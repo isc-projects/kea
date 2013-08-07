@@ -30,6 +30,9 @@ dnl                             compile managed_mapped_file (can be empty).
 dnl                             It is of no use if "WOULDFAIL" is yes.
 dnl   BOOST_STATIC_ASSERT_WOULDFAIL set to "yes" if BOOST_STATIC_ASSERT would
 dnl                                 cause build error; otherwise set to "no"
+dnl   BOOST_RBTREE_OLD if the version of boost is older than 1.48. The old
+dnl                    version confuses some versions of gcc optimisations and
+dnl                    certain files should be compiled without optimisations.
 
 AC_DEFUN([AX_BOOST_FOR_BIND10], [
 AC_LANG_SAVE
@@ -106,9 +109,21 @@ if test "X$GXX" = "Xyes"; then
     BOOST_NUMERIC_CAST_WOULDFAIL=yes])
 
    CXXFLAGS="$CXXFLAGS_SAVED"
+
+   AC_MSG_CHECKING([Boost rbtree is old])
+   AC_TRY_COMPILE([
+   #include <boost/version.hpp>
+   #if BOOST_VERSION < 104800
+   #error Too old
+   #endif
+   ],,[AC_MSG_RESULT(no)
+       BOOST_RBTREE_OLD=no
+   ],[AC_MSG_RESULT(yes)
+      BOOST_RBTREE_OLD=yes])
 else
    # This doesn't matter for non-g++
    BOOST_NUMERIC_CAST_WOULDFAIL=no
+   BOOST_RBTREE_OLD=no
 fi
 
 # Boost interprocess::managed_mapped_file is highly system dependent and
