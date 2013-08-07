@@ -128,7 +128,7 @@ public:
     HooksDhcpv6SrvTest() {
 
         // Allocate new DHCPv6 Server
-        srv_ = new NakedDhcpv6Srv(0);
+        srv_.reset(new NakedDhcpv6Srv(0));
 
         // Clear static buffers
         resetCalloutBuffers();
@@ -136,7 +136,6 @@ public:
 
     /// @brief destructor (deletes Dhcpv6Srv)
     ~HooksDhcpv6SrvTest() {
-        delete srv_;
     }
 
     /// @brief creates an option with specified option code
@@ -498,7 +497,7 @@ public:
     }
 
     /// Pointer to Dhcpv6Srv that is used in tests
-    NakedDhcpv6Srv* srv_;
+    boost::scoped_ptr<NakedDhcpv6Srv> srv_;
 
     // The following fields are used in testing pkt6_receive_callout
 
