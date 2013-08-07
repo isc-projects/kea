@@ -73,7 +73,7 @@ class BaseTestCounters(counters_test.BaseTestCounters):
         # for counters of xfer running
         _suffix = 'xfr_running'
         _xfrrunning_names = \
-            isc.config.spec_name_list(self.counters._statistics._spec,
+            isc.config.spec_name_list(self.counters._statistics_spec,
                                       "", True)
         for name in _xfrrunning_names:
             if name.find(_suffix) != 1: continue
@@ -102,7 +102,7 @@ class BaseTestCounters(counters_test.BaseTestCounters):
         # for ipsocket/unixsocket counters
         _prefix = 'socket/'
         _socket_names = \
-            isc.config.spec_name_list(self.counters._statistics._spec,
+            isc.config.spec_name_list(self.counters._statistics_spec,
                                       "", True)
         for name in _socket_names:
             if name.find(_prefix) != 0: continue
