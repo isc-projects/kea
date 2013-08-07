@@ -1047,7 +1047,7 @@ class XfroutServer:
 
     def _start_notifier(self):
         datasrc = self._unix_socket_server.get_db_file()
-        self._notifier = notify_out.NotifyOut(datasrc)
+        self._notifier = notify_out.NotifyOut(datasrc, counters=self._counters)
         if 'also_notify' in self._config_data:
             for slave in self._config_data['also_notify']:
                 address = self._default_notify_address
