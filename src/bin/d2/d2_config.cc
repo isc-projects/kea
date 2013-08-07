@@ -91,9 +91,6 @@ DdnsDomainListMgr::setDomains(DdnsDomainMapPtr domains) {
 
 bool
 DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
-    // Clear the return parameter.
-    domain.reset();
-
     // First check the case of one domain to rule them all.
     if ((size() == 1) && (wildcard_domain_)) {
         domain = wildcard_domain_;
@@ -106,6 +103,7 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
     size_t req_len = fqdn.size();
     size_t match_len = 0;
     DdnsDomainMapPair map_pair;
+    DdnsDomainPtr best_match;
     BOOST_FOREACH (map_pair, *domains_) {
         std::string domain_name = map_pair.first;
         size_t dom_len = domain_name.size();
@@ -134,13 +132,13 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
                 // any we have matched so far.
                 if (dom_len > match_len) {
                     match_len = dom_len;
-                    domain = map_pair.second;
+                    best_match = map_pair.second;
                 }
             }
         }
     }
 
-    if (!domain) {
+    if (!best_match) {
         // There's no match. If they specified a wild card domain use it
         // otherwise there's no domain for this entry.
         if (wildcard_domain_) {
@@ -152,6 +150,7 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
         return (false);
     }
 
+    domain = best_match;
     return (true);
 }
 
