@@ -22,8 +22,10 @@ import socket
 from isc.notify import notify_out, SOCK_DATA
 import isc.log
 from isc.dns import *
+from isc.statistics.dns import Counters
 
 TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
+SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
 
 def get_notify_msgdata(zone_name, qid=0):
     """A helper function to generate a notify response in wire format.
@@ -128,7 +130,7 @@ class TestZoneNotifyInfo(unittest.TestCase):
 class TestNotifyOut(unittest.TestCase):
     def setUp(self):
         self._db_file = TESTDATA_SRCDIR + '/test.sqlite3'
-        self._notify = notify_out.NotifyOut(self._db_file)
+        self._notify = notify_out.NotifyOut(self._db_file, counters=Counters(SPECFILE_LOCATION))
         self._notify._notify_infos[('example.com.', 'IN')] = MockZoneNotifyInfo('example.com.', 'IN')
         self._notify._notify_infos[('example.com.', 'CH')] = MockZoneNotifyInfo('example.com.', 'CH')
         self._notify._notify_infos[('example.net.', 'IN')] = MockZoneNotifyInfo('example.net.', 'IN')
