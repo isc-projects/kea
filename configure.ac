@@ -898,10 +898,6 @@ if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$werror_ok" = X1 -a $CLANGP
     AC_MSG_ERROR([Failed to compile a required header file.  If you are using FreeBSD and Boost installed via ports, retry with specifying --without-werror.  See the ChangeLog entry for Trac no. 1991 for more details.])
 fi
 
-if test "$BOOST_RBTREE_OLD" = "yes" ; then
-    AC_MSG_ERROR([Bah! Too old.])
-fi
-
 use_shared_memory=yes
 AC_ARG_WITH(shared-memory,
     AC_HELP_STRING([--with-shared-memory],
@@ -915,6 +911,15 @@ if test "x$use_shared_memory" = "xyes"; then
     AC_DEFINE(USE_SHARED_MEMORY, 1, [Define to 1 if shared memory support is enabled])
 fi
 AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
+
+if test "$BOOST_RBTREE_OLD" = "yes" -a "$use_shared_memory" = "yes" ; then
+    AC_MSG_ERROR([You're trying to compile against boost older than 1.48 with
+shared memory. This is known to cause problems under certain situations.
+
+Either update boost to newer version or use --without-shared-memory.
+Note that most users likely don't need shared memory support.
+])
+fi
 
 # Add some default CPP flags needed for Boost, identified by the AX macro.
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
