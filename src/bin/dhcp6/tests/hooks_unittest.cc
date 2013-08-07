@@ -56,9 +56,9 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     int hook_index_buffer6_send    = -1;
     int hook_index_lease6_renew    = -1;
     int hook_index_lease6_release  = -1;
-    int hook_index_pkt6_received = -1;
-    int hook_index_select_subnet = -1;
-    int hook_index_pkt6_send     = -1;
+    int hook_index_pkt6_received   = -1;
+    int hook_index_select_subnet   = -1;
+    int hook_index_pkt6_send       = -1;
 
     // check if appropriate indexes are set
     EXPECT_NO_THROW(hook_index_buffer6_receive = ServerHooks::getServerHooks()
@@ -76,13 +76,13 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     EXPECT_NO_THROW(hook_index_pkt6_send     = ServerHooks::getServerHooks()
                     .getIndex("pkt6_send"));
 
-    EXPECT_TRUE(hook_index_pkt6_received > 0);
-    EXPECT_TRUE(hook_index_select_subnet > 0);
-    EXPECT_TRUE(hook_index_pkt6_send > 0);
+    EXPECT_TRUE(hook_index_pkt6_received   > 0);
+    EXPECT_TRUE(hook_index_select_subnet   > 0);
+    EXPECT_TRUE(hook_index_pkt6_send       > 0);
     EXPECT_TRUE(hook_index_buffer6_receive > 0);
-    EXPECT_TRUE(hook_index_buffer6_send > 0);
-    EXPECT_TRUE(hook_index_lease6_renew > 0);
-    EXPECT_TRUE(hook_index_lease6_release > 0);
+    EXPECT_TRUE(hook_index_buffer6_send    > 0);
+    EXPECT_TRUE(hook_index_lease6_renew    > 0);
+    EXPECT_TRUE(hook_index_lease6_release  > 0);
 }
 
 // This function returns buffer for very simple Solicit
@@ -130,7 +130,7 @@ public:
         // Allocate new DHCPv6 Server
         srv_ = new NakedDhcpv6Srv(0);
 
-        // clear static buffers
+        // Clear static buffers
         resetCalloutBuffers();
     }
 
@@ -149,7 +149,7 @@ public:
     /// @return pointer to create option object
     static OptionPtr createOption(uint16_t option_code) {
 
-        char payload[] = {
+        uint8_t payload[] = {
             0xa, 0xb, 0xc, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14
         };
 
@@ -179,17 +179,17 @@ public:
         Pkt6Ptr pkt;
         callout_handle.getArgument("query6", pkt);
 
-        // get rid of the old client-id
+        // Get rid of the old client-id
         pkt->delOption(D6O_CLIENTID);
 
-        // add a new option
+        // Add a new option
         pkt->addOption(createOption(D6O_CLIENTID));
 
-        // carry on as usual
+        // Carry on as usual
         return pkt6_receive_callout(callout_handle);
     }
 
-    /// test callback that deletes client-id
+    /// Test callback that deletes client-id
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -198,14 +198,14 @@ public:
         Pkt6Ptr pkt;
         callout_handle.getArgument("query6", pkt);
 
-        // get rid of the old client-id
+        // Get rid of the old client-id
         pkt->delOption(D6O_CLIENTID);
 
-        // carry on as usual
+        // Carry on as usual
         return pkt6_receive_callout(callout_handle);
     }
 
-    /// test callback that sets skip flag
+    /// Test callback that sets skip flag
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -216,11 +216,11 @@ public:
 
         callout_handle.setSkip(true);
 
-        // carry on as usual
+        // Carry on as usual
         return pkt6_receive_callout(callout_handle);
     }
 
-    /// test callback that stores received callout name and pkt6 value
+    /// Test callback that stores received callout name and pkt6 value
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -233,7 +233,7 @@ public:
         return (0);
     }
 
-    /// test callback that changes first byte of client-id value
+    /// Test callback that changes first byte of client-id value
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -243,15 +243,17 @@ public:
         callout_handle.getArgument("query6", pkt);
 
         // If there is at least one option with data
-        if (pkt->data_.size()>Pkt6::DHCPV6_PKT_HDR_LEN + Option::OPTION6_HDR_LEN) {
-            pkt->data_[8] = 0xff;
+        if (pkt->data_.size() > Pkt6::DHCPV6_PKT_HDR_LEN + Option::OPTION6_HDR_LEN) {
+            // Offset of the first byte of the first option. Let's set this byte
+            // to some new value that we could later check
+            pkt->data_[Pkt6::DHCPV6_PKT_HDR_LEN + Option::OPTION6_HDR_LEN] = 0xff;
         }
 
-        // carry on as usual
+        // Carry on as usual
         return buffer6_receive_callout(callout_handle);
     }
 
-    /// test callback that deletes client-id
+    /// Test callback that deletes client-id
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -279,7 +281,7 @@ public:
         return buffer6_receive_callout(callout_handle);
     }
 
-    /// test callback that sets skip flag
+    /// Test callback that sets skip flag
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -290,7 +292,7 @@ public:
 
         callout_handle.setSkip(true);
 
-        // carry on as usual
+        // Carry on as usual
         return buffer6_receive_callout(callout_handle);
     }
 
@@ -316,17 +318,17 @@ public:
         Pkt6Ptr pkt;
         callout_handle.getArgument("response6", pkt);
 
-        // get rid of the old server-id
+        // Get rid of the old server-id
         pkt->delOption(D6O_SERVERID);
 
-        // add a new option
+        // Add a new option
         pkt->addOption(createOption(D6O_SERVERID));
 
-        // carry on as usual
+        // Carry on as usual
         return pkt6_send_callout(callout_handle);
     }
 
-    /// test callback that deletes server-id
+    /// Test callback that deletes server-id
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -335,10 +337,10 @@ public:
         Pkt6Ptr pkt;
         callout_handle.getArgument("response6", pkt);
 
-        // get rid of the old client-id
+        // Get rid of the old client-id
         pkt->delOption(D6O_SERVERID);
 
-        // carry on as usual
+        // Carry on as usual
         return pkt6_send_callout(callout_handle);
     }
 
@@ -395,7 +397,7 @@ public:
         return (0);
     }
 
-    /// test callback that stores received callout name and pkt6 value
+    /// Test callback that stores received callout name and pkt6 value
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -418,7 +420,7 @@ public:
     static const uint32_t override_preferred_;
     static const uint32_t override_valid_;
 
-    /// test callback that overrides received lease. It updates
+    /// Test callback that overrides received lease. It updates
     /// T1, T2, preferred and valid lifetimes
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -446,7 +448,7 @@ public:
         return (0);
     }
 
-    /// test callback that sets the skip flag
+    /// Test callback that sets the skip flag
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -458,7 +460,7 @@ public:
         return (0);
     }
 
-    /// test callback that stores received callout name passed parameters
+    /// Test callback that stores received callout name passed parameters
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -472,7 +474,7 @@ public:
         return (0);
     }
 
-    /// test callback that sets the skip flag
+    /// Test callback that sets the skip flag
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
     static int
@@ -484,7 +486,7 @@ public:
         return (0);
     }
 
-    /// resets buffers used to store data received by callouts
+    /// Resets buffers used to store data received by callouts
     void resetCalloutBuffers() {
         callback_name_ = string("");
         callback_pkt6_.reset();
@@ -495,7 +497,7 @@ public:
         callback_argument_names_.clear();
     }
 
-    /// pointer to Dhcpv6Srv that is used in tests
+    /// Pointer to Dhcpv6Srv that is used in tests
     NakedDhcpv6Srv* srv_;
 
     // The following fields are used in testing pkt6_receive_callout
@@ -563,10 +565,10 @@ TEST_F(HooksDhcpv6SrvTest, simple_buffer6_receive) {
     // In particular, it should call registered pkt6_receive callback.
     srv_->run();
 
-    // check that the callback called is indeed the one we installed
+    // Check that the callback called is indeed the one we installed
     EXPECT_EQ("buffer6_receive", callback_name_);
 
-    // check that pkt6 argument passing was successful and returned proper value
+    // Check that pkt6 argument passing was successful and returned proper value
     EXPECT_TRUE(callback_pkt6_.get() == sol.get());
 
     // Check that all expected parameters are there
@@ -596,7 +598,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_buffer6_receive) {
     // In particular, it should call registered pkt6_receive callback.
     srv_->run();
 
-    // check that the server did send a reposonce
+    // Check that the server did send a reposonce
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
@@ -657,7 +659,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_buffer6_receive) {
     // In particular, it should call registered pkt6_receive callback.
     srv_->run();
 
-    // check that the server dropped the packet and did not produce any response
+    // Check that the server dropped the packet and did not produce any response
     ASSERT_EQ(0, srv_->fake_sent_.size());
 }
 
@@ -684,10 +686,10 @@ TEST_F(HooksDhcpv6SrvTest, simple_pkt6_receive) {
     // In particular, it should call registered pkt6_receive callback.
     srv_->run();
 
-    // check that the callback called is indeed the one we installed
+    // Check that the callback called is indeed the one we installed
     EXPECT_EQ("pkt6_receive", callback_name_);
 
-    // check that pkt6 argument passing was successful and returned proper value
+    // Check that pkt6 argument passing was successful and returned proper value
     EXPECT_TRUE(callback_pkt6_.get() == sol.get());
 
     // Check that all expected parameters are there
@@ -717,7 +719,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_receive) {
     // In particular, it should call registered pkt6_receive callback.
     srv_->run();
 
-    // check that the server did send a reposonce
+    // Check that the server did send a reposonce
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
@@ -777,7 +779,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_receive) {
     // In particular, it should call registered pkt6_receive callback.
     srv_->run();
 
-    // check that the server dropped the packet and did not produce any response
+    // Check that the server dropped the packet and did not produce any response
     ASSERT_EQ(0, srv_->fake_sent_.size());
 }
 
@@ -838,7 +840,7 @@ TEST_F(HooksDhcpv6SrvTest, valueChange_pkt6_send) {
     // In particular, it should call registered pkt6_receive callback.
     srv_->run();
 
-    // check that the server did send a reposonce
+    // Check that the server did send a response
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
@@ -906,10 +908,10 @@ TEST_F(HooksDhcpv6SrvTest, skip_pkt6_send) {
     // In particular, it should call registered pkt6_receive callback.
     srv_->run();
 
-    // check that the server send the packet
+    // Check that the server send the packet
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
-    // but the sent packet should have 0 length (we told the server to
+    // But the sent packet should have 0 length (we told the server to
     // skip pack(), but did not do packing outselves)
     Pkt6Ptr sent = srv_->fake_sent_.front();
 
@@ -961,7 +963,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
     // Pass it to the server and get an advertise
     Pkt6Ptr adv = srv_->processSolicit(sol);
 
-    // check if we get response at all
+    // Check if we get response at all
     ASSERT_TRUE(adv);
 
     // Check that the callback called is indeed the one we installed
@@ -1029,7 +1031,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
     // Pass it to the server and get an advertise
     Pkt6Ptr adv = srv_->processSolicit(sol);
 
-    // check if we get response at all
+    // Check if we get response at all
     ASSERT_TRUE(adv);
 
     // The response should have an address from second pool, so let's check it
@@ -1232,7 +1234,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdate_lease6_renew) {
     // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
     int32_t cltt = static_cast<int32_t>(l->cltt_);
     int32_t expected = static_cast<int32_t>(time(NULL));
-    // equality or difference by 1 between cltt and expected is ok.
+    // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr_opt->getAddress()));
@@ -1381,7 +1383,7 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_release) {
     l = LeaseMgrFactory::instance().getLease6(addr);
     ASSERT_FALSE(l);
 
-    // get lease by subnetid/duid/iaid combination
+    // Get lease by subnetid/duid/iaid combination
     l = LeaseMgrFactory::instance().getLease6(*duid_, iaid, subnet_->getID());
     ASSERT_FALSE(l);
 }
@@ -1448,7 +1450,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
     l = LeaseMgrFactory::instance().getLease6(addr);
     ASSERT_TRUE(l);
 
-    // get lease by subnetid/duid/iaid combination
+    // Get lease by subnetid/duid/iaid combination
     l = LeaseMgrFactory::instance().getLease6(*duid_, iaid, subnet_->getID());
     ASSERT_TRUE(l);
 }
