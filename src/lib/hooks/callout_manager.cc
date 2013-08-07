@@ -113,12 +113,14 @@ CalloutManager::calloutsPresent(int hook_index) const {
 void
 CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
 
+    // Clear the "skip" flag so we don't carry state from a previous call.
+    // This is done regardless of whether callouts are present to avoid passing
+    // any state from the previous call of callCallouts().
+    callout_handle.setSkip(false);
+
     // Only initialize and iterate if there are callouts present.  This check
     // also catches the case of an invalid index.
     if (calloutsPresent(hook_index)) {
-
-        // Clear the "skip" flag so we don't carry state from a previous call.
-        callout_handle.setSkip(false);
 
         // Set the current hook index.  This is used should a callout wish to
         // determine to what hook it is attached.
