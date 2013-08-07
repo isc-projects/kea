@@ -898,6 +898,10 @@ if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$werror_ok" = X1 -a $CLANGP
     AC_MSG_ERROR([Failed to compile a required header file.  If you are using FreeBSD and Boost installed via ports, retry with specifying --without-werror.  See the ChangeLog entry for Trac no. 1991 for more details.])
 fi
 
+if test "$BOOST_RBTREE_OLD" = "yes" ; then
+    AC_MSG_ERROR([Bah! Too old.])
+fi
+
 use_shared_memory=yes
 AC_ARG_WITH(shared-memory,
     AC_HELP_STRING([--with-shared-memory],
