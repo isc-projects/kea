@@ -152,7 +152,7 @@ public:
                 const size_t max_transactions = MAX_TRANSACTIONS_DEFAULT);
 
     /// @brief Destructor
-    ~D2UpdateMgr();
+    virtual ~D2UpdateMgr();
 
     /// @brief Check current transactions; start transactions for new requests.
     ///
@@ -170,6 +170,7 @@ public:
     /// add the transaction to the list of transactions.
     void sweep();
 
+protected:
     /// @brief Performs post-completion cleanup on completed transactions.
     ///
     /// Iterates through the list of transactions and removes any that have
@@ -208,6 +209,7 @@ public:
     /// exists. Note this would be programmatic error.
     void makeTransaction(isc::dhcp_ddns::NameChangeRequestPtr& ncr);
 
+public:
     /// @brief Returns the maximum number of concurrent transactions.
     size_t getMaxTransactions() const {
         return (max_transactions_);
@@ -285,6 +287,7 @@ private:
 
 /// @brief Defines a pointer to a D2UpdateMgr instance.
 typedef boost::shared_ptr<D2UpdateMgr> D2UpdateMgrPtr;
+
 
 } // namespace isc::d2
 } // namespace isc

@@ -31,23 +31,56 @@ using namespace isc::d2;
 
 namespace {
 
+/// @brief Wrapper class for D2UpdateMgr to provide acces non-public methods.
+///
+/// This class faciliates testing by making non-public methods accessible so
+/// they can be invoked directly in test routines.
+class D2UpdateMgrWrapper : public D2UpdateMgr {
+public:
+    /// @brief Constructor
+    ///
+    /// Parameters match those needed by D2UpdateMgr.
+    D2UpdateMgrWrapper(D2QueueMgrPtr& queue_mgr, D2CfgMgrPtr& cfg_mgr,
+                       isc::asiolink::IOService& io_service,
+                       const size_t max_transactions = MAX_TRANSACTIONS_DEFAULT)
+        : D2UpdateMgr(queue_mgr, cfg_mgr, io_service, max_transactions) {
+    }
+
+    /// @brief Destructor
+    virtual ~D2UpdateMgrWrapper() {
+    }
+
+    // Expose the protected methods to be tested.
+    using D2UpdateMgr::checkFinishedTransactions;
+    using D2UpdateMgr::pickNextJob;
+    using D2UpdateMgr::makeTransaction;
+};
+
+/// @brief Defines a pointer to a D2UpdateMgr instance.
+typedef boost::shared_ptr<D2UpdateMgrWrapper> D2UpdateMgrWrapperPtr;
+
 /// @brief Test fixture for testing D2UpdateMgr.
-/// D2UpdateMgr depends on both D2QueueMgr and D2CfgMgr.  This fixture
-/// provides an instance of each, plus a canned, valid DHCP_DDNS configuration
-/// sufficient to test D2UpdateMgr's basic functions.
+///
+/// Note this class uses D2UpdateMgrWrapper class to exercise non-public
+/// aspects of D2UpdateMgr. D2UpdateMgr depends on both D2QueueMgr and
+/// D2CfgMgr.  This fixture provides an instance of each, plus a canned,
+/// valid DHCP_DDNS configuration sufficient to test D2UpdateMgr's basic
+/// functions.
 class D2UpdateMgrTest : public ConfigParseTest {
 public:
     isc::asiolink::IOService io_service_;
     D2QueueMgrPtr queue_mgr_;
     D2CfgMgrPtr cfg_mgr_;
-    D2UpdateMgrPtr update_mgr_;
+    //D2UpdateMgrPtr update_mgr_;
+    D2UpdateMgrWrapperPtr update_mgr_;
     std::vector<NameChangeRequestPtr> canned_ncrs_;
     size_t canned_count_;
 
     D2UpdateMgrTest() {
         queue_mgr_.reset(new D2QueueMgr(io_service_));
         cfg_mgr_.reset(new D2CfgMgr());
-        update_mgr_.reset(new D2UpdateMgr(queue_mgr_, cfg_mgr_, io_service_));
+        update_mgr_.reset(new D2UpdateMgrWrapper(queue_mgr_, cfg_mgr_,
+                                                 io_service_));
         makeCannedNcrs();
         makeCannedConfig();
     }
