@@ -166,6 +166,8 @@ public:
     /// the right type. Set the value and return true if the Elements
     /// is of the correct type
     ///
+    /// Notes: Read notes of IntElement definition about the use of
+    ///        long long int, long int and int.
     //@{
     virtual bool setValue(const long long int v);
     bool setValue(const long int i) { return (setValue(static_cast<long long int>(i))); };
@@ -273,6 +275,9 @@ public:
     /// underlying system).
     /// (Note that that is different from an NullElement, which
     /// represents an empty value, and is created with Element::create())
+    ///
+    /// Notes: Read notes of IntElement definition about the use of
+    ///        long long int, long int and int.
     //@{
     static ElementPtr create();
     static ElementPtr create(const long long int i);
@@ -373,6 +378,16 @@ public:
     //@}
 };
 
+/// Notes: IntElement type is changed to int64_t.
+///        Due to C++ problems on overloading and automatic type conversion,
+///          (C++ tries to convert integer type values and reference/pointer
+///           if value types do not match exactly)
+///        We decided the storage as int64_t,
+///           three (long long, long, int) override function defintions 
+///           and cast int/long/long long to int64_t via long long.
+///        Therefore, call by value methods (create, setValue) have three
+///        (int,long,long long) definitions. Others use int64_t.
+///
 class IntElement : public Element {
     int64_t i;
 private:
