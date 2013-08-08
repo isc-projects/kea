@@ -393,11 +393,6 @@ numberFromStringstream(std::istream& in, int& pos) {
 // that can also hold an e value? (and have specific getters if the
 // value is larger than an int can handle)
 //
-// Type of IntElement is changed from long int to int64_t.
-// However, strtoint64_t function does not exist.
-// It is assumed that "long long" and int64_t are the same sizes.
-// strtoll is used to convert string to integer.
-//
 ElementPtr
 fromStringstreamNumber(std::istream& in, int& pos) {
     std::string number = numberFromStringstream(in, pos);
