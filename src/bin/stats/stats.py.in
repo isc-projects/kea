@@ -1,6 +1,6 @@
 #!@PYTHON@
 
-# Copyright (C) 2010, 2011, 2012  Internet Systems Consortium.
+# Copyright (C) 2010-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -124,8 +124,8 @@ def _accum(a, b):
                              if len(a) <= i ]
     # If both of args are integer or float type, two
     # values are added.
-    elif (type(a) is int and type(b) is int) \
-            or (type(a) is float or type(b) is float):
+    elif (type(a) is int or type(a) is float) \
+            and (type(b) is int or type(b) is float):
         return a + b
 
     # If both of args are string type,
