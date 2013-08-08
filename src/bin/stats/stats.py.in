@@ -243,14 +243,12 @@ class Stats:
 
         """
         self.update_modules()
-        if self.update_statistics_data(
+        self.update_statistics_data(
             self.module_name,
             self.cc_session.lname,
             {'lname': self.cc_session.lname,
              'boot_time': get_datetime(_BASETIME),
-             'last_update_time': get_datetime()}):
-            logger.warn(STATS_RECEIVED_INVALID_STATISTICS_DATA,
-                        self.module_name)
+             'last_update_time': get_datetime()})
         # define the variable of the last time of polling
         self._lasttime_poll = 0.0
 
@@ -346,18 +344,11 @@ class Stats:
         self.update_modules()
         while len(_statistics_data) > 0:
             (_module_name, _lname, _args) = _statistics_data.pop(0)
-            if self.update_statistics_data(_module_name, _lname, _args):
-                logger.warn(
-                STATS_RECEIVED_INVALID_STATISTICS_DATA,
-                _module_name)
-            else:
-                if self.update_statistics_data(
+            if not self.update_statistics_data(_module_name, _lname, _args):
+                self.update_statistics_data(
                     self.module_name,
                     self.cc_session.lname,
-                    {'last_update_time': get_datetime()}):
-                    logger.warn(
-                        STATS_RECEIVED_INVALID_STATISTICS_DATA,
-                        self.module_name)
+                    {'last_update_time': get_datetime()})
         # if successfully done, set the last time of polling
         self._lasttime_poll = get_timestamp()
 
@@ -601,7 +592,10 @@ class Stats:
                         self.statistics_data[m],
                         _accum_bymodule(self.statistics_data_bymid[m]))
 
-        if errors: return errors
+        if errors:
+            logger.warn(
+                STATS_RECEIVED_INVALID_STATISTICS_DATA, owner)
+            return errors
 
     def command_status(self):
         """
