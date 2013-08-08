@@ -56,7 +56,7 @@ fillNodes(const Counter& counter,
         } else {
             trees->set(type_tree[i].name,
                        Element::create(static_cast<int64_t>(
-                           counter.get(type_tree[i].counter_id) & 0x7fffffffffffffff))
+                           counter.get(type_tree[i].counter_id) & 0x7fffffffffffffffLL))
                        );
         }
     }
