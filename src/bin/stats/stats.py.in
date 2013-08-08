@@ -256,12 +256,8 @@ class Stats:
         """return the current value of 'poll-interval'"""
         return self.config['poll-interval']
 
-    def do_polling(self):
-        """Polls modules for statistics data. Return nothing. First
-           search multiple instances of same module. Second requests
-           each module to invoke 'getstats'. Finally updates internal
-           statistics data every time it gets from each instance."""
-
+    def _get_multi_module_list(self):
+        """Returns a module list which is running as multiple modules."""
         # It counts the number of instances of same module by
         # examining the third value from the array result of
         # 'show_processes' of Init
@@ -304,6 +300,12 @@ class Stats:
             # release.
             modules = [ v[2] if type(v) is list and len(v) > 2 \
                             else None for v in value ]
+        return modules
+
+    def _query_statistics(self, modules):
+        """Queries each module statistics and returns sequences to use
+        for receiving that answers based on the argument 'modules' which
+        is a list of modules running as multiple modules"""
         # start requesting each module to collect statistics data
         sequences = []
         for (module_name, data) in self.get_statistics_data().items():
@@ -325,11 +327,19 @@ class Stats:
             if cnt > 1:
                 sequences = sequences + [ (module_name, seq) \
                                               for i in range(cnt-1) ]
+        return sequences
+
+    def _collect_statistics(self, sequences):
+        """Based on sequences which is a list of values returned from
+        group_sendmsg(), collects statistics data from each module. If
+        a SessionTimeout exception is raised when collecting from the
+        module, skips it and goes to collect from the next module."""
         # start receiving statistics data
         _statistics_data = []
-        while len(sequences) > 0:
+        _sequences = sequences[:]
+        while len(_sequences) > 0:
             try:
-                (module_name, seq) = sequences.pop(0)
+                (module_name, seq) = _sequences.pop(0)
                 answer, env = self.cc_session.group_recvmsg(False, seq)
                 if answer:
                     rcode, args = isc.config.ccsession.parse_answer(answer)
@@ -339,8 +349,14 @@ class Stats:
             # skip this module if SessionTimeout raised
             except isc.cc.session.SessionTimeout:
                 pass
+        return _statistics_data
 
+    def _refresh_statistics(self, statistics_data):
+        """Refreshes statistics_data into internal statistics data to
+        display, which is a list of a tuple of module_name, lname, and
+        args"""
         # update statistics data
+        _statistics_data = statistics_data[:]
         self.update_modules()
         while len(_statistics_data) > 0:
             (_module_name, _lname, _args) = _statistics_data.pop(0)
@@ -349,6 +365,16 @@ class Stats:
                     self.module_name,
                     self.cc_session.lname,
                     {'last_update_time': get_datetime()})
+
+    def do_polling(self):
+        """Polls modules for statistics data. Return nothing. First
+           search multiple instances of same module. Second requests
+           each module to invoke 'getstats'. Finally updates internal
+           statistics data every time it gets from each instance."""
+        modules = self._get_multi_module_list()
+        sequences = self._query_statistics(modules)
+        _statistics_data = self._collect_statistics(sequences)
+        self._refresh_statistics(_statistics_data)
         # if successfully done, set the last time of polling
         self._lasttime_poll = get_timestamp()
 
