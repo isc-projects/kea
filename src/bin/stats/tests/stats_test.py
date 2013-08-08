@@ -1,4 +1,4 @@
-# Copyright (C) 2010, 2011, 2012  Internet Systems Consortium.
+# Copyright (C) 2010-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -132,6 +132,8 @@ class TestUtilties(unittest.TestCase):
         self.assertEqual(stats._accum("a", None), "a")
         self.assertEqual(stats._accum(1, 2), 3)
         self.assertEqual(stats._accum(0.5, 0.3), 0.8)
+        self.assertEqual(stats._accum(1, 0.3), 1.3)
+        self.assertEqual(stats._accum(0.5, 2), 2.5)
         self.assertEqual(stats._accum('aa','bb'), 'bb')
         self.assertEqual(stats._accum('1970-01-01T09:00:00Z','2012-08-09T09:33:31Z'),
                          '2012-08-09T09:33:31Z')
