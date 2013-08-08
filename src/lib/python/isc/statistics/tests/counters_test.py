@@ -200,10 +200,34 @@ class TestCounters0(unittest.TestCase, BaseTestCounters):
     def setUp(self):
         BaseTestCounters.setUp(self)
 
+    def test_counters(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError, self.counters.inc,
+                          "foo")
+        self.assertRaises(isc.cc.data.DataNotFoundError, self.counters.get,
+                          "foo")
+        self.check_get_statistics()
+
 class TestCounters1(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
     def setUp(self):
         BaseTestCounters.setUp(self)
+
+    def test_counters(self):
+        spec = isc.config.module_spec_from_file(self.TEST_SPECFILE_LOCATION)
+        self.assertEqual(spec.get_statistics_spec(),
+                         self.counters._statistics_spec)
+        for name in isc.config.spec_name_list(self.counters._statistics_spec):
+            self.counters.inc(name)
+            self.assertEqual(self.counters.get(name), 1)
+            # checks disable/enable
+            self.counters.disable()
+            self.counters.inc(name)
+            self.assertEqual(self.counters.get(name), 1)
+            self.counters.enable()
+            self.counters.inc(name)
+            self.assertEqual(self.counters.get(name), 2)
+        self._statistics_data = {'counter':2, 'seconds': 2.0}
+        self.check_get_statistics()
 
 if __name__== "__main__":
     unittest.main()
