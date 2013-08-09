@@ -31,6 +31,7 @@ import sys
 import stats
 import isc.log
 from test_utils import MyStats
+from isc.config.ccsession import create_answer
 
 class TestUtilties(unittest.TestCase):
     items = [
@@ -699,7 +700,6 @@ class TestStats(unittest.TestCase):
 
         # We use the knowledge of what kind of messages are sent via
         # do_polling, and return the following faked answer directly.
-        create_answer = isc.config.ccsession.create_answer # shortcut
         self.stats._answers = [
             # Answer for "show_processes"
             (create_answer(0, [[1034, 'b10-auth-1', 'Auth'],
@@ -819,7 +819,6 @@ class TestStats(unittest.TestCase):
 
         # see the comment for test_update_statistics_data_withmid.  We abuse
         # do_polling here, too.  With #2781 we should make it more direct.
-        create_answer = isc.config.ccsession.create_answer # shortcut
         stat._answers = [\
             # Answer for "show_processes"
             (create_answer(0, []),  None),
@@ -870,7 +869,6 @@ class TestStats(unittest.TestCase):
         self.stats.update_modules = lambda: None
 
         # Test data borrowed from test_update_statistics_data_withmid
-        create_answer = isc.config.ccsession.create_answer # shortcut
         self.stats._answers = [
             (create_answer(0, [[1034, 'b10-auth-1', 'Auth'],
                                [1035, 'b10-auth-2', 'Auth']]),  None),
@@ -1297,7 +1295,6 @@ class TestStats(unittest.TestCase):
         del stat.statistics_data['Auth']
 
         stat.update_modules = lambda: None
-        create_answer = isc.config.ccsession.create_answer # shortcut
 
         stat._answers = [
             # Answer for "show_processes"
@@ -1316,7 +1313,6 @@ class TestStats(unittest.TestCase):
         """check statistics data of multiple instances of same module."""
         stat = MyStats()
         stat.update_modules = lambda: None
-        create_answer = isc.config.ccsession.create_answer # shortcut
 
         # Test data borrowed from test_update_statistics_data_withmid
         stat._answers = [
