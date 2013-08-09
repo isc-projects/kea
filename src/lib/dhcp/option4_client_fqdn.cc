@@ -51,6 +51,13 @@ public:
     void parseWireData(OptionBufferConstIter first,
                        OptionBufferConstIter last);
 
+    void parseCanonicalDomainName(OptionBufferConstIter first,
+                                  OptionBufferConstIter last);
+
+    void
+    parseASCIIDomainName(OptionBufferConstIter first,
+                         OptionBufferConstIter last);
+
 };
 
 Option4ClientFqdnImpl::
@@ -176,6 +183,24 @@ Option4ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
     rcode1_ = Option4ClientFqdn::Rcode(*(first++));
     rcode2_ = Option4ClientFqdn::Rcode(*(first++));
 
+    try {
+        if ((flags_ & Option4ClientFqdn::FLAG_E) != 0) {
+            parseCanonicalDomainName(first, last);
+
+        } else {
+            parseASCIIDomainName(first, last);
+
+        }
+    } catch (const Exception& ex) {
+        isc_throw(InvalidOption4ClientFqdnDomainName,
+                  "failed to parse the domain-name in DHCPv4 Client FQDN"
+                  << " Option: " << ex.what());
+    }
+}
+
+void
+Option4ClientFqdnImpl::parseCanonicalDomainName(OptionBufferConstIter first,
+                                                OptionBufferConstIter last) {
     // Parse domain-name if any.
     if (std::distance(first, last) > 0) {
         // The FQDN may comprise a partial domain-name. In this case it lacks
@@ -204,7 +229,18 @@ Option4ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
     }
 }
 
-    Option4ClientFqdn::Option4ClientFqdn(const uint8_t flag, const Rcode& rcode)
+void
+Option4ClientFqdnImpl::parseASCIIDomainName(OptionBufferConstIter first,
+                                            OptionBufferConstIter last) {
+    if (std::distance(first, last) > 0) {
+        std::string domain_name(first, last);
+        domain_name_.reset(new isc::dns::Name(domain_name));
+        domain_name_type_ = domain_name[domain_name.length() - 1] == '.' ?
+            Option4ClientFqdn::FULL : Option4ClientFqdn::PARTIAL;
+        }
+}
+
+Option4ClientFqdn::Option4ClientFqdn(const uint8_t flag, const Rcode& rcode)
     : Option(Option::V4, DHO_FQDN),
       impl_(new Option4ClientFqdnImpl(flag, rcode, "", PARTIAL)) {
 }
@@ -307,15 +343,22 @@ Option4ClientFqdn::getDomainName() const {
 
 void
 Option4ClientFqdn::packDomainName(isc::util::OutputBuffer& buf) const {
-    // Domain name, encoded as a set of labels.
-    isc::dns::LabelSequence labels(*impl_->domain_name_);
-    if (labels.getDataLength() > 0) {
-        size_t read_len = 0;
-        const uint8_t* data = labels.getData(&read_len);
-        if (impl_->domain_name_type_ == PARTIAL) {
-            --read_len;
+    if (getFlag(FLAG_E)) {
+        // Domain name, encoded as a set of labels.
+        isc::dns::LabelSequence labels(*impl_->domain_name_);
+        if (labels.getDataLength() > 0) {
+            size_t read_len = 0;
+            const uint8_t* data = labels.getData(&read_len);
+            if (impl_->domain_name_type_ == PARTIAL) {
+                --read_len;
+            }
+            buf.writeData(data, read_len);
         }
-        buf.writeData(data, read_len);
+
+    } else {
+        std::string domain_name = impl_->domain_name_->toText();
+        buf.writeData(&domain_name[0], domain_name.size());
+
     }
 }
 
