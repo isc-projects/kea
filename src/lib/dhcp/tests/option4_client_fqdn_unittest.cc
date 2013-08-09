@@ -143,8 +143,10 @@ TEST(Option4ClientFqdnTest, copyConstruct) {
     EXPECT_EQ(Option4ClientFqdn::PARTIAL, option_copy->getDomainNameType());
 }
 
-// This test verifies that the option in the on-wire format is parsed correctly.
+// This test verifies that the option in the on-wire format with the domain-name
+// encoded in the canonical format is parsed correctly.
 TEST(Option4ClientFqdnTest, constructFromWire) {
+    // The E flag sets the domain-name format to canonical.
     const uint8_t in_data[] = {
         FLAG_S | FLAG_E,                     // flags
         0,                                   // RCODE1
@@ -171,6 +173,38 @@ TEST(Option4ClientFqdnTest, constructFromWire) {
     EXPECT_EQ(Option4ClientFqdn::FULL, option->getDomainNameType());
 }
 
+// This test verifies that the option in the on-wire format with the domain-name
+// encoded in the ASCII format is parsed correctly.
+TEST(Option4ClientFqdnTest, constructFromWireASCII) {
+    // The E flag is set to zero which indicates that the domain name
+    // is encoded in the ASCII format. The "dot" character at the end
+    // indicates that the domain-name is fully qualified.
+    const uint8_t in_data[] = {
+        FLAG_S,                               // flags
+        0,                                    // RCODE1
+        0,                                    // RCODE2
+        109, 121, 104, 111, 115, 116, 46,     // myhost.
+        101, 120, 97, 109, 112, 108, 101, 46, // example.
+        99, 111, 109, 46                      // com.
+    };
+    size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
+    OptionBuffer in_buf(in_data, in_data + in_data_size);
+
+    // Create option instance. Check that constructor doesn't throw.
+    boost::scoped_ptr<Option4ClientFqdn> option;
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(in_buf.begin(), in_buf.end()))
+    );
+    ASSERT_TRUE(option);
+
+    EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_S));
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_E));
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_O));
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_N));
+    EXPECT_EQ("myhost.example.com.", option->getDomainName());
+    EXPECT_EQ(Option4ClientFqdn::FULL, option->getDomainNameType());
+}
+
 // This test verifies that truncated option is rejected.
 TEST(Option4ClientFqdnTest, constructFromWireTruncated) {
     // Empty buffer is invalid. It should be at least one octet long.
@@ -186,8 +220,48 @@ TEST(Option4ClientFqdnTest, constructFromWireTruncated) {
     EXPECT_NO_THROW(Option4ClientFqdn(in_buf.begin(), in_buf.end()));
 }
 
+// This test verifies that exception is thrown when invalid domain-name
+// in canonical format is carried in the option.
+TEST(Option4ClientFqdnTest, constructFromWireInvalidName) {
+    const uint8_t in_data[] = {
+        FLAG_S | FLAG_E,                     // flags
+        0,                                   // RCODE1
+        0,                                   // RCODE2
+        6, 109, 121, 104, 111, 115, 116,     // myhost.
+        7, 101, 120, 97, 109, 112, 108, 101, // example.
+        5, 99, 111, 109, 0                   // com. (invalid label length 5)
+    };
+    size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
+    OptionBuffer in_buf(in_data, in_data + in_data_size);
+
+    EXPECT_THROW(
+        Option4ClientFqdn(in_buf.begin(), in_buf.end()),
+        InvalidOption4ClientFqdnDomainName
+    );
+}
+
+// This test verifies that exception is thrown when invalid domain-name
+// in ASCII format is carried in the option.
+TEST(Option4ClientFqdnTest, constructFromWireInvalidASCIIName) {
+    const uint8_t in_data[] = {
+        FLAG_S,                               // flags
+        0,                                    // RCODE1
+        0,                                    // RCODE2
+        109, 121, 104, 111, 115, 116, 46, 46, // myhost.. (double dot!)
+        101, 120, 97, 109, 112, 108, 101, 46, // example.
+        99, 111, 109, 46                      // com.
+    };
+    size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
+    OptionBuffer in_buf(in_data, in_data + in_data_size);
+
+    EXPECT_THROW(
+        Option4ClientFqdn(in_buf.begin(), in_buf.end()),
+        InvalidOption4ClientFqdnDomainName
+    );
+}
+
 // This test verifies that the option in the on-wire format with partial
-// domain-name is parsed correctly.
+// domain-name encoded in canonical format is parsed correctly.
 TEST(Option4ClientFqdnTest, constructFromWirePartial) {
     const uint8_t in_data[] = {
         FLAG_N | FLAG_E,                     // flags
@@ -210,6 +284,35 @@ TEST(Option4ClientFqdnTest, constructFromWirePartial) {
     EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_O));
     EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_N));
     EXPECT_EQ("myhost", option->getDomainName());
+    EXPECT_EQ(Option4ClientFqdn::PARTIAL, option->getDomainNameType());
+}
+
+// This test verifies that the option in the on-wire format with partial
+// domain-name encoded in ASCII format is parsed correctly.
+TEST(Option4ClientFqdnTest, constructFromWirePartialASCII) {
+    // There is no "dot" character at the end, so the domain-name is partial.
+    const uint8_t in_data[] = {
+        FLAG_N,                               // flags
+        255,                                  // RCODE1
+        255,                                  // RCODE2
+        109, 121, 104, 111, 115, 116, 46,     // myhost.
+        101, 120, 97, 109, 112, 108, 101      // example
+    };
+    size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
+    OptionBuffer in_buf(in_data, in_data + in_data_size);
+
+    // Create option instance. Check that constructor doesn't throw.
+    boost::scoped_ptr<Option4ClientFqdn> option;
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(in_buf.begin(), in_buf.end()))
+    );
+    ASSERT_TRUE(option);
+
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_S));
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_E));
+    EXPECT_FALSE(option->getFlag(Option4ClientFqdn::FLAG_O));
+    EXPECT_TRUE(option->getFlag(Option4ClientFqdn::FLAG_N));
+    EXPECT_EQ("myhost.example", option->getDomainName());
     EXPECT_EQ(Option4ClientFqdn::PARTIAL, option->getDomainNameType());
 }
 
@@ -354,6 +457,14 @@ TEST(Option4ClientFqdnTest, constructInvalidName) {
 
     // Specify invalid domain name and expect that exception is thrown.
     EXPECT_THROW(Option4ClientFqdn(FLAG_E, Option4ClientFqdn::RCODE_CLIENT(),
+                                   "my...host.example.com"),
+                 InvalidOption4ClientFqdnDomainName);
+
+    // Do the same test for the domain-name in ASCII format.
+    ASSERT_NO_THROW(Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                      "myhost.example.com"));
+
+    EXPECT_THROW(Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                    "my...host.example.com"),
                  InvalidOption4ClientFqdnDomainName);
 }
@@ -558,6 +669,40 @@ TEST(Option4ClientFqdnTest, pack) {
     // so as they can be compared directly.
     ASSERT_EQ(ref_data_size, buf.getLength());
     EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
+}
+
+TEST(Option4ClientFqdnTest, packASCII) {
+    // Create option instance. Check that constructor doesn't throw.
+    const uint8_t flags = FLAG_S;
+    boost::scoped_ptr<Option4ClientFqdn> option;
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(flags,
+                                           Option4ClientFqdn::RCODE_CLIENT(),
+                                           "myhost.example.com"))
+    );
+    ASSERT_TRUE(option);
+
+    // Prepare on-wire format of the option.
+    isc::util::OutputBuffer buf(10);
+    ASSERT_NO_THROW(option->pack(buf));
+
+    // Prepare reference data.
+    const uint8_t ref_data[] = {
+        81, 23,                               // header
+        FLAG_S,                               // flags
+        0,                                    // RCODE1
+        0,                                    // RCODE2
+        109, 121, 104, 111, 115, 116, 46,     // myhost.
+        101, 120, 97, 109, 112, 108, 101, 46, // example.
+        99, 111, 109, 46                      // com.
+    };
+    size_t ref_data_size = sizeof(ref_data) / sizeof(ref_data[0]);
+
+    // Check if the buffer has the same length as the reference data,
+    // so as they can be compared directly.
+    ASSERT_EQ(ref_data_size, buf.getLength());
+    EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
+
 }
 
 // This test verifies on-wire format of the option with partial domain name
