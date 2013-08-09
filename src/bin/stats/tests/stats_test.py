@@ -1281,6 +1281,153 @@ class TestStats(unittest.TestCase):
                          isc.config.create_answer(
                 1, "module name is not specified"))
 
+    def test_get_multi_module_list(self):
+        """Test _get_multi_module_list() returns a module list which is running
+        as multiple modules."""
+        stat = MyStats()
+        # no answer
+        self.assertListEqual([], stat._get_multi_module_list())
+        # proc list returned
+        proc_list = [
+            [29317, 'b10-xfrout', 'Xfrout'],
+            [29318, 'b10-xfrin', 'Xfrin'],
+            [20061, 'b10-auth','Auth'],
+            [20103, 'b10-auth-2', 'Auth']]
+        mod_list = [ a[2] for a in proc_list ]
+        stat._answers = [
+            # Answer for "show_processes"
+            (create_answer(0, proc_list), {'from': 'init'})
+            ]
+        self.assertListEqual(mod_list, stat._get_multi_module_list())
+        # invalid proc list
+        stat._answers = [
+            # Answer for "show_processes"
+            (create_answer(0, [[999, 'invalid', 'Invalid'], 'invalid']),
+             {'from': 'init'})
+            ]
+        self.assertListEqual(['Invalid', None], stat._get_multi_module_list())
+
+    def test_get_multi_module_list_rpcrecipientmissing(self):
+        """Test _get_multi_module_list() raises an RPCRecipientMissing exception
+        if rcp_call() raise the exception"""
+        # RPCRecipientMissing case
+        stat = MyStats()
+        ex = isc.config.RPCRecipientMissing
+        def __raise(*x): raise ex(*x)
+        stat.mccs.rpc_call = lambda x,y: __raise('Error')
+        self.assertRaises(ex, stat._get_multi_module_list)
+
+    def test_get_multi_module_list_rpcerror(self):
+        """Test _get_multi_module_list() returns an empty list if rcp_call()
+        raise an RPCError exception"""
+        # RPCError case
+        stat = MyStats()
+        ex = isc.config.RPCError
+        def __raise(*x): raise ex(*x)
+        stat.mccs.rpc_call = lambda x,y: __raise(99, 'Error')
+        self.assertListEqual([], stat._get_multi_module_list())
+
+    def test_query_statistics(self):
+        """Test _query_statistics returns a list of pairs of module and
+        sequences from group_sendmsg()"""
+        stat = MyStats()
+        # imitate stat.get_statistics_data().items
+        class DummyDict:
+            items = lambda x: [
+                ('Init', 'dummy'), ('Stats', 'dummy'), ('Auth', 'dummy'),
+                ]
+        stat.get_statistics_data = lambda: DummyDict()
+        mod = ('Init', 'Auth', 'Auth')
+        seq = [('Init', stat._seq + 1),
+               ('Auth', stat._seq + 2),
+               ('Auth', stat._seq + 2) ]
+        self.assertListEqual(seq, stat._query_statistics(mod))
+
+    def test_collect_statistics(self):
+        """Test _collect_statistics() collects statistics data from each module
+        based on the sequences which is a list of values returned from
+        group_sendmsg()"""
+        stat = MyStats()
+        seq = [ ('Init', stat._seq + 1),
+                ('Auth', stat._seq + 2),
+                ('Auth', stat._seq + 2) ]
+        ret = [('Init', 'frominit', {'boot_time': '2013-01-01T00:00:00Z'}),
+               ('Auth', 'fromauth1', {'queries.tcp': 100}),
+               ('Auth', 'fromauth2', {'queries.udp': 200})]
+        stat._answers = [
+            (create_answer(0, r[2]), {'from': r[1]}) for r in ret
+            ]
+        self.assertListEqual(ret, stat._collect_statistics(seq))
+
+    def test_collect_statistics_nodata(self):
+        """Test _collect_statistics() returns empty statistics data if
+        a module returns an empty list"""
+        stat = MyStats()
+        seq = []
+        stat._answers = []
+        ret = []
+        self.assertListEqual(ret, stat._collect_statistics(seq))
+
+    def test_collect_statistics_nonzero_rcode(self):
+        """Test _collect_statistics() returns empty statistics data if
+        a module returns non-zero rcode"""
+        stat = MyStats()
+        seq = [('Init', stat._seq + 1)]
+        stat._answers = [
+            (create_answer(1, 'error'), {'from': 'frominit'})
+            ]
+        ret = []
+        self.assertListEqual(ret, stat._collect_statistics(seq))
+
+    def test_collect_statistics_sessiontimeout(self):
+        """Test _collect_statistics() collects statistics data from each module
+        based on the sequences which is a list of values returned from
+        group_sendmsg(). In this test case, SessionTimeout exceptions are raised
+        while collecting from Auth. This tests _collect_statistics skips
+        collecting from Auth."""
+        # SessionTimeout case
+        stat = MyStats()
+        ex = isc.cc.session.SessionTimeout
+        def __raise(*x): raise ex(*x)
+        # SessionTimeout is raised when asking to Auth
+        stat.cc_session.group_recvmsg = lambda x,seq: \
+            __raise() if seq == stat._seq + 2 else stat._answers.pop(0)
+        seq = [ ('Init', stat._seq + 1),
+                ('Auth', stat._seq + 2),
+                ('Auth', stat._seq + 2) ]
+        ret = [('Init', 'frominit', {'boot_time': '2013-01-01T00:00:00Z'})]
+        stat._answers = [
+            (create_answer(0, r[2]), {'from': r[1]}) for r in ret
+            ]
+        self.assertListEqual(ret, stat._collect_statistics(seq))
+
+    def test_refresh_statistics(self):
+        """Test _refresh_statistics() refreshes statistics data from given data
+        """
+        stat = MyStats()
+        self.assertEqual(self.const_default_datetime,
+                         stat.statistics_data['Init']['boot_time'])
+        self.assertEqual(0,
+                         stat.statistics_data['Auth']['queries.tcp'])
+        self.assertEqual(0,
+                         stat.statistics_data['Auth']['queries.udp'])
+        # change stats.get_datetime() for testing 'last_update_time'
+        orig_get_datetime = stats.get_datetime
+        stats.get_datetime = lambda : self.const_datetime
+        arg = [('Init', 'frominit', {'boot_time': '2013-01-01T00:00:00Z'}),
+               ('Auth', 'fromauth1', {'queries.tcp': 100}),
+               ('Auth', 'fromauth2', {'queries.udp': 200})]
+        stat._refresh_statistics(arg)
+        self.assertEqual('2013-01-01T00:00:00Z',
+                         stat.statistics_data['Init']['boot_time'])
+        self.assertEqual(100,
+                         stat.statistics_data['Auth']['queries.tcp'])
+        self.assertEqual(200,
+                         stat.statistics_data['Auth']['queries.udp'])
+        self.assertEqual(self.const_datetime,
+                         stat.statistics_data['Stats']['last_update_time'])
+        stats.get_datetime = orig_get_datetime
+
     def test_polling_init(self):
         """check statistics data of 'Init'."""
 
@@ -1398,6 +1545,17 @@ class TestStats(unittest.TestCase):
         self.assertEqual(
             last_update_time,
             stat.statistics_data['Stats']['last_update_time'])
+
+    def test_polling_update_lasttime_poll(self):
+        """Test _lasttime_poll is updated after do_polling()
+        """
+        orig_get_timestamp = stats.get_timestamp
+        stats.get_timestamp = lambda : self.const_timestamp
+        stat = MyStats()
+        self.assertEqual(0.0, stat._lasttime_poll)
+        stat.do_polling()
+        self.assertEqual(self.const_timestamp, stat._lasttime_poll)
+        stats.get_timestamp = orig_get_timestamp
 
 class Z_TestOSEnv(unittest.TestCase):
     # Running this test would break logging setting.  To prevent it from
