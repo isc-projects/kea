@@ -1,9 +1,14 @@
-655.	[func]	tmark
+656.	[func]		tomek
+	Additional hooks (buffer6_receive, lease6_renew,
+	lease6_release, buffer6_send) added to the DHCPv6 server.
+	(Trac #2984, git 540dd0449121094a56f294c500c2ed811f6016b6)
+
+655.	[func]		tmark
 	Added D2UpdateMgr class to b10-dhcp-ddns. This class is the b10-dhcp-ddns
 	task master, instantiating and supervising transactions that carry out the
 	DNS updates needed to fulfill the requests (NameChangeRequests) received
 	from b10-dhcp-ddns clients (e.g. DHCP servers).
-	(Trac #3059 git d72675617d6b60e3eb6160305738771f015849ba) 
+	(Trac #3059 git d72675617d6b60e3eb6160305738771f015849ba)
 
 654.	[bug]		stephen
 	Always clear "skip" flag before calling any callouts on a hook.
@@ -61,7 +66,7 @@
 	(Trac #3054, git 0f845ed94f462dee85b67f056656b2a197878b04)
 
 645.	[func]		tomek
-	Added initial set of hooks (pk4_receive, subnet4_select,
+	Added initial set of hooks (pkt4_receive, subnet4_select,
 	lease4_select, pkt4_send) to the DHCPv6 server.
 	(Trac #2994, git be65cfba939a6a7abd3c93931ce35c33d3e8247b)
 
@@ -82,7 +87,7 @@
 	(Trac #3056, git 92ebabdbcf6168666b03d7f7fbb31f899be39322)
 
 642.	[func]		tomek
-	Added initial set of hooks (pk6_receive, subnet6_select,
+	Added initial set of hooks (pkt6_receive, subnet6_select,
 	lease6_select, pkt6_send) to the DHCPv6 server.
 	(Trac #2995, git d6de376f97313ba40fef989e4a437d184fdf70cc)
 
