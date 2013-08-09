@@ -1382,35 +1382,26 @@ class TestStats(unittest.TestCase):
         self.assertEqual(stat.statistics_data['Stats']['lname'],
                          stat.mccs._session.lname)
 
-    def test_polling2(self):
-        """Test do_polling() doesn't incorporate broken statistics data.
-
-        Actually, this is not a test for do_polling() itself.  It's bad, but
-        fixing that is a subject of different ticket.
-
+    def test_refresh_statistics_broken_statistics_data(self):
+        """Test _refresh_statistics() doesn't incorporate broken statistics data
         """
         stat = MyStats()
         # check default statistics data of 'Init'
         self.assertEqual(
-             stat.statistics_data['Init'],
-             {'boot_time': self.const_default_datetime})
-
-        # set invalid statistics
-        create_answer = isc.config.ccsession.create_answer # shortcut
-        stat._answers = [
-            # Answer for "show_processes"
-            (create_answer(0, []),  None),
-            # Answers for "getstats" for Init (type of boot_time is invalid)
-            (create_answer(0, {'boot_time': 1}), {'from': 'init'}),
-            ]
-        stat.update_modules = lambda: None
-
-        # do_polling() should ignore the invalid answer;
-        # default data shouldn't be replaced.
-        stat.do_polling()
+            {'boot_time': self.const_default_datetime},
+            stat.statistics_data['Init'])
+        last_update_time = stat.statistics_data['Stats']['last_update_time']
+        # _refresh_statistics() should ignore the invalid statistics_data(type
+        # of boot_time is invalid); default data shouldn't be replaced.
+        arg = [('Init', 'lname', {'boot_time': 1})]
+        stat._refresh_statistics(arg)
         self.assertEqual(
-             stat.statistics_data['Init'],
-             {'boot_time': self.const_default_datetime})
+            {'boot_time': self.const_default_datetime},
+            stat.statistics_data['Init'])
+        # 'last_update_time' doesn't change
+        self.assertEqual(
+            last_update_time,
+            stat.statistics_data['Stats']['last_update_time'])
 
 class Z_TestOSEnv(unittest.TestCase):
     # Running this test would break logging setting.  To prevent it from
