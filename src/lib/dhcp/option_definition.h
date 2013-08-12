@@ -275,6 +275,21 @@ public:
     /// @return true if specified format is IAADDR option format.
     bool haveIAAddr6Format() const;
 
+    /// @brief Check if option has format of the DHCPv4 Client FQDN
+    /// %Option.
+    ///
+    /// The encoding of the domain-name carried by the FQDN option is
+    /// conditional and is specified in the flags field of the option.
+    /// The domain-name can be encoded in the ASCII format or canonical
+    /// wire format. The ASCII format is deprecated, therefore canonical
+    /// format is selected for the FQDN option definition and this function
+    /// returns true if the option definition comprises the domain-name
+    /// field encoded in canonical format.
+    ///
+    /// @return true if option has the format of DHCPv4 Client FQDN
+    /// %Option.
+    bool haveFqdn4Format() const;
+
     /// @brief Option factory.
     ///
     /// This function creates an instance of DHCP option using
