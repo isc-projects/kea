@@ -237,7 +237,7 @@ Option4ClientFqdnImpl::parseASCIIDomainName(OptionBufferConstIter first,
         domain_name_.reset(new isc::dns::Name(domain_name));
         domain_name_type_ = domain_name[domain_name.length() - 1] == '.' ?
             Option4ClientFqdn::FULL : Option4ClientFqdn::PARTIAL;
-        }
+    }
 }
 
 Option4ClientFqdn::Option4ClientFqdn(const uint8_t flag, const Rcode& rcode)

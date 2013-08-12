@@ -12,8 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
@@ -184,6 +186,10 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                     // for IA_NA and IA_PD above.
                     return (factoryIAAddr6(type, begin, end));
                 }
+            } else {
+                if ((code_ == DHO_FQDN) && haveFqdn4Format()) {
+                    return (OptionPtr(new Option4ClientFqdn(begin, end)));
+                }
             }
         }
         return (OptionPtr(new OptionCustom(*this, u, begin, end)));
@@ -339,6 +345,16 @@ OptionDefinition::haveIA6Format() const {
 bool
 OptionDefinition::haveIAAddr6Format() const {
     return (haveIAx6Format(OPT_IPV6_ADDRESS_TYPE));
+}
+
+bool
+OptionDefinition::haveFqdn4Format() const {
+    return (haveType(OPT_RECORD_TYPE) &&
+            record_fields_.size() == 4 &&
+            record_fields_[0] == OPT_UINT8_TYPE &&
+            record_fields_[1] == OPT_UINT8_TYPE &&
+            record_fields_[2] == OPT_UINT8_TYPE &&
+            record_fields_[3] == OPT_FQDN_TYPE);
 }
 
 template<typename T>
