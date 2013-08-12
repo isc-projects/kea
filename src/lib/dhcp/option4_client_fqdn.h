@@ -65,7 +65,7 @@ class Option4ClientFqdnImpl;
 /// where:
 /// - N flag specifies whether server should (0) or should not (1) perform DNS
 ///  Update,
-/// - E flag indicates encoding of the Domain Name field. If this flag is set to 1
+/// - E flag specifies encoding of the Domain Name field. If this flag is set to 1
 /// it indicates canonical wire format without compression. 0 indicates the deprecated
 /// ASCII format.
 /// - O flag is set by the server to indicate that it has overridden client's
@@ -79,17 +79,18 @@ class Option4ClientFqdnImpl;
 /// Domain names being carried by DHCPv4 Client Fqdn %Option can be fully
 /// qualified or partial. Partial domain names are encoded similar to the
 /// fully qualified domain names, except that they lack terminating zero
-/// at the end of their wire representation (or dot in case of ASCII encoding).
-/// It is also accepted to create an/ instance of this option which has empty
-/// domain-name. Clients use empty domain-names to indicate that server should
-/// generate complete fully qualified domain-name.
+/// at the end of their wire representation (or lack of dot at the end, in
+/// case of ASCII encoding). It is also accepted to create an instance of
+/// this option which has empty domain-name. Clients use empty domain-names
+/// to indicate that server should generate complete fully qualified domain-name.
 ///
 /// @warning: The RFC4702 section 2.3.1 states that the clients and servers
-/// should use character sets specified in RFC952, section 2.1. This class doesn't
-/// detect the character set violation for ASCII encoded domain-name. This could
-/// be implemented in the future but it is not important for two reasons:
+/// should use character sets specified in RFC952, section 2.1 for ASCII-encoded
+/// domain-names. This class doesn't detect the character set violation for
+/// ASCII-encoded domain-name. It could be implemented in the future but it is not
+/// important now for two reasons:
 /// - ASCII encoding is deprecated
-/// - clients SHOULD obey restrictions but if they don't server may still
+/// - clients SHOULD obey restrictions but if they don't, server may still
 ///   process the option
 ///
 /// RFC 4702 mandates that the DHCP client sets RCODE1 and RCODE2 to 0 and that
