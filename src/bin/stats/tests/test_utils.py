@@ -338,7 +338,7 @@ class MyStats(stats.Stats):
         # may want to inspect or tweak them.
 
         # initial seq num for faked group_sendmsg, arbitrary choice.
-        self.__seq = 4200
+        self._seq = 4200
         # if set, use them as faked response to group_recvmsg (see below).
         # it's a list of tuples, each of which is of (answer, envelope).
         self._answers = []
@@ -408,8 +408,8 @@ class MyStats(stats.Stats):
         generated sequence number.
 
         """
-        self.__seq += 1
-        return self.__seq
+        self._seq += 1
+        return self._seq
 
     def __group_recvmsg(self, nonblocking, seq):
         """Faked ModuleCCSession.group_recvmsg for tests.
