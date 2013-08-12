@@ -912,7 +912,7 @@ if test "x$use_shared_memory" = "xyes"; then
 fi
 AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
 
-if test "$BOOST_RBTREE_OLD" = "yes" -a "$use_shared_memory" = "yes" ; then
+if test "$BOOST_OFFSET_PTR_OLD" = "yes" -a "$use_shared_memory" = "yes" ; then
     AC_MSG_ERROR([You're trying to compile against boost older than 1.48 with
 shared memory. This is known to cause problems under certain situations.
 
