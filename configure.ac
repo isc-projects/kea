@@ -1069,6 +1069,8 @@ fi
 AX_SQLITE3_FOR_BIND10
 if test "x$have_sqlite" = "xyes" ; then
   enable_features="$enable_features SQLite3"
+
+  AX_PYTHON_SQLITE3
 fi
 
 #
