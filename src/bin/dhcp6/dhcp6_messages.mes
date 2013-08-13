@@ -96,6 +96,11 @@ subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses or prefixes
 will be assigned.
 
+% DHCP6_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
+A "libreload" command was issued to reload the hooks libraries but for
+some reason the reload failed.  Other error messages issued from the
+hooks framework will indicate the nature of the problem.
+
 % DHCP6_LEASE_ADVERT lease %1 advertised (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of the
@@ -245,11 +250,6 @@ This warning message indicates that client sent RELEASE message without
 mandatory client-id option. This is most likely caused by a buggy client
 (or a relay that malformed forwarded message). This request will not be
 processed and a response with error status code will be sent back.
-
-% DHCP6_RELOAD_FAIL reload of hooks libraries failed
-A "libreload" command was issued to reload the hooks libraries but for
-some reason the reload failed.  Other error messages issued from the
-hooks framework will indicate the nature of the problem.
 
 % DHCP6_RENEW_UNKNOWN_SUBNET RENEW message received from client on unknown subnet (duid=%1, iaid=%2)
 A warning message indicating that a client is attempting to renew his lease,

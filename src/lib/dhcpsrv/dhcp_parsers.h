@@ -338,7 +338,7 @@ private:
     std::string param_name_;
 };
 
-/// @brief parser for hooks library list
+/// @brief Parser for hooks library list
 ///
 /// This parser handles the list of hooks libraries.  This is an optional list,
 /// which may be empty.
@@ -364,7 +364,7 @@ public:
     /// @brief Constructor
     ///
     /// As this is a dedicated parser, it must be used to parse
-    /// "hooks_libraries" parameter only. All other types will throw exception.
+    /// "hooks-libraries" parameter only. All other types will throw exception.
     ///
     /// @param param_name name of the configuration parameter being parsed.
     ///
@@ -395,9 +395,9 @@ public:
     /// an indication as to whether the list is different from the list of
     /// libraries already loaded.
     ///
-    /// @param libraries (out) List of libraries that were specified in the
+    /// @param libraries [out] List of libraries that were specified in the
     ///        new configuration.
-    /// @param changed (out) true if the list is different from that currently
+    /// @param changed [out] true if the list is different from that currently
     ///        loaded.
     void getLibraries(std::vector<std::string>& libraries, bool& changed);
 

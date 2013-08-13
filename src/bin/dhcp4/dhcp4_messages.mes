@@ -89,6 +89,11 @@ point, the setting of the flag instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses will be assigned.
 
+% DHCP4_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
+A "libreload" command was issued to reload the hooks libraries but for
+some reason the reload failed.  Other error messages issued from the
+hooks framework will indicate the nature of the problem.
+
 % DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of othe advertised
@@ -225,11 +230,6 @@ that does belong to it, but the lease information was associated with
 a different hardware address. One possible reason for using different
 hardware address is that a cloned virtual machine was not updated and
 both clones use the same client-id.
-
-% DHCP4_RELOAD_FAIL reload of hooks libraries failed
-A "libreload" command was issued to reload the hooks libraries but for
-some reason the reload failed.  Other error messages issued from the
-hooks framework will indicate the nature of the problem.
 
 % DHCP4_RESPONSE_DATA responding with packet type %1, data is <%2>
 A debug message listing the data returned to the client.

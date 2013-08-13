@@ -21,9 +21,9 @@
 /// To check that they libraries are loaded and unloaded correctly, the load
 /// and unload functions in this library maintain two marker files - the load
 /// marker file and the unload marker file.  The functions append a single
-/// to the single line in the file, creating the file if need be.  In
-/// this way, the test code can determine whether the load/unload functions
-/// have been run and, if so, in what order.
+/// line to the file, creating the file if need be.  In this way, the test code
+/// can determine whether the load/unload functions have been run and, if so,
+/// in what order.
 ///
 /// This file is the common library file for the tests.  It will not compile
 /// by itself - it is included into each callout library which specifies the
@@ -69,11 +69,13 @@ version() {
     return (BIND10_HOOKS_VERSION);
 }
 
-int load(LibraryHandle&) {
+int
+load(LibraryHandle&) {
     return (appendDigit(LOAD_MARKER_FILE));
 }
 
-int unload() {
+int
+unload() {
     return (appendDigit(UNLOAD_MARKER_FILE));
 }
 

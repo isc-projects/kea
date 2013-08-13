@@ -145,13 +145,14 @@ ControlledDhcpv4Srv::dhcp4CommandHandler(const string& command, ConstElementPtr 
         ConstElementPtr answer = isc::config::createAnswer(0,
                                  "Shutting down.");
         return (answer);
+
     } else if (command == "libreload") {
         // TODO delete any stored CalloutHandles referring to the old libraries
         // Get list of currently loaded libraries and reload them.
         vector<string> loaded = HooksManager::getLibraryNames();
         bool status = HooksManager::loadLibraries(loaded);
         if (!status) {
-            LOG_ERROR(dhcp4_logger, DHCP4_RELOAD_FAIL);
+            LOG_ERROR(dhcp4_logger, DHCP4_HOOKS_LIBS_RELOAD_FAIL);
             ConstElementPtr answer = isc::config::createAnswer(1,
                                      "Failed to reload hooks libraries.");
             return (answer);

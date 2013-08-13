@@ -403,7 +403,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
 
     // Some of the parsers alter the state of the system in a way that can't
     // easily be undone. (Or alter it in a way such that undoing the change has
-    // the same risk of failurre as doing the change.)
+    // the same risk of failure as doing the change.)
     ParserPtr hooks_parser_;
 
     // The subnet parsers implement data inheritance by directly
@@ -506,6 +506,13 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             if (iface_parser) {
                 iface_parser->commit();
             }
+
+            // This occurs last as if it succeeds, there is no easy way
+            // revert it.  As a result, the failure to commit a subsequent
+            // change causes problems when trying to roll back.
+            if (hooks_parser_) {
+                hooks_parser_->commit();
+            }
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
@@ -525,12 +532,6 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     if (rollback) {
         globalContext().reset(new ParserContext(original_context));
         return (answer);
-    }
-
-    // Now commit changes that have been validated but not yet committed,
-    // and which can't be rolled back.
-    if (hooks_parser_) {
-        hooks_parser_->commit();
     }
 
     LOG_INFO(dhcp4_logger, DHCP4_CONFIG_COMPLETE).arg(config_details);
