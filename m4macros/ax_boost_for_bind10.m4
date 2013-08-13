@@ -31,6 +31,12 @@ dnl                             It is of no use if "WOULDFAIL" is yes.
 dnl   BOOST_STATIC_ASSERT_WOULDFAIL set to "yes" if BOOST_STATIC_ASSERT would
 dnl                                 cause build error; otherwise set to "no"
 
+dnl   BOOST_OFFSET_PTR_OLD set to "yes" if the version of boost is older than
+dnl                        1.48. Older versions of boost have a bug which
+dnl                        causes segfaults in offset_ptr implementation when
+dnl                        compiled by GCC with optimisations enabled.
+dnl                        See ticket no. 3025 for details.
+
 AC_DEFUN([AX_BOOST_FOR_BIND10], [
 AC_LANG_SAVE
 AC_LANG([C++])
@@ -106,9 +112,21 @@ if test "X$GXX" = "Xyes"; then
     BOOST_NUMERIC_CAST_WOULDFAIL=yes])
 
    CXXFLAGS="$CXXFLAGS_SAVED"
+
+   AC_MSG_CHECKING([Boost rbtree is old])
+   AC_TRY_COMPILE([
+   #include <boost/version.hpp>
+   #if BOOST_VERSION < 104800
+   #error Too old
+   #endif
+   ],,[AC_MSG_RESULT(no)
+       BOOST_OFFSET_PTR_OLD=no
+   ],[AC_MSG_RESULT(yes)
+      BOOST_OFFSET_PTR_OLD=yes])
 else
    # This doesn't matter for non-g++
    BOOST_NUMERIC_CAST_WOULDFAIL=no
+   BOOST_OFFSET_PTR_OLD=no
 fi
 
 # Boost interprocess::managed_mapped_file is highly system dependent and
