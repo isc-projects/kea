@@ -30,10 +30,12 @@ dnl                             compile managed_mapped_file (can be empty).
 dnl                             It is of no use if "WOULDFAIL" is yes.
 dnl   BOOST_STATIC_ASSERT_WOULDFAIL set to "yes" if BOOST_STATIC_ASSERT would
 dnl                                 cause build error; otherwise set to "no"
-dnl   BOOST_OFFSET_PTR_OLD if the version of boost is older than 1.48. The old
-dnl                        version confuses some versions of gcc optimisations
-dnl                        and certain files should be compiled without
-dnl                        optimisations.
+
+dnl   BOOST_OFFSET_PTR_OLD set to "yes" if the version of boost is older than
+dnl                        1.48. Older versions of boost have a bug which
+dnl                        causes segfaults in offset_ptr implementation when
+dnl                        compiled by GCC with optimisations enabled.
+dnl                        See ticket no. 3025 for details.
 
 AC_DEFUN([AX_BOOST_FOR_BIND10], [
 AC_LANG_SAVE
