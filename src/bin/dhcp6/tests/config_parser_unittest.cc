@@ -81,6 +81,15 @@ public:
         resetConfiguration();
     }
 
+    // Check that no hooks libraries are loaded.  This is a pre-condition for
+    // a number of tests, so is checked in one place.  As this uses an
+    // ASSERT call - and it is not clear from the documentation that Gtest
+    // predicates can be used in a constructor - the check is placed in SetUp.
+    void SetUp() {
+        std::vector<std::string> libraries = HooksManager::getLibraryNames();
+        ASSERT_TRUE(libraries.empty());
+    }
+
     ~Dhcp6ParserTest() {
         // Reset configuration database after each test.
         resetConfiguration();
@@ -1895,7 +1904,10 @@ TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
     EXPECT_FALSE(desc.option->getOption(112));
 }
 
-// Tests of the hooks libraries configuration.
+// Tests of the hooks libraries configuration.  All tests have the pre-
+// condition (checked in the test fixture's SetUp() method) that no hooks
+// libraries are loaded at the start of the tests.
+
 
 // Helper function to return a configuration containing an arbitrary number
 // of hooks libraries.
@@ -1977,10 +1989,6 @@ buildHooksLibrariesConfig(const char* library1 = NULL,
 // The goal of this test is to verify the configuration of hooks libraries if
 // none are specified.
 TEST_F(Dhcp6ParserTest, NoHooksLibraries) {
-    // Ensure that no libraries are loaded at the start of the test.
-    std::vector<std::string> libraries = HooksManager::getLibraryNames();
-    ASSERT_TRUE(libraries.empty());
-
     // Parse a configuration containing no names.
     string config = buildHooksLibrariesConfig();
     if (!executeConfiguration(config,
@@ -1989,17 +1997,13 @@ TEST_F(Dhcp6ParserTest, NoHooksLibraries) {
 
     } else {
         // No libraries should be loaded at the end of the test.
-        libraries = HooksManager::getLibraryNames();
+        std::vector<std::string> libraries = HooksManager::getLibraryNames();
         EXPECT_TRUE(libraries.empty());
     }
 }
 
 // Verify parsing fails with one library that will fail validation.
 TEST_F(Dhcp6ParserTest, InvalidLibrary) {
-    // Ensure that no libraries are loaded at the start of the test.
-    std::vector<std::string> libraries = HooksManager::getLibraryNames();
-    ASSERT_TRUE(libraries.empty());
-
     // Parse a configuration containing a failing library.
     string config = buildHooksLibrariesConfig(NOT_PRESENT_LIBRARY);
 
@@ -2017,10 +2021,6 @@ TEST_F(Dhcp6ParserTest, InvalidLibrary) {
 
 // Verify the configuration of hooks libraries with two being specified.
 TEST_F(Dhcp6ParserTest, LibrariesSpecified) {
-    // Ensure that no libraries are loaded at the start of the test.
-    std::vector<std::string> libraries = HooksManager::getLibraryNames();
-    ASSERT_TRUE(libraries.empty());
-
     // Marker files should not be present.
     EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
@@ -2033,10 +2033,10 @@ TEST_F(Dhcp6ParserTest, LibrariesSpecified) {
 
     // Expect two libraries to be loaded in the correct order (load marker file
     // is present, no unload marker file).
-     libraries = HooksManager::getLibraryNames();
-     ASSERT_EQ(2, libraries.size());
-     EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
-     EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+    std::vector<std::string> libraries = HooksManager::getLibraryNames();
+    ASSERT_EQ(2, libraries.size());
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
 
     // Unload the libraries.  The load file should not have changed, but
     // the unload one should indicate the unload() functions have been run.
