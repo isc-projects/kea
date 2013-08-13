@@ -1,3 +1,5 @@
+if BUILD_EXPERIMENTAL_RESOLVER
+# Build resolver only with --enable-experimental-resolver
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
@@ -47,4 +49,4 @@ if USE_CLANGPP
 libb10_resolve_la_CXXFLAGS += -Wno-error
 endif
 libb10_resolve_la_CPPFLAGS = $(AM_CPPFLAGS)
-
+endif
