@@ -356,6 +356,16 @@ private:
         }
     }
 
+    /// \brief Returns if the node color is black
+    bool isBlack() const {
+        return (getColor() == BLACK);
+    }
+
+    /// \brief Returns if the node color is red
+    bool isRed() const {
+        return (!isBlack());
+    }
+
     /// \brief Sets the color of this node
     void setColor(const DomainTreeNodeColor color) {
         if (color == RED) {
@@ -435,6 +445,21 @@ public:
     /// This method never throws an exception.
     const DomainTreeNode<T>* predecessor() const;
 
+    /// \brief returns the node distance from the root of its subtree
+    size_t getDistance() const {
+        size_t nodes = 1;
+        for (const DomainTreeNode<T>* node = this;
+             node != NULL;
+             node = node->getParent()) {
+            if (node->isSubTreeRoot()) {
+                break;
+            }
+            ++nodes;
+        }
+
+        return (nodes);
+    }
+
 private:
     /// \brief private shared implementation of successor and predecessor
     ///
@@ -489,6 +514,41 @@ private:
     const DomainTreeNode<T>* getRight() const {
         return (right_.get());
     }
+
+    /// \brief Access grandparent node as bare pointer.
+    ///
+    /// The grandparent node is the parent's parent.
+    ///
+    /// \return the grandparent node if one exists, NULL otherwise.
+    DomainTreeNode<T>* getGrandParent() {
+        DomainTreeNode<T>* parent = getParent();
+        if (parent != NULL) {
+            return (parent->getParent());
+        } else {
+            // If there's no parent, there's no grandparent.
+            return (NULL);
+        }
+    }
+
+    /// \brief Access uncle node as bare pointer.
+    ///
+    /// An uncle node is defined as the parent node's sibling. It exists
+    /// at the same level as the parent.
+    ///
+    /// \return the uncle node if one exists, NULL otherwise.
+    DomainTreeNode<T>* getUncle() {
+        DomainTreeNode<T>* grandparent = getGrandParent();
+        if (grandparent == NULL) {
+            // If there's no grandparent, there's no uncle.
+            return (NULL);
+        }
+        if (getParent() == grandparent->getLeft()) {
+            return (grandparent->getRight());
+        } else {
+            return (grandparent->getLeft());
+        }
+    }
+
     //@}
 
     /// \brief The subdomain tree.
@@ -1814,11 +1874,13 @@ DomainTree<T>::insert(util::MemorySegment& mem_sgmt,
     } else if (order < 0) {
         node->setSubTreeRoot(false);
         parent->left_ = node;
+        insertRebalance(current_root, node);
     } else {
         node->setSubTreeRoot(false);
         parent->right_ = node;
+        insertRebalance(current_root, node);
     }
-    insertRebalance(current_root, node);
+
     if (new_node != NULL) {
         *new_node = node;
     }
@@ -1894,61 +1956,143 @@ DomainTree<T>::nodeFission(util::MemorySegment& mem_sgmt,
 }
 
 
+/// \brief Fix Red-Black tree properties after an ordinary BST
+/// insertion.
+///
+/// After a normal binary search tree insertion, the Red-Black tree
+/// properties may be violated. This method fixes these properties by
+/// doing tree rotations and recoloring nodes in the tree appropriately.
+///
+/// \param subtree_root The root of the current sub-tree where the node
+/// is being inserted.
+/// \param node The node which was inserted by ordinary BST insertion.
 template <typename T>
 void
 DomainTree<T>::insertRebalance
-    (typename DomainTreeNode<T>::DomainTreeNodePtr* root,
+    (typename DomainTreeNode<T>::DomainTreeNodePtr* subtree_root,
      DomainTreeNode<T>* node)
 {
-    DomainTreeNode<T>* uncle;
-    DomainTreeNode<T>* parent;
-    while (node != (*root).get() &&
-           ((parent = node->getParent())->getColor()) ==
-           DomainTreeNode<T>::RED) {
-        // Here, node->parent_ is not NULL and it is also red, so
-        // node->parent_->parent_ is also not NULL.
-        if (parent == parent->getParent()->getLeft()) {
-            uncle = parent->getParent()->getRight();
+    // The node enters this method colored RED. We assume in our
+    // red-black implementation that NULL values in left and right
+    // children are BLACK.
+    //
+    // Case 1. If node is at the subtree root, we don't need to change
+    // its position in the tree. We re-color it BLACK further below
+    // (right before we return).
+    while (node != (*subtree_root).get()) {
+        // Case 2. If the node is not subtree root, but its parent is
+        // colored BLACK, then we're done. This is because the new node
+        // introduces a RED node in the path through it (from its
+        // subtree root to its children colored BLACK) but doesn't
+        // change the red-black properties.
+        DomainTreeNode<T>* parent = node->getParent();
+        if (parent->isBlack()) {
+            break;
+        }
 
-            if (uncle != NULL && uncle->getColor() ==
-                DomainTreeNode<T>::RED) {
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                uncle->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
-                node = parent->getParent();
-            } else {
-                if (node == parent->getRight()) {
-                    node = parent;
-                    leftRotate(root, node);
-                    parent = node->getParent();
-                }
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
-                rightRotate(root, parent->getParent());
-            }
+        DomainTreeNode<T>* uncle = node->getUncle();
+        DomainTreeNode<T>* grandparent = node->getGrandParent();
+
+        if ((uncle != NULL) && uncle->isRed()) {
+            // Case 3. Here, the node's parent is colored RED and the
+            // uncle node is also RED. In this case, the grandparent
+            // must be BLACK (due to existing red-black state).  We set
+            // both the parent and uncle nodes to BLACK then, change the
+            // grandparent to RED, and iterate the while loop with
+            // node = grandparent. This is the only case that causes
+            // insertion to have a max insertion time of log(n).
+            parent->setColor(DomainTreeNode<T>::BLACK);
+            uncle->setColor(DomainTreeNode<T>::BLACK);
+            grandparent->setColor(DomainTreeNode<T>::RED);
+            node = grandparent;
         } else {
-            uncle = parent->getParent()->getLeft();
+            // Case 4. Here, the node and node's parent are colored RED,
+            // and the uncle node is BLACK. Only in this case, tree
+            // rotations are necessary.
 
-            if (uncle != NULL && uncle->getColor() ==
-                DomainTreeNode<T>::RED) {
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                uncle->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
-                node = parent->getParent();
-            } else {
-                if (node == parent->getLeft()) {
-                    node = parent;
-                    rightRotate(root, node);
-                    parent = node->getParent();
-                }
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
-                leftRotate(root, parent->getParent());
+            /* First we check if we need to convert to a canonical form:
+             *
+             * (a) If the node is the right-child of its parent, and the
+             * node's parent is the left-child of the node's
+             * grandparent, rotate left about the parent so that the old
+             * 'node' becomes the new parent, and the old parent becomes
+             * the new 'node'.
+             *
+             *       G(B)                   G(B)
+             *      /   \                  /   \
+             *    P(R)  U(B)     =>     P*(R)  U(B)
+             *       \                  /
+             *       N(R)             N*(R)
+             *
+             *                    (P* is old N, N* is old P)
+             *
+             * (b) If the node is the left-child of its parent, and the
+             * node's parent is the right-child of the node's
+             * grandparent, rotate right about the parent so that the
+             * old 'node' becomes the new parent, and the old parent
+             * becomes the new 'node'.
+             *
+             *      G(B)                   G(B)
+             *     /   \                  /   \
+             *   U(B)  P(R)     =>     U(B)  P*(R)
+             *         /                        \
+             *       N(R)                      N*(R)
+             *
+             *                    (P* is old N, N* is old P)
+             */
+            if ((node == parent->getRight()) &&
+                (parent == grandparent->getLeft())) {
+                node = parent;
+                leftRotate(subtree_root, parent);
+            } else if ((node == parent->getLeft()) &&
+                       (parent == grandparent->getRight())) {
+                node = parent;
+                rightRotate(subtree_root, parent);
             }
+
+            // Also adjust the parent variable (node is already adjusted
+            // above). The grandparent variable need not be adjusted.
+            parent = node->getParent();
+
+            /* Here, we're in a canonical form where the uncle node is
+             * BLACK and both the node and its parent are together
+             * either left-children or right-children of their
+             * corresponding parents.
+             *
+             *       G(B)        or       G(B)
+             *      /   \                /   \
+             *    P(R)  U(B)           U(B)  P(R)
+             *   /                              \
+             * N(R)                             N(R)
+             *
+             * We rotate around the grandparent, right or left,
+             * depending on the orientation above, color the old
+             * grandparent RED (it used to be BLACK) and color the
+             * parent BLACK (it used to be RED). This restores the
+             * red-black property that the number of BLACK nodes from
+             * subtree root to the leaves (the NULL children which are
+             * assumed BLACK) are equal, and that every RED node has a
+             * BLACK parent.
+             */
+            parent->setColor(DomainTreeNode<T>::BLACK);
+            grandparent->setColor(DomainTreeNode<T>::RED);
+
+            if (node == parent->getLeft()) {
+                rightRotate(subtree_root, grandparent);
+            } else {
+                leftRotate(subtree_root, grandparent);
+            }
+
+            // In this case, the tree is ready now and we explicitly
+            // break out of the loop here. Even if we continue the loop,
+            // it will exit the loop in case 2 above, but that's not so
+            // obvious.
+            break;
         }
     }
 
-    (*root)->setColor(DomainTreeNode<T>::BLACK);
+    // Color sub-tree roots black.
+    (*subtree_root)->setColor(DomainTreeNode<T>::BLACK);
 }
 
 
@@ -2043,7 +2187,7 @@ DomainTree<T>::dumpTreeHelper(std::ostream& os,
 
     indent(os, depth);
     os << node->getLabels() << " ("
-       << ((node->getColor() == DomainTreeNode<T>::BLACK) ? "black" : "red")
+       << (node->isBlack() ? "black" : "red")
        << ")";
     if (node->isEmpty()) {
         os << " [invisible]";
@@ -2107,7 +2251,7 @@ DomainTree<T>::dumpDotHelper(std::ostream& os,
     }
     os << "\"] [";
 
-    if (node->getColor() == DomainTreeNode<T>::RED) {
+    if (node->isRed()) {
         os << "color=red";
     } else {
         os << "color=black";

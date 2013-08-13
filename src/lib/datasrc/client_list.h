@@ -385,7 +385,8 @@ public:
     /// \param datasrc_name The name of the data source whose segment to reset
     /// \param mode The open mode for the new memory segment
     /// \param config_params The configuration for the new memory segment.
-    void resetMemorySegment
+    /// \return If the data source was found and reset.
+    bool resetMemorySegment
         (const std::string& datasrc_name,
          memory::ZoneTableSegment::MemorySegmentOpenMode mode,
          isc::data::ConstElementPtr config_params);
@@ -453,8 +454,6 @@ public:
                             bool want_finder = true) const;
 
     /// \brief This holds one data source client and corresponding information.
-    ///
-    /// \todo The content yet to be defined.
     struct DataSourceInfo {
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
@@ -526,7 +525,7 @@ public:
     /// This may throw standard exceptions, such as std::bad_alloc. Otherwise,
     /// it is exception free.
     std::vector<DataSourceStatus> getStatus() const;
-public:
+
     /// \brief Access to the data source clients.
     ///
     /// It can be used to examine the loaded list of data sources clients

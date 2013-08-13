@@ -137,9 +137,24 @@ class TestMemmgr(unittest.TestCase):
         self.assertEqual(1, answer[0])
         self.assertIsNotNone(re.search('not a directory', answer[1]))
 
-        # Bad update: directory exists but is not readable.
-        os.mkdir(self.__test_mapped_file_dir, 0o500) # drop writable bit
+    @unittest.skipIf(os.getuid() == 0,
+                     'test cannot be run as root user')
+    def test_configure_bad_permissions(self):
+        self.__mgr._setup_ccsession()
+
+        # Pretend specified directories exist and writable
+        os.path.isdir = lambda x: True
+        os.access = lambda x, y: True
+
+        # Initial configuration.
+        self.assertEqual((0, None),
+                         parse_answer(self.__mgr._config_handler({})))
+
+        os.path.isdir = self.__orig_isdir
         os.access = self.__orig_os_access
+
+        # Bad update: directory exists but is not writable.
+        os.mkdir(self.__test_mapped_file_dir, 0o500) # drop writable bit
         user_cfg = {'mapped_file_dir': self.__test_mapped_file_dir}
         answer = parse_answer(self.__mgr._config_handler(user_cfg))
         self.assertEqual(1, answer[0])

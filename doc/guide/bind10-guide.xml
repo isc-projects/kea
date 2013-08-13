@@ -427,7 +427,7 @@ var/
         <listitem>
           <para>Go into the source and run configure:
             <screen>$ <userinput>cd bind10-<replaceable>VERSION</replaceable></userinput>
-  $ <userinput>./configure</userinput></screen>
+$ <userinput>./configure</userinput></screen>
           </para>
         </listitem>
 
@@ -438,21 +438,29 @@ var/
         </listitem>
 
         <listitem>
-          <para>Install it as root (to default /usr/local):
+          <para>Install it as root (by default to prefix
+          <filename>/usr/local/</filename>):
             <screen>$ <userinput>make install</userinput></screen>
           </para>
         </listitem>
 
         <listitem>
+          <para>Change directory to the install prefix (by default
+          <filename>/usr/local/</filename>):
+            <screen>$ <userinput>cd /usr/local/</userinput></screen>
+          </para>
+        </listitem>
+
+        <listitem>
           <para>Create a user for yourself:
-            <screen>$ <userinput>cd /usr/local/etc/bind10/</userinput></screen>
-            <screen>$ <userinput>/usr/local/sbin/b10-cmdctl-usermgr</userinput></screen>
+            <screen>$ <userinput>sbin/b10-cmdctl-usermgr add root</userinput></screen>
+	  and enter a newly chosen password when prompted.
           </para>
         </listitem>
 
         <listitem>
           <para>Start the server (as root):
-            <screen>$ <userinput>/usr/local/sbin/bind10</userinput></screen>
+            <screen>$ <userinput>sbin/bind10</userinput></screen>
           </para>
         </listitem>
 
@@ -461,7 +469,7 @@ var/
 	    configuration.  In another console, enable the authoritative
 	    DNS service (by using the <command>bindctl</command> utility
 	    to configure the <command>b10-auth</command> component to
-	    run): <screen>$ <userinput>bindctl</userinput></screen>
+	    run): <screen>$ <userinput>bin/bindctl</userinput></screen>
 	    (Login with the username and password you used above to create a user.)
             <screen>
 &gt; <userinput>config add Init/components b10-auth</userinput>
@@ -481,7 +489,7 @@ var/
 
         <listitem>
           <para>Load desired zone file(s), for example:
-            <screen>$ <userinput>b10-loadzone <replaceable>-c '{"database_file": "/usr/local/var/bind10/zone.sqlite3"}'</replaceable> <replaceable>your.zone.example.org</replaceable> <replaceable>your.zone.file</replaceable></userinput></screen>
+            <screen>$ <userinput>bin/b10-loadzone <replaceable>-c '{"database_file": "/usr/local/var/bind10/zone.sqlite3"}'</replaceable> <replaceable>your.zone.example.org</replaceable> <replaceable>your.zone.file</replaceable></userinput></screen>
           </para>
 	  (If you use the sqlite3 data source with the default DB
 	  file, you can omit the -c option).
@@ -2601,21 +2609,26 @@ can use various data source backends.
 &gt; <userinput>config set data_sources/classes/IN[1]/params { "example.org": "/path/to/example.org", "example.com": "/path/to/example.com" }</userinput>
 &gt; <userinput>config commit</userinput></screen>
 
+          Unfortunately, due to current technical limitations, the
+          params must be set as one JSON blob. To reload a zone, use the
+          same <command>Auth loadzone</command> command as above.
+	</para>
+
+	<para>
           Initially, a map value has to be set, but this value may be an
-          empty map. After that, key/value pairs can be added with 'config
-          add' and keys can be removed with 'config remove'. The initial
-          value may be an empty map, but it has to be set before zones are
-          added or removed.
+          empty map. After that, key/value pairs can be added with
+          <command>config add</command> and keys can be removed with
+          <command>config remove</command>. The initial value may be an
+          empty map, but it has to be set before zones are added or
+          removed.
 
           <screen>
 &gt; <userinput>config set data_sources/classes/IN[1]/params {}</userinput>
 &gt; <userinput>config add data_sources/classes/IN[1]/params another.example.org /path/to/another.example.org</userinput>
 &gt; <userinput>config add data_sources/classes/IN[1]/params another.example.com /path/to/another.example.com</userinput>
 &gt; <userinput>config remove data_sources/classes/IN[1]/params another.example.org</userinput>
-          </screen>
+&gt; <userinput>config commit</userinput></screen>
 
-          <command>bindctl</command>. To reload a zone, you the same command
-          as above.
         </para>
       </section>
 
@@ -2633,6 +2646,50 @@ can use various data source backends.
         good.
       </para>
       </note>
+
+      <section id='datasrc-static'>
+        <title>Adding a static data source</title>
+
+	<para>
+	  BIND 10 includes a zone file named
+	  <filename>static.zone</filename> in the CH (Chaos) class for
+	  providing information about the server via the AUTHORS.BIND
+	  and VERSION.BIND TXT records. By default, this BIND zone is
+	  configured and its records are served.
+	</para>
+
+        <para>
+          If you have removed this zone from the configuration (e.g., by
+          using the commands in the previous section to disable the
+          "built-in data source"), here is how you can add it back to
+          serve the zones in the <filename>static.zone</filename> file.
+        </para>
+
+	<para>First, add the CH class if it doesn't exist:
+
+          <screen>&gt; <userinput>config add data_sources/classes CH</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+        Then, add a data source of type <emphasis>MasterFiles</emphasis>
+        in the CH class to serve the zones in
+        <filename>static.zone</filename>:
+
+          <screen>&gt; <userinput>config add data_sources/classes/CH</userinput>
+&gt; <userinput>config set data_sources/classes/CH[0]/type MasterFiles</userinput>
+&gt; <userinput>config set data_sources/classes/CH[0]/cache-enable true</userinput>
+&gt; <userinput>config set data_sources/classes/CH[0]/params {"BIND": "/usr/local/bind10/share/bind10/static.zone"}</userinput>
+&gt; <userinput>config commit</userinput></screen>
+
+        Then, lookup the static data from
+        <filename>static.zone</filename> to test it (assuming your
+        authoritative server is running on <command>localhost</command>):
+
+          <screen>&gt; <userinput>dig @localhost -c CH -t TXT version.bind</userinput>
+&gt; <userinput>dig @localhost -c CH -t TXT authors.bind</userinput></screen>
+
+	</para>
+
+      </section>
 
     </section>
 
@@ -3599,7 +3656,7 @@ $</screen>
         will be available. It will look similar to this:
 <screen>
 &gt; <userinput>config show Dhcp4</userinput>
-Dhcp4/interface/	list	(default)
+Dhcp4/interfaces/	list	(default)
 Dhcp4/renew-timer	1000	integer	(default)
 Dhcp4/rebind-timer	2000	integer	(default)
 Dhcp4/valid-lifetime	4000	integer	(default)
@@ -3684,6 +3741,60 @@ Dhcp4/subnet4	[]	list	(default)
       <para>The password is echoed when entered and is stored in clear text in the BIND 10 configuration
       database.  Improved password security will be added in a future version of BIND 10 DHCP</para>
       </note>
+      </section>
+
+      <section id="dhcp4-interface-selection">
+      <title>Interface selection</title>
+      <para>
+        When DHCPv4 server starts up, by default it will listen to the DHCP
+        traffic and respond to it on all interfaces detected during startup.
+        However, in many cases it is desired to configure the server to listen and
+        respond on selected interfaces only. The sample commands in this section
+        show how to make interface selection using bindctl.
+      </para>
+      <para>
+        The default configuration can be presented with the following command:
+        <screen>
+&gt; <userinput>config show Dhcp4/interfaces</userinput>
+<userinput>Dhcp4/interfaces[0] "*" string</userinput></screen>
+        An asterisk sign plays a role of the wildcard and means "listen on all interfaces".
+      </para>
+      <para>
+        In order to override the default configuration, the existing entry can be replaced
+        with the actual interface name:
+        <screen>
+&gt; <userinput>config set Dhcp4/interfaces[0] eth1</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Other interface names can be added on one-by-one basis:
+        <screen>
+&gt; <userinput>config add Dhcp4/interfaces eth2</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Configuration will now contain two interfaces which can be presented as follows:
+        <screen>
+&gt; <userinput>config show Dhcp4/interfaces</userinput>
+<userinput>Dhcp4/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp4/interfaces[1]	"eth2"	string</userinput></screen>
+        When configuration gets committed, the server will start to listen on
+        eth1 and eth2 interfaces only.
+      </para>
+      <para>
+        It is possible to use wildcard interface name (asterisk) concurrently with explicit
+        interface names:
+        <screen>
+&gt; <userinput>config add Dhcp4/interfaces *</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        This will result in the following configuration:
+        <screen>
+&gt; <userinput>config show Dhcp4/interfaces</userinput>
+<userinput>Dhcp4/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp4/interfaces[1]	"eth2"	string</userinput>
+<userinput>Dhcp4/interfaces[2]	"*"	string</userinput></screen>
+        The presence of the wildcard name implies that server will listen on all interfaces.
+        In order to fall back to the previous configuration when server listens on eth1 and eth2:
+        <screen>
+&gt; <userinput>config remove Dhcp4/interfaces[2]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
       </section>
 
       <section id="dhcp4-address-config">
@@ -3830,7 +3941,10 @@ Dhcp4/subnet4	[]	list	(default)
       </note>
 
       <para>
-        Below is a list of currently supported standard DHCPv4 options. The "Name" and "Code"
+        The currently supported standard DHCPv4 options are
+        listed in <xref linkend="dhcp4-std-options-list"/>
+        and <xref linkend="dhcp4-std-options-list-part2"/>.
+        The "Name" and "Code"
         are the values that should be used as a name in the option-data
         structures. "Type" designates the format of the data: the meanings of
         the various types is given in <xref linkend="dhcp-types"/>.
@@ -3844,115 +3958,155 @@ Dhcp4/subnet4	[]	list	(default)
       <!-- @todo: describe record types -->
 
       <para>
-        <table border="1" cellpadding="5%" id="dhcp4-std-options-list">
-          <caption>List of standard DHCPv4 options</caption>
+        <table frame="all" id="dhcp4-std-options-list">
+          <title>List of standard DHCPv4 options</title>
+          <tgroup cols='4'>
+          <colspec colname='name'/>
+          <colspec colname='code'/>
+          <colspec colname='type'/>
+          <colspec colname='array'/>
           <thead>
-            <tr><th>Name</th><th>Code</th><th>Type</th><th>Array?</th></tr>
+            <row>
+              <entry>Name</entry>
+              <entry>Code</entry>
+              <entry>Type</entry>
+              <entry>Array?</entry>
+            </row>
           </thead>
           <tbody>
-<tr><td>subnet-mask</td><td>1</td><td>ipv4-address</td><td>false</td></tr>
-<tr><td>time-offset</td><td>2</td><td>uint32</td><td>false</td></tr>
-<tr><td>routers</td><td>3</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>time-servers</td><td>4</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>name-servers</td><td>5</td><td>ipv4-address</td><td>false</td></tr>
-<tr><td>domain-name-servers</td><td>6</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>log-servers</td><td>7</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>cookie-servers</td><td>8</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>lpr-servers</td><td>9</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>impress-servers</td><td>10</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>resource-location-servers</td><td>11</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>host-name</td><td>12</td><td>string</td><td>false</td></tr>
-<tr><td>boot-size</td><td>13</td><td>uint16</td><td>false</td></tr>
-<tr><td>merit-dump</td><td>14</td><td>string</td><td>false</td></tr>
-<tr><td>domain-name</td><td>15</td><td>fqdn</td><td>false</td></tr>
-<tr><td>swap-server</td><td>16</td><td>ipv4-address</td><td>false</td></tr>
-<tr><td>root-path</td><td>17</td><td>string</td><td>false</td></tr>
-<tr><td>extensions-path</td><td>18</td><td>string</td><td>false</td></tr>
-<tr><td>ip-forwarding</td><td>19</td><td>boolean</td><td>false</td></tr>
-<tr><td>non-local-source-routing</td><td>20</td><td>boolean</td><td>false</td></tr>
-<tr><td>policy-filter</td><td>21</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>max-dgram-reassembly</td><td>22</td><td>uint16</td><td>false</td></tr>
-<tr><td>default-ip-ttl</td><td>23</td><td>uint8</td><td>false</td></tr>
-<tr><td>path-mtu-aging-timeout</td><td>24</td><td>uint32</td><td>false</td></tr>
-<tr><td>path-mtu-plateau-table</td><td>25</td><td>uint16</td><td>true</td></tr>
-<tr><td>interface-mtu</td><td>26</td><td>uint16</td><td>false</td></tr>
-<tr><td>all-subnets-local</td><td>27</td><td>boolean</td><td>false</td></tr>
-<tr><td>broadcast-address</td><td>28</td><td>ipv4-address</td><td>false</td></tr>
-<tr><td>perform-mask-discovery</td><td>29</td><td>boolean</td><td>false</td></tr>
-<tr><td>mask-supplier</td><td>30</td><td>boolean</td><td>false</td></tr>
-<tr><td>router-discovery</td><td>31</td><td>boolean</td><td>false</td></tr>
-<tr><td>router-solicitation-address</td><td>32</td><td>ipv4-address</td><td>false</td></tr>
-<tr><td>static-routes</td><td>33</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>trailer-encapsulation</td><td>34</td><td>boolean</td><td>false</td></tr>
-<tr><td>arp-cache-timeout</td><td>35</td><td>uint32</td><td>false</td></tr>
-<tr><td>ieee802-3-encapsulation</td><td>36</td><td>boolean</td><td>false</td></tr>
-<tr><td>default-tcp-ttl</td><td>37</td><td>uint8</td><td>false</td></tr>
-<tr><td>tcp-keepalive-internal</td><td>38</td><td>uint32</td><td>false</td></tr>
-<tr><td>tcp-keepalive-garbage</td><td>39</td><td>boolean</td><td>false</td></tr>
-<tr><td>nis-domain</td><td>40</td><td>string</td><td>false</td></tr>
-<tr><td>nis-servers</td><td>41</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>ntp-servers</td><td>42</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>vendor-encapsulated-options</td><td>43</td><td>empty</td><td>false</td></tr>
-<tr><td>netbios-name-servers</td><td>44</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>netbios-dd-server</td><td>45</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>netbios-node-type</td><td>46</td><td>uint8</td><td>false</td></tr>
-<tr><td>netbios-scope</td><td>47</td><td>string</td><td>false</td></tr>
-<tr><td>font-servers</td><td>48</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>x-display-manager</td><td>49</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>dhcp-requested-address</td><td>50</td><td>ipv4-address</td><td>false</td></tr>
-<!-- Lease time should not be configured by a user.
-<tr><td>dhcp-lease-time</td><td>51</td><td>uint32</td><td>false</td></tr>
--->
-<tr><td>dhcp-option-overload</td><td>52</td><td>uint8</td><td>false</td></tr>
-<!-- Message Type, Server Identifier and Parameter Request List should not be configured by a user.
-<tr><td>dhcp-message-type</td><td>53</td><td>uint8</td><td>false</td></tr>
-<tr><td>dhcp-server-identifier</td><td>54</td><td>ipv4-address</td><td>false</td></tr>
-<tr><td>dhcp-parameter-request-list</td><td>55</td><td>uint8</td><td>true</td></tr>
--->
-<tr><td>dhcp-message</td><td>56</td><td>string</td><td>false</td></tr>
-<tr><td>dhcp-max-message-size</td><td>57</td><td>uint16</td><td>false</td></tr>
-<!-- Renewal and rebinding time should not be configured by a user.
-<tr><td>dhcp-renewal-time</td><td>58</td><td>uint32</td><td>false</td></tr>
-<tr><td>dhcp-rebinding-time</td><td>59</td><td>uint32</td><td>false</td></tr>
--->
-<tr><td>vendor-class-identifier</td><td>60</td><td>binary</td><td>false</td></tr>
-<!-- Client identifier should not be configured by a user.
-<tr><td>dhcp-client-identifier</td><td>61</td><td>binary</td><td>false</td></tr>
--->
-<tr><td>nwip-domain-name</td><td>62</td><td>string</td><td>false</td></tr>
-<tr><td>nwip-suboptions</td><td>63</td><td>binary</td><td>false</td></tr>
-<tr><td>user-class</td><td>77</td><td>binary</td><td>false</td></tr>
-<tr><td>fqdn</td><td>81</td><td>record</td><td>false</td></tr>
-<tr><td>dhcp-agent-options</td><td>82</td><td>empty</td><td>false</td></tr>
-<tr><td>authenticate</td><td>90</td><td>binary</td><td>false</td></tr>
-<tr><td>client-last-transaction-time</td><td>91</td><td>uint32</td><td>false</td></tr>
-<tr><td>associated-ip</td><td>92</td><td>ipv4-address</td><td>true</td></tr>
-<tr><td>subnet-selection</td><td>118</td><td>ipv4-address</td><td>false</td></tr>
-<tr><td>domain-search</td><td>119</td><td>binary</td><td>false</td></tr>
-<tr><td>vivco-suboptions</td><td>124</td><td>binary</td><td>false</td></tr>
-<tr><td>vivso-suboptions</td><td>125</td><td>binary</td><td>false</td></tr>
+<row><entry>subnet-mask</entry><entry>1</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>time-offset</entry><entry>2</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>routers</entry><entry>3</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>time-servers</entry><entry>4</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>name-servers</entry><entry>5</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>domain-name-servers</entry><entry>6</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>log-servers</entry><entry>7</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>cookie-servers</entry><entry>8</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>lpr-servers</entry><entry>9</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>impress-servers</entry><entry>10</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>resource-location-servers</entry><entry>11</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>host-name</entry><entry>12</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>boot-size</entry><entry>13</entry><entry>uint16</entry><entry>false</entry></row>
+<row><entry>merit-dump</entry><entry>14</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>domain-name</entry><entry>15</entry><entry>fqdn</entry><entry>false</entry></row>
+<row><entry>swap-server</entry><entry>16</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>root-path</entry><entry>17</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>extensions-path</entry><entry>18</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>ip-forwarding</entry><entry>19</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>non-local-source-routing</entry><entry>20</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>policy-filter</entry><entry>21</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>max-dgram-reassembly</entry><entry>22</entry><entry>uint16</entry><entry>false</entry></row>
+<row><entry>default-ip-ttl</entry><entry>23</entry><entry>uint8</entry><entry>false</entry></row>
+<row><entry>path-mtu-aging-timeout</entry><entry>24</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>path-mtu-plateau-table</entry><entry>25</entry><entry>uint16</entry><entry>true</entry></row>
+<row><entry>interface-mtu</entry><entry>26</entry><entry>uint16</entry><entry>false</entry></row>
+<row><entry>all-subnets-local</entry><entry>27</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>broadcast-address</entry><entry>28</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>perform-mask-discovery</entry><entry>29</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>mask-supplier</entry><entry>30</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>router-discovery</entry><entry>31</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>router-solicitation-address</entry><entry>32</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>static-routes</entry><entry>33</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>trailer-encapsulation</entry><entry>34</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>arp-cache-timeout</entry><entry>35</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>ieee802-3-encapsulation</entry><entry>36</entry><entry>boolean</entry><entry>false</entry></row>
+<row><entry>default-tcp-ttl</entry><entry>37</entry><entry>uint8</entry><entry>false</entry></row>
+<row><entry>tcp-keepalive-internal</entry><entry>38</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>tcp-keepalive-garbage</entry><entry>39</entry><entry>boolean</entry><entry>false</entry></row>
+
           </tbody>
+          </tgroup>
         </table>
       </para>
+
       <para>
-        <table border="1" cellpadding="5%" id="dhcp-types">
-          <caption>List of standard DHCP option types</caption>
+        <table frame="all" id="dhcp4-std-options-list-part2">
+          <title>List of standard DHCPv4 options (continued)</title>
+          <tgroup cols='4'>
+          <colspec colname='name'/>
+          <colspec colname='code'/>
+          <colspec colname='type'/>
+          <colspec colname='array'/>
           <thead>
-            <tr><th>Name</th><th>Meaning</th></tr>
+            <row>
+              <entry>Name</entry>
+              <entry>Code</entry>
+              <entry>Type</entry>
+              <entry>Array?</entry>
+            </row>
           </thead>
           <tbody>
-            <tr><td>binary</td><td>An arbitrary string of bytes, specified as a set of hexadecimal digits.</td></tr>
-            <tr><td>boolean</td><td>Boolean value with allowed values true or false</td></tr>
-            <tr><td>empty</td><td>No value, data is carried in suboptions</td></tr>
-            <tr><td>fqdn</td><td>Fully qualified domain name (e.g. www.example.com)</td></tr>
-            <tr><td>ipv4-address</td><td>IPv4 address in the usual dotted-decimal notation (e.g. 192.0.2.1)</td></tr>
-            <tr><td>ipv6-address</td><td>IPv6 address in the usual colon notation (e.g. 2001:db8::1)</td></tr>
-            <tr><td>record</td><td>Structured data that may comprise any types (except "record" and "empty")</td></tr>
-            <tr><td>string</td><td>Any text</td></tr>
-            <tr><td>uint8</td><td>8 bit unsigned integer with allowed values 0 to 255</td></tr>
-            <tr><td>uint16</td><td>16 bit unsinged integer with allowed values 0 to 65535</td></tr>
-            <tr><td>uint32</td><td>32 bit unsigned integer with allowed values 0 to 4294967295</td></tr>
+
+<row><entry>nis-domain</entry><entry>40</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>nis-servers</entry><entry>41</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>ntp-servers</entry><entry>42</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>vendor-encapsulated-options</entry><entry>43</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>netbios-name-servers</entry><entry>44</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>netbios-dd-server</entry><entry>45</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>netbios-node-type</entry><entry>46</entry><entry>uint8</entry><entry>false</entry></row>
+<row><entry>netbios-scope</entry><entry>47</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>font-servers</entry><entry>48</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>x-display-manager</entry><entry>49</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>dhcp-requested-address</entry><entry>50</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<!-- Lease time should not be configured by a user.
+<row><entry>dhcp-lease-time</entry><entry>51</entry><entry>uint32</entry><entry>false</entry></row>
+-->
+<row><entry>dhcp-option-overload</entry><entry>52</entry><entry>uint8</entry><entry>false</entry></row>
+<!-- Message Type, Server Identifier and Parameter Request List should not be configured by a user.
+<row><entry>dhcp-message-type</entry><entry>53</entry><entry>uint8</entry><entry>false</entry></row>
+<row><entry>dhcp-server-identifier</entry><entry>54</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>dhcp-parameter-request-list</entry><entry>55</entry><entry>uint8</entry><entry>true</entry></row>
+-->
+<row><entry>dhcp-message</entry><entry>56</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>dhcp-max-message-size</entry><entry>57</entry><entry>uint16</entry><entry>false</entry></row>
+<!-- Renewal and rebinding time should not be configured by a user.
+<row><entry>dhcp-renewal-time</entry><entry>58</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>dhcp-rebinding-time</entry><entry>59</entry><entry>uint32</entry><entry>false</entry></row>
+-->
+<row><entry>vendor-class-identifier</entry><entry>60</entry><entry>binary</entry><entry>false</entry></row>
+<!-- Client identifier should not be configured by a user.
+<row><entry>dhcp-client-identifier</entry><entry>61</entry><entry>binary</entry><entry>false</entry></row>
+-->
+<row><entry>nwip-domain-name</entry><entry>62</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>nwip-suboptions</entry><entry>63</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>user-class</entry><entry>77</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>fqdn</entry><entry>81</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>dhcp-agent-options</entry><entry>82</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>authenticate</entry><entry>90</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>client-last-transaction-time</entry><entry>91</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>associated-ip</entry><entry>92</entry><entry>ipv4-address</entry><entry>true</entry></row>
+<row><entry>subnet-selection</entry><entry>118</entry><entry>ipv4-address</entry><entry>false</entry></row>
+<row><entry>domain-search</entry><entry>119</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>vivco-suboptions</entry><entry>124</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>vivso-suboptions</entry><entry>125</entry><entry>binary</entry><entry>false</entry></row>
           </tbody>
+          </tgroup>
+        </table>
+
+      </para>
+      <para>
+        <table frame="all" id="dhcp-types">
+          <title>List of standard DHCP option types</title>
+          <tgroup cols='2'>
+          <colspec colname='name'/>
+          <colspec colname='meaning'/>
+          <thead>
+            <row><entry>Name</entry><entry>Meaning</entry></row>
+          </thead>
+          <tbody>
+            <row><entry>binary</entry><entry>An arbitrary string of bytes, specified as a set of hexadecimal digits.</entry></row>
+            <row><entry>boolean</entry><entry>Boolean value with allowed values true or false</entry></row>
+            <row><entry>empty</entry><entry>No value, data is carried in suboptions</entry></row>
+            <row><entry>fqdn</entry><entry>Fully qualified domain name (e.g. www.example.com)</entry></row>
+            <row><entry>ipv4-address</entry><entry>IPv4 address in the usual dotted-decimal notation (e.g. 192.0.2.1)</entry></row>
+            <row><entry>ipv6-address</entry><entry>IPv6 address in the usual colon notation (e.g. 2001:db8::1)</entry></row>
+            <row><entry>record</entry><entry>Structured data that may comprise any types (except "record" and "empty")</entry></row>
+            <row><entry>string</entry><entry>Any text</entry></row>
+            <row><entry>uint8</entry><entry>8 bit unsigned integer with allowed values 0 to 255</entry></row>
+            <row><entry>uint16</entry><entry>16 bit unsinged integer with allowed values 0 to 65535</entry></row>
+            <row><entry>uint32</entry><entry>32 bit unsigned integer with allowed values 0 to 4294967295</entry></row>
+          </tbody>
+          </tgroup>
        </table>
       </para>
     </section>
@@ -4366,7 +4520,7 @@ Dhcp4/renew-timer	1000	integer	(default)
         will be available. It will look similar to this:
 <screen>
 &gt; <userinput>config show Dhcp6</userinput>
-Dhcp6/interface/	list	(default)
+Dhcp6/interfaces/	list	(default)
 Dhcp6/renew-timer	1000	integer	(default)
 Dhcp6/rebind-timer	2000	integer	(default)
 Dhcp6/preferred-lifetime	3000	integer	(default)
@@ -4459,6 +4613,59 @@ Dhcp6/subnet6/	list
       </note>
       </section>
 
+      <section id="dhcp6-interface-selection">
+      <title>Interface selection</title>
+      <para>
+        When DHCPv6 server starts up, by default it will listen to the DHCP
+        traffic and respond to it on all interfaces detected during startup.
+        However, in many cases it is desired to configure the server to listen and
+        respond on selected interfaces only. The sample commands in this section
+        show how to make interface selection using bindctl.
+      </para>
+      <para>
+        The default configuration can be presented with the following command:
+        <screen>
+&gt; <userinput>config show Dhcp6/interfaces</userinput>
+<userinput>Dhcp6/interfaces[0] "*" string</userinput></screen>
+        An asterisk sign plays a role of the wildcard and means "listen on all interfaces".
+      </para>
+      <para>
+        In order to override the default configuration, the existing entry can be replaced
+        with the actual interface name:
+        <screen>
+&gt; <userinput>config set Dhcp6/interfaces[0] eth1</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Other interface names can be added on one-by-one basis:
+        <screen>
+&gt; <userinput>config add Dhcp6/interfaces eth2</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        Configuration will now contain two interfaces which can be presented as follows:
+        <screen>
+&gt; <userinput>config show Dhcp6/interfaces</userinput>
+<userinput>Dhcp6/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp6/interfaces[1]	"eth2"	string</userinput></screen>
+        When configuration gets committed, the server will start to listen on
+        eth1 and eth2 interfaces only.
+      </para>
+      <para>
+        It is possible to use wildcard interface name (asterisk) concurrently with explicit
+        interface names:
+        <screen>
+&gt; <userinput>config add Dhcp6/interfaces *</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        This will result in the following configuration:
+        <screen>
+&gt; <userinput>config show Dhcp6/interfaces</userinput>
+<userinput>Dhcp6/interfaces[0]	"eth1"	string</userinput>
+<userinput>Dhcp6/interfaces[1]	"eth2"	string</userinput>
+<userinput>Dhcp6/interfaces[2]	"*"	string</userinput></screen>
+        The presence of the wildcard name implies that server will listen on all interfaces.
+        In order to fall back to the previous configuration when server listens on eth1 and eth2:
+        <screen>
+&gt; <userinput>config remove Dhcp6/interfaces[2]</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+    </section>
 
     <section>
       <title>Subnet and Address Pool</title>
@@ -4545,7 +4752,7 @@ Dhcp6/subnet6/	list
       contains information on all global options that the server is
       supposed to configure in all subnets. The second line specifies
       option name. For a complete list of currently supported names,
-      see <xref linkend="dhcp6-std-options-list"/> below.
+      see <xref linkend="dhcp6-std-options-list"/>.
       The third line specifies option code, which must match one of the
       values from that
       list. Line 4 specifies option space, which must always
@@ -4615,7 +4822,9 @@ Dhcp6/subnet6/	list
 
 
     <para>
-      Below is a list of currently supported standard DHCPv6 options. The "Name" and "Code"
+      The currently supported standard DHCPv6 options are
+      listed in <xref linkend="dhcp6-std-options-list"/>.
+      The "Name" and "Code"
       are the values that should be used as a name in the option-data
       structures. "Type" designates the format of the data: the meanings of
       the various types is given in <xref linkend="dhcp-types"/>.
@@ -4630,63 +4839,68 @@ Dhcp6/subnet6/	list
 <!-- @todo: describe record types -->
 
     <para>
-      <table border="1" cellpadding="5%" id="dhcp6-std-options-list">
-        <caption>List of standard DHCPv6 options</caption>
+      <table frame="all" id="dhcp6-std-options-list">
+        <title>List of standard DHCPv6 options</title>
+        <tgroup cols='4'>
+        <colspec colname='name'/>
+        <colspec colname='code'/>
+        <colspec colname='type'/>
+        <colspec colname='array'/>
         <thead>
-          <tr><th>Name</th><th>Code</th><th>Type</th><th>Array?</th></tr>
-          <tr></tr>
+          <row><entry>Name</entry><entry>Code</entry><entry>Type</entry><entry>Array?</entry></row>
         </thead>
         <tbody>
 <!-- Our engine uses those options on its own, admin must not configure them on his own
-<tr><td>clientid</td><td>1</td><td>binary</td><td>false</td></tr>
-<tr><td>serverid</td><td>2</td><td>binary</td><td>false</td></tr>
-<tr><td>ia-na</td><td>3</td><td>record</td><td>false</td></tr>
-<tr><td>ia-ta</td><td>4</td><td>uint32</td><td>false</td></tr>
-<tr><td>iaaddr</td><td>5</td><td>record</td><td>false</td></tr>
-<tr><td>oro</td><td>6</td><td>uint16</td><td>true</td></tr> -->
-<tr><td>preference</td><td>7</td><td>uint8</td><td>false</td></tr>
+<row><entry>clientid</entry><entry>1</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>serverid</entry><entry>2</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>ia-na</entry><entry>3</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>ia-ta</entry><entry>4</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>iaaddr</entry><entry>5</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>oro</entry><entry>6</entry><entry>uint16</entry><entry>true</entry></row> -->
+<row><entry>preference</entry><entry>7</entry><entry>uint8</entry><entry>false</entry></row>
 
 <!-- Our engine uses those options on its own, admin must not configure them on his own
-<tr><td>elapsed-time</td><td>8</td><td>uint16</td><td>false</td></tr>
-<tr><td>relay-msg</td><td>9</td><td>binary</td><td>false</td></tr>
-<tr><td>auth</td><td>11</td><td>binary</td><td>false</td></tr>
-<tr><td>unicast</td><td>12</td><td>ipv6-address</td><td>false</td></tr>
-<tr><td>status-code</td><td>13</td><td>record</td><td>false</td></tr>
-<tr><td>rapid-commit</td><td>14</td><td>empty</td><td>false</td></tr>
-<tr><td>user-class</td><td>15</td><td>binary</td><td>false</td></tr>
-<tr><td>vendor-class</td><td>16</td><td>record</td><td>false</td></tr>
-<tr><td>vendor-opts</td><td>17</td><td>uint32</td><td>false</td></tr>
-<tr><td>interface-id</td><td>18</td><td>binary</td><td>false</td></tr>
-<tr><td>reconf-msg</td><td>19</td><td>uint8</td><td>false</td></tr>
-<tr><td>reconf-accept</td><td>20</td><td>empty</td><td>false</td></tr> -->
-<tr><td>sip-server-dns</td><td>21</td><td>fqdn</td><td>true</td></tr>
-<tr><td>sip-server-addr</td><td>22</td><td>ipv6-address</td><td>true</td></tr>
-<tr><td>dns-servers</td><td>23</td><td>ipv6-address</td><td>true</td></tr>
-<tr><td>domain-search</td><td>24</td><td>fqdn</td><td>true</td></tr>
-<!-- <tr><td>ia-pd</td><td>25</td><td>record</td><td>false</td></tr> -->
-<!-- <tr><td>iaprefix</td><td>26</td><td>record</td><td>false</td></tr> -->
-<tr><td>nis-servers</td><td>27</td><td>ipv6-address</td><td>true</td></tr>
-<tr><td>nisp-servers</td><td>28</td><td>ipv6-address</td><td>true</td></tr>
-<tr><td>nis-domain-name</td><td>29</td><td>fqdn</td><td>true</td></tr>
-<tr><td>nisp-domain-name</td><td>30</td><td>fqdn</td><td>true</td></tr>
-<tr><td>sntp-servers</td><td>31</td><td>ipv6-address</td><td>true</td></tr>
-<tr><td>information-refresh-time</td><td>32</td><td>uint32</td><td>false</td></tr>
-<tr><td>bcmcs-server-dns</td><td>33</td><td>fqdn</td><td>true</td></tr>
-<tr><td>bcmcs-server-addr</td><td>34</td><td>ipv6-address</td><td>true</td></tr>
-<tr><td>geoconf-civic</td><td>36</td><td>record</td><td>false</td></tr>
-<tr><td>remote-id</td><td>37</td><td>record</td><td>false</td></tr>
-<tr><td>subscriber-id</td><td>38</td><td>binary</td><td>false</td></tr>
-<tr><td>client-fqdn</td><td>39</td><td>record</td><td>false</td></tr>
-<tr><td>pana-agent</td><td>40</td><td>ipv6-address</td><td>true</td></tr>
-<tr><td>new-posix-timezone</td><td>41</td><td>string</td><td>false</td></tr>
-<tr><td>new-tzdb-timezone</td><td>42</td><td>string</td><td>false</td></tr>
-<tr><td>ero</td><td>43</td><td>uint16</td><td>true</td></tr>
-<tr><td>lq-query</td><td>44</td><td>record</td><td>false</td></tr>
-<tr><td>client-data</td><td>45</td><td>empty</td><td>false</td></tr>
-<tr><td>clt-time</td><td>46</td><td>uint32</td><td>false</td></tr>
-<tr><td>lq-relay-data</td><td>47</td><td>record</td><td>false</td></tr>
-<tr><td>lq-client-link</td><td>48</td><td>ipv6-address</td><td>true</td></tr>
+<row><entry>elapsed-time</entry><entry>8</entry><entry>uint16</entry><entry>false</entry></row>
+<row><entry>relay-msg</entry><entry>9</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>auth</entry><entry>11</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>unicast</entry><entry>12</entry><entry>ipv6-address</entry><entry>false</entry></row>
+<row><entry>status-code</entry><entry>13</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>rapid-commit</entry><entry>14</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>user-class</entry><entry>15</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>vendor-class</entry><entry>16</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>vendor-opts</entry><entry>17</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>interface-id</entry><entry>18</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>reconf-msg</entry><entry>19</entry><entry>uint8</entry><entry>false</entry></row>
+<row><entry>reconf-accept</entry><entry>20</entry><entry>empty</entry><entry>false</entry></row> -->
+<row><entry>sip-server-dns</entry><entry>21</entry><entry>fqdn</entry><entry>true</entry></row>
+<row><entry>sip-server-addr</entry><entry>22</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>dns-servers</entry><entry>23</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>domain-search</entry><entry>24</entry><entry>fqdn</entry><entry>true</entry></row>
+<!-- <row><entry>ia-pd</entry><entry>25</entry><entry>record</entry><entry>false</entry></row> -->
+<!-- <row><entry>iaprefix</entry><entry>26</entry><entry>record</entry><entry>false</entry></row> -->
+<row><entry>nis-servers</entry><entry>27</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>nisp-servers</entry><entry>28</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>nis-domain-name</entry><entry>29</entry><entry>fqdn</entry><entry>true</entry></row>
+<row><entry>nisp-domain-name</entry><entry>30</entry><entry>fqdn</entry><entry>true</entry></row>
+<row><entry>sntp-servers</entry><entry>31</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>information-refresh-time</entry><entry>32</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>bcmcs-server-dns</entry><entry>33</entry><entry>fqdn</entry><entry>true</entry></row>
+<row><entry>bcmcs-server-addr</entry><entry>34</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>geoconf-civic</entry><entry>36</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>remote-id</entry><entry>37</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>subscriber-id</entry><entry>38</entry><entry>binary</entry><entry>false</entry></row>
+<row><entry>client-fqdn</entry><entry>39</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>pana-agent</entry><entry>40</entry><entry>ipv6-address</entry><entry>true</entry></row>
+<row><entry>new-posix-timezone</entry><entry>41</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>new-tzdb-timezone</entry><entry>42</entry><entry>string</entry><entry>false</entry></row>
+<row><entry>ero</entry><entry>43</entry><entry>uint16</entry><entry>true</entry></row>
+<row><entry>lq-query</entry><entry>44</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>client-data</entry><entry>45</entry><entry>empty</entry><entry>false</entry></row>
+<row><entry>clt-time</entry><entry>46</entry><entry>uint32</entry><entry>false</entry></row>
+<row><entry>lq-relay-data</entry><entry>47</entry><entry>record</entry><entry>false</entry></row>
+<row><entry>lq-client-link</entry><entry>48</entry><entry>ipv6-address</entry><entry>true</entry></row>
         </tbody>
+        </tgroup>
       </table>
     </para>
     </section>

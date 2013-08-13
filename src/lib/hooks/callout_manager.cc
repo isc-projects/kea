@@ -29,6 +29,19 @@ using namespace std;
 namespace isc {
 namespace hooks {
 
+// Constructor
+CalloutManager::CalloutManager(int num_libraries)
+    : current_hook_(-1), current_library_(-1),
+      hook_vector_(ServerHooks::getServerHooks().getCount()),
+      library_handle_(this), pre_library_handle_(this, 0),
+      post_library_handle_(this, INT_MAX), num_libraries_(num_libraries)
+{
+    if (num_libraries < 0) {
+        isc_throw(isc::BadValue, "number of libraries passed to the "
+                  "CalloutManager must be >= 0");
+    }
+}
+
 // Check that the index of a library is valid.  It can range from 1 - n
 // (n is the number of libraries), 0 (pre-user library callouts), or INT_MAX
 // (post-user library callouts).  It can also be -1 to indicate an invalid
@@ -44,18 +57,6 @@ CalloutManager::checkLibraryIndex(int library_index) const {
     isc_throw(NoSuchLibrary, "library index " << library_index <<
               " is not valid for the number of loaded libraries (" <<
               num_libraries_ << ")");
-}
-
-// Set the number of libraries handled by the CalloutManager.
-
-void
-CalloutManager::setNumLibraries(int num_libraries) {
-    if (num_libraries < 0) {
-        isc_throw(isc::BadValue, "number of libraries passed to the "
-                  "CalloutManager must be >= 0");
-    }
-
-    num_libraries_ = num_libraries;
 }
 
 // Register a callout for the current library.
@@ -112,12 +113,14 @@ CalloutManager::calloutsPresent(int hook_index) const {
 void
 CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
 
+    // Clear the "skip" flag so we don't carry state from a previous call.
+    // This is done regardless of whether callouts are present to avoid passing
+    // any state from the previous call of callCallouts().
+    callout_handle.setSkip(false);
+
     // Only initialize and iterate if there are callouts present.  This check
     // also catches the case of an invalid index.
     if (calloutsPresent(hook_index)) {
-
-        // Clear the "skip" flag so we don't carry state from a previous call.
-        callout_handle.setSkip(false);
 
         // Set the current hook index.  This is used should a callout wish to
         // determine to what hook it is attached.

@@ -54,11 +54,6 @@ b10_dhcp6_SOURCES += config_parser.cc config_parser.h
 b10_dhcp6_SOURCES += dhcp6_log.cc dhcp6_log.h
 b10_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 
-# Temporarily compile this file here. It will be removed once libdhcp-ddns
-# is implemented which will include this file and other files required
-# by DHCPv6.
-b10_dhcp6_SOURCES += ../d2/ncr_msg.cc ../d2/ncr_msg.h
-
 nodist_b10_dhcp6_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
 
@@ -66,10 +61,12 @@ b10_dhcp6_LDADD  = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 
 b10_dhcp6dir = $(pkgdatadir)
 b10_dhcp6_DATA = dhcp6.spec

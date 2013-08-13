@@ -81,6 +81,7 @@ enum CommandID {
     LOADZONE,     ///< Load a new version of zone into a memory,
                   ///  the argument to the command is a map containing 'class'
                   ///  and 'origin' elements, both should have been validated.
+    SEGMENT_INFO_UPDATE, ///< The memory manager sent an update about segments.
     SHUTDOWN,     ///< Shutdown the builder; no argument
     NUM_COMMANDS
 };
@@ -211,6 +212,24 @@ public:
             } else {
                 return (it->second);
             }
+        }
+        /// \brief Return list of classes that are present.
+        ///
+        /// Get the list of classes for which there's a client list. It is
+        /// returned in form of a vector, copied from the internals. As the
+        /// number of classes in there is expected to be small, it is not
+        /// a performance issue.
+        ///
+        /// \return The list of classes.
+        /// \throw std::bad_alloc for problems allocating the result.
+        std::vector<dns::RRClass> getClasses() const {
+            std::vector<dns::RRClass> result;
+            for (ClientListsMap::const_iterator it =
+                 mgr_.clients_map_->begin(); it != mgr_.clients_map_->end();
+                 ++it) {
+                result.push_back(it->first);
+            }
+            return (result);
         }
     private:
         DataSrcClientsMgrBase& mgr_;
@@ -381,6 +400,36 @@ public:
         sendCommand(datasrc_clientmgr_internal::LOADZONE, args, callback);
     }
 
+    void segmentInfoUpdate(const data::ConstElementPtr& args,
+                           const datasrc_clientmgr_internal::FinishedCallback&
+                           callback =
+                           datasrc_clientmgr_internal::FinishedCallback()) {
+        // Some minimal validation
+        if (!args) {
+            isc_throw(CommandError, "segmentInfoUpdate argument empty");
+        }
+        if (args->getType() != isc::data::Element::map) {
+            isc_throw(CommandError, "segmentInfoUpdate argument not a map");
+        }
+        const char* params[] = {
+            "data-source-name",
+            "data-source-class",
+            "segment-params",
+            NULL
+        };
+        for (const char** param = params; *param; ++param) {
+            if (!args->contains(*param)) {
+                isc_throw(CommandError,
+                          "segmentInfoUpdate argument has no '" << param <<
+                          "' value");
+            }
+        }
+
+
+        sendCommand(datasrc_clientmgr_internal::SEGMENT_INFO_UPDATE, args,
+                    callback);
+    }
+
 private:
     // This is expected to be called at the end of the destructor.  It
     // actually does nothing, but provides a customization point for
@@ -407,7 +456,7 @@ private:
 
     int createFds() {
         int fds[2];
-        int result = socketpair(AF_LOCAL, SOCK_STREAM, 0, fds);
+        int result = socketpair(AF_UNIX, SOCK_STREAM, 0, fds);
         if (result != 0) {
             isc_throw(Unexpected, "Can't create socket pair: " <<
                       strerror(errno));
@@ -577,6 +626,44 @@ private:
         }
     }
 
+    void doSegmentUpdate(const isc::data::ConstElementPtr& arg) {
+        try {
+            const isc::dns::RRClass
+                rrclass(arg->get("data-source-class")->stringValue());
+            const std::string&
+                name(arg->get("data-source-name")->stringValue());
+            const isc::data::ConstElementPtr& segment_params =
+                arg->get("segment-params");
+            typename MutexType::Locker locker(*map_mutex_);
+            const boost::shared_ptr<isc::datasrc::ConfigurableClientList>&
+                list = (**clients_map_)[rrclass];
+            if (!list) {
+                LOG_FATAL(auth_logger,
+                          AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_UNKNOWN_CLASS)
+                    .arg(rrclass);
+                std::terminate();
+            }
+            if (!list->resetMemorySegment(name,
+                    isc::datasrc::memory::ZoneTableSegment::READ_ONLY,
+                    segment_params)) {
+                LOG_FATAL(auth_logger,
+                          AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_NO_DATASRC)
+                    .arg(rrclass).arg(name);
+                std::terminate();
+            }
+        } catch (const isc::dns::InvalidRRClass& irce) {
+            LOG_FATAL(auth_logger,
+                      AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_BAD_CLASS)
+                .arg(arg->get("data-source-class"));
+            std::terminate();
+        } catch (const isc::Exception& e) {
+            LOG_FATAL(auth_logger,
+                      AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_ERROR)
+                .arg(e.what());
+            std::terminate();
+        }
+    }
+
     void doLoadZone(const isc::data::ConstElementPtr& arg);
     boost::shared_ptr<datasrc::memory::ZoneWriter> getZoneWriter(
         datasrc::ConfigurableClientList& client_list,
@@ -676,7 +763,7 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     }
 
     const boost::array<const char*, NUM_COMMANDS> command_desc = {
-        {"NOOP", "RECONFIGURE", "LOADZONE", "SHUTDOWN"}
+        {"NOOP", "RECONFIGURE", "LOADZONE", "SEGMENT_INFO_UPDATE", "SHUTDOWN"}
     };
     LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
               AUTH_DATASRC_CLIENTS_BUILDER_COMMAND).arg(command_desc.at(cid));
@@ -686,6 +773,9 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
         break;
     case LOADZONE:
         doLoadZone(command.params);
+        break;
+    case SEGMENT_INFO_UPDATE:
+        doSegmentUpdate(command.params);
         break;
     case SHUTDOWN:
         return (false);

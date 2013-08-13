@@ -43,6 +43,7 @@
 #include <string>
 #include <sstream>
 #include <cerrno>
+#include <unistd.h>
 
 using isc::data::ConstElementPtr;
 using namespace isc::dns;
@@ -69,6 +70,11 @@ protected:
 
     }
 
+    void TearDown() {
+        // Some tests create this file. Delete it if it exists.
+        unlink(TEST_DATA_BUILDDIR "/test1.zone.image");
+    }
+
     void configureZones();      // used for loadzone related tests
 
     ClientListMapPtr clients_map; // configured clients
@@ -86,7 +92,7 @@ protected:
 private:
     int generateSockets() {
         int pair[2];
-        int result = socketpair(AF_LOCAL, SOCK_STREAM, 0, pair);
+        int result = socketpair(AF_UNIX, SOCK_STREAM, 0, pair);
         assert(result == 0);
         write_end = pair[0];
         read_end = pair[1];
@@ -528,6 +534,13 @@ TEST_F(DataSrcClientsBuilderTest, loadBrokenZone) {
 }
 
 TEST_F(DataSrcClientsBuilderTest, loadUnreadableZone) {
+    // If the test is run as the root user, it will fail as insufficient
+    // permissions will not stop the root user from using a file.
+    if (getuid() == 0) {
+        std::cerr << "Skipping test as it's run as the root user" << std::endl;
+        return;
+    }
+
     configureZones();
 
     // install the zone file as unreadable
@@ -639,6 +652,108 @@ TEST_F(DataSrcClientsBuilderTest,
                                  " \"class\": \"IN\"}"),
                              FinishedCallback())),
                  TestDataSrcClientsBuilder::InternalCommandError);
+}
+
+// Test the SEGMENT_INFO_UPDATE command. This test is little bit
+// indirect. It doesn't seem possible to fake the client list inside
+// easily. So we create a real image to load and load it. Then we check
+// the segment is used.
+TEST_F(DataSrcClientsBuilderTest,
+#ifdef USE_SHARED_MEMORY
+       segmentInfoUpdate
+#else
+       DISABLED_segmentInfoUpdate
+#endif
+      )
+{
+    // First, prepare the file image to be mapped
+    const ConstElementPtr config = Element::fromJSON(
+        "{"
+        "\"IN\": [{"
+        "   \"type\": \"MasterFiles\","
+        "   \"params\": {"
+        "       \"test1.example\": \""
+        TEST_DATA_BUILDDIR "/test1.zone.copied\"},"
+        "   \"cache-enable\": true,"
+        "   \"cache-type\": \"mapped\""
+        "}]}");
+    const ConstElementPtr segment_config = Element::fromJSON(
+        "{"
+        "  \"mapped-file\": \""
+        TEST_DATA_BUILDDIR "/test1.zone.image" "\"}");
+    clients_map = configureDataSource(config);
+    {
+        const boost::shared_ptr<ConfigurableClientList> list =
+            (*clients_map)[RRClass::IN()];
+        list->resetMemorySegment("MasterFiles",
+                                 memory::ZoneTableSegment::CREATE,
+                                 segment_config);
+        const ConfigurableClientList::ZoneWriterPair result =
+            list->getCachedZoneWriter(isc::dns::Name("test1.example"), false,
+                                      "MasterFiles");
+        ASSERT_EQ(ConfigurableClientList::ZONE_SUCCESS, result.first);
+        result.second->load();
+        result.second->install();
+        // not absolutely necessary, but just in case
+        result.second->cleanup();
+    } // Release this list. That will release the file with the image too,
+      // so we can map it read only from somewhere else.
+
+    // Create a new map, with the same configuration, but without the segments
+    // set
+    clients_map = configureDataSource(config);
+    const boost::shared_ptr<ConfigurableClientList> list =
+        (*clients_map)[RRClass::IN()];
+    EXPECT_EQ(SEGMENT_WAITING, list->getStatus()[0].getSegmentState());
+    // Send the command
+    const ElementPtr command_args = Element::fromJSON(
+        "{"
+        "  \"data-source-name\": \"MasterFiles\","
+        "  \"data-source-class\": \"IN\""
+        "}");
+    command_args->set("segment-params", segment_config);
+    builder.handleCommand(Command(SEGMENT_INFO_UPDATE, command_args,
+                                  FinishedCallback()));
+    // The segment is now used.
+    EXPECT_EQ(SEGMENT_INUSE, list->getStatus()[0].getSegmentState());
+
+    // Some invalid inputs (wrong class, different name of data source, etc).
+
+    // Copy the confing and modify
+    const ElementPtr bad_name = Element::fromJSON(command_args->toWire());
+    // Set bad name
+    bad_name->set("data-source-name", Element::create("bad"));
+    EXPECT_DEATH_IF_SUPPORTED({
+        builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_name,
+                                      FinishedCallback()));
+    }, "");
+
+    // Another copy with wrong class
+    const ElementPtr bad_class = Element::fromJSON(command_args->toWire());
+    // Set bad class
+    bad_class->set("data-source-class", Element::create("bad"));
+    // Aborts (we are out of sync somehow).
+    EXPECT_DEATH_IF_SUPPORTED({
+        builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_class,
+                                      FinishedCallback()));
+    }, "");
+
+    // Class CH is valid, but not present.
+    bad_class->set("data-source-class", Element::create("CH"));
+    EXPECT_DEATH_IF_SUPPORTED({
+        builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_class,
+                                      FinishedCallback()));
+    }, "");
+
+    // And break the segment params
+    const ElementPtr bad_params = Element::fromJSON(command_args->toWire());
+    bad_params->set("segment-params",
+                    Element::fromJSON("{\"mapped-file\": \"/bad/file\"}"));
+
+    EXPECT_DEATH_IF_SUPPORTED({
+        builder.handleCommand(Command(SEGMENT_INFO_UPDATE, bad_class,
+                                      FinishedCallback()));
+    }, "");
 }
 
 } // unnamed namespace

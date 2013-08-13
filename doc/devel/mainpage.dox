@@ -36,6 +36,9 @@
  * Regardless of your field of expertise, you are encouraged to visit
  * <a href="http://bind10.isc.org/">BIND10 webpage (http://bind10.isc.org)</a>
  * @section hooksFramework Hooks Framework
+ * - @subpage hooksdgDevelopersGuide
+ * - @subpage dhcpv4Hooks
+ * - @subpage dhcpv6Hooks
  * - @subpage hooksComponentDeveloperGuide
  *
  * @section dnsMaintenanceGuide DNS Maintenance Guide
@@ -48,10 +51,12 @@
  *   - @subpage dhcpv4Session
  *   - @subpage dhcpv4ConfigParser
  *   - @subpage dhcpv4ConfigInherit
+ *   - @subpage dhcpv4Other
  * - @subpage dhcp6
  *   - @subpage dhcpv6Session
  *   - @subpage dhcpv6ConfigParser
  *   - @subpage dhcpv6ConfigInherit
+ *   - @subpage dhcpv6Other
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
@@ -62,6 +67,7 @@
  *   - @subpage allocengine
  * - @subpage dhcpDatabaseBackends
  * - @subpage perfdhcpInternals
+ * - @subpage libdhcp_ddns
  *
  * @section miscellaneousTopics Miscellaneous topics
  * - @subpage LoggingApi

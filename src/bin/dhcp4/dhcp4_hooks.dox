@@ -1,0 +1,138 @@
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+/**
+ @page dhcpv4Hooks The Hooks API for the DHCPv4 Server
+
+ @section dhcpv4HooksIntroduction Introduction
+ BIND10 features an API (the "Hooks" API) that allows user-written code to
+ be integrated into BIND 10 and called at specific points in its processing.
+ An overview of the API and a tutorial for writing such code can be found in
+ the @ref hooksdgDevelopersGuide.  Information for BIND 10 maintainers can be
+ found in the @ref hooksComponentDeveloperGuide.
+
+ This manual is more specialised and is aimed at developers of hook
+ code for the DHCPv4 server. It describes each hook point, what the callouts
+ attached to the hook are able to do, and the arguments passed to the
+ callouts.  Each entry in this manual has the following information:
+
+ - Name of the hook point.
+ - Arguments for the callout.  As well as the argument name and data type, the
+   information includes the direction, which can be one of:
+   - @b in - the server passes values to the callout but ignored any data
+     returned.
+   - @b out - the callout is expected to set this value.
+   - <b>in/out</b> - the server passes a value to the callout and uses whatever
+     value the callout sends back.  Note that the callout may choose not to
+     do any modification, in which case the server will use whatever value
+     it sent to the callout.
+ - Description of the hook. This explains where in the processing the hook
+   is located, the possible actions a callout attached to this hook could take,
+   and a description of the data passed to the callouts.
+ - Skip flag action: the action taken by the server if a callout chooses to set
+    the "skip" flag.
+
+@section dhcpv4HooksHookPoints Hooks in the DHCPv4 Server
+
+The following list is ordered by appearance of specific hook points during
+packet processing. Hook points that are not specific to packet processing
+(e.g. lease expiration) will be added to the end of this list.
+
+ @subsection dhcpv4HooksPkt4Receive pkt4_receive
+
+ - @b Arguments:
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
+
+ - @b Description: this callout is executed when an incoming DHCPv4
+   packet is received and its content is parsed. The sole argument -
+   query4 - contains a pointer to an isc::dhcp::Pkt4 object that contains
+   all information regarding incoming packet, including its source and
+   destination addresses, interface over which it was received, a list
+   of all options present within and relay information.  All fields of
+   the Pkt4 object can be modified at this time, except data_. (data_
+   contains the incoming packet as raw buffer. By the time this hook is
+   reached, that information has already parsed and is available though
+   other fields in the Pkt4 object.  For this reason, it doesn't make
+   sense to modify it.)
+
+ - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
+   drop the packet and start processing the next one.  The reason for the drop
+   will be logged if logging is set to the appropriate debug level.
+
+@subsection dhcpv4HooksSubnet4Select subnet4_select
+
+ - @b Arguments:
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
+   - name: @b subnet4, type: isc::dhcp::Subnet4Ptr, direction: <b>in/out</b>
+   - name: @b subnet4collection, type: const isc::dhcp::Subnet4Collection *, direction: <b>in</b>
+
+ - @b Description: this callout is executed when a subnet is being
+   selected for the incoming packet. All parameters and addresses
+   will be assigned from that subnet. A callout can select a
+   different subnet if it wishes so, the list of all subnets currently
+   configured being provided as 'subnet4collection'. The list itself must
+   not be modified.
+
+ - <b>Skip flag action</b>: If any callout installed on 'subnet4_select'
+   sets the skip flag, the server will not select any subnet. Packet processing
+   will continue, but will be severely limited (i.e. only global options
+   will be assigned).
+
+@subsection dhcpv4HooksLeaseSelect lease4_select
+
+ - @b Arguments:
+   - name: @b subnet4, type: isc::dhcp::Subnet4Ptr, direction: <b>in</b>
+   - name: @b fake_allocation, type: bool, direction: <b>in</b>
+   - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in/out</b>
+
+ - @b Description: this callout is executed after the server engine
+   has selected a lease for client's request but before the lease
+   has been inserted into the database. Any modifications made to the
+   isc::dhcp::Lease4 object will be stored in the lease's record in the
+   database. The callout should make sure that any modifications are
+   sanity checked as the server will use that data as is with no further
+   checking.\n\n The server processes lease requests for DISCOVER and
+   REQUEST in a very similar way. The only major difference is that
+   for DISCOVER the lease is just selected, but not inserted into
+   the database.  It is possible to distinguish between DISCOVER and
+   REQUEST by checking value of the fake_allocation flag: a value of true
+   means that the lease won't be inserted into the database (DISCOVER),
+   a value of false means that it will (REQUEST).
+
+ - <b>Skip flag action</b>: If any callout installed on 'lease4_select'
+   sets the skip flag, the server will not assign any lease. Packet
+   processing will continue, but client will not get an address.
+
+@subsection dhcpv4HooksPkt4Send pkt4_send
+
+ - @b Arguments:
+   - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
+
+ - @b Description: this callout is executed when server's response
+   is about to be send back to the client. The sole argument - response4 -
+   contains a pointer to an isc::dhcp::Pkt4 object that contains the
+   packet, with set source and destination addresses, interface over which
+   it will be send, list of all options and relay information.  All fields
+   of the Pkt4 object can be modified at this time, except bufferOut_.
+   (This is scratch space used for constructing the packet after all
+   pkt4_send callouts are complete, so any changes to that field will
+   be overwritten.)
+
+ - <b>Skip flag action</b>: if any callout sets the skip flag, the server
+   will drop this response packet. However, the original request packet
+   from a client was processed, so server's state was most likely changed
+   (e.g. lease was allocated). Setting this flag merely stops the change
+   being communicated to the client.
+
+*/

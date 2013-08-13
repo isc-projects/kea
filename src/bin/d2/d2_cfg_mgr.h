@@ -105,6 +105,14 @@ typedef boost::shared_ptr<DdnsDomainListMgr> DdnsDomainListMgrPtr;
 /// and retrieving the information on demand.
 class D2CfgMgr : public DCfgMgrBase {
 public:
+    /// @brief Reverse zone suffix added to IPv4 addresses for reverse lookups
+    /// @todo This should be configurable.
+    static const char* IPV4_REV_ZONE_SUFFIX;
+
+    /// @brief Reverse zone suffix added to IPv6 addresses for reverse lookups
+    /// @todo This should be configurable.
+    static const char* IPV6_REV_ZONE_SUFFIX;
+
     /// @brief Constructor
     D2CfgMgr();
 
@@ -119,30 +127,84 @@ public:
     }
 
     /// @brief Matches a given FQDN to a forward domain.
-    /// 
+    ///
     /// This calls the matchDomain method of the forward domain manager to
-    /// match the given FQDN to a forward domain.  
+    /// match the given FQDN to a forward domain.
     ///
     /// @param fqdn is the name for which to look.
     /// @param domain receives the matching domain. Note that it will be reset
     /// upon entry and only set if a match is subsequently found.
     ///
     /// @return returns true if a match is found, false otherwise.
-    /// @throw throws D2CfgError if given an invalid fqdn. 
-    bool matchForward(const std::string& fqdn, DdnsDomainPtr &domain);
+    /// @throw throws D2CfgError if given an invalid fqdn.
+    bool matchForward(const std::string& fqdn, DdnsDomainPtr& domain);
 
-    /// @brief Matches a given FQDN to a reverse domain.
+    /// @brief Matches a given IP address to a reverse domain.
     ///
     /// This calls the matchDomain method of the reverse domain manager to
-    /// match the given FQDN to a forward domain.  
+    /// match the given IPv4 or IPv6 address to a reverse domain.
     ///
-    /// @param fqdn is the name for which to look.
+    /// @param ip_address is the name for which to look.
     /// @param domain receives the matching domain. Note that it will be reset
     /// upon entry and only set if a match is subsequently found.
     ///
     /// @return returns true if a match is found, false otherwise.
-    /// @throw throws D2CfgError if given an invalid fqdn. 
-    bool matchReverse(const std::string& fqdn, DdnsDomainPtr &domain);
+    /// @throw throws D2CfgError if given an invalid fqdn.
+    bool matchReverse(const std::string& ip_address, DdnsDomainPtr& domain);
+
+    /// @brief Generate a reverse order string for the given IP address
+    ///
+    /// This method creates a string containing the given IP address
+    /// contents in reverse order.  This format is used for matching
+    /// against reverse DDNS domains in DHCP_DDNS configuration.
+    /// After reversing the syllables of the address, it appends the
+    /// appropriate suffix.
+    ///
+    /// @param address string containing a valid IPv4 or IPv6 address.
+    ///
+    /// @return a std::string containing the reverse order address.
+    ///
+    /// @throw D2CfgError if given an invalid address.
+    static std::string reverseIpAddress(const std::string& address);
+
+    /// @brief Generate a reverse order string for the given IP address
+    ///
+    /// This method creates a string containing the given IP address
+    /// contents in reverse order.  This format is used for matching
+    /// against reverse DDNS domains in DHCP_DDNS configuration.
+    /// After reversing the syllables of the address, it appends the
+    /// appropriate suffix.
+    ///
+    /// Example:
+    ///   input:  192.168.1.15
+    ///  output:  15.1.168.192.in-addr.arpa.
+    ///
+    /// @param ioaddr is the IPv4 IOaddress to convert
+    ///
+    /// @return a std::string containing the reverse order address.
+    ///
+    /// @throw D2CfgError if not given an IPv4  address.
+    static std::string reverseV4Address(const isc::asiolink::IOAddress& ioaddr);
+
+    /// @brief Generate a reverse order string for the given IP address
+    ///
+    /// This method creates a string containing the given IPv6 address
+    /// contents in reverse order.  This format is used for matching
+    /// against reverse DDNS domains in DHCP_DDNS configuration.
+    /// After reversing the syllables of the address, it appends the
+    /// appropriate suffix.
+    ///
+    /// IPv6 example:
+    /// input:  2001:db8:302:99::
+    /// output:
+    ///0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.9.9.0.0.2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.
+    ///
+    /// @param address string containing a valid IPv6 address.
+    ///
+    /// @return a std::string containing the reverse order address.
+    ///
+    /// @throw D2CfgError if not given an IPv6 address.
+    static std::string reverseV6Address(const isc::asiolink::IOAddress& ioaddr);
 
 protected:
     /// @brief Given an element_id returns an instance of the appropriate

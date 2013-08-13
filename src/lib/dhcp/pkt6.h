@@ -116,8 +116,10 @@ public:
     /// Output buffer will be stored in data_. Length
     /// will be set in data_len_.
     ///
-    /// @return true if packing procedure was successful
-    bool pack();
+    /// @throw BadValue if packet protocol is invalid, InvalidOperation
+    /// if packing fails, or NotImplemented if protocol is TCP (IPv6 over TCP is
+    /// not yet supported).
+    void pack();
 
     /// @brief Dispatch method that handles binary packet parsing.
     ///
@@ -138,11 +140,6 @@ public:
     ///
     /// @return reference to output buffer
     const isc::util::OutputBuffer& getBuffer() const { return (bufferOut_); };
-
-    /// @brief Returns reference to input buffer.
-    ///
-    /// @return reference to input buffer
-    const OptionBuffer& getData() const { return(data_); }
 
     /// @brief Returns protocol of this packet (UDP or TCP).
     ///
@@ -347,9 +344,7 @@ public:
 
     /// collection of options present in this message
     ///
-    /// @todo: Text mentions protected, but this is really public
-    ///
-    /// @warning This protected member is accessed by derived
+    /// @warning This public member is accessed by derived
     /// classes directly. One of such derived classes is
     /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
     /// behavior must be taken into consideration before making
@@ -410,18 +405,30 @@ public:
     /// to be impossible). Therefore public field is considered the best
     /// (or least bad) solution.
     std::vector<RelayInfo> relay_info_;
+
+
+    /// unparsed data (in received packets)
+    ///
+    /// @warning This public member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
+    OptionBuffer data_;
+
 protected:
     /// Builds on wire packet for TCP transmission.
     ///
     /// TODO This function is not implemented yet.
     ///
-    /// @return true, if build was successful
-    bool packTCP();
+    /// @throw NotImplemented, IPv6 over TCP is not yet supported.
+    void packTCP();
 
     /// Builds on wire packet for UDP transmission.
     ///
-    /// @return true, if build was successful
-    bool packUDP();
+    /// @throw InvalidOperation if packing fails
+    void packUDP();
 
     /// @brief Parses on-wire form of TCP DHCPv6 packet.
     ///
@@ -491,16 +498,6 @@ protected:
 
     /// DHCPv6 transaction-id
     uint32_t transid_;
-
-    /// unparsed data (in received packets)
-    ///
-    /// @warning This protected member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    OptionBuffer data_;
 
     /// name of the network interface the packet was received/to be sent over
     std::string iface_;

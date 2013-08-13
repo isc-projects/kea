@@ -14,8 +14,6 @@
 
 #include <config.h>
 
-#include <log/dummylog.h>
-
 #include <util/buffer.h>
 
 #include <asio.hpp>
@@ -49,11 +47,10 @@ namespace asiodns {
 ///
 /// The constructor
 TCPServer::TCPServer(io_service& io_service, int fd, int af,
-                     const SimpleCallback* checkin,
                      const DNSLookup* lookup,
                      const DNSAnswer* answer) :
     io_(io_service), done_(false),
-    checkin_callback_(checkin), lookup_callback_(lookup),
+    lookup_callback_(lookup),
     answer_callback_(answer)
 {
     if (af != AF_INET && af != AF_INET6) {
@@ -204,16 +201,6 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         iosock_.reset(new TCPSocket<DummyIOCallback>(*socket_));
         io_message_.reset(new IOMessage(data_.get(), length, *iosock_,
                                         *peer_));
-
-        // Perform any necessary operations prior to processing the incoming
-        // packet (e.g., checking for queued configuration messages).
-        //
-        // (XXX: it may be a performance issue to have this called for
-        // every single incoming packet; we may wish to throttle it somehow
-        // in the future.)
-        if (checkin_callback_ != NULL) {
-            (*checkin_callback_)(*io_message_);
-        }
 
         // If we don't have a DNS Lookup provider, there's no point in
         // continuing; we exit the coroutine permanently.

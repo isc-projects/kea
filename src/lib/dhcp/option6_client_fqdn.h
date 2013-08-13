@@ -118,8 +118,8 @@ public:
     ///
     /// @param flag a combination of flags to be stored in flags field.
     /// @param domain_name a name to be stored in the domain-name field.
-    /// @param partial_domain_name indicates if the domain name is partial
-    /// (if true) or full (false).
+    /// @param domain_name_type indicates if the domain name is partial
+    /// or full.
     explicit Option6ClientFqdn(const uint8_t flag,
                                const std::string& domain_name,
                                const DomainNameType domain_name_type = FULL);

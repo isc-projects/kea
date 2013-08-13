@@ -64,8 +64,8 @@ TEST_F(Pkt6Test, constructor) {
     uint8_t data[] = { 0, 1, 2, 3, 4, 5 };
     scoped_ptr<Pkt6> pkt1(new Pkt6(data, sizeof(data)));
 
-    EXPECT_EQ(6, pkt1->getData().size());
-    EXPECT_EQ(0, memcmp( &pkt1->getData()[0], data, sizeof(data)));
+    EXPECT_EQ(6, pkt1->data_.size());
+    EXPECT_EQ(0, memcmp( &pkt1->data_[0], data, sizeof(data)));
 }
 
 /// @brief returns captured actual SOLICIT packet
@@ -221,7 +221,7 @@ TEST_F(Pkt6Test, packUnpack) {
     EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
               parent->len());
 
-    EXPECT_TRUE(parent->pack());
+    EXPECT_NO_THROW(parent->pack());
 
     EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
               parent->len());
@@ -515,7 +515,7 @@ TEST_F(Pkt6Test, relayPack) {
 
     EXPECT_EQ(DHCPV6_ADVERTISE, parent->getType());
 
-    EXPECT_TRUE(parent->pack());
+    EXPECT_NO_THROW(parent->pack());
 
     EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN // ADVERTISE
               + Pkt6::DHCPV6_RELAY_HDR_LEN // Relay header
