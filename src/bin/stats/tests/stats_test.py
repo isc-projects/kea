@@ -355,6 +355,7 @@ class TestStats(unittest.TestCase):
         self.assertRaises(CheckException, self.stats.start)
         self.assertEqual(self.__send_command(self.stats, "status"),
                          (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
+        self.assertTrue(self.stats.mccs.stopped)
 
     def test_start_set_next_polltime(self):
         """Test start() properly sets the time next_polltime to do_poll() next
