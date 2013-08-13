@@ -334,7 +334,8 @@ protected:
     ///
     /// @param question A message received from the client.
     /// @param [out] answer A server's response where FQDN option will be added.
-    /// @param fqdn A DHCPv6 Client FQDN %Option to be added.
+    /// @param fqdn A DHCPv6 Client FQDN %Option to be added to the server's
+    /// response to a client.
     void appendClientFqdn(const Pkt6Ptr& question,
                           Pkt6Ptr& answer,
                           const Option6ClientFqdnPtr& fqdn);

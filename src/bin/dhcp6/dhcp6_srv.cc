@@ -457,9 +457,7 @@ bool Dhcpv6Srv::run() {
                     .arg(e.what());
             }
 
-            // Although we don't support sending the NameChangeRequests to
-            // bind10-d2 module, we already call sendNameChangeRequets() here
-            // to empty the queue. Otherwise, the queue would bloat.
+            // Send NameChangeRequests to the b10-dhcp_ddns module.
             sendNameChangeRequests();
         }
     }
@@ -1097,6 +1095,7 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
     // DHCID can be computed from it. This may throw an exception if hostname
     // has invalid format. Again, this should be only possible in case of
     // manual intervention in the database.
+    // The DHCID computation is further in this function.
     std::vector<uint8_t> hostname_wire;
     try {
         OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire);
@@ -1133,7 +1132,7 @@ void
 Dhcpv6Srv::sendNameChangeRequests() {
     while (!name_change_reqs_.empty()) {
         // @todo Once next NameChangeRequest is picked from the queue
-        // we should send it to the bind10-d2 module. Currently we
+        // we should send it to the bind10-dhcp_ddns module. Currently we
         // just drop it.
         name_change_reqs_.pop();
     }
