@@ -1,8 +1,3 @@
-if USE_SHARED_MEMORY
-
-# We use the memory manager only with shared memory. No reason to
-# install on platforms without it and tests may fail there.
-
 SUBDIRS = . tests
 
 python_PYTHON = __init__.py builder.py datasrc_info.py logger.py
@@ -28,5 +23,3 @@ CLEANDIRS = __pycache__
 
 clean-local:
 	rm -rf $(CLEANDIRS)
-
-endif
