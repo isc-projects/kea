@@ -23,43 +23,97 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Implements the logic for the Option6ClientFqdn class.
+///
+/// The purpose of the class is to separate the implementation details
+/// of the Option6ClientFqdn class from the interface. This implementation
+/// uses b10-libdns classes to process FQDNs. At some point it may be
+/// desired to split b10-libdhcp++ from b10-libdns. In such case the
+/// implementation of this class may be changed. The declaration of the
+/// Option6ClientFqdn class holds the pointer to implementation, so
+/// the transition to a different implementation would not affect the
+/// header file.
 class Option6ClientFqdnImpl {
 public:
+    /// Holds flags carried by the option.
     uint8_t flags_;
+    /// Holds the pointer to a domain name carried in the option.
     boost::shared_ptr<isc::dns::Name> domain_name_;
+    /// Indicates whether domain name is partial or fully qualified.
     Option6ClientFqdn::DomainNameType domain_name_type_;
 
-    Option6ClientFqdnImpl(const uint8_t flag,
+    /// @brief Constructor, from domain name.
+    ///
+    /// @param flags A value of the flags option field.
+    /// @param domain_name A domain name carried by the option given in the
+    /// textual format.
+    /// @param domain_name_type A value which indicates whether domain-name
+    /// is partial of fully qualified.
+    Option6ClientFqdnImpl(const uint8_t flags,
                           const std::string& domain_name,
                           const Option6ClientFqdn::DomainNameType name_type);
 
+    /// @brief Constructor, from wire data.
+    ///
+    /// @param first An iterator pointing to the begining of the option data
+    /// in the wire format.
+    /// @param last An iterator poiting to the end of the option data in the
+    /// wire format.
     Option6ClientFqdnImpl(OptionBufferConstIter first,
                           OptionBufferConstIter last);
 
+    /// @brief Copy constructor.
+    ///
+    /// @param source An object being copied.
     Option6ClientFqdnImpl(const Option6ClientFqdnImpl& source);
 
+    /// @brief Assignment operator.
+    ///
+    /// @param source An object which is being assigned.
     Option6ClientFqdnImpl& operator=(const Option6ClientFqdnImpl& source);
 
+    /// @brief Set a new domain name for the option.
+    ///
+    /// @param domain_name A new domain name to be assigned.
+    /// @param name_type A value which indicates whether the domain-name is
+    /// partial or fully qualified.
     void setDomainName(const std::string& domain_name,
                        const Option6ClientFqdn::DomainNameType name_type);
 
-    static void checkFlags(const uint8_t flags);
+    /// @brief Check if flags are valid.
+    ///
+    /// In particular, this function checks if the N and S bits are not
+    /// set to 1 in the same time.
+    ///
+    /// @param flags A value carried by the flags field of the option.
+    /// @param check_mbz A boolean value which indicates if this function should
+    /// check if the MBZ bits are set (if true). This parameter should be set
+    /// to false when validating flags in the received message. This is because
+    /// server should ignore MBZ bits in received messages.
+    /// @throw InvalidFqdnOptionFlags if flags are invalid.
+    static void checkFlags(const uint8_t flags, const bool check_mbz);
 
+    /// @brief Parse the Option provided in the wire format.
+    ///
+    /// @param first An iterator pointing to the begining of the option data
+    /// in the wire format.
+    /// @param last An iterator poiting to the end of the option data in the
+    /// wire format.
     void parseWireData(OptionBufferConstIter first,
                        OptionBufferConstIter last);
 
 };
 
 Option6ClientFqdnImpl::
-Option6ClientFqdnImpl(const uint8_t flag,
+Option6ClientFqdnImpl(const uint8_t flags,
                       const std::string& domain_name,
                       const Option6ClientFqdn::DomainNameType name_type)
-    : flags_(flag),
+    : flags_(flags),
       domain_name_(),
       domain_name_type_(name_type) {
 
-    //  Check if flags are correct.
-    checkFlags(flags_);
+    //  Check if flags are correct. Also check if MBZ bits are set.
+    checkFlags(flags_, true);
     // Set domain name. It may throw an exception if domain name has wrong
     // format.
     setDomainName(domain_name, name_type);
@@ -68,8 +122,9 @@ Option6ClientFqdnImpl(const uint8_t flag,
 Option6ClientFqdnImpl::Option6ClientFqdnImpl(OptionBufferConstIter first,
                                              OptionBufferConstIter last) {
     parseWireData(first, last);
-    // Verify that flags value was correct.
-    checkFlags(flags_);
+    // Verify that flags value was correct. Do not check if MBZ bits are
+    // set because we should ignore those bits in received message.
+    checkFlags(flags_, false);
 }
 
 Option6ClientFqdnImpl::
@@ -126,9 +181,9 @@ setDomainName(const std::string& domain_name,
 }
 
 void
-Option6ClientFqdnImpl::checkFlags(const uint8_t flags) {
+Option6ClientFqdnImpl::checkFlags(const uint8_t flags, const bool check_mbz) {
     // The Must Be Zero (MBZ) bits must not be set.
-    if ((flags & ~Option6ClientFqdn::FLAG_MASK) != 0) {
+    if (check_mbz && ((flags & ~Option6ClientFqdn::FLAG_MASK) != 0)) {
         isc_throw(InvalidFqdnOptionFlags,
                   "invalid DHCPv6 Client FQDN Option flags: 0x"
                   << std::hex << static_cast<int>(flags) << std::dec);
@@ -153,7 +208,9 @@ Option6ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
     // The domain-name may be empty.
     if (std::distance(first, last) < Option6ClientFqdn::FLAG_FIELD_LEN) {
         isc_throw(OutOfRange, "DHCPv6 Client FQDN Option ("
-                  << D6O_CLIENT_FQDN << ") is truncated");
+                  << D6O_CLIENT_FQDN << ") is truncated. Minimal option"
+                  << " size is " << Option6ClientFqdn::FLAG_FIELD_LEN
+                  << ", got option with size " << std::distance(first, last));
     }
 
     // Parse flags
@@ -259,7 +316,7 @@ Option6ClientFqdn::setFlag(const Flag flag, const bool set_flag) {
     }
 
     // Check new flags. If they are valid, apply them.
-    Option6ClientFqdnImpl::checkFlags(new_flag);
+    Option6ClientFqdnImpl::checkFlags(new_flag, true);
     impl_->flags_ = new_flag;
 }
 
