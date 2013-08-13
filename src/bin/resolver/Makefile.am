@@ -1,3 +1,5 @@
+if BUILD_EXPERIMENTAL_RESOLVER
+# Build the resolver only with --enable-experimental-resolver
 SUBDIRS = . tests bench
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
@@ -83,4 +85,4 @@ b10_resolver_LDFLAGS = -pthread
 # and can't use @datadir@ because doesn't expand default ${prefix}
 b10_resolverdir = $(pkgdatadir)
 b10_resolver_DATA = resolver.spec
-
+endif
