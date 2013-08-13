@@ -1,3 +1,8 @@
+if USE_SHARED_MEMORY
+
+# If we don't have shared memory, the memory manager is useless.
+# Skip building, testing and installing it completely.
+
 SUBDIRS = . tests
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
@@ -60,3 +65,5 @@ install-data-hook:
 
 clean-local:
 	rm -rf $(CLEANDIRS)
+
+endif
