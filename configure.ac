@@ -912,6 +912,17 @@ if test "x$use_shared_memory" = "xyes"; then
 fi
 AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
 
+if test "$BOOST_OFFSET_PTR_OLD" = "yes" -a "$use_shared_memory" = "yes" ; then
+    AC_MSG_ERROR([You're trying to compile against boost older than 1.48 with
+shared memory. Older versions of boost have a bug which causes segfaults in
+offset_ptr implementation when compiled by GCC with optimisations enabled.
+See ticket no. 3025 for details.
+
+Either update boost to newer version or use --without-shared-memory.
+Note that most users likely don't need shared memory support.
+])
+fi
+
 # Add some default CPP flags needed for Boost, identified by the AX macro.
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
 
