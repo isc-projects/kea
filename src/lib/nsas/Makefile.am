@@ -1,5 +1,3 @@
-if BUILD_EXPERIMENTAL_RESOLVER
-# Build resolver only with --enable-experimental-resolver
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
@@ -63,4 +61,3 @@ EXTRA_DIST = nsas_messages.mes
 
 # Make sure that the generated files are got rid of in a clean operation
 CLEANFILES = *.gcno *.gcda nsas_messages.h nsas_messages.cc
-endif
