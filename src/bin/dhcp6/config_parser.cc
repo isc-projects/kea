@@ -572,6 +572,13 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
             if (iface_parser) {
                 iface_parser->commit();
             }
+
+            // This occurs last as if it succeeds, there is no easy way to
+            // revert it.  As a result, the failure to commit a subsequent
+            // change causes problems when trying to roll back.
+            if (hooks_parser) {
+                hooks_parser->commit();
+            }
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
@@ -593,12 +600,6 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     if (rollback) {
         globalContext().reset(new ParserContext(original_context));
         return (answer);
-    }
-
-    // Now commit any changes that have been validated but not yet committed,
-    // and which can't be rolled back.
-    if (hooks_parser) {
-        hooks_parser->commit();
     }
 
     LOG_INFO(dhcp6_logger, DHCP6_CONFIG_COMPLETE).arg(config_details);
