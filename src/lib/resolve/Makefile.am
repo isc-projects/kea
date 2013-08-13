@@ -47,4 +47,3 @@ if USE_CLANGPP
 libb10_resolve_la_CXXFLAGS += -Wno-error
 endif
 libb10_resolve_la_CPPFLAGS = $(AM_CPPFLAGS)
-
