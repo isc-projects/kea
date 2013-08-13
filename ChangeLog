@@ -1,3 +1,10 @@
+NNN.    [func]		fujiwara
+	src/lib/cc: CInteger size of C++ CC librargy is changed to int64_t.
+	b10-auth: The size of statistics counters is changed to uint64_t.
+	b10-auth sends lower 63 bit of counter values to b10-stats.
+	(Trac #3015,  git e5b3471d579937f19e446f8a380464e0fc059567
+	 and Trac #3016, git ffbcf9833ebd2f1952664cc0498608b988628d53)
+
 630.	[bug]		muks
 	If there is a problem loading the backend module for a type of
 	data source, b10-auth would not serve any zones. This behaviour
