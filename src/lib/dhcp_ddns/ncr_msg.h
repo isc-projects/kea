@@ -31,7 +31,7 @@
 #include <string>
 
 namespace isc {
-namespace d2 {
+namespace dhcp_ddns {
 
 /// @brief Exception thrown when NameChangeRequest marshalling error occurs.
 class NcrMessageError : public isc::Exception {
@@ -51,7 +51,7 @@ enum NameChangeStatus  {
   ST_NEW,
   ST_PENDING,
   ST_COMPLETED,
-  ST_FAILED,
+  ST_FAILED
 };
 
 /// @brief Defines the list of data wire formats supported.
@@ -74,7 +74,7 @@ public:
     /// a contiguous stream of digits, with no delimiters. For example a string
     /// containing "14A3" converts to a byte array containing:  0x14, 0xA3.
     ///
-    /// @throw throws a NcrMessageError if the input data contains non-digits
+    /// @throw NcrMessageError if the input data contains non-digits
     /// or there is an odd number of digits.
     D2Dhcid(const std::string& data);
 
@@ -88,7 +88,7 @@ public:
 
     /// @brief Returns the DHCID value as a string of hexadecimal digits.
     ///
-    /// @return returns a string containing a contiguous stream of digits.
+    /// @return a string containing a contiguous stream of digits.
     std::string toStr() const;
 
     /// @brief Sets the DHCID value based on the given string.
@@ -97,7 +97,7 @@ public:
     /// a contiguous stream of digits, with no delimiters. For example a string
     /// containing "14A3" converts to a byte array containing:  0x14, 0xA3.
     ///
-    /// @throw throws a NcrMessageError if the input data contains non-digits
+    /// @throw NcrMessageError if the input data contains non-digits
     /// or there is an odd number of digits.
     void fromStr(const std::string& data);
 
@@ -110,9 +110,24 @@ public:
 
     /// @brief Returns a reference to the DHCID byte vector.
     ///
-    /// @return returns a reference to the vector.
+    /// @return a reference to the vector.
     const std::vector<uint8_t>& getBytes() {
         return (bytes_);
+    }
+
+    /// @brief Compares two D2Dhcids for equality
+    bool operator==(const D2Dhcid& other) const {
+        return (this->bytes_ == other.bytes_);
+    }
+
+    /// @brief Compares two D2Dhcids for inequality
+    bool operator!=(const D2Dhcid& other) const {
+        return (this->bytes_ != other.bytes_);
+    }
+
+    /// @brief Compares two D2Dhcids lexcially
+    bool operator<(const D2Dhcid& other) const {
+        return (this->bytes_ < other.bytes_);
     }
 
 private:
@@ -179,9 +194,9 @@ public:
     /// @param format indicates the data format to use
     /// @param buffer is the input buffer containing the marshalled request
     ///
-    /// @return returns a pointer to the new NameChangeRequest
+    /// @return a pointer to the new NameChangeRequest
     ///
-    /// @throw throws NcrMessageError if an error occurs creating new
+    /// @throw NcrMessageError if an error occurs creating new
     /// request.
     static NameChangeRequestPtr fromFormat(const NameChangeFormat format,
                                            isc::util::InputBuffer& buffer);
@@ -210,15 +225,15 @@ public:
     ///
     /// @param json is a string containing the JSON text
     ///
-    /// @return returns a pointer to the new NameChangeRequest
+    /// @return a pointer to the new NameChangeRequest
     ///
-    /// @throw throws NcrMessageError if an error occurs creating new request.
+    /// @throw NcrMessageError if an error occurs creating new request.
     static NameChangeRequestPtr fromJSON(const std::string& json);
 
     /// @brief Instance method for marshalling the contents of the request
     /// into a string of JSON text.
     ///
-    /// @return returns a string containing the JSON rendition of the request
+    /// @return a string containing the JSON rendition of the request
     std::string toJSON() const;
 
     /// @brief Validates the content of a populated request.  This method is
@@ -237,13 +252,13 @@ public:
     /// of validation.  FQDN, DHCID, and IP Address members are all currently
     /// strings, these may be replaced with richer classes.
     ///
-    /// @throw throws a NcrMessageError if the request content violates any
+    /// @throw NcrMessageError if the request content violates any
     /// of the validation rules.
     void validateContent();
 
     /// @brief Fetches the request change type.
     ///
-    /// @return returns the change type
+    /// @return the change type
     NameChangeType getChangeType() const {
         return (change_type_);
     }
@@ -257,13 +272,13 @@ public:
     ///
     /// @param element is an integer Element containing the change type value.
     ///
-    /// @throw throws a NcrMessageError if the element is not an integer
+    /// @throw NcrMessageError if the element is not an integer
     /// Element or contains an invalid value.
     void setChangeType(isc::data::ConstElementPtr element);
 
     /// @brief Checks forward change flag.
     ///
-    /// @return returns a true if the forward change flag is true.
+    /// @return a true if the forward change flag is true.
     bool isForwardChange() const {
         return (forward_change_);
     }
@@ -279,13 +294,13 @@ public:
     /// @param element is a boolean Element containing the forward change flag
     /// value.
     ///
-    /// @throw throws a NcrMessageError if the element is not a boolean
+    /// @throw NcrMessageError if the element is not a boolean
     /// Element
     void setForwardChange(isc::data::ConstElementPtr element);
 
     /// @brief Checks reverse change flag.
     ///
-    /// @return returns a true if the reverse change flag is true.
+    /// @return a true if the reverse change flag is true.
     bool isReverseChange() const {
         return (reverse_change_);
     }
@@ -301,13 +316,13 @@ public:
     /// @param element is a boolean Element containing the reverse change flag
     /// value.
     ///
-    /// @throw throws a NcrMessageError if the element is not a boolean
+    /// @throw NcrMessageError if the element is not a boolean
     /// Element
     void setReverseChange(isc::data::ConstElementPtr element);
 
     /// @brief Fetches the request FQDN
     ///
-    /// @return returns a string containing the FQDN
+    /// @return a string containing the FQDN
     const std::string getFqdn() const {
         return (fqdn_);
     }
@@ -321,13 +336,13 @@ public:
     ///
     /// @param element is a string Element containing the FQDN
     ///
-    /// @throw throws a NcrMessageError if the element is not a string
+    /// @throw NcrMessageError if the element is not a string
     /// Element
     void setFqdn(isc::data::ConstElementPtr element);
 
     /// @brief Fetches the request IP address.
     ///
-    /// @return returns a string containing the IP address
+    /// @return a string containing the IP address
     const std::string& getIpAddress() const {
         return (ip_address_);
     }
@@ -341,13 +356,13 @@ public:
     ///
     /// @param element is a string Element containing the IP address
     ///
-    /// @throw throws a NcrMessageError if the element is not a string
+    /// @throw NcrMessageError if the element is not a string
     /// Element
     void setIpAddress(isc::data::ConstElementPtr element);
 
     /// @brief Fetches the request DHCID
     ///
-    /// @return returns a reference to the request's D2Dhcid
+    /// @return a reference to the request's D2Dhcid
     const D2Dhcid& getDhcid() const {
         return (dhcid_);
     }
@@ -358,7 +373,7 @@ public:
     /// a contiguous stream of digits, with no delimiters. For example a string
     /// containing "14A3" converts to a byte array containing:  0x14, 0xA3.
     ///
-    /// @throw throws a NcrMessageError if the input data contains non-digits
+    /// @throw NcrMessageError if the input data contains non-digits
     /// or there is an odd number of digits.
     void setDhcid(const std::string& value);
 
@@ -367,13 +382,13 @@ public:
     /// @param element is a string Element containing the string of hexadecimal
     /// digits. (See setDhcid(std::string&) above.)
     ///
-    /// @throw throws a NcrMessageError if the input data contains non-digits
+    /// @throw NcrMessageError if the input data contains non-digits
     /// or there is an odd number of digits.
     void setDhcid(isc::data::ConstElementPtr element);
 
     /// @brief Fetches the request lease expiration
     ///
-    /// @return returns the lease expiration as the number of seconds since
+    /// @return the lease expiration as the number of seconds since
     /// the (00:00:00 January 1, 1970)
     uint64_t getLeaseExpiresOn() const {
         return (lease_expires_on_);
@@ -388,7 +403,7 @@ public:
     /// Example: 18:54:54 June 26, 2013 would be: 20130626185455
     /// NOTE This is always UTC time.
     ///
-    /// @return returns a ISO date-time string of the lease expiration.
+    /// @return a ISO date-time string of the lease expiration.
     std::string getLeaseExpiresOnStr() const;
 
     /// @brief Sets the lease expiration based on the given string.
@@ -401,20 +416,20 @@ public:
     /// Example: 18:54:54 June 26, 2013 would be: 20130626185455
     /// NOTE This is always UTC time.
     ///
-    /// @throw throws a NcrMessageError if the ISO string is invalid.
+    /// @throw NcrMessageError if the ISO string is invalid.
     void setLeaseExpiresOn(const std::string& value);
 
     /// @brief Sets the lease expiration based on the given Element.
     ///
     /// @param element is string Element containing a date-time string.
     ///
-    /// @throw throws a NcrMessageError if the element is not a string
+    /// @throw NcrMessageError if the element is not a string
     /// Element, or if the element value is an invalid date-time string.
     void setLeaseExpiresOn(isc::data::ConstElementPtr element);
 
     /// @brief Fetches the request lease length.
     ///
-    /// @return returns an integer containing the lease length
+    /// @return an integer containing the lease length
     uint32_t getLeaseLength() const {
         return (lease_length_);
     }
@@ -428,13 +443,13 @@ public:
     ///
     /// @param element is a integer Element containing the lease length
     ///
-    /// @throw throws a NcrMessageError if the element is not a string
+    /// @throw NcrMessageError if the element is not a string
     /// Element
     void setLeaseLength(isc::data::ConstElementPtr element);
 
     /// @brief Fetches the request status.
     ///
-    /// @return returns the request status as a NameChangeStatus
+    /// @return the request status as a NameChangeStatus
     NameChangeStatus getStatus() const {
         return (status_);
     }
@@ -450,8 +465,8 @@ public:
     /// @param name is the name of the desired element
     /// @param element_map is the map of elements to search
     ///
-    /// @return returns a pointer to the element if located
-    /// @throw throws a NcrMessageError if the element cannot be found within
+    /// @return a pointer to the element if located
+    /// @throw NcrMessageError if the element cannot be found within
     /// the map
     isc::data::ConstElementPtr getElement(const std::string& name,
                                           const ElementMap& element_map) const;
@@ -459,8 +474,11 @@ public:
     /// @brief Returns a text rendition of the contents of the request.
     /// This method is primarily for logging purposes.
     ///
-    /// @return returns a string containing the text.
+    /// @return a string containing the text.
     std::string toText() const;
+
+    bool operator == (const NameChangeRequest& b);
+    bool operator != (const NameChangeRequest& b);
 
 private:
     /// @brief Denotes the type of this change as either an Add or a Remove.
@@ -497,7 +515,7 @@ private:
 };
 
 
-}; // end of isc::d2 namespace
+}; // end of isc::dhcp_ddns namespace
 }; // end of isc namespace
 
 #endif

@@ -15,7 +15,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
-#include <d2/ncr_msg.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
@@ -39,6 +39,8 @@
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
 #include <util/encode/hex.h>
+#include <hooks/hooks_manager.h>
+#include <hooks/callout_handle.h>
 
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
@@ -51,10 +53,43 @@
 
 using namespace isc;
 using namespace isc::asiolink;
-using namespace isc::d2;
+using namespace isc::dhcp_ddns;
 using namespace isc::dhcp;
+using namespace isc::hooks;
 using namespace isc::util;
 using namespace std;
+
+namespace {
+
+/// Structure that holds registered hook indexes
+struct Dhcp6Hooks {
+    int hook_index_buffer6_receive_;///< index for "buffer6_receive" hook point
+    int hook_index_pkt6_receive_;   ///< index for "pkt6_receive" hook point
+    int hook_index_subnet6_select_; ///< index for "subnet6_select" hook point
+    int hook_index_lease6_renew_;   ///< index for "lease6_renew" hook point
+    int hook_index_lease6_release_; ///< index for "lease6_release" hook point
+    int hook_index_pkt6_send_;      ///< index for "pkt6_send" hook point
+    int hook_index_buffer6_send_;   ///< index for "buffer6_send" hook point
+
+    /// Constructor that registers hook points for DHCPv6 engine
+    Dhcp6Hooks() {
+        hook_index_buffer6_receive_= HooksManager::registerHook("buffer6_receive");
+        hook_index_pkt6_receive_   = HooksManager::registerHook("pkt6_receive");
+        hook_index_subnet6_select_ = HooksManager::registerHook("subnet6_select");
+        hook_index_lease6_renew_   = HooksManager::registerHook("lease6_renew");
+        hook_index_lease6_release_ = HooksManager::registerHook("lease6_release");
+        hook_index_pkt6_send_      = HooksManager::registerHook("pkt6_send");
+        hook_index_buffer6_send_   = HooksManager::registerHook("buffer6_send");
+    }
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+Dhcp6Hooks Hooks;
+
+}; // anonymous namespace
 
 namespace isc {
 namespace dhcp {
@@ -98,7 +133,8 @@ const bool FQDN_REPLACE_CLIENT_NAME = false;
 static const char* SERVER_DUID_FILE = "b10-dhcp6-serverid";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
-    : alloc_engine_(), serverid_(), shutdown_(true) {
+:alloc_engine_(), serverid_(), shutdown_(true), port_(port)
+{
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
 
@@ -113,7 +149,7 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
                 LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
                 return;
             }
-            IfaceMgr::instance().openSockets6(port);
+            IfaceMgr::instance().openSockets6(port_);
         }
 
         string duid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_DUID_FILE);
@@ -131,11 +167,12 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
                 LOG_WARN(dhcp6_logger, DHCP6_SERVERID_WRITE_FAIL)
                     .arg(duid_file);
             }
-
         }
 
         // Instantiate allocation engine
         alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+
+        /// @todo call loadLibraries() when handling configuration changes
 
     } catch (const std::exception &e) {
         LOG_ERROR(dhcp6_logger, DHCP6_SRV_CONSTRUCT_ERROR).arg(e.what());
@@ -157,9 +194,17 @@ void Dhcpv6Srv::shutdown() {
     shutdown_ = true;
 }
 
+Pkt6Ptr Dhcpv6Srv::receivePacket(int timeout) {
+    return (IfaceMgr::instance().receive6(timeout));
+}
+
+void Dhcpv6Srv::sendPacket(const Pkt6Ptr& packet) {
+    IfaceMgr::instance().send(packet);
+}
+
 bool Dhcpv6Srv::run() {
     while (!shutdown_) {
-        /// @todo: calculate actual timeout to the next event (e.g. lease
+        /// @todo Calculate actual timeout to the next event (e.g. lease
         /// expiration) once we have lease database. The idea here is that
         /// it is possible to do everything in a single process/thread.
         /// For now, we are just calling select for 1000 seconds. There
@@ -173,109 +218,243 @@ bool Dhcpv6Srv::run() {
         Pkt6Ptr rsp;
 
         try {
-            query = IfaceMgr::instance().receive6(timeout);
+            query = receivePacket(timeout);
         } catch (const std::exception& e) {
             LOG_ERROR(dhcp6_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
         }
 
-        if (query) {
+        // Timeout may be reached or signal received, which breaks select() with no packet received
+        if (!query) {
+            continue;
+        }
+
+        bool skip_unpack = false;
+
+        // The packet has just been received so contains the uninterpreted wire
+        // data; execute callouts registered for buffer6_receive.
+        if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer6_receive_)) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("query6", query);
+
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_buffer6_receive_, *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to parse the packet, so skip at this
+            // stage means that callouts did the parsing already, so server
+            // should skip parsing.
+            if (callout_handle->getSkip()) {
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_RCVD_SKIP);
+                skip_unpack = true;
+            }
+
+            callout_handle->getArgument("query6", query);
+        }
+
+        // Unpack the packet information unless the buffer6_receive callouts
+        // indicated they did it
+        if (!skip_unpack) {
             if (!query->unpack()) {
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
                           DHCP6_PACKET_PARSE_FAIL);
                 continue;
             }
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_RECEIVED)
-                      .arg(query->getName());
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
-                      .arg(static_cast<int>(query->getType()))
-                      .arg(query->getBuffer().getLength())
-                      .arg(query->toText());
+        }
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_RECEIVED)
+            .arg(query->getName());
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
+            .arg(static_cast<int>(query->getType()))
+            .arg(query->getBuffer().getLength())
+            .arg(query->toText());
 
-            try {
-                NameChangeRequestPtr ncr;
-                switch (query->getType()) {
-                case DHCPV6_SOLICIT:
-                    rsp = processSolicit(query);
-                    break;
+        // At this point the information in the packet has been unpacked into
+        // the various packet fields and option objects has been cretated.
+        // Execute callouts registered for packet6_receive.
+        if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_pkt6_receive_)) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-                case DHCPV6_REQUEST:
-                    rsp = processRequest(query);
-                    break;
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
 
-                case DHCPV6_RENEW:
-                    rsp = processRenew(query);
-                    break;
+            // Pass incoming packet as argument
+            callout_handle->setArgument("query6", query);
 
-                case DHCPV6_REBIND:
-                    rsp = processRebind(query);
-                    break;
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_pkt6_receive_, *callout_handle);
 
-                case DHCPV6_CONFIRM:
-                    rsp = processConfirm(query);
-                    break;
-
-                case DHCPV6_RELEASE:
-                    rsp = processRelease(query);
-                    break;
-
-                case DHCPV6_DECLINE:
-                    rsp = processDecline(query);
-                    break;
-
-                case DHCPV6_INFORMATION_REQUEST:
-                    rsp = processInfRequest(query);
-                    break;
-
-                default:
-                    // Only action is to output a message if debug is enabled,
-                    // and that will be covered by the debug statement before
-                    // the "switch" statement.
-                    ;
-                }
-
-            } catch (const RFCViolation& e) {
-                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
-                    .arg(query->getName())
-                    .arg(query->getRemoteAddr())
-                    .arg(e.what());
-
-            } catch (const isc::Exception& e) {
-
-                // Catch-all exception (at least for ones based on the isc
-                // Exception class, which covers more or less all that
-                // are explicitly raised in the BIND 10 code).  Just log
-                // the problem and ignore the packet. (The problem is logged
-                // as a debug message because debug is disabled by default -
-                // it prevents a DDOS attack based on the sending of problem
-                // packets.)
-                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
-                    .arg(query->getName())
-                    .arg(query->getRemoteAddr())
-                    .arg(e.what());
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to process the packet, so skip at this
+            // stage means drop.
+            if (callout_handle->getSkip()) {
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_RCVD_SKIP);
+                continue;
             }
 
-            if (rsp) {
-                rsp->setRemoteAddr(query->getRemoteAddr());
-                rsp->setLocalAddr(query->getLocalAddr());
-                rsp->setRemotePort(DHCP6_CLIENT_PORT);
-                rsp->setLocalPort(DHCP6_SERVER_PORT);
-                rsp->setIndex(query->getIndex());
-                rsp->setIface(query->getIface());
+            callout_handle->getArgument("query6", query);
+        }
+
+        try {
+                NameChangeRequestPtr ncr;
+            switch (query->getType()) {
+            case DHCPV6_SOLICIT:
+                rsp = processSolicit(query);
+                    break;
+
+            case DHCPV6_REQUEST:
+                rsp = processRequest(query);
+                break;
+
+            case DHCPV6_RENEW:
+                rsp = processRenew(query);
+                break;
+
+            case DHCPV6_REBIND:
+                rsp = processRebind(query);
+                break;
+
+            case DHCPV6_CONFIRM:
+                rsp = processConfirm(query);
+                break;
+
+            case DHCPV6_RELEASE:
+                rsp = processRelease(query);
+                break;
+
+            case DHCPV6_DECLINE:
+                rsp = processDecline(query);
+                break;
+
+            case DHCPV6_INFORMATION_REQUEST:
+                rsp = processInfRequest(query);
+                break;
+
+            default:
+                // We received a packet type that we do not recognize.
+                LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_UNKNOWN_MSG_RECEIVED)
+                    .arg(static_cast<int>(query->getType()))
+                    .arg(query->getIface());
+                // Only action is to output a message if debug is enabled,
+                // and that will be covered by the debug statement before
+                // the "switch" statement.
+                ;
+            }
+
+        } catch (const RFCViolation& e) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_REQUIRED_OPTIONS_CHECK_FAIL)
+                .arg(query->getName())
+                .arg(query->getRemoteAddr().toText())
+                .arg(e.what());
+
+        } catch (const isc::Exception& e) {
+
+            // Catch-all exception (at least for ones based on the isc
+            // Exception class, which covers more or less all that
+            // are explicitly raised in the BIND 10 code).  Just log
+            // the problem and ignore the packet. (The problem is logged
+            // as a debug message because debug is disabled by default -
+            // it prevents a DDOS attack based on the sending of problem
+            // packets.)
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_PACKET_PROCESS_FAIL)
+                .arg(query->getName())
+                .arg(query->getRemoteAddr().toText())
+                .arg(e.what());
+        }
+
+        if (rsp) {
+            rsp->setRemoteAddr(query->getRemoteAddr());
+            rsp->setLocalAddr(query->getLocalAddr());
+            rsp->setRemotePort(DHCP6_CLIENT_PORT);
+            rsp->setLocalPort(DHCP6_SERVER_PORT);
+            rsp->setIndex(query->getIndex());
+            rsp->setIface(query->getIface());
+
+            // Specifies if server should do the packing
+            bool skip_pack = false;
+
+            // Server's reply packet now has all options and fields set.
+            // Options are represented by individual objects, but the
+            // output wire data has not been prepared yet.
+            // Execute all callouts registered for packet6_send
+            if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_pkt6_send_)) {
+                CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+                // Delete all previous arguments
+                callout_handle->deleteAllArguments();
+
+                // Set our response
+                callout_handle->setArgument("response6", rsp);
+
+                // Call all installed callouts
+                HooksManager::callCallouts(Hooks.hook_index_pkt6_send_, *callout_handle);
+
+                // Callouts decided to skip the next processing step. The next
+                // processing step would to pack the packet (create wire data).
+                // That step will be skipped if any callout sets skip flag.
+                // It essentially means that the callout already did packing,
+                // so the server does not have to do it again.
+                if (callout_handle->getSkip()) {
+                    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_PACKET_SEND_SKIP);
+                    skip_pack = true;
+                }
+            }
+
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA,
+                      DHCP6_RESPONSE_DATA)
+                .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
+
+            if (!skip_pack) {
+                try {
+                    rsp->pack();
+                } catch (const std::exception& e) {
+                    LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL)
+                        .arg(e.what());
+                    continue;
+                }
+
+            }
+
+            try {
+
+                // Now all fields and options are constructed into output wire buffer.
+                // Option objects modification does not make sense anymore. Hooks
+                // can only manipulate wire buffer at this stage.
+                // Let's execute all callouts registered for buffer6_send
+                if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer6_send_)) {
+                    CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+                    // Delete previously set arguments
+                    callout_handle->deleteAllArguments();
+
+                    // Pass incoming packet as argument
+                    callout_handle->setArgument("response6", rsp);
+                    
+                    // Call callouts
+                    HooksManager::callCallouts(Hooks.hook_index_buffer6_send_, *callout_handle);
+                    
+                    // Callouts decided to skip the next processing step. The next
+                    // processing step would to parse the packet, so skip at this
+                    // stage means drop.
+                    if (callout_handle->getSkip()) {
+                        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP);
+                        continue;
+                    }
+                    
+                    callout_handle->getArgument("response6", rsp);
+                }
 
                 LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA,
                           DHCP6_RESPONSE_DATA)
                     .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
 
-                if (rsp->pack()) {
-                    try {
-                        IfaceMgr::instance().send(rsp);
-                    } catch (const std::exception& e) {
-                        LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL).arg(e.what());
-                    }
-
-                } else {
-                    LOG_ERROR(dhcp6_logger, DHCP6_PACK_FAIL);
-                }
+                sendPacket(rsp);
+            } catch (const std::exception& e) {
+                LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL)
+                    .arg(e.what());
             }
 
             // Although we don't support sending the NameChangeRequests to
@@ -598,6 +777,37 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         }
     }
 
+    // Let's execute all callouts registered for subnet6_receive
+    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_subnet6_select_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(question);
+
+        // We're reusing callout_handle from previous calls
+        callout_handle->deleteAllArguments();
+
+        // Set new arguments
+        callout_handle->setArgument("query6", question);
+        callout_handle->setArgument("subnet6", subnet);
+
+        // We pass pointer to const collection for performance reasons.
+        // Otherwise we would get a non-trivial performance penalty each
+        // time subnet6_select is called.
+        callout_handle->setArgument("subnet6collection", CfgMgr::instance().getSubnets6());
+
+        // Call user (and server-side) callouts
+        HooksManager::callCallouts(Hooks.hook_index_subnet6_select_, *callout_handle);
+
+        // Callouts decided to skip this step. This means that no subnet will be
+        // selected. Packet processing will continue, but it will be severly limited
+        // (i.e. only global options will be assigned)
+        if (callout_handle->getSkip()) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_SUBNET6_SELECT_SKIP);
+            return (Subnet6Ptr());
+        }
+
+        // Use whatever subnet was specified by the callout
+        callout_handle->getArgument("subnet6", subnet);
+    }
+
     return (subnet);
 }
 
@@ -831,7 +1041,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
     // However, it will be faster if we used a pointer name_data.
     std::vector<uint8_t> buf_vec(name_data, name_data + name_buf.getLength());
     // Compute DHCID from Client Identifier and FQDN.
-    isc::d2::D2Dhcid dhcid(*duid, buf_vec);
+    isc::dhcp_ddns::D2Dhcid dhcid(*duid, buf_vec);
 
     // Get all IAs from the answer. For each IA, holding an address we will
     // create a corresponding NameChangeRequest.
@@ -851,7 +1061,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         // Get the IP address from the lease. Also, use the S flag to determine
         // if forward change should be performed. This flag will always be
         // set if server has taken responsibility for the forward update.
-        NameChangeRequest ncr(isc::d2::CHG_ADD,
+        NameChangeRequest ncr(isc::dhcp_ddns::CHG_ADD,
                               opt_fqdn->getFlag(Option6ClientFqdn::FLAG_S),
                               true, opt_fqdn->getDomainName(),
                               iaaddr->getAddress().toText(),
@@ -904,10 +1114,10 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
                   << lease->addr_.toText());
 
     }
-    isc::d2::D2Dhcid dhcid(*lease->duid_, hostname_wire);
+    isc::dhcp_ddns::D2Dhcid dhcid(*lease->duid_, hostname_wire);
 
     // Create a NameChangeRequest to remove the entry.
-    NameChangeRequest ncr(isc::d2::CHG_REMOVE,
+    NameChangeRequest ncr(isc::dhcp_ddns::CHG_REMOVE,
                           lease->fqdn_fwd_, lease->fqdn_rev_,
                           lease->hostname_,
                           lease->addr_.toText(),
@@ -932,7 +1142,7 @@ Dhcpv6Srv::sendNameChangeRequests() {
 
 OptionPtr
 Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                       Pkt6Ptr question, Option6IAPtr ia,
+                       const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
                        const Option6ClientFqdnPtr& fqdn) {
     // If there is no subnet selected for handling this IA_NA, the only thing to do left is
     // to say that we are sorry, but the user won't get an address. As a convenience, we
@@ -972,10 +1182,12 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // it should include this hint. That will help us during the actual lease
     // allocation.
     bool fake_allocation = false;
-    if (question->getType() == DHCPV6_SOLICIT) {
+    if (query->getType() == DHCPV6_SOLICIT) {
         /// @todo: Check if we support rapid commit
         fake_allocation = true;
     }
+
+    CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
     // At this point, we have to make make some decisions with respect to the
     // FQDN option that we have generated as a result of receiving client's
@@ -1011,7 +1223,8 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                                                       hint,
                                                       do_fwd, do_rev,
                                                       hostname,
-                                                      fake_allocation);
+                                                      fake_allocation,
+                                                      callout_handle);
 
     // Create IA_NA that we will put in the response.
     // Do not use OptionDefinition to create option's instance so
@@ -1081,7 +1294,7 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
 OptionPtr
 Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                      Pkt6Ptr /* question */, boost::shared_ptr<Option6IA> ia,
+                      const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
                       const Option6ClientFqdnPtr& fqdn) {
     if (!subnet) {
         // There's no subnet select for this client. There's nothing to renew.
@@ -1118,6 +1331,9 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
         return (ia_rsp);
     }
+
+    // Keep the old data in case the callout tells us to skip update
+    Lease6 old_data = *lease;
 
     // At this point, we have to make make some decisions with respect to the
     // FQDN option that we have generated as a result of receiving client's
@@ -1164,8 +1380,6 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     lease->fqdn_fwd_ = do_fwd;
     lease->fqdn_rev_ = do_rev;
 
-    LeaseMgrFactory::instance().updateLease6(lease);
-
     // Create empty IA_NA option with IAID matching the request.
     boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
 
@@ -1176,6 +1390,46 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                                           lease->addr_, lease->preferred_lft_,
                                           lease->valid_lft_));
     ia_rsp->addOption(addr);
+
+    bool skip = false;
+    // Execute all callouts registered for packet6_send
+    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_renew_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass the original packet
+        callout_handle->setArgument("query6", query);
+
+        // Pass the lease to be updated
+        callout_handle->setArgument("lease6", lease);
+
+        // Pass the IA option to be sent in response
+        callout_handle->setArgument("ia_na", ia_rsp);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease6_renew_, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to actually renew the lease, so skip at this
+        // stage means "keep the old lease as it is".
+        if (callout_handle->getSkip()) {
+            skip = true;
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RENEW_SKIP);
+        }
+    }
+
+    if (!skip) {
+        LeaseMgrFactory::instance().updateLease6(lease);
+    } else {
+        // Copy back the original date to the lease. For MySQL it doesn't make
+        // much sense, but for memfile, the Lease6Ptr points to the actual lease
+        // in memfile, so the actual update is performed when we manipulate fields
+        // of returned Lease6Ptr, the actual updateLease6() is no-op.
+        *lease = old_data;
+    }
+
     return (ia_rsp);
 }
 
@@ -1297,7 +1551,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
 }
 
 OptionPtr
-Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr /* question */,
+Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                         int& general_status, boost::shared_ptr<Option6IA> ia) {
     // Release can be done in one of two ways:
     // Approach 1: extract address from client's IA_NA and see if it belongs
@@ -1381,9 +1635,43 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, Pkt6Ptr /* question */,
     // It is not necessary to check if the address matches as we used
     // getLease6(addr) method that is supposed to return a proper lease.
 
-    // Ok, we've passed all checks. Let's release this address.
+    bool skip = false;
+    // Execute all callouts registered for packet6_send
+    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_release_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
-    if (!LeaseMgrFactory::instance().deleteLease(lease->addr_)) {
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass the original packet
+        callout_handle->setArgument("query6", query);
+
+        // Pass the lease to be updated
+        callout_handle->setArgument("lease6", lease);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease6_release_, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to send the packet, so skip at this
+        // stage means "drop response".
+        if (callout_handle->getSkip()) {
+            skip = true;
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_SKIP);
+        }
+    }
+
+    // Ok, we've passed all checks. Let's release this address.
+    bool success = false; // was the removal operation succeessful?
+
+    if (!skip) {
+        success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
+    }
+
+    // Here the success should be true if we removed lease successfully
+    // and false if skip flag was set or the removal failed for whatever reason
+
+    if (!success) {
         ia_rsp->addOption(createStatusCode(STATUS_UnspecFail,
                           "Server failed to release a lease"));
 
@@ -1516,6 +1804,75 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
     return reply;
+}
+
+isc::hooks::CalloutHandlePtr Dhcpv6Srv::getCalloutHandle(const Pkt6Ptr& pkt) {
+    // This method returns a CalloutHandle for a given packet. It is guaranteed
+    // to return the same callout_handle (so user library contexts are
+    // preserved). This method works well if the server processes one packet
+    // at a time. Once the server architecture is extended to cover parallel
+    // packets processing (e.g. delayed-ack, some form of buffering etc.), this
+    // method has to be extended (e.g. store callouts in a map and use pkt as
+    // a key). Additional code would be required to release the callout handle
+    // once the server finished processing.
+
+    CalloutHandlePtr callout_handle;
+    static Pkt6Ptr old_pointer;
+
+    if (!callout_handle ||
+        old_pointer != pkt) {
+        // This is the first packet or a different packet than previously
+        // passed to getCalloutHandle()
+
+        // Remember the pointer to this packet
+        old_pointer = pkt;
+
+        callout_handle = HooksManager::getHooksManager().createCalloutHandle();
+    }
+
+    return (callout_handle);
+}
+
+void
+Dhcpv6Srv::openActiveSockets(const uint16_t port) {
+    IfaceMgr::instance().closeSockets();
+
+    // Get the reference to the collection of interfaces. This reference should be
+    // valid as long as the program is run because IfaceMgr is a singleton.
+    // Therefore we can safely iterate over instances of all interfaces and modify
+    // their flags. Here we modify flags which indicate wheter socket should be
+    // open for a particular interface or not.
+    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
+         iface != ifaces.end(); ++iface) {
+        Iface* iface_ptr = IfaceMgr::instance().getIface(iface->getName());
+        if (iface_ptr == NULL) {
+            isc_throw(isc::Unexpected, "Interface Manager returned NULL"
+                      << " instance of the interface when DHCPv6 server was"
+                      << " trying to reopen sockets after reconfiguration");
+        }
+        if (CfgMgr::instance().isActiveIface(iface->getName())) {
+            iface_ptr->inactive4_ = false;
+            LOG_INFO(dhcp6_logger, DHCP6_ACTIVATE_INTERFACE)
+                .arg(iface->getFullName());
+
+        } else {
+            // For deactivating interface, it should be sufficient to log it
+            // on the debug level because it is more useful to know what
+            // interface is activated which is logged on the info level.
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC,
+                      DHCP6_DEACTIVATE_INTERFACE).arg(iface->getName());
+            iface_ptr->inactive6_ = true;
+
+        }
+    }
+    // Let's reopen active sockets. openSockets6 will check internally whether
+    // sockets are marked active or inactive.
+    // @todo Optimization: we should not reopen all sockets but rather select
+    // those that have been affected by the new configuration.
+    if (!IfaceMgr::instance().openSockets6(port)) {
+        LOG_WARN(dhcp6_logger, DHCP6_NO_SOCKETS_OPEN);
+    }
 }
 
 };

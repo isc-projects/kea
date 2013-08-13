@@ -190,9 +190,6 @@ public:
     /// \brief Return pointer to the DNS Answer callback function
     isc::asiodns::DNSAnswer* getDNSAnswerProvider() const { return (dns_answer_); }
 
-    /// \brief Return pointer to the Checkin callback function
-    isc::asiolink::SimpleCallback* getCheckinProvider() const { return (checkin_); }
-
     /// \brief Return data source clients manager.
     ///
     /// \throw None
@@ -273,9 +270,19 @@ public:
     /// open forever.
     void setTCPRecvTimeout(size_t timeout);
 
+    /// \brief Notify the authoritative server that the client lists were
+    ///     reconfigured.
+    ///
+    /// This is to be called when the work thread finishes reconfiguration
+    /// of the data sources. It involeves some book keeping and asking the
+    /// memory manager for segments, if some are remotely mapped.
+    void listsReconfigured();
+
 private:
+    void reconfigureDone(isc::data::ConstElementPtr request);
+    void foreignCommand(const std::string& command, const std::string&,
+                        const isc::data::ConstElementPtr& params);
     AuthSrvImpl* impl_;
-    isc::asiolink::SimpleCallback* checkin_;
     isc::asiodns::DNSLookup* dns_lookup_;
     isc::asiodns::DNSAnswer* dns_answer_;
     isc::asiodns::DNSServiceBase* dnss_;

@@ -1,3 +1,96 @@
+656.	[func]		tomek
+	Additional hooks (buffer6_receive, lease6_renew,
+	lease6_release, buffer6_send) added to the DHCPv6 server.
+	(Trac #2984, git 540dd0449121094a56f294c500c2ed811f6016b6)
+
+655.	[func]		tmark
+	Added D2UpdateMgr class to b10-dhcp-ddns. This class is the b10-dhcp-ddns
+	task master, instantiating and supervising transactions that carry out the
+	DNS updates needed to fulfill the requests (NameChangeRequests) received
+	from b10-dhcp-ddns clients (e.g. DHCP servers).
+	(Trac #3059 git d72675617d6b60e3eb6160305738771f015849ba)
+
+654.	[bug]		stephen
+	Always clear "skip" flag before calling any callouts on a hook.
+	(Trac# 3050, git ff0b9b45869b1d9a4b99e785fbce421e184c2e93)
+
+653.	[func]		tmark
+	Added initial implementation of D2QueueMgr to
+	b10-dhcp-ddns.  This class manages the receipt and
+	queueing of requests received by b10-dhcp-ddns from
+	its clients (e.g. DHCP servers)
+	(Trac# 3052, git a970f6c5255e000c053a2dc47926cea7cec2761c)
+
+652.	[doc]		stephen
+	Added the "Hook Developer's Guide" to the BIND 10 developer
+	documentation.
+	(Trac# 2982, git 26a805c7e49a9ec85ee825f179cda41a2358f4c6)
+
+651.	[bug]		muks
+	A race condition when creating cmdctl certificates caused corruption
+	of these certificates in rare cases. This has now been fixed.
+	(Trac# 2962, git 09f557d871faef090ed444ebeee7f13e142184a0)
+
+650.	[func]		muks
+	The DomainTree rebalancing code has been updated to be more
+	understandable. This ChangeLog entry is made just to make a note
+	of this change. The change should not cause any observable
+	difference whatsoever.
+	(Trac# 2811, git 7c0bad1643af13dedf9356e9fb3a51264b7481de)
+
+649.	[func]		muks
+	The default b10-xfrout also_notify port has been changed from
+	0 to 53.
+	(Trac# 2925, git 8acbf043daf590a9f2ad003e715cd4ffb0b3f979)
+
+648.	[func]		tmark
+	Moved classes pertaining to sending and receiving
+	NameChangeRequests from src/bin/d2 into their own library,
+	libdhcp_ddns, in src/lib/dhcp_ddns.  This allows the
+	classes to be shared between DHDCP-DDNS and its clients,
+	such as the DHCP servers.
+	(Trac# 3065, git 3d39bccaf3f0565152ef73ec3e2cd03e77572c56)
+
+647.	[func]		tmark
+	Added initial implementation of classes for sending
+	and receiving NameChangeRequests between DHCP-DDNS
+	and its clients such as DHCP. This includes both
+	abstract classes and a derivation which traffics
+	requests across UDP sockets.
+	(Trac #3008, git b54530b4539cec4476986442e72c047dddba7b48)
+
+646.	[func]		stephen
+	Extended the hooks framework to add a "validate libraries" function.
+	This will be used to check libraries specified during BIND 10
+	configuration.
+	(Trac #3054, git 0f845ed94f462dee85b67f056656b2a197878b04)
+
+645.	[func]		tomek
+	Added initial set of hooks (pkt4_receive, subnet4_select,
+	lease4_select, pkt4_send) to the DHCPv6 server.
+	(Trac #2994, git be65cfba939a6a7abd3c93931ce35c33d3e8247b)
+
+644.	[func]		marcin
+	b10-dhcp4, b10-dhcp6: Implemented selection of the interfaces
+	that server listens on, using Configuration Manager. It is
+	possible to specify interface names explicitly or use asterisk
+	to specify that server should listen on all available interfaces.
+	Sockets are reopened according to the new configuration as
+	soon as it is committed.
+	(Trac #1555, git f48a3bff3fbbd15584d788a264d5966154394f04)
+
+643.	[bug]		muks
+	When running some unittests as root that depended on insufficient
+	file permissions, the tests used to fail because the root user
+	could still access such files. Such tests are now skipped when
+	they are run as the root user.
+	(Trac #3056, git 92ebabdbcf6168666b03d7f7fbb31f899be39322)
+
+642.	[func]		tomek
+	Added initial set of hooks (pkt6_receive, subnet6_select,
+	lease6_select, pkt6_send) to the DHCPv6 server.
+	(Trac #2995, git d6de376f97313ba40fef989e4a437d184fdf70cc)
+
 641.	[func]		stephen
 	Added the hooks framework. This allows shared libraries of
 	user-written functions to be loaded at run-time and the
@@ -23,13 +116,13 @@
 	structure of per-zone statistics.
 	(Trac #2884, git c0153581c3533ef045a92e68e0464aab00947cbb)
 
-637.	[func]		[tmark]
+637.	[func]		tmark
 	Added initial implementation of NameChangeRequest,
 	which embodies DNS update requests sent to DHCP-DDNS
 	by its clients.
 	(trac3007 git f33bdd59c6a8c8ea883f11578b463277d01c2b70)
 
-636.	[func]		[tmark]
+636.	[func]		tmark
 	Added the initial implementation of configuration parsing for
 	DCHP-DDNS.
 	(Trac #2957, git c04fb71fa44c2a458aac57ae54eeb1711c017a49)

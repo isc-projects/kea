@@ -70,7 +70,7 @@ application when it is not running.
 
 % DCTL_ORDER_ERROR configuration contains more elements than the parsing order
 An error message which indicates that configuration being parsed includes
-element ids not specified the configuration manager's parse order list. This 
+element ids not specified the configuration manager's parse order list. This
 is a programmatic error.
 
 % DCTL_ORDER_NO_ELEMENT element: %1 is in the parsing order but is missing from the configuration
@@ -78,7 +78,7 @@ An error message output during a configuration update.  The program is
 expecting an item but has not found it in the new configuration.  This may
 mean that the BIND 10 configuration database is corrupt.
 
-% DCTL_PARSER_FAIL configuration parsing failed for configuration element: %1, reason: %2 
+% DCTL_PARSER_FAIL configuration parsing failed for configuration element: %1, reason: %2
 On receipt of message containing details to a change of its configuration,
 the server failed to create a parser to decode the contents of the named
 configuration element, or the creation succeeded but the parsing actions
@@ -112,6 +112,10 @@ service first starts.
 This is an informational message issued when the controller is exiting
 following a shut down (normal or otherwise) of the service.
 
+% DHCP_DDNS_AT_MAX_TRANSACTIONS application has %1 queued requests but has reached maximum number of %2 concurrent transactions
+This is a debug message that indicates that the application has DHCP_DDNS
+requests in the queue but is working as many concurrent requests as allowed.
+
 % DHCP_DDNS_COMMAND command directive received, command: %1 - args: %2
 This is a debug message issued when the Dhcp-Ddns application command method
 has been invoked.
@@ -124,19 +128,51 @@ has been invoked.
 This is a debug message issued when the Dhcp-Ddns application encounters an
 unrecoverable error from within the event loop.
 
-% DHCP_DDNS_NO_MATCH No DNS servers match FQDN: %1
+% DHCP_DDNS_INVALID_RESPONSE received response to DNS Update message is malformed: %1
+This is a debug message issued when the DHCP-DDNS application encountered an
+error while decoding a response to DNS Update message. Typically, this error
+will be encountered when a response message is malformed.
+
+% DHCP_DDNS_NO_ELIGIBLE_JOBS although there are queued requests, there are pending transactions for each Queue count: %1  Transaction count: %2
+This is a debug messge issued when all of the queued requests represent clients
+for which there is a an update already in progress.  This may occur under
+normal operations but should be temporary situation.
+
+% DHCP_DDNS_NO_FWD_MATCH_ERROR the configured list of forward DDNS domains does not contain a match for FQDN %1  The request has been discarded.
+This is an error message that indicates that DHCP_DDNS received a request to
+update a the forward DNS information for the given FQDN but for which there are
+no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
+configuration needs to be updated or the source of the FQDN itself should be
+investigated.
+
+% DHCP_DDNS_NO_MATCH No DNS servers match FQDN %1
 This is warning message issued when there are no domains in the configuration
-which match the cited fully qualified domain name (FQDN).  The DNS Update 
+which match the cited fully qualified domain name (FQDN).  The DNS Update
 request for the FQDN cannot be processed.
 
-% DHCP_DDNS_INVALID_RESPONSE received response to DNS Update message is malformed: %1
-This is a debug message issued when the DHCP-DDNS application encountered an error
-while decoding a response to DNS Update message. Typically, this error will be
-encountered when a response message is malformed.
+% DHCP_DDNS_NO_REV_MATCH_ERROR the configured list of reverse DDNS domains does not contain a match for FQDN %1  The request has been discarded.
+This is an error message that indicates that DHCP_DDNS received a request to
+update a the reverse DNS information for the given FQDN but for which there are
+no configured DDNS domains in the DHCP_DDNS configuration.  Either the DHCP_DDNS
+configuration needs to be updated or the source of the FQDN itself should be
+investigated.
 
 % DHCP_DDNS_PROCESS_INIT application init invoked
 This is a debug message issued when the Dhcp-Ddns application enters
 its init method.
+
+% DHCP_DDNS_QUEUE_MGR_QUEUE_FULL application request queue has reached maximum number of entries %1
+This an error message indicating that DHCP-DDNS is receiving DNS update
+requests faster than they can be processed.  This may mean the maximum queue
+needs to be increased, the DHCP-DDNS clients are simply generating too many
+requests too quickly, or perhaps upstream DNS servers are experiencing
+load issues.
+
+% DHCP_DDNS_QUEUE_MGR_RECV_ERROR application's queue manager was notified of a request receive error by its listener.
+This is an error message indicating that the NameChangeRequest listener used by
+DHCP-DDNS to receive requests encountered a IO error.  There should be
+corresponding log messages from the listener layer with more details. This may
+indicate a network connectivity or system resource issue.
 
 % DHCP_DDNS_RUN_ENTER application has entered the event loop
 This is a debug message issued when the Dhcp-Ddns application enters

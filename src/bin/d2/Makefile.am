@@ -2,7 +2,7 @@ SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(BOTAN_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP
@@ -54,10 +54,11 @@ b10_dhcp_ddns_SOURCES += d2_controller.cc d2_controller.h
 b10_dhcp_ddns_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
 b10_dhcp_ddns_SOURCES += d2_config.cc d2_config.h
 b10_dhcp_ddns_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
+b10_dhcp_ddns_SOURCES += d2_queue_mgr.cc d2_queue_mgr.h
 b10_dhcp_ddns_SOURCES += d2_update_message.cc d2_update_message.h
+b10_dhcp_ddns_SOURCES += d2_update_mgr.cc d2_update_mgr.h
 b10_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
 b10_dhcp_ddns_SOURCES += dns_client.cc dns_client.h
-b10_dhcp_ddns_SOURCES += ncr_msg.cc ncr_msg.h
 
 nodist_b10_dhcp_ddns_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes
@@ -68,9 +69,11 @@ b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
-b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la 
+b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
+b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 
 b10_dhcp_ddnsdir = $(pkgdatadir)
 b10_dhcp_ddns_DATA = dhcp-ddns.spec

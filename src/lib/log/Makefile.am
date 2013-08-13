@@ -8,7 +8,6 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libb10-log.la
 libb10_log_la_SOURCES  =
-libb10_log_la_SOURCES += dummylog.h dummylog.cc
 libb10_log_la_SOURCES += logimpl_messages.cc logimpl_messages.h
 libb10_log_la_SOURCES += log_dbglevels.h
 libb10_log_la_SOURCES += log_formatter.h log_formatter.cc

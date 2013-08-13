@@ -39,6 +39,9 @@
 #include <auth/statistics_items.h>
 #include <auth/datasrc_config.h>
 
+#include <config/tests/fake_session.h>
+#include <config/ccsession.h>
+
 #include <util/unittests/mock_socketsession.h>
 #include <dns/tests/unittest_util.h>
 #include <testutils/dnsmessage_test.h>
@@ -265,14 +268,15 @@ updateDatabase(AuthSrv& server, const char* params) {
 
 void
 updateInMemory(AuthSrv& server, const char* origin, const char* filename,
-               bool with_static = true)
+               bool with_static = true, bool mapped = false)
 {
     string spec_txt = "{"
         "\"IN\": [{"
         "   \"type\": \"MasterFiles\","
         "   \"params\": {"
         "       \"" + string(origin) + "\": \"" + string(filename) + "\""
-        "   },"
+        "   }," +
+        string(mapped ? "\"cache-type\": \"mapped\"," : "") +
         "   \"cache-enable\": true"
         "}]";
     if (with_static) {
@@ -2136,6 +2140,48 @@ TEST_F(AuthSrvTest, loadZoneCommand) {
     // it should be initially accepted)
     args->set("origin", Element::create("example.com"));
     sendCommand(server, "loadzone", args, 0);
+}
+
+// Test that the auth server subscribes to the segment readers group when
+// there's a remotely mapped segment.
+#ifdef USE_SHARED_MEMORY
+TEST_F(AuthSrvTest, postReconfigure) {
+#else
+TEST_F(AuthSrvTest, DISABLED_postReconfigure) {
+#endif
+    FakeSession session(ElementPtr(new ListElement),
+                        ElementPtr(new ListElement),
+                        ElementPtr(new ListElement));
+    const string specfile(string(TEST_OWN_DATA_DIR) + "/spec.spec");
+    session.getMessages()->add(isc::config::createAnswer());
+    isc::config::ModuleCCSession mccs(specfile, session, NULL, NULL, false,
+                                      false);
+    server.setConfigSession(&mccs);
+    // First, no lists are there, so no reason to subscribe
+    server.listsReconfigured();
+    EXPECT_FALSE(session.haveSubscription("SegmentReader", "*"));
+    // Enable remote segment
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE, false, true);
+    {
+        DataSrcClientsMgr &mgr(server.getDataSrcClientsMgr());
+        DataSrcClientsMgr::Holder holder(mgr);
+        EXPECT_EQ(SEGMENT_WAITING, holder.findClientList(RRClass::IN())->
+                  getStatus()[0].getSegmentState());
+    }
+    server.listsReconfigured();
+    EXPECT_TRUE(session.haveSubscription("SegmentReader", "*"));
+    // Set the segment to local again
+    updateInMemory(server, "example.", CONFIG_INMEMORY_EXAMPLE);
+    {
+        DataSrcClientsMgr &mgr(server.getDataSrcClientsMgr());
+        DataSrcClientsMgr::Holder holder(mgr);
+        EXPECT_EQ(SEGMENT_INUSE, holder.findClientList(RRClass::IN())->
+                  getStatus()[0].getSegmentState());
+        EXPECT_EQ("local", holder.findClientList(RRClass::IN())->
+                  getStatus()[0].getSegmentType());
+    }
+    server.listsReconfigured();
+    EXPECT_FALSE(session.haveSubscription("SegmentReader", "*"));
 }
 
 }

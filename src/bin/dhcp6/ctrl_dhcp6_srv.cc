@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 #include <config/ccsession.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/dhcp_config_parser.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
@@ -100,7 +101,27 @@ ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr new_config) {
     }
 
     // Configure the server.
-    return (configureDhcp6Server(*server_, merged_config));
+    ConstElementPtr answer = configureDhcp6Server(*server_, merged_config);
+
+    // Check that configuration was successful. If not, do not reopen sockets.
+    int rcode = 0;
+    parseAnswer(rcode, answer);
+    if (rcode != 0) {
+        return (answer);
+    }
+
+    // Configuration may change active interfaces. Therefore, we have to reopen
+    // sockets according to new configuration. This operation is not exception
+    // safe and we really don't want to emit exceptions to the callback caller.
+    // Instead, catch an exception and create appropriate answer.
+    try {
+        server_->openActiveSockets(server_->getPort());
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "failed to open sockets after server reconfiguration: " << ex.what();
+        answer = isc::config::createAnswer(1, err.str());
+    }
+    return (answer);
 }
 
 ConstElementPtr
@@ -172,8 +193,13 @@ void ControlledDhcpv6Srv::establishSession() {
     try {
         // Pull the full configuration out from the session.
         configureDhcp6Server(*this, config_session_->getFullConfig());
+        // Configuration may disable or enable interfaces so we have to
+        // reopen sockets according to new configuration.
+        openActiveSockets(getPort());
+
     } catch (const DhcpConfigError& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(ex.what());
+
     }
 
     /// Integrate the asynchronous I/O model of BIND 10 configuration
@@ -227,7 +253,6 @@ ControlledDhcpv6Srv::execDhcpv6ServerCommand(const std::string& command_id,
         return (answer);
     }
 }
-
 
 };
 };

@@ -69,6 +69,7 @@ libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 libdhcpsrv_unittests_LDADD += $(GTEST_LDADD)
 endif
 

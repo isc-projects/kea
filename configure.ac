@@ -129,7 +129,7 @@ AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
-B10_CXXFLAGS="$B10_CXXFLAGS -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+B10_CXXFLAGS="$B10_CXXFLAGS -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 case "$host" in
 *-solaris*)
 	MULTITHREADING_FLAG=-pthreads
@@ -912,6 +912,17 @@ if test "x$use_shared_memory" = "xyes"; then
 fi
 AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
 
+if test "$BOOST_OFFSET_PTR_OLD" = "yes" -a "$use_shared_memory" = "yes" ; then
+    AC_MSG_ERROR([You're trying to compile against boost older than 1.48 with
+shared memory. Older versions of boost have a bug which causes segfaults in
+offset_ptr implementation when compiled by GCC with optimisations enabled.
+See ticket no. 3025 for details.
+
+Either update boost to newer version or use --without-shared-memory.
+Note that most users likely don't need shared memory support.
+])
+fi
+
 # Add some default CPP flags needed for Boost, identified by the AX macro.
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
 
@@ -1132,6 +1143,11 @@ if test "x$enable_generate_docs" != xno ; then
     fi
     AC_MSG_RESULT(yes)
   fi
+
+  AC_PATH_PROG([ELINKS], [elinks])
+  if test -z "$ELINKS"; then
+    AC_MSG_ERROR("elinks not found; it is required for --enable-generate-docs")
+  fi
 fi
 
 
@@ -1295,6 +1311,7 @@ AC_CONFIG_FILES([Makefile
                  src/lib/python/isc/ddns/tests/Makefile
                  src/lib/python/isc/memmgr/Makefile
                  src/lib/python/isc/memmgr/tests/Makefile
+                 src/lib/python/isc/memmgr/tests/testdata/Makefile
                  src/lib/python/isc/xfrin/Makefile
                  src/lib/python/isc/xfrin/tests/Makefile
                  src/lib/python/isc/server_common/Makefile
@@ -1316,6 +1333,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/dns/benchmarks/Makefile
                  src/lib/dhcp/Makefile
                  src/lib/dhcp/tests/Makefile
+                 src/lib/dhcp_ddns/Makefile
+                 src/lib/dhcp_ddns/tests/Makefile
                  src/lib/dhcpsrv/Makefile
                  src/lib/dhcpsrv/tests/Makefile
                  src/lib/exceptions/Makefile
