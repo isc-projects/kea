@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <d2/ncr_msg.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 
@@ -22,7 +22,7 @@
 #include <limits>
 
 namespace isc {
-namespace d2 {
+namespace dhcp_ddns {
 
 /********************************* D2Dhcid ************************************/
 
@@ -68,7 +68,7 @@ D2Dhcid::fromDUID(const isc::dhcp::DUID& duid,
     // valid. It is caller's responsibility to make sure it is in
     // the valid format. Here we just make sure it is not empty.
     if (wire_fqdn.empty()) {
-        isc_throw(isc::d2::NcrMessageError,
+        isc_throw(isc::dhcp_ddns::NcrMessageError,
                   "empty FQDN used to create DHCID");
     }
 
@@ -78,7 +78,7 @@ D2Dhcid::fromDUID(const isc::dhcp::DUID& duid,
     // but let's be on the safe side here and make sure that empty
     // DUID is not returned.
     if (data.empty()) {
-        isc_throw(isc::d2::NcrMessageError,
+        isc_throw(isc::dhcp_ddns::NcrMessageError,
                   "empty DUID used to create DHCID");
     }
 
@@ -94,7 +94,7 @@ D2Dhcid::fromDUID(const isc::dhcp::DUID& duid,
         secure = sha.process(static_cast<const Botan::byte*>(&data[0]),
                              data.size());
     } catch (const std::exception& ex) {
-        isc_throw(isc::d2::NcrMessageError,
+        isc_throw(isc::dhcp_ddns::NcrMessageError,
                   "error while generating DHCID from DUID: "
                   << ex.what());
     }
@@ -511,6 +511,24 @@ NameChangeRequest::toText() const {
 
     return (stream.str());
 }
+
+bool
+NameChangeRequest::operator == (const NameChangeRequest& other) {
+    return ((change_type_ == other.change_type_) &&
+            (forward_change_ == other.forward_change_) &&
+            (reverse_change_ == other.reverse_change_) &&
+            (fqdn_ == other.fqdn_) &&
+            (ip_address_ == other.ip_address_) &&
+            (dhcid_ == other.dhcid_) &&
+            (lease_expires_on_ == other.lease_expires_on_) &&
+            (lease_length_ == other.lease_length_));
+}
+
+bool
+NameChangeRequest::operator != (const NameChangeRequest& other) {
+    return (!(*this == other));
+}
+
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

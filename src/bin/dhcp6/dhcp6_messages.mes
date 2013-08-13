@@ -14,6 +14,11 @@
 
 $NAMESPACE isc::dhcp
 
+% DHCP6_ACTIVATE_INTERFACE activating interface %1
+This message is printed when DHCPv6 server enabled an interface to be used
+to receive DHCPv6 traffic. IPv6 socket on this interface will be opened once
+Interface Manager starts up procedure of opening sockets.
+
 % DHCP6_CCSESSION_STARTED control channel session started on socket %1
 A debug message issued during startup after the IPv6 DHCP server has
 successfully established a session with the BIND 10 control channel.
@@ -82,6 +87,11 @@ New  values: hostname = %2, reverse mapping = %3, forward mapping = %4
 This debug message is logged when FQDN mapping for a particular lease has been
 changed by the recent Renew message. This mapping will be changed in DNS.
 
+% DHCP6_DEACTIVATE_INTERFACE deactivate interface %1
+This message is printed when DHCPv6 server disables an interface from being
+used to receive DHCPv6 traffic. Sockets on this interface will not be opened
+by the Interface Manager until interface is enabled.
+
 % DHCP6_DDNS_SEND_FQDN sending DHCPv6 Client FQDN Option to the client: %1
 This debug message is logged when server includes an DHCPv6 Client FQDN Option
 in its response to the client.
@@ -101,6 +111,55 @@ This error message is issued when a lease being deleted contains an indication
 that the DNS Update has been performed for it, but the FQDN held in the lease
 database has invalid format and can't be transformed to the canonical on-wire
 format.
+
+% DHCP6_HOOK_BUFFER_RCVD_SKIP received DHCPv6 buffer was dropped because a callout set the skip flag.
+This debug message is printed when a callout installed on buffer6_receive
+hook point set the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to drop the packet.
+
+% DHCP6_HOOK_BUFFER_SEND_SKIP prepared DHCPv6 response was dropped because a callout set the skip flag.
+This debug message is printed when a callout installed on buffer6_receive
+hook point set the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to drop the packet.
+Server completed all the processing (e.g. may have assigned, updated
+or released leases), but the response will not be send to the client.
+
+% DHCP6_HOOK_LEASE6_RENEW_SKIP DHCPv6 lease was not renewed because a callout set the skip flag.
+This debug message is printed when a callout installed on lease6_renew
+hook point set the skip flag. For this particular hook point, the setting
+of the flag by a callout instructs the server to not renew a lease. If
+client requested renewal of multiples leases (by sending multiple IA
+options), the server will skip the renewal of the one in question and
+will proceed with other renewals as usual.
+
+% DHCP6_HOOK_LEASE6_RELEASE_SKIP DHCPv6 lease was not released because a callout set the skip flag.
+This debug message is printed when a callout installed on lease6_release
+hook point set the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to not release
+a lease. If client requested release of multiples leases (by sending
+multiple IA options), the server will retains this particular lease and
+will proceed with other renewals as usual.
+
+% DHCP6_HOOK_PACKET_RCVD_SKIP received DHCPv6 packet was dropped because a callout set the skip flag.
+This debug message is printed when a callout installed on the pkt6_receive
+hook point set the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to drop the packet.
+
+% DHCP6_HOOK_PACKET_SEND_SKIP prepared DHCPv6 response was not sent because a callout set the skip flag.
+This debug message is printed when a callout installed on the pkt6_send
+hook point set the skip flag. For this particular hook point, the setting
+of the flag by a callout instructs the server to drop the packet. This
+effectively means that the client will not get any response, even though
+the server processed client's request and acted on it (e.g. possibly
+allocated a lease).
+
+% DHCP6_HOOK_SUBNET6_SELECT_SKIP no subnet was selected because a callout set the skip flag.
+This debug message is printed when a callout installed on the
+subnet6_select hook point set the skip flag. For this particular hook
+point, the setting of the flag instructs the server not to choose a
+subnet, an action that severely limits further processing; the server
+will be only able to offer global options - no addresses or prefixes
+will be assigned.
 
 % DHCP6_LEASE_ADVERT lease %1 advertised (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully advertised
@@ -137,6 +196,11 @@ IPv6 DHCP server but it is not running.
 % DHCP6_NO_INTERFACES failed to detect any network interfaces
 During startup the IPv6 DHCP server failed to detect any network
 interfaces and is therefore shutting down.
+
+% DHCP6_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
+This warning message is issued when current server configuration specifies
+no interfaces that server should listen on, or specified interfaces are not
+configured to receive the traffic.
 
 % DHCP6_OPEN_SOCKET opening sockets on port %1
 A debug message issued during startup, this indicates that the IPv6 DHCP
@@ -196,10 +260,10 @@ actions and committal of changes failed.  The message has been output in
 response to a non-BIND 10 exception being raised.  Additional messages
 may give further information.
 
-The most likely cause of this is that the specification file for the server
-(which details the allowable contents of the configuration) is not correct for
-this version of BIND 10.  This former may be the result of an interrupted
-installation of an update to BIND 10.
+The most likely cause of this is that the specification file for the
+server (which details the allowable contents of the configuration) is
+not correct for this version of BIND 10.  This may be the result of an
+interrupted installation of an update to BIND 10.
 
 % DHCP6_PARSER_FAIL failed to create or run parser for configuration element %1: %2
 On receipt of message containing details to a change of its configuration,
@@ -344,6 +408,12 @@ which the DHCPv6 server has not been configured. The cause is most likely due
 to a misconfiguration of the server. The packet processing will continue, but
 the response will only contain generic configuration parameters and no
 addresses or prefixes.
+
+% DHCP6_UNKNOWN_MSG_RECEIVED received unknown message (type %d) on interface %2
+This debug message is printed when server receives a message of unknown type.
+That could either mean missing functionality or invalid or broken relay or client.
+The list of formally defined message types is available here:
+www.iana.org/assignments/dhcpv6-parameters.
 
 % DHCP6_UNKNOWN_RELEASE received RELEASE from unknown client (duid=%1, iaid=%2)
 This warning message is printed when client attempts to release a lease,

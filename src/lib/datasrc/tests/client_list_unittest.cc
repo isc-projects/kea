@@ -368,7 +368,8 @@ public:
                        const std::string& datasrc_name,
                        ZoneTableSegment::MemorySegmentOpenMode mode,
                        ConstElementPtr config_params) {
-        list.resetMemorySegment(datasrc_name, mode, config_params);
+        EXPECT_TRUE(list.resetMemorySegment(datasrc_name, mode,
+                                            config_params));
     }
     virtual std::string getType() {
         return ("mapped");
@@ -382,6 +383,13 @@ INSTANTIATE_TEST_CASE_P(ListTestMapped, ListTest,
                                               &mapped_segment_type)));
 
 #endif
+
+// Calling reset on empty list finds no data and returns false.
+TEST_P(ListTest, emptyReset) {
+    EXPECT_FALSE(list_->resetMemorySegment("Something",
+                                           memory::ZoneTableSegment::CREATE,
+                                           Element::create()));
+}
 
 // Test the test itself
 TEST_P(ListTest, selfTest) {

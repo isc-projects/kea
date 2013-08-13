@@ -81,8 +81,15 @@ HooksManager::loadLibrariesInternal(const std::vector<std::string>& libraries) {
     lm_collection_.reset(new LibraryManagerCollection(libraries));
     bool status = lm_collection_->loadLibraries();
 
-    // ... and obtain the callout manager for them.
-    callout_manager_ = lm_collection_->getCalloutManager();
+    if (status) {
+        // ... and obtain the callout manager for them if successful.
+        callout_manager_ = lm_collection_->getCalloutManager();
+    } else {
+        // Unable to load libraries, reset to state before this function was
+        // called.
+        lm_collection_.reset();
+        callout_manager_.reset();
+    }
 
     return (status);
 }
@@ -122,6 +129,19 @@ HooksManager::createCalloutHandleInternal() {
 boost::shared_ptr<CalloutHandle>
 HooksManager::createCalloutHandle() {
     return (getHooksManager().createCalloutHandleInternal());
+}
+
+// Get the list of the names of loaded libraries.
+
+std::vector<std::string>
+HooksManager::getLibraryNamesInternal() const {
+    return (lm_collection_ ? lm_collection_->getLibraryNames()
+                           : std::vector<std::string>());
+}
+
+std::vector<std::string>
+HooksManager::getLibraryNames() {
+    return (getHooksManager().getLibraryNamesInternal());
 }
 
 // Perform conditional initialization if nothing is loaded.
@@ -167,6 +187,13 @@ HooksManager::postCalloutsLibraryHandleInternal() {
 isc::hooks::LibraryHandle&
 HooksManager::postCalloutsLibraryHandle() {
     return (getHooksManager().postCalloutsLibraryHandleInternal());
+}
+
+// Validate libraries
+
+std::vector<std::string>
+HooksManager::validateLibraries(const std::vector<std::string>& libraries) {
+    return (LibraryManagerCollection::validateLibraries(libraries));
 }
 
 } // namespace util

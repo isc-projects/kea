@@ -49,17 +49,14 @@ TESTS += dhcp6_unittests
 
 dhcp6_unittests_SOURCES  = dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
+dhcp6_unittests_SOURCES += hooks_unittest.cc
+dhcp6_unittests_SOURCES += dhcp6_test_utils.h
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
 dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../dhcp6_log.h ../dhcp6_log.cc
 dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../config_parser.cc ../config_parser.h
-
-# Temporarily compile this file here. It will be removed once libdhcp-ddns
-# is implemented which will include this file and other files required
-# by DHCPv6.
-dhcp6_unittests_SOURCES += ../../d2/ncr_msg.cc ../../d2/ncr_msg.h
 nodist_dhcp6_unittests_SOURCES = ../dhcp6_messages.h ../dhcp6_messages.cc
 
 dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
@@ -69,10 +66,12 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

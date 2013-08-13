@@ -552,4 +552,18 @@ TEST_F(LibraryManagerTest, LoadMultipleLibraries) {
     EXPECT_TRUE(lib_manager_4.unloadLibrary());
 }
 
+// Check that libraries can be validated.
+
+TEST_F(LibraryManagerTest, validateLibraries) {
+    EXPECT_TRUE(LibraryManager::validateLibrary(BASIC_CALLOUT_LIBRARY));
+    EXPECT_TRUE(LibraryManager::validateLibrary(FULL_CALLOUT_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(FRAMEWORK_EXCEPTION_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(INCORRECT_VERSION_LIBRARY));
+    EXPECT_TRUE(LibraryManager::validateLibrary(LOAD_CALLOUT_LIBRARY));
+    EXPECT_TRUE(LibraryManager::validateLibrary(LOAD_ERROR_CALLOUT_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(NOT_PRESENT_LIBRARY));
+    EXPECT_FALSE(LibraryManager::validateLibrary(NO_VERSION_LIBRARY));
+    EXPECT_TRUE(LibraryManager::validateLibrary(UNLOAD_CALLOUT_LIBRARY));
+}
+
 } // Anonymous namespace

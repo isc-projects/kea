@@ -766,9 +766,9 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     ASSERT_TRUE(rcvPkt); // received our own packet
 
     // let's check that we received what was sent
-    ASSERT_EQ(sendPkt->getData().size(), rcvPkt->getData().size());
-    EXPECT_EQ(0, memcmp(&sendPkt->getData()[0], &rcvPkt->getData()[0],
-                        rcvPkt->getData().size()));
+    ASSERT_EQ(sendPkt->data_.size(), rcvPkt->data_.size());
+    EXPECT_EQ(0, memcmp(&sendPkt->data_[0], &rcvPkt->data_[0],
+                        rcvPkt->data_.size()));
 
     EXPECT_EQ(sendPkt->getRemoteAddr().toText(), rcvPkt->getRemoteAddr().toText());
 

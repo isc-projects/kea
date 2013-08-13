@@ -109,9 +109,11 @@ datasrcConfigHandler(AuthSrv* server, bool* first_time,
         assert(config_session != NULL);
         *first_time = false;
         server->getDataSrcClientsMgr().reconfigure(
-            config_session->getRemoteConfigValue("data_sources", "classes"));
+            config_session->getRemoteConfigValue("data_sources", "classes"),
+            boost::bind(&AuthSrv::listsReconfigured, server));
     } else if (config->contains("classes")) {
-        server->getDataSrcClientsMgr().reconfigure(config->get("classes"));
+        server->getDataSrcClientsMgr().reconfigure(config->get("classes"),
+            boost::bind(&AuthSrv::listsReconfigured, server));
     }
 }
 
@@ -173,12 +175,11 @@ main(int argc, char* argv[]) {
         auth_server = auth_server_.get();
         LOG_INFO(auth_logger, AUTH_SERVER_CREATED);
 
-        SimpleCallback* checkin = auth_server->getCheckinProvider();
         IOService& io_service = auth_server->getIOService();
         DNSLookup* lookup = auth_server->getDNSLookupProvider();
         DNSAnswer* answer = auth_server->getDNSAnswerProvider();
 
-        DNSService dns_service(io_service, checkin, lookup, answer);
+        DNSService dns_service(io_service, lookup, answer);
         auth_server->setDNSService(dns_service);
         LOG_DEBUG(auth_logger, DBG_AUTH_START, AUTH_DNS_SERVICES_CREATED);
 

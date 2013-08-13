@@ -157,6 +157,17 @@ TEST_F(CCSessionTest, notifyNoParams) {
             session.getMsgQueue()->get(1)->toWire();
 }
 
+// Try to subscribe and unsubscribe once again
+TEST_F(CCSessionTest, subscribe) {
+    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL, false,
+                         false);
+    EXPECT_FALSE(session.haveSubscription("A group", "*"));
+    mccs.subscribe("A group");
+    EXPECT_TRUE(session.haveSubscription("A group", "*"));
+    mccs.unsubscribe("A group");
+    EXPECT_FALSE(session.haveSubscription("A group", "*"));
+}
+
 TEST_F(CCSessionTest, createAnswer) {
     ConstElementPtr answer;
     answer = createAnswer();
@@ -686,6 +697,16 @@ TEST_F(CCSessionTest, remoteConfig) {
     }
 }
 
+void
+callback(std::string* command, std::string* target, ConstElementPtr *params,
+         const std::string& command_real, const std::string& target_real,
+         const ConstElementPtr& params_real)
+{
+    *command = command_real;
+    *target = target_real;
+    *params = params_real;
+}
+
 TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
     // client will ask for config
     session.getMessages()->add(createAnswer(0, el("{  }")));
@@ -721,6 +742,22 @@ TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
     result = mccs.checkCommand();
     EXPECT_EQ(0, session.getMsgQueue()->size());
     EXPECT_EQ(0, result);
+
+    // Check that we can get the ignored commands by registering a callback
+    std::string command, target;
+    ConstElementPtr params;
+    mccs.setUnhandledCallback(boost::bind(&callback, &command, &target,
+                                          &params, _1, _2, _3));
+    session.addMessage(el("{ \"command\": [ \"good_command\","
+                          "{\"param\": true} ] }"), "Spec1", "*");
+    EXPECT_EQ(1, session.getMsgQueue()->size());
+    result = mccs.checkCommand();
+    EXPECT_EQ(0, session.getMsgQueue()->size());
+    EXPECT_EQ(0, result);
+
+    EXPECT_EQ("good_command", command);
+    EXPECT_EQ("Spec1", target);
+    EXPECT_TRUE(params && el("{\"param\": true}")->equals(*params));
 }
 
 TEST_F(CCSessionTest, initializationFail) {

@@ -14,6 +14,11 @@
 
 $NAMESPACE isc::dhcp
 
+% DHCP4_ACTIVATE_INTERFACE activating interface %1
+This message is printed when DHCPv4 server enabled an interface to be used
+to receive DHCPv4 traffic. IPv4 socket on this interface will be opened once
+Interface Manager starts up procedure of opening sockets.
+
 % DHCP4_CCSESSION_STARTED control channel session started on socket %1
 A debug message issued during startup after the IPv4 DHCP server has
 successfully established a session with the BIND 10 control channel.
@@ -37,7 +42,7 @@ This critical error message indicates that the initial DHCPv4
 configuration has failed. The server will start, but nothing will be
 served until the configuration has been corrected.
 
-% DHCP4_CONFIG_NEW_SUBNET A new subnet has been added to configuration: %1
+% DHCP4_CONFIG_NEW_SUBNET a new subnet has been added to configuration: %1
 This is an informational message reporting that the configuration has
 been extended to include the specified IPv4 subnet.
 
@@ -60,6 +65,30 @@ This informational message is printed every time DHCPv4 server is started
 and gives both the type and name of the database being used to store
 lease and other information.
 
+% DHCP4_DEACTIVATE_INTERFACE deactivate interface %1
+This message is printed when DHCPv4 server disables an interface from being
+used to receive DHCPv4 traffic. Sockets on this interface will not be opened
+by the Interface Manager until interface is enabled.
+
+% DHCP4_HOOK_PACKET_RCVD_SKIP received DHCPv4 packet was dropped, because a callout set the skip flag.
+This debug message is printed when a callout installed on the pkt4_receive
+hook point sets the skip flag. For this particular hook point, the
+setting of the flag instructs the server to drop the packet.
+
+% DHCP4_HOOK_PACKET_SEND_SKIP prepared DHCPv6 response was not sent, because a callout set skip flag.
+This debug message is printed when a callout installed on the pkt4_send
+hook point sets the skip flag. For this particular hook point, the setting
+of the flag instructs the server to drop the packet. This means that
+the client will not get any response, even though the server processed
+client's request and acted on it (e.g. possibly allocated a lease).
+
+% DHCP4_HOOK_SUBNET4_SELECT_SKIP no subnet was selected, because a callout set skip flag.
+This debug message is printed when a callout installed on the
+subnet4_select hook point sets the skip flag. For this particular hook
+point, the setting of the flag instructs the server not to choose a
+subnet, an action that severely limits further processing; the server
+will be only able to offer global options - no addresses will be assigned.
+
 % DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of othe advertised
@@ -81,6 +110,11 @@ This message indicates that the server failed to grant a lease to the
 specified client after receiving a REQUEST message from it.  There are many
 possible reasons for such a failure. Additional messages will indicate the
 reason.
+
+% DHCP4_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
+This warning message is issued when current server configuration specifies
+no interfaces that server should listen on, or specified interfaces are not
+configured to receive the traffic.
 
 % DHCP4_NOT_RUNNING IPv4 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
@@ -114,11 +148,6 @@ the message.
 This error is output if the IPv4 DHCP server fails to send an assembled
 DHCP message to a client. The reason for the error is included in the
 message.
-
-% DHCP4_PACK_FAIL failed to assemble response correctly
-This error is output if the server failed to assemble the data to be
-returned to the client into a valid packet.  The cause is most likely
-to be a programming error: please raise a bug report.
 
 % DHCP4_PARSER_COMMIT_EXCEPTION parser failed to commit changes
 On receipt of message containing details to a change of the IPv4 DHCP

@@ -27,7 +27,7 @@ from socketserver import *
 import os
 from isc.config.ccsession import *
 from isc.cc import SessionError, SessionTimeout
-from isc.statistics import Counters
+from isc.statistics.dns import Counters
 from isc.notify import notify_out
 import isc.util.process
 import fcntl
@@ -1018,6 +1018,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
 
 class XfroutServer:
     def __init__(self):
+        self._default_notify_address = ''
+        self._default_notify_port = 53
         self._unix_socket_server = None
         self._listen_sock_file = UNIX_SOCKET_FILE
         self._shutdown_event = threading.Event()
@@ -1046,7 +1048,13 @@ class XfroutServer:
         self._notifier = notify_out.NotifyOut(datasrc)
         if 'also_notify' in self._config_data:
             for slave in self._config_data['also_notify']:
-                self._notifier.add_slave(slave['address'], slave['port'])
+                address = self._default_notify_address
+                if 'address' in slave:
+                    address = slave['address']
+                port = self._default_notify_port
+                if 'port' in slave:
+                    port = slave['port']
+                self._notifier.add_slave(address, port)
         self._notifier.dispatcher()
 
     def send_notify(self, zone_name, zone_class):

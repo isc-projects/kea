@@ -15,8 +15,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
-#include <config/ccsession.h>
-#include <d2/ncr_msg.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
@@ -26,15 +25,18 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp6/config_parser.h>
-#include <dhcp6/dhcp6_srv.h>
+#include <dhcp/dhcp6.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/utils.h>
 #include <util/buffer.h>
 #include <util/range_utilities.h>
+#include <hooks/server_hooks.h>
 
+#include <dhcp6/tests/dhcp6_test_utils.h>
 #include <boost/pointer_cast.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -44,12 +46,12 @@
 #include <sstream>
 
 using namespace isc;
+using namespace isc::test;
 using namespace isc::asiolink;
-using namespace isc::config;
-using namespace isc::d2;
-using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp_ddns;
 using namespace isc::util;
+using namespace isc::hooks;
 using namespace std;
 
 // namespace has to be named, because friends are defined in Dhcpv6Srv class
@@ -59,290 +61,6 @@ namespace {
 const uint8_t FQDN_FLAG_S = 0x1;
 const uint8_t FQDN_FLAG_O = 0x2;
 const uint8_t FQDN_FLAG_N = 0x4;
-
-class NakedDhcpv6Srv: public Dhcpv6Srv {
-    // "naked" Interface Manager, exposes internal members
-public:
-    NakedDhcpv6Srv(uint16_t port) : Dhcpv6Srv(port) {
-        // Open the "memfile" database for leases
-        std::string memfile = "type=memfile";
-        LeaseMgrFactory::create(memfile);
-    }
-
-    virtual ~NakedDhcpv6Srv() {
-        // Close the lease database
-        LeaseMgrFactory::destroy();
-    }
-
-    using Dhcpv6Srv::processSolicit;
-    using Dhcpv6Srv::processRequest;
-    using Dhcpv6Srv::processRenew;
-    using Dhcpv6Srv::processRelease;
-    using Dhcpv6Srv::processClientFqdn;
-    using Dhcpv6Srv::createNameChangeRequests;
-    using Dhcpv6Srv::createRemovalNameChangeRequest;
-    using Dhcpv6Srv::createStatusCode;
-    using Dhcpv6Srv::selectSubnet;
-    using Dhcpv6Srv::sanityCheck;
-    using Dhcpv6Srv::loadServerID;
-    using Dhcpv6Srv::writeServerID;
-    using Dhcpv6Srv::name_change_reqs_;
-};
-
-static const char* DUID_FILE = "server-id-test.txt";
-
-// test fixture for any tests requiring blank/empty configuration
-// serves as base class for additional tests
-class NakedDhcpv6SrvTest : public ::testing::Test {
-public:
-
-    NakedDhcpv6SrvTest() : rcode_(-1) {
-        // it's ok if that fails. There should not be such a file anyway
-        unlink(DUID_FILE);
-    }
-
-    // Generate IA_NA option with specified parameters
-    boost::shared_ptr<Option6IA> generateIA(uint32_t iaid, uint32_t t1, uint32_t t2) {
-        boost::shared_ptr<Option6IA> ia =
-            boost::shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, iaid));
-        ia->setT1(t1);
-        ia->setT2(t2);
-        return (ia);
-    }
-
-    /// @brief generates interface-id option, based on text
-    ///
-    /// @param iface_id textual representation of the interface-id content
-    ///
-    /// @return pointer to the option object
-    OptionPtr generateInterfaceId(const string& iface_id) {
-        OptionBuffer tmp(iface_id.begin(), iface_id.end());
-        return OptionPtr(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
-    }
-
-    // Generate client-id option
-    OptionPtr generateClientId(size_t duid_size = 32) {
-
-        OptionBuffer clnt_duid(duid_size);
-        for (int i = 0; i < duid_size; i++) {
-            clnt_duid[i] = 100 + i;
-        }
-
-        duid_ = DuidPtr(new DUID(clnt_duid));
-
-        return (OptionPtr(new Option(Option::V6, D6O_CLIENTID,
-                                     clnt_duid.begin(),
-                                     clnt_duid.begin() + duid_size)));
-    }
-
-    // Checks if server response (ADVERTISE or REPLY) includes proper server-id.
-    void checkServerId(const Pkt6Ptr& rsp, const OptionPtr& expected_srvid) {
-        // check that server included its server-id
-        OptionPtr tmp = rsp->getOption(D6O_SERVERID);
-        EXPECT_EQ(tmp->getType(), expected_srvid->getType() );
-        ASSERT_EQ(tmp->len(), expected_srvid->len() );
-        EXPECT_TRUE(tmp->getData() == expected_srvid->getData());
-    }
-
-    // Checks if server response (ADVERTISE or REPLY) includes proper client-id.
-    void checkClientId(const Pkt6Ptr& rsp, const OptionPtr& expected_clientid) {
-        // check that server included our own client-id
-        OptionPtr tmp = rsp->getOption(D6O_CLIENTID);
-        ASSERT_TRUE(tmp);
-        EXPECT_EQ(expected_clientid->getType(), tmp->getType());
-        ASSERT_EQ(expected_clientid->len(), tmp->len());
-
-        // check that returned client-id is valid
-        EXPECT_TRUE(expected_clientid->getData() == tmp->getData());
-    }
-
-    // Checks if server response is a NAK
-    void checkNakResponse(const Pkt6Ptr& rsp, uint8_t expected_message_type,
-                          uint32_t expected_transid,
-                          uint16_t expected_status_code) {
-        // Check if we get response at all
-        checkResponse(rsp, expected_message_type, expected_transid);
-
-        // Check that IA_NA was returned
-        OptionPtr option_ia_na = rsp->getOption(D6O_IA_NA);
-        ASSERT_TRUE(option_ia_na);
-
-        // check that the status is no address available
-        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(option_ia_na);
-        ASSERT_TRUE(ia);
-
-        checkIA_NAStatusCode(ia, expected_status_code);
-    }
-
-    // Checks that server rejected IA_NA, i.e. that it has no addresses and
-    // that expected status code really appears there. In some limited cases
-    // (reply to RELEASE) it may be used to verify positive case, where
-    // IA_NA response is expected to not include address.
-    //
-    // Status code indicates type of error encountered (in theory it can also
-    // indicate success, but servers typically don't send success status
-    // as this is the default result and it saves bandwidth)
-    void checkIA_NAStatusCode(const boost::shared_ptr<Option6IA>& ia,
-                            uint16_t expected_status_code) {
-        // Make sure there is no address assigned.
-        EXPECT_FALSE(ia->getOption(D6O_IAADDR));
-
-        // T1, T2 should be zeroed
-        EXPECT_EQ(0, ia->getT1());
-        EXPECT_EQ(0, ia->getT2());
-
-        OptionCustomPtr status =
-            boost::dynamic_pointer_cast<OptionCustom>(ia->getOption(D6O_STATUS_CODE));
-
-        // It is ok to not include status success as this is the default behavior
-        if (expected_status_code == STATUS_Success && !status) {
-            return;
-        }
-
-        EXPECT_TRUE(status);
-
-        if (status) {
-            // We don't have dedicated class for status code, so let's just interpret
-            // first 2 bytes as status. Remainder of the status code option content is
-            // just a text explanation what went wrong.
-            EXPECT_EQ(static_cast<uint16_t>(expected_status_code),
-                      status->readInteger<uint16_t>(0));
-        }
-    }
-
-    void checkMsgStatusCode(const Pkt6Ptr& msg, uint16_t expected_status) {
-        OptionCustomPtr status =
-            boost::dynamic_pointer_cast<OptionCustom>(msg->getOption(D6O_STATUS_CODE));
-
-        // It is ok to not include status success as this is the default behavior
-        if (expected_status == STATUS_Success && !status) {
-            return;
-        }
-
-        EXPECT_TRUE(status);
-        if (status) {
-            // We don't have dedicated class for status code, so let's just interpret
-            // first 2 bytes as status. Remainder of the status code option content is
-            // just a text explanation what went wrong.
-            EXPECT_EQ(static_cast<uint16_t>(expected_status),
-                      status->readInteger<uint16_t>(0));
-        }
-    }
-
-    // Basic checks for generated response (message type and transaction-id).
-    void checkResponse(const Pkt6Ptr& rsp, uint8_t expected_message_type,
-                       uint32_t expected_transid) {
-        ASSERT_TRUE(rsp);
-        EXPECT_EQ(expected_message_type, rsp->getType());
-        EXPECT_EQ(expected_transid, rsp->getTransid());
-    }
-
-    // Generates client's packet holding an FQDN option.
-
-    virtual ~NakedDhcpv6SrvTest() {
-        // Let's clean up if there is such a file.
-        unlink(DUID_FILE);
-    };
-
-    // A DUID used in most tests (typically as client-id)
-    DuidPtr duid_;
-
-    int rcode_;
-    ConstElementPtr comment_;
-};
-
-// Provides suport for tests against a preconfigured subnet6
-// extends upon NakedDhcp6SrvTest
-class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
-public:
-    /// Name of the server-id file (used in server-id tests)
-
-    // these are empty for now, but let's keep them around
-    Dhcpv6SrvTest() {
-        subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
-                                         2000, 3000, 4000));
-        pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
-        subnet_->addPool(pool_);
-
-        CfgMgr::instance().deleteSubnets6();
-        CfgMgr::instance().addSubnet6(subnet_);
-    }
-
-    // Checks that server response (ADVERTISE or REPLY) contains proper IA_NA option
-    // It returns IAADDR option for each chaining with checkIAAddr method.
-    boost::shared_ptr<Option6IAAddr> checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
-                                            uint32_t expected_t1, uint32_t expected_t2) {
-        OptionPtr tmp = rsp->getOption(D6O_IA_NA);
-        // Can't use ASSERT_TRUE() in method that returns something
-        if (!tmp) {
-            ADD_FAILURE() << "IA_NA option not present in response";
-            return (boost::shared_ptr<Option6IAAddr>());
-        }
-
-        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-        if (!ia) {
-            ADD_FAILURE() << "IA_NA cannot convert option ptr to Option6";
-            return (boost::shared_ptr<Option6IAAddr>());
-        }
-
-        EXPECT_EQ(expected_iaid, ia->getIAID());
-        EXPECT_EQ(expected_t1, ia->getT1());
-        EXPECT_EQ(expected_t2, ia->getT2());
-
-        tmp = ia->getOption(D6O_IAADDR);
-        boost::shared_ptr<Option6IAAddr> addr = boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
-        return (addr);
-    }
-
-    // Check that generated IAADDR option contains expected address
-    // and lifetime values match the configured subnet
-    void checkIAAddr(const boost::shared_ptr<Option6IAAddr>& addr,
-                     const IOAddress& expected_addr,
-                     uint32_t /* expected_preferred */,
-                     uint32_t /* expected_valid */) {
-
-        // Check that the assigned address is indeed from the configured pool.
-        // Note that when comparing addresses, we compare the textual
-        // representation. IOAddress does not support being streamed to
-        // an ostream, which means it can't be used in EXPECT_EQ.
-        EXPECT_TRUE(subnet_->inPool(addr->getAddress()));
-        EXPECT_EQ(expected_addr.toText(), addr->getAddress().toText());
-        EXPECT_EQ(addr->getPreferred(), subnet_->getPreferred());
-        EXPECT_EQ(addr->getValid(), subnet_->getValid());
-    }
-
-    // Checks if the lease sent to client is present in the database
-    // and is valid when checked agasint the configured subnet
-    Lease6Ptr checkLease(const DuidPtr& duid, const OptionPtr& ia_na,
-                         boost::shared_ptr<Option6IAAddr> addr) {
-        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(ia_na);
-
-        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(addr->getAddress());
-        if (!lease) {
-            cout << "Lease for " << addr->getAddress().toText()
-                 << " not found in the database backend.";
-            return (Lease6Ptr());
-        }
-
-        EXPECT_EQ(addr->getAddress().toText(), lease->addr_.toText());
-        EXPECT_TRUE(*lease->duid_ == *duid);
-        EXPECT_EQ(ia->getIAID(), lease->iaid_);
-        EXPECT_EQ(subnet_->getID(), lease->subnet_id_);
-
-        return (lease);
-    }
-
-    ~Dhcpv6SrvTest() {
-        CfgMgr::instance().deleteSubnets6();
-    };
-
-    // A subnet used in most tests
-    Subnet6Ptr subnet_;
-
-    // A pool used in most tests
-    Pool6Ptr pool_;
-
-};
 
 class FqdnDhcpv6SrvTest : public Dhcpv6SrvTest {
 public:
@@ -562,7 +280,7 @@ public:
 
     // Verify that NameChangeRequest holds valid values.
     void verifyNameChangeRequest(NakedDhcpv6Srv& srv,
-                                 const isc::d2::NameChangeType type,
+                                 const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
                                  const std::string& dhcid,
@@ -576,11 +294,12 @@ public:
         EXPECT_EQ(dhcid, ncr.getDhcid().toStr());
         EXPECT_EQ(expires, ncr.getLeaseExpiresOn());
         EXPECT_EQ(len, ncr.getLeaseLength());
-        EXPECT_EQ(isc::d2::ST_NEW, ncr.getStatus());
+        EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr.getStatus());
         srv.name_change_reqs_.pop();
     }
 
     Lease6Ptr lease_;
+
 };
 
 // This test verifies that incoming SOLICIT can be handled properly when
@@ -734,7 +453,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 
     boost::scoped_ptr<Dhcpv6Srv> srv;
     ASSERT_NO_THROW( {
-        srv.reset(new Dhcpv6Srv(0));
+        srv.reset(new NakedDhcpv6Srv(0));
     });
 
     OptionPtr srvid = srv->getServerID();
@@ -809,7 +528,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 // and the requested options are actually assigned.
 TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     ConstElementPtr x;
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -2142,17 +1861,20 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
     // Verify that NameChangeRequests are correct. Each call to the
     // verifyNameChangeRequest will pop verified request from the queue.
 
-    verifyNameChangeRequest(srv, isc::d2::CHG_ADD, true, true, "2001:db8:1::1",
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 500);
 
-    verifyNameChangeRequest(srv, isc::d2::CHG_ADD, true, true, "2001:db8:1::2",
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1::2",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 500);
 
-    verifyNameChangeRequest(srv, isc::d2::CHG_ADD, true, true, "2001:db8:1::3",
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1::3",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 500);
@@ -2172,7 +1894,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
 
     ASSERT_EQ(1, srv.name_change_reqs_.size());
 
-    verifyNameChangeRequest(srv, isc::d2::CHG_REMOVE, true, true,
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -2193,7 +1915,7 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
 
     ASSERT_EQ(1, srv.name_change_reqs_.size());
 
-    verifyNameChangeRequest(srv, isc::d2::CHG_REMOVE, true, false,
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, false,
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -2272,7 +1994,7 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequests) {
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com", srv);
     ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::d2::CHG_ADD, true, true,
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -2287,12 +2009,12 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequests) {
     // remove the existing entries, one to add new entries.
     testProcessMessage(DHCPV6_REQUEST, "otherhost.example.com", srv);
     ASSERT_EQ(2, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::d2::CHG_REMOVE, true, true,
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 4000);
-    verifyNameChangeRequest(srv, isc::d2::CHG_ADD, true, true,
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
@@ -2314,7 +2036,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com", srv);
     ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::d2::CHG_ADD, true, true,
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -2329,12 +2051,12 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
     // remove the existing entries, one to add new entries.
     testProcessMessage(DHCPV6_RENEW, "otherhost.example.com", srv);
     ASSERT_EQ(2, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::d2::CHG_REMOVE, true, true,
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 4000);
-    verifyNameChangeRequest(srv, isc::d2::CHG_ADD, true, true,
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
@@ -2351,7 +2073,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com", srv);
     ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::d2::CHG_ADD, true, true,
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -2363,7 +2085,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
     // remove DNS entries is generated.
     testProcessMessage(DHCPV6_RELEASE, "otherhost.example.com", srv);
     ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::d2::CHG_REMOVE, true, true,
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",

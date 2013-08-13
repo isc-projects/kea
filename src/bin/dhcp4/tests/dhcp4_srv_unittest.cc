@@ -16,6 +16,7 @@
 #include <sstream>
 
 #include <asiolink/io_address.h>
+#include <config/ccsession.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option.h>
@@ -26,11 +27,15 @@
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcp4/config_parser.h>
+#include <hooks/server_hooks.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/utils.h>
 #include <gtest/gtest.h>
+#include <hooks/server_hooks.h>
+#include <hooks/hooks_manager.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -42,7 +47,9 @@
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::data;
 using namespace isc::asiolink;
+using namespace isc::hooks;
 
 namespace {
 
@@ -79,6 +86,55 @@ public:
         : Dhcpv4Srv(port, "type=memfile", false, false) {
     }
 
+    /// @brief fakes packet reception
+    /// @param timeout ignored
+    ///
+    /// The method receives all packets queued in receive queue, one after
+    /// another. Once the queue is empty, it initiates the shutdown procedure.
+    ///
+    /// See fake_received_ field for description
+    virtual Pkt4Ptr receivePacket(int /*timeout*/) {
+
+        // If there is anything prepared as fake incoming traffic, use it
+        if (!fake_received_.empty()) {
+            Pkt4Ptr pkt = fake_received_.front();
+            fake_received_.pop_front();
+            return (pkt);
+        }
+
+        // If not, just trigger shutdown and return immediately
+        shutdown();
+        return (Pkt4Ptr());
+    }
+
+    /// @brief fake packet sending
+    ///
+    /// Pretend to send a packet, but instead just store it in fake_send_ list
+    /// where test can later inspect server's response.
+    virtual void sendPacket(const Pkt4Ptr& pkt) {
+        fake_sent_.push_back(pkt);
+    }
+
+    /// @brief adds a packet to fake receive queue
+    ///
+    /// See fake_received_ field for description
+    void fakeReceive(const Pkt4Ptr& pkt) {
+        fake_received_.push_back(pkt);
+    }
+
+    virtual ~NakedDhcpv4Srv() {
+    }
+
+    /// @brief packets we pretend to receive
+    ///
+    /// Instead of setting up sockets on interfaces that change between OSes, it
+    /// is much easier to fake packet reception. This is a list of packets that
+    /// we pretend to have received. You can schedule new packets to be received
+    /// using fakeReceive() and NakedDhcpv4Srv::receivePacket() methods.
+    list<Pkt4Ptr> fake_received_;
+
+    list<Pkt4Ptr> fake_sent_;
+
     using Dhcpv4Srv::adjustRemoteAddr;
     using Dhcpv4Srv::processDiscover;
     using Dhcpv4Srv::processRequest;
@@ -97,11 +153,11 @@ static const char* SRVID_FILE = "server-id-test.txt";
 
 /// @brief Dummy Packet Filtering class.
 ///
-/// This class reports capability to respond directly to the
-/// client which doesn't have address configured yet.
+/// This class reports capability to respond directly to the client which
+/// doesn't have address configured yet.
 ///
-/// All packet and socket handling functions do nothing because
-/// they are not used in unit tests.
+/// All packet and socket handling functions do nothing because they are not
+/// used in unit tests.
 class PktFilterTest : public PktFilter {
 public:
 
@@ -137,7 +193,9 @@ public:
     ///
     /// Initializes common objects used in many tests.
     /// Also sets up initial configuration in CfgMgr.
-    Dhcpv4SrvTest() {
+    Dhcpv4SrvTest() :
+        rcode_(-1)
+    {
         subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1000,
                                          2000, 3000));
         pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"), IOAddress("192.0.2.110")));
@@ -153,6 +211,19 @@ public:
 
         // it's ok if that fails. There should not be such a file anyway
         unlink(SRVID_FILE);
+
+        const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
+
+        // There must be some interface detected
+        if (ifaces.empty()) {
+            // We can't use ASSERT in constructor
+            ADD_FAILURE() << "No interfaces detected.";
+        }
+
+        valid_iface_ = ifaces.begin()->getName();
+    }
+
+    virtual ~Dhcpv4SrvTest() {
     }
 
     /// @brief Add 'Parameter Request List' option to the packet.
@@ -561,6 +632,13 @@ public:
 
     /// @brief A client-id used in most tests
     ClientIdPtr client_id_;
+
+    int rcode_;
+
+    ConstElementPtr comment_;
+
+    // Name of a valid network interface
+    string valid_iface_;
 };
 
 // Sanity check. Verifies that both Dhcpv4Srv and its derived
@@ -964,6 +1042,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverNoClientId) {
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setYiaddr(hint);
+    dis->setHWAddr(generateHWAddr(6));
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -1325,8 +1404,9 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    pkt->setHWAddr(generateHWAddr(6));
 
-    // Client-id is optional for information-request, so
+    // Server-id is optional for information-request, so
     EXPECT_NO_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::OPTIONAL));
 
     // Empty packet, no server-id
@@ -1340,6 +1420,11 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
     // Server-id is forbidden, but present => exception
     EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::FORBIDDEN),
                  RFCViolation);
+
+    // There's no client-id and no HWADDR. Server needs something to
+    // identify the client
+    pkt->setHWAddr(generateHWAddr(0));
+    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::MANDATORY), RFCViolation);
 }
 
 // This test verifies that incoming (positive) RELEASE can be handled properly.
@@ -1534,5 +1619,732 @@ TEST_F(Dhcpv4SrvTest, ServerID) {
 
     EXPECT_EQ(srvid_text, text);
 }
+
+/// @todo Implement tests for subnetSelect See tests in dhcp6_srv_unittest.cc:
+/// selectSubnetAddr, selectSubnetIface, selectSubnetRelayLinkaddr,
+/// selectSubnetRelayInterfaceId. Note that the concept of interface-id is not
+/// present in the DHCPv4, so not everything is applicable directly.
+/// See ticket #3057
+
+// Checks if hooks are registered properly.
+TEST_F(Dhcpv4SrvTest, Hooks) {
+    NakedDhcpv4Srv srv(0);
+
+    // check if appropriate hooks are registered
+    int hook_index_pkt4_received = -1;
+    int hook_index_select_subnet = -1;
+    int hook_index_pkt4_send     = -1;
+
+    // check if appropriate indexes are set
+    EXPECT_NO_THROW(hook_index_pkt4_received = ServerHooks::getServerHooks()
+                    .getIndex("pkt4_receive"));
+    EXPECT_NO_THROW(hook_index_select_subnet = ServerHooks::getServerHooks()
+                    .getIndex("subnet4_select"));
+    EXPECT_NO_THROW(hook_index_pkt4_send     = ServerHooks::getServerHooks()
+                    .getIndex("pkt4_send"));
+
+    EXPECT_TRUE(hook_index_pkt4_received > 0);
+    EXPECT_TRUE(hook_index_select_subnet > 0);
+    EXPECT_TRUE(hook_index_pkt4_send > 0);
+}
+
+    // a dummy MAC address
+    const uint8_t dummyMacAddr[] = {0, 1, 2, 3, 4, 5};
+
+    // A dummy MAC address, padded with 0s
+    const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0,
+                                     0, 0, 0, 0, 0, 0, 0, 0 };
+
+    // Let's use some creative test content here (128 chars + \0)
+    const uint8_t dummyFile[] = "Lorem ipsum dolor sit amet, consectetur "
+        "adipiscing elit. Proin mollis placerat metus, at "
+        "lacinia orci ornare vitae. Mauris amet.";
+
+    // Yet another type of test content (64 chars + \0)
+    const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
+        "adipiscing elit posuere.";
+
+/// @brief a class dedicated to Hooks testing in DHCPv4 server
+///
+/// This class has a number of static members, because each non-static
+/// method has implicit 'this' parameter, so it does not match callout
+/// signature and couldn't be registered. Furthermore, static methods
+/// can't modify non-static members (for obvious reasons), so many
+/// fields are declared static. It is still better to keep them as
+/// one class rather than unrelated collection of global objects.
+class HooksDhcpv4SrvTest : public Dhcpv4SrvTest {
+
+public:
+
+    /// @brief creates Dhcpv4Srv and prepares buffers for callouts
+    HooksDhcpv4SrvTest() {
+
+        // Allocate new DHCPv6 Server
+        srv_ = new NakedDhcpv4Srv(0);
+
+        // clear static buffers
+        resetCalloutBuffers();
+    }
+
+    /// @brief destructor (deletes Dhcpv4Srv)
+    virtual ~HooksDhcpv4SrvTest() {
+
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_receive");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_send");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("subnet4_select");
+
+        delete srv_;
+    }
+
+    /// @brief creates an option with specified option code
+    ///
+    /// This method is static, because it is used from callouts
+    /// that do not have a pointer to HooksDhcpv4SSrvTest object
+    ///
+    /// @param option_code code of option to be created
+    ///
+    /// @return pointer to create option object
+    static OptionPtr createOption(uint16_t option_code) {
+
+        char payload[] = {
+            0xa, 0xb, 0xc, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14
+        };
+
+        OptionBuffer tmp(payload, payload + sizeof(payload));
+        return OptionPtr(new Option(Option::V4, option_code, tmp));
+    }
+
+    /// @brief Generates test packet.
+    ///
+    /// Allocates and generates on-wire buffer that represents test packet, with all
+    /// fixed fields set to non-zero values.  Content is not always reasonable.
+    ///
+    /// See generateTestPacket1() function that returns exactly the same packet as
+    /// Pkt4 object.
+    ///
+    /// @return pointer to allocated Pkt4 object
+    // Returns a vector containing a DHCPv4 packet header.
+    Pkt4Ptr
+    generateSimpleDiscover() {
+
+        // That is only part of the header. It contains all "short" fields,
+        // larger fields are constructed separately.
+        uint8_t hdr[] = {
+            1, 6, 6, 13,            // op, htype, hlen, hops,
+            0x12, 0x34, 0x56, 0x78, // transaction-id
+            0, 42, 0x80, 0x00,      // 42 secs, BROADCAST flags
+            192, 0, 2, 1,           // ciaddr
+            1, 2, 3, 4,             // yiaddr
+            192, 0, 2, 255,         // siaddr
+            255, 255, 255, 255,     // giaddr
+        };
+
+        // Initialize the vector with the header fields defined above.
+        vector<uint8_t> buf(hdr, hdr + sizeof(hdr));
+
+        // Append the large header fields.
+        copy(dummyChaddr, dummyChaddr + Pkt4::MAX_CHADDR_LEN, back_inserter(buf));
+        copy(dummySname, dummySname + Pkt4::MAX_SNAME_LEN, back_inserter(buf));
+        copy(dummyFile, dummyFile + Pkt4::MAX_FILE_LEN, back_inserter(buf));
+
+        // Should now have all the header, so check.  The "static_cast" is used
+        // to get round an odd bug whereby the linker appears not to find the
+        // definition of DHCPV4_PKT_HDR_LEN if it appears within an EXPECT_EQ().
+        EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), buf.size());
+
+        // Add magic cookie
+        buf.push_back(0x63);
+        buf.push_back(0x82);
+        buf.push_back(0x53);
+        buf.push_back(0x63);
+
+        // Add message type DISCOVER
+        buf.push_back(static_cast<uint8_t>(DHO_DHCP_MESSAGE_TYPE));
+        buf.push_back(1); // length (just one byte)
+        buf.push_back(static_cast<uint8_t>(DHCPDISCOVER));
+
+        return (Pkt4Ptr(new Pkt4(&buf[0], buf.size())));
+    }
+
+    /// test callback that stores received callout name and pkt4 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_receive_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("pkt4_receive");
+
+        callout_handle.getArgument("query4", callback_pkt4_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// test callback that changes client-id value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_receive_change_clientid(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("query4", pkt);
+
+        // get rid of the old client-id
+        pkt->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+
+        // add a new option
+        pkt->addOption(createOption(DHO_DHCP_CLIENT_IDENTIFIER));
+
+        // carry on as usual
+        return pkt4_receive_callout(callout_handle);
+    }
+
+    /// test callback that deletes client-id
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_receive_delete_clientid(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("query4", pkt);
+
+        // get rid of the old client-id (and no HWADDR)
+        vector<uint8_t> mac;
+        pkt->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+        pkt->setHWAddr(1, 0, mac); // HWtype 1, hwardware len = 0
+
+        // carry on as usual
+        return pkt4_receive_callout(callout_handle);
+    }
+
+    /// test callback that sets skip flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_receive_skip(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("query4", pkt);
+
+        callout_handle.setSkip(true);
+
+        // carry on as usual
+        return pkt4_receive_callout(callout_handle);
+    }
+
+    /// Test callback that stores received callout name and pkt4 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_send_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("pkt4_send");
+
+        callout_handle.getArgument("response4", callback_pkt4_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    // Test callback that changes server-id
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_send_change_serverid(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("response4", pkt);
+
+        // get rid of the old server-id
+        pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER);
+
+        // add a new option
+        pkt->addOption(createOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+        // carry on as usual
+        return pkt4_send_callout(callout_handle);
+    }
+
+    /// test callback that deletes server-id
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_send_delete_serverid(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("response4", pkt);
+
+        // get rid of the old client-id
+        pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER);
+
+        // carry on as usual
+        return pkt4_send_callout(callout_handle);
+    }
+
+    /// Test callback that sets skip flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_send_skip(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("response4", pkt);
+
+        callout_handle.setSkip(true);
+
+        // carry on as usual
+        return pkt4_send_callout(callout_handle);
+    }
+
+    /// Test callback that stores received callout name and subnet4 values
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    subnet4_select_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("subnet4_select");
+
+        callout_handle.getArgument("query4", callback_pkt4_);
+        callout_handle.getArgument("subnet4", callback_subnet4_);
+        callout_handle.getArgument("subnet4collection", callback_subnet4collection_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// Test callback that picks the other subnet if possible.
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    subnet4_select_different_subnet_callout(CalloutHandle& callout_handle) {
+
+        // Call the basic calllout to record all passed values
+        subnet4_select_callout(callout_handle);
+
+        const Subnet4Collection* subnets;
+        Subnet4Ptr subnet;
+        callout_handle.getArgument("subnet4", subnet);
+        callout_handle.getArgument("subnet4collection", subnets);
+
+        // Let's change to a different subnet
+        if (subnets->size() > 1) {
+            subnet = (*subnets)[1]; // Let's pick the other subnet
+            callout_handle.setArgument("subnet4", subnet);
+        }
+
+        return (0);
+    }
+
+    /// resets buffers used to store data received by callouts
+    void resetCalloutBuffers() {
+        callback_name_ = string("");
+        callback_pkt4_.reset();
+        callback_subnet4_.reset();
+        callback_subnet4collection_ = NULL;
+        callback_argument_names_.clear();
+    }
+
+    /// pointer to Dhcpv4Srv that is used in tests
+    NakedDhcpv4Srv* srv_;
+
+    // The following fields are used in testing pkt4_receive_callout
+
+    /// String name of the received callout
+    static string callback_name_;
+
+    /// Pkt4 structure returned in the callout
+    static Pkt4Ptr callback_pkt4_;
+
+    /// Pointer to a subnet received by callout
+    static Subnet4Ptr callback_subnet4_;
+
+    /// A list of all available subnets (received by callout)
+    static const Subnet4Collection* callback_subnet4collection_;
+
+    /// A list of all received arguments
+    static vector<string> callback_argument_names_;
+};
+
+// The following fields are used in testing pkt4_receive_callout.
+// See fields description in the class for details
+string HooksDhcpv4SrvTest::callback_name_;
+Pkt4Ptr HooksDhcpv4SrvTest::callback_pkt4_;
+Subnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
+const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
+vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
+
+
+// Checks if callouts installed on pkt4_received are indeed called and the
+// all necessary parameters are passed.
+//
+// Note that the test name does not follow test naming convention,
+// but the proper hook name is "pkt4_receive".
+TEST_F(HooksDhcpv4SrvTest, simple_pkt4_receive) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_receive", pkt4_receive_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // check that the callback called is indeed the one we installed
+    EXPECT_EQ("pkt4_receive", callback_name_);
+
+    // check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == sol.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("query4"));
+
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+}
+
+// Checks if callouts installed on pkt4_received is able to change
+// the values and the parameters are indeed used by the server.
+TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_receive", pkt4_receive_change_clientid));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // check that the server did send a reposonce
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Get client-id...
+    OptionPtr clientid = adv->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+
+    // ... and check if it is the modified value
+    OptionPtr expected = createOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    EXPECT_TRUE(clientid->equal(expected));
+}
+
+// Checks if callouts installed on pkt4_received is able to delete
+// existing options and that change impacts server processing (mandatory
+// client-id option is deleted, so the packet is expected to be dropped)
+TEST_F(HooksDhcpv4SrvTest, deleteClientId_pkt4_receive) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_receive", pkt4_receive_delete_clientid));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that the server dropped the packet and did not send a response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+// Checks if callouts installed on pkt4_received is able to set skip flag that
+// will cause the server to not process the packet (drop), even though it is valid.
+TEST_F(HooksDhcpv4SrvTest, skip_pkt4_receive) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_receive", pkt4_receive_skip));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // check that the server dropped the packet and did not produce any response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+
+// Checks if callouts installed on pkt4_send are indeed called and the
+// all necessary parameters are passed.
+TEST_F(HooksDhcpv4SrvTest, simple_pkt4_send) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_send", pkt4_send_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("pkt4_send", callback_name_);
+
+    // Check that there is one packet sent
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == adv.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("response4"));
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+}
+
+// Checks if callouts installed on pkt4_send is able to change
+// the values and the packet sent contains those changes
+TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_send) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_send", pkt4_send_change_serverid));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // check that the server did send a reposonce
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Get client-id...
+    OptionPtr clientid = adv->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+
+    // ... and check if it is the modified value
+    OptionPtr expected = createOption(DHO_DHCP_SERVER_IDENTIFIER);
+    EXPECT_TRUE(clientid->equal(expected));
+}
+
+// Checks if callouts installed on pkt4_send is able to delete
+// existing options and that server applies those changes. In particular,
+// we are trying to send a packet without server-id. The packet should
+// be sent
+TEST_F(HooksDhcpv4SrvTest, deleteServerId_pkt4_send) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_send", pkt4_send_delete_serverid));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that the server indeed sent a malformed ADVERTISE
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Get that ADVERTISE
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Make sure that it does not have server-id
+    EXPECT_FALSE(adv->getOption(DHO_DHCP_SERVER_IDENTIFIER));
+}
+
+// Checks if callouts installed on pkt4_skip is able to set skip flag that
+// will cause the server to not process the packet (drop), even though it is valid.
+TEST_F(HooksDhcpv4SrvTest, skip_pkt4_send) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_send", pkt4_send_skip));
+
+    // Let's create a simple REQUEST
+    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // check that the server dropped the packet and did not produce any response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+// This test checks if subnet4_select callout is triggered and reports
+// valid parameters
+TEST_F(HooksDhcpv4SrvTest, subnet4_select) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "subnet4_select", subnet4_select_callout));
+
+    // Configure 2 subnets, both directly reachable over local interface
+    // (let's not complicate the matter with relays)
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.0/25\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"" + valid_iface_ + "\" "
+        " }, {"
+        "    \"pool\": [ \"192.0.3.0/25\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Prepare discover packet. Server should select first subnet for it
+    Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    sol->setRemoteAddr(IOAddress("192.0.2.1"));
+    sol->setIface(valid_iface_);
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr adv = srv_->processDiscover(sol);
+
+    // check if we get response at all
+    ASSERT_TRUE(adv);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("subnet4_select", callback_name_);
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == sol.get());
+
+    const Subnet4Collection* exp_subnets = CfgMgr::instance().getSubnets4();
+
+    // The server is supposed to pick the first subnet, because of matching
+    // interface. Check that the value is reported properly.
+    ASSERT_TRUE(callback_subnet4_);
+    EXPECT_EQ(exp_subnets->front().get(), callback_subnet4_.get());
+
+    // Server is supposed to report two subnets
+    ASSERT_EQ(exp_subnets->size(), callback_subnet4collection_->size());
+
+    // Compare that the available subnets are reported as expected
+    EXPECT_TRUE((*exp_subnets)[0].get() == (*callback_subnet4collection_)[0].get());
+    EXPECT_TRUE((*exp_subnets)[1].get() == (*callback_subnet4collection_)[1].get());
+}
+
+// This test checks if callout installed on subnet4_select hook point can pick
+// a different subnet.
+TEST_F(HooksDhcpv4SrvTest, subnet_select_change) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "subnet4_select", subnet4_select_different_subnet_callout));
+
+    // Configure 2 subnets, both directly reachable over local interface
+    // (let's not complicate the matter with relays)
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.0/25\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"" + valid_iface_ + "\" "
+        " }, {"
+        "    \"pool\": [ \"192.0.3.0/25\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Prepare discover packet. Server should select first subnet for it
+    Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    sol->setRemoteAddr(IOAddress("192.0.2.1"));
+    sol->setIface(valid_iface_);
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr adv = srv_->processDiscover(sol);
+
+    // check if we get response at all
+    ASSERT_TRUE(adv);
+
+    // The response should have an address from second pool, so let's check it
+    IOAddress addr = adv->getYiaddr();
+    EXPECT_NE("0.0.0.0", addr.toText());
+
+    // Get all subnets and use second subnet for verification
+    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    ASSERT_EQ(2, subnets->size());
+
+    // Advertised address must belong to the second pool (in subnet's range,
+    // in dynamic pool)
+    EXPECT_TRUE((*subnets)[1]->inRange(addr));
+    EXPECT_TRUE((*subnets)[1]->inPool(addr));
+}
+
+
 
 } // end of anonymous namespace

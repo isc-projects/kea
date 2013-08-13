@@ -30,9 +30,20 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <list>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Exception thrown when the same interface has been specified twice.
+///
+/// In particular, this exception is thrown when adding interface to the set
+/// of interfaces on which server is supposed to listen.
+class DuplicateListeningIface : public Exception {
+public:
+    DuplicateListeningIface(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 
 /// @brief Configuration Manager
@@ -201,6 +212,26 @@ public:
     /// completely new?
     void deleteSubnets6();
 
+    /// @brief returns const reference to all subnets6
+    ///
+    /// This is used in a hook (subnet4_select), where the hook is able
+    /// to choose a different subnet. Server code has to offer a list
+    /// of possible choices (i.e. all subnets).
+    /// @return a pointer to const Subnet6 collection
+    const Subnet4Collection* getSubnets4() {
+        return (&subnets4_);
+    }
+
+    /// @brief returns const reference to all subnets6
+    ///
+    /// This is used in a hook (subnet6_select), where the hook is able
+    /// to choose a different subnet. Server code has to offer a list
+    /// of possible choices (i.e. all subnets).
+    /// @return a pointer to const Subnet6 collection
+    const Subnet6Collection* getSubnets6() {
+        return (&subnets6_);
+    }
+
     /// @brief get IPv4 subnet by address
     ///
     /// Finds a matching subnet, based on an address. This can be used
@@ -237,6 +268,43 @@ public:
     /// @return data directory
     std::string getDataDir();
 
+    /// @brief Adds the name of the interface to the set of interfaces on which
+    /// server should listen.
+    ///
+    /// @param iface A name of the interface being added to the listening set.
+    void addActiveIface(const std::string& iface);
+
+    /// @brief Sets the flag which indicates that server is supposed to listen
+    /// on all available interfaces.
+    ///
+    /// This function does not close or open sockets. It simply marks that
+    /// server should start to listen on all interfaces the next time sockets
+    /// are reopened. Server should examine this flag when it gets reconfigured
+    /// and configuration changes the interfaces that server should listen on.
+    void activateAllIfaces();
+
+    /// @brief Clear the collection of the interfaces that server should listen
+    /// on.
+    ///
+    /// Apart from clearing the list of interfaces specified with
+    /// @c CfgMgr::addListeningInterface, it also disables listening on all
+    /// interfaces if it has been enabled using
+    /// @c CfgMgr::activateAllInterfaces.
+    /// Likewise @c CfgMgr::activateAllIfaces, this function does not close or
+    /// open sockets. It marks all interfaces inactive for DHCP traffic.
+    /// Server should examine this new setting when it attempts to
+    /// reopen sockets (as a result of reconfiguration).
+    void deleteActiveIfaces();
+
+    /// @brief Check if specified interface should be used to listen to DHCP
+    /// traffic.
+    ///
+    /// @param iface A name of the interface to be checked.
+    ///
+    /// @return true if the specified interface belongs to the set of the
+    /// interfaces on which server is configured to listen.
+    bool isActiveIface(const std::string& iface) const;
+
 protected:
 
     /// @brief Protected constructor.
@@ -268,6 +336,20 @@ protected:
 
 private:
 
+    /// @brief Checks if the specified interface is listed as active.
+    ///
+    /// This function searches for the specified interface name on the list of
+    /// active interfaces: @c CfgMgr::active_ifaces_. It does not take into
+    /// account @c CfgMgr::all_ifaces_active_ flag. If this flag is set to true
+    /// but the specified interface does not belong to
+    /// @c CfgMgr::active_ifaces_, it will return false.
+    ///
+    /// @param iface interface name.
+    ///
+    /// @return true if specified interface belongs to
+    /// @c CfgMgr::active_ifaces_.
+    bool isIfaceListedActive(const std::string& iface) const;
+
     /// @brief A collection of option definitions.
     ///
     /// A collection of option definitions that can be accessed
@@ -283,6 +365,16 @@ private:
 
     /// @brief directory where data files (e.g. server-id) are stored
     std::string datadir_;
+
+    /// @name A collection of interface names on which server listens.
+    //@{
+    typedef std::list<std::string> ActiveIfacesCollection;
+    std::list<std::string> active_ifaces_;
+    //@}
+
+    /// A flag which indicates that server should listen on all available
+    /// interfaces.
+    bool all_ifaces_active_;
 };
 
 } // namespace isc::dhcp

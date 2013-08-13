@@ -69,13 +69,17 @@ class LibraryManager;
 /// code.  However, the link with the CalloutHandle does at least mean that
 /// authors of server code do not need to be so careful about when they destroy
 /// CalloutHandles.
+///
+/// The collection object also provides a utility function to validate a set
+/// of libraries.  The function checks that each library exists, can be opened,
+/// that the "version" function exists and return the right number.
 
 class LibraryManagerCollection {
 public:
     /// @brief Constructor
     ///
-    /// @param List of libraries that this collection will manage.  The order
-    ///        of the libraries is important.
+    /// @param libraries List of libraries that this collection will manage.
+    ///        The order of the libraries is important.
     LibraryManagerCollection(const std::vector<std::string>& libraries)
         : library_names_(libraries)
     {}
@@ -91,8 +95,11 @@ public:
     ///
     /// Loads the libraries.  This creates the LibraryManager associated with
     /// each library and calls its loadLibrary() method.  If a library fails
-    /// to load, the fact is noted but attempts are made to load the remaining
-    /// libraries.
+    /// to load, the loading is abandoned and all libraries loaded so far
+    /// are unloaded.
+    ///
+    /// @return true if all libraries loaded, false if one or more failed t
+    ////        load.
     bool loadLibraries();
 
     /// @brief Get callout manager
@@ -106,6 +113,36 @@ public:
     /// @throw LoadLibrariesNotCalled Thrown if this method is called between
     ///        construction and the time loadLibraries() is called.
     boost::shared_ptr<CalloutManager> getCalloutManager() const;
+
+    /// @brief Get library names
+    ///
+    /// Returns the list of library names.  If called before loadLibraries(),
+    /// the list is the list of names to be loaded; if called afterwards, it
+    /// is the list of libraries that have been loaded.
+    std::vector<std::string> getLibraryNames() const {
+        return (library_names_);
+    }
+
+    /// @brief Get number of loaded libraries
+    ///
+    /// Mainly for testing, this returns the number of libraries that are
+    /// loaded.
+    ///
+    /// @return Number of libraries that are loaded.
+    int getLoadedLibraryCount() const;
+
+    /// @brief Validate libraries
+    ///
+    /// Utility function to validate libraries.  It checks that the libraries
+    /// exist, can be opened, that a "version" function is present in them, and
+    /// that it returns the right number.  All errors are logged.
+    ///
+    /// @param libraries List of libraries to validate
+    ///
+    /// @return Vector of libraries that faled to validate, or an empty vector
+    ///         if all validated.
+    static std::vector<std::string>
+    validateLibraries(const std::vector<std::string>& libraries);
 
 protected:
     /// @brief Unload libraries

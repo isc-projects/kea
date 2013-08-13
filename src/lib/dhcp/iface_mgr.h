@@ -309,6 +309,14 @@ public:
     /// Interface flags (this value is as is returned by OS,
     /// it may mean different things on different OSes).
     uint32_t flags_;
+
+    /// Indicates that IPv4 sockets should (true) or should not (false)
+    /// be opened on this interface.
+    bool inactive4_;
+
+    /// Indicates that IPv6 sockets should (true) or should not (false)
+    /// be opened on this interface.
+    bool inactive6_;
 };
 
 /// @brief Handles network interfaces, transmission and reception.

@@ -601,12 +601,13 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
             # error)
             return ssl_sock
         except ssl.SSLError as err:
+            self.close_request(sock)
             logger.error(CMDCTL_SSL_SETUP_FAILURE_USER_DENIED, err)
-        except (CmdctlException, IOError) as cce:
+            raise
+        except (CmdctlException, IOError, socket.error) as cce:
+            self.close_request(sock)
             logger.error(CMDCTL_SSL_SETUP_FAILURE_READING_CERT, cce)
-        self.close_request(sock)
-        # raise socket error to finish the request
-        raise socket.error
+            raise
 
     def get_request(self):
         '''Get client request socket and wrap it in SSL context. '''

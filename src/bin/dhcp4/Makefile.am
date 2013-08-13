@@ -63,6 +63,7 @@ b10_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+b10_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 
 b10_dhcp4dir = $(pkgdatadir)
 b10_dhcp4_DATA = dhcp4.spec

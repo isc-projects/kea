@@ -1,0 +1,69 @@
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+#ifndef MARKER_FILE_H
+#define MARKER_FILE_H
+
+/// @file
+/// Define a marker file that is used in tests to prove that an "unload"
+/// function has been called
+
+namespace {
+const char* const LOAD_MARKER_FILE = "/home/marcin/devel/bind10/src/bin/dhcp4/tests/load_marker.txt";
+const char* const UNLOAD_MARKER_FILE = "/home/marcin/devel/bind10/src/bin/dhcp4/tests/unload_marker.txt";
+}
+
+namespace isc {
+namespace dhcp {
+namespace test {
+
+/// @brief Check marker file
+///
+/// This function is used in some of the DHCP server tests.
+///
+/// Marker files are used by the load/unload functions in the hooks
+/// libraries in these tests to signal whether they have been loaded or
+/// unloaded.  The file (if present) contains a single line holding
+/// a set of characters.
+///
+/// This convenience function checks the file to see if the characters
+/// are those expected.
+///
+/// @param name Name of the marker file.
+/// @param expected Characters expected.  If a marker file is present,
+///        it is expected to contain characters.
+///
+/// @return true if all tests pass, false if not (in which case a failure
+///         will have been logged).
+bool
+checkMarkerFile(const char* name, const char* expected);
+
+/// @brief Check marker file exists
+///
+/// This function is used in some of the DHCP server tests.
+///
+/// Checkes that the specified file does NOT exist.
+///
+/// @param name Name of the marker file.
+///
+/// @return true if file exists, false if not.
+bool
+checkMarkerFileExists(const char* name);
+
+} // namespace test
+} // namespace dhcp
+} // namespace isc
+
+#endif // MARKER_FILE_H
+

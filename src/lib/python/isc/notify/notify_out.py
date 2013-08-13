@@ -25,7 +25,7 @@ from isc.datasrc import DataSourceClient
 from isc.net import addr
 import isc
 from isc.log_messages.notify_out_messages import *
-from isc.statistics import Counters
+from isc.statistics.dns import Counters
 from isc.util.address_formatter import AddressFormatter
 
 logger = isc.log.Logger("notify_out")

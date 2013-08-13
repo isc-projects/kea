@@ -14,6 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 import os
+from collections import deque
 
 class SegmentInfoError(Exception):
     """An exception raised for general errors in the SegmentInfo class."""
@@ -33,15 +34,207 @@ class SegmentInfo:
     segment-type specific details.  Such details are expected to be
     delegated to subclasses corresponding to specific types of segments.
 
-    The implementation is still incomplete.  It will have more attributes
-    such as a set of current readers, methods for adding or deleting
-    the readers.  These will probably be implemented in this base class
-    as they will be independent from segment-type specific details.
+    A summarized (and simplified) state transition diagram (for __state)
+    would be as follows:
+                                                +--sync_reader()/remove_reader()
+                                                |  still have old readers
+                                                |          |
+                UPDATING-----complete_--->SYNCHRONIZING<---+
+                  ^          update()           |
+    start_update()|                             | sync_reader()/remove_reader()
+    events        |                             V no more old reader
+    exist       READY<------complete_----------COPYING
+                            update()
 
     """
     # Common constants of user type: reader or writer
     READER = 0
     WRITER = 1
+
+    # Enumerated values for state:
+    UPDATING = 0 # the segment is being updated (by the builder thread,
+                 # although SegmentInfo won't care about this level of
+                 # details).
+    SYNCHRONIZING = 1 # one pair of underlying segments has been
+                      # updated, and readers are now migrating to the
+                      # updated version of the segment.
+    COPYING = 2 # all readers that used the old version of segment have
+                # been migrated to the updated version, and the old
+                # segment is now being updated.
+    READY = 3 # both segments of the pair have been updated. it can now
+              # handle further updates (e.g., from xfrin).
+
+    def __init__(self):
+        # Holds the state of SegmentInfo. See the class description
+        # above for the state transition diagram.
+        self.__state = self.READY
+        # __readers is a set of 'reader_session_id' private to
+        # SegmentInfo. It consists of the (ID of) reader modules that
+        # are using the "current" reader version of the segment.
+        self.__readers = set()
+        # __old_readers is a set of 'reader_session_id' private to
+        # SegmentInfo for write (update), but publicly readable. It can
+        # be non empty only in the SYNCHRONIZING state, and consists of
+        # (ID of) reader modules that are using the old version of the
+        # segments (and have to migrate to the updated version).
+        self.__old_readers = set()
+        # __events is a FIFO queue of opaque data for pending update
+        # events. Update events can come at any time (e.g., after
+        # xfr-in), but can be only handled if SegmentInfo is in the
+        # READY state. This maintains such pending events in the order
+        # they arrived. SegmentInfo doesn't have to know the details of
+        # the stored data; it only matters for the memmgr.
+        self.__events = deque()
+
+    def get_state(self):
+        """Returns the state of SegmentInfo (UPDATING, SYNCHRONIZING,
+        COPYING or READY)."""
+        return self.__state
+
+    def get_readers(self):
+        """Returns a set of IDs of the reader modules that are using the
+        "current" reader version of the segment. This method is mainly
+        useful for testing purposes."""
+        return self.__readers
+
+    def get_old_readers(self):
+        """Returns a set of IDs of reader modules that are using the old
+        version of the segments and have to be migrated to the updated
+        version."""
+        return self.__old_readers
+
+    def get_events(self):
+        """Returns a list of pending events in the order they arrived."""
+        return list(self.__events)
+
+    # Helper method used in complete_update(), sync_reader() and
+    # remove_reader().
+    def __sync_reader_helper(self, new_state):
+        if not self.__old_readers:
+            self.__state = new_state
+            if self.__events:
+                return self.__events.popleft()
+
+        return None
+
+    def add_event(self, event_data):
+        """Add an event to the end of the pending events queue. The
+        event_data is not used internally by this class, and is returned
+        as-is by other methods. The format of event_data only matters in
+        the memmgr. This method must be called by memmgr when it
+        receives a request for reloading a zone. No state transition
+        happens."""
+        self.__events.append(event_data)
+
+    def add_reader(self, reader_session_id):
+        """Add the reader module ID to an internal set of reader modules
+        that are using the "current" reader version of the segment. It
+        must be called by memmgr when it first gets the pre-existing
+        readers or when it's notified of a new reader. No state
+        transition happens.
+
+        When the SegmentInfo is not in the READY state, if memmgr gets
+        notified of a new reader (such as b10-auth) subscribing to the
+        readers group and calls add_reader(), we assume the new reader
+        is using the new mapped file and not the old one. For making
+        sure there is no race, memmgr should make SegmentInfo updates in
+        the main thread itself (which also handles communications) and
+        only have the builder in a different thread."""
+        if reader_session_id in self.__readers:
+            raise SegmentInfoError('Reader session ID is already in readers set: ' +
+                                   str(reader_session_id))
+
+        self.__readers.add(reader_session_id)
+
+    def start_update(self):
+        """If the current state is READY and there are pending events,
+        it changes the state to UPDATING and returns the head (oldest)
+        event (without removing it from the pending events queue). This
+        tells the caller (memmgr) that it should initiate the update
+        process with the builder. In all other cases it returns None."""
+        if self.__state == self.READY:
+            if self.__events:
+                self.__state = self.UPDATING
+                return self.__events[0]
+            else:
+                return None
+
+        raise SegmentInfoError('start_update() called in ' +
+                               'incorrect state: ' + str(self.__state))
+
+    def complete_update(self):
+        """This method should be called when memmgr is notified by the
+        builder of the completion of segment update. It changes the
+        state from UPDATING to SYNCHRONIZING, and COPYING to READY. In
+        the former case, set of reader modules that are using the
+        "current" reader version of the segment are moved to the set
+        that are using an "old" version of segment. If there are no such
+        readers using the "old" version of segment, it pops the head
+        (oldest) event from the pending events queue and returns it. It
+        is an error if this method is called in other states than
+        UPDATING and COPYING."""
+        if self.__state == self.UPDATING:
+            self.__state = self.SYNCHRONIZING
+            self.__old_readers = self.__readers
+            self.__readers = set()
+            return self.__sync_reader_helper(self.READY)
+        elif self.__state == self.COPYING:
+            self.__state = self.READY
+            return None
+        else:
+            raise SegmentInfoError('complete_update() called in ' +
+                                   'incorrect state: ' + str(self.__state))
+
+    def sync_reader(self, reader_session_id):
+        """This method must only be called in the SYNCHRONIZING
+        state. memmgr should call it when it receives the
+        "segment_update_ack" message from a reader module. It moves the
+        given ID from the set of reader modules that are using the "old"
+        version of the segment to the set of reader modules that are
+        using the "current" version of the segment, and if there are no
+        reader modules using the "old" version of the segment, the state
+        is changed to COPYING. If the state has changed to COPYING, it
+        pops the head (oldest) event from the pending events queue and
+        returns it; otherwise it returns None."""
+        if self.__state != self.SYNCHRONIZING:
+            raise SegmentInfoError('sync_reader() called in ' +
+                                   'incorrect state: ' + str(self.__state))
+        if reader_session_id not in self.__old_readers:
+            raise SegmentInfoError('Reader session ID is not in old readers set: ' +
+                                   str(reader_session_id))
+        if reader_session_id in self.__readers:
+            raise SegmentInfoError('Reader session ID is already in readers set: ' +
+                                   str(reader_session_id))
+
+        self.__old_readers.remove(reader_session_id)
+        self.__readers.add(reader_session_id)
+
+        return self.__sync_reader_helper(self.COPYING)
+
+    def remove_reader(self, reader_session_id):
+        """This method must only be called in the SYNCHRONIZING
+        state. memmgr should call it when it's notified that an existing
+        reader has unsubscribed. It removes the given reader ID from
+        either the set of readers that use the "current" version of the
+        segment or the "old" version of the segment (wherever the reader
+        belonged), and in the latter case, if there are no reader
+        modules using the "old" version of the segment, the state is
+        changed to COPYING. If the state has changed to COPYING, it pops
+        the head (oldest) event from the pending events queue and
+        returns it; otherwise it returns None."""
+        if self.__state != self.SYNCHRONIZING:
+            raise SegmentInfoError('remove_reader() called in ' +
+                                   'incorrect state: ' + str(self.__state))
+        if reader_session_id in self.__old_readers:
+            self.__old_readers.remove(reader_session_id)
+            return self.__sync_reader_helper(self.COPYING)
+        elif reader_session_id in self.__readers:
+            self.__readers.remove(reader_session_id)
+            return None
+        else:
+            raise SegmentInfoError('Reader session ID is not in current ' +
+                                   'readers or old readers set: ' +
+                                   str(reader_session_id))
 
     def create(type, genid, rrclass, datasrc_name, mgr_config):
         """Factory of specific SegmentInfo subclass instance based on the

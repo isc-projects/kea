@@ -181,20 +181,21 @@ uint16_t Pkt6::directLen() const {
 }
 
 
-bool
+void
 Pkt6::pack() {
     switch (proto_) {
     case UDP:
-        return packUDP();
+        packUDP();
+        break;
     case TCP:
-        return packTCP();
+        packTCP();
+        break;
     default:
         isc_throw(BadValue, "Invalid protocol specified (non-TCP, non-UDP)");
     }
-    return (false); // never happens
 }
 
-bool
+void
 Pkt6::packUDP() {
     try {
 
@@ -252,16 +253,15 @@ Pkt6::packUDP() {
         LibDHCP::packOptions(bufferOut_, options_);
     }
     catch (const Exception& e) {
-        /// @todo: throw exception here once we turn this function to void.
-        return (false);
+       // An exception is thrown and message will be written to Logger
+       isc_throw(InvalidOperation, e.what());
     }
-    return (true);
 }
 
-bool
+void
 Pkt6::packTCP() {
     /// TODO Implement this function.
-    isc_throw(Unexpected, "DHCPv6 over TCP (bulk leasequery and failover)"
+    isc_throw(NotImplemented, "DHCPv6 over TCP (bulk leasequery and failover)"
               "not implemented yet.");
 }
 

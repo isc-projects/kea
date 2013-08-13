@@ -15,7 +15,7 @@
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
 
-#include <d2/ncr_msg.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
@@ -25,6 +25,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/subnet.h>
+#include <hooks/callout_handle.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -89,6 +90,32 @@ public:
 
     /// @brief Instructs the server to shut down.
     void shutdown();
+
+    /// @brief Get UDP port on which server should listen.
+    ///
+    /// Typically, server listens on UDP port 547. Other ports are only
+    /// used for testing purposes.
+    ///
+    /// This accessor must be public because sockets are reopened from the
+    /// static configuration callback handler. This callback handler invokes
+    /// @c ControlledDhcpv4Srv::openActiveSockets which requires port parameter
+    /// which has to be retrieved from the @c ControlledDhcpv4Srv object.
+    /// They are retrieved using this public function.
+    ///
+    /// @return UDP port on which server should listen.
+    uint16_t getPort() const {
+        return (port_);
+    }
+
+    /// @brief Open sockets which are marked as active in @c CfgMgr.
+    ///
+    /// This function reopens sockets according to the current settings in the
+    /// Configuration Manager. It holds the list of the interfaces which server
+    /// should listen on. This function will open sockets on these interfaces
+    /// only. This function is not exception safe.
+    ///
+    /// @param port UDP port on which server should listen.
+    static void openActiveSockets(const uint16_t port);
 
 protected:
 
@@ -186,14 +213,14 @@ protected:
     ///
     /// @param subnet subnet the client is connected to
     /// @param duid client's duid
-    /// @param question client's message (typically SOLICIT or REQUEST)
+    /// @param query client's message (typically SOLICIT or REQUEST)
     /// @param ia pointer to client's IA_NA option (client's request)
     /// @param fqdn A DHCPv6 Client FQDN %Option generated in a response to the
     /// FQDN option sent by a client.
     /// @return IA_NA option (server's response)
     OptionPtr assignIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
                           const isc::dhcp::DuidPtr& duid,
-                          isc::dhcp::Pkt6Ptr question,
+                          const isc::dhcp::Pkt6Ptr& query,
                           Option6IAPtr ia,
                           const Option6ClientFqdnPtr& fqdn);
 
@@ -205,12 +232,12 @@ protected:
     ///
     /// @param subnet subnet the sender belongs to
     /// @param duid client's duid
-    /// @param question client's message
+    /// @param query client's message
     /// @param ia IA_NA option that is being renewed
     /// @param fqdn DHCPv6 Client FQDN Option included in the server's response
     /// @return IA_NA option (server's response)
     OptionPtr renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                         Pkt6Ptr question, boost::shared_ptr<Option6IA> ia,
+                         const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
                          const Option6ClientFqdnPtr& fqdn);
 
     /// @brief Releases specific IA_NA option
@@ -226,11 +253,11 @@ protected:
     /// release process fails.
     ///
     /// @param duid client's duid
-    /// @param question client's message
+    /// @param query client's message
     /// @param general_status a global status (it may be updated in case of errors)
     /// @param ia IA_NA option that is being renewed
     /// @return IA_NA option (server's response)
-    OptionPtr releaseIA_NA(const DuidPtr& duid, Pkt6Ptr question,
+    OptionPtr releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                            int& general_status,
                            boost::shared_ptr<Option6IA> ia);
 
@@ -312,17 +339,17 @@ protected:
                           Pkt6Ptr& answer,
                           const Option6ClientFqdnPtr& fqdn);
 
-    /// @brief Creates a number of @c isc::d2::NameChangeRequest objects based
-    /// on the DHCPv6 Client FQDN %Option.
+    /// @brief Creates a number of @c isc::dhcp_ddns::NameChangeRequest objects
+    /// based on the DHCPv6 Client FQDN %Option.
     ///
-    /// The @c isc::d2::NameChangeRequest class encapsulates the request from
-    /// the DHCPv6 server to the DHCP-DDNS module to perform DNS Update. The
-    /// FQDN option carries response to the client about DNS updates that
+    /// The @c isc::dhcp_ddns::NameChangeRequest class encapsulates the request
+    /// from the DHCPv6 server to the DHCP-DDNS module to perform DNS Update.
+    /// The FQDN option carries response to the client about DNS updates that
     /// server intents to perform for the DNS client. Based on this, the
-    /// function will create zero or more @c isc::d2::NameChangeRequest objects
-    /// and store them in the internal queue. Requests created by this function
-    /// are only adding or updating DNS records. In order to generate requests
-    /// for DNS records removal, use @c createRemovalNameChangeRequest.
+    /// function will create zero or more @c isc::dhcp_ddns::NameChangeRequest
+    /// objects and store them in the internal queue. Requests created by this
+    /// function are only adding or updating DNS records. In order to generate
+    /// requests for DNS records removal, use @c createRemovalNameChangeRequest.
     ///
     /// @param answer A message beging sent to the Client.
     /// @param fqdn_answer A DHCPv6 Client FQDN %Option which is included in the
@@ -330,15 +357,16 @@ protected:
     void createNameChangeRequests(const Pkt6Ptr& answer,
                                   const Option6ClientFqdnPtr& fqdn_answer);
 
-    /// @brief Creates a @c isc::d2::NameChangeRequest which requests removal
-    /// of DNS entries for a particular lease.
+    /// @brief Creates a @c isc::dhcp_ddns::NameChangeRequest which requests
+    /// removal of DNS entries for a particular lease.
     ///
     /// This function should be called upon removal of the lease from the lease
     /// database, i.e, when client sent Release or Decline message. It will
-    /// create a single @isc::d2::NameChangeRequest which removes the existing
-    /// DNS records for the lease, which server is responsible for. Note that
-    /// this function will not remove the entries which server hadn't added.
-    /// This is the case, when client performs forward DNS update on its own.
+    /// create a single @c isc::dhcp_ddns::NameChangeRequest which removes the
+    /// existing DNS records for the lease, which server is responsible for.
+    /// Note that this function will not remove the entries which server hadn't
+    /// added. This is the case, when client performs forward DNS update on its
+    /// own.
     ///
     /// @param lease A lease for which the the removal of corresponding DNS
     /// records will be performed.
@@ -347,7 +375,7 @@ protected:
     /// @brief Sends all outstanding NameChangeRequests to bind10-d2 module.
     ///
     /// The purpose of this function is to pick all outstanding
-    /// NameChangeRequests from the FIFO queue and send them to bind10-d2
+    /// NameChangeRequests from the FIFO queue and send them to bind10-dhcp-ddns
     /// module.
     ///
     /// @todo Currently this function simply removes all requests from the
@@ -415,6 +443,19 @@ protected:
     /// @return string representation
     static std::string duidToString(const OptionPtr& opt);
 
+
+    /// @brief dummy wrapper around IfaceMgr::receive6
+    ///
+    /// This method is useful for testing purposes, where its replacement
+    /// simulates reception of a packet. For that purpose it is protected.
+    virtual Pkt6Ptr receivePacket(int timeout);
+
+    /// @brief dummy wrapper around IfaceMgr::send()
+    ///
+    /// This method is useful for testing purposes, where its replacement
+    /// simulates transmission of a packet. For that purpose it is protected.
+    virtual void sendPacket(const Pkt6Ptr& pkt);
+
 private:
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
@@ -429,11 +470,21 @@ private:
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
 
+    /// @brief returns callout handle for specified packet
+    ///
+    /// @param pkt packet for which the handle should be returned
+    ///
+    /// @return a callout handle to be used in hooks related to said packet
+    isc::hooks::CalloutHandlePtr getCalloutHandle(const Pkt6Ptr& pkt);
+
+    /// UDP port number on which server listens.
+    uint16_t port_;
+
 protected:
 
-    /// Holds a list of @c isc::d2::NameChangeRequest objects, which
-    /// are waiting for sending to D2 module.
-    std::queue<isc::d2::NameChangeRequest> name_change_reqs_;
+    /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects, which
+    /// are waiting for sending to b10-dhcp-ddns module.
+    std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
 };
 
 }; // namespace isc::dhcp

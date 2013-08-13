@@ -106,8 +106,8 @@ to the client. The implementation of this feature is planned for the future rele
 
 The bind10-d2 process is responsible for the actual communication with the DNS
 server, i.e. to send DNS Update messages. The bind10-dhcp6 module is responsible
-for generating so called @ref isc::d2::NameChangeRequest and sending it to the
-bind10-d2 module. The @ref isc::d2::NameChangeRequest object represents changes to the
+for generating so called @ref isc::dhcp_ddns::NameChangeRequest and sending it to the
+bind10-d2 module. The @ref isc::dhcp_ddns::NameChangeRequest object represents changes to the
 DNS bindings, related to acquisition, renewal or release of the lease. The bind10-dhcp6
 module implements the simple FIFO queue of the NameChangeRequest objects. The module
 logic, which processes the incoming DHCPv6 Client FQDN Options puts these requests
@@ -167,5 +167,9 @@ constituted by the set of constants defined in the (upper part of) dhcp6_srv.cc 
 Once the configuration is implemented, these constants will be removed.
 
  @todo Add section about setting up options and their definitions with bindctl.
+
+ @section dhcpv6Other Other DHCPv6 topics
+
+ For hooks API support in DHCPv6, see @ref dhcpv6Hooks.
 
  */

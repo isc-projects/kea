@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,26 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include "dummylog.h"
+/// Defines the logger used by the top-level component of b10-dhcp_ddns.
 
-#include <iostream>
-
-using namespace std;
+#include <dhcp_ddns/dhcp_ddns_log.h>
 
 namespace isc {
-namespace log {
+namespace dhcp_ddns {
 
-bool denabled = false;
-string dprefix;
+/// @brief Defines the logger used within lib dhcp_ddns.
+isc::log::Logger dhcp_ddns_logger("libdhcp-ddns");
 
-void dlog(const string& message,bool error_flag) {
-    if (denabled || error_flag) {
-        if (!dprefix.empty()) {
-            cerr << "[" << dprefix << "] ";
-        }
-        cerr << message << endl;
-    }
-}
+} // namespace dhcp_ddns
+} // namespace isc
 
-}
-}

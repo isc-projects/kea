@@ -28,7 +28,7 @@ import time
 from functools import reduce
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
-from isc.statistics import Counters
+from isc.statistics.dns import Counters
 from isc.notify import notify_out
 import isc.util.process
 from isc.util.address_formatter import AddressFormatter
@@ -652,7 +652,8 @@ class XfrinConnection(asyncore.dispatcher):
             self.connect(self._master_addrinfo[2])
             return True
         except socket.error as e:
-            logger.error(XFRIN_CONNECT_MASTER, self._master_addrinfo[2],
+            logger.error(XFRIN_CONNECT_MASTER, self.tsig_key_name,
+                         self._master_addrinfo[2],
                          str(e))
             return False
 
@@ -767,14 +768,15 @@ class XfrinConnection(asyncore.dispatcher):
         '''
         Used as error callback below.
         '''
-        logger.error(XFRIN_ZONE_INVALID, self._zone_name, self._rrclass,
-                     reason)
+        logger.error(XFRIN_ZONE_INVALID, self._zone_name,
+                     self._rrclass, reason)
 
     def __validate_warning(self, reason):
         '''
         Used as warning callback below.
         '''
-        logger.warn(XFRIN_ZONE_WARN, self._zone_name, self._rrclass, reason)
+        logger.warn(XFRIN_ZONE_WARN, self._zone_name,
+                    self._rrclass, reason)
 
     def finish_transfer(self):
         """
@@ -965,17 +967,18 @@ class XfrinConnection(asyncore.dispatcher):
             # The log message doesn't contain the exception text, since there's
             # only one place where the exception is thrown now and it'd be the
             # same generic message every time.
-            logger.error(XFRIN_INVALID_ZONE_DATA, self.zone_str(),
+            logger.error(XFRIN_INVALID_ZONE_DATA,
+                         self.zone_str(),
                          format_addrinfo(self._master_addrinfo))
             ret = XFRIN_FAIL
         except XfrinProtocolError as e:
-            logger.info(XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION, req_str,
-                        self.zone_str(),
+            logger.info(XFRIN_XFR_TRANSFER_PROTOCOL_VIOLATION,
+                        req_str, self.zone_str(),
                         format_addrinfo(self._master_addrinfo), str(e))
             ret = XFRIN_FAIL
         except XfrinException as e:
-            logger.error(XFRIN_XFR_TRANSFER_FAILURE, req_str,
-                         self.zone_str(),
+            logger.error(XFRIN_XFR_TRANSFER_FAILURE,
+                         req_str, self.zone_str(),
                          format_addrinfo(self._master_addrinfo), str(e))
             ret = XFRIN_FAIL
         except Exception as e:
@@ -1142,12 +1145,12 @@ def __process_xfrin(server, zone_name, rrclass, datasrc_client, zone_soa,
                     # fallback.
                     if request_ixfr == ZoneInfo.REQUEST_IXFR_ONLY:
                         logger.warn(XFRIN_XFR_TRANSFER_FALLBACK_DISABLED,
-                                    conn.zone_str())
+                                    tsig_key, conn.zone_str())
                     else:
                         retry = True
                         request_type = RRType.AXFR
                         logger.warn(XFRIN_XFR_TRANSFER_FALLBACK,
-                                    conn.zone_str())
+                                    tsig_key, conn.zone_str())
                         conn.close()
                         conn = None
 
@@ -1688,7 +1691,8 @@ class Xfrin:
                 except isc.cc.session.SessionTimeout:
                     pass        # for now we just ignore the failure
             except socket.error as err:
-                logger.error(XFRIN_MSGQ_SEND_ERROR, XFROUT_MODULE_NAME, ZONE_MANAGER_MODULE_NAME)
+                logger.error(XFRIN_MSGQ_SEND_ERROR, self.tsig_key_name,
+                             XFROUT_MODULE_NAME, ZONE_MANAGER_MODULE_NAME)
 
         else:
             msg = create_command(notify_out.ZONE_XFRIN_FAILED, param)
@@ -1702,7 +1706,8 @@ class Xfrin:
                 except isc.cc.session.SessionTimeout:
                     pass        # for now we just ignore the failure
             except socket.error as err:
-                logger.error(XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER, ZONE_MANAGER_MODULE_NAME)
+                logger.error(XFRIN_MSGQ_SEND_ERROR_ZONE_MANAGER, self.tsig_key_name,
+                             ZONE_MANAGER_MODULE_NAME)
 
     def startup(self):
         logger.debug(DBG_PROCESS, XFRIN_STARTED)
