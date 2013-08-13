@@ -299,6 +299,43 @@ class TestStats(unittest.TestCase):
         return isc.config.ccsession.parse_answer(
             stats.command_handler(command_name, params))
 
+    def test_check_command(self):
+        """Test _check_command sets proper timeout values and sets proper values
+        returned from group_recvmsg"""
+        stat = MyStats()
+        set_timeouts = []
+        orig_timeout = 1
+        stat.cc_session.get_timeout = lambda: orig_timeout
+        stat.cc_session.set_timeout = lambda x: set_timeouts.append(x)
+        msg = create_answer(0, 'msg')
+        env = {'from': 'frominit'}
+        stat._answers = [(msg, env)]
+        stat._check_command()
+        self.assertListEqual([500, orig_timeout], set_timeouts)
+        self.assertEqual(msg, stat.mccs._msg)
+        self.assertEqual(env, stat.mccs._env)
+
+    def test_check_command_sessiontimeout(self):
+        """Test _check_command doesn't perform but sets proper timeout values in
+        case that a SesstionTimeout exception is caught while doing
+        group_recvmsg()"""
+        stat = MyStats()
+        set_timeouts = []
+        orig_timeout = 1
+        stat.cc_session.get_timeout = lambda: orig_timeout
+        stat.cc_session.set_timeout = lambda x: set_timeouts.append(x)
+        msg = create_answer(0, 'msg')
+        env = {'from': 'frominit'}
+        stat._answers = [(msg, env)]
+        # SessionTimeout is raised while doing group_recvmsg()
+        ex = isc.cc.session.SessionTimeout
+        def __raise(*x): raise ex(*x)
+        stat.cc_session.group_recvmsg = lambda x: __raise()
+        stat._check_command()
+        self.assertListEqual([500, orig_timeout], set_timeouts)
+        self.assertEqual(None, stat.mccs._msg)
+        self.assertEqual(None, stat.mccs._env)
+
     def test_start(self):
         # Define a separate exception class so we can be sure that's actually
         # the one raised in __check_start() below
@@ -318,6 +355,24 @@ class TestStats(unittest.TestCase):
         self.assertRaises(CheckException, self.stats.start)
         self.assertEqual(self.__send_command(self.stats, "status"),
                          (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
+
+    def test_start_set_next_polltime(self):
+        """Test start() properly sets the time next_polltime to do_poll() next
+        time"""
+        orig_get_timestamp = stats.get_timestamp
+        stats.get_timestamp = lambda : self.const_timestamp
+        stat = MyStats()
+        # manupilate next_polltime to go it through the inner if-condition
+        stat.next_polltime = self.const_timestamp - stat.get_interval() - 1
+        # stop an infinity loop at once
+        def __stop_running(): stat.running = False
+        stat.do_polling = __stop_running
+        # do nothing in _check_command()
+        stat._check_command = lambda: None
+        stat.start()
+        # check stat.next_polltime reassigned
+        self.assertEqual(self.const_timestamp, stat.next_polltime)
+        stats.get_timestamp = orig_get_timestamp
 
     def test_shutdown(self):
         def __check_shutdown(tested_stats):
