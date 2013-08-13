@@ -83,4 +83,3 @@ b10_resolver_LDFLAGS = -pthread
 # and can't use @datadir@ because doesn't expand default ${prefix}
 b10_resolverdir = $(pkgdatadir)
 b10_resolver_DATA = resolver.spec
-
