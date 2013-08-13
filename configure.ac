@@ -904,7 +904,6 @@ AC_ARG_ENABLE(experimental_resolver,
   [enable building of the experimental resolver [default=no]])],
   build_experimental_resolver=$enableval, build_experimental_resolver=no)
 AM_CONDITIONAL([BUILD_EXPERIMENTAL_RESOLVER], [test "$build_experimental_resolver" = "yes"])
-AC_SUBST(BUILD_EXPERIMENTAL_RESOLVER)
 
 use_shared_memory=yes
 AC_ARG_WITH(shared-memory,
