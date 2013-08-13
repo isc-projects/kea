@@ -1,3 +1,16 @@
+658.	[func]*		vorner
+	The resolver, being experimental, is no longer installed by default.
+	If you really want to use it, even when it is known to be buggy, use
+	--enable-experimental-resolver.
+	(Trac #3064, git f5f07c976d2d42bdf80fea4433202ecf1f260648)
+
+657.	[bug]		vorner
+	Due to various problems with older versions of boost and shared memory,
+	the server rejects to compile with combination of boost < 1.48 and shared
+	memory enabled. Most users don't need shared memory, admins of large
+	servers are asked to upgrade boost.
+	(Trac #3025, git 598e458c7af7d5bb81131112396e4c5845060ecd)
+
 656.	[func]		tomek
 	Additional hooks (buffer6_receive, lease6_renew,
 	lease6_release, buffer6_send) added to the DHCPv6 server.
