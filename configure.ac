@@ -898,17 +898,6 @@ if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$werror_ok" = X1 -a $CLANGP
     AC_MSG_ERROR([Failed to compile a required header file.  If you are using FreeBSD and Boost installed via ports, retry with specifying --without-werror.  See the ChangeLog entry for Trac no. 1991 for more details.])
 fi
 
-build_experimental_resolver=no
-AC_ARG_ENABLE(experimental_resolver,
-  [AC_HELP_STRING([--enable-experimental-resolver],
-  [enable building of the experimental resolver [default=no]])],
-  build_experimental_resolver=$enableval, build_experimental_resolver=no)
-AM_CONDITIONAL([BUILD_EXPERIMENTAL_RESOLVER], [test "$build_experimental_resolver" = "yes"])
-if test "$build_experimental_resolver" = "yes" ; then
-    AC_DEFINE(BUILD_EXPERIMENTAL_RESOLVER, 1, [Define to 1 to build the resolver])
-fi
-AC_SUBST(BUILD_EXPERIMENTAL_RESOLVER)
-
 use_shared_memory=yes
 AC_ARG_WITH(shared-memory,
     AC_HELP_STRING([--with-shared-memory],
