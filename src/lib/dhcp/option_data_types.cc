@@ -170,7 +170,7 @@ OptionDataTypeUtil::writeBinary(const std::string& hex_str,
 
 bool
 OptionDataTypeUtil::readBool(const std::vector<uint8_t>& buf) {
-    if (buf.size() < 1) {
+    if (buf.empty()) {
         isc_throw(BadDataTypeCast, "unable to read the buffer as boolean"
                   << " value. Invalid buffer size " << buf.size());
     }
