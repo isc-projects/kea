@@ -212,9 +212,10 @@ OptionDataTypeUtil::readFqdn(const std::vector<uint8_t>& buf) {
 
 void
 OptionDataTypeUtil::writeFqdn(const std::string& fqdn,
-                              std::vector<uint8_t>& buf) {
+                              std::vector<uint8_t>& buf,
+                              bool downcase) {
     try {
-        isc::dns::Name name(fqdn);
+        isc::dns::Name name(fqdn, downcase);
         isc::dns::LabelSequence labels(name);
         if (labels.getDataLength() > 0) {
             size_t read_len = 0;

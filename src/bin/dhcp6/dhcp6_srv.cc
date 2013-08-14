@@ -1046,6 +1046,8 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
     Option::OptionCollection answer_ias = answer->getOptions(D6O_IA_NA);
     for (Option::OptionCollection::const_iterator answer_ia =
              answer_ias.begin(); answer_ia != answer_ias.end(); ++answer_ia) {
+        // @todo IA_NA may contain multiple addresses. We should process
+        // each address individually. Currently we get only one.
         Option6IAAddrPtr iaaddr = boost::static_pointer_cast<
             Option6IAAddr>(answer_ia->second->getOption(D6O_IAADDR));
         // We need an address to create a name-to-address mapping.
@@ -1094,11 +1096,13 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
     // If hostname is non-empty, try to convert it to wire format so as
     // DHCID can be computed from it. This may throw an exception if hostname
     // has invalid format. Again, this should be only possible in case of
-    // manual intervention in the database.
+    // manual intervention in the database. Note that the last parameter
+    // passed to the writeFqdn function forces conversion of the FQDN
+    // to lower case. This is required by the RFC4701, section 3.5.
     // The DHCID computation is further in this function.
     std::vector<uint8_t> hostname_wire;
     try {
-        OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire);
+        OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
     } catch (const Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_DDNS_REMOVE_INVALID_HOSTNAME);
         return;

@@ -58,12 +58,11 @@ using namespace std;
 // Maybe it should be isc::test?
 namespace {
 
-const uint8_t FQDN_FLAG_S = 0x1;
-const uint8_t FQDN_FLAG_O = 0x2;
-const uint8_t FQDN_FLAG_N = 0x4;
-
+// This is a test fixture class for testing the processing of the DHCPv6 Client
+// FQDN Option.
 class FqdnDhcpv6SrvTest : public Dhcpv6SrvTest {
 public:
+    // Constructor
     FqdnDhcpv6SrvTest()
         : Dhcpv6SrvTest() {
         // generateClientId assigns DUID to duid_.
@@ -74,9 +73,11 @@ public:
 
     }
 
+    // Destructor
     virtual ~FqdnDhcpv6SrvTest() {
     }
 
+    // Construct the DHCPv6 Client FQDN Option using flags and domain-name.
     Option6ClientFqdnPtr
     createClientFqdn(const uint8_t flags,
                      const std::string& fqdn_name,
@@ -202,12 +203,9 @@ public:
         ASSERT_NO_THROW(answ_fqdn = srv.processClientFqdn(question));
         ASSERT_TRUE(answ_fqdn);
 
-        const bool flag_n = (exp_flags & Option6ClientFqdn::FLAG_N) != 0 ?
-            true : false;
-        const bool flag_s = (exp_flags & Option6ClientFqdn::FLAG_S) != 0 ?
-            true : false;
-        const bool flag_o = (exp_flags & Option6ClientFqdn::FLAG_O) != 0 ?
-            true : false;
+        const bool flag_n = (exp_flags & Option6ClientFqdn::FLAG_N) != 0;
+        const bool flag_s = (exp_flags & Option6ClientFqdn::FLAG_S) != 0;
+        const bool flag_o = (exp_flags & Option6ClientFqdn::FLAG_O) != 0;
 
         EXPECT_EQ(flag_n, answ_fqdn->getFlag(Option6ClientFqdn::FLAG_N));
         EXPECT_EQ(flag_s, answ_fqdn->getFlag(Option6ClientFqdn::FLAG_S));
@@ -225,7 +223,7 @@ public:
         // Create a message of a specified type, add server id and
         // FQDN option.
         OptionPtr srvid = srv.getServerID();
-        Pkt6Ptr req = generatePktWithFqdn(msg_type, FQDN_FLAG_S,
+        Pkt6Ptr req = generatePktWithFqdn(msg_type, Option6ClientFqdn::FLAG_S,
                                           hostname,
                                           Option6ClientFqdn::FULL,
                                           true, srvid);
@@ -298,6 +296,7 @@ public:
         srv.name_change_reqs_.pop();
     }
 
+    // Holds a lease used by a test.
     Lease6Ptr lease_;
 
 };
@@ -1736,7 +1735,8 @@ TEST_F(Dhcpv6SrvTest, ServerID) {
 
 // Test server's response when client requests that server performs AAAA update.
 TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdate) {
-    testFqdn(DHCPV6_SOLICIT, true, FQDN_FLAG_S, "myhost.example.com",
+    testFqdn(DHCPV6_SOLICIT, true, Option6ClientFqdn::FLAG_S,
+             "myhost.example.com",
              Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_S,
              "myhost.example.com.");
 }
@@ -1744,7 +1744,7 @@ TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdate) {
 // Test server's response when client provides partial domain-name and requests
 // that server performs AAAA update.
 TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdatePartialName) {
-    testFqdn(DHCPV6_SOLICIT, true, FQDN_FLAG_S, "myhost",
+    testFqdn(DHCPV6_SOLICIT, true, Option6ClientFqdn::FLAG_S, "myhost",
              Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
              "myhost.example.com.");
 }
@@ -1752,14 +1752,15 @@ TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdatePartialName) {
 // Test server's response when client provides empty domain-name and requests
 // that server performs AAAA update.
 TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdateNoName) {
-    testFqdn(DHCPV6_SOLICIT, true, FQDN_FLAG_S, "",
+    testFqdn(DHCPV6_SOLICIT, true, Option6ClientFqdn::FLAG_S, "",
              Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
              "myhost.example.com.");
 }
 
 // Test server's response when client requests no DNS update.
 TEST_F(FqdnDhcpv6SrvTest, noUpdate) {
-    testFqdn(DHCPV6_SOLICIT, true, FQDN_FLAG_N, "myhost.example.com",
+    testFqdn(DHCPV6_SOLICIT, true, Option6ClientFqdn::FLAG_N,
+             "myhost.example.com",
              Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_N,
              "myhost.example.com.");
 }
@@ -1768,7 +1769,8 @@ TEST_F(FqdnDhcpv6SrvTest, noUpdate) {
 // update to the client and this delegation is not allowed.
 TEST_F(FqdnDhcpv6SrvTest, clientAAAAUpdateNotAllowed) {
     testFqdn(DHCPV6_SOLICIT, true, 0, "myhost.example.com.",
-             Option6ClientFqdn::FULL, FQDN_FLAG_S | FQDN_FLAG_O,
+             Option6ClientFqdn::FULL,
+             Option6ClientFqdn::FLAG_S | Option6ClientFqdn::FLAG_O,
              "myhost.example.com.");
 }
 
@@ -1974,9 +1976,7 @@ TEST_F(FqdnDhcpv6SrvTest, processSolicit) {
     NakedDhcpv6Srv srv(0);
 
     // Create a Solicit message with FQDN option and generate server's
-    // response using processRequest function. This will result in the
-    // creation of a new lease and the appropriate NameChangeRequest
-    // to add both reverse and forward mapping to DNS.
+    // response using processSolicit function.
     testProcessMessage(DHCPV6_SOLICIT, "myhost.example.com", srv);
     EXPECT_TRUE(srv.name_change_reqs_.empty());
 }
