@@ -1477,18 +1477,16 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     EXPECT_FALSE(l);
 
     // Try to get the lease by hardware address
-    // @todo: Uncomment this once trac2592 is implemented
-    // Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
-    // EXPECT_EQ(leases.size(), 0);
+    Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
+    EXPECT_EQ(leases.size(), 0);
 
     // Try to get it by hw/subnet_id combination
     l = LeaseMgrFactory::instance().getLease4(hw->hwaddr_, subnet_->getID());
     EXPECT_FALSE(l);
 
     // Try by client-id
-    // @todo: Uncomment this once trac2592 is implemented
-    //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
-    //EXPECT_EQ(leases.size(), 0);
+    leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    EXPECT_EQ(leases.size(), 0);
 
     // Try by client-id/subnet-id
     l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
