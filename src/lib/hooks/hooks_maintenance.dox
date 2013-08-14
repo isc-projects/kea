@@ -1,0 +1,270 @@
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+// Note: the prefix "hooksmg" to all labels is an abbreviation for "Hooks
+// Maintenance Guide" and is used to prevent a clash with symbols in any
+// other Doxygen file.
+
+/**
+ @page hooksmgMaintenanceGuide Hooks Maintenance Guide
+
+ @section hooksmgIntroduction Introduction
+
+ This document is aimed at BIND 10 maintainers responsible for the hooks
+ system.  It provides an overview of the classes that make up the hooks
+ framework and notes important aspects of processing.  More detailed
+ information can be found in the source code.
+
+ It is assumed that the reader is familiar with the contents of the @ref
+ hooksdgDevelopersGuide and the @ref hooksComponentDeveloperGuide.
+
+ @section hooksmgObjects Hooks Framework Objects
+
+ The relationships betweeh the various objects in the hooks framework
+ is shown below:
+
+ @image html HooksUml.png "High-Level Class Diagram of the Hooks Framework"
+
+ (To avoid clutter, the @ref hooksmgServerHooks object, used to pass
+ information about registered hooks to the components, is not shown on
+ the diagram.)
+
+ The hooks framework objects can be split into user-side objects and
+ server-side objects.  The former are those objects used or referenced
+ by user-written hooks libraries.  The latter are those objects used in
+ the hooks framework.
+
+ @subsection hooksmgUserObjects User-Side Objects
+
+ The user-side code is able to access two objects in the framework,
+ the @ref hooksmgCalloutHandle and the @ref hooksmgLibraryHandle.
+ The @ref hooksmgCalloutHandle is used to pass data between the BIND 10
+ component and the loaded library; the @ref hooksmgLibraryHandle is used
+ for registering callouts.
+
+ @subsubsection hooksmgCalloutHandle Callout Handle
+
+ The @ref isc::hooks::CalloutHandle has two functions: passing arguments
+ between the BIND 10 component and the user-written library, and storing
+ per-request context between library calls.  In both cases the data is
+ stored in a std::map structure, keyed by argument (or context item) name.
+ The actual data is stored in a boost::any object, which allows any
+ data type to be stored, although a penalty for this flexibility is
+ the restriction (mentioned in the @ref hooksdgDevelopersGuide) that
+ the type of data retrieved must be identical (and not just compatible)
+ with that stored.
+
+ The storage of context data is slightly complex because there is
+ separate context for each user library.  For this reason, the @ref
+ hooksmgCalloutHandle has multiple maps, one for each library loaded.
+ The maps are stored in another map, the appropriate map being identified
+ by the "current library index" (this index is explained further below).
+ The reason for the second map (rather than a structure such as a vector)
+ is to avoid creating individual context maps unless needed; given the
+ key to the map (in this case the current library index) accessing an
+ element in a map using the operator[] method returns the element in
+ question if it exists, or creates a new one (and stores it in the map)
+ if its doesn't.
+
+ @subsubsection hooksmgLibraryHandle Library Handle
+
+ Little more than a restricted interface to the @ref
+ hooksmgCalloutManager, the @ref isc::hooks::LibraryHandle allows a
+ callout to register and deregister callouts.  However, there are some
+ quirks to callout registration which, although the processing involved
+ is in the @ref hooksmgCalloutManager, are best described here.
+
+ Firstly, a callout can be deregistered by a function within a user
+ library only if it was registered by a function within that library. That
+ is to say, if library A registers the callout A_func() on hook "alpha"
+ and library B registers B_func(), functions within library A are only
+ able to remove A_func() (and functions in library B remove B_func()).
+ The restriction - here to prevent one library interfering with the
+ callouts of another - is enforced by means of the current library index.
+ As described below, each entry in the vector of callouts associated with
+ a hook is a pair object, comprising a pointer to the callout and
+ the index of the library with which it is associated. A callout
+ can only modify entries in that vector where the current library index
+ matches the index element of the pair.
+
+ A second quirk is that when dynamically modifying the list of callouts,
+ the change only takes effect when the current call out from the server
+ completes. To clarify this, suppose that functions A_func(), B_func()
+ and C_func() are registered on a hook, and the server executes a callout
+ on the hook. Suppose also during this call, A_func() removes the callout
+ C_func() and that B_func() adds D_func(). As changes only take effect
+ when the current call out completes, the user callouts executed will be
+ A_func(), B_func() then C_func(). When the server calls the hook callouts
+ again, the functions executed will be A_func(), B_func() and D_func().
+
+ This restriction is down to implementation.  When a set of callouts on a hook
+ is being called, the @ref hooksmgCalloutManager iterates through a
+ vector (the "callout vector") of (index, callout pointer) pairs.  Since
+ registration or deregistration of a callout on that hook would change the
+ vector (and so potentially invalidate the iterators used to access the it),
+ a copy of the vector is taken before the iteration starts.  The @ref
+ hooksmgCalloutManager iterates over this copy while any changes made
+ by the callout registration functions affect the relevant callout vector.
+
+ @subsection hooksmgServerObjects Server-Side Objects
+
+ @subsubsection hooksmgServerHooks Server Hooks
+
+ The singleton @ref isc::hooks::ServerHooks object is used to register
+ hooks. It is little more than a wrapper around a map of (hook index,
+ hook name), generating a unique number (the hook index) for each
+ hook registered.  It also handles the registration of the pre-defined
+ context_create and context_destroy hooks.
+
+ In operation, the @ref hooksmgHooksManager provides a thin wrapper
+ around it, so that the BIND 10 component developer does not have to
+ worry about another object.
+
+ @subsubsection hooksmgLibraryManager Library Manager
+
+ An @ref isc::hooks::LibraryManager is created by the @ref
+ hooksmgHooksManager object for each shared library loaded. It
+ controls the loading and unloading of the library and in essence
+ represents the library in the hooks framework. It also handles the
+ registration of the standard callouts (functions in the library with
+ the same name as the hook name).
+
+ Of particular importance is the "library's index", a number associated
+ with the library.  This is passed to the LibraryManager at creation
+ time and is used to tag the callout pointers.  It is discussed
+ further below.
+
+ As the LibraryManager provides all the methods needed to manage the
+ shared library, it is the natural home for the static validateLibrary()
+ method. The function called the parsing of the BIND 10 configuration, when
+ the "hooks-libraries" element is processed. It checks that shared library
+ exists, that it can be opened, that it contains the "version()" function
+ and that that function returns a valid value. It then closes the shared
+ library and returns an appropriate indication as to the library status.
+
+ @subsubsection hooksmgLibraryManagerCollection Library Manager Collection
+
+ The hooks framework can handle multiple libraries and as
+ a result will create a @ref hooksmgLibraryManager for each
+ of them. The collection of LibraryManagers is managed by the
+ @ref isc::hooks::LibraryManagerCollection object which, in most
+ cases has a method corresponding to a @ref hooksmgLibraryManager
+ method, e.g. it has a loadLibraries() that corresponds to the @ref
+ hooksmgLibraryManager's loadLibrary() call. As would be expected, methods
+ on the LibraryManagerCollection iterate through all specified libraries,
+ calling the corresponding LibraryManager method for each library.
+
+ One point of note is that LibraryManagerCollection operates on an "all
+ or none" principle. When loadLibraries() is called, on exit either all
+ libraries have been successfully opened or none of them have. There
+ is no use-case in BIND 10 where, after a user has specified the shared
+ libraries they want to load, the system will operate with only some of
+ them loaded.
+
+ The LibraryManagerCollection is the place where each library's index is set.
+ Each library is assigned a number ranging from 1 through to the number
+ of libraries being loaded.  As mentioned in the previous section, this
+ index is used to tag callout pointers, something that is discussed
+ in the next section.
+
+ (Whilst on the subject of library index numbers, two additional
+ numbers - 0 and INT_MAX - are also valid as "current library index".
+ For flexibility, the BIND 10 component is able to register its own
+ functions as hook callouts.  It does this by obtaining a suitable @ref
+ hooksmgLibraryHandle from the @ref hooksmgHooksManager.  A choice
+ of two is available: one @ref hooksmgLibraryHandle (with an index
+ of 0) can be used to register a callout on a hook to execute before
+ any user-supplied callouts.  The second (with an index of INT_MAX)
+ is used to register a callout to run after user-specified callouts.
+ Apart from the index number, the hooks framework does not treat these
+ callouts any differently from user-supplied ones.)
+
+ @subsubsection hooksmgCalloutManager Callout Manager
+
+ The @ref isc::hooks::CalloutManager is the core of the framework insofar
+ as the registration and calling of callouts is concerned.
+
+ It maintains a "hook vector - a vector with one element for
+ each registered hook. Each element in this vector is itself a
+ vector (the callout vector), each element of which is a pair of
+ (library index, callback pointer). When a callout is registered, the
+ CalloutManager's current library index is used to supply the "library
+ index" part of the pair. The library index is set explicitly by the
+ @ref hooksmgLibraryManager prior to calling the user library's load()
+ function (and prior to registering the standard callbacks).
+
+ The situation is slightly more complex when a callout is executing. In
+ order to execute a callout, the CalloutManager's callCallouts()
+ method must be called. This iterates through the callout vector for
+ a hook and for each element in the vector, uses the "library index"
+ part of the pair to set the "current library index" before calling the
+ callout function recorded in the second part of the pair. In most cases,
+ the setting of the library index has no effect on the callout. However,
+ if the callout wishes to dynamically register or deregister a callout,
+ the @ref hooksmgLibraryHandle (see above) calls a method on the
+ @ref hooksmgCalloutManager which in turn uses that information.
+
+ @subsubsection hooksmgHooksManager Hooks Manager
+
+ The @ref isc::hooks::HooksManager is the main object insofar as the
+ server is concerned. It controls the creation of the library-related
+ objects and provides the framework in which they interact. It also
+ provides a shell around objects such as @ref hooksmgServerHooks so that all
+ interaction with the hooks framework by the server is through the
+ HooksManager object.  Apart from this, it supplies no functionality to
+ the hooks framework.
+
+ @section hooksmgOtherIssues Other Issues
+
+ @subsection hooksmgMemoryAllocation Memory Allocation
+
+ Unloading a shared library works by unmapping the part of the process's
+ virtual address space in which the library lies. This may lead to
+ problems if there are still references to that address space elsewhere
+ in the process.
+
+ In many operating systems, heap storage allowed by a shared library
+ will lie in the virtual address allocated to the library. This has
+ implications in the hooks framework because:
+
+ - Argument information stored in a @ref hooksmgCalloutHandle by a
+ callout in a library may lie in the library's address space.
+
+ - Data modified in objects passed as arguments may lie in the address
+ space. For example, it is common for a DHCP callout to add "options"
+ to a packet: the memory allocated for those options will most likely
+ lie in library address space.
+
+ The problem really arises because of the extensive use by BIND 10 of
+ boost smart pointers. When the pointer is destroyed, the pointed-to
+ memory is deallocated. If the pointer points to address space that is
+ unmapped because a library has been unloaded, the deletion causes a
+ segmentation fault.
+
+ The hooks framework addresses the issue for the @ref hooksmgCalloutHandle
+ by keeping in that object a shared pointer to the object controlling
+ library unloading (the @ref hooksmgLibraryManagerCollection). Although
+ the libraries can be unloaded at any time, it is only when every
+ @ref hooksmgCalloutHandle that could possibly reference address space in the
+ library have been deleted that the library will actually be unloaded
+ and the address space unmapped.
+
+ The hooks framework cannot solve the second issue as the objects in
+ question are under control of the BIND 10 server incorporating the
+ hooks. It is up to the server developer to ensure that all such objects
+ have been destroyed before libraries are reloaded. In extreme cases
+ this may mean the server suspending all processing of incoming requests
+ until all currently executing requests have completed and data object
+ destroyed, reloading the libraries, then resuming processing.
+*/

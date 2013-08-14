@@ -31,7 +31,7 @@ BIND 10 component to use hooks.  It shows how the component should be written
 to load a shared library at run-time and how to call functions in it.
 
 For information about writing a hooks library containing functions called by BIND 10
-during its execution, see the document @ref hooksDevelopersGuide.
+during its execution, see the document @ref hooksdgDevelopersGuide.
 
 @subsection hooksComponentTerminology Terminology
 
@@ -53,7 +53,7 @@ to execute a user-written function.
 shared library and loaded by BIND 10 into its address space.  Multiple
 user libraries can be loaded at the same time, each containing callouts for
 the same hooks.  The hooks framework calls these libraries one after the
-other. (See the document @ref hooksDevelopersGuide for more details.)
+other. (See the document @ref hooksdgDevelopersGuide for more details.)
 
 @subsection hooksComponentLanguages Languages
 
@@ -463,7 +463,7 @@ It is possible for a component to register its own functions (i.e. within
 its own address space) as hook callouts.  These functions are called
 in eactly the same way as user callouts, being passed their arguments
 though a CalloutHandle object.  (Guidelines for writing callouts can be
-found in @ref hooksDevelopersGuide.)
+found in @ref hooksdgDevelopersGuide.)
 
 A component can associate with a hook callouts that run either before
 user-registered callouts or after them.  Registration is done via a
@@ -473,7 +473,7 @@ through the methods isc::hooks::HooksManager::preCalloutLibraryHandle()
 callouts) or isc::hooks::HooksManager::postCalloutLibraryHandle() (for
 a handle to register callouts to run after the user callouts).  Use of
 the LibraryHandle to register and deregister callouts is described in
-@ref hooksLibraryHandle.
+@ref hooksdgLibraryHandle.
 
 Finally, it should be noted that callouts registered in this way only
 remain registered until the next call to isc::hooks::loadLibraries().
