@@ -55,6 +55,36 @@ libb10_dhcp___la_LDFLAGS  = -no-undefined -version-info 2:0:0
 
 EXTRA_DIST  = README libdhcp++.dox
 
+# Specify the headers for copying into the installation directory tree. User-
+# written libraries may need access to all libdhcp++ headers.
+libb10_dhcp___includedir = $(pkgincludedir)/dhcp
+libb10_dhcp___include_HEADERS = \
+    dhcp4.h \
+    dhcp6.h \
+    duid.h \
+    hwaddr.h \
+    iface_mgr.h \
+    libdhcp++.h \
+    option.h \
+    option4_addrlst.h \
+    option6_addrlst.h \
+    option6_ia.h \
+    option6_iaaddr.h \
+    option_custom.h \
+    option_data_types.h \
+    option_definition.h \
+    option_int.h \
+    option_int_array.h \
+    option_space.h \
+    option_string.h \
+    pkt4.h \
+    pkt6.h \
+    pkt_filter.h \
+    pkt_filter_inet.h \
+    pkt_filter_lpf.h \
+    protocol_util.h \
+    std_option_defs.h
+
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
 # Boost headers when compiling with clang.

@@ -51,3 +51,14 @@ libb10_log_la_LIBADD   = $(top_builddir)/src/lib/util/libb10-util.la
 libb10_log_la_LIBADD  += interprocess/libb10-log_interprocess.la
 libb10_log_la_LIBADD  += $(LOG4CPLUS_LIBS)
 libb10_log_la_LDFLAGS = -no-undefined -version-info 1:0:0
+
+# Specify the headers for copying into the installation directory tree. User-
+# written libraries only need the definitions for logger.h and dependencies.
+libb10_log_includedir = $(pkgincludedir)/log
+libb10_log_include_HEADERS = \
+    log_formatter.h \
+    logger.h \
+    logger_level.h \
+    macros.h \
+    message_types.h
+

@@ -435,6 +435,10 @@ pkgconfig_DATA = dns++.pc
 
 CLEANFILES = $(abs_top_builddir)/logger_lockfile
 
+# config.h may be included by headers supplied for building user-written
+# hooks libraries, so we need to include it in the distribution.
+pkginclude_HEADERS = config.h
+
 if HAVE_GTEST_SOURCE
 noinst_LIBRARIES = libgtest.a
 libgtest_a_CXXFLAGS = $(GTEST_INCLUDES) $(AM_CXXFLAGS)
