@@ -202,6 +202,7 @@ class MsgQ:
         # side.
         self.__lock = threading.Lock()
         self._session = None
+        self.__poller_sock = None
 
     def members_notify(self, event, params):
         """
@@ -533,7 +534,7 @@ class MsgQ:
             self.sendbuffs[fileno] = (last_sent, buff)
         return True
 
-    def __process_write(self, fileno):
+    def _process_write(self, fileno):
         # Try to send some data from the buffer
         (_, msg) = self.sendbuffs[fileno]
         sock = self.sockets[fileno]
@@ -661,7 +662,7 @@ class MsgQ:
             reads = list(self.fd_to_lname.keys())
             if self.listen_socket.fileno() != -1: # Skip in tests
                 reads.append(self.listen_socket.fileno())
-            if self.__poller_sock.fileno() != -1:
+            if self.__poller_sock and self.__poller_sock.fileno() != -1:
                 reads.append(self.__poller_sock.fileno())
             writes = list(self.sendbuffs.keys())
             (read_ready, write_ready) = ([], [])
@@ -685,14 +686,15 @@ class MsgQ:
                         write_ready.remove(fd)
                     if fd == self.listen_socket.fileno():
                         self.process_accept()
-                    elif fd == self.__poller_sock.fileno():
+                    elif self.__poller_sock and fd == \
+                        self.__poller_sock.fileno():
                         # The signal socket. We should terminate now.
                         self.running = False
                         break
                     else:
                         self.process_packet(fd, self.sockets[fd])
                 for fd in write_ready:
-                    self.__process_write(fd)
+                    self._process_write(fd)
 
     def stop(self):
         # Signal it should terminate.

@@ -990,9 +990,11 @@ class SocketTests(unittest.TestCase):
         self.__killed_socket = None
         self.__logger = self.LoggerWrapper(msgq.logger)
         msgq.logger = self.__logger
+        self.__orig_select = msgq.select.select
 
     def tearDown(self):
         msgq.logger = self.__logger.orig_logger
+        msgq.select.select = self.__orig_select
 
     def test_send_data(self):
         # Successful case: _send_data() returns the hardcoded value, and
@@ -1072,6 +1074,47 @@ class SocketTests(unittest.TestCase):
                 expected_errors += 1
             self.assertEqual(expected_errors, self.__logger.error_called)
             self.assertEqual(expected_debugs, self.__logger.debug_called)
+
+    def test_do_select(self):
+        """
+        Check the behaviour of the run_select method.
+
+        In particular, check that we skip writing to the sockets we read,
+        because a read may have side effects (like closing the socket) and
+        we want to prevent strange behavior.
+        """
+        self.__read_called = []
+        self.__write_called = []
+        self.__reads = None
+        self.__writes = None
+        def do_read(fd, socket):
+            self.__read_called.append(fd)
+            self.__msgq.running = False
+        def do_write(fd):
+            self.__write_called.append(fd)
+            self.__msgq.running = False
+        self.__msgq.process_packet = do_read
+        self.__msgq._process_write = do_write
+        self.__msgq.fd_to_lname = {42: 'lname', 44: 'other', 45: 'unused'}
+        # The do_select does index it, but just passes the value. So reuse
+        # the dict to safe typing in the test.
+        self.__msgq.sockets = self.__msgq.fd_to_lname
+        self.__msgq.sendbuffs = {42: 'data', 43: 'data'}
+        def my_select(reads, writes, errors):
+            self.__reads = reads
+            self.__writes = writes
+            self.assertEqual([], errors)
+            return ([42, 44], [42, 43], [])
+        msgq.select.select = my_select
+        self.__msgq.listen_socket = DummySocket
+
+        self.__msgq.running = True
+        self.__msgq.run_select()
+
+        self.assertEqual([42, 44], self.__read_called)
+        self.assertEqual([43], self.__write_called)
+        self.assertEqual({42, 44, 45}, set(self.__reads))
+        self.assertEqual({42, 43}, set(self.__writes))
 
 if __name__ == '__main__':
     isc.log.resetUnitTestRootLogger()
