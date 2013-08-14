@@ -1104,7 +1104,8 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
     try {
         OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
     } catch (const Exception& ex) {
-        LOG_ERROR(dhcp6_logger, DHCP6_DDNS_REMOVE_INVALID_HOSTNAME);
+        LOG_ERROR(dhcp6_logger, DHCP6_DDNS_REMOVE_INVALID_HOSTNAME)
+            .arg(lease->hostname_);
         return;
     }
 
