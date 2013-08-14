@@ -1,7 +1,7 @@
 SUBDIRS = . tests
 
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
-AM_CPPFLAGS += $(BOOST_INCLUDES) $(BOTAN_INCLUDE)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(BOTAN_INCLUDES)
 AM_CXXFLAGS  = $(B10_CXXFLAGS)
 
 # Some versions of GCC warn about some versions of Boost regarding
