@@ -1,3 +1,8 @@
+6XX.	[func]		dclink
+	memfile backend now supports getLease4(hwaddr) and getLease4(client-id)
+	methods.
+	(Trac #2592, git ABCD)
+
 658.	[func]*		vorner
 	The resolver, being experimental, is no longer installed by default.
 	If you really want to use it, even when it is known to be buggy, use
