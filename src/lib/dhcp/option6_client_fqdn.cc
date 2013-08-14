@@ -174,7 +174,7 @@ setDomainName(const std::string& domain_name,
 
     } else {
         try {
-            domain_name_.reset(new isc::dns::Name(name));
+            domain_name_.reset(new isc::dns::Name(name, true));
             domain_name_type_ = name_type;
 
         } catch (const Exception& ex) {
@@ -234,7 +234,7 @@ Option6ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
             // Reset domain name.
             isc::util::InputBuffer name_buf(&buf[0], buf.size());
             try {
-                domain_name_.reset(new isc::dns::Name(name_buf));
+                domain_name_.reset(new isc::dns::Name(name_buf, true));
             } catch (const Exception& ex) {
                 isc_throw(InvalidOption6FqdnDomainName, "failed to parse"
                           "partial domain-name from wire format");
@@ -249,7 +249,7 @@ Option6ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
             isc::util::InputBuffer name_buf(&(*first),
                                             std::distance(first, last));
             try {
-                domain_name_.reset(new isc::dns::Name(name_buf));
+                domain_name_.reset(new isc::dns::Name(name_buf, true));
             } catch (const Exception& ex) {
                 isc_throw(InvalidOption6FqdnDomainName, "failed to parse"
                           "fully qualified domain-name from wire format");
