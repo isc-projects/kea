@@ -103,6 +103,10 @@ public:
 
     /// @brief Sets the DHCID value based on the DUID and FQDN.
     ///
+    /// This function requires that the FQDN conforms to the section 3.5
+    /// of the RFC4701, which says that the FQDN must be in lowercase.
+    /// This function doesn't validate if it really converted.
+    ///
     /// @param duid A @c isc::dhcp::DUID object encapsulating DUID.
     /// @param wire_fqdn A on-wire canonical representation of the FQDN.
     void fromDUID(const isc::dhcp::DUID& duid,

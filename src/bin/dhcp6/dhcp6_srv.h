@@ -352,6 +352,8 @@ protected:
     /// function are only adding or updating DNS records. In order to generate
     /// requests for DNS records removal, use @c createRemovalNameChangeRequest.
     ///
+    /// @todo Add support for multiple IAADDR options in the IA_NA.
+    ///
     /// @param answer A message beging sent to the Client.
     /// @param fqdn_answer A DHCPv6 Client FQDN %Option which is included in the
     /// response message sent to a client.

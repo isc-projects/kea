@@ -327,6 +327,67 @@ TEST(NameChangeRequestTest, dhcidFromDUID) {
     EXPECT_EQ(dhcid_ref, dhcid.toStr());
 }
 
+// Test that DHCID is correctly created when the DUID has minimal length (1).
+TEST(NameChangeRequestTest, dhcidFromMinDUID) {
+    D2Dhcid dhcid;
+
+    // Create DUID.
+    uint8_t duid_data[] = { 1 };
+    DUID duid(duid_data, sizeof(duid_data));
+
+    // Create FQDN in on-wire format: myhost.example.com. It is encoded
+    // as a set of labels, each preceded by its length. The whole FQDN
+    // is zero-terminated.
+    const uint8_t fqdn_data[] = {
+        6, 109, 121, 104, 111, 115, 116,     // myhost.
+        7, 101, 120, 97, 109, 112, 108, 101, // example.
+        3, 99, 111, 109, 0                   // com.
+    };
+    std::vector<uint8_t> wire_fqdn(fqdn_data, fqdn_data + sizeof(fqdn_data));
+
+    // Create DHCID.
+    ASSERT_NO_THROW(dhcid.fromDUID(duid, wire_fqdn));
+
+    // The reference DHCID (represented as string of hexadecimal digits)
+    // has been calculated using one of the online calculators.
+    std::string dhcid_ref = "000201F89004F73E60CAEDFF514E11CB91D"
+        "1F45C8F0A55D4BC4C688484A819F8EA4074";
+
+    // Make sure that the DHCID is valid.
+    EXPECT_EQ(dhcid_ref, dhcid.toStr());
+}
+
+// Test that DHCID is correctly created when the DUID has maximal length (128).
+TEST(NameChangeRequestTest, dhcidFromMaxDUID) {
+    D2Dhcid dhcid;
+
+    // Create DUID.
+    std::vector<uint8_t> duid_data(128, 1);
+    DUID duid(&duid_data[0], duid_data.size());
+
+    // Create FQDN in on-wire format: myhost.example.com. It is encoded
+    // as a set of labels, each preceded by its length. The whole FQDN
+    // is zero-terminated.
+    const uint8_t fqdn_data[] = {
+        6, 109, 121, 104, 111, 115, 116,     // myhost.
+        7, 101, 120, 97, 109, 112, 108, 101, // example.
+        3, 99, 111, 109, 0                   // com.
+    };
+    std::vector<uint8_t> wire_fqdn(fqdn_data, fqdn_data + sizeof(fqdn_data));
+
+    // Create DHCID.
+    ASSERT_NO_THROW(dhcid.fromDUID(duid, wire_fqdn));
+
+    // The reference DHCID (represented as string of hexadecimal digits)
+    // has been calculated using one of the online calculators.
+    std::string dhcid_ref = "00020137D8FBDC0585B44DFA03FAD2E36C6"
+        "159737D545A12EFB40B0D88D110A5748234";
+
+    // Make sure that the DHCID is valid.
+    EXPECT_EQ(dhcid_ref, dhcid.toStr());
+}
+
+
 /// @brief Verifies the fundamentals of converting from and to JSON.
 /// It verifies that:
 /// 1. A NameChangeRequest can be created from a valid JSON string.

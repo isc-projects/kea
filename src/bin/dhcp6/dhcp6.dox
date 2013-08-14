@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -93,21 +93,21 @@
 @section dhcpv6DDNSIntegration DHCPv6 Server Support for the Dynamic DNS Updates
 
 The DHCPv6 server supports processing of the DHCPv6 Client FQDN Option described in
-the RFC4307. This Option is sent by the DHCPv6 client to instruct the server to
+the RFC4704. This Option is sent by the DHCPv6 client to instruct the server to
 update the DNS mappings for the acquired lease. A client may send its fully
 qualified domain name, a partial name or it may choose that server will generate
 the name. In the last case, the client sends an empty domain-name field in the
 DHCPv6 Client FQDN Option.
 
-As described in RFC4307, client may choose that the server delegates the forward
+As described in RFC4704, client may choose that the server delegates the forward
 DNS update to the client and that the server performs the reverse update only. Current
 version of the DHCPv6 server does not support delegation of the forward update
 to the client. The implementation of this feature is planned for the future releases.
 
-The bind10-d2 process is responsible for the actual communication with the DNS
-server, i.e. to send DNS Update messages. The bind10-dhcp6 module is responsible
+The b10-dhcp-ddns process is responsible for the actual communication with the DNS
+server, i.e. to send DNS Update messages. The b10-dhcp6 module is responsible
 for generating so called @ref isc::dhcp_ddns::NameChangeRequest and sending it to the
-bind10-d2 module. The @ref isc::dhcp_ddns::NameChangeRequest object represents changes to the
+b10-dhcp-ddns module. The @ref isc::dhcp_ddns::NameChangeRequest object represents changes to the
 DNS bindings, related to acquisition, renewal or release of the lease. The bind10-dhcp6
 module implements the simple FIFO queue of the NameChangeRequest objects. The module
 logic, which processes the incoming DHCPv6 Client FQDN Options puts these requests
@@ -116,24 +116,25 @@ into the FIFO queue.
 @todo Currently the FIFO queue is not processed after the NameChangeRequests are
 generated and added to it. In the future implementation steps it is planned to create
 a code which will check if there are any outstanding requests in the queue and
-send them to the bind10-d2 module when server is idle waiting for DHCP messages.
+send them to the bind10-dhcp-ddns module when server is idle waiting for DHCP messages.
 
-Depending on the message type, a DHCPv6 server may generate 0, 1 or 2 NameChangeRequests
-during single message processing. Server generates no NameChangeRequests if it is
-not configured to update DNS or it rejects the DNS update for any other reason.
+In the simplest case, when client gets one address from the server, a DHCPv6 server
+may generate 0, 1 or 2 NameChangeRequests during single message processing. 
+Server generates no NameChangeRequests if it is not configured to update DNS
+ or it rejects the DNS update for any other reason.
 
 Server may generate 1 NameChangeRequests in a situation when a client acquires a
 new lease or it releases an existing lease. In the former case, the NameChangeRequest
-type is CHG_ADD, which indicates that the bind10-d2 module should add a new DNS
+type is CHG_ADD, which indicates that the bind10-dhcp-ddns module should add a new DNS
 binding for the client, and it is assumed that there is no DNS binding for this
 client already. In the latter case, the NameChangeRequest type is CHG_REMOVE to
-indicate to the bind10-d2 module that the existing DNS binding should be removed
+indicate to the bind10-dhcp-ddns module that the existing DNS binding should be removed
 from the DNS. The binding consists of the forward and reverse mapping.
 A server may only remove the mapping which it had added. Therefore, the lease database
-holds an information which updates (no update, reverse only update, both reverse and
-forward update) have been performed when the lease was acquired. Server checks
-this information to make a decision which mapping it is supposed to remove when
-a lease is released.
+holds an information which updates (no update, reverse only update, forward only update,
+both reverse and forward update) have been performed when the lease was acquired.
+Server checks this information to make a decision which mapping it is supposed to
+remove when a lease is released.
 
 Server may generate 2 NameChangeRequests in case the client is renewing a lease and
 it already has a DNS binding for that lease. Note, that renewal may be triggered
@@ -147,14 +148,12 @@ received from the client. If the FQDN sent in the message which triggered a rene
 doesn't change (comparing to the information in the lease database) the NameChangeRequest
 is not generated.
 
-@todo The decision about not generating the NameChangeRequest for the client which
-renews the lease but doesn't change its FQDN may be wrong in case it is necessary
-to inform the bind10-d2 module that the lease has been extended. However, the
-house keeper process (which removes DNS bindings for expired leases) will be
-implemented within the bind10-dhcp6 module (not the bind10-d2), so there is no
-need to store lease lifetime information in the bind10-d2 and thus send it there.
+In the more complex scenarios, when server sends multiple IA_NA options, each holding
+multiple IAADDR options, server will generate more NameChangeRequests for a single
+message being processed. That is 0, 1, 2 for the individual IA_NA. Generation of
+the distinct NameChangeRequests for each IADDR is not supported yet.
 
-The DHCPv6 Client FQDN Option is comprises "NOS" flags which communicate to the
+The DHCPv6 Client FQDN Option comprises "NOS" flags which communicate to the
 server what updates (if any), client expects the server to perform. Server
 may be configured to obey client's preference or do FQDN processing in a
 different way. If the server overrides client's preference it will communicate it

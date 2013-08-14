@@ -5268,6 +5268,9 @@ should include options from the isc option space:
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc3646">RFC 3646</ulink>: Supported option is DNS_SERVERS.</simpara>
           </listitem>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc4704">RFC 4704</ulink>: Supported option is CLIENT_FQDN.</simpara>
+          </listitem>
       </itemizedlist>
     </section>
 
