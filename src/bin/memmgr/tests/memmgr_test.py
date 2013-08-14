@@ -190,9 +190,14 @@ class TestMemmgr(unittest.TestCase):
         cfg_data = MockConfigData(
             {"classes": {"IN": [{"type": "MasterFiles",
                                  "cache-enable": True, "params": {}}]}})
+        self.__init_called = None
+        def mock_init_segments(param):
+            self.__init_called = param
+        self.__mgr._init_segments = mock_init_segments
         self.__mgr._datasrc_config_handler({}, cfg_data)
         self.assertEqual(1, len(self.__mgr._datasrc_info_list))
         self.assertEqual(1, self.__mgr._datasrc_info_list[0].gen_id)
+        self.assertEqual(self.__init_called, self.__mgr._datasrc_info_list[0])
 
         # Below we're using a mock DataSrcClientMgr for easier tests
         class MockDataSrcClientMgr:
@@ -220,6 +225,7 @@ class TestMemmgr(unittest.TestCase):
             MockDataSrcClientMgr([('sqlite3', 'mapped', None)])
         self.__mgr._datasrc_config_handler(None, None) # params don't matter
         self.assertEqual(2, len(self.__mgr._datasrc_info_list))
+        self.assertEqual(self.__init_called, self.__mgr._datasrc_info_list[1])
         self.assertIsNotNone(
             self.__mgr._datasrc_info_list[1].segment_info_map[
                 (RRClass.IN, 'sqlite3')])
