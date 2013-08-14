@@ -18,7 +18,7 @@
 #include <dhcp/duid.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
-
+#include <dhcpsrv/tests/test_utils.h>
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -28,10 +28,11 @@ using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 
 namespace {
 // empty class for now, but may be extended once Addr6 becomes bigger
-class MemfileLeaseMgrTest : public ::testing::Test {
+class MemfileLeaseMgrTest : public GenericLeaseMgrTest {
 public:
     MemfileLeaseMgrTest() {
     }
