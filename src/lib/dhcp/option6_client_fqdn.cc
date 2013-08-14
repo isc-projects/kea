@@ -90,7 +90,7 @@ public:
     /// check if the MBZ bits are set (if true). This parameter should be set
     /// to false when validating flags in the received message. This is because
     /// server should ignore MBZ bits in received messages.
-    /// @throw InvalidFqdnOptionFlags if flags are invalid.
+    /// @throw InvalidOption6FqdnFlags if flags are invalid.
     static void checkFlags(const uint8_t flags, const bool check_mbz);
 
     /// @brief Parse the Option provided in the wire format.
@@ -139,7 +139,13 @@ Option6ClientFqdnImpl(const Option6ClientFqdnImpl& source)
 
 Option6ClientFqdnImpl&
 Option6ClientFqdnImpl::operator=(const Option6ClientFqdnImpl& source) {
-    domain_name_.reset(new isc::dns::Name(*source.domain_name_));
+    if (source.domain_name_) {
+        domain_name_.reset(new isc::dns::Name(*source.domain_name_));
+
+    } else {
+        domain_name_.reset();
+
+    }
 
     // This assignment should be exception safe.
     flags_ = source.flags_;
@@ -157,7 +163,7 @@ setDomainName(const std::string& domain_name,
     std::string name = isc::util::str::trim(domain_name);
     if (name.empty()) {
         if (name_type == Option6ClientFqdn::FULL) {
-            isc_throw(InvalidFqdnOptionDomainName,
+            isc_throw(InvalidOption6FqdnDomainName,
                       "fully qualified domain-name must not be empty"
                       << " when setting new domain-name for DHCPv6 Client"
                       << " FQDN Option");
@@ -172,7 +178,7 @@ setDomainName(const std::string& domain_name,
             domain_name_type_ = name_type;
 
         } catch (const Exception& ex) {
-            isc_throw(InvalidFqdnOptionDomainName, "invalid domain-name value '"
+            isc_throw(InvalidOption6FqdnDomainName, "invalid domain-name value '"
                       << domain_name << "' when setting new domain-name for"
                       << " DHCPv6 Client FQDN Option");
 
@@ -184,7 +190,7 @@ void
 Option6ClientFqdnImpl::checkFlags(const uint8_t flags, const bool check_mbz) {
     // The Must Be Zero (MBZ) bits must not be set.
     if (check_mbz && ((flags & ~Option6ClientFqdn::FLAG_MASK) != 0)) {
-        isc_throw(InvalidFqdnOptionFlags,
+        isc_throw(InvalidOption6FqdnFlags,
                   "invalid DHCPv6 Client FQDN Option flags: 0x"
                   << std::hex << static_cast<int>(flags) << std::dec);
     }
@@ -193,7 +199,7 @@ Option6ClientFqdnImpl::checkFlags(const uint8_t flags, const bool check_mbz) {
     // MUST be 0. Checking it here.
     if ((flags & (Option6ClientFqdn::FLAG_N | Option6ClientFqdn::FLAG_S))
         == (Option6ClientFqdn::FLAG_N | Option6ClientFqdn::FLAG_S)) {
-        isc_throw(InvalidFqdnOptionFlags,
+        isc_throw(InvalidOption6FqdnFlags,
                   "both N and S flag of the DHCPv6 Client FQDN Option are set."
                   << " According to RFC 4704, if the N bit is 1 the S bit"
                   << " MUST be 0");
@@ -227,7 +233,12 @@ Option6ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
             buf.push_back(0);
             // Reset domain name.
             isc::util::InputBuffer name_buf(&buf[0], buf.size());
-            domain_name_.reset(new isc::dns::Name(name_buf));
+            try {
+                domain_name_.reset(new isc::dns::Name(name_buf));
+            } catch (const Exception& ex) {
+                isc_throw(InvalidOption6FqdnDomainName, "failed to parse"
+                          "partial domain-name from wire format");
+            }
             // Terminating zero was missing, so set the domain-name type
             // to partial.
             domain_name_type_ = Option6ClientFqdn::PARTIAL;
@@ -237,7 +248,12 @@ Option6ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
             // Name object constructor.
             isc::util::InputBuffer name_buf(&(*first),
                                             std::distance(first, last));
-            domain_name_.reset(new isc::dns::Name(name_buf));
+            try {
+                domain_name_.reset(new isc::dns::Name(name_buf));
+            } catch (const Exception& ex) {
+                isc_throw(InvalidOption6FqdnDomainName, "failed to parse"
+                          "fully qualified domain-name from wire format");
+            }
             // Set the domain-type to fully qualified domain name.
             domain_name_type_ = Option6ClientFqdn::FULL;
         }
@@ -280,15 +296,11 @@ Option6ClientFqdn::operator=(const Option6ClientFqdn& source) {
 }
 
 bool
-Option6ClientFqdn::getFlag(const Flag flag) const {
-    // Caller should query for one of the: N, S or O flags. However, enumerator
-    // value of 0x3 is valid (because it belongs to the range between the
-    // lowest and highest enumerator). The value 0x3 represents two flags:
-    // S and O and would cause ambiguity. Therefore, we selectively check
-    // that the flag is equal to one of the explicit enumerator values. If
-    // not, throw an exception.
+Option6ClientFqdn::getFlag(const uint8_t flag) const {
+    // Caller should query for one of the: N, S or O flags. Any other
+    // value is invalid.
     if (flag != FLAG_S && flag != FLAG_O && flag != FLAG_N) {
-        isc_throw(InvalidFqdnOptionFlags, "invalid DHCPv6 Client FQDN"
+        isc_throw(InvalidOption6FqdnFlags, "invalid DHCPv6 Client FQDN"
                   << " Option flag specified, expected N, S or O");
     }
 
@@ -296,14 +308,16 @@ Option6ClientFqdn::getFlag(const Flag flag) const {
 }
 
 void
-Option6ClientFqdn::setFlag(const Flag flag, const bool set_flag) {
+Option6ClientFqdn::setFlag(const uint8_t flag, const bool set_flag) {
     // Check that flag is in range between 0x1 and 0x7. Note that this
-    // allows to set or clear multiple flags concurrently.
+    // allows to set or clear multiple flags concurrently. Setting
+    // concurrent bits is discouraged (see header file) but it is not
+    // checked here so it will work.
     if (((flag & ~FLAG_MASK) != 0) || (flag == 0)) {
-        isc_throw(InvalidFqdnOptionFlags, "invalid DHCPv6 Client FQDN"
+        isc_throw(InvalidOption6FqdnFlags, "invalid DHCPv6 Client FQDN"
                   << " Option flag " << std::hex
                   << static_cast<int>(flag) << std::dec
-                  << "is being set. Expected combination of N, S and O");
+                  << "is being set. Expected: N, S or O");
     }
 
     // Copy the current flags into local variable. That way we will be able
@@ -387,15 +401,14 @@ std::string
 Option6ClientFqdn::toText(int indent) {
     std::ostringstream stream;
     std::string in(indent, ' '); // base indentation
-    std::string in_add(2, ' ');  // second-level indentation is 2 spaces long
-    stream << in  << "type=" << type_ << "(CLIENT_FQDN)" << std::endl
-           << in << "flags:" << std::endl
-           << in << in_add << "N=" << (getFlag(FLAG_N) ? "1" : "0") << std::endl
-           << in << in_add << "O=" << (getFlag(FLAG_O) ? "1" : "0") << std::endl
-           << in << in_add << "S=" << (getFlag(FLAG_S) ? "1" : "0") << std::endl
-           << in << "domain-name='" << getDomainName() << "' ("
+    stream << in  << "type=" << type_ << "(CLIENT_FQDN)" << ", "
+           << "flags: ("
+           << "N=" << (getFlag(FLAG_N) ? "1" : "0") << ", "
+           << "O=" << (getFlag(FLAG_O) ? "1" : "0") << ", "
+           << "S=" << (getFlag(FLAG_S) ? "1" : "0") << "), "
+           << "domain-name='" << getDomainName() << "' ("
            << (getDomainNameType() == PARTIAL ? "partial" : "full")
-           << ")" << std::endl;
+           << ")";
 
     return (stream.str());
 }

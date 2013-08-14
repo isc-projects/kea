@@ -25,16 +25,16 @@ namespace dhcp {
 
 /// @brief Exception thrown when invalid flags have been specified for
 /// DHCPv6 Client Fqdn %Option.
-class InvalidFqdnOptionFlags : public Exception {
+class InvalidOption6FqdnFlags : public Exception {
 public:
-    InvalidFqdnOptionFlags(const char* file, size_t line, const char* what) :
+    InvalidOption6FqdnFlags(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
 /// @brief Exception thrown when invalid domain name is specified.
-class InvalidFqdnOptionDomainName : public Exception {
+class InvalidOption6FqdnDomainName : public Exception {
 public:
-    InvalidFqdnOptionDomainName(const char* file, size_t line,
+    InvalidOption6FqdnDomainName(const char* file, size_t line,
                                 const char* what) :
         isc::Exception(file, line, what) {}
 };
@@ -91,19 +91,13 @@ class Option6ClientFqdnImpl;
 class Option6ClientFqdn : public Option {
 public:
 
-    /// @brief Enumeration holding different flags used in the Client
-    /// FQDN %Option.
-    enum Flag {
-        FLAG_S = 0x01,
-        FLAG_O = 0x02,
-        FLAG_N = 0x04
-    };
-
-    /// @brief Type of the domain-name: partial or full.
-    enum DomainNameType {
-        PARTIAL,
-        FULL
-    };
+    ///
+    ///@name A set of constants setting respective bits in 'flags' field
+    //@{
+    static const uint8_t FLAG_S = 0x01; ///< S bit.
+    static const uint8_t FLAG_O = 0x02; ///< O bit.
+    static const uint8_t FLAG_N = 0x04; ///< N bit.
+    //@}
 
     /// @brief Mask which zeroes MBZ flag bits.
     static const uint8_t FLAG_MASK = 0x7;
@@ -111,16 +105,22 @@ public:
     /// @brief The length of the flag field within DHCPv6 Client Fqdn %Option.
     static const uint16_t FLAG_FIELD_LEN = 1;
 
+    /// @brief Type of the domain-name: partial or full.
+    enum DomainNameType {
+        PARTIAL,
+        FULL
+    };
+
     /// @brief Constructor, creates option instance using flags and domain name.
     ///
     /// This constructor is used to create instance of the option which will be
     /// included in outgoing messages.
     ///
-    /// @param flag a combination of flags to be stored in flags field.
+    /// @param flags a combination of flag bits to be stored in flags field.
     /// @param domain_name a name to be stored in the domain-name field.
     /// @param domain_name_type indicates if the domain name is partial
     /// or full.
-    explicit Option6ClientFqdn(const uint8_t flag,
+    explicit Option6ClientFqdn(const uint8_t flags,
                                const std::string& domain_name,
                                const DomainNameType domain_name_type = FULL);
 
@@ -129,8 +129,8 @@ public:
     /// This constructor creates an instance of the option with empty
     /// domain-name. This domain-name is marked partial.
     ///
-    /// @param flag a combination of flags to be stored in flags field.
-    Option6ClientFqdn(const uint8_t flag);
+    /// @param flags A combination of flag bits to be stored in flags field.
+    Option6ClientFqdn(const uint8_t flags);
 
     /// @brief Constructor, creates an option instance from part of the buffer.
     ///
@@ -157,18 +157,30 @@ public:
     /// @brief Checks if the specified flag of the DHCPv6 Client FQDN %Option
     /// is set.
     ///
-    /// @param flag an enum value specifying the flag to be checked.
+    /// This method checks the single bit of flags field. Therefore, a caller
+    /// should use one of the: @c FLAG_S, @c FLAG_N, @c FLAG_O constants as
+    /// an argument of the function. Attempt to use any other value (including
+    /// combinations of these constants) will result in exception.
+    ///
+    /// @param flag A value specifying the flags bit to be checked. It can be
+    /// one of the following: @c FLAG_S, @c FLAG_N, @c FLAG_O.
     ///
     /// @return true if the bit of the specified flag is set, false otherwise.
-    bool getFlag(const Flag flag) const;
+    bool getFlag(const uint8_t flag) const;
 
     /// @brief Modifies the value of the specified DHCPv6 Client Fqdn %Option
     /// flag.
     ///
-    /// @param flag an enum value specifying the flag to be modified.
+    /// This method sets the single bit of flags field. Therefore, a caller
+    /// should use one of the: @c FLAG_S, @c FLAG_N, @c FLAG_O constants as
+    /// an argument of the function. Attempt to use any other value (including
+    /// combinations of these constants) will result in exception.
+    ///
+    /// @param flag A value specifying the flags bit to be modified. It can
+    /// be one of the following: @c FLAG_S, @c FLAG_N, @c FLAG_O.
     /// @param set a boolean value which indicates whether flag should be
     /// set (true), or cleared (false).
-    void setFlag(const Flag flag, const bool set);
+    void setFlag(const uint8_t flag, const bool set);
 
     /// @brief Sets the flag field value to 0.
     void resetFlags();
