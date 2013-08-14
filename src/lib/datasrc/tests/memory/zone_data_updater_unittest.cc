@@ -143,6 +143,7 @@ INSTANTIATE_TEST_CASE_P(LocalSegment, ZoneDataUpdaterTest,
                         ::testing::Values(static_cast<SegmentCreator*>(
                             &memory_segment_creator)));
 
+#ifdef USE_SHARED_MEMORY
 class MappedSegmentCreator : public SegmentCreator {
 public:
     MappedSegmentCreator(size_t initial_size =
@@ -162,7 +163,6 @@ private:
     const size_t initial_size_;
 };
 
-#ifdef USE_SHARED_MEMORY
 // There should be no initialization fiasco there. We only set int value inside
 // and don't use it until the create() is called.
 MappedSegmentCreator small_creator(4092), default_creator;
