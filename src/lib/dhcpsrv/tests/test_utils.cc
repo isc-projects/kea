@@ -87,7 +87,8 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
 }
 
 
-GenericLeaseMgrTest::GenericLeaseMgrTest() {
+GenericLeaseMgrTest::GenericLeaseMgrTest()
+    :lmptr_(NULL) {
     // Initialize address strings and IOAddresses
     for (int i = 0; ADDRESS4[i] != NULL; ++i) {
         string addr(ADDRESS4[i]);
