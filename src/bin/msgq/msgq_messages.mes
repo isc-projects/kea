@@ -85,17 +85,6 @@ Debug message. The listener is trying to open a listening socket.
 Debug message. The message queue successfully opened a listening socket and
 waits for incoming connections.
 
-% MSGQ_POLL_ERROR Error while polling for events: %1
-A low-level error happened when waiting for events, the error is logged. The
-reason for this varies, but it usually means the system is short on some
-resources.
-
-% MSGQ_POLL_UNKNOWN_EVENT Got an unknown event from the poller for fd %1: %2
-An unknown event got out from the poll() system call. This should generally not
-happen and it is either a programmer error or OS bug. The event is ignored. The
-number noted as the event is the raw encoded value, which might be useful to
-the authors when figuring the problem out.
-
 % MSGQ_RECV_ERROR Error reading from socket %1: %2
 There was a low-level error when reading from a socket. The error is logged and
 the corresponding socket is dropped.  The errors include receiving
