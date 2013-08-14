@@ -25,16 +25,16 @@ namespace dhcp {
 
 /// @brief Exception thrown when invalid flags have been specified for
 /// DHCPv4 Client FQDN %Option.
-class InvalidOption4ClientFqdnFlags : public Exception {
+class InvalidOption4FqdnFlags : public Exception {
 public:
-    InvalidOption4ClientFqdnFlags(const char* file, size_t line, const char* what) :
+    InvalidOption4FqdnFlags(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
 /// @brief Exception thrown when invalid domain name is specified.
-class InvalidOption4ClientFqdnDomainName : public Exception {
+class InvalidOption4FqdnDomainName : public Exception {
 public:
-    InvalidOption4ClientFqdnDomainName(const char* file, size_t line,
+    InvalidOption4FqdnDomainName(const char* file, size_t line,
                                  const char* what) :
         isc::Exception(file, line, what) {}
 };
@@ -65,9 +65,9 @@ class Option4ClientFqdnImpl;
 /// where:
 /// - N flag specifies whether server should (0) or should not (1) perform DNS
 ///  Update,
-/// - E flag specifies encoding of the Domain Name field. If this flag is set to 1
-/// it indicates canonical wire format without compression. 0 indicates the deprecated
-/// ASCII format.
+/// - E flag specifies encoding of the Domain Name field. If this flag is set
+/// to 1 it indicates canonical wire format without compression. 0 indicates
+/// the deprecated ASCII format.
 /// - O flag is set by the server to indicate that it has overridden client's
 /// preference set with the S bit.
 /// - S flag specifies whether server should (1) or should not (0) perform
@@ -82,13 +82,14 @@ class Option4ClientFqdnImpl;
 /// at the end of their wire representation (or lack of dot at the end, in
 /// case of ASCII encoding). It is also accepted to create an instance of
 /// this option which has empty domain-name. Clients use empty domain-names
-/// to indicate that server should generate complete fully qualified domain-name.
+/// to indicate that server should generate complete fully qualified
+/// domain-name.
 ///
 /// @warning: The RFC4702 section 2.3.1 states that the clients and servers
 /// should use character sets specified in RFC952, section 2.1 for ASCII-encoded
 /// domain-names. This class doesn't detect the character set violation for
-/// ASCII-encoded domain-name. It could be implemented in the future but it is not
-/// important now for two reasons:
+/// ASCII-encoded domain-name. It could be implemented in the future but it is
+/// not important now for two reasons:
 /// - ASCII encoding is deprecated
 /// - clients SHOULD obey restrictions but if they don't, server may still
 ///   process the option
@@ -112,14 +113,17 @@ class Option4ClientFqdnImpl;
 class Option4ClientFqdn : public Option {
 public:
 
-    /// @brief Enumeration holding different flags used in the Client
-    /// FQDN %Option.
-    enum Flag {
-        FLAG_S = 0x01,
-        FLAG_O = 0x02,
-        FLAG_E = 0x04,
-        FLAG_N = 0x08
-    };
+    ///
+    /// @name A set of constants used to identify and set bits in the flags field
+    //@{
+    static const uint8_t FLAG_S = 0x01; ///< Bit S
+    static const uint8_t FLAG_O = 0x02; ///< Bit O
+    static const uint8_t FLAG_E = 0x04; ///< Bit E
+    static const uint8_t FLAG_N = 0x08; ///< Bit N
+    //@}
+
+    /// @brief Mask which zeroes MBZ flag bits.
+    static const uint8_t FLAG_MASK = 0xF;
 
     /// @brief Represents the value of one of the RCODE1 or RCODE2 fields.
     ///
@@ -149,10 +153,8 @@ public:
         FULL
     };
 
-    /// @brief Mask which zeroes MBZ flag bits.
-    static const uint8_t FLAG_MASK = 0xF;
-
-    /// @brief The size of the fixed fields within DHCPv4 Client Fqdn %Option.
+    /// @brief The size in bytes of the fixed fields within DHCPv4 Client Fqdn
+    /// %Option.
     ///
     /// The fixed fields are:
     /// - Flags
@@ -162,17 +164,19 @@ public:
 
     /// @brief Constructor, creates option instance using flags and domain name.
     ///
-    /// This constructor is used to create instance of the option which will be
-    /// included in outgoing messages.
+    /// This constructor is used to create an instance of the option which will
+    /// be included in outgoing messages.
     ///
-    /// @param flag a combination of flags to be stored in flags field.
+    /// @param flags a combination of flags to be stored in flags field.
     /// @param rcode @c Rcode object representing a value for RCODE1 and RCODE2
-    /// fields of the option. Both fields are assigned the same value encapsulated
-    /// by the parameter.
+    /// fields of the option. Both fields are assigned the same value
+    /// encapsulated by the parameter.
     /// @param domain_name a name to be stored in the domain-name field.
     /// @param partial_domain_name indicates if the domain name is partial
     /// (if true) or full (false).
-    explicit Option4ClientFqdn(const uint8_t flag,
+    /// @throw InvalidOption4FqdnFlags if value of the flags field is wrong.
+    /// @throw InvalidOption4FqdnDomainName if the domain-name is invalid.
+    explicit Option4ClientFqdn(const uint8_t flags,
                                const Rcode& rcode,
                                const std::string& domain_name,
                                const DomainNameType domain_name_type = FULL);
@@ -182,11 +186,12 @@ public:
     /// This constructor creates an instance of the option with empty
     /// domain-name. This domain-name is marked partial.
     ///
-    /// @param flag a combination of flags to be stored in flags field.
+    /// @param flags a combination of flags to be stored in flags field.
     /// @param rcode @c Rcode object representing a value for RCODE1 and RCODE2
     /// fields. Both fields are assigned the same value encapsulated by this
     /// parameter.
-    Option4ClientFqdn(const uint8_t flag, const Rcode& rcode);
+    /// @throw InvalidOption4FqdnFlags if value of the flags field is invalid.
+    Option4ClientFqdn(const uint8_t flags, const Rcode& rcode);
 
     /// @brief Constructor, creates an option instance from part of the buffer.
     ///
@@ -198,6 +203,10 @@ public:
     ///
     /// @param first the lower bound of the buffer to create option from.
     /// @param last the upper bound of the buffer to create option from.
+    /// @throw InvalidOption4FqdnFlags if value of the flags field is invalid.
+    /// @throw InvalidOption4FqdnDomainName if the domain-name carried by the
+    /// option is invalid.
+    /// @throw OutOfRange if the option is truncated.
     explicit Option4ClientFqdn(OptionBufferConstIter first,
                                OptionBufferConstIter last);
 
@@ -213,18 +222,26 @@ public:
     /// @brief Checks if the specified flag of the DHCPv4 Client FQDN %Option
     /// is set.
     ///
-    /// @param flag an enum value specifying the flag to be checked.
+    /// @param flag A value specifying a bit within flags field to be checked.
+    /// It must be one of the following @c FLAG_S, @c FLAG_E, @c FLAG_O,
+    /// @c FLAG_N.
     ///
-    /// @return true if the bit of the specified flag is set, false otherwise.
-    bool getFlag(const Flag flag) const;
+    /// @return true if the bit of the specified flags bit is set, false
+    /// otherwise.
+    /// @throw InvalidOption4ClientFlags if specified flag which value is to be
+    /// returned is invalid (is not one of the FLAG_S, FLAG_N, FLAG_O).
+    bool getFlag(const uint8_t flag) const;
 
     /// @brief Modifies the value of the specified DHCPv4 Client Fqdn %Option
     /// flag.
     ///
-    /// @param flag an enum value specifying the flag to be modified.
+    /// @param flag A value specifying a bit within flags field to be set. It
+    /// must be one of the following @c FLAG_S, @c FLAG_E, @c FLAG_O, @c FLAG_N.
     /// @param set a boolean value which indicates whether flag should be
     /// set (true), or cleared (false).
-    void setFlag(const Flag flag, const bool set);
+    /// @throw InvalidOption4ClientFlags if specified flag which value is to be
+    /// set is invalid (is not one of the FLAG_S, FLAG_N, FLAG_O).
+    void setFlag(const uint8_t flag, const bool set);
 
     /// @brief Sets the flag field value to 0.
     void resetFlags();
@@ -256,6 +273,8 @@ public:
     /// @param domain_name domain name field value in the text format.
     /// @param domain_name_type type of the domain name: partial or fully
     /// qualified.
+    /// @throw InvalidOption4FqdnDomainName if the specified domain-name is
+    /// invalid.
     void setDomainName(const std::string& domain_name,
                        const DomainNameType domain_name_type);
 

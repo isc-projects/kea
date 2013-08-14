@@ -23,40 +23,102 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief Implements the logic for the Option6ClientFqdn class.
+///
+/// The purpose of the class is to separate the implementation details
+/// of the Option4ClientFqdn class from the interface. This implementation
+/// uses libdns classes to process FQDNs. At some point it may be
+/// desired to split libdhcp++ from libdns. In such case the
+/// implementation of this class may be changed. The declaration of the
+/// Option6ClientFqdn class holds the pointer to implementation, so
+/// the transition to a different implementation would not affect the
+/// header file.
 class Option4ClientFqdnImpl {
 public:
+    /// Holds flags carried by the option.
     uint8_t flags_;
+    // Holds RCODE1 and RCODE2 values.
     Option4ClientFqdn::Rcode rcode1_;
     Option4ClientFqdn::Rcode rcode2_;
+    /// Holds the pointer to a domain name carried in the option.
     boost::shared_ptr<isc::dns::Name> domain_name_;
+    /// Indicates whether domain name is partial or fully qualified.
     Option4ClientFqdn::DomainNameType domain_name_type_;
 
+    /// @brief Constructor, from domain name.
+    ///
+    /// @param flags A value of the flags option field.
+    /// @param domain_name A domain name carried by the option given in the
+    /// textual format.
+    /// @param domain_name_type A value which indicates whether domain-name
+    /// is partial of fully qualified.
     Option4ClientFqdnImpl(const uint8_t flag,
                           const Option4ClientFqdn::Rcode& rcode,
                           const std::string& domain_name,
                           const Option4ClientFqdn::DomainNameType name_type);
 
+    /// @brief Constructor, from wire data.
+    ///
+    /// @param first An iterator pointing to the begining of the option data
+    /// in the wire format.
+    /// @param last An iterator poiting to the end of the option data in the
+    /// wire format.
     Option4ClientFqdnImpl(OptionBufferConstIter first,
                           OptionBufferConstIter last);
 
+    /// @brief Copy constructor.
+    ///
+    /// @param source An object being copied.
     Option4ClientFqdnImpl(const Option4ClientFqdnImpl& source);
 
+    /// @brief Assignment operator.
+    ///
+    /// @param source An object which is being assigned.
     Option4ClientFqdnImpl& operator=(const Option4ClientFqdnImpl& source);
 
+    /// @brief Set a new domain name for the option.
+    ///
+    /// @param domain_name A new domain name to be assigned.
+    /// @param name_type A value which indicates whether the domain-name is
+    /// partial or fully qualified.
     void setDomainName(const std::string& domain_name,
                        const Option4ClientFqdn::DomainNameType name_type);
 
+    /// @brief Check if flags are valid.
+    ///
+    /// In particular, this function checks if the N and S bits are not
+    /// set to 1 in the same time.
+    ///
+    /// @param flags A value carried by the flags field of the option.
+    /// @param check_mbz A boolean value which indicates if this function should
+    /// check if the MBZ bits are set (if true). This parameter should be set
+    /// to false when validating flags in the received message. This is because
+    /// server should ignore MBZ bits in received messages.
+    /// @throw InvalidOption6FqdnFlags if flags are invalid.
     static void checkFlags(const uint8_t flags);
 
+    /// @brief Parse the Option provided in the wire format.
+    ///
+    /// @param first An iterator pointing to the begining of the option data
+    /// in the wire format.
+    /// @param last An iterator poiting to the end of the option data in the
+    /// wire format.
     void parseWireData(OptionBufferConstIter first,
                        OptionBufferConstIter last);
 
+    /// @brief Parse domain-name encoded in the canonical format.
+    ///
     void parseCanonicalDomainName(OptionBufferConstIter first,
                                   OptionBufferConstIter last);
 
-    void
-    parseASCIIDomainName(OptionBufferConstIter first,
-                         OptionBufferConstIter last);
+    /// @brief Parse domain-name emcoded in the deprecated ASCII format.
+    ///
+    /// @param first An iterator pointing to the begining of the option data
+    /// where domain-name is stored.
+    /// @param last An iterator poiting to the end of the option data where
+    /// domain-name is stored.
+    void parseASCIIDomainName(OptionBufferConstIter first,
+                              OptionBufferConstIter last);
 
 };
 
@@ -100,8 +162,16 @@ Option4ClientFqdnImpl(const Option4ClientFqdnImpl& source)
 }
 
 Option4ClientFqdnImpl&
+// This assignment operator handles assignment to self, it copies all
+// required values.
+// cppcheck-suppress operatorEqToSelf
 Option4ClientFqdnImpl::operator=(const Option4ClientFqdnImpl& source) {
-    domain_name_.reset(new isc::dns::Name(*source.domain_name_));
+    if (source.domain_name_) {
+        domain_name_.reset(new isc::dns::Name(*source.domain_name_));
+
+    } else {
+        domain_name_.reset();
+    }
 
     // Assignment is exception safe.
     flags_ = source.flags_;
@@ -121,7 +191,7 @@ setDomainName(const std::string& domain_name,
     std::string name = isc::util::str::trim(domain_name);
     if (name.empty()) {
         if (name_type == Option4ClientFqdn::FULL) {
-            isc_throw(InvalidOption4ClientFqdnDomainName,
+            isc_throw(InvalidOption4FqdnDomainName,
                       "fully qualified domain-name must not be empty"
                       << " when setting new domain-name for DHCPv4 Client"
                       << " FQDN Option");
@@ -136,7 +206,7 @@ setDomainName(const std::string& domain_name,
             domain_name_type_ = name_type;
 
         } catch (const Exception& ex) {
-            isc_throw(InvalidOption4ClientFqdnDomainName,
+            isc_throw(InvalidOption4FqdnDomainName,
                       "invalid domain-name value '"
                       << domain_name << "' when setting new domain-name for"
                       << " DHCPv4 Client FQDN Option");
@@ -149,7 +219,7 @@ void
 Option4ClientFqdnImpl::checkFlags(const uint8_t flags) {
     // The Must Be Zero (MBZ) bits must not be set.
     if ((flags & ~Option4ClientFqdn::FLAG_MASK) != 0) {
-        isc_throw(InvalidOption4ClientFqdnFlags,
+        isc_throw(InvalidOption4FqdnFlags,
                   "invalid DHCPv4 Client FQDN Option flags: 0x"
                   << std::hex << static_cast<int>(flags) << std::dec);
     }
@@ -158,7 +228,7 @@ Option4ClientFqdnImpl::checkFlags(const uint8_t flags) {
     // MUST be 0. Checking it here.
     if ((flags & (Option4ClientFqdn::FLAG_N | Option4ClientFqdn::FLAG_S))
         == (Option4ClientFqdn::FLAG_N | Option4ClientFqdn::FLAG_S)) {
-        isc_throw(InvalidOption4ClientFqdnFlags,
+        isc_throw(InvalidOption4FqdnFlags,
                   "both N and S flag of the DHCPv4 Client FQDN Option are set."
                   << " According to RFC 4702, if the N bit is 1 the S bit"
                   << " MUST be 0");
@@ -192,7 +262,7 @@ Option4ClientFqdnImpl::parseWireData(OptionBufferConstIter first,
 
         }
     } catch (const Exception& ex) {
-        isc_throw(InvalidOption4ClientFqdnDomainName,
+        isc_throw(InvalidOption4FqdnDomainName,
                   "failed to parse the domain-name in DHCPv4 Client FQDN"
                   << " Option: " << ex.what());
     }
@@ -270,6 +340,9 @@ Option4ClientFqdn::Option4ClientFqdn(const Option4ClientFqdn& source)
 }
 
 Option4ClientFqdn&
+// This assignment operator handles assignment to self, it uses copy
+// constructor of Option4ClientFqdnImpl to copy all required values.
+// cppcheck-suppress operatorEqToSelf
 Option4ClientFqdn::operator=(const Option4ClientFqdn& source) {
     Option4ClientFqdnImpl* old_impl = impl_;
     impl_ = new Option4ClientFqdnImpl(*source.impl_);
@@ -278,16 +351,11 @@ Option4ClientFqdn::operator=(const Option4ClientFqdn& source) {
 }
 
 bool
-Option4ClientFqdn::getFlag(const Flag flag) const {
-    // Caller should query for one of the: E, N, S or O flags. However, there 
-    // are valid enumerator values which should not be accepted by this function.
-    // For example a value of 0x3 is valid (because it belongs to the range between the
-    // lowest and highest enumerator). The value 0x3 represents two flags:
-    // S and O and would cause ambiguity. Therefore, we selectively check
-    // that the flag is equal to one of the explicit enumerator values. If
-    // not, throw an exception.
+Option4ClientFqdn::getFlag(const uint8_t flag) const {
+    // Caller should query for one of the: E, N, S or O flags. Any other value
+    /// is invalid and results in the exception.
     if (flag != FLAG_S && flag != FLAG_O && flag != FLAG_N && flag != FLAG_E) {
-        isc_throw(InvalidOption4ClientFqdnFlags, "invalid DHCPv4 Client FQDN"
+        isc_throw(InvalidOption4FqdnFlags, "invalid DHCPv4 Client FQDN"
                   << " Option flag specified, expected E, N, S or O");
     }
 
@@ -295,11 +363,12 @@ Option4ClientFqdn::getFlag(const Flag flag) const {
 }
 
 void
-Option4ClientFqdn::setFlag(const Flag flag, const bool set_flag) {
-    // Check that flag is in range between 0x1 and 0x7. Note that this
-    // allows to set or clear multiple flags concurrently.
+Option4ClientFqdn::setFlag(const uint8_t flag, const bool set_flag) {
+    // Check that flag is in range between 0x1 and 0x7. Although it is
+    // discouraged this check doesn't preclude the caller from setting
+    // multiple flags concurrently.
     if (((flag & ~FLAG_MASK) != 0) || (flag == 0)) {
-        isc_throw(InvalidOption4ClientFqdnFlags, "invalid DHCPv4 Client FQDN"
+        isc_throw(InvalidOption4FqdnFlags, "invalid DHCPv4 Client FQDN"
                   << " Option flag " << std::hex
                   << static_cast<int>(flag) << std::dec
                   << "is being set. Expected combination of E, N, S and O");

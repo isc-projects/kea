@@ -24,23 +24,14 @@ namespace {
 using namespace isc;
 using namespace isc::dhcp;
 
-// Redefine option flags here as uint8_t. They will be used to initialize
-// elements of the arrays that are used in tests below. Note that use of
-// enum values defined in Option4ClientFqdn class may cause compilation issues
-// during uint8_t arrays initialization. That is because the underlying
-// integral type used to represent enums is larger than one byte.
-const uint8_t FLAG_S = 0x01;
-const uint8_t FLAG_O = 0x02;
-const uint8_t FLAG_E = 0x04;
-const uint8_t FLAG_N = 0x08;
-
 // This test verifies that constructor accepts empty partial domain-name but
 // does not accept empty fully qualified domain name.
 TEST(Option4ClientFqdnTest, constructEmptyName) {
     // Create an instance of the source option.
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_S | FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_S |
+                                           Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_SERVER(),
                                            "",
                                            Option4ClientFqdn::PARTIAL))
@@ -54,22 +45,25 @@ TEST(Option4ClientFqdnTest, constructEmptyName) {
     EXPECT_EQ(Option4ClientFqdn::PARTIAL, option->getDomainNameType());
 
     // Constructor should not accept empty fully qualified domain name.
-    EXPECT_THROW(Option4ClientFqdn(FLAG_S | FLAG_E,
+    EXPECT_THROW(Option4ClientFqdn(Option4ClientFqdn::FLAG_S |
+                                   Option4ClientFqdn::FLAG_E,
                                    Option4ClientFqdn::RCODE_CLIENT(),
                                    "",
                                    Option4ClientFqdn::FULL),
-                 InvalidOption4ClientFqdnDomainName);
+                 InvalidOption4FqdnDomainName);
     // This check is similar to previous one, but using domain-name comprising
     // a single space character. This should be treated as empty domain-name.
-    EXPECT_THROW(Option4ClientFqdn(FLAG_S | FLAG_E,
+    EXPECT_THROW(Option4ClientFqdn(Option4ClientFqdn::FLAG_S |
+                                   Option4ClientFqdn::FLAG_E,
                                    Option4ClientFqdn::RCODE_CLIENT(),
                                    " ",
                                    Option4ClientFqdn::FULL),
-                 InvalidOption4ClientFqdnDomainName);
+                 InvalidOption4FqdnDomainName);
 
     // Try different constructor.
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_O | FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_O |
+                                           Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_SERVER()))
     );
     ASSERT_TRUE(option);
@@ -88,7 +82,8 @@ TEST(Option4ClientFqdnTest, copyConstruct) {
     // Create an instance of the source option.
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_S | FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_S |
+                                           Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_SERVER(),
                                            "myhost.example.com",
                                            Option4ClientFqdn::FULL))
@@ -120,7 +115,8 @@ TEST(Option4ClientFqdnTest, copyConstruct) {
 
     // Create an option with different parameters.
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_O | FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_O |
+                                           Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_SERVER(),
                                            "example",
                                            Option4ClientFqdn::PARTIAL))
@@ -148,12 +144,12 @@ TEST(Option4ClientFqdnTest, copyConstruct) {
 TEST(Option4ClientFqdnTest, constructFromWire) {
     // The E flag sets the domain-name format to canonical.
     const uint8_t in_data[] = {
-        FLAG_S | FLAG_E,                     // flags
-        0,                                   // RCODE1
-        0,                                   // RCODE2
-        6, 109, 121, 104, 111, 115, 116,     // myhost.
-        7, 101, 120, 97, 109, 112, 108, 101, // example.
-        3, 99, 111, 109, 0                   // com.
+        Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E, // flags
+        0,                                                     // RCODE1
+        0,                                                     // RCODE2
+        6, 109, 121, 104, 111, 115, 116,                       // myhost.
+        7, 101, 120, 97, 109, 112, 108, 101,                   // example.
+        3, 99, 111, 109, 0                                     // com.
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
@@ -180,7 +176,7 @@ TEST(Option4ClientFqdnTest, constructFromWireASCII) {
     // is encoded in the ASCII format. The "dot" character at the end
     // indicates that the domain-name is fully qualified.
     const uint8_t in_data[] = {
-        FLAG_S,                               // flags
+        Option4ClientFqdn::FLAG_S,            // flags
         0,                                    // RCODE1
         0,                                    // RCODE2
         109, 121, 104, 111, 115, 116, 46,     // myhost.
@@ -224,27 +220,25 @@ TEST(Option4ClientFqdnTest, constructFromWireTruncated) {
 // in canonical format is carried in the option.
 TEST(Option4ClientFqdnTest, constructFromWireInvalidName) {
     const uint8_t in_data[] = {
-        FLAG_S | FLAG_E,                     // flags
-        0,                                   // RCODE1
-        0,                                   // RCODE2
-        6, 109, 121, 104, 111, 115, 116,     // myhost.
-        7, 101, 120, 97, 109, 112, 108, 101, // example.
-        5, 99, 111, 109, 0                   // com. (invalid label length 5)
+        Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E, // flags
+        0,                                                     // RCODE1
+        0,                                                     // RCODE2
+        6, 109, 121, 104, 111, 115, 116,                       // myhost.
+        7, 101, 120, 97, 109, 112, 108, 101,                   // example.
+        5, 99, 111, 109, 0                 // com. (invalid label length 5)
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
 
-    EXPECT_THROW(
-        Option4ClientFqdn(in_buf.begin(), in_buf.end()),
-        InvalidOption4ClientFqdnDomainName
-    );
+    EXPECT_THROW(Option4ClientFqdn(in_buf.begin(), in_buf.end()),
+                 InvalidOption4FqdnDomainName);
 }
 
 // This test verifies that exception is thrown when invalid domain-name
 // in ASCII format is carried in the option.
 TEST(Option4ClientFqdnTest, constructFromWireInvalidASCIIName) {
     const uint8_t in_data[] = {
-        FLAG_S,                               // flags
+        Option4ClientFqdn::FLAG_S,            // flags
         0,                                    // RCODE1
         0,                                    // RCODE2
         109, 121, 104, 111, 115, 116, 46, 46, // myhost.. (double dot!)
@@ -254,20 +248,18 @@ TEST(Option4ClientFqdnTest, constructFromWireInvalidASCIIName) {
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
 
-    EXPECT_THROW(
-        Option4ClientFqdn(in_buf.begin(), in_buf.end()),
-        InvalidOption4ClientFqdnDomainName
-    );
+    EXPECT_THROW(Option4ClientFqdn(in_buf.begin(), in_buf.end()),
+                 InvalidOption4FqdnDomainName);
 }
 
 // This test verifies that the option in the on-wire format with partial
 // domain-name encoded in canonical format is parsed correctly.
 TEST(Option4ClientFqdnTest, constructFromWirePartial) {
     const uint8_t in_data[] = {
-        FLAG_N | FLAG_E,                     // flags
-        255,                                 // RCODE1
-        255,                                 // RCODE2
-        6, 109, 121, 104, 111, 115, 116      // myhost
+        Option4ClientFqdn::FLAG_N | Option4ClientFqdn:: FLAG_E,  // flags
+        255,                                                     // RCODE1
+        255,                                                     // RCODE2
+        6, 109, 121, 104, 111, 115, 116                          // myhost
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
@@ -292,7 +284,7 @@ TEST(Option4ClientFqdnTest, constructFromWirePartial) {
 TEST(Option4ClientFqdnTest, constructFromWirePartialASCII) {
     // There is no "dot" character at the end, so the domain-name is partial.
     const uint8_t in_data[] = {
-        FLAG_N,                               // flags
+        Option4ClientFqdn::FLAG_N,            // flags
         255,                                  // RCODE1
         255,                                  // RCODE2
         109, 121, 104, 111, 115, 116, 46,     // myhost.
@@ -351,12 +343,14 @@ TEST(Option4ClientFqdnTest, assignment) {
     // assignment test. If these asserts do not fail, we can create options
     // for the assignment test, do not surround them with asserts and be sure
     // they will not throw.
-    ASSERT_NO_THROW(Option4ClientFqdn(FLAG_S | FLAG_E,
+    ASSERT_NO_THROW(Option4ClientFqdn(Option4ClientFqdn::FLAG_S |
+                                      Option4ClientFqdn::FLAG_E,
                                       Option4ClientFqdn::RCODE_SERVER(),
                                       "myhost.example.com",
                                       Option4ClientFqdn::FULL));
 
-    ASSERT_NO_THROW(Option4ClientFqdn(FLAG_N | FLAG_E,
+    ASSERT_NO_THROW(Option4ClientFqdn(Option4ClientFqdn::FLAG_N |
+                                      Option4ClientFqdn::FLAG_E,
                                       Option4ClientFqdn::RCODE_SERVER(),
                                       "myhost",
                                       Option4ClientFqdn::PARTIAL));
@@ -364,7 +358,8 @@ TEST(Option4ClientFqdnTest, assignment) {
     // Create options with the same parameters as tested above.
 
     // Create first option.
-    Option4ClientFqdn option(FLAG_S | FLAG_E,
+    Option4ClientFqdn option(Option4ClientFqdn::FLAG_S |
+                             Option4ClientFqdn::FLAG_E,
                              Option4ClientFqdn::RCODE_SERVER(),
                              "myhost.example.com",
                              Option4ClientFqdn::FULL);
@@ -378,7 +373,8 @@ TEST(Option4ClientFqdnTest, assignment) {
     ASSERT_EQ(Option4ClientFqdn::FULL, option.getDomainNameType());
 
     // Create a second option.
-    Option4ClientFqdn option2(FLAG_N | FLAG_E,
+    Option4ClientFqdn option2(Option4ClientFqdn::FLAG_N |
+                              Option4ClientFqdn::FLAG_E,
                               Option4ClientFqdn::RCODE_SERVER(),
                               "myhost",
                               Option4ClientFqdn::PARTIAL);
@@ -396,6 +392,15 @@ TEST(Option4ClientFqdnTest, assignment) {
     ASSERT_NO_THROW(option2 = option);
 
     // Both options should now have the same values.
+    EXPECT_TRUE(option2.getFlag(Option4ClientFqdn::FLAG_S));
+    EXPECT_TRUE(option2.getFlag(Option4ClientFqdn::FLAG_E));
+    EXPECT_FALSE(option2.getFlag(Option4ClientFqdn::FLAG_O));
+    EXPECT_FALSE(option2.getFlag(Option4ClientFqdn::FLAG_N));
+    EXPECT_EQ(option.getDomainName(), option2.getDomainName());
+    EXPECT_EQ(option.getDomainNameType(), option2.getDomainNameType());
+
+    // Make self-assignment.
+    ASSERT_NO_THROW(option2 = option2);
     EXPECT_TRUE(option2.getFlag(Option4ClientFqdn::FLAG_S));
     EXPECT_TRUE(option2.getFlag(Option4ClientFqdn::FLAG_E));
     EXPECT_FALSE(option2.getFlag(Option4ClientFqdn::FLAG_O));
@@ -420,14 +425,14 @@ TEST(Option4ClientFqdnTest, constructInvalidFlags) {
     flags = 0x18;
     EXPECT_THROW(Option4ClientFqdn(flags, Option4ClientFqdn::RCODE_CLIENT(),
                                    "myhost.example.com"),
-                 InvalidOption4ClientFqdnFlags);
+                 InvalidOption4FqdnFlags);
 
     // According to RFC 4702, section 2.1. if the N bit is set the S bit MUST
     // be zero. If both are set, constructor is expected to throw.
     flags = Option4ClientFqdn::FLAG_N | Option4ClientFqdn::FLAG_S;
     EXPECT_THROW(Option4ClientFqdn(flags, Option4ClientFqdn::RCODE_CLIENT(),
                                    "myhost.example.com"),
-                 InvalidOption4ClientFqdnFlags);
+                 InvalidOption4FqdnFlags);
 }
 
 // This test verifies that constructor which parses option from on-wire format
@@ -436,14 +441,14 @@ TEST(Option4ClientFqdnTest, constructFromWireInvalidFlags) {
     // Create a buffer which holds flags field only. Set valid flag field at
     // at first to make sure that constructor doesn't always throw an exception.
     OptionBuffer in_buf(3, 0);
-    in_buf[0] = FLAG_S;
+    in_buf[0] = Option4ClientFqdn::FLAG_S;
     ASSERT_NO_THROW(Option4ClientFqdn(in_buf.begin(), in_buf.end()));
 
     // Replace the flags with invalid value and verify that constructor throws
     // appropriate exception.
-    in_buf[0] = FLAG_N | FLAG_S;
+    in_buf[0] = Option4ClientFqdn::FLAG_N | Option4ClientFqdn::FLAG_S;
     EXPECT_THROW(Option4ClientFqdn(in_buf.begin(), in_buf.end()),
-                 InvalidOption4ClientFqdnFlags);
+                 InvalidOption4FqdnFlags);
 }
 
 // This test verifies that if invalid domain name is used the constructor
@@ -452,13 +457,15 @@ TEST(Option4ClientFqdnTest, constructInvalidName) {
     // First, check that constructor does not throw when valid domain name
     // is specified. That way we eliminate the possibility that constructor
     // always throws exception.
-    ASSERT_NO_THROW(Option4ClientFqdn(FLAG_E, Option4ClientFqdn::RCODE_CLIENT(),
+    ASSERT_NO_THROW(Option4ClientFqdn(Option4ClientFqdn::FLAG_E,
+                                      Option4ClientFqdn::RCODE_CLIENT(),
                                       "myhost.example.com"));
 
     // Specify invalid domain name and expect that exception is thrown.
-    EXPECT_THROW(Option4ClientFqdn(FLAG_E, Option4ClientFqdn::RCODE_CLIENT(),
+    EXPECT_THROW(Option4ClientFqdn(Option4ClientFqdn::FLAG_E,
+                                   Option4ClientFqdn::RCODE_CLIENT(),
                                    "my...host.example.com"),
-                 InvalidOption4ClientFqdnDomainName);
+                 InvalidOption4FqdnDomainName);
 
     // Do the same test for the domain-name in ASCII format.
     ASSERT_NO_THROW(Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
@@ -466,25 +473,23 @@ TEST(Option4ClientFqdnTest, constructInvalidName) {
 
     EXPECT_THROW(Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                    "my...host.example.com"),
-                 InvalidOption4ClientFqdnDomainName);
+                 InvalidOption4FqdnDomainName);
 }
 
 // This test verifies that getFlag throws an exception if flag value other
-// than explicitly defined in the Option4ClientFqdn::Flag is spcified.
+// than N, E, O, S was specified.
 TEST(Option4ClientFqdnTest, getFlag) {
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com"))
     );
     ASSERT_TRUE(option);
 
-    // The 0x3 is a valid enumerator value (even though it is not explicitly
-    // included in the Option4ClientFqdn::Flag definition). The getFlag()
-    // function should not accept it. Only explicit values are accepted.
-    EXPECT_THROW(option->getFlag(static_cast<Option4ClientFqdn::Flag>(0x3)),
-                                 InvalidOption4ClientFqdnFlags);
+    // The value of 0x3 (binary 0011) is invalid because it specifies two bits
+    // in the flags field which value is to be checked.
+    EXPECT_THROW(option->getFlag(0x3), InvalidOption4FqdnFlags);
 }
 
 // This test verifies that flags can be modified and that incorrect flags
@@ -520,7 +525,7 @@ TEST(Option4ClientFqdnTest, setFlag) {
     // Set S = 1, this should throw exception because S and N must not
     // be set in the same time.
     ASSERT_THROW(option->setFlag(Option4ClientFqdn::FLAG_S, true),
-                 InvalidOption4ClientFqdnFlags);
+                 InvalidOption4FqdnFlags);
 
     // Set E = 0
     ASSERT_NO_THROW(option->setFlag(Option4ClientFqdn::FLAG_N, false));
@@ -537,7 +542,7 @@ TEST(Option4ClientFqdnTest, setFlag) {
 
     // Set N = 1, this should result in exception because S = 1
     ASSERT_THROW(option->setFlag(Option4ClientFqdn::FLAG_N, true),
-                 InvalidOption4ClientFqdnFlags);
+                 InvalidOption4FqdnFlags);
 
     // Set O = 0
     ASSERT_NO_THROW(option->setFlag(Option4ClientFqdn::FLAG_O, false));
@@ -545,14 +550,10 @@ TEST(Option4ClientFqdnTest, setFlag) {
 
     // Try out of bounds settings.
     uint8_t flags = 0;
-    ASSERT_THROW(option->setFlag(static_cast<Option4ClientFqdn::Flag>(flags),
-                                 true),
-                 InvalidOption4ClientFqdnFlags);
+    ASSERT_THROW(option->setFlag(flags, true), InvalidOption4FqdnFlags);
 
     flags = 0x18;
-    ASSERT_THROW(option->setFlag(static_cast<Option4ClientFqdn::Flag>(flags),
-                                 true),
-                 InvalidOption4ClientFqdnFlags);
+    ASSERT_THROW(option->setFlag(flags, true), InvalidOption4FqdnFlags);
 }
 
 // This test verifies that flags field of the option is set to 0 when resetFlags
@@ -560,7 +561,9 @@ TEST(Option4ClientFqdnTest, setFlag) {
 TEST(Option4ClientFqdnTest, resetFlags) {
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_S | FLAG_O | FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_S |
+                                           Option4ClientFqdn::FLAG_O |
+                                           Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com",
                                            Option4ClientFqdn::FULL))
@@ -587,7 +590,8 @@ TEST(Option4ClientFqdnTest, resetFlags) {
 TEST(Option4ClientFqdnTest, setDomainName) {
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_S | FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_S |
+                                           Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_SERVER(),
                                            "myhost.example.com",
                                            Option4ClientFqdn::FULL))
@@ -614,16 +618,17 @@ TEST(Option4ClientFqdnTest, setDomainName) {
 
     // Fully qualified domain-names must not be empty.
     EXPECT_THROW(option->setDomainName("", Option4ClientFqdn::FULL),
-                 InvalidOption4ClientFqdnDomainName);
+                 InvalidOption4FqdnDomainName);
     EXPECT_THROW(option->setDomainName(" ", Option4ClientFqdn::FULL),
-                 InvalidOption4ClientFqdnDomainName);
+                 InvalidOption4FqdnDomainName);
 }
 
 // This test verifies that current domain-name can be reset to empty one.
 TEST(Option4ClientFqdnTest, resetDomainName) {
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_S | FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_S |
+                                           Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com",
                                            Option4ClientFqdn::FULL))
@@ -640,7 +645,7 @@ TEST(Option4ClientFqdnTest, resetDomainName) {
 // This test verifies on-wire format of the option is correctly created.
 TEST(Option4ClientFqdnTest, pack) {
     // Create option instance. Check that constructor doesn't throw.
-    const uint8_t flags = FLAG_S | FLAG_E;
+    const uint8_t flags = Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E;
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(flags,
@@ -655,13 +660,13 @@ TEST(Option4ClientFqdnTest, pack) {
 
     // Prepare reference data.
     const uint8_t ref_data[] = {
-        81, 23,                              // header
-        FLAG_S | FLAG_E,                     // flags
-        0,                                   // RCODE1
-        0,                                   // RCODE2
-        6, 109, 121, 104, 111, 115, 116,     // myhost.
-        7, 101, 120, 97, 109, 112, 108, 101, // example.
-        3, 99, 111, 109, 0                   // com.
+        81, 23,                                                 // header
+        Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E,  // flags
+        0,                                                      // RCODE1
+        0,                                                      // RCODE2
+        6, 109, 121, 104, 111, 115, 116,                        // myhost.
+        7, 101, 120, 97, 109, 112, 108, 101,                    // example.
+        3, 99, 111, 109, 0                                      // com.
     };
     size_t ref_data_size = sizeof(ref_data) / sizeof(ref_data[0]);
 
@@ -673,7 +678,7 @@ TEST(Option4ClientFqdnTest, pack) {
 
 TEST(Option4ClientFqdnTest, packASCII) {
     // Create option instance. Check that constructor doesn't throw.
-    const uint8_t flags = FLAG_S;
+    const uint8_t flags = Option4ClientFqdn::FLAG_S;
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(flags,
@@ -689,7 +694,7 @@ TEST(Option4ClientFqdnTest, packASCII) {
     // Prepare reference data.
     const uint8_t ref_data[] = {
         81, 23,                               // header
-        FLAG_S,                               // flags
+        Option4ClientFqdn::FLAG_S,            // flags
         0,                                    // RCODE1
         0,                                    // RCODE2
         109, 121, 104, 111, 115, 116, 46,     // myhost.
@@ -709,7 +714,7 @@ TEST(Option4ClientFqdnTest, packASCII) {
 // is correctly created.
 TEST(Option4ClientFqdnTest, packPartial) {
     // Create option instance. Check that constructor doesn't throw.
-    const uint8_t flags = FLAG_S | FLAG_E;
+    const uint8_t flags = Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E;
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(flags,
@@ -725,11 +730,11 @@ TEST(Option4ClientFqdnTest, packPartial) {
 
     // Prepare reference data.
     const uint8_t ref_data[] = {
-        81, 10,                              // header
-        FLAG_S | FLAG_E,                     // flags
-        0,                                   // RCODE1
-        0,                                   // RCODE2
-        6, 109, 121, 104, 111, 115, 116      // myhost
+        81, 10,                                                // header
+        Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E, // flags
+        0,                                                     // RCODE1
+        0,                                                     // RCODE2
+        6, 109, 121, 104, 111, 115, 116                        // myhost
     };
     size_t ref_data_size = sizeof(ref_data) / sizeof(ref_data[0]);
 
@@ -745,7 +750,8 @@ TEST(Option4ClientFqdnTest, unpack) {
     // Create option instance. Check that constructor doesn't throw.
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_O | FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_O |
+                                           Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost",
                                            Option4ClientFqdn::PARTIAL))
@@ -762,12 +768,12 @@ TEST(Option4ClientFqdnTest, unpack) {
     EXPECT_EQ(Option4ClientFqdn::PARTIAL, option->getDomainNameType());
 
     const uint8_t in_data[] = {
-        FLAG_S | FLAG_E,                     // flags
-        0,                                   // RCODE1
-        0,                                   // RCODE2
-        6, 109, 121, 104, 111, 115, 116,     // myhost.
-        7, 101, 120, 97, 109, 112, 108, 101, // example.
-        3, 99, 111, 109, 0                   // com.
+        Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E, // flags
+        0,                                                     // RCODE1
+        0,                                                     // RCODE2
+        6, 109, 121, 104, 111, 115, 116,                       // myhost.
+        7, 101, 120, 97, 109, 112, 108, 101,                   // example.
+        3, 99, 111, 109, 0                                     // com.
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
@@ -790,7 +796,8 @@ TEST(Option4ClientFqdnTest, unpackPartial) {
     // Create option instance. Check that constructor doesn't throw.
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_O | FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_O |
+                                           Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com"))
     );
@@ -806,10 +813,10 @@ TEST(Option4ClientFqdnTest, unpackPartial) {
     EXPECT_EQ(Option4ClientFqdn::FULL, option->getDomainNameType());
 
     const uint8_t in_data[] = {
-        FLAG_S | FLAG_E,                     // flags
-        0,                                   // RCODE1
-        0,                                   // RCODE2
-        6, 109, 121, 104, 111, 115, 116      // myhost
+        Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E, // flags
+        0,                                                     // RCODE1
+        0,                                                     // RCODE2
+        6, 109, 121, 104, 111, 115, 116                        // myhost
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
@@ -831,7 +838,8 @@ TEST(Option4ClientFqdnTest, unpackPartial) {
 TEST(Option4ClientFqdnTest, unpackTruncated) {
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_O | FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_O |
+                                           Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_CLIENT()))
     );
     ASSERT_TRUE(option);
@@ -845,7 +853,8 @@ TEST(Option4ClientFqdnTest, unpackTruncated) {
 // toText method is correctly formatted.
 TEST(Option4ClientFqdnTest, toText) {
     // Create option instance. Check that constructor doesn't throw.
-    uint8_t flags = FLAG_N | FLAG_O | FLAG_E;
+    uint8_t flags = Option4ClientFqdn::FLAG_N | Option4ClientFqdn::FLAG_O |
+        Option4ClientFqdn::FLAG_E;
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(flags,
@@ -895,7 +904,7 @@ TEST(Option4ClientFqdnTest, len) {
     // Create option instance. Check that constructor doesn't throw.
     boost::scoped_ptr<Option4ClientFqdn> option;
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost.example.com"))
     );
@@ -909,7 +918,7 @@ TEST(Option4ClientFqdnTest, len) {
     // Let's check that the size will change when domain name of a different
     // size is used.
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "example.com"))
     );
@@ -917,7 +926,7 @@ TEST(Option4ClientFqdnTest, len) {
     EXPECT_EQ(18, option->len());
 
     ASSERT_NO_THROW(
-        option.reset(new Option4ClientFqdn(FLAG_E,
+        option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_CLIENT(),
                                            "myhost",
                                            Option4ClientFqdn::PARTIAL))
