@@ -368,7 +368,7 @@ public:
     ///
     /// @param param_name name of the configuration parameter being parsed.
     ///
-    /// @throw BadValue if supplied parameter name is not "hooks_libraries"
+            /// row BadValue if supplied parameter name is not "hooks-libraries"
     HooksLibrariesParser(const std::string& param_name);
 
     /// @brief Parses parameters value
@@ -395,9 +395,9 @@ public:
     /// an indication as to whether the list is different from the list of
     /// libraries already loaded.
     ///
-    /// @param libraries [out] List of libraries that were specified in the
+    /// @param [out] libraries List of libraries that were specified in the
     ///        new configuration.
-    /// @param changed [out] true if the list is different from that currently
+    /// @param [out] changed true if the list is different from that currently
     ///        loaded.
     void getLibraries(std::vector<std::string>& libraries, bool& changed);
 
