@@ -34,6 +34,11 @@ if test $SET_ENV_LIBRARY_PATH = yes; then
 	export @ENV_LIBRARY_PATH@
 fi
 
+BUILD_EXPERIMENTAL_RESOLVER=@BUILD_EXPERIMENTAL_RESOLVER@
+if test $BUILD_EXPERIMENTAL_RESOLVER = yes; then
+    cp -f @srcdir@/features/resolver_basic.feature.disabled @srcdir@/features/resolver_basic.feature
+fi
+
 B10_FROM_SOURCE=@abs_top_srcdir@
 export B10_FROM_SOURCE
 # TODO: We need to do this feature based (ie. no general from_source)
