@@ -202,12 +202,17 @@ class Memmgr(BIND10Server):
             genid, clients_map = self._datasrc_clients_mgr.get_clients_map()
             datasrc_info = DataSrcInfo(genid, clients_map, self._config_params)
             self._datasrc_info_list.append(datasrc_info)
+            self._init_segments(datasrc_info)
 
             # Full datasrc reconfig will be rare, so would be worth logging
             # at the info level.
             logger.info(MEMMGR_DATASRC_RECONFIGURED, genid)
+
         except isc.server_common.datasrc_clients_mgr.ConfigError as ex:
             logger.error(MEMMGR_DATASRC_CONFIG_ERROR, ex)
+
+    def _init_segments(datasrc_info):
+        pass
 
 if '__main__' == __name__:
     mgr = Memmgr()
