@@ -368,7 +368,7 @@ public:
     ///
     /// @param param_name name of the configuration parameter being parsed.
     ///
-            /// row BadValue if supplied parameter name is not "hooks-libraries"
+    /// @throw BadValue if supplied parameter name is not "hooks-libraries"
     HooksLibrariesParser(const std::string& param_name);
 
     /// @brief Parses parameters value
