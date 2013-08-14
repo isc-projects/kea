@@ -274,8 +274,6 @@ class MsgQTest(unittest.TestCase):
         sock = Sock(1)
         return notifications, sock
 
-    @unittest.skipUnless('POLLIN' in select.__dict__,
-                         'cannot perform tests requiring select.poll')
     def test_notifies(self):
         """
         Test the message queue sends notifications about connecting,
@@ -315,8 +313,6 @@ class MsgQTest(unittest.TestCase):
         self.__msgq.kill_socket(sock.fileno(), sock)
         self.assertEqual([('disconnected', {'client': lname})], notifications)
 
-    @unittest.skipUnless('POLLIN' in select.__dict__,
-                         'cannot perform tests requiring select.poll')
     def test_notifies_implicit_kill(self):
         """
         Test that the unsubscription notifications are sent before the socket
