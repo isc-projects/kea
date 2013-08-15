@@ -12,7 +12,8 @@
         {
           "item_name": "hooks-library",
           "item_type": "string",
-          "item_optional": true,
+          "item_optional": false,
+          "item_default": ""
         }
       },
  
@@ -290,6 +291,7 @@
         {
             "command_name": "libreload",
             "command_description": "Reloads the current hooks libraries.", 
+            "command_args": []
         }
 
     ]
