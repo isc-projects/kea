@@ -25,6 +25,11 @@ class TestRename(unittest.TestCase):
     def __scan(self, directory, script, fun):
         # Scan one script if it contains call to the renaming function
         filename = os.path.join(directory, script)
+        if not os.path.exists(filename):
+            # We either didn't compile it yet or it is not compiled based
+            # on some environmental condition. That is OK, we don't want
+            # to break on that.
+            return
         with open(filename) as f:
             data = ''.join(f.readlines())
         prettyname = 'src' + filename[filename.rfind('../') + 2:]
