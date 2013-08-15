@@ -1383,6 +1383,16 @@ class TestStats(unittest.TestCase):
         stat.mccs.rpc_call = lambda x,y: __raise(99, 'Error')
         self.assertListEqual([], stat._get_multi_module_list())
 
+    def test_get_multi_module_list_initsessiontimeout(self):
+        """Test _get_multi_module_list() returns an empty list if rcp_call()
+        raise a InitSeeionTimeout exception"""
+        # InitSeeionTimeout case
+        stat = MyStats()
+        ex = stats.InitSessionTimeout
+        def __raise(*x): raise ex(*x)
+        stat.mccs.rpc_call = lambda x,y: __raise()
+        self.assertRaises(ex, stat._get_multi_module_list)
+
     def test_query_statistics(self):
         """Test _query_statistics returns a list of pairs of module and
         sequences from group_sendmsg()"""
@@ -1609,6 +1619,21 @@ class TestStats(unittest.TestCase):
         stats.get_timestamp = lambda : self.const_timestamp
         stat = MyStats()
         self.assertEqual(0.0, stat._lasttime_poll)
+        stat.do_polling()
+        self.assertEqual(self.const_timestamp, stat._lasttime_poll)
+        stats.get_timestamp = orig_get_timestamp
+
+    def test_polling_initsessiontimeout(self):
+        """Test _lasttime_poll is updated after do_polling() in case that it catches
+        InitSesionTimeout at _get_multi_module_list()
+        """
+        orig_get_timestamp = stats.get_timestamp
+        stats.get_timestamp = lambda : self.const_timestamp
+        ex = stats.InitSessionTimeout
+        def __raise(*x): raise ex(*x)
+        stat = MyStats()
+        self.assertEqual(0.0, stat._lasttime_poll)
+        stat._get_multi_module_list = lambda: __raise()
         stat.do_polling()
         self.assertEqual(self.const_timestamp, stat._lasttime_poll)
         stats.get_timestamp = orig_get_timestamp
