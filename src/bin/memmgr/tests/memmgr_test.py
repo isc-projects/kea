@@ -285,8 +285,8 @@ class TestMemmgr(unittest.TestCase):
         """
         # Some mocks
         class SgmtInfo:
-            pass
-
+            def complete_update():
+                return 'command'
         sgmt_info = SgmtInfo
         class DataSrcInfo:
             def __init__(self):
@@ -297,6 +297,10 @@ class TestMemmgr(unittest.TestCase):
             def recv(self, size):
                 pass
         self.__mgr._master_sock = Sock()
+        commands = []
+        def mock_cmd_to_builder(cmd):
+            commands.append(cmd)
+        self.__mgr._cmd_to_builder = mock_cmd_to_builder
 
         self.__mgr._builder_lock = threading.Lock()
         # Extract the reference for the queue. We get a copy of the reference
@@ -308,6 +312,29 @@ class TestMemmgr(unittest.TestCase):
         self.__mgr._notify_from_builder()
         # All notifications are now eaten
         self.assertEqual([], notif_ref)
+        self.assertEqual(['command'], commands)
+        del commands[:]
+        # The new command is sent
+        # Once again the same, but with the last command - nothing new pushed
+        sgmt_info.complete_update = lambda: None
+        notif_ref.append(('load-completed', dsrc_info, isc.dns.RRClass.IN,
+                          'name'))
+        self.__mgr._notify_from_builder()
+        self.assertEqual([], notif_ref)
+        self.assertEqual([], commands)
+        # This is invalid (unhandled) notification name
+        notif_ref.append(('unhandled',))
+        self.assertRaises(ValueError, self.__mgr._notify_from_builder)
+        self.assertEqual([], notif_ref)
+
+    def test_send_to_builder(self):
+        """
+        Send command to the builder test.
+        """
+        self.__mgr._builder_cv = threading.Condition()
+        self.__mgr._cmd_to_builder(('test',))
+        self.assertEqual([('test',)], self.__mgr._builder_command_queue)
+        del self.__mgr._builder_command_queue[:]
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()

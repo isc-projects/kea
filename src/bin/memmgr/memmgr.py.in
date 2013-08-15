@@ -124,6 +124,14 @@ class Memmgr(BIND10Server):
         # All copy, switch to the new configuration.
         self._config_params = new_config_params
 
+    def _cmd_to_builder(self, cmd):
+        """
+        Send a command to the builder, with proper synchronization.
+        """
+        with self._builder_cv:
+            self._builder_command_queue.append(cmd)
+            self._builder_cv.notify_all()
+
     def _notify_from_builder(self):
         """
         Read the notifications from the builder thread.
@@ -138,7 +146,20 @@ class Memmgr(BIND10Server):
             # keep the original list.
             notifications = self._builder_response_queue[:]
             del self._builder_response_queue[:]
-        # TODO: Do stuff with the notifications
+        while notifications:
+            notification = notifications.pop()
+            notif_name = notification[0]
+            if notif_name == 'load-completed':
+                (_, dsrc_info, rrclass, dsrc_name) = notification
+                sgmt_info = dsrc_info.segment_info_map[(rrclass, dsrc_name)]
+                cmd = sgmt_info.complete_update()
+                if cmd is not None:
+                    self._cmd_to_builder(cmd)
+                else:
+                    pass
+                    # TODO: Send to the readers, #2858
+            else:
+                raise ValueError('Unknown notification name: ' + notif_name)
 
     def __create_builder_thread(self):
         # We get responses from the builder thread on this socket pair.
@@ -170,9 +191,7 @@ class Memmgr(BIND10Server):
 
         # This makes the MemorySegmentBuilder exit its main loop. It
         # should make the builder thread joinable.
-        with self._builder_cv:
-            self._builder_command_queue.append(('shutdown',))
-            self._builder_cv.notify_all()
+        self._cmd_to_builder(('shutdown',))
 
         self._builder_thread.join()
 
@@ -228,9 +247,7 @@ class Memmgr(BIND10Server):
             send_cmd = sgmt_info.start_update()
             assert cmd == send_cmd and sgmt_info.get_state() == \
                 SegmentInfo.UPDATING
-            with self._builder_cv:
-                self._builder_command_queue.append(cmd)
-                self._builder_cv.notify()
+            self._cmd_to_builder(cmd)
 
 if '__main__' == __name__:
     mgr = Memmgr()
