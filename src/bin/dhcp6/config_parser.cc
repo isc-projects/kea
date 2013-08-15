@@ -430,6 +430,8 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id) {
                                    globalContext()->string_values_);
     } else if (config_id.compare("lease-database") == 0) {
         parser = new DbAccessParser(config_id);
+    } else if (config_id.compare("hooks-libraries") == 0) {
+        parser = new HooksLibrariesParser(config_id);
     } else {
         isc_throw(NotImplemented,
                 "Parser error: Global configuration parameter not supported: "
@@ -465,6 +467,11 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
     ParserPtr option_parser;
     ParserPtr iface_parser;
 
+    // Some of the parsers alter state of the system that can't easily
+    // be undone. (Or alter it in a way such that undoing the change
+    // has the same risk of failure as doing the change.)
+    ParserPtr hooks_parser;
+
     // The subnet parsers implement data inheritance by directly
     // accessing global storage. For this reason the global data
     // parsers must store the parsed data into global storages
@@ -496,6 +503,13 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
                 subnet_parser = parser;
             } else if (config_pair.first == "option-data") {
                 option_parser = parser;
+            } else if (config_pair.first == "hooks-libraries") {
+                // Executing the commit will alter currently loaded hooks
+                // libraries. Check if the supplied libraries are valid,
+                // but defer the commit until after everything else has
+                // committed.
+                hooks_parser = parser;
+                hooks_parser->build(config_pair.second);
             } else if (config_pair.first == "interfaces") {
                 // The interface parser is independent from any other parser and
                 // can be run here before other parsers.
@@ -557,6 +571,13 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
             if (iface_parser) {
                 iface_parser->commit();
+            }
+
+            // This occurs last as if it succeeds, there is no easy way to
+            // revert it.  As a result, the failure to commit a subsequent
+            // change causes problems when trying to roll back.
+            if (hooks_parser) {
+                hooks_parser->commit();
             }
         }
         catch (const isc::Exception& ex) {

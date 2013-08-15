@@ -20,19 +20,23 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/dhcp_parsers.h>
+#include <dhcpsrv/tests/test_libraries.h>
 #include <exceptions/exceptions.h>
+#include <hooks/hooks_manager.h>
 
 #include <gtest/gtest.h>
 #include <boost/foreach.hpp>
+#include <boost/pointer_cast.hpp>
 
 #include <map>
 #include <string>
 
 using namespace std;
 using namespace isc;
-using namespace isc::dhcp;
-using namespace isc::data;
 using namespace isc::config;
+using namespace isc::data;
+using namespace isc::dhcp;
+using namespace isc::hooks;
 
 namespace {
 
@@ -308,7 +312,7 @@ public:
 
         ConfigPair config_pair;
         try {
-            // Iteraate over the config elements.
+            // Iterate over the config elements.
             const std::map<std::string, ConstElementPtr>& values_map =
                                                       config_set->mapValue();
             BOOST_FOREACH(config_pair, values_map) {
@@ -348,22 +352,34 @@ public:
 
     /// @brief Create an element parser based on the element name.
     ///
-    /// Note that currently it only supports option-defs and option-data,
+    /// Creates a parser for the appropriate element and stores a pointer to it
+    /// in the appropriate class variable.
     ///
-    /// @param config_id is the name of the configuration element.
-    /// @return returns a raw pointer to DhcpConfigParser. Note caller is
-    /// responsible for deleting it once no longer needed.
+    /// Note that the method currently it only supports option-defs, option-data
+    /// and hooks-libraries.
+    /// 
+    /// @param config_id is the name of the configuration element. 
+    ///
+    /// @return returns a shared pointer to DhcpConfigParser.
+    ///
     /// @throw throws NotImplemented if element name isn't supported.
-    DhcpConfigParser* createConfigParser(const std::string& config_id) {
-        DhcpConfigParser* parser = NULL;
+    ParserPtr createConfigParser(const std::string& config_id) {
+        ParserPtr parser;
         if (config_id.compare("option-data") == 0) {
-            parser = new OptionDataListParser(config_id,
-                                          parser_context_->options_,
-                                          parser_context_,
-                                          UtestOptionDataParser::factory);
+            parser.reset(new OptionDataListParser(config_id, 
+                                              parser_context_->options_, 
+                                              parser_context_,
+                                              UtestOptionDataParser::factory));
+
         } else if (config_id.compare("option-def") == 0) {
-            parser  = new OptionDefListParser(config_id,
-                                          parser_context_->option_defs_);
+            parser.reset(new OptionDefListParser(config_id, 
+                                              parser_context_->option_defs_));
+
+        } else if (config_id.compare("hooks-libraries") == 0) {
+            parser.reset(new HooksLibrariesParser(config_id));
+            hooks_libraries_parser_ =
+                boost::dynamic_pointer_cast<HooksLibrariesParser>(parser);
+
         } else {
             isc_throw(NotImplemented,
                 "Parser error: configuration parameter not supported: "
@@ -373,15 +389,15 @@ public:
         return (parser);
     }
 
-    /// @brief Convenicee method for parsing a configuration
-    ///
+    /// @brief Convenience method for parsing a configuration 
+    /// 
     /// Given a configuration string, convert it into Elements
     /// and parse them.
     /// @param config is the configuration string to parse
     ///
     /// @return retuns 0 if the configuration parsed successfully,
     /// non-zero otherwise failure.
-    int parseConfiguration (std::string &config) {
+    int parseConfiguration(const std::string& config) {    
         int rcode_ = 1;
         // Turn config into elements.
         // Test json just to make sure its valid.
@@ -389,7 +405,8 @@ public:
         EXPECT_TRUE(json);
         if (json) {
             ConstElementPtr status = parseElementSet(json);
-            ConstElementPtr comment_ = parseAnswer(rcode_, status);
+            ConstElementPtr comment = parseAnswer(rcode_, status);
+            error_text_ = comment->stringValue();
         }
 
         return (rcode_);
@@ -461,10 +478,21 @@ public:
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().deleteOptionDefs();
         parser_context_.reset(new ParserContext(Option::V6));
+
+        // Ensure no hooks libraries are loaded.
+        HooksManager::unloadLibraries();
     }
+
+    /// @brief Parsers used in the parsing of the configuration
+    ///
+    /// Allows the tests to interrogate the state of the parsers (if required).
+    boost::shared_ptr<HooksLibrariesParser> hooks_libraries_parser_;
 
     /// @brief Parser context - provides storage for options and definitions
     ParserContextPtr parser_context_;
+
+    /// @brief Error string if the parsing failed
+    std::string error_text_;
 };
 
 /// @brief Check Basic parsing of option definitions.
@@ -491,6 +519,7 @@ TEST_F(ParseConfigTest, basicOptionDefTest) {
     // Verify that the configuration string parses.
     int rcode = parseConfiguration(config);
     ASSERT_TRUE(rcode == 0);
+
 
     // Verify that the option definition can be retrieved.
     OptionDefinitionPtr def = getOptionDef("isc", 100);
@@ -549,3 +578,117 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
 
 };  // Anonymous namespace
 
+/// These tests check basic operation of the HooksLibrariesParser.
+
+// hooks-libraries that do not contain anything.
+TEST_F(ParseConfigTest, noHooksLibrariesTest) {
+
+    // Configuration with hooks-libraries not present.
+    string config = "{ \"hooks-libraries\": [] }";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Check that the parser recorded no change to the current state
+    // (as the test starts with no hooks libraries loaded).
+    std::vector<std::string> libraries;
+    bool changed;
+    hooks_libraries_parser_->getLibraries(libraries, changed);
+    EXPECT_TRUE(libraries.empty());
+    EXPECT_FALSE(changed);
+
+    // Load a single library and repeat the parse.
+    vector<string> basic_library;
+    basic_library.push_back(string(CALLOUT_LIBRARY_1));
+    HooksManager::loadLibraries(basic_library);
+
+    rcode = parseConfiguration(config);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // This time the change should have been recorded.
+    hooks_libraries_parser_->getLibraries(libraries, changed);
+    EXPECT_TRUE(libraries.empty());
+    EXPECT_TRUE(changed);
+
+    // But repeating it again and we are back to no change.
+    rcode = parseConfiguration(config);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+    hooks_libraries_parser_->getLibraries(libraries, changed);
+    EXPECT_TRUE(libraries.empty());
+    EXPECT_FALSE(changed);
+
+}
+
+
+TEST_F(ParseConfigTest, validHooksLibrariesTest) {
+
+    // Configuration string.  This contains a set of valid libraries.
+    const std::string quote("\"");
+    const std::string comma(", ");
+
+    const std::string config =
+        std::string("{ ") +
+            std::string("\"hooks-libraries\": [") +
+                quote + std::string(CALLOUT_LIBRARY_1) + quote + comma +
+                quote + std::string(CALLOUT_LIBRARY_2)  + quote +
+            std::string("]") +
+        std::string("}");
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Check that the parser holds two libraries and the configuration is
+    // recorded as having changed.
+    std::vector<std::string> libraries;
+    bool changed;
+    hooks_libraries_parser_->getLibraries(libraries, changed);
+    EXPECT_EQ(2, libraries.size());
+    EXPECT_TRUE(changed);
+
+    // The expected libraries should be the list of libraries specified
+    // in the given order.
+    std::vector<std::string> expected;
+    expected.push_back(CALLOUT_LIBRARY_1);
+    expected.push_back(CALLOUT_LIBRARY_2);
+    EXPECT_TRUE(expected == libraries);
+
+    // Parse the string again.
+    rcode = parseConfiguration(config);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // The list has not changed, and this is what we should see.
+    hooks_libraries_parser_->getLibraries(libraries, changed);
+    EXPECT_EQ(2, libraries.size());
+    EXPECT_FALSE(changed);
+}
+
+// Check with a set of libraries, some of which are invalid.
+TEST_F(ParseConfigTest, invalidHooksLibrariesTest) {
+
+    // @todo Initialize global library context to null
+
+    // Configuration string.  This contains an invalid library which should
+    // trigger an error in the "build" stage.
+    const std::string quote("\"");
+    const std::string comma(", ");
+
+    const std::string config =
+        std::string("{ ") +
+            std::string("\"hooks-libraries\": [") +
+                quote + std::string(CALLOUT_LIBRARY_1) + quote + comma +
+                quote + std::string(NOT_PRESENT_LIBRARY) + quote + comma +
+                quote + std::string(CALLOUT_LIBRARY_2)  + quote +
+            std::string("]") +
+        std::string("}");
+
+    // Verify that the configuration fails to parse. (Syntactically it's OK,
+    // but the library is invalid).
+    int rcode = parseConfiguration(config);
+    ASSERT_FALSE(rcode == 0) << error_text_;
+
+    // Check that the message contains the library in error.
+    EXPECT_FALSE(error_text_.find(NOT_PRESENT_LIBRARY) == string::npos) <<
+        "Error text returned from parse failure is " << error_text_;
+}
