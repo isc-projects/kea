@@ -29,7 +29,7 @@ from isc.log_messages.memmgr_messages import *
 from isc.server_common.bind10_server import BIND10Server, BIND10ServerFatal
 from isc.server_common.datasrc_clients_mgr \
     import DataSrcClientsMgr, ConfigError
-from isc.memmgr.datasrc_info import DataSrcInfo
+from isc.memmgr.datasrc_info import DataSrcInfo, SegmentInfo
 from isc.memmgr.builder import MemorySegmentBuilder
 import isc.util.process
 
@@ -211,8 +211,17 @@ class Memmgr(BIND10Server):
         except isc.server_common.datasrc_clients_mgr.ConfigError as ex:
             logger.error(MEMMGR_DATASRC_CONFIG_ERROR, ex)
 
-    def _init_segments(datasrc_info):
-        pass
+    def _init_segments(self, datasrc_info):
+        for key, sgmt_info in datasrc_info.segment_info_map.items():
+            rrclass, dsrc_name = key
+            cmd = ('load', None, datasrc_info, rrclass, dsrc_name)
+            sgmt_info.add_event(cmd)
+            send_cmd = sgmt_info.start_update()
+            assert cmd == send_cmd and sgmt_info.get_state() == \
+                SegmentInfo.UPDATING
+            with self._builder_cv:
+                self._builder_command_queue.append(cmd)
+                self._builder_cv.notify()
 
 if '__main__' == __name__:
     mgr = Memmgr()
