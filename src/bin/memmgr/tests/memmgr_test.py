@@ -16,12 +16,14 @@
 import unittest
 import os
 import re
+import threading
 
 import isc.log
 from isc.dns import RRClass
 import isc.config
 from isc.config import parse_answer
 import memmgr
+from isc.memmgr.datasrc_info import SegmentInfo
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class MyCCSession(MockModuleCCSession, isc.config.ConfigData):
@@ -235,6 +237,46 @@ class TestMemmgr(unittest.TestCase):
         self.__mgr._datasrc_clients_mgr = MockDataSrcClientMgr(None, True)
         self.__mgr._datasrc_config_handler(None, None)
         self.assertEqual(2, len(self.__mgr._datasrc_info_list))
+
+    def test_init_segments(self):
+        """
+        Test the initialization of segments ‒ just load everything found in there.
+        """
+        # Fake a lot of things. These are objects hard to set up, so this is
+        # easier.
+        class SgmtInfo:
+            def __init__(self):
+                self.events = []
+                self.__state = None
+
+            def add_event(self, cmd):
+                self.events.append(cmd)
+                self.__state = SegmentInfo.UPDATING
+
+            def start_update(self):
+                return self.events[0]
+
+            def get_state(self):
+                return self.__state
+
+        sgmt_info = SgmtInfo()
+        class DataSrcInfo:
+            def __init__(self):
+                self.segment_info_map = \
+                    {(isc.dns.RRClass.IN, "name"): sgmt_info}
+        dsrc_info = DataSrcInfo()
+
+        # Pretend to have the builder thread
+        self.__mgr._builder_cv = threading.Condition()
+
+        # Run the initialization
+        self.__mgr._init_segments(dsrc_info)
+
+        # The event was pushed into the segment info
+        command = ('load', None, dsrc_info, isc.dns.RRClass.IN, 'name')
+        self.assertEqual([command], sgmt_info.events)
+        self.assertEqual([command], self.__mgr._builder_command_queue)
+        self.__mgr._builder_command_queue.clear()
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
