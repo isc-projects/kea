@@ -124,18 +124,27 @@ class Memmgr(BIND10Server):
         # All copy, switch to the new configuration.
         self._config_params = new_config_params
 
-    def __notify_from_builder(self):
-        # Nothing is implemented here for now. This method should have
-        # code to handle responses from the builder in
-        # self._builder_response_queue[]. Access must be synchronized
-        # using self._builder_lock.
-        pass
+    def _notify_from_builder(self):
+        """
+        Read the notifications from the builder thread.
+        """
+        self._master_sock.recv(1) # Clear the wake-up data
+        notifications = None
+        with self._builder_lock:
+            # Copy the notifications out and clear them from the
+            # original list. We may not assigne [] to
+            # self._builder_response_queue, because there's other
+            # reference to it from the other thread and it would
+            # keep the original list.
+            notifications = self._builder_response_queue[:]
+            del self._builder_response_queue[:]
+        # TODO: Do stuff with the notifications
 
     def __create_builder_thread(self):
         # We get responses from the builder thread on this socket pair.
         (self._master_sock, self._builder_sock) = \
             socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.watch_fileno(self._master_sock, rcallback=self.__notify_from_builder)
+        self.watch_fileno(self._master_sock, rcallback=self._notify_from_builder)
 
         # See the documentation for MemorySegmentBuilder on how the
         # following are used.
