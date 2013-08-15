@@ -32,6 +32,7 @@ AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp6/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
+CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP
@@ -48,6 +49,16 @@ TESTS_ENVIRONMENT = \
 
 TESTS =
 if HAVE_GTEST
+# Build shared libraries for testing.
+lib_LTLIBRARIES = libco1.la libco2.la
+
+libco1_la_SOURCES  = callout_library_1.cc callout_library_common.h
+libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco1_la_CPPFLAGS = $(AM_CPPFLAGS)
+
+libco2_la_SOURCES  = callout_library_2.cc callout_library_common.h
+libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco2_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 TESTS += dhcp4_unittests
 
@@ -58,7 +69,9 @@ dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += config_parser_unittest.cc
+dhcp4_unittests_SOURCES += marker_file.cc
 nodist_dhcp4_unittests_SOURCES = ../dhcp4_messages.h ../dhcp4_messages.cc
+nodist_dhcp4_unittests_SOURCES += marker_file.h test_libraries.h
 
 dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

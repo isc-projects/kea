@@ -24,6 +24,18 @@ TESTS_ENVIRONMENT = \
 
 TESTS =
 if HAVE_GTEST
+# Build shared libraries for testing.
+lib_LTLIBRARIES = libco1.la libco2.la
+
+libco1_la_SOURCES  = callout_library.cc
+libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco1_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+
+libco2_la_SOURCES  = callout_library.cc
+libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco2_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+
+
 TESTS += libdhcpsrv_unittests
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
@@ -67,9 +79,9 @@ libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libdhcpsrv_unittests_LDADD += $(GTEST_LDADD)
 endif
 

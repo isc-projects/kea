@@ -19,24 +19,28 @@
 #include <cc/session.h>
 #include <config/ccsession.h>
 #include <dhcp/iface_mgr.h>
-#include <dhcpsrv/dhcp_config_parser.h>
-#include <dhcpsrv/cfgmgr.h>
+#include <dhcp4/config_parser.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/spec_config.h>
-#include <dhcp4/config_parser.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/dhcp_config_parser.h>
 #include <exceptions/exceptions.h>
+#include <hooks/hooks_manager.h>
 #include <util/buffer.h>
 
 #include <cassert>
 #include <iostream>
 #include <sstream>
+#include <string>
+#include <vector>
 
 using namespace isc::asiolink;
 using namespace isc::cc;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::hooks;
 using namespace isc::log;
 using namespace isc::util;
 using namespace std;
@@ -140,6 +144,21 @@ ControlledDhcpv4Srv::dhcp4CommandHandler(const string& command, ConstElementPtr 
         }
         ConstElementPtr answer = isc::config::createAnswer(0,
                                  "Shutting down.");
+        return (answer);
+
+    } else if (command == "libreload") {
+        // TODO delete any stored CalloutHandles referring to the old libraries
+        // Get list of currently loaded libraries and reload them.
+        vector<string> loaded = HooksManager::getLibraryNames();
+        bool status = HooksManager::loadLibraries(loaded);
+        if (!status) {
+            LOG_ERROR(dhcp4_logger, DHCP4_HOOKS_LIBS_RELOAD_FAIL);
+            ConstElementPtr answer = isc::config::createAnswer(1,
+                                     "Failed to reload hooks libraries.");
+            return (answer);
+        }
+        ConstElementPtr answer = isc::config::createAnswer(0,
+                                 "Hooks libraries successfully reloaded.");
         return (answer);
     }
 
