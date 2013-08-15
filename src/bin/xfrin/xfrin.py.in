@@ -1248,8 +1248,8 @@ class ZoneInfo:
            needed to get the defaults from the specification"""
         # Handle deprecated config parameter explicitly for the moment.
         if config_data.get('use_ixfr') is not None:
-            raise XfrinZoneInfoException('use_ixfr was deprecated.' +
-                                         'use rquest_ixfr')
+            raise XfrinZoneInfoException('"use_ixfr" was deprecated, ' +
+                                         'use "request_ixfr"')
 
         self._module_cc = module_cc
         self.set_name(config_data.get('name'))
