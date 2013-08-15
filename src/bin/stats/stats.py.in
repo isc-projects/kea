@@ -186,6 +186,11 @@ class StatsError(Exception):
     """Exception class for Stats class"""
     pass
 
+class InitSessionTimeout(isc.cc.session.SessionTimeout):
+    """SessionTimeout Exception in the session between the stats module and the
+    init module"""
+    pass
+
 class Stats:
     """
     Main class of stats module
@@ -271,6 +276,8 @@ class Stats:
             # TODO: Is it OK to just pass? As part of refactoring, preserving
             # the original behaviour.
             value = None
+        except isc.cc.session.SessionTimeout as e:
+            raise InitSessionTimeout(e)
         modules = []
         if type(value) is list:
             # NOTE: For example, the "show_processes" command
@@ -338,6 +345,7 @@ class Stats:
         _statistics_data = []
         _sequences = sequences[:]
         while len(_sequences) > 0:
+            (module_name, seq) = (None, None)
             try:
                 (module_name, seq) = _sequences.pop(0)
                 answer, env = self.cc_session.group_recvmsg(False, seq)
@@ -348,7 +356,7 @@ class Stats:
                             (module_name, env['from'], args))
             # skip this module if SessionTimeout raised
             except isc.cc.session.SessionTimeout:
-                pass
+                logger.warn(STATS_SKIP_COLLECTING, module_name)
         return _statistics_data
 
     def _refresh_statistics(self, statistics_data):
@@ -371,11 +379,14 @@ class Stats:
            search multiple instances of same module. Second requests
            each module to invoke 'getstats'. Finally updates internal
            statistics data every time it gets from each instance."""
-        modules = self._get_multi_module_list()
-        sequences = self._query_statistics(modules)
-        _statistics_data = self._collect_statistics(sequences)
-        self._refresh_statistics(_statistics_data)
-        # if successfully done, set the last time of polling
+        try:
+            modules = self._get_multi_module_list()
+            sequences = self._query_statistics(modules)
+            _statistics_data = self._collect_statistics(sequences)
+            self._refresh_statistics(_statistics_data)
+        except InitSessionTimeout:
+            logger.warn(STATS_SKIP_POLLING)
+        # if successfully done or skipped, set the last time of polling
         self._lasttime_poll = get_timestamp()
 
     def _check_command(self, nonblock=False):
