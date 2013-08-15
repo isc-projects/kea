@@ -16,19 +16,21 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcp_parsers.h>
+#include <hooks/hooks_manager.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
 
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
 
 using namespace std;
 using namespace isc::data;
+using namespace isc::hooks;
 
 namespace isc {
 namespace dhcp {
@@ -213,6 +215,77 @@ InterfaceListConfigParser::isIfaceAdded(const std::string& iface) const {
         }
     }
     return (false);
+}
+
+// ******************** HooksLibrariesParser *************************
+
+HooksLibrariesParser::HooksLibrariesParser(const std::string& param_name)
+    : libraries_(), changed_(false)
+{
+    // Sanity check on the name.
+    if (param_name != "hooks-libraries") {
+        isc_throw(BadValue, "Internal error. Hooks libraries "
+            "parser called for the wrong parameter: " << param_name);
+    }
+}
+
+void 
+HooksLibrariesParser::build(ConstElementPtr value) {
+    // Initialize.
+    libraries_.clear();
+    changed_ = false;
+
+    // Extract the list of libraries.
+    BOOST_FOREACH(ConstElementPtr iface, value->listValue()) {
+        string libname = iface->str();
+        boost::erase_all(libname, "\"");
+        libraries_.push_back(libname);
+    }
+
+    // Check if the list of libraries has changed.  If not, nothing is done
+    // - the command "DhcpN libreload" is required to reload the same
+    // libraries (this prevents needless reloads when anything else in the
+    // configuration is changed).
+    vector<string> current_libraries = HooksManager::getLibraryNames();
+    if (current_libraries == libraries_) {
+        return;
+    }
+
+    // Library list has changed, validate each of the libraries specified.
+    vector<string> error_libs = HooksManager::validateLibraries(libraries_);
+    if (!error_libs.empty()) {
+
+        // Construct the list of libraries in error for the message.
+        string error_list = error_libs[0];
+        for (int i = 1; i < error_libs.size(); ++i) {
+            error_list += (string(", ") + error_libs[i]);
+        }
+        isc_throw(DhcpConfigError, "hooks libraries failed to validate - "
+                  "library or libraries in error are: " + error_list);
+    }
+
+    // The library list has changed and the libraries are valid, so flag for
+    // update when commit() is called.
+    changed_ = true;
+}
+
+void 
+HooksLibrariesParser::commit() {
+    /// Commits the list of libraries to the configuration manager storage if
+    /// the list of libraries has changed.
+    if (changed_) {
+        // TODO Delete any stored CalloutHandles before reloading the
+        // libraries
+        HooksManager::loadLibraries(libraries_);
+    }
+}
+
+// Method for testing
+void
+HooksLibrariesParser::getLibraries(std::vector<std::string>& libraries,
+                                   bool& changed) {
+    libraries = libraries_;
+    changed = changed_;
 }
 
 // **************************** OptionDataParser *************************
