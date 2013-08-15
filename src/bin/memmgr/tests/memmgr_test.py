@@ -276,7 +276,38 @@ class TestMemmgr(unittest.TestCase):
         command = ('load', None, dsrc_info, isc.dns.RRClass.IN, 'name')
         self.assertEqual([command], sgmt_info.events)
         self.assertEqual([command], self.__mgr._builder_command_queue)
-        self.__mgr._builder_command_queue.clear()
+        del self.__mgr._builder_command_queue[:]
+
+    def test_notify_from_builder(self):
+        """
+        Check the notify from builder thing eats the notifications and
+        handles them.
+        """
+        # Some mocks
+        class SgmtInfo:
+            pass
+
+        sgmt_info = SgmtInfo
+        class DataSrcInfo:
+            def __init__(self):
+                self.segment_info_map = \
+                    {(isc.dns.RRClass.IN, "name"): sgmt_info}
+        dsrc_info = DataSrcInfo()
+        class Sock:
+            def recv(self, size):
+                pass
+        self.__mgr._master_sock = Sock()
+
+        self.__mgr._builder_lock = threading.Lock()
+        # Extract the reference for the queue. We get a copy of the reference
+        # to check it is cleared, not a new empty one installed
+        notif_ref = self.__mgr._builder_response_queue
+        notif_ref.append(('load-completed', dsrc_info, isc.dns.RRClass.IN,
+                          'name'))
+        # Wake up the main thread and let it process the notifications
+        self.__mgr._notify_from_builder()
+        # All notifications are now eaten
+        self.assertEqual([], notif_ref)
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()
