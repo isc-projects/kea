@@ -11,7 +11,7 @@ endif
 
 CLEANFILES = *.gcno *.gcda
 
-bin_PROGRAMS = message
+noinst_PROGRAMS = message
 
 message_SOURCES = message.cc
 message_LDADD   = $(top_builddir)/src/lib/log/libb10-log.la
