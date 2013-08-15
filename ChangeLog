@@ -1,3 +1,8 @@
+659.	[func]		stephen
+	Added capability to configure the hooks libraries for the b10-dhcp4 and
+	b10-dhcp6 servers through the BIND 10 configuration mechanism.
+	(Trac #2981, git aff6b06b2490fe4fa6568e7575a9a9105cfd7fae)
+
 658.	[func]*		vorner
 	The resolver, being experimental, is no longer installed by default.
 	If you really want to use it, even when it is known to be buggy, use
