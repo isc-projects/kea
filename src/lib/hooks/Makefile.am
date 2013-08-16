@@ -54,7 +54,8 @@ libb10_hooks_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.l
 libb10_hooks_includedir = $(pkgincludedir)/hooks
 libb10_hooks_include_HEADERS = \
     callout_handle.h \
-    library_handle.h
+    library_handle.h \
+    hooks.h
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
