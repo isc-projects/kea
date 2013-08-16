@@ -622,6 +622,34 @@ TEST(Option6ClientFqdnTest, packPartial) {
     EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
 }
 
+// This test verifies that it is possible to encode the option which carries
+// empty domain-name in the wire format.
+TEST(Option6ClientFqdnTest, packEmpty) {
+    // Create option instance. Check that constructor doesn't throw.
+    const uint8_t flags = Option6ClientFqdn::FLAG_S;
+    boost::scoped_ptr<Option6ClientFqdn> option;
+    ASSERT_NO_THROW(
+                    option.reset(new Option6ClientFqdn(flags))
+    );
+    ASSERT_TRUE(option);
+
+    // Prepare on-wire format of the option.
+    isc::util::OutputBuffer buf(5);
+    ASSERT_NO_THROW(option->pack(buf));
+
+    // Prepare reference data.
+    const uint8_t ref_data[] = {
+        0, 39, 0, 1,                         // header
+        Option6ClientFqdn::FLAG_S            // flags
+    };
+    size_t ref_data_size = sizeof(ref_data) / sizeof(ref_data[0]);
+
+    // Check if the buffer has the same length as the reference data,
+    // so as they can be compared directly.
+    ASSERT_EQ(ref_data_size, buf.getLength());
+    EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
+}
+
 // This test verifies that on-wire option data holding fully qualified domain
 // name is parsed correctly.
 TEST(Option6ClientFqdnTest, unpack) {
