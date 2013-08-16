@@ -1,4 +1,4 @@
-660.    [func]		fujiwara
+660.	[func]		fujiwara
 	src/lib/cc: Integer size of C++ CC library is changed to int64_t.
 	b10-auth: The size of statistics counters is changed to uint64_t.
 	b10-auth sends lower 63 bit of counter values to b10-stats.
@@ -6,8 +6,9 @@
 	 and Trac #3016, git ffbcf9833ebd2f1952664cc0498608b988628d53)
 
 659.	[func]		stephen
-	Added capability to configure the hooks libraries for the b10-dhcp4 and
-	b10-dhcp6 servers through the BIND 10 configuration mechanism.
+	Added capability to configure the hooks libraries for the
+	b10-dhcp4 and b10-dhcp6 servers through the BIND 10
+	configuration mechanism.
 	(Trac #2981, git aff6b06b2490fe4fa6568e7575a9a9105cfd7fae)
 
 658.	[func]*		vorner
@@ -17,10 +18,11 @@
 	(Trac #3064, git f5f07c976d2d42bdf80fea4433202ecf1f260648)
 
 657.	[bug]		vorner
-	Due to various problems with older versions of boost and shared memory,
-	the server rejects to compile with combination of boost < 1.48 and shared
-	memory enabled. Most users don't need shared memory, admins of large
-	servers are asked to upgrade boost.
+	Due to various problems with older versions of boost and
+	shared memory, the server rejects to compile with combination
+	of boost < 1.48 and shared memory enabled. Most users don't
+	need shared memory, admins of large servers are asked to
+	upgrade boost.
 	(Trac #3025, git 598e458c7af7d5bb81131112396e4c5845060ecd)
 
 656.	[func]		tomek
@@ -29,10 +31,11 @@
 	(Trac #2984, git 540dd0449121094a56f294c500c2ed811f6016b6)
 
 655.	[func]		tmark
-	Added D2UpdateMgr class to b10-dhcp-ddns. This class is the b10-dhcp-ddns
-	task master, instantiating and supervising transactions that carry out the
-	DNS updates needed to fulfill the requests (NameChangeRequests) received
-	from b10-dhcp-ddns clients (e.g. DHCP servers).
+	Added D2UpdateMgr class to b10-dhcp-ddns. This class is
+	the b10-dhcp-ddns task master, instantiating and supervising
+	transactions that carry out the DNS updates needed to
+	fulfill the requests (NameChangeRequests) received from
+	b10-dhcp-ddns clients (e.g. DHCP servers).
 	(Trac #3059 git d72675617d6b60e3eb6160305738771f015849ba)
 
 654.	[bug]		stephen
@@ -236,10 +239,10 @@
 	(Trac #1622, git 5da8f8131b1224c99603852e1574b2a1adace236)
 
 623.	[func]		tmark
-	Created the initial, bare-bones implementation of DHCP-DDNS service
-	process class, D2Process, and the abstract class from which it derives,
-	DProcessBase. D2Process will provide the DHCP-DDNS specific event loop
-	and business logic.
+	Created the initial, bare-bones implementation of DHCP-DDNS
+	service process class, D2Process, and the abstract class
+	from which it derives, DProcessBase. D2Process will provide
+	the DHCP-DDNS specific event loop and business logic.
 	(Trac #2955, git dbe4772246039a1257b6492936fda2a8600cd245)
 
 622.	[func]*		jinmei
