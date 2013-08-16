@@ -4432,9 +4432,10 @@ bind10-devel-20100421 released on April 21, 2010
 
 bind10-devel-20100319 released on March 19, 2010
 
-For complete code revision history, see http://bind10.isc.org/browser
+For complete code revision history, see
+	http://git.bind10.isc.org/cgi-bin/cgit.cgi/bind10
 Specific git changesets can be accessed at:
-	http://bind10.isc.org/changeset/?reponame=&old=rrrr^&new=rrrr
+	http://git.bind10.isc.org/cgi-bin/cgit.cgi/bind10/commit/?id=rrr
 or after cloning the original git repository by executing:
 	% git diff rrrr^ rrrr
 Subversion changesets are not accessible any more.  The subversion
