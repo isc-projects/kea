@@ -883,7 +883,7 @@ LIBS=$LIBS_SAVED
 AX_BOOST_FOR_BIND10
 # Boost offset_ptr is required in one library and not optional right now, so
 # we unconditionally fail here if it doesn't work.
-if test "$BOOST_OFFSET_PTR_WOULDFAIL" = "yes"; then
+if test "$BOOST_OFFSET_PTR_WOULDFAIL" = "yes" -a "$werror_ok" = 1; then
     AC_MSG_ERROR([Failed to compile a required header file.  Try upgrading Boost to 1.44 or higher (when using clang++) or specifying --without-werror.  See the ChangeLog entry for Trac no. 2147 for more details.])
 fi
 
