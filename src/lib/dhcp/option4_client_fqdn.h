@@ -167,13 +167,26 @@ public:
     /// This constructor is used to create an instance of the option which will
     /// be included in outgoing messages.
     ///
+    /// Note that the RCODE values are encapsulated by the Rcode object (not a
+    /// simple uint8_t value). This helps to prevent a caller from confusing the
+    /// flags value with rcode value (both are uint8_t values). For example:
+    /// if caller swaps the two, it will be detected in the compilation time.
+    /// Also, this API encourages the caller to use two predefined functions:
+    /// @c RCODE_SERVER and @c RCODE_CLIENT to set the value of RCODE. These
+    /// functions generate objects which represent the only valid values to be
+    /// be passed to the constructor (255 and 0 respectively). Other
+    /// values should not be used. However, it is still possible that the other
+    /// entity (client or server) sends the option with invalid value. Although,
+    /// the RCODE values are ignored, there should be a way to represent such
+    /// invalid RCODE value. The Rcode class is capable of representing it.
+    ///
     /// @param flags a combination of flags to be stored in flags field.
     /// @param rcode @c Rcode object representing a value for RCODE1 and RCODE2
     /// fields of the option. Both fields are assigned the same value
     /// encapsulated by the parameter.
     /// @param domain_name a name to be stored in the domain-name field.
-    /// @param partial_domain_name indicates if the domain name is partial
-    /// (if true) or full (false).
+    /// @param domain_name_type indicates if the domain name is partial
+    /// or full.
     /// @throw InvalidOption4FqdnFlags if value of the flags field is wrong.
     /// @throw InvalidOption4FqdnDomainName if the domain-name is invalid.
     explicit Option4ClientFqdn(const uint8_t flags,
