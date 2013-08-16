@@ -744,6 +744,37 @@ TEST(Option4ClientFqdnTest, packPartial) {
     EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
 }
 
+// This test verifies that it is possible to encode option with empty
+// domain-name in the on-wire format.
+TEST(Option4ClientFqdnTest, packEmpty) {
+    // Create option instance. Check that constructor doesn't throw.
+    const uint8_t flags = Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E;
+    boost::scoped_ptr<Option4ClientFqdn> option;
+    ASSERT_NO_THROW(
+        option.reset(new Option4ClientFqdn(flags,
+                                           Option4ClientFqdn::RCODE_CLIENT()))
+    );
+    ASSERT_TRUE(option);
+
+    // Prepare on-wire format of the option.
+    isc::util::OutputBuffer buf(10);
+    ASSERT_NO_THROW(option->pack(buf));
+
+    // Prepare reference data.
+    const uint8_t ref_data[] = {
+        81, 3,                                                 // header
+        Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E, // flags
+        0,                                                     // RCODE1
+        0                                                      // RCODE2
+    };
+    size_t ref_data_size = sizeof(ref_data) / sizeof(ref_data[0]);
+
+    // Check if the buffer has the same length as the reference data,
+    // so as they can be compared directly.
+    ASSERT_EQ(ref_data_size, buf.getLength());
+    EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
+}
+
 // This test verifies that on-wire option data holding fully qualified domain
 // name is parsed correctly.
 TEST(Option4ClientFqdnTest, unpack) {

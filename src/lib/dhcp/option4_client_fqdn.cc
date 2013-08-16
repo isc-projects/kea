@@ -427,6 +427,11 @@ Option4ClientFqdn::getDomainName() const {
 
 void
 Option4ClientFqdn::packDomainName(isc::util::OutputBuffer& buf) const {
+    // If domain-name is empty, do nothing.
+    if (!impl_->domain_name_) {
+        return;
+    }
+
     if (getFlag(FLAG_E)) {
         // Domain name, encoded as a set of labels.
         isc::dns::LabelSequence labels(*impl_->domain_name_);
@@ -505,10 +510,13 @@ Option4ClientFqdn::toText(int indent) {
 
 uint16_t
 Option4ClientFqdn::len() {
+    uint16_t domain_name_length = 0;
     // If domain name is partial, the NULL terminating character
     // is not included and the option length have to be adjusted.
-    uint16_t domain_name_length = impl_->domain_name_type_ == FULL ?
-        impl_->domain_name_->getLength() : impl_->domain_name_->getLength() - 1;
+    if (impl_->domain_name_) {
+        domain_name_length = impl_->domain_name_type_ == FULL ?
+            impl_->domain_name_->getLength() : impl_->domain_name_->getLength() - 1;
+    }
 
     return (getHeaderLen() + FIXED_FIELDS_LEN + domain_name_length);
 }
