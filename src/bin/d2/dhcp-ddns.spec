@@ -195,8 +195,15 @@
     "commands": [
         {
             "command_name": "shutdown",
-            "command_description": "Shuts down DHCPv6 server.",
+            "command_description": "Shuts down DHCP_DDNS server.",
             "command_args": [
+            {
+                "item_name": "type",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "normal",
+                "item_description": "values: normal (default), now, or drain_first"
+            }
             ]
         }
     ]

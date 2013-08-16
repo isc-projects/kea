@@ -607,7 +607,11 @@ public:
     /// @brief Iterates over the internal list of TSIGKeyInfoParsers,
     /// invoking commit on each.  This causes each parser to instantiate a
     /// TSIGKeyInfo from its internal data values and add that that key
-    /// instance to the storage area, keys_.
+    /// instance to the local key storage area, local_keys_.   If all of the
+    /// key parsers commit cleanly, then update the context key map (keys_)
+    /// with the contents of local_keys_.  This is done to allow for duplicate
+    /// key detection while parsing the keys, but not get stumped by it
+    /// updating the context with a valid list.
     virtual void commit();
 
 private:
@@ -618,6 +622,9 @@ private:
     /// the list of newly created TSIGKeyInfo instances. This is given to us
     /// as a constructor argument by an upper level.
     TSIGKeyInfoMapPtr keys_;
+    
+    /// @brief Local storage area to which individual key parsers commit.
+    TSIGKeyInfoMapPtr local_keys_;
 
     /// @brief Local storage of TSIGKeyInfoParser instances
     isc::dhcp::ParserCollection parsers_;

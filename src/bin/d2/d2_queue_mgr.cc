@@ -25,19 +25,12 @@ const size_t D2QueueMgr::MAX_QUEUE_DEFAULT;
 D2QueueMgr::D2QueueMgr(isc::asiolink::IOService& io_service,
                        const size_t max_queue_size)
     : io_service_(io_service), max_queue_size_(max_queue_size),
-      mgr_state_(NOT_INITTED) {
+      mgr_state_(NOT_INITTED), target_stop_state_(NOT_INITTED) {
     // Use setter to do validation.
     setMaxQueueSize(max_queue_size);
 }
 
 D2QueueMgr::~D2QueueMgr() {
-    // clean up
-    try {
-        stopListening();
-    } catch (...) {
-        // This catch is strictly for safety's sake, in case a future
-        // implementation isn't tidy or careful. 
-    }
 }
 
 void
@@ -50,9 +43,9 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
     // if we hit a problem, we will stop the listener transition to
     // the appropriate stopped state.  Upper layer(s) must monitor our
     // state as well as our queue size.
-
-    // If the receive was successful, attempt to queue the request.
-    if (result == dhcp_ddns::NameChangeListener::SUCCESS) {
+    switch (result) {
+    case dhcp_ddns::NameChangeListener::SUCCESS:
+        // Receive was successful, attempt to queue the request.
         if (getQueueSize() < getMaxQueueSize()) {
             // There's room on the queue, add to the end
             enqueue(ncr);
@@ -60,13 +53,37 @@ D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
         }
 
         // Queue is full, stop the listener.
-        stopListening(STOPPED_QUEUE_FULL);
+        // Note that we can move straight to a STOPPED state as there
+        // is no receive in progress.
         LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_QUEUE_FULL)
                   .arg(max_queue_size_);
-    } else {
+        stopListening(STOPPED_QUEUE_FULL);
+        break;
+
+    case dhcp_ddns::NameChangeListener::STOPPED:
+        if (mgr_state_ == STOPPING) {
+            // This is confirmation that the listener has stopped and its
+            // callback will not be called again, unless its restarted.
+            updateStopState();
+        } else {
+            // We should not get an receive complete status of stopped unless
+            // we canceled the read as part of stopping.  Therefore this is
+            // unexpected so we will treat it as a receive error.
+            // This is most likely an unforeseen programmatic issue.
+            LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_UNEXPECTED_STOP)
+                      .arg(mgr_state_);
+            stopListening(STOPPED_RECV_ERROR);
+        }
+
+        break;
+
+    default:
         // Receive failed, stop the listener.
-        stopListening(STOPPED_RECV_ERROR);
+        // Note that we can move straight to a STOPPED state as there
+        // is no receive in progress.
         LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_RECV_ERROR);
+        stopListening(STOPPED_RECV_ERROR);
+        break;
     }
 }
 
@@ -112,25 +129,45 @@ D2QueueMgr::startListening() {
         isc_throw(D2QueueMgrError, "D2QueueMgr listener start failed: "
                   << ex.what());
     }
+
+    LOG_INFO (dctl_logger, DHCP_DDNS_QUEUE_MGR_STARTED);
 }
 
 void
-D2QueueMgr::stopListening(const State stop_state) {
-    // Note, stopListening is guaranteed not to throw.
+D2QueueMgr::stopListening(const State target_stop_state) {
     if (listener_) {
-        listener_->stopListening();
-    }
-
-    // Enforce only valid "stop" states.
-    if (stop_state != STOPPED && stop_state != STOPPED_QUEUE_FULL &&
-        stop_state != STOPPED_RECV_ERROR) {
+        // Enforce only valid "stop" states.
         // This is purely a programmatic error and should never happen.
-        isc_throw(D2QueueMgrError, "D2QueueMgr invalid value for stop state: "
-                  << stop_state);
-    }
+        if (target_stop_state != STOPPED &&
+            target_stop_state != STOPPED_QUEUE_FULL &&
+            target_stop_state != STOPPED_RECV_ERROR) {
+            isc_throw(D2QueueMgrError,
+                      "D2QueueMgr invalid value for stop state: "
+                      << target_stop_state);
+        }
 
-    mgr_state_ = stop_state;
+        // Remember the state we want to acheive.
+        target_stop_state_ = target_stop_state;
+
+        // Instruct the listener to stop.  If the listener reports that  it
+        // has IO pending, then we transition to STOPPING to wait for the
+        // cancellation event.  Otherwise, we can move directly to the targeted
+        // state.
+        listener_->stopListening();
+        if (listener_->isIoPending()) {
+            mgr_state_ = STOPPING;
+        } else {
+            updateStopState();
+        }
+    }
 }
+
+void
+D2QueueMgr::updateStopState() {
+    mgr_state_ = target_stop_state_;
+    LOG_INFO (dctl_logger, DHCP_DDNS_QUEUE_MGR_STOPPED);
+}
+
 
 void
 D2QueueMgr::removeListener() {

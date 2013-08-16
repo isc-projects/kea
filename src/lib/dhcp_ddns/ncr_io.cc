@@ -22,8 +22,9 @@ namespace dhcp_ddns {
 
 NameChangeListener::NameChangeListener(RequestReceiveHandler&
                                        recv_handler)
-    : listening_(false), recv_handler_(recv_handler) {
+    : listening_(false), io_pending_(false), recv_handler_(recv_handler) {
 };
+
 
 void
 NameChangeListener::startListening(isc::asiolink::IOService& io_service) {
@@ -45,11 +46,17 @@ NameChangeListener::startListening(isc::asiolink::IOService& io_service) {
 
     // Start the first asynchronous receive.
     try {
-        doReceive();
+        receiveNext();
     } catch (const isc::Exception& ex) {
         stopListening();
         isc_throw(NcrListenerReceiveError, "doReceive failed:" << ex.what());
     }
+}
+
+void
+NameChangeListener::receiveNext() {
+    io_pending_ = true;
+    doReceive();
 }
 
 void
@@ -77,6 +84,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
     // not supposed to throw, but in the event it does we will at least
     // report it.
     try {
+        io_pending_ = false;
         recv_handler_(result, ncr);
     } catch (const std::exception& ex) {
         LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR)
@@ -88,7 +96,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
     // we need to check that first.
     if (amListening()) {
         try {
-            doReceive();
+            receiveNext();
         } catch (const isc::Exception& ex) {
             // It is possible though unlikely, for doReceive to fail without
             // scheduling the read. While, unlikely, it does mean the callback
@@ -105,6 +113,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
             // report it.
             NameChangeRequestPtr empty;
             try {
+                io_pending_ = false;
                 recv_handler_(ERROR, empty);
             } catch (const std::exception& ex) {
                 LOG_ERROR(dhcp_ddns_logger,
@@ -159,7 +168,7 @@ NameChangeSender::stopSending() {
     } catch (const isc::Exception &ex) {
         // Swallow exceptions. If we have some sort of error we'll log
         // it but we won't propagate the throw.
-        LOG_ERROR(dhcp_ddns_logger, 
+        LOG_ERROR(dhcp_ddns_logger,
                   DHCP_DDNS_NCR_SEND_CLOSE_ERROR).arg(ex.what());
     }
 
@@ -256,7 +265,7 @@ NameChangeSender::invokeSendHandler(const NameChangeSender::Result result) {
         try {
             send_handler_(ERROR, ncr_to_send_);
         } catch (const std::exception& ex) {
-            LOG_ERROR(dhcp_ddns_logger, 
+            LOG_ERROR(dhcp_ddns_logger,
                       DHCP_DDNS_UNCAUGHT_NCR_SEND_HANDLER_ERROR).arg(ex.what());
         }
     }
