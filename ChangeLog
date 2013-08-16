@@ -14,7 +14,7 @@
 658.	[func]*		vorner
 	The resolver, being experimental, is no longer installed by default.
 	If you really want to use it, even when it is known to be buggy, use
-	--enable-experimental-resolver.
+	the ./configure --enable-experimental-resolver option.
 	(Trac #3064, git f5f07c976d2d42bdf80fea4433202ecf1f260648)
 
 657.	[bug]		vorner
