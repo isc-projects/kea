@@ -124,7 +124,7 @@ public:
     /// If you want an exception-safe getter method, use
     /// getValue() below
     //@{
-    virtual long int intValue() const
+    virtual int64_t intValue() const
     { isc_throw(TypeError, "intValue() called on non-integer Element"); };
     virtual double doubleValue() const
     { isc_throw(TypeError, "doubleValue() called on non-double Element"); };
@@ -151,7 +151,7 @@ public:
     /// data to the given reference and returning true
     ///
     //@{
-    virtual bool getValue(long int& t) const;
+    virtual bool getValue(int64_t& t) const;
     virtual bool getValue(double& t) const;
     virtual bool getValue(bool& t) const;
     virtual bool getValue(std::string& t) const;
@@ -166,8 +166,12 @@ public:
     /// the right type. Set the value and return true if the Elements
     /// is of the correct type
     ///
+    /// Notes: Read notes of IntElement definition about the use of
+    ///        long long int, long int and int.
     //@{
-    virtual bool setValue(const long int v);
+    virtual bool setValue(const long long int v);
+    bool setValue(const long int i) { return (setValue(static_cast<long long int>(i))); };
+    bool setValue(const int i) { return (setValue(static_cast<long long int>(i))); };
     virtual bool setValue(const double v);
     virtual bool setValue(const bool t);
     virtual bool setValue(const std::string& v);
@@ -271,10 +275,14 @@ public:
     /// underlying system).
     /// (Note that that is different from an NullElement, which
     /// represents an empty value, and is created with Element::create())
+    ///
+    /// Notes: Read notes of IntElement definition about the use of
+    ///        long long int, long int and int.
     //@{
     static ElementPtr create();
-    static ElementPtr create(const long int i);
-    static ElementPtr create(const int i) { return (create(static_cast<long int>(i))); };
+    static ElementPtr create(const long long int i);
+    static ElementPtr create(const int i) { return (create(static_cast<long long int>(i))); };
+    static ElementPtr create(const long int i) { return (create(static_cast<long long int>(i))); };
     static ElementPtr create(const double d);
     static ElementPtr create(const bool b);
     static ElementPtr create(const std::string& s);
@@ -370,16 +378,27 @@ public:
     //@}
 };
 
+/// Notes: IntElement type is changed to int64_t.
+///        Due to C++ problems on overloading and automatic type conversion,
+///          (C++ tries to convert integer type values and reference/pointer
+///           if value types do not match exactly)
+///        We decided the storage as int64_t,
+///           three (long long, long, int) override function defintions 
+///           and cast int/long/long long to int64_t via long long.
+///        Therefore, call by value methods (create, setValue) have three
+///        (int,long,long long) definitions. Others use int64_t.
+///
 class IntElement : public Element {
-    long int i;
+    int64_t i;
+private:
 
 public:
-    IntElement(long int v) : Element(integer), i(v) { }
-    long int intValue() const { return (i); }
+    IntElement(int64_t v) : Element(integer), i(v) { }
+    int64_t intValue() const { return (i); }
     using Element::getValue;
-    bool getValue(long int& t) const { t = i; return (true); }
+    bool getValue(int64_t& t) const { t = i; return (true); }
     using Element::setValue;
-    bool setValue(const long int v) { i = v; return (true); }
+    bool setValue(long long int v) { i = v; return (true); }
     void toJSON(std::ostream& ss) const;
     bool equals(const Element& other) const;
 };

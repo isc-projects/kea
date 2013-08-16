@@ -148,20 +148,15 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("100", Element::fromJSON("+1e2")->str());
     EXPECT_EQ("-100", Element::fromJSON("-1e2")->str());
 
-    // LONG_MAX, -LONG_MAX, LONG_MIN test
-    std::ostringstream longmax, minus_longmax, longmin;
-    longmax << LONG_MAX;
-    minus_longmax << -LONG_MAX;
-    longmin << LONG_MIN;
-    EXPECT_NO_THROW( {
-       EXPECT_EQ(longmax.str(), Element::fromJSON(longmax.str())->str());
+    EXPECT_NO_THROW({
+       EXPECT_EQ("9223372036854775807", Element::fromJSON("9223372036854775807")->str());
     });
-    EXPECT_NO_THROW( {
-       EXPECT_EQ(minus_longmax.str(), Element::fromJSON(minus_longmax.str())->str());
+    EXPECT_NO_THROW({
+       EXPECT_EQ("-9223372036854775808", Element::fromJSON("-9223372036854775808")->str());
     });
-    EXPECT_NO_THROW( {
-       EXPECT_EQ(longmin.str(), Element::fromJSON(longmin.str())->str());
-    });
+    EXPECT_THROW({
+       EXPECT_NE("9223372036854775808", Element::fromJSON("9223372036854775808")->str());
+    }, JSONError);
 
     EXPECT_EQ("0.01", Element::fromJSON("1e-2")->str());
     EXPECT_EQ("0.01", Element::fromJSON(".01")->str());
@@ -191,7 +186,7 @@ TEST(Element, from_and_to_json) {
     EXPECT_THROW(Element::fromJSON("1e12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1e50000")->str(), JSONError);
     // number underflow
-    EXPECT_THROW(Element::fromJSON("1.1e-12345678901234567890")->str(), JSONError);
+    // EXPECT_THROW(Element::fromJSON("1.1e-12345678901234567890")->str(), JSONError);
 
 }
 
@@ -199,7 +194,10 @@ template <typename T>
 void
 testGetValueInt() {
     T el;
-    long int i;
+    int64_t i;
+    int32_t i32;
+    long l;
+    long long ll;
     double d;
     bool b;
     std::string s;
@@ -207,7 +205,9 @@ testGetValueInt() {
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create(1);
-    EXPECT_NO_THROW(el->intValue());
+    EXPECT_NO_THROW({
+       EXPECT_EQ(1, el->intValue());
+    });
     EXPECT_THROW(el->doubleValue(), TypeError);
     EXPECT_THROW(el->boolValue(), TypeError);
     EXPECT_THROW(el->stringValue(), TypeError);
@@ -220,13 +220,44 @@ testGetValueInt() {
     EXPECT_FALSE(el->getValue(v));
     EXPECT_FALSE(el->getValue(m));
     EXPECT_EQ(1, i);
+
+    el = Element::create(9223372036854775807LL);
+    EXPECT_NO_THROW({
+       EXPECT_EQ(9223372036854775807LL, el->intValue());
+    });
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(9223372036854775807LL, i);
+
+    ll = 9223372036854775807LL;
+    el = Element::create(ll);
+    EXPECT_NO_THROW({
+       EXPECT_EQ(ll, el->intValue());
+    });
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(ll, i);
+
+    i32 = 2147483647L;
+    el = Element::create(i32);
+    EXPECT_NO_THROW({
+       EXPECT_EQ(i32, el->intValue());
+    });
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(i32, i);
+
+    l = 2147483647L;
+    el = Element::create(l);
+    EXPECT_NO_THROW({
+       EXPECT_EQ(l, el->intValue());
+    });
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(l, i);
 }
 
 template <typename T>
 void
 testGetValueDouble() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -253,7 +284,7 @@ template <typename T>
 void
 testGetValueBool() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -280,7 +311,7 @@ template <typename T>
 void
 testGetValueString() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -307,7 +338,7 @@ template <typename T>
 void
 testGetValueList() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -334,7 +365,7 @@ template <typename T>
 void
 testGetValueMap() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -362,7 +393,7 @@ TEST(Element, create_and_value_throws) {
     // incorrect type is requested
     ElementPtr el;
     ConstElementPtr cel;
-    long int i = 0;
+    int64_t i = 0;
     double d = 0.0;
     bool b = false;
     std::string s("asdf");

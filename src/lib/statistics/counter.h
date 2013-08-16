@@ -22,13 +22,15 @@
 
 #include <vector>
 
+#include <stdint.h>
+
 namespace isc {
 namespace statistics {
 
 class Counter : boost::noncopyable {
 public:
     typedef unsigned int Type;
-    typedef unsigned int Value;
+    typedef uint64_t Value;
 
 private:
     std::vector<Counter::Value> counters_;
