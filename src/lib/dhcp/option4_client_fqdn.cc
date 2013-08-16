@@ -127,6 +127,11 @@ Option4ClientFqdnImpl::
 Option4ClientFqdnImpl(const uint8_t flags,
                       const Option4ClientFqdn::Rcode& rcode,
                       const std::string& domain_name,
+                      // cppcheck 1.57 complains that const enum value is not passed
+                      // by reference. Note that, it accepts the non-const enum value
+                      // to be passed by value. In both cases it is unneccessary to
+                      // pass the enum by reference.
+                      // cppcheck-suppress passedByValue
                       const Option4ClientFqdn::DomainNameType name_type)
     : flags_(flags),
       rcode1_(rcode),
@@ -189,6 +194,11 @@ Option4ClientFqdnImpl::operator=(const Option4ClientFqdnImpl& source) {
 void
 Option4ClientFqdnImpl::
 setDomainName(const std::string& domain_name,
+              // cppcheck 1.57 complains that const enum value is not passed
+              // by reference. Note that, it accepts the non-const enum
+              // to be passed by value. In both cases it is unneccessary to
+              // pass the enum by reference.
+              // cppcheck-suppress passedByValue
               const Option4ClientFqdn::DomainNameType name_type) {
     // domain-name must be trimmed. Otherwise, string comprising spaces only
     // would be treated as a fully qualified name.
