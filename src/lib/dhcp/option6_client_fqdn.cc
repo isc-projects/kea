@@ -47,7 +47,7 @@ public:
     /// @param flags A value of the flags option field.
     /// @param domain_name A domain name carried by the option given in the
     /// textual format.
-    /// @param domain_name_type A value which indicates whether domain-name
+    /// @param name_type A value which indicates whether domain-name
     /// is partial of fully qualified.
     Option6ClientFqdnImpl(const uint8_t flags,
                           const std::string& domain_name,
