@@ -135,10 +135,11 @@ public:
     /// indicate an abnormal termination.
     virtual void run();
 
-    /// @brief Implements the process shutdown procedure. Currently this is
-    /// limited to setting the instance shutdown flag, which is monitored in
-    /// run().
-    virtual void shutdown();
+    /// @brief Implements the process shutdown procedure. 
+    ///
+    /// This sets the instance shutdown flag monitored by run()  and stops 
+    /// the IO service.
+    virtual isc::data::ConstElementPtr shutdown(isc::data::ConstElementPtr);
 
     /// @brief Processes the given configuration.
     ///
@@ -604,7 +605,7 @@ public:
     /// convert.
     /// @return returns AssertionSuccess if there were no parsing errors,
     /// AssertionFailure otherwise.
-    ::testing::AssertionResult fromJSON(std::string& json_text) {
+    ::testing::AssertionResult fromJSON(const std::string& json_text) {
         try  {
             config_set_ = isc::data::Element::fromJSON(json_text);
         } catch (const isc::Exception &ex) {
@@ -616,7 +617,6 @@ public:
         return (::testing::AssertionSuccess());
     }
 
-
     /// @brief Compares the status in the  parse result stored in member
     /// variable answer_ to a given value.
     ///
@@ -625,9 +625,22 @@ public:
     /// @return returns AssertionSuccess if there were no parsing errors,
     /// AssertionFailure otherwise.
     ::testing::AssertionResult checkAnswer(int should_be) {
+        return (checkAnswer(answer_, should_be));
+    }
+
+    /// @brief Compares the status in the given parse result to a given value.
+    ///
+    /// @param answer Element set containing an integer response and string
+    /// comment. 
+    /// @param should_be is an integer against which to compare the status.
+    ///
+    /// @return returns AssertionSuccess if there were no parsing errors,
+    /// AssertionFailure otherwise.
+    ::testing::AssertionResult checkAnswer(isc::data::ConstElementPtr answer,
+                                           int should_be) {
         int rcode = 0;
         isc::data::ConstElementPtr comment;
-        comment = isc::config::parseAnswer(rcode, answer_);
+        comment = isc::config::parseAnswer(rcode, answer);
         if (rcode == should_be) {
             return (testing::AssertionSuccess());
         }

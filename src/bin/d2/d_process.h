@@ -40,6 +40,8 @@ static const int COMMAND_ERROR = 1;
 static const int COMMAND_INVALID = 2;
 static const std::string SHUT_DOWN_COMMAND("shutdown");
 
+static const int CONFIG_INVALID = 1;
+
 /// @brief Application Process Interface
 ///
 /// DProcessBase is an abstract class represents the primary "application"
@@ -81,24 +83,31 @@ public:
     /// to application. It must be invoked prior to invoking run. This would
     /// likely include the creation of additional IO sources and their
     /// integration into the io_service.
-    /// @throw throws DProcessBaseError if the initialization fails.
+    /// @throw DProcessBaseError if the initialization fails.
     virtual void init() = 0;
 
     /// @brief Implements the process's event loop. In its simplest form it
     /// would an invocation io_service_->run().  This method should not exit
     /// until the process itself is exiting due to a request to shutdown or
     /// some anomaly is forcing an exit.
-    /// @throw throws DProcessBaseError if an operational error is encountered.
+    /// @throw DProcessBaseError if an operational error is encountered.
     virtual void run() = 0;
 
-    /// @brief Implements the process's shutdown processing. When invoked, it
-    /// should ensure that the process gracefully exits the run method.
-    /// The default implementation sets the shutdown flag and stops IOService.
-    /// @throw throws DProcessBaseError if an operational error is encountered.
-    virtual void shutdown() {
-        setShutdownFlag(true);
-        stopIOService();
-    };
+    /// @brief Initiates the process's shutdown process. 
+    /// 
+    /// This is last step in the shutdown event callback chain, that is 
+    /// intended to notify the process it is to begin its shutdown process.
+    ///
+    /// @param args an Element set of shutdown arguments (if any) that are
+    /// supported by the process derivation. 
+    /// 
+    /// @return an Element that contains the results of argument processing,
+    /// consisting of an integer status value (0 means successful, 
+    /// non-zero means failure), and a string explanation of the outcome. 
+    ///  
+    /// @throw DProcessBaseError if an operational error is encountered.
+    virtual isc::data::ConstElementPtr 
+        shutdown(isc::data::ConstElementPtr args) = 0;
 
     /// @brief Processes the given configuration.
     ///
@@ -135,7 +144,7 @@ public:
 
     /// @brief Checks if the process has been instructed to shut down.
     ///
-    /// @return returns true if process shutdown flag is true.
+    /// @return true if process shutdown flag is true.
     bool shouldShutdown() {
         return (shut_down_flag_);
     }
@@ -149,14 +158,14 @@ public:
 
     /// @brief Fetches the application name.
     ///
-    /// @return returns a the application name string.
+    /// @return a the application name string.
     const std::string getAppName() const {
         return (app_name_);
     }
 
     /// @brief Fetches the controller's IOService.
     ///
-    /// @return returns a reference to the controller's IOService.
+    /// @return a reference to the controller's IOService.
     IOServicePtr& getIoService() {
         return (io_service_);
     }
@@ -171,7 +180,7 @@ public:
 
     /// @brief Fetches the process's configuration manager.
     ///
-    /// @return returns a reference to the configuration manager.
+    /// @return a reference to the configuration manager.
     DCfgMgrBasePtr& getCfgMgr() {
         return (cfg_mgr_);
     }
