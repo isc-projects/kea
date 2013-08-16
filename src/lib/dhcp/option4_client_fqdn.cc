@@ -37,7 +37,7 @@ class Option4ClientFqdnImpl {
 public:
     /// Holds flags carried by the option.
     uint8_t flags_;
-    // Holds RCODE1 and RCODE2 values.
+    /// Holds RCODE1 and RCODE2 values.
     Option4ClientFqdn::Rcode rcode1_;
     Option4ClientFqdn::Rcode rcode2_;
     /// Holds the pointer to a domain name carried in the option.
@@ -48,11 +48,12 @@ public:
     /// @brief Constructor, from domain name.
     ///
     /// @param flags A value of the flags option field.
+    /// @param rcode An object representing the RCODE1 and RCODE2 values.
     /// @param domain_name A domain name carried by the option given in the
     /// textual format.
-    /// @param domain_name_type A value which indicates whether domain-name
-    /// is partial of fully qualified.
-    Option4ClientFqdnImpl(const uint8_t flag,
+    /// @param name_type A value which indicates whether domain-name is partial
+    /// or fully qualified.
+    Option4ClientFqdnImpl(const uint8_t flags,
                           const Option4ClientFqdn::Rcode& rcode,
                           const std::string& domain_name,
                           const Option4ClientFqdn::DomainNameType name_type);
@@ -95,7 +96,7 @@ public:
     /// to false when validating flags in the received message. This is because
     /// server should ignore MBZ bits in received messages.
     /// @throw InvalidOption6FqdnFlags if flags are invalid.
-    static void checkFlags(const uint8_t flags);
+    static void checkFlags(const uint8_t flags, const bool check_mbz);
 
     /// @brief Parse the Option provided in the wire format.
     ///
@@ -123,18 +124,19 @@ public:
 };
 
 Option4ClientFqdnImpl::
-Option4ClientFqdnImpl(const uint8_t flag,
+Option4ClientFqdnImpl(const uint8_t flags,
                       const Option4ClientFqdn::Rcode& rcode,
                       const std::string& domain_name,
                       const Option4ClientFqdn::DomainNameType name_type)
-    : flags_(flag),
+    : flags_(flags),
       rcode1_(rcode),
       rcode2_(rcode),
       domain_name_(),
       domain_name_type_(name_type) {
 
-    //  Check if flags are correct.
-    checkFlags(flags_);
+    //  Check if flags are correct. Also, check that MBZ bits are not set. If
+    // they are, throw exception.
+    checkFlags(flags_, true);
     // Set domain name. It may throw an exception if domain name has wrong
     // format.
     setDomainName(domain_name, name_type);
@@ -145,8 +147,10 @@ Option4ClientFqdnImpl::Option4ClientFqdnImpl(OptionBufferConstIter first,
     : rcode1_(Option4ClientFqdn::RCODE_CLIENT()),
       rcode2_(Option4ClientFqdn::RCODE_CLIENT()) {
     parseWireData(first, last);
-    // Verify that flags value was correct.
-    checkFlags(flags_);
+    // Verify that flags value was correct. This constructor is used to parse
+    // incoming packet, so don't check MBZ bits. They are ignored because we
+    // don't want to discard the whole option because MBZ bits are set.
+    checkFlags(flags_, false);
 }
 
 Option4ClientFqdnImpl::
@@ -216,9 +220,9 @@ setDomainName(const std::string& domain_name,
 }
 
 void
-Option4ClientFqdnImpl::checkFlags(const uint8_t flags) {
+Option4ClientFqdnImpl::checkFlags(const uint8_t flags, const bool check_mbz) {
     // The Must Be Zero (MBZ) bits must not be set.
-    if ((flags & ~Option4ClientFqdn::FLAG_MASK) != 0) {
+    if (check_mbz && ((flags & ~Option4ClientFqdn::FLAG_MASK) != 0)) {
         isc_throw(InvalidOption4FqdnFlags,
                   "invalid DHCPv4 Client FQDN Option flags: 0x"
                   << std::hex << static_cast<int>(flags) << std::dec);
@@ -383,8 +387,9 @@ Option4ClientFqdn::setFlag(const uint8_t flag, const bool set_flag) {
         new_flag &= ~flag;
     }
 
-    // Check new flags. If they are valid, apply them.
-    Option4ClientFqdnImpl::checkFlags(new_flag);
+    // Check new flags. If they are valid, apply them. Also, check that MBZ
+    // bits are not set.
+    Option4ClientFqdnImpl::checkFlags(new_flag, true);
     impl_->flags_ = new_flag;
 }
 
@@ -465,22 +470,25 @@ Option4ClientFqdn::unpack(OptionBufferConstIter first,
                           OptionBufferConstIter last) {
     setData(first, last);
     impl_->parseWireData(first, last);
+    // Check that the flags in the received option are valid. Ignore MBZ bits,
+    // because we don't want to discard the whole option because of MBZ bits
+    // being set.
+    impl_->checkFlags(impl_->flags_, false);
 }
 
 std::string
 Option4ClientFqdn::toText(int indent) {
     std::ostringstream stream;
     std::string in(indent, ' '); // base indentation
-    std::string in_add(2, ' ');  // second-level indentation is 2 spaces long
-    stream << in  << "type=" << type_ << "(CLIENT_FQDN)" << std::endl
-           << in << "flags:" << std::endl
-           << in << in_add << "N=" << (getFlag(FLAG_N) ? "1" : "0") << std::endl
-           << in << in_add << "E=" << (getFlag(FLAG_E) ? "1" : "0") << std::endl
-           << in << in_add << "O=" << (getFlag(FLAG_O) ? "1" : "0") << std::endl
-           << in << in_add << "S=" << (getFlag(FLAG_S) ? "1" : "0") << std::endl
-           << in << "domain-name='" << getDomainName() << "' ("
+    stream << in  << "type=" << type_ << " (CLIENT_FQDN), "
+           <<  "flags: ("
+           << "N=" << (getFlag(FLAG_N) ? "1" : "0") << ", "
+           << "E=" << (getFlag(FLAG_E) ? "1" : "0") << ", "
+           << "O=" << (getFlag(FLAG_O) ? "1" : "0") << ", "
+           << "S=" << (getFlag(FLAG_S) ? "1" : "0") << "), "
+           << "domain-name='" << getDomainName() << "' ("
            << (getDomainNameType() == PARTIAL ? "partial" : "full")
-           << ")" << std::endl;
+           << ")";
 
     return (stream.str());
 }

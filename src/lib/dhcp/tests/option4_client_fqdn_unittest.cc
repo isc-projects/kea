@@ -866,13 +866,8 @@ TEST(Option4ClientFqdnTest, toText) {
     // The base indentation of the option will be set to 2. It should appear
     // as follows.
     std::string ref_string =
-        "  type=81(CLIENT_FQDN)\n"
-        "  flags:\n"
-        "    N=1\n"
-        "    E=1\n"
-        "    O=1\n"
-        "    S=0\n"
-        "  domain-name='myhost.example.com.' (full)\n";
+        "  type=81 (CLIENT_FQDN), flags: (N=1, E=1, O=1, S=0), "
+        "domain-name='myhost.example.com.' (full)";
     const int indent = 2;
     EXPECT_EQ(ref_string, option->toText(indent));
 
@@ -888,13 +883,8 @@ TEST(Option4ClientFqdnTest, toText) {
                                            Option4ClientFqdn::PARTIAL))
     );
     ref_string =
-        "type=81(CLIENT_FQDN)\n"
-        "flags:\n"
-        "  N=0\n"
-        "  E=0\n"
-        "  O=0\n"
-        "  S=0\n"
-        "domain-name='myhost' (partial)\n";
+        "type=81 (CLIENT_FQDN), flags: (N=0, E=0, O=0, S=0), "
+        "domain-name='myhost' (partial)";
     EXPECT_EQ(ref_string, option->toText());
 }
 
