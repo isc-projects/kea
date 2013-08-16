@@ -1,5 +1,5 @@
 660.    [func]		fujiwara
-	src/lib/cc: Integer size of C++ CC librargy is changed to int64_t.
+	src/lib/cc: Integer size of C++ CC library is changed to int64_t.
 	b10-auth: The size of statistics counters is changed to uint64_t.
 	b10-auth sends lower 63 bit of counter values to b10-stats.
 	(Trac #3015,  git e5b3471d579937f19e446f8a380464e0fc059567
@@ -126,7 +126,7 @@
 	b10-dhcp-ddns: Implemented DNSClient class which implements
 	asynchronous DNS updates using UDP. The TCP and TSIG support
 	will be	implemented at later time. Nevertheless, class API
-	accomodates the use of TCP and TSIG.
+	accommodates the use of TCP and TSIG.
 	(Trac #2977, git 5a67a8982baa1fd6b796c063eeb13850c633702c)
 
 639.	[bug]		muks
@@ -3380,7 +3380,7 @@ bind10-devel-20110322 released on March 22, 2011
 
 183.	[bug]		jerry
 	src/bin/xfrout: Enable parallel sessions between xfrout server and
-	muti-Auth. The session needs to be created only on the first time
+	multi-Auth. The session needs to be created only on the first time
 	or if an error occur.
 	(Trac #419, git 1d60afb59e9606f312caef352ecb2fe488c4e751)
 
