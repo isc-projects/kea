@@ -73,6 +73,11 @@ TEST_F(CounterTest, incrementCounterItem) {
     EXPECT_EQ(counter.get(ITEM1), 2);
     EXPECT_EQ(counter.get(ITEM2), 4);
     EXPECT_EQ(counter.get(ITEM3), 6);
+
+    for (long long int i = 0; i < 4294967306LL; i++) {
+        counter.inc(ITEM1);
+    }
+    EXPECT_EQ(counter.get(ITEM1), 4294967308LL); // 4294967306 + 2
 }
 
 TEST_F(CounterTest, invalidCounterItem) {
