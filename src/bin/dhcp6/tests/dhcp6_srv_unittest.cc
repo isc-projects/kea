@@ -1851,8 +1851,11 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
     addIA(2345, IOAddress("2001:db8:1::2"), answer);
     addIA(3456, IOAddress("2001:db8:1::3"), answer);
 
+    // Use domain name in upper case. It should be converted to lower-case
+    // before DHCID is calculated. So, we should get the same result as if
+    // we typed domain name in lower-case.
     Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
-                                                 "myhost.example.com",
+                                                 "MYHOST.EXAMPLE.COM",
                                                  Option6ClientFqdn::FULL);
 
     // Create NameChangeRequests. Since we have added 3 IAs, it should
@@ -1890,7 +1893,10 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
 
     lease_->fqdn_fwd_ = true;
     lease_->fqdn_rev_ = true;
-    lease_->hostname_ = "myhost.example.com.";
+    // Part of the domain name is in upper case, to test that it gets converted
+    // to lower case before DHCID is computed. So, we should get the same DHCID
+    // as if we typed domain-name in lower case.
+    lease_->hostname_ = "MYHOST.example.com.";
 
     ASSERT_NO_THROW(srv.createRemovalNameChangeRequest(lease_));
 
