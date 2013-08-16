@@ -107,6 +107,11 @@ public:
 Option6ClientFqdnImpl::
 Option6ClientFqdnImpl(const uint8_t flags,
                       const std::string& domain_name,
+                      // cppcheck 1.57 complains that const enum value is not
+                      // passed by reference. Note that it accepts the non-const
+                      // enum to be passed by value. In both cases it is
+                      // unnecessary to pass the enum by reference.
+                      // cppcheck-suppress passedByValue
                       const Option6ClientFqdn::DomainNameType name_type)
     : flags_(flags),
       domain_name_(),
@@ -138,6 +143,9 @@ Option6ClientFqdnImpl(const Option6ClientFqdnImpl& source)
 }
 
 Option6ClientFqdnImpl&
+// This assignment operator handles assignment to self. It uses copy
+// constructor of Option6ClientFqdnImpl to copy all required values.
+// cppcheck-suppress operatorEqToSelf
 Option6ClientFqdnImpl::operator=(const Option6ClientFqdnImpl& source) {
     if (source.domain_name_) {
         domain_name_.reset(new isc::dns::Name(*source.domain_name_));
@@ -157,6 +165,11 @@ Option6ClientFqdnImpl::operator=(const Option6ClientFqdnImpl& source) {
 void
 Option6ClientFqdnImpl::
 setDomainName(const std::string& domain_name,
+              // cppcheck 1.57 complains that const enum value is not
+              // passed by reference. Note that it accepts the non-const
+              // enum to be passed by value. In both cases it is
+              // unnecessary to pass the enum by reference.
+              // cppcheck-suppress passedByValue
               const Option6ClientFqdn::DomainNameType name_type) {
     // domain-name must be trimmed. Otherwise, string comprising spaces only
     // would be treated as a fully qualified name.
@@ -352,6 +365,11 @@ Option6ClientFqdn::getDomainName() const {
 
 void
 Option6ClientFqdn::packDomainName(isc::util::OutputBuffer& buf) const {
+    // There is nothing to do if domain-name is empty.
+    if (!impl_->domain_name_) {
+        return;
+    }
+
     // Domain name, encoded as a set of labels.
     isc::dns::LabelSequence labels(*impl_->domain_name_);
     if (labels.getDataLength() > 0) {
@@ -395,6 +413,10 @@ Option6ClientFqdn::unpack(OptionBufferConstIter first,
                           OptionBufferConstIter last) {
     setData(first, last);
     impl_->parseWireData(first, last);
+    // Check that the flags in the received option are valid. Ignore MBZ bits
+    // because we don't want to discard the whole option because of MBZ bits
+    // being set.
+    impl_->checkFlags(impl_->flags_, false);
 }
 
 std::string
