@@ -1,3 +1,9 @@
+661.    [func]		stephen
+	Copy additional header files to the BIND 10 installation directory
+	to allow the building of DHCP hooks libraries against an installed
+	version of BIND 10.
+	(Trac #3092, git e9beef0b435ba108af9e5979476bd2928808b342)
+
 660.	[func]		fujiwara
 	src/lib/cc: Integer size of C++ CC library is changed to int64_t.
 	b10-auth: The size of statistics counters is changed to uint64_t.
