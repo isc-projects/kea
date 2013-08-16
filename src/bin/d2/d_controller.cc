@@ -364,7 +364,7 @@ DControllerBase::executeCommand(const std::string& command,
     // as it may be supported there.
     isc::data::ConstElementPtr answer;
     if (command.compare(SHUT_DOWN_COMMAND) == 0) {
-        answer = shutdown();
+        answer = shutdown(args);
     } else {
         // It wasn't shutdown, so may be a custom controller command.
         int rcode = 0;
@@ -390,16 +390,15 @@ DControllerBase::customControllerCommand(const std::string& command,
 }
 
 isc::data::ConstElementPtr
-DControllerBase::shutdown() {
+DControllerBase::shutdown(isc::data::ConstElementPtr args) {
     if (process_) {
-        process_->shutdown();
-    } else {
-        // Not really a failure, but this condition is worth noting. In reality
-        // it should be pretty hard to cause this.
-        LOG_WARN(dctl_logger, DCTL_NOT_RUNNING).arg(app_name_);
-    }
+        return (process_->shutdown(args));
+    } 
 
-    return (isc::config::createAnswer(0, "Shutting down."));
+    // Not really a failure, but this condition is worth noting. In reality
+    // it should be pretty hard to cause this.
+    LOG_WARN(dctl_logger, DCTL_NOT_RUNNING).arg(app_name_);
+    return (isc::config::createAnswer(0, "Process has not been initialzed."));
 }
 
 void

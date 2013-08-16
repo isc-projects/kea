@@ -23,8 +23,8 @@ namespace d2 {
 
 const char* valid_d2_config = "{ "
                         "\"interface\" : \"eth1\" , "
-                        "\"ip_address\" : \"192.168.1.33\" , "
-                        "\"port\" : 88 , "
+                        "\"ip_address\" : \"127.0.0.1\" , "
+                        "\"port\" : 5031, "
                         "\"tsig_keys\": ["
                         "{ \"name\": \"d2_key.tmark.org\" , "
                         "   \"algorithm\": \"md5\" ,"
@@ -83,14 +83,16 @@ DStubProcess::run() {
     }
 };
 
-void
-DStubProcess::shutdown() {
+isc::data::ConstElementPtr
+DStubProcess::shutdown(isc::data::ConstElementPtr /* args */) {
     if (SimFailure::shouldFailOn(SimFailure::ftProcessShutdown)) {
         // Simulates a failure during shutdown process.
         isc_throw(DProcessBaseError, "DStubProcess simulated shutdown failure");
     }
 
-    DProcessBase::shutdown();
+    setShutdownFlag(true);
+    stopIOService();
+    return (isc::config::createAnswer(0, "Shutdown inititiated."));
 }
 
 isc::data::ConstElementPtr

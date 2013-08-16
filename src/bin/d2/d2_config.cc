@@ -253,7 +253,8 @@ TSIGKeyInfoParser::commit() {
 
 TSIGKeyInfoListParser::TSIGKeyInfoListParser(const std::string& list_name,
                                        TSIGKeyInfoMapPtr keys)
-    :list_name_(list_name), keys_(keys), parsers_() {
+    :list_name_(list_name), keys_(keys), local_keys_(new TSIGKeyInfoMap()), 
+     parsers_() {
     if (!keys_) {
         isc_throw(D2CfgError, "TSIGKeyInfoListParser ctor:"
                   " key storage cannot be null");
@@ -277,7 +278,7 @@ build(isc::data::ConstElementPtr key_list){
         // Create a name for the parser based on its position in the list.
         std::string entry_name = boost::lexical_cast<std::string>(i++);
         isc::dhcp::ParserPtr parser(new TSIGKeyInfoParser(entry_name,
-                                                            keys_));
+                                                            local_keys_));
         parser->build(key_config);
         parsers_.push_back(parser);
     }
@@ -290,6 +291,10 @@ TSIGKeyInfoListParser::commit() {
     BOOST_FOREACH(isc::dhcp::ParserPtr parser, parsers_) {
         parser->commit();
     }
+  
+    // Now that we know we have a valid list, commit that list to the
+    // area given to us during construction (i.e. to the d2 context).   
+    *keys_ = *local_keys_;
 }
 
 // *********************** DnsServerInfoParser  *************************

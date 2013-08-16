@@ -289,9 +289,14 @@ TEST_F (QueueMgrUDPTest, stateModel) {
     EXPECT_NO_THROW(queue_mgr_->startListening());
     EXPECT_EQ(D2QueueMgr::RUNNING, queue_mgr_->getMgrState());
 
-    // Verify that we can move from RUNNING to STOPPED by stopping the
+    // Verify that we can move from RUNNING to STOPPING by stopping the
     // listener.
     EXPECT_NO_THROW(queue_mgr_->stopListening());
+    EXPECT_EQ(D2QueueMgr::STOPPING, queue_mgr_->getMgrState());
+
+    // Stopping requires IO cancel, which result in a callback.
+    // So process one event and verify we are STOPPED.
+    io_service_.run_one();
     EXPECT_EQ(D2QueueMgr::STOPPED, queue_mgr_->getMgrState());
 
     // Verify that we can re-enter the RUNNING from STOPPED by starting the
@@ -304,6 +309,11 @@ TEST_F (QueueMgrUDPTest, stateModel) {
 
     // Stop the listener.
     EXPECT_NO_THROW(queue_mgr_->stopListening());
+    EXPECT_EQ(D2QueueMgr::STOPPING, queue_mgr_->getMgrState());
+
+    // Stopping requires IO cancel, which result in a callback.
+    // So process one event and verify we are STOPPED.
+    io_service_.run_one();
     EXPECT_EQ(D2QueueMgr::STOPPED, queue_mgr_->getMgrState());
 
     // Verify that we can remove the listener in the STOPPED state and
