@@ -48,6 +48,14 @@ libb10_hooks_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
 libb10_hooks_la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
 libb10_hooks_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 
+# Specify the headers for copying into the installation directory tree. User-
+# written libraries only need the definitions from the headers for the
+# CalloutHandle and LibraryHandle objects.
+libb10_hooks_includedir = $(pkgincludedir)/hooks
+libb10_hooks_include_HEADERS = \
+    callout_handle.h \
+    library_handle.h \
+    hooks.h
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the

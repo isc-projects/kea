@@ -1226,6 +1226,9 @@ AC_CONFIG_FILES([Makefile
                  doc/guide/Makefile
                  doc/design/Makefile
                  doc/design/datasrc/Makefile
+                 ext/Makefile
+                 ext/asio/Makefile
+                 ext/asio/asio/Makefile
                  compatcheck/Makefile
                  src/Makefile
                  src/bin/Makefile
