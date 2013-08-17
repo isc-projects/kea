@@ -42,39 +42,41 @@ const char* ALL_IFACES_KEYWORD = "*";
 // *********************** ParserContext  *************************
 
 ParserContext::ParserContext(Option::Universe universe):
-        boolean_values_(new BooleanStorage()),
-        uint32_values_(new Uint32Storage()),
-        string_values_(new StringStorage()),
-        options_(new OptionStorage()),
-        option_defs_(new OptionDefStorage()),
-        universe_(universe) {
-    }
+    boolean_values_(new BooleanStorage()),
+    uint32_values_(new Uint32Storage()),
+    string_values_(new StringStorage()),
+    options_(new OptionStorage()),
+    option_defs_(new OptionDefStorage()),
+    universe_(universe)
+{
+}
 
 ParserContext::ParserContext(const ParserContext& rhs):
-        boolean_values_(new BooleanStorage(*(rhs.boolean_values_))),
-        uint32_values_(new Uint32Storage(*(rhs.uint32_values_))),
-        string_values_(new StringStorage(*(rhs.string_values_))),
-        options_(new OptionStorage(*(rhs.options_))),
-        option_defs_(new OptionDefStorage(*(rhs.option_defs_))),
-        universe_(rhs.universe_) {
-    }
+    boolean_values_(new BooleanStorage(*(rhs.boolean_values_))),
+    uint32_values_(new Uint32Storage(*(rhs.uint32_values_))),
+    string_values_(new StringStorage(*(rhs.string_values_))),
+    options_(new OptionStorage(*(rhs.options_))),
+    option_defs_(new OptionDefStorage(*(rhs.option_defs_))),
+    universe_(rhs.universe_)
+{
+}
 
 ParserContext&
 ParserContext::operator=(const ParserContext& rhs) {
-        if (this != &rhs) {
-            boolean_values_ =
-                BooleanStoragePtr(new BooleanStorage(*(rhs.boolean_values_)));
-            uint32_values_ =
-                Uint32StoragePtr(new Uint32Storage(*(rhs.uint32_values_)));
-            string_values_ =
-                StringStoragePtr(new StringStorage(*(rhs.string_values_)));
-            options_ = OptionStoragePtr(new OptionStorage(*(rhs.options_)));
-            option_defs_ =
-                OptionDefStoragePtr(new OptionDefStorage(*(rhs.option_defs_)));
-            universe_ = rhs.universe_;
-        }
-        return (*this);
+    if (this != &rhs) {
+        boolean_values_ =
+            BooleanStoragePtr(new BooleanStorage(*(rhs.boolean_values_)));
+        uint32_values_ =
+            Uint32StoragePtr(new Uint32Storage(*(rhs.uint32_values_)));
+        string_values_ =
+            StringStoragePtr(new StringStorage(*(rhs.string_values_)));
+        options_ = OptionStoragePtr(new OptionStorage(*(rhs.options_)));
+        option_defs_ =
+            OptionDefStoragePtr(new OptionDefStorage(*(rhs.option_defs_)));
+        universe_ = rhs.universe_;
     }
+    return (*this);
+}
 
 
 // **************************** DebugParser *************************
@@ -229,7 +231,7 @@ HooksLibrariesParser::HooksLibrariesParser(const std::string& param_name)
     }
 }
 
-void 
+void
 HooksLibrariesParser::build(ConstElementPtr value) {
     // Initialize.
     libraries_.clear();
@@ -269,7 +271,7 @@ HooksLibrariesParser::build(ConstElementPtr value) {
     changed_ = true;
 }
 
-void 
+void
 HooksLibrariesParser::commit() {
     /// Commits the list of libraries to the configuration manager storage if
     /// the list of libraries has changed.
