@@ -370,10 +370,6 @@ class CommandControl():
             self._httpserver.shutdown()
             self._serving = False
 
-        elif command == 'print_settings':
-            # This is a hidden testing command. It does nothing useful, just
-            # returns the current configuration.
-            answer = ccsession.create_answer(0, self._cmdctl_config_data)
         else:
             answer = ccsession.create_answer(1, 'unknown command: ' + command)
 
