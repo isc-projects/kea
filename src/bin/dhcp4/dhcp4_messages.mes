@@ -70,6 +70,26 @@ This message is printed when DHCPv4 server disables an interface from being
 used to receive DHCPv4 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
+% DHCP4_HOOK_BUFFER_RCVD_SKIP received DHCPv4 buffer was dropped because a callout set the skip flag.
+This debug message is printed when a callout installed on buffer4_receive
+hook point set the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to drop the packet.
+
+% DHCP4_HOOK_BUFFER_SEND_SKIP prepared DHCPv4 response was dropped because a callout set the skip flag.
+This debug message is printed when a callout installed on buffer4_send
+hook point set the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to drop the packet.
+Server completed all the processing (e.g. may have assigned, updated
+or released leases), but the response will not be send to the client.
+
+% DHCP4_HOOK_LEASE4_RELEASE_SKIP DHCPv6 lease was not released because a callout set the skip flag.
+This debug message is printed when a callout installed on lease4_release
+hook point set the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to not release
+a lease. If client requested release of multiples leases (by sending
+multiple IA options), the server will retains this particular lease and
+will proceed with other renewals as usual.
+
 % DHCP4_HOOK_PACKET_RCVD_SKIP received DHCPv4 packet was dropped, because a callout set the skip flag.
 This debug message is printed when a callout installed on the pkt4_receive
 hook point sets the skip flag. For this particular hook point, the
