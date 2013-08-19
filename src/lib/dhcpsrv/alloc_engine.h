@@ -218,6 +218,8 @@ protected:
     /// @param clientid client identifier
     /// @param hwaddr client's hardware address
     /// @param lease lease to be renewed
+    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    ///        will be executed if this parameter is passed.
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     Lease4Ptr
@@ -225,6 +227,7 @@ protected:
                 const ClientIdPtr& clientid,
                 const HWAddrPtr& hwaddr,
                 const Lease4Ptr& lease,
+                const isc::hooks::CalloutHandlePtr& callout_handle,
                 bool fake_allocation /* = false */);
 
     /// @brief Allocates an IPv6 lease
