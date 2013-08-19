@@ -274,8 +274,6 @@ class MsgQTest(unittest.TestCase):
         sock = Sock(1)
         return notifications, sock
 
-    @unittest.skipUnless('POLLIN' in select.__dict__,
-                         'cannot perform tests requiring select.poll')
     def test_notifies(self):
         """
         Test the message queue sends notifications about connecting,
@@ -315,8 +313,6 @@ class MsgQTest(unittest.TestCase):
         self.__msgq.kill_socket(sock.fileno(), sock)
         self.assertEqual([('disconnected', {'client': lname})], notifications)
 
-    @unittest.skipUnless('POLLIN' in select.__dict__,
-                         'cannot perform tests requiring select.poll')
     def test_notifies_implicit_kill(self):
         """
         Test that the unsubscription notifications are sent before the socket
@@ -579,7 +575,6 @@ class SendNonblock(unittest.TestCase):
         '''
         msgq = MsgQ()
         # We do only partial setup, so we don't create the listening socket
-        msgq.setup_poller()
         (read, write) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
         msgq.register_socket(write)
         self.assertEqual(1, len(msgq.lnames))
@@ -677,7 +672,6 @@ class SendNonblock(unittest.TestCase):
             queue_pid = os.fork()
             if queue_pid == 0:
                 signal.alarm(120)
-                msgq.setup_poller()
                 msgq.setup_signalsock()
                 msgq.register_socket(queue)
                 msgq.run()
@@ -754,7 +748,6 @@ class SendNonblock(unittest.TestCase):
         msgq = MsgQ()
         # Don't need a listen_socket
         msgq.listen_socket = DummySocket
-        msgq.setup_poller()
         msgq.setup_signalsock()
         msgq.register_socket(write)
         msgq.register_socket(control_write)
@@ -997,9 +990,11 @@ class SocketTests(unittest.TestCase):
         self.__killed_socket = None
         self.__logger = self.LoggerWrapper(msgq.logger)
         msgq.logger = self.__logger
+        self.__orig_select = msgq.select.select
 
     def tearDown(self):
         msgq.logger = self.__logger.orig_logger
+        msgq.select.select = self.__orig_select
 
     def test_send_data(self):
         # Successful case: _send_data() returns the hardcoded value, and
@@ -1047,32 +1042,6 @@ class SocketTests(unittest.TestCase):
             self.assertEqual(expected_errors, self.__logger.error_called)
             self.assertEqual(expected_warns, self.__logger.warn_called)
 
-    def test_process_fd_read_after_bad_write(self):
-        '''Check the specific case of write fail followed by read attempt.
-
-        The write failure results in kill_socket, then read shouldn't tried.
-
-        '''
-        self.__sock_error.errno = errno.EPIPE
-        self.__sock.ex_on_send = self.__sock_error
-        self.__msgq.process_socket = None # if called, trigger an exception
-        self.__msgq._process_fd(42, True, True, False) # shouldn't crash
-
-        # check the socket is deleted from the fileno=>sock dictionary
-        self.assertEqual({}, self.__msgq.sockets)
-
-    def test_process_fd_close_after_bad_write(self):
-        '''Similar to the previous, but for checking dup'ed kill attempt'''
-        self.__sock_error.errno = errno.EPIPE
-        self.__sock.ex_on_send = self.__sock_error
-        self.__msgq._process_fd(42, True, False, True) # shouldn't crash
-        self.assertEqual({}, self.__msgq.sockets)
-
-    def test_process_fd_writer_after_close(self):
-        '''Emulate a "writable" socket has been already closed and killed.'''
-        # This just shouldn't crash
-        self.__msgq._process_fd(4200, True, False, False)
-
     def test_process_packet(self):
         '''Check some failure cases in handling an incoming message.'''
         expected_errors = 0
@@ -1105,6 +1074,47 @@ class SocketTests(unittest.TestCase):
                 expected_errors += 1
             self.assertEqual(expected_errors, self.__logger.error_called)
             self.assertEqual(expected_debugs, self.__logger.debug_called)
+
+    def test_do_select(self):
+        """
+        Check the behaviour of the run_select method.
+
+        In particular, check that we skip writing to the sockets we read,
+        because a read may have side effects (like closing the socket) and
+        we want to prevent strange behavior.
+        """
+        self.__read_called = []
+        self.__write_called = []
+        self.__reads = None
+        self.__writes = None
+        def do_read(fd, socket):
+            self.__read_called.append(fd)
+            self.__msgq.running = False
+        def do_write(fd):
+            self.__write_called.append(fd)
+            self.__msgq.running = False
+        self.__msgq.process_packet = do_read
+        self.__msgq._process_write = do_write
+        self.__msgq.fd_to_lname = {42: 'lname', 44: 'other', 45: 'unused'}
+        # The do_select does index it, but just passes the value. So reuse
+        # the dict to safe typing in the test.
+        self.__msgq.sockets = self.__msgq.fd_to_lname
+        self.__msgq.sendbuffs = {42: 'data', 43: 'data'}
+        def my_select(reads, writes, errors):
+            self.__reads = reads
+            self.__writes = writes
+            self.assertEqual([], errors)
+            return ([42, 44], [42, 43], [])
+        msgq.select.select = my_select
+        self.__msgq.listen_socket = DummySocket
+
+        self.__msgq.running = True
+        self.__msgq.run_select()
+
+        self.assertEqual([42, 44], self.__read_called)
+        self.assertEqual([43], self.__write_called)
+        self.assertEqual({42, 44, 45}, set(self.__reads))
+        self.assertEqual({42, 43}, set(self.__writes))
 
 if __name__ == '__main__':
     isc.log.resetUnitTestRootLogger()
