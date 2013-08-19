@@ -397,7 +397,7 @@ public:
     ///
     /// @return retuns 0 if the configuration parsed successfully,
     /// non-zero otherwise failure.
-    int parseConfiguration(const std::string& config) {    
+    int parseConfiguration(const std::string& config) {
         int rcode_ = 1;
         // Turn config into elements.
         // Test json just to make sure its valid.
@@ -691,4 +691,310 @@ TEST_F(ParseConfigTest, invalidHooksLibrariesTest) {
     // Check that the message contains the library in error.
     EXPECT_FALSE(error_text_.find(NOT_PRESENT_LIBRARY) == string::npos) <<
         "Error text returned from parse failure is " << error_text_;
+}
+
+/// @brief DHCP Configuration Parser Context test fixture.
+class ParserContextTest : public ::testing::Test {
+public:
+    /// @brief Constructor
+    ParserContextTest() { }
+
+    /// @brief Check that the storages of the specific type hold the
+    /// same value.
+    ///
+    /// This function assumes that the ref_values storage holds exactly
+    /// one parameter called 'foo'.
+    ///
+    /// @param ref_values A storage holding reference value. In the typical
+    /// case it is a storage held in the original context, which is assigned
+    /// to another context.
+    /// @param values A storage holding value to be checked.
+    /// @tparam ContainerType A type of the storage.
+    /// @tparam ValueType A type of the value in the container.
+    template<typename ContainerType, typename ValueType>
+    void checkValueEq(const boost::shared_ptr<ContainerType>& ref_values,
+                      const boost::shared_ptr<ContainerType>& values) {
+        ValueType param;
+        ASSERT_NO_THROW(param = values->getParam("foo"));
+        EXPECT_EQ(ref_values->getParam("foo"), param);
+    }
+
+    /// @brief Check that the storages of the specific type hold different
+    /// value.
+    ///
+    /// This function assumes that the ref_values storage holds exactly
+    /// one parameter called 'foo'.
+    ///
+    /// @param ref_values A storage holding reference value. In the typical
+    /// case it is a storage held in the original context, which is assigned
+    /// to another context.
+    /// @param values A storage holding value to be checked.
+    /// @tparam ContainerType A type of the storage.
+    /// @tparam ValueType A type of the value in the container.
+    template<typename ContainerType, typename ValueType>
+    void checkValueNeq(const boost::shared_ptr<ContainerType>& ref_values,
+                       const boost::shared_ptr<ContainerType>& values) {
+        ValueType param;
+        ASSERT_NO_THROW(param = values->getParam("foo"));
+        EXPECT_NE(ref_values->getParam("foo"), param);
+    }
+
+    /// @brief Check that option definition storage in the context holds
+    /// one option definition of the specified type.
+    ///
+    /// @param ctx A pointer to a context.
+    /// @param opt_type Expected option type.
+    void checkOptionDefinitionType(const ParserContext& ctx,
+                                   const uint16_t opt_type) {
+        OptionDefContainerPtr opt_defs =
+            ctx.option_defs_->getItems("option-space");
+        ASSERT_TRUE(opt_defs);
+        OptionDefContainerTypeIndex& idx = opt_defs->get<1>();
+        OptionDefContainerTypeRange range = idx.equal_range(opt_type);
+        EXPECT_EQ(1, std::distance(range.first, range.second));
+    }
+
+    /// @brief Check that option storage in the context holds one option
+    /// of the specified type.
+    ///
+    /// @param ctx A pointer to a context.
+    /// @param opt_type Expected option type.
+    void checkOptionType(const ParserContext& ctx, const uint16_t opt_type) {
+        Subnet::OptionContainerPtr options =
+            ctx.options_->getItems("option-space");
+        ASSERT_TRUE(options);
+        Subnet::OptionContainerTypeIndex& idx = options->get<1>();
+        Subnet::OptionContainerTypeRange range = idx.equal_range(opt_type);
+        ASSERT_EQ(1, std::distance(range.first, range.second));
+    }
+
+    /// @brief Test copy constructor or assignment operator when values
+    /// being copied are NULL.
+    ///
+    /// @param copy Indicates that copy constructor should be tested
+    /// (if true), or assignment operator (if false).
+    void testCopyAssignmentNull(const bool copy) {
+        ParserContext ctx(Option::V6);
+        // Release all pointers in the context.
+        ctx.boolean_values_.reset();
+        ctx.uint32_values_.reset();
+        ctx.string_values_.reset();
+        ctx.options_.reset();
+        ctx.option_defs_.reset();
+        ctx.hooks_libraries_.reset();
+
+        // Even if the fields of the context are NULL, it should get
+        // copied.
+        ParserContextPtr ctx_new(new ParserContext(Option::V6));
+        if (copy) {
+            ASSERT_NO_THROW(ctx_new.reset(new ParserContext(ctx)));
+        } else {
+            *ctx_new = ctx;
+        }
+
+        // The resulting context has its fields equal to NULL.
+        EXPECT_FALSE(ctx_new->boolean_values_);
+        EXPECT_FALSE(ctx_new->uint32_values_);
+        EXPECT_FALSE(ctx_new->string_values_);
+        EXPECT_FALSE(ctx_new->options_);
+        EXPECT_FALSE(ctx_new->option_defs_);
+        EXPECT_FALSE(ctx_new->hooks_libraries_);
+
+    }
+
+    /// @brief Test copy constructor or assignment operator.
+    ///
+    /// @param copy Indicates that copy constructor should be tested (if true),
+    /// or assignment operator (if false).
+    void testCopyAssignment(const bool copy) {
+        // Create new context. It will be later copied/assigned to another
+        // context.
+        ParserContext ctx(Option::V6);
+
+        // Set boolean parameter 'foo'.
+        ASSERT_TRUE(ctx.boolean_values_);
+        ctx.boolean_values_->setParam("foo", true);
+
+        // Set uint32 parameter 'foo'.
+        ASSERT_TRUE(ctx.uint32_values_);
+        ctx.uint32_values_->setParam("foo", 123);
+
+        // Ser string parameter 'foo'.
+        ASSERT_TRUE(ctx.string_values_);
+        ctx.string_values_->setParam("foo", "some string");
+
+        // Add new option, with option code 10, to the context.
+        ASSERT_TRUE(ctx.options_);
+        OptionPtr opt1(new Option(Option::V6, 10));
+        Subnet::OptionDescriptor desc1(opt1, false);
+        std::string option_space = "option-space";
+        ASSERT_TRUE(desc1.option);
+        ctx.options_->addItem(desc1, option_space);
+
+        // Add new option definition, with option code 123.
+        OptionDefinitionPtr def1(new OptionDefinition("option-foo", 123,
+                                                      "string"));
+        ctx.option_defs_->addItem(def1, option_space);
+
+        // Allocate container for hooks libraries and add one library name.
+        ctx.hooks_libraries_.reset(new std::vector<std::string>());
+        ctx.hooks_libraries_->push_back("library1");
+
+        // We will use ctx_new to assign another context to it or copy
+        // construct.
+        ParserContextPtr ctx_new(new ParserContext(Option::V4));;
+        if (copy) {
+            ctx_new.reset(new ParserContext(ctx));
+        } else {
+            *ctx_new = ctx;
+        }
+
+        // New context has the same boolean value.
+        ASSERT_TRUE(ctx_new->boolean_values_);
+        {
+            SCOPED_TRACE("Check that boolean values are equal in both"
+                         " contexts");
+            checkValueEq<BooleanStorage, bool>(ctx.boolean_values_,
+                                               ctx_new->boolean_values_);
+        }
+
+        // New context has the same uint32 value.
+        ASSERT_TRUE(ctx_new->uint32_values_);
+        {
+            SCOPED_TRACE("Check that uint32_t values are equal in both"
+                         " contexts");
+            checkValueEq<Uint32Storage, uint32_t>(ctx.uint32_values_,
+                                                  ctx_new->uint32_values_);
+        }
+
+        // New context has the same string value.
+        ASSERT_TRUE(ctx_new->string_values_);
+        {
+            SCOPED_TRACE("Check that string values are equal in both contexts");
+            checkValueEq<StringStorage, std::string>(ctx.string_values_,
+                                                     ctx_new->string_values_);
+        }
+
+        // New context has the same option.
+        ASSERT_TRUE(ctx_new->options_);
+        {
+            SCOPED_TRACE("Check that the option values are equal in both"
+                         " contexts");
+            checkOptionType(*ctx_new, 10);
+        }
+
+        // New context has the same option definition.
+        ASSERT_TRUE(ctx_new->option_defs_);
+        {
+            SCOPED_TRACE("check that the option definition is equal in both"
+                         " contexts");
+            checkOptionDefinitionType(*ctx_new, 123);
+        }
+
+        // New context has the same hooks library.
+        ASSERT_TRUE(ctx_new->hooks_libraries_);
+        {
+            ASSERT_EQ(1, ctx_new->hooks_libraries_->size());
+            EXPECT_EQ("library1", (*ctx_new->hooks_libraries_)[0]);
+        }
+
+        // New context has the same universe.
+        EXPECT_EQ(ctx.universe_, ctx_new->universe_);
+
+        // Change the value of the boolean parameter. This should not affect the
+        // corresponding value in the new context.
+        {
+            SCOPED_TRACE("Check that boolean value isn't changed when original"
+                         " value is changed");
+            ctx.boolean_values_->setParam("foo", false);
+            checkValueNeq<BooleanStorage, bool>(ctx.boolean_values_,
+                                                ctx_new->boolean_values_);
+        }
+
+        // Change the value of the uint32_t parameter. This should not affect
+        // the corresponding value in the new context.
+        {
+            SCOPED_TRACE("Check that uint32_t value isn't changed when original"
+                         " value is changed");
+            ctx.uint32_values_->setParam("foo", 987);
+            checkValueNeq<Uint32Storage, uint32_t>(ctx.uint32_values_,
+                                                   ctx_new->uint32_values_);
+        }
+
+        // Change the value of the string parameter. This should not affect the
+        // corresponding value in the new context.
+        {
+            SCOPED_TRACE("Check that string value isn't changed when original"
+                         " value is changed");
+            ctx.string_values_->setParam("foo", "different string");
+            checkValueNeq<StringStorage, std::string>(ctx.string_values_,
+                                                      ctx_new->string_values_);
+        }
+
+        // Change the option. This should not affect the option instance in the
+        // new context.
+        {
+            SCOPED_TRACE("Check that option remains the same in the new context"
+                         " when the option in the original context is changed");
+            ctx.options_->clearItems();
+            Subnet::OptionDescriptor desc(OptionPtr(new Option(Option::V6,
+                                                               100)),
+                                          false);
+
+            ASSERT_TRUE(desc.option);
+            ctx.options_->addItem(desc, "option-space");
+            checkOptionType(*ctx_new, 10);
+        }
+
+        // Change the option definition. This should not affect the option
+        // definition in the new context.
+        {
+            SCOPED_TRACE("Check that option definition remains the same in"
+                         " the new context when the option definition in the"
+                         " original context is changed");
+            ctx.option_defs_->clearItems();
+            OptionDefinitionPtr def(new OptionDefinition("option-foo", 234,
+                                                         "string"));
+
+            ctx.option_defs_->addItem(def, option_space);
+            checkOptionDefinitionType(*ctx_new, 123);
+        }
+
+        // Change the list of libraries. this should not affect the list in the
+        // new context.
+        ctx.hooks_libraries_->clear();
+        ctx.hooks_libraries_->push_back("library2");
+        ASSERT_EQ(1, ctx_new->hooks_libraries_->size());
+        EXPECT_EQ("library1", (*ctx_new->hooks_libraries_)[0]);
+
+        // Change the universe. This should not affect the universe value in the
+        // new context.
+        ctx.universe_ = Option::V4;
+        EXPECT_EQ(Option::V6, ctx_new->universe_);
+
+    }
+
+};
+
+// Check that the assignment operator of the ParserContext class copies all
+// fields correctly.
+TEST_F(ParserContextTest, assignment) {
+    testCopyAssignment(false);
+}
+
+// Check that the assignment operator of the ParserContext class copies all
+// fields correctly when these fields are NULL.
+TEST_F(ParserContextTest, assignmentNull) {
+    testCopyAssignmentNull(false);
+}
+
+// Check that the context is copy constructed correctly.
+TEST_F(ParserContextTest, copyConstruct) {
+    testCopyAssignment(true);
+}
+
+// Check that the context is copy constructed correctly, when context fields
+// are NULL.
+TEST_F(ParserContextTest, copyConstructNull) {
+    testCopyAssignmentNull(true);
 }
