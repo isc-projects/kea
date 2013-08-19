@@ -998,6 +998,8 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 // called
 TEST_F(AllocEngine4Test, renewLease4) {
     boost::scoped_ptr<AllocEngine> engine;
+    CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
     ASSERT_TRUE(engine);
 
@@ -1018,7 +1020,8 @@ TEST_F(AllocEngine4Test, renewLease4) {
     // Lease was assigned 45 seconds ago and is valid for 100 seconds. Let's
     // renew it.
     ASSERT_FALSE(lease->expired());
-    lease = engine->renewLease4(subnet_, clientid_, hwaddr_, lease, false);
+    lease = engine->renewLease4(subnet_, clientid_, hwaddr_, lease,
+                                callout_handle, false);
     // Check that he got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr.toText(), lease->addr_.toText());
