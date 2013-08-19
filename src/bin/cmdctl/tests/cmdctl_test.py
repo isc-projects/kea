@@ -462,10 +462,20 @@ class TestCommandControl(unittest.TestCase):
         answer = self.cmdctl.command_handler('unknown-command', None)
         self._check_answer(answer, 1, 'unknown command: unknown-command')
 
-        answer = self.cmdctl.command_handler('print_settings', None)
+        # Send a real command. Mock stuff so the shutdown command doesn't
+        # cause an exception.
+        class ModuleCC:
+            def send_stopping():
+                pass
+        self.cmdctl._module_cc = ModuleCC
+        class Server:
+            def shutdown():
+                pass
+        self.cmdctl._httpserver = Server
+        answer = self.cmdctl.command_handler('shutdown', None)
         rcode, msg = ccsession.parse_answer(answer)
         self.assertEqual(rcode, 0)
-        self.assertTrue(msg != None)
+        self.assertIsNone(msg)
 
     def test_command_handler_spec_update(self):
         # Should not be present
@@ -543,10 +553,10 @@ class TestCommandControl(unittest.TestCase):
         self.assertEqual(1, rcode)
 
         # Send a command to cmdctl itself.  Should be the same effect.
-        rcode, value = self.cmdctl.send_command('Cmdctl', 'print_settings',
+        rcode, value = self.cmdctl.send_command('Cmdctl', 'shutdown',
                                                 None)
         self.assertEqual(2, len(self.cmdctl.sent_messages))
-        self.assertEqual(({'command': ['print_settings']}, 'Cmdctl'),
+        self.assertEqual(({'command': ['shutdown']}, 'Cmdctl'),
                          self.cmdctl.sent_messages[-1])
         self.assertEqual(1, rcode)
 
