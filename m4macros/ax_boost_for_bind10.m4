@@ -86,6 +86,8 @@ AC_TRY_COMPILE([
 
 # Boost offset_ptr is known to not compile on some platforms, depending on
 # boost version, its local configuration, and compiler.  Detect it.
+CXXFLAGS_SAVED="$CXXFLAGS"
+CXXFLAGS="$CXXFLAGS -Werror"
 AC_MSG_CHECKING([Boost offset_ptr compiles])
 AC_TRY_COMPILE([
 #include <boost/interprocess/offset_ptr.hpp>
@@ -94,6 +96,7 @@ AC_TRY_COMPILE([
  BOOST_OFFSET_PTR_WOULDFAIL=no],
 [AC_MSG_RESULT(no)
  BOOST_OFFSET_PTR_WOULDFAIL=yes])
+CXXFLAGS="$CXXFLAGS_SAVED"
 
 # Detect build failure case known to happen with Boost installed via
 # FreeBSD ports
