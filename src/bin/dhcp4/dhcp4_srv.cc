@@ -241,12 +241,14 @@ Dhcpv4Srv::run() {
         int type = -1;
         try {
             type = query->getType();
-        } catch (const std::exception& e) {
-
+        } catch (...) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_NO_TYPE)
+                .arg(query->getIface());
+            continue;
         }
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_RECEIVED)
-            .arg(serverReceivedPacketName(query->getType()))
+            .arg(serverReceivedPacketName(type))
             .arg(type)
             .arg(query->getIface());
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
