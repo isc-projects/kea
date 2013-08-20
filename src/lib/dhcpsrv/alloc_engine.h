@@ -196,6 +196,10 @@ protected:
     ///        an address for DISCOVER that is not really allocated (true)
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.
+    /// @param [out] old_lease Holds the pointer to a previous instance of a
+    /// lease. The NULL pointer indicates that lease didn't exist prior
+    /// to calling this function (e.g. new lease has been allocated).
+    ///
     /// @return Allocated IPv4 lease (or NULL if allocation failed)
     Lease4Ptr
     allocateAddress4(const SubnetPtr& subnet,
@@ -203,7 +207,8 @@ protected:
                      const HWAddrPtr& hwaddr,
                      const isc::asiolink::IOAddress& hint,
                      bool fake_allocation,
-                     const isc::hooks::CalloutHandlePtr& callout_handle);
+                     const isc::hooks::CalloutHandlePtr& callout_handle,
+                     Lease4Ptr& old_lease);
 
     /// @brief Renews a IPv4 lease
     ///
