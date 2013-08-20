@@ -1970,6 +1970,46 @@ public:
         return pkt4_send_callout(callout_handle);
     }
 
+    /// Test callback that stores received callout name and pkt4 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_send_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("buffer4_send");
+
+        callout_handle.getArgument("response4", callback_pkt4_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// Test callback changes the output buffer to a hardcoded value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_send_change_callout(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("response4", pkt);
+
+        // modify buffer to set a diffferent payload
+        pkt->getBuffer().clear();
+        pkt->getBuffer().writeData(dummyFile, sizeof(dummyFile));
+
+        return (0);
+    }
+
+    /// Test callback that stores received callout name and pkt4 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    skip_callout(CalloutHandle& callout_handle) {
+
+        callout_handle.setSkip(true);
+
+        return (0);
+    }
+
     /// Test callback that stores received callout name and subnet4 values
     /// @param callout_handle handle passed by the hooks framework
     /// @return always 0
@@ -2398,6 +2438,96 @@ TEST_F(HooksDhcpv4SrvTest, skip_pkt4_send) {
     Pkt4Ptr sent = srv_->fake_sent_.front();
     EXPECT_EQ(0, sent->getBuffer().getLength());
 }
+
+// Checks if callouts installed on buffer4_send are indeed called and the
+// all necessary parameters are passed.
+TEST_F(HooksDhcpv4SrvTest, simple_buffer4_send) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_send", buffer4_send_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr discover = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(discover);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("buffer4_send", callback_name_);
+
+    // Check that there is one packet sent
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == adv.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("response4"));
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+}
+
+// Checks if callouts installed on buffer4_send are indeed called and that
+// the output buffer can be changed.
+TEST_F(HooksDhcpv4SrvTest, change_buffer4_send) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_send", buffer4_send_change_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr discover = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(discover);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that there is one packet sent
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+
+    // The callout is supposed to fill the output buffer with dummyFile content
+    ASSERT_EQ(sizeof(dummyFile), adv->getBuffer().getLength());
+    EXPECT_EQ(0, memcmp(adv->getBuffer().getData(), dummyFile, sizeof(dummyFile)));
+}
+
+// Checks if callouts installed on buffer4_send can set skip flag and that flag
+// causes the packet to not be sent
+TEST_F(HooksDhcpv4SrvTest, skip_buffer4_send) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_send", skip_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr discover = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(discover);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that there is no packet sent.
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
 
 // This test checks if subnet4_select callout is triggered and reports
 // valid parameters

@@ -307,11 +307,12 @@ public:
     /// is only valid till Pkt4 object is valid.
     ///
     /// RX packet or TX packet before pack() will return buffer with
-    /// zero length
+    /// zero length. This buffer is returned as non-const, so hooks
+    /// framework (and user's callouts) can modify them if needed
     ///
     /// @return reference to output buffer
-    const isc::util::OutputBuffer&
-    getBuffer() const { return (bufferOut_); };
+    isc::util::OutputBuffer&
+    getBuffer() { return (bufferOut_); };
 
     /// @brief Add an option.
     ///
