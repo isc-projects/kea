@@ -2048,10 +2048,25 @@ public:
         return (0);
     }
 
+    /// Test callback that stores received callout name passed parameters
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease4_release_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_release");
+
+        callout_handle.getArgument("query4", callback_pkt4_);
+        callout_handle.getArgument("lease4", callback_lease4_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
     /// resets buffers used to store data received by callouts
     void resetCalloutBuffers() {
         callback_name_ = string("");
         callback_pkt4_.reset();
+        callback_lease4_.reset();
         callback_subnet4_.reset();
         callback_subnet4collection_ = NULL;
         callback_argument_names_.clear();
@@ -2068,6 +2083,9 @@ public:
     /// Pkt4 structure returned in the callout
     static Pkt4Ptr callback_pkt4_;
 
+    /// Lease4 structure returned in the callout
+    static Lease4Ptr callback_lease4_;
+
     /// Pointer to a subnet received by callout
     static Subnet4Ptr callback_subnet4_;
 
@@ -2083,6 +2101,7 @@ public:
 string HooksDhcpv4SrvTest::callback_name_;
 Pkt4Ptr HooksDhcpv4SrvTest::callback_pkt4_;
 Subnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
+Lease4Ptr HooksDhcpv4SrvTest::callback_lease4_;
 const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
 vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
 
@@ -2599,7 +2618,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4_select) {
 // a different subnet.
 TEST_F(HooksDhcpv4SrvTest, subnet_select_change) {
 
-    // Install pkt4_receive_callout
+    // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "subnet4_select", subnet4_select_different_subnet_callout));
 
@@ -2652,6 +2671,156 @@ TEST_F(HooksDhcpv4SrvTest, subnet_select_change) {
     // in dynamic pool)
     EXPECT_TRUE((*subnets)[1]->inRange(addr));
     EXPECT_TRUE((*subnets)[1]->inPool(addr));
+}
+
+// This test verifies that valid RELEASE triggers lease4_release callouts
+TEST_F(HooksDhcpv4SrvTest, basic_lease4_release) {
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_t1 = 50;
+    const uint32_t temp_t2 = 75;
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_release", lease4_release_callout));
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(addr));
+
+    // Let's create a lease and put it in the LeaseMgr
+    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(addr, mac_addr, sizeof(mac_addr),
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_t1, temp_t2, temp_timestamp,
+                              subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    // Generate client-id also duid_
+    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
+    rel->setRemoteAddr(addr);
+    rel->setYiaddr(addr);
+    rel->addOption(clientid);
+    rel->addOption(srv_->getServerID());
+    rel->setHWAddr(hw);
+
+    // Pass it to the server and hope for a REPLY
+    // Note: this is no response to RELEASE in DHCPv4
+    EXPECT_NO_THROW(srv_->processRelease(rel));
+
+    // The lease should be gone from LeaseMgr
+    l = LeaseMgrFactory::instance().getLease4(addr);
+    EXPECT_FALSE(l);
+
+    // Try to get the lease by hardware address
+    // @todo: Uncomment this once trac2592 is implemented
+    // Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
+    // EXPECT_EQ(leases.size(), 0);
+
+    // Try to get it by hw/subnet_id combination
+    l = LeaseMgrFactory::instance().getLease4(hw->hwaddr_, subnet_->getID());
+    EXPECT_FALSE(l);
+
+    // Try by client-id
+    // @todo: Uncomment this once trac2592 is implemented
+    //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    //EXPECT_EQ(leases.size(), 0);
+
+    // Try by client-id/subnet-id
+    l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
+    EXPECT_FALSE(l);
+
+    // Ok, the lease is *really* not there.
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease4_release", callback_name_);
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == rel.get());
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("lease4");
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+}
+
+// This test verifies that skip flag returned by a callout installed on the
+// lease4_release hook point will keep the lease
+TEST_F(HooksDhcpv4SrvTest, skip_lease4_release) {
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_t1 = 50;
+    const uint32_t temp_t2 = 75;
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_release", skip_callout));
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(addr));
+
+    // Let's create a lease and put it in the LeaseMgr
+    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(addr, mac_addr, sizeof(mac_addr),
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_t1, temp_t2, temp_timestamp,
+                              subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    // Generate client-id also duid_
+    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
+    rel->setRemoteAddr(addr);
+    rel->setYiaddr(addr);
+    rel->addOption(clientid);
+    rel->addOption(srv_->getServerID());
+    rel->setHWAddr(hw);
+
+    // Pass it to the server and hope for a REPLY
+    // Note: this is no response to RELEASE in DHCPv4
+    EXPECT_NO_THROW(srv_->processRelease(rel));
+
+    // The lease should be still there
+    l = LeaseMgrFactory::instance().getLease4(addr);
+    EXPECT_TRUE(l);
+
+    // Try by client-id/subnet-id
+    l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
+    EXPECT_TRUE(l);
+
+    // Try to get the lease by hardware address
+    // @todo: Uncomment this once trac2592 is implemented
+    // Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
+    // EXPECT_EQ(leases.size(), 1);
+
+    // Try by client-id
+    // @todo: Uncomment this once trac2592 is implemented
+    //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    //EXPECT_EQ(leases.size(), 1);
+
 }
 
 
