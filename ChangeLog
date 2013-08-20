@@ -1,3 +1,10 @@
+662.	[func]		marcin
+	libdhcp++: Implemented an Option4ClientFqdn class which represents
+	DHCPv4 Client FQDN Option (code 81) defined in RFC4702. This class
+	supports the domain name encoding in canonical FQDN format as well
+	as in deprecated ASCII format.
+	(Trac# 3082, git 1b434debfbf4a43070eb480fa0975a6eff6429d4)
+
 661.    [func]		stephen
 	Copy additional header files to the BIND 10 installation directory
 	to allow the building of DHCP hooks libraries against an installed
