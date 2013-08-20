@@ -27,6 +27,7 @@ libb10_dhcp___la_SOURCES += option4_client_fqdn.cc option4_client_fqdn.h
 libb10_dhcp___la_SOURCES += option6_ia.cc option6_ia.h
 libb10_dhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
 libb10_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
+libb10_dhcp___la_SOURCES += option6_client_fqdn.cc option6_client_fqdn.h
 libb10_dhcp___la_SOURCES += option_int.h
 libb10_dhcp___la_SOURCES += option_int_array.h
 libb10_dhcp___la_SOURCES += option.cc option.h

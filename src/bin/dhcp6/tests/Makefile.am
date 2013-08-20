@@ -79,6 +79,7 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la

@@ -366,11 +366,14 @@ public:
     ///
     /// @param fqdn fully qualified domain name to be written.
     /// @param [out] buf output buffer.
+    /// @param downcase indicates if the FQDN should be converted to lower
+    /// case (if true). By default it is not converted.
     ///
     /// @throw isc::dhcp::BadDataTypeCast if provided FQDN
     /// is invalid.
     static void writeFqdn(const std::string& fqdn,
-                          std::vector<uint8_t>& buf);
+                          std::vector<uint8_t>& buf,
+                          const bool downcase = false);
 
     /// @brief Read string value from a buffer.
     ///
