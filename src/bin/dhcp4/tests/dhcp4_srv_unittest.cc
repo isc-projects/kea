@@ -1706,6 +1706,7 @@ public:
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_receive");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_send");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("subnet4_select");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_renew");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_release");
 
         delete srv_;
@@ -2062,11 +2063,30 @@ public:
         return (0);
     }
 
+    /// Test callback that stores received callout name and subnet4 values
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease4_renew_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_renew");
+
+        callout_handle.getArgument("subnet4", callback_subnet4_);
+        callout_handle.getArgument("lease4", callback_lease4_);
+        callout_handle.getArgument("hwaddr", callback_hwaddr_);
+        callout_handle.getArgument("clientid", callback_clientid_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+
     /// resets buffers used to store data received by callouts
     void resetCalloutBuffers() {
         callback_name_ = string("");
         callback_pkt4_.reset();
         callback_lease4_.reset();
+        callback_hwaddr_.reset();
+        callback_clientid_.reset();
         callback_subnet4_.reset();
         callback_subnet4collection_ = NULL;
         callback_argument_names_.clear();
@@ -2086,6 +2106,12 @@ public:
     /// Lease4 structure returned in the callout
     static Lease4Ptr callback_lease4_;
 
+    /// Hardware address returned in the callout
+    static HWAddrPtr callback_hwaddr_;
+
+    /// Client-id returned in the callout
+    static ClientIdPtr callback_clientid_;
+
     /// Pointer to a subnet received by callout
     static Subnet4Ptr callback_subnet4_;
 
@@ -2101,6 +2127,8 @@ public:
 string HooksDhcpv4SrvTest::callback_name_;
 Pkt4Ptr HooksDhcpv4SrvTest::callback_pkt4_;
 Subnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
+HWAddrPtr HooksDhcpv4SrvTest::callback_hwaddr_;
+ClientIdPtr HooksDhcpv4SrvTest::callback_clientid_;
 Lease4Ptr HooksDhcpv4SrvTest::callback_lease4_;
 const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
 vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
@@ -2671,6 +2699,156 @@ TEST_F(HooksDhcpv4SrvTest, subnet_select_change) {
     // in dynamic pool)
     EXPECT_TRUE((*subnets)[1]->inRange(addr));
     EXPECT_TRUE((*subnets)[1]->inPool(addr));
+}
+
+// This test verifies that incoming (positive) REQUEST/Renewing can be handled
+// properly and that callout installed on lease4_renew is triggered with
+// expected parameters.
+TEST_F(HooksDhcpv4SrvTest, basic_lease4_renew) {
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_t1 = 50;
+    const uint32_t temp_t2 = 75;
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_renew", lease4_renew_callout));
+
+    // Generate client-id also sets client_id_ member
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(addr));
+
+    // let's create a lease and put it in the LeaseMgr
+    uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2, sizeof(hwaddr2),
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_t1, temp_t2, temp_timestamp,
+                              subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RENEW
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress(addr));
+    req->setYiaddr(addr);
+    req->setCiaddr(addr); // client's address
+
+    req->addOption(clientid);
+    req->addOption(srv_->getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt4Ptr ack = srv_->processRequest(req);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPACK, 1234);
+
+    // Check that the lease is really in the database
+    l = checkLease(ack, clientid, req->getHWAddr(), addr);
+    ASSERT_TRUE(l);
+
+    // Check that T1, T2, preferred, valid and cltt were really updated
+    EXPECT_EQ(l->t1_, subnet_->getT1());
+    EXPECT_EQ(l->t2_, subnet_->getT2());
+    EXPECT_EQ(l->valid_lft_, subnet_->getValid());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease4_renew", callback_name_);
+
+    // Check that hwaddr parameter is passed properly
+    ASSERT_TRUE(callback_hwaddr_);
+    EXPECT_EQ(*callback_hwaddr_, *req->getHWAddr());
+
+    // Check that the subnet is passed properly
+    ASSERT_TRUE(callback_subnet4_);
+    EXPECT_EQ(callback_subnet4_->toText(), subnet_->toText());
+
+    ASSERT_TRUE(callback_clientid_);
+    ASSERT_TRUE(client_id_);
+    EXPECT_TRUE(*client_id_ == *callback_clientid_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("subnet4");
+    expected_argument_names.push_back("clientid");
+    expected_argument_names.push_back("hwaddr");
+    expected_argument_names.push_back("lease4");
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+}
+
+// This test verifies that a callout installed on lease4_renew can trigger
+// the server to not renew a lease.
+TEST_F(HooksDhcpv4SrvTest, skip_lease4_renew) {
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_t1 = 50;
+    const uint32_t temp_t2 = 75;
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_renew", skip_callout));
+
+    // Generate client-id also sets client_id_ member
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(addr));
+
+    // let's create a lease and put it in the LeaseMgr
+    uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2, sizeof(hwaddr2),
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_t1, temp_t2, temp_timestamp,
+                              subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Check that T1, T2, preferred, valid and cltt really set.
+    // Constructed lease looks as if it was assigned 10 seconds ago
+    // EXPECT_EQ(l->t1_, temp_t1);
+    // EXPECT_EQ(l->t2_, temp_t2);
+    EXPECT_EQ(l->valid_lft_, temp_valid);
+    EXPECT_EQ(l->cltt_, temp_timestamp);
+
+    // Let's create a RENEW
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress(addr));
+    req->setYiaddr(addr);
+    req->setCiaddr(addr); // client's address
+
+    req->addOption(clientid);
+    req->addOption(srv_->getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt4Ptr ack = srv_->processRequest(req);
+    ASSERT_TRUE(ack);
+
+    // Check that the lease is really in the database
+    l = checkLease(ack, clientid, req->getHWAddr(), addr);
+    ASSERT_TRUE(l);
+
+    // Check that T1, T2, valid and cltt were NOT updated
+    EXPECT_EQ(temp_t1, l->t1_);
+    EXPECT_EQ(temp_t2, l->t2_);
+    EXPECT_EQ(temp_valid, l->valid_lft_);
+    EXPECT_EQ(temp_timestamp, l->cltt_);
+
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
 }
 
 // This test verifies that valid RELEASE triggers lease4_release callouts

@@ -1260,6 +1260,10 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
 ///
 /// It features a couple of callout functions and buffers to store
 /// the data that is accessible via callouts.
+///
+/// Note: lease4_renew callout is tested from DHCPv4 server.
+/// See HooksDhcpv4SrvTest.basic_lease4_renew in
+/// src/bin/dhcp4/tests/dhcp4_srv_unittest.cc
 class HookAllocEngine4Test : public AllocEngine4Test {
 public:
     HookAllocEngine4Test() {
