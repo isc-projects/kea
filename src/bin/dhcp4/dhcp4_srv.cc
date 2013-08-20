@@ -846,6 +846,10 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
 Pkt4Ptr
 Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
+
+    /// @todo Uncomment this
+    // sanityCheck(request, MANDATORY);
+
     Pkt4Ptr ack = Pkt4Ptr
         (new Pkt4(DHCPACK, request->getTransid()));
 
@@ -868,6 +872,9 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
 void
 Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
+
+    /// @todo Uncomment this
+    // sanityCheck(release, MANDATORY);
 
     // Try to find client-id
     ClientIdPtr client_id;
@@ -969,12 +976,13 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
 void
 Dhcpv4Srv::processDecline(Pkt4Ptr& /* decline */) {
-    /// TODO: Implement this.
+    /// @todo Implement this.
 }
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
-    /// TODO: Currently implemented echo mode. Implement this for real
+
+    /// @todo Implement this for real.
     return (inform);
 }
 
