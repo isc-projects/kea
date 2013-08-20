@@ -1631,21 +1631,33 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     NakedDhcpv4Srv srv(0);
 
     // check if appropriate hooks are registered
-    int hook_index_pkt4_received = -1;
-    int hook_index_select_subnet = -1;
-    int hook_index_pkt4_send     = -1;
+    int hook_index_buffer4_receive = -1;
+    int hook_index_pkt4_receive    = -1;
+    int hook_index_select_subnet   = -1;
+    int hook_index_lease4_release  = -1;
+    int hook_index_pkt4_send       = -1;
+    int hook_index_buffer4_send    = -1;
 
     // check if appropriate indexes are set
-    EXPECT_NO_THROW(hook_index_pkt4_received = ServerHooks::getServerHooks()
+    EXPECT_NO_THROW(hook_index_buffer4_receive = ServerHooks::getServerHooks()
+                    .getIndex("buffer4_receive"));
+    EXPECT_NO_THROW(hook_index_pkt4_receive = ServerHooks::getServerHooks()
                     .getIndex("pkt4_receive"));
     EXPECT_NO_THROW(hook_index_select_subnet = ServerHooks::getServerHooks()
                     .getIndex("subnet4_select"));
-    EXPECT_NO_THROW(hook_index_pkt4_send     = ServerHooks::getServerHooks()
+    EXPECT_NO_THROW(hook_index_lease4_release = ServerHooks::getServerHooks()
+                    .getIndex("lease4_release"));
+    EXPECT_NO_THROW(hook_index_pkt4_send = ServerHooks::getServerHooks()
                     .getIndex("pkt4_send"));
+    EXPECT_NO_THROW(hook_index_buffer4_send = ServerHooks::getServerHooks()
+                    .getIndex("buffer4_send"));
 
-    EXPECT_TRUE(hook_index_pkt4_received > 0);
+    EXPECT_TRUE(hook_index_buffer4_receive > 0);
+    EXPECT_TRUE(hook_index_pkt4_receive > 0);
     EXPECT_TRUE(hook_index_select_subnet > 0);
+    EXPECT_TRUE(hook_index_lease4_release > 0);
     EXPECT_TRUE(hook_index_pkt4_send > 0);
+    EXPECT_TRUE(hook_index_buffer4_send > 0);
 }
 
     // a dummy MAC address
@@ -1764,6 +1776,67 @@ public:
         buf.push_back(static_cast<uint8_t>(DHCPDISCOVER));
 
         return (Pkt4Ptr(new Pkt4(&buf[0], buf.size())));
+    }
+
+    /// Test callback that stores received callout name and pkt4 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_receive_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("buffer4_receive");
+
+        callout_handle.getArgument("query4", callback_pkt4_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// Test callback that changes hwaddr value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_receive_change_hwaddr(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("query4", pkt);
+
+        // If there is at least one option with data
+        if (pkt->data_.size() >= Pkt4::DHCPV4_PKT_HDR_LEN) {
+            // Offset of the first byte of the CHWADDR field. Let's the first
+            // byte to some new value that we could later check
+            pkt->data_[28] = 0xff;
+        }
+
+        // Carry on as usual
+        return buffer4_receive_callout(callout_handle);
+    }
+
+    /// Test callback that deletes MAC address
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_receive_delete_hwaddr(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("query4", pkt);
+
+        pkt->data_[2] = 0; // offset 2 is hlen, let's set it to zero
+        memset(&pkt->data_[28], 0, Pkt4::MAX_CHADDR_LEN); // Clear CHADDR content
+
+        // carry on as usual
+        return buffer4_receive_callout(callout_handle);
+    }
+
+    /// Test callback that sets skip flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_receive_skip(CalloutHandle& callout_handle) {
+
+        callout_handle.setSkip(true);
+
+        // Carry on as usual
+        return buffer4_receive_callout(callout_handle);
     }
 
     /// test callback that stores received callout name and pkt4 value
@@ -1970,8 +2043,106 @@ Subnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
 const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
 vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
 
+// Checks if callouts installed on pkt4_receive are indeed called and the
+// all necessary parameters are passed.
+//
+// Note that the test name does not follow test naming convention,
+// but the proper hook name is "buffer4_receive".
+TEST_F(HooksDhcpv4SrvTest, simple_buffer4_receive) {
 
-// Checks if callouts installed on pkt4_received are indeed called and the
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_receive", buffer4_receive_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr dis = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(dis);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv_->run();
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("buffer4_receive", callback_name_);
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == dis.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("query4"));
+
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+}
+
+// Checks if callouts installed on buffer4_receive is able to change
+// the values and the parameters are indeed used by the server.
+TEST_F(HooksDhcpv4SrvTest, valueChange_buffer4_receive) {
+
+    // Install callback that modifies MAC addr of incoming packet
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_receive", buffer4_receive_change_hwaddr));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr discover = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(discover);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv_->run();
+
+    // Check that the server did send a reposonce
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr offer = srv_->fake_sent_.front();
+    ASSERT_TRUE(offer);
+
+    // Get client-id...
+    HWAddrPtr hwaddr = offer->getHWAddr();
+
+    ASSERT_TRUE(hwaddr); // basic sanity check. HWAddr is always present
+
+    // ... and check if it is the modified value
+    ASSERT_FALSE(hwaddr->hwaddr_.empty()); // there must be a MAC address
+    EXPECT_EQ(0xff, hwaddr->hwaddr_[0]); // check that its first byte was modified
+}
+
+// Checks if callouts installed on buffer4_receive is able to set skip flag that
+// will cause the server to not parse the packet. Even though the packet is valid,
+// the server should eventually drop it, because there won't be mandatory options
+// (or rather option objects) in it.
+TEST_F(HooksDhcpv4SrvTest, skip_buffer4_receive) {
+
+    // Install pkt6_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_receive", buffer4_receive_skip));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr discover = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(discover);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt6_receive callback.
+    srv_->run();
+
+    // Check that the server dropped the packet and did not produce any response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+// Checks if callouts installed on pkt4_receive are indeed called and the
 // all necessary parameters are passed.
 //
 // Note that the test name does not follow test naming convention,
@@ -1983,7 +2154,7 @@ TEST_F(HooksDhcpv4SrvTest, simple_pkt4_receive) {
                         "pkt4_receive", pkt4_receive_callout));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+    Pkt4Ptr sol = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -2016,7 +2187,7 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
                         "pkt4_receive", pkt4_receive_change_clientid));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+    Pkt4Ptr sol = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -2052,7 +2223,7 @@ TEST_F(HooksDhcpv4SrvTest, deleteClientId_pkt4_receive) {
                         "pkt4_receive", pkt4_receive_delete_clientid));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+    Pkt4Ptr sol = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -2076,7 +2247,7 @@ TEST_F(HooksDhcpv4SrvTest, skip_pkt4_receive) {
                         "pkt4_receive", pkt4_receive_skip));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+    Pkt4Ptr sol = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -2101,7 +2272,7 @@ TEST_F(HooksDhcpv4SrvTest, simple_pkt4_send) {
                         "pkt4_send", pkt4_send_callout));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+    Pkt4Ptr sol = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -2137,7 +2308,7 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_send) {
                         "pkt4_send", pkt4_send_change_serverid));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+    Pkt4Ptr sol = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -2174,7 +2345,7 @@ TEST_F(HooksDhcpv4SrvTest, deleteServerId_pkt4_send) {
                         "pkt4_send", pkt4_send_delete_serverid));
 
     // Let's create a simple DISCOVER
-    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+    Pkt4Ptr sol = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
@@ -2205,7 +2376,7 @@ TEST_F(HooksDhcpv4SrvTest, skip_pkt4_send) {
                         "pkt4_send", pkt4_send_skip));
 
     // Let's create a simple REQUEST
-    Pkt4Ptr sol = Pkt4Ptr(generateSimpleDiscover());
+    Pkt4Ptr sol = generateSimpleDiscover();
 
     // Simulate that we have received that traffic
     srv_->fakeReceive(sol);
