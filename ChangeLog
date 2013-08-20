@@ -1,12 +1,12 @@
 663.	[func]		marcin
-	bind10-dhcp6: Server processes the DHCPv6 Client FQDN Option
+	b10-dhcp6: Server processes the DHCPv6 Client FQDN Option
 	sent by a client and generates the response. The DHCPv6 Client
 	FQDN Option is represented by the new class in the libdhcp++.
 	As a result of FQDN Option processing, the server generates
 	NameChangeRequests which represent changes to DNS mappings for
 	a particular lease (addition or removal of DNS mappings).
 	Currently all generated NameChangeRequests are dropped. Sending
-	them to bind10-d2 will be implemented with the future tickets.
+	them to b10-dhcp-ddns will be implemented with the future tickets.
 	(Trac #3036, git 209f3964b9f12afbf36f3fa6b62964e03049ec6e)
 
 662.	[func]		marcin
