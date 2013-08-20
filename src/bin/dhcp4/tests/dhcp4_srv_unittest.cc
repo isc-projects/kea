@@ -1701,9 +1701,12 @@ public:
     /// @brief destructor (deletes Dhcpv4Srv)
     virtual ~HooksDhcpv4SrvTest() {
 
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("buffer4_receive");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("buffer4_send");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_receive");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_send");
         HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("subnet4_select");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_release");
 
         delete srv_;
     }
@@ -2384,11 +2387,16 @@ TEST_F(HooksDhcpv4SrvTest, skip_pkt4_send) {
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive4(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt4_receive callback.
+    // In particular, it should call registered pkt4_send callback.
     srv_->run();
 
-    // check that the server dropped the packet and did not produce any response
-    ASSERT_EQ(0, srv_->fake_sent_.size());
+    // Check that the server sent the message
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Get the first packet and check that it has zero length (i.e. the server
+    // did not do packing on its own)
+    Pkt4Ptr sent = srv_->fake_sent_.front();
+    EXPECT_EQ(0, sent->getBuffer().getLength());
 }
 
 // This test checks if subnet4_select callout is triggered and reports
