@@ -158,6 +158,10 @@ This is a general catch-all message indicating that the processing of a
 received packet failed.  The reason is given in the message.  The server
 will not send a response but will instead ignore the packet.
 
+% DHCP4_PACKET_DROP_NO_TYPE dropped packet received on interface %1: does not have msg-type option
+THis is a debug message informing that incoming DHCPv4 packet did not
+have mandatory DHCP message type option and thus was dropped.
+
 % DHCP4_PACKET_RECEIVED %1 (type %2) packet received on interface %3
 A debug message noting that the server has received the specified type of
 packet on the specified interface.  Note that a packet marked as UNKNOWN
