@@ -15,6 +15,7 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
+#include <cryptolink/cryptolink.h>
 
 #include <botan/sha2_32.h>
 
@@ -86,6 +87,11 @@ D2Dhcid::fromDUID(const isc::dhcp::DUID& duid,
     data.insert(data.end(), wire_fqdn.begin(), wire_fqdn.end());
 
     // Use the DUID and FQDN to compute the digest (see RFC4701, section 3).
+
+    // The getCryptoLink is a common function to initialize the Botan library.
+    cryptolink::CryptoLink::getCryptoLink();
+    // @todo The code below, which calculates the SHA-256 may need to be moved
+    // to the cryptolink library.
     Botan::SecureVector<Botan::byte> secure;
     try {
         Botan::SHA_256 sha;
