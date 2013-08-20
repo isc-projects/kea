@@ -23,6 +23,7 @@ libb10_dhcp___la_SOURCES += iface_mgr_linux.cc
 libb10_dhcp___la_SOURCES += iface_mgr_sun.cc
 libb10_dhcp___la_SOURCES += libdhcp++.cc libdhcp++.h
 libb10_dhcp___la_SOURCES += option4_addrlst.cc option4_addrlst.h
+libb10_dhcp___la_SOURCES += option4_client_fqdn.cc option4_client_fqdn.h
 libb10_dhcp___la_SOURCES += option6_ia.cc option6_ia.h
 libb10_dhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
 libb10_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
