@@ -198,7 +198,7 @@ Dhcpv4Srv::run() {
         bool skip_unpack = false;
 
         // The packet has just been received so contains the uninterpreted wire
-        // data; execute callouts registered for buffer6_receive.
+        // data; execute callouts registered for buffer4_receive.
         if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
@@ -236,12 +236,21 @@ Dhcpv4Srv::run() {
             }
         }
 
+        // When receiving a packet without message type option, getType() will
+        // throw. Let's set type to -1 as default error indicator.
+        int type = -1;
+        try {
+            type = query->getType();
+        } catch (const std::exception& e) {
+
+        }
+
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_RECEIVED)
             .arg(serverReceivedPacketName(query->getType()))
-            .arg(query->getType())
+            .arg(type)
             .arg(query->getIface());
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
-            .arg(static_cast<int>(query->getType()))
+            .arg(type)
             .arg(query->toText());
 
         // Let's execute all callouts registered for packet_received
