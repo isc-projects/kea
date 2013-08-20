@@ -1,0 +1,109 @@
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+/**
+
+ @page contributorGuide BIND10 Contributor's Guide
+
+So you found a bug in BIND10 or developed an extension and want to
+send a patch? Great! This page will explain how to contribute your
+changes and not get disappointed in the process.
+
+Before you start working on a patch or new feature, it is a good idea
+to discuss it first with BIND10 developers. You can post your
+questions to bind10-dev
+(https://lists.isc.org/mailman/listinfo/bind10-dev) for general BIND10
+stuff or to bind10-dhcp
+(https://lists.isc.org/mailman/listinfo/bind10-dhcp) for DHCP specific
+topics. If you prefer to get faster feedback, most BIND10 developers
+hang out at bind10 jabber room
+(xmpp:bind10@conference.jabber.isc.org). Those involved in DHCP also
+use dhcp chatroom (xmpp:dhcp@conference.jabber.isc.org). Feel free to
+drop a note. It is possible that someone else is working on your
+specific issue or perhaps the solution you plan to implement is not
+the best one. Often having 10 minutes talk could save many hours of
+engineering work.
+
+Ok, so you have a patch? Great! Before you submit it, make sure that
+your code compiles. This may seem obvious, but it there's more to
+it. I'm sure you have checked that it compiles on your system, but
+BIND10 is a portable software. Besides Linux, it is being compiled on
+relatively uncommon systems, like OpenBSD or Solaris 11. Will your
+code compile there? Will it work? What about endianess? It is likely
+that you used regular x86, but the software is expected to run on many
+other architectures.
+
+Have your patch conforms to BIND10 
+http://bind10.isc.org/wiki/CodingGuidelines? You still can submit
+a patch that does not adhere to it, but it will decrease your
+chances of being accepted. If the deviations are minor, ISC engineer
+that will do the review, will likely fix the issues. However,
+if there are lots of them, reviewer may simply reject the patch
+and ask you to fix it, before resubmitting.
+
+One of the ground rules in BIND10 development is that every piece of
+code has to be tested. We now have an extensive set of unit-tests for
+almost every line of code. Even if you are fixing something small,
+like a single line fix, it is encouraged to write unit-test for that
+change. That is even more true for new code. If you write a new
+function, method or a class, you definitely should write unit-tests
+for it. 
+
+BIND10 uses google test (gtest) framework as a base for our
+unit-tests. See http://code.google.com/p/googletest/ for details.
+You must have gtest installed or at least compiled before compiling
+BIND10 unit-tests. To enable unit-tests in BIND10
+
+./configure --with-gtest=/path/to/your/gtest/dir
+
+or 
+
+./configure --with-gtest-source=/path/to/your/gtest/dir
+
+Depending on how you compiled or installed (e.g. from sources or using
+some package management system) one of those two switches will find
+gtest. After that you make run unit-tests:
+
+make check
+
+If you happen to add new files or modified Makefiles, it is also a
+good idea to check if you haven't broken distribution process:
+
+make distcheck
+
+Once all those are checked and working, feel free to create a ticket
+for your patch (http://bind10.isc.org) or attach your patch to the
+existing ticket if there is one. You may drop a note to bind10 or dhcp
+chatroom saying that you have submitted a patch. Alternatively, you
+may send a note to bind10-dev or bind10-dhcp lists.
+
+Here's the tricky part. One of BIND10 developers will review your
+patch, but it may not happen immediately. Unfortunately, developers
+are usually working under tight schedule, so any extra unplanned
+review work sometimes make take a while. Having said that, we value
+external contributions very much and will do whatever we can to
+review patches in a timely manner. Don't get discouraged if your
+patch is not accepted after first review. To keep the code quality
+high, we use the same review processes for internal code and for
+external patches. It may take several cycles of review/updated patch
+submissions before the code is finally accepted.
+
+Once the process is almost completed, the developer will likely ask
+you how you would like to be credited. The typical answers are by
+first,last name, by nickname, by company or anonymously. Typically we
+will add a note to ChangeLog. If the contributted feature is big or
+critical for whatever reason, it may be also mentioned in release
+notes.
+
+*/

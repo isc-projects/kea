@@ -33,6 +33,9 @@
  * you should read <a href="http://bind10.isc.org/docs/bind10-guide.html">BIND10
  * Guide (Administrator Reference for BIND10)</a> instead.
  *
+ * @section contrib Contributor's Guide
+ * - @subpage contributorGuide
+ *
  * Regardless of your field of expertise, you are encouraged to visit
  * <a href="http://bind10.isc.org/">BIND10 webpage (http://bind10.isc.org)</a>
  * @section hooksFramework Hooks Framework
