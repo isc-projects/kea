@@ -481,8 +481,14 @@ Lease4Ptr AllocEngine::renewLease4(const SubnetPtr& subnet,
         // Delete all previous arguments
         callout_handle->deleteAllArguments();
 
+        // Subnet from which we do the allocation. Convert the general subnet
+        // pointer to a pointer to a Subnet4.  Note that because we are using
+        // boost smart pointers here, we need to do the cast using the boost
+        // version of dynamic_pointer_cast.
+        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(subnet);
+
         // Pass the parameters
-        callout_handle->setArgument("subnet4", subnet);
+        callout_handle->setArgument("subnet4", subnet4);
         callout_handle->setArgument("clientid", clientid);
         callout_handle->setArgument("hwaddr", hwaddr);
 
