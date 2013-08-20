@@ -102,11 +102,15 @@ public:
     using Dhcpv6Srv::processRequest;
     using Dhcpv6Srv::processRenew;
     using Dhcpv6Srv::processRelease;
+    using Dhcpv6Srv::processClientFqdn;
+    using Dhcpv6Srv::createNameChangeRequests;
+    using Dhcpv6Srv::createRemovalNameChangeRequest;
     using Dhcpv6Srv::createStatusCode;
     using Dhcpv6Srv::selectSubnet;
     using Dhcpv6Srv::sanityCheck;
     using Dhcpv6Srv::loadServerID;
     using Dhcpv6Srv::writeServerID;
+    using Dhcpv6Srv::name_change_reqs_;
 
     /// @brief packets we pretend to receive
     ///

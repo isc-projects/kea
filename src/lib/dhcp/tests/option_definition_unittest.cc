@@ -928,7 +928,7 @@ TEST_F(OptionDefinitionTest, utf8StringTokenized) {
     // Let's create some dummy option.
     const uint16_t opt_code = 80;
     OptionDefinition opt_def("OPTION_WITH_STRING", opt_code, "string");
-    
+
     std::vector<std::string> values;
     values.push_back("Hello World");
     values.push_back("this string should not be included in the option");
@@ -960,7 +960,7 @@ TEST_F(OptionDefinitionTest, integerInvalidType) {
 // The purpose of this test is to verify that helper methods
 // haveIA6Format and haveIAAddr6Format can be used to determine
 // IA_NA  and IAADDR option formats.
-TEST_F(OptionDefinitionTest, recognizeFormat) {
+TEST_F(OptionDefinitionTest, haveIAFormat) {
     // IA_NA option format.
     OptionDefinition opt_def1("OPTION_IA_NA", D6O_IA_NA, "record");
     for (int i = 0; i < 3; ++i) {
@@ -982,6 +982,21 @@ TEST_F(OptionDefinitionTest, recognizeFormat) {
     // return 'true' all the time.
     OptionDefinition opt_def4("OPTION_IAADDR", D6O_IAADDR, "uint32", true);
     EXPECT_FALSE(opt_def4.haveIAAddr6Format());
+}
+
+// This test verifies that haveClientFqdnFormat function recognizes that option
+// definition describes the format of DHCPv6 Client Fqdn Option Format.
+TEST_F(OptionDefinitionTest, haveClientFqdnFormat) {
+    OptionDefinition opt_def("OPTION_CLIENT_FQDN", D6O_CLIENT_FQDN, "record");
+    opt_def.addRecordField("uint8");
+    opt_def.addRecordField("fqdn");
+    EXPECT_TRUE(opt_def.haveClientFqdnFormat());
+
+    // Create option format which is not matching the Client FQDN option format
+    // to verify that tested function does dont always return true.
+    OptionDefinition opt_def_invalid("OPTION_CLIENT_FQDN", D6O_CLIENT_FQDN,
+                                     "uint8");
+    EXPECT_FALSE(opt_def_invalid.haveClientFqdnFormat());
 }
 
 } // anonymous namespace
