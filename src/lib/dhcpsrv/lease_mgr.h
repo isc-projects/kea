@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -258,6 +258,16 @@ struct Lease4 : public Lease {
     /// Initialize fields that don't have a default constructor.
     Lease4() : Lease(0, 0, 0, 0, 0, 0) {
     }
+
+    /// @brief Copy constructor
+    ///
+    /// @param other the @c Lease4 object to be copied.
+    Lease4(const Lease4& other);
+
+    /// @brief Assignment operator.
+    ///
+    /// @param other the @c Lease4 object to be assigned.
+    Lease4& operator=(const Lease4& other);
 
     /// @brief Compare two leases for equality
     ///

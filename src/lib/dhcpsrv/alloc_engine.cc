@@ -329,7 +329,10 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
                               const HWAddrPtr& hwaddr,
                               const IOAddress& hint,
                               bool fake_allocation,
-                              const isc::hooks::CalloutHandlePtr& callout_handle) {
+                              const isc::hooks::CalloutHandlePtr& callout_handle,
+                              Lease4Ptr& old_lease) {
+
+    old_lease.reset();
 
     try {
         // Allocator is always created in AllocEngine constructor and there is
@@ -349,6 +352,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
         // Check if there's existing lease for that subnet/clientid/hwaddr combination.
         Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(*hwaddr, subnet->getID());
         if (existing) {
+            old_lease.reset(new Lease4(*existing));
             // We have a lease already. This is a returning client, probably after
             // its reboot.
             existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
@@ -363,6 +367,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
         if (clientid) {
             existing = LeaseMgrFactory::instance().getLease4(*clientid, subnet->getID());
             if (existing) {
+                old_lease.reset(new Lease4(*existing));
                 // we have a lease already. This is a returning client, probably after
                 // its reboot.
                 existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
@@ -393,6 +398,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
                 }
             } else {
                 if (existing->expired()) {
+                    old_lease.reset(new Lease4(*existing));
                     return (reuseExpiredLease(existing, subnet, clientid, hwaddr,
                                               callout_handle, fake_allocation));
                 }
