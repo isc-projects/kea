@@ -33,7 +33,8 @@ namespace dhcp {
 const IOAddress DEFAULT_ADDRESS("0.0.0.0");
 
 Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
-     :local_addr_(DEFAULT_ADDRESS),
+     :bufferOut_(DHCPV4_PKT_HDR_LEN),
+      local_addr_(DEFAULT_ADDRESS),
       remote_addr_(DEFAULT_ADDRESS),
       iface_(""),
       ifindex_(0),
@@ -48,8 +49,7 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       ciaddr_(DEFAULT_ADDRESS),
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
-      giaddr_(DEFAULT_ADDRESS),
-      bufferOut_(DHCPV4_PKT_HDR_LEN)
+      giaddr_(DEFAULT_ADDRESS)
 {
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
@@ -58,7 +58,8 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
 }
 
 Pkt4::Pkt4(const uint8_t* data, size_t len)
-     :local_addr_(DEFAULT_ADDRESS),
+     :bufferOut_(0), // not used, this is RX packet
+      local_addr_(DEFAULT_ADDRESS),
       remote_addr_(DEFAULT_ADDRESS),
       iface_(""),
       ifindex_(0),
@@ -72,8 +73,7 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       ciaddr_(DEFAULT_ADDRESS),
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
-      giaddr_(DEFAULT_ADDRESS),
-      bufferOut_(0) // not used, this is RX packet
+      giaddr_(DEFAULT_ADDRESS)
 {
     if (len < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Truncated DHCPv4 packet (len=" << len
