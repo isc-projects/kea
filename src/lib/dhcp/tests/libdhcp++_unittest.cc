@@ -18,6 +18,7 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
@@ -733,8 +734,8 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_USER_CLASS, begin, end,
                                     typeid(Option));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_FQDN, begin, end,
-                                    typeid(OptionCustom));
+    LibDhcpTest::testStdOptionDefs4(DHO_FQDN, begin, begin + 3,
+                                    typeid(Option4ClientFqdn));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DHCP_AGENT_OPTIONS, begin, end,
                                     typeid(Option), "dhcp-agent-options-space");

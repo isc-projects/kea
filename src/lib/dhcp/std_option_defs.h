@@ -62,7 +62,8 @@ struct OptionDefParams {
 // RFC 1035, section 3.1. The latter could be handled
 // by OPT_FQDN_TYPE but we can't use it here because
 // clients may request ASCII encoding.
-RECORD_DECL(FQDN_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_STRING_TYPE);
+RECORD_DECL(FQDN_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
+            OPT_FQDN_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams OPTION_DEF_PARAMS4[] = {
