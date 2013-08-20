@@ -15,6 +15,9 @@
 #include <dhcp_ddns/ncr_msg.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
+#include <cryptolink/cryptolink.h>
+
+#include <botan/sha2_32.h>
 
 #include <sstream>
 #include <limits>
@@ -31,6 +34,12 @@ D2Dhcid::D2Dhcid(const std::string& data) {
     fromStr(data);
 }
 
+D2Dhcid::D2Dhcid(const isc::dhcp::DUID& duid,
+                 const std::vector<uint8_t>& wire_fqdn) {
+    fromDUID(duid, wire_fqdn);
+}
+
+
 void
 D2Dhcid::fromStr(const std::string& data) {
     bytes_.clear();
@@ -44,8 +53,62 @@ D2Dhcid::fromStr(const std::string& data) {
 std::string
 D2Dhcid::toStr() const {
     return (isc::util::encode::encodeHex(bytes_));
+}
 
+void
+D2Dhcid::fromDUID(const isc::dhcp::DUID& duid,
+                  const std::vector<uint8_t>& wire_fqdn) {
+    // DHCID created from DUID starts with two bytes representing
+    // a type of the identifier. The value of 0x0002 indicates that
+    // DHCID has been created from DUID. The 3rd byte is equal to 1
+    // which indicates that the SHA-256 algorithm is used to create
+    // a DHCID digest. This value is called digest-type.
+    static uint8_t dhcid_header[] = { 0x00, 0x02, 0x01 };
 
+    // We get FQDN in the wire format, so we don't know if it is
+    // valid. It is caller's responsibility to make sure it is in
+    // the valid format. Here we just make sure it is not empty.
+    if (wire_fqdn.empty()) {
+        isc_throw(isc::dhcp_ddns::NcrMessageError,
+                  "empty FQDN used to create DHCID");
+    }
+
+    // Get the wire representation of the DUID.
+    std::vector<uint8_t> data = duid.getDuid();
+    // It should be DUID class responsibility to validate the DUID
+    // but let's be on the safe side here and make sure that empty
+    // DUID is not returned.
+    if (data.empty()) {
+        isc_throw(isc::dhcp_ddns::NcrMessageError,
+                  "empty DUID used to create DHCID");
+    }
+
+    // Append FQDN in the wire format.
+    data.insert(data.end(), wire_fqdn.begin(), wire_fqdn.end());
+
+    // Use the DUID and FQDN to compute the digest (see RFC4701, section 3).
+
+    // The getCryptoLink is a common function to initialize the Botan library.
+    cryptolink::CryptoLink::getCryptoLink();
+    // @todo The code below, which calculates the SHA-256 may need to be moved
+    // to the cryptolink library.
+    Botan::SecureVector<Botan::byte> secure;
+    try {
+        Botan::SHA_256 sha;
+        // We have checked already that the DUID and FQDN aren't empty
+        // so it is safe to assume that the data buffer is not empty.
+        secure = sha.process(static_cast<const Botan::byte*>(&data[0]),
+                             data.size());
+    } catch (const std::exception& ex) {
+        isc_throw(isc::dhcp_ddns::NcrMessageError,
+                  "error while generating DHCID from DUID: "
+                  << ex.what());
+    }
+
+    // The exception unsafe part is finished, so we can finally replace
+    // the contents of bytes_.
+    bytes_.assign(dhcid_header, dhcid_header + sizeof(dhcid_header));
+    bytes_.insert(bytes_.end(), secure.begin(), secure.end());
 }
 
 

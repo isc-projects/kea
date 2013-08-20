@@ -275,6 +275,12 @@ public:
     /// @return true if specified format is IAADDR option format.
     bool haveIAAddr6Format() const;
 
+    /// @brief Check if specified format is OPTION_CLIENT_FQDN option format.
+    ///
+    /// @return true of specified format is OPTION_CLIENT_FQDN option format,
+    /// false otherwise.
+    bool haveClientFqdnFormat() const;
+
     /// @brief Check if option has format of the DHCPv4 Client FQDN
     /// %Option.
     ///

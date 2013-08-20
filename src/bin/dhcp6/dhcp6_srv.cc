@@ -15,11 +15,13 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option6_addrlst.h>
+#include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaaddr.h>
@@ -51,6 +53,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::dhcp_ddns;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::util;
@@ -90,6 +93,34 @@ Dhcp6Hooks Hooks;
 
 namespace isc {
 namespace dhcp {
+
+namespace {
+
+// The following constants describe server's behavior with respect to the
+// DHCPv6 Client FQDN Option sent by a client. They will be removed
+// when DDNS parameters for DHCPv6 are implemented with the ticket #3034.
+
+// Should server always include the FQDN option in its response, regardless
+// if it has been requested in ORO (Disabled).
+const bool FQDN_ALWAYS_INCLUDE = false;
+// Enable AAAA RR update delegation to the client (Disabled).
+const bool FQDN_ALLOW_CLIENT_UPDATE = false;
+// Globally enable updates (Enabled).
+const bool FQDN_ENABLE_UPDATE = true;
+// The partial name generated for the client if empty name has been
+// supplied.
+const char* FQDN_GENERATED_PARTIAL_NAME = "myhost";
+// Do update, even if client requested no updates with N flag (Disabled).
+const bool FQDN_OVERRIDE_NO_UPDATE = false;
+// Server performs an update when client requested delegation (Enabled).
+const bool FQDN_OVERRIDE_CLIENT_UPDATE = true;
+// The fully qualified domain-name suffix if partial name provided by
+// a client.
+const char* FQDN_PARTIAL_SUFFIX = "example.com";
+// Should server replace the domain-name supplied by the client (Disabled).
+const bool FQDN_REPLACE_CLIENT_NAME = false;
+
+}
 
 /// @brief file name of a server-id file
 ///
@@ -268,6 +299,7 @@ bool Dhcpv6Srv::run() {
         }
 
         try {
+                NameChangeRequestPtr ncr;
             switch (query->getType()) {
             case DHCPV6_SOLICIT:
                 rsp = processSolicit(query);
@@ -383,6 +415,7 @@ bool Dhcpv6Srv::run() {
                         .arg(e.what());
                     continue;
                 }
+
             }
 
             try {
@@ -423,6 +456,9 @@ bool Dhcpv6Srv::run() {
                 LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL)
                     .arg(e.what());
             }
+
+            // Send NameChangeRequests to the b10-dhcp_ddns module.
+            sendNameChangeRequests();
         }
     }
 
@@ -774,7 +810,8 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
 }
 
 void
-Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                        const Option6ClientFqdnPtr& fqdn) {
 
     // We need to allocate addresses for all IA_NA options in the client's
     // question (i.e. SOLICIT or REQUEST) message.
@@ -829,8 +866,9 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = assignIA_NA(subnet, duid, question,
-                                               boost::dynamic_pointer_cast<Option6IA>(opt->second),
-                                               question);
+                                               boost::dynamic_pointer_cast<
+                                               Option6IA>(opt->second),
+                                               fqdn);
             if (answer_opt) {
                 answer->addOption(answer_opt);
             }
@@ -842,9 +880,274 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     }
 }
 
+Option6ClientFqdnPtr
+Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question) {
+    // Get Client FQDN Option from the client's message. If this option hasn't
+    // been included, do nothing.
+    Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
+        Option6ClientFqdn>(question->getOption(D6O_CLIENT_FQDN));
+    if (!fqdn) {
+        return (fqdn);
+    }
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+              DHCP6_DDNS_RECEIVE_FQDN).arg(fqdn->toText());
+
+
+    // Prepare the FQDN option which will be included in the response to
+    // the client.
+    Option6ClientFqdnPtr fqdn_resp(new Option6ClientFqdn(*fqdn));
+    // RFC 4704, section 6. - all flags set to 0.
+    fqdn_resp->resetFlags();
+
+    // Conditions when N flag has to be set to indicate that server will not
+    // perform DNS updates:
+    // 1. Updates are globally disabled,
+    // 2. Client requested no update and server respects it,
+    // 3. Client requested that the AAAA update is delegated to the client but
+    //    server neither respects delegation of updates nor it is configured
+    //    to send update on its own when client requested delegation.
+    if (!FQDN_ENABLE_UPDATE ||
+        (fqdn->getFlag(Option6ClientFqdn::FLAG_N) &&
+         !FQDN_OVERRIDE_NO_UPDATE) ||
+        (!fqdn->getFlag(Option6ClientFqdn::FLAG_S) &&
+         !FQDN_ALLOW_CLIENT_UPDATE && !FQDN_OVERRIDE_CLIENT_UPDATE)) {
+        fqdn_resp->setFlag(Option6ClientFqdn::FLAG_N, true);
+
+    // Conditions when S flag is set to indicate that server will perform
+    // DNS update on its own:
+    // 1. Client requested that server performs DNS update and DNS updates are
+    //    globally enabled
+    // 2. Client requested that server delegates AAAA update to the client but
+    //    server doesn't respect delegation and it is configured to perform
+    //    an update on its own when client requested delegation.
+    } else if (fqdn->getFlag(Option6ClientFqdn::FLAG_S) ||
+               (!fqdn->getFlag(Option6ClientFqdn::FLAG_S) &&
+                !FQDN_ALLOW_CLIENT_UPDATE && FQDN_OVERRIDE_CLIENT_UPDATE)) {
+        fqdn_resp->setFlag(Option6ClientFqdn::FLAG_S, true);
+    }
+
+    // Server MUST set the O flag if it has overridden the client's setting
+    // of S flag.
+    if (fqdn->getFlag(Option6ClientFqdn::FLAG_S) !=
+        fqdn_resp->getFlag(Option6ClientFqdn::FLAG_S)) {
+        fqdn_resp->setFlag(Option6ClientFqdn::FLAG_O, true);
+    }
+
+    // If client supplied partial or empty domain-name, server should
+    // generate one.
+    if (fqdn->getDomainNameType() == Option6ClientFqdn::PARTIAL) {
+        std::ostringstream name;
+        if (fqdn->getDomainName().empty()) {
+            name << FQDN_GENERATED_PARTIAL_NAME;
+        } else {
+            name << fqdn->getDomainName();
+        }
+        name << "." << FQDN_PARTIAL_SUFFIX;
+        fqdn_resp->setDomainName(name.str(), Option6ClientFqdn::FULL);
+
+    // Server may be configured to replace a name supplied by a client,
+    // even if client supplied fully qualified domain-name.
+    } else if (FQDN_REPLACE_CLIENT_NAME) {
+        std::ostringstream name;
+        name << FQDN_GENERATED_PARTIAL_NAME << "." << FQDN_PARTIAL_SUFFIX;
+        fqdn_resp->setDomainName(name.str(), Option6ClientFqdn::FULL);
+
+    }
+
+    // Return the FQDN option which can be included in the server's response.
+    // Note that it doesn't have to be included, if client didn't request
+    // it using ORO and server is not configured to always include it.
+    return (fqdn_resp);
+}
+
+
+void
+Dhcpv6Srv::appendClientFqdn(const Pkt6Ptr& question,
+                            Pkt6Ptr& answer,
+                            const Option6ClientFqdnPtr& fqdn) {
+
+    // If FQDN is NULL, it means that client did not request DNS Update, plus
+    // server doesn't force updates.
+    if (fqdn) {
+        return;
+    }
+
+    // Server sends back the FQDN option to the client if client has requested
+    // it using Option Request Option. However, server may be configured to
+    // send the FQDN option in its response, regardless whether client requested
+    // it or not.
+    bool include_fqdn = FQDN_ALWAYS_INCLUDE;
+    if (!include_fqdn) {
+        OptionUint16ArrayPtr oro = boost::dynamic_pointer_cast<
+            OptionUint16Array>(question->getOption(D6O_ORO));
+        if (oro) {
+            const std::vector<uint16_t>& values = oro->getValues();
+            for (int i = 0; i < values.size(); ++i) {
+                if (values[i] == D6O_CLIENT_FQDN) {
+                    include_fqdn = true;
+                }
+            }
+        }
+    }
+
+    if (include_fqdn) {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                  DHCP6_DDNS_SEND_FQDN).arg(fqdn->toText());
+        answer->addOption(fqdn);
+    }
+
+}
+
+void
+Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
+                                    const Option6ClientFqdnPtr& opt_fqdn) {
+
+    // It is likely that client haven't included the FQDN option in the message
+    // and server is not configured to always update DNS. In such cases,
+    // FQDN option will be NULL. This is valid state, so we simply return.
+    if (!opt_fqdn) {
+        return;
+    }
+
+    // The response message instance is always required. For instance it
+    // holds the Client Identifier. It is a programming error if supplied
+    // message is NULL.
+    if (!answer) {
+        isc_throw(isc::Unexpected, "an instance of the object"
+                  << " encapsulating server's message must not be"
+                  << " NULL when creating DNS NameChangeRequest");
+    }
+
+    // Get the Client Id. It is mandatory and a function creating a response
+    // would have thrown an exception if it was missing. Thus throwning
+    // Unexpected if it is missing as it is a programming error.
+    OptionPtr opt_duid = answer->getOption(D6O_CLIENTID);
+    if (!opt_duid) {
+        isc_throw(isc::Unexpected,
+                  "client identifier is required when creating a new"
+                  " DNS NameChangeRequest");
+    }
+    DuidPtr duid = DuidPtr(new DUID(opt_duid->getData()));
+
+    // Get the FQDN in the on-wire format. It will be needed to compute
+    // DHCID.
+    OutputBuffer name_buf(1);
+    opt_fqdn->packDomainName(name_buf);
+    const uint8_t* name_data = static_cast<const uint8_t*>(name_buf.getData());
+    // @todo currently D2Dhcid accepts a vector holding FQDN.
+    // However, it will be faster if we used a pointer name_data.
+    std::vector<uint8_t> buf_vec(name_data, name_data + name_buf.getLength());
+    // Compute DHCID from Client Identifier and FQDN.
+    isc::dhcp_ddns::D2Dhcid dhcid(*duid, buf_vec);
+
+    // Get all IAs from the answer. For each IA, holding an address we will
+    // create a corresponding NameChangeRequest.
+    Option::OptionCollection answer_ias = answer->getOptions(D6O_IA_NA);
+    for (Option::OptionCollection::const_iterator answer_ia =
+             answer_ias.begin(); answer_ia != answer_ias.end(); ++answer_ia) {
+        // @todo IA_NA may contain multiple addresses. We should process
+        // each address individually. Currently we get only one.
+        Option6IAAddrPtr iaaddr = boost::static_pointer_cast<
+            Option6IAAddr>(answer_ia->second->getOption(D6O_IAADDR));
+        // We need an address to create a name-to-address mapping.
+        // If address is missing for any reason, go to the next IA.
+        if (!iaaddr) {
+            continue;
+        }
+        // Create new NameChangeRequest. Use the domain name from the FQDN.
+        // This is an FQDN included in the response to the client, so it
+        // holds a fully qualified domain-name already (not partial).
+        // Get the IP address from the lease. Also, use the S flag to determine
+        // if forward change should be performed. This flag will always be
+        // set if server has taken responsibility for the forward update.
+        NameChangeRequest ncr(isc::dhcp_ddns::CHG_ADD,
+                              opt_fqdn->getFlag(Option6ClientFqdn::FLAG_S),
+                              true, opt_fqdn->getDomainName(),
+                              iaaddr->getAddress().toText(),
+                              dhcid, 0, iaaddr->getValid());
+        // Add the request to the queue. This queue will be read elsewhere in
+        // the code and all requests from this queue will be sent to the
+        // D2 module.
+        name_change_reqs_.push(ncr);
+
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                  DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST).arg(ncr.toText());
+    }
+}
+
+void
+Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
+    // If we haven't performed a DNS Update when lease was acquired,
+    // there is nothing to do here.
+    if (!lease->fqdn_fwd_ && !lease->fqdn_rev_) {
+        return;
+    }
+
+    // When lease was added into a database the host name should have
+    // been added. The hostname can be empty if someone messed up in the
+    // lease data base and removed the hostname.
+    if (lease->hostname_.empty()) {
+        LOG_ERROR(dhcp6_logger, DHCP6_DDNS_REMOVE_EMPTY_HOSTNAME)
+            .arg(lease->addr_.toText());
+        return;
+    }
+
+    // If hostname is non-empty, try to convert it to wire format so as
+    // DHCID can be computed from it. This may throw an exception if hostname
+    // has invalid format. Again, this should be only possible in case of
+    // manual intervention in the database. Note that the last parameter
+    // passed to the writeFqdn function forces conversion of the FQDN
+    // to lower case. This is required by the RFC4701, section 3.5.
+    // The DHCID computation is further in this function.
+    std::vector<uint8_t> hostname_wire;
+    try {
+        OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
+    } catch (const Exception& ex) {
+        LOG_ERROR(dhcp6_logger, DHCP6_DDNS_REMOVE_INVALID_HOSTNAME)
+            .arg(lease->hostname_);
+        return;
+    }
+
+    // DUID must have been checked already  by the caller of this function.
+    // Let's be on the safe side and make sure it is non-NULL and throw
+    // an exception if it is NULL.
+    if (!lease->duid_) {
+        isc_throw(isc::Unexpected, "DUID must be set when creating"
+                  << " NameChangeRequest for DNS records removal for "
+                  << lease->addr_.toText());
+
+    }
+    isc::dhcp_ddns::D2Dhcid dhcid(*lease->duid_, hostname_wire);
+
+    // Create a NameChangeRequest to remove the entry.
+    NameChangeRequest ncr(isc::dhcp_ddns::CHG_REMOVE,
+                          lease->fqdn_fwd_, lease->fqdn_rev_,
+                          lease->hostname_,
+                          lease->addr_.toText(),
+                          dhcid, 0, lease->valid_lft_);
+    name_change_reqs_.push(ncr);
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+              DHCP6_DDNS_CREATE_REMOVE_NAME_CHANGE_REQUEST).arg(ncr.toText());
+
+}
+
+void
+Dhcpv6Srv::sendNameChangeRequests() {
+    while (!name_change_reqs_.empty()) {
+        // @todo Once next NameChangeRequest is picked from the queue
+        // we should send it to the bind10-dhcp_ddns module. Currently we
+        // just drop it.
+        name_change_reqs_.pop();
+    }
+}
+
+
 OptionPtr
 Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                       Pkt6Ptr question, boost::shared_ptr<Option6IA> ia, const Pkt6Ptr& query) {
+                       const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
+                       const Option6ClientFqdnPtr& fqdn) {
     // If there is no subnet selected for handling this IA_NA, the only thing to do left is
     // to say that we are sorry, but the user won't get an address. As a convenience, we
     // use a different status text to indicate that (compare to the same status code,
@@ -883,19 +1186,48 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // it should include this hint. That will help us during the actual lease
     // allocation.
     bool fake_allocation = false;
-    if (question->getType() == DHCPV6_SOLICIT) {
+    if (query->getType() == DHCPV6_SOLICIT) {
         /// @todo: Check if we support rapid commit
         fake_allocation = true;
     }
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
+    // At this point, we have to make make some decisions with respect to the
+    // FQDN option that we have generated as a result of receiving client's
+    // FQDN. In particular, we have to get to know if the DNS update will be
+    // performed or not. It is possible that option is NULL, which is valid
+    // condition if client didn't request DNS updates and server didn't force
+    // the update.
+    bool do_fwd = false;
+    bool do_rev = false;
+    if (fqdn) {
+        // Flag S must not coexist with flag N being set to 1, so if S=1
+        // server takes responsibility for both reverse and forward updates.
+        // Otherwise, we have to check N.
+        if (fqdn->getFlag(Option6ClientFqdn::FLAG_S)) {
+            do_fwd = true;
+            do_rev = true;
+        } else if (!fqdn->getFlag(Option6ClientFqdn::FLAG_N)) {
+            do_rev = true;
+        }
+    }
+    // Set hostname only in case any of the updates is being performed.
+    std::string hostname;
+    if (do_fwd || do_rev) {
+        hostname = fqdn->getDomainName();
+    }
+
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honour the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
-    Lease6Ptr lease = alloc_engine_->allocateAddress6(subnet, duid, ia->getIAID(),
-                                                      hint, fake_allocation,
+    Lease6Ptr lease = alloc_engine_->allocateAddress6(subnet, duid,
+                                                      ia->getIAID(),
+                                                      hint,
+                                                      do_fwd, do_rev,
+                                                      hostname,
+                                                      fake_allocation,
                                                       callout_handle);
 
     // Create IA_NA that we will put in the response.
@@ -925,6 +1257,29 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // It would be possible to insert status code=0(success) as well,
         // but this is considered waste of bandwidth as absence of status
         // code is considered a success.
+
+        // Allocation engine may have returned an existing lease. If so, we
+        // have to check that the FQDN settings we provided are the same
+        // that were set. If they aren't, we will have to remove existing
+        // DNS records and update the lease with the new settings.
+        if ((lease->hostname_ != hostname) || (lease->fqdn_fwd_ != do_fwd) ||
+            (lease->fqdn_rev_ != do_rev)) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                      DHCP6_DDNS_LEASE_ASSIGN_FQDN_CHANGE)
+                .arg(lease->toText())
+                .arg(hostname)
+                .arg(do_rev ? "true" : "false")
+                .arg(do_fwd ? "true" : "false");
+
+            // Schedule removal of the existing lease.
+            createRemovalNameChangeRequest(lease);
+            // Set the new lease properties and update.
+            lease->hostname_ = hostname;
+            lease->fqdn_fwd_ = do_fwd;
+            lease->fqdn_rev_ = do_rev;
+            LeaseMgrFactory::instance().updateLease6(lease);
+        }
+
     } else {
         // Allocation engine did not allocate a lease. The engine logged
         // cause of that failure. The only thing left is to insert
@@ -943,7 +1298,8 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
 OptionPtr
 Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                      const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia) {
+                      const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
+                      const Option6ClientFqdnPtr& fqdn) {
     if (!subnet) {
         // There's no subnet select for this client. There's nothing to renew.
         boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
@@ -983,11 +1339,50 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // Keep the old data in case the callout tells us to skip update
     Lease6 old_data = *lease;
 
+    // At this point, we have to make make some decisions with respect to the
+    // FQDN option that we have generated as a result of receiving client's
+    // FQDN. In particular, we have to get to know if the DNS update will be
+    // performed or not. It is possible that option is NULL, which is valid
+    // condition if client didn't request DNS updates and server didn't force
+    // the update.
+    bool do_fwd = false;
+    bool do_rev = false;
+    if (fqdn) {
+        if (fqdn->getFlag(Option6ClientFqdn::FLAG_S)) {
+            do_fwd = true;
+            do_rev = true;
+        } else if (!fqdn->getFlag(Option6ClientFqdn::FLAG_N)) {
+            do_rev = true;
+        }
+    }
+
+    std::string hostname;
+    if (do_fwd || do_rev) {
+        hostname = fqdn->getDomainName();
+    }
+
+    // If the new FQDN settings have changed for the lease, we need to
+    // delete any existing FQDN records for this lease.
+    if ((lease->hostname_ != hostname) || (lease->fqdn_fwd_ != do_fwd) ||
+        (lease->fqdn_rev_ != do_rev)) {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                  DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE)
+            .arg(lease->toText())
+            .arg(hostname)
+            .arg(do_rev ? "true" : "false")
+            .arg(do_fwd ? "true" : "false");
+
+        createRemovalNameChangeRequest(lease);
+    }
+
     lease->preferred_lft_ = subnet->getPreferred();
     lease->valid_lft_ = subnet->getValid();
     lease->t1_ = subnet->getT1();
     lease->t2_ = subnet->getT2();
     lease->cltt_ = time(NULL);
+    lease->hostname_ = hostname;
+    lease->fqdn_fwd_ = do_fwd;
+    lease->fqdn_rev_ = do_rev;
 
     // Create empty IA_NA option with IAID matching the request.
     boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
@@ -1043,7 +1438,8 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 }
 
 void
-Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
+Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply,
+                       const Option6ClientFqdnPtr& fqdn) {
 
     // We need to renew addresses for all IA_NA options in the client's
     // RENEW message.
@@ -1087,7 +1483,9 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
             OptionPtr answer_opt = renewIA_NA(subnet, duid, renew,
-                                   boost::dynamic_pointer_cast<Option6IA>(opt->second));
+                                              boost::dynamic_pointer_cast<
+                                              Option6IA>(opt->second),
+                                              fqdn);
             if (answer_opt) {
                 reply->addOption(answer_opt);
             }
@@ -1297,6 +1695,11 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         ia_rsp->addOption(createStatusCode(STATUS_Success,
                           "Lease released. Thank you, please come again."));
 
+        // Check if a lease has flags indicating that the FQDN update has
+        // been performed. If so, create NameChangeRequest which removes
+        // the entries.
+        createRemovalNameChangeRequest(lease);
+
         return (ia_rsp);
     }
 }
@@ -1312,7 +1715,12 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     appendDefaultOptions(solicit, advertise);
     appendRequestedOptions(solicit, advertise);
 
-    assignLeases(solicit, advertise);
+    Option6ClientFqdnPtr fqdn = processClientFqdn(solicit);
+    assignLeases(solicit, advertise, fqdn);
+    appendClientFqdn(solicit, advertise, fqdn);
+    // Note, that we don't create NameChangeRequests here because we don't
+    // perform DNS Updates for Solicit. Client must send Request to update
+    // DNS.
 
     return (advertise);
 }
@@ -1328,7 +1736,10 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     appendDefaultOptions(request, reply);
     appendRequestedOptions(request, reply);
 
-    assignLeases(request, reply);
+    Option6ClientFqdnPtr fqdn = processClientFqdn(request);
+    assignLeases(request, reply, fqdn);
+    appendClientFqdn(request, reply, fqdn);
+    createNameChangeRequests(reply, fqdn);
 
     return (reply);
 }
@@ -1344,13 +1755,17 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     appendDefaultOptions(renew, reply);
     appendRequestedOptions(renew, reply);
 
-    renewLeases(renew, reply);
+    Option6ClientFqdnPtr fqdn = processClientFqdn(renew);
+    renewLeases(renew, reply, fqdn);
+    appendClientFqdn(renew, reply, fqdn);
+    createNameChangeRequests(reply, fqdn);
 
     return reply;
 }
 
 Pkt6Ptr
 Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
+
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
     return reply;
@@ -1375,7 +1790,10 @@ Dhcpv6Srv::processRelease(const Pkt6Ptr& release) {
 
     releaseLeases(release, reply);
 
-    return reply;
+    // @todo If client sent a release and we should remove outstanding
+    // DNS records.
+
+    return (reply);
 }
 
 Pkt6Ptr

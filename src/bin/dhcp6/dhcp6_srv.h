@@ -15,9 +15,11 @@
 #ifndef DHCPV6_SRV_H
 #define DHCPV6_SRV_H
 
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
+#include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
@@ -28,6 +30,7 @@
 #include <boost/noncopyable.hpp>
 
 #include <iostream>
+#include <queue>
 
 namespace isc {
 namespace dhcp {
@@ -79,7 +82,7 @@ public:
     ///
     /// Main server processing loop. Receives incoming packets, verifies
     /// their correctness, generates appropriate answer (if needed) and
-    /// transmits respones.
+    /// transmits responses.
     ///
     /// @return true, if being shut down gracefully, fail if experienced
     ///         critical error.
@@ -132,7 +135,7 @@ protected:
     ///
     /// Processes received SOLICIT message and verifies that its sender
     /// should be served. In particular IA, TA and PD options are populated
-    /// with to-be assinged addresses, temporary addresses and delegated
+    /// with to-be assigned addresses, temporary addresses and delegated
     /// prefixes, respectively. In the usual 4 message exchange, server is
     /// expected to respond with ADVERTISE message. However, if client
     /// requests rapid-commit and server supports it, REPLY will be sent
@@ -148,7 +151,7 @@ protected:
     ///
     /// Processes incoming REQUEST message and verifies that its sender
     /// should be served. In particular IA, TA and PD options are populated
-    /// with assinged addresses, temporary addresses and delegated
+    /// with assigned addresses, temporary addresses and delegated
     /// prefixes, respectively. Uses LeaseMgr to allocate or update existing
     /// leases.
     ///
@@ -210,14 +213,16 @@ protected:
     ///
     /// @param subnet subnet the client is connected to
     /// @param duid client's duid
-    /// @param question client's message (typically SOLICIT or REQUEST)
+    /// @param query client's message (typically SOLICIT or REQUEST)
     /// @param ia pointer to client's IA_NA option (client's request)
+    /// @param fqdn A DHCPv6 Client FQDN %Option generated in a response to the
+    /// FQDN option sent by a client.
     /// @return IA_NA option (server's response)
     OptionPtr assignIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
                           const isc::dhcp::DuidPtr& duid,
-                          isc::dhcp::Pkt6Ptr question,
-                          boost::shared_ptr<Option6IA> ia,
-                          const Pkt6Ptr& query);
+                          const isc::dhcp::Pkt6Ptr& query,
+                          Option6IAPtr ia,
+                          const Option6ClientFqdnPtr& fqdn);
 
     /// @brief Renews specific IA_NA option
     ///
@@ -229,9 +234,11 @@ protected:
     /// @param duid client's duid
     /// @param query client's message
     /// @param ia IA_NA option that is being renewed
+    /// @param fqdn DHCPv6 Client FQDN Option included in the server's response
     /// @return IA_NA option (server's response)
     OptionPtr renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                         const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia);
+                         const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
+                         const Option6ClientFqdnPtr& fqdn);
 
     /// @brief Releases specific IA_NA option
     ///
@@ -290,7 +297,94 @@ protected:
     ///
     /// @param question client's message (with requested IA_NA)
     /// @param answer server's message (IA_NA options will be added here)
-    void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer);
+    /// @param fqdn an FQDN option generated in a response to the client's
+    /// FQDN option.
+    void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
+                      const Option6ClientFqdnPtr& fqdn);
+
+    /// @brief Processes Client FQDN Option.
+    ///
+    /// This function retrieves DHCPv6 Client FQDN %Option (if any) from the
+    /// packet sent by a client and takes necessary actions upon this option.
+    /// Received option comprises flags field which controls what DNS updates
+    /// server should do. Server may override client's preference based on
+    /// the current configuration. Server indicates that it has overridden
+    /// the preference by storing DHCPv6 Client Fqdn %Option with the
+    /// appropriate flags in the response to a client. This option is also
+    /// used to communicate the client's domain-name which should be sent
+    /// to the DNS in the update. Again, server may act upon the received
+    /// domain-name, i.e. if the provided domain-name is partial it should
+    /// generate the fully qualified domain-name.
+    ///
+    /// All the logic required to form appropriate answer to the client is
+    /// held in this function.
+    ///
+    /// @param question Client's message.
+    ///
+    /// @return FQDN option produced in the response to the client's message.
+    Option6ClientFqdnPtr processClientFqdn(const Pkt6Ptr& question);
+
+    /// @brief Adds DHCPv6 Client FQDN %Option to the server response.
+    ///
+    /// This function will add the specified FQDN option into the server's
+    /// response when FQDN is not NULL and server is either configured to
+    /// always include the FQDN in the response or client requested it using
+    /// %Option Request %Option.
+    /// This function is exception safe.
+    ///
+    /// @param question A message received from the client.
+    /// @param [out] answer A server's response where FQDN option will be added.
+    /// @param fqdn A DHCPv6 Client FQDN %Option to be added to the server's
+    /// response to a client.
+    void appendClientFqdn(const Pkt6Ptr& question,
+                          Pkt6Ptr& answer,
+                          const Option6ClientFqdnPtr& fqdn);
+
+    /// @brief Creates a number of @c isc::dhcp_ddns::NameChangeRequest objects
+    /// based on the DHCPv6 Client FQDN %Option.
+    ///
+    /// The @c isc::dhcp_ddns::NameChangeRequest class encapsulates the request
+    /// from the DHCPv6 server to the DHCP-DDNS module to perform DNS Update.
+    /// The FQDN option carries response to the client about DNS updates that
+    /// server intents to perform for the DNS client. Based on this, the
+    /// function will create zero or more @c isc::dhcp_ddns::NameChangeRequest
+    /// objects and store them in the internal queue. Requests created by this
+    /// function are only adding or updating DNS records. In order to generate
+    /// requests for DNS records removal, use @c createRemovalNameChangeRequest.
+    ///
+    /// @todo Add support for multiple IAADDR options in the IA_NA.
+    ///
+    /// @param answer A message beging sent to the Client.
+    /// @param fqdn_answer A DHCPv6 Client FQDN %Option which is included in the
+    /// response message sent to a client.
+    void createNameChangeRequests(const Pkt6Ptr& answer,
+                                  const Option6ClientFqdnPtr& fqdn_answer);
+
+    /// @brief Creates a @c isc::dhcp_ddns::NameChangeRequest which requests
+    /// removal of DNS entries for a particular lease.
+    ///
+    /// This function should be called upon removal of the lease from the lease
+    /// database, i.e, when client sent Release or Decline message. It will
+    /// create a single @c isc::dhcp_ddns::NameChangeRequest which removes the
+    /// existing DNS records for the lease, which server is responsible for.
+    /// Note that this function will not remove the entries which server hadn't
+    /// added. This is the case, when client performs forward DNS update on its
+    /// own.
+    ///
+    /// @param lease A lease for which the the removal of corresponding DNS
+    /// records will be performed.
+    void createRemovalNameChangeRequest(const Lease6Ptr& lease);
+
+    /// @brief Sends all outstanding NameChangeRequests to bind10-d2 module.
+    ///
+    /// The purpose of this function is to pick all outstanding
+    /// NameChangeRequests from the FIFO queue and send them to bind10-dhcp-ddns
+    /// module.
+    ///
+    /// @todo Currently this function simply removes all requests from the
+    /// queue but doesn't send them anywhere. In the future, the
+    /// NameChangeSender will be used to deliver requests to the other module.
+    void sendNameChangeRequests();
 
     /// @brief Attempts to renew received addresses
     ///
@@ -300,7 +394,10 @@ protected:
     /// as IA_NA/IAADDR to reply packet.
     /// @param renew client's message asking for renew
     /// @param reply server's response
-    void renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply);
+    /// @param fqdn A DHCPv6 Client FQDN %Option generated in the response to the
+    /// client's FQDN option.
+    void renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply,
+                     const Option6ClientFqdnPtr& fqdn);
 
     /// @brief Attempts to release received addresses
     ///
@@ -385,6 +482,12 @@ private:
 
     /// UDP port number on which server listens.
     uint16_t port_;
+
+protected:
+
+    /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects, which
+    /// are waiting for sending to b10-dhcp-ddns module.
+    std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
 };
 
 }; // namespace isc::dhcp

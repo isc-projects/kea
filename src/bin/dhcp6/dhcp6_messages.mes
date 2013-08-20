@@ -70,10 +70,47 @@ This informational message is printed every time the IPv6 DHCP server
 is started.  It indicates what database backend type is being to store
 lease and other information.
 
+% DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST created name change request: %1
+This debug message is logged when the new Name Change Request has been created
+to perform the DNS Update, which adds new RRs.
+
+% DHCP6_DDNS_CREATE_REMOVE_NAME_CHANGE_REQUEST created name change request: %1
+This debug message is logged when the new Name Change Request has been created
+to perform the DNS Update, which removes RRs from the DNS.
+
+% DHCP6_DDNS_LEASE_ASSIGN_FQDN_CHANGE FQDN for the allocated lease: %1 has changed. New values: hostname = %2, reverse mapping = %3, forward mapping = %4
+This debug message is logged when FQDN mapping for a particular lease has
+been changed by the recent Request message. This mapping will be changed in DNS.
+
+% DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE FQDN for the renewed lease: %1 has changed.
+New  values: hostname = %2, reverse mapping = %3, forward mapping = %4
+This debug message is logged when FQDN mapping for a particular lease has been
+changed by the recent Renew message. This mapping will be changed in DNS.
+
 % DHCP6_DEACTIVATE_INTERFACE deactivate interface %1
 This message is printed when DHCPv6 server disables an interface from being
 used to receive DHCPv6 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
+
+% DHCP6_DDNS_SEND_FQDN sending DHCPv6 Client FQDN Option to the client: %1
+This debug message is logged when server includes an DHCPv6 Client FQDN Option
+in its response to the client.
+
+% DHCP6_DDNS_RECEIVE_FQDN received DHCPv6 Client FQDN Option: %1
+This debug message is logged when server has found the DHCPv6 Client FQDN Option
+sent by a client and started processing it.
+
+% DHCP6_DDNS_REMOVE_EMPTY_HOSTNAME FQDN for the lease being deleted is empty: %1
+This error message is issued when a lease being deleted contains an indication
+that the DNS Update has been performed for it, but the FQDN is missing for this
+lease. This is an indication that someone may have messed up in the lease
+database.
+
+% DHCP6_DDNS_REMOVE_INVALID_HOSTNAME FQDN for the lease being deleted has invalid format: %1
+This error message is issued when a lease being deleted contains an indication
+that the DNS Update has been performed for it, but the FQDN held in the lease
+database has invalid format and can't be transformed to the canonical on-wire
+format.
 
 % DHCP6_HOOK_BUFFER_RCVD_SKIP received DHCPv6 buffer was dropped because a callout set the skip flag.
 This debug message is printed when a callout installed on buffer6_receive

@@ -21,6 +21,7 @@
 /// DHCP-DDNS. These requests are referred to as NameChangeRequests.
 
 #include <cc/data.h>
+#include <dhcp/duid.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <util/encode/hex.h>
@@ -77,6 +78,14 @@ public:
     /// or there is an odd number of digits.
     D2Dhcid(const std::string& data);
 
+    /// @brief Constructor, creates an instance of the @c D2Dhcid from the
+    /// @c isc::dhcp::DUID.
+    ///
+    /// @param duid An object representing DUID.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
+    D2Dhcid(const isc::dhcp::DUID& duid,
+            const std::vector<uint8_t>& wire_fqdn);
+
     /// @brief Returns the DHCID value as a string of hexadecimal digits.
     ///
     /// @return a string containing a contiguous stream of digits.
@@ -91,6 +100,17 @@ public:
     /// @throw NcrMessageError if the input data contains non-digits
     /// or there is an odd number of digits.
     void fromStr(const std::string& data);
+
+    /// @brief Sets the DHCID value based on the DUID and FQDN.
+    ///
+    /// This function requires that the FQDN conforms to the section 3.5
+    /// of the RFC4701, which says that the FQDN must be in lowercase.
+    /// This function doesn't validate if it really converted.
+    ///
+    /// @param duid A @c isc::dhcp::DUID object encapsulating DUID.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
+    void fromDUID(const isc::dhcp::DUID& duid,
+                  const std::vector<uint8_t>& wire_fqdn);
 
     /// @brief Returns a reference to the DHCID byte vector.
     ///
