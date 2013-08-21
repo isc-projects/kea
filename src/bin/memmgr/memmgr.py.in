@@ -140,7 +140,7 @@ class Memmgr(BIND10Server):
         notifications = None
         with self._builder_lock:
             # Copy the notifications out and clear them from the
-            # original list. We may not assigne [] to
+            # original list. We may not assign [] to
             # self._builder_response_queue, because there's other
             # reference to it from the other thread and it would
             # keep the original list.
