@@ -31,7 +31,7 @@
 
  @section hooksmgObjects Hooks Framework Objects
 
- The relationships betweeh the various objects in the hooks framework
+ The relationships between the various objects in the hooks framework
  is shown below:
 
  @image html HooksUml.png "High-Level Class Diagram of the Hooks Framework"
@@ -116,8 +116,12 @@
  a copy of the vector is taken before the iteration starts.  The @ref
  hooksmgCalloutManager iterates over this copy while any changes made
  by the callout registration functions affect the relevant callout vector.
+ Such approach was chosen because of performance considerations.
 
  @subsection hooksmgServerObjects Server-Side Objects
+
+ Those objects are not accessible by user libraries. Please do not
+ attempt to use them if you are developing user callouts.
 
  @subsubsection hooksmgServerHooks Server Hooks
 
@@ -195,7 +199,7 @@
  The @ref isc::hooks::CalloutManager is the core of the framework insofar
  as the registration and calling of callouts is concerned.
 
- It maintains a "hook vector - a vector with one element for
+ It maintains a "hook vector" - a vector with one element for
  each registered hook. Each element in this vector is itself a
  vector (the callout vector), each element of which is a pair of
  (library index, callback pointer). When a callout is registered, the
