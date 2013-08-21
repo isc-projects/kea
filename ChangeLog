@@ -1,3 +1,8 @@
+6XX.	[doc]		stephen
+	Added the "Hook's Maintenance Guide" to the BIND 10 developer
+	documentation.
+	(Trac# 3063, git ABCD)
+
 656.	[func]		tomek
 	Additional hooks (buffer6_receive, lease6_renew,
 	lease6_release, buffer6_send) added to the DHCPv6 server.
