@@ -164,8 +164,6 @@ public:
         EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
         EXPECT_EQ(subnet_->getT1(), lease->t1_);
         EXPECT_EQ(subnet_->getT2(), lease->t2_);
-        EXPECT_TRUE(false == lease->fqdn_fwd_);
-        EXPECT_TRUE(false == lease->fqdn_rev_);
         if (lease->client_id_ && !clientid_) {
             ADD_FAILURE() << "Lease4 has a client-id, while it should have none.";
         } else
@@ -614,7 +612,8 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
                                                IOAddress("0.0.0.0"),
-                                               false, false, "",
+                                               false, true,
+                                               "somehost.example.com.",
                                                false, CalloutHandlePtr(),
                                                old_lease_);
     // The new lease has been allocated, so the old lease should not exist.
@@ -642,7 +641,7 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
                                                IOAddress("0.0.0.0"),
-                                               false, false, "",
+                                               false, true, "host.example.com.",
                                                true, CalloutHandlePtr(),
                                                old_lease_);
 
@@ -670,7 +669,7 @@ TEST_F(AllocEngine4Test, allocWithValidHint4) {
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
                                                IOAddress("192.0.2.105"),
-                                               false, false, "",
+                                               true, true, "host.example.com.",
                                                false, CalloutHandlePtr(),
                                                old_lease_);
     // Check that we got a lease
@@ -805,7 +804,7 @@ TEST_F(AllocEngine4Test, allocateAddress4Nulls) {
     clientid_ = ClientIdPtr();
     lease = engine->allocateAddress4(subnet_, ClientIdPtr(), hwaddr_,
                                      IOAddress("0.0.0.0"),
-                                     false, false, "",
+                                     true, true, "myhost.example.com.",
                                      false, CalloutHandlePtr(),
                                      old_lease_);
     // Check that we got a lease
@@ -914,7 +913,7 @@ TEST_F(AllocEngine4Test, smallPool4) {
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
                                                IOAddress("0.0.0.0"),
-                                               false, false, "",
+                                               true, true, "host.example.com.",
                                                false, CalloutHandlePtr(),
                                                old_lease_);
 
@@ -1070,7 +1069,7 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     // A client comes along, asking specifically for this address
     lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
                                      IOAddress(addr.toText()),
-                                     false, false, "",
+                                     false, true, "host.example.com.",
                                      false, CalloutHandlePtr(),
                                      old_lease_);
 
@@ -1117,8 +1116,8 @@ TEST_F(AllocEngine4Test, renewLease4) {
     // Lease was assigned 45 seconds ago and is valid for 100 seconds. Let's
     // renew it.
     ASSERT_FALSE(lease->expired());
-    lease = engine->renewLease4(subnet_, clientid_, hwaddr_, false,
-                                false, "", lease, false);
+    lease = engine->renewLease4(subnet_, clientid_, hwaddr_, true,
+                                true, "host.example.com.", lease, false);
     // Check that he got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr.toText(), lease->addr_.toText());
