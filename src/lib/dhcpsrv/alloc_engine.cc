@@ -820,8 +820,6 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
         callout_handle->getArgument("lease4", lease);
     }
 
-
-
     if (!fake_allocation) {
         // That is a real (REQUEST) allocation
         bool status = LeaseMgrFactory::instance().addLease(lease);
