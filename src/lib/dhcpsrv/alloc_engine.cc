@@ -328,6 +328,9 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
                               const ClientIdPtr& clientid,
                               const HWAddrPtr& hwaddr,
                               const IOAddress& hint,
+                              const bool fwd_dns_update,
+                              const bool rev_dns_update,
+                              const std::string& hostname,
                               bool fake_allocation,
                               const isc::hooks::CalloutHandlePtr& callout_handle,
                               Lease4Ptr& old_lease) {
@@ -359,7 +362,9 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
             old_lease.reset(new Lease4(*existing));
             // We have a lease already. This is a returning client, probably after
             // its reboot.
-            existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
+            existing = renewLease4(subnet, clientid, hwaddr,
+                                   fwd_dns_update, rev_dns_update, hostname,
+                                   existing, fake_allocation);
             if (existing) {
                 return (existing);
             }
@@ -375,7 +380,9 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
                 old_lease.reset(new Lease4(*existing));
                 // we have a lease already. This is a returning client, probably after
                 // its reboot.
-                existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
+                existing = renewLease4(subnet, clientid, hwaddr,
+                                       fwd_dns_update, rev_dns_update,
+                                       hostname, existing, fake_allocation);
                 // @todo: produce a warning. We haven't found him using MAC address, but
                 // we found him using client-id
                 if (existing) {
@@ -393,7 +400,9 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
 
                 // The hint is valid and not currently used, let's create a lease for it
                 Lease4Ptr lease = createLease4(subnet, clientid, hwaddr, hint,
-                                               callout_handle, fake_allocation);
+                                               fwd_dns_update, rev_dns_update,
+                                               hostname, callout_handle,
+                                               fake_allocation);
 
                 // It can happen that the lease allocation failed (we could have lost
                 // the race condition. That means that the hint is lo longer usable and
@@ -406,7 +415,9 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
                     // Save the old lease, before reusing it.
                     old_lease.reset(new Lease4(*existing));
                     return (reuseExpiredLease(existing, subnet, clientid, hwaddr,
-                                              callout_handle, fake_allocation));
+                                              fwd_dns_update, rev_dns_update,
+                                              hostname, callout_handle,
+                                              fake_allocation));
                 }
 
             }
@@ -439,7 +450,9 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
             if (!existing) {
                 // there's no existing lease for selected candidate, so it is
                 // free. Let's allocate it.
-                Lease4Ptr lease = createLease4(subnet, clientid, hwaddr, candidate,
+                Lease4Ptr lease = createLease4(subnet, clientid, hwaddr,
+                                               candidate, fwd_dns_update,
+                                               rev_dns_update, hostname,
                                                callout_handle, fake_allocation);
                 if (lease) {
                     return (lease);
@@ -453,7 +466,9 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
                     // Save old lease before reusing it.
                     old_lease.reset(new Lease4(*existing));
                     return (reuseExpiredLease(existing, subnet, clientid, hwaddr,
-                                              callout_handle, fake_allocation));
+                                              fwd_dns_update, rev_dns_update,
+                                              hostname, callout_handle,
+                                              fake_allocation));
                 }
             }
 
@@ -476,6 +491,9 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
 Lease4Ptr AllocEngine::renewLease4(const SubnetPtr& subnet,
                                    const ClientIdPtr& clientid,
                                    const HWAddrPtr& hwaddr,
+                                   const bool fwd_dns_update,
+                                   const bool rev_dns_update,
+                                   const std::string& hostname,
                                    const Lease4Ptr& lease,
                                    bool fake_allocation /* = false */) {
 
@@ -486,6 +504,9 @@ Lease4Ptr AllocEngine::renewLease4(const SubnetPtr& subnet,
     lease->t1_ = subnet->getT1();
     lease->t2_ = subnet->getT2();
     lease->valid_lft_ = subnet->getValid();
+    lease->fqdn_fwd_ = fwd_dns_update;
+    lease->fqdn_rev_ = rev_dns_update;
+    lease->hostname_ = hostname;
 
     if (!fake_allocation) {
         // for REQUEST we do update the lease
@@ -576,6 +597,9 @@ Lease4Ptr AllocEngine::reuseExpiredLease(Lease4Ptr& expired,
                                          const SubnetPtr& subnet,
                                          const ClientIdPtr& clientid,
                                          const HWAddrPtr& hwaddr,
+                                         const bool fwd_dns_update,
+                                         const bool rev_dns_update,
+                                         const std::string& hostname,
                                          const isc::hooks::CalloutHandlePtr& callout_handle,
                                          bool fake_allocation /*= false */ ) {
 
@@ -592,9 +616,9 @@ Lease4Ptr AllocEngine::reuseExpiredLease(Lease4Ptr& expired,
     expired->cltt_ = time(NULL);
     expired->subnet_id_ = subnet->getID();
     expired->fixed_ = false;
-    expired->hostname_ = std::string("");
-    expired->fqdn_fwd_ = false;
-    expired->fqdn_rev_ = false;
+    expired->hostname_ = hostname;
+    expired->fqdn_fwd_ = fwd_dns_update;
+    expired->fqdn_rev_ = rev_dns_update;
 
     /// @todo: log here that the lease was reused (there's ticket #2524 for
     /// logging in libdhcpsrv)
@@ -732,6 +756,9 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
                                     const DuidPtr& clientid,
                                     const HWAddrPtr& hwaddr,
                                     const IOAddress& addr,
+                                    const bool fwd_dns_update,
+                                    const bool rev_dns_update,
+                                    const std::string& hostname,
                                     const isc::hooks::CalloutHandlePtr& callout_handle,
                                     bool fake_allocation /*= false */ ) {
     if (!hwaddr) {
@@ -749,6 +776,11 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
                                &local_copy[0], local_copy.size(), subnet->getValid(),
                                subnet->getT1(), subnet->getT2(), now,
                                subnet->getID()));
+
+    // Set FQDN specific lease parameters.
+    lease->fqdn_fwd_ = fwd_dns_update;
+    lease->fqdn_rev_ = rev_dns_update;
+    lease->hostname_ = hostname;
 
     // Let's execute all callouts registered for lease4_select
     if (callout_handle &&
