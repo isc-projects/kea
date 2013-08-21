@@ -14,24 +14,25 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt4.h>
-#include <dhcp/duid.h>
-#include <dhcp/hwaddr.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
-#include <dhcpsrv/utils.h>
+#include <dhcpsrv/addr_utilities.h>
+#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/utils.h>
-#include <dhcpsrv/addr_utilities.h>
-#include <hooks/hooks_manager.h>
+#include <dhcpsrv/utils.h>
 #include <hooks/callout_handle.h>
+#include <hooks/hooks_manager.h>
 
 #include <boost/algorithm/string/erase.hpp>
 
@@ -967,33 +968,6 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
                   " provided in message "
                   << serverReceivedPacketName(pkt->getType()));
     }
-}
-
-isc::hooks::CalloutHandlePtr Dhcpv4Srv::getCalloutHandle(const Pkt4Ptr& pkt) {
-    // This method returns a CalloutHandle for a given packet. It is guaranteed
-    // to return the same callout_handle (so user library contexts are
-    // preserved). This method works well if the server processes one packet
-    // at a time. Once the server architecture is extended to cover parallel
-    // packets processing (e.g. delayed-ack, some form of buffering etc.), this
-    // method has to be extended (e.g. store callouts in a map and use pkt as
-    // a key). Additional code would be required to release the callout handle
-    // once the server finished processing.
-
-    CalloutHandlePtr callout_handle;
-    static Pkt4Ptr old_pointer;
-
-    if (!callout_handle ||
-        old_pointer != pkt) {
-        // This is the first packet or a different packet than previously
-        // passed to getCalloutHandle()
-
-        // Remember the pointer to this packet
-        old_pointer = pkt;
-
-        callout_handle = HooksManager::createCalloutHandle();
-    }
-
-    return (callout_handle);
 }
 
 void
