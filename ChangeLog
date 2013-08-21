@@ -1,3 +1,8 @@
+665.	[doc]		stephen
+	Added the "Hook's Maintenance Guide" to the BIND 10 developer
+	documentation.
+	(Trac# 3063, git 5d1ee7b7470fc644b798ac47db1811c829f5ac24)
+
 664.	[bug]]		tmark
 	Corrects a bug in Hooks processing that was improperly
 	creating a new callout handle on every call, rather
