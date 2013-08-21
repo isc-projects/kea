@@ -1,3 +1,8 @@
+6XX.	[func]		tomek
+	Additional hooks (buffer4_receive, lease4_renew,
+	lease4_release, buffer4_send) added to the DHCPv4 server.
+	(Trac #2983, git ABCD)
+
 659.	[func]		stephen
 	Added capability to configure the hooks libraries for the b10-dhcp4 and
 	b10-dhcp6 servers through the BIND 10 configuration mechanism.
