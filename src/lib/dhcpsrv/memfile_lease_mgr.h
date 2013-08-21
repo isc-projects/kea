@@ -65,8 +65,10 @@ public:
 
     /// @brief Returns existing IPv4 lease for specified IPv4 address.
     ///
-    /// @todo Not implemented yet
-    /// @param addr address of the searched lease
+    /// This function returns a copy of the lease. The modification in the
+    /// return lease does not affect the instance held in the lease storage.
+    ///
+    /// @param addr An address of the searched lease.
     ///
     /// @return a collection of leases
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
@@ -85,10 +87,11 @@ public:
     /// @return lease collection
     virtual Lease4Collection getLease4(const isc::dhcp::HWAddr& hwaddr) const;
 
-    /// @brief Returns existing IPv4 leases for specified hardware address
+    /// @brief Returns existing IPv4 lease for specified hardware address
     ///        and a subnet
     ///
-    /// @todo Not implemented yet
+    /// This function returns a copy of the lease. The modification in the
+    /// return lease does not affect the instance held in the lease storage.
     ///
     /// There can be at most one lease for a given HW address in a single
     /// pool, so this method with either return a single lease or NULL.
@@ -109,10 +112,11 @@ public:
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
+    /// This function returns a copy of the lease. The modification in the
+    /// return lease does not affect the instance held in the lease storage.
+    ///
     /// There can be at most one lease for a given HW address in a single
     /// pool, so this method with either return a single lease or NULL.
-    ///
-    /// @todo Not implemented yet
     ///
     /// @param clientid client identifier
     /// @param subnet_id identifier of the subnet that lease must belong to
@@ -123,7 +127,10 @@ public:
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
-    /// @param addr address of the searched lease
+    /// This function returns a copy of the lease. The modification in the
+    /// return lease does not affect the instance held in the lease storage.
+    ///
+    /// @param addr An address of the searched lease.
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
@@ -140,27 +147,31 @@ public:
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
-    /// @todo Not implemented yet
+    /// This function returns a copy of the lease. The modification in the
+    /// return lease does not affect the instance held in the lease storage.
     ///
     /// @param duid client DUID
     /// @param iaid IA identifier
     /// @param subnet_id identifier of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid, SubnetID subnet_id) const;
+    virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid,
+                                SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///
-    /// @todo Not implemented yet
+    /// @warning This function does not validate the pointer to the lease.
+    /// It is caller's responsibility to pass the valid pointer.
     ///
     /// @param lease4 The lease to be updated.
     ///
     /// If no such lease is present, an exception will be thrown.
     virtual void updateLease4(const Lease4Ptr& lease4);
 
-    /// @brief Updates IPv4 lease.
+    /// @brief Updates IPv6 lease.
     ///
-    /// @todo Not implemented yet
+    /// @warning This function does not validate the pointer to the lease.
+    /// It is caller's responsibility to pass the valid pointer.
     ///
     /// @param lease6 The lease to be updated.
     ///
