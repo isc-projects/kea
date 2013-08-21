@@ -1,3 +1,10 @@
+664.	[bug]]		tmark
+	Corrects a bug in Hooks processing that was improperly
+	creating a new callout handle on every call, rather
+	than maintaining it throughout the context of the
+	packet being processed.
+	(Trac #3062, git 28684bcfe5e54ad0421d75d4445a04b75358ce77)
+
 663.	[func]		marcin
 	b10-dhcp6: Server processes the DHCPv6 Client FQDN Option
 	sent by a client and generates the response. The DHCPv6 Client
