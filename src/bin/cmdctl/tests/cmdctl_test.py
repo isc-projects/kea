@@ -468,14 +468,16 @@ class TestCommandControl(unittest.TestCase):
             def send_stopping():
                 pass
         self.cmdctl._module_cc = ModuleCC
+        called = []
         class Server:
             def shutdown():
-                pass
+                called.append('shutdown')
         self.cmdctl._httpserver = Server
         answer = self.cmdctl.command_handler('shutdown', None)
         rcode, msg = ccsession.parse_answer(answer)
         self.assertEqual(rcode, 0)
         self.assertIsNone(msg)
+        self.assertTrue(['shutdown'], called)
 
     def test_command_handler_spec_update(self):
         # Should not be present
