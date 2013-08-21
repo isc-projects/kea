@@ -332,6 +332,9 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
                               const isc::hooks::CalloutHandlePtr& callout_handle,
                               Lease4Ptr& old_lease) {
 
+    // The NULL pointer indicates that the old lease didn't exist. It may
+    // be later set to non NULL value if existing lease is found in the
+    // database.
     old_lease.reset();
 
     try {
@@ -352,6 +355,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
         // Check if there's existing lease for that subnet/clientid/hwaddr combination.
         Lease4Ptr existing = LeaseMgrFactory::instance().getLease4(*hwaddr, subnet->getID());
         if (existing) {
+            // Save the old lease, before renewal.
             old_lease.reset(new Lease4(*existing));
             // We have a lease already. This is a returning client, probably after
             // its reboot.
@@ -367,6 +371,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
         if (clientid) {
             existing = LeaseMgrFactory::instance().getLease4(*clientid, subnet->getID());
             if (existing) {
+                // Save the old lease before renewal.
                 old_lease.reset(new Lease4(*existing));
                 // we have a lease already. This is a returning client, probably after
                 // its reboot.
@@ -398,6 +403,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
                 }
             } else {
                 if (existing->expired()) {
+                    // Save the old lease, before reusing it.
                     old_lease.reset(new Lease4(*existing));
                     return (reuseExpiredLease(existing, subnet, clientid, hwaddr,
                                               callout_handle, fake_allocation));
@@ -444,6 +450,8 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
                 // allocation attempts.
             } else {
                 if (existing->expired()) {
+                    // Save old lease before reusing it.
+                    old_lease.reset(new Lease4(*existing));
                     return (reuseExpiredLease(existing, subnet, clientid, hwaddr,
                                               callout_handle, fake_allocation));
                 }

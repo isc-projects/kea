@@ -182,11 +182,33 @@ protected:
     ///        we give up (0 means unlimited)
     AllocEngine(AllocType engine_type, unsigned int attempts);
 
-    /// @brief Allocates an IPv4 lease
+    /// @brief Returns IPv4 lease.
     ///
-    /// This method uses currently selected allocator to pick an address from
-    /// specified subnet, creates a lease for that address and then inserts
-    /// it into LeaseMgr (if this allocation is not fake).
+    /// This method finds the appropriate lease for the client using the
+    /// following algorithm:
+    /// - If lease exists for the combination of the HW address, client id and
+    /// subnet, try to renew a lease and return it.
+    /// - If lease exists for the combination of the client id and subnet, try
+    /// to renew the lease and return it.
+    /// - If client supplied an address hint and this address is available,
+    /// allocate the new lease with this address.
+    /// - If client supplied an address hint and the lease for this address
+    /// exists in the database, return this lease if it is expired.
+    /// - Pick new address from the pool and try to allocate it for the client,
+    /// if expired lease exists for the picked address, try to reuse this lease.
+    ///
+    /// When a server should do DNS updates, it is required that allocation
+    /// returns the information how the lease was obtained by the allocation
+    /// engine. In particular, the DHCP server should be able to check whether
+    /// existing lease was returned, or new lease was allocated. When existing
+    /// lease was returned, server should check whether the FQDN has changed
+    /// between the allocation of the old and new lease. If so, server should
+    /// perform appropriate DNS update. If not, server may choose to not
+    /// perform the update. The information about the old lease is returned via
+    /// @c old_lease parameter. If NULL value is returned, it is an indication
+    /// that new lease was allocated for the client. If non-NULL value is
+    /// returned, it is an indication that allocation engine reused/renewed an
+    /// existing lease.
     ///
     /// @param subnet subnet the allocation should come from
     /// @param clientid Client identifier
@@ -337,7 +359,8 @@ private:
     ///        an address for DISCOVER that is not really allocated (true)
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
-    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, const SubnetPtr& subnet,
+    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired,
+                                const SubnetPtr& subnet,
                                 const ClientIdPtr& clientid,
                                 const HWAddrPtr& hwaddr,
                                 const isc::hooks::CalloutHandlePtr& callout_handle,
