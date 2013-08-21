@@ -141,9 +141,9 @@ class Memmgr(BIND10Server):
         with self._builder_lock:
             # Copy the notifications out and clear them from the
             # original list. We may not assign [] to
-            # self._builder_response_queue, because there's other
-            # reference to it from the other thread and it would
-            # keep the original list.
+            # self._builder_response_queue to clear it, because there's
+            # another reference to it from the other thread and it would
+            # not keep the original list.
             notifications = self._builder_response_queue[:]
             del self._builder_response_queue[:]
         while notifications:
