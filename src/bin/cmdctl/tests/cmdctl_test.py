@@ -477,7 +477,7 @@ class TestCommandControl(unittest.TestCase):
         rcode, msg = ccsession.parse_answer(answer)
         self.assertEqual(rcode, 0)
         self.assertIsNone(msg)
-        self.assertTrue(['shutdown'], called)
+        self.assertEqual(['shutdown'], called)
 
     def test_command_handler_spec_update(self):
         # Should not be present
