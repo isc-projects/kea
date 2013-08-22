@@ -1,9 +1,14 @@
+666.	[func]		vorner
+	The CmdCtl's command "print_settings" was removed. It served no real
+	purpose and was just experimental leftover from early development.
+	(Trac #3028, git 0d22246092ad4822d48f5a52af5f644f5ae2f5e2)
+
 665.	[doc]		stephen
 	Added the "Hook's Maintenance Guide" to the BIND 10 developer
 	documentation.
-	(Trac# 3063, git 5d1ee7b7470fc644b798ac47db1811c829f5ac24)
+	(Trac #3063, git 5d1ee7b7470fc644b798ac47db1811c829f5ac24)
 
-664.	[bug]]		tmark
+664.	[bug]		tmark
 	Corrects a bug in Hooks processing that was improperly
 	creating a new callout handle on every call, rather
 	than maintaining it throughout the context of the
