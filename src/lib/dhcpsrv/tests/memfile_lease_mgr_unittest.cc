@@ -131,6 +131,58 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
     EXPECT_EQ(Lease6Ptr(), x);
 }
 
-// TODO: Write more memfile tests
+// @todo Write more memfile tests
+
+// Simple test about lease4 retrieval through client id method
+TEST_F(MemfileLeaseMgrTest, getLease4ClientId) {
+    const LeaseMgr::ParameterMap pmap;
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
+    // Let's initialize a specific lease ...
+    Lease4Ptr lease = initializeLease4(straddress4_[1]);
+    EXPECT_TRUE(lease_mgr->addLease(lease));
+    Lease4Collection returned = lease_mgr->getLease4(*lease->client_id_);
+
+    ASSERT_EQ(1, returned.size());
+    // We should retrieve our lease...
+    detailCompareLease(lease, *returned.begin());
+}
+
+// Checks that lease4 retrieval client id is null is working
+TEST_F(MemfileLeaseMgrTest, getLease4NullClientId) {
+    const LeaseMgr::ParameterMap pmap;
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
+    // Let's initialize a specific lease ... But this time
+    // We keep its client id for further lookup and
+    // We clearly 'reset' it ...
+    Lease4Ptr lease = initializeLease4(straddress4_[4]);
+    ClientIdPtr client_id = lease->client_id_;
+    lease->client_id_ = ClientIdPtr();
+    EXPECT_TRUE(lease_mgr->addLease(lease));
+
+    Lease4Collection returned = lease_mgr->getLease4(*client_id);
+    // Shouldn't have our previous lease ...
+    ASSERT_EQ(0, returned.size());
+}
+
+// Checks lease4 retrieval through HWAddr
+TEST_F(MemfileLeaseMgrTest, getLease4HWAddr) {
+    const LeaseMgr::ParameterMap pmap;
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
+    // Let's initialize two different leases 4 and just add the first ...
+    Lease4Ptr leaseA = initializeLease4(straddress4_[5]);
+    Lease4Ptr leaseB = initializeLease4(straddress4_[6]);
+    HWAddr hwaddrA(leaseA->hwaddr_, HTYPE_ETHER);
+    HWAddr hwaddrB(leaseB->hwaddr_, HTYPE_ETHER);
+
+    EXPECT_TRUE(lease_mgr->addLease(leaseA));
+
+    // we should not have a lease, with this MAC Addr
+    Lease4Collection returned = lease_mgr->getLease4(hwaddrB);
+    ASSERT_EQ(0, returned.size());
+
+    // But with this one
+    returned = lease_mgr->getLease4(hwaddrA);
+    ASSERT_EQ(1, returned.size());
+}
 
 }; // end of anonymous namespace
