@@ -15,6 +15,7 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
+TEST_LIBS_LDFLAGS = -Bshareable
 endif
 
 CLEANFILES = *.gcno *.gcda
@@ -30,10 +31,12 @@ lib_LTLIBRARIES = libco1.la libco2.la
 libco1_la_SOURCES  = callout_library.cc
 libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco1_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libco1_la_LDFLAGS = $(TEST_LIBS_LDFLAGS)
 
 libco2_la_SOURCES  = callout_library.cc
 libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco2_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libco2_la_LDFLAGS = $(TEST_LIBS_LDFLAGS)
 
 
 TESTS += libdhcpsrv_unittests
