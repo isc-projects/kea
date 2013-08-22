@@ -1,6 +1,6 @@
-6XX.	[func]		dclink
+6XX.	[func]		dclink,tomek
 	memfile backend now supports getLease4(hwaddr) and getLease4(client-id)
-	methods.
+	methods. Thanks to David Carlier for contributing a patch.
 	(Trac #2592, git ABCD)
 
 658.	[func]*		vorner
