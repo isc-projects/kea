@@ -1397,11 +1397,11 @@ class TestStats(unittest.TestCase):
         """Test _query_statistics returns a list of pairs of module and
         sequences from group_sendmsg()"""
         stat = MyStats()
-        # imitate stat.get_statistics_data().items
+        # imitate stat.get_statistics_data().items. The order of the array
+        # returned by items() should be preserved.
         class DummyDict:
-            items = lambda x: [
-                ('Init', 'dummy'), ('Stats', 'dummy'), ('Auth', 'dummy'),
-                ]
+            def items(self):
+                return [('Init', 'dummy'), ('Stats', 'dummy'), ('Auth', 'dummy')]
         stat.get_statistics_data = lambda: DummyDict()
         mod = ('Init', 'Auth', 'Auth')
         seq = [('Init', stat._seq + 1),
