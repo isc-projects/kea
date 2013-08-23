@@ -70,7 +70,7 @@ public:
     ///
     /// Prepares on-wire format of message and all its options.
     /// Options must be stored in options_ field.
-    /// Output buffer will be stored in bufferOut_.
+    /// Output buffer will be stored in buffer_out_.
     ///
     /// @throw InvalidOperation if packing fails
     void
@@ -103,7 +103,7 @@ public:
     ///
     /// This is mostly a diagnostic function. It is being used for sending
     /// received packet. Received packet is stored in bufferIn_, but
-    /// transmitted data is stored in bufferOut_. If we want to send packet
+    /// transmitted data is stored in buffer_out_. If we want to send packet
     /// that we just received, a copy between those two buffers is necessary.
     void repack();
 
@@ -312,7 +312,7 @@ public:
     ///
     /// @return reference to output buffer
     isc::util::OutputBuffer&
-    getBuffer() { return (bufferOut_); };
+    getBuffer() { return (buffer_out_); };
 
     /// @brief Add an option.
     ///
@@ -490,7 +490,7 @@ public:
     /// @throw isc::Unexpected if timestamp update failed
     void updateTimestamp();
 
-    /// output buffer (used during message transmission)
+    /// Output buffer (used during message transmission)
     ///
     /// @warning This public member is accessed by derived
     /// classes directly. One of such derived classes is
@@ -502,12 +502,13 @@ public:
     /// but we expect to also have them in Python, so any accesibility
     /// methods would overly complicate things here and degrade
     /// performance).
-    isc::util::OutputBuffer bufferOut_;
+    isc::util::OutputBuffer buffer_out_;
 
-    /// that's the data of input buffer used in RX packet. Note that
-    /// InputBuffer does not store the data itself, but just expects that
-    /// data will be valid for the whole life of InputBuffer. Therefore we
-    /// need to keep the data around.
+    /// @brief That's the data of input buffer used in RX packet.
+    ///
+    /// @note Note that InputBuffer does not store the data itself, but just
+    /// expects that data will be valid for the whole life of InputBuffer.
+    /// Therefore we need to keep the data around.
     ///
     /// @warning This public member is accessed by derived
     /// classes directly. One of such derived classes is
