@@ -31,11 +31,13 @@ namespace {
 /// Structure that holds registered hook indexes
 struct AllocEngineHooks {
     int hook_index_lease4_select_; ///< index for "lease4_receive" hook point
+    int hook_index_lease4_renew_;  ///< index for "lease4_renew" hook point
     int hook_index_lease6_select_; ///< index for "lease6_receive" hook point
 
     /// Constructor that registers hook points for AllocationEngine
     AllocEngineHooks() {
         hook_index_lease4_select_ = HooksManager::registerHook("lease4_select");
+        hook_index_lease4_renew_  = HooksManager::registerHook("lease4_renew");
         hook_index_lease6_select_ = HooksManager::registerHook("lease6_select");
     }
 };
@@ -351,7 +353,8 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
         if (existing) {
             // We have a lease already. This is a returning client, probably after
             // its reboot.
-            existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
+            existing = renewLease4(subnet, clientid, hwaddr, existing, callout_handle,
+                                   fake_allocation);
             if (existing) {
                 return (existing);
             }
@@ -365,7 +368,8 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
             if (existing) {
                 // we have a lease already. This is a returning client, probably after
                 // its reboot.
-                existing = renewLease4(subnet, clientid, hwaddr, existing, fake_allocation);
+                existing = renewLease4(subnet, clientid, hwaddr, existing, callout_handle,
+                                       fake_allocation);
                 // @todo: produce a warning. We haven't found him using MAC address, but
                 // we found him using client-id
                 if (existing) {
@@ -463,7 +467,18 @@ Lease4Ptr AllocEngine::renewLease4(const SubnetPtr& subnet,
                                    const ClientIdPtr& clientid,
                                    const HWAddrPtr& hwaddr,
                                    const Lease4Ptr& lease,
+                                   const isc::hooks::CalloutHandlePtr& callout_handle,
                                    bool fake_allocation /* = false */) {
+
+    if (!lease) {
+        isc_throw(InvalidOperation, "Lease4 must be specified");
+    }
+
+    // Let's keep the old data. This is essential if we are using memfile
+    // (the lease returned points directly to the lease4 object in the database)
+    // We'll need it if we want to skip update (i.e. roll back renewal)
+    /// @todo: remove this once #3083 is implemented
+    Lease4 old_values = *lease;
 
     lease->subnet_id_ = subnet->getID();
     lease->hwaddr_ = hwaddr->hwaddr_;
@@ -473,9 +488,47 @@ Lease4Ptr AllocEngine::renewLease4(const SubnetPtr& subnet,
     lease->t2_ = subnet->getT2();
     lease->valid_lft_ = subnet->getValid();
 
-    if (!fake_allocation) {
+    bool skip = false;
+    // Execute all callouts registered for packet6_send
+    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_renew_)) {
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Subnet from which we do the allocation. Convert the general subnet
+        // pointer to a pointer to a Subnet4.  Note that because we are using
+        // boost smart pointers here, we need to do the cast using the boost
+        // version of dynamic_pointer_cast.
+        Subnet4Ptr subnet4 = boost::dynamic_pointer_cast<Subnet4>(subnet);
+
+        // Pass the parameters
+        callout_handle->setArgument("subnet4", subnet4);
+        callout_handle->setArgument("clientid", clientid);
+        callout_handle->setArgument("hwaddr", hwaddr);
+
+        // Pass the lease to be updated
+        callout_handle->setArgument("lease4", lease);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease4_renew_, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to actually renew the lease, so skip at this
+        // stage means "keep the old lease as it is".
+        if (callout_handle->getSkip()) {
+            skip = true;
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_HOOKS, DHCPSRV_HOOK_LEASE4_RENEW_SKIP);
+        }
+    }
+
+    if (!fake_allocation && !skip) {
         // for REQUEST we do update the lease
         LeaseMgrFactory::instance().updateLease4(lease);
+    }
+    if (skip) {
+        // Rollback changes (really useful only for memfile)
+        /// @todo: remove this once #3083 is implemented
+        *lease = old_values;
     }
 
     return (lease);

@@ -70,6 +70,24 @@ This message is printed when DHCPv4 server disables an interface from being
 used to receive DHCPv4 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
+% DHCP4_HOOK_BUFFER_RCVD_SKIP received DHCPv4 buffer was dropped because a callout set the skip flag.
+This debug message is printed when a callout installed on buffer4_receive
+hook point set the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to drop the packet.
+
+% DHCP4_HOOK_BUFFER_SEND_SKIP prepared DHCPv4 response was dropped because a callout set the skip flag.
+This debug message is printed when a callout installed on buffer4_send
+hook point set the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to drop the packet.
+Server completed all the processing (e.g. may have assigned, updated
+or released leases), but the response will not be send to the client.
+
+% DHCP4_HOOK_LEASE4_RELEASE_SKIP DHCPv4 lease was not released because a callout set the skip flag.
+This debug message is printed when a callout installed on lease4_release
+hook point set the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to not release
+a lease.
+
 % DHCP4_HOOK_PACKET_RCVD_SKIP received DHCPv4 packet was dropped, because a callout set the skip flag.
 This debug message is printed when a callout installed on the pkt4_receive
 hook point sets the skip flag. For this particular hook point, the
@@ -137,6 +155,10 @@ interpret. The reason why the packet is invalid is included in the message.
 This is a general catch-all message indicating that the processing of a
 received packet failed.  The reason is given in the message.  The server
 will not send a response but will instead ignore the packet.
+
+% DHCP4_PACKET_DROP_NO_TYPE packet received on interface %1 dropped, because of missing msg-type option
+This is a debug message informing that incoming DHCPv4 packet did not
+have mandatory DHCP message type option and thus was dropped.
 
 % DHCP4_PACKET_RECEIVED %1 (type %2) packet received on interface %3
 A debug message noting that the server has received the specified type of

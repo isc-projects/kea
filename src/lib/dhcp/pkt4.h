@@ -70,7 +70,7 @@ public:
     ///
     /// Prepares on-wire format of message and all its options.
     /// Options must be stored in options_ field.
-    /// Output buffer will be stored in bufferOut_.
+    /// Output buffer will be stored in buffer_out_.
     ///
     /// @throw InvalidOperation if packing fails
     void
@@ -103,7 +103,7 @@ public:
     ///
     /// This is mostly a diagnostic function. It is being used for sending
     /// received packet. Received packet is stored in bufferIn_, but
-    /// transmitted data is stored in bufferOut_. If we want to send packet
+    /// transmitted data is stored in buffer_out_. If we want to send packet
     /// that we just received, a copy between those two buffers is necessary.
     void repack();
 
@@ -307,11 +307,12 @@ public:
     /// is only valid till Pkt4 object is valid.
     ///
     /// RX packet or TX packet before pack() will return buffer with
-    /// zero length
+    /// zero length. This buffer is returned as non-const, so hooks
+    /// framework (and user's callouts) can modify them if needed
     ///
     /// @return reference to output buffer
-    const isc::util::OutputBuffer&
-    getBuffer() const { return (bufferOut_); };
+    isc::util::OutputBuffer&
+    getBuffer() { return (buffer_out_); };
 
     /// @brief Add an option.
     ///
@@ -489,6 +490,38 @@ public:
     /// @throw isc::Unexpected if timestamp update failed
     void updateTimestamp();
 
+    /// Output buffer (used during message transmission)
+    ///
+    /// @warning This public member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc. This field is also public, because
+    /// it may be modified by callouts (which are written in C++ now,
+    /// but we expect to also have them in Python, so any accesibility
+    /// methods would overly complicate things here and degrade
+    /// performance).
+    isc::util::OutputBuffer buffer_out_;
+
+    /// @brief That's the data of input buffer used in RX packet.
+    ///
+    /// @note Note that InputBuffer does not store the data itself, but just
+    /// expects that data will be valid for the whole life of InputBuffer.
+    /// Therefore we need to keep the data around.
+    ///
+    /// @warning This public member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc. This field is also public, because
+    /// it may be modified by callouts (which are written in C++ now,
+    /// but we expect to also have them in Python, so any accesibility
+    /// methods would overly complicate things here and degrade
+    /// performance).
+    std::vector<uint8_t> data_;
+
 private:
 
     /// @brief Generic method that validates and sets HW address.
@@ -590,29 +623,6 @@ protected:
     uint8_t file_[MAX_FILE_LEN];
 
     // end of real DHCPv4 fields
-
-    /// output buffer (used during message transmission)
-    ///
-    /// @warning This protected member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    isc::util::OutputBuffer bufferOut_;
-
-    /// that's the data of input buffer used in RX packet. Note that
-    /// InputBuffer does not store the data itself, but just expects that
-    /// data will be valid for the whole life of InputBuffer. Therefore we
-    /// need to keep the data around.
-    ///
-    /// @warning This protected member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt4. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    std::vector<uint8_t> data_;
 
     /// collection of options present in this message
     ///

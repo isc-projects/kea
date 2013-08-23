@@ -1,3 +1,8 @@
+667.	[func]		tomek
+	Additional hooks (buffer4_receive, lease4_renew,
+	lease4_release, buffer4_send) added to the DHCPv4 server.
+	(Trac #2983, git fd47f18f898695b98623a63a0a1c68d2e4b37568)
+
 666.	[func]		vorner
 	The CmdCtl's command "print_settings" was removed. It served no real
 	purpose and was just experimental leftover from early development.
