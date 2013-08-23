@@ -1384,14 +1384,14 @@ class TestStats(unittest.TestCase):
         self.assertListEqual([], stat._get_multi_module_list())
 
     def test_get_multi_module_list_initsessiontimeout(self):
-        """Test _get_multi_module_list() returns an empty list if rcp_call()
-        raise a InitSeeionTimeout exception"""
+        """Test _get_multi_module_list() raises an InitSeeionTimeout exception
+        if a CC session times out in rcp_call()"""
         # InitSeeionTimeout case
         stat = MyStats()
-        ex = stats.InitSessionTimeout
+        ex = isc.cc.session.SessionTimeout
         def __raise(*x): raise ex(*x)
         stat.mccs.rpc_call = lambda x,y: __raise()
-        self.assertRaises(ex, stat._get_multi_module_list)
+        self.assertRaises(stats.InitSessionTimeout, stat._get_multi_module_list)
 
     def test_query_statistics(self):
         """Test _query_statistics returns a list of pairs of module and
