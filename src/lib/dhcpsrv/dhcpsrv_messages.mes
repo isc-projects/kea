@@ -141,6 +141,12 @@ hook point sets the skip flag. It means that the server was told that
 no lease4 should be assigned. The server will not put that lease in its
 database and the client will get a NAK packet.
 
+% DHCPSRV_HOOK_LEASE4_RENEW_SKIP DHCPv4 lease was not renewed because a callout set the skip flag.
+This debug message is printed when a callout installed on lease4_renew
+hook point set the skip flag. For this particular hook point, the setting
+of the flag by a callout instructs the server to not renew a lease. The
+server will use existing lease as it is, without extending its lifetime.
+
 % DHCPSRV_HOOK_LEASE6_SELECT_SKIP Lease6 (non-temporary) creation was skipped, because of callout skip flag.
 This debug message is printed when a callout installed on lease6_select
 hook point sets the skip flag. It means that the server was told that
