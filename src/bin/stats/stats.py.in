@@ -343,11 +343,8 @@ class Stats:
         module, skips it and goes to collect from the next module."""
         # start receiving statistics data
         _statistics_data = []
-        _sequences = sequences[:]
-        while len(_sequences) > 0:
-            (module_name, seq) = (None, None)
+        for (module_name, seq) in sequences:
             try:
-                (module_name, seq) = _sequences.pop(0)
                 answer, env = self.cc_session.group_recvmsg(False, seq)
                 if answer:
                     rcode, args = isc.config.ccsession.parse_answer(answer)
