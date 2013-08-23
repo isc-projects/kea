@@ -78,16 +78,16 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed when an incoming DHCPv4
-   packet is received and its content is parsed. The sole argument -
-   query4 - contains a pointer to an isc::dhcp::Pkt4 object that contains
-   all information regarding incoming packet, including its source and
-   destination addresses, interface over which it was received, a list
-   of all options present within and relay information.  All fields of
-   the Pkt4 object can be modified at this time, except data_. (data_
-   contains the incoming packet as raw buffer. By the time this hook is
-   reached, that information has already parsed and is available though
-   other fields in the Pkt4 object.  For this reason, it doesn't make
-   sense to modify it.)
+   packet is received and its content has been parsed. The sole
+   argument - query4 - contains a pointer to an isc::dhcp::Pkt4 object
+   that contains all information regarding incoming packet, including
+   its source and destination addresses, interface over which it was
+   received, a list of all options present within and relay
+   information.  All fields of the Pkt4 object can be modified at this
+   time, except data_. (By the time this hook is reached, the contents
+   of the data_ field has been already parsed and stored in other
+   fields. Therefore, the modification in the data_ field has no
+   effect.)
 
  - <b>Skip flag action</b>: If any callout sets the skip flag, the server will
    drop the packet and start processing the next one.  The reason for the drop
@@ -120,18 +120,18 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b lease4, type: isc::dhcp::Lease4Ptr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed after the server engine
-   has selected a lease for client's request but before the lease
-   has been inserted into the database. Any modifications made to the
-   isc::dhcp::Lease4 object will be stored in the lease's record in the
-   database. The callout should make sure that any modifications are
-   sanity checked as the server will use that data as is with no further
-   checking.\n\n The server processes lease requests for DISCOVER and
-   REQUEST in a very similar way. The only major difference is that
-   for DISCOVER the lease is just selected, but not inserted into
-   the database.  It is possible to distinguish between DISCOVER and
-   REQUEST by checking value of the fake_allocation flag: a value of true
-   means that the lease won't be inserted into the database (DISCOVER),
-   a value of false means that it will (REQUEST).
+   has selected a lease for client's request but before the lease has
+   been inserted into the database. Any modifications made to the
+   isc::dhcp::Lease4 object will be stored in the lease's record in
+   the database. The callout should sanity check all modifications as
+   the server will use that data as is with no further checking.\n\n
+   The server processes lease requests for DISCOVER and REQUEST in a
+   very similar way. The only major difference is that for DISCOVER
+   the lease is just selected, but not inserted into the database.  It
+   is possible to distinguish between DISCOVER and REQUEST by checking
+   value of the fake_allocation flag: a value of true indicates that the
+   lease won't be inserted into the database (DISCOVER), a value of
+   false indicates that it will (REQUEST).
 
  - <b>Skip flag action</b>: If any callout installed on 'lease4_select'
    sets the skip flag, the server will not assign any lease. Packet
@@ -178,11 +178,11 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed when server's response
-   is about to be send back to the client. The sole argument - response4 -
+   is about to be sent back to the client. The sole argument - response4 -
    contains a pointer to an isc::dhcp::Pkt4 object that contains the
-   packet, with set source and destination addresses, interface over which
-   it will be send, list of all options and relay information.  All fields
-   of the Pkt4 object can be modified at this time, except bufferOut_.
+   packet, with source and destination addresses set, interface over which
+   it will be sent, and a list of all options and relay information.  All fields
+   of the Pkt4 object can be modified at this time, except buffer_out_.
    (This is scratch space used for constructing the packet after all
    pkt4_send callouts are complete, so any changes to that field will
    be overwritten.)
@@ -198,11 +198,11 @@ packet processing. Hook points that are not specific to packet processing
    - name: @b response4, type: isc::dhcp::Pkt4Ptr, direction: <b>in/out</b>
 
  - @b Description: this callout is executed when server's response
-   is about to be send back to the client. The sole argument - response4 -
+   is about to be sent back to the client. The sole argument - response4 -
    contains a pointer to an isc::dhcp::Pkt4 object that contains the
-   packet, with set source and destination addresses, interface over which
-   it will be send, list of all options and relay information. The raw
-   on-wire form is already prepared in bufferOut_ (see isc::dhcp::Pkt4::getBuffer())
+   packet, with source and destination addresses set, interface over which
+   it will be sent, and a list of all options and relay information. The raw
+   on-wire form is already prepared in buffer_out_ (see isc::dhcp::Pkt4::getBuffer())
    It doesn't make any sense to modify packet fields or options content
    at this time, because they were already used to construct on-wire buffer.
 

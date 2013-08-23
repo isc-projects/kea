@@ -2138,7 +2138,7 @@ vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
 //
 // Note that the test name does not follow test naming convention,
 // but the proper hook name is "buffer4_receive".
-TEST_F(HooksDhcpv4SrvTest, simple_buffer4_receive) {
+TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2171,7 +2171,7 @@ TEST_F(HooksDhcpv4SrvTest, simple_buffer4_receive) {
 
 // Checks if callouts installed on buffer4_receive is able to change
 // the values and the parameters are indeed used by the server.
-TEST_F(HooksDhcpv4SrvTest, valueChange_buffer4_receive) {
+TEST_F(HooksDhcpv4SrvTest, buffer4RreceiveValueChange) {
 
     // Install callback that modifies MAC addr of incoming packet
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2210,7 +2210,7 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_buffer4_receive) {
 // will cause the server to not parse the packet. Even though the packet is valid,
 // the server should eventually drop it, because there won't be mandatory options
 // (or rather option objects) in it.
-TEST_F(HooksDhcpv4SrvTest, skip_buffer4_receive) {
+TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
 
     // Install pkt6_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2237,7 +2237,7 @@ TEST_F(HooksDhcpv4SrvTest, skip_buffer4_receive) {
 //
 // Note that the test name does not follow test naming convention,
 // but the proper hook name is "pkt4_receive".
-TEST_F(HooksDhcpv4SrvTest, simple_pkt4_receive) {
+TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSimple) {
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2306,7 +2306,7 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
 // Checks if callouts installed on pkt4_received is able to delete
 // existing options and that change impacts server processing (mandatory
 // client-id option is deleted, so the packet is expected to be dropped)
-TEST_F(HooksDhcpv4SrvTest, deleteClientId_pkt4_receive) {
+TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDeleteClientId) {
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2330,7 +2330,7 @@ TEST_F(HooksDhcpv4SrvTest, deleteClientId_pkt4_receive) {
 
 // Checks if callouts installed on pkt4_received is able to set skip flag that
 // will cause the server to not process the packet (drop), even though it is valid.
-TEST_F(HooksDhcpv4SrvTest, skip_pkt4_receive) {
+TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSkip) {
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2355,7 +2355,7 @@ TEST_F(HooksDhcpv4SrvTest, skip_pkt4_receive) {
 
 // Checks if callouts installed on pkt4_send are indeed called and the
 // all necessary parameters are passed.
-TEST_F(HooksDhcpv4SrvTest, simple_pkt4_send) {
+TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2391,7 +2391,7 @@ TEST_F(HooksDhcpv4SrvTest, simple_pkt4_send) {
 
 // Checks if callouts installed on pkt4_send is able to change
 // the values and the packet sent contains those changes
-TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_send) {
+TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2428,7 +2428,7 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_send) {
 // existing options and that server applies those changes. In particular,
 // we are trying to send a packet without server-id. The packet should
 // be sent
-TEST_F(HooksDhcpv4SrvTest, deleteServerId_pkt4_send) {
+TEST_F(HooksDhcpv4SrvTest, pkt4SendDeleteServerId) {
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2488,7 +2488,7 @@ TEST_F(HooksDhcpv4SrvTest, skip_pkt4_send) {
 
 // Checks if callouts installed on buffer4_send are indeed called and the
 // all necessary parameters are passed.
-TEST_F(HooksDhcpv4SrvTest, simple_buffer4_send) {
+TEST_F(HooksDhcpv4SrvTest, buffer4SendSimple) {
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2524,7 +2524,7 @@ TEST_F(HooksDhcpv4SrvTest, simple_buffer4_send) {
 
 // Checks if callouts installed on buffer4_send are indeed called and that
 // the output buffer can be changed.
-TEST_F(HooksDhcpv4SrvTest, change_buffer4_send) {
+TEST_F(HooksDhcpv4SrvTest, buffer4Send) {
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2553,7 +2553,7 @@ TEST_F(HooksDhcpv4SrvTest, change_buffer4_send) {
 
 // Checks if callouts installed on buffer4_send can set skip flag and that flag
 // causes the packet to not be sent
-TEST_F(HooksDhcpv4SrvTest, skip_buffer4_send) {
+TEST_F(HooksDhcpv4SrvTest, buffer4SendSkip) {
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2578,7 +2578,7 @@ TEST_F(HooksDhcpv4SrvTest, skip_buffer4_send) {
 
 // This test checks if subnet4_select callout is triggered and reports
 // valid parameters
-TEST_F(HooksDhcpv4SrvTest, subnet4_select) {
+TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2644,7 +2644,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4_select) {
 
 // This test checks if callout installed on subnet4_select hook point can pick
 // a different subnet.
-TEST_F(HooksDhcpv4SrvTest, subnet_select_change) {
+TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2704,7 +2704,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet_select_change) {
 // This test verifies that incoming (positive) REQUEST/Renewing can be handled
 // properly and that callout installed on lease4_renew is triggered with
 // expected parameters.
-TEST_F(HooksDhcpv4SrvTest, basic_lease4_renew) {
+TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
 
     const IOAddress addr("192.0.2.106");
     const uint32_t temp_t1 = 50;
@@ -2788,7 +2788,7 @@ TEST_F(HooksDhcpv4SrvTest, basic_lease4_renew) {
 
 // This test verifies that a callout installed on lease4_renew can trigger
 // the server to not renew a lease.
-TEST_F(HooksDhcpv4SrvTest, skip_lease4_renew) {
+TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
 
     const IOAddress addr("192.0.2.106");
     const uint32_t temp_t1 = 50;
@@ -2852,7 +2852,7 @@ TEST_F(HooksDhcpv4SrvTest, skip_lease4_renew) {
 }
 
 // This test verifies that valid RELEASE triggers lease4_release callouts
-TEST_F(HooksDhcpv4SrvTest, basic_lease4_release) {
+TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
 
     const IOAddress addr("192.0.2.106");
     const uint32_t temp_t1 = 50;
@@ -2937,7 +2937,7 @@ TEST_F(HooksDhcpv4SrvTest, basic_lease4_release) {
 
 // This test verifies that skip flag returned by a callout installed on the
 // lease4_release hook point will keep the lease
-TEST_F(HooksDhcpv4SrvTest, skip_lease4_release) {
+TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
 
     const IOAddress addr("192.0.2.106");
     const uint32_t temp_t1 = 50;
@@ -2998,9 +2998,6 @@ TEST_F(HooksDhcpv4SrvTest, skip_lease4_release) {
     // @todo: Uncomment this once trac2592 is implemented
     //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
     //EXPECT_EQ(leases.size(), 1);
-
 }
-
-
 
 } // end of anonymous namespace
