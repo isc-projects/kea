@@ -33,7 +33,7 @@ namespace dhcp {
 const IOAddress DEFAULT_ADDRESS("0.0.0.0");
 
 Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
-     :bufferOut_(DHCPV4_PKT_HDR_LEN),
+     :buffer_out_(DHCPV4_PKT_HDR_LEN),
       local_addr_(DEFAULT_ADDRESS),
       remote_addr_(DEFAULT_ADDRESS),
       iface_(""),
@@ -58,7 +58,7 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
 }
 
 Pkt4::Pkt4(const uint8_t* data, size_t len)
-     :bufferOut_(0), // not used, this is RX packet
+     :buffer_out_(0), // not used, this is RX packet
       local_addr_(DEFAULT_ADDRESS),
       remote_addr_(DEFAULT_ADDRESS),
       iface_(""),
@@ -111,25 +111,25 @@ Pkt4::pack() {
     try {
         size_t hw_len = hwaddr_->hwaddr_.size();
 
-        bufferOut_.writeUint8(op_);
-        bufferOut_.writeUint8(hwaddr_->htype_);
-        bufferOut_.writeUint8(hw_len < MAX_CHADDR_LEN ? 
+        buffer_out_.writeUint8(op_);
+        buffer_out_.writeUint8(hwaddr_->htype_);
+        buffer_out_.writeUint8(hw_len < MAX_CHADDR_LEN ?
                               hw_len : MAX_CHADDR_LEN);
-        bufferOut_.writeUint8(hops_);
-        bufferOut_.writeUint32(transid_);
-        bufferOut_.writeUint16(secs_);
-        bufferOut_.writeUint16(flags_);
-        bufferOut_.writeUint32(ciaddr_);
-        bufferOut_.writeUint32(yiaddr_);
-        bufferOut_.writeUint32(siaddr_);
-        bufferOut_.writeUint32(giaddr_);
+        buffer_out_.writeUint8(hops_);
+        buffer_out_.writeUint32(transid_);
+        buffer_out_.writeUint16(secs_);
+        buffer_out_.writeUint16(flags_);
+        buffer_out_.writeUint32(ciaddr_);
+        buffer_out_.writeUint32(yiaddr_);
+        buffer_out_.writeUint32(siaddr_);
+        buffer_out_.writeUint32(giaddr_);
 
 
         if (hw_len <= MAX_CHADDR_LEN) {
             // write up to 16 bytes of the hardware address (CHADDR field is 16
             // bytes long in DHCPv4 message).
-            bufferOut_.writeData(&hwaddr_->hwaddr_[0], 
-                                 (hw_len < MAX_CHADDR_LEN ? 
+            buffer_out_.writeData(&hwaddr_->hwaddr_[0],
+                                 (hw_len < MAX_CHADDR_LEN ?
                                   hw_len : MAX_CHADDR_LEN) );
             hw_len = MAX_CHADDR_LEN - hw_len;
         } else {
@@ -138,20 +138,20 @@ Pkt4::pack() {
 
         // write (len) bytes of padding
         vector<uint8_t> zeros(hw_len, 0);
-        bufferOut_.writeData(&zeros[0], hw_len);
-        // bufferOut_.writeData(chaddr_, MAX_CHADDR_LEN);
+        buffer_out_.writeData(&zeros[0], hw_len);
+        // buffer_out_.writeData(chaddr_, MAX_CHADDR_LEN);
 
-        bufferOut_.writeData(sname_, MAX_SNAME_LEN);
-        bufferOut_.writeData(file_, MAX_FILE_LEN);
+        buffer_out_.writeData(sname_, MAX_SNAME_LEN);
+        buffer_out_.writeData(file_, MAX_FILE_LEN);
 
         // write DHCP magic cookie
-        bufferOut_.writeUint32(DHCP_OPTIONS_COOKIE);
+        buffer_out_.writeUint32(DHCP_OPTIONS_COOKIE);
 
-        LibDHCP::packOptions(bufferOut_, options_);
+        LibDHCP::packOptions(buffer_out_, options_);
 
         // add END option that indicates end of options
         // (End option is very simple, just a 255 octet)
-         bufferOut_.writeUint8(DHO_END);
+         buffer_out_.writeUint8(DHO_END);
      } catch(const Exception& e) {
         // An exception is thrown and message will be written to Logger
          isc_throw(InvalidOperation, e.what());
@@ -259,7 +259,7 @@ void Pkt4::setType(uint8_t dhcp_type) {
 }
 
 void Pkt4::repack() {
-    bufferOut_.writeData(&data_[0], data_.size());
+    buffer_out_.writeData(&data_[0], data_.size());
 }
 
 std::string

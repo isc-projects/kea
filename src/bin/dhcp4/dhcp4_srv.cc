@@ -199,7 +199,8 @@ Dhcpv4Srv::run() {
 
         // The packet has just been received so contains the uninterpreted wire
         // data; execute callouts registered for buffer4_receive.
-        if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
+        if (HooksManager::getHooksManager()
+            .calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
             // Delete previously set arguments
@@ -209,7 +210,8 @@ Dhcpv4Srv::run() {
             callout_handle->setArgument("query4", query);
 
             // Call callouts
-            HooksManager::callCallouts(Hooks.hook_index_buffer4_receive_, *callout_handle);
+            HooksManager::callCallouts(Hooks.hook_index_buffer4_receive_,
+                                       *callout_handle);
 
             // Callouts decided to skip the next processing step. The next
             // processing step would to parse the packet, so skip at this
@@ -255,7 +257,7 @@ Dhcpv4Srv::run() {
             .arg(type)
             .arg(query->toText());
 
-        // Let's execute all callouts registered for packet_received
+        // Let's execute all callouts registered for pkt4_receive
         if (HooksManager::calloutsPresent(hook_index_pkt4_receive_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
@@ -352,7 +354,7 @@ Dhcpv4Srv::run() {
         // Specifies if server should do the packing
         bool skip_pack = false;
 
-        // Execute all callouts registered for packet6_send
+        // Execute all callouts registered for pkt4_send
         if (HooksManager::calloutsPresent(hook_index_pkt4_send_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
@@ -391,8 +393,9 @@ Dhcpv4Srv::run() {
             // Now all fields and options are constructed into output wire buffer.
             // Option objects modification does not make sense anymore. Hooks
             // can only manipulate wire buffer at this stage.
-            // Let's execute all callouts registered for buffer6_send
-            if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer4_send_)) {
+            // Let's execute all callouts registered for buffer4_send
+            if (HooksManager::getHooksManager()
+                .calloutsPresent(Hooks.hook_index_buffer4_send_)) {
                 CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
                 // Delete previously set arguments
@@ -402,13 +405,15 @@ Dhcpv4Srv::run() {
                 callout_handle->setArgument("response4", rsp);
 
                 // Call callouts
-                HooksManager::callCallouts(Hooks.hook_index_buffer4_send_, *callout_handle);
+                HooksManager::callCallouts(Hooks.hook_index_buffer4_send_,
+                                           *callout_handle);
 
                 // Callouts decided to skip the next processing step. The next
                 // processing step would to parse the packet, so skip at this
                 // stage means drop.
                 if (callout_handle->getSkip()) {
-                    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_BUFFER_SEND_SKIP);
+                    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
+                              DHCP4_HOOK_BUFFER_SEND_SKIP);
                     continue;
                 }
 
@@ -847,7 +852,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 Pkt4Ptr
 Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
-    /// @todo Uncomment this
+    /// @todo Uncomment this (see ticket #3116)
     // sanityCheck(request, MANDATORY);
 
     Pkt4Ptr ack = Pkt4Ptr
@@ -873,7 +878,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 void
 Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
-    /// @todo Uncomment this
+    /// @todo Uncomment this (see ticket #3116)
     // sanityCheck(release, MANDATORY);
 
     // Try to find client-id
@@ -919,8 +924,9 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
         bool skip = false;
 
-        // Execute all callouts registered for packet6_send
-        if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease4_release_)) {
+        // Execute all callouts registered for lease4_release
+        if (HooksManager::getHooksManager()
+            .calloutsPresent(Hooks.hook_index_lease4_release_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(release);
 
             // Delete all previous arguments
@@ -933,14 +939,16 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             callout_handle->setArgument("lease4", lease);
 
             // Call all installed callouts
-            HooksManager::callCallouts(Hooks.hook_index_lease4_release_, *callout_handle);
+            HooksManager::callCallouts(Hooks.hook_index_lease4_release_,
+                                       *callout_handle);
 
             // Callouts decided to skip the next processing step. The next
             // processing step would to send the packet, so skip at this
             // stage means "drop response".
             if (callout_handle->getSkip()) {
                 skip = true;
-                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_LEASE4_RELEASE_SKIP);
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
+                          DHCP4_HOOK_LEASE4_RELEASE_SKIP);
             }
         }
 
@@ -976,13 +984,13 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
 void
 Dhcpv4Srv::processDecline(Pkt4Ptr& /* decline */) {
-    /// @todo Implement this.
+    /// @todo Implement this (also see ticket #3116)
 }
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
 
-    /// @todo Implement this for real.
+    /// @todo Implement this for real. (also see ticket #3116)
     return (inform);
 }
 
@@ -1036,7 +1044,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
 
     /// @todo Implement getSubnet4(interface-name)
 
-    // Let's execute all callouts registered for packet_received
+    // Let's execute all callouts registered for subnet4_select
     if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(question);
 
@@ -1046,16 +1054,19 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
         // Set new arguments
         callout_handle->setArgument("query4", question);
         callout_handle->setArgument("subnet4", subnet);
-        callout_handle->setArgument("subnet4collection", CfgMgr::instance().getSubnets4());
+        callout_handle->setArgument("subnet4collection",
+                                    CfgMgr::instance().getSubnets4());
 
         // Call user (and server-side) callouts
-        HooksManager::callCallouts(hook_index_subnet4_select_, *callout_handle);
+        HooksManager::callCallouts(hook_index_subnet4_select_,
+                                   *callout_handle);
 
         // Callouts decided to skip this step. This means that no subnet will be
-        // selected. Packet processing will continue, but it will be severly limited
-        // (i.e. only global options will be assigned)
+        // selected. Packet processing will continue, but it will be severly
+        // limited (i.e. only global options will be assigned)
         if (callout_handle->getSkip()) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_SUBNET4_SELECT_SKIP);
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_SUBNET4_SELECT_SKIP);
             return (Subnet4Ptr());
         }
 

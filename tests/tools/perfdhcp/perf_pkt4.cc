@@ -40,7 +40,7 @@ PerfPkt4::rawPack() {
                                options_,
                                getTransidOffset(),
                                getTransid(),
-                               bufferOut_));
+                               buffer_out_));
 }
 
 bool
