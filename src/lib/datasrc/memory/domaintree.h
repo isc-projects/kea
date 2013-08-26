@@ -569,6 +569,22 @@ private:
         }
     }
 
+    /// \brief Access sibling node as bare pointer.
+    ///
+    /// A sibling node is defined as the parent's other child. It exists
+    /// at the same level as this node.
+    ///
+    /// \return the sibling node if one exists, NULL otherwise.
+    DomainTreeNode<T>* getSibling() {
+        DomainTreeNode<T>* parent = getParent();
+
+        if (parent->getLeft() == this) {
+            return (parent->getRight());
+        } else {
+            return (parent->getLeft());
+        }
+    }
+
     /// \brief Access uncle node as bare pointer.
     ///
     /// An uncle node is defined as the parent node's sibling. It exists
