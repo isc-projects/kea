@@ -1180,7 +1180,7 @@ public:
                         DomainTree<T>* tree,
                         DataDeleter deleter)
     {
-        tree->deleteAllNodes(mem_sgmt, deleter);
+        tree->removeAllNodes(mem_sgmt, deleter);
         tree->~DomainTree<T>();
         mem_sgmt.deallocate(tree, sizeof(DomainTree<T>));
     }
@@ -1567,7 +1567,7 @@ public:
     /// \param deleter The \c DataDeleter used to destroy data stored in
     /// the tree nodes.
     template <typename DataDeleter>
-    void deleteAllNodes(util::MemorySegment& mem_sgmt, DataDeleter deleter);
+    void removeAllNodes(util::MemorySegment& mem_sgmt, DataDeleter deleter);
 
     /// \brief Swaps two tree's contents.
     ///
@@ -2109,7 +2109,7 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
 template <typename T>
 template <typename DataDeleter>
 void
-DomainTree<T>::deleteAllNodes(util::MemorySegment& mem_sgmt,
+DomainTree<T>::removeAllNodes(util::MemorySegment& mem_sgmt,
                               DataDeleter deleter)
 {
     deleteHelper(mem_sgmt, root_.get(), deleter);
