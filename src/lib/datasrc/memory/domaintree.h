@@ -1527,13 +1527,29 @@ public:
     Result insert(util::MemorySegment& mem_sgmt, const isc::dns::Name& name,
                   DomainTreeNode<T>** inserted_node);
 
+    /// \brief Delete a tree node.
+    ///
+    /// \throw none.
+    ///
+    /// \param mem_sgmt The \c MemorySegment object used to insert the nodes
+    /// (which was also used for creating the tree due to the requirement of
+    /// \c insert()).
+    /// \param node The node to delete.
+    /// \param deleter The \c DataDeleter used to destroy data stored in
+    /// the tree nodes.
+    template <typename DataDeleter>
+    void remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
+                DataDeleter deleter);
+
     /// \brief Delete all tree nodes.
     ///
     /// \throw none.
     ///
     /// \param mem_sgmt The \c MemorySegment object used to insert the nodes
     /// (which was also used for creating the tree due to the requirement of
-    /// \c inert()).
+    /// \c insert()).
+    /// \param deleter The \c DataDeleter used to destroy data stored in
+    /// the tree nodes.
     template <typename DataDeleter>
     void deleteAllNodes(util::MemorySegment& mem_sgmt, DataDeleter deleter);
 
@@ -2064,6 +2080,14 @@ DomainTree<T>::insert(util::MemorySegment& mem_sgmt,
 
     ++node_count_;
     return (SUCCESS);
+}
+
+template <typename T>
+template <typename DataDeleter>
+void
+DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
+                      DataDeleter deleter)
+{
 }
 
 template <typename T>
