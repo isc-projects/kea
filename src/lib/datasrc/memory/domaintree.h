@@ -1973,7 +1973,7 @@ DomainTree<T>::largestNodeImpl(TT* tree) {
 template <typename T>
 DomainTreeNode<T>*
 DomainTree<T>::largestNode() {
-  return (largestNodeImpl<DomainTree<T>, DomainTreeNode<T> >(this));
+    return (largestNodeImpl<DomainTree<T>, DomainTreeNode<T> >(this));
 }
 
 template <typename T>
