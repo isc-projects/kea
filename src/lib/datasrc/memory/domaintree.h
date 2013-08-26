@@ -716,29 +716,28 @@ DomainTreeNode<T>::abstractSuccessorImpl(TT* node,
     // the left pointer points to right and vice versa. Don't get confused
     // by the idea, just imagine the pointers look into a mirror.
 
-    const DomainTreeNode<T>* current = node;
     // If it has right node, the successor is the left-most node of the right
     // subtree.
-    if ((current->*right).get() != NULL) {
-        current = (current->*right).get();
+    if ((node->*right).get() != NULL) {
+        node = (node->*right).get();
         const DomainTreeNode<T>* left_n;
-        while ((left_n = (current->*left).get()) != NULL) {
-            current = left_n;
+        while ((left_n = (node->*left).get()) != NULL) {
+            node = left_n;
         }
-        return (current);
+        return (node);
     }
 
     // Otherwise go up until we find the first left branch on our path to
     // root.  If found, the parent of the branch is the successor.
     // Otherwise, we return the null node
-    const DomainTreeNode<T>* parent = current->getParent();
-    while ((!current->isSubTreeRoot()) &&
-           (current == (parent->*right).get())) {
-        current = parent;
+    const DomainTreeNode<T>* parent = node->getParent();
+    while ((!node->isSubTreeRoot()) &&
+           (node == (parent->*right).get())) {
+        node = parent;
         parent = parent->getParent();
     }
 
-    if (!current->isSubTreeRoot()) {
+    if (!node->isSubTreeRoot()) {
         return (parent);
     } else {
         return (NULL);
