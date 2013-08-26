@@ -2763,7 +2763,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
 
     // Check that hwaddr parameter is passed properly
     ASSERT_TRUE(callback_hwaddr_);
-    EXPECT_EQ(*callback_hwaddr_, *req->getHWAddr());
+    EXPECT_TRUE(*callback_hwaddr_ == *req->getHWAddr());
 
     // Check that the subnet is passed properly
     ASSERT_TRUE(callback_subnet4_);
