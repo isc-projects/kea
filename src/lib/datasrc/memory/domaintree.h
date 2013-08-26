@@ -625,6 +625,59 @@ private:
         return (down_.get());
     }
 
+    /// \brief Exchanges the location of two nodes. Their data remain
+    /// the same, but their location in the tree, colors and sub-tree
+    /// root status may change. Note that this is different from
+    /// std::swap()-like behavior.
+    ///
+    /// This method doesn't throw any exceptions.
+    void exchange(DomainTreeNode<T>* other, DomainTreeNodePtr* subtree_root) {
+        std::swap(left_, other->left_);
+        if (other->getLeft() == other) {
+            other->left_ = this;
+        }
+
+        std::swap(right_, other->right_);
+        if (other->getRight() == other) {
+            other->right_ = this;
+        }
+
+        std::swap(parent_, other->parent_);
+        if (getParent() == this) {
+            parent_ = other;
+        }
+
+        // Update FLAG_RED and FLAG_SUBTREE_ROOT as these two are
+        // associated with the node's position.
+        const bool this_is_red = isRed();
+        const bool this_is_subtree_root = isSubTreeRoot();
+        const bool other_is_red = other->isRed();
+        const bool other_is_subtree_root = other->isSubTreeRoot();
+
+        if (this_is_red) {
+            other->setColor(RED);
+        } else {
+            other->setColor(BLACK);
+        }
+
+        if (other_is_red) {
+            setColor(RED);
+        } else {
+            setColor(BLACK);
+        }
+
+        setSubTreeRoot(other_is_subtree_root);
+        other->setSubTreeRoot(this_is_subtree_root);
+
+        if (other->isSubTreeRoot()) {
+            if (other->getParent()) {
+                other->getParent()->down_ = other;
+            } else {
+                *subtree_root = other;
+            }
+        }
+    }
+
     /// \brief Data stored here.
     boost::interprocess::offset_ptr<T> data_;
 
@@ -2158,9 +2211,37 @@ DomainTree<T>::insert(util::MemorySegment& mem_sgmt,
 template <typename T>
 template <typename DataDeleter>
 void
-DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
-                      DataDeleter deleter)
+DomainTree<T>::remove(util::MemorySegment&, DomainTreeNode<T>* node,
+                      DataDeleter)
 {
+    assert(node != NULL);
+
+    // node points to the node to be deleted. But unless it's a leaf
+    // node, it first has to be exchanged with the right-most node in
+    // the left sub-tree or the left-most node in the right
+    // sub-tree. (Here, sub-tree is inside this RB tree itself, not in
+    // the tree-of-trees forest.) The node then becomes a leaf
+    // node. Note that this is not an in-place value swap of node data,
+    // but the actual node locations are swapped. Unlike normal BSTs, we
+    // have to do this as our label data is at address (this + 1).
+
+    if (node->getLeft() != NULL) {
+        DomainTreeNode<T>* rightmost = node->getLeft();
+        while (rightmost->getRight() != NULL) {
+            rightmost = rightmost->getRight();
+        }
+
+        node->exchange(rightmost, &root_);
+    } else if (node->getRight() != NULL) {
+        DomainTreeNode<T>* leftmost = node->getRight();
+        while (leftmost->getLeft() != NULL) {
+            leftmost = leftmost->getLeft();
+        }
+
+        node->exchange(leftmost, &root_);
+    }
+
+    // Now, node is a leaf node.
 }
 
 template <typename T>
