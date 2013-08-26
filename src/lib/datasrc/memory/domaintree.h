@@ -678,6 +678,20 @@ private:
             } else {
                 *subtree_root = other;
             }
+        } else {
+            if (other->getParent()->getLeft() == this) {
+                other->getParent()->left_ = other;
+            } else {
+                other->getParent()->right_ = other;
+            }
+        }
+
+        if (other->getRight()) {
+            other->getRight()->parent_ = other;
+        }
+
+        if (other->getLeft()) {
+            other->getLeft()->parent_ = other;
         }
     }
 
