@@ -474,6 +474,16 @@ public:
     }
 
 private:
+    /// \brief Static helper function used by const and non-const
+    /// variants of abstractSuccessor()
+    template <typename TT>
+    static TT*
+    abstractSuccessorImpl(TT* node,
+                          typename DomainTreeNode<T>::DomainTreeNodePtr
+                              DomainTreeNode<T>::*left,
+                          typename DomainTreeNode<T>::DomainTreeNodePtr
+                              DomainTreeNode<T>::*right);
+
     /// \brief private shared implementation of successor and predecessor
     ///
     /// As the two mentioned functions are merely mirror images of each other,
@@ -485,10 +495,18 @@ private:
     /// The overhead of the member pointers should be optimised out, as this
     /// will probably get completely inlined into predecessor and successor
     /// methods.
-    const DomainTreeNode<T>*
-        abstractSuccessor(typename DomainTreeNode<T>::DomainTreeNodePtr
+    DomainTreeNode<T>*
+    abstractSuccessor(typename DomainTreeNode<T>::DomainTreeNodePtr
                           DomainTreeNode<T>::*left,
-                          typename DomainTreeNode<T>::DomainTreeNodePtr
+                      typename DomainTreeNode<T>::DomainTreeNodePtr
+                          DomainTreeNode<T>::*right);
+
+    /// \brief private shared implementation of successor and
+    /// predecessor (const variant)
+    const DomainTreeNode<T>*
+    abstractSuccessor(typename DomainTreeNode<T>::DomainTreeNodePtr
+                          DomainTreeNode<T>::*left,
+                      typename DomainTreeNode<T>::DomainTreeNodePtr
                           DomainTreeNode<T>::*right)
         const;
 
@@ -687,18 +705,18 @@ DomainTreeNode<T>::getAbsoluteLabels(
 }
 
 template <typename T>
-const DomainTreeNode<T>*
-DomainTreeNode<T>::abstractSuccessor(
+template <typename TT>
+TT*
+DomainTreeNode<T>::abstractSuccessorImpl(TT* node,
     typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*left,
     typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*right)
-    const
 {
     // This function is written as a successor. It becomes predecessor if
     // the left and right pointers are swapped. So in case of predecessor,
     // the left pointer points to right and vice versa. Don't get confused
     // by the idea, just imagine the pointers look into a mirror.
 
-    const DomainTreeNode<T>* current = this;
+    const DomainTreeNode<T>* current = node;
     // If it has right node, the successor is the left-most node of the right
     // subtree.
     if ((current->*right).get() != NULL) {
@@ -725,6 +743,26 @@ DomainTreeNode<T>::abstractSuccessor(
     } else {
         return (NULL);
     }
+}
+
+template <typename T>
+DomainTreeNode<T>*
+DomainTreeNode<T>::abstractSuccessor(
+    typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*left,
+    typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*right)
+{
+    return (abstractSuccessorImpl<DomainTreeNode<T> >(this, left, right));
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTreeNode<T>::abstractSuccessor(
+    typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*left,
+    typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*right)
+    const
+{
+    return (abstractSuccessorImpl<const DomainTreeNode<T> >
+            (this, left, right));
 }
 
 template <typename T>
