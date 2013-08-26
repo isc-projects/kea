@@ -632,6 +632,9 @@ private:
     ///
     /// This method doesn't throw any exceptions.
     void exchange(DomainTreeNode<T>* other, DomainTreeNodePtr* subtree_root) {
+        // Swap the pointers first. down should not be swapped as it
+        // belongs to the node's data, and not to its position in the
+        // tree.
         std::swap(left_, other->left_);
         if (other->getLeft() == other) {
             other->left_ = this;
