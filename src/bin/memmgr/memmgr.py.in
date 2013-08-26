@@ -128,6 +128,7 @@ class Memmgr(BIND10Server):
         """
         Send a command to the builder, with proper synchronization.
         """
+        assert isinstance(cmd, tuple)
         with self._builder_cv:
             self._builder_command_queue.append(cmd)
             self._builder_cv.notify_all()
