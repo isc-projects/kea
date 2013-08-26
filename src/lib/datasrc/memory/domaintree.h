@@ -1279,6 +1279,19 @@ public:
         return (ret);
     }
 
+private:
+    /// \brief Static helper function used by const and non-const
+    /// variants of find() below
+    template <typename TT, typename TTN, typename CBARG>
+    static Result findImpl(TT* tree,
+                           const isc::dns::LabelSequence& target_labels_orig,
+                           TTN** target,
+                           TTN* node,
+                           DomainTreeNodeChain<T>& node_path,
+                           bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                           CBARG callback_arg);
+
+public:
     /// \brief Find with callback and node chain
     /// \anchor callback
     ///
@@ -1353,6 +1366,14 @@ public:
     ///
     /// \return As in the description, but in case of callback returning
     ///     \c true, it returns immediately with the current node.
+    template <typename CBARG>
+    Result find(const isc::dns::LabelSequence& target_labels_orig,
+                DomainTreeNode<T>** node,
+                DomainTreeNodeChain<T>& node_path,
+                bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                CBARG callback_arg);
+
+    /// \brief Find with callback and node chain (const variant)
     template <typename CBARG>
     Result find(const isc::dns::LabelSequence& target_labels_orig,
                 const DomainTreeNode<T>** node,
@@ -1639,29 +1660,20 @@ DomainTree<T>::deleteHelper(util::MemorySegment& mem_sgmt,
 }
 
 template <typename T>
-template <typename CBARG>
+template <typename TT, typename TTN, typename CBARG>
 typename DomainTree<T>::Result
-DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
-                    const DomainTreeNode<T>** target,
-                    DomainTreeNodeChain<T>& node_path,
-                    bool (*callback)(const DomainTreeNode<T>&, CBARG),
-                    CBARG callback_arg) const
+DomainTree<T>::findImpl(TT* tree,
+                        const isc::dns::LabelSequence& target_labels_orig,
+                        TTN** target,
+                        TTN* node,
+                        DomainTreeNodeChain<T>& node_path,
+                        bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                        CBARG callback_arg)
 {
     if (node_path.isEmpty() ^ target_labels_orig.isAbsolute()) {
         isc_throw(isc::BadValue,
                   "DomainTree::find() is given mismatched node chain"
                   " and label sequence");
-    }
-
-    const DomainTreeNode<T>* node;
-
-    if (!node_path.isEmpty()) {
-        // Get the top node in the node chain
-        node = node_path.top();
-        // Start searching from its down pointer
-        node = node->getDown();
-    } else {
-        node = root_.get();
     }
 
     Result ret = NOTFOUND;
@@ -1674,7 +1686,7 @@ DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
             node_path.last_comparison_.getRelation();
 
         if (relation == isc::dns::NameComparisonResult::EQUAL) {
-            if (needsReturnEmptyNode_ || !node->isEmpty()) {
+            if (tree->needsReturnEmptyNode_ || !node->isEmpty()) {
                 node_path.push(node);
                 *target = node;
                 ret = EXACTMATCH;
@@ -1687,7 +1699,7 @@ DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
                 node->getLeft() : node->getRight();
         } else {
             if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
-                if (needsReturnEmptyNode_ || !node->isEmpty()) {
+                if (tree->needsReturnEmptyNode_ || !node->isEmpty()) {
                     ret = PARTIALMATCH;
                     *target = node;
                     if (callback != NULL &&
@@ -1708,6 +1720,53 @@ DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
     }
 
     return (ret);
+}
+
+template <typename T>
+template <typename CBARG>
+typename DomainTree<T>::Result
+DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
+                    DomainTreeNode<T>** target,
+                    DomainTreeNodeChain<T>& node_path,
+                    bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                    CBARG callback_arg)
+{
+    if (!node_path.isEmpty()) {
+        isc_throw(isc::BadValue,
+                  "DomainTree::find() non-const method is given "
+                  "non-empty node chain");
+    }
+
+    DomainTreeNode<T>* node = root_.get();
+
+    return (findImpl<DomainTree<T>, DomainTreeNode<T>, CBARG >
+            (this, target_labels_orig, target, node, node_path,
+             callback, callback_arg));
+}
+
+template <typename T>
+template <typename CBARG>
+typename DomainTree<T>::Result
+DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
+                    const DomainTreeNode<T>** target,
+                    DomainTreeNodeChain<T>& node_path,
+                    bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                    CBARG callback_arg) const
+{
+    const DomainTreeNode<T>* node;
+
+    if (!node_path.isEmpty()) {
+        // Get the top node in the node chain
+        node = node_path.top();
+        // Start searching from its down pointer
+        node = node->getDown();
+    } else {
+        node = root_.get();
+    }
+
+    return (findImpl<const DomainTree<T>, const DomainTreeNode<T>, CBARG >
+            (this, target_labels_orig, target, node, node_path,
+             callback, callback_arg));
 }
 
 template <typename T>
