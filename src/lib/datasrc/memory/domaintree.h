@@ -1256,45 +1256,6 @@ public:
     ///    of it. In that case, node parameter is left intact.
     //@{
 
-    /// \brief Simple find
-    ///
-    /// Acts as described in the \ref find section.
-    Result find(const isc::dns::Name& name,
-                const DomainTreeNode<T>** node) const {
-        DomainTreeNodeChain<T> node_path;
-        const isc::dns::LabelSequence ls(name);
-        Result ret = (find<void*>(ls, node, node_path, NULL, NULL));
-        return (ret);
-    }
-
-    /// \brief Simple find, with node_path tracking
-    ///
-    /// Acts as described in the \ref find section.
-    Result find(const isc::dns::Name& name, const DomainTreeNode<T>** node,
-                DomainTreeNodeChain<T>& node_path) const
-    {
-        const isc::dns::LabelSequence ls(name);
-        Result ret = (find<void*>(ls, node, node_path, NULL, NULL));
-        return (ret);
-    }
-
-    /// \brief Simple find returning immutable node.
-    ///
-    /// Acts as described in the \ref find section, but returns immutable
-    /// node pointer.
-    template <typename CBARG>
-    Result find(const isc::dns::Name& name,
-                const DomainTreeNode<T>** node,
-                DomainTreeNodeChain<T>& node_path,
-                bool (*callback)(const DomainTreeNode<T>&, CBARG),
-                CBARG callback_arg) const
-    {
-        const isc::dns::LabelSequence ls(name);
-        Result ret = find(ls, node, node_path, callback,
-                          callback_arg);
-        return (ret);
-    }
-
 private:
     /// \brief Static helper function used by const and non-const
     /// variants of find() below
@@ -1307,7 +1268,103 @@ private:
                            bool (*callback)(const DomainTreeNode<T>&, CBARG),
                            CBARG callback_arg);
 
+    /// \brief Static helper function used by const and non-const
+    /// variants of find() below
+    template <typename TT, typename TTN>
+    static Result findImpl(TT* tree,
+                           const isc::dns::Name& name,
+                           TTN** node)
+    {
+        DomainTreeNodeChain<T> node_path;
+        const isc::dns::LabelSequence ls(name);
+        return (tree->find<void*>(ls, node, node_path, NULL, NULL));
+    }
+
+    /// \brief Static helper function used by const and non-const
+    /// variants of find() below
+    template <typename TT, typename TTN>
+    static Result findImpl(TT* tree,
+                           const isc::dns::Name& name,
+                           TTN** node,
+                           DomainTreeNodeChain<T>& node_path)
+    {
+        const isc::dns::LabelSequence ls(name);
+        return (tree->find<void*>(ls, node, node_path, NULL, NULL));
+    }
+
+    /// \brief Static helper function used by const and non-const
+    /// variants of find() below
+    template <typename TT, typename TTN, typename CBARG>
+    static Result findImpl(TT* tree,
+                           const isc::dns::Name& name,
+                           TTN** node,
+                           DomainTreeNodeChain<T>& node_path,
+                           bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                           CBARG callback_arg)
+    {
+        const isc::dns::LabelSequence ls(name);
+        return (tree->find(ls, node, node_path, callback, callback_arg));
+    }
+
 public:
+    /// \brief Simple find
+    ///
+    /// Acts as described in the \ref find section.
+    Result find(const isc::dns::Name& name,
+                DomainTreeNode<T>** node) {
+        return (findImpl<DomainTree<T>, DomainTreeNode<T> >
+                (this, name, node));
+    }
+
+    /// \brief Simple find (const variant)
+    Result find(const isc::dns::Name& name,
+                const DomainTreeNode<T>** node) const {
+        return (findImpl<const DomainTree<T>, const DomainTreeNode<T> >
+                (this, name, node));
+    }
+
+    /// \brief Simple find, with node_path tracking
+    ///
+    /// Acts as described in the \ref find section.
+    Result find(const isc::dns::Name& name, DomainTreeNode<T>** node,
+                DomainTreeNodeChain<T>& node_path)
+    {
+        return (findImpl<DomainTree<T>, DomainTreeNode<T> >
+                (this, name, node, node_path));
+    }
+
+    /// \brief Simple find, with node_path tracking (const variant)
+    Result find(const isc::dns::Name& name, const DomainTreeNode<T>** node,
+                DomainTreeNodeChain<T>& node_path) const
+    {
+        return (findImpl<const DomainTree<T>, const DomainTreeNode<T> >
+                (this, name, node, node_path));
+    }
+
+    /// \brief Simple find with callback
+    template <typename CBARG>
+    Result find(const isc::dns::Name& name,
+                DomainTreeNode<T>** node,
+                DomainTreeNodeChain<T>& node_path,
+                bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                CBARG callback_arg)
+    {
+        return (findImpl<DomainTree<T>, DomainTreeNode<T> >
+                (this, name, node, node_path, callback, callback_arg));
+    }
+
+    /// \brief Simple find with callback (const variant)
+    template <typename CBARG>
+    Result find(const isc::dns::Name& name,
+                const DomainTreeNode<T>** node,
+                DomainTreeNodeChain<T>& node_path,
+                bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                CBARG callback_arg) const
+    {
+        return (findImpl<const DomainTree<T>, const DomainTreeNode<T> >
+                (this, name, node, node_path, callback, callback_arg));
+    }
+
     /// \brief Find with callback and node chain
     /// \anchor callback
     ///
