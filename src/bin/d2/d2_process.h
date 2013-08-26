@@ -33,6 +33,14 @@ class D2Process : public DProcessBase {
 public:
 
     /// @brief Defines the shutdown types supported by D2Process
+    ///
+    /// * SD_NORMAL - Stops the queue manager and finishes all current
+    /// transactions before exiting. This is the default.
+    ///
+    /// * SD_DRAIN_FIRST - Stops the queue manager but continues processing
+    /// requests from the queue until it is empty.
+    ///
+    /// * SD_NOW - Exits immediately.
     enum ShutdownType {
       SD_NORMAL,
       SD_DRAIN_FIRST,
@@ -53,11 +61,11 @@ public:
     /// state.  Once the number of entries has decreased to this percentage
     /// of  the maximum allowed, D2Process will "resume" receiving requests
     /// by restarting the queue manager.
-    static const float QUEUE_RESTART_PERCENT;
+    static const unsigned int QUEUE_RESTART_PERCENT;
 
     /// @brief Constructor
     ///
-    /// The construction process creates the configuration manager, the queue 
+    /// Construction creates the configuration manager, the queue 
     /// manager, and the update manager.
     ///
     /// @param name name is a text label for the process. Generally used
@@ -71,11 +79,12 @@ public:
     /// @brief Called after instantiation to perform initialization unique to
     /// D2.
     ///
-    /// This is called after command line arguments but PRIOR to configuration
-    /// reception.  The base class provides this method as a place to perform
-    /// any derivation-specific initialization steps that are inapppropriate
-    /// for the constructor but necessary prior to launch.  So far, no such
-    /// steps have been identified for D2, so its implementantion is empty. 
+    /// This is invoked by the controller after command line arguments but 
+    /// PRIOR to configuration reception.  The base class provides this method 
+    /// as a place to perform any derivation-specific initialization steps 
+    /// that are inapppropriate for the constructor but necessary prior to 
+    /// launch.  So far, no such steps have been identified for D2, so its 
+    /// implementantion is empty but required.
     ///
     /// @throw DProcessBaseError if the initialization fails.
     virtual void init();
@@ -84,7 +93,7 @@ public:
     ///
     /// Once entered, the main control thread remains inside this method
     /// until shutdown.  The event loop logic is as follows:
-    /// {{{
+    /// @code 
     ///    while should not down {
     ///       process queue manager state change
     ///       process completed jobs
@@ -93,7 +102,7 @@ public:
     ///
     ///       ON an exception, exit with fatal error
     ///    }
-    /// }}}
+    /// @endcode 
     ///
     /// To summarize, each pass through the event loop first checks the state
     /// of the received queue and takes any steps required to ensure it is
@@ -233,7 +242,7 @@ protected:
     /// If callbacks are ready to be executed upon entry, the method will
     /// return as soon as these callbacks have completed.  If no callbacks
     /// are ready, then it will wait (indefinitely) until at least one callback
-    /// is executed. (NOTE: Should become desirable to periodically force an
+    /// is executed. (@note: Should become desirable to periodically force an
     /// event, an interval timer could be used to do so).
     ///
     /// @return The number of callback handlers executed, or 0 if the IO
@@ -251,14 +260,14 @@ protected:
     /// met.
     ///
     /// @return Returns true if the criteria has been met, false otherwise.
-    virtual bool canShutdown();
+    virtual bool canShutdown() const;
 
     /// @brief Sets queue reconfigure indicator to the given value.
     ///
     /// @param value is the new value to assign to the indicator
     ///
-    /// NOTE this method is really only intended for testing purposes.
-    void setReconfQueueFlag(bool value) {
+    /// @note this method is really only intended for testing purposes.
+    void setReconfQueueFlag(const bool value) {
         reconf_queue_flag_ = value;
     }
 
@@ -266,8 +275,8 @@ protected:
     ///
     /// @param value is the new value to assign to shutdown type. 
     ///
-    /// NOTE this method is really only intended for testing purposes.
-    void setShutdownType(ShutdownType value) {
+    /// @note this method is really only intended for testing purposes.
+    void setShutdownType(const ShutdownType& value) {
         shutdown_type_ = value;
     }
 
@@ -278,12 +287,12 @@ public:
     D2CfgMgrPtr getD2CfgMgr();
 
     /// @brief Returns a reference to the queue manager.
-    D2QueueMgrPtr& getD2QueueMgr() {
+    const D2QueueMgrPtr& getD2QueueMgr() const {
         return (queue_mgr_);
     }
 
     /// @brief Returns a reference to the update manager.
-    D2UpdateMgrPtr& getD2UpdateMgr() {
+    const D2UpdateMgrPtr& getD2UpdateMgr() const {
         return (update_mgr_);
     }
 
@@ -305,7 +314,7 @@ public:
     ///
     /// @return A text label corresponding the value or "invalid" if the
     /// value is not a valid value.
-    static const char* getShutdownTypeStr(ShutdownType type);
+    static const char* getShutdownTypeStr(const ShutdownType& type);
 
 private:
     /// @brief Pointer to our queue manager instance.

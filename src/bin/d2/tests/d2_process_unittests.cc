@@ -113,7 +113,7 @@ public:
         // Must call checkQueueStatus, to cause queue manager to reconfigure
         // and start.
         checkQueueStatus();
-        D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
+        const D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
 
         // If queue manager isn't in the RUNNING state, return failure.
         if (D2QueueMgr::RUNNING !=  queue_mgr->getMgrState()) {
@@ -161,7 +161,7 @@ TEST(D2Process, construction) {
     D2QueueMgrPtr queue_mgr = d2process.getD2QueueMgr();
     ASSERT_TRUE(queue_mgr);
 
-    D2UpdateMgrPtr& update_mgr = d2process.getD2UpdateMgr();
+    const D2UpdateMgrPtr& update_mgr = d2process.getD2UpdateMgr();
     ASSERT_TRUE(update_mgr);
 }
 
@@ -219,7 +219,7 @@ TEST_F(D2ProcessTest, configure) {
 /// stop is initiated.
 TEST_F(D2ProcessTest, queueStopOnShutdown) {
     ASSERT_TRUE(runWithConfig(valid_d2_config));
-    D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
+    const D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
 
     setShutdownFlag(true);
 
@@ -247,7 +247,7 @@ TEST_F(D2ProcessTest, queueStopOnShutdown) {
 /// manager stop is initiated.
 TEST_F(D2ProcessTest, queueStopOnReconf) {
     ASSERT_TRUE(runWithConfig(valid_d2_config));
-    D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
+    const D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
 
     // Manually set the reconfigure indicator.
     setReconfQueueFlag(true);
@@ -285,7 +285,7 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
 
     // Start queue manager with known good config.
     ASSERT_TRUE(runWithConfig(valid_d2_config));
-    D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
+    const D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
 
     // Set the maximum queue size to manageable number.
     size_t max_queue_size = 5;
@@ -335,7 +335,7 @@ TEST_F(D2ProcessTest, queueFullRecovery) {
 /// verifies that checkQueueStatus reacts properly to recover.
 TEST_F(D2ProcessTest, queueErrorRecovery) {
     ASSERT_TRUE(runWithConfig(valid_d2_config));
-    D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
+    const D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
 
     // Since we are not really receiving, we have to stage an error.
     queue_mgr->stopListening(D2QueueMgr::STOPPED_RECV_ERROR);
@@ -474,7 +474,7 @@ TEST_F(D2ProcessTest, shutdownArgs) {
 /// returning its result.
 TEST_F(D2ProcessTest, canShutdown) {
     ASSERT_TRUE(runWithConfig(valid_d2_config));
-    D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
+    const D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
 
     // Shutdown flag is false.  Method should return false for all types.
     EXPECT_EQ(false, checkCanShutdown(SD_NORMAL));
@@ -539,7 +539,7 @@ TEST_F(D2ProcessTest, canShutdown) {
 
     // Now use update manager to dequeue the request and make a transaction.
     // This lets us verify transaction list not empty logic.
-    D2UpdateMgrPtr& update_mgr = getD2UpdateMgr();
+    const D2UpdateMgrPtr& update_mgr = getD2UpdateMgr();
     ASSERT_TRUE(update_mgr);
     ASSERT_NO_THROW(update_mgr->sweep());
     ASSERT_EQ(0, queue_mgr->getQueueSize());

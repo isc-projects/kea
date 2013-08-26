@@ -36,54 +36,60 @@ D2QueueMgr::~D2QueueMgr() {
 void
 D2QueueMgr::operator()(const dhcp_ddns::NameChangeListener::Result result,
                        dhcp_ddns::NameChangeRequestPtr& ncr) {
-    // Note that error conditions must be handled here without throwing
-    // exceptions. Remember this is the application level "link" in the
-    // callback chain.  Throwing an exception here will "break" the
-    // io_service "run" we are operating under.  With that in mind,
-    // if we hit a problem, we will stop the listener transition to
-    // the appropriate stopped state.  Upper layer(s) must monitor our
-    // state as well as our queue size.
-    switch (result) {
-    case dhcp_ddns::NameChangeListener::SUCCESS:
-        // Receive was successful, attempt to queue the request.
-        if (getQueueSize() < getMaxQueueSize()) {
-            // There's room on the queue, add to the end
-            enqueue(ncr);
-            return;
-        }
+    try {
+        // Note that error conditions must be handled here without throwing
+        // exceptions. Remember this is the application level "link" in the
+        // callback chain.  Throwing an exception here will "break" the
+        // io_service "run" we are operating under.  With that in mind,
+        // if we hit a problem, we will stop the listener transition to
+        // the appropriate stopped state.  Upper layer(s) must monitor our
+        // state as well as our queue size.
+        switch (result) {
+        case dhcp_ddns::NameChangeListener::SUCCESS:
+            // Receive was successful, attempt to queue the request.
+            if (getQueueSize() < getMaxQueueSize()) {
+                // There's room on the queue, add to the end
+                enqueue(ncr);
+                return;
+            }
 
-        // Queue is full, stop the listener.
-        // Note that we can move straight to a STOPPED state as there
-        // is no receive in progress.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_QUEUE_FULL)
-                  .arg(max_queue_size_);
-        stopListening(STOPPED_QUEUE_FULL);
-        break;
+            // Queue is full, stop the listener.
+            // Note that we can move straight to a STOPPED state as there
+            // is no receive in progress.
+            LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_QUEUE_FULL)
+                      .arg(max_queue_size_);
+            stopListening(STOPPED_QUEUE_FULL);
+            break;
 
-    case dhcp_ddns::NameChangeListener::STOPPED:
-        if (mgr_state_ == STOPPING) {
-            // This is confirmation that the listener has stopped and its
-            // callback will not be called again, unless its restarted.
-            updateStopState();
-        } else {
-            // We should not get an receive complete status of stopped unless
-            // we canceled the read as part of stopping.  Therefore this is
-            // unexpected so we will treat it as a receive error.
-            // This is most likely an unforeseen programmatic issue.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_UNEXPECTED_STOP)
-                      .arg(mgr_state_);
+        case dhcp_ddns::NameChangeListener::STOPPED:
+            if (mgr_state_ == STOPPING) {
+                // This is confirmation that the listener has stopped and its
+                // callback will not be called again, unless its restarted.
+                updateStopState();
+            } else {
+                // We should not get an receive complete status of stopped
+                // unless we canceled the read as part of stopping. Therefore
+                // this is unexpected so we will treat it as a receive error.
+                // This is most likely an unforeseen programmatic issue.
+                LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_UNEXPECTED_STOP)
+                          .arg(mgr_state_);
+                stopListening(STOPPED_RECV_ERROR);
+            }
+
+            break;
+
+        default:
+            // Receive failed, stop the listener.
+            // Note that we can move straight to a STOPPED state as there
+            // is no receive in progress.
+            LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_RECV_ERROR);
             stopListening(STOPPED_RECV_ERROR);
+            break;
         }
-
-        break;
-
-    default:
-        // Receive failed, stop the listener.
-        // Note that we can move straight to a STOPPED state as there
-        // is no receive in progress.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_RECV_ERROR);
-        stopListening(STOPPED_RECV_ERROR);
-        break;
+    } catch (const std::exception& ex) {
+        // On the outside chance a throw occurs, let's log it and swallow it.
+        LOG_ERROR(dctl_logger, DHCP_DDNS_QUEUE_MGR_UNEXPECTED_HANDLER_ERROR)
+                  .arg(ex.what());
     }
 }
 
