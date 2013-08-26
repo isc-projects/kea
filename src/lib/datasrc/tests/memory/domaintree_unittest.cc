@@ -31,6 +31,8 @@
 
 #include <boost/format.hpp>
 
+#include <fstream>
+
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
@@ -342,6 +344,21 @@ TEST_F(DomainTreeTest, insertNames) {
                                                   &dtnode));
     EXPECT_EQ(TestDomainTree::SUCCESS, dtree.insert(mem_sgmt_, Name("n"),
                                                   &dtnode));
+}
+
+TEST_F(DomainTreeTest, remove) {
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("b"), &dtnode));
+
+    ofstream o1("d1.dot");
+    dtree_expose_empty_node.dumpDot(o1);
+    o1.close();
+
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    ofstream o2("d2.dot");
+    dtree_expose_empty_node.dumpDot(o2);
+    o2.close();
 }
 
 TEST_F(DomainTreeTest, subTreeRoot) {
