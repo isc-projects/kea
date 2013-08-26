@@ -681,9 +681,15 @@ private:
         } else {
             if (other->getParent()->getLeft() == this) {
                 other->getParent()->left_ = other;
-            } else {
+            } else if (other->getParent()->getRight() == this) {
                 other->getParent()->right_ = other;
             }
+        }
+
+        if (getParent()->getLeft() == other) {
+            getParent()->left_ = this;
+        } else if (getParent()->getRight() == other) {
+            getParent()->right_ = this;
         }
 
         if (other->getRight()) {
