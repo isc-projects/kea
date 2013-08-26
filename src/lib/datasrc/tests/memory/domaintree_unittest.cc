@@ -129,8 +129,8 @@ TEST_F(DomainTreeTest, nodeCount) {
     EXPECT_EQ(15, dtree.getNodeCount());
 
     // Delete all nodes, then the count should be set to 0.  This also tests
-    // the behavior of deleteAllNodes().
-    dtree.deleteAllNodes(mem_sgmt_, deleteData);
+    // the behavior of removeAllNodes().
+    dtree.removeAllNodes(mem_sgmt_, deleteData);
     EXPECT_EQ(0, dtree.getNodeCount());
 }
 
