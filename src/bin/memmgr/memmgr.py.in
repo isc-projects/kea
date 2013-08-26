@@ -153,6 +153,9 @@ class Memmgr(BIND10Server):
                 (_, dsrc_info, rrclass, dsrc_name) = notification
                 sgmt_info = dsrc_info.segment_info_map[(rrclass, dsrc_name)]
                 cmd = sgmt_info.complete_update()
+                # It may return another load command on the same data source.
+                # If it is so, we execute it too, before we start
+                # synchronizing with the readers.
                 if cmd is not None:
                     self._cmd_to_builder(cmd)
                 else:
