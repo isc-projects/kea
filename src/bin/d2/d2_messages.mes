@@ -1,4 +1,3 @@
-/Users/tmark/ddns/build/new3075/bind10
 # Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -173,7 +172,7 @@ needs to be increased, the DHCP-DDNS clients are simply generating too many
 requests too quickly, or perhaps upstream DNS servers are experiencing
 load issues.
 
-% DHCP_DDNS_QUEUE_MGR_RECONFIG application is reconfiguring the queue manager
+% DHCP_DDNS_QUEUE_MGR_RECONFIGURING application is reconfiguring the queue manager
 This is an informational message indicating that DHCP_DDNS is reconfiguring the
 queue manager as part of normal startup or in response to a new configuration.
 
@@ -199,7 +198,7 @@ manager if given a new configuration.
 
 % DHCP_DDNS_QUEUE_MGR_RESUMING application is resuming listening for requests now that the request queue size has reached %1 of a maximum %2 allowed
 This is an informational message indicating that DHCP_DDNS, which had stopped
-accpeting new requests, has processed enough entries from the receive queue to
+accepting new requests, has processed enough entries from the receive queue to
 resume accepting requests.
 
 % DHCP_DDNS_QUEUE_MGR_STARTED application's queue manager has begun listening for requests.
@@ -228,6 +227,12 @@ This is an error message indicating that DHCP_DDNS encountered an error while
 trying to stop the queue manager.  This error is unlikely to occur or to
 impair the application's ability to function but it should be reported for
 analysis.
+
+% DHCP_DDNS_QUEUE_MGR_UNEXPECTED_HANDLER_ERROR application's queue manager request receive handler experienced an unexpected exception %1:
+This is an error message indicating that an unexpected error occurred within the
+DHCP_DDNS's Queue Manager request receive completion handler. This is most
+likely a programmatic issue that should be reported.  The application may
+recover on its own.
 
 % DHCP_DDNS_QUEUE_MGR_UNEXPECTED_STOP application's queue manager receive was
 aborted unexpectedly while queue manager state is: %1

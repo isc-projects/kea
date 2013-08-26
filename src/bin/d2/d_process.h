@@ -35,12 +35,17 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-static const int COMMAND_SUCCESS = 0;
-static const int COMMAND_ERROR = 1;
-static const int COMMAND_INVALID = 2;
+/// @brief String value for the shutdown command.
 static const std::string SHUT_DOWN_COMMAND("shutdown");
 
-static const int CONFIG_INVALID = 1;
+/// @brief Returned by the process to indicate a command was successful.
+static const int COMMAND_SUCCESS = 0;
+
+/// @brief Returned by the process to indicates a command failed.
+static const int COMMAND_ERROR = 1;
+
+/// @brief Returned by the process to indicates a command is not valid.
+static const int COMMAND_INVALID = 2;
 
 /// @brief Application Process Interface
 ///
@@ -134,7 +139,12 @@ public:
     /// @param args is a set of arguments (if any) required for the given
     /// command.
     /// @return an Element that contains the results of command composed
-    /// of an integer status value (0 means successful, non-zero means failure),
+    /// of an integer status value: 
+    ///
+    /// - COMMAND_SUCCESS indicates a command was successful.
+    /// - COMMAND_ERROR indicates a valid command failed execute.
+    /// - COMMAND_INVALID indicates a command is not valid.
+    ///
     /// and a string explanation of the outcome.
     virtual isc::data::ConstElementPtr command(
             const std::string& command, isc::data::ConstElementPtr args) = 0;
@@ -145,7 +155,7 @@ public:
     /// @brief Checks if the process has been instructed to shut down.
     ///
     /// @return true if process shutdown flag is true.
-    bool shouldShutdown() {
+    bool shouldShutdown() const {
         return (shut_down_flag_);
     }
 
@@ -158,7 +168,7 @@ public:
 
     /// @brief Fetches the application name.
     ///
-    /// @return a the application name string.
+    /// @return application name string.
     const std::string getAppName() const {
         return (app_name_);
     }
