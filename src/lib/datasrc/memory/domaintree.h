@@ -1412,12 +1412,24 @@ public:
     const DomainTreeNode<T>*
     previousNode(DomainTreeNodeChain<T>& node_path) const;
 
+private:
+    /// \brief Static helper function used by const and non-const
+    /// variants of largestNode()
+    template <typename TT, typename TTN>
+    static TTN*
+    largestNodeImpl(TT* node);
+
+public:
     /// \brief return the largest node in the tree of trees.
     ///
     /// \throw none
     ///
     /// \return A \c DomainTreeNode that is the largest node in the
     /// tree. If there are no nodes, then \c NULL is returned.
+    DomainTreeNode<T>* largestNode();
+
+    /// \brief return the largest node in the tree of trees (const
+    /// variant).
     const DomainTreeNode<T>* largestNode() const;
 
     /// \brief Get the total number of nodes in the tree
@@ -1881,9 +1893,10 @@ DomainTree<T>::previousNode(DomainTreeNodeChain<T>& node_path) const {
 }
 
 template <typename T>
-const DomainTreeNode<T>*
-DomainTree<T>::largestNode() const {
-    const DomainTreeNode<T>* node = root_.get();
+template <typename TT, typename TTN>
+TTN*
+DomainTree<T>::largestNodeImpl(TT* tree) {
+    TTN* node = tree->root_.get();
     while (node != NULL) {
         // We go right first, then down.
         if (node->getRight() != NULL) {
@@ -1896,6 +1909,19 @@ DomainTree<T>::largestNode() const {
     }
 
     return (node);
+}
+
+template <typename T>
+DomainTreeNode<T>*
+DomainTree<T>::largestNode() {
+  return (largestNodeImpl<DomainTree<T>, DomainTreeNode<T> >(this));
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTree<T>::largestNode() const {
+    return (largestNodeImpl<const DomainTree<T>, const DomainTreeNode<T> >
+            (this));
 }
 
 template <typename T>
