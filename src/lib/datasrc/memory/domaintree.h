@@ -418,6 +418,10 @@ public:
     /// (which should be absolute), it will return \c NULL.
     ///
     /// This method never throws an exception.
+    DomainTreeNode<T>* getUpperNode();
+
+    /// \brief returns the parent of the root of its subtree (const
+    /// variant)
     const DomainTreeNode<T>* getUpperNode() const;
 
     /// \brief return the next node which is bigger than current node
@@ -643,6 +647,12 @@ template <typename T>
 const DomainTreeNode<T>*
 DomainTreeNode<T>::getSubTreeRoot() const {
     return (getSubTreeRootImpl<const DomainTreeNode<T> >(this));
+}
+
+template <typename T>
+DomainTreeNode<T>*
+DomainTreeNode<T>::getUpperNode() {
+    return (getSubTreeRoot()->getParent());
 }
 
 template <typename T>
