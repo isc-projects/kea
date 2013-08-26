@@ -393,11 +393,20 @@ private:
         return ((flags_ & FLAG_SUBTREE_ROOT) != 0);
     }
 
+    /// \brief Static helper function used by const and non-const
+    /// variants of getSubTreeRoot()
+    template <typename TT>
+    static TT*
+    getSubTreeRootImpl(TT* node);
+
     /// \brief returns the root of its subtree
     ///
     /// This method takes a node and returns the root of its subtree.
     ///
     /// This method never throws an exception.
+    DomainTreeNode<T>* getSubTreeRoot();
+
+    /// \brief returns the root of its subtree (const variant)
     const DomainTreeNode<T>* getSubTreeRoot() const;
 
 public:
@@ -610,17 +619,30 @@ DomainTreeNode<T>::~DomainTreeNode() {
 }
 
 template <typename T>
-const DomainTreeNode<T>*
-DomainTreeNode<T>::getSubTreeRoot() const {
-    const DomainTreeNode<T>* current = this;
-
-    // current would never be equal to NULL here (in a correct tree
+template <typename TT>
+TT*
+DomainTreeNode<T>::getSubTreeRootImpl(TT* node) {
+    // node would never be equal to NULL here (in a correct tree
     // implementation)
-    while (!current->isSubTreeRoot()) {
-        current = current->getParent();
+    assert(node != NULL);
+
+    while (!node->isSubTreeRoot()) {
+        node = node->getParent();
     }
 
-    return (current);
+    return (node);
+}
+
+template <typename T>
+DomainTreeNode<T>*
+DomainTreeNode<T>::getSubTreeRoot() {
+    return (getSubTreeRootImpl<DomainTreeNode<T> >(this));
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTreeNode<T>::getSubTreeRoot() const {
+    return (getSubTreeRootImpl<const DomainTreeNode<T> >(this));
 }
 
 template <typename T>
