@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -49,7 +49,10 @@ const char* create_statement[] = {
         "client_id VARBINARY(128),"
         "valid_lifetime INT UNSIGNED,"
         "expire TIMESTAMP,"
-        "subnet_id INT UNSIGNED"
+        "subnet_id INT UNSIGNED,"
+        "fqdn_fwd BOOL,"
+        "fqdn_rev BOOL,"
+        "hostname VARCHAR(255)"
         ") ENGINE = INNODB",
 
     "CREATE INDEX lease4_by_hwaddr_subnet_id ON lease4 (hwaddr, subnet_id)",
@@ -65,7 +68,10 @@ const char* create_statement[] = {
         "pref_lifetime INT UNSIGNED,"
         "lease_type TINYINT,"
         "iaid INT UNSIGNED,"
-        "prefix_len TINYINT UNSIGNED"
+        "prefix_len TINYINT UNSIGNED,"
+        "fqdn_fwd BOOL,"
+        "fqdn_rev BOOL,"
+        "hostname VARCHAR(255)"
         ") ENGINE = INNODB",
 
     "CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid)",
