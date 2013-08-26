@@ -953,12 +953,9 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             }
         }
 
-        // Ok, we've passed all checks. Let's release this address.
-        bool success = false; // was the removal operation succeessful?
-
         // Ok, hw and client-id match - let's release the lease.
         if (!skip) {
-            success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
+            bool success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
 
             if (success) {
                 // Release successful - we're done here
