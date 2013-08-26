@@ -146,8 +146,7 @@ class Memmgr(BIND10Server):
             # not keep the original list.
             notifications = self._builder_response_queue[:]
             del self._builder_response_queue[:]
-        while notifications:
-            notification = notifications.pop()
+        for notification in notifications:
             notif_name = notification[0]
             if notif_name == 'load-completed':
                 (_, dsrc_info, rrclass, dsrc_name) = notification
