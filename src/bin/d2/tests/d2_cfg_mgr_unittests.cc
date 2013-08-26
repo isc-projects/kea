@@ -347,8 +347,7 @@ TEST_F(TSIGKeyInfoTest, invalidTSIGKeyList) {
     ASSERT_NO_THROW(parser.reset(new TSIGKeyInfoListParser("test", keys_)));
 
     // Verify that the list builds without errors.
-    //ASSERT_NO_THROW(parser->build(config_set_));
-    parser->build(config_set_);
+    ASSERT_NO_THROW(parser->build(config_set_));
 
     // Verify that the list commit fails.
     EXPECT_THROW(parser->commit(), D2CfgError);

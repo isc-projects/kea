@@ -285,7 +285,7 @@ public:
         return (listening_);
     }
 
-    /// @brief Returns true if the listener is has an IO call in progress.
+    /// @brief Returns true if the listener has an IO call in progress.
     ///
     /// A true value indicates that the listener has an asynchronous IO in
     /// progress which will complete at some point in the future. Completion

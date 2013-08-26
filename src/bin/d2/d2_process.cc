@@ -30,7 +30,7 @@ const char* D2Process::SD_INVALID_STR = "invalid";
 
 // Setting to 80% for now. This is an arbitrary choice and should probably
 // be configurable.
-const float D2Process::QUEUE_RESTART_PERCENT =  0.80;
+const unsigned int D2Process::QUEUE_RESTART_PERCENT =  80;
 
 D2Process::D2Process(const char* name, IOServicePtr io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())),
@@ -120,11 +120,11 @@ D2Process::runIO() {
         cnt = asio_io_service.run_one();
     }
 
-    return cnt;
+    return (cnt);
 }
 
 bool
-D2Process::canShutdown() {
+D2Process::canShutdown() const {
     bool all_clear = false;
 
     // If we have been told to shutdown, find out if we are ready to do so.
@@ -150,6 +150,11 @@ D2Process::canShutdown() {
         case SD_NOW:
             // Get out right now, no niceties.
             all_clear = true;
+            break;
+
+        default:
+            // shutdown_type_ is an enum and should only be one of the above.
+            // if its getting through to this, something is whacked.
             break;
         }
 
@@ -260,8 +265,8 @@ D2Process::checkQueueStatus() {
             // Resume receiving once the queue has decreased by twenty
             // percent.  This is an arbitrary choice. @todo this value should
             // probably be configurable.
-            size_t threshold = (queue_mgr_->getMaxQueueSize()
-                                * QUEUE_RESTART_PERCENT);
+            size_t threshold = (((queue_mgr_->getMaxQueueSize()
+                                * QUEUE_RESTART_PERCENT)) / 100);
             if (queue_mgr_->getQueueSize() <= threshold) {
                 LOG_INFO (dctl_logger, DHCP_DDNS_QUEUE_MGR_RESUMING)
                           .arg(threshold).arg(queue_mgr_->getMaxQueueSize());
@@ -302,7 +307,7 @@ D2Process::checkQueueStatus() {
         // we can do the reconfigure. In other words, we aren't RUNNING or
         // STOPPING.
         if (reconf_queue_flag_) {
-            LOG_INFO (dctl_logger, DHCP_DDNS_QUEUE_MGR_RECONFIG);
+            LOG_INFO (dctl_logger, DHCP_DDNS_QUEUE_MGR_RECONFIGURING);
             reconfigureQueueMgr();
         }
         break;
@@ -372,7 +377,7 @@ D2Process::getD2CfgMgr() {
     return (boost::dynamic_pointer_cast<D2CfgMgr>(getCfgMgr()));
 }
 
-const char* D2Process::getShutdownTypeStr(ShutdownType type) {
+const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
     const char* str = SD_INVALID_STR;
     switch (type) {
     case SD_NORMAL:
@@ -383,6 +388,8 @@ const char* D2Process::getShutdownTypeStr(ShutdownType type) {
         break;
     case SD_NOW:
         str = SD_NOW_STR;
+        break;
+    default:
         break;
     }
 

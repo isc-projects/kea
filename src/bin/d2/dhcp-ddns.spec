@@ -195,7 +195,7 @@
     "commands": [
         {
             "command_name": "shutdown",
-            "command_description": "Shuts down DHCP_DDNS server.",
+            "command_description": "Shuts down b1-dhcp-ddns module server.",
             "command_args": [
             {
                 "item_name": "type",
