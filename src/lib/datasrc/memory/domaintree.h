@@ -439,6 +439,10 @@ public:
     /// returns \c NULL.
     ///
     /// This method never throws an exception.
+    DomainTreeNode<T>* successor();
+
+    /// \brief return the next node which is bigger than current node
+    /// in the same subtree (const variant)
     const DomainTreeNode<T>* successor() const;
 
     /// \brief return the next node which is smaller than current node
@@ -456,6 +460,10 @@ public:
     /// returns \c NULL.
     ///
     /// This method never throws an exception.
+    DomainTreeNode<T>* predecessor();
+
+    /// \brief return the next node which is smaller than current node
+    /// in the same subtree (const variant)
     const DomainTreeNode<T>* predecessor() const;
 
     /// \brief returns the node distance from the root of its subtree
@@ -765,10 +773,25 @@ DomainTreeNode<T>::abstractSuccessor(
 }
 
 template <typename T>
+DomainTreeNode<T>*
+DomainTreeNode<T>::successor() {
+    return (abstractSuccessor(&DomainTreeNode<T>::left_,
+                              &DomainTreeNode<T>::right_));
+}
+
+template <typename T>
 const DomainTreeNode<T>*
 DomainTreeNode<T>::successor() const {
     return (abstractSuccessor(&DomainTreeNode<T>::left_,
                               &DomainTreeNode<T>::right_));
+}
+
+template <typename T>
+DomainTreeNode<T>*
+DomainTreeNode<T>::predecessor() {
+    // Swap the left and right pointers for the abstractSuccessor
+    return (abstractSuccessor(&DomainTreeNode<T>::right_,
+                              &DomainTreeNode<T>::left_));
 }
 
 template <typename T>
