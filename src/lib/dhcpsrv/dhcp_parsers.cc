@@ -47,35 +47,56 @@ ParserContext::ParserContext(Option::Universe universe):
     string_values_(new StringStorage()),
     options_(new OptionStorage()),
     option_defs_(new OptionDefStorage()),
+    hooks_libraries_(),
     universe_(universe)
 {
 }
 
 ParserContext::ParserContext(const ParserContext& rhs):
-    boolean_values_(new BooleanStorage(*(rhs.boolean_values_))),
-    uint32_values_(new Uint32Storage(*(rhs.uint32_values_))),
-    string_values_(new StringStorage(*(rhs.string_values_))),
-    options_(new OptionStorage(*(rhs.options_))),
-    option_defs_(new OptionDefStorage(*(rhs.option_defs_))),
+    boolean_values_(),
+    uint32_values_(),
+    string_values_(),
+    options_(),
+    option_defs_(),
+    hooks_libraries_(),
     universe_(rhs.universe_)
 {
+    copyContext(rhs);
 }
 
 ParserContext&
+// The cppcheck version 1.56 doesn't recognize that copyContext
+// copies all context fields.
+// cppcheck-suppress operatorEqVarError
 ParserContext::operator=(const ParserContext& rhs) {
     if (this != &rhs) {
-        boolean_values_ =
-            BooleanStoragePtr(new BooleanStorage(*(rhs.boolean_values_)));
-        uint32_values_ =
-            Uint32StoragePtr(new Uint32Storage(*(rhs.uint32_values_)));
-        string_values_ =
-            StringStoragePtr(new StringStorage(*(rhs.string_values_)));
-        options_ = OptionStoragePtr(new OptionStorage(*(rhs.options_)));
-        option_defs_ =
-            OptionDefStoragePtr(new OptionDefStorage(*(rhs.option_defs_)));
-        universe_ = rhs.universe_;
+        copyContext(rhs);
     }
+
     return (*this);
+}
+
+void
+ParserContext::copyContext(const ParserContext& ctx) {
+    copyContextPointer(ctx.boolean_values_, boolean_values_);
+    copyContextPointer(ctx.uint32_values_, uint32_values_);
+    copyContextPointer(ctx.string_values_, string_values_);
+    copyContextPointer(ctx.options_, options_);
+    copyContextPointer(ctx.option_defs_, option_defs_);
+    copyContextPointer(ctx.hooks_libraries_, hooks_libraries_);
+    // Copy universe.
+    universe_ = ctx.universe_;
+}
+
+template<typename T>
+void
+ParserContext::copyContextPointer(const boost::shared_ptr<T>& source_ptr,
+                                  boost::shared_ptr<T>& dest_ptr) {
+    if (source_ptr) {
+        dest_ptr.reset(new T(*source_ptr));
+    } else {
+        dest_ptr.reset();
+    }
 }
 
 
