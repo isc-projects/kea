@@ -1,4 +1,11 @@
-668.	[func]*		marcin
+669.	[func]	tmark
+	Added main process event loop to D2Process which is the primary
+	application object in b10-dchp-ddns. This allows DHCP-DDNS
+	to queue requests received from clients for processing while
+	listening for command control events.
+	(Trac #3075 git e2f9d2e4c1b36f01eb5bfa2c4f8d55cf139c7e02)
+
+668.	[func]		marcin
 	libdhcpsrv: Implemented changes to lease allocation engine to
 	propagate information about client's FQDN.
 	(Trac #3083, git 37af28303d1cd61f675faea969cd1159df65bf9d)
