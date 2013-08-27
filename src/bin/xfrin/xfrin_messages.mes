@@ -56,7 +56,7 @@ most likely cause is that xfrin the msgq daemon is not running.
 There was an error while the given command was being processed. The
 error is given in the log message.
 
-% XFRIN_CONNECT_MASTER error connecting to master at %1%2 for %3: %4
+% XFRIN_CONNECT_MASTER error connecting to master at %1 for %2: %3
 There was an error opening a connection to the master for the specified
 zone. The error is shown in the log message.
 
