@@ -1723,6 +1723,10 @@ private:
     insertRebalance(typename DomainTreeNode<T>::DomainTreeNodePtr* root,
                     DomainTreeNode<T>* node);
 
+    void
+    removeRebalance(typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr,
+                    DomainTreeNode<T>* child, DomainTreeNode<T>* parent);
+
     DomainTreeNode<T>*
     rightRotate(typename DomainTreeNode<T>::DomainTreeNodePtr* root,
                 DomainTreeNode<T>* node);
@@ -1761,6 +1765,12 @@ private:
     void nodeFission(util::MemorySegment& mem_sgmt, DomainTreeNode<T>& node,
                      const isc::dns::LabelSequence& new_prefix,
                      const isc::dns::LabelSequence& new_suffix);
+
+    /// Try to combine the upper node and its down node into one node,
+    /// deleting the parent in the process.
+    void tryNodeFusion(util::MemorySegment& mem_sgmt,
+                       DomainTreeNode<T>* upper_node);
+
     //@}
 
     typename DomainTreeNode<T>::DomainTreeNodePtr root_;
@@ -2234,20 +2244,20 @@ DomainTree<T>::insert(util::MemorySegment& mem_sgmt,
 template <typename T>
 template <typename DataDeleter>
 void
-DomainTree<T>::remove(util::MemorySegment&, DomainTreeNode<T>* node,
-                      DataDeleter)
+DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
+                      DataDeleter deleter)
 {
-    assert(node != NULL);
+    // Save subtree root's parent for use later.
+    DomainTreeNode<T>* upper_node = node->getUpperNode();
 
-    // node points to the node to be deleted. But unless it's a leaf
-    // node, it first has to be exchanged with the right-most node in
-    // the left sub-tree or the left-most node in the right
-    // sub-tree. (Here, sub-tree is inside this RB tree itself, not in
-    // the tree-of-trees forest.) The node then becomes a leaf
-    // node. Note that this is not an in-place value swap of node data,
-    // but the actual node locations are swapped. Unlike normal BSTs, we
-    // have to do this as our label data is at address (this + 1).
-
+    // node points to the node to be deleted. It first has to be
+    // exchanged with the right-most node in the left sub-tree or the
+    // left-most node in the right sub-tree. (Here, sub-tree is inside
+    // this RB tree itself, not in the tree-of-trees forest.) The node
+    // then ends up having a maximum of 1 child. Note that this is not
+    // an in-place value swap of node data, but the actual node
+    // locations are swapped in exchange(). Unlike normal BSTs, we have
+    // to do this as our label data is at address (this + 1).
     if (node->getLeft() != NULL) {
         DomainTreeNode<T>* rightmost = node->getLeft();
         while (rightmost->getRight() != NULL) {
@@ -2264,7 +2274,56 @@ DomainTree<T>::remove(util::MemorySegment&, DomainTreeNode<T>* node,
         node->exchange(leftmost, &root_);
     }
 
-    // Now, node is a leaf node.
+    // Now, node has 0 or 1 children, as from above, either its right or
+    // left child definitely doesn't exist (and is NULL).  Pick the
+    // child node, or if no children exist, just use NULL.
+    DomainTreeNode<T>* child;
+    if (!node->getRight()) {
+        child = node->getLeft();
+    } else {
+        child = node->getRight();
+    }
+
+    // Set it as the node's parent's child, effectively removing node
+    // from the tree.
+    if (node->isSubTreeRoot()) {
+        // In this case, node is the only node in this forest sub-tree.
+        typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr =
+            node->getParent() ? &(node->getParent()->down_) : &root_;
+        *root_ptr = NULL;
+    } else {
+        if (node->getParent()->getLeft() == node) {
+            node->getParent()->left_ = child;
+        } else {
+            node->getParent()->right_ = child;
+        }
+
+        if (child) {
+            child->parent_ = node->getParent();
+        }
+
+        if (node->isBlack()) {
+            if (child && child->isRed()) {
+                child->setColor(DomainTreeNode<T>::BLACK);
+            } else {
+                typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr =
+                    node->getParent() ? &(node->getParent()->down_) : &root_;
+                removeRebalance(root_ptr, child, node->getParent());
+            }
+        }
+    }
+
+    // If node has a subtree under it, delete it too.
+    if (node->getDown()) {
+        node->getDown()->parent_ = NULL;
+        deleteHelper(mem_sgmt, node->getDown(), deleter);
+    }
+
+    tryNodeFusion(mem_sgmt, upper_node);
+
+    deleter(node->data_.get());
+    DomainTreeNode<T>::destroy(mem_sgmt, node);
+    --node_count_;
 }
 
 template <typename T>
@@ -2275,6 +2334,104 @@ DomainTree<T>::removeAllNodes(util::MemorySegment& mem_sgmt,
 {
     deleteHelper(mem_sgmt, root_.get(), deleter);
     root_ = NULL;
+}
+
+template <typename T>
+void
+DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
+                             DomainTreeNode<T>* upper_node)
+{
+    while (upper_node) {
+        DomainTreeNode<T>* subtree_root = upper_node->getDown();
+
+        // If the node deletion caused the subtree root to disappear
+        // completely, return early.
+        if (!subtree_root) {
+            if (upper_node->isSubTreeRoot()) {
+                upper_node = upper_node->getParent();
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        // If the subtree root has left or right children, the subtree
+        // has more than 1 nodes and it cannot can be fused.
+        if (subtree_root->getLeft() || subtree_root->getRight()) {
+            break;
+        }
+
+        // If the upper node is not empty, fusion cannot be done.
+        if (!upper_node->isEmpty()) {
+            break;
+        }
+
+        uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH];
+        isc::dns::LabelSequence ls(subtree_root->getLabels(), buf);
+        ls.extend(upper_node->getLabels(), buf);
+
+        DomainTreeNode<T>* new_node = DomainTreeNode<T>::create(mem_sgmt, ls);
+
+        new_node->parent_ = upper_node->getParent();
+        if (upper_node->getParent() != NULL) {
+            if (upper_node->getParent()->getLeft() == upper_node) {
+                new_node->getParent()->left_ = new_node;
+            } else if (upper_node->getParent()->getRight() == upper_node) {
+                new_node->getParent()->right_ = new_node;
+            } else {
+                new_node->getParent()->down_ = new_node;
+            }
+        } else {
+            root_ = new_node;
+        }
+
+        new_node->left_ = upper_node->getLeft();
+        if (new_node->getLeft() != NULL) {
+            new_node->getLeft()->parent_ = new_node;
+        }
+
+        new_node->right_ = upper_node->getRight();
+        if (new_node->getRight() != NULL) {
+            new_node->getRight()->parent_ = new_node;
+        }
+
+        if (upper_node->isRed()) {
+            new_node->setColor(DomainTreeNode<T>::RED);
+        } else {
+            new_node->setColor(DomainTreeNode<T>::BLACK);
+        }
+
+        new_node->setSubTreeRoot(upper_node->isSubTreeRoot());
+
+        // Set new_node's flags
+        new_node->setFlag(DomainTreeNode<T>::FLAG_CALLBACK,
+                          upper_node->getFlag(DomainTreeNode<T>::FLAG_CALLBACK));
+        new_node->setFlag(DomainTreeNode<T>::FLAG_USER1,
+                          upper_node->getFlag(DomainTreeNode<T>::FLAG_USER1));
+        new_node->setFlag(DomainTreeNode<T>::FLAG_USER2,
+                          upper_node->getFlag(DomainTreeNode<T>::FLAG_USER2));
+        new_node->setFlag(DomainTreeNode<T>::FLAG_USER3,
+                          upper_node->getFlag(DomainTreeNode<T>::FLAG_USER3));
+
+        // Set new_node's data
+        T* data = subtree_root->setData(NULL);
+        new_node->setData(data);
+
+        // Delete the old nodes.
+        DomainTreeNode<T>::destroy(mem_sgmt, upper_node);
+        DomainTreeNode<T>::destroy(mem_sgmt, subtree_root);
+
+        // We added 1 node and deleted 2.
+        --node_count_;
+
+        // Ascend one level up and iterate the whole process again if
+        // the conditions exist to fuse more nodes.
+        if (new_node->isSubTreeRoot()) {
+            upper_node = new_node->getParent();
+        } else {
+            break;
+        }
+    }
 }
 
 template <typename T>
@@ -2473,6 +2630,13 @@ DomainTree<T>::insertRebalance
     (*subtree_root)->setColor(DomainTreeNode<T>::BLACK);
 }
 
+template <typename T>
+void
+DomainTree<T>::removeRebalance
+    (typename DomainTreeNode<T>::DomainTreeNodePtr*,
+     DomainTreeNode<T>*, DomainTreeNode<T>*)
+{
+}
 
 template <typename T>
 DomainTreeNode<T>*

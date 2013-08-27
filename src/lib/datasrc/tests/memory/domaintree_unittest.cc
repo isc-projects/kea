@@ -347,13 +347,16 @@ TEST_F(DomainTreeTest, insertNames) {
 }
 
 TEST_F(DomainTreeTest, remove) {
-    EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree_expose_empty_node.find(Name("b"), &dtnode));
-
     ofstream o1("d1.dot");
     dtree_expose_empty_node.dumpDot(o1);
     o1.close();
 
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("q.w.y.d.e.f"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("o.w.y.d.e.f"), &dtnode));
     dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
 
     ofstream o2("d2.dot");
