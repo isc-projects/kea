@@ -487,13 +487,20 @@ private:
 
     /// @brief Initiates shutdown procedure.  This method is invoked
     /// by executeCommand in response to the shutdown command. It will invoke
-    /// the application process's shutdown method, which causes the process to
-    /// exit it's event loop.
+    /// the application process's shutdown method which causes the process to
+    /// to begin its shutdown process.
+    ///
+    /// Note, it is assumed that the process of shutting down is neither
+    /// instanteneous nor synchronous.  This method does not "block" waiting
+    /// until the process has halted.  Rather it is used to convey the
+    /// need to shutdown.  A successful return indicates that the shutdown
+    /// has successfully commenced, but does not indicate that the process
+    /// has actually exited. 
     ///
     /// @return returns an Element that contains the results of shutdown
-    /// attempt composed of an integer status value (0 means successful,
+    /// command composed of an integer status value (0 means successful,
     /// non-zero means failure), and a string explanation of the outcome.
-    isc::data::ConstElementPtr shutdown();
+    isc::data::ConstElementPtr shutdown(isc::data::ConstElementPtr args);
 
     /// @brief Prints the program usage text to std error.
     ///

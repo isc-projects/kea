@@ -416,7 +416,7 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
 
     // Verify the correct number of keys are present
     int count =  keys_->size();
-    ASSERT_EQ(count, 3);
+    ASSERT_EQ(3, count);
 
     // Find the 1st key and retrieve it.
     TSIGKeyInfoMap::iterator gotit = keys_->find("key1");
@@ -1007,6 +1007,11 @@ TEST_F(D2CfgMgrTest, fullConfig) {
         EXPECT_TRUE(servers);
         EXPECT_EQ(3, count);
     }
+
+    // Verify that parsing the exact same configuration a second time
+    // does not cause a duplicate value errors. 
+    answer_ = cfg_mgr_->parseConfig(config_set_);
+    ASSERT_TRUE(checkAnswer(0));
 }
 
 /// @brief Tests the basics of the D2CfgMgr FQDN-domain matching

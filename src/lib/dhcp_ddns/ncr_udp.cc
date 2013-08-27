@@ -111,6 +111,7 @@ NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
         // Bind the low level socket to our endpoint.
         asio_socket_->bind(endpoint.getASIOEndpoint());
     } catch (asio::system_error& ex) {
+        asio_socket_.reset();
         isc_throw (NcrUDPError, ex.code().message());
     }
 
@@ -131,19 +132,27 @@ NameChangeUDPListener::doReceive() {
 void
 NameChangeUDPListener::close() {
     // Whether we think we are listening or not, make sure we aren't.
-    // Since we are managing our own socket, we need to cancel and close
-    // it ourselves.
+    // Since we are managing our own socket, we need to close it ourselves.
+    // NOTE that if there is a pending receive, it will be canceled, which
+    // WILL generate an invocation of the callback with error code of
+    // "operation aborted".
     if (asio_socket_) {
-        try {
-            asio_socket_->cancel();
-            asio_socket_->close();
-        } catch (asio::system_error& ex) {
-            // It is really unlikely that this will occur.
-            // If we do reopen later it will be with a new socket instance.
-            // Repackage exception as one that is conformant with the interface.
-            isc_throw (NcrUDPError, ex.code().message());
+        if (asio_socket_->is_open()) {
+            try {
+                asio_socket_->close();
+            } catch (asio::system_error& ex) {
+                // It is really unlikely that this will occur.
+                // If we do reopen later it will be with a new socket
+                // instance. Repackage exception as one that is conformant
+                // with the interface.
+                isc_throw (NcrUDPError, ex.code().message());
+            }
         }
+
+        asio_socket_.reset();
     }
+
+    socket_.reset();
 }
 
 void
@@ -164,14 +173,21 @@ NameChangeUDPListener::receiveCompletionHandler(const bool successful,
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_INVALID_NCR).arg(ex.what());
 
             // Queue up the next recieve.
-            doReceive();
+            // NOTE: We must call the base class, NEVER doReceive
+            receiveNext();
             return;
         }
     } else {
         asio::error_code error_code = callback->getErrorCode();
-        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_RECV_ERROR)
-                  .arg(error_code.message());
-        result = ERROR;
+        if (error_code.value() == asio::error::operation_aborted) {
+            LOG_INFO(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_RECV_CANCELED)
+                     .arg(error_code.message());
+            result = STOPPED;
+        } else {
+            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_RECV_ERROR)
+                      .arg(error_code.message());
+            result = ERROR;
+        }
     }
 
     // Call the application's registered request receive handler.
@@ -245,19 +261,27 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
 void
 NameChangeUDPSender::close() {
     // Whether we think we are sending or not, make sure we aren't.
-    // Since we are managing our own socket, we need to cancel and close
-    // it ourselves.
+    // Since we are managing our own socket, we need to close it ourselves.
+    // NOTE that if there is a pending send, it will be canceled, which
+    // WILL generate an invocation of the callback with error code of
+    // "operation aborted".
     if (asio_socket_) {
-        try {
-            asio_socket_->cancel();
-            asio_socket_->close();
-        } catch (asio::system_error& ex) {
-            // It is really unlikely that this will occur.
-            // If we do reopen later it will be with a new socket instance.
-            // Repackage exception as one that is conformant with the interface.
-            isc_throw (NcrUDPError, ex.code().message());
+        if (asio_socket_->is_open()) {
+            try {
+                asio_socket_->close();
+            } catch (asio::system_error& ex) {
+                // It is really unlikely that this will occur.
+                // If we do reopen later it will be with a new socket
+                // instance. Repackage exception as one that is conformant
+                // with the interface.
+                isc_throw (NcrUDPError, ex.code().message());
+            }
         }
+
+        asio_socket_.reset();
     }
+
+    socket_.reset();
 }
 
 void
@@ -286,10 +310,15 @@ NameChangeUDPSender::sendCompletionHandler(const bool successful,
     else {
         // On a failure, log the error and set the result to ERROR.
         asio::error_code error_code = send_callback->getErrorCode();
-        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_RECV_ERROR)
-                  .arg(error_code.message());
-
-        result = ERROR;
+        if (error_code.value() == asio::error::operation_aborted) {
+            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_SEND_CANCELED)
+                      .arg(error_code.message());
+            result = STOPPED;
+        } else {
+            LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_SEND_ERROR)
+                      .arg(error_code.message());
+            result = ERROR;
+        }
     }
 
     // Call the application's registered request send handler.
