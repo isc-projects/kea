@@ -236,9 +236,6 @@ public:
         lease->t1_ = 0;                             // Not saved
         lease->t2_ = 0;                             // Not saved
         lease->fixed_ = false;                      // Unused
-        lease->hostname_ = std::string("");         // Unused
-        lease->fqdn_fwd_ = false;                   // Unused
-        lease->fqdn_rev_ = false;                   // Unused
         lease->comments_ = std::string("");         // Unused
 
         // Set other parameters.  For historical reasons, address 0 is not used.
@@ -367,9 +364,6 @@ public:
         lease->t1_ = 0;                             // Not saved
         lease->t2_ = 0;                             // Not saved
         lease->fixed_ = false;                      // Unused
-        lease->hostname_ = std::string("");         // Unused
-        lease->fqdn_fwd_ = false;                   // Unused
-        lease->fqdn_rev_ = false;                   // Unused
         lease->comments_ = std::string("");         // Unused
 
         // Set other parameters.  For historical reasons, address 0 is not used.
@@ -827,6 +821,31 @@ TEST_F(MySqlLeaseMgrTest, lease4NullClientId) {
 
 }
 
+/// @brief Verify that too long hostname for Lease4 is not accepted.
+///
+/// Checks that the it is not possible to create a lease when the hostname
+/// length exceeds 255 characters.
+TEST_F(MySqlLeaseMgrTest, lease4InvalidHostname) {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Create a dummy hostname, consisting of 255 characters.
+    leases[1]->hostname_.assign(255, 'a');
+    ASSERT_TRUE(lmptr_->addLease(leases[1]));
+
+    // The new lease must be in the database.
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    detailCompareLease(leases[1], l_returned);
+
+    // Let's delete the lease, so as we can try to add it again with
+    // invalid hostname.
+    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[1]));
+
+    // Create a hostname with 256 characters. It should not be accepted.
+    leases[1]->hostname_.assign(256, 'a');
+    EXPECT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+}
+
 /// @brief Basic Lease6 Checks
 ///
 /// Checks that the addLease, getLease6 (by address) and deleteLease (with an
@@ -871,6 +890,31 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
     l_returned = lmptr_->getLease6(ioaddress6_[2]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
+}
+
+/// @brief Verify that too long hostname for Lease6 is not accepted.
+///
+/// Checks that the it is not possible to create a lease when the hostname
+/// length exceeds 255 characters.
+TEST_F(MySqlLeaseMgrTest, lease6InvalidHostname) {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Create a dummy hostname, consisting of 255 characters.
+    leases[1]->hostname_.assign(255, 'a');
+    ASSERT_TRUE(lmptr_->addLease(leases[1]));
+
+    // The new lease must be in the database.
+    Lease6Ptr l_returned = lmptr_->getLease6(ioaddress6_[1]);
+    detailCompareLease(leases[1], l_returned);
+
+    // Let's delete the lease, so as we can try to add it again with
+    // invalid hostname.
+    EXPECT_TRUE(lmptr_->deleteLease(ioaddress6_[1]));
+
+    // Create a hostname with 256 characters. It should not be accepted.
+    leases[1]->hostname_.assign(256, 'a');
+    EXPECT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address
@@ -936,7 +980,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSize) {
         leases[1]->hwaddr_.resize(i, i);
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
         // @todo: Simply use HWAddr directly once 2589 is implemented
-        Lease4Collection returned = 
+        Lease4Collection returned =
             lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER));
 
         ASSERT_EQ(1, returned.size());
@@ -965,7 +1009,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     // Get the leases matching the hardware address of lease 1 and
     // subnet ID of lease 1.  Result should be a single lease - lease 1.
     // @todo: Simply use HWAddr directly once 2589 is implemented
-    Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, 
+    Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
         HTYPE_ETHER), leases[1]->subnet_id_);
 
     ASSERT_TRUE(returned);
@@ -1002,9 +1046,9 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     leases[1]->addr_ = leases[2]->addr_;
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
     // @todo: Simply use HWAddr directly once 2589 is implemented
-    EXPECT_THROW(returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, 
-                                                    HTYPE_ETHER), 
-                                             leases[1]->subnet_id_), 
+    EXPECT_THROW(returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
+                                                    HTYPE_ETHER),
+                                             leases[1]->subnet_id_),
                  isc::dhcp::MultipleRecords);
 
     // Delete all leases in the database
@@ -1029,8 +1073,8 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetIdSize) {
         leases[1]->hwaddr_.resize(i, i);
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
         // @todo: Simply use HWAddr directly once 2589 is implemented
-        Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, 
-                                                      HTYPE_ETHER), 
+        Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
+                                                      HTYPE_ETHER),
                                                leases[1]->subnet_id_);
         ASSERT_TRUE(returned);
         detailCompareLease(leases[1], returned);
@@ -1350,6 +1394,10 @@ TEST_F(MySqlLeaseMgrTest, updateLease4) {
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
+    // Try to update the lease with the too long hostname.
+    leases[1]->hostname_.assign(256, 'a');
+    EXPECT_THROW(lmptr_->updateLease4(leases[1]), isc::dhcp::DbOperationError);
+
     // Try updating a lease not in the database.
     lmptr_->deleteLease(ioaddress4_[2]);
     EXPECT_THROW(lmptr_->updateLease4(leases[2]), isc::dhcp::NoSuchLease);
@@ -1405,6 +1453,10 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
     l_returned = lmptr_->getLease6(ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
+
+    // Try to update the lease with the too long hostname.
+    leases[1]->hostname_.assign(256, 'a');
+    EXPECT_THROW(lmptr_->updateLease6(leases[1]), isc::dhcp::DbOperationError);
 
     // Try updating a lease not in the database.
     EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::dhcp::NoSuchLease);
