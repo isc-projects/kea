@@ -1,7 +1,7 @@
 {
   "module_spec": {
     "module_name": "NotifyOutLike",
-    "module_description": "XFR in daemon",
+    "module_description": "Test notifier",
     "config_data": [],
     "commands": [],
     "statistics": [
