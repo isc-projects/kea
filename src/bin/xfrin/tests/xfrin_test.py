@@ -2144,16 +2144,19 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
         self._const_sec = round(delta.days * 86400 + delta.seconds +
                                 delta.microseconds * 1E-6, 6)
         # List of statistics counter names and expected initial values
-        self.__name_to_counter = (('axfrreqv4', 0),
-                                 ('axfrreqv6', 0),
-                                 ('ixfrreqv4', 0),
-                                 ('ixfrreqv6', 0),
-                                 ('last_axfr_duration', 0.0),
-                                 ('last_ixfr_duration', 0.0),
-                                 ('soaoutv4', 0),
-                                 ('soaoutv6', 0),
-                                 ('xfrfail', 0),
-                                 ('xfrsuccess', 0))
+        self.__name_to_perzone_counter = (('axfrreqv4', 0),
+                                          ('axfrreqv6', 0),
+                                          ('ixfrreqv4', 0),
+                                          ('ixfrreqv6', 0),
+                                          ('last_axfr_duration', 0.0),
+                                          ('last_ixfr_duration', 0.0),
+                                          ('soaoutv4', 0),
+                                          ('soaoutv6', 0),
+                                          ('xfrfail', 0),
+                                          ('xfrsuccess', 0))
+        self.__name_to_counter = ('soa_in_progress',
+                                  'ixfr_running',
+                                  'axfr_running')
         self.__zones = 'zones'
 
     def tearDown(self):
@@ -2168,16 +2171,19 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
     def _check_init_statistics(self):
         '''checks exception being raised if not incremented statistics
         counter gotten'''
-        for (name, exp) in self.__name_to_counter:
+        for (name, exp) in self.__name_to_perzone_counter:
             self.assertRaises(isc.cc.data.DataNotFoundError,
                               self.conn._counters.get, self.__zones,
                               TEST_ZONE_NAME_STR, name)
+        for name in self.__name_to_counter:
+            self.assertRaises(isc.cc.data.DataNotFoundError,
+                              self.conn._counters.get, name)
 
-    def _check_updated_statistics(self, overwrite):
+    def _check_updated_perzone_statistics(self, overwrite):
         '''checks getting expect values after updating the pairs of
-        statistics counter name and value on to the "overwrite"
+        per-zone statistics counter name and value on to the "overwrite"
         dictionary'''
-        name2count = dict(self.__name_to_counter)
+        name2count = dict(self.__name_to_perzone_counter)
         name2count.update(overwrite)
         for (name, exp) in name2count.items():
             act = self.conn._counters.get(self.__zones,
@@ -2187,6 +2193,19 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
             msg = '%s is expected %s but actually %s' % (name, exp, act)
             self.assertEqual(exp, act, msg=msg)
 
+    def _check_updated_statistics(self, expects):
+        '''checks counters in expects are incremented. also checks other
+        counters which are not in expects are not incremented.'''
+        for name in self.__name_to_counter:
+            if name in expects:
+                exp = expects[name]
+                act = self.conn._counters.get(name)
+                msg = '%s is expected %s but actually %s' % (name, exp, act)
+                self.assertEqual(exp, act, msg=msg)
+            else:
+                self.assertRaises(isc.cc.data.DataNotFoundError,
+                                  self.conn._counters.get, name)
+
 class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
     '''Xfrin AXFR tests for IPv4 to check statistics counters'''
     def test_soaout(self):
@@ -2195,7 +2214,7 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
         self.conn.response_generator = self._create_soa_response_data
         self._check_init_statistics()
         self.assertEqual(self.conn._check_soa_serial(), XFRIN_OK)
-        self._check_updated_statistics({'soaout' + self._ipver: 1})
+        self._check_updated_perzone_statistics({'soaout' + self._ipver: 1})
 
     def test_axfrreq_xfrsuccess_last_axfr_duration(self):
         '''tests that axfrreqv4 or axfrreqv6 and xfrsuccess counters
@@ -2203,9 +2222,10 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
         self.conn.response_generator = self._create_normal_response_data
         self._check_init_statistics()
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
-        self._check_updated_statistics({'axfrreq' + self._ipver: 1,
-                                        'xfrsuccess': 1,
-                                        'last_axfr_duration': self._const_sec})
+        self._check_updated_perzone_statistics({'axfrreq' + self._ipver: 1,
+                                                'xfrsuccess': 1,
+                                                'last_axfr_duration':
+                                                    self._const_sec})
 
     def test_axfrreq_xfrsuccess_last_axfr_duration2(self):
         '''tests that axfrreqv4 or axfrreqv6 and xfrsuccess counters
@@ -2216,10 +2236,10 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
         self.conn._handle_xfrin_responses = exception_raiser
         self._check_init_statistics()
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
-        self._check_updated_statistics({'axfrreq' + self._ipver: 1,
-                                        'xfrsuccess': 1,
-                                        'last_axfr_duration':
-                                            self._const_sec})
+        self._check_updated_perzone_statistics({'axfrreq' + self._ipver: 1,
+                                                'xfrsuccess': 1,
+                                                'last_axfr_duration':
+                                                    self._const_sec})
 
     def test_axfrreq_xfrfail(self):
         '''tests that axfrreqv4 or axfrreqv6 and xfrfail counters are
@@ -2235,8 +2255,9 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
             self.conn._handle_xfrin_responses = exception_raiser
             self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
             count += 1
-            self._check_updated_statistics({'axfrreq' + self._ipver: count,
-                                            'xfrfail': count})
+            self._check_updated_perzone_statistics({'axfrreq' + self._ipver:
+                                                        count,
+                                                    'xfrfail': count})
 
 class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
     '''Xfrin IXFR tests for IPv4 to check statistics counters'''
@@ -2251,10 +2272,10 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
         self.conn.response_generator = create_ixfr_response
         self._check_init_statistics()
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR))
-        self._check_updated_statistics({'ixfrreq' + self._ipver: 1,
-                                        'xfrsuccess': 1,
-                                        'last_ixfr_duration':
-                                            self._const_sec})
+        self._check_updated_perzone_statistics({'ixfrreq' + self._ipver: 1,
+                                                'xfrsuccess': 1,
+                                                'last_ixfr_duration':
+                                                    self._const_sec})
 
     def test_ixfrreq_xfrsuccess_last_ixfr_duration2(self):
         '''tests that ixfrreqv4 or ixfrreqv6 and xfrsuccess counters
@@ -2265,10 +2286,10 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
         self.conn._handle_xfrin_responses = exception_raiser
         self._check_init_statistics()
         self.assertEqual(self.conn.do_xfrin(False, RRType.IXFR), XFRIN_OK)
-        self._check_updated_statistics({'ixfrreq' + self._ipver: 1,
-                                        'xfrsuccess': 1,
-                                        'last_ixfr_duration':
-                                            self._const_sec})
+        self._check_updated_perzone_statistics({'ixfrreq' + self._ipver: 1,
+                                                'xfrsuccess': 1,
+                                                'last_ixfr_duration':
+                                                    self._const_sec})
 
     def test_ixfrreq_xfrfail(self):
         '''tests that ixfrreqv4 or ixfrreqv6 and xfrfail counters are
@@ -2284,8 +2305,9 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
             self.conn._handle_xfrin_responses = exception_raiser
             self.assertEqual(self.conn.do_xfrin(False, RRType.IXFR), XFRIN_FAIL)
             count += 1
-            self._check_updated_statistics({'ixfrreq' + self._ipver: count,
-                                            'xfrfail': count})
+            self._check_updated_perzone_statistics({'ixfrreq' + self._ipver:
+                                                        count,
+                                                    'xfrfail': count})
 
 class TestStatisticsXfrinAXFRv6(TestStatisticsXfrinAXFRv4):
     '''Same tests as TestStatisticsXfrinAXFRv4 for IPv6'''
