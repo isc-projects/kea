@@ -215,17 +215,17 @@ protected:
     /// @param hwaddr Client's hardware address info
     /// @param hint A hint that the client provided
     /// @param fwd_dns_update Indicates whether forward DNS update will be
-    /// performed for the client (true) or not (false).
+    ///        performed for the client (true) or not (false).
     /// @param rev_dns_update Indicates whether reverse DNS update will be
-    /// performed for the client (true) or not (false).
+    ///        performed for the client (true) or not (false).
     /// @param hostname A string carrying hostname to be used for DNS updates.
     /// @param fake_allocation Is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     /// @param callout_handle A callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.
     /// @param [out] old_lease Holds the pointer to a previous instance of a
-    /// lease. The NULL pointer indicates that lease didn't exist prior
-    /// to calling this function (e.g. new lease has been allocated).
+    ///        lease. The NULL pointer indicates that lease didn't exist prior
+    ///        to calling this function (e.g. new lease has been allocated).
     ///
     /// @return Allocated IPv4 lease (or NULL if allocation failed)
     Lease4Ptr
@@ -253,9 +253,9 @@ protected:
     /// @param clientid Client identifier
     /// @param hwaddr Client's hardware address
     /// @param fwd_dns_update Indicates whether forward DNS update will be
-    /// performed for the client (true) or not (false).
+    ///        performed for the client (true) or not (false).
     /// @param rev_dns_update Indicates whether reverse DNS update will be
-    /// performed for the client (true) or not (false).
+    ///        performed for the client (true) or not (false).
     /// @param hostname A string carrying hostname to be used for DNS updates.
     /// @param lease A lease to be renewed
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
@@ -284,9 +284,11 @@ protected:
     /// @param iaid iaid field from the IA_NA container that client sent
     /// @param hint a hint that the client provided
     /// @param fwd_dns_update A boolean value which indicates that server takes
-    /// responisibility for the forward DNS Update for this lease (if true).
+    ///        responsibility for the forward DNS Update for this lease
+    ///        (if true).
     /// @param rev_dns_update A boolean value which indicates that server takes
-    /// responibility for the reverse DNS Update for this lease (if true).
+    ///        responsibility for the reverse DNS Update for this lease
+    ///        (if true).
     /// @param hostname A fully qualified domain-name of the client.
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
@@ -320,9 +322,9 @@ private:
     /// @param hwaddr Client's hardware address
     /// @param addr An address that was selected and is confirmed to be available
     /// @param fwd_dns_update Indicates whether forward DNS update will be
-    /// performed for the client (true) or not (false).
+    ///        performed for the client (true) or not (false).
     /// @param rev_dns_update Indicates whether reverse DNS update will be
-    /// performed for the client (true) or not (false).
+    ///        performed for the client (true) or not (false).
     /// @param hostname A string carrying hostname to be used for DNS updates.
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed (and there are callouts
@@ -352,9 +354,11 @@ private:
     /// @param addr an address that was selected and is confirmed to be
     /// available
     /// @param fwd_dns_update A boolean value which indicates that server takes
-    /// responisibility for the forward DNS Update for this lease (if true).
+    ///        responsibility for the forward DNS Update for this lease
+    ///        (if true).
     /// @param rev_dns_update A boolean value which indicates that server takes
-    /// responibility for the reverse DNS Update for this lease (if true).
+    ///        responsibility for the reverse DNS Update for this lease
+    ///        (if true).
     /// @param hostname A fully qualified domain-name of the client.
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed (and there are callouts
@@ -362,7 +366,7 @@ private:
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
-    ///        becomed unavailable)
+    ///         became unavailable)
     Lease6Ptr createLease6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                            uint32_t iaid, const isc::asiolink::IOAddress& addr,
                            const bool fwd_dns_update, const bool rev_dns_update,
@@ -381,9 +385,9 @@ private:
     /// @param clientid Client identifier
     /// @param hwaddr Client's hardware address
     /// @param fwd_dns_update Indicates whether forward DNS update will be
-    /// performed for the client (true) or not (false).
+    ///        performed for the client (true) or not (false).
     /// @param rev_dns_update Indicates whether reverse DNS update will be
-    /// performed for the client (true) or not (false).
+    ///        performed for the client (true) or not (false).
     /// @param hostname A string carrying hostname to be used for DNS updates.
     /// @param callout_handle A callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.
@@ -412,9 +416,11 @@ private:
     /// @param duid client's DUID
     /// @param iaid IAID from the IA_NA container the client sent to us
     /// @param fwd_dns_update A boolean value which indicates that server takes
-    /// responisibility for the forward DNS Update for this lease (if true).
+    ///        responsibility for the forward DNS Update for this lease
+    ///        (if true).
     /// @param rev_dns_update A boolean value which indicates that server takes
-    /// responibility for the reverse DNS Update for this lease (if true).
+    ///        responsibility for the reverse DNS Update for this lease
+    ///        (if true).
     /// @param hostname A fully qualified domain-name of the client.
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.
