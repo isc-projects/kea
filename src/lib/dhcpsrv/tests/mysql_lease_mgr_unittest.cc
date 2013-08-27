@@ -1321,6 +1321,9 @@ TEST_F(MySqlLeaseMgrTest, updateLease4) {
     // Modify some fields in lease 1 (not the address) and update it.
     ++leases[1]->subnet_id_;
     leases[1]->valid_lft_ *= 2;
+    leases[1]->hostname_ = "modified.hostname.";
+    leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
+    leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
     lmptr_->updateLease4(leases[1]);
 
     // ... and check what is returned is what is expected.
@@ -1372,6 +1375,9 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
     ++leases[1]->iaid_;
     leases[1]->type_ = Lease6::LEASE_IA_PD;
     leases[1]->valid_lft_ *= 2;
+    leases[1]->hostname_ = "modified.hostname.v6.";
+    leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
+    leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
     lmptr_->updateLease6(leases[1]);
     lmptr_->commit();
 
