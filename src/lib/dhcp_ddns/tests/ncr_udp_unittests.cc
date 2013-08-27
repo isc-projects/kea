@@ -113,7 +113,10 @@ TEST(NameChangeUDPListenerBasicTest, basicListenTests) {
 
     // Verify that we can start listening.
     EXPECT_NO_THROW(listener->startListening(io_service));
+    // Verify that we are in listening mode.
     EXPECT_TRUE(listener->amListening());
+    // Verify that a read is in progress.
+    EXPECT_TRUE(listener->isIoPending());
 
     // Verify that attempting to listen when we already are is an error.
     EXPECT_THROW(listener->startListening(io_service), NcrListenerError);
@@ -121,6 +124,14 @@ TEST(NameChangeUDPListenerBasicTest, basicListenTests) {
     // Verify that we can stop listening.
     EXPECT_NO_THROW(listener->stopListening());
     EXPECT_FALSE(listener->amListening());
+
+    // Verify that IO pending is still true, as IO cancel event has not yet
+    // occurred.
+    EXPECT_TRUE(listener->isIoPending());
+
+    // Verify that IO pending is false, after cancel event occurs.
+    EXPECT_NO_THROW(io_service.run_one());
+    EXPECT_FALSE(listener->isIoPending());
 
     // Verify that attempting to stop listening when we are not is ok.
     EXPECT_NO_THROW(listener->stopListening());
@@ -167,7 +178,7 @@ public:
 
     virtual ~NameChangeUDPListenerTest(){
     }
-    
+
 
     /// @brief Converts JSON string into an NCR and sends it to the listener.
     ///
@@ -226,6 +237,7 @@ TEST_F(NameChangeUDPListenerTest, basicReceivetest) {
     ASSERT_FALSE(listener_->amListening());
     ASSERT_NO_THROW(listener_->startListening(io_service_));
     ASSERT_TRUE(listener_->amListening());
+    ASSERT_TRUE(listener_->isIoPending());
 
     // Iterate over a series of requests, sending and receiving one
     /// at time.
@@ -247,6 +259,10 @@ TEST_F(NameChangeUDPListenerTest, basicReceivetest) {
     // Verify we can gracefully stop listening.
     EXPECT_NO_THROW(listener_->stopListening());
     EXPECT_FALSE(listener_->amListening());
+
+    // Verify that IO pending is false, after cancel event occurs.
+    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_FALSE(listener_->isIoPending());
 }
 
 /// @brief A NOP derivation for constructor test purposes.
@@ -489,6 +505,10 @@ TEST_F (NameChangeUDPTest, roundTripTest) {
     // Verify that we can gracefully stop listening.
     EXPECT_NO_THROW(listener_->stopListening());
     EXPECT_FALSE(listener_->amListening());
+
+    // Verify that IO pending is false, after cancel event occurs.
+    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_FALSE(listener_->isIoPending());
 
     // Verify that we can gracefully stop sending.
     EXPECT_NO_THROW(sender_->stopSending());
