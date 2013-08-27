@@ -477,18 +477,18 @@ TEST_F(D2ProcessTest, canShutdown) {
     const D2QueueMgrPtr& queue_mgr = getD2QueueMgr();
 
     // Shutdown flag is false.  Method should return false for all types.
-    EXPECT_EQ(false, checkCanShutdown(SD_NORMAL));
-    EXPECT_EQ(false, checkCanShutdown(SD_DRAIN_FIRST));
-    EXPECT_EQ(false, checkCanShutdown(SD_NOW));
+    EXPECT_FALSE(checkCanShutdown(SD_NORMAL));
+    EXPECT_FALSE(checkCanShutdown(SD_DRAIN_FIRST));
+    EXPECT_FALSE(checkCanShutdown(SD_NOW));
 
     // Set shutdown flag to true.
     setShutdownFlag(true);
 
     // Queue Manager is running, queue is empty, no transactions.
     // Only SD_NOW should return true.
-    EXPECT_EQ(false, checkCanShutdown(SD_NORMAL));
-    EXPECT_EQ(false, checkCanShutdown(SD_DRAIN_FIRST));
-    EXPECT_EQ(true, checkCanShutdown(SD_NOW));
+    EXPECT_FALSE(checkCanShutdown(SD_NORMAL));
+    EXPECT_FALSE(checkCanShutdown(SD_DRAIN_FIRST));
+    EXPECT_TRUE(checkCanShutdown(SD_NOW));
 
     // Tell queue manager to stop.
     queue_mgr->stopListening();
@@ -497,9 +497,9 @@ TEST_F(D2ProcessTest, canShutdown) {
 
     // Queue Manager is stopping, queue is empty, no transactions.
     // Only SD_NOW should return true.
-    EXPECT_EQ(false, checkCanShutdown(SD_NORMAL));
-    EXPECT_EQ(false, checkCanShutdown(SD_DRAIN_FIRST));
-    EXPECT_EQ(true, checkCanShutdown(SD_NOW));
+    EXPECT_FALSE(checkCanShutdown(SD_NORMAL));
+    EXPECT_FALSE(checkCanShutdown(SD_DRAIN_FIRST));
+    EXPECT_TRUE(checkCanShutdown(SD_NOW));
 
     // Allow cancel event to process.
     ASSERT_NO_THROW(runIO());
@@ -508,9 +508,9 @@ TEST_F(D2ProcessTest, canShutdown) {
 
     // Queue Manager is stopped, queue is empty, no transactions.
     // All types should return true.
-    EXPECT_EQ(true, checkCanShutdown(SD_NORMAL));
-    EXPECT_EQ(true, checkCanShutdown(SD_DRAIN_FIRST));
-    EXPECT_EQ(true, checkCanShutdown(SD_NOW));
+    EXPECT_TRUE(checkCanShutdown(SD_NORMAL));
+    EXPECT_TRUE(checkCanShutdown(SD_DRAIN_FIRST));
+    EXPECT_TRUE(checkCanShutdown(SD_NOW));
 
     const char* test_msg =
         "{"
@@ -533,9 +533,9 @@ TEST_F(D2ProcessTest, canShutdown) {
 
     // Queue Manager is stopped. Queue is not empty, no transactions.
     // SD_DRAIN_FIRST should be false, SD_NORMAL and SD_NOW should be true.
-    EXPECT_EQ(true, checkCanShutdown(SD_NORMAL));
-    EXPECT_EQ(false, checkCanShutdown(SD_DRAIN_FIRST));
-    EXPECT_EQ(true, checkCanShutdown(SD_NOW));
+    EXPECT_TRUE(checkCanShutdown(SD_NORMAL));
+    EXPECT_FALSE(checkCanShutdown(SD_DRAIN_FIRST));
+    EXPECT_TRUE(checkCanShutdown(SD_NOW));
 
     // Now use update manager to dequeue the request and make a transaction.
     // This lets us verify transaction list not empty logic.
@@ -547,9 +547,9 @@ TEST_F(D2ProcessTest, canShutdown) {
 
     // Queue Manager is stopped. Queue is empty, one transaction.
     // Only SD_NOW should be true.
-    EXPECT_EQ(false, checkCanShutdown(SD_NORMAL));
-    EXPECT_EQ(false, checkCanShutdown(SD_DRAIN_FIRST));
-    EXPECT_EQ(true, checkCanShutdown(SD_NOW));
+    EXPECT_FALSE(checkCanShutdown(SD_NORMAL));
+    EXPECT_FALSE(checkCanShutdown(SD_DRAIN_FIRST));
+    EXPECT_TRUE(checkCanShutdown(SD_NOW));
 }
 
 

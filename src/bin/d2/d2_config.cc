@@ -226,7 +226,7 @@ TSIGKeyInfoParser::commit() {
         isc_throw(D2CfgError, "TSIG Key Info must specify name");
     }
 
-    // Algorithme cannot be blank.
+    // Algorithm cannot be blank.
     if (algorithm.empty()) {
         isc_throw(D2CfgError, "TSIG Key Info must specify algorithm");
     }
