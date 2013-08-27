@@ -108,6 +108,10 @@ public:
 ///     without any further steps.   This method may be called from the INITTED
 ///     or one of the STOPPED states.
 ///
+///     * STOPPING - The listener is in the process of stopping active
+///     listening. This is transitory state between RUNNING and STOPPED, which
+///     is completed by IO cancellation event.
+///
 ///     * STOPPED - The listener has been listening but has been stopped
 ///     without error. To return to listening, startListener() must be invoked.
 ///
@@ -144,6 +148,7 @@ public:
       NOT_INITTED,
       INITTED,
       RUNNING,
+      STOPPING,
       STOPPED_QUEUE_FULL,
       STOPPED_RECV_ERROR,
       STOPPED,
@@ -203,6 +208,10 @@ public:
     /// If the queue is at maximum capacity, stopListening() is invoked and
     /// the state is set to STOPPED_QUEUE_FULL.
     ///
+    /// If the result indicates IO stopped, then the state is set to STOPPED.
+    /// Note this is not an error, it results from a deliberate cancellation
+    /// of listener IO as part of a normal stopListener call.
+    ///
     /// If the result indicates a failed receive, stopListening() is invoked
     /// and the state is set to STOPPED_RECV_ERROR.
     ///
@@ -220,14 +229,18 @@ public:
 
     /// @brief Stops listening for requests.
     ///
-    /// Invokes the listener's stopListening method which should cause it to
-    /// cancel any pending IO and close its IO source.  It the sets the state
-    /// to the given value.
+    /// Invokes the listener's stopListening method which will cause it to
+    /// cancel any pending IO and close its IO source.  It the sets target
+    /// stop state to the given value.
     ///
-    /// @param stop_state is one of the three stopped state values.
+    /// If there is no IO pending, the manager state is immediately set to the
+    /// target stop state, otherwise the manager state is set to STOPPING.
+    ///
+    /// @param target_stop_state is one of the three stopped state values.
     ///
     /// @throw D2QueueMgrError if stop_state is a valid stop state.
-    void stopListening(const State stop_state = STOPPED);
+    void stopListening(const State target_stop_state = STOPPED);
+
 
     /// @brief Deletes the current listener
     ///
@@ -308,6 +321,12 @@ public:
     void clearQueue();
 
   private:
+    /// @brief Sets the manager state to the target stop state.
+    ///
+    /// Convenience method which sets the manager state to the target stop
+    /// state and logs that the manager is stopped.
+    void updateStopState();
+
     /// @brief IOService that our listener should use for IO management.
     isc::asiolink::IOService& io_service_;
 
@@ -323,7 +342,8 @@ public:
     /// @brief Current state of the manager.
     State mgr_state_;
 
-
+    /// @brief Tracks the state the manager should be in once stopped.
+    State target_stop_state_;
 };
 
 /// @brief Defines a pointer for manager instances.

@@ -129,10 +129,11 @@ public:
 /// listener derivation performs the steps necessary to prepare its IO source
 /// for reception (e.g. opening a socket, connecting to a database).
 ///
-/// Assuming the open is successful, startListener will call the virtual
-/// doReceive() method.  The listener derivation uses this method to
-/// instigate an IO layer asynchronous passing in its IO layer callback to
-/// handle receive events from its IO source.
+/// Assuming the open is successful, startListener will call receiveNext, to
+/// initiate an asynchronous receive.  This method calls the virtual method,
+/// doReceive().  The listener derivation uses doReceive to instigate an IO
+/// layer asynchronous receieve passing in its IO layer callback to
+/// handle receive events from the IO source.
 ///
 /// As stated earlier, the derivation's NameChangeRequest completion handler
 /// MUST invoke the application layer handler registered with the listener.
@@ -189,8 +190,8 @@ public:
     /// @brief Prepares the IO for reception and initiates the first receive.
     ///
     /// Calls the derivation's open implementation to initialize the IO layer
-    /// source for receiving inbound requests.  If successful, it issues first
-    /// asynchronous read by calling the derivation's doReceive implementation.
+    /// source for receiving inbound requests.  If successful, it starts the
+    /// first asynchronous read by receiveNext.
     ///
     /// @param io_service is the IOService that will handle IO event processing.
     ///
@@ -203,6 +204,18 @@ public:
     /// Calls the derivation's implementation of close and marks the state
     /// as not listening.
     void stopListening();
+
+protected:
+    /// @brief Initiates an asynchronous receive
+    ///
+    /// Sets context information to indicate that IO is in progress and invokes
+    /// the derivation's asynchronous receive method, doReceive.  Note doReceive
+    /// should not be called outside this method to ensure context information
+    /// integrity.
+    ///
+    /// @throw Derivation's doReceive method may throw isc::Exception upon
+    /// error.
+    void receiveNext();
 
     /// @brief Calls the NCR receive handler registered with the listener.
     ///
@@ -261,12 +274,28 @@ public:
     /// throw it as an isc::Exception or derivative.
     virtual void doReceive() = 0;
 
+public:
     /// @brief Returns true if the listener is listening, false otherwise.
     ///
     /// A true value indicates that the IO source has been opened successfully,
-    /// and that receive loop logic is active.
+    /// and that receive loop logic is active.  This implies that closing the
+    /// IO source will interrupt that operation, resulting in a callback
+    /// invocation.
     bool amListening() const {
         return (listening_);
+    }
+
+    /// @brief Returns true if the listener has an IO call in progress.
+    ///
+    /// A true value indicates that the listener has an asynchronous IO in
+    /// progress which will complete at some point in the future. Completion
+    /// of the call will invoke the registered callback.  It is important to
+    /// understand that the listener and its related objects should not be
+    /// deleted while there is an IO call pending.  This can result in the
+    /// IO service attempting to invoke methods on objects that are no longer
+    /// valid.
+    bool isIoPending() const {
+        return (io_pending_);
     }
 
 private:
@@ -280,8 +309,11 @@ private:
         listening_ = value;
     }
 
-    /// @brief Indicates if the listener is listening.
+    /// @brief Indicates if the listener is in listening mode.
     bool listening_;
+
+    /// @brief Indicates that listener has an async IO pending completion.
+    bool io_pending_;
 
     /// @brief Application level NCR receive completion handler.
     RequestReceiveHandler& recv_handler_;
@@ -478,7 +510,6 @@ public:
     ///
     /// The given request is placed at the back of the send queue and then
     /// sendNext is invoked.
-
     ///
     /// @param ncr is the NameChangeRequest to send.
     ///
@@ -487,6 +518,7 @@ public:
     /// capacity.
     void sendRequest(NameChangeRequestPtr& ncr);
 
+protected:
     /// @brief Dequeues and sends the next request on the send queue.
     ///
     /// If there is already a send in progress just return. If there is not
@@ -523,27 +555,6 @@ public:
     /// @param result contains that send outcome status.
     void invokeSendHandler(const NameChangeSender::Result result);
 
-    /// @brief Removes the request at the front of the send queue
-    ///
-    /// This method can be used to avoid further retries of a failed
-    /// send. It is provided primarily as a just-in-case measure. Since
-    /// a failed send results in the same request being retried continuously
-    /// this method makes it possible to remove that entry, causing the
-    /// subsequent entry in the queue to be attempted on the next send.
-    /// It is presumed that sends will only fail due to some sort of
-    /// communications issue. In the unlikely event that a request is
-    /// somehow tainted and causes an send failure based on its content,
-    /// this method provides a means to remove th message.
-    void skipNext();
-
-    /// @brief Flushes all entries in the send queue
-    ///
-    /// This method can be used to discard all of the NCRs currently in the
-    /// the send queue.  Note it may not be called while the sender is in
-    /// the sending state.
-    /// @throw NcrSenderError if called and sender is in sending state.
-    void clearSendQueue();
-
     /// @brief Abstract method which opens the IO sink for transmission.
     ///
     /// The derivation uses this method to perform the steps needed to
@@ -575,6 +586,28 @@ public:
     /// @throw If the implementation encounters an error it MUST
     /// throw it as an isc::Exception or derivative.
     virtual void doSend(NameChangeRequestPtr& ncr) = 0;
+
+public:
+    /// @brief Removes the request at the front of the send queue
+    ///
+    /// This method can be used to avoid further retries of a failed
+    /// send. It is provided primarily as a just-in-case measure. Since
+    /// a failed send results in the same request being retried continuously
+    /// this method makes it possible to remove that entry, causing the
+    /// subsequent entry in the queue to be attempted on the next send.
+    /// It is presumed that sends will only fail due to some sort of
+    /// communications issue. In the unlikely event that a request is
+    /// somehow tainted and causes an send failure based on its content,
+    /// this method provides a means to remove th message.
+    void skipNext();
+
+    /// @brief Flushes all entries in the send queue
+    ///
+    /// This method can be used to discard all of the NCRs currently in the
+    /// the send queue.  Note it may not be called while the sender is in
+    /// the sending state.
+    /// @throw NcrSenderError if called and sender is in sending state.
+    void clearSendQueue();
 
     /// @brief Returns true if the sender is in send mode, false otherwise.
     ///

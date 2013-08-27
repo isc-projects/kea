@@ -45,10 +45,23 @@ start another send after completing the send of the previous request.  While
 possible, this is highly unlikely and is probably a programmatic error.  The
 application should recover on its own.
 
+% DHCP_DDNS_NCR_UDP_RECV_CANCELED UDP socket receive was canceled while listening for DNS Update requests: %1
+This is an informational  message indicating that the listening over a UDP socket for DNS update requests has been canceled.  This is a normal part of suspending listening operations.
+
 % DHCP_DDNS_NCR_UDP_RECV_ERROR UDP socket receive error while listening for DNS Update requests: %1
 This is an error message indicating that an IO error occurred while listening
 over a UDP socket for DNS update requests. This could indicate a network
 connectivity or system resource issue.
+
+% DHCP_DDNS_NCR_UDP_SEND_CANCELED UDP socket send was canceled while sending a DNS Update request to DHCP_DDNS: %1
+This is an informational message indicating that sending requests via UDP
+socket to DHCP_DDNS has been interrupted. This is a normal part of suspending
+send operations.
+
+% DHCP_DDNS_NCR_UDP_SEND_ERROR UDP socket send error while sending a DNS Update request: %1
+This is an error message indicating that an IO error occurred while sending a
+DNS update request to DHCP_DDNS over a UDP socket.  This could indicate a
+network connectivity or system resource issue.
 
 % DHCP_DDNS_UNCAUGHT_NCR_RECV_HANDLER_ERROR unexpected exception thrown from the application receive completion handler: %1
 This is an error message that indicates that an exception was thrown but not
