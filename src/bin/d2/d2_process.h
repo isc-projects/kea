@@ -47,14 +47,6 @@ public:
       SD_NOW
     };
 
-    //@{
-    /// @brief Define text labels for the shutdown types.
-    static const char* SD_NORMAL_STR;
-    static const char* SD_DRAIN_FIRST_STR;
-    static const char* SD_NOW_STR;
-    static const char* SD_INVALID_STR;
-    //@}
-
     /// @brief Defines the point at which to resume receiving requests.
     /// If the receive queue has become full, D2Process will "pause" the
     /// reception of requests by putting the queue manager in the stopped

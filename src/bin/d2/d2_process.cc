@@ -22,12 +22,6 @@
 namespace isc {
 namespace d2 {
 
-// String translations for ShutdownType enums.
-const char* D2Process::SD_NORMAL_STR = "normal";
-const char* D2Process::SD_DRAIN_FIRST_STR = "drain_first";
-const char* D2Process::SD_NOW_STR = "now";
-const char* D2Process::SD_INVALID_STR = "invalid";
-
 // Setting to 80% for now. This is an arbitrary choice and should probably
 // be configurable.
 const unsigned int D2Process::QUEUE_RESTART_PERCENT =  80;
@@ -173,7 +167,7 @@ D2Process::shutdown(isc::data::ConstElementPtr args) {
                                                   : "(no args)");
 
     // Default shutdown type is normal.
-    std::string type_str(SD_NORMAL_STR);
+    std::string type_str(getShutdownTypeStr(SD_NORMAL));
     shutdown_type_ = SD_NORMAL;
 
     if (args) {
@@ -181,11 +175,11 @@ D2Process::shutdown(isc::data::ConstElementPtr args) {
             args->contains("type")) {
             type_str = args->get("type")->stringValue();
 
-            if (type_str == SD_NORMAL_STR) {
+            if (type_str == getShutdownTypeStr(SD_NORMAL)) {
                 shutdown_type_ = SD_NORMAL;
-            } else if (type_str == SD_DRAIN_FIRST_STR) {
+            } else if (type_str == getShutdownTypeStr(SD_DRAIN_FIRST)) {
                 shutdown_type_ = SD_DRAIN_FIRST;
-            } else if (type_str == SD_NOW_STR) {
+            } else if (type_str == getShutdownTypeStr(SD_NOW)) {
                 shutdown_type_ = SD_NOW;
             } else {
                 setShutdownFlag(false);
@@ -378,16 +372,16 @@ D2Process::getD2CfgMgr() {
 }
 
 const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
-    const char* str = SD_INVALID_STR;
+    const char* str = "invalid";
     switch (type) {
     case SD_NORMAL:
-        str = SD_NORMAL_STR;
+        str = "normal";
         break;
     case SD_DRAIN_FIRST:
-        str = SD_DRAIN_FIRST_STR;
+        str = "drain_first";
         break;
     case SD_NOW:
-        str = SD_NOW_STR;
+        str = "now";
         break;
     default:
         break;
@@ -395,7 +389,6 @@ const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
 
     return (str);
 }
-
 
 }; // namespace isc::d2
 }; // namespace isc
