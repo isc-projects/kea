@@ -2259,6 +2259,44 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
                                                         count,
                                                     'xfrfail': count})
 
+    def test_soa_in_progress1(self):
+        '''tests that an soa_in_progress counter is incremented and decremented
+        when an soa query succeeds'''
+        self.conn.response_generator = self._create_soa_response_data
+        self._check_init_statistics()
+        self.assertEqual(self.conn._check_soa_serial(), XFRIN_OK)
+        self._check_updated_statistics({'soa_in_progress': 0})
+
+    def test_soa_in_progress2(self):
+        '''tests that an soa_in_progress counter is incremented and decremented
+        even if socket.error is raised from XfrinConnection._send_query()'''
+        def exception_raiser(x):
+            raise socket.error()
+        self.conn._send_query = exception_raiser
+        self._check_init_statistics()
+        self.assertRaises(socket.error, self.conn._check_soa_serial)
+        self._check_updated_statistics({'soa_in_progress': 0})
+
+    def test_axfr_running1(self):
+        '''tests that axfr_running counter is incremented and decremented'''
+        self.conn.response_generator = self._create_normal_response_data
+        self._check_init_statistics()
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
+        self._check_updated_statistics({'axfr_running': 0})
+
+    def test_axfr_running2(self):
+        '''tests that axfr_running counter is incremented and decremented even
+        if some failure exceptions are expected to be raised inside do_xfrin():
+        XfrinZoneError, XfrinProtocolError, XfrinException, and Exception'''
+        self._check_init_statistics()
+        for ex in [XfrinZoneError, XfrinProtocolError, XfrinException,
+                   Exception]:
+            def exception_raiser():
+                raise ex()
+            self.conn._handle_xfrin_responses = exception_raiser
+            self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+            self._check_updated_statistics({'axfr_running': 0})
+
 class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
     '''Xfrin IXFR tests for IPv4 to check statistics counters'''
     def test_ixfrreq_xfrsuccess_last_ixfr_duration(self):
@@ -2308,6 +2346,33 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
             self._check_updated_perzone_statistics({'ixfrreq' + self._ipver:
                                                         count,
                                                     'xfrfail': count})
+
+    def test_ixfr_running1(self):
+        '''tests that ixfr_running counter is incremented and decremented'''
+        def create_ixfr_response():
+            self.conn.reply_data = self.conn.create_response_data(
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                    RRType.IXFR)],
+                answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
+        self.conn.response_generator = create_ixfr_response
+        self._check_init_statistics()
+        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR))
+        self._check_updated_statistics({'ixfr_running': 0})
+
+    def test_ixfr_running2(self):
+        '''tests that ixfr_running counter is incremented and decremented even
+        if some failure exceptions are expected to be raised inside do_xfrin():
+        XfrinZoneError, XfrinProtocolError, XfrinException, and Exception'''
+        self._check_init_statistics()
+        count = 0
+        for ex in [XfrinZoneError, XfrinProtocolError, XfrinException,
+                   Exception]:
+            def exception_raiser():
+                raise ex()
+            self.conn._handle_xfrin_responses = exception_raiser
+            self.assertEqual(self.conn.do_xfrin(False, RRType.IXFR), XFRIN_FAIL)
+            count += 1
+            self._check_updated_statistics({'ixfr_running': 0})
 
 class TestStatisticsXfrinAXFRv6(TestStatisticsXfrinAXFRv4):
     '''Same tests as TestStatisticsXfrinAXFRv4 for IPv6'''
