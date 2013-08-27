@@ -35,6 +35,7 @@ import re
 import isc.cc
 import isc.config
 import isc.util.process
+import isc.util.traceback_handler
 from isc.util.address_formatter import AddressFormatter
 
 import isc.log
@@ -598,7 +599,7 @@ class StatsHttpd:
                 "%s: %s" % (err.__class__.__name__, err))
         return string.Template(lines)
 
-if __name__ == "__main__":
+def main():
     try:
         parser = OptionParser()
         parser.add_option(
@@ -622,3 +623,6 @@ if __name__ == "__main__":
         logger.info(STATSHTTPD_STOPPED_BY_KEYBOARD)
 
     logger.info(STATSHTTPD_EXITING)
+
+if __name__ == "__main__":
+    isc.util.traceback_handler.traceback_handler(main)

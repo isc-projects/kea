@@ -237,11 +237,6 @@ DDNS UPDATE messages, it will return SERVFAIL. However, this does point to
 an underlying problem in the messaging system, and should be inspected.
 The specific error is printed in the log message.
 
-% DDNS_UNCAUGHT_EXCEPTION uncaught exception of type %1: %2
-The b10-ddns process encountered an uncaught exception and will now shut
-down. This is indicative of a programming error and should not happen under
-normal circumstances. The exception type and message are printed.
-
 % DDNS_UPDATE_NOTIFY notified %1 of updates to %2
 Debug message.  b10-ddns has made updates to a zone based on an update
 request and has successfully notified an external module of the updates.

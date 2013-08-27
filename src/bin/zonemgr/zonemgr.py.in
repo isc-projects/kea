@@ -37,6 +37,7 @@ import errno
 from optparse import OptionParser, OptionValueError
 from isc.config.ccsession import *
 import isc.util.process
+import isc.util.traceback_handler
 from isc.log_messages.zonemgr_messages import *
 from isc.notify import notify_out
 from isc.server_common.datasrc_clients_mgr import DataSrcClientsMgr, ConfigError
@@ -802,7 +803,7 @@ def set_cmd_options(parser):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
             help="display more about what is going on")
 
-if '__main__' == __name__:
+def main():
     try:
         logger.debug(DBG_START_SHUT, ZONEMGR_STARTING)
         parser = OptionParser()
@@ -830,3 +831,6 @@ if '__main__' == __name__:
         zonemgrd.shutdown()
 
     logger.info(ZONEMGR_SHUTDOWN)
+
+if '__main__' == __name__:
+    isc.util.traceback_handler.traceback_handler(main)
