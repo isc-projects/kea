@@ -606,7 +606,7 @@ public:
 
     /// @brief Iterates over the internal list of TSIGKeyInfoParsers,
     /// invoking commit on each.  This causes each parser to instantiate a
-    /// TSIGKeyInfo from its internal data values and add that that key
+    /// TSIGKeyInfo from its internal data values and add that key
     /// instance to the local key storage area, local_keys_.   If all of the
     /// key parsers commit cleanly, then update the context key map (keys_)
     /// with the contents of local_keys_.  This is done to allow for duplicate
