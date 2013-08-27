@@ -1,6 +1,6 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
 PYTESTS = process_test.py socketserver_mixin_test.py file_test.py
-PYTESTS += address_formatter_test.py
+PYTESTS += address_formatter_test.py traceback_handler_test.py
 EXTRA_DIST = $(PYTESTS)
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
