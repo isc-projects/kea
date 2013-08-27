@@ -62,7 +62,7 @@ Lease4Ptr Memfile_LeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) cons
     if (l == storage4_.end()) {
         return (Lease4Ptr());
     } else {
-        return (*l);
+        return (Lease4Ptr(new Lease4(**l)));
     }
 }
 
@@ -94,7 +94,7 @@ Lease4Ptr Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr,
     }
 
     // Lease was found. Return it to the caller.
-    return (*lease);
+    return (Lease4Ptr(new Lease4(**lease)));
 }
 
 Lease4Collection Memfile_LeaseMgr::getLease4(const ClientId& clientid) const {
@@ -123,11 +123,11 @@ Lease4Ptr Memfile_LeaseMgr::getLease4(const ClientId& client_id,
         return Lease4Ptr();
     }
     // Lease was found. Return it to the caller.
-    return (*lease);
+    return (Lease4Ptr(new Lease4(**lease)));
 }
 
-Lease6Ptr Memfile_LeaseMgr::getLease6(
-        const isc::asiolink::IOAddress& addr) const {
+Lease6Ptr
+Memfile_LeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_ADDR6).arg(addr.toText());
 
@@ -135,7 +135,7 @@ Lease6Ptr Memfile_LeaseMgr::getLease6(
     if (l == storage6_.end()) {
         return (Lease6Ptr());
     } else {
-        return (*l);
+        return (Lease6Ptr(new Lease6(**l)));
     }
 }
 
@@ -167,20 +167,31 @@ Lease6Ptr Memfile_LeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
         return (Lease6Ptr());
     }
     // Lease was found, return it to the caller.
-    return (*lease);
+    return (Lease6Ptr(new Lease6(**lease)));
 }
 
 void Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_UPDATE_ADDR4).arg(lease->addr_.toText());
 
+    Lease4Storage::iterator lease_it = storage4_.find(lease->addr_);
+    if (lease_it == storage4_.end()) {
+        isc_throw(NoSuchLease, "failed to update the lease with address "
+                  << lease->addr_.toText() << " - no such lease");
+    }
+    **lease_it = *lease;
 }
 
 void Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_UPDATE_ADDR6).arg(lease->addr_.toText());
 
-
+    Lease6Storage::iterator lease_it = storage6_.find(lease->addr_);
+    if (lease_it == storage6_.end()) {
+        isc_throw(NoSuchLease, "failed to update the lease with address "
+                  << lease->addr_.toText() << " - no such lease");
+    }
+    **lease_it = *lease;
 }
 
 bool Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {

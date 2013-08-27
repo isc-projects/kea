@@ -182,28 +182,63 @@ protected:
     ///        we give up (0 means unlimited)
     AllocEngine(AllocType engine_type, unsigned int attempts);
 
-    /// @brief Allocates an IPv4 lease
+    /// @brief Returns IPv4 lease.
     ///
-    /// This method uses currently selected allocator to pick an address from
-    /// specified subnet, creates a lease for that address and then inserts
-    /// it into LeaseMgr (if this allocation is not fake).
+    /// This method finds the appropriate lease for the client using the
+    /// following algorithm:
+    /// - If lease exists for the combination of the HW address, client id and
+    /// subnet, try to renew a lease and return it.
+    /// - If lease exists for the combination of the client id and subnet, try
+    /// to renew the lease and return it.
+    /// - If client supplied an address hint and this address is available,
+    /// allocate the new lease with this address.
+    /// - If client supplied an address hint and the lease for this address
+    /// exists in the database, return this lease if it is expired.
+    /// - Pick new address from the pool and try to allocate it for the client,
+    /// if expired lease exists for the picked address, try to reuse this lease.
+    ///
+    /// When a server should do DNS updates, it is required that allocation
+    /// returns the information how the lease was obtained by the allocation
+    /// engine. In particular, the DHCP server should be able to check whether
+    /// existing lease was returned, or new lease was allocated. When existing
+    /// lease was returned, server should check whether the FQDN has changed
+    /// between the allocation of the old and new lease. If so, server should
+    /// perform appropriate DNS update. If not, server may choose to not
+    /// perform the update. The information about the old lease is returned via
+    /// @c old_lease parameter. If NULL value is returned, it is an indication
+    /// that new lease was allocated for the client. If non-NULL value is
+    /// returned, it is an indication that allocation engine reused/renewed an
+    /// existing lease.
     ///
     /// @param subnet subnet the allocation should come from
     /// @param clientid Client identifier
-    /// @param hwaddr client's hardware address info
-    /// @param hint a hint that the client provided
-    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    /// @param hwaddr Client's hardware address info
+    /// @param hint A hint that the client provided
+    /// @param fwd_dns_update Indicates whether forward DNS update will be
+    ///        performed for the client (true) or not (false).
+    /// @param rev_dns_update Indicates whether reverse DNS update will be
+    ///        performed for the client (true) or not (false).
+    /// @param hostname A string carrying hostname to be used for DNS updates.
+    /// @param fake_allocation Is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
-    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    /// @param callout_handle A callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.
+    /// @param [out] old_lease Holds the pointer to a previous instance of a
+    ///        lease. The NULL pointer indicates that lease didn't exist prior
+    ///        to calling this function (e.g. new lease has been allocated).
+    ///
     /// @return Allocated IPv4 lease (or NULL if allocation failed)
     Lease4Ptr
     allocateAddress4(const SubnetPtr& subnet,
                      const ClientIdPtr& clientid,
                      const HWAddrPtr& hwaddr,
                      const isc::asiolink::IOAddress& hint,
+                     const bool fwd_dns_update,
+                     const bool rev_dns_update,
+                     const std::string& hostname,
                      bool fake_allocation,
-                     const isc::hooks::CalloutHandlePtr& callout_handle);
+                     const isc::hooks::CalloutHandlePtr& callout_handle,
+                     Lease4Ptr& old_lease);
 
     /// @brief Renews a IPv4 lease
     ///
@@ -214,18 +249,26 @@ protected:
     /// to get a new lease. It thinks that it gets a new lease, but in fact
     /// we are only renewing the still valid lease for that client.
     ///
-    /// @param subnet subnet the client is attached to
-    /// @param clientid client identifier
-    /// @param hwaddr client's hardware address
-    /// @param lease lease to be renewed
+    /// @param subnet A subnet the client is attached to
+    /// @param clientid Client identifier
+    /// @param hwaddr Client's hardware address
+    /// @param fwd_dns_update Indicates whether forward DNS update will be
+    ///        performed for the client (true) or not (false).
+    /// @param rev_dns_update Indicates whether reverse DNS update will be
+    ///        performed for the client (true) or not (false).
+    /// @param hostname A string carrying hostname to be used for DNS updates.
+    /// @param lease A lease to be renewed
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.
-    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    /// @param fake_allocation Is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     Lease4Ptr
     renewLease4(const SubnetPtr& subnet,
                 const ClientIdPtr& clientid,
                 const HWAddrPtr& hwaddr,
+                const bool fwd_dns_update,
+                const bool rev_dns_update,
+                const std::string& hostname,
                 const Lease4Ptr& lease,
                 const isc::hooks::CalloutHandlePtr& callout_handle,
                 bool fake_allocation /* = false */);
@@ -241,9 +284,11 @@ protected:
     /// @param iaid iaid field from the IA_NA container that client sent
     /// @param hint a hint that the client provided
     /// @param fwd_dns_update A boolean value which indicates that server takes
-    /// responisibility for the forward DNS Update for this lease (if true).
+    ///        responsibility for the forward DNS Update for this lease
+    ///        (if true).
     /// @param rev_dns_update A boolean value which indicates that server takes
-    /// responibility for the reverse DNS Update for this lease (if true).
+    ///        responsibility for the reverse DNS Update for this lease
+    ///        (if true).
     /// @param hostname A fully qualified domain-name of the client.
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
@@ -272,20 +317,28 @@ private:
     /// into the database. That may fail in some cases, e.g. when there is another
     /// allocation process and we lost a race to a specific lease.
     ///
-    /// @param subnet subnet the lease is allocated from
-    /// @param clientid client identifier
-    /// @param hwaddr client's hardware address
-    /// @param addr an address that was selected and is confirmed to be available
+    /// @param subnet Subnet the lease is allocated from
+    /// @param clientid Client identifier
+    /// @param hwaddr Client's hardware address
+    /// @param addr An address that was selected and is confirmed to be available
+    /// @param fwd_dns_update Indicates whether forward DNS update will be
+    ///        performed for the client (true) or not (false).
+    /// @param rev_dns_update Indicates whether reverse DNS update will be
+    ///        performed for the client (true) or not (false).
+    /// @param hostname A string carrying hostname to be used for DNS updates.
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed (and there are callouts
     ///        registered)
-    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    /// @param fake_allocation Is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///        becomed unavailable)
     Lease4Ptr createLease4(const SubnetPtr& subnet, const DuidPtr& clientid,
                            const HWAddrPtr& hwaddr,
                            const isc::asiolink::IOAddress& addr,
+                           const bool fwd_dns_update,
+                           const bool rev_dns_update,
+                           const std::string& hostname,
                            const isc::hooks::CalloutHandlePtr& callout_handle,
                            bool fake_allocation = false);
 
@@ -301,9 +354,11 @@ private:
     /// @param addr an address that was selected and is confirmed to be
     /// available
     /// @param fwd_dns_update A boolean value which indicates that server takes
-    /// responisibility for the forward DNS Update for this lease (if true).
+    ///        responsibility for the forward DNS Update for this lease
+    ///        (if true).
     /// @param rev_dns_update A boolean value which indicates that server takes
-    /// responibility for the reverse DNS Update for this lease (if true).
+    ///        responsibility for the reverse DNS Update for this lease
+    ///        (if true).
     /// @param hostname A fully qualified domain-name of the client.
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed (and there are callouts
@@ -311,7 +366,7 @@ private:
     /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
     ///        an address for SOLICIT that is not really allocated (true)
     /// @return allocated lease (or NULL in the unlikely case of the lease just
-    ///        becomed unavailable)
+    ///         became unavailable)
     Lease6Ptr createLease6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                            uint32_t iaid, const isc::asiolink::IOAddress& addr,
                            const bool fwd_dns_update, const bool rev_dns_update,
@@ -325,19 +380,28 @@ private:
     /// is updated if this is real (i.e. REQUEST, fake_allocation = false), not
     /// dummy allocation request (i.e. DISCOVER, fake_allocation = true).
     ///
-    /// @param expired old, expired lease
-    /// @param subnet subnet the lease is allocated from
-    /// @param clientid client identifier
-    /// @param hwaddr client's hardware address
-    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    /// @param expired Old, expired lease
+    /// @param subnet Subnet the lease is allocated from
+    /// @param clientid Client identifier
+    /// @param hwaddr Client's hardware address
+    /// @param fwd_dns_update Indicates whether forward DNS update will be
+    ///        performed for the client (true) or not (false).
+    /// @param rev_dns_update Indicates whether reverse DNS update will be
+    ///        performed for the client (true) or not (false).
+    /// @param hostname A string carrying hostname to be used for DNS updates.
+    /// @param callout_handle A callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.
-    /// @param fake_allocation is this real i.e. REQUEST (false) or just picking
+    /// @param fake_allocation Is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
-    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired, const SubnetPtr& subnet,
+    Lease4Ptr reuseExpiredLease(Lease4Ptr& expired,
+                                const SubnetPtr& subnet,
                                 const ClientIdPtr& clientid,
                                 const HWAddrPtr& hwaddr,
+                                const bool fwd_dns_update,
+                                const bool rev_dns_update,
+                                const std::string& hostname,
                                 const isc::hooks::CalloutHandlePtr& callout_handle,
                                 bool fake_allocation = false);
 
@@ -352,9 +416,11 @@ private:
     /// @param duid client's DUID
     /// @param iaid IAID from the IA_NA container the client sent to us
     /// @param fwd_dns_update A boolean value which indicates that server takes
-    /// responisibility for the forward DNS Update for this lease (if true).
+    ///        responsibility for the forward DNS Update for this lease
+    ///        (if true).
     /// @param rev_dns_update A boolean value which indicates that server takes
-    /// responibility for the reverse DNS Update for this lease (if true).
+    ///        responsibility for the reverse DNS Update for this lease
+    ///        (if true).
     /// @param hostname A fully qualified domain-name of the client.
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.

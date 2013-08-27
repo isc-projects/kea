@@ -245,7 +245,7 @@ TEST(LeaseMgr, getParameter) {
 ///
 /// Lease4 is also defined in lease_mgr.h, so is tested in this file as well.
 // This test checks if the Lease4 structure can be instantiated correctly
-TEST(Lease4, Lease4Constructor) {
+TEST(Lease4, constructor) {
 
     // Random values for the tests
     const uint8_t HWADDR[] = {0x08, 0x00, 0x2b, 0x02, 0x3f, 0x4e};
@@ -292,12 +292,79 @@ TEST(Lease4, Lease4Constructor) {
     }
 }
 
+// This test verfies that copy constructor copies Lease4 fields correctly.
+TEST(Lease4, copyConstructor) {
+
+    // Random values for the tests
+    const uint8_t HWADDR[] = {0x08, 0x00, 0x2b, 0x02, 0x3f, 0x4e};
+    std::vector<uint8_t> hwaddr(HWADDR, HWADDR + sizeof(HWADDR));
+
+    const uint8_t CLIENTID[] = {0x17, 0x34, 0xe2, 0xff, 0x09, 0x92, 0x54};
+    std::vector<uint8_t> clientid_vec(CLIENTID, CLIENTID + sizeof(CLIENTID));
+    ClientId clientid(clientid_vec);
+
+    // ...and a time
+    const time_t current_time = time(NULL);
+
+    // Other random constants.
+    const uint32_t SUBNET_ID = 42;
+    const uint32_t VALID_LIFETIME = 500;
+
+    // Create the lease
+    Lease4 lease(0xffffffff, HWADDR, sizeof(HWADDR),
+                 CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, 0, 0, current_time,
+                 SUBNET_ID);
+
+    // Use copy constructor to copy the lease.
+    Lease4 copied_lease(lease);
+
+    // Both leases should be now equal. When doing this check we assume that
+    // the equality operator works correctly.
+    EXPECT_TRUE(lease == copied_lease);
+    // Client IDs are equal, but they should be in two distinct pointers.
+    EXPECT_FALSE(lease.client_id_ == copied_lease.client_id_);
+}
+
+// This test verfies that the assignment operator copies all Lease4 fields
+// correctly.
+TEST(Lease4, operatorAssign) {
+
+    // Random values for the tests
+    const uint8_t HWADDR[] = {0x08, 0x00, 0x2b, 0x02, 0x3f, 0x4e};
+    std::vector<uint8_t> hwaddr(HWADDR, HWADDR + sizeof(HWADDR));
+
+    const uint8_t CLIENTID[] = {0x17, 0x34, 0xe2, 0xff, 0x09, 0x92, 0x54};
+    std::vector<uint8_t> clientid_vec(CLIENTID, CLIENTID + sizeof(CLIENTID));
+    ClientId clientid(clientid_vec);
+
+    // ...and a time
+    const time_t current_time = time(NULL);
+
+    // Other random constants.
+    const uint32_t SUBNET_ID = 42;
+    const uint32_t VALID_LIFETIME = 500;
+
+    // Create the lease
+    Lease4 lease(0xffffffff, HWADDR, sizeof(HWADDR),
+                 CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, 0, 0, current_time,
+                 SUBNET_ID);
+
+    // Use assignment operator to assign the lease.
+    Lease4 copied_lease = lease;
+
+    // Both leases should be now equal. When doing this check we assume that
+    // the equality operator works correctly.
+    EXPECT_TRUE(lease == copied_lease);
+    // Client IDs are equal, but they should be in two distinct pointers.
+    EXPECT_FALSE(lease.client_id_ == copied_lease.client_id_);
+}
+
 /// @brief Lease4 Equality Test
 ///
 /// Checks that the operator==() correctly compares two leases for equality.
 /// As operator!=() is also defined for this class, every check on operator==()
 /// is followed by the reverse check on operator!=().
-TEST(Lease4, OperatorEquals) {
+TEST(Lease4, operatorEquals) {
 
     // Random values for the tests
     const uint32_t ADDRESS = 0x01020304;
