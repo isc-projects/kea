@@ -65,7 +65,7 @@ public:
 
     /// @brief Constructor
     ///
-    /// Construction creates the configuration manager, the queue 
+    /// Construction creates the configuration manager, the queue
     /// manager, and the update manager.
     ///
     /// @param name name is a text label for the process. Generally used
@@ -79,11 +79,11 @@ public:
     /// @brief Called after instantiation to perform initialization unique to
     /// D2.
     ///
-    /// This is invoked by the controller after command line arguments but 
-    /// PRIOR to configuration reception.  The base class provides this method 
-    /// as a place to perform any derivation-specific initialization steps 
-    /// that are inapppropriate for the constructor but necessary prior to 
-    /// launch.  So far, no such steps have been identified for D2, so its 
+    /// This is invoked by the controller after command line arguments but
+    /// PRIOR to configuration reception.  The base class provides this method
+    /// as a place to perform any derivation-specific initialization steps
+    /// that are inapppropriate for the constructor but necessary prior to
+    /// launch.  So far, no such steps have been identified for D2, so its
     /// implementantion is empty but required.
     ///
     /// @throw DProcessBaseError if the initialization fails.
@@ -93,7 +93,7 @@ public:
     ///
     /// Once entered, the main control thread remains inside this method
     /// until shutdown.  The event loop logic is as follows:
-    /// @code 
+    /// @code
     ///    while should not down {
     ///       process queue manager state change
     ///       process completed jobs
@@ -102,7 +102,7 @@ public:
     ///
     ///       ON an exception, exit with fatal error
     ///    }
-    /// @endcode 
+    /// @endcode
     ///
     /// To summarize, each pass through the event loop first checks the state
     /// of the received queue and takes any steps required to ensure it is
@@ -242,8 +242,10 @@ protected:
     /// If callbacks are ready to be executed upon entry, the method will
     /// return as soon as these callbacks have completed.  If no callbacks
     /// are ready, then it will wait (indefinitely) until at least one callback
-    /// is executed. (@note: Should become desirable to periodically force an
-    /// event, an interval timer could be used to do so).
+    /// is executed.
+    ///
+    /// @note: Should become desirable to periodically force an
+    /// event, an interval timer could be used to do so.
     ///
     /// @return The number of callback handlers executed, or 0 if the IO
     /// service has been stopped.
@@ -273,7 +275,7 @@ protected:
 
     /// @brief Sets the shutdown type to the given value.
     ///
-    /// @param value is the new value to assign to shutdown type. 
+    /// @param value is the new value to assign to shutdown type.
     ///
     /// @note this method is really only intended for testing purposes.
     void setShutdownType(const ShutdownType& value) {
@@ -301,8 +303,8 @@ public:
         return (reconf_queue_flag_);
     }
 
-    /// @brief Returns the type of shutdown requested.  
-    /// 
+    /// @brief Returns the type of shutdown requested.
+    ///
     /// Note, this value is meaningless unless shouldShutdown() returns true.
     ShutdownType getShutdownType() const {
         return (shutdown_type_);
