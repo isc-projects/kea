@@ -38,6 +38,52 @@ Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
      subnet_id_(subnet_id), fixed_(false), fqdn_fwd_(false), fqdn_rev_(false) {
 }
 
+Lease4::Lease4(const Lease4& other)
+    : Lease(other.addr_, other.t1_, other.t2_, other.valid_lft_,
+            other.subnet_id_, other.cltt_), ext_(other.ext_),
+      hwaddr_(other.hwaddr_) {
+
+    fixed_ = other.fixed_;
+    fqdn_fwd_ = other.fqdn_fwd_;
+    fqdn_rev_ = other.fqdn_rev_;
+    hostname_ = other.hostname_;
+    comments_ = other.comments_;
+
+    if (other.client_id_) {
+        client_id_.reset(new ClientId(other.client_id_->getClientId()));
+
+    } else {
+        client_id_.reset();
+
+    }
+}
+
+Lease4&
+Lease4::operator=(const Lease4& other) {
+    if (this != &other) {
+        addr_ = other.addr_;
+        t1_ = other.t1_;
+        t2_ = other.t2_;
+        valid_lft_ = other.valid_lft_;
+        cltt_ = other.cltt_;
+        subnet_id_ = other.subnet_id_;
+        fixed_ = other.fixed_;
+        hostname_ = other.hostname_;
+        fqdn_fwd_ = other.fqdn_fwd_;
+        fqdn_rev_ = other.fqdn_rev_;
+        comments_ = other.comments_;
+        ext_ = other.ext_;
+        hwaddr_ = other.hwaddr_;
+
+        if (other.client_id_) {
+            client_id_.reset(new ClientId(other.client_id_->getClientId()));
+        } else {
+            client_id_.reset();
+        }
+    }
+    return (*this);
+}
+
 Lease6::Lease6(LeaseType type, const isc::asiolink::IOAddress& addr,
                DuidPtr duid, uint32_t iaid, uint32_t preferred, uint32_t valid,
                uint32_t t1, uint32_t t2, SubnetID subnet_id, uint8_t prefixlen)

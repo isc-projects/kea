@@ -164,8 +164,6 @@ public:
         EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
         EXPECT_EQ(subnet_->getT1(), lease->t1_);
         EXPECT_EQ(subnet_->getT2(), lease->t2_);
-        EXPECT_TRUE(false == lease->fqdn_fwd_);
-        EXPECT_TRUE(false == lease->fqdn_rev_);
         if (lease->client_id_ && !clientid_) {
             ADD_FAILURE() << "Lease4 has a client-id, while it should have none.";
         } else
@@ -188,6 +186,7 @@ public:
     Subnet4Ptr subnet_;       ///< Subnet4 (used in tests)
     Pool4Ptr pool_;           ///< Pool belonging to subnet_
     LeaseMgrFactory factory_; ///< Pointer to LeaseMgr factory
+    Lease4Ptr old_lease_;     ///< Holds previous instance of the lease.
 };
 
 // This test checks if the Allocation Engine can be instantiated and that it
@@ -612,8 +611,13 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
     ASSERT_TRUE(engine);
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
-                                               IOAddress("0.0.0.0"), false,
-                                               CalloutHandlePtr());
+                                               IOAddress("0.0.0.0"),
+                                               false, true,
+                                               "somehost.example.com.",
+                                               false, CalloutHandlePtr(),
+                                               old_lease_);
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(old_lease_);
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -636,8 +640,13 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
     ASSERT_TRUE(engine);
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
-                                               IOAddress("0.0.0.0"), true,
-                                               CalloutHandlePtr());
+                                               IOAddress("0.0.0.0"),
+                                               false, true, "host.example.com.",
+                                               true, CalloutHandlePtr(),
+                                               old_lease_);
+
+    // The new lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(old_lease_);
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -660,10 +669,14 @@ TEST_F(AllocEngine4Test, allocWithValidHint4) {
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
                                                IOAddress("192.0.2.105"),
-                                               false, CalloutHandlePtr());
-
+                                               true, true, "host.example.com.",
+                                               false, CalloutHandlePtr(),
+                                               old_lease_);
     // Check that we got a lease
     ASSERT_TRUE(lease);
+
+    // We have allocated the new lease, so the old lease should not exist.
+    EXPECT_FALSE(old_lease_);
 
     // We should get what we asked for
     EXPECT_EQ(lease->addr_.toText(), "192.0.2.105");
@@ -700,7 +713,13 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     // twice.
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
                                                IOAddress("192.0.2.106"),
-                                               false, CalloutHandlePtr());
+                                               false, false, "",
+                                               false, CalloutHandlePtr(),
+                                               old_lease_);
+
+    // New lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(old_lease_);
+
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -734,9 +753,14 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
     // with the normal allocation
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
                                                IOAddress("10.1.1.1"),
-                                               false, CalloutHandlePtr());
+                                               false, false, "",
+                                               false, CalloutHandlePtr(),
+                                               old_lease_);
     // Check that we got a lease
     ASSERT_TRUE(lease);
+
+    // We have allocated a new lease, so the old lease should not exist.
+    EXPECT_FALSE(old_lease_);
 
     // We should NOT get what we asked for, because it is used already
     EXPECT_TRUE(lease->addr_.toText() != "10.1.1.1");
@@ -761,21 +785,32 @@ TEST_F(AllocEngine4Test, allocateAddress4Nulls) {
 
     // Allocations without subnet are not allowed
     Lease4Ptr lease = engine->allocateAddress4(SubnetPtr(), clientid_, hwaddr_,
-                                               IOAddress("0.0.0.0"), false,
-                                               CalloutHandlePtr());
+                                               IOAddress("0.0.0.0"),
+                                               false, false, "",
+                                               false, CalloutHandlePtr(),
+                                               old_lease_);
     EXPECT_FALSE(lease);
 
     // Allocations without HW address are not allowed
     lease = engine->allocateAddress4(subnet_, clientid_, HWAddrPtr(),
-                                     IOAddress("0.0.0.0"), false, CalloutHandlePtr());
+                                     IOAddress("0.0.0.0"),
+                                     false, false, "",
+                                     false, CalloutHandlePtr(),
+                                     old_lease_);
     EXPECT_FALSE(lease);
+    EXPECT_FALSE(old_lease_);
 
     // Allocations without client-id are allowed
     clientid_ = ClientIdPtr();
     lease = engine->allocateAddress4(subnet_, ClientIdPtr(), hwaddr_,
-                                     IOAddress("0.0.0.0"), false, CalloutHandlePtr());
+                                     IOAddress("0.0.0.0"),
+                                     true, true, "myhost.example.com.",
+                                     false, CalloutHandlePtr(),
+                                     old_lease_);
     // Check that we got a lease
     ASSERT_TRUE(lease);
+    // New lease has been allocated, so the old lease should not exist.
+    EXPECT_FALSE(old_lease_);
 
     // Do all checks on the lease
     checkLease4(lease);
@@ -876,11 +911,17 @@ TEST_F(AllocEngine4Test, smallPool4) {
     subnet_->addPool(pool_);
     cfg_mgr.addSubnet4(subnet_);
 
-    Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
-                                               false, CalloutHandlePtr());
+    Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
+                                               IOAddress("0.0.0.0"),
+                                               true, true, "host.example.com.",
+                                               false, CalloutHandlePtr(),
+                                               old_lease_);
 
     // Check that we got that single lease
     ASSERT_TRUE(lease);
+
+    // We have allocated new lease, so the old lease should not exist.
+    EXPECT_FALSE(old_lease_);
 
     EXPECT_EQ("192.0.2.17", lease->addr_.toText());
 
@@ -916,8 +957,9 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL);
-    Lease4Ptr lease(new Lease4(addr, hwaddr2, sizeof(hwaddr2), clientid2, sizeof(clientid2),
-                               501, 502, 503, now, subnet_->getID()));
+    Lease4Ptr lease(new Lease4(addr, hwaddr2, sizeof(hwaddr2), clientid2,
+                               sizeof(clientid2), 501, 502, 503, now,
+                               subnet_->getID()));
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -925,9 +967,12 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
     // else, so the allocation should fail
 
     Lease4Ptr lease2 = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
-                                                IOAddress("0.0.0.0"), false,
-                                                CalloutHandlePtr());
+                                                IOAddress("0.0.0.0"),
+                                                false, false, "",
+                                                false, CalloutHandlePtr(),
+                                                old_lease_);
     EXPECT_FALSE(lease2);
+    EXPECT_FALSE(old_lease_);
 }
 
 // This test checks if an expired lease can be reused in DISCOVER (fake allocation)
@@ -950,29 +995,51 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL) - 500; // Allocated 500 seconds ago
-    Lease4Ptr lease(new Lease4(addr, clientid2, sizeof(clientid2), hwaddr2, sizeof(hwaddr2),
+    Lease4Ptr lease(new Lease4(addr, clientid2, sizeof(clientid2),
+                               hwaddr2, sizeof(hwaddr2),
                                495, 100, 200, now, subnet_->getID()));
+    // Copy the lease, so as it can be compared with the old lease returned
+    // by the allocation engine.
+    Lease4 original_lease(*lease);
+
     // Lease was assigned 500 seconds ago, but its valid lifetime is 495, so it
     // is expired already
     ASSERT_TRUE(lease->expired());
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // CASE 1: Asking for any address
-    lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
-                                     true, CalloutHandlePtr());
+    lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
+                                     IOAddress("0.0.0.0"),
+                                     false, false, "",
+                                     true, CalloutHandlePtr(),
+                                     old_lease_);
     // Check that we got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr.toText(), lease->addr_.toText());
+
+    // We are reusing expired lease, the old (expired) instance should be
+    // returned. The returned instance should be the same as the original
+    // lease.
+    ASSERT_TRUE(old_lease_);
+    EXPECT_TRUE(original_lease == *old_lease_);
 
     // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
     checkLease4(lease);
 
     // CASE 2: Asking specifically for this address
-    lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_, IOAddress(addr.toText()),
-                                     true, CalloutHandlePtr());
+    lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
+                                     IOAddress(addr.toText()),
+                                     false, false, "",
+                                     true, CalloutHandlePtr(),
+                                     old_lease_);
     // Check that we got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr.toText(), lease->addr_.toText());
+
+    // We are updating expired lease. The copy of the old lease should be
+    // returned and it should be equal to the original lease.
+    ASSERT_TRUE(old_lease_);
+    EXPECT_TRUE(*old_lease_ == original_lease);
 }
 
 // This test checks if an expired lease can be reused in REQUEST (actual allocation)
@@ -987,8 +1054,13 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
     uint8_t clientid2[] = { 8, 7, 6, 5, 4, 3, 2, 1 };
     time_t now = time(NULL) - 500; // Allocated 500 seconds ago
-    Lease4Ptr lease(new Lease4(addr, clientid2, sizeof(clientid2), hwaddr2, sizeof(hwaddr2),
-                               495, 100, 200, now, subnet_->getID()));
+    Lease4Ptr lease(new Lease4(addr, clientid2, sizeof(clientid2), hwaddr2,
+                               sizeof(hwaddr2), 495, 100, 200, now,
+                               subnet_->getID()));
+    // Make a copy of the lease, so as we can comapre that with the old lease
+    // instance returned by the allocation engine.
+    Lease4 original_lease(*lease);
+
     // Lease was assigned 500 seconds ago, but its valid lifetime is 495, so it
     // is expired already
     ASSERT_TRUE(lease->expired());
@@ -996,8 +1068,10 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 
     // A client comes along, asking specifically for this address
     lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
-                                     IOAddress(addr.toText()), false,
-                                     CalloutHandlePtr());
+                                     IOAddress(addr.toText()),
+                                     false, true, "host.example.com.",
+                                     false, CalloutHandlePtr(),
+                                     old_lease_);
 
     // Check that he got that single lease
     ASSERT_TRUE(lease);
@@ -1009,6 +1083,11 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
+
+    // The allocation engine should return a copy of the old lease. This
+    // lease should be equal to the original lease.
+    ASSERT_TRUE(old_lease_);
+    EXPECT_TRUE(*old_lease_ == original_lease);
 }
 
 /// @todo write renewLease6
@@ -1039,7 +1118,8 @@ TEST_F(AllocEngine4Test, renewLease4) {
     // Lease was assigned 45 seconds ago and is valid for 100 seconds. Let's
     // renew it.
     ASSERT_FALSE(lease->expired());
-    lease = engine->renewLease4(subnet_, clientid_, hwaddr_, lease,
+    lease = engine->renewLease4(subnet_, clientid_, hwaddr_, true,
+                                true, "host.example.com.", lease, 
                                 callout_handle, false);
     // Check that he got that single lease
     ASSERT_TRUE(lease);
@@ -1406,7 +1486,9 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
                                                IOAddress("0.0.0.0"),
-                                               false, callout_handle);
+                                               false, false, "",
+                                               false, callout_handle,
+                                               old_lease_);
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -1468,8 +1550,11 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
     // Call allocateAddress4. Callouts should be triggered here.
-    Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_, IOAddress("0.0.0.0"),
-                                               false, callout_handle);
+    Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
+                                               IOAddress("0.0.0.0"),
+                                               false, false, "",
+                                               false, callout_handle,
+                                               old_lease_);
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
