@@ -631,7 +631,7 @@ private:
     /// std::swap()-like behavior.
     ///
     /// This method doesn't throw any exceptions.
-    void exchange(DomainTreeNode<T>* other, DomainTreeNodePtr* subtree_root) {
+    void exchange(DomainTreeNode<T>* other, DomainTreeNodePtr* root_ptr) {
         // Swap the pointers first. down should not be swapped as it
         // belongs to the node's data, and not to its position in the
         // tree.
@@ -672,18 +672,16 @@ private:
         setSubTreeRoot(other_is_subtree_root);
         other->setSubTreeRoot(this_is_subtree_root);
 
-        if (other->isSubTreeRoot()) {
-            if (other->getParent()) {
-                other->getParent()->down_ = other;
-            } else {
-                *subtree_root = other;
-            }
-        } else {
+        if (other->getParent() != NULL) {
             if (other->getParent()->getLeft() == this) {
                 other->getParent()->left_ = other;
             } else if (other->getParent()->getRight() == this) {
                 other->getParent()->right_ = other;
+            } else {
+                other->getParent()->down_ = other;
             }
+        } else {
+            *root_ptr = other;
         }
 
         if (getParent()->getLeft() == other) {
