@@ -93,7 +93,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
 
     // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
-    // perhaps restaring the server).
+    // perhaps restarting the server).
     IOAddress last = subnet->getLastAllocated();
 
     const PoolCollection& pools = subnet->getPools();
@@ -140,7 +140,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
         return (next);
     }
 
-    // there is a next pool, let's try first adddress from it
+    // there is a next pool, let's try first address from it
     next = (*it)->getFirstAddress();
     subnet->setLastAllocated(next);
     return (next);
