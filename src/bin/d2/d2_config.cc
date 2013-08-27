@@ -159,7 +159,7 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
 // *********************** TSIGKeyInfoParser  *************************
 
 TSIGKeyInfoParser::TSIGKeyInfoParser(const std::string& entry_name,
-    TSIGKeyInfoMapPtr keys)
+                                     TSIGKeyInfoMapPtr keys)
     : entry_name_(entry_name), keys_(keys), local_scalars_() {
     if (!keys_) {
         isc_throw(D2CfgError, "TSIGKeyInfoParser ctor:"
