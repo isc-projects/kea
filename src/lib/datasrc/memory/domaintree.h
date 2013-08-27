@@ -2393,6 +2393,11 @@ DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
             new_node->getRight()->parent_ = new_node;
         }
 
+        new_node->down_ = subtree_root->getDown();
+        if (new_node->getDown() != NULL) {
+            new_node->getDown()->parent_ = new_node;
+        }
+
         if (upper_node->isRed()) {
             new_node->setColor(DomainTreeNode<T>::RED);
         } else {
