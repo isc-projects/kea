@@ -652,8 +652,14 @@ class XfrinConnection(asyncore.dispatcher):
             self.connect(self._master_addrinfo[2])
             return True
         except socket.error as e:
-            logger.error(XFRIN_CONNECT_MASTER, self.tsig_key_name,
+            if self._tsig_key is None:
+                tsig_str = ""
+            else:
+                tsig_str = " (with TSIG %s)" % self._tsig_key
+            logger.error(XFRIN_CONNECT_MASTER,
                          self._master_addrinfo[2],
+                         tsig_str,
+                         self._zone_name.to_text(),
                          str(e))
             return False
 
