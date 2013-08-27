@@ -32,6 +32,7 @@ from isc.server_common.datasrc_clients_mgr \
 from isc.memmgr.datasrc_info import DataSrcInfo
 from isc.memmgr.builder import MemorySegmentBuilder
 import isc.util.process
+import isc.util.traceback_handler
 
 MODULE_NAME = 'memmgr'
 
@@ -209,6 +210,9 @@ class Memmgr(BIND10Server):
         except isc.server_common.datasrc_clients_mgr.ConfigError as ex:
             logger.error(MEMMGR_DATASRC_CONFIG_ERROR, ex)
 
-if '__main__' == __name__:
+def main():
     mgr = Memmgr()
     sys.exit(mgr.run(MODULE_NAME))
+
+if '__main__' == __name__:
+    isc.util.traceback_handler.traceback_handler(main)

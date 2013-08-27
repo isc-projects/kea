@@ -48,6 +48,7 @@ from optparse import OptionParser, OptionValueError
 from hashlib import sha1
 from isc.util import socketserver_mixin
 from isc.log_messages.cmdctl_messages import *
+import isc.util.traceback_handler
 
 isc.log.init("b10-cmdctl", buffer=True)
 logger = isc.log.Logger("cmdctl")
@@ -675,7 +676,7 @@ def set_cmd_options(parser):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False,
             help="display more about what is going on")
 
-if __name__ == '__main__':
+def main():
     set_signal_handler()
     parser = OptionParser(version = __version__)
     set_cmd_options(parser)
@@ -701,3 +702,6 @@ if __name__ == '__main__':
     logger.info(CMDCTL_EXITING)
 
     sys.exit(result)
+
+if __name__ == '__main__':
+    isc.util.traceback_handler.traceback_handler(main)

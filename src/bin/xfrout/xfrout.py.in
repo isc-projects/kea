@@ -30,6 +30,7 @@ from isc.cc import SessionError, SessionTimeout
 from isc.statistics.dns import Counters
 from isc.notify import notify_out
 import isc.util.process
+import isc.util.traceback_handler
 import fcntl
 import socket
 import select
@@ -1164,7 +1165,7 @@ def set_cmd_options(parser):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
             help="display more about what is going on")
 
-if '__main__' == __name__:
+def main():
     try:
         parser = OptionParser()
         set_cmd_options(parser)
@@ -1189,3 +1190,6 @@ if '__main__' == __name__:
         xfrout_server.shutdown()
 
     logger.info(XFROUT_EXITING)
+
+if '__main__' == __name__:
+    isc.util.traceback_handler.traceback_handler(main)
