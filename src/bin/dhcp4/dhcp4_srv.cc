@@ -14,24 +14,25 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
+#include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt4.h>
-#include <dhcp/duid.h>
-#include <dhcp/hwaddr.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
-#include <dhcpsrv/utils.h>
+#include <dhcpsrv/addr_utilities.h>
+#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/utils.h>
-#include <dhcpsrv/addr_utilities.h>
-#include <hooks/hooks_manager.h>
+#include <dhcpsrv/utils.h>
 #include <hooks/callout_handle.h>
+#include <hooks/hooks_manager.h>
 
 #include <boost/algorithm/string/erase.hpp>
 
@@ -46,16 +47,22 @@ using namespace isc::log;
 using namespace std;
 
 /// Structure that holds registered hook indexes
-struct Dhcp6Hooks {
+struct Dhcp4Hooks {
+    int hook_index_buffer4_receive_;///< index for "buffer4_receive" hook point
     int hook_index_pkt4_receive_;   ///< index for "pkt4_receive" hook point
     int hook_index_subnet4_select_; ///< index for "subnet4_select" hook point
+    int hook_index_lease4_release_; ///< index for "lease4_release" hook point
     int hook_index_pkt4_send_;      ///< index for "pkt4_send" hook point
+    int hook_index_buffer4_send_;   ///< index for "buffer4_send" hook point
 
-    /// Constructor that registers hook points for DHCPv6 engine
-    Dhcp6Hooks() {
+    /// Constructor that registers hook points for DHCPv4 engine
+    Dhcp4Hooks() {
+        hook_index_buffer4_receive_= HooksManager::registerHook("buffer4_receive");
         hook_index_pkt4_receive_   = HooksManager::registerHook("pkt4_receive");
         hook_index_subnet4_select_ = HooksManager::registerHook("subnet4_select");
         hook_index_pkt4_send_      = HooksManager::registerHook("pkt4_send");
+        hook_index_lease4_release_ = HooksManager::registerHook("lease4_release");
+        hook_index_buffer4_send_   = HooksManager::registerHook("buffer4_send");
     }
 };
 
@@ -63,7 +70,7 @@ struct Dhcp6Hooks {
 // will be instantiated (and the constructor run) when the module is loaded.
 // As a result, the hook indexes will be defined before any method in this
 // module is called.
-Dhcp6Hooks Hooks;
+Dhcp4Hooks Hooks;
 
 namespace isc {
 namespace dhcp {
@@ -82,8 +89,8 @@ static const char* SERVER_ID_FILE = "b10-dhcp4-serverid";
 
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
                      const bool direct_response_desired)
-: serverid_(), shutdown_(true), alloc_engine_(), port_(port), 
-    use_bcast_(use_bcast), hook_index_pkt4_receive_(-1), 
+: serverid_(), shutdown_(true), alloc_engine_(), port_(port),
+    use_bcast_(use_bcast), hook_index_pkt4_receive_(-1),
     hook_index_subnet4_select_(-1), hook_index_pkt4_send_(-1) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
@@ -183,151 +190,245 @@ Dhcpv4Srv::run() {
             LOG_ERROR(dhcp4_logger, DHCP4_PACKET_RECEIVE_FAIL).arg(e.what());
         }
 
-        if (query) {
+        // Timeout may be reached or signal received, which breaks select()
+        // with no reception ocurred
+        if (!query) {
+            continue;
+        }
+
+        bool skip_unpack = false;
+
+        // The packet has just been received so contains the uninterpreted wire
+        // data; execute callouts registered for buffer4_receive.
+        if (HooksManager::getHooksManager()
+            .calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("query4", query);
+
+            // Call callouts
+            HooksManager::callCallouts(Hooks.hook_index_buffer4_receive_,
+                                       *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to parse the packet, so skip at this
+            // stage means that callouts did the parsing already, so server
+            // should skip parsing.
+            if (callout_handle->getSkip()) {
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_BUFFER_RCVD_SKIP);
+                skip_unpack = true;
+            }
+
+            callout_handle->getArgument("query4", query);
+        }
+
+        // Unpack the packet information unless the buffer4_receive callouts
+        // indicated they did it
+        if (!skip_unpack) {
             try {
                 query->unpack();
-
             } catch (const std::exception& e) {
                 // Failed to parse the packet.
                 LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
                           DHCP4_PACKET_PARSE_FAIL).arg(e.what());
                 continue;
             }
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_RECEIVED)
-                      .arg(serverReceivedPacketName(query->getType()))
-                      .arg(query->getType())
-                      .arg(query->getIface());
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
-                      .arg(static_cast<int>(query->getType()))
-                      .arg(query->toText());
+        }
 
-            // Let's execute all callouts registered for packet_received
-            if (HooksManager::calloutsPresent(hook_index_pkt4_receive_)) {
+        // When receiving a packet without message type option, getType() will
+        // throw. Let's set type to -1 as default error indicator.
+        int type = -1;
+        try {
+            type = query->getType();
+        } catch (...) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_NO_TYPE)
+                .arg(query->getIface());
+            continue;
+        }
+
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_RECEIVED)
+            .arg(serverReceivedPacketName(type))
+            .arg(type)
+            .arg(query->getIface());
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUERY_DATA)
+            .arg(type)
+            .arg(query->toText());
+
+        // Let's execute all callouts registered for pkt4_receive
+        if (HooksManager::calloutsPresent(hook_index_pkt4_receive_)) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+            // Delete previously set arguments
+            callout_handle->deleteAllArguments();
+
+            // Pass incoming packet as argument
+            callout_handle->setArgument("query4", query);
+
+            // Call callouts
+            HooksManager::callCallouts(hook_index_pkt4_receive_,
+                                       *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to process the packet, so skip at this
+            // stage means drop.
+            if (callout_handle->getSkip()) {
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_RCVD_SKIP);
+                continue;
+            }
+
+            callout_handle->getArgument("query4", query);
+        }
+
+        try {
+            switch (query->getType()) {
+            case DHCPDISCOVER:
+                rsp = processDiscover(query);
+                break;
+
+            case DHCPREQUEST:
+                // Note that REQUEST is used for many things in DHCPv4: for
+                // requesting new leases, renewing existing ones and even
+                // for rebinding.
+                rsp = processRequest(query);
+                break;
+
+            case DHCPRELEASE:
+                processRelease(query);
+                break;
+
+            case DHCPDECLINE:
+                processDecline(query);
+                break;
+
+            case DHCPINFORM:
+                processInform(query);
+                break;
+
+            default:
+                // Only action is to output a message if debug is enabled,
+                // and that is covered by the debug statement before the
+                // "switch" statement.
+                ;
+            }
+        } catch (const isc::Exception& e) {
+
+            // Catch-all exception (at least for ones based on the isc
+            // Exception class, which covers more or less all that
+            // are explicitly raised in the BIND 10 code).  Just log
+            // the problem and ignore the packet. (The problem is logged
+            // as a debug message because debug is disabled by default -
+            // it prevents a DDOS attack based on the sending of problem
+            // packets.)
+            if (dhcp4_logger.isDebugEnabled(DBG_DHCP4_BASIC)) {
+                std::string source = "unknown";
+                HWAddrPtr hwptr = query->getHWAddr();
+                if (hwptr) {
+                    source = hwptr->toText();
+                }
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
+                          DHCP4_PACKET_PROCESS_FAIL)
+                    .arg(source).arg(e.what());
+            }
+        }
+
+        if (!rsp) {
+            continue;
+        }
+
+        adjustRemoteAddr(query, rsp);
+
+        if (!rsp->getHops()) {
+            rsp->setRemotePort(DHCP4_CLIENT_PORT);
+        } else {
+            rsp->setRemotePort(DHCP4_SERVER_PORT);
+        }
+
+        rsp->setLocalAddr(query->getLocalAddr());
+        rsp->setLocalPort(DHCP4_SERVER_PORT);
+        rsp->setIface(query->getIface());
+        rsp->setIndex(query->getIndex());
+
+        // Specifies if server should do the packing
+        bool skip_pack = false;
+
+        // Execute all callouts registered for pkt4_send
+        if (HooksManager::calloutsPresent(hook_index_pkt4_send_)) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+            // Delete all previous arguments
+            callout_handle->deleteAllArguments();
+
+            // Clear skip flag if it was set in previous callouts
+            callout_handle->setSkip(false);
+
+            // Set our response
+            callout_handle->setArgument("response4", rsp);
+
+            // Call all installed callouts
+            HooksManager::callCallouts(hook_index_pkt4_send_,
+                                       *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to send the packet, so skip at this
+            // stage means "drop response".
+            if (callout_handle->getSkip()) {
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_SKIP);
+                skip_pack = true;
+            }
+        }
+
+        if (!skip_pack) {
+            try {
+                rsp->pack();
+            } catch (const std::exception& e) {
+                LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL)
+                    .arg(e.what());
+            }
+        }
+
+        try {
+            // Now all fields and options are constructed into output wire buffer.
+            // Option objects modification does not make sense anymore. Hooks
+            // can only manipulate wire buffer at this stage.
+            // Let's execute all callouts registered for buffer4_send
+            if (HooksManager::getHooksManager()
+                .calloutsPresent(Hooks.hook_index_buffer4_send_)) {
                 CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
                 // Delete previously set arguments
                 callout_handle->deleteAllArguments();
 
                 // Pass incoming packet as argument
-                callout_handle->setArgument("query4", query);
+                callout_handle->setArgument("response4", rsp);
 
                 // Call callouts
-                HooksManager::callCallouts(hook_index_pkt4_receive_,
+                HooksManager::callCallouts(Hooks.hook_index_buffer4_send_,
                                            *callout_handle);
 
                 // Callouts decided to skip the next processing step. The next
-                // processing step would to process the packet, so skip at this
+                // processing step would to parse the packet, so skip at this
                 // stage means drop.
                 if (callout_handle->getSkip()) {
-                    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_RCVD_SKIP);
+                    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
+                              DHCP4_HOOK_BUFFER_SEND_SKIP);
                     continue;
                 }
 
-                callout_handle->getArgument("query4", query);
+                callout_handle->getArgument("response4", rsp);
             }
 
-            try {
-                switch (query->getType()) {
-                case DHCPDISCOVER:
-                    rsp = processDiscover(query);
-                    break;
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA,
+                      DHCP4_RESPONSE_DATA)
+                .arg(static_cast<int>(rsp->getType())).arg(rsp->toText());
 
-                case DHCPREQUEST:
-                    rsp = processRequest(query);
-                    break;
-
-                case DHCPRELEASE:
-                    processRelease(query);
-                    break;
-
-                case DHCPDECLINE:
-                    processDecline(query);
-                    break;
-
-                case DHCPINFORM:
-                    processInform(query);
-                    break;
-
-                default:
-                    // Only action is to output a message if debug is enabled,
-                    // and that is covered by the debug statement before the
-                    // "switch" statement.
-                    ;
-                }
-            } catch (const isc::Exception& e) {
-
-                // Catch-all exception (at least for ones based on the isc
-                // Exception class, which covers more or less all that
-                // are explicitly raised in the BIND 10 code).  Just log
-                // the problem and ignore the packet. (The problem is logged
-                // as a debug message because debug is disabled by default -
-                // it prevents a DDOS attack based on the sending of problem
-                // packets.)
-                if (dhcp4_logger.isDebugEnabled(DBG_DHCP4_BASIC)) {
-                    std::string source = "unknown";
-                    HWAddrPtr hwptr = query->getHWAddr();
-                    if (hwptr) {
-                        source = hwptr->toText();
-                    }
-                    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC,
-                              DHCP4_PACKET_PROCESS_FAIL)
-                              .arg(source).arg(e.what());
-                }
-            }
-
-            if (rsp) {
-
-                adjustRemoteAddr(query, rsp);
-
-                if (!rsp->getHops()) {
-                    rsp->setRemotePort(DHCP4_CLIENT_PORT);
-                } else {
-                    rsp->setRemotePort(DHCP4_SERVER_PORT);
-                }
-
-                rsp->setLocalAddr(query->getLocalAddr());
-                rsp->setLocalPort(DHCP4_SERVER_PORT);
-                rsp->setIface(query->getIface());
-                rsp->setIndex(query->getIndex());
-
-                // Execute all callouts registered for packet6_send
-                if (HooksManager::calloutsPresent(hook_index_pkt4_send_)) {
-                    CalloutHandlePtr callout_handle = getCalloutHandle(query);
-
-                    // Delete all previous arguments
-                    callout_handle->deleteAllArguments();
-
-                    // Clear skip flag if it was set in previous callouts
-                    callout_handle->setSkip(false);
-
-                    // Set our response
-                    callout_handle->setArgument("response4", rsp);
-
-                    // Call all installed callouts
-                    HooksManager::callCallouts(hook_index_pkt4_send_,
-                                               *callout_handle);
-
-                    // Callouts decided to skip the next processing step. The next
-                    // processing step would to send the packet, so skip at this
-                    // stage means "drop response".
-                    if (callout_handle->getSkip()) {
-                        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_PACKET_SEND_SKIP);
-                        continue;
-                    }
-                }
-
-                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA,
-                          DHCP4_RESPONSE_DATA)
-                          .arg(rsp->getType()).arg(rsp->toText());
-
-                try {
-                    rsp->pack();
-                    sendPacket(rsp);
-                } catch (const std::exception& e) {
-                    LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL)
-                              .arg(e.what());
-                }
-            }
+            sendPacket(rsp);
+        } catch (const std::exception& e) {
+            LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL)
+                .arg(e.what());
         }
     }
 
@@ -755,6 +856,10 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
 Pkt4Ptr
 Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
+
+    /// @todo Uncomment this (see ticket #3116)
+    // sanityCheck(request, MANDATORY);
+
     Pkt4Ptr ack = Pkt4Ptr
         (new Pkt4(DHCPACK, request->getTransid()));
 
@@ -762,6 +867,9 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     appendDefaultOptions(ack, DHCPACK);
     appendRequestedOptions(request, ack);
 
+    // Note that we treat REQUEST message uniformly, regardless if this is a
+    // first request (requesting for new address), renewing existing address
+    // or even rebinding.
     assignLease(request, ack);
 
     // There are a few basic options that we always want to
@@ -774,6 +882,9 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
 void
 Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
+
+    /// @todo Uncomment this (see ticket #3116)
+    // sanityCheck(release, MANDATORY);
 
     // Try to find client-id
     ClientIdPtr client_id;
@@ -816,21 +927,53 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             return;
         }
 
+        bool skip = false;
+
+        // Execute all callouts registered for lease4_release
+        if (HooksManager::getHooksManager()
+            .calloutsPresent(Hooks.hook_index_lease4_release_)) {
+            CalloutHandlePtr callout_handle = getCalloutHandle(release);
+
+            // Delete all previous arguments
+            callout_handle->deleteAllArguments();
+
+            // Pass the original packet
+            callout_handle->setArgument("query4", release);
+
+            // Pass the lease to be updated
+            callout_handle->setArgument("lease4", lease);
+
+            // Call all installed callouts
+            HooksManager::callCallouts(Hooks.hook_index_lease4_release_,
+                                       *callout_handle);
+
+            // Callouts decided to skip the next processing step. The next
+            // processing step would to send the packet, so skip at this
+            // stage means "drop response".
+            if (callout_handle->getSkip()) {
+                skip = true;
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
+                          DHCP4_HOOK_LEASE4_RELEASE_SKIP);
+            }
+        }
+
         // Ok, hw and client-id match - let's release the lease.
-        if (LeaseMgrFactory::instance().deleteLease(lease->addr_)) {
+        if (!skip) {
+            bool success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
 
-            // Release successful - we're done here
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
-                .arg(lease->addr_.toText())
+            if (success) {
+                // Release successful - we're done here
+                LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
+                    .arg(lease->addr_.toText())
+                    .arg(client_id ? client_id->toText() : "(no client-id)")
+                    .arg(release->getHWAddr()->toText());
+            } else {
+                // Release failed -
+                LOG_ERROR(dhcp4_logger, DHCP4_RELEASE_FAIL)
+                    .arg(lease->addr_.toText())
                 .arg(client_id ? client_id->toText() : "(no client-id)")
-                .arg(release->getHWAddr()->toText());
-        } else {
-
-            // Release failed -
-            LOG_ERROR(dhcp4_logger, DHCP4_RELEASE_FAIL)
-                .arg(lease->addr_.toText())
-                .arg(client_id ? client_id->toText() : "(no client-id)")
-                .arg(release->getHWAddr()->toText());
+                    .arg(release->getHWAddr()->toText());
+            }
         }
     } catch (const isc::Exception& ex) {
         // Rethrow the exception with a bit more data.
@@ -843,12 +986,13 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
 void
 Dhcpv4Srv::processDecline(Pkt4Ptr& /* decline */) {
-    /// TODO: Implement this.
+    /// @todo Implement this (also see ticket #3116)
 }
 
 Pkt4Ptr
 Dhcpv4Srv::processInform(Pkt4Ptr& inform) {
-    /// TODO: Currently implemented echo mode. Implement this for real
+
+    /// @todo Implement this for real. (also see ticket #3116)
     return (inform);
 }
 
@@ -902,7 +1046,7 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
 
     /// @todo Implement getSubnet4(interface-name)
 
-    // Let's execute all callouts registered for packet_received
+    // Let's execute all callouts registered for subnet4_select
     if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(question);
 
@@ -912,16 +1056,19 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
         // Set new arguments
         callout_handle->setArgument("query4", question);
         callout_handle->setArgument("subnet4", subnet);
-        callout_handle->setArgument("subnet4collection", CfgMgr::instance().getSubnets4());
+        callout_handle->setArgument("subnet4collection",
+                                    CfgMgr::instance().getSubnets4());
 
         // Call user (and server-side) callouts
-        HooksManager::callCallouts(hook_index_subnet4_select_, *callout_handle);
+        HooksManager::callCallouts(hook_index_subnet4_select_,
+                                   *callout_handle);
 
         // Callouts decided to skip this step. This means that no subnet will be
-        // selected. Packet processing will continue, but it will be severly limited
-        // (i.e. only global options will be assigned)
+        // selected. Packet processing will continue, but it will be severly
+        // limited (i.e. only global options will be assigned)
         if (callout_handle->getSkip()) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS, DHCP4_HOOK_SUBNET4_SELECT_SKIP);
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_HOOKS,
+                      DHCP4_HOOK_SUBNET4_SELECT_SKIP);
             return (Subnet4Ptr());
         }
 
@@ -971,33 +1118,6 @@ Dhcpv4Srv::sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid) {
                   " provided in message "
                   << serverReceivedPacketName(pkt->getType()));
     }
-}
-
-isc::hooks::CalloutHandlePtr Dhcpv4Srv::getCalloutHandle(const Pkt4Ptr& pkt) {
-    // This method returns a CalloutHandle for a given packet. It is guaranteed
-    // to return the same callout_handle (so user library contexts are
-    // preserved). This method works well if the server processes one packet
-    // at a time. Once the server architecture is extended to cover parallel
-    // packets processing (e.g. delayed-ack, some form of buffering etc.), this
-    // method has to be extended (e.g. store callouts in a map and use pkt as
-    // a key). Additional code would be required to release the callout handle
-    // once the server finished processing.
-
-    CalloutHandlePtr callout_handle;
-    static Pkt4Ptr old_pointer;
-
-    if (!callout_handle ||
-        old_pointer != pkt) {
-        // This is the first packet or a different packet than previously
-        // passed to getCalloutHandle()
-
-        // Remember the pointer to this packet
-        old_pointer = pkt;
-
-        callout_handle = HooksManager::createCalloutHandle();
-    }
-
-    return (callout_handle);
 }
 
 void

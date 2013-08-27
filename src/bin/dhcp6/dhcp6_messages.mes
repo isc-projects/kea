@@ -118,7 +118,7 @@ hook point set the skip flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to drop the packet.
 
 % DHCP6_HOOK_BUFFER_SEND_SKIP prepared DHCPv6 response was dropped because a callout set the skip flag.
-This debug message is printed when a callout installed on buffer6_receive
+This debug message is printed when a callout installed on buffer6_send
 hook point set the skip flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to drop the packet.
 Server completed all the processing (e.g. may have assigned, updated

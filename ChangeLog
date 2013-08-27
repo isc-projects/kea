@@ -1,12 +1,34 @@
+667.	[func]		tomek
+	Additional hooks (buffer4_receive, lease4_renew,
+	lease4_release, buffer4_send) added to the DHCPv4 server.
+	(Trac #2983, git fd47f18f898695b98623a63a0a1c68d2e4b37568)
+
+666.	[func]		vorner
+	The CmdCtl's command "print_settings" was removed. It served no real
+	purpose and was just experimental leftover from early development.
+	(Trac #3028, git 0d22246092ad4822d48f5a52af5f644f5ae2f5e2)
+
+665.	[doc]		stephen
+	Added the "Hook's Maintenance Guide" to the BIND 10 developer
+	documentation.
+	(Trac #3063, git 5d1ee7b7470fc644b798ac47db1811c829f5ac24)
+
+664.	[bug]		tmark
+	Corrects a bug in Hooks processing that was improperly
+	creating a new callout handle on every call, rather
+	than maintaining it throughout the context of the
+	packet being processed.
+	(Trac #3062, git 28684bcfe5e54ad0421d75d4445a04b75358ce77)
+
 663.	[func]		marcin
-	bind10-dhcp6: Server processes the DHCPv6 Client FQDN Option
+	b10-dhcp6: Server processes the DHCPv6 Client FQDN Option
 	sent by a client and generates the response. The DHCPv6 Client
 	FQDN Option is represented by the new class in the libdhcp++.
 	As a result of FQDN Option processing, the server generates
 	NameChangeRequests which represent changes to DNS mappings for
 	a particular lease (addition or removal of DNS mappings).
 	Currently all generated NameChangeRequests are dropped. Sending
-	them to bind10-d2 will be implemented with the future tickets.
+	them to b10-dhcp-ddns will be implemented with the future tickets.
 	(Trac #3036, git 209f3964b9f12afbf36f3fa6b62964e03049ec6e)
 
 662.	[func]		marcin

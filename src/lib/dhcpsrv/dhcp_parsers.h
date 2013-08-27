@@ -45,7 +45,8 @@ typedef OptionSpaceContainer<Subnet::OptionContainer,
 /// @brief Shared pointer to option storage.
 typedef boost::shared_ptr<OptionStorage> OptionStoragePtr;
 
-
+/// @brief Shared pointer to collection of hooks libraries.
+typedef boost::shared_ptr<std::vector<std::string> > HooksLibsStoragePtr;
 
 /// @brief A template class that stores named elements of a given data type.
 ///
@@ -103,7 +104,6 @@ class ValueStorage {
         void clear() {
             values_.clear();
         }
-
 
     private:
         /// @brief An std::map of the data values, keyed by parameter names.
@@ -166,13 +166,26 @@ public:
     /// the list of current names can be obtained from the HooksManager) or it
     /// is non-null (this is the new list of names, reload the libraries when
     /// possible).
-    boost::shared_ptr<std::vector<std::string> > hooks_libraries_;
+    HooksLibsStoragePtr hooks_libraries_;
 
     /// @brief The parsing universe of this context.
     Option::Universe universe_;
 
     /// @brief Assignment operator
     ParserContext& operator=(const ParserContext& rhs);
+
+    /// @brief Copy the context fields.
+    ///
+    /// This class method initializes the context data by copying the data
+    /// stored in the context instance provided as an argument. Note that
+    /// this function will also handle copying the NULL pointers.
+    ///
+    /// @param ctx context to be copied.
+    void copyContext(const ParserContext& ctx);
+
+    template<typename T>
+    void copyContextPointer(const boost::shared_ptr<T>& source_ptr,
+                            boost::shared_ptr<T>& dest_ptr);
 };
 
 /// @brief Pointer to various parser context.
