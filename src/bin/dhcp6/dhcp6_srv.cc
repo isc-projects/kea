@@ -30,17 +30,18 @@
 #include <dhcp/pkt6.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcpsrv/callout_handle_store.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/utils.h>
 #include <exceptions/exceptions.h>
+#include <hooks/callout_handle.h>
+#include <hooks/hooks_manager.h>
+#include <util/encode/hex.h>
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
-#include <util/encode/hex.h>
-#include <hooks/hooks_manager.h>
-#include <hooks/callout_handle.h>
 
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
@@ -1808,33 +1809,6 @@ Dhcpv6Srv::processInfRequest(const Pkt6Ptr& infRequest) {
     /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, infRequest->getTransid()));
     return reply;
-}
-
-isc::hooks::CalloutHandlePtr Dhcpv6Srv::getCalloutHandle(const Pkt6Ptr& pkt) {
-    // This method returns a CalloutHandle for a given packet. It is guaranteed
-    // to return the same callout_handle (so user library contexts are
-    // preserved). This method works well if the server processes one packet
-    // at a time. Once the server architecture is extended to cover parallel
-    // packets processing (e.g. delayed-ack, some form of buffering etc.), this
-    // method has to be extended (e.g. store callouts in a map and use pkt as
-    // a key). Additional code would be required to release the callout handle
-    // once the server finished processing.
-
-    CalloutHandlePtr callout_handle;
-    static Pkt6Ptr old_pointer;
-
-    if (!callout_handle ||
-        old_pointer != pkt) {
-        // This is the first packet or a different packet than previously
-        // passed to getCalloutHandle()
-
-        // Remember the pointer to this packet
-        old_pointer = pkt;
-
-        callout_handle = HooksManager::getHooksManager().createCalloutHandle();
-    }
-
-    return (callout_handle);
 }
 
 void

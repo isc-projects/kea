@@ -258,6 +258,8 @@ protected:
     /// performed for the client (true) or not (false).
     /// @param hostname A string carrying hostname to be used for DNS updates.
     /// @param lease A lease to be renewed
+    /// @param callout_handle a callout handle (used in hooks). A lease callouts
+    ///        will be executed if this parameter is passed.
     /// @param fake_allocation Is this real i.e. REQUEST (false) or just picking
     ///        an address for DISCOVER that is not really allocated (true)
     Lease4Ptr
@@ -268,6 +270,7 @@ protected:
                 const bool rev_dns_update,
                 const std::string& hostname,
                 const Lease4Ptr& lease,
+                const isc::hooks::CalloutHandlePtr& callout_handle,
                 bool fake_allocation /* = false */);
 
     /// @brief Allocates an IPv6 lease

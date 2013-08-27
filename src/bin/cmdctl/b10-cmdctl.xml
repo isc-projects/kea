@@ -169,8 +169,6 @@
       The configuration command is:
     </para>
 
-<!-- NOTE: print_settings is not documented since I think will be removed -->
-
     <para>
       <command>shutdown</command> exits <command>b10-cmdctl</command>.
       This has an optional <varname>pid</varname> argument to

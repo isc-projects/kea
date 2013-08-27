@@ -157,12 +157,13 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                             .getName(current_hook_))
                         .arg(PointerConverter(i->second).dlsymPtr());
                 }
-            } catch (...) {
+            } catch (const std::exception& e) {
                 // Any exception, not just ones based on isc::Exception
                 LOG_ERROR(hooks_logger, HOOKS_CALLOUT_EXCEPTION)
                     .arg(current_library_)
                     .arg(ServerHooks::getServerHooks().getName(current_hook_))
-                    .arg(PointerConverter(i->second).dlsymPtr());
+                    .arg(PointerConverter(i->second).dlsymPtr())
+                    .arg(e.what());
             }
 
         }

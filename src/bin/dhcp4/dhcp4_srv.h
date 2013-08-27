@@ -366,13 +366,6 @@ private:
     uint16_t port_;  ///< UDP port number on which server listens.
     bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
 
-    /// @brief returns callout handle for specified packet
-    ///
-    /// @param pkt packet for which the handle should be returned
-    ///
-    /// @return a callout handle to be used in hooks related to said packet
-    isc::hooks::CalloutHandlePtr getCalloutHandle(const Pkt4Ptr& pkt);
-
     /// Indexes for registered hook points
     int hook_index_pkt4_receive_;
     int hook_index_subnet4_select_;

@@ -285,10 +285,6 @@ public:
     /// @return always 0
     static int
     buffer6_receive_skip(CalloutHandle& callout_handle) {
-
-        Pkt6Ptr pkt;
-        callout_handle.getArgument("query6", pkt);
-
         callout_handle.setSkip(true);
 
         // Carry on as usual
@@ -561,7 +557,7 @@ TEST_F(HooksDhcpv6SrvTest, simple_buffer6_receive) {
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive6(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt6_receive callback.
+    // In particular, it should call registered buffer6_receive callback.
     srv_->run();
 
     // Check that the callback called is indeed the one we installed
@@ -577,7 +573,7 @@ TEST_F(HooksDhcpv6SrvTest, simple_buffer6_receive) {
     EXPECT_TRUE(expected_argument_names == callback_argument_names_);
 }
 
-// Checks if callouts installed on pkt6_received is able to change
+// Checks if callouts installed on buffer6_receive is able to change
 // the values and the parameters are indeed used by the server.
 TEST_F(HooksDhcpv6SrvTest, valueChange_buffer6_receive) {
 
