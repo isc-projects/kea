@@ -122,8 +122,13 @@ struct Lease {
     /// @param valid_lft Lifetime of the lease
     /// @param subnet_id Subnet identification
     /// @param cltt Client last transmission time
+    /// @param fqdn_fwd If true, forward DNS update is performed for a lease.
+    /// @param fqdn_rev If true, reverse DNS update is performed for a lease.
+    /// @param hostname FQDN of the client which gets the lease.
     Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
-          uint32_t valid_lft, SubnetID subnet_id, time_t cltt);
+          uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
+          const bool fqdn_fwd, const bool fqdn_rev,
+          const std::string& hostname);
 
     /// @brief Destructor
     virtual ~Lease() {}
@@ -243,10 +248,16 @@ struct Lease4 : public Lease {
     /// @param t2 rebinding time
     /// @param cltt Client last transmission time
     /// @param subnet_id Subnet identification
+    /// @param fqdn_fwd If true, forward DNS update is performed for a lease.
+    /// @param fqdn_rev If true, reverse DNS update is performed for a lease.
+    /// @param hostname FQDN of the client which gets the lease.
     Lease4(const isc::asiolink::IOAddress& addr, const uint8_t* hwaddr, size_t hwaddr_len,
            const uint8_t* clientid, size_t clientid_len, uint32_t valid_lft,
-           uint32_t t1, uint32_t t2, time_t cltt, uint32_t subnet_id)
-        : Lease(addr, t1, t2, valid_lft, subnet_id, cltt),
+           uint32_t t1, uint32_t t2, time_t cltt, uint32_t subnet_id,
+           const bool fqdn_fwd = false, const bool fqdn_rev = false,
+           const std::string& hostname = "")
+        : Lease(addr, t1, t2, valid_lft, subnet_id, cltt, fqdn_fwd, fqdn_rev,
+                hostname),
         ext_(0), hwaddr_(hwaddr, hwaddr + hwaddr_len) {
         if (clientid_len) {
             client_id_.reset(new ClientId(clientid, clientid_len));
@@ -256,7 +267,7 @@ struct Lease4 : public Lease {
     /// @brief Default constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease4() : Lease(0, 0, 0, 0, 0, 0) {
+    Lease4() : Lease(0, 0, 0, 0, 0, 0, false, false, "") {
     }
 
     /// @brief Compare two leases for equality
@@ -331,14 +342,46 @@ struct Lease6 : public Lease {
     /// @todo: Add DHCPv6 failover related fields here
 
     /// @brief Constructor
+    /// @param type Lease type.
+    /// @param addr Assigned address.
+    /// @param duid A pointer to an object representing DUID.
+    /// @param iaid IAID.
+    /// @param preferred Preferred lifetime.
+    /// @param valid Valid lifetime.
+    /// @param t1 A value of the T1 timer.
+    /// @param t2 A value of the T2 timer.
+    /// @param subnet_id A Subnet identifier.
+    /// @param prefixlen An address prefix length.
     Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
-           uint32_t t2, SubnetID subnet_id, uint8_t prefixlen_ = 0);
+           uint32_t t2, SubnetID subnet_id, uint8_t prefixlen = 0);
+
+    /// @brief Constructor, including FQDN data.
+    ///
+    /// @param type Lease type.
+    /// @param addr Assigned address.
+    /// @param duid A pointer to an object representing DUID.
+    /// @param iaid IAID.
+    /// @param preferred Preferred lifetime.
+    /// @param valid Valid lifetime.
+    /// @param t1 A value of the T1 timer.
+    /// @param t2 A value of the T2 timer.
+    /// @param subnet_id A Subnet identifier.
+    /// @param fqdn_fwd If true, forward DNS update is performed for a lease.
+    /// @param fqdn_rev If true, reverse DNS update is performed for a lease.
+    /// @param hostname FQDN of the client which gets the lease.
+    /// @param prefixlen An address prefix length.
+    Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
+           uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
+           uint32_t t2, SubnetID subnet_id, const bool fqdn_fwd,
+           const bool fqdn_rev, const std::string& hostname,
+           uint8_t prefixlen = 0);
 
     /// @brief Constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease6() : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, 0, 0),
+    Lease6() : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, 0, 0,
+                     false, false, ""),
         type_(LEASE_IA_NA) {
     }
 

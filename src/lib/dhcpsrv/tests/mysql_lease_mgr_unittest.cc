@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -249,6 +249,9 @@ public:
             lease->valid_lft_ = 8677;
             lease->cltt_ = 168256;
             lease->subnet_id_ = 23;
+            lease->fqdn_rev_ = true;
+            lease->fqdn_fwd_ = false;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress4_[1]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);
@@ -257,6 +260,9 @@ public:
             lease->valid_lft_ = 3677;
             lease->cltt_ = 123456;
             lease->subnet_id_ = 73;
+            lease->fqdn_rev_ = true;
+            lease->fqdn_fwd_ = true;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress4_[2]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x2a);
@@ -265,6 +271,9 @@ public:
             lease->valid_lft_ = 5412;
             lease->cltt_ = 234567;
             lease->subnet_id_ = 73;                         // Same as lease 1
+            lease->fqdn_rev_ = false;
+            lease->fqdn_fwd_ = false;
+            lease->hostname_ = "";
 
         } else if (address == straddress4_[3]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
@@ -278,6 +287,9 @@ public:
             lease->valid_lft_ = 7000;
             lease->cltt_ = 234567;
             lease->subnet_id_ = 37;
+            lease->fqdn_rev_ = true;
+            lease->fqdn_fwd_ = true;
+            lease->hostname_ = "otherhost.example.com.";
 
         } else if (address == straddress4_[4]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x4c);
@@ -287,6 +299,9 @@ public:
             lease->valid_lft_ = 7736;
             lease->cltt_ = 222456;
             lease->subnet_id_ = 85;
+            lease->fqdn_rev_ = true;
+            lease->fqdn_fwd_ = true;
+            lease->hostname_ = "otherhost.example.com.";
 
         } else if (address == straddress4_[5]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
@@ -296,6 +311,9 @@ public:
             lease->valid_lft_ = 7832;
             lease->cltt_ = 227476;
             lease->subnet_id_ = 175;
+            lease->fqdn_rev_ = false;
+            lease->fqdn_fwd_ = false;
+            lease->hostname_ = "otherhost.example.com.";
 
         } else if (address == straddress4_[6]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x6e);
@@ -305,6 +323,9 @@ public:
             lease->valid_lft_ = 1832;
             lease->cltt_ = 627476;
             lease->subnet_id_ = 112;
+            lease->fqdn_rev_ = false;
+            lease->fqdn_fwd_ = true;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress4_[7]) {
             lease->hwaddr_ = vector<uint8_t>();             // Empty
@@ -312,6 +333,9 @@ public:
             lease->valid_lft_ = 7975;
             lease->cltt_ = 213876;
             lease->subnet_id_ = 19;
+            lease->fqdn_rev_ = true;
+            lease->fqdn_fwd_ = true;
+            lease->hostname_ = "myhost.example.com.";
 
         } else {
             // Unknown address, return an empty pointer.
@@ -358,6 +382,9 @@ public:
             lease->valid_lft_ = 8677;
             lease->cltt_ = 168256;
             lease->subnet_id_ = 23;
+            lease->fqdn_fwd_ = true;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress6_[1]) {
             lease->type_ = Lease6::LEASE_IA_TA;
@@ -368,6 +395,9 @@ public:
             lease->valid_lft_ = 3677;
             lease->cltt_ = 123456;
             lease->subnet_id_ = 73;
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress6_[2]) {
             lease->type_ = Lease6::LEASE_IA_PD;
@@ -378,6 +408,9 @@ public:
             lease->valid_lft_ = 5412;
             lease->cltt_ = 234567;
             lease->subnet_id_ = 73;                     // Same as lease 1
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = false;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress6_[3]) {
             lease->type_ = Lease6::LEASE_IA_NA;
@@ -397,6 +430,9 @@ public:
             lease->valid_lft_ = 7000;
             lease->cltt_ = 234567;
             lease->subnet_id_ = 37;
+            lease->fqdn_fwd_ = true;
+            lease->fqdn_rev_ = false;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress6_[4]) {
             // Same DUID and IAID as straddress6_1
@@ -408,6 +444,9 @@ public:
             lease->valid_lft_ = 7736;
             lease->cltt_ = 222456;
             lease->subnet_id_ = 671;
+            lease->fqdn_fwd_ = true;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "otherhost.example.com.";
 
         } else if (address == straddress6_[5]) {
             // Same DUID and IAID as straddress6_1
@@ -420,6 +459,9 @@ public:
             lease->valid_lft_ = 7832;
             lease->cltt_ = 227476;
             lease->subnet_id_ = 175;
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "hostname.example.com.";
 
         } else if (address == straddress6_[6]) {
             // Same DUID as straddress6_1
@@ -432,6 +474,9 @@ public:
             lease->valid_lft_ = 1832;
             lease->cltt_ = 627476;
             lease->subnet_id_ = 112;
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "hostname.example.com.";
 
         } else if (address == straddress6_[7]) {
             // Same IAID as straddress6_1
@@ -443,6 +488,9 @@ public:
             lease->valid_lft_ = 7975;
             lease->cltt_ = 213876;
             lease->subnet_id_ = 19;
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "hostname.example.com.";
 
         } else {
             // Unknown address, return an empty pointer.
