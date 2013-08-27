@@ -1,6 +1,6 @@
 669.	[func]	tmark
 	Added main process event loop to D2Process which is the primary
-	application object in b10-dchp-ddns. This allows DHCP-DDNS
+	application object in b10-dhcp-ddns. This allows DHCP-DDNS
 	to queue requests received from clients for processing while
 	listening for command control events.
 	(Trac #3075 git e2f9d2e4c1b36f01eb5bfa2c4f8d55cf139c7e02)
@@ -210,7 +210,7 @@
 
 636.	[func]		tmark
 	Added the initial implementation of configuration parsing for
-	DCHP-DDNS.
+	DHCP-DDNS.
 	(Trac #2957, git c04fb71fa44c2a458aac57ae54eeb1711c017a49)
 
 635.	[func]		marcin
@@ -465,7 +465,7 @@ bind10-1.1.0beta2 released on May 10, 2013
 	(Trac #991, git 33ffc9a750cd3fb34158ef676aab6b05df0302e2)
 
 603.	[func]		tmark
-	The directory in which the b10-dchp4 and b10-dhcp6 server id files has
+	The directory in which the b10-dhcp4 and b10-dhcp6 server id files has
 	been changed from the local state directory (set by the "configure"
 	--localstatedir switch) to the "bind10" subdirectory of it. After an
 	upgrade, server id files in the former location will be orphaned and
