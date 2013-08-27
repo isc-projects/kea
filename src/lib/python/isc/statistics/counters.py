@@ -168,19 +168,14 @@ class Counters():
     def __init__(self, spec_file_name):
         """A constructor for the Counters class. A path to the spec file
         can be specified in spec_file_name, which is required. Statistics data
-        based on statistics spec can be accumulated if spec_file_name is
-        specified. If omitted, a default statistics spec is used. The
-        default statistics spec is defined in a hidden class named
-        _Statistics().
+        based on statistics spec can be accumulated. If an invalid argument
+        including None is specified, ModuleSpecError might be raised.
         """
         self._zones_item_list = []
         self._start_time = {}
         self._disabled = False
         self._rlock = threading.RLock()
         self._statistics_data = {}
-        self._statistics_spec = []
-        if not spec_file_name: return
-        # change the default statistics spec
         self._statistics_spec = \
             isc.config.module_spec_from_file(spec_file_name).\
             get_statistics_spec()
