@@ -272,8 +272,9 @@ TEST(Lease4, Lease4Constructor) {
 
         // Create the lease
         Lease4 lease(ADDRESS[i], HWADDR, sizeof(HWADDR),
-                     CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, 0, 0, current_time,
-                     SUBNET_ID);
+                     CLIENTID, sizeof(CLIENTID), VALID_LIFETIME, 0, 0,
+                     current_time, SUBNET_ID, true, true,
+                     "hostname.example.com.");
 
         EXPECT_EQ(ADDRESS[i], static_cast<uint32_t>(lease.addr_));
         EXPECT_EQ(0, lease.ext_);
@@ -285,9 +286,9 @@ TEST(Lease4, Lease4Constructor) {
         EXPECT_EQ(current_time, lease.cltt_);
         EXPECT_EQ(SUBNET_ID, lease.subnet_id_);
         EXPECT_FALSE(lease.fixed_);
-        EXPECT_TRUE(lease.hostname_.empty());
-        EXPECT_FALSE(lease.fqdn_fwd_);
-        EXPECT_FALSE(lease.fqdn_rev_);
+        EXPECT_EQ("hostname.example.com.", lease.hostname_);
+        EXPECT_TRUE(lease.fqdn_fwd_);
+        EXPECT_TRUE(lease.fqdn_rev_);
         EXPECT_TRUE(lease.comments_.empty());
     }
 }
@@ -427,7 +428,7 @@ TEST(Lease4, OperatorEquals) {
 
 // Lease6 is also defined in lease_mgr.h, so is tested in this file as well.
 // This test checks if the Lease6 structure can be instantiated correctly
-TEST(Lease6, Lease6Constructor) {
+TEST(Lease6, Lease6ConstructorDefault) {
 
     // check a variety of addresses with different bits set.
     const char* ADDRESS[] = {
@@ -458,6 +459,10 @@ TEST(Lease6, Lease6Constructor) {
         EXPECT_TRUE(lease->valid_lft_ == 200);
         EXPECT_TRUE(lease->t1_ == 50);
         EXPECT_TRUE(lease->t2_ == 80);
+        EXPECT_FALSE(lease->fqdn_fwd_);
+        EXPECT_FALSE(lease->fqdn_rev_);
+        EXPECT_TRUE(lease->hostname_.empty());
+
     }
 
     // Lease6 must be instantiated with a DUID, not with NULL pointer
@@ -467,6 +472,53 @@ TEST(Lease6, Lease6Constructor) {
                                          DuidPtr(), iaid, 100, 200, 50, 80,
                                          subnet_id)), InvalidOperation);
 }
+
+// This test verifies that the Lease6 constructor which accepts FQDN data,
+// sets the data correctly for the lease.
+TEST(Lease6, Lease6ConstructorWithFQDN) {
+
+    // check a variety of addresses with different bits set.
+    const char* ADDRESS[] = {
+        "::", "::1", "2001:db8:1::456",
+        "7fff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+        "8000::", "8000::1",
+        "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+    };
+
+    // Other values
+    uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+    DuidPtr duid(new DUID(llt, sizeof(llt)));
+    uint32_t iaid = 7;      // Just a number
+    SubnetID subnet_id = 8; // Just another number
+
+    for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
+        IOAddress addr(ADDRESS[i]);
+        Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr,
+                               duid, iaid, 100, 200, 50, 80, subnet_id,
+                                   true, true, "host.example.com."));
+
+        EXPECT_TRUE(lease->addr_ == addr);
+        EXPECT_TRUE(*lease->duid_ == *duid);
+        EXPECT_TRUE(lease->iaid_ == iaid);
+        EXPECT_TRUE(lease->subnet_id_ == subnet_id);
+        EXPECT_TRUE(lease->type_ == Lease6::LEASE_IA_NA);
+        EXPECT_TRUE(lease->preferred_lft_ == 100);
+        EXPECT_TRUE(lease->valid_lft_ == 200);
+        EXPECT_TRUE(lease->t1_ == 50);
+        EXPECT_TRUE(lease->t2_ == 80);
+        EXPECT_TRUE(lease->fqdn_fwd_);
+        EXPECT_TRUE(lease->fqdn_rev_);
+        EXPECT_EQ("host.example.com.", lease->hostname_);
+    }
+
+    // Lease6 must be instantiated with a DUID, not with NULL pointer
+    IOAddress addr(ADDRESS[0]);
+    Lease6Ptr lease2;
+    EXPECT_THROW(lease2.reset(new Lease6(Lease6::LEASE_IA_NA, addr,
+                                         DuidPtr(), iaid, 100, 200, 50, 80,
+                                         subnet_id)), InvalidOperation);
+}
+
 
 /// @brief Lease6 Equality Test
 ///

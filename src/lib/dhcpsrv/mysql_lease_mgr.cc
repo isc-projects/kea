@@ -565,10 +565,16 @@ public:
             client_id_length_ = 0;
         }
 
+        // Hostname is passed to Lease4 as a string object. We have to create
+        // it from the buffer holding hostname and the buffer length.
+        std::string hostname(hostname_buffer_,
+                             hostname_buffer_ + hostname_length_);
+
         // note that T1 and T2 are not stored
         return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
                                      client_id_buffer_, client_id_length_,
-                                     valid_lifetime_, 0, 0, cltt, subnet_id_)));
+                                     valid_lifetime_, 0, 0, cltt, subnet_id_,
+                                     fqdn_fwd_, fqdn_rev_, hostname)));
     }
 
     /// @brief Return columns in error
@@ -980,11 +986,17 @@ public:
         // Set up DUID,
         DuidPtr duid_ptr(new DUID(duid_buffer_, duid_length_));
 
+        // Hostname is passed to Lease6 as a string object, so we have to
+        // create it from the hostname buffer and length.
+        std::string hostname(hostname_buffer_,
+                             hostname_buffer_ + hostname_length_);
+
         // Create the lease and set the cltt (after converting from the
         // expire time retrieved from the database).
         Lease6Ptr result(new Lease6(type, addr, duid_ptr, iaid_,
                                     pref_lifetime_, valid_lifetime_, 0, 0,
-                                    subnet_id_, prefixlen_));
+                                    subnet_id_, fqdn_fwd_, fqdn_rev_,
+                                    hostname, prefixlen_));
         time_t cltt = 0;
         MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
         result->cltt_ = cltt;
