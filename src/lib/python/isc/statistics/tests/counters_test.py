@@ -154,6 +154,14 @@ class TestBasicMethods(unittest.TestCase):
         b = a + ({},)
         self.assertRaises(TypeError, counters._concat, *b)
 
+    def test_none_of_arg_of_counters(self):
+        """Test Counters raises ModuleSpecError when specifying not valid
+        argument"""
+        self.assertRaises(isc.config.module_spec.ModuleSpecError,
+                          counters.Counters, None)
+        self.assertRaises(isc.config.module_spec.ModuleSpecError,
+                          counters.Counters, '/foo/bar')
+
 class BaseTestCounters():
 
     def setUp(self):
@@ -194,18 +202,6 @@ class BaseTestCounters():
                           self.counters.stop_timer, '__undefined__')
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.counters.get, '__undefined__')
-
-class TestCounters0(unittest.TestCase, BaseTestCounters):
-    TEST_SPECFILE_LOCATION = None
-    def setUp(self):
-        BaseTestCounters.setUp(self)
-
-    def test_counters(self):
-        self.assertRaises(isc.cc.data.DataNotFoundError, self.counters.inc,
-                          "foo")
-        self.assertRaises(isc.cc.data.DataNotFoundError, self.counters.get,
-                          "foo")
-        self.check_get_statistics()
 
 class TestCounters1(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
