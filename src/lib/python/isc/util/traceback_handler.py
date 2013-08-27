@@ -22,6 +22,13 @@ import traceback
 logger = isc.log.Logger('util')
 
 def traceback_handler(main):
+    """
+    Handle uncaught exception from the main callable.
+
+    The function runs the callable passed as main (it is called
+    without any provided parameters). If it raises any exception,
+    the exception is logged and the application terminated.
+    """
     try:
         return main()
     except Exception as e:
