@@ -56,9 +56,9 @@ most likely cause is that xfrin the msgq daemon is not running.
 There was an error while the given command was being processed. The
 error is given in the log message.
 
-% XFRIN_CONNECT_MASTER (with TSIG %1) error connecting to master at %2: %3
-There was an error opening a connection to the master. The error is
-shown in the log message.
+% XFRIN_CONNECT_MASTER error connecting to master at %1%2 for %3: %4
+There was an error opening a connection to the master for the specified
+zone. The error is shown in the log message.
 
 % XFRIN_DATASRC_CONFIG_ERROR failed to update data source configuration: %1
 Configuration for the global data sources is updated, but the update
