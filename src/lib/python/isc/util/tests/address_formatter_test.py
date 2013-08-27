@@ -62,7 +62,5 @@ class AddressFormatterTest(unittest.TestCase):
         self.assertRaises(ValueError, str, AddressFormatter(("::1", 123), 1))
         self.assertRaises(ValueError, str, AddressFormatter(("::1", 123), 1))
 
-
-
 if __name__ == "__main__":
     unittest.main()
