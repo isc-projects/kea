@@ -1,3 +1,8 @@
+668.	[func]*		marcin
+	libdhcpsrv: Implemented changes to lease allocation engine to
+	propagate information about client's FQDN.
+	(Trac #3083, git 37af28303d1cd61f675faea969cd1159df65bf9d)
+
 667.	[func]		tomek
 	Additional hooks (buffer4_receive, lease4_renew,
 	lease4_release, buffer4_send) added to the DHCPv4 server.
