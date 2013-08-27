@@ -31,6 +31,7 @@ from isc.config.ccsession import *
 from isc.statistics.dns import Counters
 from isc.notify import notify_out
 import isc.util.process
+import isc.util.traceback_handler
 from isc.util.address_formatter import AddressFormatter
 from isc.datasrc import DataSourceClient, ZoneFinder
 import isc.net.parse
@@ -1847,4 +1848,4 @@ def main(xfrin_class, use_signal=True):
     logger.info(XFRIN_EXITING)
 
 if __name__ == '__main__':
-    main(Xfrin)
+    isc.util.traceback_handler.traceback_handler(lambda: main(Xfrin))

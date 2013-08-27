@@ -33,6 +33,7 @@ import threading
 import isc.config.ccsession
 from optparse import OptionParser, OptionValueError
 import isc.util.process
+import isc.util.traceback_handler
 from isc.cc.proto_defs import *
 import isc.log
 from isc.log_messages.msgq_messages import *
@@ -779,7 +780,7 @@ def signal_handler(msgq, signal, frame):
     if msgq:
         msgq.stop()
 
-if __name__ == "__main__":
+def main():
     def check_port(option, opt_str, value, parser):
         """Function to insure that the port we are passed is actually
         a valid port number. Used by OptionParser() on startup."""
@@ -855,3 +856,6 @@ if __name__ == "__main__":
     msgq.shutdown()
 
     logger.info(MSGQ_EXITING)
+
+if __name__ == "__main__":
+    isc.util.traceback_handler.traceback_handler(main)
