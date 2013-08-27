@@ -45,6 +45,7 @@ libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
 libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
 libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
+libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 libb10_dhcp_ddns_la_LIBADD += ${BOTAN_LIBS} ${BOTAN_RPATH}
 
 if USE_CLANGPP
