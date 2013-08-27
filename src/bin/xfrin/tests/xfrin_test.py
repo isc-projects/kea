@@ -3408,6 +3408,124 @@ class TestXfrinTransferStats(unittest.TestCase):
         zbps = self.stats.get_bytes_per_second()
         self.assertEqual(0, zbps)
 
+class TestXfrinConnectionSocketCounter(unittest.TestCase):
+
+    @property
+    def _master_addrinfo(self):
+        return TEST_MASTER_IPV4_ADDRINFO
+    @property
+    def _ipver(self):
+        return 'ipv4'
+
+    def setUp(self):
+        self.conn = XfrinConnection(
+            None, TEST_ZONE_NAME, None, MockDataSourceClient(), None,
+            self._master_addrinfo, None,
+            xfrin.Counters(xfrin.SPECFILE_LOCATION))
+        self.expception = socket.error
+
+    def raise_expception(self, *args):
+        raise self.expception
+
+    def test_open(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'open')
+        self.conn.create_socket(self._master_addrinfo[0],
+                                self._master_addrinfo[1])
+        self.assertEqual(1, self.conn._counters.get(
+                'socket', self._ipver, 'tcp', 'open'))
+
+    def test_openfail(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'openfail')
+        orig_create_socket = xfrin.asyncore.dispatcher.create_socket
+        xfrin.asyncore.dispatcher.create_socket = self.raise_expception
+        try:
+            self.assertRaises(self.expception, self.conn.create_socket,
+                              self._master_addrinfo[0],
+                              self._master_addrinfo[1])
+            self.assertEqual(1, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'openfail'))
+        finally:
+            xfrin.asyncore.dispatcher.create_socket = orig_create_socket
+
+    def test_close(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'close')
+        orig_socket_close = xfrin.asyncore.dispatcher.close
+        xfrin.asyncore.dispatcher.close = lambda x: None
+        try:
+            self.conn.close()
+            self.assertEqual(1, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'close'))
+        finally:
+            xfrin.asyncore.dispatcher.close = orig_socket_close
+
+    def test_conn(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'conn')
+        orig_socket_connect = xfrin.asyncore.dispatcher.connect
+        xfrin.asyncore.dispatcher.connect = lambda *a: None
+        try:
+            self.conn.connect(self._master_addrinfo[2])
+            self.assertEqual(1, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'conn'))
+        finally:
+            xfrin.asyncore.dispatcher.connect = orig_socket_connect
+
+    def test_connfail(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'connfail')
+        orig_socket_connect = xfrin.asyncore.dispatcher.connect
+        xfrin.asyncore.dispatcher.connect = self.raise_expception
+        try:
+            self.assertRaises(self.expception, self.conn.connect,
+                              self._master_addrinfo[2])
+            self.assertEqual(1, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'connfail'))
+        finally:
+            xfrin.asyncore.dispatcher.connect = orig_socket_connect
+
+    def test_senderr(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'senderr')
+        orig_socket_send = xfrin.asyncore.dispatcher.send
+        xfrin.asyncore.dispatcher.send = self.raise_expception
+        try:
+            self.assertRaises(self.expception, self.conn.send, None)
+            self.assertEqual(1, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'senderr'))
+        finally:
+            xfrin.asyncore.dispatcher.send = orig_socket_send
+
+    def test_recverr(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'recverr')
+        orig_socket_recv = xfrin.asyncore.dispatcher.recv
+        xfrin.asyncore.dispatcher.recv = self.raise_expception
+        try:
+            self.assertRaises(self.expception, self.conn.recv, None)
+            self.assertEqual(1, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'recverr'))
+        finally:
+            xfrin.asyncore.dispatcher.recv = orig_socket_recv
+
+class TestXfrinConnectionSocketCounterV6(TestXfrinConnectionSocketCounter):
+
+    @property
+    def _master_addrinfo(self):
+        return TEST_MASTER_IPV6_ADDRINFO
+    @property
+    def _ipver(self):
+        return 'ipv6'
+
 if __name__== "__main__":
     try:
         isc.log.resetUnitTestRootLogger()
