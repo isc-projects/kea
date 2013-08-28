@@ -18,6 +18,8 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option4_client_fqdn.h>
+#include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt4.h>
@@ -660,6 +662,34 @@ Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
             }
         }
     }
+}
+
+void
+Dhcpv4Srv::processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer) {
+    // It is possible that client has sent both Client FQDN and Hostname
+    // option. In such case, server should prefer Client FQDN option and
+    // ignore the Hostname option.
+    Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
+        (query->getOption(DHO_FQDN));
+    if (fqdn) {
+        processClientFqdnOption(query, answer);
+
+    } else {
+        OptionCustomPtr hostname = boost::dynamic_pointer_cast<OptionCustom>
+            (query->getOption(DHO_HOST_NAME));
+        if (hostname) {
+            processHostnameOption(query, answer);
+        }
+
+    }
+}
+
+void
+Dhcpv4Srv::processClientFqdnOption(const Pkt4Ptr&, Pkt4Ptr&) {
+}
+
+void
+Dhcpv4Srv::processHostnameOption(const Pkt4Ptr&, Pkt4Ptr&) {
 }
 
 void

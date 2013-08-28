@@ -70,6 +70,7 @@ dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += config_parser_unittest.cc
+dhcp4_unittests_SOURCES += fqdn_unittest.cc
 dhcp4_unittests_SOURCES += marker_file.cc
 nodist_dhcp4_unittests_SOURCES = ../dhcp4_messages.h ../dhcp4_messages.cc
 nodist_dhcp4_unittests_SOURCES += marker_file.h test_libraries.h

@@ -132,6 +132,7 @@ public:
     using Dhcpv4Srv::processRelease;
     using Dhcpv4Srv::processDecline;
     using Dhcpv4Srv::processInform;
+    using Dhcpv4Srv::processClientName;
     using Dhcpv4Srv::getServerID;
     using Dhcpv4Srv::loadServerID;
     using Dhcpv4Srv::generateServerID;
