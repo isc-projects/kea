@@ -65,6 +65,7 @@ TESTS += dhcp4_unittests
 dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc ../ctrl_dhcp4_srv.cc
 dhcp4_unittests_SOURCES += ../dhcp4_log.h ../dhcp4_log.cc
 dhcp4_unittests_SOURCES += ../config_parser.cc ../config_parser.h
+dhcp4_unittests_SOURCES += dhcp4_test_utils.h
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
