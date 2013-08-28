@@ -563,8 +563,8 @@ class XfrinConnection(asyncore.dispatcher):
 
     def __init__(self,
                  sock_map, zone_name, rrclass, datasrc_client,
-                 shutdown_event, master_addrinfo, zone_soa, tsig_key=None,
-                 idle_timeout=60):
+                 shutdown_event, master_addrinfo, zone_soa, counters,
+                 tsig_key=None, idle_timeout=60):
         """Constructor of the XfirnConnection class.
 
         Parameters:
@@ -579,6 +579,7 @@ class XfrinConnection(asyncore.dispatcher):
             address and port of the master server.
           zone_soa (RRset or None): SOA RRset of zone's current SOA or None
             if it's not available.
+          counters (Counters): used for statistics counters
           idle_timeout (int): max idle time for read data from socket.
 
         """
@@ -617,7 +618,7 @@ class XfrinConnection(asyncore.dispatcher):
         # keep a record of this specific transfer to log on success
         # (time, rr/s, etc)
         self._transfer_stats = XfrinTransferStats()
-        self._counters = Counters(SPECFILE_LOCATION)
+        self._counters = counters
 
     def init_socket(self):
         '''Initialize the underlyig socket.
@@ -1107,7 +1108,7 @@ def __get_initial_xfr_type(zone_soa, request_ixfr, zname, zclass, master_addr):
 
 def __process_xfrin(server, zone_name, rrclass, datasrc_client, zone_soa,
                     shutdown_event, master_addrinfo, check_soa, tsig_key,
-                    request_ixfr, conn_class):
+                    request_ixfr, counters, conn_class):
     conn = None
     exception = None
     ret = XFRIN_FAIL
@@ -1131,7 +1132,7 @@ def __process_xfrin(server, zone_name, rrclass, datasrc_client, zone_soa,
             retry = False
             conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
                               shutdown_event, master_addrinfo, zone_soa,
-                              tsig_key)
+                              counters, tsig_key)
             conn.init_socket()
             ret = XFRIN_FAIL
             if conn.connect_to_master():
@@ -1178,7 +1179,7 @@ def __process_xfrin(server, zone_name, rrclass, datasrc_client, zone_soa,
 
 def process_xfrin(server, xfrin_recorder, zone_name, rrclass, datasrc_client,
                   zone_soa, shutdown_event, master_addrinfo, check_soa,
-                  tsig_key, request_ixfr, conn_class=XfrinConnection):
+                  tsig_key, request_ixfr, counters, conn_class=XfrinConnection):
     # Even if it should be rare, the main process of xfrin session can
     # raise an exception.  In order to make sure the lock in xfrin_recorder
     # is released in any cases, we delegate the main part to the helper
@@ -1188,7 +1189,7 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, datasrc_client,
     try:
         __process_xfrin(server, zone_name, rrclass, datasrc_client, zone_soa,
                         shutdown_event, master_addrinfo, check_soa, tsig_key,
-                        request_ixfr, conn_class)
+                        request_ixfr, counters, conn_class)
     except Exception as ex:
         # don't log it until we complete decrement().
         exception = ex
@@ -1753,7 +1754,8 @@ class Xfrin:
                                               datasrc_client, zone_soa,
                                               self._shutdown_event,
                                               master_addrinfo, check_soa,
-                                              tsig_key, request_ixfr))
+                                              tsig_key, request_ixfr,
+                                              self._counters))
 
         xfrin_thread.start()
         return (0, 'zone xfrin is started')

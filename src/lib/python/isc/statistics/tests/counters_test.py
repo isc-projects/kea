@@ -49,11 +49,7 @@ class TestBasicMethods(unittest.TestCase):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
 
     def setUp(self):
-        imp.reload(counters)
         self.counters = counters.Counters(self.TEST_SPECFILE_LOCATION)
-
-    def tearDown(self):
-        self.counters.clear_all()
 
     def test_clear_counters(self):
         self.assertRaises(isc.cc.data.DataNotFoundError,
@@ -131,15 +127,15 @@ class TestBasicMethods(unittest.TestCase):
         start_functor(concurrency, number, self.counters.inc,
                       counter_name)
         counters._stop_timer(start_time,
-                            self.counters._statistics._data,
-                            self.counters._statistics._spec,
+                            self.counters._statistics_data,
+                            self.counters._statistics_spec,
                             timer_name)
         self.assertEqual(
-            counters._get_counter(self.counters._statistics._data,
+            counters._get_counter(self.counters._statistics_data,
                                  counter_name),
             concurrency * number)
         self.assertGreaterEqual(
-            counters._get_counter(self.counters._statistics._data,
+            counters._get_counter(self.counters._statistics_data,
                                  timer_name), 0.0)
 
     def test_concat(self):
@@ -158,15 +154,19 @@ class TestBasicMethods(unittest.TestCase):
         b = a + ({},)
         self.assertRaises(TypeError, counters._concat, *b)
 
+    def test_none_of_arg_of_counters(self):
+        """Test Counters raises ModuleSpecError when specifying not valid
+        argument"""
+        self.assertRaises(isc.config.module_spec.ModuleSpecError,
+                          counters.Counters, None)
+        self.assertRaises(isc.config.module_spec.ModuleSpecError,
+                          counters.Counters, '/foo/bar')
+
 class BaseTestCounters():
 
     def setUp(self):
-        imp.reload(counters)
         self._statistics_data = {}
         self.counters = counters.Counters(self.TEST_SPECFILE_LOCATION)
-
-    def tearDown(self):
-        self.counters.clear_all()
 
     def check_get_statistics(self):
         """Checks no differences between the value returned from
@@ -186,7 +186,7 @@ class BaseTestCounters():
         else:
             self.assertTrue(isc.config.ModuleSpec(
                     {'module_name': 'Foo',
-                     'statistics': self.counters._statistics._spec}
+                     'statistics': self.counters._statistics_spec}
                     ).validate_statistics(
                     False, self._statistics_data))
 
@@ -203,19 +203,27 @@ class BaseTestCounters():
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.counters.get, '__undefined__')
 
-class TestCounters0(unittest.TestCase, BaseTestCounters):
-    TEST_SPECFILE_LOCATION = None
-    def setUp(self):
-        BaseTestCounters.setUp(self)
-    def tearDown(self):
-        BaseTestCounters.tearDown(self)
-
 class TestCounters1(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
     def setUp(self):
         BaseTestCounters.setUp(self)
-    def tearDown(self):
-        BaseTestCounters.tearDown(self)
+
+    def test_counters(self):
+        spec = isc.config.module_spec_from_file(self.TEST_SPECFILE_LOCATION)
+        self.assertEqual(spec.get_statistics_spec(),
+                         self.counters._statistics_spec)
+        for name in isc.config.spec_name_list(self.counters._statistics_spec):
+            self.counters.inc(name)
+            self.assertEqual(self.counters.get(name), 1)
+            # checks disable/enable
+            self.counters.disable()
+            self.counters.inc(name)
+            self.assertEqual(self.counters.get(name), 1)
+            self.counters.enable()
+            self.counters.inc(name)
+            self.assertEqual(self.counters.get(name), 2)
+        self._statistics_data = {'counter':2, 'seconds': 2.0}
+        self.check_get_statistics()
 
 if __name__== "__main__":
     unittest.main()
