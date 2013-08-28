@@ -18,7 +18,6 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option4_addrlst.h>
-#include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
@@ -672,7 +671,7 @@ Dhcpv4Srv::processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer) {
     Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
         (query->getOption(DHO_FQDN));
     if (fqdn) {
-        processClientFqdnOption(query, answer);
+        processClientFqdnOption(fqdn, answer);
 
     } else {
         OptionCustomPtr hostname = boost::dynamic_pointer_cast<OptionCustom>
@@ -685,7 +684,18 @@ Dhcpv4Srv::processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer) {
 }
 
 void
-Dhcpv4Srv::processClientFqdnOption(const Pkt4Ptr&, Pkt4Ptr&) {
+Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
+                                   Pkt4Ptr& answer) {
+    // Create the DHCPv4 Client FQDN Option to be included in the server's
+    // response to a client.
+    Option4ClientFqdnPtr fqdn_resp(new Option4ClientFqdn(*fqdn));
+
+    // RFC4702, section 4 - set 'NOS' flags to 0.
+    fqdn_resp->setFlag(Option4ClientFqdn::FLAG_S, 0);
+    fqdn_resp->setFlag(Option4ClientFqdn::FLAG_O, 0);
+    fqdn_resp->setFlag(Option4ClientFqdn::FLAG_N, 0);
+
+    answer->addOption(fqdn_resp);
 }
 
 void
