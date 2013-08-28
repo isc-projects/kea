@@ -126,7 +126,9 @@ private:
 
 };
 
-TEST_F(FqdnDhcpv4SrvTest, basic) {
+// Test that server confirms to perform the forward and reverse DNS update,
+// when client asks for it.
+TEST_F(FqdnDhcpv4SrvTest, serverUpdateForward) {
     Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
                                         Option4ClientFqdn::FLAG_E |
                                         Option4ClientFqdn::FLAG_S,
@@ -139,5 +141,54 @@ TEST_F(FqdnDhcpv4SrvTest, basic) {
                     "myhost.example.com.");
 
 }
+
+// Test that server generates the fully qualified domain name for the client
+// if client supplies the partial name.
+TEST_F(FqdnDhcpv4SrvTest, serverUpdateForwardPartialName) {
+    Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
+                                        Option4ClientFqdn::FLAG_E |
+                                        Option4ClientFqdn::FLAG_S,
+                                        "myhost",
+                                        Option4ClientFqdn::PARTIAL,
+                                        true);
+
+    testProcessFqdn(query,
+                    Option4ClientFqdn::FLAG_E | Option4ClientFqdn::FLAG_S,
+                    "myhost.example.com.");
+
+}
+
+// Test that server generates the fully qualified domain name for the client
+// if clietn supplies empty domain name.
+TEST_F(FqdnDhcpv4SrvTest, serverUpdateForwardNoName) {
+    Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
+                                        Option4ClientFqdn::FLAG_E |
+                                        Option4ClientFqdn::FLAG_S,
+                                        "",
+                                        Option4ClientFqdn::PARTIAL,
+                                        true);
+
+    testProcessFqdn(query,
+                    Option4ClientFqdn::FLAG_E | Option4ClientFqdn::FLAG_S,
+                    "myhost.example.com.");
+
+}
+
+// Test that server does not accept delegation of the forward DNS update
+// to a client.
+TEST_F(FqdnDhcpv4SrvTest, clientUpdateNotAllowed) {
+    Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
+                                        Option4ClientFqdn::FLAG_E,
+                                        "myhost.example.com.",
+                                        Option4ClientFqdn::PARTIAL,
+                                        true);
+
+    testProcessFqdn(query, Option4ClientFqdn::FLAG_E |
+                    Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_O,
+                    "myhost.example.com.");
+
+}
+
+
 
 } // end of anonymous namespace

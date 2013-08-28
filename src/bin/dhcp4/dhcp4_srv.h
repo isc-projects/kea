@@ -18,6 +18,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
+#include <dhcp/option4_client_fqdn.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <hooks/callout_handle.h>
@@ -289,9 +290,10 @@ protected:
 private:
     /// @brief Process Client FQDN %Option sent by a client.
     ///
-    /// @param query A DISCOVER or REQUEST message from a cient.
+    /// @param fqdn An DHCPv4 Client FQDN %Option sent by a client.
     /// @param [out] answer A response message to be sent to a client.
-    void processClientFqdnOption(const Pkt4Ptr& query, Pkt4Ptr& answer);
+    void processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
+                                 Pkt4Ptr& answer);
 
     /// @brief Process Hostname %Option sent by a client.
     ///
