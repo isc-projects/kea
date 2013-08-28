@@ -250,6 +250,56 @@ protected:
     /// @param msg the message to add options to.
     void appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg);
 
+    /// @brief Processes Client FQDN and Hostname Options sent by a client.
+    ///
+    /// Client may send Client FQDN or Hostname option to communicate its name
+    /// to the server. Server may use this name to perform DNS update for the
+    /// lease being assigned to a client. If server takes responsibility for
+    /// updating DNS for a client it may communicate it by sending the Client
+    /// FQDN or Hostname %Option back to the client. Server select a different
+    /// name than requested by a client to update DNS. In such case, the server
+    /// stores this different name in its response.
+    ///
+    /// Client should not send both Client FQDN and Hostname options. However,
+    /// if client sends both options, server should prefer Client FQDN option
+    /// and ignore the Hostname option. If Client FQDN option is not present,
+    /// the Hostname option is processed.
+    ///
+    /// The Client FQDN %Option is processed by this function as described in
+    /// RFC4702.
+    ///
+    /// In response to a Hostname %Option sent by a client, the server may send
+    /// Hostname option with the same or different hostname. If different
+    /// hostname is sent, it is an indication to the client that server has
+    /// overridden the client's preferred name and will rather use this
+    /// different name to update DNS. However, since Hostname option doesn't
+    /// carry an information whether DNS update will be carried by the server
+    /// or not, the client is responsible for checking whether DNS update
+    /// has been performed.
+    ///
+    /// After successful processing options stored in the first parameter,
+    /// this function may add Client FQDN or Hostname option to the response
+    /// message. In some cases, server may cease to add any options to the
+    /// response, i.e. when server doesn't support DNS updates.
+    ///
+    /// @param query A DISCOVER or REQUEST message from a cient.
+    /// @param [out] answer A response message to be sent to a client.
+    void processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer);
+
+private:
+    /// @brief Process Client FQDN %Option sent by a client.
+    ///
+    /// @param query A DISCOVER or REQUEST message from a cient.
+    /// @param [out] answer A response message to be sent to a client.
+    void processClientFqdnOption(const Pkt4Ptr& query, Pkt4Ptr& answer);
+
+    /// @brief Process Hostname %Option sent by a client.
+    ///
+    /// @param query A DISCOVER or REQUEST message from a cient.
+    /// @param [out] answer A response message to be sent to a client.
+    void processHostnameOption(const Pkt4Ptr& query, Pkt4Ptr& answer);
+
+protected:
     /// @brief Attempts to renew received addresses
     ///
     /// Attempts to renew existing lease. This typically includes finding a lease that
