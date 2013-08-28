@@ -300,7 +300,8 @@ class MockXfrinConnection(XfrinConnection):
     def __init__(self, sock_map, zone_name, rrclass, datasrc_client,
                  shutdown_event, master_addr, tsig_key=None):
         super().__init__(sock_map, zone_name, rrclass, MockDataSourceClient(),
-                         shutdown_event, master_addr, begin_soa_rrset)
+                         shutdown_event, master_addr, begin_soa_rrset,
+                         xfrin.Counters(xfrin.SPECFILE_LOCATION))
         self.query_data = b''
         self.reply_data = b''
         self.force_time_out = False
@@ -2129,8 +2130,6 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
     and methods related to statistics tests'''
     def setUp(self):
         super().setUp()
-        # clear all statistics counters before each test
-        self.conn._counters.clear_all()
         # fake datetime
         self.__orig_datetime = isc.statistics.counters.datetime
         self.__orig_start_timer = isc.statistics.counters._start_timer
@@ -3198,7 +3197,9 @@ class TestXfrinProcess(unittest.TestCase):
         xfrin.process_xfrin(self, XfrinRecorder(), Name("example.org."),
                             RRClass.IN, None, zone_soa, None,
                             TEST_MASTER_IPV4_ADDRINFO, True, None,
-                            request_ixfr, self.__get_connection)
+                            request_ixfr,
+                            xfrin.Counters(xfrin.SPECFILE_LOCATION),
+                            self.__get_connection)
         self.assertEqual([], self.__rets)
         self.assertEqual(transfers, self.__transfers)
         # Create a connection for each attempt

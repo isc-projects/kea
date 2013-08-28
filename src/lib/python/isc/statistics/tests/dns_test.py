@@ -30,7 +30,6 @@ from isc.statistics import dns
 class BaseTestCounters(counters_test.BaseTestCounters):
 
     def setUp(self):
-        imp.reload(dns)
         self._statistics_data = {}
         self.counters = dns.Counters(self.TEST_SPECFILE_LOCATION)
         self._entire_server    = self.counters._entire_server
@@ -73,7 +72,7 @@ class BaseTestCounters(counters_test.BaseTestCounters):
         # for counters of xfer running
         _suffix = 'xfr_running'
         _xfrrunning_names = \
-            isc.config.spec_name_list(self.counters._statistics._spec,
+            isc.config.spec_name_list(self.counters._statistics_spec,
                                       "", True)
         for name in _xfrrunning_names:
             if name.find(_suffix) != 1: continue
@@ -102,7 +101,7 @@ class BaseTestCounters(counters_test.BaseTestCounters):
         # for ipsocket/unixsocket counters
         _prefix = 'socket/'
         _socket_names = \
-            isc.config.spec_name_list(self.counters._statistics._spec,
+            isc.config.spec_name_list(self.counters._statistics_spec,
                                       "", True)
         for name in _socket_names:
             if name.find(_prefix) != 0: continue
@@ -142,36 +141,24 @@ class TestCounters2(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec2.spec'
     def setUp(self):
         BaseTestCounters.setUp(self)
-    def tearDown(self):
-        BaseTestCounters.tearDown(self)
 
 class TestCounters3(unittest.TestCase, BaseTestCounters):
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec3.spec'
     @classmethod
-    def setUpClass(cls):
-        imp.reload(dns)
     def setUp(self):
         BaseTestCounters.setUp(self)
-    def tearDown(self):
-        BaseTestCounters.tearDown(self)
 
 class BaseDummyModule():
     """A base dummy class"""
     TEST_SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec2.spec'
-    def __init__(self):
-        self.counters = dns.Counters(self.TEST_SPECFILE_LOCATION)
+    def __init__(self, counters):
+        self.counters = counters
 
     def get_counters(self):
         return self.counters.get_statistics()
 
-    def clear_counters(self):
-        self.counters.clear_all()
-
 class DummyNotifyOut(BaseDummyModule):
     """A dummy class equivalent to notify.notify_out.NotifyOut"""
-    def __init__(self):
-        self.counters = dns.Counters()
-
     def inc_counters(self):
         """increments counters"""
         self.counters.inc('zones', TEST_ZONE_CLASS_STR,
@@ -202,45 +189,22 @@ class DummyUnixSockServer(BaseDummyModule):
 class DummyXfroutServer(BaseDummyModule):
     """A dummy class equivalent to XfroutServer in b10-xfrout"""
     def __init__(self):
-        super().__init__()
-        self.xfrout_sess = DummyXfroutSession()
-        self.unix_socket_server = DummyUnixSockServer()
-        self.notifier = DummyNotifyOut()
+        self.counters = dns.Counters(self.TEST_SPECFILE_LOCATION)
+        self.xfrout_sess = DummyXfroutSession(self.counters)
+        self.unix_socket_server = DummyUnixSockServer(self.counters)
+        self.notifier = DummyNotifyOut(self.counters)
 
     def inc_counters(self):
         self.xfrout_sess.inc_counters()
         self.unix_socket_server.inc_counters()
         self.notifier.inc_counters()
 
-class TestDummyNotifyOut(unittest.TestCase):
-    """Tests counters are incremented in which the spec file is not
-    loaded"""
-    def setUp(self):
-        imp.reload(dns)
-        self.notifier = DummyNotifyOut()
-        self.notifier.inc_counters()
-
-    def tearDown(self):
-        self.notifier.clear_counters()
-
-    def test_counters(self):
-        self.assertEqual(
-            {'zones': {TEST_ZONE_CLASS_STR: { '_SERVER_':
-                           {'notifyoutv4': 1, 'notifyoutv6': 1},
-                                              TEST_ZONE_NAME_STR:
-                           {'notifyoutv4': 1, 'notifyoutv6': 1}}}},
-            self.notifier.get_counters())
-
 class TestDummyXfroutServer(unittest.TestCase):
     """Tests counters are incremented or decremented in which the same
     spec file is multiply loaded in each child class"""
     def setUp(self):
-        imp.reload(dns)
         self.xfrout_server = DummyXfroutServer()
         self.xfrout_server.inc_counters()
-
-    def tearDown(self):
-        self.xfrout_server.clear_counters()
 
     def test_counters(self):
         self.assertEqual(

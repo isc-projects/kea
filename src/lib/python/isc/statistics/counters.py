@@ -151,15 +151,6 @@ def _concat(*args, sep='/'):
     """
     return sep.join(args)
 
-class _Statistics():
-    """Statistics data set. This class will be remove in the future
-    release."""
-    # default statistics data
-    _data = {}
-    # default statistics spec used in case the specfile is omitted when
-    # constructing a Counters() object
-    _spec = []
-
 class Counters():
     """A class for holding and manipulating all statistics counters
     for a module.  A Counters object may be created by specifying a spec
@@ -174,32 +165,25 @@ class Counters():
     timers can be temporarily disabled.  If disabled, counter values are
     not changed even if methods to update them are invoked."""
 
-    # default statistics data set
-    _statistics = _Statistics()
-
-    def __init__(self, spec_file_name=None):
+    def __init__(self, spec_file_name):
         """A constructor for the Counters class. A path to the spec file
-        can be specified in spec_file_name. Statistics data based on
-        statistics spec can be accumulated if spec_file_name is
-        specified. If omitted, a default statistics spec is used. The
-        default statistics spec is defined in a hidden class named
-        _Statistics(). But the hidden class won't be used and
-        spec_file_name will be required in the future release.
+        can be specified in spec_file_name, which is required. Statistics data
+        based on statistics spec can be accumulated. If an invalid argument
+        including None is specified, ModuleSpecError might be raised.
         """
         self._zones_item_list = []
         self._start_time = {}
         self._disabled = False
         self._rlock = threading.RLock()
-        if not spec_file_name: return
-        # change the default statistics spec
-        self._statistics._spec = \
+        self._statistics_data = {}
+        self._statistics_spec = \
             isc.config.module_spec_from_file(spec_file_name).\
             get_statistics_spec()
 
     def clear_all(self):
         """clears all statistics data"""
         with self._rlock:
-            self._statistics._data = {}
+            self._statistics_data = {}
 
     def disable(self):
         """disables incrementing/decrementing counters"""
@@ -219,8 +203,8 @@ class Counters():
         identifier = _concat(*args)
         with self._rlock:
             if self._disabled: return
-            _inc_counter(self._statistics._data,
-                         self._statistics._spec,
+            _inc_counter(self._statistics_data,
+                         self._statistics_spec,
                          identifier, step)
 
     def inc(self, *args):
@@ -240,7 +224,7 @@ class Counters():
         of the specified counter.  isc.cc.data.DataNotFoundError is
         raised when the counter doesn't have a number yet."""
         identifier = _concat(*args)
-        return _get_counter(self._statistics._data, identifier)
+        return _get_counter(self._statistics_data, identifier)
 
     def start_timer(self, *args):
         """Starts a timer which is identified by args and keeps it
@@ -271,8 +255,8 @@ class Counters():
             # set the end time
             _stop_timer(
                 start_time,
-                self._statistics._data,
-                self._statistics._spec,
+                self._statistics_data,
+                self._statistics_spec,
                 identifier)
             # A datetime value of once used timer should be deleted
             # for a future use.
@@ -293,5 +277,5 @@ class Counters():
         stats module, including each counter. If nothing is counted
         yet, then it returns an empty dictionary."""
         # entire copy
-        statistics_data = self._statistics._data.copy()
+        statistics_data = self._statistics_data.copy()
         return statistics_data
