@@ -128,7 +128,7 @@ class NotifyOut:
     notify message to its slaves). notify service can be started by
     calling  dispatcher(), and it can be stopped by calling shutdown()
     in another thread. '''
-    def __init__(self, datasrc_file, verbose=True):
+    def __init__(self, datasrc_file, counters=None, verbose=True):
         self._notify_infos = {} # key is (zone_name, zone_class)
         self._waiting_zones = []
         self._notifying_zones = []
@@ -143,7 +143,7 @@ class NotifyOut:
         # Use nonblock event to eliminate busy loop
         # If there are no notifying zones, clear the event bit and wait.
         self._nonblock_event = threading.Event()
-        self._counters = Counters()
+        self._counters = counters
 
     def _init_notify_out(self, datasrc_file):
         '''Get all the zones name and its notify target's address.
@@ -508,16 +508,17 @@ class NotifyOut:
             sock = zone_notify_info.create_socket(addrinfo[0])
             sock.sendto(render.get_data(), 0, addrinfo)
             # count notifying by IPv4 or IPv6 for statistics
-            if zone_notify_info.get_socket().family == socket.AF_INET:
-                self._counters.inc('zones',
-                                   zone_notify_info.zone_class,
-                                   zone_notify_info.zone_name,
-                                  'notifyoutv4')
-            elif zone_notify_info.get_socket().family == socket.AF_INET6:
-                self._counters.inc('zones',
-                                   zone_notify_info.zone_class,
-                                   zone_notify_info.zone_name,
-                                  'notifyoutv6')
+            if self._counters is not None:
+                if zone_notify_info.get_socket().family == socket.AF_INET:
+                    self._counters.inc('zones',
+                                       zone_notify_info.zone_class,
+                                       zone_notify_info.zone_name,
+                                      'notifyoutv4')
+                elif zone_notify_info.get_socket().family == socket.AF_INET6:
+                    self._counters.inc('zones',
+                                       zone_notify_info.zone_class,
+                                       zone_notify_info.zone_name,
+                                      'notifyoutv6')
             logger.info(NOTIFY_OUT_SENDING_NOTIFY, AddressFormatter(addrinfo))
         except (socket.error, addr.InvalidAddress) as err:
             logger.error(NOTIFY_OUT_SOCKET_ERROR, AddressFormatter(addrinfo),

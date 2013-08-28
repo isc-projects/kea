@@ -176,7 +176,8 @@ def make_blocking(filenum, on):
 
 class XfroutSession():
     def __init__(self, sock_fd, request_data, server, tsig_key_ring, remote,
-                 default_acl, zone_config, client_class=DataSourceClient):
+                 default_acl, zone_config, counters,
+                 client_class=DataSourceClient):
         self._sock_fd = sock_fd
         self._request_data = request_data
         self._server = server
@@ -193,7 +194,7 @@ class XfroutSession():
         self._jnl_reader = None # will be set to a reader for IXFR
         # Creation of self.counters should be done before of
         # invoking self._handle()
-        self._counters = Counters(SPECFILE_LOCATION)
+        self._counters = counters
         self._handle()
 
     def create_tsig_ctx(self, tsig_record, tsig_key_ring):
@@ -683,11 +684,11 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
     '''The unix domain socket server which accept xfr query sent from auth server.'''
 
     def __init__(self, sock_file, handle_class, shutdown_event, config_data,
-                 cc):
+                 cc, counters):
         self._remove_unused_sock_file(sock_file)
         self._sock_file = sock_file
         socketserver_mixin.NoPollMixIn.__init__(self)
-        self._counters = Counters(SPECFILE_LOCATION)
+        self._counters = counters
         try:
             ThreadingUnixStreamServer.__init__(self, sock_file, \
                                                    handle_class)
@@ -886,7 +887,8 @@ class UnixSockServer(socketserver_mixin.NoPollMixIn,
         self._lock.release()
         self.RequestHandlerClass(sock_fd, request_data, self,
                                  isc.server_common.tsig_keyring.get_keyring(),
-                                 self._guess_remote(sock_fd), acl, zone_config)
+                                 self._guess_remote(sock_fd), acl, zone_config,
+                                 self._counters)
 
     def _remove_unused_sock_file(self, sock_file):
         '''Try to remove the socket file. If the file is being used
@@ -1025,12 +1027,12 @@ class XfroutServer:
         self._shutdown_event = threading.Event()
         self._cc = isc.config.ModuleCCSession(SPECFILE_LOCATION, self.config_handler, self.command_handler)
         self._config_data = self._cc.get_full_config()
+        self._counters = Counters(SPECFILE_LOCATION)
         self._cc.start()
         self._cc.add_remote_config(AUTH_SPECFILE_LOCATION)
         isc.server_common.tsig_keyring.init_keyring(self._cc)
         self._start_xfr_query_listener()
         self._start_notifier()
-        self._counters = Counters(SPECFILE_LOCATION)
 
     def _start_xfr_query_listener(self):
         '''Start a new thread to accept xfr query. '''
@@ -1039,13 +1041,13 @@ class XfroutServer:
             XfroutSession,
             self._shutdown_event,
             self._config_data,
-            self._cc)
+            self._cc, self._counters)
         listener = threading.Thread(target=self._unix_socket_server.serve_forever)
         listener.start()
 
     def _start_notifier(self):
         datasrc = self._unix_socket_server.get_db_file()
-        self._notifier = notify_out.NotifyOut(datasrc)
+        self._notifier = notify_out.NotifyOut(datasrc, counters=self._counters)
         if 'also_notify' in self._config_data:
             for slave in self._config_data['also_notify']:
                 address = self._default_notify_address
