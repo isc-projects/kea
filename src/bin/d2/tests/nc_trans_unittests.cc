@@ -56,7 +56,7 @@ public:
     }
 
     /// @brief State handler for the READY_ST.
-    /// 
+    ///
     /// Serves as the starting state handler, it consumes the
     /// START_TRANSACTION_EVT "transitioing" to the state, DO_WORK_ST and
     /// sets the next event to START_WORK_EVT.
@@ -74,11 +74,11 @@ public:
     }
 
     /// @brief State handler for the DO_WORK_ST.
-    /// 
+    ///
     /// Simulates a state that starts some form of asynchronous work.
     /// When next event is START_WROK_EVT it sets the status to pending
     /// and signals the state model must "wait" for an event by setting
-    /// next event to NOP_EVT. 
+    /// next event to NOP_EVT.
     ///
     /// When next event is IO_COMPLETED_EVT, it transitions to the state,
     /// DONE_ST, and sets the next event to ALL_DONE_EVT.
@@ -103,7 +103,7 @@ public:
     /// @brief State handler for the DONE_ST.
     ///
     /// This is the last state in the model.  Note that it sets the
-    /// status to completed and next event to NOP_EVT. 
+    /// status to completed and next event to NOP_EVT.
     void doneHandler() {
         switch(getNextEvent()) {
         case ALL_DONE_EVT:
@@ -136,6 +136,10 @@ public:
     using NameChangeTransaction::runStateModel;
     using NameChangeTransaction::setState;
     using NameChangeTransaction::setNextEvent;
+    using NameChangeTransaction::initServerSelection;
+    using NameChangeTransaction::selectNextServer;
+    using NameChangeTransaction::getCurrentServer;
+    using NameChangeTransaction::getDNSClient;
 };
 
 const int NameChangeStub::DO_WORK_ST;
@@ -155,7 +159,7 @@ public:
     virtual ~NameChangeTransactionTest() {
     }
 
-    /// @brief Instantiates a NameChangeStub built around a canned 
+    /// @brief Instantiates a NameChangeStub built around a canned
     /// NameChangeRequest.
     NameChangeStubPtr makeCannedTransaction() {
         const char* msg_str =
@@ -171,12 +175,26 @@ public:
             "}";
 
         dhcp_ddns::NameChangeRequestPtr ncr;
-        DnsServerInfoStoragePtr servers;
+
+        DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
+        DnsServerInfoPtr server;
+
         DdnsDomainPtr forward_domain;
         DdnsDomainPtr reverse_domain;
 
         ncr = dhcp_ddns::NameChangeRequest::fromJSON(msg_str);
+
+        // make forward server list
+        server.reset(new DnsServerInfo("forward.server.org",
+                                       isc::asiolink::IOAddress("1.1.1.1")));
+        servers->push_back(server);
         forward_domain.reset(new DdnsDomain("*", "", servers));
+
+        // make reverse server list
+        servers->clear();
+        server.reset(new DnsServerInfo("reverse.server.org",
+                                       isc::asiolink::IOAddress("2.2.2.2")));
+        servers->push_back(server);
         reverse_domain.reset(new DdnsDomain("*", "", servers));
         return (NameChangeStubPtr(new NameChangeStub(io_service_, ncr,
                                   forward_domain, reverse_domain)));
@@ -220,19 +238,19 @@ TEST(NameChangeTransaction, construction) {
     ASSERT_NO_THROW(forward_domain.reset(new DdnsDomain("*", "", servers)));
     ASSERT_NO_THROW(reverse_domain.reset(new DdnsDomain("*", "", servers)));
 
-    // Verify that construction with an empty NameChangeRequest throws. 
+    // Verify that construction with an empty NameChangeRequest throws.
     EXPECT_THROW(NameChangeTransaction(io_service, empty_ncr,
                                        forward_domain, reverse_domain),
                                         NameChangeTransactionError);
 
     // Verify that construction with an empty forward domain when the
-    // NameChangeRequest calls for a forward change throws. 
+    // NameChangeRequest calls for a forward change throws.
     EXPECT_THROW(NameChangeTransaction(io_service, ncr,
                                        empty_domain, reverse_domain),
                                        NameChangeTransactionError);
 
     // Verify that construction with an empty reverse domain when the
-    // NameChangeRequest calls for a reverse change throws. 
+    // NameChangeRequest calls for a reverse change throws.
     EXPECT_THROW(NameChangeTransaction(io_service, ncr,
                                        forward_domain, empty_domain),
                                        NameChangeTransactionError);
@@ -242,20 +260,20 @@ TEST(NameChangeTransaction, construction) {
                                           forward_domain, reverse_domain));
 
     // Verify that an empty forward domain is allowed when the requests does
-    // include a forward change. 
+    // include a forward change.
     ncr->setForwardChange(false);
     EXPECT_NO_THROW(NameChangeTransaction(io_service, ncr,
                                           empty_domain, reverse_domain));
 
     // Verify that an empty reverse domain is allowed when the requests does
-    // include a reverse change. 
+    // include a reverse change.
     ncr->setReverseChange(false);
     EXPECT_NO_THROW(NameChangeTransaction(io_service, ncr,
                                           empty_domain, empty_domain));
 }
 
 /// @brief Test the basic mechanics of state model execution.
-/// It first verifies basic state handle map fucntionality, and then 
+/// It first verifies basic state handle map fucntionality, and then
 /// runs the NameChangeStub state model through from start to finish.
 TEST_F(NameChangeTransactionTest, stateModelTest) {
     NameChangeStubPtr name_change;
@@ -331,6 +349,90 @@ TEST_F(NameChangeTransactionTest, stateModelTest) {
     EXPECT_EQ(NameChangeTransaction::DONE_ST, name_change->getState());
     EXPECT_EQ(dhcp_ddns::ST_COMPLETED, name_change->getNcrStatus());
     EXPECT_EQ(NameChangeTransaction::NOP_EVT, name_change->getNextEvent());
+}
+
+/// @brief Tests server selection methods
+TEST_F(NameChangeTransactionTest, serverSelectionTest) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+
+    // Verify that the forward domain and its servers can be retrieved.
+    DdnsDomainPtr& domain = name_change->getForwardDomain();
+    ASSERT_TRUE(domain);
+    DnsServerInfoStoragePtr servers = domain->getServers();
+    ASSERT_TRUE(servers);
+
+    // Get the number of entries in the server list.
+    int num_servers = servers->size();
+    ASSERT_TRUE(num_servers > 0);
+
+    ASSERT_NO_THROW(name_change->initServerSelection(domain));
+
+    DNSClientPtr prev_client = name_change->getDNSClient();
+    D2UpdateMessagePtr prev_response = name_change->getDnsUpdateResponse();
+    DnsServerInfoPtr prev_server = name_change->getCurrentServer();
+
+    // Iteratively select through the list of servers.
+    int passes = 0;
+    while (name_change->selectNextServer()) {
+        DnsServerInfoPtr server = name_change->getCurrentServer();
+        DNSClientPtr client = name_change->getDNSClient();
+        D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+        EXPECT_TRUE(server);
+        EXPECT_TRUE(client);
+        EXPECT_TRUE(response);
+
+        EXPECT_NE(server, prev_server);
+        EXPECT_NE(client, prev_client);
+        EXPECT_NE(response, prev_response);
+
+        prev_server = server;
+        prev_client = client;
+        prev_response = response;
+
+        passes++;
+    }
+
+    // Verify that the numer of passes made equal the number of servers.
+    EXPECT_EQ (passes, num_servers);
+
+    // Repeat the same test using the reverse domain.
+    domain = name_change->getReverseDomain();
+    ASSERT_TRUE(domain);
+
+    servers = domain->getServers();
+    ASSERT_TRUE(servers);
+
+    num_servers = servers->size();
+    ASSERT_TRUE(num_servers > 0);
+
+    ASSERT_NO_THROW(name_change->initServerSelection(domain));
+
+    prev_client = name_change->getDNSClient();
+    prev_response = name_change->getDnsUpdateResponse();
+    prev_server = name_change->getCurrentServer();
+
+    passes = 0;
+    while (name_change->selectNextServer()) {
+        DnsServerInfoPtr server = name_change->getCurrentServer();
+        DNSClientPtr client = name_change->getDNSClient();
+        D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+        EXPECT_TRUE(server);
+        EXPECT_TRUE(client);
+        EXPECT_TRUE(response);
+
+        EXPECT_NE(server, prev_server);
+        EXPECT_NE(client, prev_client);
+        EXPECT_NE(response, prev_response);
+
+        prev_server = server;
+        prev_client = client;
+        prev_response = response;
+
+        passes++;
+    }
+
+    EXPECT_EQ (passes, num_servers);
 }
 
 }

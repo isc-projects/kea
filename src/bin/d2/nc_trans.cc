@@ -45,13 +45,14 @@ const int NameChangeTransaction::DERIVED_EVENTS;
 NameChangeTransaction::
 NameChangeTransaction(isc::asiolink::IOService& io_service,
                       dhcp_ddns::NameChangeRequestPtr& ncr,
-                      DdnsDomainPtr forward_domain,
-                      DdnsDomainPtr reverse_domain)
+                      DdnsDomainPtr& forward_domain,
+                      DdnsDomainPtr& reverse_domain)
     : state_handlers_(), io_service_(io_service), ncr_(ncr),
      forward_domain_(forward_domain), reverse_domain_(reverse_domain),
      dns_client_(), state_(NEW_ST), next_event_(NOP_EVT),
      dns_update_status_(DNSClient::OTHER), dns_update_response_(),
-     forward_change_completed_(false), reverse_change_completed_(false) {
+     forward_change_completed_(false), reverse_change_completed_(false),
+     current_server_list_(), current_server_(), next_server_pos_(0) {
     if (!ncr_) {
         isc_throw(NameChangeTransactionError, "NameChangeRequest cannot null");
     }
@@ -65,7 +66,7 @@ NameChangeTransaction(isc::asiolink::IOService& io_service,
         isc_throw(NameChangeTransactionError,
                  "Reverse change must have a reverse domain");
     }
-    
+
     // Use setters here so we get proper values for previous state, last event.
     setState(state_);
     setNextEvent(NOP_EVT);
@@ -94,7 +95,7 @@ void
 NameChangeTransaction::operator()(DNSClient::Status status) {
     // Stow the completion status and re-enter the run loop with the event
     // set to indicate IO completed.
-    // runStateModel is exception safe so we are good to call it here.  
+    // runStateModel is exception safe so we are good to call it here.
     // It won't exit until we hit the next IO wait or the state model ends.
     setDnsUpdateStatus(status);
     runStateModel(IO_COMPLETED_EVT);
@@ -106,12 +107,12 @@ NameChangeTransaction::runStateModel(unsigned int run_event) {
         // Seed the loop with the given event as the next to process.
         setNextEvent(run_event);
         do {
-            // Invoke the current state's handler.  It should consume the 
+            // Invoke the current state's handler.  It should consume the
             // next event, then determine what happens next by setting
-            // current state and/or the next event.  
+            // current state and/or the next event.
             (getStateHandler(state_))();
 
-            // Keep going until a handler sets next event to a NOP_EVT. 
+            // Keep going until a handler sets next event to a NOP_EVT.
         } while (getNextEvent() != NOP_EVT);
     }
     catch (const std::exception& ex) {
@@ -179,12 +180,12 @@ NameChangeTransaction::setReverseChangeCompleted(const bool value) {
     reverse_change_completed_ = value;
 }
 
-const dhcp_ddns::NameChangeRequestPtr& 
+const dhcp_ddns::NameChangeRequestPtr&
 NameChangeTransaction::getNcr() const {
     return (ncr_);
 }
 
-const TransactionKey& 
+const TransactionKey&
 NameChangeTransaction::getTransactionKey() const {
     return (ncr_->getDhcid());
 }
@@ -193,6 +194,54 @@ dhcp_ddns::NameChangeStatus
 NameChangeTransaction::getNcrStatus() const {
     return (ncr_->getStatus());
 }
+
+DdnsDomainPtr&
+NameChangeTransaction::getForwardDomain() {
+    return (forward_domain_);
+}
+
+DdnsDomainPtr&
+NameChangeTransaction::getReverseDomain() {
+    return (reverse_domain_);
+}
+
+void
+NameChangeTransaction::initServerSelection(DdnsDomainPtr& domain) {
+    current_server_list_ = domain->getServers();
+    next_server_pos_ = 0;
+    current_server_.reset();
+}
+
+bool
+NameChangeTransaction::selectNextServer() {
+    if ((current_server_list_) &&
+        (next_server_pos_ < current_server_list_->size())) {
+        current_server_  = (*current_server_list_)[next_server_pos_];
+        dns_update_response_.reset(new
+                                   D2UpdateMessage(D2UpdateMessage::INBOUND));
+        // @todo  Prototype is set on DNSClient constructor.  We need
+        // to progate a configruation value downward, probably starting
+        // at global, then domain, then server
+        // Once that is supported we need to add it here.
+        dns_client_.reset(new DNSClient(dns_update_response_ , this,
+                                        DNSClient::UDP));
+        ++next_server_pos_;
+        return (true);
+    }
+
+    return (false);
+}
+
+const DNSClientPtr&
+NameChangeTransaction::getDNSClient() const {
+    return (dns_client_);
+}
+
+const DnsServerInfoPtr&
+NameChangeTransaction::getCurrentServer() const {
+    return (current_server_);
+}
+
 
 void
 NameChangeTransaction::setNcrStatus(const dhcp_ddns::NameChangeStatus& status) {

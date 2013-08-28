@@ -187,8 +187,8 @@ public:
     /// reverse change is enabled but reverse domain is null.
     NameChangeTransaction(isc::asiolink::IOService& io_service,
                           dhcp_ddns::NameChangeRequestPtr& ncr,
-                          DdnsDomainPtr forward_domain,
-                          DdnsDomainPtr reverse_domain);
+                          DdnsDomainPtr& forward_domain,
+                          DdnsDomainPtr& reverse_domain);
 
     virtual ~NameChangeTransaction();
 
@@ -330,6 +330,45 @@ protected:
     /// @param value is the new value to assign to the flag.
     void setReverseChangeCompleted(const bool value);
 
+    /// @brief Sets the status of the transaction's NameChangeRequest
+    ///
+    /// @param status is the new value to assign to the NCR status.
+    void setNcrStatus(const dhcp_ddns::NameChangeStatus& status);
+
+    /// @brief Initializes server selection from the given DDNS domain.
+    ///
+    /// Method prepares internal data to conduct server selection from the
+    /// list of servers supplied by the given domain.  This method should be
+    /// called when a transaction is ready to begin selecting servers from
+    /// a new list.  Typically this will be prior to starting the updates for
+    /// a given DNS direction.
+    ///
+    /// @param domain is the domain from which server selection is to be
+    /// conducted.
+    void initServerSelection(DdnsDomainPtr& domain);
+
+    /// @brief Selects the next server in the current server list.
+    ///
+    /// This method is used to iterate over the list of servers.  If there are
+    /// no more servers in the list, it returns false.  Otherwise it sets the
+    /// the current server to the next server and creates a new DNSClient
+    /// instance.
+    ///
+    /// @return True if a server has been selected, false if there are no more
+    /// servers from which to select.
+    bool selectNextServer();
+
+    /// @brief Fetches the currently selected server.
+    ///
+    /// @return A const pointer reference to the DnsServerInfo of the current
+    /// server.
+    const DnsServerInfoPtr& getCurrentServer() const;
+
+    /// @brief Fetches the DNSClient instance
+    ///
+    /// @return A const pointer reference to the DNSClient
+    const DNSClientPtr& getDNSClient() const;
+
 public:
     /// @brief Fetches the NameChangeRequest for this transaction.
     ///
@@ -355,10 +394,19 @@ public:
     /// status of the transaction.
     dhcp_ddns::NameChangeStatus getNcrStatus() const;
 
-    /// @brief Sets the status of the transaction's NameChangeRequest
+    /// @brief Fetches the forward DdnsDomain.
     ///
-    /// @param status is the new value to assign to the NCR status.
-    void setNcrStatus(const dhcp_ddns::NameChangeStatus& status);
+    /// This value is only meaningful if the request calls for a forward change.
+    ///
+    /// @return A pointer reference to the forward DdnsDomain
+    DdnsDomainPtr& getForwardDomain();
+
+    /// @brief Fetches the reverse DdnsDomain.
+    ///
+    /// This value is only meaningful if the request calls for a reverse change.
+    ///
+    /// @return A pointer reference to the reverse DdnsDomain
+    DdnsDomainPtr& getReverseDomain();
 
     /// @brief Fetches the transaction's current state.
     ///
@@ -468,6 +516,18 @@ private:
 
     /// @brief Indicator for whether or not the reverse change completed ok.
     bool reverse_change_completed_;
+
+    /// @brief Pointer to the current server selection list.
+    DnsServerInfoStoragePtr current_server_list_;
+
+    /// @brief Pointer to the currently selected server.
+    DnsServerInfoPtr current_server_;
+
+    /// @brief Next server position in the list.
+    ///
+    /// This value is always the position of the next selection in the server
+    /// list, which may be beyond the end of the list.
+    size_t next_server_pos_;
 };
 
 /// @brief Defines a pointer to a NameChangeTransaction.
