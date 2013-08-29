@@ -74,12 +74,16 @@ lowestTTL(const RdataSet* rdataset, ConstRRsetPtr& rrset,
                 sig_rrset->getTTL());
     }
 }
-}
 
-RdataSet*
-RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
-                 ConstRRsetPtr rrset, ConstRRsetPtr sig_rrset,
-                 const RdataSet* old_rdataset)
+// Do some sanity checks on params of create and substract. Return the
+// target rrclass and rrtype (as they are produced as side effect of the
+// checks).
+//
+// The only reason for this function is to reuse common code of the
+// methods.
+std::pair<RRClass, RRType>
+sanityChecks(const ConstRRsetPtr& rrset, const ConstRRsetPtr &sig_rrset,
+             const RdataSet *old_rdataset)
 {
     // Check basic validity
     if (!rrset && !sig_rrset) {
@@ -98,9 +102,26 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
     const RRClass rrclass = rrset ? rrset->getClass() : sig_rrset->getClass();
     const RRType rrtype = rrset ? rrset->getType() :
         getCoveredType(sig_rrset->getRdataIterator()->getCurrent());
+
     if (old_rdataset && old_rdataset->type != rrtype) {
         isc_throw(BadValue, "RR type doesn't match for merging RdataSet");
     }
+
+    return (std::pair<RRClass, RRType>(rrclass, rrtype));
+}
+
+} // Anonymous namespace
+
+RdataSet*
+RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
+                 ConstRRsetPtr rrset, ConstRRsetPtr sig_rrset,
+                 const RdataSet* old_rdataset)
+{
+    const std::pair<RRClass, RRType>& rrparams =
+        sanityChecks(rrset, sig_rrset, old_rdataset);
+    const RRClass& rrclass = rrparams.first;
+    const RRType& rrtype = rrparams.second;
+
     const RRTTL rrttl = lowestTTL(old_rdataset, rrset, sig_rrset);
     if (old_rdataset) {
         encoder.start(rrclass, rrtype, old_rdataset->getDataBuf(),
