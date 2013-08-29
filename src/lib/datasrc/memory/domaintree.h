@@ -625,6 +625,30 @@ private:
         return (down_.get());
     }
 
+    /// \brief Helper method used in many places in code to set
+    /// parent-child links.
+    void setParentChild(DomainTreeNode<T>* oldnode,
+                        DomainTreeNode<T>* newnode,
+                        DomainTreeNodePtr* root_ptr,
+                        DomainTreeNode<T>* thisnode = NULL)
+    {
+        if (!thisnode) {
+            thisnode = this;
+        }
+
+        if (getParent() != NULL) {
+            if (getParent()->getLeft() == oldnode) {
+                thisnode->getParent()->left_ = newnode;
+            } else if (getParent()->getRight() == oldnode) {
+                thisnode->getParent()->right_ = newnode;
+            } else {
+                thisnode->getParent()->down_ = newnode;
+            }
+        } else {
+            *root_ptr = newnode;
+        }
+    }
+
     /// \brief Exchanges the location of two nodes. Their data remain
     /// the same, but their location in the tree, colors and sub-tree
     /// root status may change. Note that this is different from
@@ -672,17 +696,7 @@ private:
         setSubTreeRoot(other_is_subtree_root);
         other->setSubTreeRoot(this_is_subtree_root);
 
-        if (other->getParent() != NULL) {
-            if (other->getParent()->getLeft() == this) {
-                other->getParent()->left_ = other;
-            } else if (other->getParent()->getRight() == this) {
-                other->getParent()->right_ = other;
-            } else {
-                other->getParent()->down_ = other;
-            }
-        } else {
-            *root_ptr = other;
-        }
+        other->setParentChild(this, other, root_ptr);
 
         if (getParent()->getLeft() == other) {
             getParent()->left_ = this;
@@ -2284,17 +2298,7 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
 
     // Set it as the node's parent's child, effectively removing node
     // from the tree.
-    if (node->getParent() != NULL) {
-        if (node->getParent()->getLeft() == node) {
-            node->getParent()->left_ = child;
-        } else if (node->getParent()->getRight() == node) {
-            node->getParent()->right_ = child;
-        } else {
-            node->getParent()->down_ = child;
-        }
-    } else {
-        root_ = child;
-    }
+    node->setParentChild(node, child, &root_);
 
     if (child) {
         child->parent_ = node->getParent();
@@ -2370,17 +2374,8 @@ DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
         DomainTreeNode<T>* new_node = DomainTreeNode<T>::create(mem_sgmt, ls);
 
         new_node->parent_ = upper_node->getParent();
-        if (upper_node->getParent() != NULL) {
-            if (upper_node->getParent()->getLeft() == upper_node) {
-                new_node->getParent()->left_ = new_node;
-            } else if (upper_node->getParent()->getRight() == upper_node) {
-                new_node->getParent()->right_ = new_node;
-            } else {
-                new_node->getParent()->down_ = new_node;
-            }
-        } else {
-            root_ = new_node;
-        }
+
+        upper_node->setParentChild(upper_node, new_node, &root_, new_node);
 
         new_node->left_ = upper_node->getLeft();
         if (new_node->getLeft() != NULL) {
@@ -2453,17 +2448,8 @@ DomainTree<T>::nodeFission(util::MemorySegment& mem_sgmt,
     node.resetLabels(new_prefix);
 
     up_node->parent_ = node.getParent();
-    if (node.getParent() != NULL) {
-        if (node.getParent()->getLeft() == &node) {
-            node.getParent()->left_ = up_node;
-        } else if (node.getParent()->getRight() == &node) {
-            node.getParent()->right_ = up_node;
-        } else {
-            node.getParent()->down_ = up_node;
-        }
-    } else {
-        root_ = up_node;
-    }
+
+    node.setParentChild(&node, up_node, &root_);
 
     up_node->down_ = &node;
     node.parent_ = up_node;
