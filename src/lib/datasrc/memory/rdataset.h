@@ -207,6 +207,52 @@ public:
                             dns::ConstRRsetPtr sig_rrset,
                             const RdataSet* old_rdataset = NULL);
 
+    /// \brief Subtract some RDATAs and RRSIGs from aw RdataSet
+    ///
+    /// Allocate and construct a new RdataSet that contains all the
+    /// data from the \c old_rdataset except for the ones in rrset
+    /// and sig_rrset.
+    ///
+    /// The interface is almost the same as with \c create, as well
+    /// as the restrictions and internal format. The most significant
+    /// difference in the interface is old_rdataset is mandatory here.
+    ///
+    /// This ignores RDATAs present in rrset and not in old_rdataset
+    /// (similarly for RRSIGs). If an RDATA in rrset and not in
+    /// old_rdataset is an error condition or needs other special
+    /// handling, it is up to the caller to check the old_rdataset
+    /// first.
+    ///
+    /// There'll be no memory leak on exception. However, the memory
+    /// allocated from the mem_sgmt may move when
+    /// \c util::MemorySegmentGrown is thrown. Note that it may happen
+    /// even when subtracting data from the old_rdataset, since a new
+    /// copy is being created.
+    ///
+    /// The old_rdataset is not destroyed and it is up to the caller.
+    ///
+    /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
+    ///     relocating data.
+    /// \throw isc::BadValue Given RRset(s) are invalid.
+    /// \throw std::bad_alloc Memory allocation fails.
+    ///
+    /// \param mem_sgmt A \c MemorySegment from which memory for the new
+    /// \c RdataSet is allocated.
+    /// \param encoder The RDATA encoder to encode \c rrset and \c sig_rrset
+    /// with the \c RdataSet to be created.
+    /// \param rrset A (non RRSIG) RRset containing the RDATA that are not
+    /// to be present in the result. Can be NULL if sig_rrset is not.
+    /// \param sig_rrset An RRSIG RRset containing the RRSIGs that are not
+    /// to be present in the result. Can be NULL if rrset is not.
+    /// \param old_rdataset The data from which to subtract.
+    ///
+    /// \return A pointer to the created \c RdataSet.
+    static RdataSet* subtract(util::MemorySegment& mem_sgmt,
+                              RdataEncoder& encoder,
+                              const dns::ConstRRsetPtr& rrset,
+                              const dns::ConstRRsetPtr& sig_rrset,
+                              const RdataSet& old_rdataset);
+
     /// \brief Destruct and deallocate \c RdataSet
     ///
     /// Note that this method needs to know the expected RR class of the
