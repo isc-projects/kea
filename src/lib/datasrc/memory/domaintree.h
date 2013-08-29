@@ -569,22 +569,6 @@ private:
         }
     }
 
-    /// \brief Access sibling node as bare pointer.
-    ///
-    /// A sibling node is defined as the parent's other child. It exists
-    /// at the same level as this node.
-    ///
-    /// \return the sibling node if one exists, NULL otherwise.
-    DomainTreeNode<T>* getSibling() {
-        DomainTreeNode<T>* parent = getParent();
-
-        if (parent->getLeft() == this) {
-            return (parent->getRight());
-        } else {
-            return (parent->getLeft());
-        }
-    }
-
     /// \brief Access uncle node as bare pointer.
     ///
     /// An uncle node is defined as the parent node's sibling. It exists
@@ -2621,9 +2605,93 @@ DomainTree<T>::insertRebalance
 template <typename T>
 void
 DomainTree<T>::removeRebalance
-    (typename DomainTreeNode<T>::DomainTreeNodePtr*,
-     DomainTreeNode<T>*, DomainTreeNode<T>*)
+    (typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr,
+     DomainTreeNode<T>* child, DomainTreeNode<T>* parent)
 {
+    while (parent != *root_ptr) {
+        // A sibling node is defined as the parent's other child. It
+        // exists at the same level as child. Note that child can be
+        // NULL here.
+        DomainTreeNode<T>* sibling = (parent->getLeft() == child) ?
+            parent->getRight() : parent->getLeft();
+
+        if (sibling && sibling->isRed()) {
+            parent->setColor(DomainTreeNode<T>::RED);
+            sibling->setColor(DomainTreeNode<T>::BLACK);
+            if (parent->getLeft() == child) {
+                leftRotate(root_ptr, parent);
+            } else {
+                rightRotate(root_ptr, parent);
+            }
+        }
+
+        // FIXME: Can sibling be NULL here?
+        if (parent->isBlack() &&
+            sibling->isBlack() &&
+            ((!sibling->getLeft()) || sibling->getLeft()->isBlack()) &&
+            ((!sibling->getRight()) || sibling->getRight()->isBlack()))
+        {
+            sibling->setColor(DomainTreeNode<T>::RED);
+            child = parent;
+            parent = parent->getParent();
+            continue;
+        }
+
+        // FIXME: Can sibling be NULL here?
+        if (parent->isRed() &&
+            sibling->isBlack() &&
+            ((!sibling->getLeft()) || sibling->getLeft()->isBlack()) &&
+            ((!sibling->getRight()) || sibling->getRight()->isBlack()))
+        {
+            sibling->setColor(DomainTreeNode<T>::RED);
+            parent->setColor(DomainTreeNode<T>::BLACK);
+            break;
+        }
+
+        if (sibling->isBlack()) {
+            if ((parent->getLeft() == child) &&
+                (sibling->getLeft() && sibling->getLeft()->isRed()) &&
+                ((!sibling->getRight()) || sibling->getRight()->isBlack()))
+            {
+                sibling->setColor(DomainTreeNode<T>::RED);
+                if (sibling->getLeft()) {
+                    sibling->getLeft()->setColor(DomainTreeNode<T>::BLACK);
+                }
+                rightRotate(root_ptr, sibling);
+            } else if ((parent->getRight() == child) &&
+                (sibling->getRight() && sibling->getRight()->isRed()) &&
+                ((!sibling->getLeft()) || sibling->getLeft()->isBlack()))
+            {
+                sibling->setColor(DomainTreeNode<T>::RED);
+                if (sibling->getRight()) {
+                    sibling->getRight()->setColor(DomainTreeNode<T>::BLACK);
+                }
+                leftRotate(root_ptr, sibling);
+            }
+        }
+
+        if (parent->isRed()) {
+            sibling->setColor(DomainTreeNode<T>::RED);
+        } else {
+            sibling->setColor(DomainTreeNode<T>::BLACK);
+        }
+
+        parent->setColor(DomainTreeNode<T>::BLACK);
+
+        if (parent->getLeft() == child) {
+            if (sibling->getRight()) {
+                sibling->getRight()->setColor(DomainTreeNode<T>::BLACK);
+            }
+            leftRotate(root_ptr, parent);
+        } else {
+            if (sibling->getLeft()) {
+                sibling->getLeft()->setColor(DomainTreeNode<T>::BLACK);
+            }
+            rightRotate(root_ptr, parent);
+        }
+
+        break;
+    }
 }
 
 template <typename T>
