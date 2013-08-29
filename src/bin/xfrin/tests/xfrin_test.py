@@ -3486,7 +3486,8 @@ class TestXfrinConnectionSocketCounter(unittest.TestCase):
         try:
             self.assertRaises(self.expception, self.conn.connect,
                               self._master_addrinfo[2])
-            self.assertEqual(1, self.conn._counters.get(
+            self.assertFalse(self.conn.connect_to_master())
+            self.assertEqual(2, self.conn._counters.get(
                     'socket', self._ipver, 'tcp', 'connfail'))
         finally:
             xfrin.asyncore.dispatcher.connect = orig_socket_connect

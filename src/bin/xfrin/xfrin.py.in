@@ -610,6 +610,11 @@ class XfrinConnection(asyncore.dispatcher):
         self._shutdown_event = shutdown_event
         self._master_addrinfo = master_addrinfo
         self._tsig_key = tsig_key
+        # self.tsig_key_name is used for outputting an error massage in
+        # connect_to_master().
+        self.tsig_key_name = None
+        if tsig_key:
+            self.tsig_key_name = self._tsig_key.get_key_name()
         self._tsig_ctx = None
         # tsig_ctx_creator is introduced to allow tests to use a mock class for
         # easier tests (in normal case we always use the default)
