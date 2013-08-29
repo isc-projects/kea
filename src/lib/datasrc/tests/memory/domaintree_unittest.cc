@@ -386,6 +386,72 @@ TEST_F(DomainTreeTest, insertNames) {
 }
 
 TEST_F(DomainTreeTest, remove) {
+    // Delete single nodes and check if the rest of the nodes exist
+    for (int j = 0; j < ordered_names_count; ++j) {
+        TreeHolder holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_, true));
+        TestDomainTree& tree(*holder.get());
+        TestDomainTreeNode* node;
+
+        for (int i = 0; i < name_count; ++i) {
+            tree.insert(mem_sgmt_, Name(domain_names[i]), NULL);
+        }
+
+        for (int i = 0; i < ordered_names_count; ++i) {
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[i]), &node));
+            EXPECT_EQ(static_cast<int*>(NULL),
+                      node->setData(new int(i)));
+        }
+
+        // Now, delete the j'th node from the tree.
+        EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                  tree.find(Name(ordered_names[j]), &node));
+        tree.remove(mem_sgmt_, node, deleteData);
+
+        // Now, walk through nodes in order.
+        TestDomainTreeNodeChain node_path;
+        const TestDomainTreeNode* cnode;
+        int start_node;
+
+        if (j == 0) {
+            EXPECT_NE(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[0]),
+                                &cnode));
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[1]),
+                                &cnode, node_path));
+            start_node = 1;
+        } else {
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[0]),
+                                &cnode, node_path));
+            start_node = 0;
+        }
+
+        for (int i = start_node; i < ordered_names_count; ++i) {
+            // If a superdomain is deleted, everything under that
+            // sub-tree goes away.
+            const Name nj(ordered_names[j]);
+            const Name ni(ordered_names[i]);
+            const NameComparisonResult result = nj.compare(ni);
+            if ((result.getRelation() == NameComparisonResult::EQUAL) ||
+                (result.getRelation() == NameComparisonResult::SUPERDOMAIN)) {
+                continue;
+            }
+
+            EXPECT_NE(static_cast<void*>(NULL), cnode);
+            const int* data = cnode->getData();
+            EXPECT_EQ(i, *data);
+
+            cnode = tree.nextNode(node_path);
+        }
+
+        // We should have reached the end of the tree.
+        EXPECT_EQ(static_cast<void*>(NULL), cnode);
+    }
+}
+
+TEST_F(DomainTreeTest, DISABLED_remove1) {
     ofstream o1("d1.dot");
     dtree_expose_empty_node.dumpDot(o1);
     o1.close();
@@ -423,7 +489,7 @@ TEST_F(DomainTreeTest, remove) {
     o5.close();
 }
 
-TEST_F(DomainTreeTest, remove2) {
+TEST_F(DomainTreeTest, DISABLED_remove2) {
     ofstream o1("g1.dot");
     dtree_expose_empty_node.dumpDot(o1);
     o1.close();
@@ -437,13 +503,27 @@ TEST_F(DomainTreeTest, remove2) {
     o2.close();
 }
 
-TEST_F(DomainTreeTest, remove3) {
+TEST_F(DomainTreeTest, DISABLED_remove3) {
     ofstream o1("g1.dot");
     dtree_expose_empty_node.dumpDot(o1);
     o1.close();
 
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("b"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    ofstream o2("g2.dot");
+    dtree_expose_empty_node.dumpDot(o2);
+    o2.close();
+}
+
+TEST_F(DomainTreeTest, DISABLED_remove4) {
+    ofstream o1("g1.dot");
+    dtree_expose_empty_node.dumpDot(o1);
+    o1.close();
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("j.z.d.e.f"), &dtnode));
     dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
 
     ofstream o2("g2.dot");
