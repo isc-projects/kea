@@ -2284,30 +2284,29 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
 
     // Set it as the node's parent's child, effectively removing node
     // from the tree.
-    if (node->isSubTreeRoot()) {
-        // In this case, node is the only node in this forest sub-tree.
-        typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr =
-            node->getParent() ? &(node->getParent()->down_) : &root_;
-        *root_ptr = NULL;
-    } else {
+    if (node->getParent() != NULL) {
         if (node->getParent()->getLeft() == node) {
             node->getParent()->left_ = child;
-        } else {
+        } else if (node->getParent()->getRight() == node) {
             node->getParent()->right_ = child;
+        } else {
+            node->getParent()->down_ = child;
         }
+    } else {
+        root_ = child;
+    }
 
-        if (child) {
-            child->parent_ = node->getParent();
-        }
+    if (child) {
+        child->parent_ = node->getParent();
+    }
 
-        if (node->isBlack()) {
-            if (child && child->isRed()) {
-                child->setColor(DomainTreeNode<T>::BLACK);
-            } else {
-                typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr =
-                    node->getParent() ? &(node->getParent()->down_) : &root_;
-                removeRebalance(root_ptr, child, node->getParent());
-            }
+    if (node->isBlack()) {
+        if (child && child->isRed()) {
+            child->setColor(DomainTreeNode<T>::BLACK);
+        } else {
+            typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr =
+                upper_node ? &(upper_node->down_) : &root_;
+            removeRebalance(root_ptr, child, node->getParent());
         }
     }
 
