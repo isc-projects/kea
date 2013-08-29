@@ -64,6 +64,53 @@ const size_t Name::MAX_LABELS;
 
 namespace {
 
+// The full absolute names of the nodes in the tree with the addition of
+// the explicit root node.
+const char* const domain_names[] = {
+    "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
+    "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"
+};
+
+// These are set as the node data.
+const int node_distances[] = {
+    3, 1, 2, 2, 2, 3, 1, 2, 1, 1, 2, 2
+};
+
+const int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
+
+/*
+ * The domain order should be:
+ * ., a, b, c, d.e.f, x.d.e.f, w.y.d.e.f, o.w.y.d.e.f, p.w.y.d.e.f,
+ * q.w.y.d.e.f, z.d.e.f, j.z.d.e.f, g.h, i.g.h, k.g.h
+ *             . (no data, can't be found)
+ *             |
+ *             b
+ *           /   \
+ *          a    d.e.f
+ *              /  |   \
+ *             c   |    g.h
+ *                 |     |
+ *                w.y    i
+ *              /  |  \   \
+ *             x   |   z   k
+ *                 |   |
+ *                 p   j
+ *               /   \
+ *              o     q
+ */
+
+const char* const ordered_names[] = {
+    "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
+    "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f",
+    "g.h", "i.g.h", "k.g.h"};
+const size_t ordered_names_count(sizeof(ordered_names) /
+                                 sizeof(*ordered_names));
+
+const char* const upper_node_names[] = {
+    ".", ".", ".", ".", "d.e.f", "d.e.f", "w.y.d.e.f",
+    "w.y.d.e.f", "w.y.d.e.f", "d.e.f", "z.d.e.f",
+    ".", "g.h", "g.h"};
+
 void deleteData(int* i) {
     delete i;
 }
@@ -96,14 +143,6 @@ protected:
         dtree_expose_empty_node(*dtree_expose_empty_node_holder_.get()),
         cdtnode(NULL)
     {
-        const char* const domain_names[] = {
-            "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
-            "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"};
-        const int node_distances[] = {
-            3, 1, 2, 2, 2, 3, 1, 2, 1, 1, 2, 2
-        };
-
-        int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
         for (int i = 0; i < name_count; ++i) {
             dtree.insert(mem_sgmt_, Name(domain_names[i]), &dtnode);
             // Check the node doesn't have any data initially.
@@ -846,45 +885,14 @@ TEST_F(DomainTreeTest, getAbsoluteNameError) {
     EXPECT_THROW(chain.getAbsoluteName(), BadValue);
 }
 
-/*
- * The domain order should be:
- * ., a, b, c, d.e.f, x.d.e.f, w.y.d.e.f, o.w.y.d.e.f, p.w.y.d.e.f,
- * q.w.y.d.e.f, z.d.e.f, j.z.d.e.f, g.h, i.g.h, k.g.h
- *             . (no data, can't be found)
- *             |
- *             b
- *           /   \
- *          a    d.e.f
- *              /  |   \
- *             c   |    g.h
- *                 |     |
- *                w.y    i
- *              /  |  \   \
- *             x   |   z   k
- *                 |   |
- *                 p   j
- *               /   \
- *              o     q
- */
-const char* const names[] = {
-    "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
-    "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f",
-    "g.h", "i.g.h", "k.g.h"};
-const size_t name_count(sizeof(names) / sizeof(*names));
-
-const char* const upper_node_names[] = {
-    ".", ".", ".", ".", "d.e.f", "d.e.f", "w.y.d.e.f",
-    "w.y.d.e.f", "w.y.d.e.f", "d.e.f", "z.d.e.f",
-    ".", "g.h", "g.h"};
-
 TEST_F(DomainTreeTest, getUpperNode) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree_expose_empty_node.find(Name(names[0]),
-                                            &node,
-                                            node_path));
-    for (int i = 0; i < name_count; ++i) {
+              dtree_expose_empty_node.find(Name(ordered_names[0]),
+                                           &node,
+                                           node_path));
+    for (int i = 0; i < ordered_names_count; ++i) {
         EXPECT_NE(static_cast<void*>(NULL), node);
 
         const TestDomainTreeNode* upper_node = node->getUpperNode();
@@ -920,7 +928,7 @@ TEST_F(DomainTreeTest, getSubTreeRoot) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree_expose_empty_node.find(Name(names[0]),
+              dtree_expose_empty_node.find(Name(ordered_names[0]),
                                             &node,
                                             node_path));
     for (int i = 0; i < name_count; ++i) {
@@ -952,10 +960,10 @@ TEST_F(DomainTreeTest, nextNode) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree.find(Name(names[0]), &node, node_path));
-    for (int i = 0; i < name_count; ++i) {
+              dtree.find(Name(ordered_names[0]), &node, node_path));
+    for (int i = 0; i < ordered_names_count; ++i) {
         EXPECT_NE(static_cast<void*>(NULL), node);
-        EXPECT_EQ(Name(names[i]), node_path.getAbsoluteName());
+        EXPECT_EQ(Name(ordered_names[i]), node_path.getAbsoluteName());
         node = dtree.nextNode(node_path);
     }
 
@@ -971,7 +979,7 @@ TEST_F(DomainTreeTest, nextNode) {
 // node_path - the path from the previous call to find(), will be modified
 // chain_length - the number of names that should be in the chain to be walked
 //   (0 means it should be empty, 3 means 'a', 'b' and 'c' should be there -
-//   this is always from the beginning of the names[] list).
+//   this is always from the beginning of the ordered_names[] list).
 // skip_first - if this is false, the node should already contain the node with
 //   the first name of the chain. If it is true, the node should be NULL
 //   (true is for finds that return no match, false for the ones that return
@@ -989,7 +997,7 @@ previousWalk(TestDomainTree& dtree, const TestDomainTreeNode* node,
     }
     for (size_t i(chain_length); i > 0; --i) {
         EXPECT_NE(static_cast<void*>(NULL), node);
-        EXPECT_EQ(Name(names[i - 1]), node_path.getAbsoluteName());
+        EXPECT_EQ(Name(ordered_names[i - 1]), node_path.getAbsoluteName());
         // Find the node at the path and check the value is the same
         // (that it really returns the correct corresponding node)
         //
@@ -998,7 +1006,8 @@ previousWalk(TestDomainTree& dtree, const TestDomainTreeNode* node,
             const TestDomainTreeNode* node2(NULL);
             TestDomainTreeNodeChain node_path2;
             EXPECT_EQ(TestDomainTree::EXACTMATCH,
-                      dtree.find(Name(names[i - 1]), &node2, node_path2));
+                      dtree.find(Name(ordered_names[i - 1]),
+                                 &node2, node_path2));
             EXPECT_EQ(node, node2);
         }
         node = dtree.previousNode(node_path);
@@ -1028,8 +1037,9 @@ TEST_F(DomainTreeTest, previousNode) {
     {
         SCOPED_TRACE("Iterate through");
         EXPECT_EQ(TestDomainTree::EXACTMATCH,
-                  dtree.find(Name(names[name_count - 1]), &node, node_path));
-        previousWalk(dtree, node, node_path, name_count, false);
+                  dtree.find(Name(ordered_names[ordered_names_count - 1]),
+                             &node, node_path));
+        previousWalk(dtree, node, node_path, ordered_names_count, false);
         node = NULL;
         node_path.clear();
     }
@@ -1038,7 +1048,7 @@ TEST_F(DomainTreeTest, previousNode) {
         SCOPED_TRACE("Iterate from the middle");
         // Now, start somewhere in the middle, but within the real node.
         EXPECT_EQ(TestDomainTree::EXACTMATCH,
-                  dtree.find(Name(names[4]), &node, node_path));
+                  dtree.find(Name(ordered_names[4]), &node, node_path));
         previousWalk(dtree, node, node_path, 5, false);
         node = NULL;
         node_path.clear();
@@ -1049,7 +1059,7 @@ TEST_F(DomainTreeTest, previousNode) {
         // If we start at the lowest (which is "a"), we get to the beginning
         // right away.
         EXPECT_EQ(TestDomainTree::EXACTMATCH,
-                  dtree.find(Name(names[0]), &node, node_path));
+                  dtree.find(Name(ordered_names[0]), &node, node_path));
         EXPECT_NE(static_cast<void*>(NULL), node);
         node = dtree.previousNode(node_path);
         ASSERT_NE(static_cast<void*>(NULL), node);
@@ -1076,7 +1086,7 @@ TEST_F(DomainTreeTest, previousNode) {
         SCOPED_TRACE("Start after the last");
         EXPECT_EQ(TestDomainTree::NOTFOUND,
                   dtree.find(Name("z"), &node, node_path));
-        previousWalk(dtree, node, node_path, name_count, true);
+        previousWalk(dtree, node, node_path, ordered_names_count, true);
         node = NULL;
         node_path.clear();
     }
@@ -1138,7 +1148,7 @@ TEST_F(DomainTreeTest, previousNode) {
         EXPECT_GT(node_path.getLastComparisonResult().getOrder(), 0);
         // We then descend into 'i.g.h' and walk all the nodes in the
         // tree.
-        previousWalk(dtree, node, node_path, name_count, true);
+        previousWalk(dtree, node, node_path, ordered_names_count, true);
         node = NULL;
         node_path.clear();
     }
@@ -1432,17 +1442,11 @@ TEST_F(DomainTreeTest, root) {
 }
 
 TEST_F(DomainTreeTest, getAbsoluteLabels) {
-    // The full absolute names of the nodes in the tree
-    // with the addition of the explicit root node
-    const char* const domain_names[] = {
-        "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
-        "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"};
     // The names of the nodes themselves, as they end up in the tree
     const char* const first_labels[] = {
         "c", "b", "a", "x", "z", "g.h", "i", "o",
         "j", "p", "q", "k"};
 
-    const int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
     for (int i = 0; i < name_count; ++i) {
         EXPECT_EQ(TestDomainTree::EXACTMATCH, dtree.find(Name(domain_names[i]),
                   &cdtnode));
