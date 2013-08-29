@@ -352,14 +352,62 @@ TEST_F(DomainTreeTest, remove) {
     o1.close();
 
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("x.d.e.f"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    ofstream o2("d2.dot");
+    dtree_expose_empty_node.dumpDot(o2);
+    o2.close();
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("z.d.e.f"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    ofstream o3("d3.dot");
+    dtree_expose_empty_node.dumpDot(o3);
+    o3.close();
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("q.w.y.d.e.f"), &dtnode));
     dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    ofstream o4("d4.dot");
+    dtree_expose_empty_node.dumpDot(o4);
+    o4.close();
 
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("o.w.y.d.e.f"), &dtnode));
     dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
 
-    ofstream o2("d2.dot");
+    ofstream o5("d5.dot");
+    dtree_expose_empty_node.dumpDot(o5);
+    o5.close();
+}
+
+TEST_F(DomainTreeTest, remove2) {
+    ofstream o1("g1.dot");
+    dtree_expose_empty_node.dumpDot(o1);
+    o1.close();
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("p.w.y.d.e.f"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    ofstream o2("g2.dot");
+    dtree_expose_empty_node.dumpDot(o2);
+    o2.close();
+}
+
+TEST_F(DomainTreeTest, remove3) {
+    ofstream o1("g1.dot");
+    dtree_expose_empty_node.dumpDot(o1);
+    o1.close();
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("b"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    ofstream o2("g2.dot");
     dtree_expose_empty_node.dumpDot(o2);
     o2.close();
 }
