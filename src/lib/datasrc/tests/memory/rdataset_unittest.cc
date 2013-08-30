@@ -224,6 +224,91 @@ TEST_F(RdataSetTest, mergeCreate) {
     }
 }
 
+TEST_F(RdataSetTest, subtract) {
+    // Prepare test data
+    const char* const a_rdatas[] = { "192.0.2.1", "192.0.2.2" };
+    const char* const sig_rdatas[] = {
+        "A 5 2 3600 20120814220826 20120715220826 1234 example.com. FAKE",
+        "A 5 2 3600 20120814220826 20120715220826 4321 example.com. FAKE" };
+    ConstRRsetPtr a_rrsets = textToRRset("www.example.com. 1076895760 IN A "
+                                         + string(a_rdatas[0]) + "\n"
+                                         + "www.example.com. 1076895760 IN A "
+                                         + string(a_rdatas[1]));
+    ConstRRsetPtr rrsig_rrsets =
+        textToRRset("www.example.com. 1076895760 IN RRSIG "
+                    + string(sig_rdatas[0]) + "\n"
+                    + "www.example.com. 1076895760 IN RRSIG "
+                    + string(sig_rdatas[1]));
+    ConstRRsetPtr null_rrset;   // convenience shortcut
+    // Prepare the data to subtract (they have one common and one differing
+    // element each).
+    const char* const a_rdatas_rm[] = { "192.0.2.1", "192.0.2.3" };
+    const char* const sig_rdatas_rm[] = {
+        "A 5 2 3600 20120814220826 20120715220826 1234 example.com. FAKE",
+        "A 5 2 3600 20120814220826 20120715220826 5678 example.com. FAKE" };
+    ConstRRsetPtr a_rrsets_rm =
+        textToRRset("www.example.com. 1076895760 IN A "
+                    + string(a_rdatas_rm[0]) + "\n"
+                    + "www.example.com. 1076895760 IN A "
+                    + string(a_rdatas_rm[1]));
+    ConstRRsetPtr rrsig_rrsets_rm =
+        textToRRset("www.example.com. 1076895760 IN RRSIG "
+                    + string(sig_rdatas_rm[0]) + "\n"
+                    + "www.example.com. 1076895760 IN RRSIG "
+                    + string(sig_rdatas_rm[1]));
+
+    // A similar cycle as in the mergeCreate test.
+    for (int i = 1; i < 4; ++i) {
+        for (int j = 1; j < 4; ++j) {
+            SCOPED_TRACE("creating subtract case " + lexical_cast<string>(i) +
+                         ", " + lexical_cast<string>(j));
+            // Create old rdataset
+            SegmentObjectHolder<RdataSet, RRClass> holder1(mem_sgmt_, rrclass);
+            holder1.set(RdataSet::create(mem_sgmt_, encoder_,
+                                 (i & 1) ? a_rrsets : null_rrset,
+                                 (i & 2) ? rrsig_rrsets : null_rrset));
+            // Create merged rdataset, based on the old one and RRsets
+            SegmentObjectHolder<RdataSet, RRClass> holder2(mem_sgmt_, rrclass);
+            holder2.set(RdataSet::subtract(mem_sgmt_, encoder_,
+                                 (j & 1) ? a_rrsets_rm : null_rrset,
+                                 (j & 2) ? rrsig_rrsets_rm : null_rrset,
+                                 *holder1.get()));
+
+            // Set up the expected data for the case.
+            vector<string> expected_rdata;
+            if (i & 1) {
+                expected_rdata.push_back(a_rdatas[1]);
+                if (!(j & 1)) { // Not removed the other
+                    expected_rdata.push_back(a_rdatas[0]);
+                }
+            }
+            vector<string> expected_sigs;
+            if (i & 1) {
+                expected_sigs.push_back(sig_rdatas[1]);
+                if (!(j & 1)) { // Not removed the other
+                    expected_rdata.push_back(sig_rdatas[0]);
+                }
+            }
+
+            // Then perform the check
+            checkRdataSet(*holder2.get(), expected_rdata, expected_sigs);
+        }
+    }
+    // Reusing the data we have, test some corner cases.
+    SegmentObjectHolder<RdataSet, RRClass> holder_old(mem_sgmt_, rrclass);
+    holder_old.set(RdataSet::create(mem_sgmt_, encoder_, a_rrsets,
+                                    rrsig_rrsets));
+
+    // It throws if no Rdata passed.
+    EXPECT_THROW(RdataSet::subtract(mem_sgmt_, encoder_, null_rrset,
+                                    null_rrset, *holder_old.get()),
+                 isc::BadValue);
+
+    // If we remove everything, it returns NULL
+    EXPECT_EQ(NULL, RdataSet::subtract(mem_sgmt_, encoder_, a_rrsets,
+                                       rrsig_rrsets, *holder_old.get()));
+}
+
 TEST_F(RdataSetTest, duplicate) {
     // Create RRset and RRSIG containing duplicate RDATA.
     ConstRRsetPtr dup_rrset =
