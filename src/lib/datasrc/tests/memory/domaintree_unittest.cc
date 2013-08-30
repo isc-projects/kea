@@ -451,6 +451,99 @@ TEST_F(DomainTreeTest, remove) {
     }
 }
 
+TEST_F(DomainTreeTest, nodeFusion) {
+    // Test that node fusion occurs when conditions permit.
+
+    /* Original tree:
+     *             .
+     *             |
+     *             b
+     *           /   \
+     *          a    d.e.f
+     *              /  |   \
+     *             c   |    g.h
+     *                 |     |
+     *                w.y    i
+     *              /  |  \   \
+     *             x   |   z   k
+     *                 |   |
+     *                 p   j
+     *               /   \
+     *              o     q
+     *
+     */
+
+    // First, check that "d.e.f" and "w.y" exist independently.
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("d.e.f"), &cdtnode));
+    EXPECT_EQ(Name("d.e.f"), cdtnode->getName());
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("w.y.d.e.f"), &cdtnode));
+    EXPECT_EQ(Name("w.y"), cdtnode->getName());
+
+    // Now, delete "x" and "z" nodes.
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("x.d.e.f"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("z.d.e.f"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    /* Deleting 'x' and 'z' should cause "w.y" to be fused with "d.e.f":
+     *             .
+     *             |
+     *             b
+     *           /   \
+     *          a   w.y.d.e.f
+     *              /  |    \
+     *             c   |     g.h
+     *                 |      |
+     *                 p      i
+     *               /   \     \
+     *              o     q     k
+     */
+
+    // Check that "w.y" got fused with "d.e.f"
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("w.y.d.e.f"), &cdtnode));
+    EXPECT_EQ(Name("w.y.d.e.f"), cdtnode->getName());
+
+    // Check that "p" exists independently.
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("p.w.y.d.e.f"), &cdtnode));
+    EXPECT_EQ(Name("p"), cdtnode->getName());
+
+    // Now, delete "o" and "q" nodes.
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("o.w.y.d.e.f"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("q.w.y.d.e.f"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    /* Deleting 'o' and 'q' should cause "p" to be fused with "w.y.d.e.f":
+     *             .
+     *             |
+     *             b
+     *           /   \
+     *          a   p.w.y.d.e.f
+     *              /       \
+     *             c         g.h
+     *                        |
+     *                        i
+     *                         \
+     *                          k
+     */
+
+    // Check that "p" got fused with "w.y.d.e.f"
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("p.w.y.d.e.f"), &cdtnode));
+    EXPECT_EQ(Name("p.w.y.d.e.f"), cdtnode->getName());
+}
+
 TEST_F(DomainTreeTest, DISABLED_remove1) {
     ofstream o1("d1.dot");
     dtree_expose_empty_node.dumpDot(o1);
