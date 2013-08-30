@@ -544,6 +544,83 @@ TEST_F(DomainTreeTest, nodeFusion) {
     EXPECT_EQ(Name("p.w.y.d.e.f"), cdtnode->getName());
 }
 
+TEST_F(DomainTreeTest, nodeFusionWithData) {
+    // Test that node fusion does not occur when there is data in the
+    // parent node.
+
+    /* Original tree:
+     *             .
+     *             |
+     *             b
+     *           /   \
+     *          a    d.e.f
+     *              /  |   \
+     *             c   |    g.h
+     *                 |     |
+     *                w.y    i
+     *              /  |  \   \
+     *             x   |   z   k
+     *                 |   |
+     *                 p   j
+     *               /   \
+     *              o     q
+     *
+     */
+
+    // First, check that "d.e.f" and "w.y" exist independently.
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("d.e.f"), &cdtnode));
+    EXPECT_EQ(Name("d.e.f"), cdtnode->getName());
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("w.y.d.e.f"), &cdtnode));
+    EXPECT_EQ(Name("w.y"), cdtnode->getName());
+
+    // Set data (some value 42) in the "d.e.f" node
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("d.e.f"), &dtnode));
+    EXPECT_EQ(static_cast<int*>(NULL),
+              dtnode->setData(new int(42)));
+
+    // Now, delete "x" and "z" nodes.
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("x.d.e.f"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("z.d.e.f"), &dtnode));
+    dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
+
+    /* Deleting 'x' and 'z' should not cause "w.y" to be fused with
+     * "d.e.f" because "d.e.f" is not empty (has data) in this case.
+     *             .
+     *             |
+     *             b
+     *           /   \
+     *          a    d.e.f
+     *              /  |   \
+     *             c   |    g.h
+     *                 |     |
+     *                w.y    i
+     *                 |      \
+     *                 |       k
+     *                 |
+     *                 p
+     *               /   \
+     *              o     q
+     *
+     */
+
+    // Check that "w.y" did not get fused with "d.e.f"
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("d.e.f"), &cdtnode));
+    EXPECT_EQ(Name("d.e.f"), cdtnode->getName());
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("w.y.d.e.f"), &cdtnode));
+    EXPECT_EQ(Name("w.y"), cdtnode->getName());
+}
+
 TEST_F(DomainTreeTest, DISABLED_remove1) {
     ofstream o1("d1.dot");
     dtree_expose_empty_node.dumpDot(o1);
