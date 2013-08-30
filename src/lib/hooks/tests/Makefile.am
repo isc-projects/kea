@@ -22,7 +22,19 @@ TESTS_ENVIRONMENT = \
 
 TESTS =
 if HAVE_GTEST
-# Build shared libraries for testing.
+# Build shared libraries for testing. The libtool way to create a shared library
+# is to specify "-avoid-version -export-dynamic -module" in the library LDFLAGS
+# (see http://www.gnu.org/software/libtool/manual/html_node/Link-mode.html).
+# Use of these switches will guarantee that the .so files are created in the
+# .libs folder and they can be dlopened.
+# Note that the shared libraries with callouts should not be used together with
+# the --enable-static-link option. With this option, the bind10 libraries are
+# statically linked with the program and if the callout invokes the methods
+# which belong to these libraries, the library with the callout will get its
+# own copy of the static objects (e.g. logger, ServerHooks) and that will lead
+# to unexpected errors. For this reason, the --enable-static-link option is
+# ignored for unit tests built here.
+
 lib_LTLIBRARIES = libnvl.la libivl.la libfxl.la libbcl.la liblcl.la liblecl.la \
                   libucl.la libfcl.la
 
@@ -30,43 +42,53 @@ lib_LTLIBRARIES = libnvl.la libivl.la libfxl.la libbcl.la liblcl.la liblecl.la \
 libnvl_la_SOURCES  = no_version_library.cc
 libnvl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libnvl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libnvl_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 # Incorrect version function
 libivl_la_SOURCES  = incorrect_version_library.cc
 libivl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libivl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libivl_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 # All framework functions throw an exception
 libfxl_la_SOURCES = framework_exception_library.cc
 libfxl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libfxl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libfxl_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 # The basic callout library - contains standard callouts
 libbcl_la_SOURCES  = basic_callout_library.cc
 libbcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libbcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libbcl_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 # The load callout library - contains a load function
 liblcl_la_SOURCES  = load_callout_library.cc
 liblcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+liblcl_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 # The load error callout library - contains a load function that returns
 # an error.
 liblecl_la_SOURCES  = load_error_callout_library.cc
 liblecl_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblecl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+liblecl_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 # The unload callout library - contains an unload function that
 # creates a marker file.
 libucl_la_SOURCES  = unload_callout_library.cc
 libucl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libucl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libucl_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 # The full callout library - contains all three framework functions.
 libfcl_la_SOURCES  = full_callout_library.cc
 libfcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libfcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libfcl_la_LDFLAGS = -avoid-version -export-dynamic -module -Bstatic $(top_builddir)/src/lib/exceptions/libb10-exceptions.la -Bstatic $(top_builddir)/src/lib/hooks/libb10-hooks.la
+libfcl_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+libfcl_la_LIBADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
@@ -83,12 +105,8 @@ nodist_run_unittests_SOURCES  = marker_file.h
 nodist_run_unittests_SOURCES += test_libraries.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
+
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
-if USE_STATIC_LINK
-# If specified, only link unit tests static - the test libraries must be
-# build as shared libraries.
-run_unittests_LDFLAGS  += -static
-endif
 
 run_unittests_LDADD    = $(AM_LDADD)    $(GTEST_LDADD)
 
