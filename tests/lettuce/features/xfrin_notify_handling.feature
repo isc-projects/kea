@@ -28,8 +28,8 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_max | item_min |
-      | socket.unixdomain.open   |        1 |        0 |
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
     # Note: .Xfrout.socket.unixdomain.open can be either expected to
     # be 0 or 1 here.  The reason is: if b10-xfrout has started up and is
     # ready for a request from b10-stats, then b10-stats does request
@@ -136,8 +136,8 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_max | item_min |
-      | socket.unixdomain.open   |        1 |        0 |
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
     # Note: See above about .Xfrout.socket.unixdomain.open.
 
     #
@@ -238,8 +238,8 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_max | item_min |
-      | socket.unixdomain.open   |        1 |        0 |
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
     # Note: See above about .Xfrout.socket.unixdomain.open.
 
     #
@@ -344,8 +344,8 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_max | item_min |
-      | socket.unixdomain.open   |        1 |        0 |
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
     # Note: See above about .Xfrout.socket.unixdomain.open.
 
     #
