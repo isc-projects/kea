@@ -482,11 +482,18 @@ TEST_F(DomainTreeTest, nodeFusion) {
               dtree_expose_empty_node.find(Name("w.y.d.e.f"), &cdtnode));
     EXPECT_EQ(Name("w.y"), cdtnode->getName());
 
-    // Now, delete "x" and "z" nodes.
+    // Now, delete "x" node.
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("x.d.e.f"), &dtnode));
     dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
 
+    // "d.e.f" should still exist independently as "w.y" still has a
+    // left or right child.
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              dtree_expose_empty_node.find(Name("d.e.f"), &cdtnode));
+    EXPECT_EQ(Name("d.e.f"), cdtnode->getName());
+
+    // Now, delete "z" node.
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("z.d.e.f"), &dtnode));
     dtree_expose_empty_node.remove(mem_sgmt_, dtnode, deleteData);
