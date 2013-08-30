@@ -311,13 +311,13 @@ Feature: Xfrin incoming notify handling
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
     The statistics counters are 0 in category .Xfrin.zones.IN except for the following items
-      | item_name              | item_value |
-      | _SERVER_.soaoutv6      |          1 |
-      | _SERVER_.axfrreqv6     |          1 |
-      | _SERVER_.xfrfail       |          1 |
-      | example.org..soaoutv6  |          1 |
-      | example.org..axfrreqv6 |          1 |
-      | example.org..xfrfail   |          1 |
+      | item_name              | min_value |
+      | _SERVER_.soaoutv6      |         1 |
+      | _SERVER_.axfrreqv6     |         1 |
+      | _SERVER_.xfrfail       |         1 |
+      | example.org..soaoutv6  |         1 |
+      | example.org..axfrreqv6 |         1 |
+      | example.org..xfrfail   |         1 |
 
     #
     # Test for Xfr request rejected in IPv4
@@ -417,13 +417,13 @@ Feature: Xfrin incoming notify handling
 
     When I query statistics zones of bind10 module Xfrin with cmdctl
     The statistics counters are 0 in category .Xfrin.zones.IN except for the following items
-      | item_name              | item_value |
-      | _SERVER_.soaoutv4      |          1 |
-      | _SERVER_.axfrreqv4     |          1 |
-      | _SERVER_.xfrfail       |          1 |
-      | example.org..soaoutv4  |          1 |
-      | example.org..axfrreqv4 |          1 |
-      | example.org..xfrfail   |          1 |
+      | item_name              | min_value |
+      | _SERVER_.soaoutv4      |         1 |
+      | _SERVER_.axfrreqv4     |         1 |
+      | _SERVER_.xfrfail       |         1 |
+      | example.org..soaoutv4  |         1 |
+      | example.org..axfrreqv4 |         1 |
+      | example.org..xfrfail   |         1 |
 
     #
     # Test for unreachable slave
