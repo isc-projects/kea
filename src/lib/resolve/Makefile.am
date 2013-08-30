@@ -35,6 +35,7 @@ libb10_resolve_la_LIBADD = $(top_builddir)/src/lib/dns/libb10-dns++.la
 libb10_resolve_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libb10_resolve_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
 libb10_resolve_la_LIBADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
+libb10_resolve_la_LIBADD += $(top_builddir)/src/lib/nsas/libb10-nsas.la
 
 # The message file should be in the distribution.
 EXTRA_DIST = resolve_messages.mes
