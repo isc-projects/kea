@@ -183,6 +183,20 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
     return (rdataset);
 }
 
+RdataSet*
+RdataSet::subtract(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
+                   const dns::ConstRRsetPtr& rrset,
+                   const dns::ConstRRsetPtr& sig_rrset,
+                   const RdataSet& old_rdataset)
+{
+    (void) mem_sgmt;
+    (void) encoder;
+    (void) rrset;
+    (void) sig_rrset;
+    (void) old_rdataset;
+    return NULL; // Just for now
+}
+
 void
 RdataSet::destroy(util::MemorySegment& mem_sgmt, RdataSet* rdataset,
                   RRClass rrclass)
