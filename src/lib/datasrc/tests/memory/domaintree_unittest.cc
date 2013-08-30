@@ -510,7 +510,8 @@ TEST_F(DomainTreeTest, nodeFusion) {
               dtree_expose_empty_node.find(Name("w.y.d.e.f"), &cdtnode));
     EXPECT_EQ(Name("w.y.d.e.f"), cdtnode->getName());
 
-    // Check that "p" exists independently.
+    // Check that "p" exists independently. This also checks that the
+    // down pointer got saved correctly during the last fusion.
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
               dtree_expose_empty_node.find(Name("p.w.y.d.e.f"), &cdtnode));
     EXPECT_EQ(Name("p"), cdtnode->getName());
