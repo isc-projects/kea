@@ -456,8 +456,8 @@ Feature: Xfrin incoming notify handling
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
     The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | min_value | max_value |
-      | _SERVER_.notifyoutv6     |         1 |	       5 |
-      | example.org..notifyoutv6 |         1 |	       5 |
+      | _SERVER_.notifyoutv6     |         1 |         5 |
+      | example.org..notifyoutv6 |         1 |         5 |
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
