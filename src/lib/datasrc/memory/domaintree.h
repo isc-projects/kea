@@ -1674,6 +1674,16 @@ public:
 
     /// \brief Delete a tree node.
     ///
+    /// When a node is deleted, a process called node fusion occurs
+    /// where nodes that satisfy some conditions are combined together
+    /// into a new node, and the old nodes are deleted from the
+    /// tree. From the DomainTree user's perspective, such node fusion
+    /// will not cause any disturbance in the content of the DomainTree
+    /// itself, but any existing pointers that the user code contains to
+    /// DomainTreeNodes may be invalidated. In this case, the user code
+    /// is required to re-lookup the node using \c find() and other seek
+    /// methods.
+    ///
     /// \throw none.
     ///
     /// \param mem_sgmt The \c MemorySegment object used to insert the nodes
@@ -1762,8 +1772,11 @@ private:
                      const isc::dns::LabelSequence& new_prefix,
                      const isc::dns::LabelSequence& new_suffix);
 
-    /// Try to combine the upper node and its down node into one node,
-    /// deleting the parent in the process.
+    /// Try to replace the upper node and its down node into a single
+    /// new node, deleting the old nodes in the process. This happens
+    /// iteratively up the tree until no pair of nodes can be fused
+    /// anymore. Note that after deletion operation, a pointer to a node
+    /// may be invalid.
     void tryNodeFusion(util::MemorySegment& mem_sgmt,
                        DomainTreeNode<T>* upper_node);
 
