@@ -2813,15 +2813,20 @@ DomainTree<T>::removeRebalance
         sibling->setColor(parent->getColor());
         parent->setColor(DomainTreeNode<T>::BLACK);
 
+        ss1 = sibling->getLeft();
+        ss2 = sibling->getRight();
+        if (parent->getLeft() != child) {
+            // Swap for the mirror arrangement described in case 4 (b)
+            // above.
+            std::swap(ss1, ss2);
+        }
+
+        // ss2 cannot be NULL here as it is a RED node.
+        ss2->setColor(DomainTreeNode<T>::BLACK);
+
         if (parent->getLeft() == child) {
-            if (sibling->getRight()) {
-                sibling->getRight()->setColor(DomainTreeNode<T>::BLACK);
-            }
             leftRotate(root_ptr, parent);
         } else {
-            if (sibling->getLeft()) {
-                sibling->getLeft()->setColor(DomainTreeNode<T>::BLACK);
-            }
             rightRotate(root_ptr, parent);
         }
 
