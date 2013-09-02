@@ -2795,9 +2795,8 @@ DomainTree<T>::removeRebalance
             DomainTreeNode<T>::isBlack(ss2))
         {
             sibling->setColor(DomainTreeNode<T>::RED);
-            if (ss1) {
-                ss1->setColor(DomainTreeNode<T>::BLACK);
-            }
+            // ss1 cannot be NULL here as it is a RED node.
+            ss1->setColor(DomainTreeNode<T>::BLACK);
 
             if (parent->getLeft() != child) {
                 rightRotate(root_ptr, sibling);
