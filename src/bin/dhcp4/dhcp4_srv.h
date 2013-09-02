@@ -19,6 +19,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
 #include <dhcp/option4_client_fqdn.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <hooks/callout_handle.h>
@@ -375,6 +376,16 @@ protected:
     /// @param opt option that contains server-id
     /// @return string representation
     static std::string srvidToString(const OptionPtr& opt);
+
+    /// @brief Computes DHCID using options stored in the response message
+    /// to a client.
+    ///
+    /// @param query An object encapsulating client's message to the server.
+    /// @param answer An object encapsulating response message being sent to
+    /// a client.
+    /// @return An object encapsulating DHCID to be used for DNS updates.
+    static isc::dhcp_ddns::D2Dhcid computeDhcid(const Pkt4Ptr& query,
+                                                const Pkt4Ptr& answer);
 
     /// @brief Selects a subnet for a given client's packet.
     ///
