@@ -36,7 +36,10 @@ CREATE TABLE lease4 (
     client_id VARBINARY(128),                   # Client ID
     valid_lifetime INT UNSIGNED,                # Length of the lease (seconds)
     expire TIMESTAMP,                           # Expiration time of the lease
-    subnet_id INT UNSIGNED                      # Subnet identification
+    subnet_id INT UNSIGNED,                     # Subnet identification
+    fqdn_fwd BOOL,                              # Has forward DNS update been performed by a server
+    fqdn_rev BOOL,                              # Has reverse DNS update been performed by a server
+    hostname VARCHAR(255)                       # The FQDN of the client
     ) ENGINE = INNODB;
 
 
@@ -60,7 +63,11 @@ CREATE TABLE lease6 (
     lease_type TINYINT,                         # Lease type (see lease6_types
                                                 #    table for possible values)
     iaid INT UNSIGNED,                          # See Section 10 of RFC 3315
-    prefix_len TINYINT UNSIGNED                 # For IA_PD only
+    prefix_len TINYINT UNSIGNED,                # For IA_PD only
+    fqdn_fwd BOOL,                              # Has forward DNS update been performed by a server
+    fqdn_rev BOOL,                              # Has reverse DNS update been performed by a server
+    hostname VARCHAR(255)                       # The FQDN of the client
+
     ) ENGINE = INNODB;
 
 # Create search indexes for lease4 table 

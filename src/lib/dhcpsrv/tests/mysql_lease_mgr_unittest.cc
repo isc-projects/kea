@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -236,9 +236,6 @@ public:
         lease->t1_ = 0;                             // Not saved
         lease->t2_ = 0;                             // Not saved
         lease->fixed_ = false;                      // Unused
-        lease->hostname_ = std::string("");         // Unused
-        lease->fqdn_fwd_ = false;                   // Unused
-        lease->fqdn_rev_ = false;                   // Unused
         lease->comments_ = std::string("");         // Unused
 
         // Set other parameters.  For historical reasons, address 0 is not used.
@@ -249,6 +246,9 @@ public:
             lease->valid_lft_ = 8677;
             lease->cltt_ = 168256;
             lease->subnet_id_ = 23;
+            lease->fqdn_rev_ = true;
+            lease->fqdn_fwd_ = false;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress4_[1]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);
@@ -257,6 +257,9 @@ public:
             lease->valid_lft_ = 3677;
             lease->cltt_ = 123456;
             lease->subnet_id_ = 73;
+            lease->fqdn_rev_ = true;
+            lease->fqdn_fwd_ = true;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress4_[2]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x2a);
@@ -265,6 +268,9 @@ public:
             lease->valid_lft_ = 5412;
             lease->cltt_ = 234567;
             lease->subnet_id_ = 73;                         // Same as lease 1
+            lease->fqdn_rev_ = false;
+            lease->fqdn_fwd_ = false;
+            lease->hostname_ = "";
 
         } else if (address == straddress4_[3]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
@@ -278,6 +284,9 @@ public:
             lease->valid_lft_ = 7000;
             lease->cltt_ = 234567;
             lease->subnet_id_ = 37;
+            lease->fqdn_rev_ = true;
+            lease->fqdn_fwd_ = true;
+            lease->hostname_ = "otherhost.example.com.";
 
         } else if (address == straddress4_[4]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x4c);
@@ -287,6 +296,9 @@ public:
             lease->valid_lft_ = 7736;
             lease->cltt_ = 222456;
             lease->subnet_id_ = 85;
+            lease->fqdn_rev_ = true;
+            lease->fqdn_fwd_ = true;
+            lease->hostname_ = "otherhost.example.com.";
 
         } else if (address == straddress4_[5]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x19);      // Same as lease 1
@@ -296,6 +308,9 @@ public:
             lease->valid_lft_ = 7832;
             lease->cltt_ = 227476;
             lease->subnet_id_ = 175;
+            lease->fqdn_rev_ = false;
+            lease->fqdn_fwd_ = false;
+            lease->hostname_ = "otherhost.example.com.";
 
         } else if (address == straddress4_[6]) {
             lease->hwaddr_ = vector<uint8_t>(6, 0x6e);
@@ -305,6 +320,9 @@ public:
             lease->valid_lft_ = 1832;
             lease->cltt_ = 627476;
             lease->subnet_id_ = 112;
+            lease->fqdn_rev_ = false;
+            lease->fqdn_fwd_ = true;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress4_[7]) {
             lease->hwaddr_ = vector<uint8_t>();             // Empty
@@ -312,6 +330,9 @@ public:
             lease->valid_lft_ = 7975;
             lease->cltt_ = 213876;
             lease->subnet_id_ = 19;
+            lease->fqdn_rev_ = true;
+            lease->fqdn_fwd_ = true;
+            lease->hostname_ = "myhost.example.com.";
 
         } else {
             // Unknown address, return an empty pointer.
@@ -343,9 +364,6 @@ public:
         lease->t1_ = 0;                             // Not saved
         lease->t2_ = 0;                             // Not saved
         lease->fixed_ = false;                      // Unused
-        lease->hostname_ = std::string("");         // Unused
-        lease->fqdn_fwd_ = false;                   // Unused
-        lease->fqdn_rev_ = false;                   // Unused
         lease->comments_ = std::string("");         // Unused
 
         // Set other parameters.  For historical reasons, address 0 is not used.
@@ -358,6 +376,9 @@ public:
             lease->valid_lft_ = 8677;
             lease->cltt_ = 168256;
             lease->subnet_id_ = 23;
+            lease->fqdn_fwd_ = true;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress6_[1]) {
             lease->type_ = Lease6::LEASE_IA_TA;
@@ -368,6 +389,9 @@ public:
             lease->valid_lft_ = 3677;
             lease->cltt_ = 123456;
             lease->subnet_id_ = 73;
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress6_[2]) {
             lease->type_ = Lease6::LEASE_IA_PD;
@@ -378,6 +402,9 @@ public:
             lease->valid_lft_ = 5412;
             lease->cltt_ = 234567;
             lease->subnet_id_ = 73;                     // Same as lease 1
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = false;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress6_[3]) {
             lease->type_ = Lease6::LEASE_IA_NA;
@@ -397,6 +424,9 @@ public:
             lease->valid_lft_ = 7000;
             lease->cltt_ = 234567;
             lease->subnet_id_ = 37;
+            lease->fqdn_fwd_ = true;
+            lease->fqdn_rev_ = false;
+            lease->hostname_ = "myhost.example.com.";
 
         } else if (address == straddress6_[4]) {
             // Same DUID and IAID as straddress6_1
@@ -408,6 +438,9 @@ public:
             lease->valid_lft_ = 7736;
             lease->cltt_ = 222456;
             lease->subnet_id_ = 671;
+            lease->fqdn_fwd_ = true;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "otherhost.example.com.";
 
         } else if (address == straddress6_[5]) {
             // Same DUID and IAID as straddress6_1
@@ -420,6 +453,9 @@ public:
             lease->valid_lft_ = 7832;
             lease->cltt_ = 227476;
             lease->subnet_id_ = 175;
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "hostname.example.com.";
 
         } else if (address == straddress6_[6]) {
             // Same DUID as straddress6_1
@@ -432,6 +468,9 @@ public:
             lease->valid_lft_ = 1832;
             lease->cltt_ = 627476;
             lease->subnet_id_ = 112;
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "hostname.example.com.";
 
         } else if (address == straddress6_[7]) {
             // Same IAID as straddress6_1
@@ -443,6 +482,9 @@ public:
             lease->valid_lft_ = 7975;
             lease->cltt_ = 213876;
             lease->subnet_id_ = 19;
+            lease->fqdn_fwd_ = false;
+            lease->fqdn_rev_ = true;
+            lease->hostname_ = "hostname.example.com.";
 
         } else {
             // Unknown address, return an empty pointer.
@@ -779,6 +821,31 @@ TEST_F(MySqlLeaseMgrTest, lease4NullClientId) {
 
 }
 
+/// @brief Verify that too long hostname for Lease4 is not accepted.
+///
+/// Checks that the it is not possible to create a lease when the hostname
+/// length exceeds 255 characters.
+TEST_F(MySqlLeaseMgrTest, lease4InvalidHostname) {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Create a dummy hostname, consisting of 255 characters.
+    leases[1]->hostname_.assign(255, 'a');
+    ASSERT_TRUE(lmptr_->addLease(leases[1]));
+
+    // The new lease must be in the database.
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    detailCompareLease(leases[1], l_returned);
+
+    // Let's delete the lease, so as we can try to add it again with
+    // invalid hostname.
+    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[1]));
+
+    // Create a hostname with 256 characters. It should not be accepted.
+    leases[1]->hostname_.assign(256, 'a');
+    EXPECT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+}
+
 /// @brief Basic Lease6 Checks
 ///
 /// Checks that the addLease, getLease6 (by address) and deleteLease (with an
@@ -823,6 +890,31 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
     l_returned = lmptr_->getLease6(ioaddress6_[2]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
+}
+
+/// @brief Verify that too long hostname for Lease6 is not accepted.
+///
+/// Checks that the it is not possible to create a lease when the hostname
+/// length exceeds 255 characters.
+TEST_F(MySqlLeaseMgrTest, lease6InvalidHostname) {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Create a dummy hostname, consisting of 255 characters.
+    leases[1]->hostname_.assign(255, 'a');
+    ASSERT_TRUE(lmptr_->addLease(leases[1]));
+
+    // The new lease must be in the database.
+    Lease6Ptr l_returned = lmptr_->getLease6(ioaddress6_[1]);
+    detailCompareLease(leases[1], l_returned);
+
+    // Let's delete the lease, so as we can try to add it again with
+    // invalid hostname.
+    EXPECT_TRUE(lmptr_->deleteLease(ioaddress6_[1]));
+
+    // Create a hostname with 256 characters. It should not be accepted.
+    leases[1]->hostname_.assign(256, 'a');
+    EXPECT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address
@@ -888,7 +980,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSize) {
         leases[1]->hwaddr_.resize(i, i);
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
         // @todo: Simply use HWAddr directly once 2589 is implemented
-        Lease4Collection returned = 
+        Lease4Collection returned =
             lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER));
 
         ASSERT_EQ(1, returned.size());
@@ -917,7 +1009,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     // Get the leases matching the hardware address of lease 1 and
     // subnet ID of lease 1.  Result should be a single lease - lease 1.
     // @todo: Simply use HWAddr directly once 2589 is implemented
-    Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, 
+    Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
         HTYPE_ETHER), leases[1]->subnet_id_);
 
     ASSERT_TRUE(returned);
@@ -954,9 +1046,9 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     leases[1]->addr_ = leases[2]->addr_;
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
     // @todo: Simply use HWAddr directly once 2589 is implemented
-    EXPECT_THROW(returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, 
-                                                    HTYPE_ETHER), 
-                                             leases[1]->subnet_id_), 
+    EXPECT_THROW(returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
+                                                    HTYPE_ETHER),
+                                             leases[1]->subnet_id_),
                  isc::dhcp::MultipleRecords);
 
     // Delete all leases in the database
@@ -981,8 +1073,8 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetIdSize) {
         leases[1]->hwaddr_.resize(i, i);
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
         // @todo: Simply use HWAddr directly once 2589 is implemented
-        Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, 
-                                                      HTYPE_ETHER), 
+        Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
+                                                      HTYPE_ETHER),
                                                leases[1]->subnet_id_);
         ASSERT_TRUE(returned);
         detailCompareLease(leases[1], returned);
@@ -1273,6 +1365,9 @@ TEST_F(MySqlLeaseMgrTest, updateLease4) {
     // Modify some fields in lease 1 (not the address) and update it.
     ++leases[1]->subnet_id_;
     leases[1]->valid_lft_ *= 2;
+    leases[1]->hostname_ = "modified.hostname.";
+    leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
+    leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
     lmptr_->updateLease4(leases[1]);
 
     // ... and check what is returned is what is expected.
@@ -1299,6 +1394,10 @@ TEST_F(MySqlLeaseMgrTest, updateLease4) {
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
+    // Try to update the lease with the too long hostname.
+    leases[1]->hostname_.assign(256, 'a');
+    EXPECT_THROW(lmptr_->updateLease4(leases[1]), isc::dhcp::DbOperationError);
+
     // Try updating a lease not in the database.
     lmptr_->deleteLease(ioaddress4_[2]);
     EXPECT_THROW(lmptr_->updateLease4(leases[2]), isc::dhcp::NoSuchLease);
@@ -1324,6 +1423,9 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
     ++leases[1]->iaid_;
     leases[1]->type_ = Lease6::LEASE_IA_PD;
     leases[1]->valid_lft_ *= 2;
+    leases[1]->hostname_ = "modified.hostname.v6.";
+    leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
+    leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
     lmptr_->updateLease6(leases[1]);
     lmptr_->commit();
 
@@ -1351,6 +1453,10 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
     l_returned = lmptr_->getLease6(ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
+
+    // Try to update the lease with the too long hostname.
+    leases[1]->hostname_.assign(256, 'a');
+    EXPECT_THROW(lmptr_->updateLease6(leases[1]), isc::dhcp::DbOperationError);
 
     // Try updating a lease not in the database.
     EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::dhcp::NoSuchLease);
