@@ -78,6 +78,12 @@ public:
     /// or there is an odd number of digits.
     D2Dhcid(const std::string& data);
 
+    /// @brief Constructor, creates new instance of the @c D2Dhcid using a
+    /// vector holding raw DHCID.
+    ///
+    /// @param data An vector holding DHCID in the raw format.
+    D2Dhcid(const std::vector<uint8_t>& data);
+
     /// @brief Constructor, creates an instance of the @c D2Dhcid from the
     /// @c isc::dhcp::DUID.
     ///
@@ -100,6 +106,11 @@ public:
     /// @throw NcrMessageError if the input data contains non-digits
     /// or there is an odd number of digits.
     void fromStr(const std::string& data);
+
+    /// @brief Sets the DHCID value represented by raw data.
+    ///
+    /// @param data Holds the raw bytes representing DHCID.
+    void fromBytes(const std::vector<uint8_t>& data);
 
     /// @brief Sets the DHCID value based on the DUID and FQDN.
     ///
