@@ -2668,7 +2668,7 @@ DomainTree<T>::removeRebalance
         DomainTreeNode<T>* sibling = (parent->getLeft() == child) ?
             parent->getRight() : parent->getLeft();
 
-        if (sibling && sibling->isRed()) {
+        if (sibling->isRed()) {
             parent->setColor(DomainTreeNode<T>::RED);
             sibling->setColor(DomainTreeNode<T>::BLACK);
             if (parent->getLeft() == child) {
@@ -2678,7 +2678,10 @@ DomainTree<T>::removeRebalance
             }
         }
 
-        // FIXME: Can sibling be NULL here?
+        // Re-compute child's sibling due to the tree adjustment above.
+        sibling = (parent->getLeft() == child) ?
+            parent->getRight() : parent->getLeft();
+
         if (parent->isBlack() &&
             sibling->isBlack() &&
             ((!sibling->getLeft()) || sibling->getLeft()->isBlack()) &&
@@ -2689,7 +2692,7 @@ DomainTree<T>::removeRebalance
             continue;
         }
 
-        // FIXME: Can sibling be NULL here?
+        // FIXME: Can't sibling be NULL here?
         if (parent->isRed() &&
             sibling->isBlack() &&
             ((!sibling->getLeft()) || sibling->getLeft()->isBlack()) &&
@@ -2721,6 +2724,10 @@ DomainTree<T>::removeRebalance
                 leftRotate(root_ptr, sibling);
             }
         }
+
+        // Re-compute child's sibling due to the tree adjustment above.
+        sibling = (parent->getLeft() == child) ?
+            parent->getRight() : parent->getLeft();
 
         if (parent->isRed()) {
             sibling->setColor(DomainTreeNode<T>::RED);
