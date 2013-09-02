@@ -2272,8 +2272,8 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
     // Save subtree root's parent for use later.
     DomainTreeNode<T>* upper_node = node->getUpperNode();
 
-    // node points to the node to be deleted. It first has to be
-    // exchanged with the right-most node in the left sub-tree or the
+    // node points to the node to be deleted in the BST. It first has to
+    // be exchanged with the right-most node in the left sub-tree or the
     // left-most node in the right sub-tree. (Here, sub-tree is inside
     // this RB tree itself, not in the tree-of-trees forest.) The node
     // then ends up having a maximum of 1 child. Note that this is not
@@ -2310,6 +2310,7 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
     // from the tree.
     node->setParentChild(node, child, &root_);
 
+    // Child can be NULL here if node was a leaf.
     if (child) {
         child->parent_ = node->getParent();
     }
@@ -2324,7 +2325,8 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
         }
     }
 
-    // If node has a subtree under it, delete it too.
+    // If node has a sub red-black tree under it (down_ pointer), delete
+    // it too. Here, we can use the simple subtree form of delete.
     if (node->getDown()) {
         node->getDown()->parent_ = NULL;
         deleteHelper(mem_sgmt, node->getDown(), deleter);
@@ -2332,6 +2334,7 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
 
     tryNodeFusion(mem_sgmt, upper_node);
 
+    // Finally, destroy the node.
     deleter(node->data_.get());
     DomainTreeNode<T>::destroy(mem_sgmt, node);
     --node_count_;
@@ -2352,6 +2355,7 @@ void
 DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
                              DomainTreeNode<T>* upper_node)
 {
+    // Keep doing node fusion up the tree until it's no longer possible.
     while (upper_node) {
         DomainTreeNode<T>* subtree_root = upper_node->getDown();
 
@@ -2367,7 +2371,7 @@ DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
         }
 
         // If the subtree root has left or right children, the subtree
-        // has more than 1 nodes and it cannot can be fused.
+        // has more than 1 nodes, so fusion cannot be done.
         if (subtree_root->getLeft() || subtree_root->getRight()) {
             break;
         }
@@ -2377,10 +2381,15 @@ DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
             break;
         }
 
+        // Create a new label sequence with (subtree_root+upper_node)
+        // labels.
         uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH];
         isc::dns::LabelSequence ls(subtree_root->getLabels(), buf);
         ls.extend(upper_node->getLabels(), buf);
 
+        // We create a new node to replace subtree_root and
+        // upper_node. subtree_root and upper_node will be deleted at
+        // the end.
         DomainTreeNode<T>* new_node = DomainTreeNode<T>::create(mem_sgmt, ls);
 
         new_node->parent_ = upper_node->getParent();
@@ -2402,6 +2411,7 @@ DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
             new_node->getDown()->parent_ = new_node;
         }
 
+        // The color of the new node is the same as the upper node's.
         if (upper_node->isRed()) {
             new_node->setColor(DomainTreeNode<T>::RED);
         } else {
@@ -2410,7 +2420,7 @@ DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
 
         new_node->setSubTreeRoot(upper_node->isSubTreeRoot());
 
-        // Set new_node's flags
+        // The flags of the new node are the same as the upper node's.
         new_node->setFlag(DomainTreeNode<T>::FLAG_CALLBACK,
                           upper_node->getFlag(DomainTreeNode<T>::FLAG_CALLBACK));
         new_node->setFlag(DomainTreeNode<T>::FLAG_USER1,
@@ -2420,11 +2430,13 @@ DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
         new_node->setFlag(DomainTreeNode<T>::FLAG_USER3,
                           upper_node->getFlag(DomainTreeNode<T>::FLAG_USER3));
 
-        // Set new_node's data
+        // The data on the new node is the same as the subtree
+        // root's. Note that the upper node must be empty (contains no
+        // data).
         T* data = subtree_root->setData(NULL);
         new_node->setData(data);
 
-        // Delete the old nodes.
+        // Destroy the old nodes (without destroying any data).
         DomainTreeNode<T>::destroy(mem_sgmt, upper_node);
         DomainTreeNode<T>::destroy(mem_sgmt, subtree_root);
 
