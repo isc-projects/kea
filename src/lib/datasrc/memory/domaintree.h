@@ -2688,8 +2688,10 @@ DomainTree<T>::removeRebalance
             // Case 2. Here, the sibling is RED. We do a tree rotation
             // at the parent such that sibling is the new parent, and
             // the old parent is sibling's child. We also invert the
-            // colors of the two nodes. This step is done to convert the
-            // tree to a form for steps below.
+            // colors of the two nodes.
+            //
+            // This step is done to convert the tree to a form for
+            // further cases below.
 
             /* Parent (P) has to be BLACK here as its child sibling (S)
              * is RED.
@@ -2747,22 +2749,22 @@ DomainTree<T>::removeRebalance
          *
          *         G(?)                   G(?)
          *         /  \                   /  \
-         *       P(R)        =>         P(B)      (Rebalancing is done)
+         *       P(R)        =>         P(B)      (Rebalancing is complete)
          *      /   \                  /   \
-         *   C(?)   S(B)            C(?)   S(R)
-         *   / \     /  \           / \     /  \
-         *        s1(B) s2(B)            s1(B) s2(B)
+         *   C(?)    S(B)           C(?)    S(R)
+         *   / \     /   \           / \    /   \
+         *        ss1(B)  ss2(B)         ss1(B)  ss2(B)
          *
          *
          * (b):
          *
-         *         G(?)                   G(?) <----------(new parent)
+         *         G(?)                   G(?) <----------(New parent)
          *         /   \                  /   \
-         *       P(B)        =>         P(B) <------------(new child)
+         *       P(B)        =>         P(B) <------------(New child)
          *      /   \                  /   \
-         *   C(?)   S(B)            C(?)   S(R)
-         *   / \     /  \           / \     /  \
-         *        s1(B) s2(B)            s1(B) s2(B)
+         *   C(?)    S(B)           C(?)    S(R)
+         *   / \     /   \           / \    /   \
+         *        ss1(B)  ss2(B)         ss1(B)  ss2(B)
          */
 
         if ((DomainTreeNode<T>::isBlack(sibling->getLeft()) &&
@@ -2784,10 +2786,55 @@ DomainTree<T>::removeRebalance
         assert(DomainTreeNode<T>::isBlack(sibling));
         assert(sibling);
 
+        // NOTE #5: The path through parent--sibling is still heavier
+        // than parent--child by 1 extra BLACK node in its path. This is
+        // the key point, and this is why we are still doing the
+        // rebalancing.
+
+        // Case 4. Now, one or both of sibling's children are not
+        // BLACK. (a) We consider the case where child is the left-child
+        // of parent, and the left-child of sibling is RED and the
+        // right-child of sibling is BLACK. (b) We also consider its
+        // mirror, arrangement, i.e., the case where child is the
+        // right-child of parent, and the right-child of sibling is RED
+        // and the left-child of sibling is BLACK.
+        //
+        // In both cases, we change sibling's color to RED, the color of
+        // the RED child of sibling to BLACK (so both children of
+        // sibling are BLACK), and we do a tree rotation around sibling
+        // node in the opposite direction of the old RED child of
+        // sibling.
+        //
+        // This step is done to convert the tree to a form for further
+        // cases below.
+
+        /* (a):
+         *
+         *       P(?)        =>         P(?)
+         *      /   \                  /   \
+         *   C(?)    S(B)           C(?)    ss1(B)
+         *   / \     /   \           / \    /    \
+         *        ss1(R)  ss2(B)          x(B)   S(R)
+         *        /  \                           /  \
+         *      x(B) y(B)                     y(B)   ss2(B)
+         *
+         *
+         * (b):
+         *
+         *           P(?)        =>          P(?)
+         *          /    \                  /    \
+         *       S(B)     C(?)          ss1(B)   C(?)
+         *       /  \      / \           /  \     / \
+         *  ss2(B) ss1(R)             S(R)  x(B)
+         *          /  \              /  \
+         *        y(B) x(B)       ss2(B) y(B)
+         */
+
         DomainTreeNode<T>* ss1 = sibling->getLeft();
         DomainTreeNode<T>* ss2 = sibling->getRight();
-
         if (parent->getLeft() != child) {
+            // Swap for the mirror arrangement described in case 4 (b)
+            // above.
             std::swap(ss1, ss2);
         }
 
@@ -2808,6 +2855,27 @@ DomainTree<T>::removeRebalance
             sibling = (parent->getLeft() == child) ?
                 parent->getRight() : parent->getLeft();
         }
+
+        // NOTE #6: sibling is still BLACK, even if the sibling variable
+        // was assigned in the node above, it was set to ss1 which is
+        // now a BLACK node.
+        assert(DomainTreeNode<T>::isBlack(sibling));
+
+        // NOTE #7: sibling cannot be NULL here as even if the sibling
+        // variable was assigned in the node above, it was set to ss1
+        // which was a RED node before (non-NULL).
+        assert(sibling);
+
+        // NOTE #8: The path through parent--sibling is still heavier
+        // than parent--child by 1 extra BLACK node in its path. This is
+        // the key point, and this is why we are still doing the
+        // rebalancing.
+
+        // Case 5. After case 4 above, we are in a canonical form now
+        // where sibling is BLACK, and either (a) if child is the
+        // left-child of parent, the right-child of sibling is
+        // definitely RED, or (b) if child is the right-child of parent,
+        // the left-child of sibling is definitely RED.
 
 
         sibling->setColor(parent->getColor());
