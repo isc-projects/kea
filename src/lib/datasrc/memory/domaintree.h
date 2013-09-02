@@ -2838,9 +2838,7 @@ DomainTree<T>::removeRebalance
             std::swap(ss1, ss2);
         }
 
-        if (DomainTreeNode<T>::isRed(ss1) &&
-            DomainTreeNode<T>::isBlack(ss2))
-        {
+        if (DomainTreeNode<T>::isBlack(ss2)) {
             sibling->setColor(DomainTreeNode<T>::RED);
             // ss1 cannot be NULL here as it is a RED node.
             ss1->setColor(DomainTreeNode<T>::BLACK);
