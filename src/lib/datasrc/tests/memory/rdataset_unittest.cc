@@ -103,8 +103,10 @@ checkData(const void* data, size_t size, const RRType* rrtype,
     ASSERT_TRUE(*it != it_end); // shouldn't reach the end yet
 
     isc::util::InputBuffer b(data, size);
-    EXPECT_EQ(0, createRdata(*rrtype, RRClass::IN(), b, size)->compare(
-                  *createRdata(*rrtype, RRClass::IN(), **it)));
+    const RdataPtr& actual(createRdata(*rrtype, RRClass::IN(), b, size));
+    const RdataPtr& expected(createRdata(*rrtype, RRClass::IN(), **it));
+    EXPECT_EQ(0, actual->compare(*expected)) << actual->toText() <<
+        " vs. " << expected->toText();
     ++(*it);                    // move to the next expected data
 }
 
@@ -277,17 +279,17 @@ TEST_F(RdataSetTest, subtract) {
             // Set up the expected data for the case.
             vector<string> expected_rdata;
             if (i & 1) {
-                expected_rdata.push_back(a_rdatas[1]);
                 if (!(j & 1)) { // Not removed the other
                     expected_rdata.push_back(a_rdatas[0]);
                 }
+                expected_rdata.push_back(a_rdatas[1]);
             }
             vector<string> expected_sigs;
-            if (i & 1) {
-                expected_sigs.push_back(sig_rdatas[1]);
-                if (!(j & 1)) { // Not removed the other
-                    expected_rdata.push_back(sig_rdatas[0]);
+            if (i & 2) {
+                if (!(j & 2)) { // Not removed the other
+                    expected_sigs.push_back(sig_rdatas[0]);
                 }
+                expected_sigs.push_back(sig_rdatas[1]);
             }
 
             // Then perform the check
