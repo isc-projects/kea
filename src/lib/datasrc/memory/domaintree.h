@@ -2315,10 +2315,23 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
         child->parent_ = node->getParent();
     }
 
+    // If node is RED, it is a valid red-black tree already as (node's)
+    // child must be BLACK or NULL (which is BLACK). Deleting (the RED)
+    // node will not have any effect on the number of BLACK nodes
+    // through this path (involving node's parent and its new child). In
+    // this case, we can skip the following block.
     if (node->isBlack()) {
         if (child && child->isRed()) {
+            // If node is BLACK and child is RED, removing node would
+            // decrease the number of BLACK nodes through this path
+            // (involving node's parent and its new child). So we color
+            // child to be BLACK to restore the old count of black nodes
+            // through this path. It is now a valid red-black tree.
             child->setColor(DomainTreeNode<T>::BLACK);
         } else {
+            // If node is BLACK and child is also BLACK or NULL (which
+            // is BLACK), we need to do re-balancing to make it a valid
+            // red-black tree again.
             typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr =
                 upper_node ? &(upper_node->down_) : &root_;
             removeRebalance(root_ptr, child, node->getParent());
