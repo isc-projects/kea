@@ -2659,7 +2659,7 @@ DomainTree<T>::removeRebalance
     (typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr,
      DomainTreeNode<T>* child, DomainTreeNode<T>* parent)
 {
-    while (&(parent->down_) != root_ptr) {
+    while (child && (!child->isSubTreeRoot())) {
         // A sibling node is defined as the parent's other child. It
         // exists at the same level as child. Note that child can be
         // NULL here.
