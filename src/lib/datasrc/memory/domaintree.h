@@ -2756,6 +2756,29 @@ DomainTree<T>::removeRebalance
         // child=parent and go back to the beginning of the loop to
         // repeat the original rebalancing problem 1 node higher up the
         // tree (see NOTE #1 above).
+
+        /* (a):
+         *
+         *         G(?)                   G(?)
+         *         /  \                   /  \
+         *       P(R)        =>         P(B)      (Rebalancing is done)
+         *      /   \                  /   \
+         *   C(?)   S(B)            C(?)   S(R)
+         *   / \     /  \           / \     /  \
+         *        s1(B) s2(B)            s1(B) s2(B)
+         *
+         *
+         * (b):
+         *
+         *         G(?)                   G(?) <----------(new parent)
+         *         /   \                  /   \
+         *       P(B)        =>         P(B) <------------(new child)
+         *      /   \                  /   \
+         *   C(?)   S(B)            C(?)   S(R)
+         *   / \     /  \           / \     /  \
+         *        s1(B) s2(B)            s1(B) s2(B)
+         */
+
         if ((DomainTreeNode<T>::isBlack(sibling->getLeft()) &&
              DomainTreeNode<T>::isBlack(sibling->getRight())))
         {
