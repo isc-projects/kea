@@ -675,22 +675,13 @@ private:
 
         // Update FLAG_RED and FLAG_SUBTREE_ROOT as these two are
         // associated with the node's position.
-        const bool this_is_red = isRed();
+        const DomainTreeNodeColor this_color = getColor();
         const bool this_is_subtree_root = isSubTreeRoot();
-        const bool other_is_red = other->isRed();
+        const DomainTreeNodeColor other_color = other->getColor();
         const bool other_is_subtree_root = other->isSubTreeRoot();
 
-        if (this_is_red) {
-            other->setColor(RED);
-        } else {
-            other->setColor(BLACK);
-        }
-
-        if (other_is_red) {
-            setColor(RED);
-        } else {
-            setColor(BLACK);
-        }
+        other->setColor(this_color);
+        setColor(other_color);
 
         setSubTreeRoot(other_is_subtree_root);
         other->setSubTreeRoot(this_is_subtree_root);
@@ -2440,11 +2431,7 @@ DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
         }
 
         // The color of the new node is the same as the upper node's.
-        if (upper_node->isRed()) {
-            new_node->setColor(DomainTreeNode<T>::RED);
-        } else {
-            new_node->setColor(DomainTreeNode<T>::BLACK);
-        }
+        new_node->setColor(upper_node->getColor());
 
         new_node->setSubTreeRoot(upper_node->isSubTreeRoot());
 
@@ -2823,12 +2810,8 @@ DomainTree<T>::removeRebalance
                 parent->getRight() : parent->getLeft();
         }
 
-        if (parent->isRed()) {
-            sibling->setColor(DomainTreeNode<T>::RED);
-        } else {
-            sibling->setColor(DomainTreeNode<T>::BLACK);
-        }
 
+        sibling->setColor(parent->getColor());
         parent->setColor(DomainTreeNode<T>::BLACK);
 
         if (parent->getLeft() == child) {
