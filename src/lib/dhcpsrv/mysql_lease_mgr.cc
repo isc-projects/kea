@@ -300,9 +300,11 @@ public:
     ///
     /// The initialization of the variables here is only to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
-    MySqlLease4Exchange() : addr4_(0), hwaddr_length_(0), client_id_length_(0) {
+    MySqlLease4Exchange() : addr4_(0), hwaddr_length_(0), client_id_length_(0),
+                            fqdn_fwd_(false), fqdn_rev_(false), hostname_length_(0) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
+        memset(hostname_buffer_, 0, sizeof(hostname_buffer_));
         std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
 
         // Set the column names (for error messages)
@@ -649,9 +651,12 @@ public:
     ///
     /// The initialization of the variables here is nonly to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
-    MySqlLease6Exchange() : addr6_length_(0), duid_length_(0) {
+    MySqlLease6Exchange() : addr6_length_(0), duid_length_(0),
+                            fqdn_fwd_(false), fqdn_rev_(false),
+                            hostname_length_(0) {
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
+        memset(hostname_buffer_, 0, sizeof(hostname_buffer_));
         std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
 
         // Set the column names (for error messages)
