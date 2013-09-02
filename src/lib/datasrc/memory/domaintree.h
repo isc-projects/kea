@@ -2682,8 +2682,10 @@ DomainTree<T>::removeRebalance
         sibling = (parent->getLeft() == child) ?
             parent->getRight() : parent->getLeft();
 
+        // NOTE: From above, sibling must be BLACK here.
+        assert(sibling->isBlack());
+
         if (parent->isBlack() &&
-            sibling->isBlack() &&
             ((!sibling->getLeft()) || sibling->getLeft()->isBlack()) &&
             ((!sibling->getRight()) || sibling->getRight()->isBlack()))
         {
@@ -2692,9 +2694,7 @@ DomainTree<T>::removeRebalance
             continue;
         }
 
-        // FIXME: Can't sibling be NULL here?
         if (parent->isRed() &&
-            sibling->isBlack() &&
             ((!sibling->getLeft()) || sibling->getLeft()->isBlack()) &&
             ((!sibling->getRight()) || sibling->getRight()->isBlack()))
         {
