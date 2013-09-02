@@ -39,6 +39,7 @@ libb10_dhcp_ddns_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libb10_dhcp_ddns_la_LDFLAGS  = $(AM_LDFLAGS)
 libb10_dhcp_ddns_la_LDFLAGS += ${BOTAN_LDFLAGS}
 libb10_dhcp_ddns_la_LIBADD  =
+libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libb10-cryptolink.la
 libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
