@@ -2793,32 +2793,34 @@ DomainTree<T>::removeRebalance
             }
         }
 
-        if (sibling->isBlack()) {
-            DomainTreeNode<T>* ss1 = sibling->getLeft();
-            DomainTreeNode<T>* ss2 = sibling->getRight();
+        // NOTE #3 and NOTE #4 asserted above still hold here.
+        assert(DomainTreeNode<T>::isBlack(sibling));
+        assert(sibling);
+
+        DomainTreeNode<T>* ss1 = sibling->getLeft();
+        DomainTreeNode<T>* ss2 = sibling->getRight();
+
+        if (parent->getLeft() != child) {
+            std::swap(ss1, ss2);
+        }
+
+        if (DomainTreeNode<T>::isRed(ss1) &&
+            DomainTreeNode<T>::isBlack(ss2))
+        {
+            sibling->setColor(DomainTreeNode<T>::RED);
+            if (ss1) {
+                ss1->setColor(DomainTreeNode<T>::BLACK);
+            }
 
             if (parent->getLeft() != child) {
-                std::swap(ss1, ss2);
+                rightRotate(root_ptr, sibling);
+            } else {
+                leftRotate(root_ptr, sibling);
             }
-
-            if (DomainTreeNode<T>::isRed(ss1) &&
-                DomainTreeNode<T>::isBlack(ss2))
-            {
-                sibling->setColor(DomainTreeNode<T>::RED);
-                if (ss1) {
-                    ss1->setColor(DomainTreeNode<T>::BLACK);
-                }
-
-                if (parent->getLeft() != child) {
-                    rightRotate(root_ptr, sibling);
-                } else {
-                    leftRotate(root_ptr, sibling);
-                }
-                // Re-compute child's sibling due to the tree adjustment
-                // above.
-                sibling = (parent->getLeft() == child) ?
-                    parent->getRight() : parent->getLeft();
-            }
+            // Re-compute child's sibling due to the tree adjustment
+            // above.
+            sibling = (parent->getLeft() == child) ?
+                parent->getRight() : parent->getLeft();
         }
 
         if (parent->isRed()) {
