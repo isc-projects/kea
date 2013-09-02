@@ -2871,10 +2871,36 @@ DomainTree<T>::removeRebalance
 
         // Case 5. After case 4 above, we are in a canonical form now
         // where sibling is BLACK, and either (a) if child is the
-        // left-child of parent, the right-child of sibling is
+        // left-child of parent, the right-child (ss2) of sibling is
         // definitely RED, or (b) if child is the right-child of parent,
-        // the left-child of sibling is definitely RED.
+        // the left-child (ss2) of sibling is definitely RED.
+        //
+        // Here, we set sibling's color to that of the parent, and set
+        // the parent's color to BLACK. We set ss2's color to BLACK (it
+        // was previously RED). Then we do a tree-rotation around parent
+        // in the direction of child to pull in the BLACK parent into
+        // its sub-tree. These steps effectively balances the tree as
+        // you can see from the graph below. Before starting, the graph
+        // on the child's side is lighter by 1 BLACK node than the graph
+        // on the sibling's side. After these steps, both sides of S(x)
+        // have the same number of BLACK nodes in any path through it.
 
+        /* (a):
+         *
+         *          P(x)                            S(x)
+         *         /    \                         /     \
+         *      C(?)     S(B)         =>      P(B)      ss2(B)
+         *       / \    /    \               /   \        /  \
+         *            ss1(?) ss2(R)       C(?) ss1(?)   (B)  (B)
+         *                    /  \        / \
+         *                  (B)  (B)
+         *
+         *     (Here, 'x' is the parent's color. In the resulting tree,
+         *      it is set as S node's color.)
+         *
+         * (b):
+         *      This is just the mirror of above.
+         */
 
         sibling->setColor(parent->getColor());
         parent->setColor(DomainTreeNode<T>::BLACK);
@@ -2895,6 +2921,12 @@ DomainTree<T>::removeRebalance
         } else {
             rightRotate(root_ptr, parent);
         }
+
+        // NOTE #9: Now, sibling is parent's parent. All paths through
+        // sibling have the same number of BLACK nodes.
+
+        // We are completely finished and the tree is now
+        // balanced. Phew. Now let's take a coffee-break.
 
         break;
     }
