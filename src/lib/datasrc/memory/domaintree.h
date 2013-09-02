@@ -2675,7 +2675,8 @@ DomainTree<T>::removeRebalance
      DomainTreeNode<T>* child,  DomainTreeNode<T>* parent)
 {
     // Case 1. Repeat until we reach the root node of this subtree in
-    // the forest.
+    // the forest. Note that child can be NULL here, so we can only test
+    // the parent pointer and see if it has escaped to the upper tree.
     while (&(parent->down_) != root_ptr) {
         // A sibling node is defined as the parent's other child. It
         // exists at the same level as child. Note that child can be
