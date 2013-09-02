@@ -43,6 +43,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::log;
 using namespace std;
@@ -566,6 +567,47 @@ Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
     }
 
     return (addrs[0].toText());
+}
+
+isc::dhcp_ddns::D2Dhcid
+Dhcpv4Srv::computeDhcid(const Pkt4Ptr& query, const Pkt4Ptr& answer) {
+    std::vector<uint8_t> dhcid_data(1);
+    OptionPtr client_id = answer->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    if (client_id) {
+        dhcid_data.push_back(1);
+        dhcid_data.insert(dhcid_data.end(), client_id->getData().begin(),
+                          client_id->getData().end());
+    } else {
+        HWAddrPtr hwaddr = query->getHWAddr();
+        dhcid_data.push_back(0);
+        dhcid_data.push_back(hwaddr->htype_);
+        dhcid_data.insert(dhcid_data.end(), hwaddr->hwaddr_.begin(),
+                          hwaddr->hwaddr_.end());
+    }
+
+    std::string domain_name;
+    Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
+        (answer->getOption(DHO_FQDN));
+    if (fqdn) {
+        domain_name = fqdn->getDomainName();
+
+    } else {
+        OptionCustomPtr hostname = boost::dynamic_pointer_cast<OptionCustom>
+            (answer->getOption(DHO_HOST_NAME));
+        if (hostname) {
+            domain_name = hostname->readString();
+        }
+
+    }
+    try {
+        OptionDataTypeUtil::writeFqdn(domain_name, dhcid_data, true);
+    } catch (const Exception& ex) {
+        ;
+    }
+
+    D2Dhcid dhcid(dhcid_data);
+    return (dhcid);
+
 }
 
 void
