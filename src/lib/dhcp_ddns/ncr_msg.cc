@@ -34,6 +34,10 @@ D2Dhcid::D2Dhcid(const std::string& data) {
     fromStr(data);
 }
 
+D2Dhcid::D2Dhcid(const std::vector<uint8_t>& data)
+    : bytes_(data) {
+}
+
 D2Dhcid::D2Dhcid(const isc::dhcp::DUID& duid,
                  const std::vector<uint8_t>& wire_fqdn) {
     fromDUID(duid, wire_fqdn);
@@ -53,6 +57,11 @@ D2Dhcid::fromStr(const std::string& data) {
 std::string
 D2Dhcid::toStr() const {
     return (isc::util::encode::encodeHex(bytes_));
+}
+
+void
+D2Dhcid::fromBytes(const std::vector<uint8_t>& data) {
+    bytes_ = data;
 }
 
 void

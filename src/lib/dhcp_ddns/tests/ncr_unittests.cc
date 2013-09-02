@@ -387,6 +387,32 @@ TEST(NameChangeRequestTest, dhcidFromMaxDUID) {
     EXPECT_EQ(dhcid_ref, dhcid.toStr());
 }
 
+// Test that DHCID is correctly created from the buffer holding DHCID data
+// in raw format.
+TEST(NameChangeRequestTest, dhcidFromBytes) {
+    // Create a buffer holding raw DHCID data.
+    std::vector<uint8_t> dhcid_data;
+    for (int i = 0; i < 64; ++i) {
+        dhcid_data.push_back(i);
+    }
+    // Construct new object and initialize it with the DHCID data.
+    D2Dhcid dhcid(dhcid_data);
+
+    // Make sure that the DHCID is valid.
+    EXPECT_TRUE(std::equal(dhcid.getBytes().begin(), dhcid.getBytes().end(),
+                           dhcid_data.begin()));
+
+    // Modify the buffer and reinitialize DHCID with the new buffer.
+    for (int i = 64; i < 128; ++i) {
+        dhcid_data.push_back(i);
+    }
+    ASSERT_NO_THROW(dhcid.fromBytes(dhcid_data));
+
+    // Make sure that the DHCID is still valid.
+    EXPECT_TRUE(std::equal(dhcid.getBytes().begin(), dhcid.getBytes().end(),
+                           dhcid_data.begin()));
+
+}
 
 /// @brief Verifies the fundamentals of converting from and to JSON.
 /// It verifies that:
