@@ -361,9 +361,24 @@ private:
         return (getColor() == BLACK);
     }
 
+    /// \brief Static variant of isBlack() that also allows NULL nodes.
+    static bool isBlack(DomainTreeNode<T>* node) {
+        if (!node) {
+            // NULL nodes are black.
+            return (true);
+        }
+
+        return (node->isBlack());
+    }
+
     /// \brief Returns if the node color is red
     bool isRed() const {
         return (!isBlack());
+    }
+
+    /// \brief Static variant of isRed() that also allows NULL nodes.
+    static bool isRed(DomainTreeNode<T>* node) {
+        return (!isBlack(node));
     }
 
     /// \brief Sets the color of this node
@@ -2659,6 +2674,8 @@ DomainTree<T>::removeRebalance
     (typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr,
      DomainTreeNode<T>* child)
 {
+    // Case 1. Repeat until we reach the root node of this subtree in
+    // the forest.
     while (child && (!child->isSubTreeRoot())) {
         DomainTreeNode<T>* parent = child->getParent();
 
@@ -2668,66 +2685,118 @@ DomainTree<T>::removeRebalance
         DomainTreeNode<T>* sibling = (parent->getLeft() == child) ?
             parent->getRight() : parent->getLeft();
 
-        if (sibling->isRed()) {
+        // NOTE #1: Understand this clearly. We are here only because in
+        // the path through parent--child, a BLACK node was removed,
+        // i.e., the sibling's side in the path through parent--sibling
+        // is heavier by 1 extra BLACK node in its path. Because this
+        // can be an iterative process up the tree, the key is to
+        // understand this point when entering the block here.
+
+        // NOTE #2: sibling cannot be NULL here as parent--child has
+        // fewer BLACK nodes than parent--sibling.
+        assert(sibling);
+
+        // If sibling is RED, convert the tree to a form where sibling
+        // is BLACK.
+        if (DomainTreeNode<T>::isRed(sibling)) {
+            // Case 2. Here, the sibling is RED. We do a tree rotation
+            // at the parent such that sibling is the new parent, and
+            // the old parent is sibling's child. We also invert the
+            // colors of the two nodes. This step is done to convert the
+            // tree to a form for steps below.
+
+            /* Parent (P) has to be BLACK here as its child sibling (S)
+             * is RED.
+             *
+             *       P(B)                   S(B)
+             *      /   \                  /   \
+             *    C(?)   S(R)     =>     P(R)  y(B)
+             *    /  \   /  \            /  \
+             *          x(B) y(B)     C(?)  x(B)
+             *                       /   \
+             */
+
             parent->setColor(DomainTreeNode<T>::RED);
             sibling->setColor(DomainTreeNode<T>::BLACK);
+
             if (parent->getLeft() == child) {
                 leftRotate(root_ptr, parent);
             } else {
                 rightRotate(root_ptr, parent);
             }
+
+            // Re-compute child's sibling due to the tree adjustment
+            // above.
+            sibling = (parent->getLeft() == child) ?
+                parent->getRight() : parent->getLeft();
         }
 
-        // Re-compute child's sibling due to the tree adjustment above.
-        sibling = (parent->getLeft() == child) ?
-            parent->getRight() : parent->getLeft();
+        // NOTE #3: From above, sibling must be BLACK here. If a tree
+        // rotation happened above, the new sibling's side through
+        // parent--sibling [x(B)] above is still heavier than
+        // parent--child by 1 extra BLACK node in its path.
+        assert(DomainTreeNode<T>::isBlack(sibling));
 
-        // NOTE: From above, sibling must be BLACK here.
-        assert(sibling->isBlack());
+        // NOTE #4: sibling still cannot be NULL here as parent--child
+        // has fewer BLACK nodes than parent--sibling.
+        assert(sibling);
 
-        if (parent->isBlack() &&
-            ((!sibling->getLeft()) || sibling->getLeft()->isBlack()) &&
-            ((!sibling->getRight()) || sibling->getRight()->isBlack()))
+        // Case 3. If both of sibling's children are BLACK, then set the
+        // sibling's color to RED. This reduces the number of BLACK
+        // nodes in parent--sibling path by 1 and balances the BLACK
+        // nodes count on both sides of parent. But this introduces
+        // another issue which is that the path through one child
+        // (=parent) of parent's parent (child's grandparent) has fewer
+        // BLACK nodes now than the other child (parent's sibling).
+        //
+        // To fix this: (a) if parent is colored RED, we can change its
+        // color to BLACK (to increment the number of black nodes in
+        // grandparent--parent-->path) and we're done with the
+        // rebalacing; (b) if parent is colored BLACK, then we set
+        // child=parent and go back to the beginning of the loop to
+        // repeat the original rebalancing problem 1 node higher up the
+        // tree (see NOTE #1 above).
+        if ((DomainTreeNode<T>::isBlack(sibling->getLeft()) &&
+             DomainTreeNode<T>::isBlack(sibling->getRight())))
         {
             sibling->setColor(DomainTreeNode<T>::RED);
-            child = parent;
-            continue;
-        }
 
-        if (parent->isRed() &&
-            ((!sibling->getLeft()) || sibling->getLeft()->isBlack()) &&
-            ((!sibling->getRight()) || sibling->getRight()->isBlack()))
-        {
-            sibling->setColor(DomainTreeNode<T>::RED);
-            parent->setColor(DomainTreeNode<T>::BLACK);
-            break;
-        }
-
-        if (sibling->isBlack()) {
-            if ((parent->getLeft() == child) &&
-                (sibling->getLeft() && sibling->getLeft()->isRed()) &&
-                ((!sibling->getRight()) || sibling->getRight()->isBlack()))
-            {
-                sibling->setColor(DomainTreeNode<T>::RED);
-                if (sibling->getLeft()) {
-                    sibling->getLeft()->setColor(DomainTreeNode<T>::BLACK);
-                }
-                rightRotate(root_ptr, sibling);
-            } else if ((parent->getRight() == child) &&
-                (sibling->getRight() && sibling->getRight()->isRed()) &&
-                ((!sibling->getLeft()) || sibling->getLeft()->isBlack()))
-            {
-                sibling->setColor(DomainTreeNode<T>::RED);
-                if (sibling->getRight()) {
-                    sibling->getRight()->setColor(DomainTreeNode<T>::BLACK);
-                }
-                leftRotate(root_ptr, sibling);
+            if (parent->isBlack()) {
+                child = parent;
+                continue;
+            } else {
+                parent->setColor(DomainTreeNode<T>::BLACK);
+                break;
             }
         }
 
-        // Re-compute child's sibling due to the tree adjustment above.
-        sibling = (parent->getLeft() == child) ?
-            parent->getRight() : parent->getLeft();
+        if (sibling->isBlack()) {
+            DomainTreeNode<T>* ss1 = sibling->getLeft();
+            DomainTreeNode<T>* ss2 = sibling->getRight();
+
+            if (parent->getLeft() != child) {
+                std::swap(ss1, ss2);
+            }
+
+            if (DomainTreeNode<T>::isRed(ss1) &&
+                DomainTreeNode<T>::isBlack(ss2))
+            {
+                sibling->setColor(DomainTreeNode<T>::RED);
+                if (ss1) {
+                    ss1->setColor(DomainTreeNode<T>::BLACK);
+                }
+
+                if (parent->getLeft() != child) {
+                    rightRotate(root_ptr, sibling);
+                } else {
+                    leftRotate(root_ptr, sibling);
+                }
+                // Re-compute child's sibling due to the tree adjustment
+                // above.
+                sibling = (parent->getLeft() == child) ?
+                    parent->getRight() : parent->getLeft();
+            }
+        }
 
         if (parent->isRed()) {
             sibling->setColor(DomainTreeNode<T>::RED);
