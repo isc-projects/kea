@@ -76,6 +76,34 @@ Dhcp4Hooks Hooks;
 namespace isc {
 namespace dhcp {
 
+namespace {
+
+// The following constants describe server's behavior with respect to the
+// DHCPv4 Client FQDN Option sent by a client. They will be removed
+// when DDNS parameters for DHCPv4 are implemented with the ticket #3033.
+
+// Should server always include the FQDN option in its response, regardless
+// if it has been requested in Parameter Request List Option (Disabled).
+const bool FQDN_ALWAYS_INCLUDE = false;
+// Enable A RR update delegation to the client (Disabled).
+const bool FQDN_ALLOW_CLIENT_UPDATE = false;
+// Globally enable updates (Enabled).
+const bool FQDN_ENABLE_UPDATE = true;
+// The partial name generated for the client if empty name has been
+// supplied.
+const char* FQDN_GENERATED_PARTIAL_NAME = "myhost";
+// Do update, even if client requested no updates with N flag (Disabled).
+const bool FQDN_OVERRIDE_NO_UPDATE = false;
+// Server performs an update when client requested delegation (Enabled).
+const bool FQDN_OVERRIDE_CLIENT_UPDATE = true;
+// The fully qualified domain-name suffix if partial name provided by
+// a client.
+const char* FQDN_PARTIAL_SUFFIX = "example.com";
+// Should server replace the domain-name supplied by the client (Disabled).
+const bool FQDN_REPLACE_CLIENT_NAME = false;
+
+}
+
 /// @brief file name of a server-id file
 ///
 /// Server must store its server identifier in persistent storage that must not
@@ -695,6 +723,74 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
     fqdn_resp->setFlag(Option4ClientFqdn::FLAG_O, 0);
     fqdn_resp->setFlag(Option4ClientFqdn::FLAG_N, 0);
 
+    // Conditions when N flag has to be set to indicate that server will not
+    // perform DNS updates:
+    // 1. Updates are globally disabled,
+    // 2. Client requested no update and server respects it,
+    // 3. Client requested that the foward DNS update is delegated to the client
+    //    but server neither respects requests for forward update delegation nor
+    //    it is configured to send update on its own when client requested
+    //    delegation.
+    if (!FQDN_ENABLE_UPDATE ||
+        (fqdn->getFlag(Option4ClientFqdn::FLAG_N) &&
+         !FQDN_OVERRIDE_NO_UPDATE) ||
+        (!fqdn->getFlag(Option4ClientFqdn::FLAG_S) &&
+         !FQDN_ALLOW_CLIENT_UPDATE && !FQDN_OVERRIDE_CLIENT_UPDATE)) {
+        fqdn_resp->setFlag(Option4ClientFqdn::FLAG_N, true);
+
+    // Conditions when S flag is set to indicate that server will perform DNS
+    // update on its own:
+    // 1. Client requested that server performs DNS update and DNS updates are
+    //    globally enabled.
+    // 2. Client requested that server delegates forward update to the client
+    //    but server doesn't respect requests for delegation and it is
+    // configured to perform an update on its own when client requested the
+    // delegation.
+    } else  if (fqdn->getFlag(Option4ClientFqdn::FLAG_S) ||
+                (!fqdn->getFlag(Option4ClientFqdn::FLAG_S) &&
+                 !FQDN_ALLOW_CLIENT_UPDATE && FQDN_OVERRIDE_CLIENT_UPDATE)) {
+        fqdn_resp->setFlag(Option4ClientFqdn::FLAG_S, true);
+    }
+
+    // Server MUST set the O flag if it has overriden the client's setting
+    // of S flag.
+    if (fqdn->getFlag(Option4ClientFqdn::FLAG_S) !=
+        fqdn_resp->getFlag(Option4ClientFqdn::FLAG_S)) {
+        fqdn_resp->setFlag(Option4ClientFqdn::FLAG_O, true);
+    }
+
+    // If client suppled partial or empty domain-name, server should generate
+    // one.
+    if (fqdn->getDomainNameType() == Option4ClientFqdn::PARTIAL) {
+        std::ostringstream name;
+        if (fqdn->getDomainName().empty()) {
+            name << FQDN_GENERATED_PARTIAL_NAME;
+        } else {
+            name << fqdn->getDomainName();
+        }
+        name << "." << FQDN_PARTIAL_SUFFIX;
+        fqdn_resp->setDomainName(name.str(), Option4ClientFqdn::FULL);
+
+    // Server may be configured to replace a name supplied by a client, even if
+    // client supplied fully qualified domain-name.
+    } else if(FQDN_REPLACE_CLIENT_NAME) {
+        std::ostringstream name;
+        name << FQDN_GENERATED_PARTIAL_NAME << "." << FQDN_PARTIAL_SUFFIX;
+        fqdn_resp->setDomainName(name.str(), Option4ClientFqdn::FULL);
+    }
+
+    // Add FQDN option to the response message. Note that, there may be some
+    // cases when server may choose not to include the FQDN option in a
+    // response to a client. In such cases, the FQDN should be removed from the
+    // outgoing message. In theory we could cease to include the FQDN option
+    // in this function until it is confirmed that it should be included.
+    // However, we include it here for simplicity. Functions used to acquire
+    // lease for a client will scan the response message for FQDN and if it
+    // is found they will take necessary actions to store the FQDN information
+    // in the lease database as well as to generate NameChangeRequests to DNS.
+    // If we don't store the option in the reponse message, we will have to
+    // propagate it in the different way to the functions which acquire the
+    // lease. This would require modifications to the API of this class.
     answer->addOption(fqdn_resp);
 }
 
