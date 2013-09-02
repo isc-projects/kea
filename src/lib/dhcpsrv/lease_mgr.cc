@@ -33,20 +33,21 @@ namespace isc {
 namespace dhcp {
 
 Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
-             uint32_t valid_lft, SubnetID subnet_id, time_t cltt)
+             uint32_t valid_lft, SubnetID subnet_id, time_t cltt,
+             const bool fqdn_fwd, const bool fqdn_rev,
+             const std::string& hostname)
     :addr_(addr), t1_(t1), t2_(t2), valid_lft_(valid_lft), cltt_(cltt),
-     subnet_id_(subnet_id), fixed_(false), fqdn_fwd_(false), fqdn_rev_(false) {
+     subnet_id_(subnet_id), fixed_(false), hostname_(hostname),
+     fqdn_fwd_(fqdn_fwd), fqdn_rev_(fqdn_rev) {
 }
 
 Lease4::Lease4(const Lease4& other)
     : Lease(other.addr_, other.t1_, other.t2_, other.valid_lft_,
-            other.subnet_id_, other.cltt_), ext_(other.ext_),
+            other.subnet_id_, other.cltt_, other.fqdn_fwd_,
+            other.fqdn_rev_, other.hostname_), ext_(other.ext_),
       hwaddr_(other.hwaddr_) {
 
     fixed_ = other.fixed_;
-    fqdn_fwd_ = other.fqdn_fwd_;
-    fqdn_rev_ = other.fqdn_rev_;
-    hostname_ = other.hostname_;
     comments_ = other.comments_;
 
     if (other.client_id_) {
@@ -87,7 +88,23 @@ Lease4::operator=(const Lease4& other) {
 Lease6::Lease6(LeaseType type, const isc::asiolink::IOAddress& addr,
                DuidPtr duid, uint32_t iaid, uint32_t preferred, uint32_t valid,
                uint32_t t1, uint32_t t2, SubnetID subnet_id, uint8_t prefixlen)
-    : Lease(addr, t1, t2, valid, subnet_id, 0/*cltt*/),
+    : Lease(addr, t1, t2, valid, subnet_id, 0/*cltt*/, false, false, ""),
+      type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
+      preferred_lft_(preferred) {
+    if (!duid) {
+        isc_throw(InvalidOperation, "DUID must be specified for a lease");
+    }
+
+    cltt_ = time(NULL);
+}
+
+Lease6::Lease6(LeaseType type, const isc::asiolink::IOAddress& addr,
+               DuidPtr duid, uint32_t iaid, uint32_t preferred, uint32_t valid,
+               uint32_t t1, uint32_t t2, SubnetID subnet_id,
+               const bool fqdn_fwd, const bool fqdn_rev,
+               const std::string& hostname, uint8_t prefixlen)
+    : Lease(addr, t1, t2, valid, subnet_id, 0/*cltt*/,
+            fqdn_fwd, fqdn_rev, hostname),
       type_(type), prefixlen_(prefixlen), iaid_(iaid), duid_(duid),
       preferred_lft_(preferred) {
     if (!duid) {
