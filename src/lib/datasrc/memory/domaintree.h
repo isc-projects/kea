@@ -1713,7 +1713,7 @@ private:
 
     void
     removeRebalance(typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr,
-                    DomainTreeNode<T>* child, DomainTreeNode<T>* parent);
+                    DomainTreeNode<T>* child);
 
     DomainTreeNode<T>*
     rightRotate(typename DomainTreeNode<T>::DomainTreeNodePtr* root,
@@ -2334,7 +2334,7 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
             // red-black tree again.
             typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr =
                 upper_node ? &(upper_node->down_) : &root_;
-            removeRebalance(root_ptr, child, node->getParent());
+            removeRebalance(root_ptr, child);
         }
     }
 
@@ -2657,9 +2657,11 @@ template <typename T>
 void
 DomainTree<T>::removeRebalance
     (typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr,
-     DomainTreeNode<T>* child, DomainTreeNode<T>* parent)
+     DomainTreeNode<T>* child)
 {
     while (child && (!child->isSubTreeRoot())) {
+        DomainTreeNode<T>* parent = child->getParent();
+
         // A sibling node is defined as the parent's other child. It
         // exists at the same level as child. Note that child can be
         // NULL here.
@@ -2684,7 +2686,6 @@ DomainTree<T>::removeRebalance
         {
             sibling->setColor(DomainTreeNode<T>::RED);
             child = parent;
-            parent = parent->getParent();
             continue;
         }
 
