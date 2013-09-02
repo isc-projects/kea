@@ -174,13 +174,25 @@ TEST_F(FqdnDhcpv4SrvTest, serverUpdateForwardNoName) {
 
 }
 
+// Test server's response when client requests no DNS update.
+TEST_F(FqdnDhcpv4SrvTest, noUpdate) {
+    Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
+                                        Option4ClientFqdn::FLAG_E |
+                                        Option4ClientFqdn::FLAG_N,
+                                        "myhost.example.com.",
+                                        Option4ClientFqdn::FULL,
+                                        true);
+    testProcessFqdn(query, Option4ClientFqdn::FLAG_E | Option4ClientFqdn::FLAG_N,
+                    "myhost.example.com.");
+}
+
 // Test that server does not accept delegation of the forward DNS update
 // to a client.
 TEST_F(FqdnDhcpv4SrvTest, clientUpdateNotAllowed) {
     Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
                                         Option4ClientFqdn::FLAG_E,
                                         "myhost.example.com.",
-                                        Option4ClientFqdn::PARTIAL,
+                                        Option4ClientFqdn::FULL,
                                         true);
 
     testProcessFqdn(query, Option4ClientFqdn::FLAG_E |
