@@ -2684,7 +2684,7 @@ DomainTree<T>::removeRebalance
 
         // If sibling is RED, convert the tree to a form where sibling
         // is BLACK.
-        if (DomainTreeNode<T>::isRed(sibling)) {
+        if (sibling->isRed()) {
             // Case 2. Here, the sibling is RED. We do a tree rotation
             // at the parent such that sibling is the new parent, and
             // the old parent is sibling's child. We also invert the
@@ -2719,15 +2719,16 @@ DomainTree<T>::removeRebalance
                 parent->getRight() : parent->getLeft();
         }
 
-        // NOTE #3: From above, sibling must be BLACK here. If a tree
-        // rotation happened above, the new sibling's side through
-        // parent--sibling [x(B)] above is still heavier than
-        // parent--child by 1 extra BLACK node in its path.
-        assert(DomainTreeNode<T>::isBlack(sibling));
-
-        // NOTE #4: sibling still cannot be NULL here as parent--child
+        // NOTE #3: sibling still cannot be NULL here as parent--child
         // has fewer BLACK nodes than parent--sibling.
         assert(sibling);
+
+        // NOTE #4: From above, sibling must be BLACK here.
+        assert(sibling->isBlack());
+
+        // NOTE #5: If a tree rotation happened above, the new sibling's
+        // side through parent--sibling [x(B)] above is still heavier
+        // than parent--child by 1 extra BLACK node in its path.
 
         // Case 3. If both of sibling's children are BLACK, then set the
         // sibling's color to RED. This reduces the number of BLACK
@@ -2783,10 +2784,10 @@ DomainTree<T>::removeRebalance
         }
 
         // NOTE #3 and NOTE #4 asserted above still hold here.
-        assert(DomainTreeNode<T>::isBlack(sibling));
         assert(sibling);
+        assert(sibling->isBlack());
 
-        // NOTE #5: The path through parent--sibling is still heavier
+        // NOTE #6: The path through parent--sibling is still heavier
         // than parent--child by 1 extra BLACK node in its path. This is
         // the key point, and this is why we are still doing the
         // rebalancing.
@@ -2839,6 +2840,8 @@ DomainTree<T>::removeRebalance
         }
 
         if (DomainTreeNode<T>::isBlack(ss2)) {
+            // It is implied by ss2 being BLACK that ss1 is RED.
+
             sibling->setColor(DomainTreeNode<T>::RED);
             // ss1 cannot be NULL here as it is a RED node.
             ss1->setColor(DomainTreeNode<T>::BLACK);
@@ -2854,17 +2857,17 @@ DomainTree<T>::removeRebalance
                 parent->getRight() : parent->getLeft();
         }
 
-        // NOTE #6: sibling is still BLACK, even if the sibling variable
-        // was assigned in the node above, it was set to ss1 which is
-        // now a BLACK node.
-        assert(DomainTreeNode<T>::isBlack(sibling));
-
         // NOTE #7: sibling cannot be NULL here as even if the sibling
         // variable was assigned in the node above, it was set to ss1
         // which was a RED node before (non-NULL).
         assert(sibling);
 
-        // NOTE #8: The path through parent--sibling is still heavier
+        // NOTE #8: sibling is still BLACK, even if the sibling variable
+        // was assigned in the node above, it was set to ss1 which is
+        // now a BLACK node.
+        assert(sibling->isBlack());
+
+        // NOTE #9: The path through parent--sibling is still heavier
         // than parent--child by 1 extra BLACK node in its path. This is
         // the key point, and this is why we are still doing the
         // rebalancing.
@@ -2922,7 +2925,7 @@ DomainTree<T>::removeRebalance
             rightRotate(root_ptr, parent);
         }
 
-        // NOTE #9: Now, sibling is parent's parent. All paths through
+        // NOTE #10: Now, sibling is parent's parent. All paths through
         // sibling have the same number of BLACK nodes.
 
         // We are completely finished and the tree is now
