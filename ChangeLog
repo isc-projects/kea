@@ -1,4 +1,9 @@
-669.	[func]	tmark
+670.	[func]		marcin
+	libdhcpsrv: Added support to MySQL lease database backend to
+	store FQDN data for the lease.
+	(Trac #3084, git 79b7d8ee017b57a81cec5099bc028e1494d7e2e9)
+
+669.	[func]		tmark
 	Added main process event loop to D2Process which is the primary
 	application object in b10-dhcp-ddns. This allows DHCP-DDNS
 	to queue requests received from clients for processing while
