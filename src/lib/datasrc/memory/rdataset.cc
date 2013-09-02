@@ -12,6 +12,9 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "rdataset.h"
+#include "rdata_serialization.h"
+
 #include <exceptions/exceptions.h>
 
 #include <dns/rdata.h>
@@ -19,11 +22,10 @@
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
 #include <dns/rrset.h>
-
-#include "rdataset.h"
-#include "rdata_serialization.h"
+#include <util/buffer.h>
 
 #include <boost/static_assert.hpp>
+#include <boost/bind.hpp>
 
 #include <stdint.h>
 #include <algorithm>
@@ -183,18 +185,107 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
     return (rdataset);
 }
 
+namespace {
+
+void writeName(util::OutputBuffer* buffer, const LabelSequence& name,
+               RdataNameAttributes)
+{
+    size_t len;
+    const uint8_t* data = name.getData(&len);
+    buffer->writeData(data, len);
+}
+
+void writeData(util::OutputBuffer* buffer, const void* data, size_t len) {
+    buffer->writeData(data, len);
+}
+
+size_t subtractIterate(const dns::ConstRRsetPtr& subtract,
+                     const RRClass& rrclass, const RRType& rrtype,
+                     boost::function<bool ()> iterator,
+                     boost::function<void (const Rdata& rdata)> inserter,
+                     util::OutputBuffer& buffer)
+{
+    size_t count = 0;
+    while (iterator()) {
+        util::InputBuffer input(buffer.getData(), buffer.getLength());
+        const RdataPtr& rdata(createRdata(rrtype, rrclass, input,
+                                          buffer.getLength()));
+        buffer.clear();
+
+        bool insert = true;
+        if (subtract) {
+            for (RdataIteratorPtr it = subtract->getRdataIterator();
+                 !it->isLast(); it->next()) {
+                if (rdata->compare(it->getCurrent()) == 0) {
+                    insert = false;
+                    break;
+                }
+            }
+        }
+
+        if (insert) {
+            inserter(*rdata);
+            ++count;
+        }
+    }
+    return (count);
+}
+
+} // Anonymous namespace
+
 RdataSet*
 RdataSet::subtract(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
                    const dns::ConstRRsetPtr& rrset,
                    const dns::ConstRRsetPtr& sig_rrset,
                    const RdataSet& old_rdataset)
 {
-    (void) mem_sgmt;
-    (void) encoder;
-    (void) rrset;
-    (void) sig_rrset;
-    (void) old_rdataset;
-    return NULL; // Just for now
+    const std::pair<RRClass, RRType>& rrparams =
+        sanityChecks(rrset, sig_rrset, &old_rdataset);
+    const RRClass& rrclass = rrparams.first;
+    const RRType& rrtype = rrparams.second;
+
+    // Do the encoding
+    encoder.start(rrclass, rrtype);
+    util::OutputBuffer buffer(1024);
+    RdataReader reader(rrclass, rrtype, old_rdataset.getDataBuf(),
+                       old_rdataset.getRdataCount(),
+                       old_rdataset.getSigRdataCount(),
+                       boost::bind(writeName, &buffer, _1, _2),
+                       boost::bind(writeData, &buffer, _1, _2));
+
+    // Copy over the Rdata (except for the subtracted)
+    const size_t rdata_count =
+        subtractIterate(rrset, rrclass, rrtype,
+                        boost::bind(&RdataReader::iterateRdata, &reader),
+                        boost::bind(&RdataEncoder::addRdata, &encoder, _1),
+                        buffer);
+    // Copy over the signatures (except for the subtracted)
+    const size_t rrsig_count =
+        subtractIterate(sig_rrset, rrclass, RRType::RRSIG(),
+                        boost::bind(&RdataReader::iterateSingleSig, &reader),
+                        boost::bind(&RdataEncoder::addSIGRdata, &encoder, _1),
+                        buffer);
+
+    // Note that we don't need to check for overflow, if it fitted before, it
+    // fits after removal of something too.
+
+    if (rdata_count == 0 && rrsig_count == 0) {
+        return (NULL); // It is left empty
+    }
+    // Construct the result
+    const size_t ext_rrsig_count_len =
+        rrsig_count >= MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
+    const size_t data_len = encoder.getStorageLength();
+    void* p = mem_sgmt.allocate(sizeof(RdataSet) + ext_rrsig_count_len +
+                                data_len);
+    RdataSet* rdataset =
+        new(p) RdataSet(rrtype, rdata_count, rrsig_count,
+                        restoreTTL(old_rdataset.getTTLData()));
+    if (rrsig_count >= MANY_RRSIG_COUNT) {
+        *rdataset->getExtSIGCountBuf() = rrsig_count;
+    }
+    encoder.encode(rdataset->getDataBuf(), data_len);
+    return (rdataset);
 }
 
 void
