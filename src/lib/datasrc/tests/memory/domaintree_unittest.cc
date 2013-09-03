@@ -517,8 +517,8 @@ checkTree(const TestDomainTree& tree,
           const std::set<std::string>& names)
 {
     // The distance from each node to its sub-tree root must be less
-    // than 2 * log_2(256).
-    EXPECT_GE(2 * 8, tree.getHeight());
+    // than 2 * log_2(1024).
+    EXPECT_GE(2 * 10, tree.getHeight());
 
     // Also check RB tree properties
     EXPECT_TRUE(tree.checkProperties());
@@ -566,7 +566,7 @@ TEST_F(DomainTreeTest, insertAndRemove) {
 
     // NOTE: These tests are run within a single tree in the
     // forest. Fusion, etc. are tested elsewhere. The number of nodes in
-    // the tree doesn't grow over 256.
+    // the tree doesn't grow over 1024.
 
     TreeHolder holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_, true));
     TestDomainTree& tree(*holder.get());
@@ -576,7 +576,7 @@ TEST_F(DomainTreeTest, insertAndRemove) {
 
     // Repeat the insert/remove test some 4096 times
     for (int i = 0; i < 4096; ++i) {
-         UniformRandomIntegerGenerator gen(1, 256 - node_count);
+         UniformRandomIntegerGenerator gen(1, 1024 - node_count);
          size_t num_nodes = gen();
          node_count += num_nodes;
 
