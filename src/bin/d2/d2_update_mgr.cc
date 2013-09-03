@@ -77,7 +77,7 @@ D2UpdateMgr::checkFinishedTransactions() {
     // NOTE: One must use postfix increments of the iterator on the calls
     // to erase.  This replaces the old iterator which becomes invalid by the
     // erase with a the next valid iterator.  Prefix incrementing will not
-    // work. 
+    // work.
     TransactionList::iterator it = transaction_list_.begin();
     while (it != transaction_list_.end()) {
         NameChangeTransactionPtr trans = (*it).second;
@@ -108,12 +108,6 @@ void D2UpdateMgr::pickNextJob() {
         if (!hasTransaction(found_ncr->getDhcid())) {
             queue_mgr_->dequeueAt(index);
             makeTransaction(found_ncr);
-
-#if 0
-            // this will run it up to its first IO
-            trans->startTransaction();
-#endif
-
             return;
         }
     }
