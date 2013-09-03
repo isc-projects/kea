@@ -25,7 +25,22 @@
 namespace isc {
 namespace dhcp_ddns {
 
+
 /********************************* D2Dhcid ************************************/
+
+namespace {
+
+///
+/// @name Constants which define DHCID identifier-type
+//@{
+/// DHCID created from client's HW address.
+const uint8_t DHCID_ID_HWADDR   = 0x0;
+/// DHCID created from client identifier.
+const uint8_t DHCID_ID_CLIENTID = 0x1;
+/// DHCID created from DUID.
+const uint8_t DHCID_ID_DUID     = 0x2;
+
+}
 
 D2Dhcid::D2Dhcid() {
 }
@@ -34,8 +49,14 @@ D2Dhcid::D2Dhcid(const std::string& data) {
     fromStr(data);
 }
 
-D2Dhcid::D2Dhcid(const std::vector<uint8_t>& data)
-    : bytes_(data) {
+D2Dhcid::D2Dhcid(const isc::dhcp::HWAddrPtr& hwaddr,
+                 const std::vector<uint8_t>& wire_fqdn) {
+    fromHWAddr(hwaddr, wire_fqdn);
+}
+
+D2Dhcid::D2Dhcid(const std::vector<uint8_t>& clientid_data,
+                 const std::vector<uint8_t>& wire_fqdn) {
+    fromClientId(clientid_data, wire_fqdn);
 }
 
 D2Dhcid::D2Dhcid(const isc::dhcp::DUID& duid,
@@ -60,37 +81,53 @@ D2Dhcid::toStr() const {
 }
 
 void
-D2Dhcid::fromBytes(const std::vector<uint8_t>& data) {
-    bytes_ = data;
+D2Dhcid::fromClientId(const std::vector<uint8_t>& clientid_data,
+                      const std::vector<uint8_t>& wire_fqdn) {
+    createDigest(DHCID_ID_CLIENTID, clientid_data, wire_fqdn);
 }
+
+void
+D2Dhcid::fromHWAddr(const isc::dhcp::HWAddrPtr& hwaddr,
+                    const std::vector<uint8_t>& wire_fqdn) {
+    if (!hwaddr) {
+        isc_throw(isc::dhcp_ddns::DhcidComputeError,
+                  "unable to compute DHCID from the HW address, "
+                  "NULL pointer has been specified");
+    }
+    createDigest(DHCID_ID_HWADDR, hwaddr->hwaddr_, wire_fqdn);
+}
+
 
 void
 D2Dhcid::fromDUID(const isc::dhcp::DUID& duid,
                   const std::vector<uint8_t>& wire_fqdn) {
-    // DHCID created from DUID starts with two bytes representing
-    // a type of the identifier. The value of 0x0002 indicates that
-    // DHCID has been created from DUID. The 3rd byte is equal to 1
-    // which indicates that the SHA-256 algorithm is used to create
-    // a DHCID digest. This value is called digest-type.
-    static uint8_t dhcid_header[] = { 0x00, 0x02, 0x01 };
 
+    createDigest(DHCID_ID_DUID, duid.getDuid(), wire_fqdn);
+}
+
+void
+D2Dhcid::createDigest(const uint8_t identifier_type,
+                      const std::vector<uint8_t>& identifier_data,
+                      const std::vector<uint8_t>& wire_fqdn) {
     // We get FQDN in the wire format, so we don't know if it is
     // valid. It is caller's responsibility to make sure it is in
     // the valid format. Here we just make sure it is not empty.
     if (wire_fqdn.empty()) {
-        isc_throw(isc::dhcp_ddns::NcrMessageError,
+        isc_throw(isc::dhcp_ddns::DhcidComputeError,
                   "empty FQDN used to create DHCID");
     }
 
-    // Get the wire representation of the DUID.
-    std::vector<uint8_t> data = duid.getDuid();
-    // It should be DUID class responsibility to validate the DUID
-    // but let's be on the safe side here and make sure that empty
-    // DUID is not returned.
-    if (data.empty()) {
-        isc_throw(isc::dhcp_ddns::NcrMessageError,
+    // It is a responsibility of the classes which encapsulate client
+    // identifiers, e.g. DUID, to validate the client identifier data.
+    // But let's be on the safe side and at least check that it is not
+    // empty.
+    if (identifier_data.empty()) {
+        isc_throw(isc::dhcp_ddns::DhcidComputeError,
                   "empty DUID used to create DHCID");
     }
+
+    // A data buffer will be used to compute the digest.
+    std::vector<uint8_t> data = identifier_data;
 
     // Append FQDN in the wire format.
     data.insert(data.end(), wire_fqdn.begin(), wire_fqdn.end());
@@ -109,16 +146,30 @@ D2Dhcid::fromDUID(const isc::dhcp::DUID& duid,
         secure = sha.process(static_cast<const Botan::byte*>(&data[0]),
                              data.size());
     } catch (const std::exception& ex) {
-        isc_throw(isc::dhcp_ddns::NcrMessageError,
+        isc_throw(isc::dhcp_ddns::DhcidComputeError,
                   "error while generating DHCID from DUID: "
                   << ex.what());
     }
 
-    // The exception unsafe part is finished, so we can finally replace
-    // the contents of bytes_.
-    bytes_.assign(dhcid_header, dhcid_header + sizeof(dhcid_header));
+    // The DHCID RDATA has the following structure:
+    // 
+    //    < identifier-type > < digest-type > < digest >
+    //
+    // where identifier type 
+
+    // Let's allocate the space for the identifier-type (2 bytes) and
+    // digest-type (1 byte). This is 3 bytes all together.
+    bytes_.resize(3);
+    // Leave first byte 0 and set the second byte. Those two bytes
+    // form the identifier-type.
+    bytes_[1] = identifier_type;
+    // Third byte is always equal to 1, which specifies SHA-256 digest type.
+    bytes_[2] = 1;
+    // Now let's append the digest.
     bytes_.insert(bytes_.end(), secure.begin(), secure.end());
 }
+
+
 
 
 /**************************** NameChangeRequest ******************************/
