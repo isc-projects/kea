@@ -31,6 +31,10 @@
 
 #include <boost/format.hpp>
 
+#include <stdlib.h>
+
+#include <set>
+#include <algorithm>
 #include <fstream>
 
 using namespace std;
@@ -156,6 +160,8 @@ protected:
             EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(
                           new int(node_distances[i])));
         }
+
+        srandom(time(NULL));
     }
 
     util::MemorySegmentLocal mem_sgmt_;
@@ -453,6 +459,142 @@ TEST_F(DomainTreeTest, remove) {
         // We should have reached the end of the tree.
         EXPECT_EQ(static_cast<void*>(NULL), cnode);
     }
+}
+
+void
+insertNodes(util::MemorySegment& mem_sgmt, TestDomainTree& tree,
+            std::set<std::string>& names, size_t num_nodes,
+            UniformRandomIntegerGenerator& name_gen)
+{
+    for (size_t i = 0; i < num_nodes; ++i) {
+        std::string namestr;
+        while (true) {
+            for (int j = 0; j < 32; j++) {
+                namestr += name_gen();
+            }
+            namestr += '.';
+
+            TestDomainTreeNode* cnode;
+            if (tree.insert(mem_sgmt, Name(namestr), &cnode) ==
+                TestDomainTree::SUCCESS) {
+                names.insert(namestr);
+                break;
+            }
+
+            namestr.clear();
+        }
+    }
+}
+
+void
+removeNodes(util::MemorySegment& mem_sgmt, TestDomainTree& tree,
+            std::set<std::string>& names, size_t num_nodes)
+{
+    size_t set_size = names.size();
+
+    for (size_t i = 0; i < num_nodes; ++i) {
+        // Here, UniformRandomIntegerGenerator is not a great RNG as
+        // it'll likely get seeded with the same seed throughout this
+        // testcase, and the size of the names set keeps changing.
+
+        std::set<std::string>::iterator it(names.begin());
+        // This is rather inefficient, but it's a test...
+        std::advance(it, random() % set_size);
+        std::string nstr(*it);
+
+        TestDomainTreeNode* node;
+        EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                  tree.find(Name(nstr), &node));
+
+        tree.remove(mem_sgmt, node, deleteData);
+
+        names.erase(*it);
+        --set_size;
+    }
+}
+
+void
+checkTree(const TestDomainTree& tree,
+          const std::set<std::string>& names)
+{
+    // The distance from each node to its sub-tree root must be less
+    // than 2 * log_2(256).
+    EXPECT_GE(2 * 8, tree.getHeight());
+
+    // Also check RB tree properties
+    EXPECT_TRUE(tree.checkProperties());
+
+    // Now, walk through nodes in order.
+    TestDomainTreeNodeChain node_path;
+    const TestDomainTreeNode* cnode;
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              tree.find(Name("."), &cnode, node_path));
+
+    // Skip to the next node after "."
+    cnode = tree.nextNode(node_path);
+    if (!cnode) {
+        // Empty tree.
+        return;
+    }
+
+    for (std::set<std::string>::const_iterator it = names.begin();
+         it != names.end(); ++it)
+    {
+        const Name n1(*it);
+        const Name n2(cnode->getName());
+
+        const NameComparisonResult result = n1.compare(n2);
+        EXPECT_EQ(NameComparisonResult::EQUAL, result.getRelation());
+
+        cnode = tree.nextNode(node_path);
+    }
+
+    // We should have reached the end of the tree.
+    EXPECT_EQ(static_cast<void*>(NULL), cnode);
+}
+
+TEST_F(DomainTreeTest, insertAndRemove) {
+    // What is the best way to test our red-black tree code? It is not a
+    // good method to test every case handled in the actual code itself
+    // (such as in insertRebalance() and removeRebalance()). This is
+    // because our approach itself may be incorrect.
+    //
+    // We test our code at the interface level here by exercising the
+    // tree randomly multiple times, checking that red-black tree
+    // properties are valid, and all the nodes that are supposed to be
+    // in the tree exist and are in order.
+
+    // NOTE: These tests are run within a single tree in the
+    // forest. Fusion, etc. are tested elsewhere. The number of nodes in
+    // the tree doesn't grow over 256.
+
+    TreeHolder holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_, true));
+    TestDomainTree& tree(*holder.get());
+    std::set<std::string> names;
+
+    size_t node_count = 0;
+
+    // Repeat the insert/remove test some 4096 times
+    for (int i = 0; i < 4096; ++i) {
+         UniformRandomIntegerGenerator gen(1, 256 - node_count);
+         size_t num_nodes = gen();
+         node_count += num_nodes;
+
+         insertNodes(mem_sgmt_, tree, names, num_nodes, name_gen_);
+         checkTree(tree, names);
+
+         UniformRandomIntegerGenerator gen2(1, node_count);
+         num_nodes = gen2();
+         node_count -= num_nodes;
+
+         removeNodes(mem_sgmt_, tree, names, num_nodes);
+         checkTree(tree, names);
+    }
+
+    // Remove the rest of the nodes.
+    removeNodes(mem_sgmt_, tree, names, node_count);
+    checkTree(tree, names);
 }
 
 TEST_F(DomainTreeTest, nodeFusion) {

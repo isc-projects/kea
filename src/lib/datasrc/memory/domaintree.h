@@ -2433,6 +2433,12 @@ DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
             break;
         }
 
+        // If upper node is the root node (.), don't attempt node fusion
+        // with it. The root node must always exist.
+        if (upper_node == root_.get()) {
+            break;
+        }
+
         // Create a new label sequence with (subtree_root+upper_node)
         // labels.
         uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH];
