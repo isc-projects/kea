@@ -382,6 +382,11 @@ TEST_F(DomainTreeTest, insertNames) {
 }
 
 TEST_F(DomainTreeTest, remove) {
+    // This testcase checks that after node removal, the binary-search
+    // tree is valid and all nodes that are supposed to exist are
+    // present in the correct order. It mainly tests DomainTree as a
+    // BST, and not particularly as a red-black tree.
+
     // Delete single nodes and check if the rest of the nodes exist
     for (int j = 0; j < ordered_names_count; ++j) {
         TreeHolder holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_, true));
