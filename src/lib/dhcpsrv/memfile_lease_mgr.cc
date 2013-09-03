@@ -124,11 +124,7 @@ Memfile_LeaseMgr::getLease4(const ClientId& clientid) const {
 
         // client-id is not mandatory in DHCPv4. There can be a lease that does
         // not have a client-id. Dereferencing null pointer would be a bad thing
-        if (!(*lease)->client_id_) {
-            continue;
-        }
-
-        if(*(*lease)->client_id_ == clientid) {
+        if((*lease)->client_id_ && *(*lease)->client_id_ == clientid) {
             collection.push_back((* lease));
         }
     }
@@ -138,7 +134,36 @@ Memfile_LeaseMgr::getLease4(const ClientId& clientid) const {
 
 Lease4Ptr
 Memfile_LeaseMgr::getLease4(const ClientId& client_id,
-                                      SubnetID subnet_id) const {
+                            const HWAddr& hwaddr,
+                            SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID).arg(client_id.toText())
+                                                        .arg(hwaddr.toText())
+                                                        .arg(subnet_id);
+
+    // We are going to use index #3 of the multi index container.
+    // We define SearchIndex locally in this function because
+    // currently only this function uses this index.
+    typedef Lease4Storage::nth_index<3>::type SearchIndex;
+    // Get the index.
+    const SearchIndex& idx = storage4_.get<3>();
+    // Try to get the lease using client id, hardware address and subnet id.
+    SearchIndex::const_iterator lease =
+        idx.find(boost::make_tuple(client_id.getClientId(), hwaddr.hwaddr_,
+                                   subnet_id));
+
+    if (lease == idx.end()) {
+        // Lease was not found. Return empty pointer to the caller.
+        return (Lease4Ptr());
+    }
+
+    // Lease was found. Return it to the caller.
+    return (*lease);
+}
+
+Lease4Ptr
+Memfile_LeaseMgr::getLease4(const ClientId& client_id,
+                            SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_SUBID_CLIENTID).arg(subnet_id)
               .arg(client_id.toText());
