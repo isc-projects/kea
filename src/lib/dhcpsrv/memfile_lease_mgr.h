@@ -54,7 +54,6 @@ public:
 
     /// @brief Adds an IPv4 lease.
     ///
-    /// @todo Not implemented yet
     /// @param lease lease to be added
     virtual bool addLease(const Lease4Ptr& lease);
 
@@ -65,15 +64,12 @@ public:
 
     /// @brief Returns existing IPv4 lease for specified IPv4 address.
     ///
-    /// @todo Not implemented yet
     /// @param addr address of the searched lease
     ///
     /// @return a collection of leases
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
-    ///
-    /// @todo Not implemented yet
     ///
     /// Although in the usual case there will be only one lease, for mobile
     /// clients or clients with multiple static/fixed/reserved leases there
@@ -88,8 +84,6 @@ public:
     /// @brief Returns existing IPv4 leases for specified hardware address
     ///        and a subnet
     ///
-    /// @todo Not implemented yet
-    ///
     /// There can be at most one lease for a given HW address in a single
     /// pool, so this method with either return a single lease or NULL.
     ///
@@ -101,8 +95,6 @@ public:
                                 SubnetID subnet_id) const;
 
     /// @brief Returns existing IPv4 lease for specified client-id
-    ///
-    /// @todo Not implemented yet
     ///
     /// @param clientid client identifier
     virtual Lease4Collection getLease4(const ClientId& clientid) const;
@@ -126,8 +118,6 @@ public:
     ///
     /// There can be at most one lease for a given HW address in a single
     /// pool, so this method with either return a single lease or NULL.
-    ///
-    /// @todo Not implemented yet
     ///
     /// @param clientid client identifier
     /// @param subnet_id identifier of the subnet that lease must belong to
@@ -153,9 +143,7 @@ public:
     /// @return collection of IPv6 leases
     virtual Lease6Collection getLease6(const DUID& duid, uint32_t iaid) const;
 
-    /// @brief Returns existing IPv6 lease for a given DUID+IA combination
-    ///
-    /// @todo Not implemented yet
+    /// @brief Returns existing IPv6 lease for a given DUID/IA/subnet-id tuple
     ///
     /// @param duid client DUID
     /// @param iaid IA identifier
@@ -173,7 +161,7 @@ public:
     /// If no such lease is present, an exception will be thrown.
     virtual void updateLease4(const Lease4Ptr& lease4);
 
-    /// @brief Updates IPv4 lease.
+    /// @brief Updates IPv6 lease.
     ///
     /// @todo Not implemented yet
     ///
