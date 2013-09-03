@@ -570,43 +570,48 @@ Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
 }
 
 isc::dhcp_ddns::D2Dhcid
-Dhcpv4Srv::computeDhcid(const Pkt4Ptr& query, const Pkt4Ptr& answer) {
-    std::vector<uint8_t> dhcid_data(1);
-    OptionPtr client_id = answer->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (client_id) {
-        dhcid_data.push_back(1);
-        dhcid_data.insert(dhcid_data.end(), client_id->getData().begin(),
-                          client_id->getData().end());
-    } else {
-        HWAddrPtr hwaddr = query->getHWAddr();
-        dhcid_data.push_back(0);
-        dhcid_data.push_back(hwaddr->htype_);
-        dhcid_data.insert(dhcid_data.end(), hwaddr->hwaddr_.begin(),
-                          hwaddr->hwaddr_.end());
-    }
+Dhcpv4Srv::computeDhcid(const Lease4Ptr& lease) {
+    if (!lease) {
+        isc_throw(DhcidComputeError, "a pointer to the lease must be not"
+                  " NULL to compute DHCID");
 
-    std::string domain_name;
-    Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
-        (answer->getOption(DHO_FQDN));
-    if (fqdn) {
-        domain_name = fqdn->getDomainName();
-
-    } else {
-        OptionCustomPtr hostname = boost::dynamic_pointer_cast<OptionCustom>
-            (answer->getOption(DHO_HOST_NAME));
-        if (hostname) {
-            domain_name = hostname->readString();
-        }
+    } else if (lease->hostname_.empty()) {
+        isc_throw(DhcidComputeError, "unable to compute the DHCID for the"
+                  " lease which has empty hostname set");
 
     }
+
+    // In order to compute DHCID the client's hostname must be encoded in
+    // canonical wire format. It is unlikely that the FQDN is malformed
+    // because it is validated by the classes which encapsulate options
+    // carrying client FQDN. However, if the client name was carried in the
+    // Hostname option it is more likely as it carries the hostname as a
+    // regular string.
+    std::vector<uint8_t> fqdn_wire;
     try {
-        OptionDataTypeUtil::writeFqdn(domain_name, dhcid_data, true);
+        OptionDataTypeUtil::writeFqdn(lease->hostname_, fqdn_wire, true);
+
     } catch (const Exception& ex) {
-        ;
+        isc_throw(DhcidComputeError, "unable to compute DHCID because the"
+                  " hostname: " << lease->hostname_ << " is invalid");
+
     }
 
-    D2Dhcid dhcid(dhcid_data);
-    return (dhcid);
+    // Prefer client id to HW address to compute DHCID. If Client Id is
+    // NULL, use HW address.
+    try {
+        if (lease->client_id_) {
+            return (D2Dhcid(lease->client_id_->getClientId(), fqdn_wire));
+
+        } else {
+            HWAddrPtr hwaddr(new HWAddr(lease->hwaddr_, HTYPE_ETHER));
+            return (D2Dhcid(hwaddr, fqdn_wire));
+        }
+    } catch (const Exception& ex) {
+        isc_throw(DhcidComputeError, "unable to compute DHCID: "
+                  << ex.what());
+
+    }
 
 }
 
@@ -838,6 +843,21 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
 
 void
 Dhcpv4Srv::processHostnameOption(const Pkt4Ptr&, Pkt4Ptr&) {
+}
+
+void
+Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
+                                    const Lease4Ptr&) {
+    if (!lease) {
+        isc_throw(isc::Unexpected,
+                  "NULL lease specified when creating NameChangeRequest");
+    }
+
+    D2Dhcid dhcid = computeDhcid(lease);
+    NameChangeRequest ncr(isc::dhcp_ddns::CHG_ADD,
+                          lease->fqdn_fwd_, lease->fqdn_rev_, lease->hostname_,
+                          lease->addr_.toText(), dhcid, 0, lease->valid_lft_);
+    name_change_reqs_.push(ncr);
 }
 
 void
