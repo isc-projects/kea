@@ -16,16 +16,18 @@
 
  @page contributorGuide BIND10 Contributor's Guide
 
-So you found a bug in BIND10 or developed an extension and want to
+So you found a bug in BIND10 or plan to develop an extension and want to
 send a patch? Great! This page will explain how to contribute your
 changes and not get disappointed in the process.
+
+@section contributorGuideWritePatch Writing a patch
 
 Before you start working on a patch or new feature, it is a good idea
 to discuss it first with BIND10 developers. You can post your
 questions to bind10-dev
 (https://lists.isc.org/mailman/listinfo/bind10-dev) for general BIND10
 stuff or to bind10-dhcp
-(https://lists.isc.org/mailman/listinfo/bind10-dhcp) for DHCP specific
+(https://lists.isc.org/mailman/listinfo/bind10-dhcp) mailing lists for DHCP specific
 topics. If you prefer to get faster feedback, most BIND10 developers
 hang out at bind10 jabber room
 (xmpp:bind10@conference.jabber.isc.org). Those involved in DHCP also
@@ -34,6 +36,11 @@ drop a note. It is possible that someone else is working on your
 specific issue or perhaps the solution you plan to implement is not
 the best one. Often having 10 minutes talk could save many hours of
 engineering work.
+
+First step would be to get a source code from our GIT repository. The procedure
+is very easy and is explained here: http://bind10.isc.org/wiki/GitGuidelines.
+While it is possible to provide a patch against stable release, it makes
+the review process much easier if it is for latest code grom a git 'master' branch.
 
 Ok, so you have a patch? Great! Before you submit it, make sure that
 your code compiles. This may seem obvious, but it there's more to
@@ -44,7 +51,7 @@ code compile there? Will it work? What about endianess? It is likely
 that you used regular x86, but the software is expected to run on many
 other architectures.
 
-Have your patch conforms to BIND10 
+Does your patch conforms to BIND10
 http://bind10.isc.org/wiki/CodingGuidelines? You still can submit
 a patch that does not adhere to it, but it will decrease your
 chances of being accepted. If the deviations are minor, ISC engineer
@@ -52,35 +59,60 @@ that will do the review, will likely fix the issues. However,
 if there are lots of them, reviewer may simply reject the patch
 and ask you to fix it, before resubmitting.
 
+@section contributorGuideUnittests Running unit-tests
+
 One of the ground rules in BIND10 development is that every piece of
 code has to be tested. We now have an extensive set of unit-tests for
 almost every line of code. Even if you are fixing something small,
 like a single line fix, it is encouraged to write unit-test for that
 change. That is even more true for new code. If you write a new
 function, method or a class, you definitely should write unit-tests
-for it. 
+for it.
 
 BIND10 uses google test (gtest) framework as a base for our
 unit-tests. See http://code.google.com/p/googletest/ for details.
 You must have gtest installed or at least compiled before compiling
 BIND10 unit-tests. To enable unit-tests in BIND10
 
+@code
 ./configure --with-gtest=/path/to/your/gtest/dir
+@endcode
 
-or 
+or
 
+@code
 ./configure --with-gtest-source=/path/to/your/gtest/dir
+@endcode
+
+There are other useful switches passed to configure. It is always a good
+idea to use --enable-logger-checks, which does sanity checks on logger
+parameters. If you happen to modify anything in the documentation, use
+--enable-generate-docs. If you are modifying DHCP code, you are likely
+to be interested in MySQL backend for DHCP. Keep note that if the backend
+is not enabled, MySQL specific unit-tests are skipped, too. From that
+perspective, it is useful to use --with-dhcp-mysql parameter. For a
+complete list of all switches, use:
+
+@code
+ ./configure --help
+@endcode
 
 Depending on how you compiled or installed (e.g. from sources or using
 some package management system) one of those two switches will find
 gtest. After that you make run unit-tests:
 
+@code
 make check
+@endcode
 
 If you happen to add new files or modified Makefiles, it is also a
 good idea to check if you haven't broken distribution process:
 
+@code
 make distcheck
+@endcode
+
+@section contributorGuideReview Going through a review
 
 Once all those are checked and working, feel free to create a ticket
 for your patch (http://bind10.isc.org) or attach your patch to the
@@ -105,5 +137,16 @@ first,last name, by nickname, by company or anonymously. Typically we
 will add a note to ChangeLog. If the contributted feature is big or
 critical for whatever reason, it may be also mentioned in release
 notes.
+
+@section contributorGuideExtra Extra steps
+
+If you are interested in even more in-depth testing, you are welcome
+to visit BIND10 build farm: http://git.bind10.isc.org/~tester/builder/builder-new.html
+This is a life result page with all tests being run on various systems.
+Besides basic unit-tests, we also run them with valgrind (memory debugger),
+with cppcheck and scan-build (static code analyzers), Lettuce system tests
+and more. Although it is not possible for non ISC employees to run tests
+on that farm, it is possible that your contributed patch will end up there
+sooner or later.
 
 */
