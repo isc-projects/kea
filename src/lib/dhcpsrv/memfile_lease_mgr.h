@@ -107,6 +107,21 @@ public:
     /// @param clientid client identifier
     virtual Lease4Collection getLease4(const ClientId& clientid) const;
 
+    /// @brief Returns IPv4 lease for specified client-id/hwaddr/subnet-id tuple
+    ///
+    /// There can be at most one lease for a given client-id/hwaddr tuple
+    /// in a single pool, so this method with either return a single lease
+    /// or NULL.
+    ///
+    /// @param clientid client identifier
+    /// @param hwaddr hardware address of the client
+    /// @param subnet_id identifier of the subnet that lease must belong to
+    ///
+    /// @return a pointer to the lease (or NULL if a lease is not found)
+    virtual Lease4Ptr getLease4(const ClientId& clientid,
+                                const HWAddr& hwaddr,
+                                SubnetID subnet_id) const;
+
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
     /// There can be at most one lease for a given HW address in a single
@@ -320,6 +335,35 @@ protected:
                     >,
                     // The subnet id is accessed through the subnet_id_ member.
                     boost::multi_index::member<Lease, uint32_t, &Lease::subnet_id_>
+                >
+            >,
+
+            // Specification of the fourth index starts here.
+            boost::multi_index::ordered_unique<
+                // This is a composite index that uses two values to search for a
+                // lease: client id and subnet id.
+                boost::multi_index::composite_key<
+                    Lease4,
+                    // The client id value is not directly accessible through the
+                    // Lease4 object as it is wrapped with the ClientIdPtr object.
+                    // Therefore we use the KeyFromKeyExtractor class to access
+                    // client id through this cascaded structure. The client id
+                    // is used as an index value.
+                    KeyFromKeyExtractor<
+                        // Specify that the vector holding client id value can be obtained
+                        // from the ClientId object.
+                        boost::multi_index::const_mem_fun<ClientId, std::vector<uint8_t>,
+                                                          &ClientId::getClientId>,
+                        // Specify that the ClientId object (actually pointer to it) can
+                        // be accessed by the client_id_ member of Lease4 class.
+                        boost::multi_index::member<Lease4, ClientIdPtr, &Lease4::client_id_>
+                    >,
+                    // The hardware address is held in the hwaddr_ member of the
+                    // Lease4 object.
+                    boost::multi_index::member<Lease4, std::vector<uint8_t>,
+                                               &Lease4::hwaddr_>,
+                    // The subnet id is accessed through the subnet_id_ member.
+                    boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
                 >
             >
         >
