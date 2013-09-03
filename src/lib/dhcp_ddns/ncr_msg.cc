@@ -90,7 +90,7 @@ void
 D2Dhcid::fromHWAddr(const isc::dhcp::HWAddrPtr& hwaddr,
                     const std::vector<uint8_t>& wire_fqdn) {
     if (!hwaddr) {
-        isc_throw(isc::dhcp_ddns::DhcidComputeError,
+        isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
                   "unable to compute DHCID from the HW address, "
                   "NULL pointer has been specified");
     }
@@ -113,7 +113,7 @@ D2Dhcid::createDigest(const uint8_t identifier_type,
     // valid. It is caller's responsibility to make sure it is in
     // the valid format. Here we just make sure it is not empty.
     if (wire_fqdn.empty()) {
-        isc_throw(isc::dhcp_ddns::DhcidComputeError,
+        isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
                   "empty FQDN used to create DHCID");
     }
 
@@ -122,7 +122,7 @@ D2Dhcid::createDigest(const uint8_t identifier_type,
     // But let's be on the safe side and at least check that it is not
     // empty.
     if (identifier_data.empty()) {
-        isc_throw(isc::dhcp_ddns::DhcidComputeError,
+        isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
                   "empty DUID used to create DHCID");
     }
 
@@ -146,7 +146,7 @@ D2Dhcid::createDigest(const uint8_t identifier_type,
         secure = sha.process(static_cast<const Botan::byte*>(&data[0]),
                              data.size());
     } catch (const std::exception& ex) {
-        isc_throw(isc::dhcp_ddns::DhcidComputeError,
+        isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
                   "error while generating DHCID from DUID: "
                   << ex.what());
     }
