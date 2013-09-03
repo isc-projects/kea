@@ -234,6 +234,9 @@ TEST_F(DomainTreeTest, checkDistanceRandom) {
     // The distance from each node to its sub-tree root must be less
     // than 2 * log(n).
     EXPECT_GE(2 * log_num_nodes, mytree.getHeight());
+
+    // Also check RB tree properties
+    EXPECT_TRUE(mytree.checkProperties());
 }
 
 TEST_F(DomainTreeTest, checkDistanceSorted) {
@@ -265,6 +268,9 @@ TEST_F(DomainTreeTest, checkDistanceSorted) {
     // The distance from each node to its sub-tree root must be less
     // than 2 * log(n).
     EXPECT_GE(2 * log_num_nodes, mytree.getHeight());
+
+    // Also check RB tree properties
+    EXPECT_TRUE(mytree.checkProperties());
 }
 
 TEST_F(DomainTreeTest, setGetData) {
@@ -395,6 +401,9 @@ TEST_F(DomainTreeTest, remove) {
         EXPECT_EQ(TestDomainTree::EXACTMATCH,
                   tree.find(Name(ordered_names[j]), &node));
         tree.remove(mem_sgmt_, node, deleteData);
+
+        // Check RB tree properties
+        EXPECT_TRUE(tree.checkProperties());
 
         // Now, walk through nodes in order.
         TestDomainTreeNodeChain node_path;
