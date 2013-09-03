@@ -549,8 +549,8 @@ TEST_F(DhcidTest, fromHWAddr) {
 
     // The reference DHCID (represented as string of hexadecimal digits)
     // has been calculated using one of the online calculators.
-    std::string dhcid_ref = "0000012191B7B21AF97E0E656DF887C5E2D"
-        "EF30E7758A207EDF4CCB2DE8CA37066021C";
+    std::string dhcid_ref = "0000012247F6DC4423C3E8627434A9D686860"
+        "9D88948F78018B215EDCAA30C0C135035";
 
     // Make sure that the DHCID is valid.
     EXPECT_EQ(dhcid_ref, dhcid.toStr());
