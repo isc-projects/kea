@@ -145,6 +145,10 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientId) {
     ASSERT_EQ(1, returned.size());
     // We should retrieve our lease...
     detailCompareLease(lease, *returned.begin());
+    lease = initializeLease4(straddress4_[2]);
+    returned = lease_mgr->getLease4(*lease->client_id_);
+
+    ASSERT_EQ(0, returned.size());
 }
 
 // Checks that lease4 retrieval client id is null is working
@@ -170,9 +174,8 @@ TEST_F(MemfileLeaseMgrTest, getLease4HWAddr) {
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
     // Let's initialize two different leases 4 and just add the first ...
     Lease4Ptr leaseA = initializeLease4(straddress4_[5]);
-    Lease4Ptr leaseB = initializeLease4(straddress4_[6]);
     HWAddr hwaddrA(leaseA->hwaddr_, HTYPE_ETHER);
-    HWAddr hwaddrB(leaseB->hwaddr_, HTYPE_ETHER);
+    HWAddr hwaddrB(vector<uint8_t>(6, 0x80), HTYPE_ETHER);
 
     EXPECT_TRUE(lease_mgr->addLease(leaseA));
 
@@ -183,6 +186,28 @@ TEST_F(MemfileLeaseMgrTest, getLease4HWAddr) {
     // But with this one
     returned = lease_mgr->getLease4(hwaddrA);
     ASSERT_EQ(1, returned.size());
+}
+
+// Checks lease4 retrieval with clientId, HWAddr and subnet_id
+TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetId) {
+    const LeaseMgr::ParameterMap pmap;
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
+
+    Lease4Ptr leaseA = initializeLease4(straddress4_[4]);
+    Lease4Ptr leaseB = initializeLease4(straddress4_[5]);
+    HWAddr hwaddrA(leaseA->hwaddr_, HTYPE_ETHER);
+    HWAddr hwaddrB(leaseB->hwaddr_, HTYPE_ETHER);
+    EXPECT_TRUE(lease_mgr->addLease(leaseA));
+    // First case we should retrieve our lease
+    Lease4Ptr lease = lease_mgr->getLease4(*leaseA->client_id_, hwaddrA, leaseA->subnet_id_);
+    detailCompareLease(lease, leaseA);
+    lease = lease_mgr->getLease4(*leaseB->client_id_, hwaddrA, leaseA->subnet_id_);
+    detailCompareLease(lease, leaseA);
+    // But not the folowing, with different  hwaddr and subnet
+    lease = lease_mgr->getLease4(*leaseA->client_id_, hwaddrB, leaseA->subnet_id_);
+    EXPECT_TRUE(lease == Lease4Ptr());
+    lease = lease_mgr->getLease4(*leaseA->client_id_, hwaddrA, leaseB->subnet_id_);
+    EXPECT_TRUE(lease == Lease4Ptr());
 }
 
 }; // end of anonymous namespace
