@@ -1,3 +1,7 @@
+6XX.	[func]		tomek
+	libdhcp: Added support for IA_PD and IAPREFIX options.
+	(Trac #3145, git ABCD)
+
 670.	[func]		marcin
 	libdhcpsrv: Added support to MySQL lease database backend to
 	store FQDN data for the lease.

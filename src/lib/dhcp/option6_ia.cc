@@ -30,10 +30,24 @@ namespace dhcp {
 
 Option6IA::Option6IA(uint16_t type, uint32_t iaid)
     :Option(Option::V6, type), iaid_(iaid), t1_(0), t2_(0) {
+
+    // IA_TA has different layout than IA_NA and IA_PD. We can't sue this class
+    if (type == D6O_IA_TA) {
+        isc_throw(BadValue, "Can't use Option6IA for IA_TA as it has "
+                  "a different layout");
+    }
 }
 
-Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin, OptionBufferConstIter end)
+Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin,
+                     OptionBufferConstIter end)
     :Option(Option::V6, type) {
+
+    // IA_TA has different layout than IA_NA and IA_PD. We can't use this class
+    if (type == D6O_IA_TA) {
+        isc_throw(BadValue, "Can't use Option6IA for IA_TA as it has "
+                  "a different layout");
+    }
+
     unpack(begin, end);
 }
 
