@@ -362,7 +362,7 @@ private:
     }
 
     /// \brief Static variant of isBlack() that also allows NULL nodes.
-    static bool isBlack(DomainTreeNode<T>* node) {
+    static bool isBlack(const DomainTreeNode<T>* node) {
         if (!node) {
             // NULL nodes are black.
             return (true);
@@ -377,7 +377,7 @@ private:
     }
 
     /// \brief Static variant of isRed() that also allows NULL nodes.
-    static bool isRed(DomainTreeNode<T>* node) {
+    static bool isRed(const DomainTreeNode<T>* node) {
         return (!isBlack(node));
     }
 
@@ -1609,6 +1609,22 @@ public:
     /// Note: This method exists for testing purposes. Non-test code
     /// must not use it.
     size_t getHeight() const;
+
+private:
+    /// \brief Helper method for checkProperties()
+    bool checkPropertiesHelper(const DomainTreeNode<T>* node) const;
+
+    /// \brief Helper for checkProperties()
+    bool checkBlackDistanceHelper(const DomainTreeNode<T>* node,
+                                  size_t* distance)
+        const;
+
+public:
+    /// \brief Check red-black properties of the DomainTree.
+    ///
+    /// Note: This method exists for testing purposes. Non-test code
+    /// must not use it.
+    bool checkProperties() const;
 
     /// \name Debug function
     //@{
@@ -3040,6 +3056,82 @@ template <typename T>
 size_t
 DomainTree<T>::getHeight() const {
     return (getHeightHelper(root_.get()));
+}
+
+template <typename T>
+bool
+DomainTree<T>::checkPropertiesHelper(const DomainTreeNode<T>* node) const {
+    if (node == NULL) {
+        return (true);
+    }
+
+    // Root nodes should be BLACK.
+    if (node->isSubTreeRoot() && node->isRed()) {
+        return (false);
+    }
+
+    // Both children of RED nodes must be BLACK.
+    if (node->isRed()) {
+        if (DomainTreeNode<T>::isRed(node->getLeft()) ||
+            DomainTreeNode<T>::isRed(node->getRight()))
+        {
+            return (false);
+        }
+    }
+
+    // Repeat tests with this node's children.
+    return (checkPropertiesHelper(node->getLeft()) &&
+            checkPropertiesHelper(node->getRight()) &&
+            checkPropertiesHelper(node->getDown()));
+}
+
+template <typename T>
+bool
+DomainTree<T>::checkBlackDistanceHelper(const DomainTreeNode<T>* node,
+                                        size_t* distance) const
+{
+    if (node == NULL) {
+        *distance = 1;
+        return (true);
+    }
+
+    size_t dl, dr, dd;
+    if (!checkBlackDistanceHelper(node->getLeft(), &dl)) {
+        return (false);
+    }
+    if (!checkBlackDistanceHelper(node->getRight(), &dr)) {
+        return (false);
+    }
+    if (!checkBlackDistanceHelper(node->getDown(), &dd)) {
+        return (false);
+    }
+
+    if (dl != dr) {
+        return (false);
+    }
+
+    if (node->isBlack()) {
+        ++dl;
+    }
+
+    *distance = dl;
+
+    return (true);
+}
+
+template <typename T>
+bool
+DomainTree<T>::checkProperties() const {
+    if (!checkPropertiesHelper(root_.get())) {
+        return (false);
+    }
+
+    // Path from a given node to all its leaves must contain the same
+    // number of BLACK child nodes. This is done separately here instead
+    // of inside checkPropertiesHelper() as it would take (n log n)
+    // complexity otherwise.
+    size_t dd;
+    return (checkBlackDistanceHelper(root_.get(), &dd));
 }
 
 template <typename T>
