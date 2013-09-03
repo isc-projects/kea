@@ -38,6 +38,7 @@ using namespace isc;
 using namespace isc::dns;
 using isc::UnitTestUtil;
 using namespace isc::datasrc::memory;
+using isc::util::random::UniformRandomIntegerGenerator;
 
 // XXX: some compilers cannot find class static constants used in
 // EXPECT_xxx macros, for which we need an explicit empty definition.
@@ -141,7 +142,8 @@ protected:
                                          TestDomainTree::create(mem_sgmt_, true)),
         dtree(*dtree_holder_.get()),
         dtree_expose_empty_node(*dtree_expose_empty_node_holder_.get()),
-        cdtnode(NULL)
+        cdtnode(NULL),
+        name_gen_('a', 'z')
     {
         for (int i = 0; i < name_count; ++i) {
             dtree.insert(mem_sgmt_, Name(domain_names[i]), &dtnode);
@@ -163,6 +165,7 @@ protected:
     TestDomainTree& dtree_expose_empty_node;
     TestDomainTreeNode* dtnode;
     const TestDomainTreeNode* cdtnode;
+    UniformRandomIntegerGenerator name_gen_;
     uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
 };
 
@@ -201,7 +204,6 @@ TEST_F(DomainTreeTest, checkDistanceRandom) {
 
     TreeHolder mytree_holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_));
     TestDomainTree& mytree = *mytree_holder.get();
-    isc::util::random::UniformRandomIntegerGenerator gen('a', 'z');
     const int log_num_nodes = 20;
 
     // Make a large million+ node top-level domain tree, i.e., the
@@ -216,7 +218,7 @@ TEST_F(DomainTreeTest, checkDistanceRandom) {
         string namestr;
         while (true) {
             for (int j = 0; j < 32; j++) {
-                namestr += gen();
+                namestr += name_gen_();
             }
             namestr += '.';
 
