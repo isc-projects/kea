@@ -525,12 +525,12 @@ TEST_F(DhcidTest, fromClientId) {
     // Make sure that the empty FQDN is not accepted.
     std::vector<uint8_t> empty_wire_fqdn;
     EXPECT_THROW(dhcid.fromClientId(clientid, empty_wire_fqdn),
-                 isc::dhcp_ddns::DhcidComputeError);
+                 isc::dhcp_ddns::DhcidRdataComputeError);
 
     // Make sure that the empty client identifier is not accepted.
     clientid.clear();
     EXPECT_THROW(dhcid.fromClientId(clientid, wire_fqdn_),
-                 isc::dhcp_ddns::DhcidComputeError);
+                 isc::dhcp_ddns::DhcidRdataComputeError);
 
 
 }
@@ -558,12 +558,12 @@ TEST_F(DhcidTest, fromHWAddr) {
     // Make sure that the empty FQDN is not accepted.
     std::vector<uint8_t> empty_wire_fqdn;
     EXPECT_THROW(dhcid.fromHWAddr(hwaddr, empty_wire_fqdn),
-                 isc::dhcp_ddns::DhcidComputeError);
+                 isc::dhcp_ddns::DhcidRdataComputeError);
 
     // Make sure that the NULL HW address is not accepted.
     hwaddr.reset();
     EXPECT_THROW(dhcid.fromHWAddr(hwaddr, wire_fqdn_),
-                 isc::dhcp_ddns::DhcidComputeError);
+                 isc::dhcp_ddns::DhcidRdataComputeError);
 }
 
 } // end of anonymous namespace

@@ -43,9 +43,9 @@ public:
 
 /// @brief Exception thrown when there is an error occured during computation
 /// of the DHCID.
-class DhcidComputeError : public isc::Exception {
+class DhcidRdataComputeError : public isc::Exception {
 public:
-    DhcidComputeError(const char* file, size_t line, const char* what) :
+    DhcidRdataComputeError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
