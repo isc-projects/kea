@@ -37,7 +37,6 @@ const int NameChangeTransaction::NO_MORE_SERVERS_EVT;
 const int NameChangeTransaction::IO_COMPLETED_EVT;
 const int NameChangeTransaction::UPDATE_OK_EVT;
 const int NameChangeTransaction::UPDATE_FAILED_EVT;
-const int NameChangeTransaction::CANCEL_TRANSACTION_EVT;
 const int NameChangeTransaction::ALL_DONE_EVT;
 
 const int NameChangeTransaction::DERIVED_EVENTS;
@@ -80,15 +79,13 @@ NameChangeTransaction::startTransaction() {
     // Initialize the state handler map first.
     initStateHandlerMap();
 
+    // Test validity of the handler map. This provides an opportunity to
+    // sanity check the map prior to attempting to execute the model.
+    verifyStateHandlerMap();
+
     // Set the current state to READY and enter the run loop.
     setState(READY_ST);
     runStateModel(START_TRANSACTION_EVT);
-}
-
-void
-NameChangeTransaction::cancelTransaction() {
-    //@todo It is up to the deriving state model to handle this event.
-    runStateModel(CANCEL_TRANSACTION_EVT);
 }
 
 void
@@ -166,11 +163,6 @@ NameChangeTransaction::setDnsUpdateStatus(const DNSClient::Status& status) {
 }
 
 void
-NameChangeTransaction::setDnsUpdateResponse(D2UpdateMessagePtr& response) {
-    dns_update_response_ = response;
-}
-
-void
 NameChangeTransaction::setForwardChangeCompleted(const bool value) {
     forward_change_completed_ = value;
 }
@@ -206,7 +198,11 @@ NameChangeTransaction::getReverseDomain() {
 }
 
 void
-NameChangeTransaction::initServerSelection(DdnsDomainPtr& domain) {
+NameChangeTransaction::initServerSelection(const DdnsDomainPtr& domain) {
+    if (!domain) {
+        isc_throw(NameChangeTransactionError,
+                  "initServerSelection called with an empty domain");
+    }
     current_server_list_ = domain->getServers();
     next_server_pos_ = 0;
     current_server_.reset();
@@ -219,8 +215,8 @@ NameChangeTransaction::selectNextServer() {
         current_server_  = (*current_server_list_)[next_server_pos_];
         dns_update_response_.reset(new
                                    D2UpdateMessage(D2UpdateMessage::INBOUND));
-        // @todo  Prototype is set on DNSClient constructor.  We need
-        // to progate a configruation value downward, probably starting
+        // @todo  Protocol is set on DNSClient constructor.  We need
+        // to propagate a configuration value downward, probably starting
         // at global, then domain, then server
         // Once that is supported we need to add it here.
         dns_client_.reset(new DNSClient(dns_update_response_ , this,
