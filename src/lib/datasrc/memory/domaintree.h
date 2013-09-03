@@ -1593,6 +1593,23 @@ public:
     /// This function is mainly intended to be used for debugging.
     uint32_t getNodeCount() const { return (node_count_); }
 
+private:
+    /// \brief Helper method for getHeight()
+    size_t getHeightHelper(const DomainTreeNode<T>* node) const;
+
+public:
+    /// \brief Return the maximum height of sub-root nodes found in the
+    /// DomainTree forest.
+    ///
+    /// The height of a node is defined as the number of nodes in the
+    /// longest path from the node to a leaf. For each subtree in the
+    /// DomainTree forest, this method determines the height of its root
+    /// node. Then it returns the maximum such height in the forest.
+    ///
+    /// Note: This method exists for testing purposes. Non-test code
+    /// must not use it.
+    size_t getHeight() const;
+
     /// \name Debug function
     //@{
     /// \brief Print the nodes in the trees.
@@ -3003,6 +3020,27 @@ DomainTree<T>::rightRotate
     return (node);
 }
 
+template <typename T>
+size_t
+DomainTree<T>::getHeightHelper(const DomainTreeNode<T>* node) const {
+    if (node == NULL) {
+        return (0);
+    }
+
+    const size_t dl = getHeightHelper(node->getLeft());
+    const size_t dr = getHeightHelper(node->getRight());
+
+    const size_t this_height = (dl > dr) ? (dl + 1) : (dr + 1);
+    const size_t down_height = getHeightHelper(node->getDown());
+
+    return ((this_height > down_height) ? this_height : down_height);
+}
+
+template <typename T>
+size_t
+DomainTree<T>::getHeight() const {
+    return (getHeightHelper(root_.get()));
+}
 
 template <typename T>
 void
