@@ -93,8 +93,16 @@ D2Dhcid::fromHWAddr(const isc::dhcp::HWAddrPtr& hwaddr,
         isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
                   "unable to compute DHCID from the HW address, "
                   "NULL pointer has been specified");
+    } else if (hwaddr->hwaddr_.empty()) {
+        isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
+                  "unable to compute DHCID from the HW address, "
+                  "HW address is empty");
     }
-    createDigest(DHCID_ID_HWADDR, hwaddr->hwaddr_, wire_fqdn);
+    std::vector<uint8_t> hwaddr_data;
+    hwaddr_data.push_back(hwaddr->htype_);
+    hwaddr_data.insert(hwaddr_data.end(), hwaddr->hwaddr_.begin(),
+                       hwaddr->hwaddr_.end());
+    createDigest(DHCID_ID_HWADDR, hwaddr_data, wire_fqdn);
 }
 
 
