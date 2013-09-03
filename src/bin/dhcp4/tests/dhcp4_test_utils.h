@@ -127,6 +127,8 @@ public:
     std::list<Pkt4Ptr> fake_sent_;
 
     using Dhcpv4Srv::adjustRemoteAddr;
+    using Dhcpv4Srv::computeDhcid;
+    using Dhcpv4Srv::createNameChangeRequests;
     using Dhcpv4Srv::processDiscover;
     using Dhcpv4Srv::processRequest;
     using Dhcpv4Srv::processRelease;
@@ -139,6 +141,7 @@ public:
     using Dhcpv4Srv::writeServerID;
     using Dhcpv4Srv::sanityCheck;
     using Dhcpv4Srv::srvidToString;
+    using Dhcpv4Srv::name_change_reqs_;
 };
 
 /// @brief Dummy Packet Filtering class.

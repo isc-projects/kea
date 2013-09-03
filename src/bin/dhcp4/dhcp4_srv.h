@@ -27,9 +27,17 @@
 #include <boost/noncopyable.hpp>
 
 #include <iostream>
+#include <queue>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Exception thrown when DHCID computation failed.
+class DhcidComputeError : public isc::Exception {
+public:
+    DhcidComputeError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// @brief DHCPv4 server service.
 ///
@@ -303,6 +311,24 @@ private:
     void processHostnameOption(const Pkt4Ptr& query, Pkt4Ptr& answer);
 
 protected:
+
+    /// @brief Creates NameChangeRequests which correspond to the lease
+    /// which has been acquired.
+    ///
+    /// If this function is called whe an existing lease is renewed, it
+    /// may generate NameChangeRequest to remove existing DNS entries which
+    /// correspond to the old lease instance. This function may cease to
+    /// generate NameChangeRequests if the notion of the client's FQDN hasn't
+    /// changed between an old and new lease.
+    ///
+    /// @param lease A pointer to the new lease which has been acquired.
+    /// @param old_lease A pointer to the instance of the old lease which has
+    /// been replaced by the new lease passed in the first argument. The NULL
+    /// value indicates that the new lease has been allocated, rather than
+    /// lease being renewed.
+    void createNameChangeRequests(const Lease4Ptr& lease,
+                                  const Lease4Ptr& old_lease);
+
     /// @brief Attempts to renew received addresses
     ///
     /// Attempts to renew existing lease. This typically includes finding a lease that
@@ -377,15 +403,11 @@ protected:
     /// @return string representation
     static std::string srvidToString(const OptionPtr& opt);
 
-    /// @brief Computes DHCID using options stored in the response message
-    /// to a client.
+    /// @brief Computes DHCID from a lease.
     ///
-    /// @param query An object encapsulating client's message to the server.
-    /// @param answer An object encapsulating response message being sent to
-    /// a client.
+    /// @param lease A pointer to the structure describing a lease.
     /// @return An object encapsulating DHCID to be used for DNS updates.
-    static isc::dhcp_ddns::D2Dhcid computeDhcid(const Pkt4Ptr& query,
-                                                const Pkt4Ptr& answer);
+    static isc::dhcp_ddns::D2Dhcid computeDhcid(const Lease4Ptr& lease);
 
     /// @brief Selects a subnet for a given client's packet.
     ///
@@ -433,6 +455,12 @@ private:
     int hook_index_pkt4_receive_;
     int hook_index_subnet4_select_;
     int hook_index_pkt4_send_;
+
+protected:
+
+    /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects which
+    /// are waiting for sending  to b10-dhcp-ddns module.
+    std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
 };
 
 }; // namespace isc::dhcp
