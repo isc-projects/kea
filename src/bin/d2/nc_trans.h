@@ -57,7 +57,7 @@ typedef std::map<unsigned int, StateHandler> StateHandlerMap;
 /// of DNS server(s) needed. It is responsible for knowing what conversations
 /// it must have with which servers and in the order necessary to fulfill the
 /// request. Upon fulfillment of the request, the transaction's work is complete
-/// it is destroyed.
+/// and it is destroyed.
 ///
 /// Fulfillment of the request is carried out through the performance of the
 /// transaction's state model.  Using a state driven implementation accounts
@@ -121,10 +121,22 @@ public:
     static const int NEW_ST = 0;
     /// @brief State from which a transaction is started.
     static const int READY_ST = 1;
-    /// @brief State in which forward DNS server  selection is done.
+    /// @brief State in which forward DNS server selection is done.
+    ///
+    /// Within this state, the actual selection of the next forward server
+    /// to use is conducted.  Upon conclusion of this state the next server
+    /// is either selected or it should transition out with NO_MORE_SERVERS_EVT
+    /// event.
     static const int SELECTING_FWD_SERVER_ST = 2;
+
     /// @brief State in which reverse DNS server  selection is done.
+    ///
+    /// Within this state, the actual selection of the next reverse server
+    /// to use is conducted.  Upon conclusion of this state the next server
+    /// is either selected or it should transition out with NO_MORE_SERVERS_EVT
+    /// event.
     static const int SELECTING_REV_SERVER_ST = 3;
+
     /// @brief Final state, all work has been performed.
     static const int DONE_ST = 4;
 
@@ -163,11 +175,8 @@ public:
     /// the failure is given by the DNSClient return status and the response
     /// packet (if one was received).
     static const int UPDATE_FAILED_EVT = 8;
-    /// @brief Issued when the transaction should be cancelled.
-    /// @todo - still on the fence about this one.
-    static const int CANCEL_TRANSACTION_EVT = 9;
     /// @brief Issued when the state model has no more work left to do.
-    static const int ALL_DONE_EVT = 10;
+    static const int ALL_DONE_EVT = 9;
 
     /// @define Value at which custom events in a derived class should begin.
     static const int DERIVED_EVENTS = 100;
@@ -182,7 +191,7 @@ public:
     /// @param forward_domain is the domain to use for forward DNS updates
     /// @param reverse_domain is the domain to use for reverse DNS updates
     ///
-    /// @throw NameChangeTransaction error if given an null request,
+    /// @throw NameChangeTransactionError if given an null request,
     /// if forward change is enabled but forward domain is null, if
     /// reverse change is enabled but reverse domain is null.
     NameChangeTransaction(isc::asiolink::IOService& io_service,
@@ -190,6 +199,7 @@ public:
                           DdnsDomainPtr& forward_domain,
                           DdnsDomainPtr& reverse_domain);
 
+    /// @brief Destructor
     virtual ~NameChangeTransaction();
 
     /// @brief Begins execution of the transaction.
@@ -199,9 +209,6 @@ public:
     /// current state to READY_ST and invoking runStateModel() with an event
     /// parameter of START_TRANSACTION_EVT.
     void startTransaction();
-
-    /// @todo - Not sure about this yet.
-    void cancelTransaction();
 
     /// @brief Serves as the DNSClient IO completion event handler.
     ///
@@ -225,10 +232,38 @@ protected:
     /// Implementations should use the addToMap() method add entries to
     /// the map.
     /// @todo This method should be pure virtual but until there are
-    /// derivations for the update manager to use we will provide an
+    /// derivations for the update manager to use, we will provide a
     /// temporary empty, implementation.  If we make it pure virtual now
     /// D2UpdateManager will not compile.
     virtual void initStateHandlerMap() {};
+
+
+    /// @brief Validates the contents of the state handler map.
+    ///
+    /// This method is invoked immediately after initStateHandlerMap and
+    /// provides an opportunity for derivations to verify that the map
+    /// is correct.  If the map is determined to be invalid this method
+    /// should throw a NameChangeTransactionError.
+    ///
+    /// The simplest implementation would include a call to getStateHandler,
+    /// for each state the derivation supports.  For example, a implementation
+    /// which included three states, READY_ST, DO_WORK_ST, and DONE_ST could
+    /// implement this function as follows:
+    ///
+    /// @code
+    ///    void verifyStateHandlerMap() {
+    ///        getStateHandler(READY_ST);
+    ///        getStateHandler(DO_WORK_ST);
+    ///        getStateHandler(DONE_ST);
+    ///    }
+    /// @endcode
+    ///
+    /// @todo This method should be pure virtual but until there are
+    /// derivations for the update manager to use, we will provide a
+    /// temporary empty, implementation.  If we make it pure virtual now
+    /// D2UpdateManager will not compile.
+    /// @throw NameChangeTransactionError if the map is invalid.
+    virtual void verifyStateHandlerMap() {};
 
     /// @brief Adds an entry to the state handler map.
     ///
@@ -257,7 +292,7 @@ protected:
     ///
     /// @throw NameChangeTransactionError if the map already contains an entry
     /// for the given state.
-    void addToMap(unsigned int idx, StateHandler handler);
+    void addToMap(unsigned int state, StateHandler handler);
 
     /// @brief Processes events through the state model
     ///
@@ -345,7 +380,7 @@ protected:
     ///
     /// @param domain is the domain from which server selection is to be
     /// conducted.
-    void initServerSelection(DdnsDomainPtr& domain);
+    void initServerSelection(const DdnsDomainPtr& domain);
 
     /// @brief Selects the next server in the current server list.
     ///
@@ -387,7 +422,7 @@ public:
     ///
     /// This is the current status of the NameChangeRequest, not to
     /// be confused with the state of the transaction.  Once the transaction
-    /// is reached it's conclusion, the request will end up with a final
+    /// is reached its conclusion, the request will end up with a final
     /// status.
     ///
     /// @return A dhcp_ddns::NameChangeStatus representing the current
@@ -396,16 +431,14 @@ public:
 
     /// @brief Fetches the forward DdnsDomain.
     ///
-    /// This value is only meaningful if the request calls for a forward change.
-    ///
-    /// @return A pointer reference to the forward DdnsDomain
+    /// @return A pointer reference to the forward DdnsDomain.  If the
+    /// the request does not include a forward change, the pointer will empty.
     DdnsDomainPtr& getForwardDomain();
 
     /// @brief Fetches the reverse DdnsDomain.
     ///
-    /// This value is only meaningful if the request calls for a reverse change.
-    ///
-    /// @return A pointer reference to the reverse DdnsDomain
+    /// @return A pointer reference to the reverse DdnsDomain.  If the
+    /// the request does not include a reverse change, the pointer will empty.
     DdnsDomainPtr& getReverseDomain();
 
     /// @brief Fetches the transaction's current state.
