@@ -24,16 +24,16 @@
 /// - A context_create callout is supplied.
 ///
 /// - Three "standard" callouts are supplied corresponding to the hooks
-///   "hookpt_one", "hookpt_two", "hookpt_three".  All do some trivial calculations
-///   on the arguments supplied to it and the context variables, returning
-///   intermediate results through the "result" argument. The result of
-///   executing all four callouts in order is:
+///   "hookpt_one", "hookpt_two", "hookpt_three".  All do some trivial
+///   calculations on the arguments supplied to it and the context variables,
+///   returning intermediate results through the "result" argument. The result
+///   of executing all four callouts in order is:
 ///
 ///   @f[ (10 + data_1) * data_2 - data_3 @f]
 ///
 ///   ...where data_1, data_2 and data_3 are the values passed in arguments of
-///   the same name to the three callouts (data_1 passed to hookpt_one, data_2 to
-///   hookpt_two etc.) and the result is returned in the argument "result".
+///   the same name to the three callouts (data_1 passed to hookpt_one, data_2
+///   to hookpt_two etc.) and the result is returned in the argument "result".
 
 #include <hooks/hooks.h>
 #include <fstream>
@@ -104,12 +104,21 @@ hookpt_three(CalloutHandle& handle) {
     return (0);
 }
 
-// Framework functions.  Only version() is supplied here.
+// Framework functions.
 
 int
 version() {
     return (BIND10_HOOKS_VERSION);
 }
 
-};
+// load() initializes the user library if the main image was statically linked.
+int
+load(isc::hooks::LibraryHandle&) {
+#ifdef USE_STATIC_LINK
+    hooks_static_link_init();
+#endif
+    return (0);
+}
+
+}
 
