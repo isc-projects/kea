@@ -3071,13 +3071,13 @@ DomainTree<T>::checkPropertiesHelper(const DomainTreeNode<T>* node) const {
         return (true);
     }
 
-    // Root nodes should be BLACK.
-    if (node->isSubTreeRoot() && node->isRed()) {
-        return (false);
-    }
-
-    // Both children of RED nodes must be BLACK.
     if (node->isRed()) {
+        // Root nodes must be BLACK.
+        if (node->isSubTreeRoot()) {
+            return (false);
+        }
+
+        // Both children of RED nodes must be BLACK.
         if (DomainTreeNode<T>::isRed(node->getLeft()) ||
             DomainTreeNode<T>::isRed(node->getRight()))
         {
