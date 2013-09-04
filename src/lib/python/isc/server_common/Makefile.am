@@ -7,7 +7,6 @@ python_PYTHON += logger.py
 pythondir = $(pyexecdir)/isc/server_common
 
 BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/work/server_common_messages.py
-BUILT_SOURCES += bind10_server.py
 
 nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/server_common_messages.py
 
