@@ -9,6 +9,12 @@ AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
 # But older GCC compilers don't have the flag.     
 AM_CXXFLAGS  = $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
+# Common libraries used in user libraries
+AM_LIBADD  = $(top_builddir)/src/lib/hooks/libb10-hooks.la
+AM_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
+AM_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+AM_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
+
 if USE_CLANGPP
 # see ../Makefile.am
 AM_CXXFLAGS += -Wno-unused-parameter
@@ -42,53 +48,54 @@ lib_LTLIBRARIES = libnvl.la libivl.la libfxl.la libbcl.la liblcl.la liblecl.la \
 libnvl_la_SOURCES  = no_version_library.cc
 libnvl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libnvl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libnvl_la_LDFLAGS = -avoid-version -export-dynamic -module
+libnvl_la_LDFLAGS  = -avoid-version -export-dynamic -module
 
 # Incorrect version function
 libivl_la_SOURCES  = incorrect_version_library.cc
 libivl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libivl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libivl_la_LDFLAGS = -avoid-version -export-dynamic -module
+libivl_la_LDFLAGS  = -avoid-version -export-dynamic -module
 
 # All framework functions throw an exception
-libfxl_la_SOURCES = framework_exception_library.cc
+libfxl_la_SOURCES  = framework_exception_library.cc
 libfxl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libfxl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libfxl_la_LDFLAGS = -avoid-version -export-dynamic -module
+libfxl_la_LDFLAGS  = -avoid-version -export-dynamic -module
 
 # The basic callout library - contains standard callouts
 libbcl_la_SOURCES  = basic_callout_library.cc
 libbcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libbcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libbcl_la_LDFLAGS = -avoid-version -export-dynamic -module
+libbcl_la_LDFLAGS  = -avoid-version -export-dynamic -module
+libbcl_la_LIBADD    = $(AM_LIBADD)
 
 # The load callout library - contains a load function
 liblcl_la_SOURCES  = load_callout_library.cc
 liblcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-liblcl_la_LDFLAGS = -avoid-version -export-dynamic -module
+liblcl_la_LDFLAGS  = -avoid-version -export-dynamic -module
+liblcl_la_LIBADD    = $(AM_LIBADD)
 
 # The load error callout library - contains a load function that returns
 # an error.
 liblecl_la_SOURCES  = load_error_callout_library.cc
 liblecl_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblecl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-liblecl_la_LDFLAGS = -avoid-version -export-dynamic -module
+liblecl_la_LDFLAGS  = -avoid-version -export-dynamic -module
 
 # The unload callout library - contains an unload function that
 # creates a marker file.
 libucl_la_SOURCES  = unload_callout_library.cc
 libucl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libucl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libucl_la_LDFLAGS = -avoid-version -export-dynamic -module
+libucl_la_LDFLAGS  = -avoid-version -export-dynamic -module
 
 # The full callout library - contains all three framework functions.
 libfcl_la_SOURCES  = full_callout_library.cc
 libfcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libfcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libfcl_la_LDFLAGS = -avoid-version -export-dynamic -module -Bstatic $(top_builddir)/src/lib/exceptions/libb10-exceptions.la -Bstatic $(top_builddir)/src/lib/hooks/libb10-hooks.la
-libfcl_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-libfcl_la_LIBADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
+libfcl_la_LDFLAGS  = -avoid-version -export-dynamic -module
+libfcl_la_LIBADD    = $(AM_LIBADD)
 
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
@@ -107,14 +114,16 @@ nodist_run_unittests_SOURCES += test_libraries.h
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
+if USE_STATIC_LINK
+run_unittests_LDFLAGS += -static
+endif
 
 run_unittests_LDADD    = $(AM_LDADD)    $(GTEST_LDADD)
-
-run_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
-run_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
-run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+run_unittests_LDADD   += $(top_builddir)/src/lib/hooks/libb10-hooks.la
+run_unittests_LDADD   += $(top_builddir)/src/lib/log/libb10-log.la
+run_unittests_LDADD   += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+run_unittests_LDADD   += $(top_builddir)/src/lib/util/libb10-util.la
+run_unittests_LDADD   += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 endif
 
 noinst_PROGRAMS = $(TESTS)
