@@ -2780,7 +2780,7 @@ DomainTree<T>::removeRebalance
         // To fix this: (a) if parent is colored RED, we can change its
         // color to BLACK (to increment the number of black nodes in
         // grandparent--parent-->path) and we're done with the
-        // rebalacing; (b) if parent is colored BLACK, then we set
+        // rebalancing; (b) if parent is colored BLACK, then we set
         // child=parent and go back to the beginning of the loop to
         // repeat the original rebalancing problem 1 node higher up the
         // tree (see NOTE #1 above).
