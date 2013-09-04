@@ -532,8 +532,9 @@ checkTree(const TestDomainTree& tree,
 
     // Skip to the next node after "."
     cnode = tree.nextNode(node_path);
-    if (!cnode) {
+    if (names.empty()) {
         // Empty tree.
+        EXPECT_EQ(static_cast<void*>(NULL), cnode);
         return;
     }
 
