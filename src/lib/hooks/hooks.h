@@ -15,6 +15,7 @@
 #ifndef HOOKS_H
 #define HOOKS_H
 
+#include <config.h>
 #include <hooks/callout_handle.h>
 #include <hooks/library_handle.h>
 
@@ -34,5 +35,43 @@ typedef int (*load_function_ptr)(isc::hooks::LibraryHandle&);
 typedef int (*unload_function_ptr)();
 
 } // Anonymous namespace
+
+namespace isc {
+namespace hooks {
+
+/// @brief User-Library Initialization for Statically-Linked BIND 10
+///
+/// If BIND 10 is statically-linked, a user-created hooks library will not be
+/// able to access symbols in it.  In particular, it will not be able to access
+/// singleton objects.
+///
+/// The hooks framework handles some of this.  For example, although there is
+/// a singleton ServerHooks object, hooks framework objects store a reference
+/// to it when they are created.  When the user library needs to register a
+/// callout (which requires access to the ServerHooks information), it accesses
+/// the ServerHooks object through a pointer passed from the BIND 10 image.
+///
+/// The logging framework is more problematical. Here the code is partly
+/// statically linked (the BIND 10 logging library) and partly shared (the
+/// log4cplus).  The state of the former is not accessible to the user library,
+/// but the state of the latter is.  So within the user library, we need to
+/// initialize the BIND 10 logging library but not initialize the log4cplus
+/// code.  Some of the initialization is done when the library is loaded, but
+/// other parts are done at run-time.
+///
+/// This function - to be called by the user library code in its load() function
+/// when running against a statically linked BIND 10 - initializes the BIND 10
+/// logging library.  In particular, it loads the message dictionary with the
+/// text of the BIND 10 messages.
+///
+/// @note This means that the virtual address space is loaded with two copies
+/// of the message dictionary.  Depending on how the user libraries are linked,
+/// loading multiple user libraries may involve loading one message dictionary
+/// per library.
+
+void hooks_static_link_init();
+
+} // namespace hooks
+} // namespace isc
 
 #endif  // HOOKS_H
