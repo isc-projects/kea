@@ -847,17 +847,66 @@ Dhcpv4Srv::processHostnameOption(const Pkt4Ptr&, Pkt4Ptr&) {
 
 void
 Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
-                                    const Lease4Ptr&) {
+                                    const Lease4Ptr& old_lease) {
     if (!lease) {
         isc_throw(isc::Unexpected,
                   "NULL lease specified when creating NameChangeRequest");
     }
 
-    D2Dhcid dhcid = computeDhcid(lease);
-    NameChangeRequest ncr(isc::dhcp_ddns::CHG_ADD,
-                          lease->fqdn_fwd_, lease->fqdn_rev_, lease->hostname_,
-                          lease->addr_.toText(), dhcid, 0, lease->valid_lft_);
-    name_change_reqs_.push(ncr);
+    // If old lease is not NULL, it is an indication that the lease has
+    // just been renewed. In such case we may need to generate the
+    // additional NameChangeRequest to remove an existing entry before
+    // we create a NameChangeRequest to add the entry for an updated lease.
+    // We may also decide not to generate any requests at all. This is when
+    // we discover that nothing has changed in the client's FQDN data.
+    if (old_lease) {
+        if (!lease->matches(*old_lease)) {
+            isc_throw(isc::Unexpected,
+                      "there is no match between the current instance of the"
+                      " lease: " << lease->toText() << ", and the previous"
+                      " instance: " << lease->toText());
+        } else {
+            // There will be a NameChangeRequest generated to remove existing
+            // DNS entries if the following conditions are met:
+            // - The hostname is set for the existing lease, we can't generate
+            //   removal request for non-existent hostname.
+            // - A server has performed reverse, forward or both updates.
+            // - FQDN data between the new and old lease do not match.
+            if ((!old_lease->hostname_.empty() &&
+                (old_lease->fqdn_fwd_ || old_lease->fqdn_rev_)) &&
+                ((lease->hostname_ != old_lease->hostname_) ||
+                 (lease->fqdn_fwd_ != old_lease->fqdn_fwd_) ||
+                 (lease->fqdn_rev_ != old_lease->fqdn_rev_))) {
+                D2Dhcid dhcid = computeDhcid(old_lease);
+                NameChangeRequest ncr(isc::dhcp_ddns::CHG_REMOVE,
+                                      old_lease->fqdn_fwd_,
+                                      old_lease->fqdn_rev_,
+                                      old_lease->hostname_,
+                                      old_lease->addr_.toText(),
+                                      dhcid, 0, old_lease->valid_lft_);
+                name_change_reqs_.push(ncr);
+
+            // If FQDN data from both leases match, there is no need to update.
+            } else if ((lease->hostname_ == old_lease->hostname_) &&
+                       (lease->fqdn_fwd_ == old_lease->fqdn_fwd_) &&
+                       (lease->fqdn_rev_ == old_lease->fqdn_rev_)) {
+                return;
+            }
+
+        }
+    }
+
+    // We may need to generate the NameChangeRequest for the new lease. But,
+    // this is only when hostname is set and if forward or reverse update has
+    // been requested.
+    if (!lease->hostname_.empty() && (lease->fqdn_fwd_ || lease->fqdn_rev_)) {
+        D2Dhcid dhcid = computeDhcid(lease);
+        NameChangeRequest ncr(isc::dhcp_ddns::CHG_ADD,
+                              lease->fqdn_fwd_, lease->fqdn_rev_,
+                              lease->hostname_, lease->addr_.toText(),
+                              dhcid, 0, lease->valid_lft_);
+        name_change_reqs_.push(ncr);
+    }
 }
 
 void
