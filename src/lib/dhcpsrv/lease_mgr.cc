@@ -156,11 +156,10 @@ Lease4::toText() const {
     return (stream.str());
 }
 
-
 bool
-Lease4::operator==(const Lease4& other) const {
-    if ( (client_id_ && !other.client_id_) ||
-         (!client_id_ && other.client_id_) ) {
+Lease4::matches(const Lease4& other) const {
+    if ((client_id_ && !other.client_id_) ||
+        (!client_id_ && other.client_id_)) {
         // One lease has client-id, but the other doesn't
         return false;
     }
@@ -171,43 +170,50 @@ Lease4::operator==(const Lease4& other) const {
         return false;
     }
 
-    return (
-        addr_ == other.addr_ &&
-        ext_ == other.ext_ &&
-        hwaddr_ == other.hwaddr_ &&
-        t1_ == other.t1_ &&
-        t2_ == other.t2_ &&
-        valid_lft_ == other.valid_lft_ &&
-        cltt_ == other.cltt_ &&
-        subnet_id_ == other.subnet_id_ &&
-        fixed_ == other.fixed_ &&
-        hostname_ == other.hostname_ &&
-        fqdn_fwd_ == other.fqdn_fwd_ &&
-        fqdn_rev_ == other.fqdn_rev_ &&
-        comments_ == other.comments_
-    );
+    return (addr_ == other.addr_ &&
+            ext_ == other.ext_ &&
+            hwaddr_ == other.hwaddr_);
+
+}
+
+bool
+Lease4::operator==(const Lease4& other) const {
+    return (matches(other) &&
+            subnet_id_ == other.subnet_id_ &&
+            t1_ == other.t1_ &&
+            t2_ == other.t2_ &&
+            valid_lft_ == other.valid_lft_ &&
+            cltt_ == other.cltt_ &&
+            fixed_ == other.fixed_ &&
+            hostname_ == other.hostname_ &&
+            fqdn_fwd_ == other.fqdn_fwd_ &&
+            fqdn_rev_ == other.fqdn_rev_ &&
+            comments_ == other.comments_);
+}
+
+bool
+Lease6::matches(const Lease6& other) const {
+    return (addr_ == other.addr_ &&
+            type_ == other.type_ &&
+            prefixlen_ == other.prefixlen_ &&
+            iaid_ == other.iaid_ &&
+            *duid_ == *other.duid_);
 }
 
 bool
 Lease6::operator==(const Lease6& other) const {
-    return (
-        addr_ == other.addr_ &&
-        type_ == other.type_ &&
-        prefixlen_ == other.prefixlen_ &&
-        iaid_ == other.iaid_ &&
-        *duid_ == *other.duid_ &&
-        preferred_lft_ == other.preferred_lft_ &&
-        valid_lft_ == other.valid_lft_ &&
-        t1_ == other.t1_ &&
-        t2_ == other.t2_ &&
-        cltt_ == other.cltt_ &&
-        subnet_id_ == other.subnet_id_ &&
-        fixed_ == other.fixed_ &&
-        hostname_ == other.hostname_ &&
-        fqdn_fwd_ == other.fqdn_fwd_ &&
-        fqdn_rev_ == other.fqdn_rev_ &&
-        comments_ == other.comments_
-    );
+    return (matches(other) &&
+            preferred_lft_ == other.preferred_lft_ &&
+            valid_lft_ == other.valid_lft_ &&
+            t1_ == other.t1_ &&
+            t2_ == other.t2_ &&
+            cltt_ == other.cltt_ &&
+            subnet_id_ == other.subnet_id_ &&
+            fixed_ == other.fixed_ &&
+            hostname_ == other.hostname_ &&
+            fqdn_fwd_ == other.fqdn_fwd_ &&
+            fqdn_rev_ == other.fqdn_rev_ &&
+            comments_ == other.comments_);
 }
 
 } // namespace isc::dhcp
