@@ -207,7 +207,7 @@ public:
                             dns::ConstRRsetPtr sig_rrset,
                             const RdataSet* old_rdataset = NULL);
 
-    /// \brief Subtract some RDATAs and RRSIGs from aw RdataSet
+    /// \brief Subtract some RDATAs and RRSIGs from an RdataSet
     ///
     /// Allocate and construct a new RdataSet that contains all the
     /// data from the \c old_rdataset except for the ones in rrset
