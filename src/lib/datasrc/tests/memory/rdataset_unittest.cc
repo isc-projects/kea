@@ -269,7 +269,7 @@ TEST_F(RdataSetTest, subtract) {
             holder1.set(RdataSet::create(mem_sgmt_, encoder_,
                                  (i & 1) ? a_rrsets : null_rrset,
                                  (i & 2) ? rrsig_rrsets : null_rrset));
-            // Create merged rdataset, based on the old one and RRsets
+            // Create subtracted rdataset, from the old one and RRsets
             SegmentObjectHolder<RdataSet, RRClass> holder2(mem_sgmt_, rrclass);
             holder2.set(RdataSet::subtract(mem_sgmt_, encoder_,
                                  (j & 1) ? a_rrsets_rm : null_rrset,
