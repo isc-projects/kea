@@ -1,3 +1,8 @@
+671.	[func]		dclink,tomek
+	memfile backend now supports getLease4(hwaddr) and getLease4(client-id)
+	methods. Thanks to David Carlier for contributing a patch.
+	(Trac #2592, git a11683be53db2f9f8f9b71c1d1c163511e0319b3)
+
 670.	[func]		marcin
 	libdhcpsrv: Added support to MySQL lease database backend to
 	store FQDN data for the lease.
