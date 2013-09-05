@@ -18,6 +18,7 @@ import os
 import select
 import signal
 
+import bind10_config
 import isc.log
 import isc.config
 from isc.server_common.logger import logger
@@ -98,34 +99,9 @@ class BIND10Server:
 
         """
         self._mod_cc = isc.config.ModuleCCSession(
-            self._get_specfile_location(), self._config_handler,
-            self._command_handler)
+            bind10_config.get_specfile_location(self.__module_name),
+            self._config_handler, self._command_handler)
         self._mod_cc.start()
-
-    def _get_specfile_location(self):
-        """Return the path to the module spec file following common convetion.
-
-        This method generates the path commonly used by most BIND 10 modules,
-        determined by a well known prefix and the module name.
-
-        A specific module can override this method if it uses a different
-        path for the spec file.
-
-        """
-        # First check if it's running under an 'in-source' environment,
-        # then try commonly used paths and file names.  If found, use it.
-        for ev in ['B10_FROM_SOURCE', 'B10_FROM_BUILD']:
-            if ev in os.environ:
-                specfile = os.environ[ev] + '/src/bin/' + self.__module_name +\
-                    '/' + self.__module_name + '.spec'
-                if os.path.exists(specfile):
-                    return specfile
-        # Otherwise, just use the installed path, whether or not it really
-        # exists; leave error handling to the caller.
-        specfile_path = '${datarootdir}/bind10'\
-            .replace('${datarootdir}', '${prefix}/share')\
-            .replace('${prefix}', '/Users/jinmei/opt')
-        return specfile_path + '/' + self.__module_name + '.spec'
 
     def _trigger_shutdown(self):
         """Initiate a shutdown sequence.

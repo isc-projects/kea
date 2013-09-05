@@ -1471,7 +1471,6 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/isc/notify/tests/notify_out_test
            src/lib/python/isc/log/tests/log_console.py
            src/lib/python/isc/log_messages/work/__init__.py
-           src/lib/python/isc/server_common/bind10_server.py
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
            src/lib/cc/session_config.h.pre
