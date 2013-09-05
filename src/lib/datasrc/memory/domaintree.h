@@ -2927,10 +2927,10 @@ DomainTree<T>::getHeightHelper(const DomainTreeNode<T>* node) const {
     const size_t dl = getHeightHelper(node->getLeft());
     const size_t dr = getHeightHelper(node->getRight());
 
-    const size_t this_height = (dl > dr) ? (dl + 1) : (dr + 1);
+    const size_t this_height = std::max(dl + 1, dr + 1);
     const size_t down_height = getHeightHelper(node->getDown());
 
-    return ((this_height > down_height) ? this_height : down_height);
+    return (std::max(this_height, down_height));
 }
 
 template <typename T>
