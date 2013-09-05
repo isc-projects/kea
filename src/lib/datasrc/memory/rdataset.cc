@@ -200,10 +200,10 @@ void writeData(util::OutputBuffer* buffer, const void* data, size_t len) {
 }
 
 size_t subtractIterate(const dns::ConstRRsetPtr& subtract,
-                     const RRClass& rrclass, const RRType& rrtype,
-                     boost::function<bool ()> iterator,
-                     boost::function<void (const Rdata& rdata)> inserter,
-                     util::OutputBuffer& buffer)
+                       const RRClass& rrclass, const RRType& rrtype,
+                       boost::function<bool ()> iterator,
+                       boost::function<void (const Rdata& rdata)> inserter,
+                       util::OutputBuffer& buffer)
 {
     size_t count = 0;
     while (iterator()) {
