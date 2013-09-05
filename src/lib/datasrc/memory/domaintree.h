@@ -1695,16 +1695,6 @@ public:
 
     /// \brief Delete a tree node.
     ///
-    /// When a node is deleted, a process called node fusion occurs
-    /// where nodes that satisfy some conditions are combined together
-    /// into a new node, and the old nodes are deleted from the
-    /// tree. From the DomainTree user's perspective, such node fusion
-    /// will not cause any disturbance in the content of the DomainTree
-    /// itself, but any existing pointers that the user code contains to
-    /// DomainTreeNodes may be invalidated. In this case, the user code
-    /// is required to re-lookup the node using \c find() and other seek
-    /// methods.
-    ///
     /// \throw none.
     ///
     /// \param mem_sgmt The \c MemorySegment object used to insert the nodes
@@ -1792,14 +1782,6 @@ private:
     void nodeFission(util::MemorySegment& mem_sgmt, DomainTreeNode<T>& node,
                      const isc::dns::LabelSequence& new_prefix,
                      const isc::dns::LabelSequence& new_suffix);
-
-    /// Try to replace the upper node and its down node into a single
-    /// new node, deleting the old nodes in the process. This happens
-    /// iteratively up the tree until no pair of nodes can be fused
-    /// anymore. Note that after deletion operation, a pointer to a node
-    /// may be invalid.
-    void tryNodeFusion(util::MemorySegment& mem_sgmt,
-                       DomainTreeNode<T>* upper_node);
 
     //@}
 
@@ -2384,8 +2366,6 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
         deleteHelper(mem_sgmt, node->getDown(), deleter);
     }
 
-    tryNodeFusion(mem_sgmt, upper_node);
-
     // Finally, destroy the node.
     deleter(node->data_.get());
     DomainTreeNode<T>::destroy(mem_sgmt, node);
@@ -2400,111 +2380,6 @@ DomainTree<T>::removeAllNodes(util::MemorySegment& mem_sgmt,
 {
     deleteHelper(mem_sgmt, root_.get(), deleter);
     root_ = NULL;
-}
-
-template <typename T>
-void
-DomainTree<T>::tryNodeFusion(util::MemorySegment& mem_sgmt,
-                             DomainTreeNode<T>* upper_node)
-{
-    // Keep doing node fusion up the tree until it's no longer possible.
-    while (upper_node) {
-        DomainTreeNode<T>* subtree_root = upper_node->getDown();
-
-        // If the node deletion caused the subtree root to disappear
-        // completely, return early.
-        if (!subtree_root) {
-            if (upper_node->isSubTreeRoot()) {
-                upper_node = upper_node->getParent();
-                continue;
-            } else {
-                break;
-            }
-        }
-
-        // If the subtree root has left or right children, the subtree
-        // has more than 1 nodes, so fusion cannot be done.
-        if (subtree_root->getLeft() || subtree_root->getRight()) {
-            break;
-        }
-
-        // If the upper node is not empty, fusion cannot be done.
-        if (!upper_node->isEmpty()) {
-            break;
-        }
-
-        // If upper node is the root node (.), don't attempt node fusion
-        // with it. The root node must always exist.
-        if (upper_node == root_.get()) {
-            break;
-        }
-
-        // Create a new label sequence with (subtree_root+upper_node)
-        // labels.
-        uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH];
-        isc::dns::LabelSequence ls(subtree_root->getLabels(), buf);
-        ls.extend(upper_node->getLabels(), buf);
-
-        // We create a new node to replace subtree_root and
-        // upper_node. subtree_root and upper_node will be deleted at
-        // the end.
-        DomainTreeNode<T>* new_node = DomainTreeNode<T>::create(mem_sgmt, ls);
-
-        new_node->parent_ = upper_node->getParent();
-
-        upper_node->setParentChild(upper_node, new_node, &root_, new_node);
-
-        new_node->left_ = upper_node->getLeft();
-        if (new_node->getLeft() != NULL) {
-            new_node->getLeft()->parent_ = new_node;
-        }
-
-        new_node->right_ = upper_node->getRight();
-        if (new_node->getRight() != NULL) {
-            new_node->getRight()->parent_ = new_node;
-        }
-
-        new_node->down_ = subtree_root->getDown();
-        if (new_node->getDown() != NULL) {
-            new_node->getDown()->parent_ = new_node;
-        }
-
-        // The color of the new node is the same as the upper node's.
-        new_node->setColor(upper_node->getColor());
-
-        new_node->setSubTreeRoot(upper_node->isSubTreeRoot());
-
-        // The flags of the new node are the same as the upper node's.
-        new_node->setFlag(DomainTreeNode<T>::FLAG_CALLBACK,
-                          upper_node->getFlag(DomainTreeNode<T>::FLAG_CALLBACK));
-        new_node->setFlag(DomainTreeNode<T>::FLAG_USER1,
-                          upper_node->getFlag(DomainTreeNode<T>::FLAG_USER1));
-        new_node->setFlag(DomainTreeNode<T>::FLAG_USER2,
-                          upper_node->getFlag(DomainTreeNode<T>::FLAG_USER2));
-        new_node->setFlag(DomainTreeNode<T>::FLAG_USER3,
-                          upper_node->getFlag(DomainTreeNode<T>::FLAG_USER3));
-
-        // The data on the new node is the same as the subtree
-        // root's. Note that the upper node must be empty (contains no
-        // data).
-        T* data = subtree_root->setData(NULL);
-        new_node->setData(data);
-
-        // Destroy the old nodes (without destroying any data).
-        DomainTreeNode<T>::destroy(mem_sgmt, upper_node);
-        DomainTreeNode<T>::destroy(mem_sgmt, subtree_root);
-
-        // We added 1 node and deleted 2.
-        --node_count_;
-
-        // Ascend one level up and iterate the whole process again if
-        // the conditions exist to fuse more nodes.
-        if (new_node->isSubTreeRoot()) {
-            upper_node = new_node->getParent();
-        } else {
-            break;
-        }
-    }
 }
 
 template <typename T>
