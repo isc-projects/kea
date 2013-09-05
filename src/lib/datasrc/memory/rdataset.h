@@ -229,7 +229,8 @@ public:
     /// even when subtracting data from the old_rdataset, since a new
     /// copy is being created.
     ///
-    /// The old_rdataset is not destroyed and it is up to the caller.
+    /// The old_rdataset is not destroyed and it is up to the caller to
+    /// manage its allocation.
     ///
     /// \throw util::MemorySegmentGrown The memory segment has grown, possibly
     ///     relocating data.
@@ -239,8 +240,8 @@ public:
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c RdataSet is allocated.
     /// \param encoder The RDATA encoder to encode \c rrset and \c sig_rrset
-    /// with the \c RdataSet to be created.
-    /// \param rrset A (non RRSIG) RRset containing the RDATA that are not
+    /// with the \c RdataSet is to be created.
+    /// \param rrset A (non-RRSIG) RRset containing the RDATA that are not
     /// to be present in the result. Can be NULL if sig_rrset is not.
     /// \param sig_rrset An RRSIG RRset containing the RRSIGs that are not
     /// to be present in the result. Can be NULL if rrset is not.
