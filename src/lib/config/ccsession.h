@@ -575,6 +575,19 @@ public:
     /// \param id The id of request as returned by groupRecvMsgAsync.
     void cancelAsyncRecv(const AsyncRecvRequestID& id);
 
+    typedef boost::function<void (const std::string& event_name,
+                                  const data::ConstElementPtr& params)>
+        NotificationCallback;
+    typedef std::list<NotificationCallback> NotificationCallbacks;
+    typedef std::map<std::string, NotificationCallbacks>
+        SubscribedNotifications;
+    typedef std::pair<SubscribedNotifications::iterator,
+                      NotificationCallbacks::iterator>
+        NotificationID;
+    NotificationID subscribeNotification(const std::string& notification_group,
+                                         const NotificationCallback& callback);
+    void unsubscribeNotification(const NotificationID& notification);
+
     /// \brief Subscribe to a group
     ///
     /// Wrapper around the CCSession::subscribe.
