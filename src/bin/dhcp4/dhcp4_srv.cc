@@ -884,7 +884,7 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
                                       old_lease->hostname_,
                                       old_lease->addr_.toText(),
                                       dhcid, 0, old_lease->valid_lft_);
-                name_change_reqs_.push(ncr);
+                queueNameChangeRequest(ncr);
 
             // If FQDN data from both leases match, there is no need to update.
             } else if ((lease->hostname_ == old_lease->hostname_) &&
@@ -905,8 +905,25 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
                               lease->fqdn_fwd_, lease->fqdn_rev_,
                               lease->hostname_, lease->addr_.toText(),
                               dhcid, 0, lease->valid_lft_);
-        name_change_reqs_.push(ncr);
+        queueNameChangeRequest(ncr);
     }
+}
+
+void
+Dhcpv4Srv::
+queueNameChangeRequest(const isc::dhcp_ddns::NameChangeRequest& ncr) {
+    if (ncr.getChangeType() == isc::dhcp_ddns::CHG_ADD) {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA,
+                  DHCP4_QUEUE_ADDITION_NCR)
+            .arg(ncr.toText());
+
+    } else {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA,
+                  DHCP4_QUEUE_REMOVAL_NCR)
+            .arg(ncr.toText());
+
+    }
+    name_change_reqs_.push(ncr);
 }
 
 void
@@ -998,6 +1015,21 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
         // @todo: send renew timer option (T1, option 58)
         // @todo: send rebind timer option (T2, option 59)
+
+        // @todo Currently the NameChangeRequests are always generated if
+        // real (not fake) allocation is being performed. Should we have
+        // control switch to enable/disable NameChangeRequest creation?
+        // Perhaps we need a way to detect whether the b10-dhcp-ddns module
+        // is up an running?
+        if (!fake_allocation) {
+            try {
+                createNameChangeRequests(lease, old_lease);
+            } catch (const Exception& ex) {
+                LOG_ERROR(dhcp4_logger, DHCP4_NCR_CREATION_FAILED)
+                    .arg(ex.what());
+            }
+
+        }
 
     } else {
         // Allocation engine did not allocate a lease. The engine logged
