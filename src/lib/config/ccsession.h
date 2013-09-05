@@ -656,6 +656,8 @@ private:
     isc::cc::AbstractSession& session_;
     ModuleSpec module_specification_;
     AsyncRecvRequests async_recv_requests_;
+    SubscribedNotifications notifications_;
+
     isc::data::ConstElementPtr handleConfigUpdate(
         isc::data::ConstElementPtr new_config);
 

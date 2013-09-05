@@ -902,5 +902,42 @@ ModuleCCSession::notify(const std::string& group, const std::string& name,
                  isc::cc::CC_TO_WILDCARD, false);
 }
 
+ModuleCCSession::NotificationID
+ModuleCCSession::subscribeNotification(const std::string& notification_group,
+                                       const NotificationCallback& callback)
+{
+    // Either insert a new empty list of callbacks or get an existing one.
+    // Either way, get the iterator for its position.
+    const std::pair<SubscribedNotifications::iterator, bool>& inserted =
+        notifications_.insert(
+            std::pair<std::string, NotificationCallbacks>(notification_group,
+                NotificationCallbacks()));
+    if (inserted.second) {
+        // It was newly inserted. In that case, we need to subscribe to the
+        // group.
+        session_.subscribe(isc::cc::CC_GROUP_NOTIFICATION_PREFIX +
+                           notification_group);
+    }
+    // Insert the callback to the chain
+    NotificationCallbacks& callbacks = inserted.first->second;
+    const NotificationCallbacks::iterator& callback_id =
+        callbacks.insert(callbacks.end(), callback);
+    // Just pack the iterators to form the ID
+    return (NotificationID(inserted.first, callback_id));
+}
+
+void
+ModuleCCSession::unsubscribeNotification(const NotificationID& notification) {
+    NotificationCallbacks& callbacks = notification.first->second;
+    // Remove the callback
+    callbacks.erase(notification.second);
+    // If it became empty, remove it from the map and unsubscribe
+    if (callbacks.empty()) {
+        session_.unsubscribe(isc::cc::CC_GROUP_NOTIFICATION_PREFIX +
+                             notification.first->first);
+        notifications_.erase(notification.first);
+    }
+}
+
 }
 }
