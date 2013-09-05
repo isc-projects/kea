@@ -584,6 +584,24 @@ private:
         }
     }
 
+    /// \brief Access sibling node as bare pointer.
+    ///
+    /// A sibling node is defined as the parent's other child. It exists
+    /// at the same level as child. Note that child can be NULL here,
+    /// which is why this is a static function.
+    ///
+    /// \return the sibling node if one exists, NULL otherwise.
+    static DomainTreeNode<T>* getSibling(DomainTreeNode<T>* parent,
+                                         DomainTreeNode<T>* child)
+    {
+        if (!parent) {
+            return (NULL);
+        }
+
+        return ((parent->getLeft() == child) ?
+                parent->getRight() : parent->getLeft());
+    }
+
     /// \brief Access uncle node as bare pointer.
     ///
     /// An uncle node is defined as the parent node's sibling. It exists
@@ -2582,8 +2600,8 @@ DomainTree<T>::removeRebalance
         // A sibling node is defined as the parent's other child. It
         // exists at the same level as child. Note that child can be
         // NULL here.
-        DomainTreeNode<T>* sibling = (parent->getLeft() == child) ?
-            parent->getRight() : parent->getLeft();
+        DomainTreeNode<T>* sibling =
+            DomainTreeNode<T>::getSibling(parent, child);
 
         // NOTE #1: Understand this clearly. We are here only because in
         // the path through parent--child, a BLACK node was removed,
@@ -2629,8 +2647,7 @@ DomainTree<T>::removeRebalance
 
             // Re-compute child's sibling due to the tree adjustment
             // above.
-            sibling = (parent->getLeft() == child) ?
-                parent->getRight() : parent->getLeft();
+            sibling = DomainTreeNode<T>::getSibling(parent, child);
         }
 
         // NOTE #3: sibling still cannot be NULL here as parent--child
@@ -2767,8 +2784,7 @@ DomainTree<T>::removeRebalance
             }
             // Re-compute child's sibling due to the tree adjustment
             // above.
-            sibling = (parent->getLeft() == child) ?
-                parent->getRight() : parent->getLeft();
+            sibling = DomainTreeNode<T>::getSibling(parent, child);
         }
 
         // NOTE #7: sibling cannot be NULL here as even if the sibling
