@@ -329,6 +329,16 @@ protected:
     void createNameChangeRequests(const Lease4Ptr& lease,
                                   const Lease4Ptr& old_lease);
 
+    /// @brief Adds the NameChangeRequest to the queue for processing.
+    ///
+    /// This function adds the @c isc::dhcp_ddns::NameChangeRequest to the
+    /// queue and emits the debug message which indicates whether the request
+    /// being added is to remove DNS entry or add a new entry. This function
+    /// is exception free.
+    ///
+    /// @param ncr An isc::dhcp_ddns::NameChangeRequest object being added.
+    void queueNameChangeRequest(const isc::dhcp_ddns::NameChangeRequest& ncr);
+
     /// @brief Attempts to renew received addresses
     ///
     /// Attempts to renew existing lease. This typically includes finding a lease that
