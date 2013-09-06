@@ -1076,7 +1076,8 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_renew) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Check that T1, T2, preferred, valid and cltt really set and not using
@@ -1172,7 +1173,8 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdate_lease6_renew) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Check that T1, T2, preferred, valid and cltt really set and not using
@@ -1262,7 +1264,8 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Check that T1, T2, preferred, valid and cltt really set and not using
@@ -1293,7 +1296,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
     // Check that our callback was called
     EXPECT_EQ("lease6_renew", callback_name_);
 
-    l = LeaseMgrFactory::instance().getLease6(addr);
+    l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA, addr);
 
     // Check that the old values are still there and they were not
     // updated by the renewal
@@ -1337,7 +1340,8 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_release) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Let's create a RELEASE
@@ -1375,11 +1379,12 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_release) {
 
     // Check that the lease is really gone in the database
     // get lease by address
-    l = LeaseMgrFactory::instance().getLease6(addr);
+    l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA, addr);
     ASSERT_FALSE(l);
 
     // Get lease by subnetid/duid/iaid combination
-    l = LeaseMgrFactory::instance().getLease6(*duid_, iaid, subnet_->getID());
+    l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA, *duid_, iaid,
+                                              subnet_->getID());
     ASSERT_FALSE(l);
 }
 
@@ -1416,7 +1421,8 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Let's create a RELEASE
@@ -1442,11 +1448,13 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
 
     // Check that the lease is still there
     // get lease by address
-    l = LeaseMgrFactory::instance().getLease6(addr);
+    l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                              addr);
     ASSERT_TRUE(l);
 
     // Get lease by subnetid/duid/iaid combination
-    l = LeaseMgrFactory::instance().getLease6(*duid_, iaid, subnet_->getID());
+    l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA, *duid_, iaid,
+                                              subnet_->getID());
     ASSERT_TRUE(l);
 }
 

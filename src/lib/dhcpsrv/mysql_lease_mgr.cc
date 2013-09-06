@@ -984,8 +984,9 @@ public:
 
             default:
                 isc_throw(BadValue, "invalid lease type returned (" <<
-                          lease_type_ << ") for lease with address " <<
-                          address << ". Only 0, 1, or 2 are allowed.");
+                          static_cast<int>(lease_type_) << ") for lease with "
+                          << "address " << address << ". Only 0, 1, or 2 are "
+                          << "allowed.");
         }
 
         // Set up DUID,
@@ -1650,7 +1651,8 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 
 
 Lease6Ptr
-MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
+MySqlLeaseMgr::getLease6(Lease6::LeaseType /* type - not used yet */,
+                         const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_ADDR6).arg(addr.toText());
 
@@ -1676,7 +1678,8 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
 
 
 Lease6Collection
-MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
+MySqlLeaseMgr::getLease6(Lease6::LeaseType /* type - not used yet */,
+                         const DUID& duid, uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_IAID_DUID).arg(iaid).arg(duid.toText());
 
@@ -1718,7 +1721,8 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
 
 
 Lease6Ptr
-MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
+MySqlLeaseMgr::getLease6(Lease6::LeaseType /* type - not used yet */,
+                         const DUID& duid, uint32_t iaid,
                          SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_IAID_SUBID_DUID)

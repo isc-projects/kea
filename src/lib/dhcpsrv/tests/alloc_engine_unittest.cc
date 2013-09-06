@@ -219,7 +219,8 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
     checkLease6(lease);
 
     // Check that the lease is indeed in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
     ASSERT_TRUE(from_mgr);
 
     // Now check that the lease in LeaseMgr has the same parameters
@@ -244,7 +245,8 @@ TEST_F(AllocEngine6Test, fakeAlloc6) {
     checkLease6(lease);
 
     // Check that the lease is NOT in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
     ASSERT_FALSE(from_mgr);
 }
 
@@ -270,7 +272,8 @@ TEST_F(AllocEngine6Test, allocWithValidHint6) {
     checkLease6(lease);
 
     // Check that the lease is indeed in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
     ASSERT_TRUE(from_mgr);
 
     // Now check that the lease in LeaseMgr has the same parameters
@@ -311,7 +314,8 @@ TEST_F(AllocEngine6Test, allocWithUsedHint6) {
     checkLease6(lease);
 
     // Check that the lease is indeed in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
     ASSERT_TRUE(from_mgr);
 
     // Now check that the lease in LeaseMgr has the same parameters
@@ -342,7 +346,8 @@ TEST_F(AllocEngine6Test, allocBogusHint6) {
     checkLease6(lease);
 
     // Check that the lease is indeed in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
     ASSERT_TRUE(from_mgr);
 
     // Now check that the lease in LeaseMgr has the same parameters
@@ -468,7 +473,8 @@ TEST_F(AllocEngine6Test, smallPool6) {
     checkLease6(lease);
 
     // Check that the lease is indeed in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
     ASSERT_TRUE(from_mgr);
 
     // Now check that the lease in LeaseMgr has the same parameters
@@ -595,7 +601,8 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     EXPECT_EQ(addr.toText(), lease->addr_.toText());
 
     // Check that the lease is indeed updated in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                               addr);
     ASSERT_TRUE(from_mgr);
 
     // Now check that the lease in LeaseMgr has the same parameters
@@ -1272,7 +1279,8 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     checkLease6(lease);
 
     // Check that the lease is indeed in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
     ASSERT_TRUE(from_mgr);
 
     // Check that callouts were indeed called
@@ -1345,7 +1353,8 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     EXPECT_EQ(valid_override_, lease->valid_lft_);
 
     // Now check if the lease is in the database
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->addr_);
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
     ASSERT_TRUE(from_mgr);
 
     // Check if values in the database are overridden
