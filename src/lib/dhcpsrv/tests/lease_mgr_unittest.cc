@@ -16,6 +16,8 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/memfile_lease_mgr.h>
+#include <dhcpsrv/tests/test_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -28,6 +30,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 
 // This is a concrete implementation of a Lease database.  It does not do
 // anything useful and is used for abstract LeaseMgr class testing.
@@ -135,25 +138,25 @@ public:
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
-    /// @param duid client DUID
-    /// @param iaid IA identifier
+    /// @param duid ignored
+    /// @param iaid ignored
     ///
-    /// @return collection of IPv6 leases
+    /// @return whatever is set in leases6_ field
     virtual Lease6Collection getLease6(Lease6::LeaseType /* not used yet */,
                                        const DUID&, uint32_t) const {
-        return (Lease6Collection());
+        return (leases6_);
     }
 
-    /// @brief Returns existing IPv6 lease for a given DUID+IA combination
+    /// @brief Returns existing IPv6 lease for a given DUID+IA+subnet-id combination
     ///
-    /// @param duid client DUID
-    /// @param iaid IA identifier
-    /// @param subnet_id identifier of the subnet the lease must belong to
+    /// @param duid ignored
+    /// @param iaid ignored
+    /// @param subnet_id ignored
     ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    /// @return whatever is set in leases6_ field
     virtual Lease6Collection getLeases6(Lease6::LeaseType /* not used yet */,
                                         const DUID&, uint32_t, SubnetID) const {
-        return (Lease6Collection());
+        return (leases6_);
     }
 
     /// @brief Updates IPv4 lease.
@@ -220,6 +223,17 @@ public:
     /// @brief Rollback transactions
     virtual void rollback() {
     }
+
+    // We need to use it in ConcreteLeaseMgr
+    using LeaseMgr::getLease6;
+
+    Lease6Collection leases6_; ///< getLease6 methods return this as is
+};
+
+class LeaseMgrTest : public GenericLeaseMgrTest {
+public:
+    LeaseMgrTest() {
+    }
 };
 
 namespace {
@@ -228,7 +242,7 @@ namespace {
 ///
 /// This test checks if the LeaseMgr can be instantiated and that it
 /// parses parameters string properly.
-TEST(LeaseMgr, getParameter) {
+TEST_F(LeaseMgrTest, getParameter) {
 
     LeaseMgr::ParameterMap pmap;
     pmap[std::string("param1")] = std::string("value1");
@@ -238,6 +252,44 @@ TEST(LeaseMgr, getParameter) {
     EXPECT_EQ("value1", leasemgr.getParameter("param1"));
     EXPECT_EQ("value2", leasemgr.getParameter("param2"));
     EXPECT_THROW(leasemgr.getParameter("param3"), BadValue);
+}
+
+// This test checks if getLease6() method is working properly for 0 (NULL),
+// 1 (return the lease) and more than 1 leases (throw).
+TEST_F(LeaseMgrTest, getLease6) {
+
+    LeaseMgr::ParameterMap pmap;
+    boost::scoped_ptr<ConcreteLeaseMgr> mgr(new ConcreteLeaseMgr(pmap));
+
+    vector<Lease6Ptr> leases = createLeases6();
+
+    mgr->leases6_.clear();
+    // For no leases, the function should return NULL pointer
+    Lease6Ptr lease;
+
+    // the getLease6() is calling getLeases6(), which is a dummy. It returns
+    // whatever is there in leases6_ field.
+    EXPECT_NO_THROW(lease = mgr->getLease6(leasetype6_[1], *leases[1]->duid_,
+                                           leases[1]->iaid_,
+                                           leases[1]->subnet_id_));
+    EXPECT_TRUE(Lease6Ptr() == lease);
+
+    // For a single lease, the function should return that lease
+    mgr->leases6_.push_back(leases[1]);
+    EXPECT_NO_THROW(lease = mgr->getLease6(leasetype6_[1], *leases[1]->duid_,
+                                           leases[1]->iaid_,
+                                           leases[1]->subnet_id_));
+    EXPECT_TRUE(lease);
+
+    EXPECT_NO_THROW(detailCompareLease(lease, leases[1]));
+
+    // Add one more lease. There are 2 now. It should throw
+    mgr->leases6_.push_back(leases[2]);
+
+    EXPECT_THROW(lease = mgr->getLease6(leasetype6_[1], *leases[1]->duid_,
+                                        leases[1]->iaid_,
+                                        leases[1]->subnet_id_),
+                 MultipleRecords);
 }
 
 // There's no point in calling any other methods in LeaseMgr, as they
