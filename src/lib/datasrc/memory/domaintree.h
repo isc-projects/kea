@@ -2293,20 +2293,13 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
     // an in-place value swap of node data, but the actual node
     // locations are swapped in exchange(). Unlike normal BSTs, we have
     // to do this as our label data is at address (this + 1).
-    if (node->getLeft() != NULL) {
+    if (node->getLeft() && node->getRight()) {
         DomainTreeNode<T>* rightmost = node->getLeft();
         while (rightmost->getRight() != NULL) {
             rightmost = rightmost->getRight();
         }
 
         node->exchange(rightmost, &root_);
-    } else if (node->getRight() != NULL) {
-        DomainTreeNode<T>* leftmost = node->getRight();
-        while (leftmost->getLeft() != NULL) {
-            leftmost = leftmost->getLeft();
-        }
-
-        node->exchange(leftmost, &root_);
     }
 
     // Now, node has 0 or 1 children, as from above, either its right or
@@ -2326,6 +2319,14 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
     // Child can be NULL here if node was a leaf.
     if (child) {
         child->parent_ = node->getParent();
+        // Even if node is not a leaf node, we don't always do an
+        // exchange() with another node, so we have to set the child's
+        // FLAG_SUBTREE_ROOT explicitly.
+        if (child->getParent() &&
+            (child->getParent()->getDown() == child))
+        {
+            child->setSubTreeRoot(node->isSubTreeRoot());
+        }
     }
 
     // If node is RED, it is a valid red-black tree already as (node's)
