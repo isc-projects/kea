@@ -2950,6 +2950,15 @@ DomainTree<T>::checkPropertiesHelper(const DomainTreeNode<T>* node) const {
         }
     }
 
+    // If node is assigned to the down_ pointer of its parent, it is a
+    // subtree root and must have the flag set.
+    if (node->getParent() &&
+        (node->getParent()->getDown() == node) &&
+        (!node->isSubTreeRoot()))
+    {
+        return (false);
+    }
+
     // Repeat tests with this node's children.
     return (checkPropertiesHelper(node->getLeft()) &&
             checkPropertiesHelper(node->getRight()) &&
