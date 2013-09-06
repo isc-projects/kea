@@ -142,8 +142,8 @@ public:
     /// @param iaid ignored
     ///
     /// @return whatever is set in leases6_ field
-    virtual Lease6Collection getLease6(Lease6::LeaseType /* not used yet */,
-                                       const DUID&, uint32_t) const {
+    virtual Lease6Collection getLeases6(Lease6::LeaseType /* not used yet */,
+                                        const DUID&, uint32_t) const {
         return (leases6_);
     }
 

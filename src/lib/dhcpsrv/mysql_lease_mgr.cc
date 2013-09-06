@@ -1678,8 +1678,8 @@ MySqlLeaseMgr::getLease6(Lease6::LeaseType /* type - not used yet */,
 
 
 Lease6Collection
-MySqlLeaseMgr::getLease6(Lease6::LeaseType /* type - not used yet */,
-                         const DUID& duid, uint32_t iaid) const {
+MySqlLeaseMgr::getLeases6(Lease6::LeaseType /* type - not used yet */,
+                          const DUID& duid, uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_IAID_DUID).arg(iaid).arg(duid.toText());
 
