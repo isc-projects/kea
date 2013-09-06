@@ -128,7 +128,8 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress&) const {
+    virtual Lease6Ptr getLease6(Lease6::LeaseType /* not used yet */,
+                                const isc::asiolink::IOAddress&) const {
         return (Lease6Ptr());
     }
 
@@ -138,7 +139,8 @@ public:
     /// @param iaid IA identifier
     ///
     /// @return collection of IPv6 leases
-    virtual Lease6Collection getLease6(const DUID&, uint32_t) const {
+    virtual Lease6Collection getLease6(Lease6::LeaseType /* not used yet */,
+                                       const DUID&, uint32_t) const {
         return (Lease6Collection());
     }
 
@@ -149,7 +151,8 @@ public:
     /// @param subnet_id identifier of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(const DUID&, uint32_t, SubnetID) const {
+    virtual Lease6Ptr getLease6(Lease6::LeaseType /* not used yet */,
+                                const DUID&, uint32_t, SubnetID) const {
         return (Lease6Ptr());
     }
 

@@ -1316,7 +1316,8 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         return (ia_rsp);
     }
 
-    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(*duid, ia->getIAID(),
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                            *duid, ia->getIAID(),
                                                             subnet->getID());
 
     if (!lease) {
@@ -1579,7 +1580,8 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         return (ia_rsp);
     }
 
-    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(release_addr->getAddress());
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                            release_addr->getAddress());
 
     if (!lease) {
         // client releasing a lease that we don't know about.

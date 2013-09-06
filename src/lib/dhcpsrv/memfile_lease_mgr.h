@@ -140,33 +140,38 @@ public:
     /// This function returns a copy of the lease. The modification in the
     /// return lease does not affect the instance held in the lease storage.
     ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param addr An address of the searched lease.
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
+    virtual Lease6Ptr getLease6(Lease6::LeaseType type,
+                                const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
     /// @todo Not implemented yet
     ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param duid client DUID
     /// @param iaid IA identifier
     ///
     /// @return collection of IPv6 leases
-    virtual Lease6Collection getLease6(const DUID& duid, uint32_t iaid) const;
+    virtual Lease6Collection getLease6(Lease6::LeaseType type,
+                                       const DUID& duid, uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID/IA/subnet-id tuple
     ///
     /// This function returns a copy of the lease. The modification in the
     /// return lease does not affect the instance held in the lease storage.
     ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param duid client DUID
     /// @param iaid IA identifier
     /// @param subnet_id identifier of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid,
-                                SubnetID subnet_id) const;
+    virtual Lease6Ptr getLease6(Lease6::LeaseType type, const DUID& duid,
+                                uint32_t iaid, SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///
