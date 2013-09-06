@@ -387,6 +387,14 @@ TEST(NameChangeRequestTest, dhcidFromMaxDUID) {
     EXPECT_EQ(dhcid_ref, dhcid.toStr());
 }
 
+// test operator<< on D2Dhcid
+TEST(NameChangeRequestTest, leftShiftOperation) {
+    const D2Dhcid dhcid("010203040A7F8E3D");
+
+    ostringstream oss;
+    oss << dhcid;
+    EXPECT_EQ(dhcid.toStr(), oss.str());
+}
 
 /// @brief Verifies the fundamentals of converting from and to JSON.
 /// It verifies that:
