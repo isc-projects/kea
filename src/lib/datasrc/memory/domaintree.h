@@ -2322,7 +2322,7 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
         // Even if node is not a leaf node, we don't always do an
         // exchange() with another node, so we have to set the child's
         // FLAG_SUBTREE_ROOT explicitly.
-        if (child->getParent() &&
+        if ((!child->getParent()) ||
             (child->getParent()->getDown() == child))
         {
             child->setSubTreeRoot(node->isSubTreeRoot());
@@ -2953,8 +2953,8 @@ DomainTree<T>::checkPropertiesHelper(const DomainTreeNode<T>* node) const {
 
     // If node is assigned to the down_ pointer of its parent, it is a
     // subtree root and must have the flag set.
-    if (node->getParent() &&
-        (node->getParent()->getDown() == node) &&
+    if (((!node->getParent()) ||
+         (node->getParent()->getDown() == node)) &&
         (!node->isSubTreeRoot()))
     {
         return (false);
