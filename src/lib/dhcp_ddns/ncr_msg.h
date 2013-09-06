@@ -139,6 +139,9 @@ private:
     std::vector<uint8_t> bytes_;
 };
 
+std::ostream&
+operator<<(std::ostream& os, const D2Dhcid& dhcid);
+
 class NameChangeRequest;
 /// @brief Defines a pointer to a NameChangeRequest.
 typedef boost::shared_ptr<NameChangeRequest> NameChangeRequestPtr;

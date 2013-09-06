@@ -111,6 +111,11 @@ D2Dhcid::fromDUID(const isc::dhcp::DUID& duid,
     bytes_.insert(bytes_.end(), secure.begin(), secure.end());
 }
 
+std::ostream&
+operator<<(std::ostream& os, const D2Dhcid& dhcid) {
+    os << dhcid.toStr();
+    return (os);
+}
 
 /**************************** NameChangeRequest ******************************/
 
