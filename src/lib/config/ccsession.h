@@ -647,6 +647,8 @@ private:
     ///     otherwise.
     bool checkAsyncRecv(const data::ConstElementPtr& envelope,
                         const data::ConstElementPtr& msg);
+    bool checkNotification(const data::ConstElementPtr& envelope,
+                           const data::ConstElementPtr& msg);
     /// \brief Checks if a message with this envelope matches the request
     bool requestMatch(const AsyncRecvRequest& request,
                       const data::ConstElementPtr& envelope) const;

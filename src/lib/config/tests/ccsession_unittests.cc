@@ -115,13 +115,14 @@ TEST_F(CCSessionTest, receiveNotification) {
     EXPECT_TRUE(session.haveSubscription("notifications/group", "*"));
     EXPECT_TRUE(called.empty());
     // Send the notification
-    session.getMessages()->add(el("{"
+    const isc::data::ConstElementPtr msg = el("{"
         "       \"notification\": ["
         "           \"event\", {"
         "               \"param\": true"
         "           }"
         "       ]"
-        "   }"));
+        "   }");
+    session.addMessage(msg, "notifications/group", "*");
     mccs.checkCommand();
     ASSERT_EQ(2, called.size());
     EXPECT_EQ("first", called[0]);
@@ -132,23 +133,17 @@ TEST_F(CCSessionTest, receiveNotification) {
     // We are still subscribed to the group and handle the requests
     EXPECT_TRUE(session.haveSubscription("notifications/group", "*"));
     // Send the notification
-    session.getMessages()->add(el("{"
-        "       \"notification\": ["
-        "           \"event\", {"
-        "               \"param\": true"
-        "           }"
-        "       ]"
-        "   }"));
+    session.addMessage(msg, "notifications/group", "*");
     mccs.checkCommand();
     ASSERT_EQ(1, called.size());
     EXPECT_EQ("second", called[0]);
-    // Try to unsubscribe again. That should fail.
-    EXPECT_THROW(mccs.unsubscribeNotification(first), isc::InvalidParameter);
-    EXPECT_TRUE(session.haveSubscription("notifications/group", "*"));
     // Unsubscribe the other one too. That should cancel the upstream
     // subscription
     mccs.unsubscribeNotification(second);
     EXPECT_FALSE(session.haveSubscription("notifications/group", "*"));
+    // Nothing crashes if out of sync notification comes unexpected
+    session.addMessage(msg, "notifications/group", "*");
+    EXPECT_NO_THROW(mccs.checkCommand());
 }
 
 // Test we can send an RPC (command) and get an answer. The answer is success
