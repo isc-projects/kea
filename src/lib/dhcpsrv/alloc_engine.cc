@@ -195,7 +195,7 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts)
     hook_index_lease6_select_ = Hooks.hook_index_lease6_select_;
 }
 
-Lease6Ptr
+Lease6Collection
 AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                               const DuidPtr& duid,
                               uint32_t iaid,
@@ -222,43 +222,52 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         }
 
         // check if there's existing lease for that subnet/duid/iaid combination.
-        /// @todo: Make this generic
-        Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(
-                             Lease6::LEASE_IA_NA, *duid, iaid, subnet->getID());
-        if (existing) {
-            // we have a lease already. This is a returning client, probably after
-            // his reboot.
+        /// @todo: Make this generic (cover temp. addrs and prefixes)
+        Lease6Collection existing = LeaseMgrFactory::instance().getLeases6(
+            Lease6::LEASE_IA_NA, *duid, iaid, subnet->getID());
+
+        if (!existing.empty()) {
+            // we have at least one lease already. This is a returning client,
+            // probably after his reboot.
             return (existing);
         }
 
         // check if the hint is in pool and is available
         if (subnet->inPool(hint)) {
-            existing = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
-                                                             hint);
-            if (!existing) {
+
+            /// @todo: We support only one hint for now
+            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(
+                Lease6::LEASE_IA_NA, hint);
+            if (!lease) {
                 /// @todo: check if the hint is reserved once we have host support
                 /// implemented
 
                 // the hint is valid and not currently used, let's create a lease for it
-                Lease6Ptr lease = createLease6(subnet, duid, iaid,
-                                               hint,
-                                               fwd_dns_update,
-                                               rev_dns_update, hostname,
-                                               callout_handle,
-                                               fake_allocation);
+                /// @todo: We support only one lease per ia for now
+                lease = createLease6(subnet, duid, iaid, hint, fwd_dns_update,
+                                     rev_dns_update, hostname, callout_handle,
+                                     fake_allocation);
 
                 // It can happen that the lease allocation failed (we could have lost
                 // the race condition. That means that the hint is lo longer usable and
                 // we need to continue the regular allocation path.
                 if (lease) {
-                    return (lease);
+                    /// @todo: We support only one lease per ia for now
+                    Lease6Collection collection;
+                    collection.push_back(lease);
+                    return (collection);
                 }
             } else {
-                if (existing->expired()) {
-                    return (reuseExpiredLease(existing, subnet, duid, iaid,
+                if (lease->expired()) {
+                    /// We found a lease and it is expired, so we can reuse it
+                    /// @todo: We support only one lease per ia for now
+                    lease = reuseExpiredLease(lease, subnet, duid, iaid,
                                               fwd_dns_update, rev_dns_update,
                                               hostname, callout_handle,
-                                              fake_allocation));
+                                              fake_allocation);
+                    Lease6Collection collection;
+                    collection.push_back(lease);
+                    return (collection);
                 }
 
             }
@@ -297,7 +306,9 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                                                hostname,
                                                callout_handle, fake_allocation);
                 if (lease) {
-                    return (lease);
+                    Lease6Collection collection;
+                    collection.push_back(lease);
+                    return (collection);
                 }
 
                 // Although the address was free just microseconds ago, it may have
@@ -305,10 +316,13 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                 // allocation attempts.
             } else {
                 if (existing->expired()) {
-                    return (reuseExpiredLease(existing, subnet, duid, iaid,
-                                              fwd_dns_update, rev_dns_update,
-                                              hostname, callout_handle,
-                                              fake_allocation));
+                    existing = reuseExpiredLease(existing, subnet, duid, iaid,
+                                                 fwd_dns_update, rev_dns_update,
+                                                 hostname, callout_handle,
+                                                 fake_allocation);
+                    Lease6Collection collection;
+                    collection.push_back(existing);
+                    return (collection);
                 }
             }
 
@@ -326,7 +340,7 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_ADDRESS6_ALLOC_ERROR).arg(e.what());
     }
 
-    return (Lease6Ptr());
+    return (Lease6Collection());
 }
 
 Lease4Ptr
