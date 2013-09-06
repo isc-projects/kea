@@ -208,10 +208,10 @@ Memfile_LeaseMgr::getLease6(Lease6::LeaseType /* not used yet */,
     return (Lease6Collection());
 }
 
-Lease6Ptr
-Memfile_LeaseMgr::getLease6(Lease6::LeaseType /* not used yet */,
-                            const DUID& duid, uint32_t iaid,
-                            SubnetID subnet_id) const {
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(Lease6::LeaseType /* not used yet */,
+                             const DUID& duid, uint32_t iaid,
+                             SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID)
               .arg(iaid).arg(subnet_id).arg(duid.toText());
@@ -227,10 +227,14 @@ Memfile_LeaseMgr::getLease6(Lease6::LeaseType /* not used yet */,
         idx.find(boost::make_tuple(duid.getDuid(), iaid, subnet_id));
     // Lease was not found. Return empty pointer.
     if (lease == idx.end()) {
-        return (Lease6Ptr());
+        return (Lease6Collection());
     }
+
     // Lease was found, return it to the caller.
-    return (Lease6Ptr(new Lease6(**lease)));
+    /// @todo: allow multiple leases for a single duid+iaid+subnet_id tuple
+    Lease6Collection collection;
+    collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    return (collection);
 }
 
 void
