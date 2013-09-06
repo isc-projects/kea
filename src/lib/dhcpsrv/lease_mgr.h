@@ -318,9 +318,9 @@ struct Lease6 : public Lease {
 
     /// @brief Type of lease contents
     typedef enum {
-        LEASE_IA_NA, /// the lease contains non-temporary IPv6 address
-        LEASE_IA_TA, /// the lease contains temporary IPv6 address
-        LEASE_IA_PD  /// the lease contains IPv6 prefix (for prefix delegation)
+        LEASE_IA_NA = 0, /// the lease contains non-temporary IPv6 address
+        LEASE_IA_TA = 1, /// the lease contains temporary IPv6 address
+        LEASE_IA_PD = 2  /// the lease contains IPv6 prefix (for prefix delegation)
     } LeaseType;
 
     /// @brief Lease type
@@ -533,10 +533,12 @@ public:
     /// The assumption here is that there will not be site or link-local
     /// addresses used, so there is no way of having address duplication.
     ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const = 0;
+    virtual Lease6Ptr getLease6(Lease6::LeaseType type,
+                                const isc::asiolink::IOAddress& addr) const = 0;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
     ///
@@ -545,22 +547,24 @@ public:
     /// can be more than one. Thus return type is a container, not a single
     /// pointer.
     ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param duid client DUID
     /// @param iaid IA identifier
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Collection getLease6(const DUID& duid,
+    virtual Lease6Collection getLease6(Lease6::LeaseType type, const DUID& duid,
                                        uint32_t iaid) const = 0;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param duid client DUID
     /// @param iaid IA identifier
     /// @param subnet_id subnet id of the subnet the lease belongs to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid,
-                                SubnetID subnet_id) const = 0;
+    virtual Lease6Ptr getLease6(Lease6::LeaseType type, const DUID& duid,
+                                uint32_t iaid, SubnetID subnet_id) const = 0;
 
     /// @brief Updates IPv4 lease.
     ///
