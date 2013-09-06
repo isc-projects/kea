@@ -156,6 +156,14 @@ typedef std::map<std::string, isc::data::ConstElementPtr> ElementMap;
 class NameChangeRequest {
 public:
     /// @brief Default Constructor.
+    ///
+    /// @todo Currently, fromWire makes use of the ability to create an empty
+    /// NameChangeRequest and then builds it bit by bit.  This means that it
+    /// is technically possible to create one and attempt to use in ways
+    /// other than intended and its invalid content may or may not be handled
+    /// gracefully by consuming code.  It might be wise to revisit this
+    /// structuring such that we do not use a default constructor and only
+    /// allow valid instantiations.
     NameChangeRequest();
 
     /// @brief Constructor.  Full constructor, which provides parameters for
