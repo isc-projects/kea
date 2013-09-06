@@ -200,10 +200,12 @@ Memfile_LeaseMgr::getLease6(Lease6::LeaseType /* not used yet */,
 }
 
 Lease6Collection
-Memfile_LeaseMgr::getLease6(Lease6::LeaseType /* not used yet */,
+Memfile_LeaseMgr::getLeases6(Lease6::LeaseType /* not used yet */,
                             const DUID& duid, uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_IAID_DUID).arg(iaid).arg(duid.toText());
+
+    /// @todo Not implemented.
 
     return (Lease6Collection());
 }

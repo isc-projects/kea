@@ -552,8 +552,8 @@ public:
     /// @param iaid IA identifier
     ///
     /// @return Lease collection (may be empty if no lease is found)
-    virtual Lease6Collection getLease6(Lease6::LeaseType type, const DUID& duid,
-                                       uint32_t iaid) const = 0;
+    virtual Lease6Collection getLeases6(Lease6::LeaseType type, const DUID& duid,
+                                        uint32_t iaid) const = 0;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///

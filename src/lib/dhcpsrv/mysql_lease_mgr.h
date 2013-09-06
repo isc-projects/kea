@@ -279,8 +279,8 @@ public:
     ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease6Collection getLease6(Lease6::LeaseType type, const DUID& duid,
-                                       uint32_t iaid) const;
+    virtual Lease6Collection getLeases6(Lease6::LeaseType type, const DUID& duid,
+                                        uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///

@@ -835,9 +835,9 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
     }
 
     // Get the leases matching the DUID and IAID of lease[1].
-    Lease6Collection returned = lmptr_->getLease6(leasetype6_[1],
-                                                  *leases[1]->duid_,
-                                                  leases[1]->iaid_);
+    Lease6Collection returned = lmptr_->getLeases6(leasetype6_[1],
+                                                   *leases[1]->duid_,
+                                                   leases[1]->iaid_);
 
     // Should be three leases, matching leases[1], [4] and [5].
     ASSERT_EQ(3, returned.size());
@@ -855,15 +855,15 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
 
     // Check that nothing is returned when either the IAID or DUID match
     // nothing.
-    returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
-                                 leases[1]->iaid_ + 1);
+    returned = lmptr_->getLeases6(leasetype6_[1], *leases[1]->duid_,
+                                  leases[1]->iaid_ + 1);
     EXPECT_EQ(0, returned.size());
 
     // Alter the leases[1] DUID to match nothing in the database.
     vector<uint8_t> duid_vector = leases[1]->duid_->getDuid();
     ++duid_vector[0];
     DUID new_duid(duid_vector);
-    returned = lmptr_->getLease6(leasetype6_[1], new_duid, leases[1]->iaid_);
+    returned = lmptr_->getLeases6(leasetype6_[1], new_duid, leases[1]->iaid_);
     EXPECT_EQ(0, returned.size());
 }
 
@@ -887,9 +887,9 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSize) {
         vector<uint8_t> duid_vec(i, i);
         leases[1]->duid_.reset(new DUID(duid_vec));
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        Lease6Collection returned = lmptr_->getLease6(leasetype6_[1],
-                                                      *leases[1]->duid_,
-                                                      leases[1]->iaid_);
+        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[1],
+                                                       *leases[1]->duid_,
+                                                       leases[1]->iaid_);
         ASSERT_EQ(1, returned.size());
         detailCompareLease(leases[1], *returned.begin());
         (void) lmptr_->deleteLease(leases[1]->addr_);
