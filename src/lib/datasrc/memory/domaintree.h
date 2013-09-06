@@ -666,16 +666,27 @@ private:
         }
     }
 
-    /// \brief Exchanges the location of two nodes. Their data remain
-    /// the same, but their location in the tree, colors and sub-tree
-    /// root status may change. Note that this is different from
-    /// std::swap()-like behavior.
+    /// \brief Exchanges the location of two nodes (this and
+    /// lower). Their data remain the same, but their location in the
+    /// tree, colors and sub-tree root status may change. Note that this
+    /// is different from std::swap()-like behavior.
+    ///
+    /// IMPORTANT: A necessary pre-condition is that lower node must be
+    /// at a lower level in the tree than this node. This method is
+    /// primarily used in remove() and this pre-condition is followed
+    /// there.
     ///
     /// This method doesn't throw any exceptions.
     void exchange(DomainTreeNode<T>* lower, DomainTreeNodePtr* root_ptr) {
         // Swap the pointers first. down should not be swapped as it
         // belongs to the node's data, and not to its position in the
         // tree.
+
+        // NOTE: The conditions following the swaps below are
+        // asymmetric. We only need to check this for the lower node, as
+        // it can be a direct child of this node. The reverse is not
+        // possible.
+
         std::swap(left_, lower->left_);
         if (lower->getLeft() == lower) {
             lower->left_ = this;
