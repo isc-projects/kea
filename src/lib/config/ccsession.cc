@@ -611,6 +611,11 @@ ModuleCCSession::checkCommand() {
             return (0);
         }
 
+        // In case it is notification, eat it.
+        if (checkNotification(routing, data)) {
+            return (0);
+        }
+
         /* ignore result messages (in case we're out of sync, to prevent
          * pingpongs */
         if (data->getType() != Element::map ||
@@ -937,6 +942,48 @@ ModuleCCSession::unsubscribeNotification(const NotificationID& notification) {
                              notification.first->first);
         notifications_.erase(notification.first);
     }
+}
+
+bool
+ModuleCCSession::checkNotification(const data::ConstElementPtr& envelope,
+                                   const data::ConstElementPtr& msg)
+{
+    if (msg->getType() != data::Element::map) {
+        // If it's not a map, then it's not a notification
+        return (false);
+    }
+    if (msg->contains(isc::cc::CC_PAYLOAD_NOTIFICATION)) {
+        // There's a notification inside. Extract its parameters.
+        const std::string& group =
+            envelope->get(isc::cc::CC_HEADER_GROUP)->stringValue();
+        const std::string& notification_group =
+            group.substr(std::string(isc::cc::CC_GROUP_NOTIFICATION_PREFIX).
+                         size());
+        const data::ConstElementPtr& notification =
+            msg->get(isc::cc::CC_PAYLOAD_NOTIFICATION);
+        // The first one is the event that happened
+        const std::string& event = notification->get(0)->stringValue();
+        // Any other params are second. But they may be missing
+        const data::ConstElementPtr params =
+            notification->size() == 1 ? data::ConstElementPtr() :
+            notification->get(1);
+        // Find the chain of notification callbacks
+        const SubscribedNotifications::iterator& chain_iter =
+            notifications_.find(notification_group);
+        if (chain_iter == notifications_.end()) {
+            // This means we no longer have any notifications for this group.
+            // This can happen legally as a race condition - if msgq sends
+            // us a notification, but we unsubscribe before we get to it
+            // in the input stream.
+            return (false);
+        }
+        BOOST_FOREACH(const NotificationCallback& callback,
+                      chain_iter->second) {
+            callback(event, params);
+        }
+        return (true);
+    }
+    return (false); // Not a notification
 }
 
 }
