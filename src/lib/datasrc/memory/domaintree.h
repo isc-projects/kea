@@ -672,52 +672,52 @@ private:
     /// std::swap()-like behavior.
     ///
     /// This method doesn't throw any exceptions.
-    void exchange(DomainTreeNode<T>* other, DomainTreeNodePtr* root_ptr) {
+    void exchange(DomainTreeNode<T>* lower, DomainTreeNodePtr* root_ptr) {
         // Swap the pointers first. down should not be swapped as it
         // belongs to the node's data, and not to its position in the
         // tree.
-        std::swap(left_, other->left_);
-        if (other->getLeft() == other) {
-            other->left_ = this;
+        std::swap(left_, lower->left_);
+        if (lower->getLeft() == lower) {
+            lower->left_ = this;
         }
 
-        std::swap(right_, other->right_);
-        if (other->getRight() == other) {
-            other->right_ = this;
+        std::swap(right_, lower->right_);
+        if (lower->getRight() == lower) {
+            lower->right_ = this;
         }
 
-        std::swap(parent_, other->parent_);
+        std::swap(parent_, lower->parent_);
         if (getParent() == this) {
-            parent_ = other;
+            parent_ = lower;
         }
 
         // Update FLAG_RED and FLAG_SUBTREE_ROOT as these two are
         // associated with the node's position.
         const DomainTreeNodeColor this_color = getColor();
         const bool this_is_subtree_root = isSubTreeRoot();
-        const DomainTreeNodeColor other_color = other->getColor();
-        const bool other_is_subtree_root = other->isSubTreeRoot();
+        const DomainTreeNodeColor lower_color = lower->getColor();
+        const bool lower_is_subtree_root = lower->isSubTreeRoot();
 
-        other->setColor(this_color);
-        setColor(other_color);
+        lower->setColor(this_color);
+        setColor(lower_color);
 
-        setSubTreeRoot(other_is_subtree_root);
-        other->setSubTreeRoot(this_is_subtree_root);
+        setSubTreeRoot(lower_is_subtree_root);
+        lower->setSubTreeRoot(this_is_subtree_root);
 
-        other->setParentChild(this, other, root_ptr);
+        lower->setParentChild(this, lower, root_ptr);
 
-        if (getParent()->getLeft() == other) {
+        if (getParent()->getLeft() == lower) {
             getParent()->left_ = this;
-        } else if (getParent()->getRight() == other) {
+        } else if (getParent()->getRight() == lower) {
             getParent()->right_ = this;
         }
 
-        if (other->getRight()) {
-            other->getRight()->parent_ = other;
+        if (lower->getRight()) {
+            lower->getRight()->parent_ = lower;
         }
 
-        if (other->getLeft()) {
-            other->getLeft()->parent_ = other;
+        if (lower->getLeft()) {
+            lower->getLeft()->parent_ = lower;
         }
     }
 
