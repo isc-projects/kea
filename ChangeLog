@@ -1,3 +1,8 @@
+6XX.	[func]		tomek
+	Preparatory work for prefix delegation in LeaseMgr. getLease6()
+	renamed to getLeases6(). It now can return more than one lease.
+	(Trac #3146, git ABCD)
+
 671.	[func]		dclink,tomek
 	memfile backend now supports getLease4(hwaddr) and getLease4(client-id)
 	methods. Thanks to David Carlier for contributing a patch.
