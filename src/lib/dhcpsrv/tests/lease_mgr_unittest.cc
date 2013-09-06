@@ -151,9 +151,9 @@ public:
     /// @param subnet_id identifier of the subnet the lease must belong to
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(Lease6::LeaseType /* not used yet */,
-                                const DUID&, uint32_t, SubnetID) const {
-        return (Lease6Ptr());
+    virtual Lease6Collection getLeases6(Lease6::LeaseType /* not used yet */,
+                                        const DUID&, uint32_t, SubnetID) const {
+        return (Lease6Collection());
     }
 
     /// @brief Updates IPv4 lease.

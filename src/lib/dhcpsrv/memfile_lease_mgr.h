@@ -169,9 +169,9 @@ public:
     /// @param iaid IA identifier
     /// @param subnet_id identifier of the subnet the lease must belong to
     ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(Lease6::LeaseType type, const DUID& duid,
-                                uint32_t iaid, SubnetID subnet_id) const;
+    /// @return lease collection (may be empty if no lease is found)
+    virtual Lease6Collection getLeases6(Lease6::LeaseType type, const DUID& duid,
+                                        uint32_t iaid, SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///

@@ -89,6 +89,24 @@ public:
         factory_.create("type=memfile");
     }
 
+    /// @brief attempts to convert leases collection to a single lease
+    ///
+    /// This operation makes sense if there is at most one lease in the
+    /// collection. Otherwise it will throw.
+    ///
+    /// @param col collection of leases (zero or one leases allowed)
+    /// @throw MultipleRecords if there is more than one lease
+    /// @return Lease6 pointer (or NULL if collection was empty)
+    Lease6Ptr expectOneLease(const Lease6Collection& col) {
+        if (col.size() > 1) {
+            isc_throw(MultipleRecords, "More than one lease found in collection");
+        }
+        if (col.empty()) {
+            return (Lease6Ptr());
+        }
+        return (*col.begin());
+    }
+
     /// @brief checks if Lease6 matches expected configuration
     ///
     /// @param lease lease to be checked
@@ -207,10 +225,10 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
     ASSERT_TRUE(engine);
 
-    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
-                                               IOAddress("::"), false,
-                                               false, "",
-                                               false, CalloutHandlePtr());
+    Lease6Ptr lease;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress("::"), false, false, "", false,
+                    CalloutHandlePtr())));
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -233,10 +251,10 @@ TEST_F(AllocEngine6Test, fakeAlloc6) {
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
     ASSERT_TRUE(engine);
 
-    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
-                                               IOAddress("::"), false,
-                                               false, "", true,
-                                               CalloutHandlePtr());
+    Lease6Ptr lease;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress("::"), false, false, "", true,
+                    CalloutHandlePtr())));
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -257,10 +275,10 @@ TEST_F(AllocEngine6Test, allocWithValidHint6) {
     ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
     ASSERT_TRUE(engine);
 
-    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
-                                               IOAddress("2001:db8:1::15"),
-                                               false, false, "",
-                                               false, CalloutHandlePtr());
+    Lease6Ptr lease;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                            duid_, iaid_, IOAddress("2001:db8:1::15"), false,
+                            false, "", false, CalloutHandlePtr())));
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -297,10 +315,11 @@ TEST_F(AllocEngine6Test, allocWithUsedHint6) {
     // Another client comes in and request an address that is in pool, but
     // unfortunately it is used already. The same address must not be allocated
     // twice.
-    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
-                                               IOAddress("2001:db8:1::1f"),
-                                               false, false, "",
-                                               false, CalloutHandlePtr());
+    Lease6Ptr lease;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress("2001:db8:1::1f"), false, false, "",
+                    false, CalloutHandlePtr())));
+
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -332,10 +351,11 @@ TEST_F(AllocEngine6Test, allocBogusHint6) {
     // Client would like to get a 3000::abc lease, which does not belong to any
     // supported lease. Allocation engine should ignore it and carry on
     // with the normal allocation
-    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
-                                               IOAddress("3000::abc"),
-                                               false, false, "",
-                                               false, CalloutHandlePtr());
+    Lease6Ptr lease;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress("3000::abc"), false, false, "",
+                    false, CalloutHandlePtr())));
+
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -361,17 +381,16 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     ASSERT_TRUE(engine);
 
     // Allocations without subnet are not allowed
-    Lease6Ptr lease = engine->allocateAddress6(Subnet6Ptr(), duid_, iaid_,
-                                               IOAddress("::"),
-                                               false, false, "", false,
-                                               CalloutHandlePtr());
+    Lease6Ptr lease;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(
+                    Subnet6Ptr(), duid_, iaid_, IOAddress("::"), false, false,
+                    "", false, CalloutHandlePtr())));
     ASSERT_FALSE(lease);
 
     // Allocations without DUID are not allowed either
-    lease = engine->allocateAddress6(subnet_, DuidPtr(), iaid_,
-                                     IOAddress("::"),
-                                     false, false, "", false,
-                                     CalloutHandlePtr());
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    DuidPtr(), iaid_, IOAddress("::"), false, false, "", false,
+                    CalloutHandlePtr())));
     ASSERT_FALSE(lease);
 }
 
@@ -459,10 +478,10 @@ TEST_F(AllocEngine6Test, smallPool6) {
     subnet_->addPool(pool_);
     cfg_mgr.addSubnet6(subnet_);
 
-    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_,
-                                               IOAddress("::"),
-                                               false, false, "",
-                                               false, CalloutHandlePtr());
+    Lease6Ptr lease;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress("::"), false, false, "", false,
+                    CalloutHandlePtr())));
 
     // Check that we got that single lease
     ASSERT_TRUE(lease);
@@ -508,10 +527,10 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
 
     // There is just a single address in the pool and allocated it to someone
     // else, so the allocation should fail
-    Lease6Ptr lease2 = engine->allocateAddress6(subnet_, duid_, iaid_,
-                                                IOAddress("::"),
-                                                false, false, "", false,
-                                                CalloutHandlePtr());
+    Lease6Ptr lease2;
+    EXPECT_NO_THROW(lease2 = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress("::"), false, false, "", false,
+                    CalloutHandlePtr())));
     EXPECT_FALSE(lease2);
 }
 
@@ -544,9 +563,9 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     ASSERT_TRUE(lease->expired());
 
     // CASE 1: Asking for any address
-    lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
-                                     false, false, "",
-                                     true, CalloutHandlePtr());
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress("::"), false, false, "", true,
+                    CalloutHandlePtr())));
     // Check that we got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr.toText(), lease->addr_.toText());
@@ -555,10 +574,10 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     checkLease6(lease);
 
     // CASE 2: Asking specifically for this address
-    lease = engine->allocateAddress6(subnet_, duid_, iaid_,
-                                     IOAddress(addr.toText()),
-                                     false, false, "",
-                                     true, CalloutHandlePtr());
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress(addr.toText()), false, false, "",
+                    true, CalloutHandlePtr())));
+
     // Check that we got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr.toText(), lease->addr_.toText());
@@ -591,10 +610,9 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // A client comes along, asking specifically for this address
-    lease = engine->allocateAddress6(subnet_, duid_, iaid_,
-                                     IOAddress(addr.toText()),
-                                     false, false, "", false,
-                                     CalloutHandlePtr());
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress(addr.toText()), false, false, "",
+                    false, CalloutHandlePtr())));
 
     // Check that he got that single lease
     ASSERT_TRUE(lease);
@@ -1126,7 +1144,7 @@ TEST_F(AllocEngine4Test, renewLease4) {
     // renew it.
     ASSERT_FALSE(lease->expired());
     lease = engine->renewLease4(subnet_, clientid_, hwaddr_, true,
-                                true, "host.example.com.", lease, 
+                                true, "host.example.com.", lease,
                                 callout_handle, false);
     // Check that he got that single lease
     ASSERT_TRUE(lease);
@@ -1269,9 +1287,10 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
 
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
-    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
-                                               false, false, "",
-                                               false, callout_handle);
+    Lease6Ptr lease;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress("::"), false, false, "", false,
+                    callout_handle)));
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -1339,9 +1358,10 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
     // Call allocateAddress6. Callouts should be triggered here.
-    Lease6Ptr lease = engine->allocateAddress6(subnet_, duid_, iaid_, IOAddress("::"),
-                                               false, false, "",
-                                               false, callout_handle);
+    Lease6Ptr lease;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress("::"), false, false, "", false,
+                    callout_handle)));
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -1583,7 +1603,5 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
     EXPECT_EQ(t2_override_, from_mgr->t2_);
     EXPECT_EQ(valid_override_, from_mgr->valid_lft_);
 }
-
-
 
 }; // End of anonymous namespace

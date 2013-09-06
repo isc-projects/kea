@@ -551,20 +551,50 @@ public:
     /// @param duid client DUID
     /// @param iaid IA identifier
     ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    /// @return Lease collection (may be empty if no lease is found)
     virtual Lease6Collection getLease6(Lease6::LeaseType type, const DUID& duid,
                                        uint32_t iaid) const = 0;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
+    ///
+    /// There may be more than one address, temp. address or prefix
+    /// for specified duid/iaid/subnet-id tuple.
     ///
     /// @param type specifies lease type: (NA, TA or PD)
     /// @param duid client DUID
     /// @param iaid IA identifier
     /// @param subnet_id subnet id of the subnet the lease belongs to
     ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(Lease6::LeaseType type, const DUID& duid,
-                                uint32_t iaid, SubnetID subnet_id) const = 0;
+    /// @return Lease collection (may be empty if no lease is found)
+    virtual Lease6Collection getLeases6(Lease6::LeaseType type, const DUID& duid,
+                                        uint32_t iaid, SubnetID subnet_id) const = 0;
+
+
+    /// @brief returns zero or one IPv6 lease for a given duid+iaid+subnet_id
+    ///
+    /// This function is mostly intended to be used in unit-tests during the
+    /// transition from single to multi address per IA. It may also be used
+    /// in other cases where at most one lease is expected in the database.
+    ///
+    /// It is a wrapper around getLease6(), which returns a collection of
+    /// leases. That collection can be converted into a single pointer if
+    /// there are no leases (NULL pointer) or one lease (use that single lease).
+    /// If there are more leases in the collection, the function will
+    /// throw MultipleRecords exception.
+    ///
+    /// Note: This method is not virtual on purpose. It is common for all
+    /// backends.
+    ///
+    /// @param type specifies lease type: (NA, TA or PD)
+    /// @param duid client DUID
+    /// @param iaid IA identifier
+    /// @param subnet_id subnet id of the subnet the lease belongs to
+    ///
+    /// @throw MultipleRecords if there is more than one lease matching
+    ///
+    /// @return Lease pointer (or NULL if none is found)
+    Lease6Ptr getLease6(Lease6::LeaseType type, const DUID& duid,
+                        uint32_t iaid, SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///
