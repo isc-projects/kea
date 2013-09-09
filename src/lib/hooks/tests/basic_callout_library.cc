@@ -115,7 +115,7 @@ version() {
 int
 load(isc::hooks::LibraryHandle&) {
 #ifdef USE_STATIC_LINK
-    hooks_static_link_init();
+    hooksStaticLinkInit();
 #endif
     return (0);
 }

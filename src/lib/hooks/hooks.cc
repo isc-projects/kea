@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <hooks/hooks.h>
-#include <log/message_dictionary.h>
 #include <log/message_initializer.h>
 
 
@@ -23,7 +22,7 @@ namespace hooks {
 // Load the logging message dictionary if not already loaded
 
 void
-hooks_static_link_init() {
+hooksStaticLinkInit() {
     isc::log::MessageInitializer::loadDictionary();
 }
 
