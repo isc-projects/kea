@@ -203,6 +203,7 @@ public:
     /// We'll add others as we see the need for them.
     //@{
     static const Name& HMACMD5_NAME();    ///< HMAC-MD5 (RFC2845)
+    static const Name& HMACMD5_SHORT_NAME();
     static const Name& HMACSHA1_NAME();   ///< HMAC-SHA1 (RFC4635)
     static const Name& HMACSHA256_NAME(); ///< HMAC-SHA256 (RFC4635)
     static const Name& HMACSHA224_NAME(); ///< HMAC-SHA256 (RFC4635)
