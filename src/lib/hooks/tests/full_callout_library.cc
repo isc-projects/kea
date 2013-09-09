@@ -118,7 +118,7 @@ int
 load(LibraryHandle& handle) {
     // Initialize if the main image was statically linked
 #ifdef USE_STATIC_LINK
-    isc::hooks::hooks_static_link_init();
+    hooksStaticLinkInit();
 #endif
     // Register the non-standard functions
     handle.registerCallout("hookpt_two", hook_nonstandard_two);
