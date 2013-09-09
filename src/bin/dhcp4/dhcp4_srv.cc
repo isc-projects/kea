@@ -872,19 +872,11 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
             //   removal request for non-existent hostname.
             // - A server has performed reverse, forward or both updates.
             // - FQDN data between the new and old lease do not match.
-            if ((!old_lease->hostname_.empty() &&
-                (old_lease->fqdn_fwd_ || old_lease->fqdn_rev_)) &&
-                ((lease->hostname_ != old_lease->hostname_) ||
+            if  ((lease->hostname_ != old_lease->hostname_) ||
                  (lease->fqdn_fwd_ != old_lease->fqdn_fwd_) ||
-                 (lease->fqdn_rev_ != old_lease->fqdn_rev_))) {
-                D2Dhcid dhcid = computeDhcid(old_lease);
-                NameChangeRequest ncr(isc::dhcp_ddns::CHG_REMOVE,
-                                      old_lease->fqdn_fwd_,
-                                      old_lease->fqdn_rev_,
-                                      old_lease->hostname_,
-                                      old_lease->addr_.toText(),
-                                      dhcid, 0, old_lease->valid_lft_);
-                queueNameChangeRequest(ncr);
+                 (lease->fqdn_rev_ != old_lease->fqdn_rev_)) {
+                queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
+                                       old_lease);
 
             // If FQDN data from both leases match, there is no need to update.
             } else if ((lease->hostname_ == old_lease->hostname_) &&
@@ -896,23 +888,37 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
         }
     }
 
-    // We may need to generate the NameChangeRequest for the new lease. But,
-    // this is only when hostname is set and if forward or reverse update has
-    // been requested.
-    if (!lease->hostname_.empty() && (lease->fqdn_fwd_ || lease->fqdn_rev_)) {
-        D2Dhcid dhcid = computeDhcid(lease);
-        NameChangeRequest ncr(isc::dhcp_ddns::CHG_ADD,
-                              lease->fqdn_fwd_, lease->fqdn_rev_,
-                              lease->hostname_, lease->addr_.toText(),
-                              dhcid, 0, lease->valid_lft_);
-        queueNameChangeRequest(ncr);
-    }
+    // We may need to generate the NameChangeRequest for the new lease. It
+    // will be generated only if hostname is set and if forward or reverse
+    // update has been requested.
+    queueNameChangeRequest(isc::dhcp_ddns::CHG_ADD, lease);
 }
 
 void
 Dhcpv4Srv::
-queueNameChangeRequest(const isc::dhcp_ddns::NameChangeRequest& ncr) {
-    if (ncr.getChangeType() == isc::dhcp_ddns::CHG_ADD) {
+queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
+                       const Lease4Ptr& lease) {
+    // The hostname must not be empty, and at least one type of update
+    // should be requested.
+    if (!lease || lease->hostname_.empty() ||
+        (!lease->fqdn_rev_ && !lease->fqdn_fwd_)) {
+        return;
+    }
+    D2Dhcid dhcid;
+    try {
+        dhcid  = computeDhcid(lease);
+
+    } catch (const DhcidComputeError& ex) {
+        LOG_ERROR(dhcp4_logger, DHCP4_DHCID_COMPUTE_ERROR)
+            .arg(lease->toText())
+            .arg(ex.what());
+        return;
+
+    }
+    NameChangeRequest ncr(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
+                          lease->hostname_, lease->addr_.toText(),
+                          dhcid, 0, lease->valid_lft_);
+    if (chg_type == isc::dhcp_ddns::CHG_ADD) {
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA,
                   DHCP4_QUEUE_ADDITION_NCR)
             .arg(ncr.toText());
@@ -925,6 +931,7 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeRequest& ncr) {
     }
     name_change_reqs_.push(ncr);
 }
+
 
 void
 Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
@@ -975,6 +982,17 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
     CalloutHandlePtr callout_handle = getCalloutHandle(question);
 
+    std::string hostname;
+    bool fqdn_fwd = false;
+    bool fqdn_rev = false;
+    Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
+        Option4ClientFqdn>(answer->getOption(DHO_FQDN));
+    if (fqdn) {
+        hostname = fqdn->getDomainName();
+        fqdn_fwd = fqdn->getFlag(Option4ClientFqdn::FLAG_S);
+        fqdn_rev = !fqdn->getFlag(Option4ClientFqdn::FLAG_N);
+    }
+
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honour the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
@@ -982,7 +1000,8 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // @todo pass the actual FQDN data.
     Lease4Ptr old_lease;
     Lease4Ptr lease = alloc_engine_->allocateAddress4(subnet, client_id, hwaddr,
-                                                      hint, false, false, "",
+                                                      hint, fqdn_fwd, fqdn_rev,
+                                                      hostname,
                                                       fake_allocation,
                                                       callout_handle,
                                                       old_lease);
@@ -1044,6 +1063,9 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
         answer->setType(DHCPNAK);
         answer->setYiaddr(IOAddress("0.0.0.0"));
+
+        answer->delOption(DHO_FQDN);
+        answer->delOption(DHO_HOST_NAME);
     }
 }
 
@@ -1123,6 +1145,12 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     appendDefaultOptions(offer, DHCPOFFER);
     appendRequestedOptions(discover, offer);
 
+    // If DISCOVER message contains the FQDN or Hostname option, server
+    // may respond to the client with the appropriate FQDN or Hostname
+    // option to indicate that whether it will take responsibility for
+    // updating DNS when the client sends REQUEST message.
+    processClientName(discover, offer);
+
     assignLease(discover, offer);
 
     // There are a few basic options that we always want to
@@ -1145,6 +1173,12 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     copyDefaultFields(request, ack);
     appendDefaultOptions(ack, DHCPACK);
     appendRequestedOptions(request, ack);
+
+    // If REQUEST message contains the FQDN or Hostname option, server
+    // should respond to the client with the appropriate FQDN or Hostname
+    // option to indicate if it takes responsibility for the DNS updates.
+    // This is performed by the function below.
+    processClientName(request, ack);
 
     // Note that we treat REQUEST message uniformly, regardless if this is a
     // first request (requesting for new address), renewing existing address
@@ -1174,12 +1208,12 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
     try {
         // Do we have a lease for that particular address?
-        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(release->getYiaddr());
+        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(release->getCiaddr());
 
         if (!lease) {
             // No such lease - bogus release
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_NO_LEASE)
-                .arg(release->getYiaddr().toText())
+                .arg(release->getCiaddr().toText())
                 .arg(release->getHWAddr()->toText())
                 .arg(client_id ? client_id->toText() : "(no client-id)");
             return;
@@ -1190,7 +1224,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
         if (lease->hwaddr_ != release->getHWAddr()->hwaddr_) {
             // @todo: Print hwaddr from lease as part of ticket #2589
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_HWADDR)
-                .arg(release->getYiaddr().toText())
+                .arg(release->getCiaddr().toText())
                 .arg(client_id ? client_id->toText() : "(no client-id)")
                 .arg(release->getHWAddr()->toText());
             return;
@@ -1200,7 +1234,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
         // the client sent us.
         if (lease->client_id_ && client_id && *lease->client_id_ != *client_id) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID)
-                .arg(release->getYiaddr().toText())
+                .arg(release->getCiaddr().toText())
                 .arg(client_id->toText())
                 .arg(lease->client_id_->toText());
             return;
@@ -1241,11 +1275,15 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             bool success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
 
             if (success) {
-                // Release successful - we're done here
+                // Release successful
                 LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
                     .arg(lease->addr_.toText())
                     .arg(client_id ? client_id->toText() : "(no client-id)")
                     .arg(release->getHWAddr()->toText());
+
+                // Remove existing DNS entries for the lease, if any.
+                queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, lease);
+
             } else {
                 // Release failed -
                 LOG_ERROR(dhcp4_logger, DHCP4_RELEASE_FAIL)

@@ -70,6 +70,11 @@ This message is printed when DHCPv4 server disables an interface from being
 used to receive DHCPv4 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
+% DHCP4_DHCID_COMPUTE_ERROR failed to compute the DHCID for lease: %1, reason: %2
+This error message is logged when the attempt to compute DHCID for a specified
+lease has failed. The lease details and reason for failure is logged in the
+message.
+
 % DHCP4_HOOK_BUFFER_RCVD_SKIP received DHCPv4 buffer was dropped because a callout set the skip flag.
 This debug message is printed when a callout installed on buffer4_receive
 hook point set the skip flag. For this particular hook point, the
