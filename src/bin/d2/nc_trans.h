@@ -21,6 +21,7 @@
 #include <exceptions/exceptions.h>
 #include <d2/d2_config.h>
 #include <d2/dns_client.h>
+#include <d2/state_model.h>
 #include <dhcp_ddns/ncr_msg.h>
 
 #include <boost/shared_ptr.hpp>
@@ -29,7 +30,7 @@
 namespace isc {
 namespace d2 {
 
-/// @brief Thrown if the update manager encounters a general error.
+/// @brief Thrown if the transaction encounters a general error.
 class NameChangeTransactionError : public isc::Exception {
 public:
     NameChangeTransactionError(const char* file, size_t line,
@@ -40,17 +41,12 @@ public:
 /// @brief Defines the type used as the unique key for transactions.
 typedef isc::dhcp_ddns::D2Dhcid TransactionKey;
 
-/// @brief Defines a function pointer for the handler method for a state.
-typedef boost::function<void()> StateHandler;
-
-/// @brief Defines a map of states to their handler methods.
-typedef std::map<unsigned int, StateHandler> StateHandlerMap;
-
 /// @brief Embodies the "life-cycle" required to carry out a DDNS update.
 ///
 /// NameChangeTransaction is the base class that provides the common state
 /// model mechanics and services performing the DNS updates needed to carry out
-/// a DHCP_DDNS request as described by a NameChangeRequest.
+/// a DHCP_DDNS request as described by a NameChangeRequest.  It is derived
+/// from StateModel which supplies a simple, general purpose FSM implementation.
 ///
 /// Upon construction, each transaction has all of the information and
 /// resources required to carry out its assigned request, including the list(s)
@@ -73,61 +69,33 @@ typedef std::map<unsigned int, StateHandler> StateHandlerMap;
 /// single update to the server and returns the response, asynchronously,
 /// through a callback.  At each point in a transaction's state model, where
 /// an update is to be sent, the model "suspends" until notified by the
-/// DNSClient via the callback.
+/// DNSClient via the callbacka.  Suspension is done by posting a
+/// StateModel::NOP_EVT as the next event, stopping the state model execution.
 ///
-/// The state model implementation used is a very basic approach. States
-/// and events are simple integer constants. Each state must have a state
-/// handler. State handlers are void methods which accept an event as their
-/// only parameter.  Each transaction instance contains a map of states to
-/// to bound method pointers to their respective state handlers.
-///
-/// When invoked, the handler determines what it should do based upon the event,
-/// including what the next state and event should be. In other words the state
-/// transition knowledge is distributed among the state handlers rather than
-/// encapsulated in some form of state transition table.  Events set from within
-/// the state handlers are "internally" triggered events.  Events set from
-/// outside the state model, such as through the DNSClient completion callback
-/// are "externally" triggered.
-///
-/// Executing the model consists of iteratively invoking the state handler
-/// indicated by the current state and passing it the current event.  As the
-/// handlers update the state and event, the machine is traversed. The loop
-/// "stops" whenever the model cannot continue without an externally triggered
-/// event or when it has reached its final state.  In the case of the former,
-/// the loop is re-entered upon arrival of the external event.
-///
-/// This loop is implemented in the runStateModel method.  This method accepts
-/// an event as argument.  This event is treated as the "next event" to process
-/// and is fed to the current state's handler.  The runStateModel does not exit
-/// until a handler sets the next event to a special value, NOP_EVT,
-/// indicating that either it is now waiting for IO to complete of the state
-/// model has reached its conclusion.
-///
-/// Re-entering the "loop" when a DNS update completes is done by a call to
-/// runStateModel() from within the DNSClient callback, with an event value
-/// of IO_COMPLETED_EVT.  As above, runStateModel() will loop until either the
-/// next IO is issued or the state model has reached its conclusion.
+/// Resuming state model execution when a DNS update completes is done by a
+/// call to StateModel::runStateModel() from within the DNSClient callback,
+/// with an event value of IO_COMPLETED_EVT (described below).
 ///
 /// This class defines a set of events and states that are a common to all
 /// transactions. Each derivation may add define additional states and events
 /// as needed, but it must support the common set.  NameChangeTransaction
 /// does not supply any state handlers.  These are the sole responsibility of
 /// derivations.
-class NameChangeTransaction : public DNSClient::Callback {
+class NameChangeTransaction : public DNSClient::Callback, public StateModel {
 public:
 
     //@{ States common to all transactions.
-    /// @brief State a transaction is in immediately after construction.
-    static const int NEW_ST = 0;
+
     /// @brief State from which a transaction is started.
-    static const int READY_ST = 1;
+    static const int READY_ST = SM_STATE_MAX + 1;
+
     /// @brief State in which forward DNS server selection is done.
     ///
     /// Within this state, the actual selection of the next forward server
     /// to use is conducted.  Upon conclusion of this state the next server
     /// is either selected or it should transition out with NO_MORE_SERVERS_EVT
     /// event.
-    static const int SELECTING_FWD_SERVER_ST = 2;
+    static const int SELECTING_FWD_SERVER_ST = SM_STATE_MAX + 2;
 
     /// @brief State in which reverse DNS server  selection is done.
     ///
@@ -135,51 +103,43 @@ public:
     /// to use is conducted.  Upon conclusion of this state the next server
     /// is either selected or it should transition out with NO_MORE_SERVERS_EVT
     /// event.
-    static const int SELECTING_REV_SERVER_ST = 3;
+    static const int SELECTING_REV_SERVER_ST = SM_STATE_MAX + 3;
 
-    /// @brief Final state, all work has been performed.
-    static const int DONE_ST = 4;
+    static const int PROCESS_TRANS_OK_ST = SM_STATE_MAX + 4;
+
+    static const int PROCESS_TRANS_FAILED_ST = SM_STATE_MAX + 5;
 
     /// @define Value at which custom states in a derived class should begin.
-    static const int DERIVED_STATES = 100;
+    static const int NCT_STATE_MAX = SM_STATE_MAX + 100;
     //@}
 
-
     //@{ Events common to all transactions.
-    /// @brief Signifies that no event has occurred.
-    /// This is event used to interrupt the event loop to allow waiting for
-    /// an IO event or when there is no more work to be done.
-    static const int NOP_EVT = 0;
-    /// @brief Event used to start the transaction.
-    static const int START_TRANSACTION_EVT = 1;
     /// @brief Issued when a server needs to be selected.
-    static const int SELECT_SERVER_EVT = 2;
+    static const int SELECT_SERVER_EVT = SM_STATE_MAX + 1;
     /// @brief Issued when a server  has been selected.
-    static const int SERVER_SELECTED_EVT = 3;
+    static const int SERVER_SELECTED_EVT = SM_EVENT_MAX + 2;
     /// @brief Issued when an update fails due to an IO error.
-    static const int SERVER_IO_ERROR_EVT = 4;
+    static const int SERVER_IO_ERROR_EVT = SM_EVENT_MAX + 3;
     /// @brief Issued when there are no more servers from which to select.
     /// This occurs when none of the servers in the list can be reached to
     /// perform the update.
-    static const int NO_MORE_SERVERS_EVT = 5;
+    static const int NO_MORE_SERVERS_EVT =SM_EVENT_MAX +  4;
     /// @brief Issued when a DNS update packet exchange has completed.
     /// This occurs whenever the DNSClient callback is invoked whether the
     /// exchange was successful or not.
-    static const int IO_COMPLETED_EVT = 6;
+    static const int IO_COMPLETED_EVT = SM_EVENT_MAX + 5;
     /// @brief Issued when the attempted update successfully completed.
     /// This occurs when an DNS update packet was successfully processed
     /// by the server.
-    static const int UPDATE_OK_EVT = 7;
+    static const int UPDATE_OK_EVT = SM_EVENT_MAX + 6;
     /// @brief Issued when the attempted update fails to complete.
     /// This occurs when an DNS update packet fails to process. The nature of
     /// the failure is given by the DNSClient return status and the response
     /// packet (if one was received).
-    static const int UPDATE_FAILED_EVT = 8;
-    /// @brief Issued when the state model has no more work left to do.
-    static const int ALL_DONE_EVT = 9;
+    static const int UPDATE_FAILED_EVT = SM_EVENT_MAX + 7;
 
     /// @define Value at which custom events in a derived class should begin.
-    static const int DERIVED_EVENTS = 100;
+    static const int NCT_EVENT_MAX = SM_EVENT_MAX + 100;
     //@}
 
     /// @brief Constructor
@@ -204,10 +164,9 @@ public:
 
     /// @brief Begins execution of the transaction.
     ///
-    /// This method invokes initHandlersMap() to initialize the map of state
-    /// handlers. It then starts the transaction's state model by setting the
-    /// current state to READY_ST and invoking runStateModel() with an event
-    /// parameter of START_TRANSACTION_EVT.
+    /// This method invokes StateModel::startModel() with a value of READY_ST.
+    /// This causes transaction's state model to attempt to begin execution
+    /// with the state handler for READY_ST.
     void startTransaction();
 
     /// @brief Serves as the DNSClient IO completion event handler.
@@ -237,113 +196,49 @@ protected:
     /// D2UpdateManager will not compile.
     virtual void initStateHandlerMap() {};
 
-
     /// @brief Validates the contents of the state handler map.
     ///
     /// This method is invoked immediately after initStateHandlerMap and
-    /// provides an opportunity for derivations to verify that the map
-    /// is correct.  If the map is determined to be invalid this method
-    /// should throw a NameChangeTransactionError.
+    /// verifies that the state map includes handlers for all of the states
+    /// defined by NameChangeTransaction.  If the map is determined to be
+    /// invalid this method will throw a NameChangeTransactionError.
     ///
-    /// The simplest implementation would include a call to getStateHandler,
-    /// for each state the derivation supports.  For example, a implementation
-    /// which included three states, READY_ST, DO_WORK_ST, and DONE_ST could
-    /// implement this function as follows:
+    /// Derivations should ALSO provide an implementation of this method. That
+    /// implementation should invoke this method, as well as verifying that all
+    /// of the derivation's states have handlers.
+    ///
+    /// A derivation's implementation of this function might look as follows:
     ///
     /// @code
-    ///    void verifyStateHandlerMap() {
-    ///        getStateHandler(READY_ST);
-    ///        getStateHandler(DO_WORK_ST);
-    ///        getStateHandler(DONE_ST);
-    ///    }
+    ///
+    ///     class DerivedTrans : public NameChangeTransaction {
+    ///         :
+    ///         void verifyStateHandlerMap() {
+    ///             // Verify derivations' states:
+    ///             getStateHandler(SOME_DERIVED_STATE_1);
+    ///             getStateHandler(SOME_DERIVED_STATE_2);
+    ///             :
+    ///             getStateHandler(SOME_DERIVED_STATE_N);
+    ///
+    ///             // Verify handlers for NameChangeTransaction states:
+    ///             NameChangeTransaction::verifyStateHandlerMap();
+    ///         }
+    ///
     /// @endcode
     ///
-    /// @todo This method should be pure virtual but until there are
-    /// derivations for the update manager to use, we will provide a
-    /// temporary empty, implementation.  If we make it pure virtual now
-    /// D2UpdateManager will not compile.
     /// @throw NameChangeTransactionError if the map is invalid.
-    virtual void verifyStateHandlerMap() {};
+    virtual void verifyStateHandlerMap();
 
-    /// @brief Adds an entry to the state handler map.
+    /// @brief Handler for fatal model execution errors.
     ///
-    /// This method attempts to add an entry to the handler map which maps
-    /// the given handler to the given state.  The state handler must be
-    /// a bound member pointer to a handler method of the transaction instance.
-    /// The following code snippet shows an example derivation and call to
-    /// addToMap() within its initStateHandlerMap() method.
-    ///
-    /// @code
-    /// class ExampleTrans : public NameChangeTransaction {
-    /// public:
-    /// :
-    /// void readyHandler() {
-    /// }
-    ///
-    /// void initStateHandlerMap() {
-    ///     addToMap(READY_ST,
-    ///        boost::bind(&ExampleTrans::readyHandler, this));
-    ///     :
-    ///
-    /// @endcode
-    ///
-    /// @param state the value of the state to which to map
-    /// @param handler the bound method pointer to the handler for the state
-    ///
-    /// @throw NameChangeTransactionError if the map already contains an entry
-    /// for the given state.
-    void addToMap(unsigned int state, StateHandler handler);
-
-    /// @brief Processes events through the state model
-    ///
-    /// This method implements the state model "execution loop".  It uses
-    /// the given event as the next event to process and begins looping by
-    /// passing it the state handler for the current state.   As described
-    /// above, the invoked state handler determines the current state and the
-    /// next event required to implement the business logic. The method
-    /// continues to loop until next event is set to NOP_EVT, at which point
-    /// the method exits.
-    ///
-    /// Any exception thrown during the loop is caught, logged, and the
-    /// transaction is immediately set to failed status.  The state model is
-    /// expected to account for any possible errors so any that escape are
-    /// treated as unrecoverable in terms of the current transaction.
-    ///
-    /// @param event is the next event to process
-    ///
-    /// This is guaranteed not to throw.
-    void runStateModel(unsigned int event);
-
-    /// @brief Return the state handler for a given state.
-    ///
-    /// This method looks up the state handler for the given state from within
-    /// the state handler map.
-    ///
-    /// @param state is the state constant of the desired handler.
-    ///
-    /// @return A StateHandler (bound method pointer) for the method that
-    /// handles the given state for this transaction.
-    ///
-    /// @throw NameChangeTransactionError
-    StateHandler getStateHandler(unsigned int state);
-
-    /// @brief Sets the current state to the given state value.
-    ///
-    /// This updates the transaction's notion of the current state and is the
-    /// state whose handler will be executed on the next iteration of the run
-    /// loop.
-    ///
-    /// @param state the new value to assign to the current state.
-    void setState(unsigned int state);
-
-    /// @brief Sets the next event to the given event value.
-    ///
-    /// This updates the transaction's notion of the next event and is the
-    /// event that will be passed into the current state's handler on the next
-    /// iteration of the run loop.
-    ///
-    /// @param state the new value to assign to the current state.
-    void setNextEvent(unsigned int event);
+    /// This handler is called by the StateModel implementation when the model
+    /// execution encounters a model violation:  attempt to call an unmapped
+    /// state, an event not valid for the current state, or an uncaught
+    /// exception thrown during a state handler invocation.  When such an
+    /// error occurs the transaction is deemed inoperable, and futher model
+    /// execution cannot be performed.  It marks the transaction as failed by
+    /// setting the NCR status to dhcp_ddns::ST_FAILED
+    virtual void onModelFailure();
 
     /// @brief Sets the update status to the given status value.
     ///
@@ -441,34 +336,6 @@ public:
     /// the request does not include a reverse change, the pointer will empty.
     DdnsDomainPtr& getReverseDomain();
 
-    /// @brief Fetches the transaction's current state.
-    ///
-    /// This returns the transaction's notion of the current state. It is the
-    /// state whose handler will be executed on the next iteration of the run
-    /// loop.
-    ///
-    /// @return An unsigned int representing the current state.
-    unsigned int getState() const;
-
-    /// @brief Fetches the transaction's previous state.
-    ///
-    /// @return An unsigned int representing the previous state.
-    unsigned int getPrevState() const;
-
-    /// @brief Fetches the transaction's last event.
-    ///
-    /// @return An unsigned int representing the last event.
-    unsigned int getLastEvent() const;
-
-    /// @brief Fetches the transaction's next event.
-    ///
-    /// This returns the transaction's notion of the next event. It is the
-    /// event that will be passed into the current state's handler on the next
-    /// iteration of the run loop.
-    ///
-    /// @return An unsigned int representing the next event.
-    unsigned int getNextEvent() const;
-
     /// @brief Fetches the most recent DNS update status.
     ///
     /// @return A DNSClient::Status indicating the result of the most recent
@@ -499,10 +366,82 @@ public:
     /// @return True if the reverse change has been completed, false otherwise.
     bool getReverseChangeCompleted() const;
 
-private:
-    /// @brief Contains a map of states to their state handlers.
-    StateHandlerMap state_handlers_;
+    /// @brief Converts a state value into a text label.
+    ///
+    /// This method supplies labels for NameChangeTransaction's predefined
+    /// states. It is declared virtual to allow derivations to embed a call to
+    /// this method within their own implementation which would define labels
+    /// for its states.  An example implementation might look like the
+    /// following:
+    /// @code
+    ///
+    /// class DerivedTrans : public NameChangeTransaction {
+    ///     :
+    ///     static const int EXAMPLE_1_ST = NCT_STATE_MAX + 1;
+    ///     :
+    ///     const char* getStateLabel(const int state) const {
+    ///         const char* str = "Unknown";
+    ///         switch(state) {
+    ///         case EXAMPLE_1_ST:
+    ///             str = "DerivedTrans::EXAMPLE_1_ST";
+    ///             break;
+    ///         :
+    ///         default:
+    ///             // Not a derived state, pass it to NameChangeTransaction's
+    ///             // method.
+    ///             str = NameChangeTransaction::getStateLabel(state);
+    ///             break;
+    ///         }
+    ///
+    ///         return (str);
+    ///      }
+    ///
+    /// @endcode
+    ///
+    /// @param state is the state for which a label is desired.
+    ///
+    /// @return Returns a const char* containing the state label or
+    /// "Unknown" if the value cannot be mapped.
+    virtual const char* getStateLabel(const int state) const;
 
+    /// @brief Converts a event value into a text label.
+    ///
+    /// This method supplies labels for NameChangeTransactions's predefined
+    /// events. It is declared virtual to allow derivations to embed a call to
+    /// this method within their own implementation which would define labels
+    /// for their events.  An example implementation might look like the
+    /// following:
+    /// @code
+    ///
+    /// class DerivedTrans : public NameChangeTransaction {
+    ///     :
+    ///     static const int EXAMPLE_1_EVT = NCT_EVENT_MAX + 1;
+    ///     :
+    ///     const char* getEventLabel(const int event) const {
+    ///         const char* str = "Unknown";
+    ///         switch(event) {
+    ///         case EXAMPLE_1_EVT:
+    ///             str = "DerivedTrans::EXAMPLE_1_EVT";
+    ///             break;
+    ///         :
+    ///         default:
+    ///             // Not a derived event, pass it to NameChangeTransaction's
+    ///             // method.
+    ///             str = StateModel::getEventLabel(event);
+    ///             break;
+    ///         }
+    ///
+    ///         return (str);
+    ///      }
+    ///
+    /// @endcode
+    /// @param event is the event for which a label is desired.
+    ///
+    /// @return Returns a const char* containing the event label or
+    /// "Unknown" if the value cannot be mapped.
+    virtual const char* getEventLabel(const int state) const;
+
+private:
     /// @brief The IOService which should be used to for IO processing.
     isc::asiolink::IOService& io_service_;
 
@@ -525,18 +464,6 @@ private:
 
     /// @brief The DNSClient instance that will carry out DNS packet exchanges.
     DNSClientPtr dns_client_;
-
-    /// @brief The current state within the transaction's state model.
-    unsigned int state_;
-
-    /// @brief The previous state within the transaction's state model.
-    unsigned int prev_state_;
-
-    /// @brief The event last processed by the transaction.
-    unsigned int last_event_;
-
-    /// @brief The event the transaction should process next.
-    unsigned int next_event_;
 
     /// @brief The outcome of the most recently completed DNS packet exchange.
     DNSClient::Status dns_update_status_;

@@ -19,17 +19,15 @@ namespace isc {
 namespace d2 {
 
 // Common transaction states
-const int NameChangeTransaction::NEW_ST;
 const int NameChangeTransaction::READY_ST;
 const int NameChangeTransaction::SELECTING_FWD_SERVER_ST;
 const int NameChangeTransaction::SELECTING_REV_SERVER_ST;
-const int NameChangeTransaction::DONE_ST;
+const int NameChangeTransaction::PROCESS_TRANS_OK_ST;
+const int NameChangeTransaction::PROCESS_TRANS_FAILED_ST;
 
-const int NameChangeTransaction::DERIVED_STATES;
+const int NameChangeTransaction::NCT_STATE_MAX;
 
 // Common transaction events
-const int NameChangeTransaction::NOP_EVT;
-const int NameChangeTransaction::START_TRANSACTION_EVT;
 const int NameChangeTransaction::SELECT_SERVER_EVT;
 const int NameChangeTransaction::SERVER_SELECTED_EVT;
 const int NameChangeTransaction::SERVER_IO_ERROR_EVT;
@@ -37,18 +35,16 @@ const int NameChangeTransaction::NO_MORE_SERVERS_EVT;
 const int NameChangeTransaction::IO_COMPLETED_EVT;
 const int NameChangeTransaction::UPDATE_OK_EVT;
 const int NameChangeTransaction::UPDATE_FAILED_EVT;
-const int NameChangeTransaction::ALL_DONE_EVT;
 
-const int NameChangeTransaction::DERIVED_EVENTS;
+const int NameChangeTransaction::NCT_EVENT_MAX;
 
 NameChangeTransaction::
 NameChangeTransaction(isc::asiolink::IOService& io_service,
                       dhcp_ddns::NameChangeRequestPtr& ncr,
                       DdnsDomainPtr& forward_domain,
                       DdnsDomainPtr& reverse_domain)
-    : state_handlers_(), io_service_(io_service), ncr_(ncr),
-     forward_domain_(forward_domain), reverse_domain_(reverse_domain),
-     dns_client_(), state_(NEW_ST), next_event_(NOP_EVT),
+    : io_service_(io_service), ncr_(ncr), forward_domain_(forward_domain),
+     reverse_domain_(reverse_domain), dns_client_(),
      dns_update_status_(DNSClient::OTHER), dns_update_response_(),
      forward_change_completed_(false), reverse_change_completed_(false),
      current_server_list_(), current_server_(), next_server_pos_(0) {
@@ -65,10 +61,6 @@ NameChangeTransaction(isc::asiolink::IOService& io_service,
         isc_throw(NameChangeTransactionError,
                  "Reverse change must have a reverse domain");
     }
-
-    // Use setters here so we get proper values for previous state, last event.
-    setState(state_);
-    setNextEvent(NOP_EVT);
 }
 
 NameChangeTransaction::~NameChangeTransaction(){
@@ -76,85 +68,32 @@ NameChangeTransaction::~NameChangeTransaction(){
 
 void
 NameChangeTransaction::startTransaction() {
-    // Initialize the state handler map first.
-    initStateHandlerMap();
-
-    // Test validity of the handler map. This provides an opportunity to
-    // sanity check the map prior to attempting to execute the model.
-    verifyStateHandlerMap();
-
-    // Set the current state to READY and enter the run loop.
-    setState(READY_ST);
-    runStateModel(START_TRANSACTION_EVT);
+    startModel(READY_ST);
 }
 
 void
 NameChangeTransaction::operator()(DNSClient::Status status) {
     // Stow the completion status and re-enter the run loop with the event
     // set to indicate IO completed.
-    // runStateModel is exception safe so we are good to call it here.
+    // runModel is exception safe so we are good to call it here.
     // It won't exit until we hit the next IO wait or the state model ends.
     setDnsUpdateStatus(status);
-    runStateModel(IO_COMPLETED_EVT);
+    runModel(IO_COMPLETED_EVT);
+}
+
+
+void
+NameChangeTransaction::verifyStateHandlerMap() {
+    getStateHandler(READY_ST);
+    getStateHandler(SELECTING_FWD_SERVER_ST);
+    getStateHandler(SELECTING_REV_SERVER_ST);
+    getStateHandler(PROCESS_TRANS_OK_ST);
+    getStateHandler(PROCESS_TRANS_FAILED_ST);
 }
 
 void
-NameChangeTransaction::runStateModel(unsigned int run_event) {
-    try {
-        // Seed the loop with the given event as the next to process.
-        setNextEvent(run_event);
-        do {
-            // Invoke the current state's handler.  It should consume the
-            // next event, then determine what happens next by setting
-            // current state and/or the next event.
-            (getStateHandler(state_))();
-
-            // Keep going until a handler sets next event to a NOP_EVT.
-        } while (getNextEvent() != NOP_EVT);
-    }
-    catch (const std::exception& ex) {
-        // Transaction has suffered an unexpected exception.  This indicates
-        // a programmatic shortcoming.  Log it and set status to ST_FAILED.
-        // In theory, the model should account for all error scenarios and
-        // deal with them accordingly.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_TRANS_PROCESS_EROR).arg(ex.what());
-        setNcrStatus(dhcp_ddns::ST_FAILED);
-    }
-}
-
-
-StateHandler
-NameChangeTransaction::getStateHandler(unsigned int state) {
-    StateHandlerMap::iterator it = state_handlers_.find(state);
-    if (it == state_handlers_.end()) {
-        isc_throw(NameChangeTransactionError, "Invalid state: " << state);
-    }
-
-    return ((*it).second);
-}
-
-void
-NameChangeTransaction::addToMap(unsigned int state, StateHandler handler) {
-    StateHandlerMap::iterator it = state_handlers_.find(state);
-    if (it != state_handlers_.end()) {
-        isc_throw(NameChangeTransactionError,
-                  "Attempted duplicate entry in state handler mape, state: "
-                   << state);
-    }
-
-    state_handlers_[state] = handler;
-}
-
-void
-NameChangeTransaction::setState(unsigned int state) {
-    prev_state_ = state_;
-    state_ = state;
-}
-
-void
-NameChangeTransaction::setNextEvent(unsigned int event) {
-    last_event_ = next_event_;
-    next_event_ = event;
+NameChangeTransaction::onModelFailure() {
+    setNcrStatus(dhcp_ddns::ST_FAILED);
 }
 
 void
@@ -244,26 +183,6 @@ NameChangeTransaction::setNcrStatus(const dhcp_ddns::NameChangeStatus& status) {
     return (ncr_->setStatus(status));
 }
 
-unsigned int
-NameChangeTransaction::getState() const {
-    return (state_);
-}
-
-unsigned int
-NameChangeTransaction::getPrevState() const {
-    return (prev_state_);
-}
-
-unsigned int
-NameChangeTransaction::getLastEvent() const {
-    return (last_event_);
-}
-
-unsigned int
-NameChangeTransaction::getNextEvent() const {
-    return (next_event_);
-}
-
 DNSClient::Status
 NameChangeTransaction::getDnsUpdateStatus() const {
     return (dns_update_status_);
@@ -282,6 +201,66 @@ NameChangeTransaction::getForwardChangeCompleted() const {
 bool
 NameChangeTransaction::getReverseChangeCompleted() const {
     return (reverse_change_completed_);
+}
+
+const char*
+NameChangeTransaction::getStateLabel(const int state) const {
+    const char* str = "Unknown";
+    switch(state) {
+    case READY_ST:
+        str = "NameChangeTransaction::READY_ST";
+        break;
+    case SELECTING_FWD_SERVER_ST:
+        str = "NameChangeTransaction::SELECTING_FWD_SERVER_ST";
+        break;
+    case SELECTING_REV_SERVER_ST:
+        str = "NameChangeTransaction::SELECTING_REV_SERVER_ST";
+        break;
+    case PROCESS_TRANS_OK_ST:
+        str = "NameChangeTransaction::PROCESS_TRANS_OK_ST";
+        break;
+    case PROCESS_TRANS_FAILED_ST:
+        str = "NameChangeTransaction::PROCESS_TRANS_FAILED_ST";
+        break;
+    default:
+        str = StateModel::getStateLabel(state);
+        break;
+    }
+
+    return (str);
+}
+
+const char*
+NameChangeTransaction::getEventLabel(const int event) const {
+    const char* str = "Unknown";
+    switch(event) {
+    case SELECT_SERVER_EVT:
+        str = "NameChangeTransaction::SELECT_SERVER_EVT";
+        break;
+    case SERVER_SELECTED_EVT:
+        str = "NameChangeTransaction::SERVER_SELECTED_EVT";
+        break;
+    case SERVER_IO_ERROR_EVT:
+        str = "NameChangeTransaction::SERVER_IO_ERROR_EVT";
+        break;
+    case NO_MORE_SERVERS_EVT:
+        str = "NameChangeTransaction::NO_MORE_SERVERS_EVT";
+        break;
+    case IO_COMPLETED_EVT:
+        str = "NameChangeTransaction::IO_COMPLETED_EVT";
+        break;
+    case UPDATE_OK_EVT:
+        str = "NameChangeTransaction::UPDATE_OK_EVT";
+        break;
+    case UPDATE_FAILED_EVT:
+        str = "NameChangeTransaction::UPDATE_FAILED_EVT";
+        break;
+    default:
+        str = StateModel::getEventLabel(event);
+        break;
+    }
+
+    return (str);
 }
 
 
