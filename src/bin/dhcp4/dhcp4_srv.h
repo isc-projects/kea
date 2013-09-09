@@ -19,6 +19,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
 #include <dhcp/option4_client_fqdn.h>
+#include <dhcp/option_custom.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
@@ -306,9 +307,11 @@ private:
 
     /// @brief Process Hostname %Option sent by a client.
     ///
-    /// @param query A DISCOVER or REQUEST message from a cient.
+    /// @param opt_hostname An @c OptionCustom object encapsulating the Hostname
+    /// %Option.
     /// @param [out] answer A response message to be sent to a client.
-    void processHostnameOption(const Pkt4Ptr& query, Pkt4Ptr& answer);
+    void processHostnameOption(const OptionCustomPtr& opt_hostname,
+                               Pkt4Ptr& answer);
 
 protected:
 
