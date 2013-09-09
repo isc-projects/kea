@@ -89,9 +89,6 @@ const bool FQDN_ALWAYS_INCLUDE = false;
 const bool FQDN_ALLOW_CLIENT_UPDATE = false;
 // Globally enable updates (Enabled).
 const bool FQDN_ENABLE_UPDATE = true;
-// The partial name generated for the client if empty name has been
-// supplied.
-const char* FQDN_GENERATED_PARTIAL_NAME = "myhost";
 // Do update, even if client requested no updates with N flag (Disabled).
 const bool FQDN_OVERRIDE_NO_UPDATE = false;
 // Server performs an update when client requested delegation (Enabled).
@@ -810,19 +807,21 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
     if (fqdn->getDomainNameType() == Option4ClientFqdn::PARTIAL) {
         std::ostringstream name;
         if (fqdn->getDomainName().empty() || FQDN_REPLACE_CLIENT_NAME) {
-            name << FQDN_GENERATED_PARTIAL_NAME;
+            fqdn_resp->setDomainName("", Option4ClientFqdn::PARTIAL);
+
         } else {
             name << fqdn->getDomainName();
+            name << "." << FQDN_PARTIAL_SUFFIX;
+            fqdn_resp->setDomainName(name.str(), Option4ClientFqdn::FULL);
+
         }
-        name << "." << FQDN_PARTIAL_SUFFIX;
-        fqdn_resp->setDomainName(name.str(), Option4ClientFqdn::FULL);
 
     // Server may be configured to replace a name supplied by a client, even if
-    // client supplied fully qualified domain-name.
+    // client supplied fully qualified domain-name. The empty domain-name is
+    // is set to indicate that the name must be generated when the new lease
+    // is acquired.
     } else if(FQDN_REPLACE_CLIENT_NAME) {
-        std::ostringstream name;
-        name << FQDN_GENERATED_PARTIAL_NAME << "." << FQDN_PARTIAL_SUFFIX;
-        fqdn_resp->setDomainName(name.str(), Option4ClientFqdn::FULL);
+        fqdn_resp->setDomainName("", Option4ClientFqdn::PARTIAL);
     }
 
     // Add FQDN option to the response message. Note that, there may be some
@@ -866,10 +865,7 @@ Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
     // If there is only one label, it is a root. We will have to generate
     // the whole domain name for the client.
     if (FQDN_REPLACE_CLIENT_NAME || (label_count < 2)) {
-        std::ostringstream resp_hostname;
-        resp_hostname << FQDN_GENERATED_PARTIAL_NAME << "."
-                      << FQDN_PARTIAL_SUFFIX << ".";
-        opt_hostname_resp->writeString(resp_hostname.str());
+        opt_hostname_resp->writeString("");
     // If there are two labels, it means that the client has specified
     // the unqualified name. We have to concatenate the unqalified name
     // with the domain name.
@@ -1022,6 +1018,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     std::string hostname;
     bool fqdn_fwd = false;
     bool fqdn_rev = false;
+    OptionCustomPtr opt_hostname;
     Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option4ClientFqdn>(answer->getOption(DHO_FQDN));
     if (fqdn) {
@@ -1029,8 +1026,8 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         fqdn_fwd = fqdn->getFlag(Option4ClientFqdn::FLAG_S);
         fqdn_rev = !fqdn->getFlag(Option4ClientFqdn::FLAG_N);
     } else {
-        OptionCustomPtr opt_hostname = boost::dynamic_pointer_cast<
-            OptionCustom>(answer->getOption(DHO_HOST_NAME));
+        opt_hostname = boost::dynamic_pointer_cast<OptionCustom>
+            (answer->getOption(DHO_HOST_NAME));
         if (opt_hostname) {
             hostname = opt_hostname->readString();
             // @todo It could be configurable what sort of updates the server
@@ -1063,6 +1060,42 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
             .arg(hwaddr?hwaddr->toText():"(no hwaddr info)");
 
         answer->setYiaddr(lease->addr_);
+
+        // If there has been Client FQDN or Hostname option sent, but the
+        // hostname is empty, it means that server is responsible for
+        // generating the entire hostname for the client. The example of the
+        // client's name, generated from the IP address is: host-192-0-2-3.
+        if ((fqdn || opt_hostname) && lease->hostname_.empty()) {
+            hostname = lease->addr_.toText();
+            // Replace dots with hyphens.
+            std::replace(hostname.begin(), hostname.end(), '.', '-');
+            ostringstream stream;
+            // The partial suffix will need to be replaced with the actual
+            // domain-name for the client when configuration is implemented.
+            stream << "host-" << hostname << "." << FQDN_PARTIAL_SUFFIX << ".";
+            lease->hostname_ = stream.str();
+            // The operations below are rather safe, but we want to catch
+            // any potential exceptions (e.g. invalid lease database backend
+            // implementation) and log an error.
+            try {
+                // The lease update should be safe, because the lease should
+                // be already in the database. In most cases the exception
+                // would be thrown if the lease was missing.
+                LeaseMgrFactory::instance().updateLease4(lease);
+                // The name update in the option should be also safe,
+                // because the generated name is well formed.
+                if (fqdn) {
+                    fqdn->setDomainName(lease->hostname_,
+                                        Option4ClientFqdn::FULL);
+                } else if (opt_hostname) {
+                    opt_hostname->writeString(lease->hostname_);
+                }
+
+            } catch (const Exception& ex) {
+                LOG_ERROR(dhcp4_logger, DHCP4_NAME_GEN_UPDATE_FAIL)
+                    .arg(ex.what());
+            }
+        }
 
         // IP Address Lease time (type 51)
         opt = OptionPtr(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
