@@ -69,7 +69,7 @@ namespace hooks {
 /// loading multiple user libraries may involve loading one message dictionary
 /// per library.
 
-void hooks_static_link_init();
+void hooksStaticLinkInit();
 
 } // namespace hooks
 } // namespace isc
