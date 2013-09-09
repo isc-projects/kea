@@ -253,8 +253,8 @@ in event loop.
 This is informational message issued when the application has been instructed
 to shut down by the controller.
 
-% DHCP_DDNS_TRANS_PROCESS_EROR application encountered an unexpected error while carrying out a NameChangeRequest: %1
-This is error message issued when the application fails to process a 
+% DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR application encountered an unexpected error while carrying out a NameChangeRequest: %1 , %2
+This is error message issued when the application fails to process a
 NameChangeRequest correctly. Some or all of the DNS updates requested as part
 of this update did not succeed. This is a programmatic error and should be
-reported. 
+reported.
