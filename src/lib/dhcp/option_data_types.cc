@@ -227,6 +227,16 @@ OptionDataTypeUtil::writeFqdn(const std::string& fqdn,
     }
 }
 
+unsigned int
+OptionDataTypeUtil::getLabelCount(const std::string& text_name) {
+    try {
+        isc::dns::Name name(text_name);
+        return (name.getLabelCount());
+    } catch (const isc::Exception& ex) {
+        isc_throw(BadDataTypeCast, ex.what());
+    }
+}
+
 std::string
 OptionDataTypeUtil::readString(const std::vector<uint8_t>& buf) {
     std::string value;
