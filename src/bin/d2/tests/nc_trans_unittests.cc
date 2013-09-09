@@ -35,13 +35,10 @@ class NameChangeStub : public NameChangeTransaction {
 public:
 
     // NameChangeStub states
-    static const int DUMMY_ST = DERIVED_STATES + 1;
-
-    static const int DO_WORK_ST = DERIVED_STATES + 2;
-
+    static const int DOING_UPDATE_ST = NCT_STATE_MAX + 1;
 
     // NameChangeStub events
-    static const int START_WORK_EVT = DERIVED_EVENTS + 1;
+    static const int SEND_UPDATE_EVT = NCT_EVENT_MAX + 2;
 
     /// @brief Constructor
     ///
@@ -51,84 +48,86 @@ public:
                    DdnsDomainPtr forward_domain,
                    DdnsDomainPtr reverse_domain)
         : NameChangeTransaction(io_service, ncr, forward_domain,
-                                reverse_domain), dummy_called_(false) {
+                                reverse_domain) {
     }
 
     /// @brief Destructor
     virtual ~NameChangeStub() {
     }
 
-    bool getDummyCalled() {
-        return (dummy_called_);
-    }
-
-    void clearDummyCalled() {
-        dummy_called_ = false;
-    }
-
+    /// @brief Empty handler used to statisfy map verification.
     void dummyHandler() {
-       dummy_called_ = true;
+        isc_throw(NameChangeTransactionError,
+                  "dummyHandler - invalid event: " << getContextStr());
     }
 
     /// @brief State handler for the READY_ST.
     ///
     /// Serves as the starting state handler, it consumes the
-    /// START_TRANSACTION_EVT "transitioning" to the state, DO_WORK_ST and
-    /// sets the next event to START_WORK_EVT.
+    /// START_EVT "transitioning" to the state, DOING_UPDATE_ST and
+    /// sets the next event to SEND_UPDATE_EVT.
     void readyHandler() {
         switch(getNextEvent()) {
-        case START_TRANSACTION_EVT:
-            setState(DO_WORK_ST);
-            setNextEvent(START_WORK_EVT);
+        case START_EVT:
+            transition(DOING_UPDATE_ST, SEND_UPDATE_EVT);
             break;
         default:
             // its bogus
-            isc_throw(NameChangeTransactionError, "invalid event: "
-                      << getNextEvent() << " for state: " << getState());
+            isc_throw(NameChangeTransactionError,
+                      "readyHandler - invalid event: " << getContextStr());
         }
     }
 
-    /// @brief State handler for the DO_WORK_ST.
+    /// @brief State handler for the DOING_UPDATE_ST.
     ///
     /// Simulates a state that starts some form of asynchronous work.
-    /// When next event is START_WORK_EVT it sets the status to pending
+    /// When next event is SEND_UPDATE_EVT it sets the status to pending
     /// and signals the state model must "wait" for an event by setting
     /// next event to NOP_EVT.
     ///
     /// When next event is IO_COMPLETED_EVT, it transitions to the state,
-    /// DONE_ST, and sets the next event to ALL_DONE_EVT.
-    void doWorkHandler() {
+    /// PROCESS_TRANS_OK_ST, and sets the next event to UPDATE_OK_EVT.
+    void doingUpdateHandler() {
         switch(getNextEvent()) {
-        case START_WORK_EVT:
+        case SEND_UPDATE_EVT:
             setNcrStatus(dhcp_ddns::ST_PENDING);
-            setNextEvent(NOP_EVT);
+            postNextEvent(NOP_EVT);
             break;
-        //case WORK_DONE_EVT:
         case IO_COMPLETED_EVT:
-            setState(DONE_ST);
-            setNextEvent(ALL_DONE_EVT);
+            if (getDnsUpdateStatus() == DNSClient::SUCCESS) {
+                setForwardChangeCompleted(true);
+                transition(PROCESS_TRANS_OK_ST, UPDATE_OK_EVT);
+            } else {
+                transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
+            }
             break;
         default:
             // its bogus
-            isc_throw(NameChangeTransactionError, "invalid event: "
-                      << getNextEvent() << " for state: " << getState());
+            isc_throw(NameChangeTransactionError,
+                      "doingUpdateHandler - invalid event: "
+                      << getContextStr());
         }
     }
 
-    /// @brief State handler for the DONE_ST.
+    /// @brief State handler for the PROCESS_TRANS_OK_ST.
     ///
     /// This is the last state in the model.  Note that it sets the
     /// status to completed and next event to NOP_EVT.
-    void doneHandler() {
+    void processTransDoneHandler() {
         switch(getNextEvent()) {
-        case ALL_DONE_EVT:
+        case UPDATE_OK_EVT:
             setNcrStatus(dhcp_ddns::ST_COMPLETED);
-            setNextEvent(NOP_EVT);
+            endModel();
+            break;
+        case UPDATE_FAILED_EVT:
+            setNcrStatus(dhcp_ddns::ST_FAILED);
+            endModel();
             break;
         default:
             // its bogus
-            isc_throw(NameChangeTransactionError, "invalid event: "
-                      << getNextEvent() << " for state: " << getState());
+            isc_throw(NameChangeTransactionError,
+                      "processTransDoneHandler - invalid event: "
+                      << getContextStr());
         }
     }
 
@@ -137,26 +136,63 @@ public:
         addToMap(READY_ST,
             boost::bind(&NameChangeStub::readyHandler, this));
 
-        addToMap(DO_WORK_ST,
-            boost::bind(&NameChangeStub::doWorkHandler, this));
+        addToMap(SELECTING_FWD_SERVER_ST,
+            boost::bind(&NameChangeStub::dummyHandler, this));
 
-        addToMap(DONE_ST,
-            boost::bind(&NameChangeStub::doneHandler, this));
+        addToMap(SELECTING_REV_SERVER_ST,
+            boost::bind(&NameChangeStub::dummyHandler, this));
+
+        addToMap(DOING_UPDATE_ST,
+            boost::bind(&NameChangeStub::doingUpdateHandler, this));
+
+        addToMap(PROCESS_TRANS_OK_ST,
+            boost::bind(&NameChangeStub::processTransDoneHandler, this));
+
+        addToMap(PROCESS_TRANS_FAILED_ST,
+            boost::bind(&NameChangeStub::processTransDoneHandler, this));
     }
 
     void verifyStateHandlerMap() {
         getStateHandler(READY_ST);
-        getStateHandler(DO_WORK_ST);
-        getStateHandler(DONE_ST);
+        getStateHandler(DOING_UPDATE_ST);
+        // Call base class verification.
+        NameChangeTransaction::verifyStateHandlerMap();
     }
 
+    const char* getStateLabel(const int state) const {
+        const char* str = "Unknown";
+        switch(state) {
+        case NameChangeStub::DOING_UPDATE_ST:
+            str = "NameChangeStub::DOING_UPDATE_ST";
+            break;
+        default:
+            str = NameChangeTransaction::getStateLabel(state);
+            break;
+        }
+
+        return (str);
+    }
+
+    const char* getEventLabel(const int event) const {
+        const char* str = "Unknown";
+        switch(event) {
+        case NameChangeStub::SEND_UPDATE_EVT:
+            str = "NameChangeStub::SEND_UPDATE_EVT";
+            break;
+        default:
+            str = NameChangeTransaction::getEventLabel(event);
+            break;
+        }
+
+        return (str);
+    }
+
+
+
     // Expose the protected methods to be tested.
-    using NameChangeTransaction::addToMap;
-    using NameChangeTransaction::getStateHandler;
-    using NameChangeTransaction::initStateHandlerMap;
-    using NameChangeTransaction::runStateModel;
-    using NameChangeTransaction::setState;
-    using NameChangeTransaction::setNextEvent;
+    using StateModel::runModel;
+    using StateModel::getStateHandler;
+
     using NameChangeTransaction::initServerSelection;
     using NameChangeTransaction::selectNextServer;
     using NameChangeTransaction::getCurrentServer;
@@ -168,14 +204,9 @@ public:
     using NameChangeTransaction::getReverseChangeCompleted;
     using NameChangeTransaction::setForwardChangeCompleted;
     using NameChangeTransaction::setReverseChangeCompleted;
-
-    bool dummy_called_;
 };
 
-const int NameChangeStub::DO_WORK_ST;
-const int NameChangeStub::START_WORK_EVT;
-
-/// @brief Defines a pointer to a D2UpdateMgr instance.
+/// @brief Defines a pointer to a NameChangeStubPtr instance.
 typedef boost::shared_ptr<NameChangeStub> NameChangeStubPtr;
 
 /// @brief Test fixture for testing NameChangeTransaction
@@ -333,26 +364,11 @@ TEST_F(NameChangeTransactionTest, accessors) {
     EXPECT_FALSE(name_change->getDNSClient());
     EXPECT_FALSE(name_change->getCurrentServer());
 
-    // Previous state should be set by setState.
-    EXPECT_NO_THROW(name_change->setState(NameChangeTransaction::READY_ST));
-    EXPECT_NO_THROW(name_change->setState(NameChangeStub::DO_WORK_ST));
-    EXPECT_EQ(NameChangeTransaction::READY_ST, name_change->getPrevState());
-    EXPECT_EQ(NameChangeStub::DO_WORK_ST, name_change->getState());
-
-    // Last event should be set by setNextEvent.
-    EXPECT_NO_THROW(name_change->setNextEvent(NameChangeStub::
-                                              START_WORK_EVT));
-    EXPECT_NO_THROW(name_change->setNextEvent(NameChangeTransaction::
-                                              IO_COMPLETED_EVT));
-    EXPECT_EQ(NameChangeStub::START_WORK_EVT, name_change->getLastEvent());
-    EXPECT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
-              name_change->getNextEvent());
-
     // Verify that DNS update status can be set and retrieved.
     EXPECT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::TIMEOUT));
     EXPECT_EQ(DNSClient::TIMEOUT, name_change->getDnsUpdateStatus());
 
-    // Verify that the DNS update response can be retrieved. 
+    // Verify that the DNS update response can be retrieved.
     EXPECT_FALSE(name_change->getDnsUpdateResponse());
 
     // Verify that the forward change complete flag can be set and fetched.
@@ -364,142 +380,22 @@ TEST_F(NameChangeTransactionTest, accessors) {
     EXPECT_TRUE(name_change->getReverseChangeCompleted());
 }
 
-/// @brief Tests the fundamental methods used for state handler mapping.
-/// Verifies the ability to search for and add entries in the state handler map.
-TEST_F(NameChangeTransactionTest, basicStateMapping) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-
-    // Verify that getStateHandler will throw when, state cannot be found.
-    EXPECT_THROW(name_change->getStateHandler(NameChangeTransaction::READY_ST),
-                 NameChangeTransactionError);
-
-    // Verify that we can add a handler to the map.
-    ASSERT_NO_THROW(name_change->addToMap(NameChangeTransaction::READY_ST,
-                                          boost::bind(&NameChangeStub::
-                                                      dummyHandler,
-                                                      name_change.get())));
-
-    // Verify that we can find the handler by its state.
-    StateHandler retreived_handler;
-    EXPECT_NO_THROW(retreived_handler =
-                    name_change->getStateHandler(NameChangeTransaction::
-                                                 READY_ST));
-
-    // Verify that retrieved handler executes the correct method.
-    name_change->clearDummyCalled();
-
-    ASSERT_NO_THROW((retreived_handler)());
-    EXPECT_TRUE(name_change->getDummyCalled());
-
-    // Verify that we cannot add a duplicate.
-    EXPECT_THROW(name_change->addToMap(NameChangeTransaction::READY_ST,
-                                       boost::bind(&NameChangeStub::
-                                                   readyHandler,
-                                                   name_change.get())),
-                 NameChangeTransactionError);
-
-    // Verify that we can still find the handler by its state.
-    EXPECT_NO_THROW(name_change->getStateHandler(NameChangeTransaction::
-                                                 READY_ST));
-}
-
 /// @brief Tests state map initialization and validation.
 /// This tests the basic concept of state map initialization and verification
-/// by manually invoking the map methods normally called by startTransaction.
+/// by manually invoking the map methods normally by StateModel::startModel.
 TEST_F(NameChangeTransactionTest, stubStateMapInit) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
 
     // Verify that the map validation throws prior to the map being
     // initialized.
-    ASSERT_THROW(name_change->verifyStateHandlerMap(),
-                 NameChangeTransactionError);
+    ASSERT_THROW(name_change->verifyStateHandlerMap(), StateModelError);
 
     // Call initStateHandlerMap to initialize the state map.
     ASSERT_NO_THROW(name_change->initStateHandlerMap());
 
     // Verify that the map validation succeeds now that the map is initialized.
     ASSERT_NO_THROW(name_change->verifyStateHandlerMap());
-}
-
-/// @brief Tests that invalid states are handled gracefully.
-/// This test verifies that attempting to execute a state which has no handler
-/// results in a failed transaction.
-TEST_F(NameChangeTransactionTest, invalidState) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-
-    // Verfiy that to running the model with a state that has no handler,
-    // will result in failed transaction (status of ST_FAILED).
-    // First, verify state is NEW_ST and that NEW_ST has no handler.
-    // that the transaction failed:
-    ASSERT_EQ(NameChangeTransaction::NEW_ST, name_change->getState());
-    ASSERT_THROW(name_change->getStateHandler(NameChangeTransaction::NEW_ST),
-                 NameChangeTransactionError);
-
-    // Now call runStateModel() which should not throw.
-    EXPECT_NO_THROW(name_change->runStateModel(NameChangeTransaction::
-                                               START_TRANSACTION_EVT));
-
-    // Verify that the transaction has failed.
-    EXPECT_EQ(dhcp_ddns::ST_FAILED, name_change->getNcrStatus());
-}
-
-/// @brief Tests that invalid events are handled gracefully.
-/// This test verifies that submitting an invalid event to the state machine
-/// results in a failed transaction.
-TEST_F(NameChangeTransactionTest, invalidEvent) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-
-    // First, lets execute the state model to a known valid point, by
-    // calling startTransaction.
-    ASSERT_NO_THROW(name_change->startTransaction());
-
-    // Verify we are in the state of DO_WORK_ST.
-    EXPECT_EQ(NameChangeStub::DO_WORK_ST, name_change->getState());
-
-    // Verity that submitting an invalid event to a valid state, results
-    // in a failed transaction without a throw (Current state is DO_WORK_ST,
-    // during which START_TRANSACTION_EVT, is invalid).
-    EXPECT_NO_THROW(name_change->runStateModel(NameChangeTransaction::
-                                               START_TRANSACTION_EVT));
-
-    // Verify that the transaction has failed.
-    EXPECT_EQ(dhcp_ddns::ST_FAILED, name_change->getNcrStatus());
-}
-
-/// @brief Test the basic mechanics of state model execution.
-/// This test exercises the ability to execute state model from state to
-/// finish, including the handling of a asynchronous IO operation.
-TEST_F(NameChangeTransactionTest, stateModelTest) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-
-    // Launch the transaction by calling startTransaction.  The state model
-    // should run up until the "IO" operation is initiated in DO_WORK_ST.
-
-    ASSERT_NO_THROW(name_change->startTransaction());
-
-    // Verify that we are now in state of DO_WORK_ST, the last event was
-    // START_WORK_EVT, the next event is NOP_EVT, and NCR status is ST_PENDING.
-    EXPECT_EQ(NameChangeStub::DO_WORK_ST, name_change->getState());
-    EXPECT_EQ(NameChangeStub::START_WORK_EVT, name_change->getLastEvent());
-    EXPECT_EQ(NameChangeTransaction::NOP_EVT, name_change->getNextEvent());
-    EXPECT_EQ(dhcp_ddns::ST_PENDING, name_change->getNcrStatus());
-
-    // Simulate completion of DNSClient exchange by invoking the callback, as
-    // DNSClient would.  This should cause the state model to progress through
-    // completion.
-    EXPECT_NO_THROW((*name_change)(DNSClient::SUCCESS));
-
-    // Verify that the state model has progressed through to completion:
-    // it is in the DONE_ST, the status is ST_COMPLETED, and the next event
-    // is NOP_EVT.
-    EXPECT_EQ(NameChangeTransaction::DONE_ST, name_change->getState());
-    EXPECT_EQ(dhcp_ddns::ST_COMPLETED, name_change->getNcrStatus());
-    EXPECT_EQ(NameChangeTransaction::NOP_EVT, name_change->getNextEvent());
 }
 
 /// @brief Tests server selection methods.
@@ -617,5 +513,179 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
     // Verify that the number of passes made equal the number of servers.
     EXPECT_EQ (passes, num_servers);
 }
+
+/// @brief Tests the ability to decode state values into text labels.
+TEST_F(NameChangeTransactionTest, stateLabels) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+
+    // Verify StateModel labels.
+    EXPECT_EQ("StateModel::NEW_ST",
+              name_change->getStateLabel(StateModel::NEW_ST));
+    EXPECT_EQ("StateModel::END_ST",
+              name_change->getStateLabel(StateModel::END_ST));
+
+    // Verify NameChangeTransaction labels
+    EXPECT_EQ("NameChangeTransaction::READY_ST",
+              name_change->getStateLabel(NameChangeTransaction::READY_ST));
+    EXPECT_EQ("NameChangeTransaction::SELECTING_FWD_SERVER_ST",
+              name_change->getStateLabel(NameChangeTransaction::
+                                        SELECTING_FWD_SERVER_ST));
+    EXPECT_EQ("NameChangeTransaction::SELECTING_REV_SERVER_ST",
+              name_change->getStateLabel(NameChangeTransaction::
+                                         SELECTING_REV_SERVER_ST));
+    EXPECT_EQ("NameChangeTransaction::PROCESS_TRANS_OK_ST",
+              name_change->getStateLabel(NameChangeTransaction::
+                                         PROCESS_TRANS_OK_ST));
+    EXPECT_EQ("NameChangeTransaction::PROCESS_TRANS_FAILED_ST",
+              name_change->getStateLabel(NameChangeTransaction::
+                                         PROCESS_TRANS_FAILED_ST));
+
+    // Verify Stub states
+    EXPECT_EQ("NameChangeStub::DOING_UPDATE_ST",
+              name_change->getStateLabel(NameChangeStub::DOING_UPDATE_ST));
+
+    // Verify unknown state.
+    EXPECT_EQ("Unknown", name_change->getStateLabel(-1));
+}
+
+/// @brief Tests the ability to decode event values into text labels.
+TEST_F(NameChangeTransactionTest, eventLabels) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+
+    // Verify StateModel labels.
+    EXPECT_EQ("StateModel::NOP_EVT",
+              name_change->getEventLabel(StateModel::NOP_EVT));
+    EXPECT_EQ("StateModel::START_EVT",
+              name_change->getEventLabel(StateModel::START_EVT));
+    EXPECT_EQ("StateModel::END_EVT",
+              name_change->getEventLabel(StateModel::END_EVT));
+    EXPECT_EQ("StateModel::FAIL_EVT",
+              name_change->getEventLabel(StateModel::FAIL_EVT));
+
+    // Verify NameChangeTransactionLabels
+    EXPECT_EQ("NameChangeTransaction::SELECT_SERVER_EVT",
+              name_change->getEventLabel(NameChangeTransaction::
+                                         SELECT_SERVER_EVT));
+    EXPECT_EQ("NameChangeTransaction::SERVER_SELECTED_EVT",
+              name_change->getEventLabel(NameChangeTransaction::
+                                         SERVER_SELECTED_EVT));
+    EXPECT_EQ("NameChangeTransaction::SERVER_IO_ERROR_EVT",
+              name_change->getEventLabel(NameChangeTransaction::
+                                         SERVER_IO_ERROR_EVT));
+    EXPECT_EQ("NameChangeTransaction::NO_MORE_SERVERS_EVT",
+              name_change->getEventLabel(NameChangeTransaction::
+                                         NO_MORE_SERVERS_EVT));
+    EXPECT_EQ("NameChangeTransaction::IO_COMPLETED_EVT",
+              name_change->getEventLabel(NameChangeTransaction::
+                                         IO_COMPLETED_EVT));
+    EXPECT_EQ("NameChangeTransaction::UPDATE_OK_EVT",
+              name_change->getEventLabel(NameChangeTransaction::
+                                         UPDATE_OK_EVT));
+    EXPECT_EQ("NameChangeTransaction::UPDATE_FAILED_EVT",
+              name_change->getEventLabel(NameChangeTransaction::
+                                         UPDATE_FAILED_EVT));
+
+    // Verify stub class labels.
+    EXPECT_EQ("NameChangeStub::SEND_UPDATE_EVT",
+              name_change->getEventLabel(NameChangeStub::SEND_UPDATE_EVT));
+
+    // Verify unknown state.
+    EXPECT_EQ("Unknown", name_change->getEventLabel(-1));
+}
+
+/// @brief Tests that the transaction will be "failed" upon model errors.
+TEST_F(NameChangeTransactionTest, modelFailure) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+
+    // We will cause a model failure by attempting to submit an event to
+    // NEW_ST.  Let's make sure that state is NEW_ST and that NEW_ST has no
+    // handler.
+    ASSERT_EQ(NameChangeTransaction::NEW_ST, name_change->getState());
+    ASSERT_THROW(name_change->getStateHandler(NameChangeTransaction::NEW_ST),
+                 StateModelError);
+
+    // Now call runStateModel() which should not throw.
+    EXPECT_NO_THROW(name_change->runModel(NameChangeTransaction::START_EVT));
+
+    // Verify that the model reports are done but failed.
+    EXPECT_TRUE(name_change->isModelDone());
+    EXPECT_TRUE(name_change->didModelFail());
+
+    // Verify that the transaction has failed.
+    EXPECT_EQ(dhcp_ddns::ST_FAILED, name_change->getNcrStatus());
+}
+
+/// @brief Tests the ability to use startTransaction to initate the state
+/// model execution, and DNSClient callback, operator(), to resume the
+/// the model with a update successful outcome.
+TEST_F(NameChangeTransactionTest, successfulUpdateTest) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+
+    EXPECT_TRUE(name_change->isModelNew());
+    EXPECT_FALSE(name_change->getForwardChangeCompleted());
+
+    // Launch the transaction by calling startTransaction.  The state model
+    // should run up until the "IO" operation is initiated in DOING_UPDATE_ST.
+    ASSERT_NO_THROW(name_change->startTransaction());
+
+    // Verify that the model is running but waiting, and that forward change
+    // completion is still false.
+    EXPECT_TRUE(name_change->isModelRunning());
+    EXPECT_TRUE(name_change->isModelWaiting());
+    EXPECT_FALSE(name_change->getForwardChangeCompleted());
+
+    // Simulate completion of DNSClient exchange by invoking the callback, as
+    // DNSClient would.  This should cause the state model to progress through
+    // completion.
+    EXPECT_NO_THROW((*name_change)(DNSClient::SUCCESS));
+
+    // The model should have worked through to completion.
+    // Verify that the model is done and not failed.
+    EXPECT_TRUE(name_change->isModelDone());
+    EXPECT_FALSE(name_change->didModelFail());
+
+    // Verify that NCR status is completed, and that the forward change
+    // was completed.
+    EXPECT_EQ(dhcp_ddns::ST_COMPLETED, name_change->getNcrStatus());
+    EXPECT_TRUE(name_change->getForwardChangeCompleted());
+}
+
+/// @brief Tests the ability to use startTransaction to initate the state
+/// model execution, and DNSClient callback, operator(), to resume the
+/// the model with a update failure outcome.
+TEST_F(NameChangeTransactionTest, failedUpdateTest) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+
+    // Launch the transaction by calling startTransaction.  The state model
+    // should run up until the "IO" operation is initiated in DOING_UPDATE_ST.
+    ASSERT_NO_THROW(name_change->startTransaction());
+
+    // Vefity that the model is running but waiting, and that the forward
+    // change has not been completed.
+    EXPECT_TRUE(name_change->isModelRunning());
+    EXPECT_TRUE(name_change->isModelWaiting());
+    EXPECT_FALSE(name_change->getForwardChangeCompleted());
+
+    // Simulate completion of DNSClient exchange by invoking the callback, as
+    // DNSClient would.  This should cause the state model to progress through
+    // to completion.
+    EXPECT_NO_THROW((*name_change)(DNSClient::TIMEOUT));
+
+    // The model should have worked through to completion.
+    // Verify that the model is done and not failed.
+    EXPECT_TRUE(name_change->isModelDone());
+    EXPECT_FALSE(name_change->didModelFail());
+
+    // Verify that the NCR status is failed and that the forward change
+    // was not completed.
+    EXPECT_EQ(dhcp_ddns::ST_FAILED, name_change->getNcrStatus());
+    EXPECT_FALSE(name_change->getForwardChangeCompleted());
+}
+
 
 }
