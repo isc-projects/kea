@@ -317,17 +317,17 @@
 
  Within the code users by the user's hooks library, the ServerHooks
  object is used by @ref isc::hooks::CalloutHandle and @ref
- isc::hooks::CalloutManager objects.  Both of these objects are
- passed to the hooks library code when a callout is called: the former
- directly through the callout argument list, the latter indirectly
- as a pointer to it is stored in the CalloutHandle.  This allows
- a solution to the problem: instead of accessing the singleton via
- ServerHooks::getServerHooks(), the constructors of these objects store
- a reference to the singleton ServerHooks when they are created and use
- that reference to access ServerHooks data.  Since both CalloutHandle
- and CalloutManager are created in the statically-linked BIND 10 server,
- use of the reference means that it is the singleton within the server -
- and not the one within the user's hooks library - that is referenced.
+ isc::hooks::CalloutManager objects.  Both these objects are passed to the
+ hooks library code when a callout is called: the former directly through
+ the callout argument list, the latter indirectly as a pointer to it is
+ stored in the CalloutHandle.  This allows a solution to the problem:
+ instead of accessing the singleton via ServerHooks::getServerHooks(),
+ the constructors of these objects store a reference to the singleton
+ ServerHooks when they are created and use that reference to access
+ ServerHooks data.  Since both CalloutHandle and CalloutManager are
+ created in the statically-linked BIND 10 server, use of the reference
+ means that it is the singleton within the server - and not the one
+ within the user's hooks library - that is referenced.
 
  The solution of the logging problem is not so straightforward.  Within
  BIND 10, there are two logging components, the BIND 10 logging framework
@@ -350,8 +350,8 @@
  global variables is performed once.
 
  The next two tasks - static initialization of the messages in the BIND
- 10 libraries and the static initialization of the logging framework
- - is performed twice, once in the context of the BIND 10 server and
+ 10 libraries and the static initialization of the logging framework -
+ are performed twice, once in the context of the BIND 10 server and
  once in the context of the hooks library.  For this reason, run-time
  initialization of the logging framework needs to be performed twice,
  once in the context of the BIND 10 server and once in the context of the
