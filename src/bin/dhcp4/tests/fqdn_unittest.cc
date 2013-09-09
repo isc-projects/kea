@@ -363,6 +363,13 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateForwardPartialNameFqdn) {
 }
 
 // Test that server generates the fully qualified domain name for the client
+// if client supplies the unqualified name in the Hostname option.
+TEST_F(NameDhcpv4SrvTest, serverUpdateUnqualifiedHostname) {
+    Pkt4Ptr query = generatePktWithHostname(DHCPREQUEST, "myhost");
+    testProcessHostname(query, "myhost.example.com.");
+}
+
+// Test that server generates the fully qualified domain name for the client
 // if clietn supplies empty domain name.
 TEST_F(NameDhcpv4SrvTest, serverUpdateForwardNoNameFqdn) {
     Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
@@ -522,7 +529,7 @@ TEST_F(NameDhcpv4SrvTest, processDiscover) {
 // a different domain-name. Server should use existing lease for the second
 // request but modify the DNS entries for the lease according to the contents
 // of the FQDN sent in the second request.
-TEST_F(NameDhcpv4SrvTest, processTwoRequests) {
+TEST_F(NameDhcpv4SrvTest, processTwoRequestsFqdn) {
     Pkt4Ptr req1 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                        Option4ClientFqdn::FLAG_E,
                                        "myhost.example.com.",
@@ -548,6 +555,52 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequests) {
                                        Option4ClientFqdn::FLAG_E,
                                        "otherhost.example.com.",
                                        Option4ClientFqdn::FULL, true);
+
+    ASSERT_NO_THROW(reply = srv_->processRequest(req2));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // There should be two NameChangeRequests. Verify that they are valid.
+    ASSERT_EQ(2, srv_->name_change_reqs_.size());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
+                            reply->getYiaddr().toText(),
+                            "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436"
+                            "965B68B6D438D98E680BF10B09F3BCF",
+                            0, subnet_->getValid());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            reply->getYiaddr().toText(),
+                            "otherhost.example.com.",
+                            "000101A5AEEA7498BD5AD9D3BF600E49FF39A7E3"
+                            "AFDCE8C3D0E53F35CC584DD63C89CA",
+                            0, subnet_->getValid());
+}
+
+// Test that client may send two requests, each carrying Hostname option with
+// a different name. Server should use existing lease for the second request
+// but modify the DNS entries for the lease according to the contents of the
+// Hostname sent in the second request.
+TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
+    Pkt4Ptr req1 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
+
+    Pkt4Ptr reply;
+    ASSERT_NO_THROW(reply = srv_->processRequest(req1));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // Verify that there is one NameChangeRequest generated.
+    ASSERT_EQ(1, srv_->name_change_reqs_.size());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            reply->getYiaddr().toText(), "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436"
+                            "965B68B6D438D98E680BF10B09F3BCF",
+                            0, subnet_->getValid());
+
+    // Create another Request message but with a different Hostname. Server
+    // should generate two NameChangeRequests: one to remove existing entry,
+    // another one to add new entry with updated domain-name.
+    Pkt4Ptr req2 = generatePktWithHostname(DHCPREQUEST, "otherhost");
 
     ASSERT_NO_THROW(reply = srv_->processRequest(req2));
 

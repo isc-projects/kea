@@ -809,7 +809,7 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
     // one.
     if (fqdn->getDomainNameType() == Option4ClientFqdn::PARTIAL) {
         std::ostringstream name;
-        if (fqdn->getDomainName().empty()) {
+        if (fqdn->getDomainName().empty() || FQDN_REPLACE_CLIENT_NAME) {
             name << FQDN_GENERATED_PARTIAL_NAME;
         } else {
             name << fqdn->getDomainName();
@@ -843,12 +843,43 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
 void
 Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
                                  Pkt4Ptr& answer) {
+    // Do nothing if the DNS updates are disabled.
     if (!FQDN_ENABLE_UPDATE) {
         return;
     }
 
     std::string hostname = opt_hostname->readString();
-    answer->addOption(OptionCustomPtr(new OptionCustom(*opt_hostname)));
+    unsigned int label_count = OptionDataTypeUtil::getLabelCount(hostname);
+    // Copy construct the hostname provided by the client. It is entirely
+    // possible that we will use the hostname option provided by the client
+    // to perform the DNS update and we will send the same option to him to
+    // indicate that we accepted this hostname.
+    OptionCustomPtr opt_hostname_resp(new OptionCustom(*opt_hostname));
+
+    // The hostname option may be unqualified or fully qualified. The lab_count
+    // holds the number of labels for the name. The number of 1 means that
+    // there is only root label "." (even for unqualified names, as the
+    // getLabelCount function treats each name as a fully qualified one).
+    // By checking the number of labels present in the hostname we may infer
+    // whether client has sent the fully qualified or unqualified hostname.
+
+    // If there is only one label, it is a root. We will have to generate
+    // the whole domain name for the client.
+    if (FQDN_REPLACE_CLIENT_NAME || (label_count < 2)) {
+        std::ostringstream resp_hostname;
+        resp_hostname << FQDN_GENERATED_PARTIAL_NAME << "."
+                      << FQDN_PARTIAL_SUFFIX << ".";
+        opt_hostname_resp->writeString(resp_hostname.str());
+    // If there are two labels, it means that the client has specified
+    // the unqualified name. We have to concatenate the unqalified name
+    // with the domain name.
+    } else if (label_count == 2) {
+        std::ostringstream resp_hostname;
+        resp_hostname << hostname << "." << FQDN_PARTIAL_SUFFIX << ".";
+        opt_hostname_resp->writeString(resp_hostname.str());
+    }
+
+    answer->addOption(opt_hostname_resp);
 }
 
 void
@@ -997,6 +1028,16 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         hostname = fqdn->getDomainName();
         fqdn_fwd = fqdn->getFlag(Option4ClientFqdn::FLAG_S);
         fqdn_rev = !fqdn->getFlag(Option4ClientFqdn::FLAG_N);
+    } else {
+        OptionCustomPtr opt_hostname = boost::dynamic_pointer_cast<
+            OptionCustom>(answer->getOption(DHO_HOST_NAME));
+        if (opt_hostname) {
+            hostname = opt_hostname->readString();
+            // @todo It could be configurable what sort of updates the server
+            // is doing when Hostname option was sent.
+            fqdn_fwd = true;
+            fqdn_rev = true;
+        }
     }
 
     // Use allocation engine to pick a lease for this client. Allocation engine
