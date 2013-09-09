@@ -375,6 +375,14 @@ public:
                           std::vector<uint8_t>& buf,
                           const bool downcase = false);
 
+    /// @brief Return the number of labels in the Name.
+    ///
+    /// @param text_name A text representation of the name.
+    ///
+    /// @return A number of labels in the provided name.
+    /// @throw isc::BadCast if provided name is malformed.
+    static unsigned int getLabelCount(const std::string& text_name);
+
     /// @brief Read string value from a buffer.
     ///
     /// @param buf input buffer.
