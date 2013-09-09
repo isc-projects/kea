@@ -18,7 +18,6 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option4_addrlst.h>
-#include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt4.h>
@@ -752,7 +751,7 @@ Dhcpv4Srv::processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer) {
         OptionCustomPtr hostname = boost::dynamic_pointer_cast<OptionCustom>
             (query->getOption(DHO_HOST_NAME));
         if (hostname) {
-            processHostnameOption(query, answer);
+            processHostnameOption(hostname, answer);
         }
 
     }
@@ -842,7 +841,14 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
 }
 
 void
-Dhcpv4Srv::processHostnameOption(const Pkt4Ptr&, Pkt4Ptr&) {
+Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
+                                 Pkt4Ptr& answer) {
+    if (!FQDN_ENABLE_UPDATE) {
+        return;
+    }
+
+    std::string hostname = opt_hostname->readString();
+    answer->addOption(OptionCustomPtr(new OptionCustom(*opt_hostname)));
 }
 
 void

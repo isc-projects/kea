@@ -28,12 +28,12 @@ using namespace isc::dhcp_ddns;
 using namespace isc::test;
 
 namespace {
-class FqdnDhcpv4SrvTest : public Dhcpv4SrvTest {
+class NameDhcpv4SrvTest : public Dhcpv4SrvTest {
 public:
-    FqdnDhcpv4SrvTest() : Dhcpv4SrvTest() {
+    NameDhcpv4SrvTest() : Dhcpv4SrvTest() {
         srv_ = new NakedDhcpv4Srv(0);
     }
-    virtual ~FqdnDhcpv4SrvTest() {
+    virtual ~NameDhcpv4SrvTest() {
         delete srv_;
     }
 
@@ -65,11 +65,27 @@ public:
                                                            RCODE_CLIENT(),
                                                            fqdn_name,
                                                            fqdn_type)));
+   }
+
+    // Create an instance of the Hostname option.
+    OptionCustomPtr
+    createHostname(const std::string& hostname) {
+        OptionDefinition def("hostname", DHO_HOST_NAME, "string");
+        OptionCustomPtr opt_hostname(new OptionCustom(def, Option::V4));
+        opt_hostname->writeString(hostname);
+        return (opt_hostname);
     }
 
+    // Get the Client FQDN Option from the given message.
     Option4ClientFqdnPtr getClientFqdnOption(const Pkt4Ptr& pkt) {
         return (boost::dynamic_pointer_cast<
                 Option4ClientFqdn>(pkt->getOption(DHO_FQDN)));
+    }
+
+    // get the Hostname option from the given message.
+    OptionCustomPtr getHostnameOption(const Pkt4Ptr& pkt) {
+        return (boost::dynamic_pointer_cast<
+                OptionCustom>(pkt->getOption(DHO_HOST_NAME)));
     }
 
     // Create a message holding DHCPv4 Client FQDN Option.
@@ -109,6 +125,30 @@ public:
         return (pkt);
     }
 
+    // Create a message holding a Hostname option.
+    Pkt4Ptr generatePktWithHostname(const uint8_t msg_type,
+                                    const std::string& hostname) {
+
+        Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
+        pkt->setRemoteAddr(IOAddress("192.0.2.3"));
+        // For DISCOVER we don't include server id, because client broadcasts
+        // the message to all servers.
+        if (msg_type != DHCPDISCOVER) {
+            pkt->addOption(srv_->getServerID());
+        }
+
+        pkt->addOption(generateClientId());
+
+
+        // Create Client FQDN Option with the specified flags and
+        // domain-name.
+        pkt->addOption(createHostname(hostname));
+
+        return (pkt);
+        
+    }
+                                    
+
 
     // Test that server generates the appropriate FQDN option in response to
     // client's FQDN option.
@@ -143,6 +183,30 @@ public:
         EXPECT_EQ(Option4ClientFqdn::FULL, fqdn->getDomainNameType());
 
     }
+
+    // Test that the Hostname option is returned in the server's response
+    // to the message holding Hostname option sent by a client.
+    void testProcessHostname(const Pkt4Ptr& query,
+                             const std::string& exp_hostname) {
+        ASSERT_TRUE(getHostnameOption(query));
+
+        Pkt4Ptr answer;
+        if (query->getType() == DHCPDISCOVER) {
+            answer.reset(new Pkt4(DHCPOFFER, 1234));
+
+        } else {
+            answer.reset(new Pkt4(DHCPACK, 1234));
+
+        }
+        ASSERT_NO_THROW(srv_->processClientName(query, answer));
+
+        OptionCustomPtr hostname = getHostnameOption(answer);
+        ASSERT_TRUE(hostname);
+
+        EXPECT_EQ(exp_hostname, hostname->readString());
+
+    }
+
 
     // Test that the client message holding an FQDN is processed and the
     // NameChangeRequests are generated.
@@ -202,7 +266,7 @@ public:
 
 // Test that the exception is thrown if lease pointer specified as the argument
 // of computeDhcid function is NULL.
-TEST_F(FqdnDhcpv4SrvTest, dhcidNullLease) {
+TEST_F(NameDhcpv4SrvTest, dhcidNullLease) {
     Lease4Ptr lease;
     EXPECT_THROW(srv_->computeDhcid(lease), isc::dhcp::DhcidComputeError);
 
@@ -210,7 +274,7 @@ TEST_F(FqdnDhcpv4SrvTest, dhcidNullLease) {
 
 // Test that the appropriate exception is thrown if the lease object used
 // to compute DHCID comprises wrong hostname.
-TEST_F(FqdnDhcpv4SrvTest, dhcidWrongHostname) {
+TEST_F(NameDhcpv4SrvTest, dhcidWrongHostname) {
     // First, make sure that the lease with the correct hostname is accepted.
     Lease4Ptr lease = createLease(IOAddress("192.0.2.3"),
                                   "myhost.example.com.", true, true);
@@ -227,7 +291,7 @@ TEST_F(FqdnDhcpv4SrvTest, dhcidWrongHostname) {
 
 // Test that the DHCID is computed correctly, when the lease holds
 // correct hostname and non-NULL client id.
-TEST_F(FqdnDhcpv4SrvTest, dhcidComputeFromClientId) {
+TEST_F(NameDhcpv4SrvTest, dhcidComputeFromClientId) {
     Lease4Ptr lease = createLease(IOAddress("192.0.2.3"),
                                   "myhost.example.com.",
                                   true, true);
@@ -242,7 +306,7 @@ TEST_F(FqdnDhcpv4SrvTest, dhcidComputeFromClientId) {
 
 // Test that the DHCID is computed correctly, when the lease holds correct
 // hostname and NULL client id.
-TEST_F(FqdnDhcpv4SrvTest, dhcidComputeFromHWAddr) {
+TEST_F(NameDhcpv4SrvTest, dhcidComputeFromHWAddr) {
     Lease4Ptr lease = createLease(IOAddress("192.0.2.3"),
                                   "myhost.example.com.",
                                   true, true);
@@ -260,7 +324,7 @@ TEST_F(FqdnDhcpv4SrvTest, dhcidComputeFromHWAddr) {
 
 // Test that server confirms to perform the forward and reverse DNS update,
 // when client asks for it.
-TEST_F(FqdnDhcpv4SrvTest, serverUpdateForward) {
+TEST_F(NameDhcpv4SrvTest, serverUpdateForwardFqdn) {
     Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
                                         Option4ClientFqdn::FLAG_E |
                                         Option4ClientFqdn::FLAG_S,
@@ -274,9 +338,17 @@ TEST_F(FqdnDhcpv4SrvTest, serverUpdateForward) {
 
 }
 
+// Test that server processes the Hostname option sent by a client and
+// responds with the Hostname option to confirm that the 
+TEST_F(NameDhcpv4SrvTest, serverUpdateHostname) {
+    Pkt4Ptr query = generatePktWithHostname(DHCPREQUEST,
+                                            "myhost.example.com.");
+    testProcessHostname(query, "myhost.example.com.");
+}
+
 // Test that server generates the fully qualified domain name for the client
 // if client supplies the partial name.
-TEST_F(FqdnDhcpv4SrvTest, serverUpdateForwardPartialName) {
+TEST_F(NameDhcpv4SrvTest, serverUpdateForwardPartialNameFqdn) {
     Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
                                         Option4ClientFqdn::FLAG_E |
                                         Option4ClientFqdn::FLAG_S,
@@ -292,7 +364,7 @@ TEST_F(FqdnDhcpv4SrvTest, serverUpdateForwardPartialName) {
 
 // Test that server generates the fully qualified domain name for the client
 // if clietn supplies empty domain name.
-TEST_F(FqdnDhcpv4SrvTest, serverUpdateForwardNoName) {
+TEST_F(NameDhcpv4SrvTest, serverUpdateForwardNoNameFqdn) {
     Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
                                         Option4ClientFqdn::FLAG_E |
                                         Option4ClientFqdn::FLAG_S,
@@ -307,7 +379,7 @@ TEST_F(FqdnDhcpv4SrvTest, serverUpdateForwardNoName) {
 }
 
 // Test server's response when client requests no DNS update.
-TEST_F(FqdnDhcpv4SrvTest, noUpdate) {
+TEST_F(NameDhcpv4SrvTest, noUpdateFqdn) {
     Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
                                         Option4ClientFqdn::FLAG_E |
                                         Option4ClientFqdn::FLAG_N,
@@ -321,7 +393,7 @@ TEST_F(FqdnDhcpv4SrvTest, noUpdate) {
 
 // Test that server does not accept delegation of the forward DNS update
 // to a client.
-TEST_F(FqdnDhcpv4SrvTest, clientUpdateNotAllowed) {
+TEST_F(NameDhcpv4SrvTest, clientUpdateNotAllowedFqdn) {
     Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
                                         Option4ClientFqdn::FLAG_E,
                                         "myhost.example.com.",
@@ -336,7 +408,7 @@ TEST_F(FqdnDhcpv4SrvTest, clientUpdateNotAllowed) {
 
 // Test that exactly one NameChangeRequest is generated when the new lease
 // has been acquired (old lease is NULL).
-TEST_F(FqdnDhcpv4SrvTest, createNameChangeRequestsNewLease) {
+TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNewLease) {
     Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
                                   true, true);
     Lease4Ptr old_lease;
@@ -353,7 +425,7 @@ TEST_F(FqdnDhcpv4SrvTest, createNameChangeRequestsNewLease) {
 
 // Test that no NameChangeRequest is generated when a lease is renewed and
 // the FQDN data hasn't changed.
-TEST_F(FqdnDhcpv4SrvTest, createNameChangeRequestsRenewNoChange) {
+TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenewNoChange) {
     Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
                                   true, true);
     Lease4Ptr old_lease = createLease(IOAddress("192.0.2.3"),
@@ -366,7 +438,7 @@ TEST_F(FqdnDhcpv4SrvTest, createNameChangeRequestsRenewNoChange) {
 
 // Test that no NameChangeRequest is generated when forward and reverse
 // DNS update flags are not set in the lease.
-TEST_F(FqdnDhcpv4SrvTest, createNameChangeRequestsNoUpdate) {
+TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNoUpdate) {
     Lease4Ptr lease1 = createLease(IOAddress("192.0.2.3"),
                                    "lease1.example.com.",
                                    true, true);
@@ -392,7 +464,7 @@ TEST_F(FqdnDhcpv4SrvTest, createNameChangeRequestsNoUpdate) {
 
 // Test that two NameChangeRequests are generated when the lease is being
 // renewed and the new lease has updated FQDN data.
-TEST_F(FqdnDhcpv4SrvTest, createNameChangeRequestsRenew) {
+TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenew) {
     Lease4Ptr lease1 = createLease(IOAddress("192.0.2.3"),
                                    "lease1.example.com.",
                                    true, true);
@@ -419,7 +491,7 @@ TEST_F(FqdnDhcpv4SrvTest, createNameChangeRequestsRenew) {
 // This test verifies that exception is thrown when leases passed to the
 // createNameChangeRequests function do not match, i.e. they comprise
 // different IP addresses, client ids etc.
-TEST_F(FqdnDhcpv4SrvTest, createNameChangeRequestsLeaseMismatch) {
+TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsLeaseMismatch) {
     Lease4Ptr lease1 = createLease(IOAddress("192.0.2.3"),
                                    "lease1.example.com.",
                                    true, true);
@@ -432,7 +504,7 @@ TEST_F(FqdnDhcpv4SrvTest, createNameChangeRequestsLeaseMismatch) {
 
 // Test that the OFFER message generated as a result of the DISCOVER message
 // processing will not result in generation of the NameChangeRequests.
-TEST_F(FqdnDhcpv4SrvTest, processDiscover) {
+TEST_F(NameDhcpv4SrvTest, processDiscover) {
     Pkt4Ptr req = generatePktWithFqdn(DHCPDISCOVER, Option4ClientFqdn::FLAG_S |
                                       Option4ClientFqdn::FLAG_E,
                                       "myhost.example.com.",
@@ -450,7 +522,7 @@ TEST_F(FqdnDhcpv4SrvTest, processDiscover) {
 // a different domain-name. Server should use existing lease for the second
 // request but modify the DNS entries for the lease according to the contents
 // of the FQDN sent in the second request.
-TEST_F(FqdnDhcpv4SrvTest, processTwoRequests) {
+TEST_F(NameDhcpv4SrvTest, processTwoRequests) {
     Pkt4Ptr req1 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                        Option4ClientFqdn::FLAG_E,
                                        "myhost.example.com.",
@@ -501,7 +573,7 @@ TEST_F(FqdnDhcpv4SrvTest, processTwoRequests) {
 // Test that when the Release message is sent for the previously acquired
 // lease, then server genenerates a NameChangeRequest to remove the entries
 // corresponding to the lease being released.
-TEST_F(FqdnDhcpv4SrvTest, processRequestRelease) {
+TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
     Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                       Option4ClientFqdn::FLAG_E,
                                       "myhost.example.com.",
