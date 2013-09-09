@@ -860,7 +860,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     // Generate client-id also duid_
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setRemoteAddr(addr);
-    rel->setYiaddr(addr);
+    rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv->getServerID());
     rel->setHWAddr(hw);
@@ -925,7 +925,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     // Generate client-id also duid_
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setRemoteAddr(addr);
-    rel->setYiaddr(addr);
+    rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv->getServerID());
     rel->setHWAddr(bogus_hw);
@@ -2284,7 +2284,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     // Generate client-id also duid_
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setRemoteAddr(addr);
-    rel->setYiaddr(addr);
+    rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv_->getServerID());
     rel->setHWAddr(hw);

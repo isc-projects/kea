@@ -33,7 +33,6 @@ public:
     FqdnDhcpv4SrvTest() : Dhcpv4SrvTest() {
         srv_ = new NakedDhcpv4Srv(0);
     }
-
     virtual ~FqdnDhcpv4SrvTest() {
         delete srv_;
     }
@@ -110,6 +109,7 @@ public:
         return (pkt);
     }
 
+
     // Test that server generates the appropriate FQDN option in response to
     // client's FQDN option.
     void testProcessFqdn(const Pkt4Ptr& query, const uint8_t exp_flags,
@@ -141,6 +141,37 @@ public:
 
         EXPECT_EQ(exp_domain_name, fqdn->getDomainName());
         EXPECT_EQ(Option4ClientFqdn::FULL, fqdn->getDomainNameType());
+
+    }
+
+    // Test that the client message holding an FQDN is processed and the
+    // NameChangeRequests are generated.
+    void testProcessMessageWithFqdn(const uint8_t msg_type,
+                            const std::string& hostname) {
+        Pkt4Ptr req = generatePktWithFqdn(msg_type, Option4ClientFqdn::FLAG_S |
+                                          Option4ClientFqdn::FLAG_E, hostname,
+                                          Option4ClientFqdn::FULL, true);
+        Pkt4Ptr reply;
+        if (msg_type == DHCPDISCOVER) {
+            ASSERT_NO_THROW(reply = srv_->processDiscover(req));
+
+        } else if (msg_type == DHCPREQUEST) {
+            ASSERT_NO_THROW(reply = srv_->processRequest(req));
+
+        } else if (msg_type == DHCPRELEASE) {
+            ASSERT_NO_THROW(srv_->processRelease(req));
+            return;
+
+        } else {
+            return;
+        }
+
+        if (msg_type == DHCPDISCOVER) {
+            checkResponse(reply, DHCPOFFER, 1234);
+
+        } else {
+            checkResponse(reply, DHCPACK, 1234);
+        }
 
     }
 
@@ -397,6 +428,110 @@ TEST_F(FqdnDhcpv4SrvTest, createNameChangeRequestsLeaseMismatch) {
                                    true, true);
     EXPECT_THROW(srv_->createNameChangeRequests(lease2, lease1),
                  isc::Unexpected);
+}
+
+// Test that the OFFER message generated as a result of the DISCOVER message
+// processing will not result in generation of the NameChangeRequests.
+TEST_F(FqdnDhcpv4SrvTest, processDiscover) {
+    Pkt4Ptr req = generatePktWithFqdn(DHCPDISCOVER, Option4ClientFqdn::FLAG_S |
+                                      Option4ClientFqdn::FLAG_E,
+                                      "myhost.example.com.",
+                                      Option4ClientFqdn::FULL, true);
+
+    Pkt4Ptr reply;
+    ASSERT_NO_THROW(reply = srv_->processDiscover(req));
+
+    checkResponse(reply, DHCPOFFER, 1234);
+
+    EXPECT_TRUE(srv_->name_change_reqs_.empty());
+}
+
+// Test that client may send two requests, each carrying FQDN option with
+// a different domain-name. Server should use existing lease for the second
+// request but modify the DNS entries for the lease according to the contents
+// of the FQDN sent in the second request.
+TEST_F(FqdnDhcpv4SrvTest, processTwoRequests) {
+    Pkt4Ptr req1 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
+                                       Option4ClientFqdn::FLAG_E,
+                                       "myhost.example.com.",
+                                       Option4ClientFqdn::FULL, true);
+
+    Pkt4Ptr reply;
+    ASSERT_NO_THROW(reply = srv_->processRequest(req1));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // Verify that there is one NameChangeRequest generated.
+    ASSERT_EQ(1, srv_->name_change_reqs_.size());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            reply->getYiaddr().toText(), "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436"
+                            "965B68B6D438D98E680BF10B09F3BCF",
+                            0, subnet_->getValid());
+
+    // Create another Request message but with a different FQDN. Server
+    // should generate two NameChangeRequests: one to remove existing entry,
+    // another one to add new entry with updated domain-name.
+    Pkt4Ptr req2 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
+                                       Option4ClientFqdn::FLAG_E,
+                                       "otherhost.example.com.",
+                                       Option4ClientFqdn::FULL, true);
+
+    ASSERT_NO_THROW(reply = srv_->processRequest(req2));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // There should be two NameChangeRequests. Verify that they are valid.
+    ASSERT_EQ(2, srv_->name_change_reqs_.size());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
+                            reply->getYiaddr().toText(),
+                            "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436"
+                            "965B68B6D438D98E680BF10B09F3BCF",
+                            0, subnet_->getValid());
+
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            reply->getYiaddr().toText(),
+                            "otherhost.example.com.",
+                            "000101A5AEEA7498BD5AD9D3BF600E49FF39A7E3"
+                            "AFDCE8C3D0E53F35CC584DD63C89CA",
+                            0, subnet_->getValid());
+}
+
+// Test that when the Release message is sent for the previously acquired
+// lease, then server genenerates a NameChangeRequest to remove the entries
+// corresponding to the lease being released.
+TEST_F(FqdnDhcpv4SrvTest, processRequestRelease) {
+    Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
+                                      Option4ClientFqdn::FLAG_E,
+                                      "myhost.example.com.",
+                                      Option4ClientFqdn::FULL, true);
+
+    Pkt4Ptr reply;
+    ASSERT_NO_THROW(reply = srv_->processRequest(req));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // Verify that there is one NameChangeRequest generated.
+    ASSERT_EQ(1, srv_->name_change_reqs_.size());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            reply->getYiaddr().toText(), "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436"
+                            "965B68B6D438D98E680BF10B09F3BCF",
+                            0, subnet_->getValid());
+
+    // Create a Release message.
+    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
+    rel->setCiaddr(reply->getYiaddr());
+    rel->setRemoteAddr(IOAddress("192.0.2.3"));
+    rel->addOption(generateClientId());
+    rel->addOption(srv_->getServerID());
+
+    ASSERT_NO_THROW(srv_->processRelease(rel));
+
+    // The lease has been removed, so there should be a NameChangeRequest to
+    // remove corresponding DNS entries.
+    ASSERT_EQ(1, srv_->name_change_reqs_.size());
 }
 
 } // end of anonymous namespace
