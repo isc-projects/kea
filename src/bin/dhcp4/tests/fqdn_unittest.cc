@@ -76,6 +76,17 @@ public:
         return (opt_hostname);
     }
 
+    // Generates partial hostname from the address. The format of the
+    // generated address is: host-A-B-C-D, where A.B.C.D is an IP
+    // address.
+    std::string generatedNameFromAddress(const IOAddress& addr) {
+        std::string gen_name = addr.toText();
+        std::replace(gen_name.begin(), gen_name.end(), '.', '-');
+        std::ostringstream hostname;
+        hostname << "host-" << gen_name;
+        return (hostname.str());
+    }
+
     // Get the Client FQDN Option from the given message.
     Option4ClientFqdnPtr getClientFqdnOption(const Pkt4Ptr& pkt) {
         return (boost::dynamic_pointer_cast<
@@ -153,7 +164,9 @@ public:
     // Test that server generates the appropriate FQDN option in response to
     // client's FQDN option.
     void testProcessFqdn(const Pkt4Ptr& query, const uint8_t exp_flags,
-                         const std::string& exp_domain_name) {
+                         const std::string& exp_domain_name,
+                         const Option4ClientFqdn::DomainNameType
+                         exp_domain_type = Option4ClientFqdn::FULL) {
         ASSERT_TRUE(getClientFqdnOption(query));
 
         Pkt4Ptr answer;
@@ -180,7 +193,7 @@ public:
         EXPECT_EQ(flag_e, fqdn->getFlag(Option4ClientFqdn::FLAG_E));
 
         EXPECT_EQ(exp_domain_name, fqdn->getDomainName());
-        EXPECT_EQ(Option4ClientFqdn::FULL, fqdn->getDomainNameType());
+        EXPECT_EQ(exp_domain_type, fqdn->getDomainNameType());
 
     }
 
@@ -253,7 +266,11 @@ public:
         EXPECT_EQ(reverse, ncr.isReverseChange());
         EXPECT_EQ(addr, ncr.getIpAddress());
         EXPECT_EQ(fqdn, ncr.getFqdn());
-        EXPECT_EQ(dhcid, ncr.getDhcid().toStr());
+        // Compare dhcid if it is not empty. In some cases, the DHCID is
+        // not known in advance and can't be compared.
+        if (!dhcid.empty()) {
+            EXPECT_EQ(dhcid, ncr.getDhcid().toStr());
+        }
         EXPECT_EQ(expires, ncr.getLeaseExpiresOn());
         EXPECT_EQ(len, ncr.getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr.getStatus());
@@ -369,8 +386,10 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateUnqualifiedHostname) {
     testProcessHostname(query, "myhost.example.com.");
 }
 
-// Test that server generates the fully qualified domain name for the client
-// if clietn supplies empty domain name.
+// Test that server sets empty domain-name in the FQDN option when client
+// supplied no domain-name. The domain-name is supposed to be set after the
+// lease is acquired. The domain-name is then generated from the IP address
+// assigned to a client.
 TEST_F(NameDhcpv4SrvTest, serverUpdateForwardNoNameFqdn) {
     Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
                                         Option4ClientFqdn::FLAG_E |
@@ -381,7 +400,7 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateForwardNoNameFqdn) {
 
     testProcessFqdn(query,
                     Option4ClientFqdn::FLAG_E | Option4ClientFqdn::FLAG_S,
-                    "myhost.example.com.");
+                    "", Option4ClientFqdn::PARTIAL);
 
 }
 
@@ -524,6 +543,52 @@ TEST_F(NameDhcpv4SrvTest, processDiscover) {
 
     EXPECT_TRUE(srv_->name_change_reqs_.empty());
 }
+
+// Test that server generates client's hostname from the IP address assigned
+// to it when DHCPv4 Client FQDN option specifies an empty domain-name.
+TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
+    Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
+                                      Option4ClientFqdn::FLAG_E,
+                                      "", Option4ClientFqdn::PARTIAL, true);
+
+    Pkt4Ptr reply;
+    ASSERT_NO_THROW(reply = srv_->processRequest(req));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // Verify that there is one NameChangeRequest generated.
+    ASSERT_EQ(1, srv_->name_change_reqs_.size());
+    // The hostname is generated from the IP address acquired (yiaddr).
+    std::ostringstream hostname;
+    hostname << generatedNameFromAddress(reply->getYiaddr())
+             << ".example.com.";
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            reply->getYiaddr().toText(), hostname.str(),
+                            "", // empty DHCID forces that it is not checked
+                            0, subnet_->getValid());
+}
+
+// Test that server generates client's hostname from the IP address assigned
+// to it when Hostname option carries the top level domain-name.
+TEST_F(NameDhcpv4SrvTest, processRequestEmptyHostname) {
+    Pkt4Ptr req = generatePktWithHostname(DHCPREQUEST, ".");
+
+    Pkt4Ptr reply;
+    ASSERT_NO_THROW(reply = srv_->processRequest(req));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    // Verify that there is one NameChangeRequest generated.
+    ASSERT_EQ(1, srv_->name_change_reqs_.size());
+    // The hostname is generated from the IP address acquired (yiaddr).
+    std::ostringstream hostname;
+    hostname << generatedNameFromAddress(reply->getYiaddr()) << ".example.com.";
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                            reply->getYiaddr().toText(), hostname.str(),
+                            "", // empty DHCID forces that it is not checked
+                            0, subnet_->getValid());
+}
+
 
 // Test that client may send two requests, each carrying FQDN option with
 // a different domain-name. Server should use existing lease for the second
