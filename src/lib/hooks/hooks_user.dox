@@ -156,7 +156,7 @@ int version() {
     return (BIND10_HOOKS_VERSION);
 }
 
-};
+}
 @endcode
 
 The file "hooks/hooks.h" is specified relative to the BIND 10 libraries
@@ -211,6 +211,8 @@ extern std::fstream interesting;
 #include <hooks/hooks.h>
 #include "library_common.h"
 
+using namespace isc::hooks;
+
 // "Interesting clients" log file handle definition.
 std::fstream interesting;
 
@@ -229,7 +231,7 @@ int unload() {
     return (0);
 }
 
-};
+}
 @endcode
 
 Notes:
@@ -276,7 +278,7 @@ All callouts are declared with the signature:
 @code
 extern "C" {
 int callout(CalloutHandle& handle);
-};
+}
 @endcode
 
 (As before, the callout is declared with "C" linkage.)  Information is passed
@@ -454,16 +456,15 @@ hardware address of the incoming packet, classify it, and write it,
 together with the assigned IP address, to a log file.  Although we could
 do this in one callout, for this example we'll use two:
 
-- pkt_rcvd - a callout on this hook is invoked when a packet has been
-received and has been parsed.  It is passed a single argument, "query"
+- pkt4_receive - a callout on this hook is invoked when a packet has been
+received and has been parsed.  It is passed a single argument, "query4"
 which is an isc::dhcp::Pkt4 object (representing a DHCP v4 packet).
 We will do the classification here.
 
-- v4_lease_write_post - called when the lease (an assignment of an IPv4
-address to a client for a fixed period of time) has been written to the
-database. It is passed two arguments, the query ("query")
-and the response (called "reply").  This is the point at which the
-example code will write the hardware and IP addresses to the log file.
+- pkt4_send - called when a response is just about to be sent back to
+the client.  It is passed a single argument "response4".  This is the
+point at which the example code will write the hardware and IP addresses
+to the log file.
 
 The standard for naming callouts is to give them the same name as
 the hook.  If this is done, the callouts will be automatically found
@@ -473,7 +474,7 @@ case, so the code for the first callout (used to classify the client's
 hardware address) is:
 
 @code
-// pkt_rcvd.cc
+// pkt_receive4.cc
 
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
@@ -482,47 +483,51 @@ hardware address) is:
 #include <string>
 
 using namespace isc::dhcp;
+using namespace isc::hooks;
 using namespace std;
 
 extern "C" {
 
-// This callout is called at the "pkt_rcvd" hook.
-int pkt_rcvd(CalloutHandle& handle) {
+// This callout is called at the "pkt4_receive" hook.
+int pkt4_receive(CalloutHandle& handle) {
 
     // A pointer to the packet is passed to the callout via a "boost" smart
     // pointer. The include file "pkt4.h" typedefs a pointer to the Pkt4
     // object as Pkt4Ptr.  Retrieve a pointer to the object.
-    Pkt4Ptr query_ptr;
-    handle.getArgument("query", query_ptr);
+    Pkt4Ptr query4_ptr;
+    handle.getArgument("query4", query4_ptr);
 
     // Point to the hardware address.
-    HwAddrPtr hwaddr_ptr = query_ptr->getHWAddr();
+    HWAddrPtr hwaddr_ptr = query4_ptr->getHWAddr();
 
     // The hardware address is held in a public member variable. We'll classify
     // it as interesting if the sum of all the bytes in it is divisible by 4.
     //  (This is a contrived example after all!)
     long sum = 0;
     for (int i = 0; i < hwaddr_ptr->hwaddr_.size(); ++i) {
-        sum += hwaddr_ptr->hwadr_[i];
+        sum += hwaddr_ptr->hwaddr_[i];
     }
 
     // Classify it.
     if (sum % 4 == 0) {
         // Store the text form of the hardware address in the context to pass
         // to the next callout.
-        handle.setContext("hwaddr", hwaddr_ptr->hwaddr_.toText());
+        string hwaddr = hwaddr_ptr->toText();
+        handle.setContext("hwaddr", hwaddr);
     }
 
     return (0);
 };
+
+}
 @endcode
 
-The pct_rcvd callout placed the hardware address of an interesting client in
+The pkt4_receive callout placed the hardware address of an interesting client in
 the "hwaddr" context for the packet.  Turning now to the callout that will
 write this information to the log file:
 
 @code
-// v4_lease_write.cc
+// pkt4_send.cc
 
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
@@ -531,28 +536,28 @@ write this information to the log file:
 #include <string>
 
 using namespace isc::dhcp;
+using namespace isc::hooks;
 using namespace std;
 
 extern "C" {
 
-// This callout is called at the "v4_lease_write_post" hook.
-int v4_lease_write_post(CalloutHandle& handle) {
+// This callout is called at the "pkt4_send" hook.
+int pkt4_send(CalloutHandle& handle) {
 
     // Obtain the hardware address of the "interesting" client.  We have to
     // use a try...catch block here because if the client was not interesting,
     // no information would be set and getArgument would thrown an exception.
     string hwaddr;
-    try (handle.getArgument("hwaddr", hwaddr) {
+    try {
+        handle.getContext("hwaddr", hwaddr);
 
         // getArgument didn't throw so the client is interesting.  Get a pointer
-        // to the reply.  Note that the argument list for this hook also
-        // contains a pointer to the query: we don't need to access that in this
-        // example.
-        Pkt4Ptr reply;
-        handle.getArgument("reply", reply);
+        // to the reply.
+        Pkt4Ptr response4_ptr;
+        handle.getArgument("response4", response4_ptr);
 
         // Get the string form of the IP address.
-        string ipaddr = reply->getYiaddr().toText();
+        string ipaddr = response4_ptr->getYiaddr().toText();
 
         // Write the information to the log file.
         interesting << hwaddr << " " << ipaddr << "\n";
@@ -561,16 +566,15 @@ int v4_lease_write_post(CalloutHandle& handle) {
         flush(interesting);
 
     } catch (const NoSuchCalloutContext&) {
-
-        // No such element in the per-request context with the name
-        // "hwaddr".  We will do nothing, so just dismiss the exception.
-
-    }
+        // No such element in the per-request context with the name "hwaddr".
+        // This means that the request was not an interesting, so do nothing
+        // and dismiss the exception.
+     }
 
     return (0);
 }
 
-};
+}
 @endcode
 
 @subsection hooksdgBuild Building the Library
@@ -586,8 +590,8 @@ command line needed to create the library using the Gnu C++ compiler on a
 Linux system is:
 
 @code
-g++ -I /usr/include/bind10 -L /usr/lib/bind10 -fpic -shared -o example.so \
-    load_unload.cc pkt_rcvd.cc v4_lease_write.cc version.cc \
+g++ -I /usr/include/bind10 -L /usr/lib/bind10/lib -fpic -shared -o example.so \
+    load_unload.cc pkt4_receive.cc pkt4_send.cc version.cc \
     -lb10-dhcp++ -lb10-util -lb10-exceptions
 @endcode
 
@@ -621,6 +625,11 @@ module, the following bindctl commands must be executed:
 The DHCPv4 server will load the library and execute the callouts each time a
 request is received.
 
+@note The above assumes that the hooks library will be used with a version of
+BIND 10 that is dynamically-linked.  For information regarding running
+hooks libraries against a statically-linked BIND 10, see
+@ref hookdgStaticallyLinkedBind10.
+
 @section hooksdgAdvancedTopics Advanced Topics
 
 @subsection hooksdgContextCreateDestroy Context Creation and Destruction
@@ -633,12 +642,12 @@ to initialize per-request context. The second is called after all
 server-defined hooks have been processed, and is to allow a library to
 tidy up.
 
-As an example, the v4_lease_write example above required that the code
+As an example, the pkt4_send example above required that the code
 check for an exception being thrown when accessing the "hwaddr" context
 item in case it was not set.  An alternative strategy would have been to
 provide a callout for the "context_create" hook and set the context item
 "hwaddr" to an empty string. Instead of needing to handle an exception,
-v4_lease_write would be guaranteed to get something when looking for
+pkt4_send would be guaranteed to get something when looking for
 the hwaddr item and so could write or not write the output depending on
 the value.
 
@@ -662,8 +671,8 @@ Here it is assumed that the hooks library is performing some form of
 security checking on the packet and needs to maintain information in
 a user-specified "SecurityInformation" object. (The details of this
 fictitious object are of no concern here.) The object is created in
-the context_create callout and used in both the pkt4_rcvd and the
-v4_lease_write_post callouts.
+the context_create callout and used in both the pkt4_receive and the
+pkt4_send callouts.
 
 @code
 // Storing information in a "raw" pointer.  Assume that the
@@ -682,7 +691,7 @@ int context_create(CalloutHandle& handle) {
 }
 
 // Callouts that use the context
-int pktv_rcvd(CalloutHandle& handle) {
+int pkt4_receive(CalloutHandle& handle) {
     // Retrieve the pointer to the SecurityInformation object
     SecurityInformation si;
     handle.getContext("security_information", si);
@@ -695,7 +704,7 @@ int pktv_rcvd(CalloutHandle& handle) {
     // altered, so there is no need to call setContext() again.
 }
 
-int v4_lease_write_post(CalloutHandle& handle) {
+int pkt4_send(CalloutHandle& handle) {
     // Retrieve the pointer to the SecurityInformation object
     SecurityInformation si;
     handle.getContext("security_information", si);
@@ -741,9 +750,9 @@ int context_create(CalloutHandle& handle) {
 }
 
 // Other than the data type, a shared pointer has similar semantics to a "raw"
-// pointer.  Only the code from pkt_rcvd is shown here.
+// pointer.  Only the code from pkt4_receive is shown here.
 
-int pktv_rcvd(CalloutHandle& handle) {
+int pkt4_receive(CalloutHandle& handle) {
     // Retrieve the pointer to the SecurityInformation object
     boost::shared_ptr<SecurityInformation> si;
     handle.setContext("security_information", si);
@@ -773,7 +782,7 @@ As briefly mentioned in @ref hooksdgExampleCallouts, the standard is for
 callouts in the user library to have the same name as the name of the
 hook to which they are being attached.  This convention was followed
 in the tutorial, e.g.  the callout that needed to be attached to the
-"pkt_rcvd" hook was named pkt_rcvd.
+"pkt4_receive" hook was named pkt4_receive.
 
 The reason for this convention is that when the library is loaded, the
 hook framework automatically searches the library for functions with
@@ -805,7 +814,7 @@ The following sections cover some of the ways in which these can be used.
 
 The example in the tutorial used standard names for the callouts.  As noted
 above, it is possible to use non-standard names.  Suppose, instead of the
-callout names "pkt_rcvd" and "v4_lease_write", we had named our callouts
+callout names "pkt4_receive" and "pkt4_send", we had named our callouts
 "classify" and "write_data".  The hooks framework would not have registered
 these callouts, so we would have needed to do it ourself.  The place to
 do this is the "load" framework function, and its code would have had to
@@ -815,8 +824,8 @@ been modified to:
 int load(LibraryHandle& libhandle) {
     // Register the callouts on the hooks. We assume that a header file
     // declares the "classify" and "write_data" functions.
-    libhandle.registerCallout("pkt_rcvd", classify);
-    libhandle.registerCallout("v4_lease_write", write_data);
+    libhandle.registerCallout("pkt4_receive", classify);
+    libhandle.registerCallout("pkt4_send", write_data);
 
     // Open the log file
     interesting.open("/data/clients/interesting.log",
@@ -839,8 +848,8 @@ To register multiple callouts on a hook, just call
 LibraryHandle::registerCallout multiple times on the same hook, e.g.
 
 @code
-    libhandle.registerCallout("pkt_rcvd", classify);
-    libhandle.registerCallout("pkt_rcvd", write_data);
+    libhandle.registerCallout("pkt4_receive", classify);
+    libhandle.registerCallout("pkt4_receive", write_data);
 @endcode
 
 The hooks framework will call the callouts in the order they are
@@ -859,16 +868,16 @@ is able to be registered on a hook multiple times.
 Using our contrived example again, the DHCPv4 server processes one request
 to completion before it starts processing the next.  With this knowledge,
 we could alter the logic of the code so that the callout attached to the
-"pkt_rcvd" hook registers the callout doing the logging when it detects
+"pkt4_receive" hook registers the callout doing the logging when it detects
 an interesting packet, and the callout doing the logging deregisters
 itself in its execution.  The relevant modifications to the code in
 the tutorial are shown below:
 
 @code
-// pkt_rcvd.cc
+// pkt4_receive.cc
 //      :
 
-int pkt_rcvd(CalloutHandle& handle) {
+int pkt4_receive(CalloutHandle& handle) {
 
             :
             :
@@ -880,7 +889,7 @@ int pkt_rcvd(CalloutHandle& handle) {
         handle.setContext("hwaddr", hwaddr_ptr->hwaddr_.toText());
 
         // Register the callback to log the data.
-        handle.getLibraryHandle().registerCallout("v4_lease_write", write_data);
+        handle.getLibraryHandle().registerCallout("pkt4_send", write_data);
     }
 
     return (0);
@@ -888,7 +897,7 @@ int pkt_rcvd(CalloutHandle& handle) {
 @endcode
 
 @code
-// v4_lease_write.cc
+// pkt4_send.cc
         :
 
 int write_data(CalloutHandle& handle) {
@@ -912,9 +921,9 @@ int write_data(CalloutHandle& handle) {
     flush(interesting);
 
     // We've logged the data, so deregister ourself.  This callout will not
-    // be called again until it is registered by pkt_rcvd.
+    // be called again until it is registered by pkt4_receive.
 
-    handle.getLibraryHandle().deregisterCallout("v4_lease_write", write_data);
+    handle.getLibraryHandle().deregisterCallout("pkt4_send", write_data);
 
     return (0);
 }
@@ -1028,4 +1037,39 @@ appear between "check" and "validate".  On the other hand, if it were
 "logpkt" that registered the new callout, "double_check" would appear
 after "validate".
 
+@subsection hooksdgStaticallyLinkedBind10 Running Against a Statically-Linked BIND 10
+
+If BIND 10 is built with the --enable-static-link switch (set when
+running the "configure" script), no shared BIND 10 libraries are built;
+instead, archive libraries are created and BIND 10 is linked to them.
+If you create a hooks library also linked against these archive libraries,
+wht the library is loaded you end up with two copies of the library code,
+one in BIND 10 and one in your library.
+
+To run successfully, your library needs to perform run-time initialization
+of the BIND 10 libraries against which you have linked (something
+performed by BIND 10 in the case of shared libraries).  To do this,
+call the function isc::hooks::hooksStaticLinkInit() as the first call of
+the load() function in your library. (If your library does not include
+a load() function, you need to add one.) For example:
+
+@code
+#include <hooks/hooks.h>
+
+extern "C" {
+
+int version() {
+    return (BIND10_HOOKS_VERSION);
+}
+
+int load() {
+    isc::hooks::hooksStaticLinkInit();
+        :
+}
+
+// Other callout functions
+        :
+
+}
+@endcode
 */
