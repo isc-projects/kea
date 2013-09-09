@@ -31,9 +31,16 @@ using namespace isc::cryptolink;
 namespace isc {
 namespace dns {
 namespace {
+    bool
+    isHMACMD5(const isc::dns::Name& name) {
+        static const Name md5_short_name("hmac-md5");
+        return ((name == TSIGKey::HMACMD5_NAME()) ||
+                (name == md5_short_name));
+    }
+
     HashAlgorithm
     convertAlgorithmName(const isc::dns::Name& name) {
-        if (name == TSIGKey::HMACMD5_NAME()) {
+        if (isHMACMD5(name)) {
             return (isc::cryptolink::MD5);
         }
         if (name == TSIGKey::HMACSHA1_NAME()) {
