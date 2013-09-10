@@ -1,7 +1,12 @@
+673.	[func]		tomek
+	libdhcp: Added support for IA_PD and IAPREFIX options. New class
+	for IAPREFIX (Option6_IAPrefix) has been added.
+	(Trac #3145, git 3a844e85ecc3067ccd1c01841f4a61366cb278f4)
+
 672.	[func]	tmark
 	Added b10-dhcp-ddnsupdate transaction base class, NameChangeTransaction.
-	This class provides the common structure and methods to implement the state 
-	models described in the DHCP_DDNS design, plus integration with DNSClient 
+	This class provides the common structure and methods to implement the state
+	models described in the DHCP_DDNS design, plus integration with DNSClient
 	and its callback mechanism for asynchronous IO with the DNS servers.
 	(Trac #3086, git 079b862c9eb21056fdf957e560b8fe7b218441b6)
 
