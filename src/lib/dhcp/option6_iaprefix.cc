@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
-#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <exceptions/exceptions.h>
 #include <util/io_utilities.h>
 
@@ -31,22 +31,26 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-Option6IAAddr::Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr,
-                             uint32_t pref, uint32_t valid)
-    :Option(V6, type), addr_(addr), preferred_(pref),
-     valid_(valid) {
-    if (!addr.isV6()) {
-        isc_throw(isc::BadValue, addr_.toText() << " is not an IPv6 address");
+Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& prefix,
+                                 uint8_t prefix_len, uint32_t pref, uint32_t valid)
+    :Option6IAAddr(type, prefix, pref, valid), prefix_len_(prefix_len) {
+    // Option6IAAddr will check if prefix is IPv6 and will throw if it is not
+    if (prefix_len > 128) {
+        isc_throw(BadValue, prefix_len << " is not a valid prefix length. "
+                  << "Allowed range is 0..128");
     }
 }
 
-Option6IAAddr::Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
+Option6IAPrefix::Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator begin,
                              OptionBuffer::const_iterator end)
-    :Option(V6, type), addr_("::") {
+    :Option6IAAddr(type, begin, end) {
     unpack(begin, end);
 }
 
-void Option6IAAddr::pack(isc::util::OutputBuffer& buf) {
+void Option6IAPrefix::pack(isc::util::OutputBuffer& buf) {
+    if (!addr_.isV6()) {
+        isc_throw(isc::BadValue, addr_.toText() << " is not an IPv6 address");
+    }
 
     buf.writeUint16(type_);
 
@@ -54,28 +58,21 @@ void Option6IAAddr::pack(isc::util::OutputBuffer& buf) {
     // length without 4-byte option header
     buf.writeUint16(len() - getHeaderLen());
 
-    if (!addr_.isV6()) {
-        isc_throw(isc::BadValue, addr_.toText()
-                  << " is not an IPv6 address");
-    }
-    buf.writeData(&addr_.toBytes()[0], isc::asiolink::V6ADDRESS_LEN);
-
     buf.writeUint32(preferred_);
     buf.writeUint32(valid_);
+    buf.writeUint8(prefix_len_);
 
-    // parse suboption (there shouldn't be any for IAADDR)
+    buf.writeData(&addr_.toBytes()[0], isc::asiolink::V6ADDRESS_LEN);
+
+    // store encapsulated options (the only defined so far is PD_EXCLUDE)
     packOptions(buf);
 }
 
-void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
+void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
                       OptionBuffer::const_iterator end) {
-    if ( distance(begin, end) < OPTION6_IAADDR_LEN) {
+    if ( distance(begin, end) < OPTION6_IAPREFIX_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
-
-    // 16 bytes: IPv6 address
-    addr_ = IOAddress::fromBytes(AF_INET6, &(*begin));
-    begin += V6ADDRESS_LEN;
 
     preferred_ = readUint32( &(*begin) );
     begin += sizeof(uint32_t);
@@ -83,36 +80,41 @@ void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
     valid_ = readUint32( &(*begin) );
     begin += sizeof(uint32_t);
 
+    prefix_len_ = *begin;
+    begin += sizeof(uint8_t);
+
+    // 16 bytes: IPv6 address
+    addr_ = IOAddress::fromBytes(AF_INET6, &(*begin));
+    begin += V6ADDRESS_LEN;
+
+    // unpack encapsulated options (the only defined so far is PD_EXCLUDE)
     unpackOptions(OptionBuffer(begin, end));
 }
 
-std::string Option6IAAddr::toText(int indent /* =0 */) {
+std::string Option6IAPrefix::toText(int indent /* =0 */) {
     stringstream tmp;
     for (int i=0; i<indent; i++)
         tmp << " ";
 
-    tmp << "type=" << type_ << "(IAADDR) addr=" << addr_.toText()
-        << ", preferred-lft=" << preferred_  << ", valid-lft="
+    tmp << "type=" << type_ << "(IAPREFIX) prefix=" << addr_.toText() << "/"
+        << prefix_len_ << ", preferred-lft=" << preferred_ << ", valid-lft="
         << valid_ << endl;
 
     for (OptionCollection::const_iterator opt=options_.begin();
          opt!=options_.end();
          ++opt) {
-        tmp << (*opt).second->toText(indent+2);
+        tmp << (*opt).second->toText(indent + 2);
     }
     return tmp.str();
 }
 
-uint16_t Option6IAAddr::len() {
+uint16_t Option6IAPrefix::len() {
 
-    uint16_t length = OPTION6_HDR_LEN + OPTION6_IAADDR_LEN;
+    uint16_t length = OPTION6_HDR_LEN + OPTION6_IAPREFIX_LEN;
 
     // length of all suboptions
-    // TODO implement:
-    // protected: unsigned short Option::lenHelper(int header_size);
-    for (Option::OptionCollection::iterator it = options_.begin();
-         it != options_.end();
-         ++it) {
+    for (Option::OptionCollection::const_iterator it = options_.begin();
+         it != options_.end(); ++it) {
         length += (*it).second->len();
     }
     return (length);

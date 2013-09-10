@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,57 +12,69 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef OPTION6_IAADDR_H
-#define OPTION6_IAADDR_H
+#ifndef OPTION6_IAPREFIX_H
+#define OPTION6_IAPREFIX_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/option6_iaaddr.h>
 #include <dhcp/option.h>
-#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
 
-class Option6IAAddr;
 
-/// A pointer to the @c isc::dhcp::Option6IAAddr object.
-typedef boost::shared_ptr<Option6IAAddr> Option6IAAddrPtr;
-
-class Option6IAAddr: public Option {
+/// @brief Class that represents IAPREFIX option in DHCPv6
+///
+/// It is based on a similar class that handles addresses. There are major
+/// differences, though. The fields are in different order. There is also
+/// additional prefix length field.
+///
+/// It should be noted that to get a full prefix (2 values: base prefix, and
+/// a prefix length) 2 methods are used: getAddress() and getLength(). Although
+/// using getAddress() to obtain base prefix is somewhat counter-intuitive at
+/// first, it becomes obvious when one realizes that an address is a special
+/// case of a prefix with /128. It makes everyone's like much easier, because
+/// the base prefix doubles as a regular address in many cases, e.g. when
+/// searching for a lease.
+class Option6IAPrefix : public Option6IAAddr {
 
 public:
-    /// length of the fixed part of the IAADDR option
-    static const size_t OPTION6_IAADDR_LEN = 24;
+    /// length of the fixed part of the IAPREFIX option
+    static const size_t OPTION6_IAPREFIX_LEN = 25;
 
     /// @brief Constructor, used for options constructed (during transmission).
     ///
-    /// @throw BadValue if specified addr is not IPv6
-    ///
     /// @param type option type
     /// @param addr reference to an address
+    /// @param prefix_length length (1-128)
     /// @param preferred address preferred lifetime (in seconds)
     /// @param valid address valid lifetime (in seconds)
-    Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr,
-                  uint32_t preferred, uint32_t valid);
+    Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& addr,
+                    uint8_t prefix_length, uint32_t preferred, uint32_t valid);
 
     /// @brief Constructor, used for received options.
     ///
-    /// @throw OutOfRange if specified option is truncated
+    /// @throw OutOfRange if buffer is too short
     ///
     /// @param type option type
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
-    Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
-                  OptionBuffer::const_iterator end);
+    Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator begin,
+                    OptionBuffer::const_iterator end);
 
     /// @brief Writes option in wire-format.
     ///
     /// Writes option in wire-format to buf, returns pointer to first unused
     /// byte after stored option.
     ///
+    /// @throw BadValue if the address is not IPv6
+    ///
     /// @param buf pointer to a buffer
     void pack(isc::util::OutputBuffer& buf);
 
     /// @brief Parses received buffer.
+    ///
+    /// @throw OutOfRange when buffer is shorter than 25 bytes
     ///
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
@@ -74,57 +86,21 @@ public:
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    virtual std::string
-    toText(int indent = 0);
-
+    virtual std::string toText(int indent = 0);
 
     /// sets address in this option.
     ///
     /// @param addr address to be sent in this option
-    void setAddress(const isc::asiolink::IOAddress& addr) { addr_ = addr; }
+    void setPrefix(const isc::asiolink::IOAddress& prefix,
+                   uint8_t length) { addr_ = prefix; prefix_len_ = length; }
 
-    /// Sets preferred lifetime (in seconds)
-    ///
-    /// @param pref address preferred lifetime (in seconds)
-    ///
-    void setPreferred(unsigned int pref) { preferred_=pref; }
-
-    /// Sets valid lifetime (in seconds).
-    ///
-    /// @param valid address valid lifetime (in seconds)
-    ///
-    void setValid(unsigned int valid) { valid_=valid; }
-
-    /// Returns  address contained within this option.
-    ///
-    /// @return address
-    isc::asiolink::IOAddress
-    getAddress() const { return addr_; }
-
-    /// Returns preferred lifetime of an address.
-    ///
-    /// @return preferred lifetime (in seconds)
-    unsigned int
-    getPreferred() const { return preferred_; }
-
-    /// Returns valid lifetime of an address.
-    ///
-    /// @return valid lifetime (in seconds)
-    unsigned int
-    getValid() const { return valid_; }
+    uint8_t getLength() const { return prefix_len_; }
 
     /// returns data length (data length + DHCPv4/DHCPv6 option header)
     virtual uint16_t len();
 
 protected:
-    /// contains an IPv6 address
-    isc::asiolink::IOAddress addr_;
-
-    /// contains preferred-lifetime timer (in seconds)
-    unsigned int preferred_;
-
-    /// contains valid-lifetime timer (in seconds)
-    unsigned int valid_;
+    uint8_t prefix_len_;
 };
 
 } // isc::dhcp namespace
