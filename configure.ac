@@ -705,6 +705,7 @@ if test "x${BOTAN_CONFIG}" != "x"
 then
     BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
     BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
+    BOTAN_VERSION=`${BOTAN_CONFIG} --version 2> /dev/null`
 
     # We expect botan-config --libs to contain -L<path_to_libbotan>, but
     # this is not always the case.  As a heuristics workaround we add
@@ -796,6 +797,7 @@ if test "$MYSQL_CONFIG" != "" ; then
 
     MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
     MYSQL_LIBS=`$MYSQL_CONFIG --libs`
+    MYSQL_VERSION=`$MYSQL_CONFIG --version`
 
     AC_SUBST(MYSQL_CPPFLAGS)
     AC_SUBST(MYSQL_LIBS)
@@ -873,6 +875,20 @@ AC_LINK_IFELSE(
         [AC_MSG_RESULT([checking for log4cplus library... no])
          AC_MSG_ERROR([Needs log4cplus library])]
 )
+
+dnl Determine the log4cplus version, used mainly for config.report.
+AC_MSG_CHECKING([log4cplus version])
+cat > conftest.cpp << EOF
+#include "log4cplus/version.h"
+AUTOCONF_LOG4CPLUS_VERSION=LOG4CPLUS_VERSION_STR
+EOF
+
+LOG4CPLUS_VERSION=`$CPP conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+if test -z "$LOG4CPLUS_VERSION"; then
+  LOG4CPLUS_VERSION="unknown"
+fi
+$RM -f conftest.cpp
+AC_MSG_RESULT([$LOG4CPLUS_VERSION])
 
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
@@ -953,6 +969,7 @@ AC_SUBST(MULTITHREADING_FLAG)
 GTEST_LDFLAGS=
 GTEST_LDADD=
 DISTCHECK_GTEST_CONFIGURE_FLAG=
+GTEST_VERSION="unknown"
 
 if test "x$enable_gtest" = "xyes" ; then
 
@@ -1008,6 +1025,7 @@ if test "$gtest_path" != "no" ; then
         GTEST_INCLUDES=`${GTEST_CONFIG} --cppflags`
         GTEST_LDFLAGS=`${GTEST_CONFIG} --ldflags`
         GTEST_LDADD=`${GTEST_CONFIG} --libs`
+        GTEST_VERSION=`${GTEST_CONFIG} --version`
         GTEST_FOUND="true"
     else
         AC_MSG_WARN([Unable to locate Google Test gtest-config.])
@@ -1534,39 +1552,67 @@ cat > config.report << END
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 Package:
-  Name:          $PACKAGE_NAME
-  Version:       $PACKAGE_VERSION
+  Name:            ${PACKAGE_NAME}
+  Version:         ${PACKAGE_VERSION}
+  OS Family:       ${OS_TYPE}
 
-C++ Compiler:    $CXX
+C++ Compiler:
+  CXX:             ${CXX}
+  DEFS:            ${DEFS}
+  CPPFLAGS:        ${CPPFLAGS}
+  CXXFLAGS:        ${CXXFLAGS}
+  LDFLAGS:         ${LDFLAGS}
+  B10_CXXFLAGS:    ${B10_CXXFLAGS}
 
-Flags:
-  DEFS:          $DEFS
-  CPPFLAGS:      $CPPFLAGS
-  CXXFLAGS:      $CXXFLAGS
-  LDFLAGS:       $LDFLAGS
-  B10_CXXFLAGS:  $B10_CXXFLAGS
-  OS Family:     $OS_TYPE
-dnl includes too
-  Python:        ${PYTHON_INCLUDES}
-                 ${PYTHON_CXXFLAGS}
-                 ${PYTHON_LDFLAGS}
-                 ${PYTHON_LIB}
-  Boost:         ${BOOST_INCLUDES}
-  Botan:         ${BOTAN_INCLUDES}
-                 ${BOTAN_LDFLAGS}
-                 ${BOTAN_LIBS}
-  Log4cplus:     ${LOG4CPLUS_INCLUDES}
-                 ${LOG4CPLUS_LIBS}
-  SQLite:        $SQLITE_CFLAGS
-                 $SQLITE_LIBS
+Python:
+  PYTHON_VERSION:  ${PYTHON_VERSION}
+  PYTHON_INCLUDES: ${PYTHON_INCLUDES}
+  PYTHON_CXXFLAGS: ${PYTHON_CXXFLAGS}
+  PYTHON_LDFLAGS:  ${PYTHON_LDFLAGS}
+  PYTHON_LIB:      ${PYTHON_LIB}
+
+Boost:
+  BOOST_VERSION:   ${BOOST_VERSION}
+  BOOST_INCLUDES:  ${BOOST_INCLUDES}
+
+Botan:
+  BOTAN_VERSION:   ${BOTAN_VERSION}
+  BOTAN_INCLUDES:  ${BOTAN_INCLUDES}
+  BOTAN_LDFLAGS:   ${BOTAN_LDFLAGS}
+  BOTAN_LIBS:      ${BOTAN_LIBS}
+
+Log4cplus:
+  LOG4CPLUS_VERSION: ${LOG4CPLUS_VERSION}
+  LOG4CPLUS_INCLUDES: ${LOG4CPLUS_INCLUDES}
+  LOG4CPLUS_LIBS:  ${LOG4CPLUS_LIBS}
+
+SQLite:
+  SQLITE_VERSION:  ${SQLITE_VERSION}
+  SQLITE_CFLAGS:   ${SQLITE_CFLAGS}
+  SQLITE_LIBS:     ${SQLITE_LIBS}
 END
 
 # Avoid confusion on DNS/DHCP and only mention MySQL if it
 # were specified on the command line.
 if test "$MYSQL_CPPFLAGS" != "" ; then
 cat >> config.report << END
-  MySQL:         $MYSQL_CPPFLAGS
-                 $MYSQL_LIBS
+
+MySQL:
+  MYSQL_VERSION:   ${MYSQL_VERSION}
+  MYSQL_CPPFLAGS:  ${MYSQL_CPPFLAGS}
+  MYSQL_LIBS:      ${MYSQL_LIBS}
+END
+fi
+
+if test "$enable_gtest" != "no"; then
+cat >> config.report << END
+
+GTest:
+  GTEST_VERSION:   ${GTEST_VERSION}
+  GTEST_INCLUDES:  ${GTEST_INCLUDES}
+  GTEST_LDFLAGS:   ${GTEST_LDFLAGS}
+  GTEST_LDADD:     ${GTEST_LDADD}
+  GTEST_SOURCE:    ${GTEST_SOURCE}
 END
 fi
 
