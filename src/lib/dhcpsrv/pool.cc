@@ -62,7 +62,7 @@ Pool4::Pool4(const isc::asiolink::IOAddress& prefix,
 }
 
 
-Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
+Pool6::Pool6(PoolType type, const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
     :Pool(first, last), type_(type) {
 
@@ -93,7 +93,7 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
     }
 }
 
-Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
+Pool6::Pool6(PoolType type, const isc::asiolink::IOAddress& prefix,
              uint8_t prefix_len, uint8_t delegated_len /* = 128 */)
     :Pool(prefix, IOAddress("::")),
      type_(type), prefix_len_(delegated_len) {

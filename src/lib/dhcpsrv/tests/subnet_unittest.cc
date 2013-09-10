@@ -69,7 +69,7 @@ TEST(Subnet4Test, Pool4InSubnet4) {
     subnet->addPool(pool1);
 
     // If there's only one pool, get that pool
-    PoolPtr mypool = subnet->getPool();
+    PoolPtr mypool = subnet->getAnyPool();
     EXPECT_EQ(mypool, pool1);
 
 
@@ -78,7 +78,7 @@ TEST(Subnet4Test, Pool4InSubnet4) {
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
-    mypool = subnet->getPool();
+    mypool = subnet->getAnyPool();
 
     EXPECT_EQ(mypool, pool1);
 
@@ -215,7 +215,7 @@ TEST(Subnet6Test, Pool6InSubnet6) {
     subnet->addPool(pool1);
 
     // If there's only one pool, get that pool
-    PoolPtr mypool = subnet->getPool();
+    PoolPtr mypool = subnet->getAnyPool();
     EXPECT_EQ(mypool, pool1);
 
 
@@ -224,7 +224,7 @@ TEST(Subnet6Test, Pool6InSubnet6) {
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
-    mypool = subnet->getPool();
+    mypool = subnet->getAnyPool();
 
     EXPECT_EQ(mypool, pool1);
 
