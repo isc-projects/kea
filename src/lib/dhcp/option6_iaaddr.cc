@@ -35,6 +35,9 @@ Option6IAAddr::Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr
                              uint32_t pref, uint32_t valid)
     :Option(V6, type), addr_(addr), preferred_(pref),
      valid_(valid) {
+    if (!addr.isV6()) {
+        isc_throw(isc::BadValue, addr_.toText() << " is not an IPv6 address");
+    }
 }
 
 Option6IAAddr::Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
