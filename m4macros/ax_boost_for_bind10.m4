@@ -185,6 +185,20 @@ CXXFLAGS="$CXXFLAGS_SAVED"
 
 AC_SUBST(BOOST_INCLUDES)
 
+dnl Determine the Boost version, used mainly for config.report.
+AC_MSG_CHECKING([Boost version])
+cat > conftest.cpp << EOF
+#include "boost/version.hpp"
+AUTOCONF_BOOST_LIB_VERSION=BOOST_LIB_VERSION
+EOF
+
+BOOST_VERSION=`$CPP conftest.cpp | grep '^AUTOCONF_BOOST_LIB_VERSION=' | $SED -e 's/^AUTOCONF_BOOST_LIB_VERSION=//' -e 's/_/./g' -e 's/"//g' 2> /dev/null`
+if test -z "$BOOST_VERSION"; then
+  BOOST_VERSION="unknown"
+fi
+$RM -f conftest.cpp
+AC_MSG_RESULT([$BOOST_VERSION])
+
 CPPFLAGS="$CPPFLAGS_SAVED"
 AC_LANG_RESTORE
 ])dnl AX_BOOST_FOR_BIND10
