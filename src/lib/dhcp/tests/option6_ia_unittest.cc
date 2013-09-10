@@ -68,9 +68,9 @@ public:
 
         // Create an option
         // unpack() is called from constructor
-        scoped_ptr<Option6IA> opt(new Option6IA(type,
-                                                buf_.begin(),
-                                                buf_.begin() + 12));
+        scoped_ptr<Option6IA> opt;
+        ASSERT_NO_THROW(opt.reset(new Option6IA(type, buf_.begin(),
+                                                buf_.begin() + 12)));
 
         EXPECT_EQ(Option::V6, opt->getUniverse());
         EXPECT_EQ(type, opt->getType());
@@ -82,7 +82,7 @@ public:
         // different place
 
         // Test for pack()
-        opt->pack(outBuf_);
+        ASSERT_NO_THROW(opt->pack(outBuf_));
 
         // 12 bytes header + 4 bytes content
         EXPECT_EQ(12, opt->len() - opt->getHeaderLen());
@@ -208,7 +208,8 @@ TEST_F(Option6IATest, suboptionsPack) {
 TEST_F(Option6IATest, pdSuboptionsPack) {
 
     // Let's build IA_PD
-    scoped_ptr<Option6IA> ia(new Option6IA(D6O_IA_PD, 0x13579ace));
+    scoped_ptr<Option6IA> ia;
+    ASSERT_NO_THROW(ia.reset(new Option6IA(D6O_IA_PD, 0x13579ace)));
     ia->setT1(0x2345);
     ia->setT2(0x3456);
 
