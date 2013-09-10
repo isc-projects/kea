@@ -95,7 +95,7 @@ libfcl_la_SOURCES  = full_callout_library.cc
 libfcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libfcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libfcl_la_LDFLAGS  = -avoid-version -export-dynamic -module
-libfcl_la_LIBADD    = $(AM_LIBADD)
+libfcl_la_LIBADD   = $(AM_LIBADD)
 
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
