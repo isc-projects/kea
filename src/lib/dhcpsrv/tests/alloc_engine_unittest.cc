@@ -375,7 +375,7 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
 // pool
 TEST_F(AllocEngine6Test, IterativeAllocator) {
     boost::scoped_ptr<NakedAllocEngine::Allocator>
-        alloc(new NakedAllocEngine::IterativeAllocator());
+        alloc(new NakedAllocEngine::IterativeAllocator(Pool6::TYPE_IA));
 
     for (int i = 0; i < 1000; ++i) {
         IOAddress candidate = alloc->pickAddress(subnet_, duid_, IOAddress("::"));
@@ -388,7 +388,7 @@ TEST_F(AllocEngine6Test, IterativeAllocator) {
 // in all pools in specified subnet. It also must not pick the same address twice
 // unless it runs out of pool space and must start over.
 TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
-    NakedAllocEngine::IterativeAllocator alloc;
+    NakedAllocEngine::IterativeAllocator alloc(Pool6::TYPE_IA);
 
     // let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
     for (int i = 2; i < 10; ++i) {
@@ -829,7 +829,7 @@ TEST_F(AllocEngine4Test, allocateAddress4Nulls) {
 // pool
 TEST_F(AllocEngine4Test, IterativeAllocator) {
     boost::scoped_ptr<NakedAllocEngine::Allocator>
-        alloc(new NakedAllocEngine::IterativeAllocator());
+        alloc(new NakedAllocEngine::IterativeAllocator(Pool6::TYPE_V4));
 
     for (int i = 0; i < 1000; ++i) {
         IOAddress candidate = alloc->pickAddress(subnet_, clientid_,
@@ -843,7 +843,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator) {
 // in all pools in specified subnet. It also must not pick the same address twice
 // unless it runs out of pool space and must start over.
 TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
-    NakedAllocEngine::IterativeAllocator alloc;
+    NakedAllocEngine::IterativeAllocator alloc(Pool6::TYPE_V4);
 
     // Let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
     for (int i = 2; i < 10; ++i) {

@@ -77,10 +77,20 @@ protected:
         pickAddress(const SubnetPtr& subnet, const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) = 0;
 
+        /// @brief Default constructor.
+        ///
+        /// Specifies which type of leases this allocator will assign
+        Allocator(Pool::PoolType lease_type)
+            :lease_type_(lease_type) {
+        }
+
         /// @brief virtual destructor
         virtual ~Allocator() {
         }
     protected:
+
+        /// @brief defines lease type allocation
+        Pool::PoolType lease_type_;
     };
 
     /// @brief Address/prefix allocator that iterates over all addresses
@@ -95,7 +105,8 @@ protected:
         /// @brief default constructor
         ///
         /// Does not do anything
-        IterativeAllocator();
+        /// @param type - specifies allocation type
+        IterativeAllocator(Pool::PoolType type);
 
         /// @brief returns the next address from pools in a subnet
         ///
@@ -123,7 +134,8 @@ protected:
     public:
 
         /// @brief default constructor (does nothing)
-        HashedAllocator();
+        /// @param type - specifies allocation type
+        HashedAllocator(Pool::PoolType type);
 
         /// @brief returns an address based on hash calculated from client's DUID.
         ///
@@ -145,7 +157,8 @@ protected:
     public:
 
         /// @brief default constructor (does nothing)
-        RandomAllocator();
+        /// @param type - specifies allocation type
+        RandomAllocator(Pool::PoolType type);
 
         /// @brief returns an random address from pool of specified subnet
         ///

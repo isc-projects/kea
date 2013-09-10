@@ -240,10 +240,9 @@ public:
     /// @todo: Define map<SubnetID, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
     ///
-    /// @return address that was last tried from this pool
-    isc::asiolink::IOAddress getLastAllocated() const {
-        return (last_allocated_);
-    }
+    /// @param type lease type to be returned
+    /// @return address/prefix that was last tried from this pool
+    isc::asiolink::IOAddress getLastAllocated(Pool::PoolType type) const;
 
     /// @brief sets the last address that was tried from this pool
     ///
@@ -253,9 +252,10 @@ public:
     ///
     /// @todo: Define map<SubnetID, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
-    void setLastAllocated(const isc::asiolink::IOAddress& addr) {
-        last_allocated_ = addr;
-    }
+    /// @param addr address/prefix to that was tried last
+    /// @param type lease type to be set
+    void setLastAllocated(const isc::asiolink::IOAddress& addr,
+                          Pool::PoolType type);
 
     /// @brief returns unique ID for that subnet
     /// @return unique ID for that subnet
@@ -280,7 +280,7 @@ public:
 
     /// @brief Returns a pool without any address specified
     /// @return returns one of the pools defined
-    PoolPtr getPool() {
+    PoolPtr getAnyPool() {
         return (getPool(default_pool()));
     }
 
@@ -295,9 +295,7 @@ public:
     /// The reference is only valid as long as the object that returned it.
     ///
     /// @return a collection of all pools
-    const PoolCollection& getPools() const {
-        return pools_;
-    }
+    const PoolCollection& getPools() const;
 
     /// @brief sets name of the network interface for directly attached networks
     ///
@@ -377,7 +375,17 @@ protected:
     /// removing a pool, restarting or changing allocation algorithms. For
     /// that purpose it should be only considered a help that should not be
     /// fully trusted.
-    isc::asiolink::IOAddress last_allocated_;
+    isc::asiolink::IOAddress last_allocated_ia_;
+
+    /// @brief last allocated temporary address
+    ///
+    /// See @ref last_allocated_ia_ for details.
+    isc::asiolink::IOAddress last_allocated_ta_;
+
+    /// @brief last allocated IPv6 prefix
+    ///
+    /// See @ref last_allocated_ia_ for details.
+    isc::asiolink::IOAddress last_allocated_pd_;
 
     /// @brief Name of the network interface (if connected directly)
     std::string iface_;
@@ -493,7 +501,7 @@ protected:
     /// @brief specifies optional interface-id
     OptionPtr interface_id_;
 
-    /// @brief collection of pools in that list
+    /// @brief collection of pools for non-temporary addresses
     Pool6Collection pools_;
 
     /// @brief a triplet with preferred lifetime (in seconds)
