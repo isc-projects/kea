@@ -30,7 +30,9 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const Triplet<uint32_t>& valid_lifetime)
     :id_(getNextID()), prefix_(prefix), prefix_len_(len), t1_(t1),
      t2_(t2), valid_(valid_lifetime),
-     last_allocated_(lastAddrInPrefix(prefix, len)) {
+     last_allocated_ia_(lastAddrInPrefix(prefix, len)),
+     last_allocated_ta_(lastAddrInPrefix(prefix, len)),
+     last_allocated_pd_(lastAddrInPrefix(prefix, len)) {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue, 
@@ -86,6 +88,38 @@ Subnet::getOptionDescriptor(const std::string& option_space,
     return (*range.first);
 }
 
+isc::asiolink::IOAddress Subnet::getLastAllocated(Pool::PoolType type) const {
+    switch (type) {
+    case Pool::TYPE_V4:
+    case Pool::TYPE_IA:
+        return last_allocated_ia_;
+    case Pool::TYPE_TA:
+        return last_allocated_ta_;
+    case Pool::TYPE_PD:
+        return last_allocated_pd_;
+    default:
+        isc_throw(BadValue, "Pool type " << type << " not supported");
+    }
+}
+
+void Subnet::setLastAllocated(const isc::asiolink::IOAddress& addr,
+                              Pool::PoolType type) {
+    switch (type) {
+    case Pool::TYPE_V4:
+    case Pool::TYPE_IA:
+        last_allocated_ia_ = addr;
+        return;
+    case Pool::TYPE_TA:
+        last_allocated_ta_ = addr;
+        return;
+    case Pool::TYPE_PD:
+        last_allocated_pd_ = addr;
+        return;
+    default:
+        isc_throw(BadValue, "Pool type " << type << " not supported");
+    }
+}
+
 std::string 
 Subnet::toText() const {
     std::stringstream tmp;
@@ -102,6 +136,10 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
     }
+}
+
+const PoolCollection& Subnet::getPools() const {
+    return pools_;
 }
 
 void 
