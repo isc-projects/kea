@@ -551,7 +551,7 @@ int pkt4_send(CalloutHandle& handle) {
     try {
         handle.getContext("hwaddr", hwaddr);
 
-        // getArgument didn't throw so the client is interesting.  Get a pointer
+        // getContext didn't throw so the client is interesting.  Get a pointer
         // to the reply.
         Pkt4Ptr response4_ptr;
         handle.getArgument("response4", response4_ptr);
@@ -592,7 +592,7 @@ Linux system is:
 @code
 g++ -I /usr/include/bind10 -L /usr/lib/bind10/lib -fpic -shared -o example.so \
     load_unload.cc pkt4_receive.cc pkt4_send.cc version.cc \
-    -lb10-dhcp++ -lb10-util -lb10-exceptions
+    -lb10-dhcpsrv -lb10-dhcp++ -lb10-hooks -lb10-log -lb10-util -lb10-exceptions
 @endcode
 
 Notes:
@@ -628,7 +628,7 @@ request is received.
 @note The above assumes that the hooks library will be used with a version of
 BIND 10 that is dynamically-linked.  For information regarding running
 hooks libraries against a statically-linked BIND 10, see
-@ref hookdgStaticallyLinkedBind10.
+@ref hooksdgStaticallyLinkedBind10.
 
 @section hooksdgAdvancedTopics Advanced Topics
 
@@ -1043,15 +1043,15 @@ If BIND 10 is built with the --enable-static-link switch (set when
 running the "configure" script), no shared BIND 10 libraries are built;
 instead, archive libraries are created and BIND 10 is linked to them.
 If you create a hooks library also linked against these archive libraries,
-wht the library is loaded you end up with two copies of the library code,
+when the library is loaded you end up with two copies of the library code,
 one in BIND 10 and one in your library.
 
 To run successfully, your library needs to perform run-time initialization
-of the BIND 10 libraries against which you have linked (something
-performed by BIND 10 in the case of shared libraries).  To do this,
-call the function isc::hooks::hooksStaticLinkInit() as the first call of
-the load() function in your library. (If your library does not include
-a load() function, you need to add one.) For example:
+of the BIND 10 code in your library (something performed by BIND 10
+in the case of shared libraries).  To do this, call the function
+isc::hooks::hooksStaticLinkInit() as the first statement of the load()
+function. (If your library does not include a load() function, you need
+to add one.) For example:
 
 @code
 #include <hooks/hooks.h>
