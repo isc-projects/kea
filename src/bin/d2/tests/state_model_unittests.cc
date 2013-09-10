@@ -235,6 +235,15 @@ public:
     bool work_completed_;
 };
 
+// Declare them so gtest can see them.
+const int StateModelTest::DUMMY_ST;
+const int StateModelTest::READY_ST;
+const int StateModelTest::DO_WORK_ST;
+const int StateModelTest::DONE_ST;
+const int StateModelTest::WORK_START_EVT;
+const int StateModelTest::WORK_DONE_EVT;
+const int StateModelTest::ALL_DONE_EVT;
+
 /// @brief Tests the fundamental methods used for state handler mapping.
 /// Verifies the ability to search for and add entries in the state handler map.
 TEST_F(StateModelTest, basicStateMapping) {
