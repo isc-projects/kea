@@ -341,7 +341,8 @@ protected:
     /// is exception free.
     ///
     /// @param chg_type A type of the NameChangeRequest (ADD or REMOVE).
-    /// @param ncr An isc::dhcp_ddns::NameChangeRequest object being added.
+    /// @param lease A lease for which the NameChangeRequest is created and
+    /// queued.
     void queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
                                 const Lease4Ptr& lease);
 
