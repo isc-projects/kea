@@ -32,7 +32,7 @@ bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
 
 Pool4::Pool4(const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
-    :Pool(first, last) {
+:Pool(first, last) {
     // check if specified address boundaries are sane
     if (!first.isV4() || !last.isV4()) {
         isc_throw(BadValue, "Invalid Pool4 address boundaries: not IPv4");
@@ -88,23 +88,35 @@ Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
     // parameters are for IA and TA only. There is another dedicated
     // constructor for that (it uses prefix/length)
     if ((type != TYPE_IA) && (type != TYPE_TA)) {
-        isc_throw(BadValue, "Invalid Pool6 type specified");
+        isc_throw(BadValue, "Invalid Pool6 type specified:"
+                  << static_cast<int>(type));
     }
 }
 
 Pool6::Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
-             uint8_t prefix_len)
+             uint8_t prefix_len, uint8_t delegated_len /* = 128 */)
     :Pool(prefix, IOAddress("::")),
-     type_(type) {
+     type_(type), prefix_len_(delegated_len) {
 
     // check if the prefix is sane
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
     }
 
-    // check if the prefix length is sane 
+    // check if the prefix length is sane
     if (prefix_len == 0 || prefix_len > 128) {
-        isc_throw(BadValue, "Invalid prefix length");
+        isc_throw(BadValue, "Invalid prefix length: " << prefix_len);
+    }
+
+    if (prefix_len > delegated_len) {
+        isc_throw(BadValue, "Delegated length (" << static_cast<int>(delegated_len)
+                  << ") must be smaller than prefix length ("
+                  << static_cast<int>(prefix_len) << ")");
+    }
+
+    if ( ( (type == TYPE_IA) || (type == TYPE_TA)) && (delegated_len != 128)) {
+        isc_throw(BadValue, "For IA or TA pools, delegated prefix length must "
+                  << " be 128.");
     }
 
     /// @todo: We should probably implement checks against weird addresses

@@ -143,7 +143,9 @@ public:
 
     /// @brief the constructor for Pool6 "min-max" style definition
     ///
-    /// @param type type of the pool (IA, TA or PD)
+    /// @throw BadValue if PD is define (PD can be only prefix/len)
+    ///
+    /// @param type type of the pool (IA or TA)
     /// @param first the first address in a pool
     /// @param last the last address in a pool
     Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
@@ -151,11 +153,27 @@ public:
 
     /// @brief the constructor for Pool6 "prefix/len" style definition
     ///
+    /// For addressed, this is just a prefix/len definition. For prefixes,
+    /// there is one extra additional parameter delegated_len. It specifies
+    /// a size of delegated prefixes that the pool will be split into. For
+    /// example pool 2001:db8::/56, delegated_len=64 means that there is a
+    /// pool 2001:db8::/56. It will be split into 256 prefixes of length /64,
+    /// e.g. 2001:db8:0:1::/64, 2001:db8:0:2::/64 etc.
+    ///
+    /// Obviously, prefix_len must define bigger prefix than delegated_len,
+    /// so prefix_len < delegated_len. Note that it is slightly confusing:
+    /// bigger (larger) prefix actually has smaller prefix length, e.g.
+    /// /56 is a bigger prefix than /64.
+    ///
+    /// @throw BadValue if delegated_len is defined for non-PD types or
+    ///        when delegated_len < prefix_len
+    ///
     /// @param type type of the pool (IA, TA or PD)
     /// @param prefix specifies prefix of the pool
-    /// @param prefix_len specifies length of the prefix of the pool
+    /// @param prefix_len specifies prefix length of the pool
+    /// @param delegated_len specifies lenght of the delegated prefixes
     Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
-          uint8_t prefix_len);
+          uint8_t prefix_len, uint8_t delegated_len = 128);
 
     /// @brief returns pool type
     ///
@@ -164,10 +182,21 @@ public:
         return (type_);
     }
 
+    /// @brief returns delegated prefix length
+    ///
+    /// This may be useful for "prefix/len" style definition for
+    /// addresses, but is mostly useful for prefix pools.
+    /// @return prefix length (1-128)
+    uint8_t getLength() {
+        return (prefix_len_);
+    }
+
 private:
     /// @brief defines a pool type
     Pool6Type type_;
 
+    /// @brief Defines prefix length (for TYPE_PD only)
+    uint8_t prefix_len_;
 };
 
 /// @brief a pointer an IPv6 Pool
