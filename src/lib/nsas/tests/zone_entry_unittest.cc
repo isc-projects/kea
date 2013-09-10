@@ -23,7 +23,8 @@
 #include <dns/rrclass.h>
 #include <dns/rdataclass.h>
 
-#include "../asiolink.h"
+#include <asiolink/asiolink.h>
+
 #include "../zone_entry.h"
 #include "../nameserver_entry.h"
 #include "../address_request_callback.h"
