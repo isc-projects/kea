@@ -34,6 +34,11 @@ namespace dhcp {
 Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& prefix,
                                  uint8_t prefix_len, uint32_t pref, uint32_t valid)
     :Option6IAAddr(type, prefix, pref, valid), prefix_len_(prefix_len) {
+    // Option6IAAddr will check if prefix is IPv6 and will throw if it is not
+    if (prefix_len > 128) {
+        isc_throw(BadValue, prefix_len << " is not a valid prefix length. "
+                  << "Allowed range is 0..128");
+    }
 }
 
 Option6IAPrefix::Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator begin,
@@ -44,8 +49,7 @@ Option6IAPrefix::Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator beg
 
 void Option6IAPrefix::pack(isc::util::OutputBuffer& buf) {
     if (!addr_.isV6()) {
-        isc_throw(isc::BadValue, addr_.toText()
-                  << " is not an IPv6 address");
+        isc_throw(isc::BadValue, addr_.toText() << " is not an IPv6 address");
     }
 
     buf.writeUint16(type_);
@@ -99,7 +103,7 @@ std::string Option6IAPrefix::toText(int indent /* =0 */) {
     for (OptionCollection::const_iterator opt=options_.begin();
          opt!=options_.end();
          ++opt) {
-        tmp << (*opt).second->toText(indent+2);
+        tmp << (*opt).second->toText(indent + 2);
     }
     return tmp.str();
 }
@@ -109,7 +113,7 @@ uint16_t Option6IAPrefix::len() {
     uint16_t length = OPTION6_HDR_LEN + OPTION6_IAPREFIX_LEN;
 
     // length of all suboptions
-    for (Option::OptionCollection::iterator it = options_.begin();
+    for (Option::OptionCollection::const_iterator it = options_.begin();
          it != options_.end(); ++it) {
         length += (*it).second->len();
     }

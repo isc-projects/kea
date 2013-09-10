@@ -25,16 +25,16 @@ namespace dhcp {
 
 /// @brief Class that represents IAPREFIX option in DHCPv6
 ///
-/// It is based on a similar class that handles addresses.
-/// The major differences are fields order and prefix has also
+/// It is based on a similar class that handles addresses. There are major
+/// differences, though. The fields are in different order. There is also
 /// additional prefix length field.
 ///
-/// It should be noted that to get a full prefix (2 values: base address, and
+/// It should be noted that to get a full prefix (2 values: base prefix, and
 /// a prefix length) 2 methods are used: getAddress() and getLength(). Although
-/// using getAddress() to obtain base address is somewhat counter-intuitive at
+/// using getAddress() to obtain base prefix is somewhat counter-intuitive at
 /// first, it becomes obvious when one realizes that an address is a special
-/// case of a prefix with /128. It make everyone's like much easier, because
-/// the base address doubles as a regular address in many cases, e.g. when
+/// case of a prefix with /128. It makes everyone's like much easier, because
+/// the base prefix doubles as a regular address in many cases, e.g. when
 /// searching for a lease.
 class Option6IAPrefix : public Option6IAAddr {
 
@@ -42,7 +42,7 @@ public:
     /// length of the fixed part of the IAPREFIX option
     static const size_t OPTION6_IAPREFIX_LEN = 25;
 
-    /// @brief Ctor, used for options constructed (during transmission).
+    /// @brief Constructor, used for options constructed (during transmission).
     ///
     /// @param type option type
     /// @param addr reference to an address
@@ -52,7 +52,9 @@ public:
     Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& addr,
                     uint8_t prefix_length, uint32_t preferred, uint32_t valid);
 
-    /// @brief ctor, used for received options.
+    /// @brief Constructor, used for received options.
+    ///
+    /// @throw OutOfRange if buffer is too short
     ///
     /// @param type option type
     /// @param begin iterator to first byte of option data
@@ -65,10 +67,14 @@ public:
     /// Writes option in wire-format to buf, returns pointer to first unused
     /// byte after stored option.
     ///
+    /// @throw BadValue if the address is not IPv6
+    ///
     /// @param buf pointer to a buffer
     void pack(isc::util::OutputBuffer& buf);
 
     /// @brief Parses received buffer.
+    ///
+    /// @throw OutOfRange when buffer is shorter than 25 bytes
     ///
     /// @param begin iterator to first byte of option data
     /// @param end iterator to end of option data (first byte after option end)
@@ -80,8 +86,7 @@ public:
     /// @param indent number of spaces before printing text
     ///
     /// @return string with text representation.
-    virtual std::string
-    toText(int indent = 0);
+    virtual std::string toText(int indent = 0);
 
     /// sets address in this option.
     ///
