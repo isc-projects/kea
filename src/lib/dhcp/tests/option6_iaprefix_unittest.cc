@@ -128,8 +128,9 @@ TEST_F(Option6IAPrefixTest, basic) {
 
     // Create an option (unpack content)
     boost::scoped_ptr<Option6IAPrefix> opt;
-    EXPECT_NO_THROW(opt.reset(new Option6IAPrefix(D6O_IAPREFIX, buf_.begin(),
+    ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(D6O_IAPREFIX, buf_.begin(),
                                                   buf_.begin() + 25)));
+    ASSERT_TRUE(opt);
 
     // Pack this option
     opt->pack(outBuf_);
@@ -149,7 +150,7 @@ TEST_F(Option6IAPrefixTest, build) {
     boost::scoped_ptr<Option6IAPrefix> opt;
     setExampleBuffer();
 
-    EXPECT_NO_THROW(opt.reset(new Option6IAPrefix(12345,
+    ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(12345,
                     IOAddress("2001:db8:1::dead:beef"), 77, 1000, 3000000000)));
     ASSERT_TRUE(opt);
 
