@@ -146,6 +146,10 @@ TEST(Pool6Test, constructor_prefix_len) {
     // This is Pool6, IPv4 addresses do not belong here
     EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("192.168.0.2"), 96),
                  BadValue);
+
+    // Delegated prefix length for addresses must be /128
+    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1::"), 96, 125),
+                 BadValue);
 }
 
 TEST(Pool6Test, in_range) {
@@ -159,6 +163,33 @@ TEST(Pool6Test, in_range) {
    EXPECT_FALSE(pool1.inRange(IOAddress("2001:db8:1::10")));
    EXPECT_FALSE(pool1.inRange(IOAddress("::")));
 }
+
+// Checks that Prefix Delegation pools are handled properly
+TEST(Pool6Test, PD) {
+
+    // Let's construct 2001:db8:1::/96 PD pool, split into /112 prefixes
+    Pool6 pool1(Pool6::TYPE_PD, IOAddress("2001:db8:1::"), 96, 112);
+
+    EXPECT_EQ(Pool6::TYPE_PD, pool1.getType());
+    EXPECT_EQ(112, pool1.getLength());
+    EXPECT_EQ("2001:db8:1::", pool1.getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::ffff:ffff", pool1.getLastAddress().toText());
+
+    // Check that it's not possible to have min-max range for PD
+    EXPECT_THROW(Pool6 pool2(Pool6::TYPE_PD, IOAddress("2001:db8:1::1"),
+                             IOAddress("2001:db8:1::f")), BadValue);
+
+    // Check that it's not allowed to delegate bigger prefix than the pool
+    // Let's try to split /64 prefix into /56 chunks (should be impossible)
+    EXPECT_THROW(Pool6 pool3(Pool6::TYPE_PD, IOAddress("2001:db8:1::"),
+                             64, 56), BadValue);
+
+    // It should be possible to have a pool split into just a single chunk
+    // Let's try to split 2001:db8:1::/77 into a single /77 delegated prefix
+    EXPECT_NO_THROW(Pool6 pool4(Pool6::TYPE_PD, IOAddress("2001:db8:1::"),
+                                77, 77));
+}
+
 
 // This test creates 100 pools and verifies that their IDs are unique.
 TEST(Pool6Test, unique_id) {
