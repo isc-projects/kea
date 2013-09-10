@@ -53,6 +53,7 @@
  *   - @subpage dhcpv4Session
  *   - @subpage dhcpv4ConfigParser
  *   - @subpage dhcpv4ConfigInherit
+ *   - @subpage dhcpv4DDNSIntegration
  *   - @subpage dhcpv4Other
  * - @subpage dhcp6
  *   - @subpage dhcpv6Session
