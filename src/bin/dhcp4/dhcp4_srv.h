@@ -346,6 +346,17 @@ protected:
     void queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
                                 const Lease4Ptr& lease);
 
+    /// @brief Sends all outstanding NameChangeRequests to b10-dhcp-ddns module.
+    ///
+    /// The purpose of this function is to pick all outstanding
+    /// NameChangeRequests from the FIFO queue and send them to b10-dhcp-ddns
+    /// module.
+    ///
+    /// @todo Currently this function simply removes all requests from the
+    /// queue but doesn't send them anywhere. In the future, the
+    /// NameChangeSender will be used to deliver requests to the other module.
+    void sendNameChangeRequests();
+
     /// @brief Attempts to renew received addresses
     ///
     /// Attempts to renew existing lease. This typically includes finding a lease that

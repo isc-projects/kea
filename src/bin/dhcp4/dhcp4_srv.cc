@@ -456,6 +456,9 @@ Dhcpv4Srv::run() {
             LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL)
                 .arg(e.what());
         }
+
+        // Send NameChangeRequests to the b10-dhcp_ddns module.
+        sendNameChangeRequests();
     }
 
     return (true);
@@ -965,6 +968,15 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
     name_change_reqs_.push(ncr);
 }
 
+void
+Dhcpv4Srv::sendNameChangeRequests() {
+    while (!name_change_reqs_.empty()) {
+        // @todo Once next NameChangeRequest is picked from the queue
+        // we should send it to the b10-dhcp_ddns module. Currently we
+        // just drop it.
+        name_change_reqs_.pop();
+    }
+}
 
 void
 Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
