@@ -28,9 +28,10 @@
 #include <util/locks.h>
 #include <util/random/random_number_generator.h>
 
+#include <asiolink/asiolink.h>
+
 #include "hash_key.h"
 #include "nsas_entry.h"
-#include "asiolink.h"
 #include "fetchable.h"
 #include "nsas_types.h"
 #include "glue_hints.h"
