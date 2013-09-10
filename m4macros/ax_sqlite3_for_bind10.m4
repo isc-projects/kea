@@ -13,8 +13,25 @@ dnl in PATH.
 AC_DEFUN([AX_SQLITE3_FOR_BIND10], [
 
 PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.3.9,
-    have_sqlite="yes",
-    have_sqlite="no (sqlite3 not detected)")
+    [have_sqlite="yes"
+dnl Determine the SQLite version, used mainly for config.report.
+CPPFLAGS_SAVED="$CPPFLAGS"
+CPPFLAGS="${CPPFLAGS} $SQLITE_CFLAGS"
+AC_MSG_CHECKING([SQLite version])
+cat > conftest.c << EOF
+#include "sqlite3.h"
+AUTOCONF_SQLITE_VERSION=SQLITE_VERSION
+EOF
+
+SQLITE_VERSION=`$CPP conftest.c | grep '^AUTOCONF_SQLITE_VERSION=' | $SED -e 's/^AUTOCONF_SQLITE_VERSION=//' -e 's/"//g' 2> /dev/null`
+if test -z "$SQLITE_VERSION"; then
+  SQLITE_VERSION="unknown"
+fi
+$RM -f conftest.c
+AC_MSG_RESULT([$SQLITE_VERSION])
+
+CPPFLAGS="$CPPFLAGS_SAVED"
+    ],have_sqlite="no (sqlite3 not detected)")
 
 # Check for sqlite3 program
 AC_PATH_PROG(SQLITE3_PROGRAM, sqlite3, no)
