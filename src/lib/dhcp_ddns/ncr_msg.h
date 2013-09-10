@@ -91,8 +91,8 @@ public:
     /// @brief Constructor, creates an instance of the @c D2Dhcid from the
     /// HW address.
     ///
-    /// @param A pointer to the object encapsulating HW address.
-    /// @param A on-wire canonical representation of the FQDN.
+    /// @param hwaddr A pointer to the object encapsulating HW address.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
     D2Dhcid(const isc::dhcp::HWAddrPtr& hwaddr,
             const std::vector<uint8_t>& wire_fqdn);
 
@@ -147,8 +147,8 @@ public:
 
     /// @brief Sets the DHCID value based on the HW address and FQDN.
     ///
-    /// @param A pointer to the object encapsulating HW address.
-    /// @param A on-wire canonical representation of the FQDN.
+    /// @param hwaddr A pointer to the object encapsulating HW address.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
     void fromHWAddr(const isc::dhcp::HWAddrPtr& hwaddr,
                     const std::vector<uint8_t>& wire_fqdn);
 
