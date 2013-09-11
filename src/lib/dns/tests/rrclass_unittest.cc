@@ -102,6 +102,7 @@ TEST_F(RRClassTest, toText) {
 TEST_F(RRClassTest, createFromText) {
     scoped_ptr<RRClass> chclass(RRClass::createFromText("CH"));
     EXPECT_TRUE(chclass);
+    EXPECT_EQ("CH", chclass->toText());
 
     scoped_ptr<RRClass> zzclass(RRClass::createFromText("ZZ"));
     EXPECT_FALSE(zzclass);
