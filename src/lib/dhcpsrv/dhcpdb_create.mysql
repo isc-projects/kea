@@ -76,7 +76,9 @@ CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid);
 
 # ... and a definition of lease6 types.  This table is a convenience for
 # users of the database - if they want to view the lease table and use the
-# type names, they can join this table with the lease6 table
+# type names, they can join this table with the lease6 table.
+# Make sure those values match Lease6::LeaseType enum (see src/bin/dhcpsrv/
+# lease_mgr.h)
 CREATE TABLE lease6_types (
     lease_type TINYINT PRIMARY KEY NOT NULL,    # Lease type code.
     name VARCHAR(5)                             # Name of the lease type

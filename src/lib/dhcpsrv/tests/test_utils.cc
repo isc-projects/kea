@@ -36,6 +36,13 @@ const char* ADDRESS6[] = {
     NULL
 };
 
+// Lease types that correspond to ADDRESS6 leases
+static const Lease6::LeaseType LEASETYPE6[] = {
+    Lease6::LEASE_IA_NA, Lease6::LEASE_IA_TA, Lease6::LEASE_IA_PD,
+    Lease6::LEASE_IA_NA, Lease6::LEASE_IA_TA, Lease6::LEASE_IA_PD,
+    Lease6::LEASE_IA_NA, Lease6::LEASE_IA_TA
+};
+
 void
 detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
     // Compare address strings.  Comparison of address objects is not used, as
@@ -109,8 +116,9 @@ GenericLeaseMgrTest::GenericLeaseMgrTest()
         IOAddress ioaddr(addr);
         ioaddress6_.push_back(ioaddr);
 
-        /// Let's create different lease types
-        leasetype6_.push_back(static_cast<Lease6::LeaseType>(i%3));
+        /// Let's create different lease types. We use LEASETYPE6 values as
+        /// a template
+        leasetype6_.push_back(LEASETYPE6[i]);
     }
 }
 
