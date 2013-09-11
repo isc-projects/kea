@@ -151,7 +151,7 @@ TEST_F(Option6IAPrefixTest, build) {
     setExampleBuffer();
 
     ASSERT_NO_THROW(opt.reset(new Option6IAPrefix(12345,
-                    IOAddress("2001:db8:1::dead:beef"), 77, 1000, 3000000000)));
+                    IOAddress("2001:db8:1::dead:beef"), 77, 1000, 3000000000u)));
     ASSERT_TRUE(opt);
 
     checkOption(*opt, 12345);
