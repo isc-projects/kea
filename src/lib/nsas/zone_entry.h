@@ -28,8 +28,6 @@
 #include <util/locks.h>
 #include <util/random/random_number_generator.h>
 
-#include <asiolink/asiolink.h>
-
 #include "hash_key.h"
 #include "nsas_entry.h"
 #include "fetchable.h"
