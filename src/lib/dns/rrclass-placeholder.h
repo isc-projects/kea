@@ -35,16 +35,6 @@ namespace dns {
 // forward declarations
 class AbstractMessageRenderer;
 
-class RRClass; // forward declaration to define MaybeRRClass.
-
-/// \brief A shortcut for a compound type to represent RRClass-or-not.
-///
-/// A value of this type can be interpreted in a boolean context, whose
-/// value is \c true if and only if it contains a valid RRClass object.
-/// And, if it contains a valid RRClass object, its value is accessible
-/// using \c operator*, just like a bare pointer to \c RRClass.
-typedef boost::optional<RRClass> MaybeRRClass;
-
 ///
 /// \brief A standard DNS module exception that is thrown if an RRClass object
 /// is being constructed from an unrecognized string.
@@ -148,6 +138,12 @@ public:
     ///
     /// \param buffer A buffer storing the wire format data.
     explicit RRClass(isc::util::InputBuffer& buffer);
+    /// \brief Copy constructor.
+    ///
+    /// This constructor never throws an exception.
+    ///
+    /// \param other The RRClass to copy from.
+    RRClass(const RRClass& other) : classcode_(other.classcode_) {}
 
     /// A separate factory of RRClass from text.
     ///
@@ -163,12 +159,8 @@ public:
     /// <code>RRClass(const std::string&)</code> constructor.
     ///
     /// If the given text represents a valid RRClass, it returns a
-    /// \c MaybeRRClass object that stores a corresponding \c RRClass
-    /// object, which is accessible via \c operator*().  In this case
-    /// the returned object will be interpreted as \c true in a boolean
-    /// context.  If the given text does not represent a valid RRClass,
-    /// it returns a \c MaybeRRClass object which is interpreted as
-    /// \c false in a boolean context.
+    /// pointer to a new \c RRClass object. If the given text does not
+    /// represent a valid RRClass, it returns \c NULL.
     ///
     /// One main purpose of this function is to minimize the overhead
     /// when the given text does not represent a valid RR class.  For
@@ -183,9 +175,9 @@ public:
     /// This function never throws the \c InvalidRRClass exception.
     ///
     /// \param class_str A string representation of the \c RRClass.
-    /// \return A MaybeRRClass object either storing an RRClass object
-    /// for the given text or a \c false value.
-    static MaybeRRClass createFromText(const std::string& class_str);
+    /// \return A new RRClass object for the given text or a \c NULL
+    /// value.
+    static RRClass* createFromText(const std::string& class_str);
 
     ///
     /// We use the default copy constructor intentionally.
