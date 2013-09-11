@@ -20,10 +20,13 @@
 
 #include <dns/tests/unittest_util.h>
 
+#include <boost/scoped_ptr.hpp>
+
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
+using boost::scoped_ptr;
 
 namespace {
 class RRClassTest : public ::testing::Test {
@@ -97,11 +100,11 @@ TEST_F(RRClassTest, toText) {
 }
 
 TEST_F(RRClassTest, createFromText) {
-    const MaybeRRClass rrclass("IN");
-    EXPECT_TRUE(rrclass);
-    EXPECT_EQ("IN", rrclass->toText());
-    EXPECT_TRUE(RRClass::createFromText("CH"));
-    EXPECT_FALSE(RRClass::createFromText("ZZ"));
+    scoped_ptr<RRClass> chclass(RRClass::createFromText("CH"));
+    EXPECT_TRUE(chclass);
+
+    scoped_ptr<RRClass> zzclass(RRClass::createFromText("ZZ"));
+    EXPECT_FALSE(zzclass);
 }
 
 TEST_F(RRClassTest, toWireBuffer) {

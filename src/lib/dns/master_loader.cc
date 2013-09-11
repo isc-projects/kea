@@ -224,15 +224,10 @@ private:
             // after the RR class below.
         }
 
-        const MaybeRRClass rrclass =
-            RRClass::createFromText(rrparam_token.getString());
+        boost::scoped_ptr<RRClass> rrclass
+            (RRClass::createFromText(rrparam_token.getString()));
         if (rrclass) {
-            // FIXME: The following code re-parses the rrparam_token to
-            // make an RRClass instead of using the MaybeRRClass above,
-            // because some old versions of boost::optional (that we
-            // still want to support) have a bug (see trac #2593). This
-            // workaround should be removed at some point in the future.
-            if (RRClass(rrparam_token.getString()) != zone_class_) {
+            if (*rrclass != zone_class_) {
                 isc_throw(InternalException, "Class mismatch: " << *rrclass <<
                           " vs. " << zone_class_);
             }
@@ -296,9 +291,9 @@ private:
         // We use the factory version instead of RRTTL constructor as we
         // need to expect cases where ttl_txt does not actually represent a TTL
         // but an RR class or type.
-        const MaybeRRTTL maybe_ttl = RRTTL::createFromText(ttl_txt);
-        if (maybe_ttl) {
-            current_ttl_ = maybe_ttl;
+        RRTTL* rrttl = RRTTL::createFromText(ttl_txt);
+        if (rrttl) {
+            current_ttl_.reset(rrttl);
             limitTTL(*current_ttl_, false);
             return (true);
         }
@@ -329,7 +324,7 @@ private:
                     dynamic_cast<const rdata::generic::SOA&>(*rdata).
                     getMinimum();
                 setDefaultTTL(RRTTL(ttl_val), true);
-                current_ttl_ = *default_ttl_;
+                current_ttl_.reset(new RRTTL(*default_ttl_));
             } else {
                 // On catching the exception we'll try to reach EOL again,
                 // so we need to unget it now.
@@ -338,7 +333,7 @@ private:
                                         "no TTL specified; load rejected");
             }
         } else if (!explicit_ttl && default_ttl_) {
-            current_ttl_ = *default_ttl_;
+            current_ttl_.reset(new RRTTL(*default_ttl_));
         } else if (!explicit_ttl && warn_rfc1035_ttl_) {
             // Omitted (class and) TTL values are default to the last
             // explicitly stated values (RFC 1035, Sec. 5.1).
@@ -407,8 +402,10 @@ private:
     boost::scoped_ptr<RRTTL> default_ttl_; // Default TTL of RRs used when
                                            // unspecified.  If NULL no default
                                            // is known.
-    MaybeRRTTL current_ttl_; // The TTL used most recently.  Initially unset.
-                             // Once set always stores a valid RRTTL.
+    boost::scoped_ptr<RRTTL> current_ttl_; // The TTL used most recently.
+                                           // Initially unset. Once set
+                                           // always stores a valid
+                                           // RRTTL.
     const MasterLoader::Options options_;
     const std::string master_file_;
     std::string string_token_;
