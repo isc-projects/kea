@@ -28,7 +28,6 @@
 #include <util/lru_list.h>
 
 #include "address_entry.h"
-#include "asiolink.h"
 #include "nsas_types.h"
 #include "hash_key.h"
 #include "fetchable.h"
