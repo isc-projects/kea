@@ -59,7 +59,7 @@ public:
     Option4ClientFqdnPtr
     createClientFqdn(const uint8_t flags,
                      const std::string& fqdn_name,
-                     const Option4ClientFqdn::DomainNameType fqdn_type) {
+                     Option4ClientFqdn::DomainNameType fqdn_type) {
         return (Option4ClientFqdnPtr(new Option4ClientFqdn(flags,
                                                            Option4ClientFqdn::
                                                            RCODE_CLIENT(),
@@ -103,8 +103,7 @@ public:
     Pkt4Ptr generatePktWithFqdn(const uint8_t msg_type,
                                 const uint8_t fqdn_flags,
                                 const std::string& fqdn_domain_name,
-                                const Option4ClientFqdn::DomainNameType
-                                fqdn_type,
+                                Option4ClientFqdn::DomainNameType fqdn_type,
                                 const bool include_prl,
                                 const bool include_clientid = true) {
         Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
@@ -156,16 +155,14 @@ public:
         pkt->addOption(createHostname(hostname));
 
         return (pkt);
-        
-    }
-                                    
 
+    }
 
     // Test that server generates the appropriate FQDN option in response to
     // client's FQDN option.
     void testProcessFqdn(const Pkt4Ptr& query, const uint8_t exp_flags,
                          const std::string& exp_domain_name,
-                         const Option4ClientFqdn::DomainNameType
+                         Option4ClientFqdn::DomainNameType
                          exp_domain_type = Option4ClientFqdn::FULL) {
         ASSERT_TRUE(getClientFqdnOption(query));
 
