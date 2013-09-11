@@ -15,8 +15,6 @@
 #ifndef ADDRESS_REQUEST_CALLBACK_H
 #define ADDRESS_REQUEST_CALLBACK_H
 
-#include <asiolink/asiolink.h>
-
 #include "nameserver_address.h"
 
 namespace isc {
