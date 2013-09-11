@@ -824,6 +824,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
 ///
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of DIUID and IAID.
+/// @todo: update this test once type checking/filtering is implemented
 TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
@@ -870,6 +871,7 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
 // @brief Get Lease4 by DUID and IAID (2)
 //
 // Check that the system can cope with a DUID of any size.
+/// @todo: update this test once type checking/filtering is implemented
 TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSize) {
 
     // Create leases, although we need only one.
