@@ -18,7 +18,7 @@ import os
 import isc.log
 import isc.util.traceback_handler
 
-class HandlerTest(unittest.TestCase):
+class TracebackHandlerTest(unittest.TestCase):
     def setUp(self):
         """
         Save some things to be restored later, if we overwrite them
