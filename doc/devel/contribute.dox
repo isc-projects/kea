@@ -22,7 +22,7 @@ changes and not get disappointed in the process.
 
 @section contributorGuideWritePatch Writing a patch
 
-Before you start working on a patch or new feature, it is a good idea
+Before you start working on a patch or a new feature, it is a good idea
 to discuss it first with BIND10 developers. You can post your
 questions to bind10-dev
 (https://lists.isc.org/mailman/listinfo/bind10-dev) for general BIND10
