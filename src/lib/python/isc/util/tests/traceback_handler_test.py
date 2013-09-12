@@ -60,8 +60,7 @@ class TracebackHandlerTest(unittest.TestCase):
             self.called = True
             return
 
-        self.assertEqual(None,
-                         isc.util.traceback_handler.traceback_handler(succ))
+        self.assertIsNone(isc.util.traceback_handler.traceback_handler(succ))
         self.assertTrue(self.called)
 
     def test_exception(self):
