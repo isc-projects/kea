@@ -24,10 +24,10 @@ changes and not get disappointed in the process.
 
 Before you start working on a patch or a new feature, it is a good idea
 to discuss it first with BIND10 developers. You can post your
-questions to bind10-dev
+questions to the \c bind10-dev mailing list
 (https://lists.isc.org/mailman/listinfo/bind10-dev) for general BIND10
-stuff or to bind10-dhcp
-(https://lists.isc.org/mailman/listinfo/bind10-dhcp) mailing lists for DHCP specific
+stuff or to the \c bind10-dhcp mailing list
+(https://lists.isc.org/mailman/listinfo/bind10-dhcp) for DHCP specific
 topics. If you prefer to get faster feedback, most BIND10 developers
 hang out at bind10 jabber room
 (xmpp:bind10@conference.jabber.isc.org). Those involved in DHCP also
