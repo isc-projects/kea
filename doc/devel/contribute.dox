@@ -88,14 +88,14 @@ or
 ./configure --with-gtest-source=/path/to/your/gtest/dir
 @endcode
 
-There are other useful switches which can be passed to configure. It is always a good
-idea to use \c --enable-logger-checks, which does sanity checks on logger
-parameters. If you happen to modify anything in the documentation, use
-\c --enable-generate-docs. If you are modifying DHCP code, you are likely
-to be interested in enabling the MySQL backend for DHCP. Note that if the backend
-is not enabled, MySQL specific unit-tests are skipped. From that
-perspective, it is useful to use \c --with-dhcp-mysql. For a
-complete list of all switches, use:
+There are other useful switches which can be passed to configure. It is
+always a good idea to use \c --enable-logger-checks, which does sanity
+checks on logger parameters. If you happen to modify anything in the
+documentation, use \c --enable-generate-docs. If you are modifying DHCP
+code, you are likely to be interested in enabling the MySQL backend for
+DHCP. Note that if the backend is not enabled, MySQL specific unit-tests
+are skipped. From that perspective, it is useful to use
+\c --with-dhcp-mysql. For a complete list of all switches, use:
 
 @code
  ./configure --help
