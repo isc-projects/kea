@@ -26,7 +26,7 @@ Before you start working on a patch or a new feature, it is a good idea
 to discuss it first with BIND10 developers. You can post your questions
 to the \c bind10-dev mailing list
 (https://lists.isc.org/mailman/listinfo/bind10-dev) for general BIND10
-stuff or to the \c bind10-dhcp mailing list
+stuff, or to the \c bind10-dhcp mailing list
 (https://lists.isc.org/mailman/listinfo/bind10-dhcp) for DHCP specific
 topics. If you prefer to get faster feedback, most BIND10 developers
 hang out in the \c bind10 jabber room
