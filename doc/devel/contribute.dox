@@ -29,9 +29,9 @@ questions to the \c bind10-dev mailing list
 stuff or to the \c bind10-dhcp mailing list
 (https://lists.isc.org/mailman/listinfo/bind10-dhcp) for DHCP specific
 topics. If you prefer to get faster feedback, most BIND10 developers
-hang out at bind10 jabber room
+hang out in the \c bind10 jabber room
 (xmpp:bind10@conference.jabber.isc.org). Those involved in DHCP also
-use dhcp chatroom (xmpp:dhcp@conference.jabber.isc.org). Feel free to
+use the \c dhcp chatroom (xmpp:dhcp@conference.jabber.isc.org). Feel free to
 drop a note. It is possible that someone else is working on your
 specific issue or perhaps the solution you plan to implement is not
 the best one. Often having 10 minutes talk could save many hours of
