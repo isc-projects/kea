@@ -119,30 +119,30 @@ are skipped. From that perspective, it is useful to use
 
 @section contributorGuideReview Going through a review
 
-Once all those are checked and working, feel free to create a ticket
-for your patch at http://bind10.isc.org/ or attach your patch to an
-existing ticket if you have fixed it. It would be nice if you also join the \c bind10 or \c dhcp
-chatroom saying that you have submitted a patch. Alternatively, you
-may send a note to the \c bind10-dev or \c bind10-dhcp mailing lists.
+Once all those are checked and working, feel free to create a ticket for
+your patch at http://bind10.isc.org/ or attach your patch to an existing
+ticket if you have fixed it. It would be nice if you also join the
+\c bind10 or \c dhcp chatroom saying that you have submitted a
+patch. Alternatively, you may send a note to the \c bind10-dev or
+\c bind10-dhcp mailing lists.
 
-Here's the tricky part. One of BIND10 developers will review your
-patch, but it may not happen immediately. Unfortunately, developers
-are usually working under a tight schedule, so any extra unplanned
-review work may take a while sometimes. Having said that, we value
-external contributions very much and will do whatever we can to
-review patches in a timely manner. Don't get discouraged if your
-patch is not accepted after first review. To keep the code quality
-high, we use the same review processes for internal code and for
-external patches. It may take some cycles of review/updated patch
-submissions before the code is finally accepted.
+Here's the tricky part. One of BIND10 developers will review your patch,
+but it may not happen immediately. Unfortunately, developers are usually
+working under a tight schedule, so any extra unplanned review work may
+take a while sometimes. Having said that, we value external
+contributions very much and will do whatever we can to review patches in
+a timely manner. Don't get discouraged if your patch is not accepted
+after first review. To keep the code quality high, we use the same
+review processes for internal code and for external patches. It may take
+some cycles of review/updated patch submissions before the code is
+finally accepted.
 
-Once the process is almost complete, the developer will likely ask
-you how you would like to be credited. The typical answers are by
-first and last name, by nickname, by company name or anonymously. Typically we
-will add a note to the \c ChangeLog and also set you as the author of the
-commit applying the patch. If the contributted feature is big or
-critical for whatever reason, it may also be mentioned in release
-notes.
+Once the process is almost complete, the developer will likely ask you
+how you would like to be credited. The typical answers are by first and
+last name, by nickname, by company name or anonymously. Typically we
+will add a note to the \c ChangeLog and also set you as the author of
+the commit applying the patch. If the contributted feature is big or
+critical for whatever reason, it may also be mentioned in release notes.
 
 @section contributorGuideExtra Extra steps
 
