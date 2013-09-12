@@ -48,6 +48,16 @@ class TracebackHandlerTest(unittest.TestCase):
         self.assertEqual(42,
                          isc.util.traceback_handler.traceback_handler(succ))
 
+    def test_success_no_returned_value(self):
+        """
+        Test the handler handles the case where main() returns nothing.
+        """
+        def succ():
+            return
+
+        self.assertEqual(None,
+                         isc.util.traceback_handler.traceback_handler(succ))
+
     def test_exception(self):
         """
         Test the exception is caught and logged, but not propagated.
