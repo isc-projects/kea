@@ -53,13 +53,13 @@ compile and work there? What about endianess? It is likely that you used
 a regular x86 architecture machine to write your patch, but the software
 is expected to run on many other architectures.
 
-Does your patch conforms to BIND10
-http://bind10.isc.org/wiki/CodingGuidelines? You still can submit
-a patch that does not adhere to it, but it will decrease your
-chances of being accepted. If the deviations are minor, ISC engineer
-that will do the review, will likely fix the issues. However,
-if there are lots of them, reviewer may simply reject the patch
-and ask you to fix it, before resubmitting.
+Does your patch conform to BIND10
+<http://bind10.isc.org/wiki/CodingGuidelines>? You still can submit
+a patch that does not adhere to it, but that will decrease its
+chances of being accepted. If the deviations are minor, the BIND10 engineer
+who does the review will likely fix the issues. However,
+if there are lots of issues, the reviewer may simply reject the patch
+and ask you to fix it before re-submitting.
 
 @section contributorGuideUnittests Running unit-tests
 
