@@ -68,6 +68,15 @@ AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
 AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
+CXX_VERSION="unknown"
+
+dnl Determine if weare using GNU sed
+GNU_SED=no
+$SED --version 2> /dev/null | grep -q GNU
+if test $? -eq 0; then
+  GNU_SED=yes
+fi
+
 # Linker options
 
 # check -R, "-Wl,-R" or -rpath (we share the AX function defined in
@@ -108,6 +117,7 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
 if test "$SUNCXX" = "yes"; then
+CXX_VERSION=`$CXX-V 2> /dev/null | head -1`
 CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
 MULTITHREADING_FLAG="-mt"
 fi
@@ -120,7 +130,8 @@ fi
 # we suppress this particular warning.  Note that it doesn't weaken checks
 # on the source code.
 if test "$CLANGPP" = "yes"; then
-	B10_CXXFLAGS="$B10_CXXFLAGS -Qunused-arguments"
+CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
+B10_CXXFLAGS="$B10_CXXFLAGS -Qunused-arguments"
 fi
 
 BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
@@ -129,6 +140,7 @@ AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
+CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
 B10_CXXFLAGS="$B10_CXXFLAGS -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 case "$host" in
 *-solaris*)
@@ -705,7 +717,6 @@ if test "x${BOTAN_CONFIG}" != "x"
 then
     BOTAN_LIBS=`${BOTAN_CONFIG} --libs`
     BOTAN_INCLUDES=`${BOTAN_CONFIG} --cflags`
-    BOTAN_VERSION=`${BOTAN_CONFIG} --version 2> /dev/null`
 
     # We expect botan-config --libs to contain -L<path_to_libbotan>, but
     # this is not always the case.  As a heuristics workaround we add
@@ -718,6 +729,21 @@ then
             BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
     fi
 fi
+
+dnl Determine the Botan version
+AC_MSG_CHECKING([Botan version])
+cat > conftest.cpp << EOF
+#include <botan/version.h>
+AUTOCONF_BOTAN_VERSION=BOTAN_VERSION_MAJOR . BOTAN_VERSION_MINOR . BOTAN_VERSION_PATCH
+EOF
+
+BOTAN_VERSION=`$CPP $CPPFLAGS $BOTAN_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+if test -z "$BOTAN_VERSION"; then
+  BOTAN_VERSION="unknown"
+fi
+$RM -f conftest.cpp
+AC_MSG_RESULT([$BOTAN_VERSION])
+
 # botan-config script (and the way we call pkg-config) returns -L and -l
 # as one string, but we need them in separate values
 BOTAN_LDFLAGS=
@@ -879,11 +905,11 @@ AC_LINK_IFELSE(
 dnl Determine the log4cplus version, used mainly for config.report.
 AC_MSG_CHECKING([log4cplus version])
 cat > conftest.cpp << EOF
-#include "log4cplus/version.h"
+#include <log4cplus/version.h>
 AUTOCONF_LOG4CPLUS_VERSION=LOG4CPLUS_VERSION_STR
 EOF
 
-LOG4CPLUS_VERSION=`$CPP conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+LOG4CPLUS_VERSION=`$CPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
 if test -z "$LOG4CPLUS_VERSION"; then
   LOG4CPLUS_VERSION="unknown"
 fi
@@ -1555,9 +1581,11 @@ Package:
   Name:            ${PACKAGE_NAME}
   Version:         ${PACKAGE_VERSION}
   OS Family:       ${OS_TYPE}
+  Using GNU sed:   ${GNU_SED}
 
 C++ Compiler:
   CXX:             ${CXX}
+  CXX_VERSION:     ${CXX_VERSION}
   DEFS:            ${DEFS}
   CPPFLAGS:        ${CPPFLAGS}
   CXXFLAGS:        ${CXXFLAGS}
