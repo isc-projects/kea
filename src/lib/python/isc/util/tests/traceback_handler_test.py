@@ -42,21 +42,27 @@ class TracebackHandlerTest(unittest.TestCase):
         Test the handler doesn't influence the result of successful
         function.
         """
+        self.called = False
         def succ():
+            self.called = True
             return 42
 
         self.assertEqual(42,
                          isc.util.traceback_handler.traceback_handler(succ))
+        self.assertTrue(self.called)
 
     def test_success_no_returned_value(self):
         """
         Test the handler handles the case where main() returns nothing.
         """
+        self.called = False
         def succ():
+            self.called = True
             return
 
         self.assertEqual(None,
                          isc.util.traceback_handler.traceback_handler(succ))
+        self.assertTrue(self.called)
 
     def test_exception(self):
         """
