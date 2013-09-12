@@ -27,7 +27,7 @@ def traceback_handler(main):
 
     The function runs the callable passed as main (it is called
     without any provided parameters). If it raises any exception,
-    the exception is logged and the application terminated.
+    the exception is logged and the application is terminated.
     """
     try:
         return main()
