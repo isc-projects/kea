@@ -146,11 +146,11 @@ critical for whatever reason, it may also be mentioned in release notes.
 
 @section contributorGuideExtra Extra steps
 
-If you are interested in even more in-depth testing, you are welcome
-to visit BIND10 build farm: http://git.bind10.isc.org/~tester/builder/builder-new.html
-This is a life result page with all tests being run on various systems.
-Besides basic unit-tests, we also run them with valgrind (memory debugger),
-with cppcheck and scan-build (static code analyzers), Lettuce system tests
+If you are interested in knowing the results of more in-depth testing, you are welcome
+to visit the BIND10 build farm: http://git.bind10.isc.org/~tester/builder/builder-new.html.
+This is a live result page with all tests being run on various systems.
+Besides basic unit-tests, we also have reports from Valgrind (memory debugger),
+cppcheck and clang-analyzer (static code analyzers), Lettuce system tests
 and more. Although it is not possible for non ISC employees to run tests
 on that farm, it is possible that your contributed patch will end up there
 sooner or later.
