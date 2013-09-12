@@ -71,12 +71,12 @@ change. That is even more true for new code. If you write a new
 function, method or a class, you definitely should write unit-tests
 for it.
 
-BIND10 uses the Google C++ Testing Framework (also called googletest or gtest) as a base for our C++
-unit-tests. See http://code.google.com/p/googletest/ for details.
-For Python unit-tests, we use the its \c unittest library which is
-included in Python.
-You must have \c gtest installed or at least extracted in a directory before compiling
-BIND10 unit-tests. To enable unit-tests in BIND10, use
+BIND10 uses the Google C++ Testing Framework (also called googletest or
+gtest) as a base for our C++ unit-tests. See
+http://code.google.com/p/googletest/ for details. For Python unit-tests,
+we use the its \c unittest library which is included in Python. You must
+have \c gtest installed or at least extracted in a directory before
+compiling BIND10 unit-tests. To enable unit-tests in BIND10, use
 
 @code
 ./configure --with-gtest=/path/to/your/gtest/dir
