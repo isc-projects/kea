@@ -37,10 +37,12 @@ working on your specific issue or perhaps the solution you plan to
 implement is not the best one. Often having a 10 minute talk could save
 many hours of engineering work.
 
-First step would be to get the source code from our Git repository. The procedure
-is very easy and is explained here: http://bind10.isc.org/wiki/GitGuidelines.
-While it is possible to provide a patch against the latest stable release, it makes
-the review process much easier if it is for latest code from the Git \c master branch.
+First step would be to get the source code from our Git repository. The
+procedure is very easy and is explained here:
+http://bind10.isc.org/wiki/GitGuidelines.  While it is possible to
+provide a patch against the latest stable release, it makes the review
+process much easier if it is for latest code from the Git \c master
+branch.
 
 Ok, so you have a patch? Great! Before you submit it, make sure that
 your code compiles. This may seem obvious, but it there's more to
