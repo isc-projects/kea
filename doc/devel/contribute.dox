@@ -44,13 +44,13 @@ provide a patch against the latest stable release, it makes the review
 process much easier if it is for latest code from the Git \c master
 branch.
 
-Ok, so you have a patch? Great! Before you submit it, make sure that
-your code compiles. This may seem obvious, but it there's more to
-it. I'm sure you have checked that it compiles on your system, but
-BIND10 is a portable software. Besides Linux, it is being compiled on
-relatively uncommon systems, like OpenBSD or Solaris 11. Will your
-code compile there? Will it work? What about endianess? It is likely
-that you used regular x86, but the software is expected to run on many
+Ok, so you have written a patch? Great! Before you submit it, make sure that
+your code compiles. This may seem obvious, but there's more to
+it. You have surely checked that it compiles on your system, but
+BIND10 is portable software. Besides Linux, it is compiled and used on
+relatively uncommon systems like OpenBSD and Solaris 11. Will your
+code compile and work there? What about endianess? It is likely
+that you used a regular x86 architecture machine to write your patch, but the software is expected to run on many
 other architectures.
 
 Does your patch conforms to BIND10
