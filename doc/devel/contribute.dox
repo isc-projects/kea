@@ -66,15 +66,17 @@ it before re-submitting.
 One of the ground rules in BIND10 development is that every piece of
 code has to be tested. We now have an extensive set of unit-tests for
 almost every line of code. Even if you are fixing something small,
-like a single line fix, it is encouraged to write unit-test for that
+like a single line fix, it is encouraged to write unit-tests for that
 change. That is even more true for new code. If you write a new
 function, method or a class, you definitely should write unit-tests
 for it.
 
-BIND10 uses google test (gtest) framework as a base for our
+BIND10 uses the Google C++ Testing Framework (also called googletest or gtest) as a base for our C++
 unit-tests. See http://code.google.com/p/googletest/ for details.
-You must have gtest installed or at least compiled before compiling
-BIND10 unit-tests. To enable unit-tests in BIND10
+For Python unit-tests, we use the its \c unittest library which is
+included in Python.
+You must have \c gtest installed or at least extracted in a directory before compiling
+BIND10 unit-tests. To enable unit-tests in BIND10, use
 
 @code
 ./configure --with-gtest=/path/to/your/gtest/dir
