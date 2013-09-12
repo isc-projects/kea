@@ -32,9 +32,9 @@ topics. If you prefer to get faster feedback, most BIND10 developers
 hang out in the \c bind10 jabber room
 (xmpp:bind10@conference.jabber.isc.org). Those involved in DHCP also
 use the \c dhcp chatroom (xmpp:dhcp@conference.jabber.isc.org). Feel free to
-drop a note. It is possible that someone else is working on your
+join these rooms and talk to us. It is possible that someone else is working on your
 specific issue or perhaps the solution you plan to implement is not
-the best one. Often having 10 minutes talk could save many hours of
+the best one. Often having a 10 minute talk could save many hours of
 engineering work.
 
 First step would be to get a source code from our GIT repository. The procedure
