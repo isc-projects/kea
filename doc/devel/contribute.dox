@@ -23,19 +23,19 @@ changes and not get disappointed in the process.
 @section contributorGuideWritePatch Writing a patch
 
 Before you start working on a patch or a new feature, it is a good idea
-to discuss it first with BIND10 developers. You can post your
-questions to the \c bind10-dev mailing list
+to discuss it first with BIND10 developers. You can post your questions
+to the \c bind10-dev mailing list
 (https://lists.isc.org/mailman/listinfo/bind10-dev) for general BIND10
 stuff or to the \c bind10-dhcp mailing list
 (https://lists.isc.org/mailman/listinfo/bind10-dhcp) for DHCP specific
 topics. If you prefer to get faster feedback, most BIND10 developers
 hang out in the \c bind10 jabber room
-(xmpp:bind10@conference.jabber.isc.org). Those involved in DHCP also
-use the \c dhcp chatroom (xmpp:dhcp@conference.jabber.isc.org). Feel free to
-join these rooms and talk to us. It is possible that someone else is working on your
-specific issue or perhaps the solution you plan to implement is not
-the best one. Often having a 10 minute talk could save many hours of
-engineering work.
+(xmpp:bind10@conference.jabber.isc.org). Those involved in DHCP also use
+the \c dhcp chatroom (xmpp:dhcp@conference.jabber.isc.org). Feel free to
+join these rooms and talk to us. It is possible that someone else is
+working on your specific issue or perhaps the solution you plan to
+implement is not the best one. Often having a 10 minute talk could save
+many hours of engineering work.
 
 First step would be to get a source code from our GIT repository. The procedure
 is very easy and is explained here: http://bind10.isc.org/wiki/GitGuidelines.
