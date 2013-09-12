@@ -80,6 +80,7 @@ class TracebackHandlerTest(unittest.TestCase):
             def fatal(self, message, ename, exception, filename):
                 obj.assertTrue(isinstance(exception, Exception))
                 obj.assertEqual('Exception', ename)
+                obj.assertTrue(os.path.isfile(filename))
                 with open(filename) as f:
                     text = f.read()
                 obj.assertTrue(text.startswith('Traceback'))
