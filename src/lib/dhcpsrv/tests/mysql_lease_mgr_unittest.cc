@@ -484,15 +484,15 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
     // Reopen the database to ensure that they actually got stored.
     reopen();
 
-    Lease6Ptr l_returned = lmptr_->getLease6(ioaddress6_[1]);
+    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
-    l_returned = lmptr_->getLease6(ioaddress6_[2]);
+    l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
 
-    l_returned = lmptr_->getLease6(ioaddress6_[3]);
+    l_returned = lmptr_->getLease6(leasetype6_[3], ioaddress6_[3]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[3], l_returned);
 
@@ -502,12 +502,12 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
     // Delete a lease, check that it's gone, and that we can't delete it
     // a second time.
     EXPECT_TRUE(lmptr_->deleteLease(ioaddress6_[1]));
-    l_returned = lmptr_->getLease6(ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
     EXPECT_FALSE(l_returned);
     EXPECT_FALSE(lmptr_->deleteLease(ioaddress6_[1]));
 
     // Check that the second address is still there.
-    l_returned = lmptr_->getLease6(ioaddress6_[2]);
+    l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
 }
@@ -525,7 +525,7 @@ TEST_F(MySqlLeaseMgrTest, lease6InvalidHostname) {
     ASSERT_TRUE(lmptr_->addLease(leases[1]));
 
     // The new lease must be in the database.
-    Lease6Ptr l_returned = lmptr_->getLease6(ioaddress6_[1]);
+    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
     detailCompareLease(leases[1], l_returned);
 
     // Let's delete the lease, so as we can try to add it again with
@@ -824,6 +824,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
 ///
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of DIUID and IAID.
+/// @todo: update this test once type checking/filtering is implemented
 TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
@@ -835,8 +836,9 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
     }
 
     // Get the leases matching the DUID and IAID of lease[1].
-    Lease6Collection returned = lmptr_->getLease6(*leases[1]->duid_,
-                                                  leases[1]->iaid_);
+    Lease6Collection returned = lmptr_->getLeases6(leasetype6_[1],
+                                                   *leases[1]->duid_,
+                                                   leases[1]->iaid_);
 
     // Should be three leases, matching leases[1], [4] and [5].
     ASSERT_EQ(3, returned.size());
@@ -854,20 +856,22 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
 
     // Check that nothing is returned when either the IAID or DUID match
     // nothing.
-    returned = lmptr_->getLease6(*leases[1]->duid_, leases[1]->iaid_ + 1);
+    returned = lmptr_->getLeases6(leasetype6_[1], *leases[1]->duid_,
+                                  leases[1]->iaid_ + 1);
     EXPECT_EQ(0, returned.size());
 
     // Alter the leases[1] DUID to match nothing in the database.
     vector<uint8_t> duid_vector = leases[1]->duid_->getDuid();
     ++duid_vector[0];
     DUID new_duid(duid_vector);
-    returned = lmptr_->getLease6(new_duid, leases[1]->iaid_);
+    returned = lmptr_->getLeases6(leasetype6_[1], new_duid, leases[1]->iaid_);
     EXPECT_EQ(0, returned.size());
 }
 
 // @brief Get Lease4 by DUID and IAID (2)
 //
 // Check that the system can cope with a DUID of any size.
+/// @todo: update this test once type checking/filtering is implemented
 TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSize) {
 
     // Create leases, although we need only one.
@@ -885,8 +889,9 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSize) {
         vector<uint8_t> duid_vec(i, i);
         leases[1]->duid_.reset(new DUID(duid_vec));
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        Lease6Collection returned = lmptr_->getLease6(*leases[1]->duid_,
-                                                      leases[1]->iaid_);
+        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[1],
+                                                       *leases[1]->duid_,
+                                                       leases[1]->iaid_);
         ASSERT_EQ(1, returned.size());
         detailCompareLease(leases[1], *returned.begin());
         (void) lmptr_->deleteLease(leases[1]->addr_);
@@ -909,7 +914,7 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
     }
 
     // Get the leases matching the DUID and IAID of lease[1].
-    Lease6Ptr returned = lmptr_->getLease6(*leases[1]->duid_,
+    Lease6Ptr returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
                                            leases[1]->iaid_,
                                            leases[1]->subnet_id_);
     ASSERT_TRUE(returned);
@@ -917,19 +922,19 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
 
     // Modify each of the three parameters (DUID, IAID, Subnet ID) and
     // check that nothing is returned.
-    returned = lmptr_->getLease6(*leases[1]->duid_, leases[1]->iaid_ + 1,
-                                 leases[1]->subnet_id_);
+    returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
+                                 leases[1]->iaid_ + 1, leases[1]->subnet_id_);
     EXPECT_FALSE(returned);
 
-    returned = lmptr_->getLease6(*leases[1]->duid_, leases[1]->iaid_,
-                                 leases[1]->subnet_id_ + 1);
+    returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
+                                 leases[1]->iaid_, leases[1]->subnet_id_ + 1);
     EXPECT_FALSE(returned);
 
     // Alter the leases[1] DUID to match nothing in the database.
     vector<uint8_t> duid_vector = leases[1]->duid_->getDuid();
     ++duid_vector[0];
     DUID new_duid(duid_vector);
-    returned = lmptr_->getLease6(new_duid, leases[1]->iaid_,
+    returned = lmptr_->getLease6(leasetype6_[1], new_duid, leases[1]->iaid_,
                                  leases[1]->subnet_id_);
     EXPECT_FALSE(returned);
 }
@@ -954,7 +959,7 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
         vector<uint8_t> duid_vec(i, i);
         leases[1]->duid_.reset(new DUID(duid_vec));
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        Lease6Ptr returned = lmptr_->getLease6(*leases[1]->duid_,
+        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
                                                leases[1]->iaid_,
                                                leases[1]->subnet_id_);
         ASSERT_TRUE(returned);
@@ -1030,7 +1035,7 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
     lmptr_->commit();
 
-    Lease6Ptr l_returned = lmptr_->getLease6(ioaddress6_[1]);
+    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
@@ -1046,7 +1051,7 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
 
     // ... and check what is returned is what is expected.
     l_returned.reset();
-    l_returned = lmptr_->getLease6(ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
@@ -1058,14 +1063,14 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
     lmptr_->updateLease6(leases[1]);
 
     l_returned.reset();
-    l_returned = lmptr_->getLease6(ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
     // Check we can do an update without changing data.
     lmptr_->updateLease6(leases[1]);
     l_returned.reset();
-    l_returned = lmptr_->getLease6(ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 

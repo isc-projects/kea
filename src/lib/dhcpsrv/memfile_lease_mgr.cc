@@ -46,7 +46,7 @@ Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_ADD_ADDR6).arg(lease->addr_.toText());
 
-    if (getLease6(lease->addr_)) {
+    if (getLease6(lease->type_, lease->addr_)) {
         // there is a lease with specified address already
         return (false);
     }
@@ -186,7 +186,8 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id,
 }
 
 Lease6Ptr
-Memfile_LeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
+Memfile_LeaseMgr::getLease6(Lease6::LeaseType /* not used yet */,
+                            const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_ADDR6).arg(addr.toText());
 
@@ -199,16 +200,20 @@ Memfile_LeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
 }
 
 Lease6Collection
-Memfile_LeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
+Memfile_LeaseMgr::getLeases6(Lease6::LeaseType /* not used yet */,
+                            const DUID& duid, uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_IAID_DUID).arg(iaid).arg(duid.toText());
+
+    /// @todo Not implemented.
 
     return (Lease6Collection());
 }
 
-Lease6Ptr
-Memfile_LeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
-                            SubnetID subnet_id) const {
+Lease6Collection
+Memfile_LeaseMgr::getLeases6(Lease6::LeaseType /* not used yet */,
+                             const DUID& duid, uint32_t iaid,
+                             SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_IAID_SUBID_DUID)
               .arg(iaid).arg(subnet_id).arg(duid.toText());
@@ -224,10 +229,14 @@ Memfile_LeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
         idx.find(boost::make_tuple(duid.getDuid(), iaid, subnet_id));
     // Lease was not found. Return empty pointer.
     if (lease == idx.end()) {
-        return (Lease6Ptr());
+        return (Lease6Collection());
     }
+
     // Lease was found, return it to the caller.
-    return (Lease6Ptr(new Lease6(**lease)));
+    /// @todo: allow multiple leases for a single duid+iaid+subnet_id tuple
+    Lease6Collection collection;
+    collection.push_back(Lease6Ptr(new Lease6(**lease)));
+    return (collection);
 }
 
 void

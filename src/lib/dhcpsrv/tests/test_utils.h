@@ -105,6 +105,7 @@ public:
     std::vector<std::string>  straddress4_;   ///< String forms of IPv4 addresses
     std::vector<isc::asiolink::IOAddress> ioaddress4_;  ///< IOAddress forms of IPv4 addresses
     std::vector<std::string>  straddress6_;   ///< String forms of IPv6 addresses
+    std::vector<Lease6::LeaseType> leasetype6_; ///< Lease types
     std::vector<isc::asiolink::IOAddress> ioaddress6_;  ///< IOAddress forms of IPv6 addresses
 
     LeaseMgr*   lmptr_;             ///< Pointer to the lease manager

@@ -36,6 +36,13 @@ const char* ADDRESS6[] = {
     NULL
 };
 
+// Lease types that correspond to ADDRESS6 leases
+static const Lease6::LeaseType LEASETYPE6[] = {
+    Lease6::LEASE_IA_NA, Lease6::LEASE_IA_TA, Lease6::LEASE_IA_PD,
+    Lease6::LEASE_IA_NA, Lease6::LEASE_IA_TA, Lease6::LEASE_IA_PD,
+    Lease6::LEASE_IA_NA, Lease6::LEASE_IA_TA
+};
+
 void
 detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
     // Compare address strings.  Comparison of address objects is not used, as
@@ -108,6 +115,10 @@ GenericLeaseMgrTest::GenericLeaseMgrTest()
         straddress6_.push_back(addr);
         IOAddress ioaddr(addr);
         ioaddress6_.push_back(ioaddr);
+
+        /// Let's create different lease types. We use LEASETYPE6 values as
+        /// a template
+        leasetype6_.push_back(LEASETYPE6[i]);
     }
 }
 
@@ -264,7 +275,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
 
     // Set other parameters.  For historical reasons, address 0 is not used.
     if (address == straddress6_[0]) {
-        lease->type_ = Lease6::LEASE_IA_TA;
+        lease->type_ = leasetype6_[0];
         lease->prefixlen_ = 4;
         lease->iaid_ = 142;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x77)));
@@ -277,7 +288,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hostname_ = "myhost.example.com.";
 
     } else if (address == straddress6_[1]) {
-        lease->type_ = Lease6::LEASE_IA_TA;
+        lease->type_ = leasetype6_[1];
         lease->prefixlen_ = 0;
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
@@ -290,7 +301,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hostname_ = "myhost.example.com.";
 
     } else if (address == straddress6_[2]) {
-        lease->type_ = Lease6::LEASE_IA_PD;
+        lease->type_ = leasetype6_[2];
         lease->prefixlen_ = 7;
         lease->iaid_ = 89;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x3a)));
@@ -303,7 +314,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
         lease->hostname_ = "myhost.example.com.";
 
     } else if (address == straddress6_[3]) {
-        lease->type_ = Lease6::LEASE_IA_NA;
+        lease->type_ = leasetype6_[3];
         lease->prefixlen_ = 28;
         lease->iaid_ = 0xfffffffe;
         vector<uint8_t> duid;
@@ -326,7 +337,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
 
     } else if (address == straddress6_[4]) {
         // Same DUID and IAID as straddress6_1
-        lease->type_ = Lease6::LEASE_IA_PD;
+        lease->type_ = leasetype6_[4];
         lease->prefixlen_ = 15;
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
@@ -340,7 +351,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
 
     } else if (address == straddress6_[5]) {
         // Same DUID and IAID as straddress6_1
-        lease->type_ = Lease6::LEASE_IA_PD;
+        lease->type_ = leasetype6_[5];
         lease->prefixlen_ = 24;
         lease->iaid_ = 42;                          // Same as lease 4
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
@@ -355,7 +366,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
 
     } else if (address == straddress6_[6]) {
         // Same DUID as straddress6_1
-        lease->type_ = Lease6::LEASE_IA_PD;
+        lease->type_ = leasetype6_[6];
         lease->prefixlen_ = 24;
         lease->iaid_ = 93;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
@@ -370,7 +381,7 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
 
     } else if (address == straddress6_[7]) {
         // Same IAID as straddress6_1
-        lease->type_ = Lease6::LEASE_IA_PD;
+        lease->type_ = leasetype6_[7];
         lease->prefixlen_ = 24;
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0xe5)));
