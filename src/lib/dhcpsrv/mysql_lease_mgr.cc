@@ -163,21 +163,22 @@ TaggedStatement tagged_statements[] = {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
-                            "WHERE address = ?"},
+                            "WHERE address = ? and lease_type = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
-                            "WHERE duid = ? AND iaid = ?"},
+                            "WHERE duid = ? AND iaid = ? AND lease_type = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
-                            "WHERE duid = ? AND iaid = ? AND subnet_id = ?"},
+                            "WHERE duid = ? AND iaid = ? AND subnet_id = ? "
+                            "AND lease_type = ?"},
     {MySqlLeaseMgr::GET_VERSION,
                     "SELECT version, minor FROM schema_version"},
     {MySqlLeaseMgr::INSERT_LEASE4,
@@ -1374,7 +1375,8 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
 bool
 MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_ADD_ADDR6).arg(lease->addr_.toText());
+              DHCPSRV_MYSQL_ADD_ADDR6).arg(lease->addr_.toText())
+              .arg(lease->type_);
 
     // Create the MYSQL_BIND array for the lease
     std::vector<MYSQL_BIND> bind = exchange6_->createBindForSend(lease);
@@ -1651,13 +1653,14 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 
 
 Lease6Ptr
-MySqlLeaseMgr::getLease6(Lease6::LeaseType /* type - not used yet */,
+MySqlLeaseMgr::getLease6(Lease6::LeaseType lease_type,
                          const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_ADDR6).arg(addr.toText());
+              DHCPSRV_MYSQL_GET_ADDR6).arg(addr.toText())
+              .arg(lease_type);
 
     // Set up the WHERE clause value
-    MYSQL_BIND inbind[1];
+    MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
     std::string addr6 = addr.toText();
@@ -1670,6 +1673,11 @@ MySqlLeaseMgr::getLease6(Lease6::LeaseType /* type - not used yet */,
     inbind[0].buffer_length = addr6_length;
     inbind[0].length = &addr6_length;
 
+    // LEASE_TYPE
+    inbind[1].buffer_type = MYSQL_TYPE_TINY;
+    inbind[1].buffer = reinterpret_cast<char*>(&lease_type);
+    inbind[1].is_unsigned = MLM_TRUE;
+
     Lease6Ptr result;
     getLease(GET_LEASE6_ADDR, inbind, result);
 
@@ -1678,13 +1686,14 @@ MySqlLeaseMgr::getLease6(Lease6::LeaseType /* type - not used yet */,
 
 
 Lease6Collection
-MySqlLeaseMgr::getLeases6(Lease6::LeaseType /* type - not used yet */,
+MySqlLeaseMgr::getLeases6(Lease6::LeaseType lease_type,
                           const DUID& duid, uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_IAID_DUID).arg(iaid).arg(duid.toText());
+              DHCPSRV_MYSQL_GET_IAID_DUID).arg(iaid).arg(duid.toText())
+              .arg(lease_type);
 
     // Set up the WHERE clause value
-    MYSQL_BIND inbind[2];
+    MYSQL_BIND inbind[3];
     memset(inbind, 0, sizeof(inbind));
 
     // In the following statement, the DUID is being read.  However, the
@@ -1712,6 +1721,11 @@ MySqlLeaseMgr::getLeases6(Lease6::LeaseType /* type - not used yet */,
     inbind[1].buffer = reinterpret_cast<char*>(&iaid);
     inbind[1].is_unsigned = MLM_TRUE;
 
+    // LEASE_TYPE
+    inbind[2].buffer_type = MYSQL_TYPE_TINY;
+    inbind[2].buffer = reinterpret_cast<char*>(&lease_type);
+    inbind[2].is_unsigned = MLM_TRUE;
+
     // ... and get the data
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6_DUID_IAID, inbind, result);
@@ -1720,15 +1734,16 @@ MySqlLeaseMgr::getLeases6(Lease6::LeaseType /* type - not used yet */,
 }
 
 Lease6Collection
-MySqlLeaseMgr::getLeases6(Lease6::LeaseType /* type - not used yet */,
+MySqlLeaseMgr::getLeases6(Lease6::LeaseType lease_type,
                           const DUID& duid, uint32_t iaid,
                           SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_IAID_SUBID_DUID)
-              .arg(iaid).arg(subnet_id).arg(duid.toText());
+              .arg(iaid).arg(subnet_id).arg(duid.toText())
+              .arg(lease_type);
 
     // Set up the WHERE clause value
-    MYSQL_BIND inbind[3];
+    MYSQL_BIND inbind[4];
     memset(inbind, 0, sizeof(inbind));
 
     // See the earlier description of the use of "const_cast" when accessing
@@ -1751,14 +1766,16 @@ MySqlLeaseMgr::getLeases6(Lease6::LeaseType /* type - not used yet */,
     inbind[2].buffer = reinterpret_cast<char*>(&subnet_id);
     inbind[2].is_unsigned = MLM_TRUE;
 
-    Lease6Ptr result;
-    getLease(GET_LEASE6_DUID_IAID_SUBID, inbind, result);
+    // LEASE_TYPE
+    inbind[3].buffer_type = MYSQL_TYPE_TINY;
+    inbind[3].buffer = reinterpret_cast<char*>(&lease_type);
+    inbind[3].is_unsigned = MLM_TRUE;
 
-    /// @todo: Implement getting one than more lease at the time
-    Lease6Collection collection;
-    collection.push_back(result);
+    // ... and get the data
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6_DUID_IAID_SUBID, inbind, result);
 
-    return (collection);
+    return (result);
 }
 
 // Update lease methods.  These comprise common code that handles the actual
@@ -1823,7 +1840,8 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE6;
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_UPDATE_ADDR6).arg(lease->addr_.toText());
+              DHCPSRV_MYSQL_UPDATE_ADDR6).arg(lease->addr_.toText())
+              .arg(lease->type_);
 
     // Create the MYSQL_BIND array for the data being updated
     std::vector<MYSQL_BIND> bind = exchange6_->createBindForSend(lease);
