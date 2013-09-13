@@ -1024,7 +1024,8 @@ TEST_F(Dhcpv6SrvTest, RenewBasic) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Check that T1, T2, preferred, valid and cltt really set and not using
@@ -1116,7 +1117,8 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     OptionPtr clientid = generateClientId();
 
     // Check that the lease is NOT in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                        addr);
     ASSERT_FALSE(l);
 
     // Let's create a RENEW
@@ -1147,7 +1149,7 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     checkIA_NAStatusCode(ia, STATUS_NoBinding);
 
     // Check that there is no lease added
-    l = LeaseMgrFactory::instance().getLease6(addr);
+    l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA, addr);
     ASSERT_FALSE(l);
 
     // CASE 2: Lease is known and belongs to this client, but to a different IAID
@@ -1189,7 +1191,7 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     ASSERT_TRUE(ia);
     checkIA_NAStatusCode(ia, STATUS_NoBinding);
 
-    lease = LeaseMgrFactory::instance().getLease6(addr);
+    lease = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA, addr);
     ASSERT_TRUE(lease);
     // Verify that the lease was not updated.
     EXPECT_EQ(123, lease->cltt_);
@@ -1226,7 +1228,8 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Let's create a RELEASE
@@ -1265,11 +1268,12 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
 
     // Check that the lease is really gone in the database
     // get lease by address
-    l = LeaseMgrFactory::instance().getLease6(addr);
+    l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA, addr);
     ASSERT_FALSE(l);
 
     // get lease by subnetid/duid/iaid combination
-    l = LeaseMgrFactory::instance().getLease6(*duid_, iaid, subnet_->getID());
+    l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA, *duid_, iaid,
+                                              subnet_->getID());
     ASSERT_FALSE(l);
 }
 
@@ -1301,7 +1305,8 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     OptionPtr clientid = generateClientId();
 
     // Check that the lease is NOT in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                        addr);
     ASSERT_FALSE(l);
 
     // Let's create a RELEASE
@@ -1334,7 +1339,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     checkMsgStatusCode(reply, STATUS_NoBinding);
 
     // Check that the lease is not there
-    l = LeaseMgrFactory::instance().getLease6(addr);
+    l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA, addr);
     ASSERT_FALSE(l);
 
     // CASE 2: Lease is known and belongs to this client, but to a different IAID
@@ -1356,7 +1361,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     checkMsgStatusCode(reply, STATUS_NoBinding);
 
     // Check that the lease is still there
-    l = LeaseMgrFactory::instance().getLease6(addr);
+    l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA, addr);
     ASSERT_TRUE(l);
 
     // CASE 3: Lease belongs to a client with different client-id
@@ -1379,7 +1384,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     checkMsgStatusCode(reply, STATUS_NoBinding);
 
     // Check that the lease is still there
-    l = LeaseMgrFactory::instance().getLease6(addr);
+    l = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA, addr);
     ASSERT_TRUE(l);
 
     // Finally, let's cleanup the database
