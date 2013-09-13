@@ -130,6 +130,23 @@ std::string LeaseMgr::getParameter(const std::string& name) const {
     return (param->second);
 }
 
+Lease6Ptr
+LeaseMgr::getLease6(Lease6::LeaseType type, const DUID& duid,
+                    uint32_t iaid, SubnetID subnet_id) const {
+    Lease6Collection col = getLeases6(type, duid, iaid, subnet_id);
+
+    if (col.size() > 1) {
+        isc_throw(MultipleRecords, "More than one lease found for type "
+                  << static_cast<int>(type) << ", duid "
+                  << duid.toText() << ", iaid " << iaid
+                  << " and subnet-id " << subnet_id);
+    }
+    if (col.empty()) {
+        return (Lease6Ptr());
+    }
+    return (*col.begin());
+}
+
 std::string
 Lease6::toText() const {
     ostringstream stream;

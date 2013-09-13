@@ -1,3 +1,8 @@
+674.	[func]		tomek
+	Preparatory work for prefix delegation in LeaseMgr. getLease6()
+	renamed to getLeases6(). It now can return more than one lease.
+	(Trac #3146, git 05a05d810be754e7a4d8ca181550867febf6dcc6)
+
 673.	[func]		tomek
 	libdhcp: Added support for IA_PD and IAPREFIX options. New class
 	for IAPREFIX (Option6_IAPrefix) has been added.

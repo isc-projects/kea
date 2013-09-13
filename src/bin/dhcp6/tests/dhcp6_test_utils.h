@@ -377,7 +377,8 @@ public:
                          boost::shared_ptr<Option6IAAddr> addr) {
         boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(ia_na);
 
-        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(addr->getAddress());
+        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+                                                                addr->getAddress());
         if (!lease) {
             std::cout << "Lease for " << addr->getAddress().toText()
                       << " not found in the database backend.";

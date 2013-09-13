@@ -295,8 +295,8 @@ protected:
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.
     ///
-    /// @return Allocated IPv6 lease (or NULL if allocation failed)
-    Lease6Ptr
+    /// @return Allocated IPv6 leases (may be empty if allocation failed)
+    Lease6Collection
     allocateAddress6(const Subnet6Ptr& subnet,
                      const DuidPtr& duid,
                      uint32_t iaid,
