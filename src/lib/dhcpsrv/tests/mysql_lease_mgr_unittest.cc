@@ -824,8 +824,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
 ///
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of DIUID and IAID.
-/// @todo: update this test once type checking/filtering is implemented
-TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
+TEST_F(MySqlLeaseMgrTest, getLeases6DuidIaid) {
     // Get the leases to be used for the test.
     vector<Lease6Ptr> leases = createLeases6();
     ASSERT_LE(6, leases.size());    // Expect to access leases 0 through 5
@@ -840,8 +839,8 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
                                                    *leases[1]->duid_,
                                                    leases[1]->iaid_);
 
-    // Should be three leases, matching leases[1], [4] and [5].
-    ASSERT_EQ(3, returned.size());
+    // Should be two leases, matching leases[1] and [4].
+    ASSERT_EQ(2, returned.size());
 
     // Easiest way to check is to look at the addresses.
     vector<string> addresses;
@@ -852,7 +851,6 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
     sort(addresses.begin(), addresses.end());
     EXPECT_EQ(straddress6_[1], addresses[0]);
     EXPECT_EQ(straddress6_[4], addresses[1]);
-    EXPECT_EQ(straddress6_[5], addresses[2]);
 
     // Check that nothing is returned when either the IAID or DUID match
     // nothing.
@@ -871,8 +869,7 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaid) {
 // @brief Get Lease4 by DUID and IAID (2)
 //
 // Check that the system can cope with a DUID of any size.
-/// @todo: update this test once type checking/filtering is implemented
-TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSize) {
+TEST_F(MySqlLeaseMgrTest, getLeases6DuidIaidSize) {
 
     // Create leases, although we need only one.
     vector<Lease6Ptr> leases = createLeases6();
@@ -900,6 +897,99 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSize) {
     // Don't bother to check DUIDs longer than the maximum - these cannot be
     // constructed, and that limitation is tested in the DUID/Client ID unit
     // tests.
+}
+
+/// @brief Check that getLease6 methods discriminate by lease type.
+///
+/// Adds six leases, two per lease type all with the same duid and iad but
+/// with alternating subnet_ids.
+/// It then verifies that all of getLeases6() method variants correctly
+/// discriminate between the leases based on lease type alone.
+TEST_F(MySqlLeaseMgrTest, lease6LeaseTypeCheck) {
+
+    Lease6Ptr empty_lease(new Lease6());
+
+    DuidPtr duid(new DUID(vector<uint8_t>(8, 0x77)));
+
+    // Initialize unused fields.
+    empty_lease->t1_ = 0;                             // Not saved
+    empty_lease->t2_ = 0;                             // Not saved
+    empty_lease->fixed_ = false;                      // Unused
+    empty_lease->comments_ = std::string("");         // Unused
+    empty_lease->iaid_ = 142;
+    empty_lease->duid_ = DuidPtr(new DUID(*duid));
+    empty_lease->subnet_id_ = 23;
+    empty_lease->preferred_lft_ = 100;
+    empty_lease->valid_lft_ = 100;
+    empty_lease->cltt_ = 100;
+    empty_lease->fqdn_fwd_ = true;
+    empty_lease->fqdn_rev_ = true;
+    empty_lease->hostname_ = "myhost.example.com.";
+    empty_lease->prefixlen_ = 4;
+
+    // Make Two leases per lease type, all with the same  duid, iad but
+    // alternate the subnet_ids.
+    vector<Lease6Ptr> leases;
+    int tick = 0;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 2; j++) {
+            Lease6Ptr lease(new Lease6(*empty_lease));
+            lease->type_ = leasetype6_[i];
+            lease->addr_ = IOAddress(straddress6_[tick++]);
+            lease->subnet_id_ += j;
+            std::cout << "ok, subnet is: " << lease->subnet_id_
+                << " tick is:" << tick << std::endl;
+            leases.push_back(lease);
+            EXPECT_TRUE(lmptr_->addLease(lease));
+        }
+    }
+
+    // Verify getting a single lease by type and address.
+    for (int i = 0; i < 3; i++) {
+        // Look for exact match for each lease type.
+        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i],
+                                                   leases[i*2]->addr_);
+        // We should match one per lease type.
+        ASSERT_TRUE(returned);
+        EXPECT_TRUE(*returned == *leases[i*2]);
+
+        // Same address but wrong lease type, should not match.
+        returned = lmptr_->getLease6(leasetype6_[i+1], leases[i*2]->addr_);
+        ASSERT_FALSE(returned);
+    }
+
+    // Verify getting a collection of leases by type, duid, and iad.
+    // Iterate over the lease types, asking for leases based on
+    // lease type, duid, and iad.
+    tick = 0;
+    for (int i = 0; i < 3; i++) {
+        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i],
+                                                       *duid, 142);
+        // We should match two per lease type.
+        ASSERT_EQ(2, returned.size());
+        EXPECT_TRUE(*(returned[0]) == *leases[tick++]);
+        EXPECT_TRUE(*(returned[1]) == *leases[tick++]);
+    }
+
+    // Verify getting a collection of leases by type, duid, iad, and subnet id.
+    // Iterate over the lease types, asking for leases based on
+    // lease type, duid, iad, and subnet_id.
+    for (int i = 0; i < 3; i++) {
+        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i],
+                                                   *duid, 142, 23);
+        // We should match one per lease type.
+        ASSERT_EQ(1, returned.size());
+        EXPECT_TRUE(*(returned[0]) == *leases[i*2]);
+    }
+
+    // Verify getting a single lease by type, duid, iad, and subnet id.
+    for (int i = 0; i < 3; i++) {
+        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i],
+                                                *duid, 142, 23);
+        // We should match one per lease type.
+        ASSERT_TRUE(returned);
+        EXPECT_TRUE(*returned == *leases[i*2]);
+    }
 }
 
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
@@ -938,6 +1028,7 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
                                  leases[1]->subnet_id_);
     EXPECT_FALSE(returned);
 }
+
 
 // @brief Get Lease4 by DUID, IAID & subnet ID (2)
 //
@@ -1051,7 +1142,7 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
 
     // ... and check what is returned is what is expected.
     l_returned.reset();
-    l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(Lease6::LEASE_IA_PD, ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
@@ -1063,14 +1154,14 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
     lmptr_->updateLease6(leases[1]);
 
     l_returned.reset();
-    l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(Lease6::LEASE_IA_TA, ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
     // Check we can do an update without changing data.
     lmptr_->updateLease6(leases[1]);
     l_returned.reset();
-    l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(Lease6::LEASE_IA_TA, ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
