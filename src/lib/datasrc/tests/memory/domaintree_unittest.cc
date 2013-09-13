@@ -141,8 +141,8 @@ class DomainTreeTest : public::testing::Test {
 protected:
     DomainTreeTest() :
         dtree_holder_(mem_sgmt_, TestDomainTree::create(mem_sgmt_)),
-        dtree_expose_empty_node_holder_(mem_sgmt_,
-                                         TestDomainTree::create(mem_sgmt_, true)),
+        dtree_expose_empty_node_holder_
+            (mem_sgmt_, TestDomainTree::create(mem_sgmt_, true)),
         dtree(*dtree_holder_.get()),
         dtree_expose_empty_node(*dtree_expose_empty_node_holder_.get()),
         cdtnode(NULL),
