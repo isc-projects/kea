@@ -415,7 +415,7 @@ TEST_F(DomainTreeTest, remove) {
         tree.remove(mem_sgmt_, node, deleteData);
 
         // Check RB tree properties
-        EXPECT_TRUE(tree.checkProperties());
+        ASSERT_TRUE(tree.checkProperties());
 
         // Now, walk through nodes in order.
         TestDomainTreeNodeChain node_path;
@@ -438,25 +438,35 @@ TEST_F(DomainTreeTest, remove) {
         }
 
         for (int i = start_node; i < ordered_names_count; ++i) {
-            // If a superdomain is deleted, everything under that
-            // sub-tree goes away.
             const Name nj(ordered_names[j]);
             const Name ni(ordered_names[i]);
-            const NameComparisonResult result = nj.compare(ni);
-            if ((result.getRelation() == NameComparisonResult::EQUAL) ||
-                (result.getRelation() == NameComparisonResult::SUPERDOMAIN)) {
+            if (ni == nj) {
+                // This may be true for the last node if we seek ahead
+                // in the loop using nextNode() below.
+                if (!cnode) {
+                    break;
+                }
+                // All ordered nodes have data initially. If any node is
+                // empty, it means it was remove()d, but an empty node
+                // exists because it is a super-domain. Just skip it.
+                if (cnode->isEmpty()) {
+                     cnode = tree.nextNode(node_path);
+                }
                 continue;
             }
 
-            EXPECT_NE(static_cast<void*>(NULL), cnode);
+            ASSERT_NE(static_cast<void*>(NULL), cnode);
             const int* data = cnode->getData();
-            EXPECT_EQ(i, *data);
+
+            if (data) {
+                 EXPECT_EQ(i, *data);
+            }
 
             cnode = tree.nextNode(node_path);
         }
 
         // We should have reached the end of the tree.
-        EXPECT_EQ(static_cast<void*>(NULL), cnode);
+        ASSERT_EQ(static_cast<void*>(NULL), cnode);
     }
 }
 
