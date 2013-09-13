@@ -477,6 +477,101 @@ TEST_F(DomainTreeTest, remove) {
     }
 }
 
+TEST_F(DomainTreeTest, removeEmpty) {
+    // This test is similar to the .remove test. But it checks node
+    // deletion when upper nodes are empty.
+
+    // Delete single nodes and check if the rest of the nodes exist
+    for (int j = 0; j < ordered_names_count; ++j) {
+        TreeHolder holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_, true));
+        TestDomainTree& tree(*holder.get());
+        TestDomainTreeNode* node;
+
+        for (int i = 0; i < name_count; ++i) {
+            tree.insert(mem_sgmt_, Name(domain_names[i]), NULL);
+        }
+
+        for (int i = 0; i < ordered_names_count; ++i) {
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[i]), &node));
+            // Check nodes are empty.
+            EXPECT_TRUE(node->isEmpty());
+        }
+
+        // Now, delete the j'th node from the tree.
+        EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                  tree.find(Name(ordered_names[j]), &node));
+        tree.remove(mem_sgmt_, node, deleteData);
+
+        // Check RB tree properties
+        ASSERT_TRUE(tree.checkProperties());
+
+        // Now, walk through nodes in order.
+        TestDomainTreeNodeChain node_path;
+        const TestDomainTreeNode* cnode;
+        int start_node;
+
+        if (j == 0) {
+            EXPECT_NE(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[0]),
+                                &cnode));
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[1]),
+                                &cnode, node_path));
+            start_node = 1;
+        } else {
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[0]),
+                                &cnode, node_path));
+            start_node = 0;
+        }
+
+        for (int i = start_node; i < ordered_names_count; ++i) {
+            const Name nj(ordered_names[j]);
+            const Name ni(ordered_names[i]);
+
+            if ((nj == Name("j.z.d.e.f")) &&
+                (ni == Name("z.d.e.f")))
+            {
+                // The only special case in the tree. Here, "z.d.e.f"
+                // will not exist as it would have been removed during
+                // removal of "j.z.d.e.f".
+                continue;
+            }
+
+            if (ni == nj) {
+                // This may be true for the last node if we seek ahead
+                // in the loop using nextNode() below.
+                if (!cnode) {
+                    break;
+                }
+                // All ordered nodes are empty initially. If an empty
+                // removed node exists because it is a super-domain,
+                // just skip it.
+                if ((nj == Name("d.e.f")) ||
+                    (nj == Name("w.y.d.e.f")) ||
+                    (nj == Name("z.d.e.f")) ||
+                    (nj == Name("g.h")))
+                {
+                     cnode = tree.nextNode(node_path);
+                }
+                continue;
+            }
+
+            ASSERT_NE(static_cast<void*>(NULL), cnode);
+
+            uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH];
+            const LabelSequence ls(cnode->getAbsoluteLabels(buf));
+            EXPECT_EQ(LabelSequence(ni), ls);
+
+            cnode = tree.nextNode(node_path);
+        }
+
+        // We should have reached the end of the tree.
+        ASSERT_EQ(static_cast<void*>(NULL), cnode);
+    }
+}
+
 void
 insertNodes(util::MemorySegment& mem_sgmt, TestDomainTree& tree,
             std::set<std::string>& names, size_t num_nodes,
