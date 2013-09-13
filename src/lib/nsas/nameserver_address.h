@@ -19,7 +19,6 @@
 
 #include <exceptions/exceptions.h>
 
-#include "asiolink.h"
 #include "address_entry.h"
 #include "nsas_types.h"
 
