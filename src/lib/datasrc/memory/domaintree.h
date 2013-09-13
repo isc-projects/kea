@@ -2282,87 +2282,118 @@ void
 DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
                       DataDeleter deleter)
 {
-    // Save subtree root's parent for use later.
-    DomainTreeNode<T>* upper_node = node->getUpperNode();
-
-    // node points to the node to be deleted in the BST. It first has to
-    // be exchanged with the right-most node in the left sub-tree or the
-    // left-most node in the right sub-tree. (Here, sub-tree is inside
-    // this RB tree itself, not in the tree-of-trees forest.) The node
-    // then ends up having a maximum of 1 child. Note that this is not
-    // an in-place value swap of node data, but the actual node
-    // locations are swapped in exchange(). Unlike normal BSTs, we have
-    // to do this as our label data is at address (this + 1).
-    if (node->getLeft() && node->getRight()) {
-        DomainTreeNode<T>* rightmost = node->getLeft();
-        while (rightmost->getRight() != NULL) {
-            rightmost = rightmost->getRight();
-        }
-
-        node->exchange(rightmost, &root_);
-    }
-
-    // Now, node has 0 or 1 children, as from above, either its right or
-    // left child definitely doesn't exist (and is NULL).  Pick the
-    // child node, or if no children exist, just use NULL.
-    DomainTreeNode<T>* child;
-    if (!node->getRight()) {
-        child = node->getLeft();
-    } else {
-        child = node->getRight();
-    }
-
-    // Set it as the node's parent's child, effectively removing node
-    // from the tree.
-    node->setParentChild(node, child, &root_);
-
-    // Child can be NULL here if node was a leaf.
-    if (child) {
-        child->parent_ = node->getParent();
-        // Even if node is not a leaf node, we don't always do an
-        // exchange() with another node, so we have to set the child's
-        // FLAG_SUBTREE_ROOT explicitly.
-        if ((!child->getParent()) ||
-            (child->getParent()->getDown() == child))
-        {
-            child->setSubTreeRoot(node->isSubTreeRoot());
-        }
-    }
-
-    // If node is RED, it is a valid red-black tree already as (node's)
-    // child must be BLACK or NULL (which is BLACK). Deleting (the RED)
-    // node will not have any effect on the number of BLACK nodes
-    // through this path (involving node's parent and its new child). In
-    // this case, we can skip the following block.
-    if (node->isBlack()) {
-        if (child && child->isRed()) {
-            // If node is BLACK and child is RED, removing node would
-            // decrease the number of BLACK nodes through this path
-            // (involving node's parent and its new child). So we color
-            // child to be BLACK to restore the old count of black nodes
-            // through this path. It is now a valid red-black tree.
-            child->setColor(DomainTreeNode<T>::BLACK);
-        } else {
-            // If node is BLACK and child is also BLACK or NULL (which
-            // is BLACK), we need to do re-balancing to make it a valid
-            // red-black tree again.
-            typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr =
-                upper_node ? &(upper_node->down_) : &root_;
-            removeRebalance(root_ptr, child, node->getParent());
-        }
-    }
-
-    // If node has a sub red-black tree under it (down_ pointer), delete
-    // it too. Here, we can use the simple subtree form of delete.
+    // If node has a down pointer, we cannot remove this node from the
+    // DomainTree forest. We merely clear its data (destroying the data)
+    // and return.
     if (node->getDown()) {
-        node->getDown()->parent_ = NULL;
-        deleteHelper(mem_sgmt, node->getDown(), deleter);
+        T* data = node->setData(NULL);
+        if (data) {
+            deleter(data);
+        }
+        return;
     }
 
-    // Finally, destroy the node.
-    deleter(node->data_.get());
-    DomainTreeNode<T>::destroy(mem_sgmt, node);
-    --node_count_;
+    while (true) {
+        // Save subtree root's parent for use later.
+        DomainTreeNode<T>* upper_node = node->getUpperNode();
+
+        // node points to the node to be deleted in the BST. It first
+        // has to be exchanged with the right-most node in the left
+        // sub-tree or the left-most node in the right sub-tree. (Here,
+        // sub-tree is inside this RB tree itself, not in the
+        // tree-of-trees forest.) The node then ends up having a maximum
+        // of 1 child. Note that this is not an in-place value swap of
+        // node data, but the actual node locations are swapped in
+        // exchange(). Unlike normal BSTs, we have to do this as our
+        // label data is at address (this + 1).
+        if (node->getLeft() && node->getRight()) {
+            DomainTreeNode<T>* rightmost = node->getLeft();
+            while (rightmost->getRight() != NULL) {
+                rightmost = rightmost->getRight();
+            }
+
+            node->exchange(rightmost, &root_);
+        }
+
+        // Now, node has 0 or 1 children, as from above, either its
+        // right or left child definitely doesn't exist (and is NULL).
+        // Pick the child node, or if no children exist, just use NULL.
+        DomainTreeNode<T>* child;
+        if (!node->getRight()) {
+            child = node->getLeft();
+        } else {
+            child = node->getRight();
+        }
+
+        // Set it as the node's parent's child, effectively removing
+        // node from the tree.
+        node->setParentChild(node, child, &root_);
+
+        // Child can be NULL here if node was a leaf.
+        if (child) {
+            child->parent_ = node->getParent();
+            // Even if node is not a leaf node, we don't always do an
+            // exchange() with another node, so we have to set the
+            // child's FLAG_SUBTREE_ROOT explicitly.
+            if ((!child->getParent()) ||
+                (child->getParent()->getDown() == child))
+            {
+                child->setSubTreeRoot(node->isSubTreeRoot());
+            }
+        }
+
+        // If node is RED, it is a valid red-black tree already as
+        // (node's) child must be BLACK or NULL (which is
+        // BLACK). Deleting (the RED) node will not have any effect on
+        // the number of BLACK nodes through this path (involving node's
+        // parent and its new child). In this case, we can skip the
+        // following block.
+        if (node->isBlack()) {
+            if (child && child->isRed()) {
+                // If node is BLACK and child is RED, removing node
+                // would decrease the number of BLACK nodes through this
+                // path (involving node's parent and its new child). So
+                // we color child to be BLACK to restore the old count
+                // of black nodes through this path. It is now a valid
+                // red-black tree.
+                child->setColor(DomainTreeNode<T>::BLACK);
+            } else {
+                // If node is BLACK and child is also BLACK or NULL
+                // (which is BLACK), we need to do re-balancing to make
+                // it a valid red-black tree again.
+                typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr =
+                    upper_node ? &(upper_node->down_) : &root_;
+                removeRebalance(root_ptr, child, node->getParent());
+            }
+        }
+
+        // Finally, destroy the node.
+        if (node->data_.get()) {
+            deleter(node->data_.get());
+        }
+        DomainTreeNode<T>::destroy(mem_sgmt, node);
+        --node_count_;
+
+        // If the node deletion did not cause the subtree to disappear
+        // completely, return early.
+        if (upper_node->getDown()) {
+            break;
+        }
+
+        // If the upper node is not empty, it cannot be deleted.
+        if (!upper_node->isEmpty()) {
+            break;
+        }
+
+        // If upper node is the root node (.), don't attempt to delete
+        // it. The root node must always exist.
+        if (upper_node == root_.get()) {
+            break;
+        }
+
+        // Ascend up the tree and delete the upper node.
+        node = upper_node;
+    }
 }
 
 template <typename T>
