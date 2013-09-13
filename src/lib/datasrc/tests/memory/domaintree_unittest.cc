@@ -390,7 +390,8 @@ TEST_F(DomainTreeTest, remove) {
     // This testcase checks that after node removal, the binary-search
     // tree is valid and all nodes that are supposed to exist are
     // present in the correct order. It mainly tests DomainTree as a
-    // BST, and not particularly as a red-black tree.
+    // BST, and not particularly as a red-black tree. This test checks
+    // node deletion when upper nodes have data.
 
     // Delete single nodes and check if the rest of the nodes exist
     for (int j = 0; j < ordered_names_count; ++j) {
@@ -405,8 +406,9 @@ TEST_F(DomainTreeTest, remove) {
         for (int i = 0; i < ordered_names_count; ++i) {
             EXPECT_EQ(TestDomainTree::EXACTMATCH,
                       tree.find(Name(ordered_names[i]), &node));
-            EXPECT_EQ(static_cast<int*>(NULL),
-                      node->setData(new int(i)));
+            // Check nodes are not empty.
+            EXPECT_EQ(static_cast<int*>(NULL), node->setData(new int(i)));
+            EXPECT_FALSE(node->isEmpty());
         }
 
         // Now, delete the j'th node from the tree.
@@ -440,6 +442,7 @@ TEST_F(DomainTreeTest, remove) {
         for (int i = start_node; i < ordered_names_count; ++i) {
             const Name nj(ordered_names[j]);
             const Name ni(ordered_names[i]);
+
             if (ni == nj) {
                 // This may be true for the last node if we seek ahead
                 // in the loop using nextNode() below.
@@ -461,6 +464,10 @@ TEST_F(DomainTreeTest, remove) {
             if (data) {
                  EXPECT_EQ(i, *data);
             }
+
+            uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH];
+            const LabelSequence ls(cnode->getAbsoluteLabels(buf));
+            EXPECT_EQ(LabelSequence(ni), ls);
 
             cnode = tree.nextNode(node_path);
         }
