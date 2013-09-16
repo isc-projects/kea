@@ -358,6 +358,12 @@ private:
     // field for the real number of RRSIGs.  It's 2^3 - 1 = 7.
     static const size_t MANY_RRSIG_COUNT = (1 << 3) - 1;
 
+    // Common code for packing the result in create and subtract.
+    static RdataSet* packSet(util::MemorySegment& mem_sgmt,
+                             RdataEncoder& encoder, size_t rdata_count,
+                             size_t rrsig_count, const dns::RRType& rrtype,
+                             const dns::RRTTL& rrttl);
+
 public:
     /// \brief Return the bare pointer to the next node.
     ///

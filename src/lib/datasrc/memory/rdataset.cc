@@ -115,6 +115,25 @@ sanityChecks(const ConstRRsetPtr& rrset, const ConstRRsetPtr &sig_rrset,
 } // Anonymous namespace
 
 RdataSet*
+RdataSet::packSet(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
+                  size_t rdata_count, size_t rrsig_count, const RRType& rrtype,
+                  const RRTTL& rrttl)
+{
+    const size_t ext_rrsig_count_len =
+        rrsig_count >= MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
+    const size_t data_len = encoder.getStorageLength();
+    void* p = mem_sgmt.allocate(sizeof(RdataSet) + ext_rrsig_count_len +
+                                data_len);
+    RdataSet* rdataset = new(p) RdataSet(rrtype, rdata_count, rrsig_count,
+                                         rrttl);
+    if (rrsig_count >= RdataSet::MANY_RRSIG_COUNT) {
+        *rdataset->getExtSIGCountBuf() = rrsig_count;
+    }
+    encoder.encode(rdataset->getDataBuf(), data_len);
+    return (rdataset);
+}
+
+RdataSet*
 RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
                  ConstRRsetPtr rrset, ConstRRsetPtr sig_rrset,
                  const RdataSet* old_rdataset)
@@ -171,18 +190,8 @@ RdataSet::create(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
                   << MAX_RRSIG_COUNT);
     }
 
-    const size_t ext_rrsig_count_len =
-        rrsig_count >= MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
-    const size_t data_len = encoder.getStorageLength();
-    void* p = mem_sgmt.allocate(sizeof(RdataSet) + ext_rrsig_count_len +
-                                data_len);
-    RdataSet* rdataset = new(p) RdataSet(rrtype, rdata_count, rrsig_count,
-                                         rrttl);
-    if (rrsig_count >= MANY_RRSIG_COUNT) {
-        *rdataset->getExtSIGCountBuf() = rrsig_count;
-    }
-    encoder.encode(rdataset->getDataBuf(), data_len);
-    return (rdataset);
+    return (packSet(mem_sgmt, encoder, rdata_count, rrsig_count, rrtype,
+                    rrttl));
 }
 
 namespace {
@@ -272,20 +281,8 @@ RdataSet::subtract(util::MemorySegment& mem_sgmt, RdataEncoder& encoder,
     if (rdata_count == 0 && rrsig_count == 0) {
         return (NULL); // It is left empty
     }
-    // Construct the result
-    const size_t ext_rrsig_count_len =
-        rrsig_count >= MANY_RRSIG_COUNT ? sizeof(uint16_t) : 0;
-    const size_t data_len = encoder.getStorageLength();
-    void* p = mem_sgmt.allocate(sizeof(RdataSet) + ext_rrsig_count_len +
-                                data_len);
-    RdataSet* rdataset =
-        new(p) RdataSet(rrtype, rdata_count, rrsig_count,
-                        restoreTTL(old_rdataset.getTTLData()));
-    if (rrsig_count >= MANY_RRSIG_COUNT) {
-        *rdataset->getExtSIGCountBuf() = rrsig_count;
-    }
-    encoder.encode(rdataset->getDataBuf(), data_len);
-    return (rdataset);
+    return (packSet(mem_sgmt, encoder, rdata_count, rrsig_count, rrtype,
+                    restoreTTL(old_rdataset.getTTLData())));
 }
 
 void
