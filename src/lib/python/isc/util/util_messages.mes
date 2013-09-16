@@ -15,7 +15,7 @@
 # No namespace declaration - these constants go in the global namespace
 # of the isc.util.util_messages python module.
 
-% UNHANDLED_EXCEPTION program terminated with exception %1: %2. More info in %3
+% PYTHON_UNHANDLED_EXCEPTION program terminated with exception %1: %2. More info in %3
 A program encountered an unexpected situation and terminated because it
 didn't know how to handle it. The exact problem is logged in the
 message. This might be caused by a bug in the program, a broken
