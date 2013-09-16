@@ -102,8 +102,12 @@ isc::asiolink::IOAddress Subnet::getLastAllocated(Pool::PoolType type) const {
     }
 }
 
-void Subnet::setLastAllocated(const isc::asiolink::IOAddress& addr,
-                              Pool::PoolType type) {
+void Subnet::setLastAllocated(Pool::PoolType type,
+                              const isc::asiolink::IOAddress& addr) {
+
+    // check if the type is valid (and throw if it isn't)
+    checkType(type);
+
     switch (type) {
     case Pool::TYPE_V4:
     case Pool::TYPE_IA:
@@ -125,6 +129,12 @@ Subnet::toText() const {
     std::stringstream tmp;
     tmp << prefix_.toText() << "/" << static_cast<unsigned int>(prefix_len_);
     return (tmp.str());
+}
+
+void Subnet4::checkType(Pool::PoolType type) {
+    if (type != Pool::TYPE_V4) {
+        isc_throw(BadValue, "Only TYPE_V4 is allowed for Subnet4");
+    }
 }
 
 Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
@@ -270,6 +280,14 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Non IPv6 prefix " << prefix.toText()
                   << " specified in subnet6");
+    }
+}
+
+void Subnet6::checkType(Pool::PoolType type) {
+    if ( (type != Pool::TYPE_IA) && (type != Pool::TYPE_TA) &&
+         (type != Pool::TYPE_PD)) {
+        isc_throw(BadValue, "Invalid Pool type: " << static_cast<int>(type)
+                  << ", must be TYPE_IA, TYPE_TA or TYPE_PD for Subnet6");
     }
 }
 
