@@ -135,7 +135,8 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
             .arg(LeaseMgrFactory::instance().getName());
 
         // Instantiate allocation engine
-        alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+        alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100,
+                                            false /* false = IPv4 */));
 
         // Register hook points
         hook_index_pkt4_receive_   = Hooks.hook_index_pkt4_receive_;
