@@ -55,8 +55,10 @@ public:
     /// @brief the sole constructor
     /// @param engine_type specifies engine type (e.g. iterative)
     /// @param attempts number of lease selection attempts before giving up
-    NakedAllocEngine(AllocEngine::AllocType engine_type, unsigned int attempts)
-        :AllocEngine(engine_type, attempts) {
+    /// @param ipv6 specifies if the engine is IPv6 or IPv4
+    NakedAllocEngine(AllocEngine::AllocType engine_type,
+                     unsigned int attempts, bool ipv6 = true)
+        :AllocEngine(engine_type, attempts, ipv6) {
     }
 
     // Expose internal classes for testing purposes
@@ -607,7 +609,8 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
 // This test checks if the simple IPv4 allocation can succeed
 TEST_F(AllocEngine4Test, simpleAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
@@ -636,7 +639,8 @@ TEST_F(AllocEngine4Test, simpleAlloc4) {
 // This test checks if the fake allocation (for DISCOVER) can succeed
 TEST_F(AllocEngine4Test, fakeAlloc4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
@@ -664,7 +668,8 @@ TEST_F(AllocEngine4Test, fakeAlloc4) {
 // in pool and free) can succeed
 TEST_F(AllocEngine4Test, allocWithValidHint4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     Lease4Ptr lease = engine->allocateAddress4(subnet_, clientid_, hwaddr_,
@@ -697,7 +702,8 @@ TEST_F(AllocEngine4Test, allocWithValidHint4) {
 // in pool, but is currently used) can succeed
 TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     // Let's create a lease and put it in the LeaseMgr
@@ -745,7 +751,8 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
 // can succeed. The invalid hint should be ignored completely.
 TEST_F(AllocEngine4Test, allocBogusHint4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     // Client would like to get a 3000::abc lease, which does not belong to any
@@ -780,7 +787,8 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
 // This test checks that NULL values are handled properly
 TEST_F(AllocEngine4Test, allocateAddress4Nulls) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     // Allocations without subnet are not allowed
@@ -898,7 +906,8 @@ TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
 // This test checks if really small pools are working
 TEST_F(AllocEngine4Test, smallPool4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.17");
@@ -940,7 +949,8 @@ TEST_F(AllocEngine4Test, smallPool4) {
 // to find out a new lease fails.
 TEST_F(AllocEngine4Test, outOfAddresses4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.17");
@@ -978,7 +988,8 @@ TEST_F(AllocEngine4Test, outOfAddresses4) {
 // This test checks if an expired lease can be reused in DISCOVER (fake allocation)
 TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.15");
@@ -1045,7 +1056,8 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
 // This test checks if an expired lease can be reused in REQUEST (actual allocation)
 TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.105");
@@ -1098,7 +1110,8 @@ TEST_F(AllocEngine4Test, renewLease4) {
     boost::scoped_ptr<AllocEngine> engine;
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     IOAddress addr("192.0.2.102");
@@ -1471,7 +1484,8 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager
@@ -1534,7 +1548,8 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
 
     // Create allocation engine (hook names are registered in its ctor)
     boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                 100, false)));
     ASSERT_TRUE(engine);
 
     // Initialize Hooks Manager

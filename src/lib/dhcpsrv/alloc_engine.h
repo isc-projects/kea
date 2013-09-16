@@ -193,7 +193,8 @@ protected:
     /// @param engine_type selects allocation algorithm
     /// @param attempts number of attempts for each lease allocation before
     ///        we give up (0 means unlimited)
-    AllocEngine(AllocType engine_type, unsigned int attempts);
+    /// @param ipv6 specifies if the engine should work for IPv4 or IPv6
+    AllocEngine(AllocType engine_type, unsigned int attempts, bool ipv6 = true);
 
     /// @brief Returns IPv4 lease.
     ///
