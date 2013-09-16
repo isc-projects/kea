@@ -254,8 +254,8 @@ public:
     ///        AllocEngine::IterativeAllocator and keep the data there
     /// @param addr address/prefix to that was tried last
     /// @param type lease type to be set
-    void setLastAllocated(const isc::asiolink::IOAddress& addr,
-                          Pool::PoolType type);
+    void setLastAllocated(Pool::PoolType type,
+                          const isc::asiolink::IOAddress& addr);
 
     /// @brief returns unique ID for that subnet
     /// @return unique ID for that subnet
@@ -309,12 +309,12 @@ public:
     /// @param iface_name name of the interface
     void setIface(const std::string& iface_name);
 
-    /// @brief network interface name used to reach subnet (or "" for remote 
+    /// @brief network interface name used to reach subnet (or "" for remote
     /// subnets)
     /// @return network interface name for directly attached subnets or ""
     std::string getIface() const;
 
-    /// @brief returns textual representation of the subnet (e.g. 
+    /// @brief returns textual representation of the subnet (e.g.
     /// "2001:db8::/64")
     ///
     /// @return textual representation
@@ -343,6 +343,16 @@ protected:
         static SubnetID id = 0;
         return (id++);
     }
+
+    /// @brief Checks if used pool type is valid
+    ///
+    /// Allowed type for Subnet4 is Pool::TYPE_V4.
+    /// Allowed types for Subnet6 are Pool::TYPE_{IA,TA,PD}.
+    /// This method is implemented in derived classes.
+    ///
+    /// @param type type to be checked
+    /// @throw BadValue if invalid value is used
+    virtual void checkType(Pool::PoolType type) = 0;
 
     /// @brief Check if option is valid and can be added to a subnet.
     ///
@@ -447,6 +457,14 @@ protected:
     virtual isc::asiolink::IOAddress default_pool() const {
         return (isc::asiolink::IOAddress("0.0.0.0"));
     }
+
+    /// @brief Checks if used pool type is valid
+    ///
+    /// Allowed type for Subnet4 is Pool::TYPE_V4.
+    ///
+    /// @param type type to be checked
+    /// @throw BadValue if invalid value is used
+    virtual void checkType(Pool::PoolType type);
 };
 
 /// @brief A pointer to a Subnet4 object
@@ -510,6 +528,14 @@ protected:
     virtual isc::asiolink::IOAddress default_pool() const {
         return (isc::asiolink::IOAddress("::"));
     }
+
+    /// @brief Checks if used pool type is valid
+    ///
+    /// allowed types for Subnet6 are Pool::TYPE_{IA,TA,PD}.
+    ///
+    /// @param type type to be checked
+    /// @throw BadValue if invalid value is used
+    virtual void checkType(Pool::PoolType type);
 
     /// @brief specifies optional interface-id
     OptionPtr interface_id_;

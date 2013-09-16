@@ -117,7 +117,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
     if (it == pools.end()) {
         // ok to access first element directly. We checked that pools is non-empty
         IOAddress next = pools[0]->getFirstAddress();
-        subnet->setLastAllocated(next, lease_type_);
+        subnet->setLastAllocated(lease_type_, next);
         return (next);
     }
 
@@ -126,7 +126,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
     IOAddress next = increaseAddress(last); // basically addr++
     if ((*it)->inRange(next)) {
         // the next one is in the pool as well, so we haven't hit pool boundary yet
-        subnet->setLastAllocated(next, lease_type_);
+        subnet->setLastAllocated(lease_type_, next);
         return (next);
     }
 
@@ -136,13 +136,13 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
         // Really out of luck today. That was the last pool. Let's rewind
         // to the beginning.
         next = pools[0]->getFirstAddress();
-        subnet->setLastAllocated(next, lease_type_);
+        subnet->setLastAllocated(lease_type_, next);
         return (next);
     }
 
     // there is a next pool, let's try first address from it
     next = (*it)->getFirstAddress();
-    subnet->setLastAllocated(next, lease_type_);
+    subnet->setLastAllocated(lease_type_, next);
     return (next);
 }
 
@@ -173,17 +173,21 @@ AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
 }
 
 
-AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts)
+AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
+                         bool ipv6)
     :attempts_(attempts) {
+
+    Pool::PoolType pool_type = ipv6?Pool::TYPE_IA:Pool::TYPE_V4;
+
     switch (engine_type) {
     case ALLOC_ITERATIVE:
-        allocator_.reset(new IterativeAllocator(Pool6::TYPE_IA));
+        allocator_.reset(new IterativeAllocator(pool_type));
         break;
     case ALLOC_HASHED:
-        allocator_.reset(new HashedAllocator(Pool6::TYPE_IA));
+        allocator_.reset(new HashedAllocator(pool_type));
         break;
     case ALLOC_RANDOM:
-        allocator_.reset(new RandomAllocator(Pool6::TYPE_IA));
+        allocator_.reset(new RandomAllocator(pool_type));
         break;
 
     default:
