@@ -19,11 +19,11 @@ CPPFLAGS_SAVED="$CPPFLAGS"
 CPPFLAGS="${CPPFLAGS} $SQLITE_CFLAGS"
 AC_MSG_CHECKING([SQLite version])
 cat > conftest.c << EOF
-#include "sqlite3.h"
+#include <sqlite3.h>
 AUTOCONF_SQLITE_VERSION=SQLITE_VERSION
 EOF
 
-SQLITE_VERSION=`$CPP conftest.c | grep '^AUTOCONF_SQLITE_VERSION=' | $SED -e 's/^AUTOCONF_SQLITE_VERSION=//' -e 's/"//g' 2> /dev/null`
+SQLITE_VERSION=`$CPP $CPPFLAGS conftest.c | grep '^AUTOCONF_SQLITE_VERSION=' | $SED -e 's/^AUTOCONF_SQLITE_VERSION=//' -e 's/"//g' 2> /dev/null`
 if test -z "$SQLITE_VERSION"; then
   SQLITE_VERSION="unknown"
 fi
