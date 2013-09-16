@@ -117,7 +117,7 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
 if test "$SUNCXX" = "yes"; then
-CXX_VERSION=`$CXX-V 2> /dev/null | head -1`
+CXX_VERSION=`$CXX -V 2> /dev/null | head -1`
 CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
 MULTITHREADING_FLAG="-mt"
 fi
