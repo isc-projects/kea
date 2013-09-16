@@ -1,3 +1,9 @@
+675.    [func]      vorner
+	If there's an exception not handled in a Python BIND10 component,
+	it is now stored in a temporary file and properly logged, instead
+	of dumping to stderr.
+	(Trac #3095, git 18cf54ed89dee1dd1847053c5210f0ca220590c2)
+
 674.	[func]		tomek
 	Preparatory work for prefix delegation in LeaseMgr. getLease6()
 	renamed to getLeases6(). It now can return more than one lease.
