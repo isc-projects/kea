@@ -26,6 +26,7 @@ from bindctl import command_sets
 import pprint
 from optparse import OptionParser, OptionValueError
 import isc.util.process
+import isc.util.traceback_handler
 
 isc.util.process.rename()
 
@@ -150,7 +151,7 @@ def set_bindctl_options(parser):
                       default=None, action='store',
                       help='Directory to store the password CSV file')
 
-if __name__ == '__main__':
+def main():
     parser = OptionParser(version = VERSION)
     set_bindctl_options(parser)
     (options, args) = parser.parse_args()
@@ -161,3 +162,6 @@ if __name__ == '__main__':
     command_sets.prepare_execute_commands(tool)
     result = tool.run()
     sys.exit(result)
+
+if __name__ == '__main__':
+    isc.util.traceback_handler.traceback_handler(main)

@@ -78,6 +78,7 @@ from isc.log_messages.init_messages import *
 import isc.bind10.component
 import isc.bind10.special_component
 import isc.bind10.socket_cache
+import isc.util.traceback_handler
 import libutil_io_python
 import tempfile
 
@@ -1368,4 +1369,4 @@ def main():
     sys.exit(b10_init.exitcode)
 
 if __name__ == "__main__":
-    main()
+    isc.util.traceback_handler.traceback_handler(main)

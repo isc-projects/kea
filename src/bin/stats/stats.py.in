@@ -29,6 +29,7 @@ import select
 import isc.cc
 import isc.config
 import isc.util.process
+import isc.util.traceback_handler
 import isc.log
 from isc.log_messages.stats_messages import *
 
@@ -722,7 +723,7 @@ class Stats:
                 1, "specified arguments are incorrect: " \
                     + "owner: " + str(owner) + ", name: " + str(name))
 
-if __name__ == "__main__":
+def main():
     try:
         parser = OptionParser()
         parser.add_option(
@@ -746,3 +747,6 @@ if __name__ == "__main__":
         logger.info(STATS_STOPPED_BY_KEYBOARD)
 
     logger.info(STATS_EXITING)
+
+if __name__ == "__main__":
+    isc.util.traceback_handler.traceback_handler(main)

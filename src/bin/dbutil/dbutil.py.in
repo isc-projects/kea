@@ -58,6 +58,7 @@ sys.excepthook = my_except_hook
 import os, sqlite3, shutil
 from optparse import OptionParser
 import isc.util.process
+import isc.util.traceback_handler
 import isc.log
 from isc.log_messages.dbutil_messages import *
 
@@ -566,8 +567,10 @@ def parse_command():
     sys.exit(EXIT_COMMAND_ERROR)
 
 
-if __name__ == "__main__":
+def main():
     (options, args) = parse_command()
+
+    global logger
 
     if options.verbose:
         isc.log.init("b10-dbutil", "DEBUG", 99)
@@ -619,3 +622,6 @@ if __name__ == "__main__":
             exit_code = EXIT_UPGRADE_ERROR
 
     sys.exit(exit_code)
+
+if __name__ == "__main__":
+    isc.util.traceback_handler.traceback_handler(main)
