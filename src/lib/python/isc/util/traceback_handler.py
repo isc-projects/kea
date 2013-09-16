@@ -35,5 +35,5 @@ def traceback_handler(main):
         fd, name = tempfile.mkstemp(text=True)
         with os.fdopen(fd, 'w') as handle:
             traceback.print_exc(None, handle)
-        logger.fatal(UNHANDLED_EXCEPTION, type(e).__name__, e, name)
+        logger.fatal(PYTHON_UNHANDLED_EXCEPTION, type(e).__name__, e, name)
         sys.exit(1)
