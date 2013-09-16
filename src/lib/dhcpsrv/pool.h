@@ -77,6 +77,20 @@ public:
     /// @return true, if the address is in pool
     bool inRange(const isc::asiolink::IOAddress& addr) const;
 
+    /// @brief Returns pool type (v4, v6 non-temporary, v6 temp, v6 prefix)
+    /// @return returns pool type
+    PoolType getType() const {
+        return (type_);
+    }
+
+    /// @brief virtual destructor
+    ///
+    /// We need Pool to be a polymorphic class, so we could dynamic cast
+    /// from PoolPtr to Pool6Ptr if we need to. A class becomes polymorphic,
+    /// when there is at least one virtual method.
+    virtual ~Pool() {
+    }
+
 protected:
 
     /// @brief protected constructor
@@ -84,7 +98,12 @@ protected:
     /// This constructor is protected to prevent anyone from instantiating
     /// Pool class directly. Instances of Pool4 and Pool6 should be created
     /// instead.
-    Pool(const isc::asiolink::IOAddress& first,
+    ///
+    /// @param type type of the pool
+    /// @param first first address of a range
+    /// @param last last address of a range
+    Pool(PoolType type,
+         const isc::asiolink::IOAddress& first,
          const isc::asiolink::IOAddress& last);
 
     /// @brief returns the next unique Pool-ID
@@ -110,6 +129,9 @@ protected:
     ///
     /// @todo: This field is currently not used.
     std::string comments_;
+
+    /// @brief defines a pool type
+    PoolType type_;
 };
 
 /// @brief Pool information for IPv4 addresses
@@ -135,9 +157,6 @@ public:
 
 /// @brief a pointer an IPv4 Pool
 typedef boost::shared_ptr<Pool4> Pool4Ptr;
-
-/// @brief a container for IPv4 Pools
-typedef std::vector<Pool4Ptr> Pool4Collection;
 
 /// @brief Pool information for IPv6 addresses and prefixes
 ///
@@ -197,18 +216,12 @@ public:
     }
 
 private:
-    /// @brief defines a pool type
-    PoolType type_;
-
     /// @brief Defines prefix length (for TYPE_PD only)
     uint8_t prefix_len_;
 };
 
 /// @brief a pointer an IPv6 Pool
 typedef boost::shared_ptr<Pool6> Pool6Ptr;
-
-/// @brief a container for IPv6 Pools
-typedef std::vector<Pool6Ptr> Pool6Collection;
 
 /// @brief a pointer to either IPv4 or IPv6 Pool
 typedef boost::shared_ptr<Pool> PoolPtr;

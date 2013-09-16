@@ -1119,7 +1119,7 @@ TEST_F(AllocEngine4Test, renewLease4) {
     // renew it.
     ASSERT_FALSE(lease->expired());
     lease = engine->renewLease4(subnet_, clientid_, hwaddr_, true,
-                                true, "host.example.com.", lease, 
+                                true, "host.example.com.", lease,
                                 callout_handle, false);
     // Check that he got that single lease
     ASSERT_TRUE(lease);

@@ -21,9 +21,9 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-Pool::Pool(const isc::asiolink::IOAddress& first,
+Pool::Pool(PoolType type, const isc::asiolink::IOAddress& first,
            const isc::asiolink::IOAddress& last)
-    :id_(getNextID()), first_(first), last_(last) {
+    :id_(getNextID()), first_(first), last_(last), type_(type) {
 }
 
 bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
@@ -32,7 +32,7 @@ bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
 
 Pool4::Pool4(const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
-:Pool(first, last) {
+:Pool(Pool::TYPE_V4, first, last) {
     // check if specified address boundaries are sane
     if (!first.isV4() || !last.isV4()) {
         isc_throw(BadValue, "Invalid Pool4 address boundaries: not IPv4");
@@ -43,9 +43,8 @@ Pool4::Pool4(const isc::asiolink::IOAddress& first,
     }
 }
 
-Pool4::Pool4(const isc::asiolink::IOAddress& prefix,
-             uint8_t prefix_len)
-    :Pool(prefix, IOAddress("0.0.0.0")) {
+Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
+:Pool(Pool::TYPE_V4, prefix, IOAddress("0.0.0.0")) {
 
     // check if the prefix is sane
     if (!prefix.isV4()) {
@@ -64,11 +63,17 @@ Pool4::Pool4(const isc::asiolink::IOAddress& prefix,
 
 Pool6::Pool6(PoolType type, const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
-    :Pool(first, last), type_(type) {
+    :Pool(type, first, last) {
 
     // check if specified address boundaries are sane
     if (!first.isV6() || !last.isV6()) {
         isc_throw(BadValue, "Invalid Pool6 address boundaries: not IPv6");
+    }
+
+    if ( (type != Pool::TYPE_IA) && (type != Pool::TYPE_TA) &&
+         (type != Pool::TYPE_PD)) {
+        isc_throw(BadValue, "Invalid Pool6 type: " << static_cast<int>(type)
+                  << ", must be TYPE_IA, TYPE_TA or TYPE_PD");
     }
 
     if (last < first) {
@@ -95,8 +100,7 @@ Pool6::Pool6(PoolType type, const isc::asiolink::IOAddress& first,
 
 Pool6::Pool6(PoolType type, const isc::asiolink::IOAddress& prefix,
              uint8_t prefix_len, uint8_t delegated_len /* = 128 */)
-    :Pool(prefix, IOAddress("::")),
-     type_(type), prefix_len_(delegated_len) {
+    :Pool(type, prefix, IOAddress("::")), prefix_len_(delegated_len) {
 
     // check if the prefix is sane
     if (!prefix.isV6()) {
