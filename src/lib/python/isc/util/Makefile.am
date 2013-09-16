@@ -9,6 +9,7 @@ EXTRA_DIST = util_messages.mes
 
 CLEANFILES = $(PYTHON_LOGMSGPKG_DIR)/work/util_messages.py
 CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/util_messages.pyc
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/util_messages.pyo
 
 # Define rule to build logging source files from message file
 $(PYTHON_LOGMSGPKG_DIR)/work/util_messages.py: util_messages.mes
