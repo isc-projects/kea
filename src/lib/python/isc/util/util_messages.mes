@@ -13,7 +13,7 @@
 # PERFORMANCE OF THIS SOFTWARE.
 
 # No namespace declaration - these constants go in the global namespace
-# of the libddns_messages python module.
+# of the isc.util.util_messages python module.
 
 % UNHANDLED_EXCEPTION program terminated with exception %1: %2. More info in %3
 A program encountered an unexpected situation and terminated because it
