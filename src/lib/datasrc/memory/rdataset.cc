@@ -106,7 +106,7 @@ sanityChecks(const ConstRRsetPtr& rrset, const ConstRRsetPtr &sig_rrset,
         getCoveredType(sig_rrset->getRdataIterator()->getCurrent());
 
     if (old_rdataset && old_rdataset->type != rrtype) {
-        isc_throw(BadValue, "RR type doesn't match for merging RdataSet");
+        isc_throw(BadValue, "RR type doesn't match between RdataSets");
     }
 
     return (std::pair<RRClass, RRType>(rrclass, rrtype));
