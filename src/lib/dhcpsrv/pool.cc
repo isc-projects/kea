@@ -63,7 +63,7 @@ Pool4::Pool4( const isc::asiolink::IOAddress& prefix, uint8_t prefix_len)
 
 Pool6::Pool6(PoolType type, const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
-    :Pool(type, first, last) {
+    :Pool(type, first, last), prefix_len_(128) {
 
     // check if specified address boundaries are sane
     if (!first.isV6() || !last.isV6()) {
