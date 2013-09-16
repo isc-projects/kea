@@ -352,7 +352,7 @@ protected:
     ///
     /// @param type type to be checked
     /// @throw BadValue if invalid value is used
-    virtual void checkType(Pool::PoolType type) = 0;
+    virtual void checkType(Pool::PoolType type) const = 0;
 
     /// @brief Check if option is valid and can be added to a subnet.
     ///
@@ -464,7 +464,7 @@ protected:
     ///
     /// @param type type to be checked
     /// @throw BadValue if invalid value is used
-    virtual void checkType(Pool::PoolType type);
+    virtual void checkType(Pool::PoolType type) const;
 };
 
 /// @brief A pointer to a Subnet4 object
@@ -535,7 +535,7 @@ protected:
     ///
     /// @param type type to be checked
     /// @throw BadValue if invalid value is used
-    virtual void checkType(Pool::PoolType type);
+    virtual void checkType(Pool::PoolType type) const;
 
     /// @brief specifies optional interface-id
     OptionPtr interface_id_;

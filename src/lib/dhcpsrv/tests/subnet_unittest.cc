@@ -197,6 +197,52 @@ TEST(Subnet4Test, lastAllocated) {
     EXPECT_THROW(subnet->setLastAllocated(Pool::TYPE_PD, addr), BadValue);
 }
 
+// Checks if the V4 is the only allowed type for Pool4 and if getPool()
+// is working properly.
+TEST(Subnet4Test, PoolType) {
+
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.2.0.0"), 16, 1, 2, 3));
+
+    PoolPtr pool1(new Pool4(IOAddress("192.2.1.0"), 24));
+    PoolPtr pool2(new Pool4(IOAddress("192.2.2.0"), 24));
+    PoolPtr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:3::"), 64));
+    PoolPtr pool4(new Pool6(Pool6::TYPE_TA, IOAddress("2001:db8:1:4::"), 64));
+    PoolPtr pool5(new Pool6(Pool6::TYPE_PD, IOAddress("2001:db8:1:1::"), 64));
+
+    // There should be no pools of any type by default
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Pool::TYPE_V4));
+
+    // It should not be possible to ask for V6 pools in Subnet4
+    EXPECT_THROW(subnet->getAnyPool(Pool::TYPE_IA), BadValue);
+    EXPECT_THROW(subnet->getAnyPool(Pool::TYPE_TA), BadValue);
+    EXPECT_THROW(subnet->getAnyPool(Pool::TYPE_PD), BadValue);
+
+    // Let's add a single V4 pool and check that it can be retrieved
+    subnet->addPool(pool1);
+
+    // If there's only one IA pool, get that pool (without and with hint)
+    EXPECT_EQ(pool1, subnet->getAnyPool(Pool::TYPE_V4));
+    EXPECT_EQ(pool1, subnet->getPool(Pool::TYPE_V4, IOAddress("192.0.1.167")));
+
+    // Let's add additional V4 pool
+    subnet->addPool(pool2);
+
+    // Try without hints
+    EXPECT_EQ(pool1, subnet->getAnyPool(Pool::TYPE_V4));
+
+    // Try with valid hints
+    EXPECT_EQ(pool1, subnet->getPool(Pool::TYPE_V4, IOAddress("192.2.1.5")));
+    EXPECT_EQ(pool2, subnet->getPool(Pool::TYPE_V4, IOAddress("192.2.2.254")));
+
+    // Try with bogus hints (hints should be ingored)
+    EXPECT_EQ(pool1, subnet->getPool(Pool::TYPE_V4, IOAddress("10.1.1.1")));
+
+    // Trying to add Pool6 to Subnet4 is a big no,no!
+    EXPECT_THROW(subnet->addPool(pool3), BadValue);
+    EXPECT_THROW(subnet->addPool(pool4), BadValue);
+    EXPECT_THROW(subnet->addPool(pool5), BadValue);
+}
+
 // Tests for Subnet6
 
 TEST(Subnet6Test, constructor) {
@@ -240,7 +286,6 @@ TEST(Subnet6Test, Pool6InSubnet6) {
     PoolPtr mypool = subnet->getAnyPool(Pool::TYPE_IA);
     EXPECT_EQ(mypool, pool1);
 
-
     subnet->addPool(pool2);
     subnet->addPool(pool3);
 
@@ -254,6 +299,77 @@ TEST(Subnet6Test, Pool6InSubnet6) {
     mypool = subnet->getPool(Pool::TYPE_IA, IOAddress("2001:db8:1:3::dead:beef"));
 
     EXPECT_EQ(mypool, pool3);
+}
+
+// Check if Subnet6 supports different types of pools properly.
+TEST(Subnet6Test, PoolTypes) {
+
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    PoolPtr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
+    PoolPtr pool2(new Pool6(Pool6::TYPE_TA, IOAddress("2001:db8:1:2::"), 64));
+    PoolPtr pool3(new Pool6(Pool6::TYPE_PD, IOAddress("2001:db8:1:3::"), 64));
+    PoolPtr pool4(new Pool6(Pool6::TYPE_PD, IOAddress("2001:db8:1:4::"), 64));
+
+    PoolPtr pool5(new Pool4(IOAddress("192.0.2.0"), 24));
+
+    // There should be no pools of any type by default
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Pool::TYPE_IA));
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Pool::TYPE_TA));
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Pool::TYPE_PD));
+
+    // Trying to get IPv4 pool from Subnet6 is not allowed
+    EXPECT_THROW(subnet->getAnyPool(Pool::TYPE_V4), BadValue);
+
+    // Let's add a single IA pool and check that it can be retrieved
+    subnet->addPool(pool1);
+
+    // If there's only one IA pool, get that pool
+    EXPECT_EQ(pool1, subnet->getAnyPool(Pool::TYPE_IA));
+    EXPECT_EQ(pool1, subnet->getPool(Pool::TYPE_IA, IOAddress("2001:db8:1:1::1")));
+
+    // Check if pools of different type are not returned
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Pool::TYPE_TA));
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Pool::TYPE_PD));
+
+    // We ask with good hints, but wrong types, should return nothing
+    EXPECT_EQ(PoolPtr(), subnet->getPool(Pool::TYPE_PD, IOAddress("2001:db8:1:2::1")));
+    EXPECT_EQ(PoolPtr(), subnet->getPool(Pool::TYPE_TA, IOAddress("2001:db8:1:3::1")));
+
+    // Let's add TA and PD pools
+    subnet->addPool(pool2);
+    subnet->addPool(pool3);
+
+    // Try without hints
+    EXPECT_EQ(pool1, subnet->getAnyPool(Pool::TYPE_IA));
+    EXPECT_EQ(pool2, subnet->getAnyPool(Pool::TYPE_TA));
+    EXPECT_EQ(pool3, subnet->getAnyPool(Pool::TYPE_PD));
+
+    // Try with valid hints
+    EXPECT_EQ(pool1, subnet->getPool(Pool::TYPE_IA, IOAddress("2001:db8:1:1::1")));
+    EXPECT_EQ(pool2, subnet->getPool(Pool::TYPE_TA, IOAddress("2001:db8:1:2::1")));
+    EXPECT_EQ(pool3, subnet->getPool(Pool::TYPE_PD, IOAddress("2001:db8:1:3::1")));
+
+    // Try with bogus hints (hints should be ingored)
+    EXPECT_EQ(pool1, subnet->getPool(Pool::TYPE_IA, IOAddress("2001:db8:1:7::1")));
+    EXPECT_EQ(pool2, subnet->getPool(Pool::TYPE_TA, IOAddress("2001:db8:1:7::1")));
+    EXPECT_EQ(pool3, subnet->getPool(Pool::TYPE_PD, IOAddress("2001:db8:1:7::1")));
+
+    // Let's add a second PD pool
+    subnet->addPool(pool4);
+
+    // Without hints, it should return the first pool
+    EXPECT_EQ(pool3, subnet->getAnyPool(Pool::TYPE_PD));
+
+    // With valid hint, it should return that hint
+    EXPECT_EQ(pool3, subnet->getPool(Pool::TYPE_PD, IOAddress("2001:db8:1:3::1")));
+    EXPECT_EQ(pool4, subnet->getPool(Pool::TYPE_PD, IOAddress("2001:db8:1:4::1")));
+
+    // With invalid hint, it should return the first pool
+    EXPECT_EQ(pool3, subnet->getPool(Pool::TYPE_PD, IOAddress("2001:db8::123")));
+
+    // Adding Pool4 to Subnet6 is a big no, no!
+    EXPECT_THROW(subnet->addPool(pool5), BadValue);
 }
 
 TEST(Subnet6Test, Subnet6_Pool6_checks) {
