@@ -274,14 +274,20 @@ public:
 
     /// @brief Returns a pool that specified address belongs to
     ///
+    /// If there is no pool that the address belongs to (hint is invalid), other
+    /// pool of specified type will be returned.
+    ///
+    /// @param type pool type that the pool is looked for
     /// @param addr address that the returned pool should cover (optional)
-    /// @return Pointer to found Pool4 or Pool6 (or NULL)
-    PoolPtr getPool(isc::asiolink::IOAddress addr);
+    /// @return found pool (or NULL)
+    PoolPtr getPool(Pool::PoolType type, isc::asiolink::IOAddress addr);
 
     /// @brief Returns a pool without any address specified
+    ///
+    /// @param type pool type that the pool is looked for
     /// @return returns one of the pools defined
-    PoolPtr getAnyPool() {
-        return (getPool(default_pool()));
+    PoolPtr getAnyPool(Pool::PoolType type) {
+        return (getPool(type, default_pool()));
     }
 
     /// @brief Returns the default address that will be used for pool selection
@@ -294,8 +300,9 @@ public:
     ///
     /// The reference is only valid as long as the object that returned it.
     ///
+    /// @param type lease type to be set
     /// @return a collection of all pools
-    const PoolCollection& getPools() const;
+    const PoolCollection& getPools(Pool::PoolType type) const;
 
     /// @brief sets name of the network interface for directly attached networks
     ///
@@ -348,8 +355,14 @@ protected:
     /// a Subnet4 or Subnet6.
     SubnetID id_;
 
-    /// @brief collection of pools in that list
+    /// @brief collection of IPv4 or non-temporary IPv6 pools in that subnet
     PoolCollection pools_;
+
+    /// @brief collection of IPv6 temporary address pools in that subnet
+    PoolCollection pools_ta_;
+
+    /// @brief collection of IPv6 prefix pools in that subnet
+    PoolCollection pools_pd_;
 
     /// @brief a prefix of the subnet
     isc::asiolink::IOAddress prefix_;
@@ -500,9 +513,6 @@ protected:
 
     /// @brief specifies optional interface-id
     OptionPtr interface_id_;
-
-    /// @brief collection of pools for non-temporary addresses
-    Pool6Collection pools_;
 
     /// @brief a triplet with preferred lifetime (in seconds)
     Triplet<uint32_t> preferred_;

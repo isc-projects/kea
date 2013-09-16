@@ -96,7 +96,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
     // perhaps restarting the server).
     IOAddress last = subnet->getLastAllocated(lease_type_);
 
-    const PoolCollection& pools = subnet->getPools();
+    const PoolCollection& pools = subnet->getPools(lease_type_);
 
     if (pools.empty()) {
         isc_throw(AllocFailed, "No pools defined in selected subnet");
