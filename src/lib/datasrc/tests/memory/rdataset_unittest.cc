@@ -697,4 +697,52 @@ TEST_F(RdataSetTest, varyingTTL) {
     EXPECT_EQ(RRTTL(5), restoreTTL(rdataset->getTTLData()));
     RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
 }
+
+// Creation of rdataset with bad params, with create and subtract
+TEST_F(RdataSetTest, badParams) {
+    const ConstRRsetPtr empty_rrset(new RRset(Name("www.example.com"),
+                                             RRClass::IN(), RRType::A(),
+                                             RRTTL(3600)));
+    const ConstRRsetPtr a_rrset = textToRRset("www.example.com. 3600 IN A "
+                                              "192.0.2.1");
+    const ConstRRsetPtr aaaa_rrset = textToRRset("www.example.com. 3600 IN AAAA "
+                                                 "2001:db8::1");
+    const ConstRRsetPtr sig_rrset = textToRRset("www.example.com. 3600 IN RRSIG "
+                                                "A 5 2 3600 20120814220826 "
+                                                "20120715220826 1234 "
+                                                "example.com. FAKE");
+    const ConstRRsetPtr sig_rrset_ch = textToRRset("www.example.com. 3600 CH RRSIG "
+                                                   "A 5 2 3600 20120814220826 "
+                                                   "20120715220826 1234 "
+                                                   "example.com. FAKE",
+                                                   RRClass::CH());
+    SegmentObjectHolder<RdataSet, RRClass> holder(mem_sgmt_, rrclass);
+    holder.set(RdataSet::create(mem_sgmt_, encoder_, a_rrset, sig_rrset));
+    // Empty RRset as rdata
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, empty_rrset, sig_rrset),
+                 isc::BadValue);
+    // The same for rrsig
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset, empty_rrset),
+                 isc::BadValue);
+    // Similar for subtract
+    EXPECT_THROW(RdataSet::subtract(mem_sgmt_, encoder_, empty_rrset,
+                                    sig_rrset, *holder.get()),
+                 isc::BadValue);
+    EXPECT_THROW(RdataSet::subtract(mem_sgmt_, encoder_, a_rrset, empty_rrset,
+                                    *holder.get()),
+                 isc::BadValue);
+    // Class mismatch
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset, sig_rrset_ch),
+                 isc::BadValue);
+    EXPECT_THROW(RdataSet::subtract(mem_sgmt_, encoder_, a_rrset,
+                                    sig_rrset_ch, *holder.get()),
+                 isc::BadValue);
+    // Bad rrtype
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, aaaa_rrset,
+                                  ConstRRsetPtr(), holder.get()),
+                 isc::BadValue);
+    EXPECT_THROW(RdataSet::subtract(mem_sgmt_, encoder_, aaaa_rrset,
+                                    ConstRRsetPtr(), *holder.get()),
+                 isc::BadValue);
+}
 }
