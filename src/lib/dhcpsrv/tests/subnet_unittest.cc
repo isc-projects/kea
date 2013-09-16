@@ -69,7 +69,7 @@ TEST(Subnet4Test, Pool4InSubnet4) {
     subnet->addPool(pool1);
 
     // If there's only one pool, get that pool
-    PoolPtr mypool = subnet->getAnyPool();
+    PoolPtr mypool = subnet->getAnyPool(Pool::TYPE_V4);
     EXPECT_EQ(mypool, pool1);
 
 
@@ -78,12 +78,12 @@ TEST(Subnet4Test, Pool4InSubnet4) {
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
-    mypool = subnet->getAnyPool();
+    mypool = subnet->getAnyPool(Pool::TYPE_V4);
 
     EXPECT_EQ(mypool, pool1);
 
     // If we provide a hint, we should get a pool that this hint belongs to
-    mypool = subnet->getPool(IOAddress("192.1.2.195"));
+    mypool = subnet->getPool(Pool::TYPE_V4, IOAddress("192.1.2.195"));
 
     EXPECT_EQ(mypool, pool3);
 
@@ -215,7 +215,7 @@ TEST(Subnet6Test, Pool6InSubnet6) {
     subnet->addPool(pool1);
 
     // If there's only one pool, get that pool
-    PoolPtr mypool = subnet->getAnyPool();
+    PoolPtr mypool = subnet->getAnyPool(Pool::TYPE_IA);
     EXPECT_EQ(mypool, pool1);
 
 
@@ -224,12 +224,12 @@ TEST(Subnet6Test, Pool6InSubnet6) {
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
-    mypool = subnet->getAnyPool();
+    mypool = subnet->getAnyPool(Pool::TYPE_IA);
 
     EXPECT_EQ(mypool, pool1);
 
     // If we provide a hint, we should get a pool that this hint belongs to
-    mypool = subnet->getPool(IOAddress("2001:db8:1:3::dead:beef"));
+    mypool = subnet->getPool(Pool::TYPE_IA, IOAddress("2001:db8:1:3::dead:beef"));
 
     EXPECT_EQ(mypool, pool3);
 }
