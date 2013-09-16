@@ -190,6 +190,38 @@ TEST(Pool6Test, PD) {
                                 77, 77));
 }
 
+// Checks that temporary address pools are handled properly
+TEST(Pool6Test, TA) {
+    // Note: since we defined TA pool types during PD work, we can test it
+    // now. Although the configuration to take advantage of it is not
+    // planned for now, we will support it some day.
+
+    // Let's construct 2001:db8:1::/96 temporary addresses
+    Pool6Ptr pool1;
+    EXPECT_NO_THROW(pool1.reset(new Pool6(Pool6::TYPE_TA,
+                                          IOAddress("2001:db8:1::"), 96)));
+
+    // Check that TA range can be only defined for single addresses
+    EXPECT_THROW(Pool6(Pool6::TYPE_TA, IOAddress("2001:db8:1::"), 96, 127),
+                 BadValue);
+
+    ASSERT_TRUE(pool1);
+    EXPECT_EQ(Pool6::TYPE_TA, pool1->getType());
+    EXPECT_EQ(128, pool1->getLength()); // singular addresses, not prefixes
+    EXPECT_EQ("2001:db8:1::", pool1->getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::ffff:ffff", pool1->getLastAddress().toText());
+
+    // Check that it's possible to have min-max range for TA
+    Pool6Ptr pool2;
+    EXPECT_NO_THROW(pool2.reset(new Pool6(Pool6::TYPE_TA,
+                                          IOAddress("2001:db8:1::1"),
+                                          IOAddress("2001:db8:1::f"))));
+    ASSERT_TRUE(pool2);
+    EXPECT_EQ(Pool6::TYPE_TA, pool2->getType());
+    EXPECT_EQ(128, pool2->getLength()); // singular addresses, not prefixes
+    EXPECT_EQ("2001:db8:1::1", pool2->getFirstAddress().toText());
+    EXPECT_EQ("2001:db8:1::f", pool2->getLastAddress().toText());
+}
 
 // This test creates 100 pools and verifies that their IDs are unique.
 TEST(Pool6Test, unique_id) {
