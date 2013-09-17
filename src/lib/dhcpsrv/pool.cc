@@ -114,7 +114,7 @@ Pool6::Pool6(PoolType type, const isc::asiolink::IOAddress& prefix,
 
     if (prefix_len > delegated_len) {
         isc_throw(BadValue, "Delegated length (" << static_cast<int>(delegated_len)
-                  << ") must be smaller than prefix length ("
+                  << ") must be longer than prefix length ("
                   << static_cast<int>(prefix_len) << ")");
     }
 
