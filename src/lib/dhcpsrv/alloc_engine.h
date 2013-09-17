@@ -77,10 +77,21 @@ protected:
         pickAddress(const SubnetPtr& subnet, const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) = 0;
 
+        /// @brief Default constructor.
+        ///
+        /// Specifies which type of leases this allocator will assign
+        /// @param pool_type specifies pool type (addresses, temp. addr or prefixes)
+        Allocator(Pool::PoolType pool_type)
+            :pool_type_(pool_type) {
+        }
+
         /// @brief virtual destructor
         virtual ~Allocator() {
         }
     protected:
+
+        /// @brief defines lease type allocation
+        Pool::PoolType pool_type_;
     };
 
     /// @brief Address/prefix allocator that iterates over all addresses
@@ -95,7 +106,8 @@ protected:
         /// @brief default constructor
         ///
         /// Does not do anything
-        IterativeAllocator();
+        /// @param type - specifies allocation type
+        IterativeAllocator(Pool::PoolType type);
 
         /// @brief returns the next address from pools in a subnet
         ///
@@ -123,7 +135,8 @@ protected:
     public:
 
         /// @brief default constructor (does nothing)
-        HashedAllocator();
+        /// @param type - specifies allocation type
+        HashedAllocator(Pool::PoolType type);
 
         /// @brief returns an address based on hash calculated from client's DUID.
         ///
@@ -145,7 +158,8 @@ protected:
     public:
 
         /// @brief default constructor (does nothing)
-        RandomAllocator();
+        /// @param type - specifies allocation type
+        RandomAllocator(Pool::PoolType type);
 
         /// @brief returns an random address from pool of specified subnet
         ///
@@ -180,7 +194,8 @@ protected:
     /// @param engine_type selects allocation algorithm
     /// @param attempts number of attempts for each lease allocation before
     ///        we give up (0 means unlimited)
-    AllocEngine(AllocType engine_type, unsigned int attempts);
+    /// @param ipv6 specifies if the engine should work for IPv4 or IPv6
+    AllocEngine(AllocType engine_type, unsigned int attempts, bool ipv6 = true);
 
     /// @brief Returns IPv4 lease.
     ///

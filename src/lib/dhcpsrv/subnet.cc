@@ -30,15 +30,17 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const Triplet<uint32_t>& valid_lifetime)
     :id_(getNextID()), prefix_(prefix), prefix_len_(len), t1_(t1),
      t2_(t2), valid_(valid_lifetime),
-     last_allocated_(lastAddrInPrefix(prefix, len)) {
+     last_allocated_ia_(lastAddrInPrefix(prefix, len)),
+     last_allocated_ta_(lastAddrInPrefix(prefix, len)),
+     last_allocated_pd_(lastAddrInPrefix(prefix, len)) {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
-        isc_throw(BadValue, 
+        isc_throw(BadValue,
                   "Invalid prefix length specified for subnet: " << len);
     }
 }
 
-bool 
+bool
 Subnet::inRange(const isc::asiolink::IOAddress& addr) const {
     IOAddress first = firstAddrInPrefix(prefix_, prefix_len_);
     IOAddress last = lastAddrInPrefix(prefix_, prefix_len_);
@@ -86,11 +88,56 @@ Subnet::getOptionDescriptor(const std::string& option_space,
     return (*range.first);
 }
 
-std::string 
+isc::asiolink::IOAddress Subnet::getLastAllocated(Pool::PoolType type) const {
+    // check if the type is valid (and throw if it isn't)
+    checkType(type);
+
+    switch (type) {
+    case Pool::TYPE_V4:
+    case Pool::TYPE_IA:
+        return last_allocated_ia_;
+    case Pool::TYPE_TA:
+        return last_allocated_ta_;
+    case Pool::TYPE_PD:
+        return last_allocated_pd_;
+    default:
+        isc_throw(BadValue, "Pool type " << type << " not supported");
+    }
+}
+
+void Subnet::setLastAllocated(Pool::PoolType type,
+                              const isc::asiolink::IOAddress& addr) {
+
+    // check if the type is valid (and throw if it isn't)
+    checkType(type);
+
+    switch (type) {
+    case Pool::TYPE_V4:
+    case Pool::TYPE_IA:
+        last_allocated_ia_ = addr;
+        return;
+    case Pool::TYPE_TA:
+        last_allocated_ta_ = addr;
+        return;
+    case Pool::TYPE_PD:
+        last_allocated_pd_ = addr;
+        return;
+    default:
+        isc_throw(BadValue, "Pool type " << type << " not supported");
+    }
+}
+
+std::string
 Subnet::toText() const {
     std::stringstream tmp;
     tmp << prefix_.toText() << "/" << static_cast<unsigned int>(prefix_len_);
     return (tmp.str());
+}
+
+void Subnet4::checkType(Pool::PoolType type) const {
+    if (type != Pool::TYPE_V4) {
+        isc_throw(BadValue, "Only TYPE_V4 is allowed for Subnet4");
+    }
 }
 
 Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
@@ -104,35 +151,55 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
     }
 }
 
-void 
-Subnet::addPool(const PoolPtr& pool) {
-    IOAddress first_addr = pool->getFirstAddress();
-    IOAddress last_addr = pool->getLastAddress();
+const PoolCollection& Subnet::getPools(Pool::PoolType type) const {
+    // check if the type is valid (and throw if it isn't)
+    checkType(type);
 
-    if (!inRange(first_addr) || !inRange(last_addr)) {
-        isc_throw(BadValue, "Pool (" << first_addr.toText() << "-" 
-                  << last_addr.toText()
-                  << " does not belong in this (" << prefix_.toText() << "/"
-                  << static_cast<int>(prefix_len_) << ") subnet4");
+    switch (type) {
+    case Pool::TYPE_V4:
+    case Pool::TYPE_IA:
+        return (pools_);
+    case Pool::TYPE_TA:
+        return (pools_ta_);
+    case Pool::TYPE_PD:
+        return (pools_pd_);
+    default:
+        isc_throw(BadValue, "Unsupported pool type: " << type);
     }
-
-    /// @todo: Check that pools do not overlap
-
-    pools_.push_back(pool);
 }
 
-PoolPtr Subnet::getPool(isc::asiolink::IOAddress hint) {
+PoolPtr Subnet::getPool(Pool::PoolType type, isc::asiolink::IOAddress hint) {
+    // check if the type is valid (and throw if it isn't)
+    checkType(type);
+
+    PoolCollection* pools = NULL;
+
+    switch (type) {
+    case Pool::TYPE_V4:
+    case Pool::TYPE_IA:
+        pools = &pools_;
+        break;
+    case Pool::TYPE_TA:
+        pools = &pools_ta_;
+        break;
+    case Pool::TYPE_PD:
+        pools = &pools_pd_;
+        break;
+    default:
+        isc_throw(BadValue, "Failed to select pools. Unknown pool type: "
+                  << type);
+    }
 
     PoolPtr candidate;
-    for (PoolCollection::iterator pool = pools_.begin(); 
-         pool != pools_.end(); ++pool) {
+    for (PoolCollection::const_iterator pool = pools->begin();
+         pool != pools->end(); ++pool) {
 
-        // If we won't find anything better, then let's just use the first pool
+        // if we won't find anything better, then let's just use the first pool
         if (!candidate) {
             candidate = *pool;
         }
 
-        // If the client provided a pool and there's a pool that hint is valid 
+        // if the client provided a pool and there's a pool that hint is valid
         // in, then let's use that pool
         if ((*pool)->inRange(hint)) {
             return (*pool);
@@ -141,30 +208,62 @@ PoolPtr Subnet::getPool(isc::asiolink::IOAddress hint) {
     return (candidate);
 }
 
-void 
+void
+Subnet::addPool(const PoolPtr& pool) {
+    IOAddress first_addr = pool->getFirstAddress();
+    IOAddress last_addr = pool->getLastAddress();
+
+    if (!inRange(first_addr) || !inRange(last_addr)) {
+        isc_throw(BadValue, "Pool (" << first_addr.toText() << "-"
+                  << last_addr.toText()
+                  << " does not belong in this (" << prefix_.toText() << "/"
+                  << static_cast<int>(prefix_len_) << ") subnet");
+    }
+
+    /// @todo: Check that pools do not overlap
+
+    // check if the type is valid (and throw if it isn't)
+    checkType(pool->getType());
+
+    switch (pool->getType()) {
+    case Pool::TYPE_V4:
+    case Pool::TYPE_IA:
+        pools_.push_back(pool);
+        return;
+    case Pool6::TYPE_TA:
+        pools_ta_.push_back(pool);
+        return;
+    case Pool6::TYPE_PD:
+        pools_pd_.push_back(pool);
+        return;
+    default:
+        isc_throw(BadValue, "Invalid pool type specified: "
+                  << static_cast<int>(pool->getType()));
+    }
+}
+
+void
 Subnet::setIface(const std::string& iface_name) {
     iface_ = iface_name;
 }
 
-std::string 
+std::string
 Subnet::getIface() const {
     return (iface_);
 }
 
-
-
 void
 Subnet4::validateOption(const OptionPtr& option) const {
     if (!option) {
-        isc_throw(isc::BadValue, 
+        isc_throw(isc::BadValue,
                   "option configured for subnet must not be NULL");
     } else if (option->getUniverse() != Option::V4) {
-        isc_throw(isc::BadValue, 
+        isc_throw(isc::BadValue,
                   "expected V4 option to be added to the subnet");
     }
 }
 
-bool 
+bool
 Subnet::inPool(const isc::asiolink::IOAddress& addr) const {
 
     // Let's start with checking if it even belongs to that subnet.
@@ -172,7 +271,7 @@ Subnet::inPool(const isc::asiolink::IOAddress& addr) const {
         return (false);
     }
 
-    for (PoolCollection::const_iterator pool = pools_.begin(); 
+    for (PoolCollection::const_iterator pool = pools_.begin();
          pool != pools_.end(); ++pool) {
         if ((*pool)->inRange(addr)) {
             return (true);
@@ -195,13 +294,21 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
     }
 }
 
+void Subnet6::checkType(Pool::PoolType type) const {
+    if ( (type != Pool::TYPE_IA) && (type != Pool::TYPE_TA) &&
+         (type != Pool::TYPE_PD)) {
+        isc_throw(BadValue, "Invalid Pool type: " << static_cast<int>(type)
+                  << ", must be TYPE_IA, TYPE_TA or TYPE_PD for Subnet6");
+    }
+}
+
 void
 Subnet6::validateOption(const OptionPtr& option) const {
     if (!option) {
-        isc_throw(isc::BadValue, 
+        isc_throw(isc::BadValue,
                   "option configured for subnet must not be NULL");
     } else if (option->getUniverse() != Option::V6) {
-        isc_throw(isc::BadValue, 
+        isc_throw(isc::BadValue,
                   "expected V6 option to be added to the subnet");
     }
 }

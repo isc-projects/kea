@@ -240,10 +240,9 @@ public:
     /// @todo: Define map<SubnetID, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
     ///
-    /// @return address that was last tried from this pool
-    isc::asiolink::IOAddress getLastAllocated() const {
-        return (last_allocated_);
-    }
+    /// @param type lease type to be returned
+    /// @return address/prefix that was last tried from this pool
+    isc::asiolink::IOAddress getLastAllocated(Pool::PoolType type) const;
 
     /// @brief sets the last address that was tried from this pool
     ///
@@ -253,9 +252,10 @@ public:
     ///
     /// @todo: Define map<SubnetID, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
-    void setLastAllocated(const isc::asiolink::IOAddress& addr) {
-        last_allocated_ = addr;
-    }
+    /// @param addr address/prefix to that was tried last
+    /// @param type lease type to be set
+    void setLastAllocated(Pool::PoolType type,
+                          const isc::asiolink::IOAddress& addr);
 
     /// @brief returns unique ID for that subnet
     /// @return unique ID for that subnet
@@ -274,14 +274,20 @@ public:
 
     /// @brief Returns a pool that specified address belongs to
     ///
+    /// If there is no pool that the address belongs to (hint is invalid), other
+    /// pool of specified type will be returned.
+    ///
+    /// @param type pool type that the pool is looked for
     /// @param addr address that the returned pool should cover (optional)
-    /// @return Pointer to found Pool4 or Pool6 (or NULL)
-    PoolPtr getPool(isc::asiolink::IOAddress addr);
+    /// @return found pool (or NULL)
+    PoolPtr getPool(Pool::PoolType type, isc::asiolink::IOAddress addr);
 
     /// @brief Returns a pool without any address specified
+    ///
+    /// @param type pool type that the pool is looked for
     /// @return returns one of the pools defined
-    PoolPtr getPool() {
-        return (getPool(default_pool()));
+    PoolPtr getAnyPool(Pool::PoolType type) {
+        return (getPool(type, default_pool()));
     }
 
     /// @brief Returns the default address that will be used for pool selection
@@ -294,22 +300,21 @@ public:
     ///
     /// The reference is only valid as long as the object that returned it.
     ///
+    /// @param type lease type to be set
     /// @return a collection of all pools
-    const PoolCollection& getPools() const {
-        return pools_;
-    }
+    const PoolCollection& getPools(Pool::PoolType type) const;
 
     /// @brief sets name of the network interface for directly attached networks
     ///
     /// @param iface_name name of the interface
     void setIface(const std::string& iface_name);
 
-    /// @brief network interface name used to reach subnet (or "" for remote 
+    /// @brief network interface name used to reach subnet (or "" for remote
     /// subnets)
     /// @return network interface name for directly attached subnets or ""
     std::string getIface() const;
 
-    /// @brief returns textual representation of the subnet (e.g. 
+    /// @brief returns textual representation of the subnet (e.g.
     /// "2001:db8::/64")
     ///
     /// @return textual representation
@@ -339,6 +344,16 @@ protected:
         return (id++);
     }
 
+    /// @brief Checks if used pool type is valid
+    ///
+    /// Allowed type for Subnet4 is Pool::TYPE_V4.
+    /// Allowed types for Subnet6 are Pool::TYPE_{IA,TA,PD}.
+    /// This method is implemented in derived classes.
+    ///
+    /// @param type type to be checked
+    /// @throw BadValue if invalid value is used
+    virtual void checkType(Pool::PoolType type) const = 0;
+
     /// @brief Check if option is valid and can be added to a subnet.
     ///
     /// @param option option to be validated.
@@ -350,8 +365,14 @@ protected:
     /// a Subnet4 or Subnet6.
     SubnetID id_;
 
-    /// @brief collection of pools in that list
+    /// @brief collection of IPv4 or non-temporary IPv6 pools in that subnet
     PoolCollection pools_;
+
+    /// @brief collection of IPv6 temporary address pools in that subnet
+    PoolCollection pools_ta_;
+
+    /// @brief collection of IPv6 prefix pools in that subnet
+    PoolCollection pools_pd_;
 
     /// @brief a prefix of the subnet
     isc::asiolink::IOAddress prefix_;
@@ -377,7 +398,17 @@ protected:
     /// removing a pool, restarting or changing allocation algorithms. For
     /// that purpose it should be only considered a help that should not be
     /// fully trusted.
-    isc::asiolink::IOAddress last_allocated_;
+    isc::asiolink::IOAddress last_allocated_ia_;
+
+    /// @brief last allocated temporary address
+    ///
+    /// See @ref last_allocated_ia_ for details.
+    isc::asiolink::IOAddress last_allocated_ta_;
+
+    /// @brief last allocated IPv6 prefix
+    ///
+    /// See @ref last_allocated_ia_ for details.
+    isc::asiolink::IOAddress last_allocated_pd_;
 
     /// @brief Name of the network interface (if connected directly)
     std::string iface_;
@@ -426,6 +457,14 @@ protected:
     virtual isc::asiolink::IOAddress default_pool() const {
         return (isc::asiolink::IOAddress("0.0.0.0"));
     }
+
+    /// @brief Checks if used pool type is valid
+    ///
+    /// Allowed type for Subnet4 is Pool::TYPE_V4.
+    ///
+    /// @param type type to be checked
+    /// @throw BadValue if invalid value is used
+    virtual void checkType(Pool::PoolType type) const;
 };
 
 /// @brief A pointer to a Subnet4 object
@@ -490,11 +529,16 @@ protected:
         return (isc::asiolink::IOAddress("::"));
     }
 
+    /// @brief Checks if used pool type is valid
+    ///
+    /// allowed types for Subnet6 are Pool::TYPE_{IA,TA,PD}.
+    ///
+    /// @param type type to be checked
+    /// @throw BadValue if invalid value is used
+    virtual void checkType(Pool::PoolType type) const;
+
     /// @brief specifies optional interface-id
     OptionPtr interface_id_;
-
-    /// @brief collection of pools in that list
-    Pool6Collection pools_;
 
     /// @brief a triplet with preferred lifetime (in seconds)
     Triplet<uint32_t> preferred_;
