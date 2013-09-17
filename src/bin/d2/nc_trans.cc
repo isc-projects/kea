@@ -81,6 +81,29 @@ NameChangeTransaction::operator()(DNSClient::Status status) {
     runModel(IO_COMPLETED_EVT);
 }
 
+void
+NameChangeTransaction::defineEvents() {
+    StateModel::defineEvents();
+    defineEvent(SELECT_SERVER_EVT, "SELECT_SERVER_EVT");
+    defineEvent(SERVER_SELECTED_EVT, "SERVER_SELECTED_EVT");
+    defineEvent(SERVER_IO_ERROR_EVT, "SERVER_IO_ERROR_EVT");
+    defineEvent(NO_MORE_SERVERS_EVT, "NO_MORE_SERVERS_EVT");
+    defineEvent(IO_COMPLETED_EVT, "IO_COMPLETED_EVT");
+    defineEvent(UPDATE_OK_EVT, "UPDATE_OK_EVT");
+    defineEvent(UPDATE_FAILED_EVT, "UPDATE_FAILED_EVT");
+}
+
+void
+NameChangeTransaction::verifyEvents() {
+    StateModel::verifyEvents();
+    getEvent(SELECT_SERVER_EVT);
+    getEvent(SERVER_SELECTED_EVT);
+    getEvent(SERVER_IO_ERROR_EVT);
+    getEvent(NO_MORE_SERVERS_EVT);
+    getEvent(IO_COMPLETED_EVT);
+    getEvent(UPDATE_OK_EVT);
+    getEvent(UPDATE_FAILED_EVT);
+}
 
 void
 NameChangeTransaction::verifyStateHandlerMap() {
@@ -229,40 +252,6 @@ NameChangeTransaction::getStateLabel(const int state) const {
 
     return (str);
 }
-
-const char*
-NameChangeTransaction::getEventLabel(const int event) const {
-    const char* str = "Unknown";
-    switch(event) {
-    case SELECT_SERVER_EVT:
-        str = "NameChangeTransaction::SELECT_SERVER_EVT";
-        break;
-    case SERVER_SELECTED_EVT:
-        str = "NameChangeTransaction::SERVER_SELECTED_EVT";
-        break;
-    case SERVER_IO_ERROR_EVT:
-        str = "NameChangeTransaction::SERVER_IO_ERROR_EVT";
-        break;
-    case NO_MORE_SERVERS_EVT:
-        str = "NameChangeTransaction::NO_MORE_SERVERS_EVT";
-        break;
-    case IO_COMPLETED_EVT:
-        str = "NameChangeTransaction::IO_COMPLETED_EVT";
-        break;
-    case UPDATE_OK_EVT:
-        str = "NameChangeTransaction::UPDATE_OK_EVT";
-        break;
-    case UPDATE_FAILED_EVT:
-        str = "NameChangeTransaction::UPDATE_FAILED_EVT";
-        break;
-    default:
-        str = StateModel::getEventLabel(event);
-        break;
-    }
-
-    return (str);
-}
-
 
 } // namespace isc::d2
 } // namespace isc

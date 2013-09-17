@@ -182,6 +182,28 @@ public:
     virtual void operator()(DNSClient::Status status);
 
 protected:
+    /// @brief Adds events defined by NameChangeTransaction to the event set. 
+    ///
+    /// This method adds the events common to NCR transaction processing to
+    /// the set of define events.  It invokes the superclass's implementation
+    /// first to maitain the hierarchical chain of event defintion.
+    /// Derivations of NameChangeTransaction must invoke its implementation 
+    /// in like fashion.
+    ///
+    /// @throw StateModelError if an event definition is invalid or a duplicate.
+    virtual void defineEvents();
+
+    /// @brief Validates the contents of the set of events.
+    ///
+    /// This method verifies that the events defined by both the superclass and
+    /// this class are defined.  As with defineEvents, this method calls the
+    /// superclass's implementation first, to verify events defined by it and
+    /// then this implementation to verify events defined by 
+    /// NameChangeTransaction.
+    ///
+    /// @throw StateModelError if an event value is undefined. 
+    virtual void verifyEvents();
+
     /// @brief Populates the map of state handlers.
     ///
     /// This method is used by derivations to construct a map of states to
@@ -403,43 +425,6 @@ public:
     /// @return Returns a const char* containing the state label or
     /// "Unknown" if the value cannot be mapped.
     virtual const char* getStateLabel(const int state) const;
-
-    /// @brief Converts a event value into a text label.
-    ///
-    /// This method supplies labels for NameChangeTransactions's predefined
-    /// events. It is declared virtual to allow derivations to embed a call to
-    /// this method within their own implementation which would define labels
-    /// for their events.  An example implementation might look like the
-    /// following:
-    /// @code
-    ///
-    /// class DerivedTrans : public NameChangeTransaction {
-    ///     :
-    ///     static const int EXAMPLE_1_EVT = NCT_EVENT_MAX + 1;
-    ///     :
-    ///     const char* getEventLabel(const int event) const {
-    ///         const char* str = "Unknown";
-    ///         switch(event) {
-    ///         case EXAMPLE_1_EVT:
-    ///             str = "DerivedTrans::EXAMPLE_1_EVT";
-    ///             break;
-    ///         :
-    ///         default:
-    ///             // Not a derived event, pass it to NameChangeTransaction's
-    ///             // method.
-    ///             str = StateModel::getEventLabel(event);
-    ///             break;
-    ///         }
-    ///
-    ///         return (str);
-    ///      }
-    ///
-    /// @endcode
-    /// @param event is the event for which a label is desired.
-    ///
-    /// @return Returns a const char* containing the event label or
-    /// "Unknown" if the value cannot be mapped.
-    virtual const char* getEventLabel(const int state) const;
 
 private:
     /// @brief The IOService which should be used to for IO processing.

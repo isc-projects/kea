@@ -154,18 +154,32 @@ public:
         }
     }
 
+    virtual void defineEvents() {
+        StateModel::defineEvents();
+        defineEvent(WORK_START_EVT, "WORK_START_EVT");
+        defineEvent(WORK_DONE_EVT , "WORK_DONE_EVT");
+        defineEvent(ALL_DONE_EVT, "ALL_DONE_EVT");
+    }
+
+    virtual void verifyEvents() {
+        StateModel::verifyEvents();
+        getEvent(WORK_START_EVT);
+        getEvent(WORK_DONE_EVT);
+        getEvent(ALL_DONE_EVT);
+    }
+
     /// @brief Initializes the state handler map.
     virtual void initStateHandlerMap() {
-        addToMap(DUMMY_ST,
+        addToStateHandlerMap(DUMMY_ST,
             boost::bind(&StateModelTest::dummyHandler, this));
 
-        addToMap(READY_ST,
+        addToStateHandlerMap(READY_ST,
             boost::bind(&StateModelTest::readyHandler, this));
 
-        addToMap(DO_WORK_ST,
+        addToStateHandlerMap(DO_WORK_ST,
             boost::bind(&StateModelTest::doWorkHandler, this));
 
-        addToMap(DONE_ST,
+        addToStateHandlerMap(DONE_ST,
             boost::bind(&StateModelTest::doneWorkHandler, this));
     }
 
@@ -205,26 +219,6 @@ public:
         return (str);
     }
 
-    const char* getEventLabel(const int event) const {
-        const char* str = "Unknown";
-        switch(event) {
-        case WORK_START_EVT:
-            str = "StateModelTest::WORK_START_EVT";
-            break;
-        case WORK_DONE_EVT:
-            str = "StateModelTest::WORK_DONE_EVT";
-            break;
-        case ALL_DONE_EVT :
-            str = "StateModelTest::ALL_DONE_EVT";
-            break;
-        default:
-            str = StateModel::getEventLabel(event);
-            break;
-        }
-
-        return (str);
-    }
-
     /// @brief Indicator of whether or not the DUMMY_ST handler has been called.
     bool dummy_called_;
 
@@ -252,8 +246,9 @@ TEST_F(StateModelTest, basicStateMapping) {
     EXPECT_THROW(getStateHandler(READY_ST), StateModelError);
 
     // Verify that we can add a handler to the map.
-    ASSERT_NO_THROW(addToMap(READY_ST, boost::bind(&StateModelTest::
-                                                   dummyHandler, this)));
+    ASSERT_NO_THROW(addToStateHandlerMap(READY_ST,
+                                         boost::bind(&StateModelTest::
+                                                     dummyHandler, this)));
 
     // Verify that we can find the handler by its state.
     StateHandler retreived_handler;
@@ -270,8 +265,9 @@ TEST_F(StateModelTest, basicStateMapping) {
     EXPECT_TRUE(getDummyCalled());
 
     // Verify that we cannot add a duplicate.
-    EXPECT_THROW(addToMap(READY_ST, boost::bind(&StateModelTest::readyHandler,
-                                                this)),
+    EXPECT_THROW(addToStateHandlerMap(READY_ST,
+                                      boost::bind(&StateModelTest::readyHandler,
+                                                  this)),
                  StateModelError);
 
     // Verify that we can still find the handler by its state.
@@ -279,13 +275,15 @@ TEST_F(StateModelTest, basicStateMapping) {
 
 
     // Verify that we cannot add a handler for NEW_ST.
-    EXPECT_THROW(addToMap(NEW_ST, boost::bind(&StateModelTest::dummyHandler,
-                                              this)),
+    EXPECT_THROW(addToStateHandlerMap(NEW_ST,
+                                      boost::bind(&StateModelTest::dummyHandler,
+                                                  this)),
                  StateModelError);
 
     // Verify that we cannot add a handler for END_ST.
-    EXPECT_THROW(addToMap(END_ST, boost::bind(&StateModelTest::dummyHandler,
-                                              this)),
+    EXPECT_THROW(addToStateHandlerMap(END_ST,
+                                      boost::bind(&StateModelTest::dummyHandler,
+                                                  this)),
                  StateModelError);
 }
 
@@ -323,18 +321,21 @@ TEST_F(StateModelTest, stateLabels) {
 /// @brief Tests the ability to decode event values into text labels.
 TEST_F(StateModelTest, eventLabels) {
     // Verify base class labels.
-    EXPECT_EQ("StateModel::NOP_EVT", getEventLabel(NOP_EVT));
-    EXPECT_EQ("StateModel::START_EVT", getEventLabel(START_EVT));
-    EXPECT_EQ("StateModel::END_EVT", getEventLabel(END_EVT));
-    EXPECT_EQ("StateModel::FAIL_EVT", getEventLabel(FAIL_EVT));
+    ASSERT_NO_THROW(defineEvents());
+    ASSERT_NO_THROW(verifyEvents());
+
+    EXPECT_EQ("NOP_EVT", std::string(getEventLabel(NOP_EVT)));
+    EXPECT_EQ("START_EVT", std::string(getEventLabel(START_EVT)));
+    EXPECT_EQ("END_EVT", std::string(getEventLabel(END_EVT)));
+    EXPECT_EQ("FAIL_EVT", std::string(getEventLabel(FAIL_EVT)));
 
     // Verify stub class labels.
-    EXPECT_EQ("StateModelTest::WORK_START_EVT", getEventLabel(WORK_START_EVT));
-    EXPECT_EQ("StateModelTest::WORK_DONE_EVT", getEventLabel(WORK_DONE_EVT));
-    EXPECT_EQ("StateModelTest::ALL_DONE_EVT", getEventLabel(ALL_DONE_EVT));
+    EXPECT_EQ("WORK_START_EVT", std::string(getEventLabel(WORK_START_EVT)));
+    EXPECT_EQ("WORK_DONE_EVT", std::string(getEventLabel(WORK_DONE_EVT)));
+    EXPECT_EQ("ALL_DONE_EVT", std::string(getEventLabel(ALL_DONE_EVT)));
 
     // Verify unknown state.
-    EXPECT_EQ("Unknown", getEventLabel(-1));
+    EXPECT_EQ(LabeledValueSet::UNDEFINED_LABEL, getEventLabel(-1));
 }
 
 /// @brief General testing of member accessors.
@@ -374,7 +375,10 @@ TEST_F(StateModelTest, stateAccessors) {
 }
 
 TEST_F(StateModelTest, eventAccessors) {
-    // Verify post-construction event values.
+    // Construct the event definitions, normally done by startModel.
+    ASSERT_NO_THROW(defineEvents());
+    ASSERT_NO_THROW(verifyEvents());
+
     EXPECT_EQ(NOP_EVT, getNextEvent());
     EXPECT_EQ(NOP_EVT, getLastEvent());
 
@@ -394,6 +398,10 @@ TEST_F(StateModelTest, eventAccessors) {
 }
 
 TEST_F(StateModelTest, transitionWithEnd) {
+    // Construct the event definitions, normally done by startModel.
+    ASSERT_NO_THROW(defineEvents());
+    ASSERT_NO_THROW(verifyEvents());
+
     // Manually init the handlers map.
     ASSERT_NO_THROW(initStateHandlerMap());
     ASSERT_NO_THROW(verifyStateHandlerMap());
@@ -418,6 +426,10 @@ TEST_F(StateModelTest, transitionWithEnd) {
 }
 
 TEST_F(StateModelTest, transitionWithAbort) {
+    // Construct the event definitions, normally done by startModel.
+    ASSERT_NO_THROW(defineEvents());
+    ASSERT_NO_THROW(verifyEvents());
+
     // Manually init the handlers map.
     ASSERT_NO_THROW(initStateHandlerMap());
     ASSERT_NO_THROW(verifyStateHandlerMap());
@@ -442,6 +454,10 @@ TEST_F(StateModelTest, transitionWithAbort) {
 }
 
 TEST_F(StateModelTest, doFlags) {
+    // Construct the event definitions, normally done by startModel.
+    ASSERT_NO_THROW(defineEvents());
+    ASSERT_NO_THROW(verifyEvents());
+
     // Manually init the handlers map.
     ASSERT_NO_THROW(initStateHandlerMap());
     ASSERT_NO_THROW(verifyStateHandlerMap());
@@ -471,6 +487,10 @@ TEST_F(StateModelTest, doFlags) {
 }
 
 TEST_F(StateModelTest, statusMethods) {
+    // Construct the event definitions, normally done by startModel.
+    ASSERT_NO_THROW(defineEvents());
+    ASSERT_NO_THROW(verifyEvents());
+
     // Manually init the handlers map.
     ASSERT_NO_THROW(initStateHandlerMap());
     ASSERT_NO_THROW(verifyStateHandlerMap());
@@ -482,8 +502,20 @@ TEST_F(StateModelTest, statusMethods) {
     EXPECT_FALSE(isModelDone());
     EXPECT_FALSE(didModelFail());
 
+    // verify that you can add to the before the model has started.
+    EXPECT_NO_THROW(addToStateHandlerMap(9998,
+                                         boost::bind(&StateModelTest::
+                                                     readyHandler, this)));
+
     // call transition to move from NEW_ST to DUMMY_ST with START_EVT
     EXPECT_NO_THROW(transition(DUMMY_ST, START_EVT));
+
+
+    // verify that you cannot add to the map once the model has started.
+    EXPECT_THROW(addToStateHandlerMap(9999,
+                                      boost::bind(&StateModelTest::readyHandler,
+                                                  this)),
+                 StateModelError);
 
     // The state and event combos set above, should show the model as
     // "running", all others should be false.
@@ -516,6 +548,10 @@ TEST_F(StateModelTest, statusMethods) {
 }
 
 TEST_F(StateModelTest, statusMethodsOnFailure) {
+    // Construct the event definitions, normally done by startModel.
+    ASSERT_NO_THROW(defineEvents());
+    ASSERT_NO_THROW(verifyEvents());
+
     // Manually init the handlers map.
     ASSERT_NO_THROW(initStateHandlerMap());
     ASSERT_NO_THROW(verifyStateHandlerMap());
@@ -535,6 +571,10 @@ TEST_F(StateModelTest, statusMethodsOnFailure) {
 }
 
 TEST_F(StateModelTest, contextStrs) {
+    // Construct the event definitions, normally done by startModel.
+    ASSERT_NO_THROW(defineEvents());
+    ASSERT_NO_THROW(verifyEvents());
+
     // Manually init the handlers map.
     ASSERT_NO_THROW(initStateHandlerMap());
     ASSERT_NO_THROW(verifyStateHandlerMap());
@@ -566,7 +606,8 @@ TEST_F(StateModelTest, invalidState) {
 
     // Now call runModel() which should not throw, but should result
     // in a failed model and a call to onModelFailure().
-    EXPECT_NO_THROW(runModel(START_EVT));
+    //EXPECT_NO_THROW(runModel(START_EVT));
+    (runModel(START_EVT));
 
     // Verify that status methods are correct: model is done but failed.
     EXPECT_FALSE(isModelNew());

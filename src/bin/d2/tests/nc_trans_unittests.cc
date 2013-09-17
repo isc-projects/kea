@@ -131,25 +131,38 @@ public:
         }
     }
 
+    virtual void defineEvents() {
+        NameChangeTransaction::defineEvents();
+        defineEvent(SEND_UPDATE_EVT, "SEND_UPDATE_EVT");
+    }
+
+    virtual void verifyEvents() {
+        NameChangeTransaction::verifyEvents();
+        getEvent(SEND_UPDATE_EVT);
+    }
+
     /// @brief Initializes the state handler map.
     void initStateHandlerMap() {
-        addToMap(READY_ST,
-            boost::bind(&NameChangeStub::readyHandler, this));
+        addToStateHandlerMap(READY_ST,
+                             boost::bind(&NameChangeStub::readyHandler, this));
 
-        addToMap(SELECTING_FWD_SERVER_ST,
-            boost::bind(&NameChangeStub::dummyHandler, this));
+        addToStateHandlerMap(SELECTING_FWD_SERVER_ST,
+                             boost::bind(&NameChangeStub::dummyHandler, this));
 
-        addToMap(SELECTING_REV_SERVER_ST,
-            boost::bind(&NameChangeStub::dummyHandler, this));
+        addToStateHandlerMap(SELECTING_REV_SERVER_ST,
+                             boost::bind(&NameChangeStub::dummyHandler, this));
 
-        addToMap(DOING_UPDATE_ST,
-            boost::bind(&NameChangeStub::doingUpdateHandler, this));
+        addToStateHandlerMap(DOING_UPDATE_ST,
+                             boost::bind(&NameChangeStub::doingUpdateHandler,
+                                         this));
 
-        addToMap(PROCESS_TRANS_OK_ST,
-            boost::bind(&NameChangeStub::processTransDoneHandler, this));
+        addToStateHandlerMap(PROCESS_TRANS_OK_ST,
+                             boost::bind(&NameChangeStub::
+                                         processTransDoneHandler, this));
 
-        addToMap(PROCESS_TRANS_FAILED_ST,
-            boost::bind(&NameChangeStub::processTransDoneHandler, this));
+        addToStateHandlerMap(PROCESS_TRANS_FAILED_ST,
+                             boost::bind(&NameChangeStub::
+                                         processTransDoneHandler, this));
     }
 
     void verifyStateHandlerMap() {
@@ -172,22 +185,6 @@ public:
 
         return (str);
     }
-
-    const char* getEventLabel(const int event) const {
-        const char* str = "Unknown";
-        switch(event) {
-        case NameChangeStub::SEND_UPDATE_EVT:
-            str = "NameChangeStub::SEND_UPDATE_EVT";
-            break;
-        default:
-            str = NameChangeTransaction::getEventLabel(event);
-            break;
-        }
-
-        return (str);
-    }
-
-
 
     // Expose the protected methods to be tested.
     using StateModel::runModel;
@@ -554,45 +551,50 @@ TEST_F(NameChangeTransactionTest, eventLabels) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
 
+    // Manually invoke event definition.
+    ASSERT_NO_THROW(name_change->defineEvents());
+    ASSERT_NO_THROW(name_change->verifyEvents());
+
     // Verify StateModel labels.
-    EXPECT_EQ("StateModel::NOP_EVT",
-              name_change->getEventLabel(StateModel::NOP_EVT));
-    EXPECT_EQ("StateModel::START_EVT",
-              name_change->getEventLabel(StateModel::START_EVT));
-    EXPECT_EQ("StateModel::END_EVT",
-              name_change->getEventLabel(StateModel::END_EVT));
-    EXPECT_EQ("StateModel::FAIL_EVT",
-              name_change->getEventLabel(StateModel::FAIL_EVT));
+    EXPECT_EQ("NOP_EVT",
+              std::string(name_change->getEventLabel(StateModel::NOP_EVT)));
+    EXPECT_EQ("START_EVT",
+              std::string(name_change->getEventLabel(StateModel::START_EVT)));
+    EXPECT_EQ("END_EVT",
+              std::string(name_change->getEventLabel(StateModel::END_EVT)));
+    EXPECT_EQ("FAIL_EVT",
+              std::string(name_change->getEventLabel(StateModel::FAIL_EVT)));
 
     // Verify NameChangeTransactionLabels
-    EXPECT_EQ("NameChangeTransaction::SELECT_SERVER_EVT",
-              name_change->getEventLabel(NameChangeTransaction::
-                                         SELECT_SERVER_EVT));
-    EXPECT_EQ("NameChangeTransaction::SERVER_SELECTED_EVT",
-              name_change->getEventLabel(NameChangeTransaction::
-                                         SERVER_SELECTED_EVT));
-    EXPECT_EQ("NameChangeTransaction::SERVER_IO_ERROR_EVT",
-              name_change->getEventLabel(NameChangeTransaction::
-                                         SERVER_IO_ERROR_EVT));
-    EXPECT_EQ("NameChangeTransaction::NO_MORE_SERVERS_EVT",
-              name_change->getEventLabel(NameChangeTransaction::
-                                         NO_MORE_SERVERS_EVT));
-    EXPECT_EQ("NameChangeTransaction::IO_COMPLETED_EVT",
-              name_change->getEventLabel(NameChangeTransaction::
-                                         IO_COMPLETED_EVT));
-    EXPECT_EQ("NameChangeTransaction::UPDATE_OK_EVT",
-              name_change->getEventLabel(NameChangeTransaction::
-                                         UPDATE_OK_EVT));
-    EXPECT_EQ("NameChangeTransaction::UPDATE_FAILED_EVT",
-              name_change->getEventLabel(NameChangeTransaction::
-                                         UPDATE_FAILED_EVT));
+    EXPECT_EQ("SELECT_SERVER_EVT",
+              std::string(name_change->getEventLabel(NameChangeTransaction::
+                                         SELECT_SERVER_EVT)));
+    EXPECT_EQ("SERVER_SELECTED_EVT",
+              std::string(name_change->getEventLabel(NameChangeTransaction::
+                                         SERVER_SELECTED_EVT)));
+    EXPECT_EQ("SERVER_IO_ERROR_EVT",
+              std::string(name_change->getEventLabel(NameChangeTransaction::
+                                         SERVER_IO_ERROR_EVT)));
+    EXPECT_EQ("NO_MORE_SERVERS_EVT",
+              std::string(name_change->getEventLabel(NameChangeTransaction::
+                                         NO_MORE_SERVERS_EVT)));
+    EXPECT_EQ("IO_COMPLETED_EVT",
+              std::string(name_change->getEventLabel(NameChangeTransaction::
+                                         IO_COMPLETED_EVT)));
+    EXPECT_EQ("UPDATE_OK_EVT",
+              std::string(name_change->getEventLabel(NameChangeTransaction::
+                                         UPDATE_OK_EVT)));
+    EXPECT_EQ("UPDATE_FAILED_EVT",
+              std::string(name_change->getEventLabel(NameChangeTransaction::
+                                         UPDATE_FAILED_EVT)));
 
     // Verify stub class labels.
-    EXPECT_EQ("NameChangeStub::SEND_UPDATE_EVT",
-              name_change->getEventLabel(NameChangeStub::SEND_UPDATE_EVT));
+    EXPECT_EQ("SEND_UPDATE_EVT",
+              std::string(name_change->getEventLabel(NameChangeStub::
+                                                     SEND_UPDATE_EVT)));
 
-    // Verify unknown state.
-    EXPECT_EQ("Unknown", name_change->getEventLabel(-1));
+    // Verify undefined event label.
+    EXPECT_EQ(LabeledValueSet::UNDEFINED_LABEL, name_change->getEventLabel(-1));
 }
 
 /// @brief Tests that the transaction will be "failed" upon model errors.
