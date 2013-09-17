@@ -102,12 +102,6 @@ public:
     ///
     /// \param buffer A buffer storing the wire format data.
     explicit RRTTL(isc::util::InputBuffer& buffer);
-    /// \brief Copy constructor.
-    ///
-    /// This constructor never throws an exception.
-    ///
-    /// \param other The RRTTL to copy from.
-    RRTTL(const RRTTL& other) : ttlval_(other.ttlval_) {}
 
     /// A separate factory of RRTTL from text.
     ///

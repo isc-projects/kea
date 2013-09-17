@@ -138,12 +138,6 @@ public:
     ///
     /// \param buffer A buffer storing the wire format data.
     explicit RRClass(isc::util::InputBuffer& buffer);
-    /// \brief Copy constructor.
-    ///
-    /// This constructor never throws an exception.
-    ///
-    /// \param other The RRClass to copy from.
-    RRClass(const RRClass& other) : classcode_(other.classcode_) {}
 
     /// A separate factory of RRClass from text.
     ///
