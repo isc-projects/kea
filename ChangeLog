@@ -1,3 +1,10 @@
+676.	[bug]		muks
+	We now also allow the short name ("hmac-md5"), along with the long
+	name ("hmac-md5.sig-alg.reg.int") that was allowed before for
+	HMAC-MD5, so that it is more conveninent to configure TSIG keys
+	using it.
+	(Trac #2762, git c543008573eba65567e9c189824322954c6dd43b)
+
 675.    [func]      vorner
 	If there's an exception not handled in a Python BIND10 component,
 	it is now stored in a temporary file and properly logged, instead
