@@ -94,9 +94,9 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
     // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
     // perhaps restarting the server).
-    IOAddress last = subnet->getLastAllocated(lease_type_);
+    IOAddress last = subnet->getLastAllocated(pool_type_);
 
-    const PoolCollection& pools = subnet->getPools(lease_type_);
+    const PoolCollection& pools = subnet->getPools(pool_type_);
 
     if (pools.empty()) {
         isc_throw(AllocFailed, "No pools defined in selected subnet");
@@ -117,7 +117,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
     if (it == pools.end()) {
         // ok to access first element directly. We checked that pools is non-empty
         IOAddress next = pools[0]->getFirstAddress();
-        subnet->setLastAllocated(lease_type_, next);
+        subnet->setLastAllocated(pool_type_, next);
         return (next);
     }
 
@@ -126,7 +126,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
     IOAddress next = increaseAddress(last); // basically addr++
     if ((*it)->inRange(next)) {
         // the next one is in the pool as well, so we haven't hit pool boundary yet
-        subnet->setLastAllocated(lease_type_, next);
+        subnet->setLastAllocated(pool_type_, next);
         return (next);
     }
 
@@ -136,13 +136,13 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
         // Really out of luck today. That was the last pool. Let's rewind
         // to the beginning.
         next = pools[0]->getFirstAddress();
-        subnet->setLastAllocated(lease_type_, next);
+        subnet->setLastAllocated(pool_type_, next);
         return (next);
     }
 
     // there is a next pool, let's try first address from it
     next = (*it)->getFirstAddress();
-    subnet->setLastAllocated(lease_type_, next);
+    subnet->setLastAllocated(pool_type_, next);
     return (next);
 }
 

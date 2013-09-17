@@ -66,24 +66,25 @@ TEST(Subnet4Test, Pool4InSubnet4) {
     PoolPtr pool2(new Pool4(IOAddress("192.1.2.128"), 26));
     PoolPtr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
 
-    subnet->addPool(pool1);
+    EXPECT_NO_THROW(subnet->addPool(pool1));
 
     // If there's only one pool, get that pool
     PoolPtr mypool = subnet->getAnyPool(Pool::TYPE_V4);
     EXPECT_EQ(mypool, pool1);
 
 
-    subnet->addPool(pool2);
-    subnet->addPool(pool3);
+    EXPECT_NO_THROW(subnet->addPool(pool2));
+    EXPECT_NO_THROW(subnet->addPool(pool3));
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
-    mypool = subnet->getAnyPool(Pool::TYPE_V4);
+    EXPECT_NO_THROW(mypool = subnet->getAnyPool(Pool::TYPE_V4));
 
     EXPECT_EQ(mypool, pool1);
 
     // If we provide a hint, we should get a pool that this hint belongs to
-    mypool = subnet->getPool(Pool::TYPE_V4, IOAddress("192.1.2.195"));
+    EXPECT_NO_THROW(mypool = subnet->getPool(Pool::TYPE_V4,
+                                             IOAddress("192.1.2.195")));
 
     EXPECT_EQ(mypool, pool3);
 
@@ -218,14 +219,14 @@ TEST(Subnet4Test, PoolType) {
     EXPECT_THROW(subnet->getAnyPool(Pool::TYPE_PD), BadValue);
 
     // Let's add a single V4 pool and check that it can be retrieved
-    subnet->addPool(pool1);
+    EXPECT_NO_THROW(subnet->addPool(pool1));
 
     // If there's only one IA pool, get that pool (without and with hint)
     EXPECT_EQ(pool1, subnet->getAnyPool(Pool::TYPE_V4));
     EXPECT_EQ(pool1, subnet->getPool(Pool::TYPE_V4, IOAddress("192.0.1.167")));
 
     // Let's add additional V4 pool
-    subnet->addPool(pool2);
+    EXPECT_NO_THROW(subnet->addPool(pool2));
 
     // Try without hints
     EXPECT_EQ(pool1, subnet->getAnyPool(Pool::TYPE_V4));
@@ -322,7 +323,7 @@ TEST(Subnet6Test, PoolTypes) {
     EXPECT_THROW(subnet->getAnyPool(Pool::TYPE_V4), BadValue);
 
     // Let's add a single IA pool and check that it can be retrieved
-    subnet->addPool(pool1);
+    EXPECT_NO_THROW(subnet->addPool(pool1));
 
     // If there's only one IA pool, get that pool
     EXPECT_EQ(pool1, subnet->getAnyPool(Pool::TYPE_IA));
@@ -337,8 +338,8 @@ TEST(Subnet6Test, PoolTypes) {
     EXPECT_EQ(PoolPtr(), subnet->getPool(Pool::TYPE_TA, IOAddress("2001:db8:1:3::1")));
 
     // Let's add TA and PD pools
-    subnet->addPool(pool2);
-    subnet->addPool(pool3);
+    EXPECT_NO_THROW(subnet->addPool(pool2));
+    EXPECT_NO_THROW(subnet->addPool(pool3));
 
     // Try without hints
     EXPECT_EQ(pool1, subnet->getAnyPool(Pool::TYPE_IA));
@@ -356,7 +357,7 @@ TEST(Subnet6Test, PoolTypes) {
     EXPECT_EQ(pool3, subnet->getPool(Pool::TYPE_PD, IOAddress("2001:db8:1:7::1")));
 
     // Let's add a second PD pool
-    subnet->addPool(pool4);
+    EXPECT_NO_THROW(subnet->addPool(pool4));
 
     // Without hints, it should return the first pool
     EXPECT_EQ(pool3, subnet->getAnyPool(Pool::TYPE_PD));
