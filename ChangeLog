@@ -1,3 +1,8 @@
+677.	[func]		tomek
+	libdhcpsrv: CfgMgr is now able to store IA, TA and PD pools in
+	Subnet6 structures.
+	(Trac #3150, git e6f0e89162bac0adae3ce3141437a282d5183162)
+
 676.	[bug]		muks
 	We now also allow the short name ("hmac-md5"), along with the long
 	name ("hmac-md5.sig-alg.reg.int") that was allowed before for
@@ -21,7 +26,7 @@
 	for IAPREFIX (Option6_IAPrefix) has been added.
 	(Trac #3145, git 3a844e85ecc3067ccd1c01841f4a61366cb278f4)
 
-672.	[func]	tmark
+672.	[func]		tmark
 	Added b10-dhcp-ddnsupdate transaction base class, NameChangeTransaction.
 	This class provides the common structure and methods to implement the state
 	models described in the DHCP_DDNS design, plus integration with DNSClient
