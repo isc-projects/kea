@@ -45,10 +45,10 @@ public:
     /// There is a new one being worked on (IA_PA, see draft-ietf-dhc-host-gen-id), but
     /// support for it is not planned for now.
     typedef enum {
-        TYPE_IA = 0,
-        TYPE_TA = 1,
-        TYPE_PD = 2,
-        TYPE_V4 = 3
+        TYPE_IA,
+        TYPE_TA,
+        TYPE_PD,
+        TYPE_V4
     }  PoolType;
 
     /// @brief returns Pool-id
@@ -184,10 +184,16 @@ public:
     /// pool 2001:db8::/56. It will be split into 256 prefixes of length /64,
     /// e.g. 2001:db8:0:1::/64, 2001:db8:0:2::/64 etc.
     ///
-    /// Obviously, prefix_len must define bigger prefix than delegated_len,
-    /// so prefix_len < delegated_len. Note that it is slightly confusing:
-    /// bigger (larger) prefix actually has smaller prefix length, e.g.
-    /// /56 is a bigger prefix than /64.
+    /// Naming convention:
+    /// A smaller prefix length yields a shorter prefix which describes a larger
+    /// set of addresses. A larger length yields a longer prefix which describes
+    /// a smaller set of addresses.
+    ///
+    /// Obviously, prefix_len must define shorter or equal prefix length than
+    /// delegated_len, so prefix_len <= delegated_len. Note that it is slightly
+    /// confusing: bigger (larger) prefix actually has smaller prefix length,
+    /// e.g. /56 is a bigger prefix than /64, but has shorter (smaller) prefix
+    /// length.
     ///
     /// @throw BadValue if delegated_len is defined for non-PD types or
     ///        when delegated_len < prefix_len

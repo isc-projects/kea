@@ -80,8 +80,9 @@ protected:
         /// @brief Default constructor.
         ///
         /// Specifies which type of leases this allocator will assign
-        Allocator(Pool::PoolType lease_type)
-            :lease_type_(lease_type) {
+        /// @param pool_type specifies pool type (addresses, temp. addr or prefixes)
+        Allocator(Pool::PoolType pool_type)
+            :pool_type_(pool_type) {
         }
 
         /// @brief virtual destructor
@@ -90,7 +91,7 @@ protected:
     protected:
 
         /// @brief defines lease type allocation
-        Pool::PoolType lease_type_;
+        Pool::PoolType pool_type_;
     };
 
     /// @brief Address/prefix allocator that iterates over all addresses
