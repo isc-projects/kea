@@ -754,7 +754,17 @@ CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
 LIBS="$LIBS $BOTAN_LIBS"
-AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
+AC_CHECK_HEADERS([botan/botan.h],,[
+if test "x$ac_header_preproc" = "xyes"; then
+  AC_MSG_ERROR([
+botan/botan.h was found but is unusable. The most common cause of this problem
+is attempting to use an updated C++ compiler with older C++ libraries, such as
+the version of Botan that comes with your distribution. If you have updated
+your C++ compiler we highly recommend that you use support libraries such as
+Boost and Botan that were compiled with the same compiler version.])
+else
+  AC_MSG_ERROR([Missing required header files.])
+fi])
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <botan/botan.h>
                           #include <botan/hash.h>
