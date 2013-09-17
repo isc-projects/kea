@@ -15,12 +15,13 @@
 #ifndef STATE_MODEL_H
 #define STATE_MODEL_H
 
-/// @file nc_trans.h This file defines the class StateModel.
+/// @file state_model.h This file defines the class StateModel.
 
 #include <asiolink/io_service.h>
 #include <exceptions/exceptions.h>
 #include <d2/d2_config.h>
 #include <d2/dns_client.h>
+#include <d2/labeled_value.h>
 #include <dhcp_ddns/ncr_msg.h>
 
 #include <boost/shared_ptr.hpp>
@@ -38,6 +39,12 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Define an Event. 
+typedef LabeledValue Event;
+
+/// @brief Define Event pointer.
+typedef LabeledValuePtr EventPtr;
+
 /// @brief Defines a pointer to an instance method for handling a state.
 typedef boost::function<void()> StateHandler;
 
@@ -50,8 +57,8 @@ typedef std::map<unsigned int, StateHandler> StateHandlerMap;
 /// of a basic finite state machine.
 ///
 /// The state model implementation used is a very basic approach. States
-/// and events are simple integer constants. Each state must have a state
-/// handler. State handlers are void methods which require no parameters.
+/// and events described by simple integer constants. Each state must have a 
+/// state handler. State handlers are void methods which require no parameters.
 /// Each model instance contains a map of states to instance method pointers
 /// to their respective state handlers.  The model tracks the following
 /// context values:
@@ -92,7 +99,7 @@ typedef std::map<unsigned int, StateHandler> StateHandlerMap;
 ///
 /// Derivations add their own states and events appropriate for their state
 /// model.  Note that NEW_ST and END_ST do not support handlers.  No work can
-/// done (events consumed) prior to starting the model nor can work be done
+/// be done (events consumed) prior to starting the model nor can work be done
 /// once the model has ended.
 ///
 /// Model execution consists of iteratively invoking the state handler
@@ -103,11 +110,11 @@ typedef std::map<unsigned int, StateHandler> StateHandlerMap;
 /// the former, the loop may be re-entered upon arrival of the external event.
 ///
 /// This loop is implemented in the runModel method.  This method accepts an
-/// event as argument which is "posts" as the next event.  It then retrieves the
+/// event as argument which it "posts" as the next event.  It then retrieves the
 /// handler for the current state from the handler map and invokes it. runModel
-/// repeats this process until it either NOP_EVT or END_EVT events are posted.
-/// In other words each invocation of runModel causes the model to be traversed
-/// from the current state until it must wait or ends .
+/// repeats this process until it either a NOP_EVT posts or the state changes
+/// to END_ST.  In other words each invocation of runModel causes the model to
+/// be traversed from the current state until it must wait or ends.
 ///
 /// Re-entering the "loop" upon the occurrence of an external event is done by
 /// invoking runModel with the appropriate event.  As before, runModel will
@@ -133,11 +140,11 @@ typedef std::map<unsigned int, StateHandler> StateHandlerMap;
 /// "done" and "failed".  There are several boolean status methods which may
 /// be used to check these conditions.
 ///
-/// To progress from from one state to the another, state handlers invoke use
-/// the method, transition.  This method accepts a state and an a event as
+/// To progress from one state to the another, state handlers invoke use
+/// the method, transition.  This method accepts a state and an event as
 /// parameters.  These values become the current state and the next event
 /// respectively.  This has the effect of entering the given state having posted
-/// the given event.  The postEvent method is may be used to post a new event
+/// the given event.  The postEvent method may be used to post a new event
 /// to the current state.
 ///
 /// Bringing the model to a normal end is done by invoking the endModel method
@@ -218,21 +225,88 @@ public:
     /// @brief Conducts a normal transition to the end of the model.
     ///
     /// This method posts an END_EVT and sets the current state to END_ST.
-    /// It is should be called by any state handler in the model from which
+    /// It should be called by any state handler in the model from which
     /// an exit leads to the model end.  In other words, if the transition
     /// out of a particular state is to the end of the model, that state's
     /// handler should call endModel.
     void endModel();
 
 protected:
+    /// @brief Populates the set of events. 
+    ///
+    /// This method is used to construct the set of valid events. Each class
+    /// within a StateModel derivation heirarchy uses this method to add any
+    /// events it defines to the set.  Each derivation's implementation must
+    /// also call it's superclass's implementation.  This allows each class 
+    /// within the heirarchy to make contributions to the set of defined 
+    /// events. Implementations use the method, defineEvent(), to add event 
+    /// definitions.  An example of the derivation's implementation follows:
+    ///
+    /// @code
+    /// void StateModelDerivation::defineEvents() {
+    ///     // Call the superclass implementation.
+    ///     StateModelDerivation::defineEvents();
+    ///
+    ///     // Add the events defined by the derivation. 
+    ///     defineEvent(SOME_CUSTOM_EVT_1, "CUSTOM_EVT_1");
+    ///     defineEvent(SOME_CUSTOM_EVT_2, "CUSTOM_EVT_2");
+    ///     :
+    /// }
+    /// @endcode
+    virtual void defineEvents();
+
+    /// @brief Adds an event value and associated label to the set of events.
+    ///
+    /// @param value is the numeric value of the event
+    /// @param label is the text label of the event used in log messages and
+    /// exceptions.
+    ///
+    /// @throw StateModelError if the model has already been started, if
+    /// the value is already defined, or if the label is null or empty.
+    void defineEvent(unsigned int value, const char* label);
+
+    /// @brief Fetches the event referred to by value.
+    ///
+    /// @param value is the numeric value of the event desired.
+    /// 
+    /// @return returns a constant pointer reference to the event if found
+    ///
+    /// @throw StateModelError if the event is not defined.
+    const EventPtr& getEvent(unsigned int value);
+
+    /// @brief Validates the contents of the set of events.
+    ///
+    /// This method is invoked immediately after the defineEvents method and 
+    /// is used to verify that all the requred events are defined.  If the 
+    /// event set is determined to be invalid this method should throw a 
+    /// StateModelError.  As with the defineEvents method, each class within
+    /// the a StateModel derivation heirarchy must supply an implementation
+    /// which calls it's superclass's implemenation as well as verifying any
+    /// events added by the derivation.  Validating an event is accomplished
+    /// by simply attempting to fetch en event by its value from the the 
+    /// event set.  An example of the derivation's implementation follows:
+    ///
+    /// @code
+    /// void StateModelDerivation::verifyEvents() {
+    ///     // Call the superclass implementation.
+    ///     StateModelDerivation::verifyEvents();
+    ///
+    ///     // Verify the events defined by the derivation. 
+    ///     events_.get(SOME_CUSTOM_EVT_1, "CUSTOM_EVT_1");
+    ///     events_.get(SOME_CUSTOM_EVT_2, "CUSTOM_EVT_2");
+    ///     :
+    /// }
+    /// @endcode
+    virtual void verifyEvents();
+
     /// @brief Populates the map of state handlers.
     ///
     /// This method is used by derivations to construct a map of states to
     /// their appropriate state handlers (bound method pointers).  It is
     /// invoked at the beginning of startModel().
     ///
-    /// Implementations should use the addToMap() method add entries to
-    /// the map.
+    /// Implementations should use the addToStateHandlerMap() method add
+    /// entries to the map.
     virtual void initStateHandlerMap() = 0;
 
     /// @brief Validates the contents of the state handler map.
@@ -243,7 +317,7 @@ protected:
     /// should throw a StateModelError.
     ///
     /// The simplest implementation would include a call to getStateHandler,
-    /// for each state the derivation supports.  For example, a implementation
+    /// for each state the derivation supports.  For example, an implementation
     /// which included three states, READY_ST, DO_WORK_ST, and DONE_ST could
     /// implement this function as follows:
     ///
@@ -263,7 +337,7 @@ protected:
     /// the given handler to the given state.  The state handler must be
     /// a bound member pointer to a handler method of derivation instance.
     /// The following code snippet shows an example derivation and call to
-    /// addToMap() within its initStateHandlerMap() method.
+    /// addToStateHandlerMap() within its initStateHandlerMap() method.
     ///
     /// @code
     /// class ExampleModel : public StateModel {
@@ -273,7 +347,7 @@ protected:
     /// }
     ///
     /// void initStateHandlerMap() {
-    ///     addToMap(READY_ST,
+    ///     addToStateHandlerMap(READY_ST,
     ///        boost::bind(&ExampleModel::readyHandler, this));
     ///     :
     ///
@@ -283,8 +357,8 @@ protected:
     /// @param handler the bound method pointer to the handler for the state
     ///
     /// @throw StateModelError if the map already contains an entry
-    /// for the given state.
-    void addToMap(unsigned int state, StateHandler handler);
+    /// for the given state, or if the model is beyond the NEW_ST.
+    void addToStateHandlerMap(unsigned int state, StateHandler handler);
 
     /// @brief Handler for fatal model execution errors.
     ///
@@ -349,9 +423,9 @@ protected:
     /// event that will be passed into the current state's handler on the next
     /// iteration of the run loop.
     ///
-    /// @param event the new value to assign to the next event.
+    /// @param the numeric event value to post as the next event.
     ///
-    /// @todo Currently there is no mechanism for validating events.
+    /// @throw StateModelError if the event is undefined 
     void postNextEvent(unsigned int event);
 
     /// @brief Checks if on entry flag is true.
@@ -469,40 +543,13 @@ public:
     /// "Unknown" if the value cannot be mapped.
     virtual const char* getStateLabel(const int state) const;
 
-    /// @brief Converts a event value into a text label.
+    /// @brief Fetches the label associated with an event value.
     ///
-    /// This method supplies labels for StateModel's predefined events. It is
-    /// declared virtual to allow derivations to embed a call to this method
-    /// within their own implementation which would define labels for its
-    /// events.  An example implementation might look like the following:
-    /// @code
-    ///
-    /// class DerivedModel : public StateModel {
-    ///     :
-    ///     static const int EXAMPLE_1_EVT = SM_EVENT_MAX + 1;
-    ///     :
-    ///     const char* getEventLabel(const int event) const {
-    ///         const char* str = "Unknown";
-    ///         switch(event) {
-    ///         case EXAMPLE_1_EVT:
-    ///             str = "DerivedModel::EXAMPLE_1_EVT";
-    ///             break;
-    ///         :
-    ///         default:
-    ///             // Not a derived event, pass it down to StateModel's method.
-    ///             str = StateModel::getEventLabel(event);
-    ///             break;
-    ///         }
-    ///
-    ///         return (str);
-    ///      }
-    ///
-    /// @endcode
-    /// @param event is the event for which a label is desired.
+    /// @param event is the numeric event value for which the label is desired.
     ///
     /// @return Returns a const char* containing the event label or
-    /// "Unknown" if the value cannot be mapped.
-    virtual const char* getEventLabel(const int state) const;
+    /// LabeledValueSet::UNDEFINED_LABEL if the value is undefined.
+    virtual const char* getEventLabel(const int event) const;
 
     /// @brief Convenience method which returns a string rendition of the
     /// current state and next event.
@@ -525,6 +572,9 @@ public:
     std::string getPrevContextStr() const;
 
 private:
+    /// @brief Contains the set of defined Events.
+    LabeledValueSet events_;
+
     /// @brief Contains a map of states to their state handlers.
     StateHandlerMap state_handlers_;
 
