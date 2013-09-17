@@ -141,13 +141,13 @@ protected:
     ///
     /// @param addr is the IPv6 prefix of the pool.
     /// @param len is the prefix length.
-    /// @param ptype is the type of IPv6 pool (Pool6::Pool6Type). Note this is
-    /// passed in as an int32_t and cast to Pool6Type to accommodate a
+    /// @param ptype is the type of IPv6 pool (Pool::PoolType). Note this is
+    /// passed in as an int32_t and cast to PoolType to accommodate a
     /// polymorphic interface.
     /// @return returns a PoolPtr to the new Pool4 object.
     PoolPtr poolMaker (IOAddress &addr, uint32_t len, int32_t ptype)
     {
-        return (PoolPtr(new Pool6(static_cast<isc::dhcp::Pool6::Pool6Type>
+        return (PoolPtr(new Pool6(static_cast<isc::dhcp::Pool::PoolType>
                                   (ptype), addr, len)));
     }
 
@@ -155,13 +155,13 @@ protected:
     ///
     /// @param min is the first IPv6 address in the pool.
     /// @param max is the last IPv6 address in the pool.
-    /// @param ptype is the type of IPv6 pool (Pool6::Pool6Type). Note this is
-    /// passed in as an int32_t and cast to Pool6Type to accommodate a
+    /// @param ptype is the type of IPv6 pool (Pool::PoolType). Note this is
+    /// passed in as an int32_t and cast to PoolType to accommodate a
     /// polymorphic interface.
     /// @return returns a PoolPtr to the new Pool4 object.
     PoolPtr poolMaker (IOAddress &min, IOAddress &max, int32_t ptype)
     {
-        return (PoolPtr(new Pool6(static_cast<isc::dhcp::Pool6::Pool6Type>
+        return (PoolPtr(new Pool6(static_cast<isc::dhcp::Pool::PoolType>
                                   (ptype), min, max)));
     }
 };

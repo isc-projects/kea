@@ -53,8 +53,8 @@ AllocEngineHooks Hooks;
 namespace isc {
 namespace dhcp {
 
-AllocEngine::IterativeAllocator::IterativeAllocator()
-    :Allocator() {
+AllocEngine::IterativeAllocator::IterativeAllocator(Pool::PoolType lease_type)
+    :Allocator(lease_type) {
 }
 
 isc::asiolink::IOAddress
@@ -94,9 +94,9 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
     // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
     // perhaps restarting the server).
-    IOAddress last = subnet->getLastAllocated();
+    IOAddress last = subnet->getLastAllocated(pool_type_);
 
-    const PoolCollection& pools = subnet->getPools();
+    const PoolCollection& pools = subnet->getPools(pool_type_);
 
     if (pools.empty()) {
         isc_throw(AllocFailed, "No pools defined in selected subnet");
@@ -117,7 +117,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
     if (it == pools.end()) {
         // ok to access first element directly. We checked that pools is non-empty
         IOAddress next = pools[0]->getFirstAddress();
-        subnet->setLastAllocated(next);
+        subnet->setLastAllocated(pool_type_, next);
         return (next);
     }
 
@@ -126,7 +126,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
     IOAddress next = increaseAddress(last); // basically addr++
     if ((*it)->inRange(next)) {
         // the next one is in the pool as well, so we haven't hit pool boundary yet
-        subnet->setLastAllocated(next);
+        subnet->setLastAllocated(pool_type_, next);
         return (next);
     }
 
@@ -136,18 +136,18 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
         // Really out of luck today. That was the last pool. Let's rewind
         // to the beginning.
         next = pools[0]->getFirstAddress();
-        subnet->setLastAllocated(next);
+        subnet->setLastAllocated(pool_type_, next);
         return (next);
     }
 
     // there is a next pool, let's try first address from it
     next = (*it)->getFirstAddress();
-    subnet->setLastAllocated(next);
+    subnet->setLastAllocated(pool_type_, next);
     return (next);
 }
 
-AllocEngine::HashedAllocator::HashedAllocator()
-    :Allocator() {
+AllocEngine::HashedAllocator::HashedAllocator(Pool::PoolType lease_type)
+    :Allocator(lease_type) {
     isc_throw(NotImplemented, "Hashed allocator is not implemented");
 }
 
@@ -159,8 +159,8 @@ AllocEngine::HashedAllocator::pickAddress(const SubnetPtr&,
     isc_throw(NotImplemented, "Hashed allocator is not implemented");
 }
 
-AllocEngine::RandomAllocator::RandomAllocator()
-    :Allocator() {
+AllocEngine::RandomAllocator::RandomAllocator(Pool::PoolType lease_type)
+    :Allocator(lease_type) {
     isc_throw(NotImplemented, "Random allocator is not implemented");
 }
 
@@ -173,17 +173,21 @@ AllocEngine::RandomAllocator::pickAddress(const SubnetPtr&,
 }
 
 
-AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts)
+AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
+                         bool ipv6)
     :attempts_(attempts) {
+
+    Pool::PoolType pool_type = ipv6?Pool::TYPE_IA:Pool::TYPE_V4;
+
     switch (engine_type) {
     case ALLOC_ITERATIVE:
-        allocator_ = boost::shared_ptr<Allocator>(new IterativeAllocator());
+        allocator_.reset(new IterativeAllocator(pool_type));
         break;
     case ALLOC_HASHED:
-        allocator_ = boost::shared_ptr<Allocator>(new HashedAllocator());
+        allocator_.reset(new HashedAllocator(pool_type));
         break;
     case ALLOC_RANDOM:
-        allocator_ = boost::shared_ptr<Allocator>(new RandomAllocator());
+        allocator_.reset(new RandomAllocator(pool_type));
         break;
 
     default:
