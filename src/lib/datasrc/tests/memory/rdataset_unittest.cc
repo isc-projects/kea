@@ -703,6 +703,9 @@ TEST_F(RdataSetTest, badParams) {
     const ConstRRsetPtr empty_rrset(new RRset(Name("www.example.com"),
                                              RRClass::IN(), RRType::A(),
                                              RRTTL(3600)));
+    const ConstRRsetPtr empty_rrsig(new RRset(Name("www.example.com"),
+                                             RRClass::IN(), RRType::RRSIG(),
+                                             RRTTL(3600)));
     const ConstRRsetPtr a_rrset = textToRRset("www.example.com. 3600 IN A "
                                               "192.0.2.1");
     const ConstRRsetPtr aaaa_rrset = textToRRset("www.example.com. 3600 IN AAAA "
@@ -722,7 +725,10 @@ TEST_F(RdataSetTest, badParams) {
     EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, empty_rrset, sig_rrset),
                  isc::BadValue);
     // The same for rrsig
-    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset, empty_rrset),
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset, empty_rrsig),
+                 isc::BadValue);
+    // Mismatched type
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, empty_rrset, a_rrset),
                  isc::BadValue);
     // Similar for subtract
     EXPECT_THROW(RdataSet::subtract(mem_sgmt_, encoder_, empty_rrset,
