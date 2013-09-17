@@ -97,6 +97,9 @@ sanityChecks(const ConstRRsetPtr& rrset, const ConstRRsetPtr &sig_rrset,
     if (sig_rrset && sig_rrset->getRdataCount() == 0) {
         isc_throw(BadValue, "Empty SIG RRset");
     }
+    if (sig_rrset && sig_rrset->getType() != RRType::RRSIG()) {
+        isc_throw(BadValue, "SIG RRset doesn't have type RRSIG");
+    }
     if (rrset && sig_rrset && rrset->getClass() != sig_rrset->getClass()) {
         isc_throw(BadValue, "RR class doesn't match between RRset and RRSIG");
     }
