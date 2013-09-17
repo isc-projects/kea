@@ -324,7 +324,11 @@ private:
                     dynamic_cast<const rdata::generic::SOA&>(*rdata).
                     getMinimum();
                 setDefaultTTL(RRTTL(ttl_val), true);
-                current_ttl_.reset(new RRTTL(*default_ttl_));
+                if (!current_ttl_) {
+                    current_ttl_.reset(new RRTTL(*default_ttl_));
+                } else {
+                    *current_ttl_ = *default_ttl_;
+                }
             } else {
                 // On catching the exception we'll try to reach EOL again,
                 // so we need to unget it now.
@@ -333,7 +337,11 @@ private:
                                         "no TTL specified; load rejected");
             }
         } else if (!explicit_ttl && default_ttl_) {
-            current_ttl_.reset(new RRTTL(*default_ttl_));
+            if (!current_ttl_) {
+                current_ttl_.reset(new RRTTL(*default_ttl_));
+            } else {
+                *current_ttl_ = *default_ttl_;
+            }
         } else if (!explicit_ttl && warn_rfc1035_ttl_) {
             // Omitted (class and) TTL values are default to the last
             // explicitly stated values (RFC 1035, Sec. 5.1).
