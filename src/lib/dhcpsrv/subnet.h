@@ -28,6 +28,7 @@
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/triplet.h>
+#include <dhcpsrv/lease.h>
 
 namespace isc {
 namespace dhcp {
@@ -45,7 +46,6 @@ namespace dhcp {
 /// to the particular subnet.
 ///
 /// @todo: Implement support for options here
-
 
 /// @brief Unique identifier for a subnet (both v4 and v6)
 typedef uint32_t SubnetID;
@@ -242,7 +242,7 @@ public:
     ///
     /// @param type lease type to be returned
     /// @return address/prefix that was last tried from this pool
-    isc::asiolink::IOAddress getLastAllocated(Pool::PoolType type) const;
+    isc::asiolink::IOAddress getLastAllocated(Lease::Type type) const;
 
     /// @brief sets the last address that was tried from this pool
     ///
@@ -254,7 +254,7 @@ public:
     ///        AllocEngine::IterativeAllocator and keep the data there
     /// @param addr address/prefix to that was tried last
     /// @param type lease type to be set
-    void setLastAllocated(Pool::PoolType type,
+    void setLastAllocated(Lease::Type type,
                           const isc::asiolink::IOAddress& addr);
 
     /// @brief returns unique ID for that subnet
@@ -280,13 +280,13 @@ public:
     /// @param type pool type that the pool is looked for
     /// @param addr address that the returned pool should cover (optional)
     /// @return found pool (or NULL)
-    PoolPtr getPool(Pool::PoolType type, isc::asiolink::IOAddress addr);
+    PoolPtr getPool(Lease::Type type, isc::asiolink::IOAddress addr);
 
     /// @brief Returns a pool without any address specified
     ///
     /// @param type pool type that the pool is looked for
     /// @return returns one of the pools defined
-    PoolPtr getAnyPool(Pool::PoolType type) {
+    PoolPtr getAnyPool(Lease::Type type) {
         return (getPool(type, default_pool()));
     }
 
@@ -302,7 +302,7 @@ public:
     ///
     /// @param type lease type to be set
     /// @return a collection of all pools
-    const PoolCollection& getPools(Pool::PoolType type) const;
+    const PoolCollection& getPools(Lease::Type type) const;
 
     /// @brief sets name of the network interface for directly attached networks
     ///
@@ -352,7 +352,7 @@ protected:
     ///
     /// @param type type to be checked
     /// @throw BadValue if invalid value is used
-    virtual void checkType(Pool::PoolType type) const = 0;
+    virtual void checkType(Lease::Type type) const = 0;
 
     /// @brief Check if option is valid and can be added to a subnet.
     ///
@@ -464,7 +464,7 @@ protected:
     ///
     /// @param type type to be checked
     /// @throw BadValue if invalid value is used
-    virtual void checkType(Pool::PoolType type) const;
+    virtual void checkType(Lease::Type type) const;
 };
 
 /// @brief A pointer to a Subnet4 object
@@ -535,7 +535,7 @@ protected:
     ///
     /// @param type type to be checked
     /// @throw BadValue if invalid value is used
-    virtual void checkType(Pool::PoolType type) const;
+    virtual void checkType(Lease::Type type) const;
 
     /// @brief specifies optional interface-id
     OptionPtr interface_id_;

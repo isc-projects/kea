@@ -42,6 +42,7 @@ libb10_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
 libb10_dhcpsrv_la_SOURCES += dhcp_config_parser.h
 libb10_dhcpsrv_la_SOURCES += dhcp_parsers.cc dhcp_parsers.h 
 libb10_dhcpsrv_la_SOURCES += key_from_key.h
+libb10_dhcpsrv_la_SOURCES += lease.cc lease.h
 libb10_dhcpsrv_la_SOURCES += lease_mgr.cc lease_mgr.h
 libb10_dhcpsrv_la_SOURCES += lease_mgr_factory.cc lease_mgr_factory.h
 libb10_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h

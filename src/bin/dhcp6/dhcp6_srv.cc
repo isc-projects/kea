@@ -1225,7 +1225,7 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // be inserted into the LeaseMgr as well.
     Lease6Collection leases = alloc_engine_->allocateAddress6(subnet, duid,
                                                               ia->getIAID(),
-                                                              hint,
+                                                              hint, Lease::TYPE_NA,
                                                               do_fwd, do_rev,
                                                               hostname,
                                                               fake_allocation,
@@ -1321,7 +1321,7 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         return (ia_rsp);
     }
 
-    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                             *duid, ia->getIAID(),
                                                             subnet->getID());
 
@@ -1585,7 +1585,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         return (ia_rsp);
     }
 
-    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                             release_addr->getAddress());
 
     if (!lease) {

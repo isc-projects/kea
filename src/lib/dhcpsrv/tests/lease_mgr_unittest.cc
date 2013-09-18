@@ -131,7 +131,7 @@ public:
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(Lease6::LeaseType /* not used yet */,
+    virtual Lease6Ptr getLease6(Lease::Type /* not used yet */,
                                 const isc::asiolink::IOAddress&) const {
         return (Lease6Ptr());
     }
@@ -142,7 +142,7 @@ public:
     /// @param iaid ignored
     ///
     /// @return whatever is set in leases6_ field
-    virtual Lease6Collection getLeases6(Lease6::LeaseType /* not used yet */,
+    virtual Lease6Collection getLeases6(Lease::Type /* not used yet */,
                                         const DUID&, uint32_t) const {
         return (leases6_);
     }
@@ -154,7 +154,7 @@ public:
     /// @param subnet_id ignored
     ///
     /// @return whatever is set in leases6_ field
-    virtual Lease6Collection getLeases6(Lease6::LeaseType /* not used yet */,
+    virtual Lease6Collection getLeases6(Lease::Type /* not used yet */,
                                         const DUID&, uint32_t, SubnetID) const {
         return (leases6_);
     }
@@ -568,7 +568,7 @@ TEST(Lease6, Lease6ConstructorDefault) {
 
     for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
         IOAddress addr(ADDRESS[i]);
-        Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr,
+        Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr,
                                duid, iaid, 100, 200, 50, 80,
                                subnet_id));
 
@@ -576,7 +576,7 @@ TEST(Lease6, Lease6ConstructorDefault) {
         EXPECT_TRUE(*lease->duid_ == *duid);
         EXPECT_TRUE(lease->iaid_ == iaid);
         EXPECT_TRUE(lease->subnet_id_ == subnet_id);
-        EXPECT_TRUE(lease->type_ == Lease6::LEASE_IA_NA);
+        EXPECT_TRUE(lease->type_ == Lease::TYPE_NA);
         EXPECT_TRUE(lease->preferred_lft_ == 100);
         EXPECT_TRUE(lease->valid_lft_ == 200);
         EXPECT_TRUE(lease->t1_ == 50);
@@ -590,7 +590,7 @@ TEST(Lease6, Lease6ConstructorDefault) {
     // Lease6 must be instantiated with a DUID, not with NULL pointer
     IOAddress addr(ADDRESS[0]);
     Lease6Ptr lease2;
-    EXPECT_THROW(lease2.reset(new Lease6(Lease6::LEASE_IA_NA, addr,
+    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
                                          DuidPtr(), iaid, 100, 200, 50, 80,
                                          subnet_id)), InvalidOperation);
 }
@@ -615,7 +615,7 @@ TEST(Lease6, Lease6ConstructorWithFQDN) {
 
     for (int i = 0; i < sizeof(ADDRESS) / sizeof(ADDRESS[0]); ++i) {
         IOAddress addr(ADDRESS[i]);
-        Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr,
+        Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr,
                                duid, iaid, 100, 200, 50, 80, subnet_id,
                                    true, true, "host.example.com."));
 
@@ -623,7 +623,7 @@ TEST(Lease6, Lease6ConstructorWithFQDN) {
         EXPECT_TRUE(*lease->duid_ == *duid);
         EXPECT_TRUE(lease->iaid_ == iaid);
         EXPECT_TRUE(lease->subnet_id_ == subnet_id);
-        EXPECT_TRUE(lease->type_ == Lease6::LEASE_IA_NA);
+        EXPECT_TRUE(lease->type_ == Lease::TYPE_NA);
         EXPECT_TRUE(lease->preferred_lft_ == 100);
         EXPECT_TRUE(lease->valid_lft_ == 200);
         EXPECT_TRUE(lease->t1_ == 50);
@@ -636,7 +636,7 @@ TEST(Lease6, Lease6ConstructorWithFQDN) {
     // Lease6 must be instantiated with a DUID, not with NULL pointer
     IOAddress addr(ADDRESS[0]);
     Lease6Ptr lease2;
-    EXPECT_THROW(lease2.reset(new Lease6(Lease6::LEASE_IA_NA, addr,
+    EXPECT_THROW(lease2.reset(new Lease6(Lease::TYPE_NA, addr,
                                          DuidPtr(), iaid, 100, 200, 50, 80,
                                          subnet_id)), InvalidOperation);
 }
@@ -657,9 +657,9 @@ TEST(Lease6, OperatorEquals) {
     SubnetID subnet_id = 8; // just another number
 
     // Check for equality.
-    Lease6 lease1(Lease6::LEASE_IA_NA, addr, duid, iaid, 100, 200, 50, 80,
+    Lease6 lease1(Lease::TYPE_NA, addr, duid, iaid, 100, 200, 50, 80,
                                subnet_id);
-    Lease6 lease2(Lease6::LEASE_IA_NA, addr, duid, iaid, 100, 200, 50, 80,
+    Lease6 lease2(Lease::TYPE_NA, addr, duid, iaid, 100, 200, 50, 80,
                                subnet_id);
 
     // cltt_ constructs with time(NULL), make sure they are always equal
@@ -677,7 +677,7 @@ TEST(Lease6, OperatorEquals) {
     EXPECT_TRUE(lease1 == lease2);  // Check that the reversion has made the
     EXPECT_FALSE(lease1 != lease2); // ... leases equal
 
-    lease1.type_ = Lease6::LEASE_IA_PD;
+    lease1.type_ = Lease::TYPE_PD;
     EXPECT_FALSE(lease1 == lease2);
     EXPECT_TRUE(lease1 != lease2);
     lease1.type_ = lease2.type_;
@@ -792,7 +792,7 @@ TEST(Lease6, Lease6Expired) {
     const DuidPtr duid(new DUID(duid_array, sizeof(duid_array)));
     const uint32_t iaid = 7;        // Just a number
     const SubnetID subnet_id = 8;   // Just another number
-    Lease6 lease(Lease6::LEASE_IA_NA, addr, duid, iaid, 100, 200, 50, 80,
+    Lease6 lease(Lease::TYPE_NA, addr, duid, iaid, 100, 200, 50, 80,
                                subnet_id);
 
     // Case 1: a second before expiration

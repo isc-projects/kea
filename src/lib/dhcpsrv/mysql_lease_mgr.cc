@@ -969,18 +969,18 @@ public:
 
         // Set the lease type in a variable of the appropriate data type, which
         // has been initialized with an arbitrary (but valid) value.
-        Lease6::LeaseType type = Lease6::LEASE_IA_NA;
+        Lease::Type type = Lease::TYPE_NA;
         switch (lease_type_) {
-            case Lease6::LEASE_IA_NA:
-                type = Lease6::LEASE_IA_NA;
+            case Lease::TYPE_NA:
+                type = Lease::TYPE_NA;
                 break;
 
-            case Lease6::LEASE_IA_TA:
-                type = Lease6::LEASE_IA_TA;
+            case Lease::TYPE_TA:
+                type = Lease::TYPE_TA;
                 break;
 
-            case Lease6::LEASE_IA_PD:
-                type = Lease6::LEASE_IA_PD;
+            case Lease::TYPE_PD:
+                type = Lease::TYPE_PD;
                 break;
 
             default:
@@ -1653,7 +1653,7 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 
 
 Lease6Ptr
-MySqlLeaseMgr::getLease6(Lease6::LeaseType lease_type,
+MySqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_ADDR6).arg(addr.toText())
@@ -1686,7 +1686,7 @@ MySqlLeaseMgr::getLease6(Lease6::LeaseType lease_type,
 
 
 Lease6Collection
-MySqlLeaseMgr::getLeases6(Lease6::LeaseType lease_type,
+MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
                           const DUID& duid, uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_IAID_DUID).arg(iaid).arg(duid.toText())
@@ -1734,7 +1734,7 @@ MySqlLeaseMgr::getLeases6(Lease6::LeaseType lease_type,
 }
 
 Lease6Collection
-MySqlLeaseMgr::getLeases6(Lease6::LeaseType lease_type,
+MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
                           const DUID& duid, uint32_t iaid,
                           SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,

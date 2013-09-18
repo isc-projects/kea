@@ -39,14 +39,14 @@ TEST(Pool4Test, constructor_first_last) {
     EXPECT_EQ(IOAddress("192.0.2.255"), pool1.getLastAddress());
 
     // This is Pool4, IPv6 addresses do not belong here
-    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::1"),
+    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("2001:db8::1"),
                        IOAddress("192.168.0.5")), BadValue);
-    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("192.168.0.2"),
+    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("192.168.0.2"),
                        IOAddress("2001:db8::1")), BadValue);
 
     // Should throw. Range should be 192.0.2.1-192.0.2.2, not
     // the other way around.
-    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("192.0.2.2"),
+    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("192.0.2.2"),
                        IOAddress("192.0.2.1")), BadValue);
 }
 
@@ -106,54 +106,54 @@ TEST(Pool4Test, unique_id) {
 TEST(Pool6Test, constructor_first_last) {
 
     // let's construct 2001:db8:1:: - 2001:db8:1::ffff:ffff:ffff:ffff pool
-    Pool6 pool1(Pool6::TYPE_IA, IOAddress("2001:db8:1::"),
+    Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8:1::"),
                 IOAddress("2001:db8:1::ffff:ffff:ffff:ffff"));
 
-    EXPECT_EQ(Pool6::TYPE_IA, pool1.getType());
+    EXPECT_EQ(Lease::TYPE_NA, pool1.getType());
     EXPECT_EQ(IOAddress("2001:db8:1::"), pool1.getFirstAddress());
     EXPECT_EQ(IOAddress("2001:db8:1::ffff:ffff:ffff:ffff"),
               pool1.getLastAddress());
 
     // This is Pool6, IPv4 addresses do not belong here
-    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::1"),
+    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("2001:db8::1"),
                        IOAddress("192.168.0.5")), BadValue);
-    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("192.168.0.2"),
+    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("192.168.0.2"),
                        IOAddress("2001:db8::1")), BadValue);
 
     // Should throw. Range should be 2001:db8::1 - 2001:db8::2, not
     // the other way around.
-    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::2"),
+    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("2001:db8::2"),
                        IOAddress("2001:db8::1")), BadValue);
 }
 
 TEST(Pool6Test, constructor_prefix_len) {
 
     // let's construct 2001:db8:1::/96 pool
-    Pool6 pool1(Pool6::TYPE_IA, IOAddress("2001:db8:1::"), 96);
+    Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 96);
 
-    EXPECT_EQ(Pool6::TYPE_IA, pool1.getType());
+    EXPECT_EQ(Lease::TYPE_NA, pool1.getType());
     EXPECT_EQ("2001:db8:1::", pool1.getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff", pool1.getLastAddress().toText());
 
     // No such thing as /130 prefix
-    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::"), 130),
+    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("2001:db8::"), 130),
                  BadValue);
 
     // /0 prefix does not make sense
-    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::"), 0),
+    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("2001:db8::"), 0),
                  BadValue);
 
     // This is Pool6, IPv4 addresses do not belong here
-    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("192.168.0.2"), 96),
+    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("192.168.0.2"), 96),
                  BadValue);
 
     // Delegated prefix length for addresses must be /128
-    EXPECT_THROW(Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1::"), 96, 125),
+    EXPECT_THROW(Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"), 96, 125),
                  BadValue);
 }
 
 TEST(Pool6Test, in_range) {
-   Pool6 pool1(Pool6::TYPE_IA, IOAddress("2001:db8:1::1"),
+   Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
                IOAddress("2001:db8:1::f"));
 
    EXPECT_FALSE(pool1.inRange(IOAddress("2001:db8:1::")));
@@ -168,25 +168,25 @@ TEST(Pool6Test, in_range) {
 TEST(Pool6Test, PD) {
 
     // Let's construct 2001:db8:1::/96 PD pool, split into /112 prefixes
-    Pool6 pool1(Pool6::TYPE_PD, IOAddress("2001:db8:1::"), 96, 112);
+    Pool6 pool1(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 96, 112);
 
-    EXPECT_EQ(Pool6::TYPE_PD, pool1.getType());
+    EXPECT_EQ(Lease::TYPE_PD, pool1.getType());
     EXPECT_EQ(112, pool1.getLength());
     EXPECT_EQ("2001:db8:1::", pool1.getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff", pool1.getLastAddress().toText());
 
     // Check that it's not possible to have min-max range for PD
-    EXPECT_THROW(Pool6 pool2(Pool6::TYPE_PD, IOAddress("2001:db8:1::1"),
+    EXPECT_THROW(Pool6 pool2(Lease::TYPE_PD, IOAddress("2001:db8:1::1"),
                              IOAddress("2001:db8:1::f")), BadValue);
 
     // Check that it's not allowed to delegate bigger prefix than the pool
     // Let's try to split /64 prefix into /56 chunks (should be impossible)
-    EXPECT_THROW(Pool6 pool3(Pool6::TYPE_PD, IOAddress("2001:db8:1::"),
+    EXPECT_THROW(Pool6 pool3(Lease::TYPE_PD, IOAddress("2001:db8:1::"),
                              64, 56), BadValue);
 
     // It should be possible to have a pool split into just a single chunk
     // Let's try to split 2001:db8:1::/77 into a single /77 delegated prefix
-    EXPECT_NO_THROW(Pool6 pool4(Pool6::TYPE_PD, IOAddress("2001:db8:1::"),
+    EXPECT_NO_THROW(Pool6 pool4(Lease::TYPE_PD, IOAddress("2001:db8:1::"),
                                 77, 77));
 }
 
@@ -198,26 +198,26 @@ TEST(Pool6Test, TA) {
 
     // Let's construct 2001:db8:1::/96 temporary addresses
     Pool6Ptr pool1;
-    EXPECT_NO_THROW(pool1.reset(new Pool6(Pool6::TYPE_TA,
+    EXPECT_NO_THROW(pool1.reset(new Pool6(Lease::TYPE_TA,
                                           IOAddress("2001:db8:1::"), 96)));
 
     // Check that TA range can be only defined for single addresses
-    EXPECT_THROW(Pool6(Pool6::TYPE_TA, IOAddress("2001:db8:1::"), 96, 127),
+    EXPECT_THROW(Pool6(Lease::TYPE_TA, IOAddress("2001:db8:1::"), 96, 127),
                  BadValue);
 
     ASSERT_TRUE(pool1);
-    EXPECT_EQ(Pool6::TYPE_TA, pool1->getType());
+    EXPECT_EQ(Lease::TYPE_TA, pool1->getType());
     EXPECT_EQ(128, pool1->getLength()); // singular addresses, not prefixes
     EXPECT_EQ("2001:db8:1::", pool1->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::ffff:ffff", pool1->getLastAddress().toText());
 
     // Check that it's possible to have min-max range for TA
     Pool6Ptr pool2;
-    EXPECT_NO_THROW(pool2.reset(new Pool6(Pool6::TYPE_TA,
+    EXPECT_NO_THROW(pool2.reset(new Pool6(Lease::TYPE_TA,
                                           IOAddress("2001:db8:1::1"),
                                           IOAddress("2001:db8:1::f"))));
     ASSERT_TRUE(pool2);
-    EXPECT_EQ(Pool6::TYPE_TA, pool2->getType());
+    EXPECT_EQ(Lease::TYPE_TA, pool2->getType());
     EXPECT_EQ(128, pool2->getLength()); // singular addresses, not prefixes
     EXPECT_EQ("2001:db8:1::1", pool2->getFirstAddress().toText());
     EXPECT_EQ("2001:db8:1::f", pool2->getLastAddress().toText());
@@ -230,7 +230,7 @@ TEST(Pool6Test, unique_id) {
     std::vector<Pool6Ptr> pools;
 
     for (int i = 0; i < num_pools; ++i) {
-        pools.push_back(Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1::"),
+        pools.push_back(Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::"),
                                            IOAddress("2001:db8:1::ffff:ffff:ffff:ffff"))));
     }
 

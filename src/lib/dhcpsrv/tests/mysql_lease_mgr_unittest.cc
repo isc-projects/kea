@@ -1137,7 +1137,7 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
 
     // Modify some fields in lease 1 (not the address) and update it.
     ++leases[1]->iaid_;
-    leases[1]->type_ = Lease6::LEASE_IA_PD;
+    leases[1]->type_ = Lease::TYPE_PD;
     leases[1]->valid_lft_ *= 2;
     leases[1]->hostname_ = "modified.hostname.v6.";
     leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
@@ -1147,26 +1147,26 @@ TEST_F(MySqlLeaseMgrTest, updateLease6) {
 
     // ... and check what is returned is what is expected.
     l_returned.reset();
-    l_returned = lmptr_->getLease6(Lease6::LEASE_IA_PD, ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(Lease::TYPE_PD, ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
     // Alter the lease again and check.
     ++leases[1]->iaid_;
-    leases[1]->type_ = Lease6::LEASE_IA_TA;
+    leases[1]->type_ = Lease::TYPE_TA;
     leases[1]->cltt_ += 6;
     leases[1]->prefixlen_ = 93;
     lmptr_->updateLease6(leases[1]);
 
     l_returned.reset();
-    l_returned = lmptr_->getLease6(Lease6::LEASE_IA_TA, ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(Lease::TYPE_TA, ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
     // Check we can do an update without changing data.
     lmptr_->updateLease6(leases[1]);
     l_returned.reset();
-    l_returned = lmptr_->getLease6(Lease6::LEASE_IA_TA, ioaddress6_[1]);
+    l_returned = lmptr_->getLease6(Lease::TYPE_TA, ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[1], l_returned);
 
