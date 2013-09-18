@@ -625,12 +625,12 @@ private:
         return (down_.get());
     }
 
-    /// \brief Helper method used in many places in code to set
-    /// parent-child links.
-    void setParentChild(DomainTreeNode<T>* oldnode,
-                        DomainTreeNode<T>* newnode,
-                        DomainTreeNodePtr* root_ptr,
-                        DomainTreeNode<T>* thisnode = NULL)
+    /// \brief Helper method used in many places in code to set parent's
+    /// child links.
+    void connectChild(DomainTreeNode<T>* oldnode,
+                      DomainTreeNode<T>* newnode,
+                      DomainTreeNodePtr* root_ptr,
+                      DomainTreeNode<T>* thisnode = NULL)
     {
         if (!thisnode) {
             thisnode = this;
@@ -698,7 +698,7 @@ private:
         setSubTreeRoot(lower_is_subtree_root);
         lower->setSubTreeRoot(this_is_subtree_root);
 
-        lower->setParentChild(this, lower, root_ptr);
+        lower->connectChild(this, lower, root_ptr);
 
         if (getParent()->getLeft() == lower) {
             getParent()->left_ = this;
@@ -2327,7 +2327,7 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
 
         // Set it as the node's parent's child, effectively removing
         // node from the tree.
-        node->setParentChild(node, child, &root_);
+        node->connectChild(node, child, &root_);
 
         // Child can be NULL here if node was a leaf.
         if (child) {
@@ -2424,7 +2424,7 @@ DomainTree<T>::nodeFission(util::MemorySegment& mem_sgmt,
 
     up_node->parent_ = node.getParent();
 
-    node.setParentChild(&node, up_node, &root_);
+    node.connectChild(&node, up_node, &root_);
 
     up_node->down_ = &node;
     node.parent_ = up_node;
