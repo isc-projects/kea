@@ -177,21 +177,42 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
                          bool ipv6)
     :attempts_(attempts) {
 
-    Lease::Type pool_type = ipv6?Lease::TYPE_NA:Lease::TYPE_V4;
+    Lease::Type basic_type = ipv6?Lease::TYPE_NA:Lease::TYPE_V4;
 
+    // Initalize normal address allocators
     switch (engine_type) {
     case ALLOC_ITERATIVE:
-        allocator_.reset(new IterativeAllocator(pool_type));
+        allocators_[basic_type] = AllocatorPtr(new IterativeAllocator(basic_type));
         break;
     case ALLOC_HASHED:
-        allocator_.reset(new HashedAllocator(pool_type));
+        allocators_[basic_type] = AllocatorPtr(new HashedAllocator(basic_type));
         break;
     case ALLOC_RANDOM:
-        allocator_.reset(new RandomAllocator(pool_type));
+        allocators_[basic_type] = AllocatorPtr(new RandomAllocator(basic_type));
         break;
-
     default:
         isc_throw(BadValue, "Invalid/unsupported allocation algorithm");
+    }
+
+    // If this is IPv6 allocation engine, initalize also temporary addrs
+    // and prefixes
+    if (ipv6) {
+        switch (engine_type) {
+        case ALLOC_ITERATIVE:
+            allocators_[Lease::TYPE_TA] = AllocatorPtr(new IterativeAllocator(Lease::TYPE_TA));
+            allocators_[Lease::TYPE_PD] = AllocatorPtr(new IterativeAllocator(Lease::TYPE_PD));
+            break;
+        case ALLOC_HASHED:
+            allocators_[Lease::TYPE_TA] = AllocatorPtr(new HashedAllocator(Lease::TYPE_TA));
+            allocators_[Lease::TYPE_PD] = AllocatorPtr(new HashedAllocator(Lease::TYPE_PD));
+            break;
+        case ALLOC_RANDOM:
+            allocators_[Lease::TYPE_TA] = AllocatorPtr(new RandomAllocator(Lease::TYPE_TA));
+            allocators_[Lease::TYPE_PD] = AllocatorPtr(new RandomAllocator(Lease::TYPE_PD));
+            break;
+        default:
+            isc_throw(BadValue, "Invalid/unsupported allocation algorithm");
+        }
     }
 
     // Register hook points
@@ -212,10 +233,11 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                               const isc::hooks::CalloutHandlePtr& callout_handle) {
 
     try {
-        // That check is not necessary. We create allocator in AllocEngine
-        // constructor
-        if (!allocator_) {
-            isc_throw(InvalidOperation, "No allocator selected");
+        AllocatorPtr allocator = getAllocator(type);
+
+        if (!allocator) {
+            isc_throw(InvalidOperation, "No allocator specified for "
+                      << Lease6::typeToText(type));
         }
 
         if (!subnet) {
@@ -296,7 +318,7 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
 
         unsigned int i = attempts_;
         do {
-            IOAddress candidate = allocator_->pickAddress(subnet, duid, hint);
+            IOAddress candidate = allocator->pickAddress(subnet, duid, hint);
 
             /// @todo: check if the address is reserved once we have host support
             /// implemented
@@ -366,9 +388,12 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
     old_lease.reset();
 
     try {
+
+        AllocatorPtr allocator = getAllocator(Lease::TYPE_V4);
+
         // Allocator is always created in AllocEngine constructor and there is
         // currently no other way to set it, so that check is not really necessary.
-        if (!allocator_) {
+        if (!allocator) {
             isc_throw(InvalidOperation, "No allocator selected");
         }
 
@@ -467,7 +492,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
 
         unsigned int i = attempts_;
         do {
-            IOAddress candidate = allocator_->pickAddress(subnet, clientid, hint);
+            IOAddress candidate = allocator->pickAddress(subnet, clientid, hint);
 
             /// @todo: check if the address is reserved once we have host support
             /// implemented
@@ -921,6 +946,16 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
             return (Lease4Ptr());
         }
     }
+}
+
+AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
+    std::map<Lease::Type, AllocatorPtr>::const_iterator alloc = allocators_.find(type);
+
+    if (alloc == allocators_.end()) {
+        isc_throw(BadValue, "No allocator initialized for pool type "
+                  << Lease::typeToText(type));
+    }
+    return (alloc->second);
 }
 
 AllocEngine::~AllocEngine() {

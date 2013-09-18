@@ -32,6 +32,8 @@ Lease::Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
 std::string
 Lease::typeToText(Lease::Type type) {
    switch (type) {
+   case Lease::TYPE_V4:
+       return string("V4");
    case Lease::TYPE_NA:
        return string("IA_NA");
    case Lease::TYPE_TA:
