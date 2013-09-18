@@ -177,7 +177,7 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
                          bool ipv6)
     :attempts_(attempts) {
 
-    Pool::PoolType pool_type = ipv6?Pool::TYPE_IA:Pool::TYPE_V4;
+    Lease::Type pool_type = ipv6?Lease::TYPE_NA:Lease::TYPE_V4;
 
     switch (engine_type) {
     case ALLOC_ITERATIVE:
