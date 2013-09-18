@@ -1,3 +1,8 @@
+678.	[func]	tmark
+	MySQL backend used by b10-dhcp6 now uses lease type as a 
+	filtering parameter in all IPv6 lease queries.
+	(Trac# 3147,  git 65b6372b783cb1361fd56efe2b3247bfdbdc47ea)
+
 677.	[func]		tomek
 	libdhcpsrv: CfgMgr is now able to store IA, TA and PD pools in
 	Subnet6 structures.
