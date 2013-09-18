@@ -16,8 +16,8 @@
 #define POOL_H
 
 #include <asiolink/io_address.h>
-
 #include <boost/shared_ptr.hpp>
+#include <dhcpsrv/lease.h>
 
 #include <vector>
 
@@ -31,25 +31,8 @@ namespace dhcp {
 class Pool {
 
 public:
-
-    /// @brief specifies Pool type
-    ///
-    /// Currently there are 3 pool types defined in DHCPv6:
-    /// - Non-temporary addresses (conveyed in IA_NA)
-    /// - Temporary addresses (conveyed in IA_TA)
-    /// - Delegated Prefixes (conveyed in IA_PD)
-    ///
-    /// The fourth one (TYPE_V4) is used in DHCPv4 use cases when getPool()
-    /// code is shared between v4 and v6 code.
-    ///
-    /// There is a new one being worked on (IA_PA, see draft-ietf-dhc-host-gen-id), but
-    /// support for it is not planned for now.
-    typedef enum {
-        TYPE_IA,
-        TYPE_TA,
-        TYPE_PD,
-        TYPE_V4
-    }  PoolType;
+    /// @note:
+    /// PoolType enum was removed. Please use Lease::Type instead
 
     /// @brief returns Pool-id
     ///
@@ -79,7 +62,7 @@ public:
 
     /// @brief Returns pool type (v4, v6 non-temporary, v6 temp, v6 prefix)
     /// @return returns pool type
-    PoolType getType() const {
+    Lease::Type getType() const {
         return (type_);
     }
 
@@ -102,7 +85,7 @@ protected:
     /// @param type type of the pool
     /// @param first first address of a range
     /// @param last last address of a range
-    Pool(PoolType type,
+    Pool(Lease::Type type,
          const isc::asiolink::IOAddress& first,
          const isc::asiolink::IOAddress& last);
 
@@ -131,7 +114,7 @@ protected:
     std::string comments_;
 
     /// @brief defines a pool type
-    PoolType type_;
+    Lease::Type type_;
 };
 
 /// @brief Pool information for IPv4 addresses
@@ -172,7 +155,7 @@ public:
     /// @param type type of the pool (IA or TA)
     /// @param first the first address in a pool
     /// @param last the last address in a pool
-    Pool6(PoolType type, const isc::asiolink::IOAddress& first,
+    Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
           const isc::asiolink::IOAddress& last);
 
     /// @brief the constructor for Pool6 "prefix/len" style definition
@@ -202,13 +185,13 @@ public:
     /// @param prefix specifies prefix of the pool
     /// @param prefix_len specifies prefix length of the pool
     /// @param delegated_len specifies lenght of the delegated prefixes
-    Pool6(PoolType type, const isc::asiolink::IOAddress& prefix,
+    Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
           uint8_t prefix_len, uint8_t delegated_len = 128);
 
     /// @brief returns pool type
     ///
     /// @return pool type
-    PoolType getType() const {
+    Lease::Type getType() const {
         return (type_);
     }
 

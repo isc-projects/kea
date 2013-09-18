@@ -81,7 +81,7 @@ protected:
         ///
         /// Specifies which type of leases this allocator will assign
         /// @param pool_type specifies pool type (addresses, temp. addr or prefixes)
-        Allocator(Pool::PoolType pool_type)
+        Allocator(Lease::Type pool_type)
             :pool_type_(pool_type) {
         }
 
@@ -90,8 +90,8 @@ protected:
         }
     protected:
 
-        /// @brief defines lease type allocation
-        Pool::PoolType pool_type_;
+        /// @brief defines pool type allocation
+        Lease::Type pool_type_;
     };
 
     /// @brief Address/prefix allocator that iterates over all addresses
@@ -107,7 +107,7 @@ protected:
         ///
         /// Does not do anything
         /// @param type - specifies allocation type
-        IterativeAllocator(Pool::PoolType type);
+        IterativeAllocator(Lease::Type type);
 
         /// @brief returns the next address from pools in a subnet
         ///
@@ -136,7 +136,7 @@ protected:
 
         /// @brief default constructor (does nothing)
         /// @param type - specifies allocation type
-        HashedAllocator(Pool::PoolType type);
+        HashedAllocator(Lease::Type type);
 
         /// @brief returns an address based on hash calculated from client's DUID.
         ///
@@ -159,7 +159,7 @@ protected:
 
         /// @brief default constructor (does nothing)
         /// @param type - specifies allocation type
-        RandomAllocator(Pool::PoolType type);
+        RandomAllocator(Lease::Type type);
 
         /// @brief returns an random address from pool of specified subnet
         ///
@@ -298,6 +298,7 @@ protected:
     /// @param duid Client's DUID
     /// @param iaid iaid field from the IA_NA container that client sent
     /// @param hint a hint that the client provided
+    /// @param type lease type (IA, TA or PD)
     /// @param fwd_dns_update A boolean value which indicates that server takes
     ///        responsibility for the forward DNS Update for this lease
     ///        (if true).
@@ -316,6 +317,7 @@ protected:
                      const DuidPtr& duid,
                      uint32_t iaid,
                      const isc::asiolink::IOAddress& hint,
+                     Lease::Type type,
                      const bool fwd_dns_update,
                      const bool rev_dns_update,
                      const std::string& hostname,
@@ -367,7 +369,8 @@ private:
     /// @param duid client's DUID
     /// @param iaid IAID from the IA_NA container the client sent to us
     /// @param addr an address that was selected and is confirmed to be
-    /// available
+    ///        available
+    /// @param type lease type (IA, TA or PD)
     /// @param fwd_dns_update A boolean value which indicates that server takes
     ///        responsibility for the forward DNS Update for this lease
     ///        (if true).
@@ -384,7 +387,8 @@ private:
     ///         became unavailable)
     Lease6Ptr createLease6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                            uint32_t iaid, const isc::asiolink::IOAddress& addr,
-                           const bool fwd_dns_update, const bool rev_dns_update,
+                           Lease::Type type, const bool fwd_dns_update,
+                           const bool rev_dns_update,
                            const std::string& hostname,
                            const isc::hooks::CalloutHandlePtr& callout_handle,
                            bool fake_allocation = false);

@@ -147,7 +147,7 @@ protected:
     /// @return returns a PoolPtr to the new Pool4 object.
     PoolPtr poolMaker (IOAddress &addr, uint32_t len, int32_t ptype)
     {
-        return (PoolPtr(new Pool6(static_cast<isc::dhcp::Pool::PoolType>
+        return (PoolPtr(new Pool6(static_cast<isc::dhcp::Lease::Type>
                                   (ptype), addr, len)));
     }
 
@@ -161,7 +161,7 @@ protected:
     /// @return returns a PoolPtr to the new Pool4 object.
     PoolPtr poolMaker (IOAddress &min, IOAddress &max, int32_t ptype)
     {
-        return (PoolPtr(new Pool6(static_cast<isc::dhcp::Pool::PoolType>
+        return (PoolPtr(new Pool6(static_cast<isc::dhcp::Lease::Type>
                                   (ptype), min, max)));
     }
 };

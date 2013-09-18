@@ -256,7 +256,7 @@ public:
     ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease6Ptr getLease6(Lease6::LeaseType type,
+    virtual Lease6Ptr getLease6(Lease::Type type,
                                 const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
@@ -279,7 +279,7 @@ public:
     ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease6Collection getLeases6(Lease6::LeaseType type, const DUID& duid,
+    virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
@@ -298,7 +298,7 @@ public:
     ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease6Collection getLeases6(Lease6::LeaseType type, const DUID& duid,
+    virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid, SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.

@@ -71,7 +71,7 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
 
     SubnetID subnet_id = 8; // just another number
 
-    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr,
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr,
                                duid, iaid, 100, 200, 50, 80,
                                subnet_id));
 
@@ -80,11 +80,11 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
     // should not be allowed to add a second lease with the same address
     EXPECT_FALSE(lease_mgr->addLease(lease));
 
-    Lease6Ptr x = lease_mgr->getLease6(Lease6::LEASE_IA_NA,
+    Lease6Ptr x = lease_mgr->getLease6(Lease::TYPE_NA,
                                        IOAddress("2001:db8:1::234"));
     EXPECT_EQ(Lease6Ptr(), x);
 
-    x = lease_mgr->getLease6(Lease6::LEASE_IA_NA,
+    x = lease_mgr->getLease6(Lease::TYPE_NA,
                              IOAddress("2001:db8:1::456"));
     ASSERT_TRUE(x);
 
@@ -95,14 +95,14 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
 
     // These are not important from lease management perspective, but
     // let's check them anyway.
-    EXPECT_EQ(x->type_, Lease6::LEASE_IA_NA);
+    EXPECT_EQ(x->type_, Lease::TYPE_NA);
     EXPECT_EQ(x->preferred_lft_, 100);
     EXPECT_EQ(x->valid_lft_, 200);
     EXPECT_EQ(x->t1_, 50);
     EXPECT_EQ(x->t2_, 80);
 
     // Test getLease6(duid, iaid, subnet_id) - positive case
-    Lease6Ptr y = lease_mgr->getLease6(Lease6::LEASE_IA_NA, *duid, iaid,
+    Lease6Ptr y = lease_mgr->getLease6(Lease::TYPE_NA, *duid, iaid,
                                        subnet_id);
     ASSERT_TRUE(y);
     EXPECT_TRUE(*y->duid_ == *duid);
@@ -111,18 +111,18 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
 
     // Test getLease6(duid, iaid, subnet_id) - wrong iaid
     uint32_t invalid_iaid = 9; // no such iaid
-    y = lease_mgr->getLease6(Lease6::LEASE_IA_NA, *duid, invalid_iaid,
+    y = lease_mgr->getLease6(Lease::TYPE_NA, *duid, invalid_iaid,
                              subnet_id);
     EXPECT_FALSE(y);
 
     uint32_t invalid_subnet_id = 999;
-    y = lease_mgr->getLease6(Lease6::LEASE_IA_NA, *duid, iaid,
+    y = lease_mgr->getLease6(Lease::TYPE_NA, *duid, iaid,
                              invalid_subnet_id);
     EXPECT_FALSE(y);
 
     // truncated duid
     DuidPtr invalid_duid(new DUID(llt, sizeof(llt) - 1));
-    y = lease_mgr->getLease6(Lease6::LEASE_IA_NA, *invalid_duid, iaid,
+    y = lease_mgr->getLease6(Lease::TYPE_NA, *invalid_duid, iaid,
                              subnet_id);
     EXPECT_FALSE(y);
 
@@ -133,7 +133,7 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
     EXPECT_TRUE(lease_mgr->deleteLease(IOAddress("2001:db8:1::456")));
 
     // after the lease is deleted, it should really be gone
-    x = lease_mgr->getLease6(Lease6::LEASE_IA_NA, IOAddress("2001:db8:1::456"));
+    x = lease_mgr->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::456"));
     EXPECT_EQ(Lease6Ptr(), x);
 }
 

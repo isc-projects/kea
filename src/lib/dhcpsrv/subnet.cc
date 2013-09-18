@@ -88,38 +88,38 @@ Subnet::getOptionDescriptor(const std::string& option_space,
     return (*range.first);
 }
 
-isc::asiolink::IOAddress Subnet::getLastAllocated(Pool::PoolType type) const {
+isc::asiolink::IOAddress Subnet::getLastAllocated(Lease::Type type) const {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
     switch (type) {
-    case Pool::TYPE_V4:
-    case Pool::TYPE_IA:
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
         return last_allocated_ia_;
-    case Pool::TYPE_TA:
+    case Lease::TYPE_TA:
         return last_allocated_ta_;
-    case Pool::TYPE_PD:
+    case Lease::TYPE_PD:
         return last_allocated_pd_;
     default:
         isc_throw(BadValue, "Pool type " << type << " not supported");
     }
 }
 
-void Subnet::setLastAllocated(Pool::PoolType type,
+void Subnet::setLastAllocated(Lease::Type type,
                               const isc::asiolink::IOAddress& addr) {
 
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
     switch (type) {
-    case Pool::TYPE_V4:
-    case Pool::TYPE_IA:
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
         last_allocated_ia_ = addr;
         return;
-    case Pool::TYPE_TA:
+    case Lease::TYPE_TA:
         last_allocated_ta_ = addr;
         return;
-    case Pool::TYPE_PD:
+    case Lease::TYPE_PD:
         last_allocated_pd_ = addr;
         return;
     default:
@@ -134,8 +134,8 @@ Subnet::toText() const {
     return (tmp.str());
 }
 
-void Subnet4::checkType(Pool::PoolType type) const {
-    if (type != Pool::TYPE_V4) {
+void Subnet4::checkType(Lease::Type type) const {
+    if (type != Lease::TYPE_V4) {
         isc_throw(BadValue, "Only TYPE_V4 is allowed for Subnet4");
     }
 }
@@ -151,38 +151,38 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
     }
 }
 
-const PoolCollection& Subnet::getPools(Pool::PoolType type) const {
+const PoolCollection& Subnet::getPools(Lease::Type type) const {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
     switch (type) {
-    case Pool::TYPE_V4:
-    case Pool::TYPE_IA:
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
         return (pools_);
-    case Pool::TYPE_TA:
+    case Lease::TYPE_TA:
         return (pools_ta_);
-    case Pool::TYPE_PD:
+    case Lease::TYPE_PD:
         return (pools_pd_);
     default:
         isc_throw(BadValue, "Unsupported pool type: " << type);
     }
 }
 
-PoolPtr Subnet::getPool(Pool::PoolType type, isc::asiolink::IOAddress hint) {
+PoolPtr Subnet::getPool(Lease::Type type, isc::asiolink::IOAddress hint) {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
     PoolCollection* pools = NULL;
 
     switch (type) {
-    case Pool::TYPE_V4:
-    case Pool::TYPE_IA:
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
         pools = &pools_;
         break;
-    case Pool::TYPE_TA:
+    case Lease::TYPE_TA:
         pools = &pools_ta_;
         break;
-    case Pool::TYPE_PD:
+    case Lease::TYPE_PD:
         pools = &pools_pd_;
         break;
     default:
@@ -226,14 +226,14 @@ Subnet::addPool(const PoolPtr& pool) {
     checkType(pool->getType());
 
     switch (pool->getType()) {
-    case Pool::TYPE_V4:
-    case Pool::TYPE_IA:
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
         pools_.push_back(pool);
         return;
-    case Pool6::TYPE_TA:
+    case Lease::TYPE_TA:
         pools_ta_.push_back(pool);
         return;
-    case Pool6::TYPE_PD:
+    case Lease::TYPE_PD:
         pools_pd_.push_back(pool);
         return;
     default:
@@ -294,11 +294,12 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
     }
 }
 
-void Subnet6::checkType(Pool::PoolType type) const {
-    if ( (type != Pool::TYPE_IA) && (type != Pool::TYPE_TA) &&
-         (type != Pool::TYPE_PD)) {
-        isc_throw(BadValue, "Invalid Pool type: " << static_cast<int>(type)
-                  << ", must be TYPE_IA, TYPE_TA or TYPE_PD for Subnet6");
+void Subnet6::checkType(Lease::Type type) const {
+    if ( (type != Lease::TYPE_NA) && (type != Lease::TYPE_TA) &&
+         (type != Lease::TYPE_PD)) {
+        isc_throw(BadValue, "Invalid Pool type: " << Lease::typeToText(type)
+                  << "(" << static_cast<int>(type)
+                  << "), must be TYPE_NA, TYPE_TA or TYPE_PD for Subnet6");
     }
 }
 

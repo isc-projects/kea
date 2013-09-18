@@ -321,7 +321,7 @@ public:
     Dhcpv6SrvTest() {
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
                                          2000, 3000, 4000));
-        pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
+        pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
         subnet_->addPool(pool_);
 
         CfgMgr::instance().deleteSubnets6();
@@ -377,7 +377,7 @@ public:
                          boost::shared_ptr<Option6IAAddr> addr) {
         boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(ia_na);
 
-        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                                 addr->getAddress());
         if (!lease) {
             std::cout << "Lease for " << addr->getAddress().toText()
