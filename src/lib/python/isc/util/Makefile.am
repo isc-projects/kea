@@ -3,6 +3,8 @@ SUBDIRS = . cio tests
 python_PYTHON =  __init__.py process.py socketserver_mixin.py file.py \
 	traceback_handler.py
 BUILT_SOURCES = $(PYTHON_LOGMSGPKG_DIR)/work/util_messages.py
+nodist_pylogmessage_PYTHON = $(PYTHON_LOGMSGPKG_DIR)/work/util_messages.py
+pylogmessagedir = $(pyexecdir)/isc/log_messages/
 python_PYTHON += address_formatter.py
 
 EXTRA_DIST = util_messages.mes
