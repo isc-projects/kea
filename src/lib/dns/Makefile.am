@@ -7,7 +7,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
-CLEANFILES += rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc
+CLEANFILES += rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc s-rdatacode
 # These two are created with rrtype/class.h, so not explicitly listed in
 # BUILT_SOURCES.
 CLEANFILES += python/rrtype_constants_inc.cc
@@ -157,8 +157,12 @@ nodist_libb10_dns___la_SOURCES = rdataclass.cc rrparamregistry.cc
 rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h
 rrparamregistry.cc: rrparamregistry-placeholder.cc
-rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile
+
+s-rdatacode:
 	$(PYTHON) ./gen-rdatacode.py
+	touch $@
+
+rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile s-rdatacode
 
 libdns___includedir = $(includedir)/$(PACKAGE_NAME)/dns
 libdns___include_HEADERS = \
