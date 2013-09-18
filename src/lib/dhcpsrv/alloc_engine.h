@@ -25,6 +25,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <map>
+
 namespace isc {
 namespace dhcp {
 
@@ -93,6 +95,9 @@ protected:
         /// @brief defines pool type allocation
         Lease::Type pool_type_;
     };
+
+    /// defines a pointer to allocator
+    typedef boost::shared_ptr<Allocator> AllocatorPtr;
 
     /// @brief Address/prefix allocator that iterates over all addresses
     ///
@@ -324,6 +329,12 @@ protected:
                      bool fake_allocation,
                      const isc::hooks::CalloutHandlePtr& callout_handle);
 
+    /// @brief returns allocator for a given pool type
+    /// @param type type of pool (V4, IA, TA or PD)
+    /// @throw BadValue if allocator for a given type is missing
+    /// @return pointer to allocator handing a given resource types
+    AllocatorPtr getAllocator(Lease::Type type);
+
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~AllocEngine();
 private:
@@ -456,7 +467,10 @@ private:
                                 bool fake_allocation = false);
 
     /// @brief a pointer to currently used allocator
-    boost::shared_ptr<Allocator> allocator_;
+    ///
+    /// For IPv4, there will be only one allocator: TYPE_V4
+    /// For IPv6, there will be 3 allocators: TYPE_NA, TYPE_TA, TYPE_PD
+    std::map<Lease::Type, AllocatorPtr> allocators_;
 
     /// @brief number of attempts before we give up lease allocation (0=unlimited)
     unsigned int attempts_;
