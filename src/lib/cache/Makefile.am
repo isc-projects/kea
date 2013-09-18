@@ -36,9 +36,12 @@ nodist_libb10_cache_la_SOURCES = cache_messages.cc cache_messages.h
 
 BUILT_SOURCES = cache_messages.cc cache_messages.h
 
-cache_messages.cc cache_messages.h: cache_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/cache/cache_messages.mes
+cache_messages.cc cache_messages.h: s-messages
 
-CLEANFILES = *.gcno *.gcda cache_messages.cc cache_messages.h
+s-messages: cache_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/cache/cache_messages.mes
+	touch $@
+
+CLEANFILES = *.gcno *.gcda cache_messages.cc cache_messages.h s-messages
 
 EXTRA_DIST = cache_messages.mes

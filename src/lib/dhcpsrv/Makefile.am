@@ -11,8 +11,11 @@ endif
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 # Define rule to build logging source files from message file
-dhcpsrv_messages.h dhcpsrv_messages.cc: dhcpsrv_messages.mes
+dhcpsrv_messages.h dhcpsrv_messages.cc: s-messages
+
+s-messages: dhcpsrv_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
+	touch $@
 
 # Tell Automake that the dhcpsrv_messages.{cc,h} source files are created in the
 # build process, so it must create these before doing anything else.  Although
@@ -29,7 +32,7 @@ BUILT_SOURCES = dhcpsrv_messages.h dhcpsrv_messages.cc
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # Make sure the generated files are deleted in a "clean" operation
-CLEANFILES = *.gcno *.gcda dhcpsrv_messages.h dhcpsrv_messages.cc
+CLEANFILES = *.gcno *.gcda dhcpsrv_messages.h dhcpsrv_messages.cc s-messages
 
 lib_LTLIBRARIES = libb10-dhcpsrv.la
 libb10_dhcpsrv_la_SOURCES  =
