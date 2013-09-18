@@ -2319,10 +2319,10 @@ DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
         // right or left child definitely doesn't exist (and is NULL).
         // Pick the child node, or if no children exist, just use NULL.
         DomainTreeNode<T>* child;
-        if (!node->getRight()) {
-            child = node->getLeft();
-        } else {
+        if (node->getRight()) {
             child = node->getRight();
+        } else {
+            child = node->getLeft();
         }
 
         // Set it as the node's parent's child, effectively removing
