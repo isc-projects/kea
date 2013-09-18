@@ -1338,14 +1338,6 @@ private:
                            bool (*callback)(const DomainTreeNode<T>&, CBARG),
                            CBARG callback_arg);
 
-    /// \brief Static helper function used by const and non-const
-    /// variants of find() below
-    template <typename TT, typename TTN, typename CBARG>
-    static Result findImpl(TT* tree, const isc::dns::Name& name,
-                           TTN** node, DomainTreeNodeChain<T>& node_path,
-                           bool (*callback)(const DomainTreeNode<T>&, CBARG),
-                           CBARG callback_arg);
-
 public:
     /// \brief Find with callback and node chain
     /// \anchor callback
@@ -1441,17 +1433,17 @@ public:
     /// Acts as described in the \ref find section.
     Result find(const isc::dns::Name& name,
                 DomainTreeNode<T>** node) {
+        const isc::dns::LabelSequence ls(name);
         DomainTreeNodeChain<T> node_path;
-        return (findImpl<DomainTree<T>, DomainTreeNode<T>, void* >
-                (this, name, node, node_path, NULL, NULL));
+        return (find<void*>(ls, node, node_path, NULL, NULL));
     }
 
     /// \brief Simple find (const variant)
     Result find(const isc::dns::Name& name,
                 const DomainTreeNode<T>** node) const {
+        const isc::dns::LabelSequence ls(name);
         DomainTreeNodeChain<T> node_path;
-        return (findImpl<const DomainTree<T>, const DomainTreeNode<T>, void* >
-                (this, name, node, node_path, NULL, NULL));
+        return (find<void*>(ls, node, node_path, NULL, NULL));
     }
 
     /// \brief Simple find, with node_path tracking
@@ -1460,16 +1452,16 @@ public:
     Result find(const isc::dns::Name& name, DomainTreeNode<T>** node,
                 DomainTreeNodeChain<T>& node_path)
     {
-        return (findImpl<DomainTree<T>, DomainTreeNode<T>, void* >
-                (this, name, node, node_path, NULL, NULL));
+        const isc::dns::LabelSequence ls(name);
+        return (find<void*>(ls, node, node_path, NULL, NULL));
     }
 
     /// \brief Simple find, with node_path tracking (const variant)
     Result find(const isc::dns::Name& name, const DomainTreeNode<T>** node,
                 DomainTreeNodeChain<T>& node_path) const
     {
-        return (findImpl<const DomainTree<T>, const DomainTreeNode<T>, void* >
-                (this, name, node, node_path, NULL, NULL));
+        const isc::dns::LabelSequence ls(name);
+        return (find<void*>(ls, node, node_path, NULL, NULL));
     }
 
     /// \brief Simple find with callback
@@ -1480,8 +1472,8 @@ public:
                 bool (*callback)(const DomainTreeNode<T>&, CBARG),
                 CBARG callback_arg)
     {
-        return (findImpl<DomainTree<T>, DomainTreeNode<T> >
-                (this, name, node, node_path, callback, callback_arg));
+        const isc::dns::LabelSequence ls(name);
+        return (find<CBARG>(ls, node, node_path, callback, callback_arg));
     }
 
     /// \brief Simple find with callback (const variant)
@@ -1492,8 +1484,8 @@ public:
                 bool (*callback)(const DomainTreeNode<T>&, CBARG),
                 CBARG callback_arg) const
     {
-        return (findImpl<const DomainTree<T>, const DomainTreeNode<T> >
-                (this, name, node, node_path, callback, callback_arg));
+        const isc::dns::LabelSequence ls(name);
+        return (find<CBARG>(ls, node, node_path, callback, callback_arg));
     }
 
     //@}
@@ -1827,18 +1819,6 @@ DomainTree<T>::deleteHelper(util::MemorySegment& mem_sgmt,
             --node_count_;
         }
     }
-}
-
-template <typename T>
-template <typename TT, typename TTN, typename CBARG>
-typename DomainTree<T>::Result
-DomainTree<T>::findImpl(TT* tree, const isc::dns::Name& name,
-                        TTN** node, DomainTreeNodeChain<T>& node_path,
-                        bool (*callback)(const DomainTreeNode<T>&, CBARG),
-                        CBARG callback_arg)
-{
-    const isc::dns::LabelSequence ls(name);
-    return (tree->find(ls, node, node_path, callback, callback_arg));
 }
 
 template <typename T>
