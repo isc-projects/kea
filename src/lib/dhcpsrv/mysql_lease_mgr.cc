@@ -163,7 +163,7 @@ TaggedStatement tagged_statements[] = {
                         "lease_type, iaid, prefix_len, "
                         "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
-                            "WHERE address = ? and lease_type = ?"},
+                            "WHERE address = ? AND lease_type = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
@@ -1254,7 +1254,7 @@ MySqlLeaseMgr::openDatabase() {
                   mysql_error(mysql_));
     }
 
-    // Set SQL mode options for the connection:  SQL mode governs how what 
+    // Set SQL mode options for the connection:  SQL mode governs how what
     // constitutes insertable data for a given column, and how to handle
     // invalid data.  We want to ensure we get the strictest behavior and
     // to reject invalid data with an error.
