@@ -17,7 +17,7 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
+CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
 
 man_MANS = b10-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
@@ -41,8 +41,11 @@ endif
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
-dhcp6_messages.h dhcp6_messages.cc: dhcp6_messages.mes
+dhcp6_messages.h dhcp6_messages.cc: s-messages
+
+s-messages: dhcp6_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
+	touch $@
 
 BUILT_SOURCES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
 

@@ -8,11 +8,14 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-CLEANFILES = *.gcno *.gcda asiodns_messages.h asiodns_messages.cc
+CLEANFILES = *.gcno *.gcda asiodns_messages.h asiodns_messages.cc s-messages
 
 # Define rule to build logging source files from message file
-asiodns_messages.h asiodns_messages.cc: asiodns_messages.mes
+asiodns_messages.h asiodns_messages.cc: s-messages
+
+s-messages: asiodns_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/asiodns/asiodns_messages.mes
+	touch $@
 
 BUILT_SOURCES = asiodns_messages.h asiodns_messages.cc
 

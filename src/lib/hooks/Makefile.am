@@ -12,8 +12,11 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 
 # Define rule to build logging source files from message file
-hooks_messages.h hooks_messages.cc: hooks_messages.mes
+hooks_messages.h hooks_messages.cc: s-messages
+
+s-messages: hooks_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/hooks/hooks_messages.mes
+	touch $@
 
 # Tell automake that the message files are built as part of the build process
 # (so that they are built before the main library is built).
@@ -23,7 +26,7 @@ BUILT_SOURCES = hooks_messages.h hooks_messages.cc
 EXTRA_DIST = hooks_messages.mes
 
 # Get rid of generated message files on a clean
-CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc
+CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc s-messages
 
 lib_LTLIBRARIES = libb10-hooks.la
 libb10_hooks_la_SOURCES  =
