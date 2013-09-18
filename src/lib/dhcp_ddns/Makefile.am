@@ -12,8 +12,11 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 
 # Define rule to build logging source files from message file
-dhcp_ddns_messages.h dhcp_ddns_messages.cc: dhcp_ddns_messages.mes
+dhcp_ddns_messages.h dhcp_ddns_messages.cc: s-messages
+
+s-messages: dhcp_ddns_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/dhcp_ddns/dhcp_ddns_messages.mes
+	touch $@
 
 # Tell automake that the message files are built as part of the build process
 # (so that they are built before the main library is built).
@@ -23,7 +26,7 @@ BUILT_SOURCES = dhcp_ddns_messages.h dhcp_ddns_messages.cc
 EXTRA_DIST = dhcp_ddns_messages.mes libdhcp_ddns.dox
 
 # Get rid of generated message files on a clean
-CLEANFILES = *.gcno *.gcda dhcp_ddns_messages.h dhcp_ddns_messages.cc
+CLEANFILES = *.gcno *.gcda dhcp_ddns_messages.h dhcp_ddns_messages.cc s-messages
 
 lib_LTLIBRARIES = libb10-dhcp_ddns.la
 libb10_dhcp_ddns_la_SOURCES  =
