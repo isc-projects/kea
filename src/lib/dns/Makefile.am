@@ -158,11 +158,11 @@ rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h
 rrparamregistry.cc: rrparamregistry-placeholder.cc
 
-s-rdatacode:
+s-rdatacode: Makefile
 	$(PYTHON) ./gen-rdatacode.py
 	touch $@
 
-rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: Makefile s-rdatacode
+rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc: s-rdatacode
 
 libdns___includedir = $(includedir)/$(PACKAGE_NAME)/dns
 libdns___include_HEADERS = \
