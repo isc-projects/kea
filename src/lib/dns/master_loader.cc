@@ -275,11 +275,7 @@ private:
     // care about where it comes from).  see LimitTTL() for parameter
     // post_parsing.
     void setDefaultTTL(const RRTTL& ttl, bool post_parsing) {
-        if (!default_ttl_) {
-            default_ttl_.reset(new RRTTL(ttl));
-        } else {
-            *default_ttl_ = ttl;
-        }
+        assignTTL(default_ttl_, ttl);
         limitTTL(*default_ttl_, post_parsing);
     }
 
@@ -324,11 +320,7 @@ private:
                     dynamic_cast<const rdata::generic::SOA&>(*rdata).
                     getMinimum();
                 setDefaultTTL(RRTTL(ttl_val), true);
-                if (!current_ttl_) {
-                    current_ttl_.reset(new RRTTL(*default_ttl_));
-                } else {
-                    *current_ttl_ = *default_ttl_;
-                }
+                assignTTL(current_ttl_, *default_ttl_);
             } else {
                 // On catching the exception we'll try to reach EOL again,
                 // so we need to unget it now.
@@ -337,11 +329,7 @@ private:
                                         "no TTL specified; load rejected");
             }
         } else if (!explicit_ttl && default_ttl_) {
-            if (!current_ttl_) {
-                current_ttl_.reset(new RRTTL(*default_ttl_));
-            } else {
-                *current_ttl_ = *default_ttl_;
-            }
+            assignTTL(current_ttl_, *default_ttl_);
         } else if (!explicit_ttl && warn_rfc1035_ttl_) {
             // Omitted (class and) TTL values are default to the last
             // explicitly stated values (RFC 1035, Sec. 5.1).
@@ -395,6 +383,17 @@ private:
                     }
                     break;
             }
+        }
+    }
+
+    /// \brief Assign the right RRTTL's value to the left RRTTL. If one
+    /// doesn't exist in the scoped_ptr, make a new RRTTL copy of the
+    /// right argument.
+    static void assignTTL(boost::scoped_ptr<RRTTL>& left, const RRTTL& right) {
+        if (!left) {
+            left.reset(new RRTTL(right));
+        } else {
+            *left = right;
         }
     }
 
