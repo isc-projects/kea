@@ -289,12 +289,12 @@ A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
 hardware address.
 
-% DHCPSRV_MYSQL_GET_IAID_DUID obtaining IPv6 leases for IAID %1, DUID %2, and lease type %3
+% DHCPSRV_MYSQL_GET_IAID_DUID obtaining IPv6 leases for IAID %1, DUID %2, lease type %3
 A debug message issued when the server is attempting to obtain a set of
 IPv6 lease from the MySQL database for a client with the specified IAID
 (Identity Association ID) and DUID (DHCP Unique Identifier).
 
-% DHCPSRV_MYSQL_GET_IAID_SUBID_DUID obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3, and lease type %4
+% DHCPSRV_MYSQL_GET_IAID_SUBID_DUID obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3, lease type %4
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the MySQL database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
