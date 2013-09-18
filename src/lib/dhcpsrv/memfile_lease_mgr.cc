@@ -186,7 +186,7 @@ Memfile_LeaseMgr::getLease4(const ClientId& client_id,
 }
 
 Lease6Ptr
-Memfile_LeaseMgr::getLease6(Lease6::LeaseType /* not used yet */,
+Memfile_LeaseMgr::getLease6(Lease::Type /* not used yet */,
                             const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_ADDR6).arg(addr.toText());
@@ -200,7 +200,7 @@ Memfile_LeaseMgr::getLease6(Lease6::LeaseType /* not used yet */,
 }
 
 Lease6Collection
-Memfile_LeaseMgr::getLeases6(Lease6::LeaseType /* not used yet */,
+Memfile_LeaseMgr::getLeases6(Lease::Type /* not used yet */,
                             const DUID& duid, uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_GET_IAID_DUID).arg(iaid).arg(duid.toText());
@@ -211,7 +211,7 @@ Memfile_LeaseMgr::getLeases6(Lease6::LeaseType /* not used yet */,
 }
 
 Lease6Collection
-Memfile_LeaseMgr::getLeases6(Lease6::LeaseType /* not used yet */,
+Memfile_LeaseMgr::getLeases6(Lease::Type /* not used yet */,
                              const DUID& duid, uint32_t iaid,
                              SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,

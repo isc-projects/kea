@@ -53,7 +53,7 @@ AllocEngineHooks Hooks;
 namespace isc {
 namespace dhcp {
 
-AllocEngine::IterativeAllocator::IterativeAllocator(Pool::PoolType lease_type)
+AllocEngine::IterativeAllocator::IterativeAllocator(Lease::Type lease_type)
     :Allocator(lease_type) {
 }
 
@@ -146,7 +146,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
     return (next);
 }
 
-AllocEngine::HashedAllocator::HashedAllocator(Pool::PoolType lease_type)
+AllocEngine::HashedAllocator::HashedAllocator(Lease::Type lease_type)
     :Allocator(lease_type) {
     isc_throw(NotImplemented, "Hashed allocator is not implemented");
 }
@@ -159,7 +159,7 @@ AllocEngine::HashedAllocator::pickAddress(const SubnetPtr&,
     isc_throw(NotImplemented, "Hashed allocator is not implemented");
 }
 
-AllocEngine::RandomAllocator::RandomAllocator(Pool::PoolType lease_type)
+AllocEngine::RandomAllocator::RandomAllocator(Lease::Type lease_type)
     :Allocator(lease_type) {
     isc_throw(NotImplemented, "Random allocator is not implemented");
 }
@@ -204,6 +204,7 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                               const DuidPtr& duid,
                               uint32_t iaid,
                               const IOAddress& hint,
+                              Lease::Type type,
                               const bool fwd_dns_update,
                               const bool rev_dns_update,
                               const std::string& hostname,
@@ -227,8 +228,8 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
 
         // check if there's existing lease for that subnet/duid/iaid combination.
         /// @todo: Make this generic (cover temp. addrs and prefixes)
-        Lease6Collection existing = LeaseMgrFactory::instance().getLeases6(
-            Lease6::LEASE_IA_NA, *duid, iaid, subnet->getID());
+        Lease6Collection existing = LeaseMgrFactory::instance().getLeases6(type,
+                                    *duid, iaid, subnet->getID());
 
         if (!existing.empty()) {
             // we have at least one lease already. This is a returning client,
@@ -240,15 +241,14 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         if (subnet->inPool(hint)) {
 
             /// @todo: We support only one hint for now
-            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(
-                Lease6::LEASE_IA_NA, hint);
+            Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(type, hint);
             if (!lease) {
                 /// @todo: check if the hint is reserved once we have host support
                 /// implemented
 
                 // the hint is valid and not currently used, let's create a lease for it
                 /// @todo: We support only one lease per ia for now
-                lease = createLease6(subnet, duid, iaid, hint, fwd_dns_update,
+                lease = createLease6(subnet, duid, iaid, hint, type, fwd_dns_update,
                                      rev_dns_update, hostname, callout_handle,
                                      fake_allocation);
 
@@ -264,11 +264,12 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             } else {
                 if (lease->expired()) {
                     /// We found a lease and it is expired, so we can reuse it
-                    /// @todo: We support only one lease per ia for now
                     lease = reuseExpiredLease(lease, subnet, duid, iaid,
                                               fwd_dns_update, rev_dns_update,
                                               hostname, callout_handle,
                                               fake_allocation);
+
+                    /// @todo: We support only one lease per ia for now
                     Lease6Collection collection;
                     collection.push_back(lease);
                     return (collection);
@@ -300,14 +301,14 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             /// @todo: check if the address is reserved once we have host support
             /// implemented
 
-            Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(
-                                 Lease6::LEASE_IA_NA, candidate);
+            Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(type,
+                                 candidate);
             if (!existing) {
                 // there's no existing lease for selected candidate, so it is
                 // free. Let's allocate it.
                 Lease6Ptr lease = createLease6(subnet, duid, iaid, candidate,
-                                               fwd_dns_update, rev_dns_update,
-                                               hostname,
+                                               type, fwd_dns_update,
+                                               rev_dns_update, hostname,
                                                callout_handle, fake_allocation);
                 if (lease) {
                     Lease6Collection collection;
@@ -752,13 +753,14 @@ Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
                                     const DuidPtr& duid,
                                     uint32_t iaid,
                                     const IOAddress& addr,
+                                    Lease::Type type,
                                     const bool fwd_dns_update,
                                     const bool rev_dns_update,
                                     const std::string& hostname,
                                     const isc::hooks::CalloutHandlePtr& callout_handle,
                                     bool fake_allocation /*= false */ ) {
 
-    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid, iaid,
+    Lease6Ptr lease(new Lease6(type, addr, duid, iaid,
                                subnet->getPreferred(), subnet->getValid(),
                                subnet->getT1(), subnet->getT2(), subnet->getID()));
 
@@ -818,7 +820,7 @@ Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
         // It is for advertise only. We should not insert the lease into LeaseMgr,
         // but rather check that we could have inserted it.
         Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(
-                             Lease6::LEASE_IA_NA, addr);
+                             Lease::TYPE_NA, addr);
         if (!existing) {
             return (lease);
         } else {

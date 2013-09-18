@@ -83,7 +83,7 @@ public:
         CfgMgr& cfg_mgr = CfgMgr::instance();
 
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
-        pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1::10"),
+        pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::10"),
                                    IOAddress("2001:db8:1::20")));
         subnet_->addPool(pool_);
         cfg_mgr.addSubnet6(subnet_);
@@ -229,8 +229,8 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
 
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("::"), false, false, "", false,
-                    CalloutHandlePtr())));
+                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
+                    "", false, CalloutHandlePtr())));
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -255,8 +255,8 @@ TEST_F(AllocEngine6Test, fakeAlloc6) {
 
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("::"), false, false, "", true,
-                    CalloutHandlePtr())));
+                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
+                    "", true, CalloutHandlePtr())));
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -279,8 +279,9 @@ TEST_F(AllocEngine6Test, allocWithValidHint6) {
 
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                            duid_, iaid_, IOAddress("2001:db8:1::15"), false,
-                            false, "", false, CalloutHandlePtr())));
+                            duid_, iaid_, IOAddress("2001:db8:1::15"),
+                            Lease::TYPE_NA, false, false, "", false,
+                            CalloutHandlePtr())));
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -310,7 +311,7 @@ TEST_F(AllocEngine6Test, allocWithUsedHint6) {
     // Let's create a lease and put it in the LeaseMgr
     DuidPtr duid2 = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0xff)));
     time_t now = time(NULL);
-    Lease6Ptr used(new Lease6(Lease6::LEASE_IA_NA, IOAddress("2001:db8:1::1f"),
+    Lease6Ptr used(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1f"),
                               duid2, 1, 2, 3, 4, now, subnet_->getID()));
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
 
@@ -319,8 +320,8 @@ TEST_F(AllocEngine6Test, allocWithUsedHint6) {
     // twice.
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("2001:db8:1::1f"), false, false, "",
-                    false, CalloutHandlePtr())));
+                    duid_, iaid_, IOAddress("2001:db8:1::1f"), Lease::TYPE_NA,
+                    false, false, "", false, CalloutHandlePtr())));
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -355,8 +356,8 @@ TEST_F(AllocEngine6Test, allocBogusHint6) {
     // with the normal allocation
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("3000::abc"), false, false, "",
-                    false, CalloutHandlePtr())));
+                    duid_, iaid_, IOAddress("3000::abc"), Lease::TYPE_NA, false,
+                    false, "", false, CalloutHandlePtr())));
 
     // Check that we got a lease
     ASSERT_TRUE(lease);
@@ -385,14 +386,14 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     // Allocations without subnet are not allowed
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(
-                    Subnet6Ptr(), duid_, iaid_, IOAddress("::"), false, false,
-                    "", false, CalloutHandlePtr())));
+                    Subnet6Ptr(), duid_, iaid_, IOAddress("::"), Lease::TYPE_NA,
+                    false, false, "", false, CalloutHandlePtr())));
     ASSERT_FALSE(lease);
 
     // Allocations without DUID are not allowed either
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    DuidPtr(), iaid_, IOAddress("::"), false, false, "", false,
-                    CalloutHandlePtr())));
+                    DuidPtr(), iaid_, IOAddress("::"), Lease::TYPE_NA, false,
+                    false, "", false, CalloutHandlePtr())));
     ASSERT_FALSE(lease);
 }
 
@@ -401,7 +402,7 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
 // pool
 TEST_F(AllocEngine6Test, IterativeAllocator) {
     boost::scoped_ptr<NakedAllocEngine::Allocator>
-        alloc(new NakedAllocEngine::IterativeAllocator(Pool6::TYPE_IA));
+        alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_NA));
 
     for (int i = 0; i < 1000; ++i) {
         IOAddress candidate = alloc->pickAddress(subnet_, duid_, IOAddress("::"));
@@ -414,7 +415,7 @@ TEST_F(AllocEngine6Test, IterativeAllocator) {
 // in all pools in specified subnet. It also must not pick the same address twice
 // unless it runs out of pool space and must start over.
 TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
-    NakedAllocEngine::IterativeAllocator alloc(Pool6::TYPE_IA);
+    NakedAllocEngine::IterativeAllocator alloc(Lease::TYPE_NA);
 
     // let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
     for (int i = 2; i < 10; ++i) {
@@ -423,7 +424,7 @@ TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
         min << "2001:db8:1::" << hex << i*16 + 1;
         max << "2001:db8:1::" << hex << i*16 + 9;
 
-        Pool6Ptr pool(new Pool6(Pool6::TYPE_IA, IOAddress(min.str()),
+        Pool6Ptr pool(new Pool6(Lease::TYPE_NA, IOAddress(min.str()),
                                 IOAddress(max.str())));
         subnet_->addPool(pool);
     }
@@ -476,14 +477,14 @@ TEST_F(AllocEngine6Test, smallPool6) {
 
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
-    pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
+    pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.addSubnet6(subnet_);
 
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("::"), false, false, "", false,
-                    CalloutHandlePtr())));
+                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
+                    "", false, CalloutHandlePtr())));
 
     // Check that we got that single lease
     ASSERT_TRUE(lease);
@@ -515,14 +516,14 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
 
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
-    pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
+    pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.addSubnet6(subnet_);
 
     // Just a different duid
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
-    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, other_duid, other_iaid,
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
                                501, 502, 503, 504, subnet_->getID(), 0));
     lease->cltt_ = time(NULL) - 10; // Allocated 10 seconds ago
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
@@ -531,8 +532,8 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
     // else, so the allocation should fail
     Lease6Ptr lease2;
     EXPECT_NO_THROW(lease2 = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("::"), false, false, "", false,
-                    CalloutHandlePtr())));
+                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
+                    "", false, CalloutHandlePtr())));
     EXPECT_FALSE(lease2);
 }
 
@@ -548,14 +549,14 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
 
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
-    pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
+    pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.addSubnet6(subnet_);
 
     // Just a different duid
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
-    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, other_duid, other_iaid,
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
                                501, 502, 503, 504, subnet_->getID(), 0));
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
@@ -566,7 +567,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
 
     // CASE 1: Asking for any address
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("::"), false, false, "", true,
+                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false, "", true,
                     CalloutHandlePtr())));
     // Check that we got that single lease
     ASSERT_TRUE(lease);
@@ -577,7 +578,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
 
     // CASE 2: Asking specifically for this address
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress(addr.toText()), false, false, "",
+                    duid_, iaid_, addr, Lease::TYPE_NA, false, false, "",
                     true, CalloutHandlePtr())));
 
     // Check that we got that single lease
@@ -597,7 +598,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
 
     // Create configuration similar to other tests, but with a single address pool
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
-    pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, addr, addr)); // just a single address
+    pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
     subnet_->addPool(pool_);
     cfg_mgr.addSubnet6(subnet_);
 
@@ -605,7 +606,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
     const uint32_t other_iaid = 3568;
     const SubnetID other_subnetid = 999;
-    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, other_duid, other_iaid,
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, other_duid, other_iaid,
                                501, 502, 503, 504, other_subnetid, 0));
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
@@ -613,7 +614,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
 
     // A client comes along, asking specifically for this address
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress(addr.toText()), false, false, "",
+                    duid_, iaid_, addr, Lease::TYPE_NA, false, false, "",
                     false, CalloutHandlePtr())));
 
     // Check that he got that single lease
@@ -621,7 +622,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     EXPECT_EQ(addr.toText(), lease->addr_.toText());
 
     // Check that the lease is indeed updated in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease6::LEASE_IA_NA,
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                                addr);
     ASSERT_TRUE(from_mgr);
 
@@ -862,7 +863,7 @@ TEST_F(AllocEngine4Test, allocateAddress4Nulls) {
 // pool
 TEST_F(AllocEngine4Test, IterativeAllocator) {
     boost::scoped_ptr<NakedAllocEngine::Allocator>
-        alloc(new NakedAllocEngine::IterativeAllocator(Pool6::TYPE_V4));
+        alloc(new NakedAllocEngine::IterativeAllocator(Lease::TYPE_V4));
 
     for (int i = 0; i < 1000; ++i) {
         IOAddress candidate = alloc->pickAddress(subnet_, clientid_,
@@ -876,7 +877,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator) {
 // in all pools in specified subnet. It also must not pick the same address twice
 // unless it runs out of pool space and must start over.
 TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
-    NakedAllocEngine::IterativeAllocator alloc(Pool6::TYPE_V4);
+    NakedAllocEngine::IterativeAllocator alloc(Lease::TYPE_V4);
 
     // Let's start from 2, as there is 2001:db8:1::10 - 2001:db8:1::20 pool already.
     for (int i = 2; i < 10; ++i) {
@@ -1302,8 +1303,8 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
 
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("::"), false, false, "", false,
-                    callout_handle)));
+                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
+                    "", false, callout_handle)));
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -1373,8 +1374,8 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     // Call allocateAddress6. Callouts should be triggered here.
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("::"), false, false, "", false,
-                    callout_handle)));
+                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
+                    "", false, callout_handle)));
     // Check that we got a lease
     ASSERT_TRUE(lease);
 

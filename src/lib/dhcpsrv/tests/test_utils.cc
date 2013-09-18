@@ -37,10 +37,9 @@ const char* ADDRESS6[] = {
 };
 
 // Lease types that correspond to ADDRESS6 leases
-static const Lease6::LeaseType LEASETYPE6[] = {
-    Lease6::LEASE_IA_NA, Lease6::LEASE_IA_TA, Lease6::LEASE_IA_PD,
-    Lease6::LEASE_IA_NA, Lease6::LEASE_IA_TA, Lease6::LEASE_IA_PD,
-    Lease6::LEASE_IA_NA, Lease6::LEASE_IA_TA
+static const Lease::Type LEASETYPE6[] = {
+    Lease::TYPE_NA, Lease::TYPE_TA, Lease::TYPE_PD, Lease::TYPE_NA,
+    Lease::TYPE_TA, Lease::TYPE_PD, Lease::TYPE_NA, Lease::TYPE_TA
 };
 
 void
