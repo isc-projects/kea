@@ -927,68 +927,73 @@ TEST_F(MySqlLeaseMgrTest, lease6LeaseTypeCheck) {
     empty_lease->hostname_ = "myhost.example.com.";
     empty_lease->prefixlen_ = 4;
 
-    // Make Two leases per lease type, all with the same  duid, iad but
+    // Make Two leases per lease type, all with the same  DUID, IAID but
     // alternate the subnet_ids.
     vector<Lease6Ptr> leases;
-    int tick = 0;
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 2; j++) {
-            Lease6Ptr lease(new Lease6(*empty_lease));
-            lease->type_ = leasetype6_[i];
-            lease->addr_ = IOAddress(straddress6_[tick++]);
-            lease->subnet_id_ += j;
-            std::cout << "ok, subnet is: " << lease->subnet_id_
-                << " tick is:" << tick << std::endl;
-            leases.push_back(lease);
-            EXPECT_TRUE(lmptr_->addLease(lease));
-        }
-    }
+    for (int i = 0; i < 6; ++i) {
+          Lease6Ptr lease(new Lease6(*empty_lease));
+          lease->type_ = leasetype6_[i / 2];
+          lease->addr_ = IOAddress(straddress6_[i]);
+          lease->subnet_id_ += (i % 2);
+          leases.push_back(lease);
+          EXPECT_TRUE(lmptr_->addLease(lease));
+     }
 
     // Verify getting a single lease by type and address.
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 6; ++i) {
         // Look for exact match for each lease type.
-        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i],
-                                                   leases[i*2]->addr_);
+        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i / 2],
+                                               leases[i]->addr_);
         // We should match one per lease type.
         ASSERT_TRUE(returned);
-        EXPECT_TRUE(*returned == *leases[i*2]);
+        EXPECT_TRUE(*returned == *leases[i]);
 
         // Same address but wrong lease type, should not match.
-        returned = lmptr_->getLease6(leasetype6_[i+1], leases[i*2]->addr_);
+        returned = lmptr_->getLease6(leasetype6_[i / 2 + 1], leases[i]->addr_);
         ASSERT_FALSE(returned);
     }
 
-    // Verify getting a collection of leases by type, duid, and iad.
+    // Verify getting a collection of leases by type, DUID, and IAID.
     // Iterate over the lease types, asking for leases based on
-    // lease type, duid, and iad.
-    tick = 0;
-    for (int i = 0; i < 3; i++) {
+    // lease type, DUID, and IAID.
+    for (int i = 0; i < 3; ++i) {
         Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i],
                                                        *duid, 142);
         // We should match two per lease type.
         ASSERT_EQ(2, returned.size());
-        EXPECT_TRUE(*(returned[0]) == *leases[tick++]);
-        EXPECT_TRUE(*(returned[1]) == *leases[tick++]);
+
+        // Collection order returned is not guaranteed.
+        // Easiest way to check is to look at the addresses.
+        vector<string> addresses;
+        for (Lease6Collection::const_iterator it = returned.begin();
+            it != returned.end(); ++it) {
+            addresses.push_back((*it)->addr_.toText());
+        }
+        sort(addresses.begin(), addresses.end());
+
+        // Now verify that the lease addresses match.
+        EXPECT_EQ(addresses[0], leases[(i * 2)]->addr_.toText());
+        EXPECT_EQ(addresses[1], leases[(i * 2 + 1)]->addr_.toText());
     }
 
-    // Verify getting a collection of leases by type, duid, iad, and subnet id.
+    // Verify getting a collection of leases by type, DUID, IAID, and subnet id.
     // Iterate over the lease types, asking for leases based on
-    // lease type, duid, iad, and subnet_id.
-    for (int i = 0; i < 3; i++) {
+    // lease type, DUID, IAID, and subnet_id.
+    for (int i = 0; i < 3; ++i) {
         Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i],
                                                    *duid, 142, 23);
         // We should match one per lease type.
         ASSERT_EQ(1, returned.size());
-        EXPECT_TRUE(*(returned[0]) == *leases[i*2]);
+        EXPECT_TRUE(*(returned[0]) == *leases[i * 2]);
     }
 
     // Verify getting a single lease by type, duid, iad, and subnet id.
-    for (int i = 0; i < 3; i++) {
-        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i],
-                                                *duid, 142, 23);
+    for (int i = 0; i < 6; ++i) {
+        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i / 2],
+                                                *duid, 142, (23 + (i % 2)));
         // We should match one per lease type.
         ASSERT_TRUE(returned);
-        EXPECT_TRUE(*returned == *leases[i*2]);
+        EXPECT_TRUE(*returned == *leases[i]);
     }
 }
 
