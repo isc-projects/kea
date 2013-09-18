@@ -64,6 +64,7 @@ public:
     // Expose internal classes for testing purposes
     using AllocEngine::Allocator;
     using AllocEngine::IterativeAllocator;
+    using AllocEngine::getAllocator;
 };
 
 /// @brief Used in Allocation Engine tests for IPv6
@@ -209,8 +210,8 @@ public:
     Lease4Ptr old_lease_;     ///< Holds previous instance of the lease.
 };
 
-// This test checks if the Allocation Engine can be instantiated and that it
-// parses parameters string properly.
+// This test checks if the v6 Allocation Engine can be instantiated, parses
+// parameters string and allocators are created.
 TEST_F(AllocEngine6Test, constructor) {
     boost::scoped_ptr<AllocEngine> x;
 
@@ -218,7 +219,19 @@ TEST_F(AllocEngine6Test, constructor) {
     ASSERT_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_HASHED, 5)), NotImplemented);
     ASSERT_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_RANDOM, 5)), NotImplemented);
 
-    ASSERT_NO_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_NO_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100, true)));
+
+    // Check that allocator for normal addresses is created
+    ASSERT_TRUE(x->getAllocator(Lease::TYPE_NA));
+
+    // Check that allocator for temporary address is created
+    ASSERT_TRUE(x->getAllocator(Lease::TYPE_TA));
+
+    // Check that allocator for prefixes is created
+    ASSERT_TRUE(x->getAllocator(Lease::TYPE_PD));
+
+    // There should be no V4 allocator
+    EXPECT_THROW(x->getAllocator(Lease::TYPE_V4), BadValue);
 }
 
 // This test checks if the simple allocation can succeed
@@ -631,6 +644,32 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
 }
 
 // --- IPv4 ---
+
+// This test checks if the v4 Allocation Engine can be instantiated, parses
+// parameters string and allocators are created.
+TEST_F(AllocEngine4Test, constructor) {
+    boost::scoped_ptr<AllocEngine> x;
+
+    // Hashed and random allocators are not supported yet
+    ASSERT_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_HASHED, 5, false)),
+                 NotImplemented);
+    ASSERT_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_RANDOM, 5, false)),
+                 NotImplemented);
+
+    // Create V4 (ipv6=false) Allocation Engine that will try at most
+    // 100 attempts to pick up a lease
+    ASSERT_NO_THROW(x.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100,
+                                            false)));
+
+    // There should be V4 allocator
+    ASSERT_TRUE(x->getAllocator(Lease::TYPE_V4));
+
+    // Check that allocators for V6 stuff are not created
+    EXPECT_THROW(x->getAllocator(Lease::TYPE_NA), BadValue);
+    EXPECT_THROW(x->getAllocator(Lease::TYPE_TA), BadValue);
+    EXPECT_THROW(x->getAllocator(Lease::TYPE_PD), BadValue);
+}
+
 
 // This test checks if the simple IPv4 allocation can succeed
 TEST_F(AllocEngine4Test, simpleAlloc4) {
