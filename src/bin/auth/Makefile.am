@@ -45,11 +45,11 @@ statistics_items.h: statistics_items.h.pre statistics_msg_items.def
 statistics.cc: statistics.cc.pre statistics_msg_items.def
 tests/statistics_unittest.cc: tests/statistics_unittest.cc.pre statistics_msg_items.def
 
-gen-statisticsitems.py: gen-statisticsitems.py.pre
+gen-statisticsitems.py: gen-statisticsitems.py.pre Makefile
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" gen-statisticsitems.py.pre >$@
 	chmod +x $@
 
-auth.spec b10-auth.xml statistics_items.h statistics.cc tests/statistics_unittest.cc: Makefile s-genstats
+auth.spec b10-auth.xml statistics_items.h statistics.cc tests/statistics_unittest.cc: s-genstats
 
 s-genstats: gen-statisticsitems.py
 	./gen-statisticsitems.py
