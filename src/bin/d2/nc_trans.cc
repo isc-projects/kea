@@ -83,7 +83,10 @@ NameChangeTransaction::operator()(DNSClient::Status status) {
 
 void
 NameChangeTransaction::defineEvents() {
+    // Call superclass impl first.
     StateModel::defineEvents();
+
+    // Define NCT events.
     defineEvent(SELECT_SERVER_EVT, "SELECT_SERVER_EVT");
     defineEvent(SERVER_SELECTED_EVT, "SERVER_SELECTED_EVT");
     defineEvent(SERVER_IO_ERROR_EVT, "SERVER_IO_ERROR_EVT");
@@ -95,7 +98,10 @@ NameChangeTransaction::defineEvents() {
 
 void
 NameChangeTransaction::verifyEvents() {
+    // Call superclass impl first.
     StateModel::verifyEvents();
+
+    // Verify NCT events.
     getEvent(SELECT_SERVER_EVT);
     getEvent(SERVER_SELECTED_EVT);
     getEvent(SERVER_IO_ERROR_EVT);
@@ -106,17 +112,31 @@ NameChangeTransaction::verifyEvents() {
 }
 
 void
-NameChangeTransaction::verifyStateHandlerMap() {
-    getStateHandler(READY_ST);
-    getStateHandler(SELECTING_FWD_SERVER_ST);
-    getStateHandler(SELECTING_REV_SERVER_ST);
-    getStateHandler(PROCESS_TRANS_OK_ST);
-    getStateHandler(PROCESS_TRANS_FAILED_ST);
+NameChangeTransaction::defineStates() {
+    // Call superclass impl first.
+    StateModel::defineStates();
+    // This class is "abstract" in that it does not supply handlers for its
+    // states, derivations must do that therefore they must define them.
 }
 
 void
-NameChangeTransaction::onModelFailure() {
+NameChangeTransaction::verifyStates() {
+    // Call superclass impl first.
+    StateModel::verifyStates();
+
+    // Verify NCT states. This ensures that derivations provide the handlers.
+    getState(READY_ST);
+    getState(SELECTING_FWD_SERVER_ST);
+    getState(SELECTING_REV_SERVER_ST);
+    getState(PROCESS_TRANS_OK_ST);
+    getState(PROCESS_TRANS_FAILED_ST);
+}
+
+void
+NameChangeTransaction::onModelFailure(const std::string& explanation) {
     setNcrStatus(dhcp_ddns::ST_FAILED);
+    LOG_ERROR(dctl_logger, DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR)
+                  .arg(explanation);
 }
 
 void
@@ -224,33 +244,6 @@ NameChangeTransaction::getForwardChangeCompleted() const {
 bool
 NameChangeTransaction::getReverseChangeCompleted() const {
     return (reverse_change_completed_);
-}
-
-const char*
-NameChangeTransaction::getStateLabel(const int state) const {
-    const char* str = "Unknown";
-    switch(state) {
-    case READY_ST:
-        str = "NameChangeTransaction::READY_ST";
-        break;
-    case SELECTING_FWD_SERVER_ST:
-        str = "NameChangeTransaction::SELECTING_FWD_SERVER_ST";
-        break;
-    case SELECTING_REV_SERVER_ST:
-        str = "NameChangeTransaction::SELECTING_REV_SERVER_ST";
-        break;
-    case PROCESS_TRANS_OK_ST:
-        str = "NameChangeTransaction::PROCESS_TRANS_OK_ST";
-        break;
-    case PROCESS_TRANS_FAILED_ST:
-        str = "NameChangeTransaction::PROCESS_TRANS_FAILED_ST";
-        break;
-    default:
-        str = StateModel::getStateLabel(state);
-        break;
-    }
-
-    return (str);
 }
 
 } // namespace isc::d2

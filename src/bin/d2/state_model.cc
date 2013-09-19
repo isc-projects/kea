@@ -20,6 +20,53 @@
 namespace isc {
 namespace d2 {
 
+/********************************** State *******************************/
+
+State::State(const int value, const char* label, StateHandler handler)
+        : LabeledValue(value, label), handler_(handler) {
+}
+
+State::~State() {
+}
+
+void
+State::run() {
+        (handler_)();
+}
+
+/********************************** StateSet *******************************/
+
+StateSet::StateSet() {
+}
+
+StateSet::~StateSet() {
+}
+
+void
+StateSet::add(const int value, const char* label, StateHandler handler) {
+    try {
+        LabeledValueSet::add(LabeledValuePtr(new State(value, label, handler)));
+    } catch (const std::exception& ex) {
+        isc_throw(StateModelError, "StateSet: cannot add state :" << ex.what());
+    }
+
+}
+
+const StatePtr
+StateSet::getState(int value) {
+    if (!isDefined(value)) {
+        isc_throw(StateModelError," StateSet: state is undefined");
+    }
+
+    // Since we have to use dynamic casting, to get a state pointer
+    // we can't return a reference.
+    StatePtr state = boost::dynamic_pointer_cast<State>(get(value));
+    return (state);
+}
+
+/********************************** StateModel *******************************/
+
+
 // Common state model states
 const int StateModel::NEW_ST;
 const int StateModel::END_ST;
@@ -34,10 +81,10 @@ const int StateModel::FAIL_EVT;
 
 const int StateModel::SM_EVENT_MAX;
 
-StateModel::StateModel() : state_handlers_(), state_(NEW_ST),
-                          prev_state_(NEW_ST), last_event_(NOP_EVT),
-                          next_event_(NOP_EVT), on_entry_flag_(false),
-                          on_exit_flag_(false) {
+StateModel::StateModel() : events_(), states_(), dictionaries_initted_(false),
+                          curr_state_(NEW_ST), prev_state_(NEW_ST),
+                          last_event_(NOP_EVT), next_event_(NOP_EVT),
+                          on_entry_flag_(false), on_exit_flag_(false) {
 }
 
 StateModel::~StateModel(){
@@ -45,6 +92,7 @@ StateModel::~StateModel(){
 
 void
 StateModel::startModel(const int start_state) {
+    // First let's build and verify the dictionary of events.
     try {
         defineEvents();
         verifyEvents();
@@ -52,20 +100,29 @@ StateModel::startModel(const int start_state) {
         isc_throw(StateModelError, "Event set is invalid: " << ex.what());
     }
 
-    // Initialize the state handler map first.
-    initStateHandlerMap();
+    // Next let's build and verify the dictionary of states.
+    try {
+        defineStates();
+        verifyStates();
+    } catch (const std::exception& ex) {
+        isc_throw(StateModelError, "State set is invalid: " << ex.what());
+    }
 
-    // Test validity of the handler map. This provides an opportunity to
-    // sanity check the map prior to attempting to execute the model.
-    verifyStateHandlerMap();
+    // Record that we are good to go.
+    dictionaries_initted_ = true;
 
-    // Set the current state to startng state and enter the run loop.
+    // Set the current state to starting state and enter the run loop.
     setState(start_state);
     runModel(START_EVT);
 }
 
 void
 StateModel::runModel(unsigned int run_event) {
+    /// If the dictionaries aren't built bail out.
+    if (!dictionaries_initted_) {
+       abortModel("runModel invoked before model has been initialized");
+    }
+
     try {
         // Seed the loop with the given event as the next to process.
         postNextEvent(run_event);
@@ -73,32 +130,35 @@ StateModel::runModel(unsigned int run_event) {
             // Invoke the current state's handler.  It should consume the
             // next event, then determine what happens next by setting
             // current state and/or the next event.
-            (getStateHandler(state_))();
+            getState(curr_state_)->run();
 
             // Keep going until a handler sets next event to a NOP_EVT.
         } while (!isModelDone() && getNextEvent() != NOP_EVT);
     }
     catch (const std::exception& ex) {
-        // The model has suffered an unexpected exception. This constitutes a
+        // The model has suffered an unexpected exception. This constitutes
         // a model violation and indicates a programmatic shortcoming.
         // In theory, the model should account for all error scenarios and
-        // deal with them accordingly.  Log it and transition to END_ST with
-        // FAILED_EVT via abortModel.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR)
-                  .arg(ex.what()).arg(getContextStr());
-        abortModel();
+        // deal with them accordingly.  Transition to END_ST with FAILED_EVT
+        // via abortModel.
+        abortModel(ex.what());
     }
 }
 
 void
+StateModel::nopStateHandler() {
+}
+
+
+void
 StateModel::defineEvent(unsigned int event_value, const char* label) {
     if (!isModelNew()) {
-        // Don't allow for self-modifying maps.
+        // Don't allow for self-modifying models.
         isc_throw(StateModelError, "Events may only be added to a new model."
                    << event_value << " - " << label);
     }
 
-    // add method may throw on duplicate or empty label.  
+    // Attempt to add the event to the set.
     try {
         events_.add(event_value, label);
     } catch (const std::exception& ex) {
@@ -109,52 +169,41 @@ StateModel::defineEvent(unsigned int event_value, const char* label) {
 const EventPtr&
 StateModel::getEvent(unsigned int event_value) {
     if (!events_.isDefined(event_value)) {
-        isc_throw(StateModelError, 
+        isc_throw(StateModelError,
                   "Event value is not defined:" << event_value);
     }
 
     return (events_.get(event_value));
 }
 
-StateHandler
-StateModel::getStateHandler(unsigned int state) {
-    StateHandlerMap::iterator it = state_handlers_.find(state);
-    // It is wrong to try to find a state that isn't mapped.
-    if (it == state_handlers_.end()) {
-        isc_throw(StateModelError, "No handler for state: "
-                  << state << " - " << getStateLabel(state));
+void
+StateModel::defineState(unsigned int state_value, const char* label,
+    StateHandler handler) {
+    if (!isModelNew()) {
+        // Don't allow for self-modifying maps.
+        isc_throw(StateModelError, "States may only be added to a new model."
+                   << state_value << " - " << label);
     }
 
-    return ((*it).second);
+    // Attempt to add the state to the set.
+    try {
+        states_.add(state_value, label, handler);
+    } catch (const std::exception& ex) {
+        isc_throw(StateModelError, "Error adding state: " << ex.what());
+    }
+}
+
+const StatePtr
+StateModel::getState(unsigned int state_value) {
+    if (!states_.isDefined(state_value)) {
+        isc_throw(StateModelError,
+                  "State value is not defined:" << state_value);
+    }
+
+    return (states_.getState(state_value));
 }
 
 void
-StateModel::addToStateHandlerMap(unsigned int state, StateHandler handler) {
-    if (!isModelNew()) {
-        // Don't allow for self-modifying maps.
-        isc_throw(StateModelError,
-                  "State handler mappings can only be added to a new model."
-                   << state << " - " << getStateLabel(state));
-    }
-
-    StateHandlerMap::iterator it = state_handlers_.find(state);
-    // Check for a duplicate attempt.  State's can't have more than one.
-    if (it != state_handlers_.end()) {
-        isc_throw(StateModelError,
-                  "Attempted duplicate entry in state handler map, state: "
-                   << state << " - " << getStateLabel(state));
-    }
-
-    // Do not allow handlers for special states fo NEW_ST and END_ST.
-    if (state == NEW_ST || state == END_ST) {
-        isc_throw(StateModelError, "A handler is not supported for state: "
-                  << state << " - " << getStateLabel(state));
-    }
-
-    state_handlers_[state] = handler;
-}
-
-void 
 StateModel::defineEvents() {
     defineEvent(NOP_EVT, "NOP_EVT");
     defineEvent(START_EVT, "START_EVT");
@@ -170,6 +219,19 @@ StateModel::verifyEvents() {
     getEvent(FAIL_EVT);
 }
 
+void
+StateModel::defineStates() {
+    defineState(NEW_ST, "NEW_ST",
+                boost::bind(&StateModel::nopStateHandler, this));
+    defineState(END_ST, "END_ST",
+                boost::bind(&StateModel::nopStateHandler, this));
+}
+
+void
+StateModel::verifyStates() {
+    getState(NEW_ST);
+    getState(END_ST);
+}
 
 void
 StateModel::transition(unsigned int state, unsigned int event) {
@@ -183,33 +245,37 @@ StateModel::endModel() {
 }
 
 void
-StateModel::abortModel() {
+StateModel::abortModel(const std::string& explanation) {
     transition(END_ST, FAIL_EVT);
-    onModelFailure();
+
+    std::ostringstream stream ;
+    stream << explanation << " : " << getContextStr();
+    onModelFailure(stream.str());
 }
 
 void
 StateModel::setState(unsigned int state) {
-    // If the new state isn't NEW_ST or END_ST, make sure it has a handler.
-    if ((state && state != NEW_ST && state != END_ST)
-        && (state_handlers_.end() == state_handlers_.find(state))) {
-        isc_throw(StateModelError, "Attempt to set state to invalid stat :"
-                  << state << "=" << getStateLabel(state));
+    if (state != END_ST && !states_.isDefined(state)) {
+        isc_throw(StateModelError,
+                  "Attempt to set state to an undefined value: " << state );
     }
 
-    prev_state_ = state_;
-    state_ = state;
+    prev_state_ = curr_state_;
+    curr_state_ = state;
 
     // Set the "do" flags if we are transitioning.
-    on_entry_flag_ = ((state != END_ST) && (prev_state_ != state_));
+    on_entry_flag_ = ((state != END_ST) && (prev_state_ != curr_state_));
+
     // At this time they are calculated the same way.
     on_exit_flag_ = on_entry_flag_;
 }
 
 void
 StateModel::postNextEvent(unsigned int event_value) {
+    // Check for FAIL_EVT as special case of model error before events are
+    // defined.
     if (event_value != FAIL_EVT && !events_.isDefined(event_value)) {
-        isc_throw(StateModelError, 
+        isc_throw(StateModelError,
                   "Attempt to post an undefined event, value: " << event_value);
     }
 
@@ -232,8 +298,8 @@ StateModel::doOnExit() {
 }
 
 unsigned int
-StateModel::getState() const {
-    return (state_);
+StateModel::getCurrState() const {
+    return (curr_state_);
 }
 
 unsigned int
@@ -252,12 +318,12 @@ StateModel::getNextEvent() const {
 }
 bool
 StateModel::isModelNew() const {
-    return (state_ == NEW_ST);
+    return (curr_state_ == NEW_ST);
 }
 
 bool
 StateModel::isModelRunning() const {
-    return ((state_ != NEW_ST) && (state_ != END_ST));
+    return ((curr_state_ != NEW_ST) && (curr_state_ != END_ST));
 }
 
 bool
@@ -267,7 +333,7 @@ StateModel::isModelWaiting() const {
 
 bool
 StateModel::isModelDone() const {
-    return (state_ == END_ST);
+    return (curr_state_ == END_ST);
 }
 
 bool
@@ -277,26 +343,19 @@ StateModel::didModelFail() const {
 
 const char*
 StateModel::getStateLabel(const int state) const {
-    const char* str = "Unknown";
-    switch(state) {
-    case NEW_ST:
-        str = "StateModel::NEW_ST";
-        break;
-    case END_ST:
-        str = "StateModel::END_ST";
-        break;
-    default:
-        break;
-    }
+    return (states_.getLabel(state));
+}
 
-    return (str);
+const char*
+StateModel::getEventLabel(const int event) const {
+    return (events_.getLabel(event));
 }
 
 std::string
 StateModel::getContextStr() const {
     std::ostringstream stream;
     stream << "current state: [ "
-            << state_ << " " << getStateLabel(state_)
+            << curr_state_ << " " << getStateLabel(curr_state_)
             << " ] next event: [ "
             << next_event_ << " " << getEventLabel(next_event_) << " ]";
     return(stream.str());
@@ -310,11 +369,6 @@ StateModel::getPrevContextStr() const {
            << " ] last event: [ "
            << next_event_ << " " << getEventLabel(last_event_) << " ]";
     return(stream.str());
-}
-
-const char*
-StateModel::getEventLabel(const int event) const {
-    return (events_.getLabel(event));
 }
 
 } // namespace isc::d2
