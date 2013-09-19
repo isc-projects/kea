@@ -474,9 +474,10 @@ private:
     volatile bool shutdown_;
 
     /// Indexes for registered hook points
-    int hook_index_pkt6_receive_;
-    int hook_index_subnet6_select_;
-    int hook_index_pkt6_send_;
+    // (Unused and commented out for now to fix build failures)
+    // int hook_index_pkt6_receive_;
+    // int hook_index_subnet6_select_;
+    // int hook_index_pkt6_send_;
 
     /// UDP port number on which server listens.
     uint16_t port_;

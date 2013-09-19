@@ -6,9 +6,6 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 AM_CXXFLAGS += -Wno-unused-parameter # see src/lib/cc/Makefile.am
-if USE_CLANGPP
-AM_CXXFLAGS += -Wno-error
-endif
 
 CLEANFILES = *.gcno *.gcda
 
