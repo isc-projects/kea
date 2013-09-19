@@ -65,6 +65,16 @@ public:
     using AllocEngine::Allocator;
     using AllocEngine::IterativeAllocator;
     using AllocEngine::getAllocator;
+
+    class NakedIterativeAllocator: public AllocEngine::IterativeAllocator {
+    public:
+        NakedIterativeAllocator(Lease::Type type)
+            :IterativeAllocator(type) {
+        }
+
+        using AllocEngine::IterativeAllocator::increaseAddress;
+        using AllocEngine::IterativeAllocator::increasePrefix;
+    };
 };
 
 /// @brief Used in Allocation Engine tests for IPv6
@@ -125,12 +135,30 @@ public:
         EXPECT_EQ(subnet_->getPreferred(), lease->preferred_lft_);
         EXPECT_EQ(subnet_->getT1(), lease->t1_);
         EXPECT_EQ(subnet_->getT2(), lease->t2_);
-        EXPECT_EQ(0, lease->prefixlen_); // this is IA_NA, not IA_PD
+        EXPECT_EQ(128, lease->prefixlen_); // this is IA_NA, not IA_PD
         EXPECT_TRUE(false == lease->fqdn_fwd_);
         EXPECT_TRUE(false == lease->fqdn_rev_);
         EXPECT_TRUE(*lease->duid_ == *duid_);
         // @todo: check cltt
-     }
+    }
+
+    /// @brief checks if specified address is increased properly
+    /// @param alloc IterativeAllocator that is tested
+    /// @param input address to be increased
+    /// @param exp_output expected address after increase
+    void
+    checkAddrIncrease(NakedAllocEngine::NakedIterativeAllocator& alloc,
+                      std::string input, std::string exp_output) {
+        EXPECT_EQ(exp_output, alloc.increaseAddress(IOAddress(input)).toText());
+    }
+
+    void
+    checkPrefixIncrease(NakedAllocEngine::NakedIterativeAllocator& alloc,
+                        std::string input, uint8_t prefix_len,
+                        std::string exp_output) {
+        EXPECT_EQ(exp_output, alloc.increasePrefix(IOAddress(input), prefix_len)
+                  .toText());
+    }
 
     virtual ~AllocEngine6Test() {
         factory_.destroy();
@@ -422,6 +450,71 @@ TEST_F(AllocEngine6Test, IterativeAllocator) {
         EXPECT_TRUE(subnet_->inPool(candidate));
     }
 }
+
+// This test verifies that the allocator iterates over addresses properly
+TEST_F(AllocEngine6Test, IterativeAllocatorAddrStep) {
+    NakedAllocEngine::NakedIterativeAllocator alloc(Lease::TYPE_NA);
+
+    // Let's pick the first address
+    IOAddress addr1 = alloc.pickAddress(subnet_, duid_, IOAddress("2001:db8:1::10"));
+
+    // Check that we can indeed pick the first address from the pool
+    EXPECT_EQ("2001:db8:1::10", addr1.toText());
+
+    // Check that addresses can be increased properly
+    checkAddrIncrease(alloc, "2001:db8::9", "2001:db8::a");
+    checkAddrIncrease(alloc, "2001:db8::f", "2001:db8::10");
+    checkAddrIncrease(alloc, "2001:db8::10", "2001:db8::11");
+    checkAddrIncrease(alloc, "2001:db8::ff", "2001:db8::100");
+    checkAddrIncrease(alloc, "2001:db8::ffff", "2001:db8::1:0");
+    checkAddrIncrease(alloc, "::", "::1");
+    checkAddrIncrease(alloc, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", "::");
+
+    // Check that prefixes can be increased properly
+
+    // For /128 prefix, increasePrefix should work the same as addressIncrease
+    checkPrefixIncrease(alloc, "2001:db8::9", 128, "2001:db8::a");
+    checkPrefixIncrease(alloc, "2001:db8::f", 128, "2001:db8::10");
+    checkPrefixIncrease(alloc, "2001:db8::10", 128, "2001:db8::11");
+    checkPrefixIncrease(alloc, "2001:db8::ff", 128, "2001:db8::100");
+    checkPrefixIncrease(alloc, "2001:db8::ffff", 128, "2001:db8::1:0");
+    checkPrefixIncrease(alloc, "::", 128, "::1");
+    checkPrefixIncrease(alloc, "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff", 128, "::");
+
+    // Check that /64 prefixes can be generated
+    checkPrefixIncrease(alloc, "2001:db8::", 64, "2001:db8:0:1::");
+
+    // Check that prefix length not divisible by 8 are working
+    checkPrefixIncrease(alloc, "2001:db8::", 128, "2001:db8::1");
+    checkPrefixIncrease(alloc, "2001:db8::", 127, "2001:db8::2");
+    checkPrefixIncrease(alloc, "2001:db8::", 126, "2001:db8::4");
+    checkPrefixIncrease(alloc, "2001:db8::", 125, "2001:db8::8");
+    checkPrefixIncrease(alloc, "2001:db8::", 124, "2001:db8::10");
+    checkPrefixIncrease(alloc, "2001:db8::", 123, "2001:db8::20");
+    checkPrefixIncrease(alloc, "2001:db8::", 122, "2001:db8::40");
+    checkPrefixIncrease(alloc, "2001:db8::", 121, "2001:db8::80");
+    checkPrefixIncrease(alloc, "2001:db8::", 120, "2001:db8::100");
+
+    // These are not really useful cases, because there are bits set
+    // int the last (128 - prefix_len) bits. Nevertheless, it shows
+    // that the algorithm is working even in such cases
+    checkPrefixIncrease(alloc, "2001:db8::1", 128, "2001:db8::2");
+    checkPrefixIncrease(alloc, "2001:db8::1", 127, "2001:db8::3");
+    checkPrefixIncrease(alloc, "2001:db8::1", 126, "2001:db8::5");
+    checkPrefixIncrease(alloc, "2001:db8::1", 125, "2001:db8::9");
+    checkPrefixIncrease(alloc, "2001:db8::1", 124, "2001:db8::11");
+    checkPrefixIncrease(alloc, "2001:db8::1", 123, "2001:db8::21");
+    checkPrefixIncrease(alloc, "2001:db8::1", 122, "2001:db8::41");
+    checkPrefixIncrease(alloc, "2001:db8::1", 121, "2001:db8::81");
+    checkPrefixIncrease(alloc, "2001:db8::1", 120, "2001:db8::101");
+
+    // Let's try out couple real life scenarios
+    checkPrefixIncrease(alloc, "2001:db8:1:abcd::", 64, "2001:db8:1:abce::");
+    checkPrefixIncrease(alloc, "2001:db8:1:abcd::", 60, "2001:db8:1:abdd::");
+    checkPrefixIncrease(alloc, "2001:db8:1:abcd::", 56, "2001:db8:1:accd::");
+    checkPrefixIncrease(alloc, "2001:db8:1:abcd::", 52, "2001:db8:1:bbcd::");
+}
+
 
 
 // This test verifies that the iterative allocator really walks over all addresses
