@@ -244,6 +244,25 @@ Subnet::addPool(const PoolPtr& pool) {
 }
 
 void
+Subnet::delPools(Lease::Type type) {
+    switch (type) {
+    case Lease::TYPE_V4:
+    case Lease::TYPE_NA:
+        pools_.clear();
+        return;
+    case Lease::TYPE_TA:
+        pools_ta_.clear();
+        return;
+    case Lease::TYPE_PD:
+        pools_pd_.clear();
+        return;
+    default:
+        isc_throw(BadValue, "Invalid pool type specified: "
+                  << static_cast<int>(type));
+    }
+}
+
+void
 Subnet::setIface(const std::string& iface_name) {
     iface_ = iface_name;
 }

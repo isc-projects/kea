@@ -272,6 +272,13 @@ public:
     /// @param pool pool to be added
     void addPool(const PoolPtr& pool);
 
+
+    /// @brief Deletes all pools of specified type
+    ///
+    /// This method is used for testing purposes only
+    /// @param type type of pools to be deleted
+    void delPools(Lease::Type type);
+
     /// @brief Returns a pool that specified address belongs to
     ///
     /// If there is no pool that the address belongs to (hint is invalid), other

@@ -137,6 +137,9 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
                                              const DuidPtr&,
                                              const IOAddress&) {
 
+    // Is this prefix allocation?
+    bool prefix = pool_type_ == Lease::TYPE_PD;
+
     // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
     // perhaps restarting the server).
@@ -169,7 +172,18 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
 
     // Ok, we have a pool that the last address belonged to, let's use it.
 
-    IOAddress next = increaseAddress(last); // basically addr++
+    IOAddress next("::");
+    if (!prefix) {
+        next = increaseAddress(last); // basically addr++
+    } else {
+        Pool6Ptr pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
+        if (!pool6) {
+            // Something is gravely wrong here
+            isc_throw(InvalidParameter, "Wrong type of pool");
+        }
+        // Get the next prefix
+        next = increasePrefix(last, (pool6)->getLength());
+    }
     if ((*it)->inRange(next)) {
         // the next one is in the pool as well, so we haven't hit pool boundary yet
         subnet->setLastAllocated(pool_type_, next);
