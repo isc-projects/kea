@@ -22,8 +22,11 @@ AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
 # Define rule to build logging source files from message file
-nsas_messages.h nsas_messages.cc: nsas_messages.mes
+nsas_messages.h nsas_messages.cc: s-messages
+
+s-messages: nsas_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/nsas/nsas_messages.mes
+	touch $@
 
 # What is being built.
 lib_LTLIBRARIES = libb10-nsas.la
@@ -59,4 +62,4 @@ nodist_libb10_nsas_la_SOURCES  = nsas_messages.h nsas_messages.cc
 EXTRA_DIST = nsas_messages.mes
 
 # Make sure that the generated files are got rid of in a clean operation
-CLEANFILES = *.gcno *.gcda nsas_messages.h nsas_messages.cc
+CLEANFILES = *.gcno *.gcda nsas_messages.h nsas_messages.cc s-messages

@@ -714,9 +714,8 @@ public:
     template<typename ContainerType, typename ValueType>
     void checkValueEq(const boost::shared_ptr<ContainerType>& ref_values,
                       const boost::shared_ptr<ContainerType>& values) {
-        ValueType param;
-        ASSERT_NO_THROW(param = values->getParam("foo"));
-        EXPECT_EQ(ref_values->getParam("foo"), param);
+        ASSERT_NO_THROW(values->getParam("foo"));
+        EXPECT_EQ(ref_values->getParam("foo"), values->getParam("foo"));
     }
 
     /// @brief Check that the storages of the specific type hold different
@@ -734,9 +733,8 @@ public:
     template<typename ContainerType, typename ValueType>
     void checkValueNeq(const boost::shared_ptr<ContainerType>& ref_values,
                        const boost::shared_ptr<ContainerType>& values) {
-        ValueType param;
-        ASSERT_NO_THROW(param = values->getParam("foo"));
-        EXPECT_NE(ref_values->getParam("foo"), param);
+        ASSERT_NO_THROW(values->getParam("foo"));
+        EXPECT_NE(ref_values->getParam("foo"), values->getParam("foo"));
     }
 
     /// @brief Check that option definition storage in the context holds

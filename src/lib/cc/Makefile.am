@@ -29,13 +29,16 @@ nodist_libb10_cc_la_SOURCES += proto_defs.h
 libb10_cc_la_LIBADD = $(top_builddir)/src/lib/log/libb10-log.la
 
 CLEANFILES = *.gcno *.gcda session_config.h cc_messages.cc cc_messages.h \
-	proto_defs.h
+	proto_defs.h s-messages
 
 session_config.h: session_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" session_config.h.pre >$@
 
-cc_messages.cc cc_messages.h: cc_messages.mes
+cc_messages.cc cc_messages.h: s-messages
+
+s-messages: cc_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/cc/cc_messages.mes
+	touch $@
 
 BUILT_SOURCES = session_config.h cc_messages.cc cc_messages.h proto_defs.h
 
