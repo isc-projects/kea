@@ -131,65 +131,63 @@ public:
         }
     }
 
+    /// @brief Construct the event dictionary.
     virtual void defineEvents() {
+        // Invoke the base call implementation first.
         NameChangeTransaction::defineEvents();
+
+        // Define our events.
         defineEvent(SEND_UPDATE_EVT, "SEND_UPDATE_EVT");
     }
 
+    /// @brief Verify the event dictionary.
     virtual void verifyEvents() {
+        // Invoke the base call implementation first.
         NameChangeTransaction::verifyEvents();
+
+        // Define our events.
         getEvent(SEND_UPDATE_EVT);
     }
 
-    /// @brief Initializes the state handler map.
-    void initStateHandlerMap() {
-        addToStateHandlerMap(READY_ST,
+    /// @brief Construct the state dictionary.
+    virtual void defineStates() {
+        // Invoke the base call implementation first.
+        NameChangeTransaction::defineStates();
+
+        // Define our states.
+        defineState(READY_ST, "READY_ST",
                              boost::bind(&NameChangeStub::readyHandler, this));
 
-        addToStateHandlerMap(SELECTING_FWD_SERVER_ST,
+        defineState(SELECTING_FWD_SERVER_ST, "SELECTING_FWD_SERVER_ST",
                              boost::bind(&NameChangeStub::dummyHandler, this));
 
-        addToStateHandlerMap(SELECTING_REV_SERVER_ST,
+        defineState(SELECTING_REV_SERVER_ST, "SELECTING_REV_SERVER_ST",
                              boost::bind(&NameChangeStub::dummyHandler, this));
 
-        addToStateHandlerMap(DOING_UPDATE_ST,
+        defineState(DOING_UPDATE_ST, "DOING_UPDATE_ST",
                              boost::bind(&NameChangeStub::doingUpdateHandler,
                                          this));
 
-        addToStateHandlerMap(PROCESS_TRANS_OK_ST,
+        defineState(PROCESS_TRANS_OK_ST, "PROCESS_TRANS_OK_ST",
                              boost::bind(&NameChangeStub::
                                          processTransDoneHandler, this));
 
-        addToStateHandlerMap(PROCESS_TRANS_FAILED_ST,
+        defineState(PROCESS_TRANS_FAILED_ST, "PROCESS_TRANS_FAILED_ST",
                              boost::bind(&NameChangeStub::
                                          processTransDoneHandler, this));
     }
 
-    void verifyStateHandlerMap() {
-        getStateHandler(READY_ST);
-        getStateHandler(DOING_UPDATE_ST);
-        // Call base class verification.
-        NameChangeTransaction::verifyStateHandlerMap();
-    }
+    /// @brief Verify the event dictionary.
+    virtual void verifyStates() {
+        // Invoke the base call implementation first.
+        NameChangeTransaction::verifyStates();
 
-    const char* getStateLabel(const int state) const {
-        const char* str = "Unknown";
-        switch(state) {
-        case NameChangeStub::DOING_UPDATE_ST:
-            str = "NameChangeStub::DOING_UPDATE_ST";
-            break;
-        default:
-            str = NameChangeTransaction::getStateLabel(state);
-            break;
-        }
-
-        return (str);
+        // Define our states.
+        getState(DOING_UPDATE_ST);
     }
 
     // Expose the protected methods to be tested.
     using StateModel::runModel;
-    using StateModel::getStateHandler;
-
     using NameChangeTransaction::initServerSelection;
     using NameChangeTransaction::selectNextServer;
     using NameChangeTransaction::getCurrentServer;
@@ -377,22 +375,23 @@ TEST_F(NameChangeTransactionTest, accessors) {
     EXPECT_TRUE(name_change->getReverseChangeCompleted());
 }
 
-/// @brief Tests state map initialization and validation.
-/// This tests the basic concept of state map initialization and verification
-/// by manually invoking the map methods normally by StateModel::startModel.
-TEST_F(NameChangeTransactionTest, stubStateMapInit) {
+/// @brief Tests event and state dictionary construction and verification.
+TEST_F(NameChangeTransactionTest, dictionaryCheck) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
 
-    // Verify that the map validation throws prior to the map being
-    // initialized.
-    ASSERT_THROW(name_change->verifyStateHandlerMap(), StateModelError);
+    // Verify that the event and state dictionary validation fails prior
+    // dictionary construction.
+    ASSERT_THROW(name_change->verifyEvents(), StateModelError);
+    ASSERT_THROW(name_change->verifyStates(), StateModelError);
 
-    // Call initStateHandlerMap to initialize the state map.
-    ASSERT_NO_THROW(name_change->initStateHandlerMap());
+    // Construct both dictionaries.
+    ASSERT_NO_THROW(name_change->defineEvents());
+    ASSERT_NO_THROW(name_change->defineStates());
 
-    // Verify that the map validation succeeds now that the map is initialized.
-    ASSERT_NO_THROW(name_change->verifyStateHandlerMap());
+    // Verify both event and state dictionaries now pass validation.
+    ASSERT_NO_THROW(name_change->verifyEvents());
+    ASSERT_NO_THROW(name_change->verifyStates());
 }
 
 /// @brief Tests server selection methods.
@@ -511,106 +510,14 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
     EXPECT_EQ (passes, num_servers);
 }
 
-/// @brief Tests the ability to decode state values into text labels.
-TEST_F(NameChangeTransactionTest, stateLabels) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-
-    // Verify StateModel labels.
-    EXPECT_EQ("StateModel::NEW_ST",
-              name_change->getStateLabel(StateModel::NEW_ST));
-    EXPECT_EQ("StateModel::END_ST",
-              name_change->getStateLabel(StateModel::END_ST));
-
-    // Verify NameChangeTransaction labels
-    EXPECT_EQ("NameChangeTransaction::READY_ST",
-              name_change->getStateLabel(NameChangeTransaction::READY_ST));
-    EXPECT_EQ("NameChangeTransaction::SELECTING_FWD_SERVER_ST",
-              name_change->getStateLabel(NameChangeTransaction::
-                                        SELECTING_FWD_SERVER_ST));
-    EXPECT_EQ("NameChangeTransaction::SELECTING_REV_SERVER_ST",
-              name_change->getStateLabel(NameChangeTransaction::
-                                         SELECTING_REV_SERVER_ST));
-    EXPECT_EQ("NameChangeTransaction::PROCESS_TRANS_OK_ST",
-              name_change->getStateLabel(NameChangeTransaction::
-                                         PROCESS_TRANS_OK_ST));
-    EXPECT_EQ("NameChangeTransaction::PROCESS_TRANS_FAILED_ST",
-              name_change->getStateLabel(NameChangeTransaction::
-                                         PROCESS_TRANS_FAILED_ST));
-
-    // Verify Stub states
-    EXPECT_EQ("NameChangeStub::DOING_UPDATE_ST",
-              name_change->getStateLabel(NameChangeStub::DOING_UPDATE_ST));
-
-    // Verify unknown state.
-    EXPECT_EQ("Unknown", name_change->getStateLabel(-1));
-}
-
-/// @brief Tests the ability to decode event values into text labels.
-TEST_F(NameChangeTransactionTest, eventLabels) {
-    NameChangeStubPtr name_change;
-    ASSERT_NO_THROW(name_change = makeCannedTransaction());
-
-    // Manually invoke event definition.
-    ASSERT_NO_THROW(name_change->defineEvents());
-    ASSERT_NO_THROW(name_change->verifyEvents());
-
-    // Verify StateModel labels.
-    EXPECT_EQ("NOP_EVT",
-              std::string(name_change->getEventLabel(StateModel::NOP_EVT)));
-    EXPECT_EQ("START_EVT",
-              std::string(name_change->getEventLabel(StateModel::START_EVT)));
-    EXPECT_EQ("END_EVT",
-              std::string(name_change->getEventLabel(StateModel::END_EVT)));
-    EXPECT_EQ("FAIL_EVT",
-              std::string(name_change->getEventLabel(StateModel::FAIL_EVT)));
-
-    // Verify NameChangeTransactionLabels
-    EXPECT_EQ("SELECT_SERVER_EVT",
-              std::string(name_change->getEventLabel(NameChangeTransaction::
-                                         SELECT_SERVER_EVT)));
-    EXPECT_EQ("SERVER_SELECTED_EVT",
-              std::string(name_change->getEventLabel(NameChangeTransaction::
-                                         SERVER_SELECTED_EVT)));
-    EXPECT_EQ("SERVER_IO_ERROR_EVT",
-              std::string(name_change->getEventLabel(NameChangeTransaction::
-                                         SERVER_IO_ERROR_EVT)));
-    EXPECT_EQ("NO_MORE_SERVERS_EVT",
-              std::string(name_change->getEventLabel(NameChangeTransaction::
-                                         NO_MORE_SERVERS_EVT)));
-    EXPECT_EQ("IO_COMPLETED_EVT",
-              std::string(name_change->getEventLabel(NameChangeTransaction::
-                                         IO_COMPLETED_EVT)));
-    EXPECT_EQ("UPDATE_OK_EVT",
-              std::string(name_change->getEventLabel(NameChangeTransaction::
-                                         UPDATE_OK_EVT)));
-    EXPECT_EQ("UPDATE_FAILED_EVT",
-              std::string(name_change->getEventLabel(NameChangeTransaction::
-                                         UPDATE_FAILED_EVT)));
-
-    // Verify stub class labels.
-    EXPECT_EQ("SEND_UPDATE_EVT",
-              std::string(name_change->getEventLabel(NameChangeStub::
-                                                     SEND_UPDATE_EVT)));
-
-    // Verify undefined event label.
-    EXPECT_EQ(LabeledValueSet::UNDEFINED_LABEL, name_change->getEventLabel(-1));
-}
-
 /// @brief Tests that the transaction will be "failed" upon model errors.
 TEST_F(NameChangeTransactionTest, modelFailure) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
 
-    // We will cause a model failure by attempting to submit an event to
-    // NEW_ST.  Let's make sure that state is NEW_ST and that NEW_ST has no
-    // handler.
-    ASSERT_EQ(NameChangeTransaction::NEW_ST, name_change->getState());
-    ASSERT_THROW(name_change->getStateHandler(NameChangeTransaction::NEW_ST),
-                 StateModelError);
-
-    // Now call runStateModel() which should not throw.
-    EXPECT_NO_THROW(name_change->runModel(NameChangeTransaction::START_EVT));
+    // Now call runModel() with an undefined event which should not throw,
+    // but should result in a failed model and failed transaction.
+    EXPECT_NO_THROW(name_change->runModel(9999));
 
     // Verify that the model reports are done but failed.
     EXPECT_TRUE(name_change->isModelDone());
@@ -688,6 +595,5 @@ TEST_F(NameChangeTransactionTest, failedUpdateTest) {
     EXPECT_EQ(dhcp_ddns::ST_FAILED, name_change->getNcrStatus());
     EXPECT_FALSE(name_change->getForwardChangeCompleted());
 }
-
 
 }
