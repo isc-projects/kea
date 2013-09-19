@@ -182,12 +182,12 @@ public:
     virtual void operator()(DNSClient::Status status);
 
 protected:
-    /// @brief Adds events defined by NameChangeTransaction to the event set. 
+    /// @brief Adds events defined by NameChangeTransaction to the event set.
     ///
     /// This method adds the events common to NCR transaction processing to
     /// the set of define events.  It invokes the superclass's implementation
     /// first to maitain the hierarchical chain of event defintion.
-    /// Derivations of NameChangeTransaction must invoke its implementation 
+    /// Derivations of NameChangeTransaction must invoke its implementation
     /// in like fashion.
     ///
     /// @throw StateModelError if an event definition is invalid or a duplicate.
@@ -198,58 +198,33 @@ protected:
     /// This method verifies that the events defined by both the superclass and
     /// this class are defined.  As with defineEvents, this method calls the
     /// superclass's implementation first, to verify events defined by it and
-    /// then this implementation to verify events defined by 
+    /// then this implementation to verify events defined by
     /// NameChangeTransaction.
     ///
-    /// @throw StateModelError if an event value is undefined. 
+    /// @throw StateModelError if an event value is undefined.
     virtual void verifyEvents();
 
-    /// @brief Populates the map of state handlers.
+    /// @brief Adds states defined by NameChangeTransaction to the state set.
     ///
-    /// This method is used by derivations to construct a map of states to
-    /// their appropriate state handlers (bound method pointers).  It is
-    /// invoked at the beginning of startTransaction().
+    /// This method adds the states common to NCR transaction processing to
+    /// the dictionary of states.  It invokes the superclass's implementation
+    /// first to maitain the hierarchical chain of state defintion.
+    /// Derivations of NameChangeTransaction must invoke its implementation
+    /// in like fashion.
     ///
-    /// Implementations should use the addToMap() method add entries to
-    /// the map.
-    /// @todo This method should be pure virtual but until there are
-    /// derivations for the update manager to use, we will provide a
-    /// temporary empty, implementation.  If we make it pure virtual now
-    /// D2UpdateManager will not compile.
-    virtual void initStateHandlerMap() {};
+    /// @throw StateModelError if an state definition is invalid or a duplicate.
+    virtual void defineStates();
 
-    /// @brief Validates the contents of the state handler map.
+    /// @brief Validates the contents of the set of states.
     ///
-    /// This method is invoked immediately after initStateHandlerMap and
-    /// verifies that the state map includes handlers for all of the states
-    /// defined by NameChangeTransaction.  If the map is determined to be
-    /// invalid this method will throw a NameChangeTransactionError.
+    /// This method verifies that the states defined by both the superclass and
+    /// this class are defined.  As with defineStates, this method calls the
+    /// superclass's implementation first, to verify states defined by it and
+    /// then this implementation to verify states defined by
+    /// NameChangeTransaction.
     ///
-    /// Derivations should ALSO provide an implementation of this method. That
-    /// implementation should invoke this method, as well as verifying that all
-    /// of the derivation's states have handlers.
-    ///
-    /// A derivation's implementation of this function might look as follows:
-    ///
-    /// @code
-    ///
-    ///     class DerivedTrans : public NameChangeTransaction {
-    ///         :
-    ///         void verifyStateHandlerMap() {
-    ///             // Verify derivations' states:
-    ///             getStateHandler(SOME_DERIVED_STATE_1);
-    ///             getStateHandler(SOME_DERIVED_STATE_2);
-    ///             :
-    ///             getStateHandler(SOME_DERIVED_STATE_N);
-    ///
-    ///             // Verify handlers for NameChangeTransaction states:
-    ///             NameChangeTransaction::verifyStateHandlerMap();
-    ///         }
-    ///
-    /// @endcode
-    ///
-    /// @throw NameChangeTransactionError if the map is invalid.
-    virtual void verifyStateHandlerMap();
+    /// @throw StateModelError if an event value is undefined.
+    virtual void verifyStates();
 
     /// @brief Handler for fatal model execution errors.
     ///
@@ -260,7 +235,9 @@ protected:
     /// error occurs the transaction is deemed inoperable, and futher model
     /// execution cannot be performed.  It marks the transaction as failed by
     /// setting the NCR status to dhcp_ddns::ST_FAILED
-    virtual void onModelFailure();
+    ///
+    /// @param explanation is text detailing the error
+    virtual void onModelFailure(const std::string& explanation);
 
     /// @brief Sets the update status to the given status value.
     ///
@@ -387,44 +364,6 @@ public:
     ///
     /// @return True if the reverse change has been completed, false otherwise.
     bool getReverseChangeCompleted() const;
-
-    /// @brief Converts a state value into a text label.
-    ///
-    /// This method supplies labels for NameChangeTransaction's predefined
-    /// states. It is declared virtual to allow derivations to embed a call to
-    /// this method within their own implementation which would define labels
-    /// for its states.  An example implementation might look like the
-    /// following:
-    /// @code
-    ///
-    /// class DerivedTrans : public NameChangeTransaction {
-    ///     :
-    ///     static const int EXAMPLE_1_ST = NCT_STATE_MAX + 1;
-    ///     :
-    ///     const char* getStateLabel(const int state) const {
-    ///         const char* str = "Unknown";
-    ///         switch(state) {
-    ///         case EXAMPLE_1_ST:
-    ///             str = "DerivedTrans::EXAMPLE_1_ST";
-    ///             break;
-    ///         :
-    ///         default:
-    ///             // Not a derived state, pass it to NameChangeTransaction's
-    ///             // method.
-    ///             str = NameChangeTransaction::getStateLabel(state);
-    ///             break;
-    ///         }
-    ///
-    ///         return (str);
-    ///      }
-    ///
-    /// @endcode
-    ///
-    /// @param state is the state for which a label is desired.
-    ///
-    /// @return Returns a const char* containing the state label or
-    /// "Unknown" if the value cannot be mapped.
-    virtual const char* getStateLabel(const int state) const;
 
 private:
     /// @brief The IOService which should be used to for IO processing.
