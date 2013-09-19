@@ -24,9 +24,6 @@ namespace {
 
 /// @brief Verifies basic construction and accessors for LabeledValue.
 TEST(LabeledValue, construction) {
-    /// Verify that a null label is not allowed.
-    ASSERT_THROW(LabeledValue(1, NULL), LabeledValueError);
-
     /// Verify that an empty label is not allowed.
     ASSERT_THROW(LabeledValue(1, ""), LabeledValueError);
 

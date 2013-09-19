@@ -19,9 +19,9 @@ namespace d2 {
 
 /**************************** LabeledValue ****************************/
 
-LabeledValue::LabeledValue(const int value, const char* label)
+LabeledValue::LabeledValue(const int value, const std::string& label)
     : value_(value), label_(label) {
-    if (label == NULL || strlen(label) == 0) {
+    if (label.empty()) {
         isc_throw(LabeledValueError, "labels cannot be empty");
     }
 }
@@ -34,7 +34,7 @@ LabeledValue::getValue() const {
     return (value_);
 }
 
-const char*
+std::string
 LabeledValue::getLabel() const {
     return (label_);
 }
@@ -86,7 +86,7 @@ LabeledValueSet::add(LabeledValuePtr entry) {
 }
 
 void
-LabeledValueSet::add(const int value, const char* label) {
+LabeledValueSet::add(const int value, const std::string& label) {
     add (LabeledValuePtr(new LabeledValue(value,label)));
 }
 
@@ -108,7 +108,7 @@ LabeledValueSet::isDefined(const int value) const {
     return (it != map_.end());
 }
 
-const char*
+std::string
 LabeledValueSet::getLabel(const int value) const {
     LabeledValueMap::const_iterator it = map_.find(value);
     if (it != map_.end()) {
@@ -116,7 +116,7 @@ LabeledValueSet::getLabel(const int value) const {
         return (ptr->getLabel());
     }
 
-    return (UNDEFINED_LABEL);
+    return (std::string(UNDEFINED_LABEL));
 }
 
 } // namespace isc::d2
