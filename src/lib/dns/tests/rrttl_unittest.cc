@@ -26,6 +26,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
+using boost::scoped_ptr;
 
 namespace {
 class RRTTLTest : public ::testing::Test {
@@ -75,6 +76,12 @@ TEST_F(RRTTLTest, getValue) {
     EXPECT_EQ(0xffffffff, ttl_max.getValue());
 }
 
+TEST_F(RRTTLTest, copyConstruct) {
+    const RRTTL ttl1(3600);
+    const RRTTL ttl2(ttl1);
+    EXPECT_EQ(ttl1.getValue(), ttl2.getValue());
+}
+
 TEST_F(RRTTLTest, fromText) {
     // Border cases
     EXPECT_EQ(0, RRTTL("0").getValue());
@@ -88,14 +95,14 @@ TEST_F(RRTTLTest, fromText) {
 }
 
 TEST_F(RRTTLTest, createFromText) {
-    // It returns an actual RRTT iff the given text is recognized as a
+    // It returns an actual RRTTL iff the given text is recognized as a
     // valid RR TTL.
-    MaybeRRTTL maybe_ttl = RRTTL::createFromText("3600");
-    EXPECT_TRUE(maybe_ttl);
-    EXPECT_EQ(RRTTL(3600), *maybe_ttl);
+    scoped_ptr<RRTTL> good_ttl(RRTTL::createFromText("3600"));
+    EXPECT_TRUE(good_ttl);
+    EXPECT_EQ(RRTTL(3600), *good_ttl);
 
-    maybe_ttl = RRTTL::createFromText("bad");
-    EXPECT_FALSE(maybe_ttl);
+    scoped_ptr<RRTTL> bad_ttl(RRTTL::createFromText("bad"));
+    EXPECT_FALSE(bad_ttl);
 }
 
 void

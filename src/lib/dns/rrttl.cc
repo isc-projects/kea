@@ -166,13 +166,13 @@ RRTTL::RRTTL(const std::string& ttlstr) {
     }
 }
 
-MaybeRRTTL
+RRTTL*
 RRTTL::createFromText(const string& ttlstr) {
     uint32_t ttlval;
     if (parseTTLString(ttlstr, ttlval, NULL)) {
-        return (MaybeRRTTL(ttlval));
+        return (new RRTTL(ttlval));
     }
-    return (MaybeRRTTL());
+    return (NULL);
 }
 
 RRTTL::RRTTL(InputBuffer& buffer) {
