@@ -245,7 +245,7 @@ public:
     /// @brief Final state, all the state model has reached its conclusion.
     static const int END_ST = 1;
 
-    /// @define Value at which custom states in a derived class should begin.
+    /// @brief Value at which custom states in a derived class should begin.
     static const int SM_STATE_MAX = 10;
     //@}
 
@@ -264,7 +264,7 @@ public:
     /// @brief Event issued to abort the model execution.
     static const int FAIL_EVT = 3;
 
-    /// @define Value at which custom events in a derived class should begin.
+    /// @brief Value at which custom events in a derived class should begin.
     static const int SM_EVENT_MAX = 10;
     //@}
 
@@ -419,6 +419,8 @@ protected:
     /// @param value is the numeric value of the state
     /// @param label is the text label of the state used in log messages and
     /// exceptions.
+    /// @param handler is the bound instance method which implements the state's
+    /// actions.
     ///
     /// @throw StateModelError if the model has already been started, if
     /// the value is already defined, or if the label is empty.
@@ -512,7 +514,7 @@ protected:
     /// event that will be passed into the current state's handler on the next
     /// iteration of the run loop.
     ///
-    /// @param the numeric event value to post as the next event.
+    /// @param event the numeric event value to post as the next event.
     ///
     /// @throw StateModelError if the event is undefined
     void postNextEvent(unsigned int event);
