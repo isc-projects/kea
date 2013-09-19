@@ -192,10 +192,11 @@ public:
     /// is not always true. For the given example, 2001::1234:abcd would return
     /// true for inSubnet(), but false for inPool() check.
     ///
+    /// @param type pool types to iterate over
     /// @param addr this address will be checked if it belongs to any pools in
     ///        that subnet
     /// @return true if the address is in any of the pools
-    bool inPool(const isc::asiolink::IOAddress& addr) const;
+    bool inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const;
 
     /// @brief return valid-lifetime for addresses in that prefix
     Triplet<uint32_t> getValid() const {
@@ -310,13 +311,21 @@ public:
     /// and 0.0.0.0 for Subnet4)
     virtual isc::asiolink::IOAddress default_pool() const = 0;
 
-    /// @brief returns all pools
+    /// @brief returns all pools (const variant)
     ///
     /// The reference is only valid as long as the object that returned it.
     ///
     /// @param type lease type to be set
     /// @return a collection of all pools
     const PoolCollection& getPools(Lease::Type type) const;
+
+    /// @brief returns all pools (variable variant)
+    ///
+    /// The reference is only valid as long as the object that returned it.
+    ///
+    /// @param type lease type to be set
+    /// @return a collection of all pools
+    PoolCollection& getPools(Lease::Type type);
 
     /// @brief sets name of the network interface for directly attached networks
     ///

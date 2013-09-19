@@ -517,7 +517,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
         }
 
         // check if the hint is in pool and is available
-        if (subnet->inPool(hint)) {
+        if (subnet->inPool(Lease::TYPE_V4, hint)) {
             existing = LeaseMgrFactory::instance().getLease4(hint);
             if (!existing) {
                 /// @todo: Check if the hint is reserved once we have host support
