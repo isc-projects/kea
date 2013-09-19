@@ -22,7 +22,7 @@ namespace d2 {
 
 /********************************** State *******************************/
 
-State::State(const int value, const char* label, StateHandler handler)
+State::State(const int value, const std::string& label, StateHandler handler)
         : LabeledValue(value, label), handler_(handler) {
 }
 
@@ -43,7 +43,7 @@ StateSet::~StateSet() {
 }
 
 void
-StateSet::add(const int value, const char* label, StateHandler handler) {
+StateSet::add(const int value, const std::string& label, StateHandler handler) {
     try {
         LabeledValueSet::add(LabeledValuePtr(new State(value, label, handler)));
     } catch (const std::exception& ex) {
@@ -151,7 +151,7 @@ StateModel::nopStateHandler() {
 
 
 void
-StateModel::defineEvent(unsigned int event_value, const char* label) {
+StateModel::defineEvent(unsigned int event_value, const std::string& label) {
     if (!isModelNew()) {
         // Don't allow for self-modifying models.
         isc_throw(StateModelError, "Events may only be added to a new model."
@@ -177,7 +177,7 @@ StateModel::getEvent(unsigned int event_value) {
 }
 
 void
-StateModel::defineState(unsigned int state_value, const char* label,
+StateModel::defineState(unsigned int state_value, const std::string& label,
     StateHandler handler) {
     if (!isModelNew()) {
         // Don't allow for self-modifying maps.
@@ -341,12 +341,12 @@ StateModel::didModelFail() const {
     return (isModelDone() && (next_event_ == FAIL_EVT));
 }
 
-const char*
+std::string
 StateModel::getStateLabel(const int state) const {
     return (states_.getLabel(state));
 }
 
-const char*
+std::string
 StateModel::getEventLabel(const int event) const {
     return (events_.getLabel(event));
 }
