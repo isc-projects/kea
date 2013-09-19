@@ -109,7 +109,7 @@ public:
 
     static const int PROCESS_TRANS_FAILED_ST = SM_STATE_MAX + 5;
 
-    /// @define Value at which custom states in a derived class should begin.
+    /// @brief Value at which custom states in a derived class should begin.
     static const int NCT_STATE_MAX = SM_STATE_MAX + 100;
     //@}
 
@@ -138,7 +138,7 @@ public:
     /// packet (if one was received).
     static const int UPDATE_FAILED_EVT = SM_EVENT_MAX + 7;
 
-    /// @define Value at which custom events in a derived class should begin.
+    /// @brief Value at which custom events in a derived class should begin.
     static const int NCT_EVENT_MAX = SM_EVENT_MAX + 100;
     //@}
 
