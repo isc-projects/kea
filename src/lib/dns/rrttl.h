@@ -32,16 +32,6 @@ namespace dns {
 // forward declarations
 class AbstractMessageRenderer;
 
-class RRTTL;                    // forward declaration to define MaybeRRTTL
-
-/// \brief A shortcut for a compound type to represent RRTTL-or-not.
-///
-/// A value of this type can be interpreted in a boolean context, whose
-/// value is \c true if and only if it contains a valid RRTTL object.
-/// And, if it contains a valid RRTTL object, its value is accessible
-/// using \c operator*, just like a bare pointer to \c RRTTL.
-typedef boost::optional<RRTTL> MaybeRRTTL;
-
 ///
 /// \brief A standard DNS module exception that is thrown if an RRTTL object
 /// is being constructed from an unrecognized string.
@@ -123,12 +113,9 @@ public:
     /// possible exception handling.   This version is provided for such
     /// purpose.
     ///
-    /// If the given text represents a valid RRTTL, it returns a \c MaybeRRTTL
-    /// object that stores a corresponding \c RRTTL object, which is
-    /// accessible via \c operator*().  In this case the returned object will
-    /// be interpreted as \c true in a boolean context.  If the given text
-    /// does not represent a valid RRTTL, it returns a \c MaybeRRTTL object
-    /// which is interpreted as \c false in a boolean context.
+    /// If the given text represents a valid RRTTL, it returns a pointer
+    /// to a new RRTTL object. If the given text does not represent a
+    /// valid RRTTL, it returns \c NULL..
     ///
     /// One main purpose of this function is to minimize the overhead
     /// when the given text does not represent a valid RR TTL.  For this
@@ -142,9 +129,8 @@ public:
     /// This function never throws the \c InvalidRRTTL exception.
     ///
     /// \param ttlstr A string representation of the \c RRTTL.
-    /// \return An MaybeRRTTL object either storing an RRTTL object for
-    /// the given text or a \c false value.
-    static MaybeRRTTL createFromText(const std::string& ttlstr);
+    /// \return A new RRTTL object for the given text or a \c NULL value.
+    static RRTTL* createFromText(const std::string& ttlstr);
     ///
     //@}
 
