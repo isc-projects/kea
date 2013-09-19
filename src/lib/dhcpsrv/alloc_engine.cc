@@ -177,7 +177,8 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
                          bool ipv6)
     :attempts_(attempts) {
 
-    Lease::Type basic_type = ipv6?Lease::TYPE_NA:Lease::TYPE_V4;
+    // Choose the basic (normal address) lease type
+    Lease::Type basic_type = ipv6 ? Lease::TYPE_NA : Lease::TYPE_V4;
 
     // Initalize normal address allocators
     switch (engine_type) {
