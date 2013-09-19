@@ -168,7 +168,8 @@ const PoolCollection& Subnet::getPools(Lease::Type type) const {
     }
 }
 
-PoolPtr Subnet::getPool(Lease::Type type, isc::asiolink::IOAddress hint) {
+PoolPtr Subnet::getPool(Lease::Type type, isc::asiolink::IOAddress hint,
+                        bool anypool /* true */) {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
@@ -195,7 +196,7 @@ PoolPtr Subnet::getPool(Lease::Type type, isc::asiolink::IOAddress hint) {
          pool != pools->end(); ++pool) {
 
         // if we won't find anything better, then let's just use the first pool
-        if (!candidate) {
+        if (anypool && !candidate) {
             candidate = *pool;
         }
 

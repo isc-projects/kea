@@ -277,10 +277,17 @@ public:
     /// If there is no pool that the address belongs to (hint is invalid), other
     /// pool of specified type will be returned.
     ///
+    /// With anypool set to true, this is means give me a pool, preferably
+    /// the one that addr belongs to. With anypool set to false, it means
+    /// give me a pool that addr belongs to (or NULL if here is no such pool)
+    ///
     /// @param type pool type that the pool is looked for
     /// @param addr address that the returned pool should cover (optional)
+    /// @param anypool other pool may be returned as well, not only the one
+    ///        that addr belongs to
     /// @return found pool (or NULL)
-    PoolPtr getPool(Lease::Type type, isc::asiolink::IOAddress addr);
+    PoolPtr getPool(Lease::Type type, isc::asiolink::IOAddress addr,
+                    bool anypool = true);
 
     /// @brief Returns a pool without any address specified
     ///
