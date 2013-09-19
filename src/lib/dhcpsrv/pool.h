@@ -82,7 +82,7 @@ protected:
     /// Pool class directly. Instances of Pool4 and Pool6 should be created
     /// instead.
     ///
-    /// @param type type of the pool
+    /// @param type type of lease that will be served from this pool
     /// @param first first address of a range
     /// @param last last address of a range
     Pool(Lease::Type type,
@@ -113,7 +113,7 @@ protected:
     /// @todo: This field is currently not used.
     std::string comments_;
 
-    /// @brief defines a pool type
+    /// @brief defines a lease type that will be served from this pool
     Lease::Type type_;
 };
 
