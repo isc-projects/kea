@@ -59,14 +59,14 @@ RRClass::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint16(classcode_);
 }
 
-MaybeRRClass
+RRClass*
 RRClass::createFromText(const string& class_str) {
     uint16_t class_code;
     if (RRParamRegistry::getRegistry().textToClassCode(class_str,
                                                        class_code)) {
-        return (MaybeRRClass(class_code));
+        return (new RRClass(class_code));
     }
-    return (MaybeRRClass());
+    return (NULL);
 }
 
 ostream&
