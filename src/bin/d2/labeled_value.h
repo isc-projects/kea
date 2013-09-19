@@ -31,8 +31,7 @@ namespace d2 {
 /// @brief Thrown if an error is encountered handling a LabeledValue.
 class LabeledValueError : public isc::Exception {
 public:
-    LabeledValueError(const char* file, size_t line,
-                               const char* what) :
+    LabeledValueError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
@@ -53,8 +52,8 @@ public:
     /// @param value the numeric constant value to be labeled.
     /// @param label the text label to associate to this value.
     ///
-    /// @throw LabeledValueError if label is null or empty.
-    LabeledValue(const int value, const char* label);
+    /// @throw LabeledValueError if label is empty.
+    LabeledValue(const int value, const std::string& label);
 
     /// @brief Destructor.
     ///
@@ -68,8 +67,8 @@ public:
 
     /// @brief Gets the text label of this instance.
     ///
-    /// @return The text label as const char*
-    const char* getLabel() const;
+    /// @return The text label as string
+    std::string getLabel() const;
 
     /// @brief  Equality operator
     ///
@@ -91,7 +90,7 @@ private:
     int value_;
 
     /// @brief The text label for the value.
-    const char* label_;
+    std::string label_;
 };
 
 /// @brief Dumps the label to ostream.
@@ -148,9 +147,9 @@ public:
     /// @param value the numeric constant value to be labeled.
     /// @param label the text label to associate to this value.
     ///
-    /// @throw LabeledValuePtr if the label is null or empty, or if the set
+    /// @throw LabeledValuePtr if the label is empty, or if the set
     /// already contains an entry with the same value.
-    void add(const int value, const char* label);
+    void add(const int value, const std::string& label);
 
     /// @brief Fetches a pointer to the entry associated with value
     ///
@@ -173,7 +172,7 @@ public:
     ///
     /// @return the label of the value if defined, otherwise it returns
     /// UNDEFINED_LABEL.
-    const char* getLabel(const int value) const;
+    std::string getLabel(const int value) const;
 
 private:
     /// @brief The map of labeled values.

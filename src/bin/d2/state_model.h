@@ -34,8 +34,7 @@ namespace d2 {
 /// @brief Thrown if the state machine encounters a general error.
 class StateModelError : public isc::Exception {
 public:
-    StateModelError(const char* file, size_t line,
-                               const char* what) :
+    StateModelError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
@@ -71,7 +70,7 @@ public:
     /// @endcode
     ///
     /// @throw StateModelError if label is null or blank.
-    State(const int value, const char* label, StateHandler handler);
+    State(const int value, const std::string& label, StateHandler handler);
 
     /// @brief Destructor
     virtual ~State();
@@ -108,7 +107,7 @@ public:
     ///
     /// @throw StateModelError if the value is already defined in the set, or
     /// if the label is null or blank.
-    void add(const int value, const char* label, StateHandler handler);
+    void add(const int value, const std::string& label, StateHandler handler);
 
     /// @brief Fetches a state for the given value.
     ///
@@ -355,8 +354,8 @@ protected:
     /// exceptions.
     ///
     /// @throw StateModelError if the model has already been started, if
-    /// the value is already defined, or if the label is null or empty.
-    void defineEvent(unsigned int value, const char* label);
+    /// the value is already defined, or if the label is empty.
+    void defineEvent(unsigned int value, const std::string& label);
 
     /// @brief Fetches the event referred to by value.
     ///
@@ -422,8 +421,8 @@ protected:
     /// exceptions.
     ///
     /// @throw StateModelError if the model has already been started, if
-    /// the value is already defined, or if the label is null or empty.
-    void defineState(unsigned int value, const char* label,
+    /// the value is already defined, or if the label is empty.
+    void defineState(unsigned int value, const std::string& label,
                      StateHandler handler);
 
     /// @brief Fetches the state referred to by value.
@@ -601,9 +600,9 @@ public:
     ///
     /// @param event is the numeric event value for which the label is desired.
     ///
-    /// @return Returns a const char* containing the event label or
+    /// @return Returns a string containing the event label or
     /// LabeledValueSet::UNDEFINED_LABEL if the value is undefined.
-    const char* getEventLabel(const int event) const;
+    std::string getEventLabel(const int event) const;
 
     /// @brief Fetches the label associated with an state value.
     ///
@@ -611,7 +610,7 @@ public:
     ///
     /// @return Returns a const char* containing the state label or
     /// LabeledValueSet::UNDEFINED_LABEL if the value is undefined.
-    const char* getStateLabel(const int state) const;
+    std::string getStateLabel(const int state) const;
 
     /// @brief Convenience method which returns a string rendition of the
     /// current state and next event.

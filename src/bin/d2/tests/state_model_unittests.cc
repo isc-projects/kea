@@ -238,7 +238,7 @@ public:
             event = getEvent(value);
             EXPECT_TRUE(event);
             EXPECT_EQ(value, event->getValue());
-            EXPECT_EQ(label, std::string(event->getLabel()));
+            EXPECT_EQ(label, event->getLabel());
         } catch (const std::exception& ex) {
             return false;
         }
@@ -253,7 +253,7 @@ public:
             state = getState(value);
             EXPECT_TRUE(state);
             EXPECT_EQ(value, state->getValue());
-            EXPECT_EQ(label, std::string(state->getLabel()));
+            EXPECT_EQ(label, state->getLabel());
         } catch (const std::exception& ex) {
             return false;
         }
@@ -381,7 +381,7 @@ TEST_F(StateModelTest, stateDefinition) {
 
     // Verify the state's value and label.
     EXPECT_EQ(READY_ST, state->getValue());
-    EXPECT_EQ("READY_ST", std::string(state->getLabel()));
+    EXPECT_EQ("READY_ST", state->getLabel());
 
     // Now verify that retrieved state's handler executes the correct method.
     // Make sure the dummy called flag is false prior to invocation.
@@ -426,8 +426,7 @@ TEST_F(StateModelTest, stateDictionary) {
 
     // Verify that undefined states are handled correctly.
     EXPECT_THROW(getState(9999), StateModelError);
-    EXPECT_EQ(LabeledValueSet::UNDEFINED_LABEL,
-              std::string(getStateLabel(9999)));
+    EXPECT_EQ(LabeledValueSet::UNDEFINED_LABEL, getStateLabel(9999));
 }
 
 /// @brief General testing of state context accessors.
