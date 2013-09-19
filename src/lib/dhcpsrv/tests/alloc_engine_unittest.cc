@@ -127,7 +127,7 @@ public:
         // that is belongs to the right subnet
         EXPECT_EQ(lease->subnet_id_, subnet_->getID());
         EXPECT_TRUE(subnet_->inRange(lease->addr_));
-        EXPECT_TRUE(subnet_->inPool(lease->addr_));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, lease->addr_));
 
         // that it have proper parameters
         EXPECT_EQ(iaid_, lease->iaid_);
@@ -136,6 +136,29 @@ public:
         EXPECT_EQ(subnet_->getT1(), lease->t1_);
         EXPECT_EQ(subnet_->getT2(), lease->t2_);
         EXPECT_EQ(128, lease->prefixlen_); // this is IA_NA, not IA_PD
+        EXPECT_TRUE(false == lease->fqdn_fwd_);
+        EXPECT_TRUE(false == lease->fqdn_rev_);
+        EXPECT_TRUE(*lease->duid_ == *duid_);
+        // @todo: check cltt
+    }
+
+    /// @brief checks if Lease6 PD matches expected configuration
+    ///
+    /// @param lease lease to be checked
+    void checkPDLease6(const Lease6Ptr& lease, uint8_t expected_pd_len) {
+        // that is belongs to the right subnet
+        EXPECT_EQ(lease->subnet_id_, subnet_->getID());
+        EXPECT_TRUE(subnet_->inRange(lease->addr_));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, lease->addr_));
+
+        // that it have proper parameters
+        EXPECT_EQ(iaid_, lease->iaid_);
+        EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
+        EXPECT_EQ(subnet_->getPreferred(), lease->preferred_lft_);
+        EXPECT_EQ(subnet_->getT1(), lease->t1_);
+        EXPECT_EQ(subnet_->getT2(), lease->t2_);
+
+        EXPECT_EQ(expected_pd_len, lease->prefixlen_); // IA_PD
         EXPECT_TRUE(false == lease->fqdn_fwd_);
         EXPECT_TRUE(false == lease->fqdn_rev_);
         EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -207,7 +230,7 @@ public:
         // Check that is belongs to the right subnet
         EXPECT_EQ(lease->subnet_id_, subnet_->getID());
         EXPECT_TRUE(subnet_->inRange(lease->addr_));
-        EXPECT_TRUE(subnet_->inPool(lease->addr_));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, lease->addr_));
 
         // Check that it has proper parameters
         EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
@@ -278,6 +301,40 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
 
     // Do all checks on the lease
     checkLease6(lease);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+}
+
+
+// This test checks if the simple PD allocation can succeed
+TEST_F(AllocEngine6Test, pdSimpleAlloc6) {
+    boost::scoped_ptr<AllocEngine> engine;
+    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
+    ASSERT_TRUE(engine);
+
+    subnet_->delPools(Lease::TYPE_NA);
+
+    Pool6Ptr pd_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 56, 64));
+    subnet_->addPool(pd_pool);
+
+    Lease6Ptr lease;
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                    duid_, iaid_, IOAddress("::"), Lease::TYPE_PD, false, false,
+                    "", false, CalloutHandlePtr())));
+
+    // Check that we got a lease
+    ASSERT_TRUE(lease);
+
+    EXPECT_EQ(Lease::TYPE_PD, lease->type_);
+
+    // Do all checks on the PD lease
+    checkPDLease6(lease, pd_pool->getLength());
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -447,7 +504,7 @@ TEST_F(AllocEngine6Test, IterativeAllocator) {
 
     for (int i = 0; i < 1000; ++i) {
         IOAddress candidate = alloc->pickAddress(subnet_, duid_, IOAddress("::"));
-        EXPECT_TRUE(subnet_->inPool(candidate));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
     }
 }
 
@@ -636,7 +693,7 @@ TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
     int cnt = 0;
     while (++cnt) {
         IOAddress candidate = alloc.pickAddress(subnet_, duid_, IOAddress("::"));
-        EXPECT_TRUE(subnet_->inPool(candidate));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, candidate));
 
         // One way to easily verify that the iterative allocator really works is
         // to uncomment the following line and observe its output that it
@@ -1093,7 +1150,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator) {
     for (int i = 0; i < 1000; ++i) {
         IOAddress candidate = alloc->pickAddress(subnet_, clientid_,
                                                  IOAddress("0.0.0.0"));
-        EXPECT_TRUE(subnet_->inPool(candidate));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
     }
 }
 
@@ -1125,7 +1182,7 @@ TEST_F(AllocEngine4Test, IterativeAllocator_manyPools4) {
     int cnt = 0;
     while (++cnt) {
         IOAddress candidate = alloc.pickAddress(subnet_, clientid_, IOAddress("0.0.0.0"));
-        EXPECT_TRUE(subnet_->inPool(candidate));
+        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_V4, candidate));
 
         // One way to easily verify that the iterative allocator really works is
         // to uncomment the following line and observe its output that it
