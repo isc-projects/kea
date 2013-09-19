@@ -9,11 +9,14 @@ AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
 # But older GCC compilers don't have the flag.     
 AM_CXXFLAGS  = $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
-# Common libraries used in user libraries
-AM_LIBADD  = $(top_builddir)/src/lib/hooks/libb10-hooks.la
-AM_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
-AM_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-AM_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
+# BIND 10 libraries against which the test user libraries are linked.
+HOOKS_LIB      = $(top_builddir)/src/lib/hooks/libb10-hooks.la
+LOG_LIB        = $(top_builddir)/src/lib/log/libb10-log.la
+EXCEPTIONS_LIB = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+UTIL_LIB       = $(top_builddir)/src/lib/util/libb10-util.la
+THREADS_LIB    = $(top_builddir)/src/lib/util/threads/libb10-threads.la
+
+ALL_LIBS       = $(HOOKS_LIB) $(LOG_LIB) $(EXCEPTIONS_LIB) $(UTIL_LIB) $(THREADS_LIB)
 
 if USE_CLANGPP
 # see ../Makefile.am
@@ -67,14 +70,14 @@ libbcl_la_SOURCES  = basic_callout_library.cc
 libbcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libbcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libbcl_la_LDFLAGS  = -avoid-version -export-dynamic -module
-libbcl_la_LIBADD    = $(AM_LIBADD)
+libbcl_la_LIBADD    = $(ALL_LIBS)
 
 # The load callout library - contains a load function
 liblcl_la_SOURCES  = load_callout_library.cc
 liblcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 liblcl_la_LDFLAGS  = -avoid-version -export-dynamic -module
-liblcl_la_LIBADD    = $(AM_LIBADD)
+liblcl_la_LIBADD    = $(ALL_LIBS)
 
 # The load error callout library - contains a load function that returns
 # an error.
@@ -95,7 +98,7 @@ libfcl_la_SOURCES  = full_callout_library.cc
 libfcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libfcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libfcl_la_LDFLAGS  = -avoid-version -export-dynamic -module
-libfcl_la_LIBADD   = $(AM_LIBADD)
+libfcl_la_LIBADD   = $(ALL_LIBS)
 
 TESTS += run_unittests
 run_unittests_SOURCES  = run_unittests.cc
@@ -112,18 +115,30 @@ nodist_run_unittests_SOURCES  = marker_file.h
 nodist_run_unittests_SOURCES += test_libraries.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
-
 run_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 if USE_STATIC_LINK
 run_unittests_LDFLAGS += -static
 endif
 
-run_unittests_LDADD    = $(AM_LDADD)    $(GTEST_LDADD)
-run_unittests_LDADD   += $(top_builddir)/src/lib/hooks/libb10-hooks.la
-run_unittests_LDADD   += $(top_builddir)/src/lib/log/libb10-log.la
-run_unittests_LDADD   += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-run_unittests_LDADD   += $(top_builddir)/src/lib/util/libb10-util.la
+run_unittests_LDADD    = $(AM_LDADD) $(GTEST_LDADD)
+run_unittests_LDADD   += $(ALL_LIBS)
 run_unittests_LDADD   += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+
+# As noted in configure.ac, libtool doesn't work perfectly with Darwin: it embeds the
+# final install path in dynamic libraries and loadable modules refer to that path even
+# if its loaded within the source tree, so preventing tests from working - but only
+# when linking statically.  The solution used in other Makefiles (setting the path
+# to the dynamic libraries via an environment variable) don't seem to work.  What does
+# work is to run the unit test using libtool and specifying paths via -dlopen switches.
+# So... If running in an environment where we have to set the library path AND if
+# linking statically, override the "check" target and run the unit tests ourselves.
+if USE_STATIC_LINK
+if SET_ENV_LIBRARY_PATH
+check-TESTS:
+	$(LIBTOOL) --mode=execute -dlopen $(HOOKS_LIB)  -dlopen $(LOG_LIB) -dlopen $(EXCEPTIONS_LIB) -dlopen $(UTIL_LIB)  -dlopen $(THREADS_LIB) ./run_unittests
+endif
+endif
+
 endif
 
 noinst_PROGRAMS = $(TESTS)

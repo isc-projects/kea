@@ -13,7 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <hooks/hooks.h>
-#include <log/message_initializer.h>
+#include <log/logger_support.h>
+
+#include <string>
 
 
 namespace isc {
@@ -23,7 +25,9 @@ namespace hooks {
 
 void
 hooksStaticLinkInit() {
-    isc::log::MessageInitializer::loadDictionary();
+    if (!isc::log::isLoggingInitialized()) {
+        isc::log::initLogger(std::string("userlib"));
+    }
 }
 
 } // namespace hooks
