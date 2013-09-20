@@ -123,42 +123,24 @@ public:
     /// @brief checks if Lease6 matches expected configuration
     ///
     /// @param lease lease to be checked
-    void checkLease6(const Lease6Ptr& lease) {
+    /// @param exp_type expected lease type
+    /// @param exp_pd_len expected prefix length
+    void checkLease6(const Lease6Ptr& lease, Lease::Type exp_type,
+                     uint8_t exp_pd_len = 128) {
+
         // that is belongs to the right subnet
         EXPECT_EQ(lease->subnet_id_, subnet_->getID());
         EXPECT_TRUE(subnet_->inRange(lease->addr_));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, lease->addr_));
+        EXPECT_TRUE(subnet_->inPool(exp_type, lease->addr_));
 
         // that it have proper parameters
+        EXPECT_EQ(exp_type, lease->type_);
         EXPECT_EQ(iaid_, lease->iaid_);
         EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
         EXPECT_EQ(subnet_->getPreferred(), lease->preferred_lft_);
         EXPECT_EQ(subnet_->getT1(), lease->t1_);
         EXPECT_EQ(subnet_->getT2(), lease->t2_);
-        EXPECT_EQ(128, lease->prefixlen_); // this is IA_NA, not IA_PD
-        EXPECT_TRUE(false == lease->fqdn_fwd_);
-        EXPECT_TRUE(false == lease->fqdn_rev_);
-        EXPECT_TRUE(*lease->duid_ == *duid_);
-        // @todo: check cltt
-    }
-
-    /// @brief checks if Lease6 PD matches expected configuration
-    ///
-    /// @param lease lease to be checked
-    void checkPDLease6(const Lease6Ptr& lease, uint8_t expected_pd_len) {
-        // that is belongs to the right subnet
-        EXPECT_EQ(lease->subnet_id_, subnet_->getID());
-        EXPECT_TRUE(subnet_->inRange(lease->addr_));
-        EXPECT_TRUE(subnet_->inPool(Lease::TYPE_PD, lease->addr_));
-
-        // that it have proper parameters
-        EXPECT_EQ(iaid_, lease->iaid_);
-        EXPECT_EQ(subnet_->getValid(), lease->valid_lft_);
-        EXPECT_EQ(subnet_->getPreferred(), lease->preferred_lft_);
-        EXPECT_EQ(subnet_->getT1(), lease->t1_);
-        EXPECT_EQ(subnet_->getT2(), lease->t2_);
-
-        EXPECT_EQ(expected_pd_len, lease->prefixlen_); // IA_PD
+        EXPECT_EQ(exp_pd_len, lease->prefixlen_); // this is IA_NA, not IA_PD
         EXPECT_TRUE(false == lease->fqdn_fwd_);
         EXPECT_TRUE(false == lease->fqdn_rev_);
         EXPECT_TRUE(*lease->duid_ == *duid_);
@@ -300,7 +282,7 @@ TEST_F(AllocEngine6Test, simpleAlloc6) {
     ASSERT_TRUE(lease);
 
     // Do all checks on the lease
-    checkLease6(lease);
+    checkLease6(lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -334,7 +316,7 @@ TEST_F(AllocEngine6Test, pdSimpleAlloc6) {
     EXPECT_EQ(Lease::TYPE_PD, lease->type_);
 
     // Do all checks on the PD lease
-    checkPDLease6(lease, pd_pool->getLength());
+    checkLease6(lease, Lease::TYPE_PD, pd_pool->getLength());
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -360,7 +342,7 @@ TEST_F(AllocEngine6Test, fakeAlloc6) {
     ASSERT_TRUE(lease);
 
     // Do all checks on the lease
-    checkLease6(lease);
+    checkLease6(lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is NOT in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -388,7 +370,7 @@ TEST_F(AllocEngine6Test, allocWithValidHint6) {
     EXPECT_EQ(lease->addr_.toText(), "2001:db8:1::15");
 
     // Do all checks on the lease
-    checkLease6(lease);
+    checkLease6(lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -431,7 +413,7 @@ TEST_F(AllocEngine6Test, allocWithUsedHint6) {
     EXPECT_TRUE(lease->addr_.toText() != "2001:db8:1::1f");
 
     // Do all checks on the lease
-    checkLease6(lease);
+    checkLease6(lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -464,7 +446,7 @@ TEST_F(AllocEngine6Test, allocBogusHint6) {
     EXPECT_TRUE(lease->addr_.toText() != "3000::abc");
 
     // Do all checks on the lease
-    checkLease6(lease);
+    checkLease6(lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -748,7 +730,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
     EXPECT_EQ("2001:db8:1::ad", lease->addr_.toText());
 
     // Do all checks on the lease
-    checkLease6(lease);
+    checkLease6(lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -830,7 +812,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     EXPECT_EQ(addr.toText(), lease->addr_.toText());
 
     // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
-    checkLease6(lease);
+    checkLease6(lease, Lease::TYPE_NA, 128);
 
     // CASE 2: Asking specifically for this address
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
@@ -1591,7 +1573,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     ASSERT_TRUE(lease);
 
     // Do all checks on the lease
-    checkLease6(lease);
+    checkLease6(lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
