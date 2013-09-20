@@ -521,7 +521,13 @@ public:
                 boost::shared_ptr<Pkt6>
                     advertise_pkt6(createAdvertisePkt6(transid));
                 // Receive ADVERTISE and send REQUEST.
-                ASSERT_NO_THROW(tc.processReceivedPacket6(sock, advertise_pkt6));
+                /*                ASSERT_NO_THROW(tc.processReceivedPacket6(sock,
+                                  advertise_pkt6)); */
+                try {
+                    tc.processReceivedPacket6(sock, advertise_pkt6);
+                } catch (const Exception& ex) {
+                    std::cout << ex.what() << std::endl;
+                }
                 ++transid;
             }
             if (tc.checkExitConditions()) {
@@ -646,14 +652,20 @@ private:
     /// \return instance of the packet.
     boost::shared_ptr<Pkt6>
     createAdvertisePkt6(uint32_t transid) const {
-        OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
+        OptionPtr opt_ia;
+        if (CommandOptions::instance().getLeaseType() ==
+            CommandOptions::ADDRESS_ONLY) {
+            opt_ia = Option::factory(Option::V6, D6O_IA_NA);
+        } else {
+            opt_ia = Option::factory(Option::V6, D6O_IA_PD);
+        }
         OptionPtr opt_serverid(new Option(Option::V6, D6O_SERVERID));
         NakedTestControl tc;
         uint8_t randomized = 0;
         std::vector<uint8_t> duid(tc.generateDuid(randomized));
         OptionPtr opt_clientid(Option::factory(Option::V6, D6O_CLIENTID, duid));
         boost::shared_ptr<Pkt6> advertise(new Pkt6(DHCPV6_ADVERTISE, transid));
-        advertise->addOption(opt_ia_na);
+        advertise->addOption(opt_ia);
         advertise->addOption(opt_serverid);
         advertise->addOption(opt_clientid);
         advertise->updateTimestamp();
@@ -1001,6 +1013,32 @@ TEST_F(TestControlTest, Packet6Exchange) {
     testPkt6Exchange(iterations_num, received_num, use_templates,
                      iterations_performed);
     EXPECT_EQ(6, iterations_performed);
+}
+
+TEST_F(TestControlTest, Packet6ExchangePrefixDelegation) {
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback_iface(getLocalLoopback());
+    if (loopback_iface.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test."
+                  << std::endl;
+        return;
+    }
+
+    const int iterations_num = 100;
+    // Set number of iterations to 10.
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -e prefix-only"
+                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
+    int iterations_performed = 0;
+    // Set number of received packets equal to number of iterations.
+    // This simulates no packet drops.
+    bool use_templates = false;
+    testPkt6Exchange(iterations_num, iterations_num, use_templates,
+                     iterations_performed);
+    // Actual number of iterations should be 10.
+    EXPECT_EQ(10, iterations_performed);
 }
 
 TEST_F(TestControlTest, PacketTemplates) {
