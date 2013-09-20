@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -54,6 +54,13 @@ static const size_t DHCPV6_ELAPSED_TIME_OFFSET = 84;
 static const size_t DHCPV6_SERVERID_OFFSET = 22;
 /// Default DHCPV6 IA_NA offset in the packet template.
 static const size_t DHCPV6_IA_NA_OFFSET = 40;
+
+/// @brief Exception thrown when the required option is not found in a packet.
+class OptionNotFound : public Exception {
+public:
+    OptionNotFound(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// \brief Test Control class.
 ///
@@ -335,6 +342,17 @@ protected:
     /// \param buf option-buffer carrying IANA suboptions.
     /// \return instance of IA_NA option.
     static dhcp::OptionPtr factoryIana6(dhcp::Option::Universe u,
+                                        uint16_t type,
+                                        const dhcp::OptionBuffer& buf);
+
+    /// \brief Factory function to create IA_PD option.
+    ///
+    /// this factory function creates DHCPv6 IA_PD option instance.
+    ///
+    /// \param u universe (ignored).
+    /// \param type option-type (ignored).
+    /// \param buf option-buffer carrying sub-options.
+    static dhcp::OptionPtr factoryIapd6(dhcp::Option::Universe u,
                                         uint16_t type,
                                         const dhcp::OptionBuffer& buf);
 
@@ -833,6 +851,31 @@ protected:
     void updateSendDue();
 
 private:
+
+    /// \brief Copies IA_NA or IA_PD option from one packet to another.
+    ///
+    /// This function checks the lease-type specified in the command line
+    /// with option -e<lease-type>. If 'address-only' value has been specified
+    /// this function expects that IA_NA option is present in the packet
+    /// encapsulated by pkt_from object. If 'prefix-only' value has been
+    /// specified, this function expects that IA_PD option is present in the
+    /// packet encapsulated by pkt_to object.
+    ///
+    /// \todo In the future it is planned to add support for the perfdhcp to
+    /// request address and prefix in the same DHCP message (request both
+    /// IA_NA and IA_PD options). In this case, this function will have to
+    /// be extended to copy both IA_NA and IA_PD options.
+    ///
+    /// \warning
+    ///
+    /// \param [in] pkt_from A packet from which options should be copied.
+    /// \parma [out] pkt_to A packet to which options should be copied.
+    ///
+    /// \throw isc::perfdhcp::OptionNotFound if a required option is not
+    /// found in the packet from which options should be copied.
+    /// \throw isc::BadValue if any of the specified pointers to packets
+    /// is NULL.
+    void copyIaOptions(const dhcp::Pkt6Ptr& pkt_from, dhcp::Pkt6Ptr& pkt_to);
 
     /// \brief Convert binary value to hex string.
     ///

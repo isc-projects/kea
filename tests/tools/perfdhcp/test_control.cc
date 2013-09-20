@@ -97,6 +97,31 @@ TestControl::TestControl() {
     reset();
 }
 
+void
+TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
+    if (!pkt_from || !pkt_to) {
+        isc_throw(BadValue, "NULL pointers must not be specified as arguments"
+                  " for the copyIaOptions function");
+    }
+    OptionPtr option;
+    if (CommandOptions::instance().getLeaseType() ==
+        CommandOptions::ADDRESS_ONLY) {
+        option = pkt_from->getOption(D6O_IA_NA);
+        if (!option) {
+            isc_throw(OptionNotFound, "IA_NA option not found in the"
+                      " server's response");
+        }
+    } else {
+        option = pkt_from->getOption(D6O_IA_PD);
+        if (!option) {
+            isc_throw(OptionNotFound, "IA_PD option not found in the"
+                      " server's response");
+        }
+    }
+    pkt_to->addOption(option);
+
+}
+
 std::string
 TestControl::byte2Hex(const uint8_t b) const {
     const int b1 = b / 16;
@@ -288,6 +313,22 @@ TestControl::factoryIana6(Option::Universe, uint16_t,
     }
     return (OptionPtr(new Option(Option::V6, D6O_IA_NA, buf_ia_na)));
 }
+
+OptionPtr
+TestControl::factoryIapd6(Option::Universe, uint16_t,
+                          const OptionBuffer& buf) {
+    // @todo allow different values of T1, T2 and IAID.
+    static const uint8_t buf_array[] = {
+        0, 0, 0, 1,                     // IAID = 1
+        0, 0, 3600 >> 8, 3600 & 0xff,   // T1 = 3600
+        0, 0, 5400 >> 8, 5400 & 0xff,   // T2 = 5400
+    };
+    OptionBuffer buf_ia_pd(buf_array, buf_array + sizeof(buf_array));
+    // Append sub-options to IA_PD.
+    buf_ia_pd.insert(buf_ia_pd.end(), buf.begin(), buf.end());
+    return (OptionPtr(new Option(Option::V6, D6O_IA_PD, buf_ia_pd)));
+}
+
 
 OptionPtr
 TestControl::factoryRapidCommit6(Option::Universe, uint16_t,
@@ -1079,6 +1120,11 @@ TestControl::registerOptionFactories6() const {
                                        D6O_IA_NA,
                                        &TestControl::factoryIana6);
 
+        // D6O_IA_PD option factory.
+        LibDHCP::OptionFactoryRegister(Option::V6,
+                                       D6O_IA_PD,
+                                       &TestControl::factoryIapd6);
+
 
     }
     factories_registered = true;
@@ -1577,13 +1623,13 @@ TestControl::sendRequest6(const TestControlSocket& socket,
         }
         pkt6->addOption(opt_serverid);
     }
-    // Set IA_NA option.
-    OptionPtr opt_ia_na = advertise_pkt6->getOption(D6O_IA_NA);
-    if (!opt_ia_na) {
-        isc_throw(Unexpected, "DHCPv6 IA_NA option not found in received "
-                  "packet");
-    }
-    pkt6->addOption(opt_ia_na);
+
+    // Copy IA_NA or IA_PD option from the Advertise message to the Request
+    // message being sent to the server. This will throw exception if the
+    // option to be copied is not found. Note that this function will copy
+    // one of IA_NA or IA_PD options, depending on the lease-type value
+    // specified in the command line.
+    copyIaOptions(advertise_pkt6, pkt6);
 
     // Set default packet data.
     setDefaults6(socket, pkt6);
@@ -1732,7 +1778,15 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     }
     pkt6->addOption(Option::factory(Option::V6, D6O_CLIENTID, duid));
     pkt6->addOption(Option::factory(Option::V6, D6O_ORO));
-    pkt6->addOption(Option::factory(Option::V6, D6O_IA_NA));
+
+    // Depending on the lease-type option specified, we should request
+    // IPv6 address (with IA_NA) or IPv6 prefix (IA_PD).
+    if (CommandOptions::instance().getLeaseType() ==
+        CommandOptions::ADDRESS_ONLY) {
+        pkt6->addOption(Option::factory(Option::V6, D6O_IA_NA));
+    } else {
+        pkt6->addOption(Option::factory(Option::V6, D6O_IA_PD));
+    }
 
     setDefaults6(socket, pkt6);
     pkt6->pack();
