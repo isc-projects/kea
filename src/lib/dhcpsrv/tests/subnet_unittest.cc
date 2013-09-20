@@ -609,27 +609,27 @@ TEST(Subnet6Test, inRangeinPool) {
     // 192.1.1.1 belongs to the subnet...
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::1")));
     // ... but it does not belong to any pool within
-    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("2001:db8::1")));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::1")));
 
     // the last address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::f")));
-    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("2001:db8::f")));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::f")));
 
     // the first address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::10")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("2001:db8::10")));
+    EXPECT_TRUE (subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::10")));
 
     // let's try something in the middle as well
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::18")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("2001:db8::18")));
+    EXPECT_TRUE (subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18")));
 
     // the last address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::20")));
-    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("2001:db8::20")));
+    EXPECT_TRUE (subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::20")));
 
     // the first address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::21")));
-    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("2001:db8::21")));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::21")));
 }
 
 // This test checks if the toText() method returns text representation
