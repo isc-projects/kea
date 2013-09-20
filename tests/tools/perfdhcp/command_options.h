@@ -36,6 +36,16 @@ public:
         DORA_SARR
     };
 
+    /// @brief  A type of lease being requested by the client.
+    ///
+    /// Currently it indicates whether perfdhcp is simulating the requests
+    /// for IPv6 addresses or prefixes (Prefix Delegation). Note that
+    /// prefixes can be only requested when IPv6 mode is selected.
+    enum LeaseType {
+        ADDRESS_ONLY,
+        PREFIX_ONLY
+    };
+
     /// CommandOptions is a singleton class. This method returns reference
     /// to its sole instance.
     ///
@@ -70,6 +80,11 @@ public:
     ///
     /// \return packet exchange mode.
     ExchangeMode getExchangeMode() const { return exchange_mode_; }
+
+    /// \ brief Returns the type of lease being requested.
+    ///
+    /// \return type of lease being requested by perfdhcp.
+    LeaseType getLeaseType() const { return (lease_type_); }
 
     /// \brief Returns echange rate.
     ///
@@ -300,6 +315,11 @@ private:
     /// \throw InvalidParameter if string is empty.
     std::string nonEmptyString(const std::string& errmsg) const;
 
+    /// \brief Decodes the lease type requested by perfdhcp from optarg.
+    ///
+    /// \throw InvalidParameter if lease type value specified is invalid.
+    void initLeaseType();
+
     /// \brief Set number of clients.
     ///
     /// Interprets the getopt() "opt" global variable as the number of clients
@@ -373,6 +393,8 @@ private:
     uint8_t ipversion_;
     /// Packet exchange mode (e.g. DORA/SARR)
     ExchangeMode exchange_mode_;
+    /// Lease Type to be obtained: address only, IPv6 prefix only.
+    LeaseType lease_type_;
     /// Rate in exchange per second
     int rate_;
     /// Delay between generation of two consecutive
