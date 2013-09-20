@@ -93,10 +93,16 @@ public:
         // instantiate cfg_mgr
         CfgMgr& cfg_mgr = CfgMgr::instance();
 
+        // Configure normal address pool
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
         pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::10"),
                                    IOAddress("2001:db8:1::20")));
         subnet_->addPool(pool_);
+
+        // Configure PD pool
+        pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 56, 64));
+        subnet_->addPool(pd_pool_);
+
         cfg_mgr.addSubnet6(subnet_);
 
         factory_.create("type=memfile");
@@ -165,6 +171,109 @@ public:
                   .toText());
     }
 
+    /// checks if the simple allocation can succeed
+    ///
+    /// The type of lease is determined by pool type (pool->getType()
+    ///
+    /// @param pool pool from which the lease will be allocated from
+    /// @param hint address to be used as a hint
+    /// @param fake true - this is fake allocation (SOLICIT)
+    /// @return allocated lease (or NULL)
+    Lease6Ptr simpleAlloc6Test(const Pool6Ptr& pool, const IOAddress& hint,
+                               bool fake) {
+        Lease::Type type = pool->getType();
+        uint8_t expected_len = pool->getLength();
+
+        boost::scoped_ptr<AllocEngine> engine;
+        EXPECT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                     100)));
+        // We can't use ASSERT macros in non-void methods
+        EXPECT_TRUE(engine);
+        if (!engine) {
+            return (Lease6Ptr());
+        }
+
+        Lease6Ptr lease;
+        EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                        duid_, iaid_, hint, type, false, false,
+                        "", fake, CalloutHandlePtr())));
+
+        // Check that we got a lease
+        EXPECT_TRUE(lease);
+        if (!lease) {
+            return (Lease6Ptr());
+        }
+
+        // Do all checks on the lease
+        checkLease6(lease, type, expected_len);
+
+        // Check that the lease is indeed in LeaseMgr
+        Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(type,
+                                                                   lease->addr_);
+        if (!fake) {
+            // This is a real (REQUEST) allocation, the lease must be in the DB
+            EXPECT_TRUE(from_mgr);
+            if (!from_mgr) {
+                return (Lease6Ptr());
+            }
+
+            // Now check that the lease in LeaseMgr has the same parameters
+            detailCompareLease(lease, from_mgr);
+        } else {
+            // This is a fake (SOLICIT) allocation, the lease must not be in DB
+            EXPECT_FALSE(from_mgr);
+            if (from_mgr) {
+                return (Lease6Ptr());
+            }
+        }
+
+        return (lease);
+    }
+
+    void allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
+                               IOAddress requested, uint8_t expected_pd_len) {
+        boost::scoped_ptr<AllocEngine> engine;
+        ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                     100)));
+        ASSERT_TRUE(engine);
+
+        // Let's create a lease and put it in the LeaseMgr
+        DuidPtr duid2 = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0xff)));
+        time_t now = time(NULL);
+        Lease6Ptr used(new Lease6(type, used_addr,
+                                  duid2, 1, 2, 3, 4, now, subnet_->getID()));
+        ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+        // Another client comes in and request an address that is in pool, but
+        // unfortunately it is used already. The same address must not be allocated
+        // twice.
+        Lease6Ptr lease;
+        EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                        duid_, iaid_, requested, type, false, false, "", false,
+                        CalloutHandlePtr())));
+
+        // Check that we got a lease
+        ASSERT_TRUE(lease);
+
+        // Allocated address must be different
+        EXPECT_NE(used_addr.toText(), lease->addr_.toText());
+
+        // We should NOT get what we asked for, because it is used already
+        EXPECT_NE(requested.toText(), lease->addr_.toText());
+
+        // Do all checks on the lease
+        checkLease6(lease, type, expected_pd_len);
+
+        // Check that the lease is indeed in LeaseMgr
+        Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                                   lease->addr_);
+        ASSERT_TRUE(from_mgr);
+
+        // Now check that the lease in LeaseMgr has the same parameters
+        detailCompareLease(lease, from_mgr);
+    }
+
+
     virtual ~AllocEngine6Test() {
         factory_.destroy();
     }
@@ -172,7 +281,8 @@ public:
     DuidPtr duid_;            ///< client-identifier (value used in tests)
     uint32_t iaid_;           ///< IA identifier (value used in tests)
     Subnet6Ptr subnet_;       ///< subnet6 (used in tests)
-    Pool6Ptr pool_;           ///< pool belonging to subnet_
+    Pool6Ptr pool_;           ///< NA pool belonging to subnet_
+    Pool6Ptr pd_pool_;        ///< PD pool belonging to subnet_
     LeaseMgrFactory factory_; ///< pointer to LeaseMgr factory
 };
 
@@ -267,161 +377,54 @@ TEST_F(AllocEngine6Test, constructor) {
     EXPECT_THROW(x->getAllocator(Lease::TYPE_V4), BadValue);
 }
 
-// This test checks if the simple allocation can succeed
+// This test checks if the simple allocation (REQUEST) can succeed
 TEST_F(AllocEngine6Test, simpleAlloc6) {
-    boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
-
-    Lease6Ptr lease;
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
-                    "", false, CalloutHandlePtr())));
-
-    // Check that we got a lease
-    ASSERT_TRUE(lease);
-
-    // Do all checks on the lease
-    checkLease6(lease, Lease::TYPE_NA, 128);
-
-    // Check that the lease is indeed in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_TRUE(from_mgr);
-
-    // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease(lease, from_mgr);
+    simpleAlloc6Test(pool_, IOAddress("::"), false);
 }
 
-
-// This test checks if the simple PD allocation can succeed
+// This test checks if the simple PD allocation (REQUEST) can succeed
 TEST_F(AllocEngine6Test, pdSimpleAlloc6) {
-    boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
-
-    subnet_->delPools(Lease::TYPE_NA);
-
-    Pool6Ptr pd_pool(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 56, 64));
-    subnet_->addPool(pd_pool);
-
-    Lease6Ptr lease;
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("::"), Lease::TYPE_PD, false, false,
-                    "", false, CalloutHandlePtr())));
-
-    // Check that we got a lease
-    ASSERT_TRUE(lease);
-
-    EXPECT_EQ(Lease::TYPE_PD, lease->type_);
-
-    // Do all checks on the PD lease
-    checkLease6(lease, Lease::TYPE_PD, pd_pool->getLength());
-
-    // Check that the lease is indeed in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_TRUE(from_mgr);
-
-    // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease(lease, from_mgr);
+    simpleAlloc6Test(pd_pool_, IOAddress("::"), false);
 }
 
 // This test checks if the fake allocation (for SOLICIT) can succeed
 TEST_F(AllocEngine6Test, fakeAlloc6) {
-    boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
 
-    Lease6Ptr lease;
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
-                    "", true, CalloutHandlePtr())));
-
-    // Check that we got a lease
-    ASSERT_TRUE(lease);
-
-    // Do all checks on the lease
-    checkLease6(lease, Lease::TYPE_NA, 128);
-
-    // Check that the lease is NOT in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_FALSE(from_mgr);
+    simpleAlloc6Test(pool_, IOAddress("::"), true);
 }
+
+// This test checks if the fake PD allocation (for SOLICIT) can succeed
+TEST_F(AllocEngine6Test, pdFakeAlloc6) {
+    simpleAlloc6Test(pd_pool_, IOAddress("::"), true);
+};
 
 // This test checks if the allocation with a hint that is valid (in range,
 // in pool and free) can succeed
 TEST_F(AllocEngine6Test, allocWithValidHint6) {
-    boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
 
-    Lease6Ptr lease;
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                            duid_, iaid_, IOAddress("2001:db8:1::15"),
-                            Lease::TYPE_NA, false, false, "", false,
-                            CalloutHandlePtr())));
-
-    // Check that we got a lease
-    ASSERT_TRUE(lease);
+    Lease6Ptr lease = simpleAlloc6Test(pool_, IOAddress("2001:db8:1::15"),
+                                       false);
 
     // We should get what we asked for
     EXPECT_EQ(lease->addr_.toText(), "2001:db8:1::15");
-
-    // Do all checks on the lease
-    checkLease6(lease, Lease::TYPE_NA, 128);
-
-    // Check that the lease is indeed in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_TRUE(from_mgr);
-
-    // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease(lease, from_mgr);
 }
 
-// This test checks if the allocation with a hint that is in range,
-// in pool, but is currently used) can succeed
+// This test checks if the address allocation with a hint that is in range,
+// in pool, but is currently used, can succeed
 TEST_F(AllocEngine6Test, allocWithUsedHint6) {
-    boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
+    allocWithUsedHintTest(Lease::TYPE_NA,
+                          IOAddress("2001:db8:1::1f"), // allocate this as used
+                          IOAddress("2001:db8:1::1f"), // request this addr
+                          128);
+}
 
-    // Let's create a lease and put it in the LeaseMgr
-    DuidPtr duid2 = boost::shared_ptr<DUID>(new DUID(vector<uint8_t>(8, 0xff)));
-    time_t now = time(NULL);
-    Lease6Ptr used(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1f"),
-                              duid2, 1, 2, 3, 4, now, subnet_->getID()));
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
-
-    // Another client comes in and request an address that is in pool, but
-    // unfortunately it is used already. The same address must not be allocated
-    // twice.
-    Lease6Ptr lease;
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("2001:db8:1::1f"), Lease::TYPE_NA,
-                    false, false, "", false, CalloutHandlePtr())));
-
-    // Check that we got a lease
-    ASSERT_TRUE(lease);
-
-    // Allocated address must be different
-    EXPECT_TRUE(used->addr_.toText() != lease->addr_.toText());
-
-    // We should NOT get what we asked for, because it is used already
-    EXPECT_TRUE(lease->addr_.toText() != "2001:db8:1::1f");
-
-    // Do all checks on the lease
-    checkLease6(lease, Lease::TYPE_NA, 128);
-
-    // Check that the lease is indeed in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_TRUE(from_mgr);
-
-    // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease(lease, from_mgr);
+// This test checks if the PD allocation with a hint that is in range,
+// in pool, but is currently used, can succeed
+TEST_F(AllocEngine6Test, pdAllocWithUsedHint6) {
+    allocWithUsedHintTest(Lease::TYPE_PD,
+                          IOAddress("2001:db8:1::"), // allocate this prefix as used
+                          IOAddress("2001:db8:1::"), // request this prefix
+                          64);
 }
 
 // This test checks if the allocation with a hint that is out the blue
@@ -679,7 +682,7 @@ TEST_F(AllocEngine6Test, IterativeAllocator_manyPools6) {
 
         // One way to easily verify that the iterative allocator really works is
         // to uncomment the following line and observe its output that it
-        // covers all defined subnets.
+        // covers all defined pools.
         // cout << candidate.toText() << endl;
 
         if (generated_addrs.find(candidate) == generated_addrs.end()) {
