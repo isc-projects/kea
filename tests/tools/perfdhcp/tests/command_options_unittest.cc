@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -60,6 +60,7 @@ protected:
         EXPECT_NO_THROW(process("perfdhcp 192.168.0.1"));
         EXPECT_EQ(4, opt.getIpVersion());
         EXPECT_EQ(CommandOptions::DORA_SARR, opt.getExchangeMode());
+        EXPECT_EQ(CommandOptions::ADDRESS_ONLY, opt.getLeaseType());
         EXPECT_EQ(0, opt.getRate());
         EXPECT_EQ(0, opt.getReportDelay());
         EXPECT_EQ(0, opt.getClientsNum());
@@ -179,6 +180,32 @@ TEST_F(CommandOptionsTest, IpVersion) {
     EXPECT_THROW(process("perfdhcp -6 -B -l ethx all"), isc::InvalidParameter);
     // -c and -4 (default) must not coexist
     EXPECT_THROW(process("perfdhcp -c -l ethx all"), isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, LeaseType) {
+    CommandOptions& opt = CommandOptions::instance();
+    // Check that the -e address-only works for IPv6.
+    ASSERT_NO_THROW(process("perfdhcp -6 -l etx -e address-only all"));
+    EXPECT_EQ(6, opt.getIpVersion());
+    EXPECT_EQ("etx", opt.getLocalName());
+    EXPECT_EQ(CommandOptions::ADDRESS_ONLY, opt.getLeaseType());
+    // Check that the -e address-only works for IPv4.
+    ASSERT_NO_THROW(process("perfdhcp -4 -l etx -e address-only all"));
+    EXPECT_EQ(4, opt.getIpVersion());
+    EXPECT_EQ("etx", opt.getLocalName());
+    EXPECT_EQ(CommandOptions::ADDRESS_ONLY, opt.getLeaseType());
+    // Check that the -e prefix-only works.
+    ASSERT_NO_THROW(process("perfdhcp -6 -l etx -e prefix-only all"));
+    EXPECT_EQ(6, opt.getIpVersion());
+    EXPECT_EQ("etx", opt.getLocalName());
+    EXPECT_EQ(CommandOptions::PREFIX_ONLY, opt.getLeaseType());
+    // Check that -e prefix-only must not coexist with -4 option.
+    EXPECT_THROW(process("perfdhcp -4 -l ethx -e prefix-only all"),
+                 InvalidParameter);
+    // Check that -e prefix-only must not coexist with -T options.
+    EXPECT_THROW(process("perfdhcp -6 -l ethx -e prefix-only -T file1.hex"
+                         " -T file2.hex -E 4 all"), InvalidParameter);
+
 }
 
 TEST_F(CommandOptionsTest, Rate) {
