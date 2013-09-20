@@ -273,6 +273,51 @@ public:
         detailCompareLease(lease, from_mgr);
     }
 
+    /// @brief checks if bogus hint can be ignored and the allocation succeeds
+    ///
+    /// This test checks if the allocation with a hing that is out of the blue
+    /// can succeed. The invalid hint should be ingored completely.
+    ///
+    /// @param type Lease type
+    /// @param hint hint (as send by a client)
+    /// @param expectd_pd_len (used in validation)
+    void allocBogusHint6(Lease::Type type, IOAddress hint,
+                         uint8_t expected_pd_len) {
+        boost::scoped_ptr<AllocEngine> engine;
+        ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE,
+                                                     100)));
+        ASSERT_TRUE(engine);
+
+        // Client would like to get a 3000::abc lease, which does not belong to any
+        // supported lease. Allocation engine should ignore it and carry on
+        // with the normal allocation
+        Lease6Ptr lease;
+        EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
+                        duid_, iaid_, hint, type, false,
+                        false, "", false, CalloutHandlePtr())));
+
+        // Check that we got a lease
+        ASSERT_TRUE(lease);
+
+        // We should NOT get what we asked for, because it is used already
+        EXPECT_NE(hint.toText(), lease->addr_.toText());
+
+        // Do all checks on the lease
+        checkLease6(lease, type, expected_pd_len);
+
+    // Check that the lease is indeed in LeaseMgr
+    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
+                                                               lease->addr_);
+    ASSERT_TRUE(from_mgr);
+
+    // Now check that the lease in LeaseMgr has the same parameters
+    detailCompareLease(lease, from_mgr);
+
+
+
+
+    }
+
 
     virtual ~AllocEngine6Test() {
         factory_.destroy();
@@ -430,34 +475,15 @@ TEST_F(AllocEngine6Test, pdAllocWithUsedHint6) {
 // This test checks if the allocation with a hint that is out the blue
 // can succeed. The invalid hint should be ignored completely.
 TEST_F(AllocEngine6Test, allocBogusHint6) {
-    boost::scoped_ptr<AllocEngine> engine;
-    ASSERT_NO_THROW(engine.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100)));
-    ASSERT_TRUE(engine);
 
-    // Client would like to get a 3000::abc lease, which does not belong to any
-    // supported lease. Allocation engine should ignore it and carry on
-    // with the normal allocation
-    Lease6Ptr lease;
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateAddress6(subnet_,
-                    duid_, iaid_, IOAddress("3000::abc"), Lease::TYPE_NA, false,
-                    false, "", false, CalloutHandlePtr())));
+    allocBogusHint6(Lease::TYPE_NA, IOAddress("3000::abc"), 128);
+}
 
-    // Check that we got a lease
-    ASSERT_TRUE(lease);
+// This test checks if the allocation with a hint that is out the blue
+// can succeed. The invalid hint should be ignored completely.
+TEST_F(AllocEngine6Test, pdAllocBogusHint6) {
 
-    // We should NOT get what we asked for, because it is used already
-    EXPECT_TRUE(lease->addr_.toText() != "3000::abc");
-
-    // Do all checks on the lease
-    checkLease6(lease, Lease::TYPE_NA, 128);
-
-    // Check that the lease is indeed in LeaseMgr
-    Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
-                                                               lease->addr_);
-    ASSERT_TRUE(from_mgr);
-
-    // Now check that the lease in LeaseMgr has the same parameters
-    detailCompareLease(lease, from_mgr);
+    allocBogusHint6(Lease::TYPE_PD, IOAddress("3000::abc"), 64);
 }
 
 // This test checks that NULL values are handled properly
