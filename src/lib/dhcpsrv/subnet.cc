@@ -169,28 +169,15 @@ const PoolCollection& Subnet::getPools(Lease::Type type) const {
 }
 
 PoolCollection& Subnet::getPools(Lease::Type type) {
-    switch (type) {
-    case Lease::TYPE_V4:
-    case Lease::TYPE_NA:
-        return (pools_);
-    case Lease::TYPE_TA:
-        return (pools_);
-    case Lease::TYPE_PD:
-        return (pools_pd_);
-    default:
-        isc_throw(BadValue, "Invalid pool type specified: "
-                  << static_cast<int>(type));
-    }
-}
+    // check if the type is valid (and throw if it isn't)
+    checkType(type);
 
-#if 0
-const PoolCollection& Subnet::getConstPools(Lease::Type type) const {
     switch (type) {
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
         return (pools_);
     case Lease::TYPE_TA:
-        return (pools_);
+        return (pools_ta_);
     case Lease::TYPE_PD:
         return (pools_pd_);
     default:
@@ -198,7 +185,6 @@ const PoolCollection& Subnet::getConstPools(Lease::Type type) const {
                   << static_cast<int>(type));
     }
 }
-#endif
 
 PoolPtr Subnet::getPool(Lease::Type type, isc::asiolink::IOAddress hint,
                         bool anypool /* true */) {
