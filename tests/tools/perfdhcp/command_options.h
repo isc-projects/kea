@@ -42,8 +42,8 @@ public:
 
         /// The lease type code.
         enum Type {
-            ADDRESS_ONLY,
-            PREFIX_ONLY,
+            ADDRESS,
+            PREFIX,
             ADDRESS_AND_PREFIX
         };
 
@@ -68,8 +68,8 @@ public:
         /// specified from the command line, the address or prefix
         /// (IA_NA or IA_PD) option should be sent to the server.
         /// For example, if user specified '-e address-and-prefix' in the
-        /// command line this function will return true for both ADDRESS_ONLY
-        /// and PREFIX_ONLY, because both address and prefix is requested from
+        /// command line this function will return true for both ADDRESS
+        /// and PREFIX, because both address and prefix is requested from
         /// the server.
         ///
         /// \param lease_type A lease type.

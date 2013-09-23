@@ -33,7 +33,7 @@ namespace isc {
 namespace perfdhcp {
 
 CommandOptions::LeaseType::LeaseType()
-    : type_(ADDRESS_ONLY) {
+    : type_(ADDRESS) {
 }
 
 CommandOptions::LeaseType::LeaseType(const Type lease_type)
@@ -58,10 +58,10 @@ CommandOptions::LeaseType::set(const Type lease_type) {
 void
 CommandOptions::LeaseType::fromCommandLine(const std::string& cmd_line_arg) {
     if (cmd_line_arg == "address-only") {
-        type_ = ADDRESS_ONLY;
+        type_ = ADDRESS;
 
     } else if (cmd_line_arg == "prefix-only") {
-        type_ = PREFIX_ONLY;
+        type_ = PREFIX;
 
     } else if (cmd_line_arg == "address-and-prefix") {
         type_ = ADDRESS_AND_PREFIX;
@@ -76,9 +76,9 @@ CommandOptions::LeaseType::fromCommandLine(const std::string& cmd_line_arg) {
 std::string
 CommandOptions::LeaseType::toText() const {
     switch (type_) {
-    case ADDRESS_ONLY:
+    case ADDRESS:
         return ("address-only (IA_NA option added to the client's request)");
-    case PREFIX_ONLY:
+    case PREFIX:
         return ("prefix-only (IA_PD option added to the client's request)");
     case ADDRESS_AND_PREFIX:
         return ("address-and-prefix (Both IA_NA and IA_PD options added to the"
@@ -109,7 +109,7 @@ CommandOptions::reset() {
     // will need to reset all members many times to perform unit tests
     ipversion_ = 0;
     exchange_mode_ = DORA_SARR;
-    lease_type_.set(LeaseType::ADDRESS_ONLY);
+    lease_type_.set(LeaseType::ADDRESS);
     rate_ = 0;
     report_delay_ = 0;
     clients_num_ = 0;
@@ -682,11 +682,11 @@ CommandOptions::validate() const {
           "-6 (IPv6) must be set to use -c");
     check((getExchangeMode() == DO_SA) && (getNumRequests().size() > 1),
           "second -n<num-request> is not compatible with -i");
-    check((getIpVersion() == 4) && !getLeaseType().is(LeaseType::ADDRESS_ONLY),
+    check((getIpVersion() == 4) && !getLeaseType().is(LeaseType::ADDRESS),
           "-6 option must be used if lease type other than '-e address-only'"
           " is specified");
     check(!getTemplateFiles().empty() &&
-          !getLeaseType().is(LeaseType::ADDRESS_ONLY),
+          !getLeaseType().is(LeaseType::ADDRESS),
           "template files may be only used with '-e address-only'");
     check((getExchangeMode() == DO_SA) && (getDropTime()[1] != 1.),
           "second -d<drop-time> is not compatible with -i");
