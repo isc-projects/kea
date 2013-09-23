@@ -71,11 +71,11 @@ TEST(LeaseTypeTest, fromCommandLine) {
 TEST(LeaseTypeTest, toText) {
     CommandOptions::LeaseType lease_type;
     ASSERT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS_ONLY));
-    EXPECT_EQ("address-only: IA_NA option added to the client's request",
+    EXPECT_EQ("address-only (IA_NA option added to the client's request)",
               lease_type.toText());
 
     lease_type.set(CommandOptions::LeaseType::PREFIX_ONLY);
-    EXPECT_EQ("prefix-only: IA_PD option added to the client's request",
+    EXPECT_EQ("prefix-only (IA_PD option added to the client's request)",
               lease_type.toText());
 }
 
