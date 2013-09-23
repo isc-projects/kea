@@ -52,6 +52,33 @@ TEST(LeaseTypeTest, set) {
     EXPECT_TRUE(lease_type.is(CommandOptions::LeaseType::PREFIX_ONLY));
 }
 
+TEST(LeaseTypeTest, includes) {
+    CommandOptions::LeaseType
+        lease_type(CommandOptions::LeaseType::ADDRESS_ONLY);
+    ASSERT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS_ONLY));
+    EXPECT_TRUE(lease_type.includes(CommandOptions::LeaseType::ADDRESS_ONLY));
+    EXPECT_FALSE(lease_type.includes(CommandOptions::LeaseType::PREFIX_ONLY));
+    EXPECT_FALSE(
+        lease_type.includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX)
+    );
+
+    lease_type.set(CommandOptions::LeaseType::PREFIX_ONLY);
+    EXPECT_FALSE(lease_type.includes(CommandOptions::LeaseType::ADDRESS_ONLY));
+    EXPECT_TRUE(lease_type.includes(CommandOptions::LeaseType::PREFIX_ONLY));
+    EXPECT_FALSE(
+        lease_type.includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX)
+    );
+
+    lease_type.set(CommandOptions::LeaseType::ADDRESS_AND_PREFIX);
+    EXPECT_TRUE(lease_type.includes(CommandOptions::LeaseType::ADDRESS_ONLY));
+    EXPECT_TRUE(lease_type.includes(CommandOptions::LeaseType::PREFIX_ONLY));
+    EXPECT_TRUE(
+        lease_type.includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX)
+    );
+
+}
+
+
 TEST(LeaseTypeTest, fromCommandLine) {
     CommandOptions::LeaseType
         lease_type(CommandOptions::LeaseType::ADDRESS_ONLY);

@@ -45,6 +45,11 @@ CommandOptions::LeaseType::is(const Type lease_type) const {
     return (lease_type == type_);
 }
 
+bool
+CommandOptions::LeaseType::includes(const Type lease_type) const {
+    return (is(ADDRESS_AND_PREFIX) || (lease_type == type_));
+}
+
 void
 CommandOptions::LeaseType::set(const Type lease_type) {
     type_ = lease_type;
@@ -57,6 +62,9 @@ CommandOptions::LeaseType::fromCommandLine(const std::string& cmd_line_arg) {
 
     } else if (cmd_line_arg == "prefix-only") {
         type_ = PREFIX_ONLY;
+
+    } else if (cmd_line_arg == "address-and-prefix") {
+        type_ = ADDRESS_AND_PREFIX;
 
     } else {
         isc_throw(isc::InvalidParameter, "value of lease-type: -e<lease-type>,"
@@ -72,6 +80,9 @@ CommandOptions::LeaseType::toText() const {
         return ("address-only (IA_NA option added to the client's request)");
     case PREFIX_ONLY:
         return ("prefix-only (IA_PD option added to the client's request)");
+    case ADDRESS_AND_PREFIX:
+        return ("address-and-prefix (Both IA_NA and IA_PD options added to the"
+                " client's request)");
     default:
         isc_throw(Unexpected, "internal error: undefined lease type code when"
                   " returning textual representation of the lease type");
@@ -903,10 +914,13 @@ CommandOptions::usage() const {
         "    having been lost.  The value is given in seconds and may contain a\n"
         "    fractional component.  The default is 1 second.\n"
         "-e<lease-type>: A type of lease being requested from the server. It\n"
-        "    may be one of the following: address-only or prefix-only. The\n"
-        "    former indicates that the regular IP (v4 or v6) will be requested,\n"
-        "    the latter indicates that the IPv6 prefixes will be requested. The\n"
-        "    '-e prefix-only' must not be used with -4.\n"
+        "    may be one of the following: address-only, prefix-only or\n"
+        "    address-and-prefix. The address-only indicates that the regular\n"
+        "    address (v4 or v6) will be requested. The prefix-only indicates\n"
+        "    that the IPv6 prefix will be requested. The address-and-prefix\n"
+        "    indicates that both IPv6 address and prefix will be requested.\n"
+        "    The '-e prefix-only' and -'e address-and-prefix' must not be\n"
+        "    used with -4.\n"
         "-E<time-offset>: Offset of the (DHCPv4) secs field / (DHCPv6)\n"
         "    elapsed-time option in the (second/request) template.\n"
         "    The value 0 disables it.\n"
