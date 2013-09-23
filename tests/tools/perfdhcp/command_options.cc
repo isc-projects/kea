@@ -69,9 +69,9 @@ std::string
 CommandOptions::LeaseType::toText() const {
     switch (type_) {
     case ADDRESS_ONLY:
-        return ("address-only: IA_NA option added to the client's request");
+        return ("address-only (IA_NA option added to the client's request)");
     case PREFIX_ONLY:
-        return ("prefix-only: IA_PD option added to the client's request");
+        return ("prefix-only (IA_PD option added to the client's request)");
     default:
         isc_throw(Unexpected, "internal error: undefined lease type code when"
                   " returning textual representation of the lease type");
