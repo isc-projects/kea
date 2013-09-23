@@ -37,13 +37,13 @@ namespace {
 
 // Library with load/unload functions creating marker files to check their
 // operation.
-static const char* CALLOUT_LIBRARY_1 = "/home/thomson/devel/bind10/src/lib/dhcpsrv/tests/.libs/libco1"
+static const char* CALLOUT_LIBRARY_1 = "/Users/tmark/build/trac3151/bind10/src/lib/dhcpsrv/tests/.libs/libco1"
                                            DLL_SUFFIX;
-static const char* CALLOUT_LIBRARY_2 = "/home/thomson/devel/bind10/src/lib/dhcpsrv/tests/.libs/libco2"
+static const char* CALLOUT_LIBRARY_2 = "/Users/tmark/build/trac3151/bind10/src/lib/dhcpsrv/tests/.libs/libco2"
                                            DLL_SUFFIX;
 
 // Name of a library which is not present.
-static const char* NOT_PRESENT_LIBRARY = "/home/thomson/devel/bind10/src/lib/dhcpsrv/tests/.libs/libnothere"
+static const char* NOT_PRESENT_LIBRARY = "/Users/tmark/build/trac3151/bind10/src/lib/dhcpsrv/tests/.libs/libnothere"
                                          DLL_SUFFIX;
 } // anonymous namespace
 
