@@ -32,6 +32,52 @@ using namespace isc;
 namespace isc {
 namespace perfdhcp {
 
+CommandOptions::LeaseType::LeaseType()
+    : type_(ADDRESS_ONLY) {
+}
+
+CommandOptions::LeaseType::LeaseType(const Type lease_type)
+    : type_(lease_type) {
+}
+
+bool
+CommandOptions::LeaseType::is(const Type lease_type) const {
+    return (lease_type == type_);
+}
+
+void
+CommandOptions::LeaseType::set(const Type lease_type) {
+    type_ = lease_type;
+}
+
+void
+CommandOptions::LeaseType::fromCommandLine(const std::string& cmd_line_arg) {
+    if (cmd_line_arg == "address-only") {
+        type_ = ADDRESS_ONLY;
+
+    } else if (cmd_line_arg == "prefix-only") {
+        type_ = PREFIX_ONLY;
+
+    } else {
+        isc_throw(isc::InvalidParameter, "value of lease-type: -e<lease-type>,"
+                  " must be one of the following: 'address-only' or"
+                  " 'prefix-only'");
+    }
+}
+
+std::string
+CommandOptions::LeaseType::toText() const {
+    switch (type_) {
+    case ADDRESS_ONLY:
+        return ("address-only: IA_NA option added to the client's request");
+    case PREFIX_ONLY:
+        return ("prefix-only: IA_PD option added to the client's request");
+    default:
+        isc_throw(Unexpected, "internal error: undefined lease type code when"
+                  " returning textual representation of the lease type");
+    }
+}
+
 CommandOptions&
 CommandOptions::instance() {
     static CommandOptions options;
@@ -52,7 +98,7 @@ CommandOptions::reset() {
     // will need to reset all members many times to perform unit tests
     ipversion_ = 0;
     exchange_mode_ = DORA_SARR;
-    lease_type_ = ADDRESS_ONLY;
+    lease_type_.set(LeaseType::ADDRESS_ONLY);
     rate_ = 0;
     report_delay_ = 0;
     clients_num_ = 0;
@@ -625,10 +671,11 @@ CommandOptions::validate() const {
           "-6 (IPv6) must be set to use -c");
     check((getExchangeMode() == DO_SA) && (getNumRequests().size() > 1),
           "second -n<num-request> is not compatible with -i");
-    check((getIpVersion() == 4) && (getLeaseType() != ADDRESS_ONLY),
+    check((getIpVersion() == 4) && !getLeaseType().is(LeaseType::ADDRESS_ONLY),
           "-6 option must be used if lease type other than '-e address-only'"
           " is specified");
-    check(!getTemplateFiles().empty() && (getLeaseType() != ADDRESS_ONLY),
+    check(!getTemplateFiles().empty() &&
+          !getLeaseType().is(LeaseType::ADDRESS_ONLY),
           "template files may be only used with '-e address-only'");
     check((getExchangeMode() == DO_SA) && (getDropTime()[1] != 1.),
           "second -d<drop-time> is not compatible with -i");
@@ -718,17 +765,7 @@ CommandOptions::nonEmptyString(const std::string& errmsg) const {
 void
 CommandOptions::initLeaseType() {
     std::string lease_type_arg = optarg;
-    if (lease_type_arg == "address-only") {
-        lease_type_ = ADDRESS_ONLY;
-
-    } else if (lease_type_arg == "prefix-only") {
-        lease_type_ = PREFIX_ONLY;
-
-    } else {
-        isc_throw(isc::InvalidParameter, "value of lease-type: -e<lease-type>,"
-                  " must be one of the following: 'address-only' or"
-                  " 'prefix-only'");
-    }
+    lease_type_.fromCommandLine(lease_type_arg);
 }
 
 void
@@ -741,6 +778,7 @@ CommandOptions::printCommandLine() const {
             std::cout << "SOLICIT-ADVERETISE only" << std::endl;
         }
     }
+    std::cout << "lease-type=" << getLeaseType().toText() << std::endl;
     if (rate_ != 0) {
         std::cout << "rate[1/s]=" << rate_ <<  std::endl;
     }

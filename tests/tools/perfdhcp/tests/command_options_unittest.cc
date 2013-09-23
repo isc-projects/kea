@@ -28,6 +28,57 @@ using namespace isc;
 using namespace isc::perfdhcp;
 using namespace boost::posix_time;
 
+TEST(LeaseTypeTest, defaultConstructor) {
+    CommandOptions::LeaseType lease_type;
+    EXPECT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS_ONLY));
+}
+
+TEST(LeaseTypeTest, constructor) {
+    CommandOptions::LeaseType
+        lease_type1(CommandOptions::LeaseType::ADDRESS_ONLY);
+    EXPECT_TRUE(lease_type1.is(CommandOptions::LeaseType::ADDRESS_ONLY));
+
+    CommandOptions::LeaseType
+        lease_type2(CommandOptions::LeaseType::PREFIX_ONLY);
+    EXPECT_TRUE(lease_type2.is(CommandOptions::LeaseType::PREFIX_ONLY));
+}
+
+TEST(LeaseTypeTest, set) {
+    CommandOptions::LeaseType
+        lease_type(CommandOptions::LeaseType::ADDRESS_ONLY);
+    EXPECT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS_ONLY));
+
+    lease_type.set(CommandOptions::LeaseType::PREFIX_ONLY);
+    EXPECT_TRUE(lease_type.is(CommandOptions::LeaseType::PREFIX_ONLY));
+}
+
+TEST(LeaseTypeTest, fromCommandLine) {
+    CommandOptions::LeaseType
+        lease_type(CommandOptions::LeaseType::ADDRESS_ONLY);
+    ASSERT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS_ONLY));
+
+    lease_type.fromCommandLine("prefix-only");
+    ASSERT_TRUE(lease_type.is(CommandOptions::LeaseType::PREFIX_ONLY));
+
+    lease_type.fromCommandLine("address-only");
+    EXPECT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS_ONLY));
+
+    EXPECT_THROW(lease_type.fromCommandLine("bogus-parameter"),
+                 isc::InvalidParameter);
+
+}
+
+TEST(LeaseTypeTest, toText) {
+    CommandOptions::LeaseType lease_type;
+    ASSERT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS_ONLY));
+    EXPECT_EQ("address-only: IA_NA option added to the client's request",
+              lease_type.toText());
+
+    lease_type.set(CommandOptions::LeaseType::PREFIX_ONLY);
+    EXPECT_EQ("prefix-only: IA_PD option added to the client's request",
+              lease_type.toText());
+}
+
 /// \brief Test Fixture Class
 ///
 /// This test fixture class is used to perform
@@ -60,7 +111,8 @@ protected:
         EXPECT_NO_THROW(process("perfdhcp 192.168.0.1"));
         EXPECT_EQ(4, opt.getIpVersion());
         EXPECT_EQ(CommandOptions::DORA_SARR, opt.getExchangeMode());
-        EXPECT_EQ(CommandOptions::ADDRESS_ONLY, opt.getLeaseType());
+        EXPECT_TRUE(opt.getLeaseType()
+                    .is(CommandOptions::LeaseType::ADDRESS_ONLY));
         EXPECT_EQ(0, opt.getRate());
         EXPECT_EQ(0, opt.getReportDelay());
         EXPECT_EQ(0, opt.getClientsNum());
@@ -188,17 +240,17 @@ TEST_F(CommandOptionsTest, LeaseType) {
     ASSERT_NO_THROW(process("perfdhcp -6 -l etx -e address-only all"));
     EXPECT_EQ(6, opt.getIpVersion());
     EXPECT_EQ("etx", opt.getLocalName());
-    EXPECT_EQ(CommandOptions::ADDRESS_ONLY, opt.getLeaseType());
+    EXPECT_TRUE(opt.getLeaseType().is(CommandOptions::LeaseType::ADDRESS_ONLY));
     // Check that the -e address-only works for IPv4.
     ASSERT_NO_THROW(process("perfdhcp -4 -l etx -e address-only all"));
     EXPECT_EQ(4, opt.getIpVersion());
     EXPECT_EQ("etx", opt.getLocalName());
-    EXPECT_EQ(CommandOptions::ADDRESS_ONLY, opt.getLeaseType());
+    EXPECT_TRUE(opt.getLeaseType().is(CommandOptions::LeaseType::ADDRESS_ONLY));
     // Check that the -e prefix-only works.
     ASSERT_NO_THROW(process("perfdhcp -6 -l etx -e prefix-only all"));
     EXPECT_EQ(6, opt.getIpVersion());
     EXPECT_EQ("etx", opt.getLocalName());
-    EXPECT_EQ(CommandOptions::PREFIX_ONLY, opt.getLeaseType());
+    EXPECT_TRUE(opt.getLeaseType().is(CommandOptions::LeaseType::PREFIX_ONLY));
     // Check that -e prefix-only must not coexist with -4 option.
     EXPECT_THROW(process("perfdhcp -4 -l ethx -e prefix-only all"),
                  InvalidParameter);

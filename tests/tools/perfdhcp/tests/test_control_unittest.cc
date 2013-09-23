@@ -653,8 +653,8 @@ private:
     boost::shared_ptr<Pkt6>
     createAdvertisePkt6(uint32_t transid) const {
         OptionPtr opt_ia;
-        if (CommandOptions::instance().getLeaseType() ==
-            CommandOptions::ADDRESS_ONLY) {
+        if (CommandOptions::instance().getLeaseType()
+            .is(CommandOptions::LeaseType::ADDRESS_ONLY)) {
             opt_ia = Option::factory(Option::V6, D6O_IA_NA);
         } else {
             opt_ia = Option::factory(Option::V6, D6O_IA_PD);
