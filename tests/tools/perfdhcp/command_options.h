@@ -1,3 +1,4 @@
+
 // Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
@@ -481,7 +482,7 @@ private:
     /// Indicates number of -d<value> parameters specified by user.
     /// If this value goes above 2, command line parsing fails.
     uint8_t drop_time_set_;
-    /// Time to elapse before request is lost. The fisrt value of
+    /// Time to elapse before request is lost. The first value of
     /// two-element vector refers to DO/SA exchanges,
     /// second value refers to RA/RR. Default values are { 1, 1 }
     std::vector<double> drop_time_;
@@ -518,12 +519,12 @@ private:
     /// Indicates that we take server id from first received packet.
     bool use_first_;
     /// Packet template file names. These files store template packets
-    /// that are used for initiating echanges. Template packets
+    /// that are used for initiating exchanges. Template packets
     /// read from files are later tuned with variable data.
     std::vector<std::string> template_file_;
     /// Offset of transaction id in template files. First vector
     /// element points to offset for DISCOVER/SOLICIT messages,
-    /// second element points to trasaction id offset for
+    /// second element points to transaction id offset for
     /// REQUEST messages
     std::vector<int> xid_offset_;
     /// Random value offset in templates. Random value offset
