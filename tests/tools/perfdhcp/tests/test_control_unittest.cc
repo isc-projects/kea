@@ -656,13 +656,13 @@ private:
         boost::shared_ptr<Pkt6> advertise(new Pkt6(DHCPV6_ADVERTISE, transid));
         // Add IA_NA if requested by the client.
         if (CommandOptions::instance().getLeaseType()
-            .includes(CommandOptions::LeaseType::ADDRESS_ONLY)) {
+            .includes(CommandOptions::LeaseType::ADDRESS)) {
             OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
             advertise->addOption(opt_ia_na);
         }
         // Add IA_PD if requested by the client.
         if (CommandOptions::instance().getLeaseType()
-            .includes(CommandOptions::LeaseType::PREFIX_ONLY)) {
+            .includes(CommandOptions::LeaseType::PREFIX)) {
             OptionPtr opt_ia_pd = Option::factory(Option::V6, D6O_IA_PD);
             advertise->addOption(opt_ia_pd);
         }

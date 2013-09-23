@@ -105,7 +105,7 @@ TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
     }
     // IA_NA
     if (CommandOptions::instance().getLeaseType()
-        .includes(CommandOptions::LeaseType::ADDRESS_ONLY)) {
+        .includes(CommandOptions::LeaseType::ADDRESS)) {
         OptionPtr option = pkt_from->getOption(D6O_IA_NA);
         if (!option) {
             isc_throw(OptionNotFound, "IA_NA option not found in the"
@@ -115,7 +115,7 @@ TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
     }
     // IA_PD
     if (CommandOptions::instance().getLeaseType()
-        .includes(CommandOptions::LeaseType::PREFIX_ONLY)) {
+        .includes(CommandOptions::LeaseType::PREFIX)) {
         OptionPtr option = pkt_from->getOption(D6O_IA_PD);
         if (!option) {
             isc_throw(OptionNotFound, "IA_PD option not found in the"
@@ -1789,12 +1789,12 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
 
     // IA_NA
     if (CommandOptions::instance().getLeaseType()
-        .includes(CommandOptions::LeaseType::ADDRESS_ONLY)) {
+        .includes(CommandOptions::LeaseType::ADDRESS)) {
         pkt6->addOption(Option::factory(Option::V6, D6O_IA_NA));
     }
     // IA_PD
     if (CommandOptions::instance().getLeaseType()
-        .includes(CommandOptions::LeaseType::PREFIX_ONLY)) {
+        .includes(CommandOptions::LeaseType::PREFIX)) {
         pkt6->addOption(Option::factory(Option::V6, D6O_IA_PD));
     }
 
