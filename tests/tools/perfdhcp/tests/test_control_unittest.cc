@@ -1086,7 +1086,7 @@ TEST_F(TestControlTest, PacketTemplates) {
     // Size of the file is 2 times larger than binary data size.
     ASSERT_TRUE(createTemplateFile(file1, template1, template1.size() * 2));
     ASSERT_TRUE(createTemplateFile(file2, template2, template2.size() * 2));
-    CommandOptions& options = CommandOptions::instance();
+
     NakedTestControl tc;
 
     ASSERT_NO_THROW(

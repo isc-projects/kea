@@ -500,7 +500,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     // If DUID is not specified from command line we need to
     // generate one.
-    if (duid_template_.size() == 0) {
+    if (duid_template_.empty()) {
         generateDuidTemplate();
     }
     return (false);
@@ -568,9 +568,9 @@ CommandOptions::decodeMac(const std::string& base) {
     mac_template_.clear();
     // Get pieces of MAC address separated with : (or even ::)
     while (std::getline(s1, token, ':')) {
-        unsigned int ui = 0;
         // Convert token to byte value using std::istringstream
         if (token.length() > 0) {
+            unsigned int ui = 0;
             try {
                 // Do actual conversion
                 ui = convertHexString(token);
