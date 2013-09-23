@@ -30,20 +30,65 @@ namespace perfdhcp {
 ///
 class CommandOptions : public boost::noncopyable {
 public:
+
+    /// \brief A class encapsulating the type of lease being requested from the
+    /// server.
+    ///
+    /// This class comprises convenience functions to convert the lease type
+    /// to the textual format and to match the appropriate lease type with the
+    /// value of the -e<lease-type> parameter specified from the command line.
+    class LeaseType {
+    public:
+
+        /// The lease type code.
+        enum Type {
+            ADDRESS_ONLY,
+            PREFIX_ONLY
+        };
+
+        LeaseType();
+
+        /// \brief Constructor from lease type code.
+        ///
+        /// \param lease_type A lease type code.
+        LeaseType(const Type lease_type);
+
+        /// \brief Checks if lease type has the specified code.
+        ///
+        /// \param lease_type A lease type code to be checked.
+        ///
+        /// \return true if lease type is matched with the specified code.
+        bool is(const Type lease_type) const;
+
+        /// \brief Sets the lease type code.
+        ///
+        /// \param lease_type A lease type code.
+        void set(const Type lease_type);
+
+        /// \brief Sets the lease type from the command line argument.
+        ///
+        /// \param cmd_line_arg An argument specified in the command line
+        /// as -e<lease-type>:
+        /// - address-only
+        /// - prefix-only
+        ///
+        /// \throw isc::InvalidParameter if the specified argument is invalid.
+        void fromCommandLine(const std::string& cmd_line_arg);
+
+        /// \brief Return textual representation of the lease type.
+        ///
+        /// \return A textual representation of the lease type.
+        std::string toText() const;
+
+    private:
+        Type type_; ///< A lease type code.
+
+    };
+
     /// 2-way (cmd line param -i) or 4-way exchanges
     enum ExchangeMode {
         DO_SA,
         DORA_SARR
-    };
-
-    /// @brief  A type of lease being requested by the client.
-    ///
-    /// Currently it indicates whether perfdhcp is simulating the requests
-    /// for IPv6 addresses or prefixes (Prefix Delegation). Note that
-    /// prefixes can be only requested when IPv6 mode is selected.
-    enum LeaseType {
-        ADDRESS_ONLY,
-        PREFIX_ONLY
     };
 
     /// CommandOptions is a singleton class. This method returns reference
