@@ -458,11 +458,11 @@ TestControl::getElapsedTime(const T& pkt1, const T& pkt2) {
 uint64_t
 TestControl::getNextExchangesNum() const {
     CommandOptions& options = CommandOptions::instance();
-    // Reset number of exchanges.
-    uint64_t due_exchanges = 0;
     // Get current time.
     ptime now(microsec_clock::universal_time());
     if (now >= send_due_) {
+        // Reset number of exchanges.
+        uint64_t due_exchanges = 0;
         // If rate is specified from the command line we have to
         // synchornize with it.
         if (options.getRate() != 0) {
@@ -737,7 +737,7 @@ TestControl::sendPackets(const TestControlSocket& socket,
         if (options.getIpVersion() == 4) {
             // No template packets means that no -T option was specified.
             // We have to build packets ourselfs.
-            if (template_buffers_.size() == 0) {
+            if (template_buffers_.empty()) {
                 sendDiscover4(socket, preload);
             } else {
                 // @todo add defines for packet type index that can be
@@ -747,7 +747,7 @@ TestControl::sendPackets(const TestControlSocket& socket,
         } else {
             // No template packets means that no -T option was specified.
             // We have to build packets ourselfs.
-            if (template_buffers_.size() == 0) {
+            if (template_buffers_.empty()) {
                 sendSolicit6(socket, preload);
             } else {
                 // @todo add defines for packet type index that can be
@@ -966,7 +966,7 @@ TestControl::readPacketTemplate(const std::string& file_name) {
     // Expect even number of digits.
     if (hex_digits.size() % 2 != 0) {
         isc_throw(OutOfRange, "odd number of digits in template file");
-    } else if (hex_digits.size() == 0) {
+    } else if (hex_digits.empty()) {
         isc_throw(OutOfRange, "template file " << file_name << " is empty");
     }
     std::vector<uint8_t> binary_stream;
