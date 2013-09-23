@@ -40,7 +40,7 @@ using namespace isc::perfdhcp;
 class NakedTestControl: public TestControl {
 public:
 
-    /// \brief Incremental transaction id generaator.
+    /// \brief Incremental transaction id generator.
     ///
     /// This is incremental transaction id generator. It overrides
     /// the default transaction id generator that generates transaction
@@ -123,7 +123,7 @@ public:
     /// truncated.
     ///
     /// \param filename template file to be created.
-    /// \param buffer with binary datato be stored in file.
+    /// \param buffer with binary data to be stored in file.
     /// \param size target size of the file.
     /// \param invalid_chars inject invalid chars to the template file.
     /// \return true if file creation successful.
@@ -283,7 +283,7 @@ public:
 
     /// brief Test generation of mulitple DUIDs
     ///
-    /// Thie method checks the generation of multiple DUIDs. Number
+    /// This method checks the generation of multiple DUIDs. Number
     /// of iterations depends on the number of simulated clients.
     /// It is expected that DUID's size is 14 (consists of DUID-LLT
     /// HW type field, 4 octets of time value and MAC address). The
@@ -497,7 +497,7 @@ public:
 
         // Incremental transaction id generator will generate
         // predictable values of transaction id for each iteration.
-        // This is important because we need to simulate reponses
+        // This is important because we need to simulate responses
         // from the server and use the same transaction ids as in
         // packets sent by client.
         TestControl::NumberGeneratorPtr
@@ -754,7 +754,7 @@ TEST_F(TestControlTest, Options4) {
 
     // Get the option buffer. It should hold the combination of values
     // listed in requested_options array. However their order can be
-    // different in general so we need to search each value separatelly.
+    // different in general so we need to search each value separately.
     const OptionBuffer& requested_options_buf =
         opt_requested_options->getData();
     EXPECT_EQ(requested_options_ref.size(), requested_options_buf.size());

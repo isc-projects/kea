@@ -167,7 +167,7 @@ public:
         /// \param socket socket descriptor.
         TestControlSocket(const int socket);
 
-        /// \brief Destriuctor of the socket wrapper class.
+        /// \brief Destructor of the socket wrapper class.
         ///
         /// Destructor closes wrapped socket.
         ~TestControlSocket();
@@ -204,7 +204,7 @@ public:
     /// The default generator pointer.
     typedef boost::shared_ptr<NumberGenerator> NumberGeneratorPtr;
 
-    /// \brief Sequential numbers generatorc class.
+    /// \brief Sequential numbers generator class.
     class SequentialGenerator : public NumberGenerator {
     public:
         /// \brief Constructor.
@@ -220,7 +220,7 @@ public:
             }
         }
 
-        /// \brief Generate number sequentialy.
+        /// \brief Generate number sequentially.
         ///
         /// \return generated number.
         virtual uint32_t generate() {
@@ -248,7 +248,7 @@ public:
     /// brief\ Run performance test.
     ///
     /// Method runs whole performance test. Command line options must
-    /// be parsed prior to running this function. Othewise function will
+    /// be parsed prior to running this function. Otherwise function will
     /// throw exception.
     ///
     /// \throw isc::InvalidOperation if command line options are not parsed.
@@ -287,7 +287,7 @@ protected:
     /// only via \ref instance method.
     TestControl();
 
-    /// \brief Check if test exit condtitions fulfilled.
+    /// \brief Check if test exit conditions fulfilled.
     ///
     /// Method checks if the test exit conditions are fulfilled.
     /// Exit conditions are checked periodically from the
@@ -389,7 +389,7 @@ protected:
 
     /// \brief Factory function to create DHCPv4 Request List option.
     ///
-    /// This factory function creayes DHCPv4 PARAMETER_REQUEST_LIST option
+    /// This factory function creates DHCPv4 PARAMETER_REQUEST_LIST option
     /// instance with the following set of requested options:
     /// - DHO_SUBNET_MASK,
     /// - DHO_BROADCAST_ADDRESS,
@@ -545,7 +545,7 @@ protected:
     /// \brief Process received DHCPv6 packet.
     ///
     /// Method performs processing of the received DHCPv6 packet,
-    /// updates statistics and responsds to the server if required,
+    /// updates statistics and responds to the server if required,
     /// e.g. when ADVERTISE packet arrives, this function will initiate
     /// REQUEST message to the server.
     ///
@@ -596,7 +596,7 @@ protected:
     /// \brief Register option factory functions for DHCPv4 or DHCPv6.
     ///
     /// Method registers option factory functions for DHCPv4 or DHCPv6,
-    /// depending in whch mode test is currently running.
+    /// depending in which mode test is currently running.
     void registerOptionFactories() const;
 
 
@@ -630,7 +630,7 @@ protected:
     /// type and keeps them around until test finishes. Then they
     /// are printed to the user. If packet of specified type has
     /// been already stored this function perfroms no operation.
-    /// This function does not perform sainty check if packet
+    /// This function does not perform sanity check if packet
     /// pointer is valid. Make sure it is before calling it.
     ///
     /// \param pkt packet to be stored.
@@ -869,7 +869,7 @@ private:
     /// \warning
     ///
     /// \param [in] pkt_from A packet from which options should be copied.
-    /// \parma [out] pkt_to A packet to which options should be copied.
+    /// \param [out] pkt_to A packet to which options should be copied.
     ///
     /// \throw isc::perfdhcp::OptionNotFound if a required option is not
     /// found in the packet from which options should be copied.
