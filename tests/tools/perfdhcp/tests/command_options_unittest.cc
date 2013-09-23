@@ -28,11 +28,13 @@ using namespace isc;
 using namespace isc::perfdhcp;
 using namespace boost::posix_time;
 
+// Verify that default constructor sets lease type to the expected value.
 TEST(LeaseTypeTest, defaultConstructor) {
     CommandOptions::LeaseType lease_type;
     EXPECT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS));
 }
 
+// Verify that the constructor sets the lease type to the specified value.
 TEST(LeaseTypeTest, constructor) {
     CommandOptions::LeaseType
         lease_type1(CommandOptions::LeaseType::ADDRESS);
@@ -43,6 +45,7 @@ TEST(LeaseTypeTest, constructor) {
     EXPECT_TRUE(lease_type2.is(CommandOptions::LeaseType::PREFIX));
 }
 
+// Verify that the lease type can be modified using set() function.
 TEST(LeaseTypeTest, set) {
     CommandOptions::LeaseType
         lease_type(CommandOptions::LeaseType::ADDRESS);
@@ -52,16 +55,26 @@ TEST(LeaseTypeTest, set) {
     EXPECT_TRUE(lease_type.is(CommandOptions::LeaseType::PREFIX));
 }
 
+// Verify that the includes() function returns true when the lease type
+// specified with the function argument is the same as the lease type
+// encapsulated by the LeaseType object on which include function is called
+// or when the lease type value encapsulated by this object is
+// ADDRESS_AND_PREFIX.
 TEST(LeaseTypeTest, includes) {
-    CommandOptions::LeaseType
-        lease_type(CommandOptions::LeaseType::ADDRESS);
+    // Lease type: ADDRESS
+    CommandOptions::LeaseType lease_type(CommandOptions::LeaseType::ADDRESS);
+    // Lease type IS ADDRESS.
     ASSERT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS));
+    // Lease type includes the ADDRESS.
     EXPECT_TRUE(lease_type.includes(CommandOptions::LeaseType::ADDRESS));
+    // Lease type does not include PREFIX.
     EXPECT_FALSE(lease_type.includes(CommandOptions::LeaseType::PREFIX));
+    // Lease type does not include ADDRESS_AND_PREFIX.
     EXPECT_FALSE(
         lease_type.includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX)
     );
 
+    // Do the same check for PREFIX.
     lease_type.set(CommandOptions::LeaseType::PREFIX);
     EXPECT_FALSE(lease_type.includes(CommandOptions::LeaseType::ADDRESS));
     EXPECT_TRUE(lease_type.includes(CommandOptions::LeaseType::PREFIX));
@@ -69,6 +82,10 @@ TEST(LeaseTypeTest, includes) {
         lease_type.includes(CommandOptions::LeaseType::ADDRESS_AND_PREFIX)
     );
 
+    // When lease type is set to 'address-and-prefix' it means that client
+    // requests both address and prefix (IA_NA and IA_PD). Therefore, the
+    // LeaseType::includes() function should return true for both ADDRESS
+    // and PREFIX.
     lease_type.set(CommandOptions::LeaseType::ADDRESS_AND_PREFIX);
     EXPECT_TRUE(lease_type.includes(CommandOptions::LeaseType::ADDRESS));
     EXPECT_TRUE(lease_type.includes(CommandOptions::LeaseType::PREFIX));
@@ -78,7 +95,8 @@ TEST(LeaseTypeTest, includes) {
 
 }
 
-
+// Verify that the LeaseType::fromCommandLine() function parses the lease-type
+// argument specified as -e<lease-type>.
 TEST(LeaseTypeTest, fromCommandLine) {
     CommandOptions::LeaseType
         lease_type(CommandOptions::LeaseType::ADDRESS);
@@ -90,11 +108,16 @@ TEST(LeaseTypeTest, fromCommandLine) {
     lease_type.fromCommandLine("address-only");
     EXPECT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS));
 
+    lease_type.fromCommandLine("address-and-prefix");
+    EXPECT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS_AND_PREFIX));
+
     EXPECT_THROW(lease_type.fromCommandLine("bogus-parameter"),
                  isc::InvalidParameter);
 
 }
 
+// Verify that the LeaseType::toText() function returns the textual
+// representation of the lease type specified.
 TEST(LeaseTypeTest, toText) {
     CommandOptions::LeaseType lease_type;
     ASSERT_TRUE(lease_type.is(CommandOptions::LeaseType::ADDRESS));
@@ -104,6 +127,11 @@ TEST(LeaseTypeTest, toText) {
     lease_type.set(CommandOptions::LeaseType::PREFIX);
     EXPECT_EQ("prefix-only (IA_PD option added to the client's request)",
               lease_type.toText());
+
+    lease_type.set(CommandOptions::LeaseType::ADDRESS_AND_PREFIX);
+    EXPECT_EQ("address-and-prefix (Both IA_NA and IA_PD options added to the"
+              " client's request)", lease_type.toText());
+
 }
 
 /// \brief Test Fixture Class
