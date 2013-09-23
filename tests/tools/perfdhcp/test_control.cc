@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -104,8 +104,8 @@ TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
                   " for the copyIaOptions function");
     }
     OptionPtr option;
-    if (CommandOptions::instance().getLeaseType() ==
-        CommandOptions::ADDRESS_ONLY) {
+    if (CommandOptions::instance().getLeaseType()
+        .is(CommandOptions::LeaseType::ADDRESS_ONLY)) {
         option = pkt_from->getOption(D6O_IA_NA);
         if (!option) {
             isc_throw(OptionNotFound, "IA_NA option not found in the"
@@ -1781,8 +1781,8 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
 
     // Depending on the lease-type option specified, we should request
     // IPv6 address (with IA_NA) or IPv6 prefix (IA_PD).
-    if (CommandOptions::instance().getLeaseType() ==
-        CommandOptions::ADDRESS_ONLY) {
+    if (CommandOptions::instance().getLeaseType()
+        .is(CommandOptions::LeaseType::ADDRESS_ONLY)) {
         pkt6->addOption(Option::factory(Option::V6, D6O_IA_NA));
     } else {
         pkt6->addOption(Option::factory(Option::V6, D6O_IA_PD));
