@@ -103,22 +103,27 @@ TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
         isc_throw(BadValue, "NULL pointers must not be specified as arguments"
                   " for the copyIaOptions function");
     }
-    OptionPtr option;
+    // IA_NA
     if (CommandOptions::instance().getLeaseType()
-        .is(CommandOptions::LeaseType::ADDRESS_ONLY)) {
-        option = pkt_from->getOption(D6O_IA_NA);
+        .includes(CommandOptions::LeaseType::ADDRESS_ONLY)) {
+        OptionPtr option = pkt_from->getOption(D6O_IA_NA);
         if (!option) {
             isc_throw(OptionNotFound, "IA_NA option not found in the"
                       " server's response");
         }
-    } else {
-        option = pkt_from->getOption(D6O_IA_PD);
+        pkt_to->addOption(option);
+    }
+    // IA_PD
+    if (CommandOptions::instance().getLeaseType()
+        .includes(CommandOptions::LeaseType::PREFIX_ONLY)) {
+        OptionPtr option = pkt_from->getOption(D6O_IA_PD);
         if (!option) {
             isc_throw(OptionNotFound, "IA_PD option not found in the"
                       " server's response");
         }
+        pkt_to->addOption(option);
     }
-    pkt_to->addOption(option);
+
 
 }
 
@@ -635,15 +640,15 @@ TestControl::openSocket() const {
     uint16_t port = options.getLocalPort();
     int sock = 0;
 
-    uint8_t family = (options.getIpVersion() == 6) ? AF_INET6 : AF_INET; 
+    uint8_t family = (options.getIpVersion() == 6) ? AF_INET6 : AF_INET;
     IOAddress remoteaddr(servername);
-    
+
     // Check for mismatch between IP option and server address
     if (family != remoteaddr.getFamily()) {
-        isc_throw(InvalidParameter, 
-                  "Values for IP version: " <<  
+        isc_throw(InvalidParameter,
+                  "Values for IP version: " <<
                   static_cast<unsigned int>(options.getIpVersion()) <<
-                  " and server address: " << servername << " are mismatched."); 
+                  " and server address: " << servername << " are mismatched.");
     }
 
     if (port == 0) {
@@ -1780,11 +1785,16 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     pkt6->addOption(Option::factory(Option::V6, D6O_ORO));
 
     // Depending on the lease-type option specified, we should request
-    // IPv6 address (with IA_NA) or IPv6 prefix (IA_PD).
+    // IPv6 address (with IA_NA) or IPv6 prefix (IA_PD) or both.
+
+    // IA_NA
     if (CommandOptions::instance().getLeaseType()
-        .is(CommandOptions::LeaseType::ADDRESS_ONLY)) {
+        .includes(CommandOptions::LeaseType::ADDRESS_ONLY)) {
         pkt6->addOption(Option::factory(Option::V6, D6O_IA_NA));
-    } else {
+    }
+    // IA_PD
+    if (CommandOptions::instance().getLeaseType()
+        .includes(CommandOptions::LeaseType::PREFIX_ONLY)) {
         pkt6->addOption(Option::factory(Option::V6, D6O_IA_PD));
     }
 
