@@ -347,7 +347,6 @@ TEST_F(StatsMgrTest, Delays) {
 
     // Send DISCOVER, wait 2s and receive OFFER. This will affect
     // counters in Stats Manager.
-    const unsigned int delay1 = 2;
     passDOPacketsWithDelay(stats_mgr, 2, common_transid);
 
     // Initially min delay is equal to MAX_DOUBLE. After first packets
