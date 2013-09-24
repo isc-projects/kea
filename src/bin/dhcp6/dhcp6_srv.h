@@ -473,13 +473,6 @@ private:
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
 
-#if 0
-    /// Indexes for registered hook points
-    int hook_index_pkt6_receive_;
-    int hook_index_subnet6_select_;
-    int hook_index_pkt6_send_;
-#endif
-
     /// UDP port number on which server listens.
     uint16_t port_;
 
