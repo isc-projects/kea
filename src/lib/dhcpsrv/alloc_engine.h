@@ -266,16 +266,13 @@ protected:
     ///
     /// @return Allocated IPv4 lease (or NULL if allocation failed)
     Lease4Ptr
-    allocateAddress4(const SubnetPtr& subnet,
-                     const ClientIdPtr& clientid,
-                     const HWAddrPtr& hwaddr,
-                     const isc::asiolink::IOAddress& hint,
-                     const bool fwd_dns_update,
-                     const bool rev_dns_update,
-                     const std::string& hostname,
-                     bool fake_allocation,
-                     const isc::hooks::CalloutHandlePtr& callout_handle,
-                     Lease4Ptr& old_lease);
+    allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid,
+                   const HWAddrPtr& hwaddr,
+                   const isc::asiolink::IOAddress& hint,
+                   const bool fwd_dns_update, const bool rev_dns_update,
+                   const std::string& hostname, bool fake_allocation,
+                   const isc::hooks::CalloutHandlePtr& callout_handle,
+                   Lease4Ptr& old_lease);
 
     /// @brief Renews a IPv4 lease
     ///
@@ -335,16 +332,11 @@ protected:
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
-    allocateAddress6(const Subnet6Ptr& subnet,
-                     const DuidPtr& duid,
-                     uint32_t iaid,
-                     const isc::asiolink::IOAddress& hint,
-                     Lease::Type type,
-                     const bool fwd_dns_update,
-                     const bool rev_dns_update,
-                     const std::string& hostname,
-                     bool fake_allocation,
-                     const isc::hooks::CalloutHandlePtr& callout_handle);
+    allocateLease6(const Subnet6Ptr& subnet, const DuidPtr& duid, uint32_t iaid,
+                   const isc::asiolink::IOAddress& hint, Lease::Type type,
+                   const bool fwd_dns_update, const bool rev_dns_update,
+                   const std::string& hostname, bool fake_allocation,
+                   const isc::hooks::CalloutHandlePtr& callout_handle);
 
     /// @brief returns allocator for a given pool type
     /// @param type type of pool (V4, IA, TA or PD)
