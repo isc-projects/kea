@@ -25,7 +25,7 @@ const int NameChangeTransaction::SELECTING_REV_SERVER_ST;
 const int NameChangeTransaction::PROCESS_TRANS_OK_ST;
 const int NameChangeTransaction::PROCESS_TRANS_FAILED_ST;
 
-const int NameChangeTransaction::NCT_STATE_MAX;
+const int NameChangeTransaction::NCT_DERIVED_STATE_MIN;
 
 // Common transaction events
 const int NameChangeTransaction::SELECT_SERVER_EVT;
@@ -36,7 +36,7 @@ const int NameChangeTransaction::IO_COMPLETED_EVT;
 const int NameChangeTransaction::UPDATE_OK_EVT;
 const int NameChangeTransaction::UPDATE_FAILED_EVT;
 
-const int NameChangeTransaction::NCT_EVENT_MAX;
+const int NameChangeTransaction::NCT_DERIVED_EVENT_MIN;
 
 NameChangeTransaction::
 NameChangeTransaction(isc::asiolink::IOService& io_service,

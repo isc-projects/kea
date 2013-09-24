@@ -35,10 +35,10 @@ class NameChangeStub : public NameChangeTransaction {
 public:
 
     // NameChangeStub states
-    static const int DOING_UPDATE_ST = NCT_STATE_MAX + 1;
+    static const int DOING_UPDATE_ST = NCT_DERIVED_STATE_MIN + 1;
 
     // NameChangeStub events
-    static const int SEND_UPDATE_EVT = NCT_EVENT_MAX + 2;
+    static const int SEND_UPDATE_EVT = NCT_DERIVED_EVENT_MIN + 2;
 
     /// @brief Constructor
     ///

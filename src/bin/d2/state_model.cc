@@ -71,7 +71,7 @@ StateSet::getState(int value) {
 const int StateModel::NEW_ST;
 const int StateModel::END_ST;
 
-const int StateModel::SM_STATE_MAX;
+const int StateModel::SM_DERIVED_STATE_MIN;
 
 // Common state model events
 const int StateModel::NOP_EVT;
@@ -79,7 +79,7 @@ const int StateModel::START_EVT;
 const int StateModel::END_EVT;
 const int StateModel::FAIL_EVT;
 
-const int StateModel::SM_EVENT_MAX;
+const int StateModel::SM_DERIVED_EVENT_MIN;
 
 StateModel::StateModel() : events_(), states_(), dictionaries_initted_(false),
                           curr_state_(NEW_ST), prev_state_(NEW_ST),
@@ -231,6 +231,11 @@ void
 StateModel::verifyStates() {
     getState(NEW_ST);
     getState(END_ST);
+}
+
+void 
+StateModel::onModelFailure(const std::string&) {
+    // Empty implementation to make deriving classes simpler.
 }
 
 void
