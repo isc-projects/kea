@@ -110,7 +110,7 @@ AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& 
     // Copy the address. It must be V6, but we already checked that.
     std::memcpy(packed, &vec[0], V6ADDRESS_LEN);
 
-    // Increase last byte that is in prefix
+    // Can we safely increase only the last byte in prefix without overflow?
     if (packed[n_bytes] + uint16_t(mask) < 256u) {
         packed[n_bytes] += mask;
         return (IOAddress::fromBytes(AF_INET6, packed));
@@ -119,7 +119,7 @@ AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& 
     // Overflow (done on uint8_t, but the sum is greater than 255)
     packed[n_bytes] += mask;
 
-    // Start increasing the least significant byte
+    // Deal with the overflow. Start increasing the least significant byte
     for (int i = n_bytes - 1; i >= 0; --i) {
         ++packed[i];
         // If we haven't overflowed (0xff->0x0) the next byte, then we are done
