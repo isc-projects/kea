@@ -87,7 +87,7 @@ public:
     //@{ States common to all transactions.
 
     /// @brief State from which a transaction is started.
-    static const int READY_ST = SM_STATE_MAX + 1;
+    static const int READY_ST = SM_DERIVED_STATE_MIN + 1;
 
     /// @brief State in which forward DNS server selection is done.
     ///
@@ -95,7 +95,7 @@ public:
     /// to use is conducted.  Upon conclusion of this state the next server
     /// is either selected or it should transition out with NO_MORE_SERVERS_EVT
     /// event.
-    static const int SELECTING_FWD_SERVER_ST = SM_STATE_MAX + 2;
+    static const int SELECTING_FWD_SERVER_ST = SM_DERIVED_STATE_MIN + 2;
 
     /// @brief State in which reverse DNS server  selection is done.
     ///
@@ -103,43 +103,52 @@ public:
     /// to use is conducted.  Upon conclusion of this state the next server
     /// is either selected or it should transition out with NO_MORE_SERVERS_EVT
     /// event.
-    static const int SELECTING_REV_SERVER_ST = SM_STATE_MAX + 3;
+    static const int SELECTING_REV_SERVER_ST = SM_DERIVED_STATE_MIN + 3;
 
-    static const int PROCESS_TRANS_OK_ST = SM_STATE_MAX + 4;
+    /// @brief State which processes successful transaction conclusion.
+    static const int PROCESS_TRANS_OK_ST = SM_DERIVED_STATE_MIN + 4;
 
-    static const int PROCESS_TRANS_FAILED_ST = SM_STATE_MAX + 5;
+    /// @brief State which processes an unsuccessful transaction conclusion.
+    static const int PROCESS_TRANS_FAILED_ST = SM_DERIVED_STATE_MIN + 5;
 
     /// @brief Value at which custom states in a derived class should begin.
-    static const int NCT_STATE_MAX = SM_STATE_MAX + 100;
+    static const int NCT_DERIVED_STATE_MIN = SM_DERIVED_STATE_MIN + 101;
     //@}
 
     //@{ Events common to all transactions.
     /// @brief Issued when a server needs to be selected.
-    static const int SELECT_SERVER_EVT = SM_STATE_MAX + 1;
+    static const int SELECT_SERVER_EVT = SM_DERIVED_EVENT_MIN + 1;
+
     /// @brief Issued when a server  has been selected.
-    static const int SERVER_SELECTED_EVT = SM_EVENT_MAX + 2;
+    static const int SERVER_SELECTED_EVT = SM_DERIVED_EVENT_MIN + 2;
+
     /// @brief Issued when an update fails due to an IO error.
-    static const int SERVER_IO_ERROR_EVT = SM_EVENT_MAX + 3;
+    static const int SERVER_IO_ERROR_EVT = SM_DERIVED_EVENT_MIN + 3;
+
     /// @brief Issued when there are no more servers from which to select.
     /// This occurs when none of the servers in the list can be reached to
     /// perform the update.
-    static const int NO_MORE_SERVERS_EVT =SM_EVENT_MAX +  4;
+
+    static const int NO_MORE_SERVERS_EVT =SM_DERIVED_EVENT_MIN +  4;
     /// @brief Issued when a DNS update packet exchange has completed.
     /// This occurs whenever the DNSClient callback is invoked whether the
     /// exchange was successful or not.
-    static const int IO_COMPLETED_EVT = SM_EVENT_MAX + 5;
+
+    static const int IO_COMPLETED_EVT = SM_DERIVED_EVENT_MIN + 5;
     /// @brief Issued when the attempted update successfully completed.
     /// This occurs when an DNS update packet was successfully processed
     /// by the server.
-    static const int UPDATE_OK_EVT = SM_EVENT_MAX + 6;
+
+    static const int UPDATE_OK_EVT = SM_DERIVED_EVENT_MIN + 6;
+
     /// @brief Issued when the attempted update fails to complete.
     /// This occurs when an DNS update packet fails to process. The nature of
     /// the failure is given by the DNSClient return status and the response
     /// packet (if one was received).
-    static const int UPDATE_FAILED_EVT = SM_EVENT_MAX + 7;
+    static const int UPDATE_FAILED_EVT = SM_DERIVED_EVENT_MIN + 7;
 
     /// @brief Value at which custom events in a derived class should begin.
-    static const int NCT_EVENT_MAX = SM_EVENT_MAX + 100;
+    static const int NCT_DERIVED_EVENT_MIN = SM_DERIVED_EVENT_MIN + 101;
     //@}
 
     /// @brief Constructor
