@@ -35,32 +35,32 @@ public:
 
     ///@brief StateModelTest states
     ///@brief Fake state used for handler mapping tests.
-    static const int DUMMY_ST = SM_STATE_MAX + 1;
+    static const int DUMMY_ST = SM_DERIVED_STATE_MIN + 1;
 
     ///@brief Starting state for the test state model.
-    static const int READY_ST = SM_STATE_MAX + 2;
+    static const int READY_ST = SM_DERIVED_STATE_MIN + 2;
 
     ///@brief State which simulates doing asynchronous work.
-    static const int DO_WORK_ST = SM_STATE_MAX + 3;
+    static const int DO_WORK_ST = SM_DERIVED_STATE_MIN + 3;
 
     ///@brief State which finishes off processing.
-    static const int DONE_ST = SM_STATE_MAX + 4;
+    static const int DONE_ST = SM_DERIVED_STATE_MIN + 4;
 
     // StateModelTest events
     ///@brief Event used to trigger initiation of asynchronous work.
-    static const int WORK_START_EVT = SM_EVENT_MAX + 1;
+    static const int WORK_START_EVT = SM_DERIVED_EVENT_MIN + 1;
 
     ///@brief Event issued when the asynchronous work "completes".
-    static const int WORK_DONE_EVT = SM_EVENT_MAX + 2;
+    static const int WORK_DONE_EVT = SM_DERIVED_EVENT_MIN + 2;
 
     ///@brief Event issued when all the work is done.
-    static const int ALL_DONE_EVT = SM_EVENT_MAX + 3;
+    static const int ALL_DONE_EVT = SM_DERIVED_EVENT_MIN + 3;
 
     ///@brief Event used to trigger an attempt to transition to bad state
-    static const int FORCE_UNDEFINED_ST_EVT = SM_EVENT_MAX + 4;
+    static const int FORCE_UNDEFINED_ST_EVT = SM_DERIVED_EVENT_MIN + 4;
 
     ///@brief Event used to trigger an attempt to transition to bad state
-    static const int SIMULATE_ERROR_EVT = SM_EVENT_MAX + 5;
+    static const int SIMULATE_ERROR_EVT = SM_DERIVED_EVENT_MIN + 5;
 
     /// @brief Constructor
     ///

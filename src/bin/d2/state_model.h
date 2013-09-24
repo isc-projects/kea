@@ -246,7 +246,7 @@ public:
     static const int END_ST = 1;
 
     /// @brief Value at which custom states in a derived class should begin.
-    static const int SM_STATE_MAX = 10;
+    static const int SM_DERIVED_STATE_MIN = 11;
     //@}
 
     //@{ Events common to all state models.
@@ -265,7 +265,7 @@ public:
     static const int FAIL_EVT = 3;
 
     /// @brief Value at which custom events in a derived class should begin.
-    static const int SM_EVENT_MAX = 10;
+    static const int SM_DERIVED_EVENT_MIN = 11;
     //@}
 
     /// @brief Constructor
@@ -466,10 +466,11 @@ protected:
     /// model execution, such as a state handler throwing an exception.
     /// It provides derivations an opportunity to act accordingly by setting
     /// the appropriate status or taking other remedial action.   This allows
-    /// the model execution loop to remain exception safe.
+    /// the model execution loop to remain exception safe.  This default
+    /// implementation does nothing.
     ///
     /// @param explanation text detailing the error and state machine context
-    virtual void onModelFailure(const std::string& explanation) = 0;
+    virtual void onModelFailure(const std::string& explanation);
 
     /// @brief Sets up the model to transition into given state with a given
     /// event.
