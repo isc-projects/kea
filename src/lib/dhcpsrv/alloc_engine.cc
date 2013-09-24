@@ -282,16 +282,12 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
 }
 
 Lease6Collection
-AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
-                              const DuidPtr& duid,
-                              uint32_t iaid,
-                              const IOAddress& hint,
-                              Lease::Type type,
-                              const bool fwd_dns_update,
-                              const bool rev_dns_update,
-                              const std::string& hostname,
-                              bool fake_allocation,
-                              const isc::hooks::CalloutHandlePtr& callout_handle) {
+AllocEngine::allocateLease6(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                            uint32_t iaid, const IOAddress& hint,
+                            Lease::Type type, const bool fwd_dns_update,
+                            const bool rev_dns_update,
+                            const std::string& hostname, bool fake_allocation,
+                            const isc::hooks::CalloutHandlePtr& callout_handle) {
 
     try {
         AllocatorPtr allocator = getAllocator(type);
@@ -445,16 +441,12 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
 }
 
 Lease4Ptr
-AllocEngine::allocateAddress4(const SubnetPtr& subnet,
-                              const ClientIdPtr& clientid,
-                              const HWAddrPtr& hwaddr,
-                              const IOAddress& hint,
-                              const bool fwd_dns_update,
-                              const bool rev_dns_update,
-                              const std::string& hostname,
-                              bool fake_allocation,
-                              const isc::hooks::CalloutHandlePtr& callout_handle,
-                              Lease4Ptr& old_lease) {
+AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid,
+                            const HWAddrPtr& hwaddr, const IOAddress& hint,
+                            const bool fwd_dns_update, const bool rev_dns_update,
+                            const std::string& hostname, bool fake_allocation,
+                            const isc::hooks::CalloutHandlePtr& callout_handle,
+                            Lease4Ptr& old_lease) {
 
     // The NULL pointer indicates that the old lease didn't exist. It may
     // be later set to non NULL value if existing lease is found in the
