@@ -1,3 +1,8 @@
+679.	[func]	tmark
+	b10-dhcp-ddns Finite state machine logic was refactored into its own class,
+	StateModel.
+	(Trac# 3156,  git 6e9227b1b15448e834d1f60dd655e5633ff9745c)
+
 678.	[func]	tmark
 	MySQL backend used by b10-dhcp6 now uses lease type as a 
 	filtering parameter in all IPv6 lease queries.
