@@ -1,3 +1,4 @@
+
 // Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
@@ -30,6 +31,79 @@ namespace perfdhcp {
 ///
 class CommandOptions : public boost::noncopyable {
 public:
+
+    /// \brief A class encapsulating the type of lease being requested from the
+    /// server.
+    ///
+    /// This class comprises convenience functions to convert the lease type
+    /// to the textual format and to match the appropriate lease type with the
+    /// value of the -e<lease-type> parameter specified from the command line.
+    class LeaseType {
+    public:
+
+        /// The lease type code.
+        enum Type {
+            ADDRESS,
+            PREFIX,
+            ADDRESS_AND_PREFIX
+        };
+
+        LeaseType();
+
+        /// \brief Constructor from lease type code.
+        ///
+        /// \param lease_type A lease type code.
+        LeaseType(const Type lease_type);
+
+        /// \brief Checks if lease type has the specified code.
+        ///
+        /// \param lease_type A lease type code to be checked.
+        ///
+        /// \return true if lease type is matched with the specified code.
+        bool is(const Type lease_type) const;
+
+        /// \brief Checks if lease type implies request for the address,
+        /// prefix (or both) as specified by the function argument.
+        ///
+        /// This is a convenience function to check that, for the lease type
+        /// specified from the command line, the address or prefix
+        /// (IA_NA or IA_PD) option should be sent to the server.
+        /// For example, if user specified '-e address-and-prefix' in the
+        /// command line this function will return true for both ADDRESS
+        /// and PREFIX, because both address and prefix is requested from
+        /// the server.
+        ///
+        /// \param lease_type A lease type.
+        ///
+        /// \return true if the lease type implies creation of the address,
+        /// prefix or both as specified by the argument.
+        bool includes(const Type lease_type) const;
+
+        /// \brief Sets the lease type code.
+        ///
+        /// \param lease_type A lease type code.
+        void set(const Type lease_type);
+
+        /// \brief Sets the lease type from the command line argument.
+        ///
+        /// \param cmd_line_arg An argument specified in the command line
+        /// as -e<lease-type>:
+        /// - address-only
+        /// - prefix-only
+        ///
+        /// \throw isc::InvalidParameter if the specified argument is invalid.
+        void fromCommandLine(const std::string& cmd_line_arg);
+
+        /// \brief Return textual representation of the lease type.
+        ///
+        /// \return A textual representation of the lease type.
+        std::string toText() const;
+
+    private:
+        Type type_; ///< A lease type code.
+
+    };
+
     /// 2-way (cmd line param -i) or 4-way exchanges
     enum ExchangeMode {
         DO_SA,
@@ -70,6 +144,11 @@ public:
     ///
     /// \return packet exchange mode.
     ExchangeMode getExchangeMode() const { return exchange_mode_; }
+
+    /// \ brief Returns the type of lease being requested.
+    ///
+    /// \return type of lease being requested by perfdhcp.
+    LeaseType getLeaseType() const { return (lease_type_); }
 
     /// \brief Returns echange rate.
     ///
@@ -300,6 +379,11 @@ private:
     /// \throw InvalidParameter if string is empty.
     std::string nonEmptyString(const std::string& errmsg) const;
 
+    /// \brief Decodes the lease type requested by perfdhcp from optarg.
+    ///
+    /// \throw InvalidParameter if lease type value specified is invalid.
+    void initLeaseType();
+
     /// \brief Set number of clients.
     ///
     /// Interprets the getopt() "opt" global variable as the number of clients
@@ -373,6 +457,8 @@ private:
     uint8_t ipversion_;
     /// Packet exchange mode (e.g. DORA/SARR)
     ExchangeMode exchange_mode_;
+    /// Lease Type to be obtained: address only, IPv6 prefix only.
+    LeaseType lease_type_;
     /// Rate in exchange per second
     int rate_;
     /// Delay between generation of two consecutive
@@ -396,7 +482,7 @@ private:
     /// Indicates number of -d<value> parameters specified by user.
     /// If this value goes above 2, command line parsing fails.
     uint8_t drop_time_set_;
-    /// Time to elapse before request is lost. The fisrt value of
+    /// Time to elapse before request is lost. The first value of
     /// two-element vector refers to DO/SA exchanges,
     /// second value refers to RA/RR. Default values are { 1, 1 }
     std::vector<double> drop_time_;
@@ -433,12 +519,12 @@ private:
     /// Indicates that we take server id from first received packet.
     bool use_first_;
     /// Packet template file names. These files store template packets
-    /// that are used for initiating echanges. Template packets
+    /// that are used for initiating exchanges. Template packets
     /// read from files are later tuned with variable data.
     std::vector<std::string> template_file_;
     /// Offset of transaction id in template files. First vector
     /// element points to offset for DISCOVER/SOLICIT messages,
-    /// second element points to trasaction id offset for
+    /// second element points to transaction id offset for
     /// REQUEST messages
     std::vector<int> xid_offset_;
     /// Random value offset in templates. Random value offset

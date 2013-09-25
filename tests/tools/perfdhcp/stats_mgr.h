@@ -260,6 +260,7 @@ public:
         /// assumed dropped. Negative value disables it.
         /// \param archive_enabled if true packets archive mode is enabled.
         /// In this mode all packets are stored throughout the test execution.
+        /// \param boot_time Holds the timestamp when perfdhcp has been started.
         ExchangeStats(const ExchangeType xchg_type,
                       const double drop_time,
                       const bool archive_enabled,
@@ -1183,7 +1184,7 @@ public:
     /// \throw isc::InvalidOperation if no exchange type added to
     /// track statistics.
      void printStats() const {
-        if (exchanges_.size() == 0) {
+        if (exchanges_.empty()) {
             isc_throw(isc::InvalidOperation,
                       "no exchange type added for tracking");
         }
@@ -1238,7 +1239,7 @@ public:
     /// \throw isc::InvalidOperation if no exchange type added to
     /// track statistics or packets archive mode is disabled.
     void printTimestamps() const {
-        if (exchanges_.size() == 0) {
+        if (exchanges_.empty()) {
             isc_throw(isc::InvalidOperation,
                       "no exchange type added for tracking");
         }
@@ -1261,7 +1262,7 @@ public:
     ///
     /// \throw isc::InvalidOperation if no custom counters added for tracking.
     void printCustomCounters() const {
-        if (custom_counters_.size() == 0) {
+        if (custom_counters_.empty()) {
             isc_throw(isc::InvalidOperation, "no custom counters specified");
         }
         for (CustomCountersMapIterator it = custom_counters_.begin();

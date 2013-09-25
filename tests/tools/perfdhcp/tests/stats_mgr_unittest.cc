@@ -81,6 +81,10 @@ public:
     ///
     /// Method simulates sending or receiving  multiple DHCPv6 packets.
     ///
+    /// \note The xchg_type parameter is passed as non-const value to avoid
+    /// false cppcheck errors which expect enum value being passed by reference.
+    /// This error is not reported when non-const enum is passed by value.
+    ///
     /// \param stats_mgr Statistics Manager instance to be used.
     /// \param xchg_type packet exchange types.
     /// \param packet_type DHCPv6 packet type.
@@ -88,7 +92,7 @@ public:
     /// \param receive simulated packets are received (if true)
     /// or sent (if false)
     void passMultiplePackets6(const boost::shared_ptr<StatsMgr6> stats_mgr,
-                              const StatsMgr6::ExchangeType xchg_type,
+                              StatsMgr6::ExchangeType xchg_type,
                               const uint8_t packet_type,
                               const int num_packets,
                               const bool receive = false) {
@@ -347,7 +351,6 @@ TEST_F(StatsMgrTest, Delays) {
 
     // Send DISCOVER, wait 2s and receive OFFER. This will affect
     // counters in Stats Manager.
-    const unsigned int delay1 = 2;
     passDOPacketsWithDelay(stats_mgr, 2, common_transid);
 
     // Initially min delay is equal to MAX_DOUBLE. After first packets

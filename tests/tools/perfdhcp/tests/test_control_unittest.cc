@@ -40,7 +40,7 @@ using namespace isc::perfdhcp;
 class NakedTestControl: public TestControl {
 public:
 
-    /// \brief Incremental transaction id generaator.
+    /// \brief Incremental transaction id generator.
     ///
     /// This is incremental transaction id generator. It overrides
     /// the default transaction id generator that generates transaction
@@ -123,7 +123,7 @@ public:
     /// truncated.
     ///
     /// \param filename template file to be created.
-    /// \param buffer with binary datato be stored in file.
+    /// \param buffer with binary data to be stored in file.
     /// \param size target size of the file.
     /// \param invalid_chars inject invalid chars to the template file.
     /// \return true if file creation successful.
@@ -283,7 +283,7 @@ public:
 
     /// brief Test generation of mulitple DUIDs
     ///
-    /// Thie method checks the generation of multiple DUIDs. Number
+    /// This method checks the generation of multiple DUIDs. Number
     /// of iterations depends on the number of simulated clients.
     /// It is expected that DUID's size is 14 (consists of DUID-LLT
     /// HW type field, 4 octets of time value and MAC address). The
@@ -497,7 +497,7 @@ public:
 
         // Incremental transaction id generator will generate
         // predictable values of transaction id for each iteration.
-        // This is important because we need to simulate reponses
+        // This is important because we need to simulate responses
         // from the server and use the same transaction ids as in
         // packets sent by client.
         TestControl::NumberGeneratorPtr
@@ -521,7 +521,8 @@ public:
                 boost::shared_ptr<Pkt6>
                     advertise_pkt6(createAdvertisePkt6(transid));
                 // Receive ADVERTISE and send REQUEST.
-                ASSERT_NO_THROW(tc.processReceivedPacket6(sock, advertise_pkt6));
+                ASSERT_NO_THROW(tc.processReceivedPacket6(sock,
+                                                          advertise_pkt6));
                 ++transid;
             }
             if (tc.checkExitConditions()) {
@@ -646,14 +647,24 @@ private:
     /// \return instance of the packet.
     boost::shared_ptr<Pkt6>
     createAdvertisePkt6(uint32_t transid) const {
-        OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
+        boost::shared_ptr<Pkt6> advertise(new Pkt6(DHCPV6_ADVERTISE, transid));
+        // Add IA_NA if requested by the client.
+        if (CommandOptions::instance().getLeaseType()
+            .includes(CommandOptions::LeaseType::ADDRESS)) {
+            OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
+            advertise->addOption(opt_ia_na);
+        }
+        // Add IA_PD if requested by the client.
+        if (CommandOptions::instance().getLeaseType()
+            .includes(CommandOptions::LeaseType::PREFIX)) {
+            OptionPtr opt_ia_pd = Option::factory(Option::V6, D6O_IA_PD);
+            advertise->addOption(opt_ia_pd);
+        }
         OptionPtr opt_serverid(new Option(Option::V6, D6O_SERVERID));
         NakedTestControl tc;
         uint8_t randomized = 0;
         std::vector<uint8_t> duid(tc.generateDuid(randomized));
         OptionPtr opt_clientid(Option::factory(Option::V6, D6O_CLIENTID, duid));
-        boost::shared_ptr<Pkt6> advertise(new Pkt6(DHCPV6_ADVERTISE, transid));
-        advertise->addOption(opt_ia_na);
         advertise->addOption(opt_serverid);
         advertise->addOption(opt_clientid);
         advertise->updateTimestamp();
@@ -737,7 +748,7 @@ TEST_F(TestControlTest, Options4) {
 
     // Get the option buffer. It should hold the combination of values
     // listed in requested_options array. However their order can be
-    // different in general so we need to search each value separatelly.
+    // different in general so we need to search each value separately.
     const OptionBuffer& requested_options_buf =
         opt_requested_options->getData();
     EXPECT_EQ(requested_options_ref.size(), requested_options_buf.size());
@@ -963,7 +974,7 @@ TEST_F(TestControlTest, Packet4Exchange) {
     EXPECT_EQ(12, iterations_performed);
 }
 
-TEST_F(TestControlTest, Packet6Exchange) {
+TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
     // Get the local loopback interface to open socket on
     // it and test packets exchanges. We don't want to fail
     // the test if interface is not available.
@@ -998,9 +1009,126 @@ TEST_F(TestControlTest, Packet6Exchange) {
     // then test should be interrupted and actual number of iterations will
     // be 6.
     const int received_num = 3;
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case). All exchanged packets carry the IA_NA option
+    // to simulate the IPv6 address acquisition and to verify that the
+    // IA_NA options returned by the server are processed correctly.
     testPkt6Exchange(iterations_num, received_num, use_templates,
                      iterations_performed);
     EXPECT_EQ(6, iterations_performed);
+}
+
+TEST_F(TestControlTest, Packet6Exchange) {
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback_iface(getLocalLoopback());
+    if (loopback_iface.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test."
+                  << std::endl;
+        return;
+    }
+
+    const int iterations_num = 100;
+    // Set number of iterations to 10.
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -e address-only"
+                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
+    int iterations_performed = 0;
+    // Set number of received packets equal to number of iterations.
+    // This simulates no packet drops.
+    bool use_templates = false;
+
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case). All exchanged packets carry the IA_NA option
+    // to simulate the IPv6 address acqusition and to verify that the IA_NA
+    // options returned by the server are processed correctly.
+    testPkt6Exchange(iterations_num, iterations_num, use_templates,
+                     iterations_performed);
+    // Actual number of iterations should be 10.
+    EXPECT_EQ(10, iterations_performed);
+}
+
+TEST_F(TestControlTest, Packet6ExchangePrefixDelegation) {
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback_iface(getLocalLoopback());
+    if (loopback_iface.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test."
+                  << std::endl;
+        return;
+    }
+
+    const int iterations_num = 100;
+    // Set number of iterations to 10.
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -e prefix-only"
+                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
+    int iterations_performed = 0;
+    // Set number of received packets equal to number of iterations.
+    // This simulates no packet drops.
+    bool use_templates = false;
+
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case). All exchanged packets carry the IA_PD option
+    // to simulate the Prefix Delegation and to verify that the IA_PD options
+    // returned by the server are processed correctly.
+    testPkt6Exchange(iterations_num, iterations_num, use_templates,
+                     iterations_performed);
+    // Actual number of iterations should be 10.
+    EXPECT_EQ(10, iterations_performed);
+}
+
+TEST_F(TestControlTest, Packet6ExchangeAddressAndPrefix) {
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback_iface(getLocalLoopback());
+    if (loopback_iface.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test."
+                  << std::endl;
+        return;
+    }
+
+    const int iterations_num = 100;
+    // Set number of iterations to 10.
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -e address-and-prefix"
+                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
+    int iterations_performed = 0;
+    // Set number of received packets equal to number of iterations.
+    // This simulates no packet drops.
+    bool use_templates = false;
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case).  All exchanged packets carry either IA_NA
+    // or IA_PD options to simulate the address and prefix acquisition with
+    // the single message and to verify that the IA_NA and IA_PD options
+    // returned by the server are processed correctly.
+    testPkt6Exchange(iterations_num, iterations_num, use_templates,
+                     iterations_performed);
+    // Actual number of iterations should be 10.
+    EXPECT_EQ(10, iterations_performed);
 }
 
 TEST_F(TestControlTest, PacketTemplates) {
@@ -1017,7 +1145,7 @@ TEST_F(TestControlTest, PacketTemplates) {
     // Size of the file is 2 times larger than binary data size.
     ASSERT_TRUE(createTemplateFile(file1, template1, template1.size() * 2));
     ASSERT_TRUE(createTemplateFile(file2, template2, template2.size() * 2));
-    CommandOptions& options = CommandOptions::instance();
+
     NakedTestControl tc;
 
     ASSERT_NO_THROW(
