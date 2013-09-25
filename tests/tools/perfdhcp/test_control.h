@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -54,6 +54,13 @@ static const size_t DHCPV6_ELAPSED_TIME_OFFSET = 84;
 static const size_t DHCPV6_SERVERID_OFFSET = 22;
 /// Default DHCPV6 IA_NA offset in the packet template.
 static const size_t DHCPV6_IA_NA_OFFSET = 40;
+
+/// @brief Exception thrown when the required option is not found in a packet.
+class OptionNotFound : public Exception {
+public:
+    OptionNotFound(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// \brief Test Control class.
 ///
@@ -160,7 +167,7 @@ public:
         /// \param socket socket descriptor.
         TestControlSocket(const int socket);
 
-        /// \brief Destriuctor of the socket wrapper class.
+        /// \brief Destructor of the socket wrapper class.
         ///
         /// Destructor closes wrapped socket.
         ~TestControlSocket();
@@ -197,7 +204,7 @@ public:
     /// The default generator pointer.
     typedef boost::shared_ptr<NumberGenerator> NumberGeneratorPtr;
 
-    /// \brief Sequential numbers generatorc class.
+    /// \brief Sequential numbers generator class.
     class SequentialGenerator : public NumberGenerator {
     public:
         /// \brief Constructor.
@@ -213,7 +220,7 @@ public:
             }
         }
 
-        /// \brief Generate number sequentialy.
+        /// \brief Generate number sequentially.
         ///
         /// \return generated number.
         virtual uint32_t generate() {
@@ -241,7 +248,7 @@ public:
     /// brief\ Run performance test.
     ///
     /// Method runs whole performance test. Command line options must
-    /// be parsed prior to running this function. Othewise function will
+    /// be parsed prior to running this function. Otherwise function will
     /// throw exception.
     ///
     /// \throw isc::InvalidOperation if command line options are not parsed.
@@ -280,7 +287,7 @@ protected:
     /// only via \ref instance method.
     TestControl();
 
-    /// \brief Check if test exit condtitions fulfilled.
+    /// \brief Check if test exit conditions fulfilled.
     ///
     /// Method checks if the test exit conditions are fulfilled.
     /// Exit conditions are checked periodically from the
@@ -338,6 +345,17 @@ protected:
                                         uint16_t type,
                                         const dhcp::OptionBuffer& buf);
 
+    /// \brief Factory function to create IA_PD option.
+    ///
+    /// this factory function creates DHCPv6 IA_PD option instance.
+    ///
+    /// \param u universe (ignored).
+    /// \param type option-type (ignored).
+    /// \param buf option-buffer carrying sub-options.
+    static dhcp::OptionPtr factoryIapd6(dhcp::Option::Universe u,
+                                        uint16_t type,
+                                        const dhcp::OptionBuffer& buf);
+
     /// \brief Factory function to create DHCPv6 ORO option.
     ///
     /// This factory function creates DHCPv6 Option Request Option instance.
@@ -371,7 +389,7 @@ protected:
 
     /// \brief Factory function to create DHCPv4 Request List option.
     ///
-    /// This factory function creayes DHCPv4 PARAMETER_REQUEST_LIST option
+    /// This factory function creates DHCPv4 PARAMETER_REQUEST_LIST option
     /// instance with the following set of requested options:
     /// - DHO_SUBNET_MASK,
     /// - DHO_BROADCAST_ADDRESS,
@@ -527,7 +545,7 @@ protected:
     /// \brief Process received DHCPv6 packet.
     ///
     /// Method performs processing of the received DHCPv6 packet,
-    /// updates statistics and responsds to the server if required,
+    /// updates statistics and responds to the server if required,
     /// e.g. when ADVERTISE packet arrives, this function will initiate
     /// REQUEST message to the server.
     ///
@@ -578,7 +596,7 @@ protected:
     /// \brief Register option factory functions for DHCPv4 or DHCPv6.
     ///
     /// Method registers option factory functions for DHCPv4 or DHCPv6,
-    /// depending in whch mode test is currently running.
+    /// depending in which mode test is currently running.
     void registerOptionFactories() const;
 
 
@@ -612,7 +630,7 @@ protected:
     /// type and keeps them around until test finishes. Then they
     /// are printed to the user. If packet of specified type has
     /// been already stored this function perfroms no operation.
-    /// This function does not perform sainty check if packet
+    /// This function does not perform sanity check if packet
     /// pointer is valid. Make sure it is before calling it.
     ///
     /// \param pkt packet to be stored.
@@ -833,6 +851,24 @@ protected:
     void updateSendDue();
 
 private:
+
+    /// \brief Copies IA_NA or IA_PD option from one packet to another.
+    ///
+    /// This function checks the lease-type specified in the command line
+    /// with option -e<lease-type>. If 'address-only' value has been specified
+    /// this function expects that IA_NA option is present in the packet
+    /// encapsulated by pkt_from object. If 'prefix-only' value has been
+    /// specified, this function expects that IA_PD option is present in the
+    /// packet encapsulated by pkt_to object.
+    ///
+    /// \param [in] pkt_from A packet from which options should be copied.
+    /// \param [out] pkt_to A packet to which options should be copied.
+    ///
+    /// \throw isc::perfdhcp::OptionNotFound if a required option is not
+    /// found in the packet from which options should be copied.
+    /// \throw isc::BadValue if any of the specified pointers to packets
+    /// is NULL.
+    void copyIaOptions(const dhcp::Pkt6Ptr& pkt_from, dhcp::Pkt6Ptr& pkt_to);
 
     /// \brief Convert binary value to hex string.
     ///

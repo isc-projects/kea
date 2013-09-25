@@ -32,6 +32,63 @@ using namespace isc;
 namespace isc {
 namespace perfdhcp {
 
+CommandOptions::LeaseType::LeaseType()
+    : type_(ADDRESS) {
+}
+
+CommandOptions::LeaseType::LeaseType(const Type lease_type)
+    : type_(lease_type) {
+}
+
+bool
+CommandOptions::LeaseType::is(const Type lease_type) const {
+    return (lease_type == type_);
+}
+
+bool
+CommandOptions::LeaseType::includes(const Type lease_type) const {
+    return (is(ADDRESS_AND_PREFIX) || (lease_type == type_));
+}
+
+void
+CommandOptions::LeaseType::set(const Type lease_type) {
+    type_ = lease_type;
+}
+
+void
+CommandOptions::LeaseType::fromCommandLine(const std::string& cmd_line_arg) {
+    if (cmd_line_arg == "address-only") {
+        type_ = ADDRESS;
+
+    } else if (cmd_line_arg == "prefix-only") {
+        type_ = PREFIX;
+
+    } else if (cmd_line_arg == "address-and-prefix") {
+        type_ = ADDRESS_AND_PREFIX;
+
+    } else {
+        isc_throw(isc::InvalidParameter, "value of lease-type: -e<lease-type>,"
+                  " must be one of the following: 'address-only' or"
+                  " 'prefix-only'");
+    }
+}
+
+std::string
+CommandOptions::LeaseType::toText() const {
+    switch (type_) {
+    case ADDRESS:
+        return ("address-only (IA_NA option added to the client's request)");
+    case PREFIX:
+        return ("prefix-only (IA_PD option added to the client's request)");
+    case ADDRESS_AND_PREFIX:
+        return ("address-and-prefix (Both IA_NA and IA_PD options added to the"
+                " client's request)");
+    default:
+        isc_throw(Unexpected, "internal error: undefined lease type code when"
+                  " returning textual representation of the lease type");
+    }
+}
+
 CommandOptions&
 CommandOptions::instance() {
     static CommandOptions options;
@@ -52,6 +109,7 @@ CommandOptions::reset() {
     // will need to reset all members many times to perform unit tests
     ipversion_ = 0;
     exchange_mode_ = DORA_SARR;
+    lease_type_.set(LeaseType::ADDRESS);
     rate_ = 0;
     report_delay_ = 0;
     clients_num_ = 0;
@@ -150,7 +208,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
     while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:"
-                        "s:iBc1T:X:O:E:S:I:x:w:")) != -1) {
+                        "s:iBc1T:X:O:E:S:I:x:w:e:")) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
             stream << " " << optarg;
@@ -230,6 +288,10 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                                             " -d<value> must be a positive integer");
                 max_drop_.push_back(num_drops);
             }
+            break;
+
+        case 'e':
+            initLeaseType();
             break;
 
         case 'E':
@@ -438,7 +500,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     // If DUID is not specified from command line we need to
     // generate one.
-    if (duid_template_.size() == 0) {
+    if (duid_template_.empty()) {
         generateDuidTemplate();
     }
     return (false);
@@ -506,9 +568,9 @@ CommandOptions::decodeMac(const std::string& base) {
     mac_template_.clear();
     // Get pieces of MAC address separated with : (or even ::)
     while (std::getline(s1, token, ':')) {
-        unsigned int ui = 0;
         // Convert token to byte value using std::istringstream
         if (token.length() > 0) {
+            unsigned int ui = 0;
             try {
                 // Do actual conversion
                 ui = convertHexString(token);
@@ -620,6 +682,12 @@ CommandOptions::validate() const {
           "-6 (IPv6) must be set to use -c");
     check((getExchangeMode() == DO_SA) && (getNumRequests().size() > 1),
           "second -n<num-request> is not compatible with -i");
+    check((getIpVersion() == 4) && !getLeaseType().is(LeaseType::ADDRESS),
+          "-6 option must be used if lease type other than '-e address-only'"
+          " is specified");
+    check(!getTemplateFiles().empty() &&
+          !getLeaseType().is(LeaseType::ADDRESS),
+          "template files may be only used with '-e address-only'");
     check((getExchangeMode() == DO_SA) && (getDropTime()[1] != 1.),
           "second -d<drop-time> is not compatible with -i");
     check((getExchangeMode() == DO_SA) &&
@@ -706,6 +774,12 @@ CommandOptions::nonEmptyString(const std::string& errmsg) const {
 }
 
 void
+CommandOptions::initLeaseType() {
+    std::string lease_type_arg = optarg;
+    lease_type_.fromCommandLine(lease_type_arg);
+}
+
+void
 CommandOptions::printCommandLine() const {
     std::cout << "IPv" << static_cast<int>(ipversion_) << std::endl;
     if (exchange_mode_ == DO_SA) {
@@ -715,6 +789,7 @@ CommandOptions::printCommandLine() const {
             std::cout << "SOLICIT-ADVERETISE only" << std::endl;
         }
     }
+    std::cout << "lease-type=" << getLeaseType().toText() << std::endl;
     if (rate_ != 0) {
         std::cout << "rate[1/s]=" << rate_ <<  std::endl;
     }
@@ -800,13 +875,13 @@ CommandOptions::printCommandLine() const {
 void
 CommandOptions::usage() const {
     std::cout <<
-        "perfdhcp [-hv] [-4|-6] [-r<rate>] [-t<report>] [-R<range>] [-b<base>]\n"
-        "    [-n<num-request>] [-p<test-period>] [-d<drop-time>] [-D<max-drop>]\n"
-        "    [-l<local-addr|interface>] [-P<preload>] [-a<aggressivity>]\n"
-        "    [-L<local-port>] [-s<seed>] [-i] [-B] [-c] [-1]\n"
-        "    [-T<template-file>] [-X<xid-offset>] [-O<random-offset]\n"
-        "    [-E<time-offset>] [-S<srvid-offset>] [-I<ip-offset>]\n"
-        "    [-x<diagnostic-selector>] [-w<wrapped>] [server]\n"
+        "perfdhcp [-hv] [-4|-6] [-e<lease-type>] [-r<rate>] [-t<report>]\n"
+        "    [-R<range>] [-b<base>] [-n<num-request>] [-p<test-period>]\n"
+        "    [-d<drop-time>] [-D<max-drop>] [-l<local-addr|interface>]\n"
+        "    [-P<preload>] [-a<aggressivity>] [-L<local-port>] [-s<seed>]\n"
+        "    [-i] [-B] [-c] [-1] [-T<template-file>] [-X<xid-offset>]\n"
+        "    [-O<random-offset] [-E<time-offset>] [-S<srvid-offset>]\n"
+        "    [-I<ip-offset>] [-x<diagnostic-selector>] [-w<wrapped>] [server]\n"
         "\n"
         "The [server] argument is the name/address of the DHCP server to\n"
         "contact.  For DHCPv4 operation, exchanges are initiated by\n"
@@ -838,6 +913,14 @@ CommandOptions::usage() const {
         "-d<drop-time>: Specify the time after which a requeqst is treated as\n"
         "    having been lost.  The value is given in seconds and may contain a\n"
         "    fractional component.  The default is 1 second.\n"
+        "-e<lease-type>: A type of lease being requested from the server. It\n"
+        "    may be one of the following: address-only, prefix-only or\n"
+        "    address-and-prefix. The address-only indicates that the regular\n"
+        "    address (v4 or v6) will be requested. The prefix-only indicates\n"
+        "    that the IPv6 prefix will be requested. The address-and-prefix\n"
+        "    indicates that both IPv6 address and prefix will be requested.\n"
+        "    The '-e prefix-only' and -'e address-and-prefix' must not be\n"
+        "    used with -4.\n"
         "-E<time-offset>: Offset of the (DHCPv4) secs field / (DHCPv6)\n"
         "    elapsed-time option in the (second/request) template.\n"
         "    The value 0 disables it.\n"
