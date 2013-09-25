@@ -42,3 +42,20 @@ perfdhcp_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 
 # ... and the documentation
 EXTRA_DIST = perfdhcp_internals.dox
+
+man_MANS = perfdhcp.1
+DISTCLEANFILES = $(man_MANS)
+EXTRA_DIST += $(man_MANS) perfdhcp.xml
+
+if GENERATE_DOCS
+
+perfdhcp.1: perfdhcp.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(builddir)/perfdhcp.xml
+
+else
+
+$(man_MANS):
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild BIND 10 > $@
+
+endif
