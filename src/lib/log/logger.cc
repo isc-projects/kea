@@ -43,6 +43,11 @@ void Logger::initLoggerImpl() {
 
 Logger::~Logger() {
     delete loggerptr_;
+
+    // The next statement is required for the BIND 10 hooks framework, where
+    // a statically-linked BIND 10 loads and unloads multiple libraries. See
+    // the hooks documentation for more details.
+    loggerptr_ = 0;
 }
 
 // Get Name of Logger

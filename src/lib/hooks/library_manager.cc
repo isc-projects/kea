@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <exceptions/exceptions.h>
 #include <hooks/hooks.h>
 #include <hooks/hooks_log.h>
 #include <hooks/callout_manager.h>
@@ -179,6 +180,10 @@ LibraryManager::runLoad() {
         try {
             manager_->setLibraryIndex(index_);
             status = (*pc.loadPtr())(manager_->getLibraryHandle());
+        } catch (const isc::Exception& ex) {
+            LOG_ERROR(hooks_logger, HOOKS_LOAD_FRAMEWORK_EXCEPTION)
+                .arg(library_name_).arg(ex.what());
+            return (false);
         } catch (...) {
             LOG_ERROR(hooks_logger, HOOKS_LOAD_EXCEPTION).arg(library_name_);
             return (false);
@@ -217,6 +222,10 @@ LibraryManager::runUnload() {
         int status = -1;
         try {
             status = (*pc.unloadPtr())();
+        } catch (const isc::Exception& ex) {
+            LOG_ERROR(hooks_logger, HOOKS_UNLOAD_FRAMEWORK_EXCEPTION)
+                .arg(library_name_).arg(ex.what());
+            return (false);
         } catch (...) {
             // Exception generated.  Note a warning as the unload will occur
             // anyway.
