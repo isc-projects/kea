@@ -521,14 +521,8 @@ public:
                 boost::shared_ptr<Pkt6>
                     advertise_pkt6(createAdvertisePkt6(transid));
                 // Receive ADVERTISE and send REQUEST.
-                /*                ASSERT_NO_THROW(tc.processReceivedPacket6(sock,
-                                  advertise_pkt6)); */
-                try {
-                    tc.processReceivedPacket6(sock,
-                                              advertise_pkt6);
-                } catch (const Exception& ex) {
-                    std::cout << ex.what() << std::endl;
-                }
+                ASSERT_NO_THROW(tc.processReceivedPacket6(sock,
+                                                          advertise_pkt6));
                 ++transid;
             }
             if (tc.checkExitConditions()) {
@@ -980,7 +974,7 @@ TEST_F(TestControlTest, Packet4Exchange) {
     EXPECT_EQ(12, iterations_performed);
 }
 
-TEST_F(TestControlTest, Packet6Exchange) {
+TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
     // Get the local loopback interface to open socket on
     // it and test packets exchanges. We don't want to fail
     // the test if interface is not available.
@@ -1015,9 +1009,54 @@ TEST_F(TestControlTest, Packet6Exchange) {
     // then test should be interrupted and actual number of iterations will
     // be 6.
     const int received_num = 3;
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case). All exchanged packets carry the IA_NA option
+    // to simulate the IPv6 address acquisition and to verify that the
+    // IA_NA options returned by the server are processed correctly.
     testPkt6Exchange(iterations_num, received_num, use_templates,
                      iterations_performed);
     EXPECT_EQ(6, iterations_performed);
+}
+
+TEST_F(TestControlTest, Packet6Exchange) {
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback_iface(getLocalLoopback());
+    if (loopback_iface.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test."
+                  << std::endl;
+        return;
+    }
+
+    const int iterations_num = 100;
+    // Set number of iterations to 10.
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -e address-only"
+                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
+    int iterations_performed = 0;
+    // Set number of received packets equal to number of iterations.
+    // This simulates no packet drops.
+    bool use_templates = false;
+
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case). All exchanged packets carry the IA_NA option
+    // to simulate the IPv6 address acqusition and to verify that the IA_NA
+    // options returned by the server are processed correctly.
+    testPkt6Exchange(iterations_num, iterations_num, use_templates,
+                     iterations_performed);
+    // Actual number of iterations should be 10.
+    EXPECT_EQ(10, iterations_performed);
 }
 
 TEST_F(TestControlTest, Packet6ExchangePrefixDelegation) {
@@ -1040,6 +1079,16 @@ TEST_F(TestControlTest, Packet6ExchangePrefixDelegation) {
     // Set number of received packets equal to number of iterations.
     // This simulates no packet drops.
     bool use_templates = false;
+
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case). All exchanged packets carry the IA_PD option
+    // to simulate the Prefix Delegation and to verify that the IA_PD options
+    // returned by the server are processed correctly.
     testPkt6Exchange(iterations_num, iterations_num, use_templates,
                      iterations_performed);
     // Actual number of iterations should be 10.
@@ -1066,6 +1115,16 @@ TEST_F(TestControlTest, Packet6ExchangeAddressAndPrefix) {
     // Set number of received packets equal to number of iterations.
     // This simulates no packet drops.
     bool use_templates = false;
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case).  All exchanged packets carry either IA_NA
+    // or IA_PD options to simulate the address and prefix acquisition with
+    // the single message and to verify that the IA_NA and IA_PD options
+    // returned by the server are processed correctly.
     testPkt6Exchange(iterations_num, iterations_num, use_templates,
                      iterations_performed);
     // Actual number of iterations should be 10.
