@@ -861,13 +861,6 @@ private:
     /// specified, this function expects that IA_PD option is present in the
     /// packet encapsulated by pkt_to object.
     ///
-    /// \todo In the future it is planned to add support for the perfdhcp to
-    /// request address and prefix in the same DHCP message (request both
-    /// IA_NA and IA_PD options). In this case, this function will have to
-    /// be extended to copy both IA_NA and IA_PD options.
-    ///
-    /// \warning
-    ///
     /// \param [in] pkt_from A packet from which options should be copied.
     /// \param [out] pkt_to A packet to which options should be copied.
     ///
