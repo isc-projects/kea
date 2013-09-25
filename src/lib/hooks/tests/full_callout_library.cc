@@ -34,8 +34,8 @@
 ///   @f[ ((7 * data_1) - data_2) * data_3 @f]
 ///
 ///   ...where data_1, data_2 and data_3 are the values passed in arguments of
-///   the same name to the three callouts (data_1 passed to hookpt_one, data_2 to
-///   hookpt_two etc.) and the result is returned in the argument "result".
+///   the same name to the three callouts (data_1 passed to hookpt_one, data_2
+///   to hookpt_two etc.) and the result is returned in the argument "result".
 
 #include <hooks/hooks.h>
 #include <hooks/tests/marker_file.h>
@@ -116,6 +116,10 @@ version() {
 
 int
 load(LibraryHandle& handle) {
+    // Initialize if the main image was statically linked
+#ifdef USE_STATIC_LINK
+    hooksStaticLinkInit();
+#endif
     // Register the non-standard functions
     handle.registerCallout("hookpt_two", hook_nonstandard_two);
     handle.registerCallout("hookpt_three", hook_nonstandard_three);
