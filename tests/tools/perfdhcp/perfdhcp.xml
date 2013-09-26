@@ -66,13 +66,125 @@
     <para>The arguments are as follows:</para>
 
     <variablelist>
-      <varlistentry>
-        <term><option>-v</option></term>
-        <listitem><para>
-          Enable verbose logging mode. This enables logging of
-          diagnostic messages at the maximum debug level.
-        </para></listitem>
-      </varlistentry>
+
+        <varlistentry><term><option>-1</option></term><listitem><para>Take the server-ID option from the first received message.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-4</option></term><listitem><para>DHCPv4 operation (default). This is incompatible with the -6 option.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-6</option></term><listitem><para>DHCPv6 operation. This is incompatible with the -4 option.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-a</option><replaceable class="parameter">aggressivity</replaceable></term><listitem><para>When the target sending rate is not yet reached,
+   control how many exchanges are initiated before the next pause.</para></listitem></varlistentry>
+<!-- TODO: number? -->
+
+        <varlistentry><term><option>-b</option><replaceable class="parameter">base</replaceable></term><listitem><para>The base mac, duid, IP, etc, used to simulate different
+    clients.  This can be specified multiple times, each instance is
+    in the <replaceable class="parameter">type=value</replaceable> form, for instance:
+    (and default) mac=00:0c:01:02:03:04.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-d</option><replaceable class="parameter">drop-time</replaceable></term><listitem><para>Specify the time after which a request is treated as
+    having been lost.  The value is given in seconds and may contain a
+    fractional component.  The default is 1 second.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-E</option><replaceable class="parameter">time-offset</replaceable></term><listitem><para>Offset of the (DHCPv4) secs field / (DHCPv6)
+   elapsed-time option in the (second/request) template.
+        The value 0 disables it.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-h</option></term><listitem><para>Print help.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-i</option></term><listitem><para>Do only the initial part of an exchange: DO or SA, depending on
+   whether -6 is given.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-I</option><replaceable class="parameter">ip-offset</replaceable></term><listitem><para>Offset of the (DHCPv4) IP address in the requested-IP
+   option / (DHCPv6) IA_NA option in the (second/request) template.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-l</option><replaceable class="parameter">local-addr|interface></replaceable></term><listitem><para>For DHCPv4 operation, specify the local
+    hostname/address to use when communicating with the server.  By
+    default, the interface address through which traffic would
+    normally be routed to the server is used.
+    For DHCPv6 operation, specify the name of the network interface
+    via which exchanges are initiated.</para></listitem></varlistentry>
+
+     <varlistentry><term><option>-L</option><replaceable class="parameter">local-port</replaceable></term><listitem><para>Specify the local port to use
+  (the value 0 means to use the default).</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-O</option><replaceable class="parameter">random-offset</replaceable></term><listitem><para>Offset of the last octet to randomize in the template.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-P</option><replaceable class="parameter">preload</replaceable></term><listitem><para>Initiate first <replaceable class="parameter">preload</replaceable> exchanges back to back at startup.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-r</option><replaceable class="parameter">rate</replaceable></term><listitem><para>Initiate <replaceable class="parameter">rate</replaceable> DORA/SARR (or if -i is given, DO/SA)
+    exchanges per second.  A periodic report is generated showing the
+    number of exchanges which were not completed, as well as the
+    average response latency.  The program continues until
+    interrupted, at which point a final report is generated.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-R</option><replaceable class="parameter">range</replaceable></term><listitem><para>Specify how many different clients are used. With 1
+    (the default), all requests seem to come from the same client.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-s</option><replaceable class="parameter">seed</replaceable></term><listitem><para>Specify the seed for randomization, making it repeatable.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-S</option><replaceable class="parameter">srvid-offset</replaceable></term><listitem><para>Offset of the server-ID option in the
+(second/request) template.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-T</option><replaceable class="parameter">template-file</replaceable></term><listitem><para>The name of a file containing the template to use
+   as a stream of hexadecimal digits.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-v</option></term><listitem><para>Report the version number of this program.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-w</option><replaceable class="parameter">wrapped</replaceable></term><listitem><para>Command to call with start/stop at the beginning/end of
+  the program.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-x</option><replaceable class="parameter">diagnostic-selector</replaceable></term><listitem><para>Include extended diagnostics in the output.
+  <replaceable class="parameter">diagnostic-selector</replaceable> is a string of single-keywords specifying
+ the operations for which verbose output is desired.  The selector
+    keyletters are:
+* 'a' print the decoded command line arguments
+* 'e' print the exit reason
+* 'i' print rate processing details
+* 's' print first server-id
+* 't' when finished, print timers of all successful exchanges
+* 'T' when finished, print templates
+</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-X</option><replaceable class="parameter">xid-offset</replaceable></term><listitem><para>Transaction ID (aka. xid) offset in the template.</para></listitem></varlistentry>
+
+<para>DHCPv4 only option:</para>
+
+        <varlistentry><term><option>-B</option></term><listitem><para>Force broadcast handling.</para></listitem></varlistentry>
+
+<para>DHCPv6 only options:</para>
+
+        <varlistentry><term><option>-c</option></term><listitem><para>Add a rapid commit option (exchanges will be SA).</para></listitem></varlistentry>
+
+<para>The remaining options are used only in conjunction with -r:</para>
+
+        <varlistentry><term><option>-D</option><replaceable class="parameter">max-drop</replaceable></term><listitem><para>Abort the test if more than <replaceable class="parameter">max-drop</replaceable> requests have
+ been dropped.  Use -D0 to abort if even a single request has been
+ dropped.  If <replaceable class="parameter">max-drop</replaceable> includes the suffix '%', it specifies a
+    maximum percentage of requests that may be dropped before abort.
+   In this case, testing of the threshold begins after 10 requests
+    have been expected to be received.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-n</option><replaceable class="parameter">num-request</replaceable></term><listitem><para>Initiate <replaceable class="parameter">num-request</replaceable> transactions.  No report is
+    generated until all transactions have been initiated/waited-for
+    after which a report is generated and the program terminates.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-p</option><replaceable class="parameter">test-period</replaceable></term><listitem><para>Send requests for the given test period, which is
+    specified in the same manner as -d.  This can be used as an
+    alternative to -n, or both options can be given, in which case the
+    testing is completed when either limit is reached.</para></listitem></varlistentry>
+
+        <varlistentry><term><option>-t</option><replaceable class="parameter">report</replaceable></term><listitem><para>Delay in seconds between two periodic reports.</para></listitem></varlistentry>
+
+<!--
+TODO: where is this displayed?
+        "Errors:\n"
+        <varlistentry><term><option> tooshort</option></term><listitem><para>received a too short message\n"
+        <varlistentry><term><option> orphans</option></term><listitem><para>received a message which doesn't match an exchange\n"
+        "   (duplicate, late or not related)\n"
+        <varlistentry><term><option> locallimit</option></term><listitem><para>reached to local system limits when sending a message.</para></listitem></varlistentry>
+
+-->
 
     </variablelist>
 
@@ -162,92 +274,4 @@
         "the server.\n"
         "The -r option is used to set up a performance test, without\n"
         "it exchanges are initiated as fast as possible.\n"
-        "\n"
-        "Options:\n"
-        "-1: Take the server-ID option from the first received message.\n"
-        "-4: DHCPv4 operation (default). This is incompatible with the -6 option.\n"
-        "-6: DHCPv6 operation. This is incompatible with the -4 option.\n"
-        "-a<aggressivity>: When the target sending rate is not yet reached,\n"
-        "    control how many exchanges are initiated before the next pause.\n"
-        "-b<base>: The base mac, duid, IP, etc, used to simulate different\n"
-        "    clients.  This can be specified multiple times, each instance is\n"
-        "    in the <type>=<value> form, for instance:\n"
-        "    (and default) mac=00:0c:01:02:03:04.\n"
-        "-d<drop-time>: Specify the time after which a requeqst is treated as\n"
-        "    having been lost.  The value is given in seconds and may contain a\n"
-        "    fractional component.  The default is 1 second.\n"
-        "-E<time-offset>: Offset of the (DHCPv4) secs field / (DHCPv6)\n"
-        "    elapsed-time option in the (second/request) template.\n"
-        "    The value 0 disables it.\n"
-        "-h: Print this help.\n"
-        "-i: Do only the initial part of an exchange: DO or SA, depending on\n"
-        "    whether -6 is given.\n"
-        "-I<ip-offset>: Offset of the (DHCPv4) IP address in the requested-IP\n"
-        "    option / (DHCPv6) IA_NA option in the (second/request) template.\n"
-        "-l<local-addr|interface>: For DHCPv4 operation, specify the local\n"
-        "    hostname/address to use when communicating with the server.  By\n"
-        "    default, the interface address through which traffic would\n"
-        "    normally be routed to the server is used.\n"
-        "    For DHCPv6 operation, specify the name of the network interface\n"
-        "    via which exchanges are initiated.\n"
-        "-L<local-port>: Specify the local port to use\n"
-        "    (the value 0 means to use the default).\n"
-        "-O<random-offset>: Offset of the last octet to randomize in the template.\n"
-        "-P<preload>: Initiate first <preload> exchanges back to back at startup.\n"
-        "-r<rate>: Initiate <rate> DORA/SARR (or if -i is given, DO/SA)\n"
-        "    exchanges per second.  A periodic report is generated showing the\n"
-        "    number of exchanges which were not completed, as well as the\n"
-        "    average response latency.  The program continues until\n"
-        "    interrupted, at which point a final report is generated.\n"
-        "-R<range>: Specify how many different clients are used. With 1\n"
-        "    (the default), all requests seem to come from the same client.\n"
-        "-s<seed>: Specify the seed for randomization, making it repeatable.\n"
-        "-S<srvid-offset>: Offset of the server-ID option in the\n"
-        "    (second/request) template.\n"
-        "-T<template-file>: The name of a file containing the template to use\n"
-        "    as a stream of hexadecimal digits.\n"
-        "-v: Report the version number of this program.\n"
-        "-w<wrapped>: Command to call with start/stop at the beginning/end of\n"
-        "    the program.\n"
-        "-x<diagnostic-selector>: Include extended diagnostics in the output.\n"
-        "    <diagnostic-selector> is a string of single-keywords specifying\n"
-        "    the operations for which verbose output is desired.  The selector\n"
-        "    keyletters are:\n"
-        "   * 'a': print the decoded command line arguments\n"
-        "   * 'e': print the exit reason\n"
-        "   * 'i': print rate processing details\n"
-        "   * 's': print first server-id\n"
-        "   * 't': when finished, print timers of all successful exchanges\n"
-        "   * 'T': when finished, print templates\n"
-        "-X<xid-offset>: Transaction ID (aka. xid) offset in the template.\n"
-        "\n"
-        "DHCPv4 only options:\n"
-        "-B: Force broadcast handling.\n"
-        "\n"
-        "DHCPv6 only options:\n"
-        "-c: Add a rapid commit option (exchanges will be SA).\n"
-        "\n"
-        "The remaining options are used only in conjunction with -r:\n"
-        "\n"
-        "-D<max-drop>: Abort the test if more than <max-drop> requests have\n"
-        "    been dropped.  Use -D0 to abort if even a single request has been\n"
-        "    dropped.  If <max-drop> includes the suffix '%', it specifies a\n"
-        "    maximum percentage of requests that may be dropped before abort.\n"
-        "    In this case, testing of the threshold begins after 10 requests\n"
-        "    have been expected to be received.\n"
-        "-n<num-request>: Initiate <num-request> transactions.  No report is\n"
-        "    generated until all transactions have been initiated/waited-for,\n"
-        "    after which a report is generated and the program terminates.\n"
-        "-p<test-period>: Send requests for the given test period, which is\n"
-        "    specified in the same manner as -d.  This can be used as an\n"
-        "    alternative to -n, or both options can be given, in which case the\n"
-        "    testing is completed when either limit is reached.\n"
-        "-t<report>: Delay in seconds between two periodic reports.\n"
-        "\n"
-        "Errors:\n"
-        "- tooshort: received a too short message\n"
-        "- orphans: received a message which doesn't match an exchange\n"
-        "   (duplicate, late or not related)\n"
-        "- locallimit: reached to local system limits when sending a message.\n"
-        "\n"
 -->
