@@ -41,10 +41,13 @@
     </copyright>
   </docinfo>
 
+<!-- TODO: some examples show -fflag and -f flag - do both work? -->
+<!-- TODO: rewrite descriptions so say string or number etc -->
+
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>perfdhcp</command>
-      <arg><option>-v</option></arg>
+      <arg><option>-e</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -89,6 +92,18 @@
         <varlistentry><term><option>-E</option><replaceable class="parameter">time-offset</replaceable></term><listitem><para>Offset of the (DHCPv4) secs field / (DHCPv6)
    elapsed-time option in the (second/request) template.
         The value 0 disables it.</para></listitem></varlistentry>
+
+<varlistentry><term><option>-e</option><replaceable class="parameter">lease-type</replaceable></term><listitem><para>
+The type of lease being requested from the server.
+It may be one of the following: address-only, prefix-only or
+    address-and-prefix. The address-only indicates that the regular
+    address (v4 or v6) will be requested. The prefix-only indicates
+    that the IPv6 prefix will be requested. The address-and-prefix
+    indicates that both IPv6 address and prefix will be requested.
+    The '-e prefix-only' and '-e address-and-prefix' must not be
+    used with -4.
+ (The -6 option must be used if lease type other than '-e address-only'.)
+</para></listitem></varlistentry>
 
         <varlistentry><term><option>-h</option></term><listitem><para>Print help.</para></listitem></varlistentry>
 
