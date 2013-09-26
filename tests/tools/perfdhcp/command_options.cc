@@ -835,7 +835,7 @@ CommandOptions::usage() const {
         "    clients.  This can be specified multiple times, each instance is\n"
         "    in the <type>=<value> form, for instance:\n"
         "    (and default) mac=00:0c:01:02:03:04.\n"
-        "-d<drop-time>: Specify the time after which a requeqst is treated as\n"
+        "-d<drop-time>: Specify the time after which a request is treated as\n"
         "    having been lost.  The value is given in seconds and may contain a\n"
         "    fractional component.  The default is 1 second.\n"
         "-E<time-offset>: Offset of the (DHCPv4) secs field / (DHCPv6)\n"
