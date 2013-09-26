@@ -22,6 +22,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/hooks_manager.h>
@@ -694,6 +695,8 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 // Goal of this test is to verify if pools can be defined
 // using prefix/length notation. There is no separate test for min-max
 // notation as it was tested in several previous tests.
+// Note this test also verifies that subnets can be configured without
+// prefix delegation pools.
 TEST_F(Dhcp6ParserTest, poolPrefixLen) {
 
     ConstElementPtr x;
@@ -775,9 +778,18 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     ASSERT_TRUE(p6);
     EXPECT_EQ("2001:db8:1::", p6->getFirstAddress().toText());
     EXPECT_EQ(128, p6->getLength());
+
+    // prefix-len is not directly accessible after pool construction, so
+    // verify that it was interpreted correctly by checking the last address
+    // value.
+    isc::asiolink::IOAddress prefixAddress("2001:db8:1::");
+    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64).toText(),
+              p6->getLastAddress().toText());
 }
 
 // Goal of this test is verify that a list of PD pools can be configured.
+// It also verifies that a subnet may be configured with both regular pools
+// and pd pools.
 TEST_F(Dhcp6ParserTest, pdPoolList) {
 
     ConstElementPtr x;
@@ -794,6 +806,7 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1:04::/80\" ],"
         "    \"subnet\": \"2001:db8:1::/40\","
         "    \"pd-pools\": ["
         "        { \"prefix\": \"2001:db8:1:01::\", "
@@ -829,8 +842,12 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
                         instance().getSubnet6(IOAddress("2001:db8:1::5"));
     ASSERT_TRUE(subnet);
 
-    // Fetch the collection of PD pools.  It should have 3 entries.
+    // Fetch the collection of NA pools.  It should have 1 entry.
     PoolCollection pc;
+    ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_NA));
+    EXPECT_EQ(1, pc.size());
+
+    // Fetch the collection of PD pools.  It should have 3 entries.
     ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
     EXPECT_EQ(3, pc.size());
 
@@ -843,6 +860,67 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
         EXPECT_EQ((80 + (i * 8)), p6->getLength());
     }
 }
+
+// Goal of this test is to verify the a whole prefix can be delegated and that
+// a whole subnet can be delegated.
+TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
+
+    ConstElementPtr x;
+
+    // Define a single valid pd pool.
+    string config =
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1::\", "
+        "          \"prefix-len\": 64, "
+        "          \"delegated-len\": 64"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }";
+
+    // Convert the JSON string into Elements.
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+
+    // Verify that DHCP6 configuration processing succeeds.
+    // Returned value must be non-empty ConstElementPtr to config result.
+    // rcode should be 0 which indicates successful configuration processing.
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    EXPECT_EQ(0, rcode_);
+
+    // Test that we can retrieve the subnet.
+    Subnet6Ptr subnet = CfgMgr::
+                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
+
+    ASSERT_TRUE(subnet);
+
+    // Fetch the collection of PD pools.  It should have 1 entry.
+    PoolCollection pc;
+    ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
+    EXPECT_EQ(1, pc.size());
+
+    // Get a pointer to the pd pool instance, and verify its contents.
+    Pool6Ptr p6;
+    ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[0]));
+    ASSERT_TRUE(p6);
+    EXPECT_EQ("2001:db8:1::", p6->getFirstAddress().toText());
+    EXPECT_EQ(64, p6->getLength());
+
+    // prefix-len is not directly accessible after pool construction, so
+    // verify that it was interpreted correctly by checking the last address
+    // value.
+    isc::asiolink::IOAddress prefixAddress("2001:db8:1::");
+    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64).toText(),
+              p6->getLastAddress().toText());
+}
+
 
 // Goal of this test is check for proper handling of invalid prefix delegation
 // pool configuration.  It uses an array of invalid configurations to check
