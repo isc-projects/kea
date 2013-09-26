@@ -166,6 +166,21 @@ protected:
     }
 };
 
+/// @brief Parser for IPv6 prefix delegation definitions.
+///
+/// This class handles prefix delegation pool definitions for IPv6 subnets
+/// Pool6 objects are created and stored in the given PoolStorage container.
+///
+/// PdPool defintions currently support three elements: prefix, prefix-len,
+/// and delegated-len, as shown in the example JSON text below:
+///
+/// {{{
+///
+/// {
+///     "prefix": "2001:db8:1::",
+///     "prefix-len": 64,
+///     "delegated-len": 128
+/// }
 class PdPoolParser : public DhcpConfigParser {
 public:
 
