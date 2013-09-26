@@ -1,10 +1,15 @@
-679.	[func]	tmark
+680.	[func]		marcin
+	perfdhcp: Added support for requesting IPv6 prefixes using IA_PD
+	option being sent to the server.
+	(Trac #3173, git 4cc844f7cc82c8bd749296a2709ef67af8d9ba87)
+
+679.	[func]		tmark
 	b10-dhcp-ddns Finite state machine logic was refactored into its own class,
 	StateModel.
 	(Trac# 3156,  git 6e9227b1b15448e834d1f60dd655e5633ff9745c)
 
-678.	[func]	tmark
-	MySQL backend used by b10-dhcp6 now uses lease type as a 
+678.	[func]		tmark
+	MySQL backend used by b10-dhcp6 now uses lease type as a
 	filtering parameter in all IPv6 lease queries.
 	(Trac# 3147,  git 65b6372b783cb1361fd56efe2b3247bfdbdc47ea)
 
