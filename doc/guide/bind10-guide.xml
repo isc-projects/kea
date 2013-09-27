@@ -4725,6 +4725,27 @@ Dhcp6/subnet6/	list
       </para>
     </section>
 
+    <section>
+<!-- @todo: add real meat to the prefix delegation config this is just place holder stuff -->
+      <title>Subnet and Prefix Delegation Pools</title>
+      <para>
+        Subnets may also be configured to delegate address prefixes....
+        A subnet may have one or more prefix delegation pools.  Each pool has
+        a prefixed address, which is specified as a prefix and a prefix length,
+        as well as a delegated prefix length.  A sample configuration is shown
+        below:
+      <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config show Dhcp6/subnet6[0]</userinput>
+&gt; <userinput>config add Dhcp6/subnet6[0]/pd-pools</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pd-pools[0]/prefix "2001:db8:1::"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pd-pools[0]/prefix-len 64</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pd-pools[0]/delegated-len 96</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+    </section>
+
     <section id="dhcp6-std-options">
       <title>Standard DHCPv6 options</title>
       <para>
