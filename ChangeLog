@@ -1,3 +1,8 @@
+681.	[func]	tmark
+	Added support for prefix delegation configuration to b10-dhcp6
+	subnets.
+	(Trac# 3151 git 79a22be33825bafa1a0cdfa24d5cb751ab1ae2d3)
+
 680.	[func]		marcin
 	perfdhcp: Added support for requesting IPv6 prefixes using IA_PD
 	option being sent to the server.
