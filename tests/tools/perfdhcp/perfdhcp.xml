@@ -76,7 +76,10 @@
         </term>
         <listitem>
           <para>Take the server-ID option from the first received
-          message.</para>
+          message.
+<!-- TODO: The default is .... (not to use the server-ID option
+from the first received message. -->
+          </para>
         </listitem>
       </varlistentry>
 
@@ -85,7 +88,7 @@
           <option>-4</option>
         </term>
         <listitem>
-          <para>DHCPv4 operation (default). This is incompatible
+          <para>DHCPv4 operation. This is the default. This is incompatible
           with the -6 option.</para>
         </listitem>
       </varlistentry>
@@ -108,7 +111,7 @@
         <listitem>
           <para>When the target sending rate is not yet reached,
           control how many exchanges are initiated before the next
-          pause.</para>
+          pause. This is set to a positive integer. The default is 1.</para>
         </listitem>
       </varlistentry>
 
@@ -116,15 +119,23 @@
       <varlistentry>
         <term>
           <option>-b</option>
-          <replaceable class="parameter">base</replaceable>
+          <replaceable class="parameter">basetype=value</replaceable>
         </term>
         <listitem>
-          <para>The base mac, duid, IP, etc, used to simulate
-          different clients. This can be specified multiple times,
-          each instance is in the
-          <replaceable class="parameter">
-          type=value</replaceable>form, for instance: (and default)
-          mac=00:0c:01:02:03:04.</para>
+          <para>The base MAC or DUID used to simulate different clients.
+          The <replaceable class="parameter">basetype</replaceable>
+          may be mac or duid. (The keyword "ether" may alternatively
+          used for MAC.)
+          The -b option can be specified multiple times.
+          The MAC address must consist of six octets separated by
+          single (:) or double (::) colons, for example:
+          mac=00:0c:01:02:03:04.
+	  The DUID value is a hexadecimal string;
+          it must be at least six octets long and must not be
+	  longer than 64 bytes and the length must be less than
+	  128 hexadecimal digits, for example:
+          duid=0101010101010101010110111F14.</para>
+<!-- TODO: code mentions duid=0F1234 but isn't that too short? -->
         </listitem>
       </varlistentry>
 
@@ -148,8 +159,10 @@
         </term>
         <listitem>
           <para>Offset of the (DHCPv4) secs field / (DHCPv6)
-          elapsed-time option in the (second/request) template. The
-          value 0 disables it.</para>
+          elapsed-time option in the (second/request) template.
+          The value must be 0 or a positive integer.
+          The value 0 disables it. This is incompatible
+          with the -i option.</para>
         </listitem>
       </varlistentry>
 
@@ -186,8 +199,11 @@
           <option>-i</option>
         </term>
         <listitem>
-          <para>Do only the initial part of an exchange: DO or SA,
-          depending on whether -6 is given.</para>
+          <para>Do only the initial part of an exchange: DO or SA.
+          If DHCPv4 mode (-4) is does DISCOVER-OFFER only.
+          If DHCPv6 mode (-6) is does SOLICIT-ADVERTISE only.</para>
+<!-- TODO:  The default is to use 4-way DORA for
+DHCPv4 and SARR for DHCPv6. -->
         </listitem>
       </varlistentry>
 
@@ -199,7 +215,8 @@
         <listitem>
           <para>Offset of the (DHCPv4) IP address in the
           requested-IP option / (DHCPv6) IA_NA option in the
-          (second/request) template.</para>
+          (second/request) template. This value is a positive integer.
+          This is incompatible with the -i option.</para>
         </listitem>
       </varlistentry>
 
@@ -224,8 +241,10 @@
           <replaceable class="parameter">local-port</replaceable>
         </term>
         <listitem>
-          <para>Specify the local port to use (the value 0 means to
-          use the default).</para>
+          <para>Specify the local port to use.
+          The value must be 0 or a positive integer up to 65535.
+<!-- NOTE: within uint16_t -->
+          The value 0 means to use the default.</para>
         </listitem>
       </varlistentry>
 
@@ -236,7 +255,8 @@
         </term>
         <listitem>
           <para>Offset of the last octet to randomize in the
-          template.</para>
+          template. The value must be greater than 3.
+          The -T switch must be used with -O.</para>
         </listitem>
       </varlistentry>
 
@@ -247,9 +267,10 @@
         </term>
         <listitem>
           <para>Initiate first
-          <replaceable class="parameter">
-          preload</replaceable>exchanges back to back at
-          startup.</para>
+          <replaceable class="parameter">preload</replaceable>
+          exchanges back to back at startup.
+          The value must be 0 or a positive integer.</para>
+<!-- TODO: The default is 0 - what does that mean? -->
         </listitem>
       </varlistentry>
 
@@ -260,13 +281,13 @@
         </term>
         <listitem>
           <para>Initiate
-          <replaceable class="parameter">
-          rate</replaceable>DORA/SARR (or if -i is given, DO/SA)
-          exchanges per second. A periodic report is generated
-          showing the number of exchanges which were not completed,
-          as well as the average response latency. The program
-          continues until interrupted, at which point a final
-          report is generated.</para>
+          <replaceable class="parameter">rate</replaceable>
+          DORA/SARR (or if -i is given, DO/SA)
+          exchanges per second. The value is a positive integer.
+	  A periodic report is generated showing the number of
+	  exchanges which were not completed, as well as the average
+	  response latency. The program continues until interrupted,
+	  at which point a final report is generated.</para>
         </listitem>
       </varlistentry>
 
@@ -278,7 +299,9 @@
         <listitem>
           <para>Specify how many different clients are used. With 1
           (the default), all requests seem to come from the same
-          client.</para>
+          client.
+          The value must be 0 or a positive integer.</para>
+<!-- TODO: Why does help say default is 1? what does 0 mean? -->
         </listitem>
       </varlistentry>
 
@@ -289,7 +312,9 @@
         </term>
         <listitem>
           <para>Specify the seed for randomization, making it
-          repeatable.</para>
+          repeatable.
+          The value must be 0 or a positive integer.
+          The value 0 means a seed is not used; this is the default.</para>
         </listitem>
       </varlistentry>
 
@@ -300,7 +325,8 @@
         </term>
         <listitem>
           <para>Offset of the server-ID option in the
-          (second/request) template.</para>
+          (second/request) template. The value is a positive integer.
+          This is incompatible with the -i option.</para>
         </listitem>
       </varlistentry>
 
@@ -312,6 +338,7 @@
         <listitem>
           <para>The name of a file containing the template to use
           as a stream of hexadecimal digits.</para>
+<!-- TODO: this switch can be used a second time except with -i -->
         </listitem>
       </varlistentry>
 
@@ -346,11 +373,11 @@
 <!-- TODO: fix formatting -->
 	  is a string of single-keywords specifying the operations
 	  for which verbose output is desired. The selector keyletters
-	  are: * 'a' print the decoded command line arguments *
-	  'e' print the exit reason * 'i' print rate processing
-	  details * 's' print first server-id * 't' when finished,
-	  print timers of all successful exchanges * 'T' when
-	  finished, print templates</para>
+	  are: 'a' print the decoded command line arguments,
+	  'e' print the exit reason, 'i' print rate processing
+	  details, 's' print first server-id, 't' when finished,
+	  print timers of all successful exchanges, 'T' when
+	  finished, print templates.</para>
         </listitem>
       </varlistentry>
 
@@ -360,8 +387,9 @@
           <replaceable class="parameter">xid-offset</replaceable>
         </term>
         <listitem>
-          <para>Transaction ID (aka. xid) offset in the
-          template.</para>
+          <para>Transaction ID (xid) offset in the
+          template. The value is a positive integer.
+          The -T switch must be used with -X.</para>
         </listitem>
       </varlistentry>
 
@@ -371,7 +399,9 @@
           <option>-B</option>
         </term>
         <listitem>
-          <para>Force broadcast handling.</para>
+          <para>Force broadcast handling. This is a DHCPv4-only
+          (-4) option, and is not compatible with IPv6 (-6).</para>
+<!-- TODO: mention this is the default when "all" is the server name. -->
         </listitem>
       </varlistentry>
 
@@ -382,12 +412,14 @@
         </term>
         <listitem>
           <para>Add a rapid commit option (exchanges will be
-          SA).</para>
+          SA). This is a DHCPv6-only (-6) option.
+          The -i switch must be set to use -c.</para>
         </listitem>
       </varlistentry>
 
       <para>The remaining options are used only in conjunction with
       -r:</para>
+
       <varlistentry>
         <term>
           <option>-D</option>
@@ -395,15 +427,16 @@
         </term>
         <listitem>
           <para>Abort the test if more than
-          <replaceable class="parameter">
-          max-drop</replaceable>requests have been dropped. Use -D0
+          <replaceable class="parameter">max-drop</replaceable>
+          requests have been dropped. Use -D0
           to abort if even a single request has been dropped. If
-          <replaceable class="parameter">
-          max-drop</replaceable>includes the suffix '%', it
+          <replaceable class="parameter">max-drop</replaceable>
+          includes the suffix '%', it
           specifies a maximum percentage of requests that may be
           dropped before abort. In this case, testing of the
           threshold begins after 10 requests have been expected to
           be received.</para>
+          <para>The -D option must be used with the -r switch.</para>
         </listitem>
       </varlistentry>
 
@@ -414,11 +447,13 @@
         </term>
         <listitem>
           <para>Initiate
-          <replaceable class="parameter">
-          num-request</replaceable>transactions. No report is
-          generated until all transactions have been
+          <replaceable class="parameter">num-request</replaceable>
+          transactions.
+          The value is a positive integer.
+          No report is generated until all transactions have been
           initiated/waited-for after which a report is generated
           and the program terminates.</para>
+          <para>The -n option must be used with the -r switch.</para>
         </listitem>
       </varlistentry>
 
@@ -432,7 +467,8 @@
           specified in the same manner as -d. This can be used as
           an alternative to -n, or both options can be given, in
           which case the testing is completed when either limit is
-          reached.</para>
+          reached. The value must be a positive integer.
+          The -p option must be used with the -r switch.</para>
         </listitem>
       </varlistentry>
 
@@ -443,7 +479,8 @@
         </term>
         <listitem>
           <para>Delay in seconds between two periodic
-          reports.</para>
+          reports. The value is a positive integer.
+          The -t option must be used with the -r switch.</para>
         </listitem>
       </varlistentry>
 
