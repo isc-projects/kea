@@ -174,13 +174,15 @@ protected:
 /// PdPool defintions currently support three elements: prefix, prefix-len,
 /// and delegated-len, as shown in the example JSON text below:
 ///
-/// {{{
+/// @code
 ///
 /// {
 ///     "prefix": "2001:db8:1::",
 ///     "prefix-len": 64,
 ///     "delegated-len": 128
 /// }
+/// @endcode
+///
 class PdPoolParser : public DhcpConfigParser {
 public:
 
