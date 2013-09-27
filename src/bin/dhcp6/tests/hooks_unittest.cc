@@ -951,7 +951,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface(valid_iface_);
-    sol->addOption(generateIA(234, 1500, 3000));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -1019,7 +1019,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface(valid_iface_);
-    sol->addOption(generateIA(234, 1500, 3000));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -1091,7 +1091,7 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_renew) {
     // Let's create a RENEW
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(renewed_addr_opt);
@@ -1188,7 +1188,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdate_lease6_renew) {
     // Let's create a RENEW
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(renewed_addr_opt);
@@ -1279,7 +1279,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
     // Let's create a RENEW
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(renewed_addr_opt);
@@ -1347,7 +1347,7 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_release) {
     // Let's create a RELEASE
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr released_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(released_addr_opt);
@@ -1428,7 +1428,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
     // Let's create a RELEASE
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr released_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(released_addr_opt);
