@@ -537,7 +537,8 @@ TODO: where is this displayed?
       <citerefentry>
         <refentrytitle>b10-dhcp6</refentrytitle><manvolnum>8</manvolnum>
       </citerefentry>,
-      <citetitle>BIND 10 Guide</citetitle>.
+      <citetitle>BIND 10 Guide</citetitle>,
+      <citetitle>DHCP Performance Guide</citetitle>.
     </para>
   </refsect1>
 
