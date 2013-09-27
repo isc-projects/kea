@@ -70,126 +70,383 @@
 
     <variablelist>
 
-        <varlistentry><term><option>-1</option></term><listitem><para>Take the server-ID option from the first received message.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-1</option>
+        </term>
+        <listitem>
+          <para>Take the server-ID option from the first received
+          message.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-4</option></term><listitem><para>DHCPv4 operation (default). This is incompatible with the -6 option.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-4</option>
+        </term>
+        <listitem>
+          <para>DHCPv4 operation (default). This is incompatible
+          with the -6 option.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-6</option></term><listitem><para>DHCPv6 operation. This is incompatible with the -4 option.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-6</option>
+        </term>
+        <listitem>
+          <para>DHCPv6 operation. This is incompatible with the -4
+          option.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-a</option><replaceable class="parameter">aggressivity</replaceable></term><listitem><para>When the target sending rate is not yet reached,
-   control how many exchanges are initiated before the next pause.</para></listitem></varlistentry>
-<!-- TODO: number? -->
+      <varlistentry>
+        <term>
+          <option>-a</option>
+          <replaceable class="parameter">aggressivity</replaceable>
+        </term>
+        <listitem>
+          <para>When the target sending rate is not yet reached,
+          control how many exchanges are initiated before the next
+          pause.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-b</option><replaceable class="parameter">base</replaceable></term><listitem><para>The base mac, duid, IP, etc, used to simulate different
-    clients.  This can be specified multiple times, each instance is
-    in the <replaceable class="parameter">type=value</replaceable> form, for instance:
-    (and default) mac=00:0c:01:02:03:04.</para></listitem></varlistentry>
+      <!-- TODO: number? -->
+      <varlistentry>
+        <term>
+          <option>-b</option>
+          <replaceable class="parameter">base</replaceable>
+        </term>
+        <listitem>
+          <para>The base mac, duid, IP, etc, used to simulate
+          different clients. This can be specified multiple times,
+          each instance is in the
+          <replaceable class="parameter">
+          type=value</replaceable>form, for instance: (and default)
+          mac=00:0c:01:02:03:04.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-d</option><replaceable class="parameter">drop-time</replaceable></term><listitem><para>Specify the time after which a request is treated as
-    having been lost.  The value is given in seconds and may contain a
-    fractional component.  The default is 1 second.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-d</option>
+          <replaceable class="parameter">drop-time</replaceable>
+        </term>
+        <listitem>
+          <para>Specify the time after which a request is treated
+          as having been lost. The value is given in seconds and
+          may contain a fractional component. The default is 1
+          second.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-E</option><replaceable class="parameter">time-offset</replaceable></term><listitem><para>Offset of the (DHCPv4) secs field / (DHCPv6)
-   elapsed-time option in the (second/request) template.
-        The value 0 disables it.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-E</option>
+          <replaceable class="parameter">time-offset</replaceable>
+        </term>
+        <listitem>
+          <para>Offset of the (DHCPv4) secs field / (DHCPv6)
+          elapsed-time option in the (second/request) template. The
+          value 0 disables it.</para>
+        </listitem>
+      </varlistentry>
 
-<varlistentry><term><option>-e</option><replaceable class="parameter">lease-type</replaceable></term><listitem><para>
-The type of lease being requested from the server.
-It may be one of the following: address-only, prefix-only or
-    address-and-prefix. The address-only indicates that the regular
-    address (v4 or v6) will be requested. The prefix-only indicates
-    that the IPv6 prefix will be requested. The address-and-prefix
-    indicates that both IPv6 address and prefix will be requested.
-    The '-e prefix-only' and '-e address-and-prefix' must not be
-    used with -4.
- (The -6 option must be used if lease type other than '-e address-only'.)
-</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-e</option>
+          <replaceable class="parameter">lease-type</replaceable>
+        </term>
+        <listitem>
+          <para>The type of lease being requested from the server.
+          It may be one of the following: address-only, prefix-only
+          or address-and-prefix. The address-only indicates that
+          the regular address (v4 or v6) will be requested. The
+          prefix-only indicates that the IPv6 prefix will be
+          requested. The address-and-prefix indicates that both
+          IPv6 address and prefix will be requested. The '-e
+          prefix-only' and '-e address-and-prefix' must not be used
+          with -4. (The -6 option must be used if lease type other
+          than '-e address-only'.)</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-h</option></term><listitem><para>Print help.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-h</option>
+        </term>
+        <listitem>
+          <para>Print help.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-i</option></term><listitem><para>Do only the initial part of an exchange: DO or SA, depending on
-   whether -6 is given.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-i</option>
+        </term>
+        <listitem>
+          <para>Do only the initial part of an exchange: DO or SA,
+          depending on whether -6 is given.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-I</option><replaceable class="parameter">ip-offset</replaceable></term><listitem><para>Offset of the (DHCPv4) IP address in the requested-IP
-   option / (DHCPv6) IA_NA option in the (second/request) template.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-I</option>
+          <replaceable class="parameter">ip-offset</replaceable>
+        </term>
+        <listitem>
+          <para>Offset of the (DHCPv4) IP address in the
+          requested-IP option / (DHCPv6) IA_NA option in the
+          (second/request) template.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-l</option><replaceable class="parameter">local-addr|interface></replaceable></term><listitem><para>For DHCPv4 operation, specify the local
-    hostname/address to use when communicating with the server.  By
-    default, the interface address through which traffic would
-    normally be routed to the server is used.
-    For DHCPv6 operation, specify the name of the network interface
-    via which exchanges are initiated.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-l</option>
+          <replaceable class="parameter">local-addr|interface</replaceable>
+        </term>
+        <listitem>
+          <para>For DHCPv4 operation, specify the local
+          hostname/address to use when communicating with the
+          server. By default, the interface address through which
+          traffic would normally be routed to the server is used.
+          For DHCPv6 operation, specify the name of the network
+          interface via which exchanges are initiated.</para>
+        </listitem>
+      </varlistentry>
 
-     <varlistentry><term><option>-L</option><replaceable class="parameter">local-port</replaceable></term><listitem><para>Specify the local port to use
-  (the value 0 means to use the default).</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-L</option>
+          <replaceable class="parameter">local-port</replaceable>
+        </term>
+        <listitem>
+          <para>Specify the local port to use (the value 0 means to
+          use the default).</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-O</option><replaceable class="parameter">random-offset</replaceable></term><listitem><para>Offset of the last octet to randomize in the template.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-O</option>
+          <replaceable class="parameter">random-offset</replaceable>
+        </term>
+        <listitem>
+          <para>Offset of the last octet to randomize in the
+          template.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-P</option><replaceable class="parameter">preload</replaceable></term><listitem><para>Initiate first <replaceable class="parameter">preload</replaceable> exchanges back to back at startup.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-P</option>
+          <replaceable class="parameter">preload</replaceable>
+        </term>
+        <listitem>
+          <para>Initiate first
+          <replaceable class="parameter">
+          preload</replaceable>exchanges back to back at
+          startup.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-r</option><replaceable class="parameter">rate</replaceable></term><listitem><para>Initiate <replaceable class="parameter">rate</replaceable> DORA/SARR (or if -i is given, DO/SA)
-    exchanges per second.  A periodic report is generated showing the
-    number of exchanges which were not completed, as well as the
-    average response latency.  The program continues until
-    interrupted, at which point a final report is generated.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-r</option>
+          <replaceable class="parameter">rate</replaceable>
+        </term>
+        <listitem>
+          <para>Initiate
+          <replaceable class="parameter">
+          rate</replaceable>DORA/SARR (or if -i is given, DO/SA)
+          exchanges per second. A periodic report is generated
+          showing the number of exchanges which were not completed,
+          as well as the average response latency. The program
+          continues until interrupted, at which point a final
+          report is generated.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-R</option><replaceable class="parameter">range</replaceable></term><listitem><para>Specify how many different clients are used. With 1
-    (the default), all requests seem to come from the same client.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-R</option>
+          <replaceable class="parameter">range</replaceable>
+        </term>
+        <listitem>
+          <para>Specify how many different clients are used. With 1
+          (the default), all requests seem to come from the same
+          client.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-s</option><replaceable class="parameter">seed</replaceable></term><listitem><para>Specify the seed for randomization, making it repeatable.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-s</option>
+          <replaceable class="parameter">seed</replaceable>
+        </term>
+        <listitem>
+          <para>Specify the seed for randomization, making it
+          repeatable.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-S</option><replaceable class="parameter">srvid-offset</replaceable></term><listitem><para>Offset of the server-ID option in the
-(second/request) template.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-S</option>
+          <replaceable class="parameter">srvid-offset</replaceable>
+        </term>
+        <listitem>
+          <para>Offset of the server-ID option in the
+          (second/request) template.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-T</option><replaceable class="parameter">template-file</replaceable></term><listitem><para>The name of a file containing the template to use
-   as a stream of hexadecimal digits.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-T</option>
+          <replaceable class="parameter">template-file</replaceable>
+        </term>
+        <listitem>
+          <para>The name of a file containing the template to use
+          as a stream of hexadecimal digits.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-v</option></term><listitem><para>Report the version number of this program.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-v</option>
+        </term>
+        <listitem>
+          <para>Report the version number of this program.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-w</option><replaceable class="parameter">wrapped</replaceable></term><listitem><para>Command to call with start/stop at the beginning/end of
-  the program.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-w</option>
+          <replaceable class="parameter">wrapped</replaceable>
+        </term>
+        <listitem>
+          <para>Command to call with start/stop at the
+          beginning/end of the program.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-x</option><replaceable class="parameter">diagnostic-selector</replaceable></term><listitem><para>Include extended diagnostics in the output.
-  <replaceable class="parameter">diagnostic-selector</replaceable> is a string of single-keywords specifying
- the operations for which verbose output is desired.  The selector
-    keyletters are:
-* 'a' print the decoded command line arguments
-* 'e' print the exit reason
-* 'i' print rate processing details
-* 's' print first server-id
-* 't' when finished, print timers of all successful exchanges
-* 'T' when finished, print templates
-</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-x</option>
+          <replaceable class="parameter">diagnostic-selector</replaceable>
+        </term>
+        <listitem>
+          <para>Include extended diagnostics in the output.
+          <replaceable class="parameter">diagnostic-selector</replaceable>
+<!-- TODO: fix formatting -->
+	  is a string of single-keywords specifying the operations
+	  for which verbose output is desired. The selector keyletters
+	  are: * 'a' print the decoded command line arguments *
+	  'e' print the exit reason * 'i' print rate processing
+	  details * 's' print first server-id * 't' when finished,
+	  print timers of all successful exchanges * 'T' when
+	  finished, print templates</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-X</option><replaceable class="parameter">xid-offset</replaceable></term><listitem><para>Transaction ID (aka. xid) offset in the template.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-X</option>
+          <replaceable class="parameter">xid-offset</replaceable>
+        </term>
+        <listitem>
+          <para>Transaction ID (aka. xid) offset in the
+          template.</para>
+        </listitem>
+      </varlistentry>
 
-<para>DHCPv4 only option:</para>
+      <para>DHCPv4 only option:</para>
+      <varlistentry>
+        <term>
+          <option>-B</option>
+        </term>
+        <listitem>
+          <para>Force broadcast handling.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-B</option></term><listitem><para>Force broadcast handling.</para></listitem></varlistentry>
+      <para>DHCPv6 only options:</para>
+      <varlistentry>
+        <term>
+          <option>-c</option>
+        </term>
+        <listitem>
+          <para>Add a rapid commit option (exchanges will be
+          SA).</para>
+        </listitem>
+      </varlistentry>
 
-<para>DHCPv6 only options:</para>
+      <para>The remaining options are used only in conjunction with
+      -r:</para>
+      <varlistentry>
+        <term>
+          <option>-D</option>
+          <replaceable class="parameter">max-drop</replaceable>
+        </term>
+        <listitem>
+          <para>Abort the test if more than
+          <replaceable class="parameter">
+          max-drop</replaceable>requests have been dropped. Use -D0
+          to abort if even a single request has been dropped. If
+          <replaceable class="parameter">
+          max-drop</replaceable>includes the suffix '%', it
+          specifies a maximum percentage of requests that may be
+          dropped before abort. In this case, testing of the
+          threshold begins after 10 requests have been expected to
+          be received.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-c</option></term><listitem><para>Add a rapid commit option (exchanges will be SA).</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-n</option>
+          <replaceable class="parameter">num-request</replaceable>
+        </term>
+        <listitem>
+          <para>Initiate
+          <replaceable class="parameter">
+          num-request</replaceable>transactions. No report is
+          generated until all transactions have been
+          initiated/waited-for after which a report is generated
+          and the program terminates.</para>
+        </listitem>
+      </varlistentry>
 
-<para>The remaining options are used only in conjunction with -r:</para>
+      <varlistentry>
+        <term>
+          <option>-p</option>
+          <replaceable class="parameter">test-period</replaceable>
+        </term>
+        <listitem>
+          <para>Send requests for the given test period, which is
+          specified in the same manner as -d. This can be used as
+          an alternative to -n, or both options can be given, in
+          which case the testing is completed when either limit is
+          reached.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-D</option><replaceable class="parameter">max-drop</replaceable></term><listitem><para>Abort the test if more than <replaceable class="parameter">max-drop</replaceable> requests have
- been dropped.  Use -D0 to abort if even a single request has been
- dropped.  If <replaceable class="parameter">max-drop</replaceable> includes the suffix '%', it specifies a
-    maximum percentage of requests that may be dropped before abort.
-   In this case, testing of the threshold begins after 10 requests
-    have been expected to be received.</para></listitem></varlistentry>
+      <varlistentry>
+        <term>
+          <option>-t</option>
+          <replaceable class="parameter">report</replaceable>
+        </term>
+        <listitem>
+          <para>Delay in seconds between two periodic
+          reports.</para>
+        </listitem>
+      </varlistentry>
 
-        <varlistentry><term><option>-n</option><replaceable class="parameter">num-request</replaceable></term><listitem><para>Initiate <replaceable class="parameter">num-request</replaceable> transactions.  No report is
-    generated until all transactions have been initiated/waited-for
-    after which a report is generated and the program terminates.</para></listitem></varlistentry>
-
-        <varlistentry><term><option>-p</option><replaceable class="parameter">test-period</replaceable></term><listitem><para>Send requests for the given test period, which is
-    specified in the same manner as -d.  This can be used as an
-    alternative to -n, or both options can be given, in which case the
-    testing is completed when either limit is reached.</para></listitem></varlistentry>
-
-        <varlistentry><term><option>-t</option><replaceable class="parameter">report</replaceable></term><listitem><para>Delay in seconds between two periodic reports.</para></listitem></varlistentry>
 
 <!--
 TODO: where is this displayed?
