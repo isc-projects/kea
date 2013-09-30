@@ -1,3 +1,10 @@
+682.	[func]		naokikambe
+	New statistics items added into b10-xfrin : ixfr_running, axfr_running,
+	and soa_in_progress.  Their values can be obtained by invoking "Stats
+	show Xfrin" via bindctl when b10-xfrin is running.
+	(Trac #2274, git ca691626a2be16f08754177bb27983a9f4984702)
+
+
 681.	[func]	tmark
 	Added support for prefix delegation configuration to b10-dhcp6
 	subnets.
