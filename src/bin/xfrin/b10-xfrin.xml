@@ -337,6 +337,27 @@ operation
         </listitem>
       </varlistentry><!-- end of zones -->
 
+      <varlistentry>
+        <term>ixfr_running</term>
+        <listitem><simpara>
+          Number of IXFRs in progress
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>axfr_running</term>
+        <listitem><simpara>
+          Number of AXFRs in progress
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>soa_in_progress</term>
+        <listitem><simpara>
+          Number of SOA queries in progress
+        </simpara></listitem>
+      </varlistentry>
+
     </variablelist>
 
     <para>
