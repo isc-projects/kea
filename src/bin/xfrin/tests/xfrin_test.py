@@ -2190,7 +2190,7 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
                                           TEST_RRCLASS_STR,
                                           TEST_ZONE_NAME_STR,
                                           name)
-            msg = '%s is expected %s but actually %s' % (name, exp, act)
+            msg = '%s: expected %s but actually got %s' % (name, exp, act)
             self.assertEqual(exp, act, msg=msg)
 
     def _check_updated_statistics(self, expects):
@@ -2200,7 +2200,7 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
             if name in expects:
                 exp = expects[name]
                 act = self.conn._counters.get(name)
-                msg = '%s is expected %s but actually %s' % (name, exp, act)
+                msg = '%s: expected %s but actually got %s' % (name, exp, act)
                 self.assertEqual(exp, act, msg=msg)
             else:
                 self.assertRaises(isc.cc.data.DataNotFoundError,
