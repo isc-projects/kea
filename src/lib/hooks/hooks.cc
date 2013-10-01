@@ -12,28 +12,23 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef TEST_LIBRARIES_H
-#define TEST_LIBRARIES_H
+#include <hooks/hooks.h>
+#include <log/logger_support.h>
 
-#include <config.h>
-
-namespace {
-
-#define DLL_SUFFIX ".so"
-
-// Names of the libraries used in these tests.  These libraries are built using
-// libtool, so we need to look in the hidden ".libs" directory to locate the
-// shared library.
-
-// Library with load/unload functions creating marker files to check their
-// operation.
-const char* const CALLOUT_LIBRARY_1 = "@abs_builddir@/.libs/libco1.so";
-const char* const CALLOUT_LIBRARY_2 = "@abs_builddir@/.libs/libco2.so";
-
-// Name of a library which is not present.
-const char* const NOT_PRESENT_LIBRARY = "@abs_builddir@/.libs/libnothere.so";
-
-} // anonymous namespace
+#include <string>
 
 
-#endif // TEST_LIBRARIES_H
+namespace isc {
+namespace hooks {
+
+// Load the logging message dictionary if not already loaded
+
+void
+hooksStaticLinkInit() {
+    if (!isc::log::isLoggingInitialized()) {
+        isc::log::initLogger(std::string("userlib"));
+    }
+}
+
+} // namespace hooks
+} // namespace isc

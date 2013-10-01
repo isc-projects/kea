@@ -181,6 +181,7 @@ AC_HELP_STRING([--enable-static-link],
   [build programs with static link [[default=no]]]),
   [enable_static_link=yes], [enable_static_link=no])
 AM_CONDITIONAL(USE_STATIC_LINK, test $enable_static_link = yes)
+AM_COND_IF([USE_STATIC_LINK], [AC_DEFINE([USE_STATIC_LINK], [1], [BIND 10 was statically linked?])])
 
 # Check validity about some libtool options
 if test $enable_static_link = yes -a $enable_static = no; then

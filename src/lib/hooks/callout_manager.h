@@ -338,6 +338,13 @@ private:
         }
     };
 
+    // Member variables
+
+    /// Reference to the singleton ServerHooks object.  See the
+    /// @ref hooksmgMaintenanceGuide for information as to why the class holds
+    /// a reference instead of accessing the singleton within the code.
+    ServerHooks& server_hooks_;
+
     /// Current hook.  When a call is made to callCallouts, this holds the
     /// index of the current hook.  It is set to an invalid value (-1)
     /// otherwise.
