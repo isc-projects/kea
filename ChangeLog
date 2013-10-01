@@ -1,3 +1,11 @@
+684.	[func]		muks, vorner
+	API support to delete zone data has been added. With this,
+	DomainTree and RdataSet which form the central zone data
+	structures of b10-auth allow deletion of names and RR data
+	respectively.
+	(Trac #2750, git d3dbe8e1643358d4f88cdbb7a16a32fd384b85b1)
+	(Trac #2751, git 7430591b4ae4c7052cab86ed17d0221db3b524a8)
+
 683.	[bug]		stephen
 	Modifications to fix problems running unit tests if they are statically
 	linked.  This includes provision of an initialization function that
