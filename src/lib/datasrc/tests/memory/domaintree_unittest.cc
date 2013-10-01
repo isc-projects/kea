@@ -31,11 +31,17 @@
 
 #include <boost/format.hpp>
 
+#include <stdlib.h>
+
+#include <set>
+#include <algorithm>
+
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using isc::UnitTestUtil;
 using namespace isc::datasrc::memory;
+using isc::util::random::UniformRandomIntegerGenerator;
 
 // XXX: some compilers cannot find class static constants used in
 // EXPECT_xxx macros, for which we need an explicit empty definition.
@@ -61,6 +67,53 @@ const size_t Name::MAX_LABELS;
  */
 
 namespace {
+
+// The full absolute names of the nodes in the tree with the addition of
+// the explicit root node.
+const char* const domain_names[] = {
+    "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
+    "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"
+};
+
+// These are set as the node data.
+const int node_distances[] = {
+    3, 1, 2, 2, 2, 3, 1, 2, 1, 1, 2, 2
+};
+
+const int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
+
+/*
+ * The domain order should be:
+ * ., a, b, c, d.e.f, x.d.e.f, w.y.d.e.f, o.w.y.d.e.f, p.w.y.d.e.f,
+ * q.w.y.d.e.f, z.d.e.f, j.z.d.e.f, g.h, i.g.h, k.g.h
+ *             . (no data, can't be found)
+ *             |
+ *             b
+ *           /   \
+ *          a    d.e.f
+ *              /  |   \
+ *             c   |    g.h
+ *                 |     |
+ *                w.y    i
+ *              /  |  \   \
+ *             x   |   z   k
+ *                 |   |
+ *                 p   j
+ *               /   \
+ *              o     q
+ */
+
+const char* const ordered_names[] = {
+    "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
+    "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f",
+    "g.h", "i.g.h", "k.g.h"};
+const size_t ordered_names_count(sizeof(ordered_names) /
+                                 sizeof(*ordered_names));
+
+const char* const upper_node_names[] = {
+    ".", ".", ".", ".", "d.e.f", "d.e.f", "w.y.d.e.f",
+    "w.y.d.e.f", "w.y.d.e.f", "d.e.f", "z.d.e.f",
+    ".", "g.h", "g.h"};
 
 void deleteData(int* i) {
     delete i;
@@ -88,20 +141,13 @@ class DomainTreeTest : public::testing::Test {
 protected:
     DomainTreeTest() :
         dtree_holder_(mem_sgmt_, TestDomainTree::create(mem_sgmt_)),
-        dtree_expose_empty_node_holder_(mem_sgmt_,
-                                         TestDomainTree::create(mem_sgmt_, true)),
+        dtree_expose_empty_node_holder_
+            (mem_sgmt_, TestDomainTree::create(mem_sgmt_, true)),
         dtree(*dtree_holder_.get()),
         dtree_expose_empty_node(*dtree_expose_empty_node_holder_.get()),
-        cdtnode(NULL)
+        cdtnode(NULL),
+        name_gen_('a', 'z')
     {
-        const char* const domain_names[] = {
-            "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
-            "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"};
-        const int node_distances[] = {
-            3, 1, 2, 2, 2, 3, 1, 2, 1, 1, 2, 2
-        };
-
-        int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
         for (int i = 0; i < name_count; ++i) {
             dtree.insert(mem_sgmt_, Name(domain_names[i]), &dtnode);
             // Check the node doesn't have any data initially.
@@ -113,6 +159,8 @@ protected:
             EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(
                           new int(node_distances[i])));
         }
+
+        srandom(time(NULL));
     }
 
     util::MemorySegmentLocal mem_sgmt_;
@@ -122,6 +170,7 @@ protected:
     TestDomainTree& dtree_expose_empty_node;
     TestDomainTreeNode* dtnode;
     const TestDomainTreeNode* cdtnode;
+    UniformRandomIntegerGenerator name_gen_;
     uint8_t buf[LabelSequence::MAX_SERIALIZED_LENGTH];
 };
 
@@ -129,8 +178,8 @@ TEST_F(DomainTreeTest, nodeCount) {
     EXPECT_EQ(15, dtree.getNodeCount());
 
     // Delete all nodes, then the count should be set to 0.  This also tests
-    // the behavior of deleteAllNodes().
-    dtree.deleteAllNodes(mem_sgmt_, deleteData);
+    // the behavior of removeAllNodes().
+    dtree.removeAllNodes(mem_sgmt_, deleteData);
     EXPECT_EQ(0, dtree.getNodeCount());
 }
 
@@ -150,22 +199,6 @@ TEST_F(DomainTreeTest, getDistance) {
     }
 }
 
-void
-checkDistances(const TestDomainTree& tree, int distance) {
-    TestDomainTreeNodeChain node_path;
-    const TestDomainTreeNode* node = NULL;
-
-    // Try to find a node left of the left-most node, and start from its
-    // next node (which is the left-most node in its subtree).
-    EXPECT_EQ(TestDomainTree::NOTFOUND,
-              tree.find<void*>(Name("0"), &node, node_path, NULL, NULL));
-    while ((node = tree.nextNode(node_path)) != NULL) {
-        // The distance from each node to its sub-tree root must be less
-        // than 2 * log(n).
-        EXPECT_GE(2 * distance, node->getDistance());
-    }
-}
-
 TEST_F(DomainTreeTest, checkDistanceRandom) {
     // This test checks an important performance-related property of the
     // DomainTree (a red-black tree), which is important for us: the
@@ -176,7 +209,6 @@ TEST_F(DomainTreeTest, checkDistanceRandom) {
 
     TreeHolder mytree_holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_));
     TestDomainTree& mytree = *mytree_holder.get();
-    isc::util::random::UniformRandomIntegerGenerator gen('a', 'z');
     const int log_num_nodes = 20;
 
     // Make a large million+ node top-level domain tree, i.e., the
@@ -191,7 +223,7 @@ TEST_F(DomainTreeTest, checkDistanceRandom) {
         string namestr;
         while (true) {
             for (int j = 0; j < 32; j++) {
-                namestr += gen();
+                namestr += name_gen_();
             }
             namestr += '.';
 
@@ -206,7 +238,12 @@ TEST_F(DomainTreeTest, checkDistanceRandom) {
         EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(new int(i + 1)));
     }
 
-    checkDistances(mytree, log_num_nodes);
+    // The distance from each node to its sub-tree root must be less
+    // than 2 * log(n).
+    EXPECT_GE(2 * log_num_nodes, mytree.getHeight());
+
+    // Also check RB tree properties
+    EXPECT_TRUE(mytree.checkProperties());
 }
 
 TEST_F(DomainTreeTest, checkDistanceSorted) {
@@ -235,7 +272,12 @@ TEST_F(DomainTreeTest, checkDistanceSorted) {
         EXPECT_EQ(static_cast<int*>(NULL), dtnode->setData(new int(i + 1)));
     }
 
-    checkDistances(mytree, log_num_nodes);
+    // The distance from each node to its sub-tree root must be less
+    // than 2 * log(n).
+    EXPECT_GE(2 * log_num_nodes, mytree.getHeight());
+
+    // Also check RB tree properties
+    EXPECT_TRUE(mytree.checkProperties());
 }
 
 TEST_F(DomainTreeTest, setGetData) {
@@ -342,6 +384,329 @@ TEST_F(DomainTreeTest, insertNames) {
                                                   &dtnode));
     EXPECT_EQ(TestDomainTree::SUCCESS, dtree.insert(mem_sgmt_, Name("n"),
                                                   &dtnode));
+}
+
+TEST_F(DomainTreeTest, remove) {
+    // This testcase checks that after node removal, the binary-search
+    // tree is valid and all nodes that are supposed to exist are
+    // present in the correct order. It mainly tests DomainTree as a
+    // BST, and not particularly as a red-black tree. This test checks
+    // node deletion when upper nodes have data.
+
+    // Delete single nodes and check if the rest of the nodes exist
+    for (int j = 0; j < ordered_names_count; ++j) {
+        TreeHolder holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_, true));
+        TestDomainTree& tree(*holder.get());
+        TestDomainTreeNode* node;
+
+        for (int i = 0; i < name_count; ++i) {
+            tree.insert(mem_sgmt_, Name(domain_names[i]), NULL);
+        }
+
+        for (int i = 0; i < ordered_names_count; ++i) {
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[i]), &node));
+            // Check nodes are not empty.
+            EXPECT_EQ(static_cast<int*>(NULL), node->setData(new int(i)));
+            EXPECT_FALSE(node->isEmpty());
+        }
+
+        // Now, delete the j'th node from the tree.
+        EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                  tree.find(Name(ordered_names[j]), &node));
+        tree.remove(mem_sgmt_, node, deleteData);
+
+        // Check RB tree properties
+        ASSERT_TRUE(tree.checkProperties());
+
+        // Now, walk through nodes in order.
+        TestDomainTreeNodeChain node_path;
+        const TestDomainTreeNode* cnode;
+        int start_node;
+
+        if (j == 0) {
+            EXPECT_NE(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[0]),
+                                &cnode));
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[1]),
+                                &cnode, node_path));
+            start_node = 1;
+        } else {
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[0]),
+                                &cnode, node_path));
+            start_node = 0;
+        }
+
+        for (int i = start_node; i < ordered_names_count; ++i) {
+            const Name nj(ordered_names[j]);
+            const Name ni(ordered_names[i]);
+
+            if (ni == nj) {
+                // This may be true for the last node if we seek ahead
+                // in the loop using nextNode() below.
+                if (!cnode) {
+                    break;
+                }
+                // All ordered nodes have data initially. If any node is
+                // empty, it means it was remove()d, but an empty node
+                // exists because it is a super-domain. Just skip it.
+                if (cnode->isEmpty()) {
+                     cnode = tree.nextNode(node_path);
+                }
+                continue;
+            }
+
+            ASSERT_NE(static_cast<void*>(NULL), cnode);
+            const int* data = cnode->getData();
+
+            if (data) {
+                 EXPECT_EQ(i, *data);
+            }
+
+            uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH];
+            const LabelSequence ls(cnode->getAbsoluteLabels(buf));
+            EXPECT_EQ(LabelSequence(ni), ls);
+
+            cnode = tree.nextNode(node_path);
+        }
+
+        // We should have reached the end of the tree.
+        ASSERT_EQ(static_cast<void*>(NULL), cnode);
+    }
+}
+
+TEST_F(DomainTreeTest, removeEmpty) {
+    // This test is similar to the .remove test. But it checks node
+    // deletion when upper nodes are empty.
+
+    // Delete single nodes and check if the rest of the nodes exist
+    for (int j = 0; j < ordered_names_count; ++j) {
+        TreeHolder holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_, true));
+        TestDomainTree& tree(*holder.get());
+        TestDomainTreeNode* node;
+
+        for (int i = 0; i < name_count; ++i) {
+            tree.insert(mem_sgmt_, Name(domain_names[i]), NULL);
+        }
+
+        for (int i = 0; i < ordered_names_count; ++i) {
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[i]), &node));
+            // Check nodes are empty.
+            EXPECT_TRUE(node->isEmpty());
+        }
+
+        // Now, delete the j'th node from the tree.
+        EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                  tree.find(Name(ordered_names[j]), &node));
+        tree.remove(mem_sgmt_, node, deleteData);
+
+        // Check RB tree properties
+        ASSERT_TRUE(tree.checkProperties());
+
+        // Now, walk through nodes in order.
+        TestDomainTreeNodeChain node_path;
+        const TestDomainTreeNode* cnode;
+        int start_node;
+
+        if (j == 0) {
+            EXPECT_NE(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[0]),
+                                &cnode));
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[1]),
+                                &cnode, node_path));
+            start_node = 1;
+        } else {
+            EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                      tree.find(Name(ordered_names[0]),
+                                &cnode, node_path));
+            start_node = 0;
+        }
+
+        for (int i = start_node; i < ordered_names_count; ++i) {
+            const Name nj(ordered_names[j]);
+            const Name ni(ordered_names[i]);
+
+            if ((nj == Name("j.z.d.e.f")) &&
+                (ni == Name("z.d.e.f")))
+            {
+                // The only special case in the tree. Here, "z.d.e.f"
+                // will not exist as it would have been removed during
+                // removal of "j.z.d.e.f".
+                continue;
+            }
+
+            if (ni == nj) {
+                // This may be true for the last node if we seek ahead
+                // in the loop using nextNode() below.
+                if (!cnode) {
+                    break;
+                }
+                // All ordered nodes are empty initially. If an empty
+                // removed node exists because it is a super-domain,
+                // just skip it.
+                if ((nj == Name("d.e.f")) ||
+                    (nj == Name("w.y.d.e.f")) ||
+                    (nj == Name("z.d.e.f")) ||
+                    (nj == Name("g.h")))
+                {
+                     cnode = tree.nextNode(node_path);
+                }
+                continue;
+            }
+
+            ASSERT_NE(static_cast<void*>(NULL), cnode);
+
+            uint8_t buf[isc::dns::LabelSequence::MAX_SERIALIZED_LENGTH];
+            const LabelSequence ls(cnode->getAbsoluteLabels(buf));
+            EXPECT_EQ(LabelSequence(ni), ls);
+
+            cnode = tree.nextNode(node_path);
+        }
+
+        // We should have reached the end of the tree.
+        ASSERT_EQ(static_cast<void*>(NULL), cnode);
+    }
+}
+
+void
+insertNodes(util::MemorySegment& mem_sgmt, TestDomainTree& tree,
+            std::set<std::string>& names, size_t num_nodes,
+            UniformRandomIntegerGenerator& name_gen)
+{
+    for (size_t i = 0; i < num_nodes; ++i) {
+        std::string namestr;
+        while (true) {
+            for (int j = 0; j < 32; j++) {
+                namestr += name_gen();
+            }
+            namestr += '.';
+
+            TestDomainTreeNode* cnode;
+            if (tree.insert(mem_sgmt, Name(namestr), &cnode) ==
+                TestDomainTree::SUCCESS) {
+                names.insert(namestr);
+                break;
+            }
+
+            namestr.clear();
+        }
+    }
+}
+
+void
+removeNodes(util::MemorySegment& mem_sgmt, TestDomainTree& tree,
+            std::set<std::string>& names, size_t num_nodes)
+{
+    size_t set_size = names.size();
+
+    for (size_t i = 0; i < num_nodes; ++i) {
+        // Here, UniformRandomIntegerGenerator is not a great RNG as
+        // it'll likely get seeded with the same seed throughout this
+        // testcase, and the size of the names set keeps changing.
+
+        std::set<std::string>::iterator it(names.begin());
+        // This is rather inefficient, but it's a test...
+        std::advance(it, random() % set_size);
+        std::string nstr(*it);
+
+        TestDomainTreeNode* node;
+        EXPECT_EQ(TestDomainTree::EXACTMATCH,
+                  tree.find(Name(nstr), &node));
+
+        tree.remove(mem_sgmt, node, deleteData);
+
+        names.erase(*it);
+        --set_size;
+    }
+}
+
+void
+checkTree(const TestDomainTree& tree,
+          const std::set<std::string>& names)
+{
+    // The distance from each node to its sub-tree root must be less
+    // than 2 * log_2(1024).
+    EXPECT_GE(2 * 10, tree.getHeight());
+
+    // Also check RB tree properties
+    EXPECT_TRUE(tree.checkProperties());
+
+    // Now, walk through nodes in order.
+    TestDomainTreeNodeChain node_path;
+    const TestDomainTreeNode* cnode;
+
+    EXPECT_EQ(TestDomainTree::EXACTMATCH,
+              tree.find(Name("."), &cnode, node_path));
+
+    // Skip to the next node after "."
+    cnode = tree.nextNode(node_path);
+    if (names.empty()) {
+        // Empty tree.
+        EXPECT_EQ(static_cast<void*>(NULL), cnode);
+        return;
+    }
+
+    for (std::set<std::string>::const_iterator it = names.begin();
+         it != names.end(); ++it)
+    {
+        const Name n1(*it);
+        const Name n2(cnode->getName());
+
+        const NameComparisonResult result = n1.compare(n2);
+        EXPECT_EQ(NameComparisonResult::EQUAL, result.getRelation());
+
+        cnode = tree.nextNode(node_path);
+    }
+
+    // We should have reached the end of the tree.
+    EXPECT_EQ(static_cast<void*>(NULL), cnode);
+}
+
+TEST_F(DomainTreeTest, insertAndRemove) {
+    // What is the best way to test our red-black tree code? It is not a
+    // good method to test every case handled in the actual code itself
+    // (such as in insertRebalance() and removeRebalance()). This is
+    // because our approach itself may be incorrect.
+    //
+    // We test our code at the interface level here by exercising the
+    // tree randomly multiple times, checking that red-black tree
+    // properties are valid, and all the nodes that are supposed to be
+    // in the tree exist and are in order.
+
+    // NOTE: These tests are run within a single tree in the
+    // forest. Fusion, etc. are tested elsewhere. The number of nodes in
+    // the tree doesn't grow over 1024.
+
+    TreeHolder holder(mem_sgmt_, TestDomainTree::create(mem_sgmt_, true));
+    TestDomainTree& tree(*holder.get());
+    std::set<std::string> names;
+
+    size_t node_count = 0;
+
+    // Repeat the insert/remove test some 4096 times
+    for (int i = 0; i < 4096; ++i) {
+         UniformRandomIntegerGenerator gen(1, 1024 - node_count);
+         size_t num_nodes = gen();
+         node_count += num_nodes;
+
+         insertNodes(mem_sgmt_, tree, names, num_nodes, name_gen_);
+         checkTree(tree, names);
+
+         UniformRandomIntegerGenerator gen2(1, node_count);
+         num_nodes = gen2();
+         node_count -= num_nodes;
+
+         removeNodes(mem_sgmt_, tree, names, num_nodes);
+         checkTree(tree, names);
+    }
+
+    // Remove the rest of the nodes.
+    removeNodes(mem_sgmt_, tree, names, node_count);
+    checkTree(tree, names);
 }
 
 TEST_F(DomainTreeTest, subTreeRoot) {
@@ -778,45 +1143,14 @@ TEST_F(DomainTreeTest, getAbsoluteNameError) {
     EXPECT_THROW(chain.getAbsoluteName(), BadValue);
 }
 
-/*
- * The domain order should be:
- * ., a, b, c, d.e.f, x.d.e.f, w.y.d.e.f, o.w.y.d.e.f, p.w.y.d.e.f,
- * q.w.y.d.e.f, z.d.e.f, j.z.d.e.f, g.h, i.g.h, k.g.h
- *             . (no data, can't be found)
- *             |
- *             b
- *           /   \
- *          a    d.e.f
- *              /  |   \
- *             c   |    g.h
- *                 |     |
- *                w.y    i
- *              /  |  \   \
- *             x   |   z   k
- *                 |   |
- *                 p   j
- *               /   \
- *              o     q
- */
-const char* const names[] = {
-    "a", "b", "c", "d.e.f", "x.d.e.f", "w.y.d.e.f", "o.w.y.d.e.f",
-    "p.w.y.d.e.f", "q.w.y.d.e.f", "z.d.e.f", "j.z.d.e.f",
-    "g.h", "i.g.h", "k.g.h"};
-const size_t name_count(sizeof(names) / sizeof(*names));
-
-const char* const upper_node_names[] = {
-    ".", ".", ".", ".", "d.e.f", "d.e.f", "w.y.d.e.f",
-    "w.y.d.e.f", "w.y.d.e.f", "d.e.f", "z.d.e.f",
-    ".", "g.h", "g.h"};
-
 TEST_F(DomainTreeTest, getUpperNode) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree_expose_empty_node.find(Name(names[0]),
-                                            &node,
-                                            node_path));
-    for (int i = 0; i < name_count; ++i) {
+              dtree_expose_empty_node.find(Name(ordered_names[0]),
+                                           &node,
+                                           node_path));
+    for (int i = 0; i < ordered_names_count; ++i) {
         EXPECT_NE(static_cast<void*>(NULL), node);
 
         const TestDomainTreeNode* upper_node = node->getUpperNode();
@@ -852,7 +1186,7 @@ TEST_F(DomainTreeTest, getSubTreeRoot) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree_expose_empty_node.find(Name(names[0]),
+              dtree_expose_empty_node.find(Name(ordered_names[0]),
                                             &node,
                                             node_path));
     for (int i = 0; i < name_count; ++i) {
@@ -884,10 +1218,10 @@ TEST_F(DomainTreeTest, nextNode) {
     TestDomainTreeNodeChain node_path;
     const TestDomainTreeNode* node = NULL;
     EXPECT_EQ(TestDomainTree::EXACTMATCH,
-              dtree.find(Name(names[0]), &node, node_path));
-    for (int i = 0; i < name_count; ++i) {
+              dtree.find(Name(ordered_names[0]), &node, node_path));
+    for (int i = 0; i < ordered_names_count; ++i) {
         EXPECT_NE(static_cast<void*>(NULL), node);
-        EXPECT_EQ(Name(names[i]), node_path.getAbsoluteName());
+        EXPECT_EQ(Name(ordered_names[i]), node_path.getAbsoluteName());
         node = dtree.nextNode(node_path);
     }
 
@@ -903,7 +1237,7 @@ TEST_F(DomainTreeTest, nextNode) {
 // node_path - the path from the previous call to find(), will be modified
 // chain_length - the number of names that should be in the chain to be walked
 //   (0 means it should be empty, 3 means 'a', 'b' and 'c' should be there -
-//   this is always from the beginning of the names[] list).
+//   this is always from the beginning of the ordered_names[] list).
 // skip_first - if this is false, the node should already contain the node with
 //   the first name of the chain. If it is true, the node should be NULL
 //   (true is for finds that return no match, false for the ones that return
@@ -921,7 +1255,7 @@ previousWalk(TestDomainTree& dtree, const TestDomainTreeNode* node,
     }
     for (size_t i(chain_length); i > 0; --i) {
         EXPECT_NE(static_cast<void*>(NULL), node);
-        EXPECT_EQ(Name(names[i - 1]), node_path.getAbsoluteName());
+        EXPECT_EQ(Name(ordered_names[i - 1]), node_path.getAbsoluteName());
         // Find the node at the path and check the value is the same
         // (that it really returns the correct corresponding node)
         //
@@ -930,7 +1264,8 @@ previousWalk(TestDomainTree& dtree, const TestDomainTreeNode* node,
             const TestDomainTreeNode* node2(NULL);
             TestDomainTreeNodeChain node_path2;
             EXPECT_EQ(TestDomainTree::EXACTMATCH,
-                      dtree.find(Name(names[i - 1]), &node2, node_path2));
+                      dtree.find(Name(ordered_names[i - 1]),
+                                 &node2, node_path2));
             EXPECT_EQ(node, node2);
         }
         node = dtree.previousNode(node_path);
@@ -960,8 +1295,9 @@ TEST_F(DomainTreeTest, previousNode) {
     {
         SCOPED_TRACE("Iterate through");
         EXPECT_EQ(TestDomainTree::EXACTMATCH,
-                  dtree.find(Name(names[name_count - 1]), &node, node_path));
-        previousWalk(dtree, node, node_path, name_count, false);
+                  dtree.find(Name(ordered_names[ordered_names_count - 1]),
+                             &node, node_path));
+        previousWalk(dtree, node, node_path, ordered_names_count, false);
         node = NULL;
         node_path.clear();
     }
@@ -970,7 +1306,7 @@ TEST_F(DomainTreeTest, previousNode) {
         SCOPED_TRACE("Iterate from the middle");
         // Now, start somewhere in the middle, but within the real node.
         EXPECT_EQ(TestDomainTree::EXACTMATCH,
-                  dtree.find(Name(names[4]), &node, node_path));
+                  dtree.find(Name(ordered_names[4]), &node, node_path));
         previousWalk(dtree, node, node_path, 5, false);
         node = NULL;
         node_path.clear();
@@ -981,7 +1317,7 @@ TEST_F(DomainTreeTest, previousNode) {
         // If we start at the lowest (which is "a"), we get to the beginning
         // right away.
         EXPECT_EQ(TestDomainTree::EXACTMATCH,
-                  dtree.find(Name(names[0]), &node, node_path));
+                  dtree.find(Name(ordered_names[0]), &node, node_path));
         EXPECT_NE(static_cast<void*>(NULL), node);
         node = dtree.previousNode(node_path);
         ASSERT_NE(static_cast<void*>(NULL), node);
@@ -1008,7 +1344,7 @@ TEST_F(DomainTreeTest, previousNode) {
         SCOPED_TRACE("Start after the last");
         EXPECT_EQ(TestDomainTree::NOTFOUND,
                   dtree.find(Name("z"), &node, node_path));
-        previousWalk(dtree, node, node_path, name_count, true);
+        previousWalk(dtree, node, node_path, ordered_names_count, true);
         node = NULL;
         node_path.clear();
     }
@@ -1070,7 +1406,7 @@ TEST_F(DomainTreeTest, previousNode) {
         EXPECT_GT(node_path.getLastComparisonResult().getOrder(), 0);
         // We then descend into 'i.g.h' and walk all the nodes in the
         // tree.
-        previousWalk(dtree, node, node_path, name_count, true);
+        previousWalk(dtree, node, node_path, ordered_names_count, true);
         node = NULL;
         node_path.clear();
     }
@@ -1364,17 +1700,11 @@ TEST_F(DomainTreeTest, root) {
 }
 
 TEST_F(DomainTreeTest, getAbsoluteLabels) {
-    // The full absolute names of the nodes in the tree
-    // with the addition of the explicit root node
-    const char* const domain_names[] = {
-        "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
-        "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"};
     // The names of the nodes themselves, as they end up in the tree
     const char* const first_labels[] = {
         "c", "b", "a", "x", "z", "g.h", "i", "o",
         "j", "p", "q", "k"};
 
-    const int name_count = sizeof(domain_names) / sizeof(domain_names[0]);
     for (int i = 0; i < name_count; ++i) {
         EXPECT_EQ(TestDomainTree::EXACTMATCH, dtree.find(Name(domain_names[i]),
                   &cdtnode));
