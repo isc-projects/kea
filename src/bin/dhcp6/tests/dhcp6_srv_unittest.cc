@@ -2155,6 +2155,8 @@ TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
 }
 
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
+// @todo Uncomment this test as part of #3180 work.
+// Kea code currently fails to handle docsis traffic.
 TEST_F(Dhcpv6SrvTest, DISABLED_docsisTraffic) {
 
     NakedDhcpv6Srv srv(0);
