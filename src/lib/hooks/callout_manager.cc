@@ -31,7 +31,8 @@ namespace hooks {
 
 // Constructor
 CalloutManager::CalloutManager(int num_libraries)
-    : current_hook_(-1), current_library_(-1),
+    : server_hooks_(ServerHooks::getServerHooks()),
+      current_hook_(-1), current_library_(-1),
       hook_vector_(ServerHooks::getServerHooks().getCount()),
       library_handle_(this), pre_library_handle_(this, 0),
       post_library_handle_(this, INT_MAX), num_libraries_(num_libraries)
@@ -72,7 +73,7 @@ CalloutManager::registerCallout(const std::string& name, CalloutPtr callout) {
 
     // Get the index associated with this hook (validating the name in the
     // process).
-    int hook_index = ServerHooks::getServerHooks().getIndex(name);
+    int hook_index = server_hooks_.getIndex(name);
 
     // Iterate through the callout vector for the hook from start to end,
     // looking for the first entry where the library index is greater than
@@ -147,21 +148,19 @@ CalloutManager::callCallouts(int hook_index, CalloutHandle& callout_handle) {
                 if (status == 0) {
                     LOG_DEBUG(hooks_logger, HOOKS_DBG_EXTENDED_CALLS,
                               HOOKS_CALLOUT_CALLED).arg(current_library_)
-                        .arg(ServerHooks::getServerHooks()
-                            .getName(current_hook_))
+                        .arg(server_hooks_.getName(current_hook_))
                         .arg(PointerConverter(i->second).dlsymPtr());
                 } else {
                     LOG_ERROR(hooks_logger, HOOKS_CALLOUT_ERROR)
                         .arg(current_library_)
-                        .arg(ServerHooks::getServerHooks()
-                            .getName(current_hook_))
+                        .arg(server_hooks_.getName(current_hook_))
                         .arg(PointerConverter(i->second).dlsymPtr());
                 }
             } catch (const std::exception& e) {
                 // Any exception, not just ones based on isc::Exception
                 LOG_ERROR(hooks_logger, HOOKS_CALLOUT_EXCEPTION)
                     .arg(current_library_)
-                    .arg(ServerHooks::getServerHooks().getName(current_hook_))
+                    .arg(server_hooks_.getName(current_hook_))
                     .arg(PointerConverter(i->second).dlsymPtr())
                     .arg(e.what());
             }
@@ -184,7 +183,7 @@ CalloutManager::deregisterCallout(const std::string& name, CalloutPtr callout) {
 
     // Get the index associated with this hook (validating the name in the
     // process).
-    int hook_index = ServerHooks::getServerHooks().getIndex(name);
+    int hook_index = server_hooks_.getIndex(name);
 
     /// Construct a CalloutEntry matching the current library and the callout
     /// we want to remove.
@@ -227,7 +226,7 @@ CalloutManager::deregisterAllCallouts(const std::string& name) {
 
     // Get the index associated with this hook (validating the name in the
     // process).
-    int hook_index = ServerHooks::getServerHooks().getIndex(name);
+    int hook_index = server_hooks_.getIndex(name);
 
     /// Construct a CalloutEntry matching the current library (the callout
     /// pointer is NULL as we are not checking that).

@@ -13,11 +13,6 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 # But older GCC compilers don't have the flag.
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
-if USE_STATIC_LINK
-AM_LDFLAGS = -static
-TEST_LIBS_LDFLAGS = -Bshareable
-endif
-
 CLEANFILES = *.gcno *.gcda
 
 TESTS_ENVIRONMENT = \
@@ -25,19 +20,30 @@ TESTS_ENVIRONMENT = \
 
 TESTS =
 if HAVE_GTEST
-# Build shared libraries for testing.
+# Build shared libraries for testing. The libtool way to create a shared library
+# is to specify "-avoid-version -export-dynamic -module" in the library LDFLAGS
+# (see http://www.gnu.org/software/libtool/manual/html_node/Link-mode.html).
+# Use of these switches will guarantee that the .so files are created in the
+# .libs folder and they can be dlopened.
+# Note that the shared libraries with callouts should not be used together with
+# the --enable-static-link option. With this option, the bind10 libraries are
+# statically linked with the program and if the callout invokes the methods
+# which belong to these libraries, the library with the callout will get its
+# own copy of the static objects (e.g. logger, ServerHooks) and that will lead
+# to unexpected errors. For this reason, the --enable-static-link option is
+# ignored for unit tests built here.
+
 lib_LTLIBRARIES = libco1.la libco2.la
 
 libco1_la_SOURCES  = callout_library.cc
 libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco1_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libco1_la_LDFLAGS = $(TEST_LIBS_LDFLAGS)
+libco1_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 libco2_la_SOURCES  = callout_library.cc
 libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco2_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libco2_la_LDFLAGS = $(TEST_LIBS_LDFLAGS)
-
+libco2_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 TESTS += libdhcpsrv_unittests
 
