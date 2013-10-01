@@ -393,6 +393,13 @@ public:
         return (lease);
     }
 
+    // see wireshark.cc for descriptions
+    // The descriptions are too large and too closely related to the
+    // code, so it is kept in .cc rather than traditionally in .h
+    Pkt6* captureSimpleSolicit();
+    Pkt6* captureRelayedSolicit();
+    Pkt6* captureDocsisRelayedSolicit();
+
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();
     };
