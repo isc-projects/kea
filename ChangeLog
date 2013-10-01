@@ -1,3 +1,7 @@
+6XX.	[func]		tomek
+	b10-dhcp6 now sends back relayed traffic to proper port.
+	(Trac #3177, git ABCD)
+
 681.	[func]	tmark
 	Added support for prefix delegation configuration to b10-dhcp6
 	subnets.
