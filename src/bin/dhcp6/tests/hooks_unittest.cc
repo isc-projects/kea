@@ -85,33 +85,6 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_lease6_release  > 0);
 }
 
-// This function returns buffer for very simple Solicit
-Pkt6* captureSimpleSolicit() {
-    Pkt6* pkt;
-    uint8_t data[] = {
-        1,  // type 1 = SOLICIT
-        0xca, 0xfe, 0x01, // trans-id = 0xcafe01
-        0, 1, // option type 1 (client-id)
-        0, 10, // option lenth 10
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, // DUID
-        0, 3, // option type 3 (IA_NA)
-        0, 12, // option length 12
-        0, 0, 0, 1, // iaid = 1
-        0, 0, 0, 0, // T1 = 0
-        0, 0, 0, 0  // T2 = 0
-    };
-
-    pkt = new Pkt6(data, sizeof(data));
-    pkt->setRemotePort(546);
-    pkt->setRemoteAddr(IOAddress("fe80::1"));
-    pkt->setLocalPort(0);
-    pkt->setLocalAddr(IOAddress("ff02::1:2"));
-    pkt->setIndex(2);
-    pkt->setIface("eth0");
-
-    return (pkt);
-}
-
 /// @brief a class dedicated to Hooks testing in DHCPv6 server
 ///
 /// This class has a number of static members, because each non-static
