@@ -68,8 +68,8 @@ const size_t Name::MAX_LABELS;
 
 namespace {
 
-// The full absolute names of the nodes in the tree with the addition of
-// the explicit root node.
+// The full absolute names of the nodes in the tree (the tree also
+// contains "." which is not included in this list).
 const char* const domain_names[] = {
     "c", "b", "a", "x.d.e.f", "z.d.e.f", "g.h", "i.g.h", "o.w.y.d.e.f",
     "j.z.d.e.f", "p.w.y.d.e.f", "q.w.y.d.e.f", "k.g.h"
