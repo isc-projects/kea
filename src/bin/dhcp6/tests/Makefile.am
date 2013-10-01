@@ -68,6 +68,7 @@ dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../dhcp6_log.h ../dhcp6_log.cc
 dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../config_parser.cc ../config_parser.h
+dhcp6_unittests_SOURCES += wireshark.cc
 
 nodist_dhcp6_unittests_SOURCES  = ../dhcp6_messages.h ../dhcp6_messages.cc
 nodist_dhcp6_unittests_SOURCES += marker_file.h test_libraries.h
