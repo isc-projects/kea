@@ -1223,13 +1223,13 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // will try to honour the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
-    Lease6Collection leases = alloc_engine_->allocateLease6(subnet, duid,
-                                                            ia->getIAID(),
-                                                            hint, Lease::TYPE_NA,
-                                                            do_fwd, do_rev,
-                                                            hostname,
-                                                            fake_allocation,
-                                                            callout_handle);
+    Lease6Collection leases = alloc_engine_->allocateLeases6(subnet, duid,
+                                                             ia->getIAID(),
+                                                             hint, Lease::TYPE_NA,
+                                                             do_fwd, do_rev,
+                                                             hostname,
+                                                             fake_allocation,
+                                                             callout_handle);
     /// @todo: Handle more than one lease
     Lease6Ptr lease;
     if (!leases.empty()) {
