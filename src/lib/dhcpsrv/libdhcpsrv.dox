@@ -61,10 +61,10 @@ separate module, called allocator. Its sole purpose is to pick an address from
 a pool. Allocation engine will then check if the picked address is free and if
 it is not, then will ask allocator to pick again.
 
-At lease 3 allocators will be implemented:
+At least 3 allocators will be implemented:
 
 - Iterative - it iterates over all resources (addresses or prefixes) in
-available pools, one by one. The advantages of this approach are speed
+available pools, one by one. The advantages of this approach are: speed
 (typically it only needs to increase address just one), the guarantee to cover
 all addresses and predictability.  This allocator behaves reasonably good in
 case of nearing depletion. Even when pools are almost completely allocated, it
@@ -108,8 +108,9 @@ TYPE_TA is partial. Some routines are able to handle it, while other are
 not. The major missing piece is the RandomAllocator, so there is no way to randomly
 generate an address. This defeats the purpose of using temporary addresses.
 
-Prefixes are supported. For a prefix pool, the iterative allocator "walks over"
-the every available pool. It is similar to how it iterates over address pool,
+The Allocation Engine supports allocation of the IPv6 addresses and prefixes.
+For a prefix pool, the iterative allocator "walks over"
+every available pool. It is similar to how it iterates over address pool,
 but instead of increasing address by just one, it walks over the whole delegated
 prefix length in one step. This is implemented in
 isc::dhcp::AllocEngine::IterativeAllocator::increasePrefix(). Functionally the

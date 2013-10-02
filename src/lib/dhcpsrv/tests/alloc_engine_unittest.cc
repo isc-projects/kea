@@ -66,8 +66,12 @@ public:
     using AllocEngine::IterativeAllocator;
     using AllocEngine::getAllocator;
 
+    /// @brief IterativeAllocator with internal methods exposed
     class NakedIterativeAllocator: public AllocEngine::IterativeAllocator {
     public:
+
+        /// @brief constructor
+        /// @param type pool types that will be interated
         NakedIterativeAllocator(Lease::Type type)
             :IterativeAllocator(type) {
         }
@@ -146,14 +150,17 @@ public:
         EXPECT_EQ(subnet_->getPreferred(), lease->preferred_lft_);
         EXPECT_EQ(subnet_->getT1(), lease->t1_);
         EXPECT_EQ(subnet_->getT2(), lease->t2_);
-        EXPECT_EQ(exp_pd_len, lease->prefixlen_); // this is IA_NA, not IA_PD
+        EXPECT_EQ(exp_pd_len, lease->prefixlen_);
         EXPECT_TRUE(false == lease->fqdn_fwd_);
         EXPECT_TRUE(false == lease->fqdn_rev_);
         EXPECT_TRUE(*lease->duid_ == *duid_);
         // @todo: check cltt
     }
 
-    /// @brief checks if specified address is increased properly
+    /// @brief Checks if specified address is increased properly
+    ///
+    /// Method uses gtest macros to mark check failure.
+    ///
     /// @param alloc IterativeAllocator that is tested
     /// @param input address to be increased
     /// @param exp_output expected address after increase
@@ -163,6 +170,14 @@ public:
         EXPECT_EQ(exp_output, alloc.increaseAddress(IOAddress(input)).toText());
     }
 
+    /// @brief Checks if increasePrefix() works as expected
+    ///
+    /// Method uses gtest macros to mark check failure.
+    ///
+    /// @param alloc allocator to be tested
+    /// @param input IPv6 prefix (as a string)
+    /// @param prefix_len prefix len
+    /// @param exp_output expected output (string)
     void
     checkPrefixIncrease(NakedAllocEngine::NakedIterativeAllocator& alloc,
                         std::string input, uint8_t prefix_len,
@@ -171,7 +186,7 @@ public:
                   .toText());
     }
 
-    /// checks if the simple allocation can succeed
+    /// @brief Checks if the simple allocation can succeed
     ///
     /// The type of lease is determined by pool type (pool->getType()
     ///
@@ -194,7 +209,7 @@ public:
         }
 
         Lease6Ptr lease;
-        EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLease6(subnet_,
+        EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                         duid_, iaid_, hint, type, false, false,
                         "", fake, CalloutHandlePtr())));
 
@@ -230,6 +245,16 @@ public:
         return (lease);
     }
 
+    /// @brief Checks if the address allocation with a hint that is in range,
+    ///        in pool, but is currently used, can succeed
+    ///
+    /// Method uses gtest macros to mark check failure.
+    ///
+    /// @param type lease type
+    /// @param used_addr address should be preallocated (simulates prior
+    ///        allocation by some other user)
+    /// @param requested address requested by the client
+    /// @param expected_pd_len expected PD len (128 for addresses)
     void allocWithUsedHintTest(Lease::Type type, IOAddress used_addr,
                                IOAddress requested, uint8_t expected_pd_len) {
         boost::scoped_ptr<AllocEngine> engine;
@@ -248,7 +273,7 @@ public:
         // unfortunately it is used already. The same address must not be allocated
         // twice.
         Lease6Ptr lease;
-        EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLease6(subnet_,
+        EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                         duid_, iaid_, requested, type, false, false, "", false,
                         CalloutHandlePtr())));
 
@@ -292,7 +317,7 @@ public:
         // supported lease. Allocation engine should ignore it and carry on
         // with the normal allocation
         Lease6Ptr lease;
-        EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLease6(subnet_,
+        EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                         duid_, iaid_, hint, type, false,
                         false, "", false, CalloutHandlePtr())));
 
@@ -494,13 +519,13 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
 
     // Allocations without subnet are not allowed
     Lease6Ptr lease;
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLease6(
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(
                     Subnet6Ptr(), duid_, iaid_, IOAddress("::"), Lease::TYPE_NA,
                     false, false, "", false, CalloutHandlePtr())));
     ASSERT_FALSE(lease);
 
     // Allocations without DUID are not allowed either
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLease6(subnet_,
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     DuidPtr(), iaid_, IOAddress("::"), Lease::TYPE_NA, false,
                     false, "", false, CalloutHandlePtr())));
     ASSERT_FALSE(lease);
@@ -674,9 +699,10 @@ TEST_F(AllocEngine6Test, IterativeAllocatorPrefixIncrease) {
     checkPrefixIncrease(alloc, "2001:db8:1:abcd::", 60, "2001:db8:1:abdd::");
     checkPrefixIncrease(alloc, "2001:db8:1:abcd::", 56, "2001:db8:1:accd::");
     checkPrefixIncrease(alloc, "2001:db8:1:abcd::", 52, "2001:db8:1:bbcd::");
+
+    // And now let's try something over the top
+    checkPrefixIncrease(alloc, "::", 1, "8000::");
 }
-
-
 
 // This test verifies that the iterative allocator really walks over all addresses
 // in all pools in specified subnet. It also must not pick the same address twice
@@ -749,7 +775,7 @@ TEST_F(AllocEngine6Test, smallPool6) {
     cfg_mgr.addSubnet6(subnet_);
 
     Lease6Ptr lease;
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLease6(subnet_,
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
                     "", false, CalloutHandlePtr())));
 
@@ -798,7 +824,7 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
     // There is just a single address in the pool and allocated it to someone
     // else, so the allocation should fail
     Lease6Ptr lease2;
-    EXPECT_NO_THROW(lease2 = expectOneLease(engine->allocateLease6(subnet_,
+    EXPECT_NO_THROW(lease2 = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
                     "", false, CalloutHandlePtr())));
     EXPECT_FALSE(lease2);
@@ -833,7 +859,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     ASSERT_TRUE(lease->expired());
 
     // CASE 1: Asking for any address
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLease6(subnet_,
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false, "", true,
                     CalloutHandlePtr())));
     // Check that we got that single lease
@@ -844,7 +870,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     checkLease6(lease, Lease::TYPE_NA, 128);
 
     // CASE 2: Asking specifically for this address
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLease6(subnet_,
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, addr, Lease::TYPE_NA, false, false, "",
                     true, CalloutHandlePtr())));
 
@@ -880,7 +906,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // A client comes along, asking specifically for this address
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLease6(subnet_,
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, addr, Lease::TYPE_NA, false, false, "",
                     false, CalloutHandlePtr())));
 
@@ -1595,7 +1621,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
     Lease6Ptr lease;
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLease6(subnet_,
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
                     "", false, callout_handle)));
     // Check that we got a lease
@@ -1660,13 +1686,13 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "lease6_select", lease6_select_different_callout));
 
-    // Normally, dhcpv6_srv would passed the handle when calling allocateLease6,
+    // Normally, dhcpv6_srv would passed the handle when calling allocateLeases6,
     // but in tests we need to create it on our own.
     CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
 
-    // Call allocateLease6. Callouts should be triggered here.
+    // Call allocateLeases6. Callouts should be triggered here.
     Lease6Ptr lease;
-    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLease6(subnet_,
+    EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
                     "", false, callout_handle)));
     // Check that we got a lease

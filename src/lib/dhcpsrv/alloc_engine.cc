@@ -58,7 +58,7 @@ AllocEngine::IterativeAllocator::IterativeAllocator(Lease::Type lease_type)
 }
 
 isc::asiolink::IOAddress
-AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress& addr) const {
+AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress& addr) {
     // Get a buffer holding an address.
     const std::vector<uint8_t>& vec = addr.toBytes();
     // Get the address length.
@@ -87,7 +87,7 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
 
 isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& prefix,
-                                                uint8_t prefix_len) const {
+                                                const uint8_t prefix_len) {
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Prefix operations are for IPv6 only (attempted to "
                   "increase prefix " << prefix.toText() << ")");
@@ -193,7 +193,7 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
                       << " is not Pool6");
         }
         // Get the next prefix
-        next = increasePrefix(last, (pool6)->getLength());
+        next = increasePrefix(last, pool6->getLength());
     }
     if ((*it)->inRange(next)) {
         // the next one is in the pool as well, so we haven't hit pool boundary yet
@@ -293,12 +293,12 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
 }
 
 Lease6Collection
-AllocEngine::allocateLease6(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                            uint32_t iaid, const IOAddress& hint,
-                            Lease::Type type, const bool fwd_dns_update,
-                            const bool rev_dns_update,
-                            const std::string& hostname, bool fake_allocation,
-                            const isc::hooks::CalloutHandlePtr& callout_handle) {
+AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                             uint32_t iaid, const IOAddress& hint,
+                             Lease::Type type, const bool fwd_dns_update,
+                             const bool rev_dns_update,
+                             const std::string& hostname, bool fake_allocation,
+                             const isc::hooks::CalloutHandlePtr& callout_handle) {
 
     try {
         AllocatorPtr allocator = getAllocator(type);
@@ -696,7 +696,7 @@ Lease4Ptr AllocEngine::renewLease4(const SubnetPtr& subnet,
 Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
                                          const Subnet6Ptr& subnet,
                                          const DuidPtr& duid,
-                                         uint32_t iaid,
+                                         const uint32_t iaid,
                                          uint8_t prefix_len,
                                          const bool fwd_dns_update,
                                          const bool rev_dns_update,
@@ -859,15 +859,19 @@ Lease4Ptr AllocEngine::reuseExpiredLease(Lease4Ptr& expired,
 
 Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
                                     const DuidPtr& duid,
-                                    uint32_t iaid,
+                                    const uint32_t iaid,
                                     const IOAddress& addr,
                                     uint8_t prefix_len,
-                                    Lease::Type type,
+                                    const Lease::Type type,
                                     const bool fwd_dns_update,
                                     const bool rev_dns_update,
                                     const std::string& hostname,
                                     const isc::hooks::CalloutHandlePtr& callout_handle,
                                     bool fake_allocation /*= false */ ) {
+
+    if (type != Lease::TYPE_PD) {
+        prefix_len = 128; // non-PD lease types must be always /128
+    }
 
     Lease6Ptr lease(new Lease6(type, addr, duid, iaid,
                                subnet->getPreferred(), subnet->getValid(),

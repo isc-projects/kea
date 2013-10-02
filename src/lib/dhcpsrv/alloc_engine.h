@@ -70,6 +70,14 @@ protected:
         /// again if necessary. The number of times this method is called will
         /// increase as the number of available leases will decrease.
         ///
+        /// This method can also be used to pick a prefix. We should not rename
+        /// it to pickLease(), because at this early stage there is no concept
+        /// of a lease yet. Here it is a matter of selecting one address or
+        /// prefix from the defined pool, without going into details who it is
+        /// for or who uses it. I thought that pickAddress() is less confusing
+        /// than pickResource(), because nobody would immediately know what the
+        /// resource means in this context.
+        ///
         /// @param subnet next address will be returned from pool of that subnet
         /// @param duid Client's DUID
         /// @param hint client's hint
@@ -126,18 +134,19 @@ protected:
                         const isc::asiolink::IOAddress& hint);
     protected:
 
-        /// @brief returns an address increased by one
+        /// @brief Returns an address increased by one
         ///
-        /// This method works for both IPv4 and IPv6 addresses.
+        /// This method works for both IPv4 and IPv6 addresses. For example,
+        /// increase 192.0.2.255 will become 192.0.3.0.
         ///
         /// @param addr address to be increased
         /// @return address increased by one
-        isc::asiolink::IOAddress
-        increaseAddress(const isc::asiolink::IOAddress& addr) const;
+        static isc::asiolink::IOAddress
+        increaseAddress(const isc::asiolink::IOAddress& addr);
 
-        /// @brief returns the next prefix
+        /// @brief Returns the next prefix
         ///
-        /// This method works for IPv6 addresses only. It increase
+        /// This method works for IPv6 addresses only. It increases
         /// specified prefix by a given prefix_len. For example, 2001:db8::
         /// increased by prefix length /32 will become 2001:db9::. This method
         /// is used to iterate over IPv6 prefix pools
@@ -145,9 +154,9 @@ protected:
         /// @param prefix prefix to be increased
         /// @param prefix_len length of the prefix to be increased
         /// @return result prefix
-        isc::asiolink::IOAddress
+        static isc::asiolink::IOAddress
         increasePrefix(const isc::asiolink::IOAddress& prefix,
-                       uint8_t prefix_len) const;
+                       const uint8_t prefix_len);
     };
 
     /// @brief Address/prefix allocator that gets an address based on a hash
@@ -332,11 +341,11 @@ protected:
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
-    allocateLease6(const Subnet6Ptr& subnet, const DuidPtr& duid, uint32_t iaid,
-                   const isc::asiolink::IOAddress& hint, Lease::Type type,
-                   const bool fwd_dns_update, const bool rev_dns_update,
-                   const std::string& hostname, bool fake_allocation,
-                   const isc::hooks::CalloutHandlePtr& callout_handle);
+    allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid, uint32_t iaid,
+                    const isc::asiolink::IOAddress& hint, Lease::Type type,
+                    const bool fwd_dns_update, const bool rev_dns_update,
+                    const std::string& hostname, bool fake_allocation,
+                    const isc::hooks::CalloutHandlePtr& callout_handle);
 
     /// @brief returns allocator for a given pool type
     /// @param type type of pool (V4, IA, TA or PD)
@@ -391,6 +400,7 @@ private:
     /// @param addr an address that was selected and is confirmed to be
     ///        available
     /// @param prefix_len lenght of the prefix (for PD only)
+    ///        should be 128 for other lease types
     /// @param type lease type (IA, TA or PD)
     /// @param fwd_dns_update A boolean value which indicates that server takes
     ///        responsibility for the forward DNS Update for this lease
@@ -407,8 +417,8 @@ private:
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///         became unavailable)
     Lease6Ptr createLease6(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                           uint32_t iaid, const isc::asiolink::IOAddress& addr,
-                           uint8_t prefix_len, Lease::Type type,
+                           const uint32_t iaid, const isc::asiolink::IOAddress& addr,
+                           const uint8_t prefix_len, const Lease::Type type,
                            const bool fwd_dns_update, const bool rev_dns_update,
                            const std::string& hostname,
                            const isc::hooks::CalloutHandlePtr& callout_handle,
@@ -456,6 +466,7 @@ private:
     /// @param duid client's DUID
     /// @param iaid IAID from the IA_NA container the client sent to us
     /// @param prefix_len prefix length (for PD leases)
+    ///        Should be 128 for other lease types
     /// @param fwd_dns_update A boolean value which indicates that server takes
     ///        responsibility for the forward DNS Update for this lease
     ///        (if true).
@@ -470,8 +481,9 @@ private:
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
     Lease6Ptr reuseExpiredLease(Lease6Ptr& expired, const Subnet6Ptr& subnet,
-                                const DuidPtr& duid, uint32_t iaid,
-                                uint8_t prefix_len, const bool fwd_dns_update,
+                                const DuidPtr& duid, const uint32_t iaid,
+                                uint8_t prefix_len,
+                                const bool fwd_dns_update,
                                 const bool rev_dns_update,
                                 const std::string& hostname,
                                 const isc::hooks::CalloutHandlePtr& callout_handle,
