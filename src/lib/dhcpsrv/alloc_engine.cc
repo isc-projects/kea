@@ -89,7 +89,8 @@ isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& prefix,
                                                 uint8_t prefix_len) const {
     if (!prefix.isV6()) {
-        isc_throw(BadValue, "Prefix operations are for IPv6 only");
+        isc_throw(BadValue, "Prefix operations are for IPv6 only (attempted to "
+                  "increase prefix " << prefix.toText() << ")");
     }
 
     // Get a buffer holding an address.
@@ -100,10 +101,19 @@ AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& 
                   << prefix_len);
     }
 
-    // Explanation what happens here: http://www.youtube.com/watch?v=NFQCYpIHLNQ
+    // Brief explanation what happens here:
+    // http://www.youtube.com/watch?v=NFQCYpIHLNQ
+
     uint8_t n_bytes = (prefix_len - 1)/8;
     uint8_t n_bits = 8 - (prefix_len - n_bytes*8);
     uint8_t mask = 1 << n_bits;
+
+    // Longer explanation: n_bytes specifies number of full bytes that are
+    // in-prefix. They can also be used as an offset for the first byte that
+    // is not in prefix. n_bits specifies number of bits on the last byte that
+    // is (often partially) in prefix. For example for a /125 prefix, the values
+    // are 15 and 3, respectively. Mask is a bitmask that has the least
+    // significant bit from the prefix set.
 
     uint8_t packed[V6ADDRESS_LEN];
 
@@ -179,7 +189,8 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
         Pool6Ptr pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
         if (!pool6) {
             // Something is gravely wrong here
-            isc_throw(InvalidParameter, "Wrong type of pool");
+            isc_throw(Unexpected, "Wrong type of pool: " << (*it)->toText()
+                      << " is not Pool6");
         }
         // Get the next prefix
         next = increasePrefix(last, (pool6)->getLength());

@@ -31,6 +31,14 @@ bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
     return (first_.smallerEqual(addr) && addr.smallerEqual(last_));
 }
 
+std::string
+Pool::toText() const {
+    std::stringstream tmp;
+    tmp << "type=" << Lease::typeToText(type_) << ", " << first_.toText()
+        << "-" << last_.toText();
+    return (tmp.str());
+}
+
 Pool4::Pool4(const isc::asiolink::IOAddress& first,
              const isc::asiolink::IOAddress& last)
 :Pool(Lease::TYPE_V4, first, last) {
@@ -131,6 +139,16 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
     // Let's now calculate the last address in defined pool
     last_ = lastAddrInPrefix(prefix, prefix_len);
 }
+
+std::string
+Pool6::toText() const {
+    std::stringstream tmp;
+    tmp << "type=" << Lease::typeToText(type_) << ", " << first_.toText()
+        << "-" << last_.toText() << ", delegated_len="
+        << static_cast<int>(prefix_len_);
+    return (tmp.str());
+}
+
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
