@@ -1,3 +1,8 @@
+6XX.	[func]		tomek
+	libdhcpsrv: Allocation Engine is now able to handle IPv6 prefixes.
+	This will be used in Prefix Delegation.
+	(Trac #3171, git ABCD)
+
 678.	[func]	tmark
 	MySQL backend used by b10-dhcp6 now uses lease type as a 
 	filtering parameter in all IPv6 lease queries.
