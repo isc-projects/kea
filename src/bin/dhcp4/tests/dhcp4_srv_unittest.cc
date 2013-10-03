@@ -390,7 +390,7 @@ public:
         // Technically inPool implies inRange, but let's be on the safe
         // side and check both.
         EXPECT_TRUE(subnet->inRange(rsp->getYiaddr()));
-        EXPECT_TRUE(subnet->inPool(rsp->getYiaddr()));
+        EXPECT_TRUE(subnet->inPool(Lease::TYPE_V4, rsp->getYiaddr()));
 
         // Check lease time
         OptionPtr opt = rsp->getOption(DHO_DHCP_LEASE_TIME);
@@ -1333,7 +1333,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // let's create a lease and put it in the LeaseMgr
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -1444,7 +1444,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -1520,7 +1520,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a RELEASE
     // Generate client-id also duid_
@@ -2696,7 +2696,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     // Advertised address must belong to the second pool (in subnet's range,
     // in dynamic pool)
     EXPECT_TRUE((*subnets)[1]->inRange(addr));
-    EXPECT_TRUE((*subnets)[1]->inPool(addr));
+    EXPECT_TRUE((*subnets)[1]->inPool(Lease::TYPE_V4, addr));
 }
 
 // This test verifies that incoming (positive) REQUEST/Renewing can be handled
@@ -2718,7 +2718,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // let's create a lease and put it in the LeaseMgr
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -2802,7 +2802,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // let's create a lease and put it in the LeaseMgr
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -2866,7 +2866,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -2951,7 +2951,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};

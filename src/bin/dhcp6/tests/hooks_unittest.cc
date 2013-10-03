@@ -1047,7 +1047,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
     // Advertised address must belong to the second pool (in subnet's range,
     // in dynamic pool)
     EXPECT_TRUE((*subnets)[1]->inRange(addr_opt->getAddress()));
-    EXPECT_TRUE((*subnets)[1]->inPool(addr_opt->getAddress()));
+    EXPECT_TRUE((*subnets)[1]->inPool(Lease::TYPE_NA, addr_opt->getAddress()));
 }
 
 // This test verifies that incoming (positive) RENEW can be handled properly,
@@ -1066,7 +1066,7 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_renew) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
@@ -1163,7 +1163,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdate_lease6_renew) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
@@ -1254,7 +1254,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
@@ -1330,7 +1330,7 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_release) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
@@ -1411,7 +1411,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
