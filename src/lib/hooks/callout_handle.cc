@@ -30,7 +30,8 @@ namespace hooks {
 CalloutHandle::CalloutHandle(const boost::shared_ptr<CalloutManager>& manager,
                     const boost::shared_ptr<LibraryManagerCollection>& lmcoll)
     : lm_collection_(lmcoll), arguments_(), context_collection_(),
-      manager_(manager), skip_(false) {
+      manager_(manager), server_hooks_(ServerHooks::getServerHooks()),
+      skip_(false) {
 
     // Call the "context_create" hook.  We should be OK doing this - although
     // the constructor has not finished running, all the member variables
@@ -148,7 +149,7 @@ CalloutHandle::getHookName() const {
     // ... and look up the hook.
     string hook = "";
     try {
-        hook = ServerHooks::getServerHooks().getName(index);
+        hook = server_hooks_.getName(index);
     } catch (const NoSuchHook&) {
         // Hook index is invalid, so this methods probably called from outside
         // a callout being executed via a call to CalloutManager::callCallouts.

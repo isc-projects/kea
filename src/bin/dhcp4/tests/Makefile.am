@@ -40,25 +40,35 @@ if USE_CLANGPP
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
-if USE_STATIC_LINK
-AM_LDFLAGS = -static
-endif
-
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
-# Build shared libraries for testing.
+# Build shared libraries for testing. The libtool way to create a shared library
+# is to specify "-avoid-version -export-dynamic -module" in the library LDFLAGS
+# (see http://www.gnu.org/software/libtool/manual/html_node/Link-mode.html).
+# Use of these switches will guarantee that the .so files are created in the
+# .libs folder and they can be dlopened.
+# Note that the shared libraries with callouts should not be used together with
+# the --enable-static-link option. With this option, the bind10 libraries are
+# statically linked with the program and if the callout invokes the methods
+# which belong to these libraries, the library with the callout will get its
+# own copy of the static objects (e.g. logger, ServerHooks) and that will lead
+# to unexpected errors. For this reason, the --enable-static-link option is
+# ignored for unit tests built here.
+
 lib_LTLIBRARIES = libco1.la libco2.la
 
 libco1_la_SOURCES  = callout_library_1.cc callout_library_common.h
 libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco1_la_CPPFLAGS = $(AM_CPPFLAGS)
+libco1_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 libco2_la_SOURCES  = callout_library_2.cc callout_library_common.h
 libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco2_la_CPPFLAGS = $(AM_CPPFLAGS)
+libco2_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 TESTS += dhcp4_unittests
 
