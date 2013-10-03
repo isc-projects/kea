@@ -319,14 +319,6 @@ public:
     /// @return a collection of all pools
     const PoolCollection& getPools(Lease::Type type) const;
 
-    /// @brief Returns all pools (variable variant)
-    ///
-    /// The reference is only valid as long as the object that returned it.
-    ///
-    /// @param type lease type to be set
-    /// @return a collection of all pools
-    PoolCollection& getPools(Lease::Type type);
-
     /// @brief Sets name of the network interface for directly attached networks
     ///
     /// @param iface_name name of the interface
@@ -344,6 +336,14 @@ public:
     virtual std::string toText() const;
 
 protected:
+    /// @brief Returns all pools (non-const variant)
+    ///
+    /// The reference is only valid as long as the object that returned it.
+    ///
+    /// @param type lease type to be set
+    /// @return a collection of all pools
+    PoolCollection& getPoolsWritable(Lease::Type type);
+
     /// @brief Protected constructor
     //
     /// By making the constructor protected, we make sure that noone will

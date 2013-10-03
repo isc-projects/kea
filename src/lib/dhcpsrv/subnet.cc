@@ -169,7 +169,7 @@ const PoolCollection& Subnet::getPools(Lease::Type type) const {
     }
 }
 
-PoolCollection& Subnet::getPools(Lease::Type type) {
+PoolCollection& Subnet::getPoolsWritable(Lease::Type type) {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
 
@@ -230,12 +230,12 @@ Subnet::addPool(const PoolPtr& pool) {
     checkType(pool->getType());
 
     // Add the pool to the appropriate pools collection
-    getPools(pool->getType()).push_back(pool);
+    getPoolsWritable(pool->getType()).push_back(pool);
 }
 
 void
 Subnet::delPools(Lease::Type type) {
-    getPools(type).clear();
+    getPoolsWritable(type).clear();
 }
 
 void

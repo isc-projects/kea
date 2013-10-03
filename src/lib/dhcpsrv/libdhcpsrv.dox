@@ -99,14 +99,16 @@ returning clients are almost guaranteed to get a different address. Another
 drawback is that with almost depleted pools it is increasingly difficult to
 "guess" an address that is free. This allocator is currently not implemented.
 
-@subsection allocEnginePD Prefix Delegation support in AllocEngine
+@subsection allocEngineTypes Different lease types support
 
 Allocation Engine has been extended to support different types of leases. Four
 types are supported: TYPE_V4 (IPv4 addresses), TYPE_NA (normal IPv6 addresses),
 TYPE_TA (temporary IPv6 addresses) and TYPE_PD (delegated prefixes). Support for
 TYPE_TA is partial. Some routines are able to handle it, while other are
 not. The major missing piece is the RandomAllocator, so there is no way to randomly
-generate an address. This defeats the purpose of using temporary addresses.
+generate an address. This defeats the purpose of using temporary addresses for now.
+
+@subsection allocEnginePD Prefix Delegation support in AllocEngine
 
 The Allocation Engine supports allocation of the IPv6 addresses and prefixes.
 For a prefix pool, the iterative allocator "walks over"
