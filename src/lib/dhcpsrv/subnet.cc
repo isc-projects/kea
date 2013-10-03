@@ -164,38 +164,42 @@ const PoolCollection& Subnet::getPools(Lease::Type type) const {
     case Lease::TYPE_PD:
         return (pools_pd_);
     default:
-        isc_throw(BadValue, "Unsupported pool type: " << type);
+        isc_throw(BadValue, "Unsupported pool type: "
+                  << static_cast<int>(type));
     }
 }
 
-PoolPtr Subnet::getPool(Lease::Type type, isc::asiolink::IOAddress hint) {
+PoolCollection& Subnet::getPoolsWritable(Lease::Type type) {
     // check if the type is valid (and throw if it isn't)
     checkType(type);
-
-    PoolCollection* pools = NULL;
 
     switch (type) {
     case Lease::TYPE_V4:
     case Lease::TYPE_NA:
-        pools = &pools_;
-        break;
+        return (pools_);
     case Lease::TYPE_TA:
-        pools = &pools_ta_;
-        break;
+        return (pools_ta_);
     case Lease::TYPE_PD:
-        pools = &pools_pd_;
-        break;
+        return (pools_pd_);
     default:
-        isc_throw(BadValue, "Failed to select pools. Unknown pool type: "
-                  << type);
+        isc_throw(BadValue, "Invalid pool type specified: "
+                  << static_cast<int>(type));
     }
+}
+
+const PoolPtr Subnet::getPool(Lease::Type type, const isc::asiolink::IOAddress& hint,
+                        bool anypool /* true */) const {
+    // check if the type is valid (and throw if it isn't)
+    checkType(type);
+
+    const PoolCollection& pools = getPools(type);
 
     PoolPtr candidate;
-    for (PoolCollection::const_iterator pool = pools->begin();
-         pool != pools->end(); ++pool) {
+    for (PoolCollection::const_iterator pool = pools.begin();
+         pool != pools.end(); ++pool) {
 
         // if we won't find anything better, then let's just use the first pool
-        if (!candidate) {
+        if (anypool && !candidate) {
             candidate = *pool;
         }
 
@@ -225,21 +229,13 @@ Subnet::addPool(const PoolPtr& pool) {
     // check if the type is valid (and throw if it isn't)
     checkType(pool->getType());
 
-    switch (pool->getType()) {
-    case Lease::TYPE_V4:
-    case Lease::TYPE_NA:
-        pools_.push_back(pool);
-        return;
-    case Lease::TYPE_TA:
-        pools_ta_.push_back(pool);
-        return;
-    case Lease::TYPE_PD:
-        pools_pd_.push_back(pool);
-        return;
-    default:
-        isc_throw(BadValue, "Invalid pool type specified: "
-                  << static_cast<int>(pool->getType()));
-    }
+    // Add the pool to the appropriate pools collection
+    getPoolsWritable(pool->getType()).push_back(pool);
+}
+
+void
+Subnet::delPools(Lease::Type type) {
+    getPoolsWritable(type).clear();
 }
 
 void
@@ -264,15 +260,17 @@ Subnet4::validateOption(const OptionPtr& option) const {
 }
 
 bool
-Subnet::inPool(const isc::asiolink::IOAddress& addr) const {
+Subnet::inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const {
 
     // Let's start with checking if it even belongs to that subnet.
     if (!inRange(addr)) {
         return (false);
     }
 
-    for (PoolCollection::const_iterator pool = pools_.begin();
-         pool != pools_.end(); ++pool) {
+    const PoolCollection& pools = getPools(type);
+
+    for (PoolCollection::const_iterator pool = pools.begin();
+         pool != pools.end(); ++pool) {
         if ((*pool)->inRange(addr)) {
             return (true);
         }

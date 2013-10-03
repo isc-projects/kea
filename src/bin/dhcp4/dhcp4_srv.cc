@@ -718,11 +718,11 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // be inserted into the LeaseMgr as well.
     // @todo pass the actual FQDN data.
     Lease4Ptr old_lease;
-    Lease4Ptr lease = alloc_engine_->allocateAddress4(subnet, client_id, hwaddr,
-                                                      hint, false, false, "",
-                                                      fake_allocation,
-                                                      callout_handle,
-                                                      old_lease);
+    Lease4Ptr lease = alloc_engine_->allocateLease4(subnet, client_id, hwaddr,
+                                                    hint, false, false, "",
+                                                    fake_allocation,
+                                                    callout_handle,
+                                                    old_lease);
 
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to

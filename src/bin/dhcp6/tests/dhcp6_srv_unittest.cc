@@ -265,7 +265,7 @@ public:
 
         // Check that we have got the address we requested.
         checkIAAddr(addr, IOAddress("2001:db8:1:1::dead:beef"),
-                    subnet_->getPreferred(),
+                    Lease::TYPE_NA, subnet_->getPreferred(),
                     subnet_->getValid());
 
         if (msg_type != DHCPV6_SOLICIT) {
@@ -663,7 +663,8 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     ASSERT_TRUE(addr);
 
     // Check that the assigned address is indeed from the configured pool
-    checkIAAddr(addr, addr->getAddress(), subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA, subnet_->getPreferred(),
+                subnet_->getValid());
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -695,7 +696,7 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
 
     // with a valid hint
     IOAddress hint("2001:db8:1:1::dead:beef");
-    ASSERT_TRUE(subnet_->inPool(hint));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, hint));
     OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR, hint, 300, 500));
     ia->addOption(hint_opt);
     sol->addOption(ia);
@@ -717,7 +718,8 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     ASSERT_TRUE(addr);
 
     // check that we've got the address we requested
-    checkIAAddr(addr, hint, subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr, hint, Lease::TYPE_NA, subnet_->getPreferred(),
+                subnet_->getValid());
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -747,7 +749,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     boost::shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
     IOAddress hint("2001:db8:1::cafe:babe");
-    ASSERT_FALSE(subnet_->inPool(hint));
+    ASSERT_FALSE(subnet_->inPool(Lease::TYPE_NA, hint));
     OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR, hint, 300, 500));
     ia->addOption(hint_opt);
     sol->addOption(ia);
@@ -766,8 +768,9 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     ASSERT_TRUE(addr);
 
     // Check that the assigned address is indeed from the configured pool
-    checkIAAddr(addr, addr->getAddress(), subnet_->getPreferred(), subnet_->getValid());
-    EXPECT_TRUE(subnet_->inPool(addr->getAddress()));
+    checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA, subnet_->getPreferred(),
+                subnet_->getValid());
+    EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr->getAddress()));
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -830,9 +833,12 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     ASSERT_TRUE(addr3);
 
     // Check that the assigned address is indeed from the configured pool
-    checkIAAddr(addr1, addr1->getAddress(), subnet_->getPreferred(), subnet_->getValid());
-    checkIAAddr(addr2, addr2->getAddress(), subnet_->getPreferred(), subnet_->getValid());
-    checkIAAddr(addr3, addr3->getAddress(), subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr1, addr1->getAddress(), Lease::TYPE_NA,
+                subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr2, addr2->getAddress(), Lease::TYPE_NA,
+                subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr3, addr3->getAddress(), Lease::TYPE_NA,
+                subnet_->getPreferred(), subnet_->getValid());
 
     // check DUIDs
     checkServerId(reply1, srv.getServerID());
@@ -876,7 +882,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
 
     // with a valid hint
     IOAddress hint("2001:db8:1:1::dead:beef");
-    ASSERT_TRUE(subnet_->inPool(hint));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, hint));
     OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR, hint, 300, 500));
     ia->addOption(hint_opt);
     req->addOption(ia);
@@ -896,12 +902,14 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     ASSERT_TRUE(tmp);
 
     // check that IA_NA was returned and that there's an address included
-    boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234, subnet_->getT1(),
-                                                subnet_->getT2());
+    boost::shared_ptr<Option6IAAddr> addr = checkIA_NA(reply, 234,
+                                                       subnet_->getT1(),
+                                                       subnet_->getT2());
     ASSERT_TRUE(addr);
 
     // check that we've got the address we requested
-    checkIAAddr(addr, hint, subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr, hint, Lease::TYPE_NA, subnet_->getPreferred(),
+                subnet_->getValid());
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -974,9 +982,12 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     ASSERT_TRUE(addr3);
 
     // Check that the assigned address is indeed from the configured pool
-    checkIAAddr(addr1, addr1->getAddress(), subnet_->getPreferred(), subnet_->getValid());
-    checkIAAddr(addr2, addr2->getAddress(), subnet_->getPreferred(), subnet_->getValid());
-    checkIAAddr(addr3, addr3->getAddress(), subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr1, addr1->getAddress(), Lease::TYPE_NA,
+                subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr2, addr2->getAddress(), Lease::TYPE_NA,
+                subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr3, addr3->getAddress(), Lease::TYPE_NA,
+                subnet_->getPreferred(), subnet_->getValid());
 
     // check DUIDs
     checkServerId(reply1, srv.getServerID());
@@ -1014,7 +1025,7 @@ TEST_F(Dhcpv6SrvTest, RenewBasic) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
@@ -1065,7 +1076,8 @@ TEST_F(Dhcpv6SrvTest, RenewBasic) {
     ASSERT_TRUE(addr_opt);
 
     // Check that we've got the address we requested
-    checkIAAddr(addr_opt, addr, subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr_opt, addr, Lease::TYPE_NA, subnet_->getPreferred(),
+                subnet_->getValid());
 
     // Check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -1111,7 +1123,7 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     const uint32_t bogus_iaid = 456;
 
     // Quick sanity check that the address we're about to use is ok
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // GenerateClientId() also sets duid_
     OptionPtr clientid = generateClientId();
@@ -1218,7 +1230,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
@@ -1299,7 +1311,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     const uint32_t bogus_iaid = 456;
 
     // Quick sanity check that the address we're about to use is ok
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // GenerateClientId() also sets duid_
     OptionPtr clientid = generateClientId();

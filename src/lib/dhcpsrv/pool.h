@@ -66,6 +66,11 @@ public:
         return (type_);
     }
 
+    /// @brief returns textual representation of the pool
+    ///
+    /// @return textual representation
+    virtual std::string toText() const;
+
     /// @brief virtual destructor
     ///
     /// We need Pool to be a polymorphic class, so we could dynamic cast
@@ -203,6 +208,11 @@ public:
     uint8_t getLength() {
         return (prefix_len_);
     }
+
+    /// @brief returns textual representation of the pool
+    ///
+    /// @return textual representation
+    virtual std::string toText() const;
 
 private:
     /// @brief Defines prefix length (for TYPE_PD only)

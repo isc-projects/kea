@@ -192,22 +192,23 @@ public:
     /// is not always true. For the given example, 2001::1234:abcd would return
     /// true for inSubnet(), but false for inPool() check.
     ///
+    /// @param type type of pools to iterate over
     /// @param addr this address will be checked if it belongs to any pools in
     ///        that subnet
     /// @return true if the address is in any of the pools
-    bool inPool(const isc::asiolink::IOAddress& addr) const;
+    bool inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief return valid-lifetime for addresses in that prefix
+    /// @brief Return valid-lifetime for addresses in that prefix
     Triplet<uint32_t> getValid() const {
         return (valid_);
     }
 
-    /// @brief returns T1 (renew timer), expressed in seconds
+    /// @brief Returns T1 (renew timer), expressed in seconds
     Triplet<uint32_t> getT1() const {
         return (t1_);
     }
 
-    /// @brief returns T2 (rebind timer), expressed in seconds
+    /// @brief Returns T2 (rebind timer), expressed in seconds
     Triplet<uint32_t> getT2() const {
         return (t2_);
     }
@@ -257,11 +258,11 @@ public:
     void setLastAllocated(Lease::Type type,
                           const isc::asiolink::IOAddress& addr);
 
-    /// @brief returns unique ID for that subnet
+    /// @brief Returns unique ID for that subnet
     /// @return unique ID for that subnet
     SubnetID getID() const { return (id_); }
 
-    /// @brief returns subnet parameters (prefix and prefix length)
+    /// @brief Returns subnet parameters (prefix and prefix length)
     ///
     /// @return (prefix, prefix length) pair
     std::pair<isc::asiolink::IOAddress, uint8_t> get() const {
@@ -272,15 +273,29 @@ public:
     /// @param pool pool to be added
     void addPool(const PoolPtr& pool);
 
+
+    /// @brief Deletes all pools of specified type
+    ///
+    /// This method is used for testing purposes only
+    /// @param type type of pools to be deleted
+    void delPools(Lease::Type type);
+
     /// @brief Returns a pool that specified address belongs to
     ///
     /// If there is no pool that the address belongs to (hint is invalid), other
     /// pool of specified type will be returned.
     ///
+    /// With anypool set to true, this is means give me a pool, preferably
+    /// the one that addr belongs to. With anypool set to false, it means
+    /// give me a pool that addr belongs to (or NULL if here is no such pool)
+    ///
     /// @param type pool type that the pool is looked for
     /// @param addr address that the returned pool should cover (optional)
+    /// @param anypool other pool may be returned as well, not only the one
+    ///        that addr belongs to
     /// @return found pool (or NULL)
-    PoolPtr getPool(Lease::Type type, isc::asiolink::IOAddress addr);
+    const PoolPtr getPool(Lease::Type type, const isc::asiolink::IOAddress& addr,
+                          bool anypool = true) const;
 
     /// @brief Returns a pool without any address specified
     ///
@@ -296,7 +311,7 @@ public:
     /// and 0.0.0.0 for Subnet4)
     virtual isc::asiolink::IOAddress default_pool() const = 0;
 
-    /// @brief returns all pools
+    /// @brief Returns all pools (const variant)
     ///
     /// The reference is only valid as long as the object that returned it.
     ///
@@ -304,24 +319,32 @@ public:
     /// @return a collection of all pools
     const PoolCollection& getPools(Lease::Type type) const;
 
-    /// @brief sets name of the network interface for directly attached networks
+    /// @brief Sets name of the network interface for directly attached networks
     ///
     /// @param iface_name name of the interface
     void setIface(const std::string& iface_name);
 
-    /// @brief network interface name used to reach subnet (or "" for remote
+    /// @brief Network interface name used to reach subnet (or "" for remote
     /// subnets)
     /// @return network interface name for directly attached subnets or ""
     std::string getIface() const;
 
-    /// @brief returns textual representation of the subnet (e.g.
+    /// @brief Returns textual representation of the subnet (e.g.
     /// "2001:db8::/64")
     ///
     /// @return textual representation
     virtual std::string toText() const;
 
 protected:
-    /// @brief protected constructor
+    /// @brief Returns all pools (non-const variant)
+    ///
+    /// The reference is only valid as long as the object that returned it.
+    ///
+    /// @param type lease type to be set
+    /// @return a collection of all pools
+    PoolCollection& getPoolsWritable(Lease::Type type);
+
+    /// @brief Protected constructor
     //
     /// By making the constructor protected, we make sure that noone will
     /// ever instantiate that class. Pool4 and Pool6 should be used instead.

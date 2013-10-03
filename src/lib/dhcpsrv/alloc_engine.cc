@@ -85,11 +85,70 @@ AllocEngine::IterativeAllocator::increaseAddress(const isc::asiolink::IOAddress&
     return (IOAddress::fromBytes(addr.getFamily(), packed));
 }
 
+isc::asiolink::IOAddress
+AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& prefix,
+                                                const uint8_t prefix_len) {
+    if (!prefix.isV6()) {
+        isc_throw(BadValue, "Prefix operations are for IPv6 only (attempted to "
+                  "increase prefix " << prefix.toText() << ")");
+    }
+
+    // Get a buffer holding an address.
+    const std::vector<uint8_t>& vec = prefix.toBytes();
+
+    if (prefix_len < 1 || prefix_len > 128) {
+        isc_throw(BadValue, "Cannot increase prefix: invalid prefix length: "
+                  << prefix_len);
+    }
+
+    // Brief explanation what happens here:
+    // http://www.youtube.com/watch?v=NFQCYpIHLNQ
+
+    uint8_t n_bytes = (prefix_len - 1)/8;
+    uint8_t n_bits = 8 - (prefix_len - n_bytes*8);
+    uint8_t mask = 1 << n_bits;
+
+    // Longer explanation: n_bytes specifies number of full bytes that are
+    // in-prefix. They can also be used as an offset for the first byte that
+    // is not in prefix. n_bits specifies number of bits on the last byte that
+    // is (often partially) in prefix. For example for a /125 prefix, the values
+    // are 15 and 3, respectively. Mask is a bitmask that has the least
+    // significant bit from the prefix set.
+
+    uint8_t packed[V6ADDRESS_LEN];
+
+    // Copy the address. It must be V6, but we already checked that.
+    std::memcpy(packed, &vec[0], V6ADDRESS_LEN);
+
+    // Can we safely increase only the last byte in prefix without overflow?
+    if (packed[n_bytes] + uint16_t(mask) < 256u) {
+        packed[n_bytes] += mask;
+        return (IOAddress::fromBytes(AF_INET6, packed));
+    }
+
+    // Overflow (done on uint8_t, but the sum is greater than 255)
+    packed[n_bytes] += mask;
+
+    // Deal with the overflow. Start increasing the least significant byte
+    for (int i = n_bytes - 1; i >= 0; --i) {
+        ++packed[i];
+        // If we haven't overflowed (0xff->0x0) the next byte, then we are done
+        if (packed[i] != 0) {
+            break;
+        }
+    }
+
+    return (IOAddress::fromBytes(AF_INET6, packed));
+}
+
 
 isc::asiolink::IOAddress
 AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
                                              const DuidPtr&,
                                              const IOAddress&) {
+
+    // Is this prefix allocation?
+    bool prefix = pool_type_ == Lease::TYPE_PD;
 
     // Let's get the last allocated address. It is usually set correctly,
     // but there are times when it won't be (like after removing a pool or
@@ -123,7 +182,19 @@ AllocEngine::IterativeAllocator::pickAddress(const SubnetPtr& subnet,
 
     // Ok, we have a pool that the last address belonged to, let's use it.
 
-    IOAddress next = increaseAddress(last); // basically addr++
+    IOAddress next("::");
+    if (!prefix) {
+        next = increaseAddress(last); // basically addr++
+    } else {
+        Pool6Ptr pool6 = boost::dynamic_pointer_cast<Pool6>(*it);
+        if (!pool6) {
+            // Something is gravely wrong here
+            isc_throw(Unexpected, "Wrong type of pool: " << (*it)->toText()
+                      << " is not Pool6");
+        }
+        // Get the next prefix
+        next = increasePrefix(last, pool6->getLength());
+    }
     if ((*it)->inRange(next)) {
         // the next one is in the pool as well, so we haven't hit pool boundary yet
         subnet->setLastAllocated(pool_type_, next);
@@ -222,16 +293,12 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
 }
 
 Lease6Collection
-AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
-                              const DuidPtr& duid,
-                              uint32_t iaid,
-                              const IOAddress& hint,
-                              Lease::Type type,
-                              const bool fwd_dns_update,
-                              const bool rev_dns_update,
-                              const std::string& hostname,
-                              bool fake_allocation,
-                              const isc::hooks::CalloutHandlePtr& callout_handle) {
+AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                             uint32_t iaid, const IOAddress& hint,
+                             Lease::Type type, const bool fwd_dns_update,
+                             const bool rev_dns_update,
+                             const std::string& hostname, bool fake_allocation,
+                             const isc::hooks::CalloutHandlePtr& callout_handle) {
 
     try {
         AllocatorPtr allocator = getAllocator(type);
@@ -261,8 +328,10 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
         }
 
         // check if the hint is in pool and is available
-        if (subnet->inPool(hint)) {
+        // This is equivalent of subnet->inPool(hint), but returns the pool
+        Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(subnet->getPool(type, hint, false));
 
+        if (pool) {
             /// @todo: We support only one hint for now
             Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(type, hint);
             if (!lease) {
@@ -270,10 +339,9 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                 /// implemented
 
                 // the hint is valid and not currently used, let's create a lease for it
-                /// @todo: We support only one lease per ia for now
-                lease = createLease6(subnet, duid, iaid, hint, type, fwd_dns_update,
-                                     rev_dns_update, hostname, callout_handle,
-                                     fake_allocation);
+                lease = createLease6(subnet, duid, iaid, hint, pool->getLength(),
+                                     type, fwd_dns_update, rev_dns_update,
+                                     hostname, callout_handle, fake_allocation);
 
                 // It can happen that the lease allocation failed (we could have lost
                 // the race condition. That means that the hint is lo longer usable and
@@ -288,6 +356,7 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
                 if (lease->expired()) {
                     /// We found a lease and it is expired, so we can reuse it
                     lease = reuseExpiredLease(lease, subnet, duid, iaid,
+                                              pool->getLength(),
                                               fwd_dns_update, rev_dns_update,
                                               hostname, callout_handle,
                                               fake_allocation);
@@ -324,13 +393,24 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             /// @todo: check if the address is reserved once we have host support
             /// implemented
 
+            // The first step is to find out prefix length. It is 128 for
+            // non-PD leases.
+            uint8_t prefix_len = 128;
+            if (type == Lease::TYPE_PD) {
+                Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(
+                    subnet->getPool(type, candidate, false));
+                prefix_len = pool->getLength();
+            }
+
             Lease6Ptr existing = LeaseMgrFactory::instance().getLease6(type,
                                  candidate);
             if (!existing) {
+
                 // there's no existing lease for selected candidate, so it is
                 // free. Let's allocate it.
+
                 Lease6Ptr lease = createLease6(subnet, duid, iaid, candidate,
-                                               type, fwd_dns_update,
+                                               prefix_len, type, fwd_dns_update,
                                                rev_dns_update, hostname,
                                                callout_handle, fake_allocation);
                 if (lease) {
@@ -345,9 +425,9 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
             } else {
                 if (existing->expired()) {
                     existing = reuseExpiredLease(existing, subnet, duid, iaid,
-                                                 fwd_dns_update, rev_dns_update,
-                                                 hostname, callout_handle,
-                                                 fake_allocation);
+                                                 prefix_len, fwd_dns_update,
+                                                 rev_dns_update, hostname,
+                                                 callout_handle, fake_allocation);
                     Lease6Collection collection;
                     collection.push_back(existing);
                     return (collection);
@@ -372,16 +452,12 @@ AllocEngine::allocateAddress6(const Subnet6Ptr& subnet,
 }
 
 Lease4Ptr
-AllocEngine::allocateAddress4(const SubnetPtr& subnet,
-                              const ClientIdPtr& clientid,
-                              const HWAddrPtr& hwaddr,
-                              const IOAddress& hint,
-                              const bool fwd_dns_update,
-                              const bool rev_dns_update,
-                              const std::string& hostname,
-                              bool fake_allocation,
-                              const isc::hooks::CalloutHandlePtr& callout_handle,
-                              Lease4Ptr& old_lease) {
+AllocEngine::allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid,
+                            const HWAddrPtr& hwaddr, const IOAddress& hint,
+                            const bool fwd_dns_update, const bool rev_dns_update,
+                            const std::string& hostname, bool fake_allocation,
+                            const isc::hooks::CalloutHandlePtr& callout_handle,
+                            Lease4Ptr& old_lease) {
 
     // The NULL pointer indicates that the old lease didn't exist. It may
     // be later set to non NULL value if existing lease is found in the
@@ -444,7 +520,7 @@ AllocEngine::allocateAddress4(const SubnetPtr& subnet,
         }
 
         // check if the hint is in pool and is available
-        if (subnet->inPool(hint)) {
+        if (subnet->inPool(Lease::TYPE_V4, hint)) {
             existing = LeaseMgrFactory::instance().getLease4(hint);
             if (!existing) {
                 /// @todo: Check if the hint is reserved once we have host support
@@ -620,7 +696,8 @@ Lease4Ptr AllocEngine::renewLease4(const SubnetPtr& subnet,
 Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
                                          const Subnet6Ptr& subnet,
                                          const DuidPtr& duid,
-                                         uint32_t iaid,
+                                         const uint32_t iaid,
+                                         uint8_t prefix_len,
                                          const bool fwd_dns_update,
                                          const bool rev_dns_update,
                                          const std::string& hostname,
@@ -629,6 +706,10 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
 
     if (!expired->expired()) {
         isc_throw(BadValue, "Attempt to recycle lease that is still valid");
+    }
+
+    if (expired->type_ != Lease::TYPE_PD) {
+        prefix_len = 128; // non-PD lease types must be always /128
     }
 
     // address, lease type and prefixlen (0) stay the same
@@ -644,6 +725,7 @@ Lease6Ptr AllocEngine::reuseExpiredLease(Lease6Ptr& expired,
     expired->hostname_ = hostname;
     expired->fqdn_fwd_ = fwd_dns_update;
     expired->fqdn_rev_ = rev_dns_update;
+    expired->prefixlen_ = prefix_len;
 
     /// @todo: log here that the lease was reused (there's ticket #2524 for
     /// logging in libdhcpsrv)
@@ -777,18 +859,24 @@ Lease4Ptr AllocEngine::reuseExpiredLease(Lease4Ptr& expired,
 
 Lease6Ptr AllocEngine::createLease6(const Subnet6Ptr& subnet,
                                     const DuidPtr& duid,
-                                    uint32_t iaid,
+                                    const uint32_t iaid,
                                     const IOAddress& addr,
-                                    Lease::Type type,
+                                    uint8_t prefix_len,
+                                    const Lease::Type type,
                                     const bool fwd_dns_update,
                                     const bool rev_dns_update,
                                     const std::string& hostname,
                                     const isc::hooks::CalloutHandlePtr& callout_handle,
                                     bool fake_allocation /*= false */ ) {
 
+    if (type != Lease::TYPE_PD) {
+        prefix_len = 128; // non-PD lease types must be always /128
+    }
+
     Lease6Ptr lease(new Lease6(type, addr, duid, iaid,
                                subnet->getPreferred(), subnet->getValid(),
-                               subnet->getT1(), subnet->getT2(), subnet->getID()));
+                               subnet->getT1(), subnet->getT2(), subnet->getID(),
+                               prefix_len));
 
     lease->fqdn_fwd_ = fwd_dns_update;
     lease->fqdn_rev_ = rev_dns_update;
