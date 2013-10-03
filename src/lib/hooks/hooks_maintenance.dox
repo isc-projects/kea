@@ -271,4 +271,112 @@
  this may mean the server suspending all processing of incoming requests
  until all currently executing requests have completed and data object
  destroyed, reloading the libraries, then resuming processing.
+
+ @subsection hooksmgStaticLinking Hooks and Statically-Linked BIND 10
+
+ BIND 10 has the configuration option to allow static linking.  What this
+ means is that it links against the static BIND 10 libraries and not
+ the shareable ones - although it links against the shareable system
+ libraries like "libc" and "libstdc++" and well as the sharable libraries
+ for third-party packages such as log4cplus and MySql.
+
+ Static linking poses a problem for dynamically-loaded hooks libraries
+ as some of the code in them - in particular the hooks framework and
+ the logging code - depend on global objects created within the BIND
+ 10 libraries.  In the normal course of events (BIND 10 linked against
+ shared libraries), when BIND 10 is run and the operating system loads
+ a BIND 10 shared library containing a global object, address space
+ is assigned for it.  When the hooks framework loads a user-library
+ linked against the same BIND 10 shared library, the operating system
+ recognises that the library is already loaded (and initialized) and
+ uses its definition of the global object.  Thus both the code in the
+ BIND 10 image and the code in the user-written shared library
+ reference the same object.
+
+ If BIND 10 is statically linked, the linker allocates address space
+ in the BIND 10 image for the global object and does not include any
+ reference to the shared library containing it.  When BIND 10 now loads
+ the user-written shared library - and so loads the BIND 10 library code
+ containing the global object - the operating system does not know that
+ the object already exists.  Instead, it allocates new address space.
+ The version of BIND 10 in memory therefore has two copies of the object:
+ one referenced by code in the BIND 10 image, and one referenced by code
+ in the user-written hooks library.  This causes problems - information
+ put in one copy is not available to the other.
+
+ Particular problems were encountered with global objects the hooks library
+ and in the logging library, so some code to alleviate the problem has been
+ included.
+
+ The issue in the hooks library is the singleton @ref
+ isc::hooks::ServerHooks object, used by the user-written hooks library
+ if it attempts to register or deregister callouts.  The contents of the
+ singleton - the names of the hook points and their index - are set by
+ the relevant BIND 10 server; this information is not available in the
+ singleton created in the user's hooks library.
+
+ Within the code users by the user's hooks library, the ServerHooks
+ object is used by @ref isc::hooks::CalloutHandle and @ref
+ isc::hooks::CalloutManager objects.  Both these objects are passed to the
+ hooks library code when a callout is called: the former directly through
+ the callout argument list, the latter indirectly as a pointer to it is
+ stored in the CalloutHandle.  This allows a solution to the problem:
+ instead of accessing the singleton via ServerHooks::getServerHooks(),
+ the constructors of these objects store a reference to the singleton
+ ServerHooks when they are created and use that reference to access
+ ServerHooks data.  Since both CalloutHandle and CalloutManager are
+ created in the statically-linked BIND 10 server, use of the reference
+ means that it is the singleton within the server - and not the one
+ within the user's hooks library - that is referenced.
+
+ The solution of the logging problem is not so straightforward.  Within
+ BIND 10, there are two logging components, the BIND 10 logging framework
+ and the log4cplus libraries.  Owing to static linking, there are two
+ instances of the former; but as static linking uses shared libraries of
+ third-party products, there is one instance of the latter.  What further
+ complicates matters is that initialization of the logging framework is
+ in two parts: static initialization and run-time initialization.
+
+ The logging initialization comprises the following:
+
+ -# Static initialization of the log4cplus global variables.
+ -# Static initialization of messages in the various BIND 10 libraries.
+ -# Static initialization of logging framework.
+ -# Run-time initialization of the logging framework.
+ -# Run-time initialization of log4cplus
+
+ As both the BIND 10 server and the user-written hooks libraries use the
+ log4cplus shared library, item 1 - the static initialization of the log4cplus
+ global variables is performed once.
+
+ The next two tasks - static initialization of the messages in the BIND
+ 10 libraries and the static initialization of the logging framework -
+ are performed twice, once in the context of the BIND 10 server and
+ once in the context of the hooks library.  For this reason, run-time
+ initialization of the logging framework needs to be performed twice,
+ once in the context of the BIND 10 server and once in the context of the
+ user-written hooks library.  However, the standard logging framework
+ initialization code also performs the last task, initialization of
+ log4cplus, something that causes problems if executed more than once.
+
+ To get round this, the function isc::hooks::hooksStaticLinkInit()
+ has been written.  It executes the only part of the logging framework
+ run-time initialization that actually pertains to the logging framework
+ and not log4cplus, namely loading the message dictionary with the
+ statically-initialized messages in the BIND 10 libraries.
+ This should be executed by any hooks library linking against a statically
+ initialized BIND 10.  (In fact, running it against a dynamically-linked
+ BIND 10 should have no effect, as the load operation discards any duplicate
+ message entries.)  The hooks library tests do this, the code being
+ copnditionally compiled within a test of the USE_STATIC_LINK macro, set
+ by the configure script.
+
+ @note Not everything is completely rosy with logging and static linking.
+ In particular, there appears to be an issue with the scenario where a
+ user-written hooks library is run by a statically-linked BIND 10 and then
+ unloaded.  As far as can be determined, on unload the system attempts to
+ delete the same logger twice.  This is alleviated by explictly clearing
+ the loggerptr_ variable in the isc::log::Logger destructor, but there
+ is a suspicion that some memory might be lost in these circumstances.
+ This is still under investigation.
 */
