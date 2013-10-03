@@ -289,7 +289,7 @@ struct Lease6 : public Lease {
     /// @param prefixlen An address prefix length.
     Lease6(Type type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
            uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
-           uint32_t t2, SubnetID subnet_id, uint8_t prefixlen = 0);
+           uint32_t t2, SubnetID subnet_id, uint8_t prefixlen = 128);
 
     /// @brief Constructor, including FQDN data.
     ///

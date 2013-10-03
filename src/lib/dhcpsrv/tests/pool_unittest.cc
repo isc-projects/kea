@@ -99,9 +99,16 @@ TEST(Pool4Test, unique_id) {
             }
         }
     }
-
 }
 
+// Simple check if toText returns reasonable values
+TEST(Poo4Test,toText) {
+    Pool4 pool1(IOAddress("192.0.2.7"), IOAddress("192.0.2.17"));
+    EXPECT_EQ("type=V4, 192.0.2.7-192.0.2.17", pool1.toText());
+
+    Pool4 pool2(IOAddress("192.0.2.128"), 28);
+    EXPECT_EQ("type=V4, 192.0.2.128-192.0.2.143", pool2.toText());
+}
 
 TEST(Pool6Test, constructor_first_last) {
 
@@ -242,6 +249,18 @@ TEST(Pool6Test, unique_id) {
         }
     }
 
+}
+
+// Simple check if toText returns reasonable values
+TEST(Poo6Test,toText) {
+    Pool6 pool1(Lease::TYPE_NA, IOAddress("2001:db8::1"),
+                IOAddress("2001:db8::2"));
+    EXPECT_EQ("type=IA_NA, 2001:db8::1-2001:db8::2, delegated_len=128",
+              pool1.toText());
+
+    Pool6 pool2(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 96, 112);
+    EXPECT_EQ("type=IA_PD, 2001:db8:1::-2001:db8:1::ffff:ffff, delegated_len=112",
+              pool2.toText());
 }
 
 }; // end of anonymous namespace

@@ -358,6 +358,7 @@ public:
     // and lifetime values match the configured subnet
     void checkIAAddr(const boost::shared_ptr<Option6IAAddr>& addr,
                      const IOAddress& expected_addr,
+                     Lease::Type type,
                      uint32_t /* expected_preferred */,
                      uint32_t /* expected_valid */) {
 
@@ -365,7 +366,7 @@ public:
         // Note that when comparing addresses, we compare the textual
         // representation. IOAddress does not support being streamed to
         // an ostream, which means it can't be used in EXPECT_EQ.
-        EXPECT_TRUE(subnet_->inPool(addr->getAddress()));
+        EXPECT_TRUE(subnet_->inPool(type, addr->getAddress()));
         EXPECT_EQ(expected_addr.toText(), addr->getAddress().toText());
         EXPECT_EQ(addr->getPreferred(), subnet_->getPreferred());
         EXPECT_EQ(addr->getValid(), subnet_->getValid());
