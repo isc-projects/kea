@@ -399,7 +399,7 @@ private:
     /// @param iaid IAID from the IA_NA container the client sent to us
     /// @param addr an address that was selected and is confirmed to be
     ///        available
-    /// @param prefix_len lenght of the prefix (for PD only)
+    /// @param prefix_len length of the prefix (for PD only)
     ///        should be 128 for other lease types
     /// @param type lease type (IA, TA or PD)
     /// @param fwd_dns_update A boolean value which indicates that server takes
