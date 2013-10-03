@@ -808,6 +808,12 @@ def main():
     signal.signal(signal.SIGTERM,
                   lambda signal, frame: signal_handler(msgq, signal, frame))
 
+    # Ignore SIGPIPE. We handle errors writing to children using try in the
+    # appropriate places and the delivery of a signal is very heavy handed.
+    # Windows doesn't support SIGPIPE so don't try it there.
+    if not sys.platform.startswith('win'):
+        signal.signal(signal.SIGPIPE, signal.SIG_IGN)
+
     try:
         msgq.setup()
     except Exception as e:
