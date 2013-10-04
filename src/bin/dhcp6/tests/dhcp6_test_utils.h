@@ -420,7 +420,7 @@ public:
     /// @brief Performs negative RENEW test
     ///
     /// See renewReject and pdRenewReject tests for detailed explanation.
-    /// In essence the test attempts to perform a successful RENEW scenario.
+    /// In essence the test attempts to perform couple failed RENEW scenarios.
     ///
     /// This method does not throw, but uses gtest macros to signify failures.
     ///
@@ -446,6 +446,18 @@ public:
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();
     };
+
+    /// @brief Performs negative RELEASE test
+    ///
+    /// See releaseReject and pdReleaseReject tests for detailed explanation.
+    /// In essence the test attempts to perform couple failed RELEASE scenarios.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param addr address being sent in RELEASE
+    void
+    testReleaseReject(Lease::Type type, const IOAddress& addr);
 
     /// A subnet used in most tests
     Subnet6Ptr subnet_;
