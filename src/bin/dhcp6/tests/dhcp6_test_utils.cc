@@ -426,6 +426,116 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
     ASSERT_FALSE(l);
 }
 
+void
+Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
+    NakedDhcpv6Srv srv(0);
+
+    const uint32_t transid = 1234;
+    const uint32_t valid_iaid = 234;
+    const uint32_t bogus_iaid = 456;
+
+    uint32_t code; // option code of the container (IA_NA or IA_PD)
+    uint8_t prefix_len;
+    if (type == Lease::TYPE_NA) {
+        code = D6O_IA_NA;
+        prefix_len = 128;
+    } else if (type == Lease::TYPE_PD) {
+        code = D6O_IA_PD;
+        prefix_len = pd_pool_->getLength();
+    } else {
+        isc_throw(BadValue, "Invalid lease type");
+    }
+
+    // Quick sanity check that the address we're about to use is ok
+    ASSERT_TRUE(subnet_->inPool(type, addr));
+
+    // GenerateClientId() also sets duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the lease is NOT in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, addr);
+    ASSERT_FALSE(l);
+
+    // Let's create a RELEASE
+    Pkt6Ptr rel = createMessage(DHCPV6_RELEASE, type, addr, prefix_len, valid_iaid);
+    rel->addOption(clientid);
+    rel->addOption(srv.getServerID());
+
+    // Case 1: No lease known to server
+    SCOPED_TRACE("CASE 1: No lease known to server");
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRelease(rel);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, transid);
+    OptionPtr tmp = reply->getOption(code);
+    ASSERT_TRUE(tmp);
+    // Check that IA_NA/IA_PD was returned and that there's status code in it
+    boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+    ASSERT_TRUE(ia);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding);
+    checkMsgStatusCode(reply, STATUS_NoBinding);
+
+    // Check that the lease is not there
+    l = LeaseMgrFactory::instance().getLease6(type, addr);
+    ASSERT_FALSE(l);
+
+    // CASE 2: Lease is known and belongs to this client, but to a different IAID
+    SCOPED_TRACE("CASE 2: Lease is known and belongs to this client, but to a different IAID");
+
+    Lease6Ptr lease(new Lease6(type, addr, duid_, valid_iaid, 501, 502, 503,
+                               504, subnet_->getID(), prefix_len));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Let's create a different RELEASE, with a bogus iaid
+    rel = createMessage(DHCPV6_RELEASE, type, addr, prefix_len, bogus_iaid);
+    rel->addOption(clientid);
+    rel->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    reply = srv.processRelease(rel);
+    checkResponse(reply, DHCPV6_REPLY, transid);
+    tmp = reply->getOption(code);
+    ASSERT_TRUE(tmp);
+    // Check that IA_NA was returned and that there's an address included
+    ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+    ASSERT_TRUE(ia);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding);
+    checkMsgStatusCode(reply, STATUS_NoBinding);
+
+    // Check that the lease is still there
+    l = LeaseMgrFactory::instance().getLease6(type, addr);
+    ASSERT_TRUE(l);
+
+    // CASE 3: Lease belongs to a client with different client-id
+    SCOPED_TRACE("CASE 3: Lease belongs to a client with different client-id");
+
+    rel->delOption(D6O_CLIENTID);
+    ia = boost::dynamic_pointer_cast<Option6IA>(rel->getOption(code));
+    ia->setIAID(valid_iaid); // Now iaid in renew matches that in leasemgr
+    rel->addOption(generateClientId(13)); // generate different DUID
+                                          // (with length 13)
+
+    reply = srv.processRelease(rel);
+    checkResponse(reply, DHCPV6_REPLY, transid);
+    tmp = reply->getOption(code);
+    ASSERT_TRUE(tmp);
+    // Check that IA_NA was returned and that there's an address included
+    ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+    ASSERT_TRUE(ia);
+    checkIA_NAStatusCode(ia, STATUS_NoBinding);
+    checkMsgStatusCode(reply, STATUS_NoBinding);
+
+    // Check that the lease is still there
+    l = LeaseMgrFactory::instance().getLease6(type, addr);
+    ASSERT_TRUE(l);
+
+    // Finally, let's cleanup the database
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+}
+
+
 // Generate IA_NA option with specified parameters
 boost::shared_ptr<Option6IA>
 NakedDhcpv6SrvTest::generateIA(uint16_t type, uint32_t iaid, uint32_t t1,
