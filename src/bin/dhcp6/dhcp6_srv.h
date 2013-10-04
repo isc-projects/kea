@@ -257,6 +257,20 @@ protected:
                          const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
                          const Option6ClientFqdnPtr& fqdn);
 
+    /// @brief Renews specific IA_PD option
+    ///
+    /// Generates response to IA_PD in Renew. This typically includes finding a
+    /// lease that corresponds to the received prefix. If no such lease is
+    /// found, an IA_PD response is generated with an appropriate status code.
+    ///
+    /// @param subnet subnet the sender belongs to
+    /// @param duid client's duid
+    /// @param query client's message
+    /// @param ia IA_PD option that is being renewed
+    /// @return IA_PD option (server's response)
+    OptionPtr renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                         const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia);
+
     /// @brief Releases specific IA_NA option
     ///
     /// Generates response to IA_NA in Release message. This covers finding and
