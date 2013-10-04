@@ -286,9 +286,25 @@ protected:
     /// @param duid client's duid
     /// @param query client's message
     /// @param general_status a global status (it may be updated in case of errors)
-    /// @param ia IA_NA option that is being renewed
+    /// @param ia IA_NA option that is being released
     /// @return IA_NA option (server's response)
     OptionPtr releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
+                           int& general_status,
+                           boost::shared_ptr<Option6IA> ia);
+
+    /// @brief Releases specific IA_PD option
+    ///
+    /// Generates response to IA_PD in Release message. This covers finding and
+    /// removal of a lease that corresponds to the received prefix(es). If no such
+    /// lease is found, an IA_PD response is generated with an appropriate
+    /// status code.
+    ///
+    /// @param duid client's duid
+    /// @param query client's message
+    /// @param general_status a global status (it may be updated in case of errors)
+    /// @param ia IA_PD option that is being released
+    /// @return IA_PD option (server's response)
+    OptionPtr releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
                            int& general_status,
                            boost::shared_ptr<Option6IA> ia);
 

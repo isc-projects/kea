@@ -1777,7 +1777,14 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
             }
             break;
         }
-        // @todo: add support for IA_PD
+        case D6O_IA_PD: {
+            OptionPtr answer_opt = releaseIA_PD(duid, release, general_status,
+                                   boost::dynamic_pointer_cast<Option6IA>(opt->second));
+            if (answer_opt) {
+                reply->addOption(answer_opt);
+            }
+            break;
+        }
         // @todo: add support for IA_TA
         default:
             // remaining options are stateless and thus ignored in this context
@@ -1827,7 +1834,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
                           "Sorry, no known leases for this duid/iaid, can't release."));
         general_status = STATUS_NoBinding;
 
-        LOG_INFO(dhcp6_logger, DHCP6_UNKNOWN_RELEASE)
+        LOG_INFO(dhcp6_logger, DHCP6_UNKNOWN_RELEASE_NA)
             .arg(duid->toText())
             .arg(ia->getIAID());
 
@@ -1839,7 +1846,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         // have mandatory DUID information attached. Someone was messing with our
         // database.
 
-        LOG_ERROR(dhcp6_logger, DHCP6_LEASE_WITHOUT_DUID)
+        LOG_ERROR(dhcp6_logger, DHCP6_LEASE_NA_WITHOUT_DUID)
             .arg(release_addr->getAddress().toText());
 
         general_status = STATUS_UnspecFail;
@@ -1849,9 +1856,9 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
     }
 
     if (*duid != *(lease->duid_)) {
-        // Sorry, it's not your address. You can't release it.
 
-        LOG_INFO(dhcp6_logger, DHCP6_RELEASE_FAIL_WRONG_DUID)
+        // Sorry, it's not your address. You can't release it.
+        LOG_INFO(dhcp6_logger, DHCP6_RELEASE_NA_FAIL_WRONG_DUID)
             .arg(duid->toText())
             .arg(release_addr->getAddress().toText())
             .arg(lease->duid_->toText());
@@ -1864,7 +1871,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
 
     if (ia->getIAID() != lease->iaid_) {
         // This address belongs to this client, but to a different IA
-        LOG_WARN(dhcp6_logger, DHCP6_RELEASE_FAIL_WRONG_IAID)
+        LOG_WARN(dhcp6_logger, DHCP6_RELEASE_PD_FAIL_WRONG_IAID)
             .arg(duid->toText())
             .arg(release_addr->getAddress().toText())
             .arg(lease->iaid_)
@@ -1900,7 +1907,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         // stage means "drop response".
         if (callout_handle->getSkip()) {
             skip = true;
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_SKIP);
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP);
         }
     }
 
@@ -1918,7 +1925,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         ia_rsp->addOption(createStatusCode(STATUS_UnspecFail,
                           "Server failed to release a lease"));
 
-        LOG_ERROR(dhcp6_logger, DHCP6_RELEASE_FAIL)
+        LOG_ERROR(dhcp6_logger, DHCP6_RELEASE_NA_FAIL)
             .arg(lease->addr_.toText())
             .arg(duid->toText())
             .arg(lease->iaid_);
@@ -1926,7 +1933,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
 
         return (ia_rsp);
     } else {
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_RELEASE)
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_RELEASE_NA)
             .arg(lease->addr_.toText())
             .arg(duid->toText())
             .arg(lease->iaid_);
@@ -1938,6 +1945,152 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         // been performed. If so, create NameChangeRequest which removes
         // the entries.
         createRemovalNameChangeRequest(lease);
+
+        return (ia_rsp);
+    }
+}
+
+OptionPtr
+Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
+                        int& general_status, boost::shared_ptr<Option6IA> ia) {
+    // Release can be done in one of two ways:
+    // Approach 1: extract address from client's IA_NA and see if it belongs
+    // to this particular client.
+    // Approach 2: find a subnet for this client, get a lease for
+    // this subnet/duid/iaid and check if its content matches to what the
+    // client is asking us to release.
+    //
+    // This method implements approach 1.
+
+    // That's our response
+    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
+
+    boost::shared_ptr<Option6IAPrefix> release_prefix = boost::dynamic_pointer_cast<Option6IAPrefix>
+        (ia->getOption(D6O_IAPREFIX));
+    if (!release_prefix) {
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                                           "You did not include address in your RELEASE"));
+        general_status = STATUS_NoBinding;
+        return (ia_rsp);
+    }
+
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD,
+                                                            release_prefix->getAddress());
+
+    if (!lease) {
+        // client releasing a lease that we don't know about.
+
+        // Insert status code NoAddrsAvail.
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                          "Sorry, no known leases for this duid/iaid, can't release."));
+        general_status = STATUS_NoBinding;
+
+        LOG_INFO(dhcp6_logger, DHCP6_UNKNOWN_RELEASE_PD)
+            .arg(duid->toText())
+            .arg(ia->getIAID());
+
+        return (ia_rsp);
+    }
+
+    if (!lease->duid_) {
+        // Something is gravely wrong here. We do have a lease, but it does not
+        // have mandatory DUID information attached. Someone was messing with our
+        // database.
+
+        LOG_ERROR(dhcp6_logger, DHCP6_LEASE_PD_WITHOUT_DUID)
+            .arg(release_prefix->getAddress().toText());
+
+        general_status = STATUS_UnspecFail;
+        ia_rsp->addOption(createStatusCode(STATUS_UnspecFail,
+                          "Database consistency check failed when trying to RELEASE"));
+        return (ia_rsp);
+    }
+
+    if (*duid != *(lease->duid_)) {
+        // Sorry, it's not your address. You can't release it.
+
+        LOG_INFO(dhcp6_logger, DHCP6_RELEASE_PD_FAIL_WRONG_DUID)
+            .arg(duid->toText())
+            .arg(release_prefix->getAddress().toText())
+            .arg(lease->duid_->toText());
+
+        general_status = STATUS_NoBinding;
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                          "This address does not belong to you, you can't release it"));
+        return (ia_rsp);
+    }
+
+    if (ia->getIAID() != lease->iaid_) {
+        // This address belongs to this client, but to a different IA
+        LOG_WARN(dhcp6_logger, DHCP6_RELEASE_PD_FAIL_WRONG_IAID)
+            .arg(duid->toText())
+            .arg(release_prefix->getAddress().toText())
+            .arg(lease->iaid_)
+            .arg(ia->getIAID());
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                          "This is your address, but you used wrong IAID"));
+        general_status = STATUS_NoBinding;
+        return (ia_rsp);
+    }
+
+    // It is not necessary to check if the address matches as we used
+    // getLease6(addr) method that is supposed to return a proper lease.
+
+    bool skip = false;
+    // Execute all callouts registered for packet6_send
+    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_release_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass the original packet
+        callout_handle->setArgument("query6", query);
+
+        // Pass the lease to be updated
+        callout_handle->setArgument("lease6", lease);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease6_release_, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to send the packet, so skip at this
+        // stage means "drop response".
+        if (callout_handle->getSkip()) {
+            skip = true;
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP);
+        }
+    }
+
+    // Ok, we've passed all checks. Let's release this prefix.
+    bool success = false; // was the removal operation succeessful?
+
+    if (!skip) {
+        success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
+    }
+
+    // Here the success should be true if we removed lease successfully
+    // and false if skip flag was set or the removal failed for whatever reason
+
+    if (!success) {
+        ia_rsp->addOption(createStatusCode(STATUS_UnspecFail,
+                          "Server failed to release a lease"));
+
+        LOG_ERROR(dhcp6_logger, DHCP6_RELEASE_PD_FAIL)
+            .arg(lease->addr_.toText())
+            .arg(duid->toText())
+            .arg(lease->iaid_);
+        general_status = STATUS_UnspecFail;
+
+        return (ia_rsp);
+    } else {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_RELEASE_PD)
+            .arg(lease->addr_.toText())
+            .arg(duid->toText())
+            .arg(lease->iaid_);
+
+        ia_rsp->addOption(createStatusCode(STATUS_Success,
+                          "Lease released. Thank you, please come again."));
 
         return (ia_rsp);
     }
