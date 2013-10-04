@@ -360,9 +360,7 @@ public:
     // and lifetime values match the configured subnet
     void checkIAAddr(const boost::shared_ptr<Option6IAAddr>& addr,
                      const IOAddress& expected_addr,
-                     Lease::Type type,
-                     uint32_t /* expected_preferred */,
-                     uint32_t /* expected_valid */) {
+                     Lease::Type type) {
 
         // Check that the assigned address is indeed from the configured pool.
         // Note that when comparing addresses, we compare the textual
@@ -379,9 +377,29 @@ public:
     Lease6Ptr checkLease(const DuidPtr& duid, const OptionPtr& ia_na,
                          boost::shared_ptr<Option6IAAddr> addr);
 
+    /// @brief Verifies received IAPrefix option
+    ///
+    /// Verifies if received IAPrefix option matches the lease in database
+    /// @param duid client's DUID
+    /// @param ia_pd IA_PD option that contains the IAPRefix option
+    /// @param prefix pointer to the IAPREFIX option
+    /// @return corresponding IPv6 lease (if found)
     Lease6Ptr checkPdLease(const DuidPtr& duid, const OptionPtr& ia_pd,
                            boost::shared_ptr<Option6IAPrefix> prefix);
 
+    /// @brief Performs basic RENEW tests
+    ///
+    /// See renewBasic and pdRenewBasic for detailed explanation.
+    /// In essence the test attempts to perform a successful RENEW scenario.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param existing_addr address to be preinserted into the database
+    /// @param renew_addr address being sent in RENEW
+    void
+    testRenewBasic(Lease::Type type, const std::string& existing_addr,
+                   const std::string& renew_addr);
 
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();

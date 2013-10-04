@@ -265,8 +265,7 @@ public:
 
         // Check that we have got the address we requested.
         checkIAAddr(addr, IOAddress("2001:db8:1:1::dead:beef"),
-                    Lease::TYPE_NA, subnet_->getPreferred(),
-                    subnet_->getValid());
+                    Lease::TYPE_NA);
 
         if (msg_type != DHCPV6_SOLICIT) {
             // Check that the lease exists.
@@ -663,8 +662,7 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     ASSERT_TRUE(addr);
 
     // Check that the assigned address is indeed from the configured pool
-    checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA, subnet_->getPreferred(),
-                subnet_->getValid());
+    checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA);
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -709,8 +707,7 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
     ASSERT_TRUE(prefix);
 
     // Check that the assigned prefix is indeed from the configured pool
-    checkIAAddr(prefix, prefix->getAddress(), Lease::TYPE_PD,
-                subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(prefix, prefix->getAddress(), Lease::TYPE_PD);
     EXPECT_EQ(pd_pool_->getLength(), prefix->getLength());
 
     // check DUIDs
@@ -765,8 +762,7 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     ASSERT_TRUE(addr);
 
     // check that we've got the address we requested
-    checkIAAddr(addr, hint, Lease::TYPE_NA, subnet_->getPreferred(),
-                subnet_->getValid());
+    checkIAAddr(addr, hint, Lease::TYPE_NA);
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -815,8 +811,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     ASSERT_TRUE(addr);
 
     // Check that the assigned address is indeed from the configured pool
-    checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA, subnet_->getPreferred(),
-                subnet_->getValid());
+    checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA);
     EXPECT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr->getAddress()));
 
     // check DUIDs
@@ -880,12 +875,9 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     ASSERT_TRUE(addr3);
 
     // Check that the assigned address is indeed from the configured pool
-    checkIAAddr(addr1, addr1->getAddress(), Lease::TYPE_NA,
-                subnet_->getPreferred(), subnet_->getValid());
-    checkIAAddr(addr2, addr2->getAddress(), Lease::TYPE_NA,
-                subnet_->getPreferred(), subnet_->getValid());
-    checkIAAddr(addr3, addr3->getAddress(), Lease::TYPE_NA,
-                subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr1, addr1->getAddress(), Lease::TYPE_NA);
+    checkIAAddr(addr2, addr2->getAddress(), Lease::TYPE_NA);
+    checkIAAddr(addr3, addr3->getAddress(), Lease::TYPE_NA);
 
     // check DUIDs
     checkServerId(reply1, srv.getServerID());
@@ -955,8 +947,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     ASSERT_TRUE(addr);
 
     // check that we've got the address we requested
-    checkIAAddr(addr, hint, Lease::TYPE_NA, subnet_->getPreferred(),
-                subnet_->getValid());
+    checkIAAddr(addr, hint, Lease::TYPE_NA);
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -1022,8 +1013,7 @@ TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
     ASSERT_TRUE(prf);
 
     // check that we've got the address we requested
-    checkIAAddr(prf, hint, Lease::TYPE_PD, subnet_->getPreferred(),
-                subnet_->getValid());
+    checkIAAddr(prf, hint, Lease::TYPE_PD);
     EXPECT_EQ(pd_pool_->getLength(), prf->getLength());
 
     // check DUIDs
@@ -1097,12 +1087,9 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     ASSERT_TRUE(addr3);
 
     // Check that the assigned address is indeed from the configured pool
-    checkIAAddr(addr1, addr1->getAddress(), Lease::TYPE_NA,
-                subnet_->getPreferred(), subnet_->getValid());
-    checkIAAddr(addr2, addr2->getAddress(), Lease::TYPE_NA,
-                subnet_->getPreferred(), subnet_->getValid());
-    checkIAAddr(addr3, addr3->getAddress(), Lease::TYPE_NA,
-                subnet_->getPreferred(), subnet_->getValid());
+    checkIAAddr(addr1, addr1->getAddress(), Lease::TYPE_NA);
+    checkIAAddr(addr2, addr2->getAddress(), Lease::TYPE_NA);
+    checkIAAddr(addr3, addr3->getAddress(), Lease::TYPE_NA);
 
     // check DUIDs
     checkServerId(reply1, srv.getServerID());
@@ -1128,93 +1115,25 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
 // expected:
 // - returned REPLY message has copy of client-id
 // - returned REPLY message has server-id
-// - returned REPLY message has IA that includes IAADDR
+// - returned REPLY message has IA_NA that includes IAADDR
 // - lease is actually renewed in LeaseMgr
-TEST_F(Dhcpv6SrvTest, RenewBasic) {
-    NakedDhcpv6Srv srv(0);
+TEST_F(Dhcpv6SrvTest, renewBasic) {
+    testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe");
+}
 
-    const IOAddress addr("2001:db8:1:1::cafe:babe");
-    const uint32_t iaid = 234;
-
-    // Generate client-id also duid_
-    OptionPtr clientid = generateClientId();
-
-    // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
-
-    // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
-    // value on purpose. They should be updated during RENEW.
-    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(), 0));
-    lease->cltt_ = 1234;
-    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
-
-    // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                                        addr);
-    ASSERT_TRUE(l);
-
-    // Check that T1, T2, preferred, valid and cltt really set and not using
-    // previous (500, 501, etc.) values
-    EXPECT_NE(l->t1_, subnet_->getT1());
-    EXPECT_NE(l->t2_, subnet_->getT2());
-    EXPECT_NE(l->preferred_lft_, subnet_->getPreferred());
-    EXPECT_NE(l->valid_lft_, subnet_->getValid());
-    EXPECT_NE(l->cltt_, time(NULL));
-
-    // Let's create a RENEW
-    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
-    req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
-
-    OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
-    ia->addOption(renewed_addr_opt);
-    req->addOption(ia);
-    req->addOption(clientid);
-
-    // Server-id is mandatory in RENEW
-    req->addOption(srv.getServerID());
-
-    // Pass it to the server and hope for a REPLY
-    Pkt6Ptr reply = srv.processRenew(req);
-
-    // Check if we get response at all
-    checkResponse(reply, DHCPV6_REPLY, 1234);
-
-    OptionPtr tmp = reply->getOption(D6O_IA_NA);
-    ASSERT_TRUE(tmp);
-
-    // Check that IA_NA was returned and that there's an address included
-    boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 234, subnet_->getT1(),
-                                                           subnet_->getT2());
-
-    ASSERT_TRUE(addr_opt);
-
-    // Check that we've got the address we requested
-    checkIAAddr(addr_opt, addr, Lease::TYPE_NA, subnet_->getPreferred(),
-                subnet_->getValid());
-
-    // Check DUIDs
-    checkServerId(reply, srv.getServerID());
-    checkClientId(reply, clientid);
-
-    // Check that the lease is really in the database
-    l = checkLease(duid_, reply->getOption(D6O_IA_NA), addr_opt);
-    ASSERT_TRUE(l);
-
-    // Check that T1, T2, preferred, valid and cltt were really updated
-    EXPECT_EQ(l->t1_, subnet_->getT1());
-    EXPECT_EQ(l->t2_, subnet_->getT2());
-    EXPECT_EQ(l->preferred_lft_, subnet_->getPreferred());
-    EXPECT_EQ(l->valid_lft_, subnet_->getValid());
-
-    // Checking for CLTT is a bit tricky if we want to avoid off by 1 errors
-    int32_t cltt = static_cast<int32_t>(l->cltt_);
-    int32_t expected = static_cast<int32_t>(time(NULL));
-    // equality or difference by 1 between cltt and expected is ok.
-    EXPECT_GE(1, abs(cltt - expected));
-
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr_opt->getAddress()));
+// This test verifies that incoming (positive) PD RENEW can be handled properly,
+// that a REPLY is generated, that the response has a prefix and that prefix
+// really belongs to the configured pool and that lease is actually renewed.
+//
+// expected:
+// - returned REPLY message has copy of client-id
+// - returned REPLY message has server-id
+// - returned REPLY message has IA_PD that includes IAPREFIX
+// - lease is actually renewed in LeaseMgr
+TEST_F(Dhcpv6SrvTest, pdRenewBasic) {
+    testRenewBasic(Lease::TYPE_PD, "2001:db8:1:1::cafe:babe",
+                   "2001:db8:1:1::cafe:babe");
 }
 
 // This test verifies that incoming (invalid) RENEW can be handled properly.
