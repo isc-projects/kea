@@ -132,7 +132,15 @@ client requested renewal of multiples leases (by sending multiple IA
 options), the server will skip the renewal of the one in question and
 will proceed with other renewals as usual.
 
-% DHCP6_HOOK_LEASE6_RELEASE_SKIP DHCPv6 lease was not released because a callout set the skip flag.
+% DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP DHCPv6 address lease was not released because a callout set the skip flag.
+This debug message is printed when a callout installed on lease6_release
+hook point set the skip flag. For this particular hook point, the
+setting of the flag by a callout instructs the server to not release
+a lease. If client requested release of multiples leases (by sending
+multiple IA options), the server will retains this particular lease and
+will proceed with other renewals as usual.
+
+% DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP DHCPv6 prefix lease was not released because a callout set the skip flag.
 This debug message is printed when a callout installed on lease6_release
 hook point set the skip flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to not release
@@ -209,9 +217,16 @@ This message indicates that the server failed to grant (in response to
 received REQUEST) a prefix lease for a given client. There may be many reasons
 for such failure. Each specific failure is logged in a separate log entry.
 
-% DHCP6_LEASE_WITHOUT_DUID lease for address %1 does not have a DUID
+% DHCP6_LEASE_NA_WITHOUT_DUID address lease for address %1 does not have a DUID
 This error message indicates a database consistency failure. The lease
 database has an entry indicating that the given address is in use,
+but the lease does not contain any client identification. This is most
+likely due to a software error: please raise a bug report. As a temporary
+workaround, manually remove the lease entry from the database.
+
+% DHCP6_LEASE_PD_WITHOUT_DUID prefix lease for address %1 does not have a DUID
+This error message indicates a database consistency failure. The lease
+database has an entry indicating that the given prefix is in use,
 but the lease does not contain any client identification. This is most
 likely due to a software error: please raise a bug report. As a temporary
 workaround, manually remove the lease entry from the database.
@@ -312,30 +327,55 @@ as a hint for possible requested prefix.
 % DHCP6_QUERY_DATA received packet length %1, data length %2, data is %3
 A debug message listing the data received from the client or relay.
 
-% DHCP6_RELEASE address %1 belonging to client duid=%2, iaid=%3 was released properly.
+% DHCP6_RELEASE_NA address %1 belonging to client duid=%2, iaid=%3 was released properly.
 This debug message indicates that an address was released properly. It
 is a normal operation during client shutdown.
 
-% DHCP6_RELEASE_FAIL failed to remove lease for address %1 for duid=%2, iaid=%3
-This error message indicates that the software failed to remove a
+% DHCP6_RELEASE_PD prefix %1 belonging to client duid=%2, iaid=%3 was released properly.
+This debug message indicates that a prefix was released properly. It
+is a normal operation during client shutdown.
+
+% DHCP6_RELEASE_NA_FAIL failed to remove address lease for address %1 for duid=%2, iaid=%3
+This error message indicates that the software failed to remove an address
 lease from the lease database.  It probably due to an error during a
 database operation: resolution will most likely require administrator
 intervention (e.g. check if DHCP process has sufficient privileges to
 update the database). It may also be triggered if a lease was manually
 removed from the database during RELEASE message processing.
 
-% DHCP6_RELEASE_FAIL_WRONG_DUID client (duid=%1) tried to release address %2, but it belongs to client (duid=%3)
+% DHCP6_RELEASE_PD_FAIL failed to remove prefix lease for address %1 for duid=%2, iaid=%3
+This error message indicates that the software failed to remove a prefix
+lease from the lease database.  It probably due to an error during a
+database operation: resolution will most likely require administrator
+intervention (e.g. check if DHCP process has sufficient privileges to
+update the database). It may also be triggered if a lease was manually
+removed from the database during RELEASE message processing.
+
+% DHCP6_RELEASE_NA_FAIL_WRONG_DUID client (duid=%1) tried to release address %2, but it belongs to client (duid=%3)
 This warning message indicates that client tried to release an address
 that belongs to a different client. This should not happen in normal
 circumstances and may indicate a misconfiguration of the client.  However,
 since the client releasing the address will stop using it anyway, there
 is a good chance that the situation will correct itself.
 
-% DHCP6_RELEASE_FAIL_WRONG_IAID client (duid=%1) tried to release address %2, but it used wrong IAID (expected %3, but got %4)
+% DHCP6_RELEASE_PD_FAIL_WRONG_DUID client (duid=%1) tried to release prefix %2, but it belongs to client (duid=%3)
+This warning message indicates that client tried to release a prefix
+that belongs to a different client. This should not happen in normal
+circumstances and may indicate a misconfiguration of the client.  However,
+since the client releasing the prefix will stop using it anyway, there
+is a good chance that the situation will correct itself.
+
+% DHCP6_RELEASE_NA_FAIL_WRONG_IAID client (duid=%1) tried to release address %2, but it used wrong IAID (expected %3, but got %4)
 This warning message indicates that client tried to release an address
 that does belong to it, but the address was expected to be in a different
 IA (identity association) container. This probably means that the client's
 support for multiple addresses is flawed.
+
+% DHCP6_RELEASE_PD_FAIL_WRONG_IAID client (duid=%1) tried to release prefix %2, but it used wrong IAID (expected %3, but got %4)
+This warning message indicates that client tried to release a prefix
+that does belong to it, but the address was expected to be in a different
+IA (identity association) container. This probably means that the client's
+support for multiple prefixes is flawed.
 
 % DHCP6_RELEASE_MISSING_CLIENTID client (address=%1) sent RELEASE message without mandatory client-id
 This warning message indicates that client sent RELEASE message without
@@ -447,9 +487,14 @@ That could either mean missing functionality or invalid or broken relay or clien
 The list of formally defined message types is available here:
 www.iana.org/assignments/dhcpv6-parameters.
 
-% DHCP6_UNKNOWN_RELEASE received RELEASE from unknown client (duid=%1, iaid=%2)
-This warning message is printed when client attempts to release a lease,
-but no such lease is known by the server. See DHCP6_UNKNOWN_RENEW for
+% DHCP6_UNKNOWN_RELEASE_NA received RELEASE from unknown client (IA_NA, duid=%1, iaid=%2)
+This warning message is printed when client attempts to release an address lease,
+but no such lease is known by the server. See DHCP6_UNKNOWN_RENEW_NA for
+possible reasons for such behavior.
+
+% DHCP6_UNKNOWN_RELEASE_PD received RELEASE from unknown client (IA_PD, duid=%1, iaid=%2)
+This warning message is printed when client attempts to release an prefix lease,
+but no such lease is known by the server. See DHCP6_UNKNOWN_RENEW_PD for
 possible reasons for such behavior.
 
 % DHCP6_UNKNOWN_RENEW_NA received unknown IA_NA RENEW from client (duid=%1, iaid=%2) in subnet %3
