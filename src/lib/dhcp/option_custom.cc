@@ -24,6 +24,7 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
                            Universe u)
     : Option(u, def.getCode(), OptionBuffer()),
       definition_(def) {
+    setEncapsulatedSpace(def.getEncapsulatedSpace());
     createBuffers();
 }
 
@@ -32,6 +33,7 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
                            const OptionBuffer& data)
     : Option(u, def.getCode(), data.begin(), data.end()),
       definition_(def) {
+    setEncapsulatedSpace(def.getEncapsulatedSpace());
     createBuffers(getData());
 }
 
@@ -41,6 +43,7 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
                            OptionBufferConstIter last)
     : Option(u, def.getCode(), first, last),
       definition_(def) {
+    setEncapsulatedSpace(def.getEncapsulatedSpace());
     createBuffers(getData());
 }
 
@@ -522,7 +525,7 @@ OptionCustom::len() {
     }
 
     // ... and lengths of all suboptions
-    for (OptionCustom::OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();

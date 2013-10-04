@@ -254,7 +254,7 @@ TEST_F(LibDhcpTest, optionFactory) {
 
 TEST_F(LibDhcpTest, packOptions6) {
     OptionBuffer buf(512);
-    isc::dhcp::Option::OptionCollection opts; // list of options
+    isc::dhcp::OptionCollection opts; // list of options
 
     // generate content for options
     for (int i = 0; i < 64; i++) {
@@ -286,7 +286,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     // Option is used as a simple option implementation
     // More advanced uses are validated in tests dedicated for
     // specific derived classes.
-    isc::dhcp::Option::OptionCollection options; // list of options
+    isc::dhcp::OptionCollection options; // list of options
 
     OptionBuffer buf(512);
     memcpy(&buf[0], v6packed, sizeof(v6packed));
@@ -298,7 +298,7 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 
     EXPECT_EQ(options.size(), 5); // there should be 5 options
 
-    isc::dhcp::Option::OptionCollection::const_iterator x = options.find(1);
+    isc::dhcp::OptionCollection::const_iterator x = options.find(1);
     ASSERT_FALSE(x == options.end()); // option 1 should exist
     EXPECT_EQ(1, x->second->getType());  // this should be option 1
     ASSERT_EQ(9, x->second->len()); // it should be of length 9
@@ -399,7 +399,7 @@ TEST_F(LibDhcpTest, packOptions4) {
     OptionPtr opt4(new Option(Option::V4,254, payload[3]));
     OptionPtr opt5(new Option(Option::V4,128, payload[4]));
 
-    isc::dhcp::Option::OptionCollection opts; // list of options
+    isc::dhcp::OptionCollection opts; // list of options
     opts.insert(make_pair(opt1->getType(), opt1));
     opts.insert(make_pair(opt1->getType(), opt2));
     opts.insert(make_pair(opt1->getType(), opt3));
@@ -418,13 +418,13 @@ TEST_F(LibDhcpTest, packOptions4) {
 TEST_F(LibDhcpTest, unpackOptions4) {
 
     vector<uint8_t> v4packed(v4_opts, v4_opts + sizeof(v4_opts));
-    isc::dhcp::Option::OptionCollection options; // list of options
+    isc::dhcp::OptionCollection options; // list of options
 
     ASSERT_NO_THROW(
         LibDHCP::unpackOptions4(v4packed, options);
     );
 
-    isc::dhcp::Option::OptionCollection::const_iterator x = options.find(12);
+    isc::dhcp::OptionCollection::const_iterator x = options.find(12);
     ASSERT_FALSE(x == options.end()); // option 1 should exist
     // Option 12 holds a string so let's cast it to an appropriate type.
     OptionStringPtr option12 = boost::static_pointer_cast<OptionString>(x->second);

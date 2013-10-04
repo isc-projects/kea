@@ -459,6 +459,24 @@ protected:
     /// simulates transmission of a packet. For that purpose it is protected.
     virtual void sendPacket(const Pkt6Ptr& pkt);
 
+    /// @brief Implements a callback function to parse options in the message.
+    ///
+    /// @param buf a A buffer holding options in on-wire format.
+    /// @param option_space A name of the option space which holds definitions
+    /// of to be used to parse options in the packets.
+    /// @param [out] options A reference to the collection where parsed options
+    /// will be stored.
+    /// @param relay_msg_offset Reference to a size_t structure. If specified,
+    /// offset to beginning of relay_msg option will be stored in it.
+    /// @param relay_msg_len reference to a size_t structure. If specified,
+    /// length of the relay_msg option will be stored in it.
+    /// @return An offset to the first byte after last parsed option.
+    size_t unpackOptions(const OptionBuffer& buf,
+                         const std::string& option_space,
+                         isc::dhcp::OptionCollection& options,
+                         size_t* relay_msg_offset,
+                         size_t* relay_msg_len);
+
 private:
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

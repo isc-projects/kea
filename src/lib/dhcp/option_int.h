@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -52,6 +52,7 @@ public:
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
+        setEncapsulatedSpace(u == Option::V4 ? "dhcp4" : "dhcp6");
     }
 
     /// @brief Constructor.
@@ -74,6 +75,7 @@ public:
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
+        setEncapsulatedSpace(u == Option::V4 ? "dhcp4" : "dhcp6");
         unpack(begin, end);
     }
 
@@ -175,7 +177,7 @@ public:
         // The data length is equal to size of T.
         length += sizeof(T);;
         // length of all suboptions
-        for (Option::OptionCollection::iterator it = options_.begin();
+        for (OptionCollection::iterator it = options_.begin();
              it != options_.end();
              ++it) {
             length += (*it).second->len();
