@@ -88,7 +88,7 @@ public:
         uint16_t  relay_msg_len_;
 
         /// options received from a specified relay, except relay-msg option
-        isc::dhcp::Option::OptionCollection options_;
+        isc::dhcp::OptionCollection options_;
     };
 
     /// Constructor, used in replying to a message
@@ -242,7 +242,7 @@ public:
     ///
     /// @param type option type we are looking for
     /// @return instance of option collection with requested options
-    isc::dhcp::Option::OptionCollection getOptions(uint16_t type);
+    isc::dhcp::OptionCollection getOptions(uint16_t type);
 
     /// Attempts to delete first suboption of requested type
     ///
@@ -350,7 +350,7 @@ public:
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
-    isc::dhcp::Option::OptionCollection options_;
+    isc::dhcp::OptionCollection options_;
 
     /// @brief Update packet timestamp.
     ///
@@ -387,6 +387,14 @@ public:
     ///         Note that this string is statically allocated and MUST NOT
     ///         be freed by the caller.
     const char* getName() const;
+
+    /// @brief Set callback function to be used to parse options.
+    ///
+    /// @param callback An instance of the callback function or NULL to
+    /// uninstall callback.
+    void setCallback(UnpackOptionsCallback callback) {
+        callback_ = callback;
+    }
 
     /// @brief copies relay information from client's packet to server's response
     ///
@@ -534,6 +542,10 @@ protected:
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
+
+    /// A callback to be called to unpack options from the packet.
+    UnpackOptionsCallback callback_;
+
 }; // Pkt6 class
 
 } // isc::dhcp namespace

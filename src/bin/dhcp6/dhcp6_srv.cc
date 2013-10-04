@@ -229,6 +229,15 @@ bool Dhcpv6Srv::run() {
             continue;
         }
 
+        // In order to parse the DHCP options, the server needs to use some
+        // configuration information such as: existing option spaces, option
+        // definitions etc. This is the kind of information which is not
+        // available in the libdhcp, so we need to supply our own implementation
+        // of the option parsing function here, which would rely on the
+        // configuration data.
+        query->setCallback(boost::bind(&Dhcpv6Srv::unpackOptions, this, _1, _2,
+                                       _3, _4, _5));
+
         bool skip_unpack = false;
 
         // The packet has just been received so contains the uninterpreted wire
@@ -703,7 +712,7 @@ Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
 void
 Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                        RequirementLevel serverid) {
-    Option::OptionCollection client_ids = pkt->getOptions(D6O_CLIENTID);
+    OptionCollection client_ids = pkt->getOptions(D6O_CLIENTID);
     switch (clientid) {
     case MANDATORY:
         if (client_ids.size() != 1) {
@@ -724,7 +733,7 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
         break;
     }
 
-    Option::OptionCollection server_ids = pkt->getOptions(D6O_SERVERID);
+    OptionCollection server_ids = pkt->getOptions(D6O_SERVERID);
     switch (serverid) {
     case FORBIDDEN:
         if (!server_ids.empty()) {
@@ -870,7 +879,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
     //
     // @todo: expand this to cover IA_PD and IA_TA once we implement support for
     // prefix delegation and temporary addresses.
-    for (Option::OptionCollection::iterator opt = question->options_.begin();
+    for (OptionCollection::iterator opt = question->options_.begin();
          opt != question->options_.end(); ++opt) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
@@ -1052,8 +1061,8 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
 
     // Get all IAs from the answer. For each IA, holding an address we will
     // create a corresponding NameChangeRequest.
-    Option::OptionCollection answer_ias = answer->getOptions(D6O_IA_NA);
-    for (Option::OptionCollection::const_iterator answer_ia =
+    OptionCollection answer_ias = answer->getOptions(D6O_IA_NA);
+    for (OptionCollection::const_iterator answer_ia =
              answer_ias.begin(); answer_ia != answer_ias.end(); ++answer_ia) {
         // @todo IA_NA may contain multiple addresses. We should process
         // each address individually. Currently we get only one.
@@ -1493,7 +1502,7 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply,
     }
     DuidPtr duid(new DUID(opt_duid->getData()));
 
-    for (Option::OptionCollection::iterator opt = renew->options_.begin();
+    for (OptionCollection::iterator opt = renew->options_.begin();
          opt != renew->options_.end(); ++opt) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
@@ -1543,7 +1552,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
     DuidPtr duid(new DUID(opt_duid->getData()));
 
     int general_status = STATUS_Success;
-    for (Option::OptionCollection::iterator opt = release->options_.begin();
+    for (OptionCollection::iterator opt = release->options_.begin();
          opt != release->options_.end(); ++opt) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
@@ -1867,6 +1876,100 @@ Dhcpv6Srv::openActiveSockets(const uint16_t port) {
         LOG_WARN(dhcp6_logger, DHCP6_NO_SOCKETS_OPEN);
     }
 }
+
+size_t
+Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
+                         const std::string& option_space,
+                         isc::dhcp::OptionCollection& options,
+                         size_t* relay_msg_offset,
+                         size_t* relay_msg_len) {
+    size_t offset = 0;
+    size_t length = buf.size();
+
+    OptionDefContainer option_defs;
+    if (option_space == "dhcp6") {
+        // Get the list of stdandard option definitions.
+        option_defs = LibDHCP::getOptionDefs(Option::V6);
+    } else if (!option_space.empty()) {
+        OptionDefContainerPtr option_defs_ptr =
+            CfgMgr::instance().getOptionDefs(option_space);
+        if (option_defs_ptr != NULL) {
+            option_defs = *option_defs_ptr;
+        }
+    }
+
+    // Get the search index #1. It allows to search for option definitions
+    // using option code.
+    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
+
+    // The buffer being read comprises a set of options, each starting with
+    // a two-byte type code and a two-byte length field.
+    while (offset + 4 <= length) {
+        uint16_t opt_type = isc::util::readUint16(&buf[offset]);
+        offset += 2;
+
+        uint16_t opt_len = isc::util::readUint16(&buf[offset]);
+        offset += 2;
+
+        if (offset + opt_len > length) {
+            // @todo: consider throwing exception here.
+            return (offset);
+        }
+
+        if (opt_type == D6O_RELAY_MSG && relay_msg_offset && relay_msg_len) {
+            // remember offset of the beginning of the relay-msg option
+            *relay_msg_offset = offset;
+            *relay_msg_len = opt_len;
+
+            // do not create that relay-msg option
+            offset += opt_len;
+            continue;
+        }
+
+        // Get all definitions with the particular option code. Note that option
+        // code is non-unique within this container however at this point we
+        // expect to get one option definition with the particular code. If more
+        // are returned we report an error.
+        const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
+        // Get the number of returned option definitions for the option code.
+        size_t num_defs = distance(range.first, range.second);
+
+        OptionPtr opt;
+        if (num_defs > 1) {
+            // Multiple options of the same code are not supported right now!
+            isc_throw(isc::Unexpected, "Internal error: multiple option definitions"
+                      " for option type " << opt_type << " returned. Currently it is not"
+                      " supported to initialize multiple option definitions"
+                      " for the same option code. This will be supported once"
+                      " support for option spaces is implemented");
+        } else if (num_defs == 0) {
+            // @todo Don't crash if definition does not exist because only a few
+            // option definitions are initialized right now. In the future
+            // we will initialize definitions for all options and we will
+            // remove this elseif. For now, return generic option.
+            opt = OptionPtr(new Option(Option::V6, opt_type,
+                                       buf.begin() + offset,
+                                       buf.begin() + offset + opt_len));
+            opt->setEncapsulatedSpace("dhcp6");
+        } else {
+            // The option definition has been found. Use it to create
+            // the option instance from the provided buffer chunk.
+            const OptionDefinitionPtr& def = *(range.first);
+            assert(def);
+            opt = def->optionFactory(Option::V6, opt_type,
+                                     buf.begin() + offset,
+                                     buf.begin() + offset + opt_len,
+                                     boost::bind(&Dhcpv6Srv::unpackOptions, this, _1, _2,
+                                                 _3, _4, _5));
+        }
+        // add option to options
+        options.insert(std::make_pair(opt_type, opt));
+        offset += opt_len;
+    }
+
+    return (offset);
+}
+
 
 };
 };

@@ -17,6 +17,7 @@
 
 #include <util/buffer.h>
 
+#include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <map>
@@ -44,6 +45,14 @@ typedef boost::shared_ptr<OptionBuffer> OptionBufferPtr;
 class Option;
 typedef boost::shared_ptr<Option> OptionPtr;
 
+/// A collection of DHCPv6 options
+typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
+
+/// This type describes a callback function to parse options from buffer.
+typedef boost::function< size_t(const OptionBuffer&, const std::string,
+                                OptionCollection&, size_t*, size_t*)
+                         > UnpackOptionsCallback;
+
 
 class Option {
 public:
@@ -56,8 +65,6 @@ public:
     /// defines option universe DHCPv4 or DHCPv6
     enum Universe { V4, V6 };
 
-    /// a collection of DHCPv6 options
-    typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
 
     /// @brief a factory function prototype
     ///
@@ -290,6 +297,29 @@ public:
         data_.assign(first, last);
     }
 
+    /// @brief Sets the name of the option space encapsulated by this option.
+    ///
+    /// @param encapsulated_space name of the option space encapsulated by
+    /// this option.
+    void setEncapsulatedSpace(const std::string& encapsulated_space) {
+        encapsulated_space_ = encapsulated_space;
+    }
+
+    /// @brief Returns the name of the option space encapsulated by this option.
+    ///
+    /// @return name of the option space encapsulated by this option.
+    std::string getEncapsulatedSpace() const {
+        return (encapsulated_space_);
+    }
+
+    /// @brief Set callback function to be used to parse options.
+    ///
+    /// @param callback An instance of the callback function or NULL to
+    /// uninstall callback.
+    void setCallback(UnpackOptionsCallback callback) {
+        callback_ = callback;
+    }
+
     /// just to force that every option has virtual dtor
     virtual ~Option();
 
@@ -371,6 +401,12 @@ protected:
 
     /// collection for storing suboptions
     OptionCollection options_;
+
+    /// Name of the option space being encapsulated by this option.
+    std::string encapsulated_space_;
+
+    /// A callback to be called to unpack options from the packet.
+    UnpackOptionsCallback callback_;
 
     /// @todo probably 2 different containers have to be used for v4 (unique
     /// options) and v6 (options with the same type can repeat)
