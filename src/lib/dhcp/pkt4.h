@@ -16,6 +16,7 @@
 #define PKT4_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/option.h>
 #include <util/buffer.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
@@ -482,6 +483,14 @@ public:
     /// @return remote port
     uint16_t getRemotePort() const { return (remote_port_); }
 
+    /// @brief Set callback function to be used to parse options.
+    ///
+    /// @param callback An instance of the callback function or NULL to
+    /// uninstall callback.
+    void setCallback(UnpackOptionsCallback callback) {
+        callback_ = callback;
+    }
+
     /// @brief Update packet timestamp.
     ///
     /// Updates packet timestamp. This method is invoked
@@ -632,10 +641,13 @@ protected:
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
-    isc::dhcp::Option::OptionCollection options_;
+    isc::dhcp::OptionCollection options_;
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
+
+    /// A callback to be called to unpack options from the packet.
+    UnpackOptionsCallback callback_;
 
 }; // Pkt4 class
 

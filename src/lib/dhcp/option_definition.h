@@ -315,7 +315,8 @@ public:
     /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
                             OptionBufferConstIter begin,
-                            OptionBufferConstIter end) const;
+                            OptionBufferConstIter end,
+                            UnpackOptionsCallback callback = NULL) const;
 
     /// @brief Option factory.
     ///
@@ -334,7 +335,8 @@ public:
     /// @return instance of the DHCP option.
     /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
-                            const OptionBuffer& buf = OptionBuffer()) const;
+                            const OptionBuffer& buf = OptionBuffer(),
+                            UnpackOptionsCallback callback = NULL) const;
 
     /// @brief Option factory.
     ///
@@ -444,9 +446,14 @@ public:
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
     static OptionPtr factoryInteger(Option::Universe u, uint16_t type,
+                                    const std::string& encapsulated_space,
                                     OptionBufferConstIter begin,
-                                    OptionBufferConstIter end) {
-        OptionPtr option(new OptionInt<T>(u, type, begin, end));
+                                    OptionBufferConstIter end,
+                                    UnpackOptionsCallback callback) {
+        OptionPtr option(new OptionInt<T>(u, type, 0));
+        option->setEncapsulatedSpace(encapsulated_space);
+        option->setCallback(callback);
+        option->unpack(begin, end);
         return (option);
     }
 

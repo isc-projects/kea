@@ -93,7 +93,7 @@ Pkt4::len() {
     size_t length = DHCPV4_PKT_HDR_LEN; // DHCPv4 header
 
     // ... and sum of lengths of all options
-    for (Option::OptionCollection::const_iterator it = options_.begin();
+    for (OptionCollection::const_iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -209,11 +209,15 @@ Pkt4::unpack() {
     }
 
     size_t opts_len = bufferIn.getLength() - bufferIn.getPosition();
-    vector<uint8_t> optsBuffer;
+    vector<uint8_t> opts_buffer;
 
     // First use of readVector.
-    bufferIn.readVector(optsBuffer, opts_len);
-    LibDHCP::unpackOptions4(optsBuffer, options_);
+    bufferIn.readVector(opts_buffer, opts_len);
+    if (callback_.empty()) {
+        LibDHCP::unpackOptions4(opts_buffer, options_);
+    } else {
+        callback_(opts_buffer, "dhcp4", options_, 0, 0);
+    }
 
     // @todo check will need to be called separately, so hooks can be called
     // after the packet is parsed, but before its content is verified
@@ -270,7 +274,7 @@ Pkt4::toText() {
         << ":" << remote_port_ << ", msgtype=" << static_cast<int>(getType())
         << ", transid=0x" << hex << transid_ << dec << endl;
 
-    for (isc::dhcp::Option::OptionCollection::iterator opt=options_.begin();
+    for (isc::dhcp::OptionCollection::iterator opt=options_.begin();
          opt != options_.end();
          ++opt) {
         tmp << "  " << opt->second->toText() << std::endl;
@@ -428,7 +432,7 @@ Pkt4::addOption(boost::shared_ptr<Option> opt) {
 
 boost::shared_ptr<isc::dhcp::Option>
 Pkt4::getOption(uint8_t type) const {
-    Option::OptionCollection::const_iterator x = options_.find(type);
+    OptionCollection::const_iterator x = options_.find(type);
     if (x != options_.end()) {
         return (*x).second;
     }
@@ -437,7 +441,7 @@ Pkt4::getOption(uint8_t type) const {
 
 bool
 Pkt4::delOption(uint8_t type) {
-    isc::dhcp::Option::OptionCollection::iterator x = options_.find(type);
+    isc::dhcp::OptionCollection::iterator x = options_.find(type);
     if (x != options_.end()) {
         options_.erase(x);
         return (true); // delete successful

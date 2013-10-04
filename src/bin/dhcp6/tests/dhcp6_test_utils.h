@@ -110,6 +110,7 @@ public:
     using Dhcpv6Srv::sanityCheck;
     using Dhcpv6Srv::loadServerID;
     using Dhcpv6Srv::writeServerID;
+    using Dhcpv6Srv::unpackOptions;
     using Dhcpv6Srv::name_change_reqs_;
 
     /// @brief packets we pretend to receive

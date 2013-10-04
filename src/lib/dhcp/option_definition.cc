@@ -113,7 +113,8 @@ OptionDefinition::addRecordField(const OptionDataType data_type) {
 OptionPtr
 OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                                 OptionBufferConstIter begin,
-                                OptionBufferConstIter end) const {
+                                OptionBufferConstIter end,
+                                UnpackOptionsCallback callback) const {
     try {
         switch(type_) {
         case OPT_EMPTY_TYPE:
@@ -124,31 +125,37 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
 
         case OPT_UINT8_TYPE:
             return (array_type_ ? factoryGeneric(u, type, begin, end) :
-                    factoryInteger<uint8_t>(u, type, begin, end));
+                    factoryInteger<uint8_t>(u, type, getEncapsulatedSpace(),
+                                            begin, end, callback));
 
         case OPT_INT8_TYPE:
             return (array_type_ ? factoryGeneric(u, type, begin, end) :
-                    factoryInteger<int8_t>(u, type, begin, end));
+                    factoryInteger<int8_t>(u, type, getEncapsulatedSpace(),
+                                           begin, end, callback));
 
         case OPT_UINT16_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint16_t>(u, type, begin, end) :
-                    factoryInteger<uint16_t>(u, type, begin, end));
+                    factoryInteger<uint16_t>(u, type, getEncapsulatedSpace(),
+                                             begin, end, callback));
 
         case OPT_INT16_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint16_t>(u, type, begin, end) :
-                    factoryInteger<int16_t>(u, type, begin, end));
+                    factoryInteger<int16_t>(u, type, getEncapsulatedSpace(),
+                                            begin, end, callback));
 
         case OPT_UINT32_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint32_t>(u, type, begin, end) :
-                    factoryInteger<uint32_t>(u, type, begin, end));
+                    factoryInteger<uint32_t>(u, type, getEncapsulatedSpace(),
+                                             begin, end, callback));
 
         case OPT_INT32_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint32_t>(u, type, begin, end) :
-                    factoryInteger<int32_t>(u, type, begin, end));
+                    factoryInteger<int32_t>(u, type, getEncapsulatedSpace(),
+                                            begin, end, callback));
 
         case OPT_IPV4_ADDRESS_TYPE:
             // If definition specifies that an option is an array
@@ -211,8 +218,9 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
 
 OptionPtr
 OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
-                                const OptionBuffer& buf) const {
-    return (optionFactory(u, type, buf.begin(), buf.end()));
+                                const OptionBuffer& buf,
+                                UnpackOptionsCallback callback) const {
+    return (optionFactory(u, type, buf.begin(), buf.end(), callback));
 }
 
 OptionPtr

@@ -351,6 +351,18 @@ protected:
 
 private:
 
+    /// @brief Implements a callback function to parse options in the message.
+    ///
+    /// @param buf a A buffer holding options in on-wire format.
+    /// @param option_space A name of the option space which holds definitions
+    /// of to be used to parse options in the packets.
+    /// @param [out] options A reference to the collection where parsed options
+    /// will be stored.
+    /// @return An offset to the first byte after last parsed option.
+    size_t unpackOptions(const OptionBuffer& buf,
+                         const std::string& option_space,
+                         isc::dhcp::OptionCollection& options);
+
     /// @brief Constructs netmask option based on subnet4
     /// @param subnet subnet for which the netmask will be calculated
     ///
