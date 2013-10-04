@@ -1454,7 +1454,7 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
                           "Sorry, no known leases for this duid/iaid."));
 
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_UNKNOWN_RENEW)
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_UNKNOWN_RENEW_NA)
             .arg(duid->toText())
             .arg(ia->getIAID())
             .arg(subnet->toText());
@@ -1563,6 +1563,108 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     return (ia_rsp);
 }
 
+OptionPtr
+Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                      const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia) {
+    if (!subnet) {
+        // There's no subnet select for this client. There's nothing to renew.
+        boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
+
+        // Insert status code NoAddrsAvail.
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                          "Sorry, no known leases for this duid/iaid."));
+
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_RENEW_UNKNOWN_SUBNET)
+            .arg(duid->toText())
+            .arg(ia->getIAID());
+
+        return (ia_rsp);
+    }
+
+    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD,
+                                                            *duid, ia->getIAID(),
+                                                            subnet->getID());
+
+    if (!lease) {
+        // client renewing a lease that we don't know about.
+
+        // Create empty IA_NA option with IAID matching the request.
+        boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
+
+        // Insert status code NoAddrsAvail.
+        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                          "Sorry, no known leases for this duid/iaid."));
+
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_UNKNOWN_RENEW_PD)
+            .arg(duid->toText())
+            .arg(ia->getIAID())
+            .arg(subnet->toText());
+
+        return (ia_rsp);
+    }
+
+    // Keep the old data in case the callout tells us to skip update
+    Lease6 old_data = *lease;
+
+    lease->preferred_lft_ = subnet->getPreferred();
+    lease->valid_lft_ = subnet->getValid();
+    lease->t1_ = subnet->getT1();
+    lease->t2_ = subnet->getT2();
+    lease->cltt_ = time(NULL);
+
+    // Create empty IA_NA option with IAID matching the request.
+    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
+
+    ia_rsp->setT1(subnet->getT1());
+    ia_rsp->setT2(subnet->getT2());
+
+    boost::shared_ptr<Option6IAPrefix>
+      prefix(new Option6IAPrefix(D6O_IAPREFIX, lease->addr_, lease->prefixlen_,
+                                 lease->preferred_lft_, lease->valid_lft_));
+    ia_rsp->addOption(prefix);
+
+    bool skip = false;
+    // Execute all callouts registered for packet6_send
+    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_renew_)) {
+        CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+        // Delete all previous arguments
+        callout_handle->deleteAllArguments();
+
+        // Pass the original packet
+        callout_handle->setArgument("query6", query);
+
+        // Pass the lease to be updated
+        callout_handle->setArgument("lease6", lease);
+
+        // Pass the IA option to be sent in response
+        callout_handle->setArgument("ia_pd", ia_rsp);
+
+        // Call all installed callouts
+        HooksManager::callCallouts(Hooks.hook_index_lease6_renew_, *callout_handle);
+
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to actually renew the lease, so skip at this
+        // stage means "keep the old lease as it is".
+        if (callout_handle->getSkip()) {
+            skip = true;
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RENEW_SKIP);
+        }
+    }
+
+    if (!skip) {
+        LeaseMgrFactory::instance().updateLease6(lease);
+    } else {
+        // Copy back the original date to the lease. For MySQL it doesn't make
+        // much sense, but for memfile, the Lease6Ptr points to the actual lease
+        // in memfile, so the actual update is performed when we manipulate fields
+        // of returned Lease6Ptr, the actual updateLease6() is no-op.
+        *lease = old_data;
+    }
+
+    return (ia_rsp);
+}
+
 void
 Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply,
                        const Option6ClientFqdnPtr& fqdn) {
@@ -1617,6 +1719,16 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply,
             }
             break;
         }
+        case D6O_IA_PD: {
+            OptionPtr answer_opt = renewIA_PD(subnet, duid, renew,
+                                              boost::dynamic_pointer_cast<
+                                                  Option6IA>(opt->second));
+            if (answer_opt) {
+                reply->addOption(answer_opt);
+            }
+            break;
+        }
+
         default:
             break;
         }
