@@ -351,6 +351,80 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
 }
 
+void
+Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
+                                const IOAddress& release_addr) {
+    NakedDhcpv6Srv srv(0);
+
+    const uint32_t iaid = 234;
+
+    uint32_t code; // option code of the container (IA_NA or IA_PD)
+    uint8_t prefix_len;
+    if (type == Lease::TYPE_NA) {
+        code = D6O_IA_NA;
+        prefix_len = 128;
+    } else if (type == Lease::TYPE_PD) {
+        code = D6O_IA_PD;
+        prefix_len = pd_pool_->getLength();
+    } else {
+        isc_throw(BadValue, "Invalid lease type");
+    }
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(type, existing));
+
+    // Let's prepopulate the database
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, existing, duid_, iaid,
+                               501, 502, 503, 504, subnet_->getID(),
+                               prefix_len));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
+
+    // Check that the lease is really in the database
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(type, existing);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    Pkt6Ptr rel = createMessage(DHCPV6_RELEASE, type, release_addr, prefix_len,
+                                iaid);
+    rel->addOption(clientid);
+    rel->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRelease(rel);
+
+    // Check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    OptionPtr tmp = reply->getOption(code);
+    ASSERT_TRUE(tmp);
+
+    // Check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
+    checkIA_NAStatusCode(ia, STATUS_Success);
+    checkMsgStatusCode(reply, STATUS_Success);
+
+    // There should be no address returned in RELEASE (see RFC3315, 18.2.6)
+    // There should be no prefix
+    EXPECT_FALSE(tmp->getOption(D6O_IAADDR));
+    EXPECT_FALSE(tmp->getOption(D6O_IAPREFIX));
+
+    // Check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+
+    // Check that the lease is really gone in the database
+    // get lease by address
+    l = LeaseMgrFactory::instance().getLease6(type, release_addr);
+    ASSERT_FALSE(l);
+
+    // get lease by subnetid/duid/iaid combination
+    l = LeaseMgrFactory::instance().getLease6(type, *duid_, iaid,
+                                              subnet_->getID());
+    ASSERT_FALSE(l);
+}
 
 // Generate IA_NA option with specified parameters
 boost::shared_ptr<Option6IA>

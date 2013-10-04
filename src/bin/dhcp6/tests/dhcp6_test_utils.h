@@ -429,6 +429,20 @@ public:
     void
     testRenewReject(Lease::Type type, const IOAddress& addr);
 
+    /// @brief Performs basic (positive) RELEASE test
+    ///
+    /// See releaseBasic and pdReleaseBasic tests for detailed explanation.
+    /// In essence the test attempts to perform a successful RELEASE scenario.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param existing address to be preinserted into the database
+    /// @param release_addr address being sent in RELEASE
+    void
+    testReleaseBasic(Lease::Type type, const IOAddress& existing,
+                     const IOAddress& release_addr);
+
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();
     };
