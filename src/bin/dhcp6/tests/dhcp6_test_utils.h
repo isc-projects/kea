@@ -325,9 +325,8 @@ public:
 
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().addSubnet6(subnet_);
-    }
 
-    void configurePdPool() {
+        // configure PD pool
         pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 64, 80));
         subnet_->addPool(pd_pool_);
     }
@@ -387,9 +386,26 @@ public:
     Lease6Ptr checkPdLease(const DuidPtr& duid, const OptionPtr& ia_pd,
                            boost::shared_ptr<Option6IAPrefix> prefix);
 
-    /// @brief Performs basic RENEW tests
+    /// @brief Creates a message with specified IA
     ///
-    /// See renewBasic and pdRenewBasic for detailed explanation.
+    /// An utility function that creates a message of specified type with
+    /// specified container (IA_NA or IA_PD) and an address or prefix
+    /// inside it.
+    ///
+    /// @param message_type type of the message (e.g. DHCPV6_SOLICIT)
+    /// @param lease_type type of a lease (TYPE_NA or TYPE_PD)
+    /// @param addr address or prefix to use in IADDRESS or IAPREFIX options
+    /// @param prefix_len length of the prefix (used for prefixes only)
+    /// @param iaid IA identifier (used in IA_XX option)
+    /// @return created message
+    Pkt6Ptr
+    createMessage(uint8_t message_type, Lease::Type lease_type,
+                  const IOAddress& addr, const uint8_t prefix_len,
+                  uint32_t iaid);
+
+    /// @brief Performs basic (positive) RENEW test
+    ///
+    /// See renewBasic and pdRenewBasic tests for detailed explanation.
     /// In essence the test attempts to perform a successful RENEW scenario.
     ///
     /// This method does not throw, but uses gtest macros to signify failures.
@@ -400,6 +416,18 @@ public:
     void
     testRenewBasic(Lease::Type type, const std::string& existing_addr,
                    const std::string& renew_addr);
+
+    /// @brief Performs negative RENEW test
+    ///
+    /// See renewReject and pdRenewReject tests for detailed explanation.
+    /// In essence the test attempts to perform a successful RENEW scenario.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param addr address being sent in RENEW
+    void
+    testRenewReject(Lease::Type type, const IOAddress& addr);
 
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();
