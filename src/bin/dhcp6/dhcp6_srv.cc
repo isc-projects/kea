@@ -817,7 +817,6 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
     // We need to allocate addresses for all IA_NA options in the client's
     // question (i.e. SOLICIT or REQUEST) message.
     // @todo add support for IA_TA
-    // @todo add support for IA_PD
 
     // We need to select a subnet the client is connected in.
     Subnet6Ptr subnet = selectSubnet(question);
@@ -1343,8 +1342,8 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     }
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_REQUEST)
-        .arg(duid?duid->toText():"(no-duid)").arg(ia->getIAID())
-        .arg(hintOpt?hint.toText():"(no hint)");
+        .arg(duid ? duid->toText() : "(no-duid)").arg(ia->getIAID())
+        .arg(hintOpt ? hint.toText() : "(no hint)");
 
     // "Fake" allocation is processing of SOLICIT message. We pretend to do an
     // allocation, but we do not put the lease in the database. That is ok,
@@ -1387,11 +1386,11 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
             // We have a lease! Let's wrap its content into IA_PD option
             // with IAADDR suboption.
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, fake_allocation?
-                      DHCP6_PD_LEASE_ADVERT:DHCP6_PD_LEASE_ALLOC)
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+                      DHCP6_PD_LEASE_ADVERT : DHCP6_PD_LEASE_ALLOC)
                 .arg((*l)->addr_.toText())
                 .arg(static_cast<int>((*l)->prefixlen_))
-                .arg(duid?duid->toText():"(no-duid)")
+                .arg(duid ? duid->toText() : "(no-duid)")
                 .arg(ia->getIAID());
 
             boost::shared_ptr<Option6IAPrefix>
@@ -1412,7 +1411,7 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
                   DHCP6_PD_LEASE_ADVERT_FAIL : DHCP6_PD_LEASE_ALLOC_FAIL)
-            .arg(duid?duid->toText():"(no-duid)")
+            .arg(duid ? duid->toText() : "(no-duid)")
             .arg(ia->getIAID());
 
         ia_rsp->addOption(createStatusCode(STATUS_NoPrefixAvail,

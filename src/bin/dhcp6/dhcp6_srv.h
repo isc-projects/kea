@@ -227,9 +227,9 @@ protected:
     /// @brief Processes IA_PD option (and assigns prefixes if necessary).
     ///
     /// Generates response to IA_PD. This typically includes selecting (and
-    /// allocating a lease in case of REQUEST) a prefix lease and creating
-    /// IAPREFIX option. In case of allocation failure, it may contain
-    /// status code option with non-zero status, denoting cause of the
+    /// allocating in the case of REQUEST) a prefix lease and creating an
+    /// IAPREFIX option. In case of an allocation failure, it may contain a
+    /// status code option with non-zero status denoting the cause of the
     /// allocation failure.
     ///
     /// @param subnet subnet the client is connected to
