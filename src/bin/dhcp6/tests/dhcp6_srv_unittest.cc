@@ -2116,6 +2116,82 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
 
 }
 
+// Checks if server responses are sent to the proper port.
+TEST_F(Dhcpv6SrvTest, portsDirectTraffic) {
+
+    NakedDhcpv6Srv srv(0);
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = captureSimpleSolicit();
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // Get Advertise...
+    ASSERT_FALSE(srv.fake_sent_.empty());
+    Pkt6Ptr adv = srv.fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // This is sent back to client directly, should be port 546
+    EXPECT_EQ(DHCP6_CLIENT_PORT, adv->getRemotePort());
+}
+
+// Checks if server responses are sent to the proper port.
+TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
+
+    NakedDhcpv6Srv srv(0);
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = captureRelayedSolicit();
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // Get Advertise...
+    ASSERT_FALSE(srv.fake_sent_.empty());
+    Pkt6Ptr adv = srv.fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // This is sent back to relay, so port is 547
+    EXPECT_EQ(DHCP6_SERVER_PORT, adv->getRemotePort());
+}
+
+// Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
+// @todo Uncomment this test as part of #3180 work.
+// Kea code currently fails to handle docsis traffic.
+TEST_F(Dhcpv6SrvTest, DISABLED_docsisTraffic) {
+
+    NakedDhcpv6Srv srv(0);
+
+    // Let's get a traffic capture from DOCSIS3.0 modem
+    Pkt6Ptr sol = captureDocsisRelayedSolicit();
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // We should have an Advertise in response
+    ASSERT_FALSE(srv.fake_sent_.empty());
+    Pkt6Ptr adv = srv.fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    /// @todo Check that the ADVERTISE is ok, that it includes all options,
+    /// that is relayed properly, etc.
+}
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
