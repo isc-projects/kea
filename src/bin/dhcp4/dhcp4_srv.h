@@ -349,8 +349,6 @@ protected:
     /// simulates transmission of a packet. For that purpose it is protected.
     virtual void sendPacket(const Pkt4Ptr& pkt);
 
-private:
-
     /// @brief Implements a callback function to parse options in the message.
     ///
     /// @param buf a A buffer holding options in on-wire format.
@@ -362,6 +360,8 @@ private:
     size_t unpackOptions(const OptionBuffer& buf,
                          const std::string& option_space,
                          isc::dhcp::OptionCollection& options);
+
+private:
 
     /// @brief Constructs netmask option based on subnet4
     /// @param subnet subnet for which the netmask will be calculated
