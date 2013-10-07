@@ -50,7 +50,6 @@ void Dhcpv6SrvTest::captureSetDefaultFields(const Pkt6Ptr& pkt) {
 
 // This function returns buffer for very simple Solicit
 Pkt6Ptr Dhcpv6SrvTest::captureSimpleSolicit() {
-    Pkt6Ptr pkt;
     uint8_t data[] = {
         1,  // type 1 = SOLICIT
         0xca, 0xfe, 0x01, // trans-id = 0xcafe01
@@ -64,7 +63,7 @@ Pkt6Ptr Dhcpv6SrvTest::captureSimpleSolicit() {
         0, 0, 0, 0  // T2 = 0
     };
 
-    pkt.reset(new Pkt6(data, sizeof(data)));
+    Pkt6Ptr pkt(new Pkt6(data, sizeof(data)));
     captureSetDefaultFields(pkt);
 
     return (pkt);
