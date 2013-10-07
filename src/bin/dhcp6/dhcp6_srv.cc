@@ -1312,18 +1312,17 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 OptionPtr
 Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
                        const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia) {
+
+    // Create IA_PD that we will put in the response.
+    // Do not use OptionDefinition to create option's instance so
+    // as we can initialize IAID using a constructor.
+    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
+
     // If there is no subnet selected for handling this IA_PD, the only thing to
     // do left is to say that we are sorry, but the user won't get an address.
     // As a convenience, we use a different status text to indicate that
     // (compare to the same status code, but different wording below)
     if (!subnet) {
-        // Create empty IA_PD option with IAID matching the request.
-        // Note that we don't use OptionDefinition class to create this option.
-        // This is because we prefer using a constructor of Option6IA that
-        // initializes IAID. Otherwise we would have to use setIAID() after
-        // creation of the option which has some performance implications.
-        boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD,
-                                                          ia->getIAID()));
 
         // Insert status code NoAddrsAvail.
         ia_rsp->addOption(createStatusCode(STATUS_NoPrefixAvail,
@@ -1351,11 +1350,7 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // the user selects this server to do actual allocation (i.e. sends REQUEST)
     // it should include this hint. That will help us during the actual lease
     // allocation.
-    bool fake_allocation = false;
-    if (query->getType() == DHCPV6_SOLICIT) {
-        /// @todo: Check if we support rapid commit
-        fake_allocation = true;
-    }
+    bool fake_allocation = (query->getType() == DHCPV6_SOLICIT);
 
     CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
@@ -1370,11 +1365,6 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
                                                             string(),
                                                             fake_allocation,
                                                             callout_handle);
-
-    // Create IA_PD that we will put in the response.
-    // Do not use OptionDefinition to create option's instance so
-    // as we can initialize IAID using a constructor.
-    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
 
     if (!leases.empty()) {
 
