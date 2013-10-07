@@ -23,6 +23,7 @@ perfdhcp_SOURCES += command_options.cc command_options.h
 perfdhcp_SOURCES += localized_option.h
 perfdhcp_SOURCES += perf_pkt6.cc perf_pkt6.h
 perfdhcp_SOURCES += perf_pkt4.cc perf_pkt4.h
+perfdhcp_SOURCES += packet_storage.h
 perfdhcp_SOURCES += pkt_transform.cc pkt_transform.h
 perfdhcp_SOURCES += stats_mgr.h
 perfdhcp_SOURCES += test_control.cc test_control.h
