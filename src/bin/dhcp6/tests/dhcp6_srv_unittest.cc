@@ -2110,7 +2110,7 @@ TEST_F(Dhcpv6SrvTest, portsDirectTraffic) {
     NakedDhcpv6Srv srv(0);
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureSimpleSolicit());
+    Pkt6Ptr sol = captureSimpleSolicit();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(sol);
@@ -2135,7 +2135,7 @@ TEST_F(Dhcpv6SrvTest, portsRelayedTraffic) {
     NakedDhcpv6Srv srv(0);
 
     // Let's create a simple SOLICIT
-    Pkt6Ptr sol = Pkt6Ptr(captureRelayedSolicit());
+    Pkt6Ptr sol = captureRelayedSolicit();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(sol);
@@ -2162,7 +2162,7 @@ TEST_F(Dhcpv6SrvTest, DISABLED_docsisTraffic) {
     NakedDhcpv6Srv srv(0);
 
     // Let's get a traffic capture from DOCSIS3.0 modem
-    Pkt6Ptr sol = Pkt6Ptr(captureDocsisRelayedSolicit());
+    Pkt6Ptr sol = captureDocsisRelayedSolicit();
 
     // Simulate that we have received that traffic
     srv.fakeReceive(sol);
