@@ -328,6 +328,14 @@ class MsgqRunTest(unittest.TestCase):
             'group': 'notifications/cc_members'
         }]}, msg)
 
+    def test_multiple_invocations(self):
+        """
+        Check to make sure that an attempt to start a second copy of the MsgQ
+        daemon fails.
+        """
+        self.__retcode = subprocess.call([MSGQ_PATH, '-s', SOCKET_PATH])
+        self.assertNotEqual(self.__retcode, 0)
+
 if __name__ == '__main__':
     isc.log.init("msgq-tests")
     isc.log.resetUnitTestRootLogger()
