@@ -369,7 +369,15 @@ bool Dhcpv6Srv::run() {
         if (rsp) {
             rsp->setRemoteAddr(query->getRemoteAddr());
             rsp->setLocalAddr(query->getLocalAddr());
-            rsp->setRemotePort(DHCP6_CLIENT_PORT);
+
+            if (rsp->relay_info_.empty()) {
+                // Direct traffic, send back to the client directly
+                rsp->setRemotePort(DHCP6_CLIENT_PORT);
+            } else {
+                // Relayed traffic, send back to the relay agent
+                rsp->setRemotePort(DHCP6_SERVER_PORT);
+            }
+
             rsp->setLocalPort(DHCP6_SERVER_PORT);
             rsp->setIndex(query->getIndex());
             rsp->setIface(query->getIface());
@@ -433,10 +441,10 @@ bool Dhcpv6Srv::run() {
 
                     // Pass incoming packet as argument
                     callout_handle->setArgument("response6", rsp);
-                    
+
                     // Call callouts
                     HooksManager::callCallouts(Hooks.hook_index_buffer6_send_, *callout_handle);
-                    
+
                     // Callouts decided to skip the next processing step. The next
                     // processing step would to parse the packet, so skip at this
                     // stage means drop.
@@ -444,7 +452,7 @@ bool Dhcpv6Srv::run() {
                         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_BUFFER_SEND_SKIP);
                         continue;
                     }
-                    
+
                     callout_handle->getArgument("response6", rsp);
                 }
 

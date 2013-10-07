@@ -1,3 +1,7 @@
+686.	[bug]		tomek
+	b10-dhcp6 now sends back relayed traffic to proper port.
+	(Trac #3177, git 6b33de4bea92eecb64b6c673bf1b8ae51f8edcf1)
+
 685.	[func]		tomek
 	libdhcpsrv: Allocation Engine is now able to handle IPv6 prefixes.
 	This will be used in Prefix Delegation.
@@ -24,10 +28,10 @@
 	show Xfrin" via bindctl when b10-xfrin is running.
 	(Trac #2274, git ca691626a2be16f08754177bb27983a9f4984702)
 
-681.	[func]	tmark
+681.	[func]		tmark
 	Added support for prefix delegation configuration to b10-dhcp6
 	subnets.
-	(Trac# 3151 git 79a22be33825bafa1a0cdfa24d5cb751ab1ae2d3)
+	(Trac# 3151, git 79a22be33825bafa1a0cdfa24d5cb751ab1ae2d3)
 
 680.	[func]		marcin
 	perfdhcp: Added support for requesting IPv6 prefixes using IA_PD
@@ -37,12 +41,12 @@
 679.	[func]		tmark
 	b10-dhcp-ddns Finite state machine logic was refactored into its own class,
 	StateModel.
-	(Trac# 3156,  git 6e9227b1b15448e834d1f60dd655e5633ff9745c)
+	(Trac# 3156, git 6e9227b1b15448e834d1f60dd655e5633ff9745c)
 
 678.	[func]		tmark
 	MySQL backend used by b10-dhcp6 now uses lease type as a
 	filtering parameter in all IPv6 lease queries.
-	(Trac# 3147,  git 65b6372b783cb1361fd56efe2b3247bfdbdc47ea)
+	(Trac# 3147, git 65b6372b783cb1361fd56efe2b3247bfdbdc47ea)
 
 677.	[func]		tomek
 	libdhcpsrv: CfgMgr is now able to store IA, TA and PD pools in
