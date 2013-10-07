@@ -74,6 +74,8 @@ SPECFILE_LOCATION = SPECFILE_PATH + "/msgq.spec"
 
 class MsgQReceiveError(Exception): pass
 
+class MsgQRunningError(Exception): pass
+
 class MsgQCloseOnReceive(Exception):
     """Exception raised when reading data from a socket results in 'shutdown'.
 
@@ -268,11 +270,28 @@ class MsgQ:
         """Set up the listener socket.  Internal function."""
         logger.debug(TRACE_BASIC, MSGQ_LISTENER_SETUP, self.socket_file)
 
-        self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-
         if os.path.exists(self.socket_file):
+            # Rather than just blindly removing the socket file, attempt to
+            # connect to the existing socket to see if there is an existing
+            # msgq running. Only if that fails do we remove the file and
+            # attempt to create a new socket.
+            self._existing = True
+            try:
+                self._session = isc.cc.Session(self.socket_file)
+            except isc.cc.session.SessionError:
+                self._existing = False
+
+            self._session.close()
+            self._session = None
+
+            if self._existing:
+                logger.fatal(MSGQ_ALREADY_RUNNING)
+                raise MsgQRunningError("Message Queue daemon already running")
+
             os.remove(self.socket_file)
+
         try:
+            self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.listen_socket.bind(self.socket_file)
             self.listen_socket.listen(1024)
         except Exception as e:
