@@ -39,9 +39,18 @@ using namespace std;
 namespace isc {
 namespace test {
 
+void Dhcpv6SrvTest::captureSetDefaultFields(const Pkt6Ptr& pkt) {
+    pkt->setRemotePort(546);
+    pkt->setRemoteAddr(IOAddress("fe80::1"));
+    pkt->setLocalPort(0);
+    pkt->setLocalAddr(IOAddress("ff02::1:2"));
+    pkt->setIndex(2);
+    pkt->setIface("eth0");
+}
+
 // This function returns buffer for very simple Solicit
-Pkt6* isc::test::Dhcpv6SrvTest::captureSimpleSolicit() {
-    Pkt6* pkt;
+Pkt6Ptr Dhcpv6SrvTest::captureSimpleSolicit() {
+    Pkt6Ptr pkt;
     uint8_t data[] = {
         1,  // type 1 = SOLICIT
         0xca, 0xfe, 0x01, // trans-id = 0xcafe01
@@ -55,18 +64,13 @@ Pkt6* isc::test::Dhcpv6SrvTest::captureSimpleSolicit() {
         0, 0, 0, 0  // T2 = 0
     };
 
-    pkt = new Pkt6(data, sizeof(data));
-    pkt->setRemotePort(546);
-    pkt->setRemoteAddr(IOAddress("fe80::1"));
-    pkt->setLocalPort(0);
-    pkt->setLocalAddr(IOAddress("ff02::1:2"));
-    pkt->setIndex(2);
-    pkt->setIface("eth0");
+    pkt.reset(new Pkt6(data, sizeof(data)));
+    captureSetDefaultFields(pkt);
 
     return (pkt);
 }
 
-Pkt6* isc::test::Dhcpv6SrvTest::captureRelayedSolicit() {
+Pkt6Ptr Dhcpv6SrvTest::captureRelayedSolicit() {
 
     // This is a very simple relayed SOLICIT message:
     // RELAY-FORW
@@ -89,19 +93,14 @@ Pkt6* isc::test::Dhcpv6SrvTest::captureRelayedSolicit() {
     // to be OptionBuffer format)
     isc::util::encode::decodeHex(hex_string, bin);
 
-    Pkt6* pkt = new Pkt6(&bin[0], bin.size());
-    pkt->setRemotePort(547);
-    pkt->setRemoteAddr(IOAddress("fe80::1234"));
-    pkt->setLocalPort(547);
-    pkt->setLocalAddr(IOAddress("ff05::1:3"));
-    pkt->setIndex(2);
-    pkt->setIface("eth0");
+    Pkt6Ptr pkt(new Pkt6(&bin[0], bin.size()));
+    captureSetDefaultFields(pkt);
+
     return (pkt);
 }
 
 /// returns a buffer with relayed SOLICIT (from DOCSIS3.0 cable modem)
-/// see dhcp6_relay_forw-virginmedia.pcap
-Pkt6* isc::test::Dhcpv6SrvTest::captureDocsisRelayedSolicit() {
+Pkt6Ptr isc::test::Dhcpv6SrvTest::captureDocsisRelayedSolicit() {
 
     // This is an actual DOCSIS packet
     // RELAY-FORW (12) 
@@ -156,13 +155,8 @@ Pkt6* isc::test::Dhcpv6SrvTest::captureDocsisRelayedSolicit() {
     // to be OptionBuffer format)
     isc::util::encode::decodeHex(hex_string, bin);
 
-    Pkt6* pkt = new Pkt6(&bin[0], bin.size());
-    pkt->setRemotePort(547);
-    pkt->setRemoteAddr(IOAddress("fe80::1234"));
-    pkt->setLocalPort(547);
-    pkt->setLocalAddr(IOAddress("ff05::1:3"));
-    pkt->setIndex(2);
-    pkt->setIface("eth0");
+    Pkt6Ptr pkt(new Pkt6(&bin[0], bin.size()));
+    captureSetDefaultFields(pkt);
     return (pkt);
 }
 

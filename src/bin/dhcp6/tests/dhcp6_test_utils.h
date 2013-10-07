@@ -396,9 +396,17 @@ public:
     // see wireshark.cc for descriptions
     // The descriptions are too large and too closely related to the
     // code, so it is kept in .cc rather than traditionally in .h
-    Pkt6* captureSimpleSolicit();
-    Pkt6* captureRelayedSolicit();
-    Pkt6* captureDocsisRelayedSolicit();
+    Pkt6Ptr captureSimpleSolicit();
+    Pkt6Ptr captureRelayedSolicit();
+    Pkt6Ptr captureDocsisRelayedSolicit();
+
+
+    /// @brief Auxiliary method that sets Pkt6 fields
+    ///
+    /// Used to reconstruct captured packets. Sets UDP ports, interface names,
+    /// and other fields to some believable values.
+    /// @param pkt packet that will have its fields set
+    void captureSetDefaultFields(const Pkt6Ptr& pkt);
 
     ~Dhcpv6SrvTest() {
         CfgMgr::instance().deleteSubnets6();
