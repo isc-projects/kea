@@ -206,7 +206,7 @@ protected:
     /// @brief Processes IA_NA option (and assigns addresses if necessary).
     ///
     /// Generates response to IA_NA. This typically includes selecting (and
-    /// allocating a lease in case of REQUEST) a lease and creating
+    /// allocating a lease in case of REQUEST) an address lease and creating
     /// IAADDR option. In case of allocation failure, it may contain
     /// status code option with non-zero status, denoting cause of the
     /// allocation failure.
@@ -223,6 +223,23 @@ protected:
                           const isc::dhcp::Pkt6Ptr& query,
                           Option6IAPtr ia,
                           const Option6ClientFqdnPtr& fqdn);
+
+    /// @brief Processes IA_PD option (and assigns prefixes if necessary).
+    ///
+    /// Generates response to IA_PD. This typically includes selecting (and
+    /// allocating in the case of REQUEST) a prefix lease and creating an
+    /// IAPREFIX option. In case of an allocation failure, it may contain a
+    /// status code option with non-zero status denoting the cause of the
+    /// allocation failure.
+    ///
+    /// @param subnet subnet the client is connected to
+    /// @param duid client's duid
+    /// @param query client's message (typically SOLICIT or REQUEST)
+    /// @param ia pointer to client's IA_PD option (client's request)
+    /// @return IA_PD option (server's response)
+    OptionPtr assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                          const Pkt6Ptr& query,
+                          boost::shared_ptr<Option6IA> ia);
 
     /// @brief Renews specific IA_NA option
     ///

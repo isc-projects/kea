@@ -16,11 +16,15 @@
 ///
 /// @brief  This file contains utility classes used for DHCPv6 server testing
 
+#ifndef DHCP6_TEST_UTILS_H
+#define DHCP6_TEST_UTILS_H
+
 #include <gtest/gtest.h>
 
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/iface_mgr.h>
@@ -145,14 +149,9 @@ public:
         valid_iface_ = ifaces.begin()->getName();
     }
 
-    // Generate IA_NA option with specified parameters
-    boost::shared_ptr<Option6IA> generateIA(uint32_t iaid, uint32_t t1, uint32_t t2) {
-        boost::shared_ptr<Option6IA> ia =
-            boost::shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, iaid));
-        ia->setT1(t1);
-        ia->setT2(t2);
-        return (ia);
-    }
+    // Generate IA_NA or IA_PD option with specified parameters
+    boost::shared_ptr<Option6IA> generateIA(uint16_t type, uint32_t iaid,
+                                            uint32_t t1, uint32_t t2);
 
     /// @brief generates interface-id option, based on text
     ///
@@ -328,31 +327,34 @@ public:
         CfgMgr::instance().addSubnet6(subnet_);
     }
 
-    // Checks that server response (ADVERTISE or REPLY) contains proper IA_NA option
-    // It returns IAADDR option for each chaining with checkIAAddr method.
-    boost::shared_ptr<Option6IAAddr> checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
-                                            uint32_t expected_t1, uint32_t expected_t2) {
-        OptionPtr tmp = rsp->getOption(D6O_IA_NA);
-        // Can't use ASSERT_TRUE() in method that returns something
-        if (!tmp) {
-            ADD_FAILURE() << "IA_NA option not present in response";
-            return (boost::shared_ptr<Option6IAAddr>());
-        }
-
-        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-        if (!ia) {
-            ADD_FAILURE() << "IA_NA cannot convert option ptr to Option6";
-            return (boost::shared_ptr<Option6IAAddr>());
-        }
-
-        EXPECT_EQ(expected_iaid, ia->getIAID());
-        EXPECT_EQ(expected_t1, ia->getT1());
-        EXPECT_EQ(expected_t2, ia->getT2());
-
-        tmp = ia->getOption(D6O_IAADDR);
-        boost::shared_ptr<Option6IAAddr> addr = boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
-        return (addr);
+    void configurePdPool() {
+        pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 64, 80));
+        subnet_->addPool(pd_pool_);
     }
+
+    /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
+    ///        IA_NA option
+    ///
+    /// @param rsp server's response
+    /// @param expected_iaid expected IAID value
+    /// @param expected_t1 expected T1 value
+    /// @param expected_t2 expected T2 value
+    /// @return IAADDR option for easy chaining with checkIAAddr method
+    boost::shared_ptr<Option6IAAddr>
+        checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
+                   uint32_t expected_t1, uint32_t expected_t2);
+
+    /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
+    ///        IA_PD option
+    ///
+    /// @param rsp server's response
+    /// @param expected_iaid expected IAID value
+    /// @param expected_t1 expected T1 value
+    /// @param expected_t2 expected T2 value
+    /// @return IAPREFIX option for easy chaining with checkIAAddr method
+    boost::shared_ptr<Option6IAPrefix>
+    checkIA_PD(const Pkt6Ptr& rsp, uint32_t expected_iaid,
+               uint32_t expected_t1, uint32_t expected_t2);
 
     // Check that generated IAADDR option contains expected address
     // and lifetime values match the configured subnet
@@ -375,24 +377,11 @@ public:
     // Checks if the lease sent to client is present in the database
     // and is valid when checked agasint the configured subnet
     Lease6Ptr checkLease(const DuidPtr& duid, const OptionPtr& ia_na,
-                         boost::shared_ptr<Option6IAAddr> addr) {
-        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(ia_na);
+                         boost::shared_ptr<Option6IAAddr> addr);
 
-        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
-                                                                addr->getAddress());
-        if (!lease) {
-            std::cout << "Lease for " << addr->getAddress().toText()
-                      << " not found in the database backend.";
-            return (Lease6Ptr());
-        }
+    Lease6Ptr checkPdLease(const DuidPtr& duid, const OptionPtr& ia_pd,
+                           boost::shared_ptr<Option6IAPrefix> prefix);
 
-        EXPECT_EQ(addr->getAddress().toText(), lease->addr_.toText());
-        EXPECT_TRUE(*lease->duid_ == *duid);
-        EXPECT_EQ(ia->getIAID(), lease->iaid_);
-        EXPECT_EQ(subnet_->getID(), lease->subnet_id_);
-
-        return (lease);
-    }
 
     // see wireshark.cc for descriptions
     // The descriptions are too large and too closely related to the
@@ -416,9 +405,14 @@ public:
     /// A subnet used in most tests
     Subnet6Ptr subnet_;
 
-    /// A pool used in most tests
+    /// A normal, non-temporary pool used in most tests
     Pool6Ptr pool_;
+
+    /// A prefix pool used in most tests
+    Pool6Ptr pd_pool_;
 };
 
 }; // end of isc::test namespace
 }; // end of isc namespace
+
+#endif // DHCP6_TEST_UTILS_H
