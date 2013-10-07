@@ -24,7 +24,7 @@
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
-#include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
@@ -825,7 +825,6 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
     // We need to allocate addresses for all IA_NA options in the client's
     // question (i.e. SOLICIT or REQUEST) message.
     // @todo add support for IA_TA
-    // @todo add support for IA_PD
 
     // We need to select a subnet the client is connected in.
     Subnet6Ptr subnet = selectSubnet(question);
@@ -882,6 +881,14 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
                 answer->addOption(answer_opt);
             }
             break;
+        }
+        case D6O_IA_PD: {
+            OptionPtr answer_opt = assignIA_PD(subnet, duid, question,
+                                               boost::dynamic_pointer_cast<
+                                               Option6IA>(opt->second));
+            if (answer_opt) {
+                answer->addOption(answer_opt);
+            }
         }
         default:
             break;
@@ -1306,6 +1313,107 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
         ia_rsp->addOption(createStatusCode(STATUS_NoAddrsAvail,
                           "Sorry, no address could be allocated."));
+    }
+    return (ia_rsp);
+}
+
+OptionPtr
+Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                       const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia) {
+
+    // Create IA_PD that we will put in the response.
+    // Do not use OptionDefinition to create option's instance so
+    // as we can initialize IAID using a constructor.
+    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
+
+    // If there is no subnet selected for handling this IA_PD, the only thing to
+    // do left is to say that we are sorry, but the user won't get an address.
+    // As a convenience, we use a different status text to indicate that
+    // (compare to the same status code, but different wording below)
+    if (!subnet) {
+
+        // Insert status code NoAddrsAvail.
+        ia_rsp->addOption(createStatusCode(STATUS_NoPrefixAvail,
+                                           "Sorry, no subnet available."));
+        return (ia_rsp);
+    }
+
+    // Check if the client sent us a hint in his IA_PD. Clients may send an
+    // address in their IA_NA options as a suggestion (e.g. the last address
+    // they used before).
+    boost::shared_ptr<Option6IAPrefix> hintOpt =
+      boost::dynamic_pointer_cast<Option6IAPrefix>(ia->getOption(D6O_IAPREFIX));
+    IOAddress hint("::");
+    if (hintOpt) {
+        hint = hintOpt->getAddress();
+    }
+
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PROCESS_IA_PD_REQUEST)
+        .arg(duid ? duid->toText() : "(no-duid)").arg(ia->getIAID())
+        .arg(hintOpt ? hint.toText() : "(no hint)");
+
+    // "Fake" allocation is processing of SOLICIT message. We pretend to do an
+    // allocation, but we do not put the lease in the database. That is ok,
+    // because we do not guarantee that the user will get that exact lease. If
+    // the user selects this server to do actual allocation (i.e. sends REQUEST)
+    // it should include this hint. That will help us during the actual lease
+    // allocation.
+    bool fake_allocation = (query->getType() == DHCPV6_SOLICIT);
+
+    CalloutHandlePtr callout_handle = getCalloutHandle(query);
+
+    // Use allocation engine to pick a lease for this client. Allocation engine
+    // will try to honour the hint, but it is just a hint - some other address
+    // may be used instead. If fake_allocation is set to false, the lease will
+    // be inserted into the LeaseMgr as well.
+    Lease6Collection leases = alloc_engine_->allocateLeases6(subnet, duid,
+                                                            ia->getIAID(),
+                                                            hint, Lease::TYPE_PD,
+                                                            false, false,
+                                                            string(),
+                                                            fake_allocation,
+                                                            callout_handle);
+
+    if (!leases.empty()) {
+
+        ia_rsp->setT1(subnet->getT1());
+        ia_rsp->setT2(subnet->getT2());
+
+        for (Lease6Collection::iterator l = leases.begin();
+             l != leases.end(); ++l) {
+
+            // We have a lease! Let's wrap its content into IA_PD option
+            // with IAADDR suboption.
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+                      DHCP6_PD_LEASE_ADVERT : DHCP6_PD_LEASE_ALLOC)
+                .arg((*l)->addr_.toText())
+                .arg(static_cast<int>((*l)->prefixlen_))
+                .arg(duid ? duid->toText() : "(no-duid)")
+                .arg(ia->getIAID());
+
+            boost::shared_ptr<Option6IAPrefix>
+                addr(new Option6IAPrefix(D6O_IAPREFIX, (*l)->addr_,
+                                         (*l)->prefixlen_, (*l)->preferred_lft_,
+                                         (*l)->valid_lft_));
+            ia_rsp->addOption(addr);
+        }
+
+        // It would be possible to insert status code=0(success) as well,
+        // but this is considered waste of bandwidth as absence of status
+        // code is considered a success.
+
+    } else {
+        // Allocation engine did not allocate a lease. The engine logged
+        // cause of that failure. The only thing left is to insert
+        // status code to pass the sad news to the client.
+
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, fake_allocation ?
+                  DHCP6_PD_LEASE_ADVERT_FAIL : DHCP6_PD_LEASE_ALLOC_FAIL)
+            .arg(duid ? duid->toText() : "(no-duid)")
+            .arg(ia->getIAID());
+
+        ia_rsp->addOption(createStatusCode(STATUS_NoPrefixAvail,
+                          "Sorry, no prefixes could be allocated."));
     }
     return (ia_rsp);
 }

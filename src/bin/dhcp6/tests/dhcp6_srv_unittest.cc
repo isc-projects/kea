@@ -97,7 +97,7 @@ public:
                                 OptionPtr srvid = OptionPtr()) {
         Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(msg_type, 1234));
         pkt->setRemoteAddr(IOAddress("fe80::abcd"));
-        Option6IAPtr ia = generateIA(234, 1500, 3000);
+        Option6IAPtr ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
 
         if (msg_type != DHCPV6_REPLY) {
             IOAddress hint("2001:db8:1:1::dead:beef");
@@ -149,7 +149,7 @@ public:
 
     // Adds IA option to the message. Option holds an address.
     void addIA(const uint32_t iaid, const IOAddress& addr, Pkt6Ptr& pkt) {
-        Option6IAPtr opt_ia = generateIA(iaid, 1500, 3000);
+        Option6IAPtr opt_ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
         Option6IAAddrPtr opt_iaaddr(new Option6IAAddr(D6O_IAADDR, addr,
                                                       300, 500));
         opt_ia->addOption(opt_iaaddr);
@@ -158,7 +158,7 @@ public:
 
     // Adds IA option to the message. Option holds status code.
     void addIA(const uint32_t iaid, const uint16_t status_code, Pkt6Ptr& pkt) {
-        Option6IAPtr opt_ia = generateIA(iaid, 1500, 3000);
+        Option6IAPtr opt_ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
         addStatusCode(status_code, "", opt_ia);
         pkt->addOption(opt_ia);
     }
@@ -312,7 +312,7 @@ TEST_F(NakedDhcpv6SrvTest, SolicitNoSubnet) {
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
-    sol->addOption(generateIA(234, 1500, 3000));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -335,7 +335,7 @@ TEST_F(NakedDhcpv6SrvTest, RequestNoSubnet) {
     // Let's create a REQUEST
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
 
     // with a hint
     IOAddress hint("2001:db8:1:1::dead:beef");
@@ -373,7 +373,7 @@ TEST_F(NakedDhcpv6SrvTest, RenewNoSubnet) {
     // Let's create a RENEW
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(renewed_addr_opt);
@@ -408,7 +408,7 @@ TEST_F(NakedDhcpv6SrvTest, ReleaseNoSubnet) {
     // Let's create a RELEASE
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr released_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(released_addr_opt);
@@ -563,7 +563,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
-    sol->addOption(generateIA(234, 1500, 3000));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -647,7 +647,7 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
-    sol->addOption(generateIA(234, 1500, 3000));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -665,6 +665,53 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
     // Check that the assigned address is indeed from the configured pool
     checkIAAddr(addr, addr->getAddress(), Lease::TYPE_NA, subnet_->getPreferred(),
                 subnet_->getValid());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+}
+
+// This test verifies that incoming SOLICIT can be handled properly, that an
+// ADVERTISE is generated, that the response has a prefix and that prefix
+// really belongs to the configured pool.
+//
+// This test sends a SOLICIT without any hint in IA_PD.
+//
+// constructed very simple SOLICIT message with:
+// - client-id option (mandatory)
+// - IA option (a request for address, without any addresses)
+//
+// expected returned ADVERTISE message:
+// - copy of client-id
+// - server-id
+// - IA that includes IAPREFIX
+TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
+
+    configurePdPool();
+
+    NakedDhcpv6Srv srv(0);
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->addOption(generateIA(D6O_IA_PD, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt6Ptr reply = srv.processSolicit(sol);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_ADVERTISE, 1234);
+
+    // check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAPrefix> prefix = checkIA_PD(reply, 234, subnet_->getT1(),
+                                                           subnet_->getT2());
+    ASSERT_TRUE(prefix);
+
+    // Check that the assigned prefix is indeed from the configured pool
+    checkIAAddr(prefix, prefix->getAddress(), Lease::TYPE_PD,
+                subnet_->getPreferred(), subnet_->getValid());
+    EXPECT_EQ(pd_pool_->getLength(), prefix->getLength());
 
     // check DUIDs
     checkServerId(reply, srv.getServerID());
@@ -692,7 +739,7 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     // Let's create a SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
 
     // with a valid hint
     IOAddress hint("2001:db8:1:1::dead:beef");
@@ -747,7 +794,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     // Let's create a SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
     IOAddress hint("2001:db8:1::cafe:babe");
     ASSERT_FALSE(subnet_->inPool(Lease::TYPE_NA, hint));
     OptionPtr hint_opt(new Option6IAAddr(D6O_IAADDR, hint, 300, 500));
@@ -798,9 +845,9 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     sol2->setRemoteAddr(IOAddress("fe80::1223"));
     sol3->setRemoteAddr(IOAddress("fe80::3467"));
 
-    sol1->addOption(generateIA(1, 1500, 3000));
-    sol2->addOption(generateIA(2, 1500, 3000));
-    sol3->addOption(generateIA(3, 1500, 3000));
+    sol1->addOption(generateIA(D6O_IA_NA, 1, 1500, 3000));
+    sol2->addOption(generateIA(D6O_IA_NA, 2, 1500, 3000));
+    sol3->addOption(generateIA(D6O_IA_NA, 3, 1500, 3000));
 
     // different client-id sizes
     OptionPtr clientid1 = generateClientId(12);
@@ -878,7 +925,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     // Let's create a REQUEST
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(234, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
 
     // with a valid hint
     IOAddress hint("2001:db8:1:1::dead:beef");
@@ -921,6 +968,74 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     LeaseMgrFactory::instance().deleteLease(addr->getAddress());
 }
 
+// This test verifies that incoming REQUEST can be handled properly, that a
+// REPLY is generated, that the response has a prefix and that prefix
+// really belongs to the configured pool.
+//
+// This test sends a REQUEST with IA_PD that contains a valid hint.
+//
+// constructed very simple REQUEST message with:
+// - client-id option (mandatory)
+// - IA option (a request for address, with an address that belongs to the
+//              configured pool, i.e. is valid as hint)
+//
+// expected returned REPLY message:
+// - copy of client-id
+// - server-id
+// - IA that includes IAPREFIX
+TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
+
+    configurePdPool();
+
+    NakedDhcpv6Srv srv(0);
+
+    // Let's create a REQUEST
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_PD, 234, 1500, 3000);
+
+    // with a valid hint
+    IOAddress hint("2001:db8:1:2:f::");
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_PD, hint));
+    OptionPtr hint_opt(new Option6IAPrefix(D6O_IAPREFIX, hint, 64, 300, 500));
+    ia->addOption(hint_opt);
+    req->addOption(ia);
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+
+    // server-id is mandatory in REQUEST
+    req->addOption(srv.getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt6Ptr reply = srv.processRequest(req);
+
+    // check if we get response at all
+    checkResponse(reply, DHCPV6_REPLY, 1234);
+
+    OptionPtr tmp = reply->getOption(D6O_IA_PD);
+    ASSERT_TRUE(tmp);
+
+    // check that IA_NA was returned and that there's an address included
+    boost::shared_ptr<Option6IAPrefix> prf = checkIA_PD(reply, 234,
+                                                        subnet_->getT1(),
+                                                        subnet_->getT2());
+    ASSERT_TRUE(prf);
+
+    // check that we've got the address we requested
+    checkIAAddr(prf, hint, Lease::TYPE_PD, subnet_->getPreferred(),
+                subnet_->getValid());
+    EXPECT_EQ(pd_pool_->getLength(), prf->getLength());
+
+    // check DUIDs
+    checkServerId(reply, srv.getServerID());
+    checkClientId(reply, clientid);
+
+    // check that the lease is really in the database
+    Lease6Ptr l = checkPdLease(duid_, reply->getOption(D6O_IA_PD), prf);
+    EXPECT_TRUE(l);
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(prf->getAddress()));
+}
+
 // This test checks that the server is offering different addresses to different
 // clients in REQUEST. Please note that ADVERTISE is not a guarantee that such
 // and address will be assigned. Had the pool was very small and contained only
@@ -941,9 +1056,9 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     req2->setRemoteAddr(IOAddress("fe80::1223"));
     req3->setRemoteAddr(IOAddress("fe80::3467"));
 
-    req1->addOption(generateIA(1, 1500, 3000));
-    req2->addOption(generateIA(2, 1500, 3000));
-    req3->addOption(generateIA(3, 1500, 3000));
+    req1->addOption(generateIA(D6O_IA_NA, 1, 1500, 3000));
+    req2->addOption(generateIA(D6O_IA_NA, 2, 1500, 3000));
+    req3->addOption(generateIA(D6O_IA_NA, 3, 1500, 3000));
 
     // different client-id sizes
     OptionPtr clientid1 = generateClientId(12);
@@ -1050,7 +1165,7 @@ TEST_F(Dhcpv6SrvTest, RenewBasic) {
     // Let's create a RENEW
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(renewed_addr_opt);
@@ -1136,7 +1251,7 @@ TEST_F(Dhcpv6SrvTest, RenewReject) {
     // Let's create a RENEW
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, transid));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(bogus_iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, bogus_iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(renewed_addr_opt);
@@ -1247,7 +1362,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
     // Let's create a RELEASE
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr released_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(released_addr_opt);
@@ -1324,7 +1439,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseReject) {
     // Let's create a RELEASE
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, transid));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(bogus_iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, bogus_iaid, 1500, 3000);
 
     OptionPtr released_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(released_addr_opt);

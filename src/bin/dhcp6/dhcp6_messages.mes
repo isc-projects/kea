@@ -166,26 +166,50 @@ A "libreload" command was issued to reload the hooks libraries but for
 some reason the reload failed.  Other error messages issued from the
 hooks framework will indicate the nature of the problem.
 
-% DHCP6_LEASE_ADVERT lease %1 advertised (client duid=%2, iaid=%3)
+% DHCP6_LEASE_ADVERT address lease %1 advertised (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully advertised
-a lease. It is up to the client to choose one server out of the
+an address lease. It is up to the client to choose one server out of the
 advertised servers and continue allocation with that server. This
 is a normal behavior and indicates successful operation.
 
-% DHCP6_LEASE_ADVERT_FAIL failed to advertise a lease for client duid=%1, iaid=%2
-This message indicates that the server failed to advertise (in response to
-received SOLICIT) a lease for a given client. There may be many reasons for
-such failure. Each specific failure is logged in a separate log entry.
+% DHCP6_PD_LEASE_ADVERT prefix lease %1/%2 advertised (client duid=%3, iaid=%4)
+This debug message indicates that the server successfully advertised
+a prefix lease. It is up to the client to choose one server out of the
+advertised servers and continue allocation with that server. This
+is a normal behavior and indicates successful operation.
 
-% DHCP6_LEASE_ALLOC lease %1 has been allocated (client duid=%2, iaid=%3)
-This debug message indicates that the server successfully granted (in
-response to client's REQUEST message) a lease. This is a normal behavior
-and indicates successful operation.
+% DHCP6_LEASE_ADVERT_FAIL failed to advertise an address lease for client duid=%1, iaid=%2
+This message indicates that in response to a received SOLICIT, the server
+failed to advertise a non-temporary lease for a given client. There may
+be many reasons for such failure. Each failure is logged in a separate
+log entry.
 
-% DHCP6_LEASE_ALLOC_FAIL failed to grant a lease for client duid=%1, iaid=%2
+% DHCP6_PD_LEASE_ADVERT_FAIL failed to advertise a prefix lease for client duid=%1, iaid=%2
+This message indicates that in response to a received SOLICIT, the
+server failed to advertise a prefix lease for the client. There may
+be many reasons for such failure. Each failure is logged in a separate
+log entry.
+
+% DHCP6_LEASE_ALLOC address lease %1 has been allocated (client duid=%2, iaid=%3)
+This debug message indicates that in response to a client's REQUEST
+message, the server successfully granted an non-temporary address
+lease. This is a normal behavior and indicates successful operation.
+
+% DHCP6_PD_LEASE_ALLOC prefix lease %1/%2 has been allocated (client duid=%3, iaid=%4)
+This debug message indicates that in response to a client's REQUEST
+message, the server successfully granted a prefix delegation lease. This
+is a normal behavior and indicates successful operation.
+
+% DHCP6_LEASE_ALLOC_FAIL failed to grant an address lease for client duid=%1, iaid=%2
+This message indicates that in response to a received REQUEST, the server
+failed to grant a non-temporary address lease for the client. There may
+be many reasons for such failure. Each failure is logged in a separate
+log entry.
+
+% DHCP6_PD_LEASE_ALLOC_FAIL failed to grant a prefix lease for client duid=%1, iaid=%2
 This message indicates that the server failed to grant (in response to
-received REQUEST) a lease for a given client. There may be many reasons for
-such failure. Each specific failure is logged in a separate log entry.
+received REQUEST) a prefix lease for a given client. There may be many reasons
+for such failure. Each failure is logged in a separate log entry.
 
 % DHCP6_LEASE_WITHOUT_DUID lease for address %1 does not have a DUID
 This error message indicates a database consistency failure. The lease
@@ -278,9 +302,14 @@ parsing actions and committal of changes failed.  The reason for the
 failure is given in the message.
 
 % DHCP6_PROCESS_IA_NA_REQUEST server is processing IA_NA option (duid=%1, iaid=%2, hint=%3)
-This is a debug message that indicates a processing of received IA_NA
-option. It may optionally contain an address that may be used by the server
-as a hint for possible requested address.
+This is a debug message that indicates the processing of a received
+IA_NA option. It may optionally contain an address that may be used by
+the server as a hint for possible requested address.
+
+% DHCP6_PROCESS_IA_PD_REQUEST server is processing IA_PD option (duid=%1, iaid=%2, hint=%3)
+This is a debug message that indicates a processing of received IA_PD
+option. It may optionally contain an prefix that may be used by the server
+as a hint for possible requested prefix.
 
 % DHCP6_QUERY_DATA received packet length %1, data length %2, data is %3
 A debug message listing the data received from the client or relay.
