@@ -1115,7 +1115,7 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
 // - lease is actually renewed in LeaseMgr
 TEST_F(Dhcpv6SrvTest, renewBasic) {
     testRenewBasic(Lease::TYPE_NA, "2001:db8:1:1::cafe:babe",
-                   "2001:db8:1:1::cafe:babe");
+                   "2001:db8:1:1::cafe:babe", 128);
 }
 
 // This test verifies that incoming (positive) PD RENEW can be handled properly,
@@ -1128,8 +1128,8 @@ TEST_F(Dhcpv6SrvTest, renewBasic) {
 // - returned REPLY message has IA_PD that includes IAPREFIX
 // - lease is actually renewed in LeaseMgr
 TEST_F(Dhcpv6SrvTest, pdRenewBasic) {
-    testRenewBasic(Lease::TYPE_PD, "2001:db8:1:1::cafe:babe",
-                   "2001:db8:1:1::cafe:babe");
+    testRenewBasic(Lease::TYPE_PD, "2001:db8:1:2::",
+                   "2001:db8:1:2::", pd_pool_->getLength());
 }
 
 // This test verifies that incoming (invalid) RENEW with an address
@@ -1190,7 +1190,7 @@ TEST_F(Dhcpv6SrvTest, ReleaseBasic) {
 // - returned REPLY message has IA_PD that does not include an IAPREFIX
 // - lease is actually removed from LeaseMgr
 TEST_F(Dhcpv6SrvTest, pdReleaseBasic) {
-    testReleaseBasic(Lease::TYPE_NA, IOAddress("2001:db8:1:2::"),
+    testReleaseBasic(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"),
                      IOAddress("2001:db8:1:2::"));
 }
 
