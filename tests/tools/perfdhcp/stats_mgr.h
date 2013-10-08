@@ -1169,6 +1169,8 @@ public:
             return("SOLICIT-ADVERTISE");
         case XCHG_RR:
             return("REQUEST-REPLY");
+        case XCHG_RN:
+            return("RENEW-REPLY");
         default:
             return("Unknown exchange type");
         }
