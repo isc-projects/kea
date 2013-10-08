@@ -16,10 +16,11 @@
 #ifndef COMMAND_OPTIONS_H
 #define COMMAND_OPTIONS_H
 
+#include <boost/noncopyable.hpp>
+
+#include <stdint.h>
 #include <string>
 #include <vector>
-
-#include <boost/noncopyable.hpp>
 
 namespace isc {
 namespace perfdhcp {

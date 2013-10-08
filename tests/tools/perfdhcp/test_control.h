@@ -15,20 +15,21 @@
 #ifndef TEST_CONTROL_H
 #define TEST_CONTROL_H
 
-#include <string>
-#include <vector>
-
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include "packet_storage.h"
+#include "stats_mgr.h"
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 
-#include "stats_mgr.h"
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+#include <string>
+#include <vector>
 
 namespace isc {
 namespace perfdhcp {
@@ -298,6 +299,14 @@ protected:
     ///
     /// \return true if any of the exit conditions is fulfilled.
     bool checkExitConditions() const;
+
+    /// \brief Creates IPv6 packet using options from Reply packet.
+    ///
+    /// \param reply An instance of the Reply packet which contents should
+    /// be used to create an instance of the Renew packet.
+    ///
+    /// \return created Renew packet.
+    dhcp::Pkt6Ptr createRenew(const dhcp::Pkt6Ptr& reply);
 
     /// \brief Factory function to create DHCPv6 ELAPSED_TIME option.
     ///
@@ -702,6 +711,27 @@ protected:
                      const uint64_t packets_num,
                      const bool preload = false);
 
+    /// \brief Send number of DHCPv6 Renew packets to the server.
+    ///
+    /// \param socket An object representing socket to be used to send packets.
+    /// \param packets_num A number of Renew packets to be send.
+    ///
+    /// \param A number of packets actually sent.
+    uint64_t sendRenewPackets(const TestControlSocket& socket,
+                          const uint64_t packets_num);
+
+    /// \brief Send a renew message using provided socket.
+    ///
+    /// This function will try to identify an existing lease for which a Renew
+    /// will be sent. If there is no lease that can be renewed this method will
+    /// return false.
+    ///
+    /// \param socket An object encapsulating socket to be used to send
+    /// a packet.
+    ///
+    /// \return true if packet has been sent, false otherwise.
+    bool sendRenew(const TestControlSocket& socket);
+
     /// \brief Send DHCPv4 REQUEST message.
     ///
     /// Method creates and sends DHCPv4 REQUEST message to the server.
@@ -1002,6 +1032,8 @@ private:
 
     StatsMgr4Ptr stats_mgr4_;  ///< Statistics Manager 4.
     StatsMgr6Ptr stats_mgr6_;  ///< Statistics Manager 6.
+
+    PacketStorage<dhcp::Pkt6> reply_storage_; ///< A storage for reply messages.
 
     NumberGeneratorPtr transid_gen_; ///< Transaction id generator.
     NumberGeneratorPtr macaddr_gen_; ///< Numbers generator for MAC address.
