@@ -591,11 +591,11 @@ TEST_F(OptionTest, unpackCallback) {
     // Create a buffer which holds two sub options.
     const char opt_data[] = {
         0x00, 0x01,  // sub option code  = 1
-        0x00, 0x02,  // sub option length = 1
-        0x00, 0x01,  // sub option data
+        0x00, 0x02,  // sub option length = 2
+        0x00, 0x01,  // sub option data (2 bytes)
         0x00, 0x02,  // sub option code = 2
-        0x00, 0x02,  // sub option length
-        0x00, 0x01   // sub option data
+        0x00, 0x02,  // sub option length = 2
+        0x01, 0x01   // sub option data (2 bytes)
     };
     OptionBuffer opt_buf(opt_data, opt_data + sizeof(opt_data));
 
@@ -605,6 +605,9 @@ TEST_F(OptionTest, unpackCallback) {
     ASSERT_FALSE(cb.executed_);
     // Create an option and install a callback.
     NakedOption option;
+    // Parameters from _1 to _5 are placeholders for the actual values
+    // to be passed to the callback function. See: boost::bind documentation
+    // at http://www.boost.org/doc/libs/1_54_0/libs/bind/bind.html.
     option.setCallback(boost::bind(&CustomUnpackCallback::execute, &cb,
                                    _1, _2, _3, _4, _5));
     // Parse options. It should result in a call to our callback function.

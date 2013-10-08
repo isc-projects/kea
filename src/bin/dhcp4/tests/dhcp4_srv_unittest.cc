@@ -1664,6 +1664,7 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
 // - option (option space 'foobar')
 //   - sub option (option space 'foo')
 //      - sub option (option space 'bar')
+// @todo Add more thorough unit tests for unpackOptions.
 TEST_F(Dhcpv4SrvTest, unpackOptions) {
     // Create option definition for each level of encapsulation. Each option
     // definition is for the option code 1. Options may have the same

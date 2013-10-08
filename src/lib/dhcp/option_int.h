@@ -47,6 +47,7 @@ public:
     ///
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
+    /// @todo Extend constructor to set encapsulated option space name.
     OptionInt(Option::Universe u, uint16_t type, T value)
         : Option(u, type), value_(value) {
         if (!OptionDataTypeTraits<T>::integer_type) {
@@ -69,6 +70,7 @@ public:
     /// @throw isc::OutOfRange if provided buffer is shorter than data size.
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
+    /// @todo Extend constructor to set encapsulated option space name.
     OptionInt(Option::Universe u, uint16_t type, OptionBufferConstIter begin,
                OptionBufferConstIter end)
         : Option(u, type) {

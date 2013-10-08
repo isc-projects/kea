@@ -1181,9 +1181,9 @@ Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
     size_t offset = 0;
 
     OptionDefContainer option_defs;
-    if (option_space == "dhcp6") {
+    if (option_space == "dhcp4") {
         // Get the list of stdandard option definitions.
-        option_defs = LibDHCP::getOptionDefs(Option::V6);
+        option_defs = LibDHCP::getOptionDefs(Option::V4);
     } else if (!option_space.empty()) {
         OptionDefContainerPtr option_defs_ptr =
             CfgMgr::instance().getOptionDefs(option_space);
