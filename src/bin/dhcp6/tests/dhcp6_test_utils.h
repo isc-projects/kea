@@ -413,9 +413,10 @@ public:
     /// @param type type (TYPE_NA or TYPE_PD)
     /// @param existing_addr address to be preinserted into the database
     /// @param renew_addr address being sent in RENEW
+    /// @param prefix_len length of the prefix (128 for addresses)
     void
     testRenewBasic(Lease::Type type, const std::string& existing_addr,
-                   const std::string& renew_addr);
+                   const std::string& renew_addr, const uint8_t prefix_len);
 
     /// @brief Performs negative RENEW test
     ///

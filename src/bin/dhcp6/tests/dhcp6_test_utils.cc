@@ -134,6 +134,7 @@ Dhcpv6SrvTest::createMessage(uint8_t message_type, Lease::Type lease_type,
         code = D6O_IA_PD;
         subopt.reset(new Option6IAPrefix(D6O_IAPREFIX, addr, prefix_len,
                                          300, 500));
+        break;
     default:
         isc_throw(BadValue, "Invalid lease type specified");
     }
@@ -148,7 +149,8 @@ Dhcpv6SrvTest::createMessage(uint8_t message_type, Lease::Type lease_type,
 
 void
 Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr,
-                              const std::string& renew_addr) {
+                              const std::string& renew_addr,
+                              const uint8_t prefix_len) {
     NakedDhcpv6Srv srv(0);
 
     const IOAddress existing(existing_addr);
@@ -163,8 +165,8 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
-    Lease6Ptr lease(new Lease6(type, existing, duid_, iaid,
-                               501, 502, 503, 504, subnet_->getID(), 128));
+    Lease6Ptr lease(new Lease6(type, existing, duid_, iaid, 501, 502, 503, 504,
+                               subnet_->getID(), prefix_len));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
@@ -181,7 +183,7 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
     EXPECT_NE(l->cltt_, time(NULL));
 
     Pkt6Ptr req = createMessage(DHCPV6_RENEW, type, IOAddress(renew_addr),
-                                128, iaid);
+                                prefix_len, iaid);
     req->addOption(clientid);
     req->addOption(srv.getServerID());
 
@@ -198,8 +200,8 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
     switch (type) {
     case Lease::TYPE_NA: {
         // Check that IA_NA was returned and that there's an address included
-        boost::shared_ptr<Option6IAAddr> addr_opt = checkIA_NA(reply, 234, subnet_->getT1(),
-                                                           subnet_->getT2());
+        boost::shared_ptr<Option6IAAddr>
+          addr_opt = checkIA_NA(reply, 234, subnet_->getT1(), subnet_->getT2());
 
         ASSERT_TRUE(addr_opt);
 
