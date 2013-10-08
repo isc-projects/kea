@@ -330,6 +330,9 @@ Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
         if (callback_.empty()) {
             LibDHCP::unpackOptions6(opt_buffer, options_);
         } else {
+            // The last two arguments hold the DHCPv6 Relay message offset and
+            // length. Setting them to NULL because we are dealing with the
+            // not-relayed message.
             callback_(opt_buffer, "dhcp6", options_, 0, 0);
         }
     } catch (const Exception& e) {

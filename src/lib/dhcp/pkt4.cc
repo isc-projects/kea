@@ -162,61 +162,66 @@ void
 Pkt4::unpack() {
 
     // input buffer (used during message reception)
-    isc::util::InputBuffer bufferIn(&data_[0], data_.size());
+    isc::util::InputBuffer buffer_in(&data_[0], data_.size());
 
-    if (bufferIn.getLength() < DHCPV4_PKT_HDR_LEN) {
+    if (buffer_in.getLength() < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Received truncated DHCPv4 packet (len="
-                  << bufferIn.getLength() << " received, at least "
+                  << buffer_in.getLength() << " received, at least "
                   << DHCPV4_PKT_HDR_LEN << "is expected");
     }
 
-    op_ = bufferIn.readUint8();
-    uint8_t htype = bufferIn.readUint8();
-    uint8_t hlen = bufferIn.readUint8();
-    hops_ = bufferIn.readUint8();
-    transid_ = bufferIn.readUint32();
-    secs_ = bufferIn.readUint16();
-    flags_ = bufferIn.readUint16();
-    ciaddr_ = IOAddress(bufferIn.readUint32());
-    yiaddr_ = IOAddress(bufferIn.readUint32());
-    siaddr_ = IOAddress(bufferIn.readUint32());
-    giaddr_ = IOAddress(bufferIn.readUint32());
+    op_ = buffer_in.readUint8();
+    uint8_t htype = buffer_in.readUint8();
+    uint8_t hlen = buffer_in.readUint8();
+    hops_ = buffer_in.readUint8();
+    transid_ = buffer_in.readUint32();
+    secs_ = buffer_in.readUint16();
+    flags_ = buffer_in.readUint16();
+    ciaddr_ = IOAddress(buffer_in.readUint32());
+    yiaddr_ = IOAddress(buffer_in.readUint32());
+    siaddr_ = IOAddress(buffer_in.readUint32());
+    giaddr_ = IOAddress(buffer_in.readUint32());
 
     vector<uint8_t> hw_addr(MAX_CHADDR_LEN, 0);
-    bufferIn.readVector(hw_addr, MAX_CHADDR_LEN);
-    bufferIn.readData(sname_, MAX_SNAME_LEN);
-    bufferIn.readData(file_, MAX_FILE_LEN);
+    buffer_in.readVector(hw_addr, MAX_CHADDR_LEN);
+    buffer_in.readData(sname_, MAX_SNAME_LEN);
+    buffer_in.readData(file_, MAX_FILE_LEN);
 
     hw_addr.resize(hlen);
 
     hwaddr_ = HWAddrPtr(new HWAddr(hw_addr, htype));
 
-    if (bufferIn.getLength() == bufferIn.getPosition()) {
+    if (buffer_in.getLength() == buffer_in.getPosition()) {
         // this is *NOT* DHCP packet. It does not have any DHCPv4 options. In
         // particular, it does not have magic cookie, a 4 byte sequence that
         // differentiates between DHCP and BOOTP packets.
         isc_throw(InvalidOperation, "Received BOOTP packet. BOOTP is not supported.");
     }
 
-    if (bufferIn.getLength() - bufferIn.getPosition() < 4) {
+    if (buffer_in.getLength() - buffer_in.getPosition() < 4) {
       // there is not enough data to hold magic DHCP cookie
       isc_throw(Unexpected, "Truncated or no DHCP packet.");
     }
 
-    uint32_t magic = bufferIn.readUint32();
+    uint32_t magic = buffer_in.readUint32();
     if (magic != DHCP_OPTIONS_COOKIE) {
       isc_throw(Unexpected, "Invalid or missing DHCP magic cookie");
     }
 
-    size_t opts_len = bufferIn.getLength() - bufferIn.getPosition();
+    size_t opts_len = buffer_in.getLength() - buffer_in.getPosition();
     vector<uint8_t> opts_buffer;
 
-    // First use of readVector.
-    bufferIn.readVector(opts_buffer, opts_len);
+    // Use readVector because a function which parses option requires
+    // a vector as an input.
+    buffer_in.readVector(opts_buffer, opts_len);
     if (callback_.empty()) {
         LibDHCP::unpackOptions4(opts_buffer, options_);
     } else {
-        callback_(opts_buffer, "dhcp4", options_, 0, 0);
+        // The last two arguments are set to NULL because they are
+        // specific to DHCPv6 options parsing. They are unused for
+        // DHCPv4 case. In DHCPv6 case they hold are the relay message
+        // offset and length.
+        callback_(opts_buffer, "dhcp4", options_, NULL, NULL);
     }
 
     // @todo check will need to be called separately, so hooks can be called
