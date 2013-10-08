@@ -598,6 +598,13 @@ class Init:
             process, the log_starting/log_started methods are not used.
         """
         logger.info(BIND10_STARTING_CC)
+
+        # Unsubscribe from the other CC session first, because we only
+        # monitor one and msgq expects all data sent to us to be read,
+        # or it will close its side of the socket.
+        if self.cc_session is not None:
+            self.cc_session.group_unsubscribe("Init")
+
         self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                       self.config_handler,
                                       self.command_handler,
