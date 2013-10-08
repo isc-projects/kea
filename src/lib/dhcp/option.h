@@ -45,12 +45,32 @@ typedef boost::shared_ptr<OptionBuffer> OptionBufferPtr;
 class Option;
 typedef boost::shared_ptr<Option> OptionPtr;
 
-/// A collection of DHCPv6 options
+/// A collection of DHCP (v4 or v6) options
 typedef std::multimap<unsigned int, OptionPtr> OptionCollection;
 
-/// This type describes a callback function to parse options from buffer.
-typedef boost::function< size_t(const OptionBuffer&, const std::string,
-                                OptionCollection&, size_t*, size_t*)
+/// @brief This type describes a callback function to parse options from buffer.
+///
+/// @note The last two parameters should be specified in the callback function
+/// parameters list only if DHCPv6 options are parsed. Exclude these parameters
+/// from the callback function defined to parse DHCPv4 options.
+///
+/// @param buffer A buffer holding options to be parsed.
+/// @param encapsulated_space A name of the option space to which options being
+/// parsed belong.
+/// @param [out] options A container to which parsed options should be appended.
+/// @param relay_msg_offset A pointer to a size_t value. It indicates the
+/// offset to beginning of relay_msg option. This parameter should be specified
+/// for DHCPv6 options only.
+/// @param relay_msg_len A pointer to a size_t value. It holds the length of
+/// of the relay_msg option. This parameter should be specified for DHCPv6
+/// options only.
+///
+/// @return An offset to the first byte after last parsed option.
+typedef boost::function< size_t(const OptionBuffer& buffer,
+                                const std::string encapsulated_space,
+                                OptionCollection& options,
+                                size_t* relay_msg_offset,
+                                size_t* relay_msg_len)
                          > UnpackOptionsCallback;
 
 
