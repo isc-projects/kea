@@ -85,7 +85,7 @@ public:
         return (storage_.empty());
     }
 
-    /// \brief Returns next packet from the storage..
+    /// \brief Returns next packet from the storage.
     ///
     /// This function returns packets sequentially (in the same order
     /// in which they have been appended). The returned packet is

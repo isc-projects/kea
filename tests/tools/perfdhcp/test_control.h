@@ -721,9 +721,9 @@ protected:
     /// \param socket An object representing socket to be used to send packets.
     /// \param packets_num A number of Renew packets to be send.
     ///
-    /// \param A number of packets actually sent.
+    /// \return A number of packets actually sent.
     uint64_t sendRenewPackets(const TestControlSocket& socket,
-                          const uint64_t packets_num);
+                              const uint64_t packets_num);
 
     /// \brief Send a renew message using provided socket.
     ///
