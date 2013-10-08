@@ -283,6 +283,31 @@ TestControl::checkExitConditions() const {
     return (false);
 }
 
+Pkt6Ptr
+TestControl::createRenew(const Pkt6Ptr& reply) {
+    if (!reply) {
+        isc_throw(isc::BadValue,"Unable to create Renew packet from the Reply packet"
+                  " because the instance of the Reply is NULL");
+    }
+    Pkt6Ptr renew(new Pkt6(DHCPV6_RENEW, generateTransid()));
+    // Client id.
+    OptionPtr opt_clientid = reply->getOption(D6O_CLIENTID);
+    if (!opt_clientid) {
+        isc_throw(isc::Unexpected, "failed to create Renew packet because client id"
+                  " option has not been found in the Reply from the server");
+    }
+    renew->addOption(opt_clientid);
+    // Server id.
+    OptionPtr opt_serverid = reply->getOption(D6O_SERVERID);
+    if (!opt_serverid) {
+        isc_throw(isc::Unexpected, "failed to create Renew packet because server id"
+                  " option has not been found in the Reply from the server");
+    }
+    renew->addOption(opt_serverid);
+    copyIaOptions(reply, renew);
+    return (renew);
+}
+
 OptionPtr
 TestControl::factoryElapsedTime6(Option::Universe, uint16_t,
                                  const OptionBuffer& buf) {
@@ -616,6 +641,9 @@ TestControl::initializeStatsMgr() {
             stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RR,
                                           options.getDropTime()[1]);
         }
+        if (options.getRenewRate() != 0) {
+            stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RN);
+        }
     }
     if (testDiags('i')) {
         if (options.getIpVersion() == 4) {
@@ -767,6 +795,17 @@ TestControl::sendPackets(const TestControlSocket& socket,
             }
         }
     }
+}
+
+uint64_t
+TestControl::sendRenewPackets(const TestControlSocket& socket,
+                              const uint64_t packets_num) {
+    for (uint64_t i = 0; i < packets_num; ++i) {
+        if (!sendRenew(socket)) {
+            return (i);
+        }
+    }
+    return (packets_num);
 }
 
 void
@@ -1024,7 +1063,15 @@ TestControl::processReceivedPacket6(const TestControlSocket& socket,
             }
         }
     } else if (packet_type == DHCPV6_REPLY) {
-        stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RR, pkt6);
+        Pkt6Ptr sent_packet = stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RR,
+                                                          pkt6);
+        if (sent_packet) {
+            if (CommandOptions::instance().getRenewRate() != 0) {
+                reply_storage_.append(pkt6);
+            }
+        } else {
+            stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RN, pkt6);
+        }
     }
 }
 
@@ -1249,6 +1296,15 @@ TestControl::run() {
         // Initiate new DHCP packet exchanges.
         sendPackets(socket, packets_due);
 
+        if ((options.getIpVersion() == 6) && (options.getRenewRate() != 0)) {
+            uint64_t renew_packets_due =
+                packets_due * options.getRenewRate() / options.getRate();
+            if (renew_packets_due == 0) {
+                renew_packets_due = 1;
+            }
+            sendRenewPackets(socket, renew_packets_due);
+        }
+
         // Report delay means that user requested printing number
         // of sent/received/dropped packets repeatedly.
         if (options.getReportDelay() > 0) {
@@ -1427,6 +1483,24 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
                                     boost::static_pointer_cast<Pkt4>(pkt4));
     }
     saveFirstPacket(pkt4);
+}
+
+bool
+TestControl::sendRenew(const TestControlSocket& socket) {
+    Pkt6Ptr reply = reply_storage_.getRandom();
+    if (!reply) {
+        return (false);
+    }
+    Pkt6Ptr renew = createRenew(reply);
+    setDefaults6(socket, renew);
+    renew->pack();
+    IfaceMgr::instance().send(renew);
+    if (!stats_mgr6_) {
+        isc_throw(Unexpected, "Statistics Manager for DHCPv6 "
+                  "hasn't been initialized");
+    }
+    stats_mgr6_->passSentPacket(StatsMgr6::XCHG_RN, renew);
+    return (true);
 }
 
 void
