@@ -1491,6 +1491,7 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
 
 bool
 TestControl::sendRenew(const TestControlSocket& socket) {
+    last_renew_ = microsec_clock::universal_time();
     Pkt6Ptr reply = reply_storage_.getRandom();
     if (!reply) {
         return (false);
