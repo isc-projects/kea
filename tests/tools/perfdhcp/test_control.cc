@@ -481,17 +481,18 @@ TestControl::getElapsedTime(const T& pkt1, const T& pkt2) {
 
 
 uint64_t
-TestControl::getNextExchangesNum() const {
+TestControl::getNextExchangesNum(const boost::posix_time::ptime& send_due,
+                                 const int rate) {
     CommandOptions& options = CommandOptions::instance();
     // Get current time.
     ptime now(microsec_clock::universal_time());
-    if (now >= send_due_) {
+    if (now >= send_due) {
         // Reset number of exchanges.
         uint64_t due_exchanges = 0;
         // If rate is specified from the command line we have to
         // synchornize with it.
-        if (options.getRate() != 0) {
-            time_period period(send_due_, now);
+        if (rate != 0) {
+            time_period period(send_due, now);
             time_duration duration = period.length();
             // due_factor indicates the number of seconds that
             // sending next chunk of packets will take.
@@ -500,7 +501,7 @@ TestControl::getNextExchangesNum() const {
             due_factor += duration.total_seconds();
             // Multiplying due_factor by expected rate gives the number
             // of exchanges to be initiated.
-            due_exchanges = static_cast<uint64_t>(due_factor * options.getRate());
+            due_exchanges = static_cast<uint64_t>(due_factor * rate);
             // We want to make sure that at least one packet goes out.
             if (due_exchanges == 0) {
                 due_exchanges = 1;
@@ -1203,6 +1204,8 @@ TestControl::reset() {
     send_due_ = microsec_clock::universal_time();
     last_sent_ = send_due_;
     last_report_ = send_due_;
+    renew_due_ = send_due_;
+    last_renew_ = send_due_;
     transid_gen_.reset();
     // Actual generators will have to be set later on because we need to
     // get command line parameters first.
@@ -1270,10 +1273,10 @@ TestControl::run() {
     initializeStatsMgr();
     for (;;) {
         // Calculate send due based on when last exchange was initiated.
-        updateSendDue();
+        updateSendDue(last_sent_, options.getRate(), send_due_);
         // Calculate number of packets to be sent to stay
         // catch up with rate.
-        uint64_t packets_due = getNextExchangesNum();
+        uint64_t packets_due = getNextExchangesNum(send_due_, options.getRate());
         if ((packets_due == 0) && testDiags('i')) {
             if (options.getIpVersion() == 4) {
                 stats_mgr4_->incrementCounter("shortwait");
@@ -1296,12 +1299,13 @@ TestControl::run() {
         // Initiate new DHCP packet exchanges.
         sendPackets(socket, packets_due);
 
+        // If -f<renew-rate> option was specified we have to check how many
+        // Renew packets should be sent to catch up with a desired rate.
         if ((options.getIpVersion() == 6) && (options.getRenewRate() != 0)) {
+            updateSendDue(last_renew_, options.getRenewRate(), renew_due_);
             uint64_t renew_packets_due =
-                packets_due * options.getRenewRate() / options.getRate();
-            if (renew_packets_due == 0) {
-                renew_packets_due = 1;
-            }
+                getNextExchangesNum(renew_due_, options.getRenewRate());
+            // Send renew packets.
             sendRenewPackets(socket, renew_packets_due);
         }
 
@@ -1990,16 +1994,17 @@ TestControl::testDiags(const char diag) const {
 }
 
 void
-TestControl::updateSendDue() {
+TestControl::updateSendDue(const boost::posix_time::ptime& last_sent,
+                           const int rate,
+                           boost::posix_time::ptime& send_due) {
     // If default constructor was called, this should not happen but
     // if somebody has changed default constructor it is better to
     // keep this check.
-    if (last_sent_.is_not_a_date_time()) {
+    if (last_sent.is_not_a_date_time()) {
         isc_throw(Unexpected, "time of last sent packet not initialized");
     }
     // Get the expected exchange rate.
     CommandOptions& options = CommandOptions::instance();
-    int rate = options.getRate();
     // If rate was not specified we will wait just one clock tick to
     // send next packet. This simulates best effort conditions.
     long duration = 1;
@@ -2011,14 +2016,14 @@ TestControl::updateSendDue() {
         duration = time_duration::ticks_per_second() / rate;
     }
     // Calculate due time to initiate next chunk of exchanges.
-    send_due_ = last_sent_ + time_duration(0, 0, 0, duration);
+    send_due = last_sent + time_duration(0, 0, 0, duration);
     // Check if it is already due.
     ptime now(microsec_clock::universal_time());
     // \todo verify if this condition is not too tight. In other words
     // verify if this will not produce too many late sends.
     // We might want to look at this once we are done implementing
     // microsecond timeouts in IfaceMgr.
-    if (now > send_due_) {
+    if (now > send_due) {
         if (testDiags('i')) {
             if (options.getIpVersion() == 4) {
                 stats_mgr4_->incrementCounter("latesend");

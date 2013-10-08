@@ -1234,7 +1234,8 @@ TEST_F(TestControlTest, RateControl) {
     CommandOptions& options = CommandOptions::instance();
 
     NakedTestControl tc1;
-    uint64_t xchgs_num = tc1.getNextExchangesNum();
+    uint64_t xchgs_num = tc1.getNextExchangesNum(microsec_clock::universal_time(),
+                                                 options.getRate());
     EXPECT_EQ(options.getAggressivity(), xchgs_num);
 
     // The exchange rate is now 1 per second. We don't know how many
@@ -1245,7 +1246,8 @@ TEST_F(TestControlTest, RateControl) {
         processCmdLine("perfdhcp -l 127.0.0.1 -a 1000000 -r 1 all")
     );
     NakedTestControl tc2;
-    xchgs_num = tc2.getNextExchangesNum();
+    xchgs_num = tc2.getNextExchangesNum(microsec_clock::universal_time(),
+                                        options.getRate());
     EXPECT_GT(xchgs_num, 0);
     EXPECT_LT(xchgs_num, options.getAggressivity());
     // @todo add more thorough checks for rate values.
