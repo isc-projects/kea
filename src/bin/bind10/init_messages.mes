@@ -325,3 +325,7 @@ the configuration manager to start up.  The total length of time Init
 will wait for the configuration manager before reporting an error is
 set with the command line --wait switch, which has a default value of
 ten seconds.
+
+% BIND10_RECONFIGURE_ERROR Error applying new config: %1
+A new configuration was received, but there was an error doing the
+re-configuration.
