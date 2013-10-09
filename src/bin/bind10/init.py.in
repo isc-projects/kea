@@ -337,6 +337,7 @@ class Init:
                 self.__propagate_component_config(new_config['components'])
             return isc.config.ccsession.create_answer(0)
         except Exception as e:
+            logger.error(BIND10_RECONFIGURE_ERROR, e)
             return isc.config.ccsession.create_answer(1, str(e))
 
     def get_processes(self):
