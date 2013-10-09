@@ -329,3 +329,6 @@ ten seconds.
 % BIND10_RECONFIGURE_ERROR Error applying new config: %1
 A new configuration was received, but there was an error doing the
 re-configuration.
+
+% BIND10_COMPONENT_SHUTDOWN_ERROR An error occured stopping component %1
+An attempt to gracefully shutdown a component failed.
