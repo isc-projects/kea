@@ -765,9 +765,14 @@ class Init:
         it might want to choose if it is for this one).
         """
         logger.info(BIND10_STOP_PROCESS, process)
-        self.cc_session.group_sendmsg(isc.config.ccsession.
-                                      create_command('shutdown', {'pid': pid}),
-                                      recipient, recipient)
+        try:
+            self.cc_session.group_sendmsg(isc.config.ccsession.
+                                          create_command('shutdown',
+                                                         {'pid': pid}),
+                                          recipient, recipient)
+        except:
+            logger.error(BIND10_COMPONENT_SHUTDOWN_ERROR, process)
+            raise
 
     def component_shutdown(self, exitcode=0):
         """
