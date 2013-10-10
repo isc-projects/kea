@@ -129,6 +129,10 @@ public:
     /// @param expected_clientid expected value of client-id
     void checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid);
 
+    void captureSetDefaultFields(const Pkt4Ptr& pkt);
+
+    Pkt4Ptr captureRelayedDiscover();
+
     /// @brief Tests if Discover or Request message is processed correctly
     ///
     /// @param msg_type DHCPDISCOVER or DHCPREQUEST
