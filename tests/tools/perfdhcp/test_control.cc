@@ -98,6 +98,38 @@ TestControl::TestControl() {
 }
 
 void
+TestControl::cleanCachedPackets() {
+    CommandOptions& options = CommandOptions::instance();
+    // When Renews are not sent, Reply packets are not cached so there
+    // is nothing to do.
+    if (options.getRenewRate() == 0) {
+        return;
+    }
+
+    static boost::posix_time::ptime last_clean =
+        microsec_clock::universal_time();
+
+    // Check how much time has passed since last cleanup.
+    time_period time_since_clean(last_clean,
+                                 microsec_clock::universal_time());
+    // Cleanup every 1 second.
+    if (time_since_clean.length().total_seconds() >= 1) {
+        // Calculate how many cached packets to remove. Actually we could
+        // just leave enough packets to handle Renews for 1 second but
+        // since we want to randomize leases to be renewed so leave 5
+        // times more packets to randomize from.
+        // @todo The cache size might be controlled from the command line.
+        if (reply_storage_.size() > 5 * options.getRenewRate()) {
+            reply_storage_.clear(reply_storage_.size() -
+                                 5 * options.getRenewRate());
+        }
+        // Remember when we performed a cleanup for the last time.
+        // We want to do the next cleanup not earlier than in one second.
+        last_clean = microsec_clock::universal_time();
+    }
+}
+
+void
 TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
     if (!pkt_from || !pkt_to) {
         isc_throw(BadValue, "NULL pointers must not be specified as arguments"
@@ -1314,6 +1346,14 @@ TestControl::run() {
         if (options.getReportDelay() > 0) {
             printIntermediateStats();
         }
+
+        // If we are sending Renews to the server, the Reply packets are cached
+        // so as leases for which we send Renews can be idenitfied. The major
+        // issue with this approach is that most of the time we are caching
+        // more packets than we actually need. This function removes excessive
+        // Reply messages to reduce the memory and CPU utilization. Note that
+        // searches in the long list of Reply packets increases CPU utilization.
+        cleanCachedPackets();
     }
     printStats();
 

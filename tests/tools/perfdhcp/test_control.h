@@ -300,6 +300,16 @@ protected:
     /// \return true if any of the exit conditions is fulfilled.
     bool checkExitConditions() const;
 
+    /// \brief Removes cached DHCPv6 Reply packets every second.
+    ///
+    /// This function wipes cached Reply packets from the storage.
+    /// The number of packets left in the storage after the call
+    /// to this function should guarantee that the Renew packets
+    /// can be sent at the given rate. Note that the Renew packets
+    /// are generated for the existing leases, represented here as
+    /// replies from the server.
+    void cleanCachedPackets();
+
     /// \brief Creates IPv6 packet using options from Reply packet.
     ///
     /// \param reply An instance of the Reply packet which contents should
