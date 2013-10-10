@@ -144,7 +144,7 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
         command->contains(isc::cc::CC_PAYLOAD_COMMAND)) {
         ConstElementPtr cmd = command->get(isc::cc::CC_PAYLOAD_COMMAND);
         if (cmd->getType() == Element::list &&
-            cmd->size() > 0 &&
+            !cmd->empty() &&
             cmd->get(0)->getType() == Element::string) {
             if (cmd->size() > 1) {
                 arg = cmd->get(1);
