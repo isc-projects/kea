@@ -378,7 +378,9 @@ public:
 
     /// @brief Verifies received IAPrefix option
     ///
-    /// Verifies if received IAPrefix option matches the lease in database
+    /// Verifies if the received IAPrefix option matches the lease in the
+    /// database.
+    ///
     /// @param duid client's DUID
     /// @param ia_pd IA_PD option that contains the IAPRefix option
     /// @param prefix pointer to the IAPREFIX option
@@ -388,8 +390,8 @@ public:
 
     /// @brief Creates a message with specified IA
     ///
-    /// An utility function that creates a message of specified type with
-    /// specified container (IA_NA or IA_PD) and an address or prefix
+    /// A utility function that creates a message of the specified type with
+    /// a specified container (IA_NA or IA_PD) and an address or prefix
     /// inside it.
     ///
     /// @param message_type type of the message (e.g. DHCPV6_SOLICIT)
