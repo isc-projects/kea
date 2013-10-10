@@ -82,7 +82,7 @@ to perform the DNS Update, which removes RRs from the DNS.
 This debug message is logged when FQDN mapping for a particular lease has
 been changed by the recent Request message. This mapping will be changed in DNS.
 
-% DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE FQDN for the renewed lease: %1 has changed.
+% DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE FQDN for the renewed lease: %1 has changed
 New  values: hostname = %2, reverse mapping = %3, forward mapping = %4
 This debug message is logged when FQDN mapping for a particular lease has been
 changed by the recent Renew message. This mapping will be changed in DNS.
@@ -112,19 +112,19 @@ that the DNS Update has been performed for it, but the FQDN held in the lease
 database has invalid format and can't be transformed to the canonical on-wire
 format.
 
-% DHCP6_HOOK_BUFFER_RCVD_SKIP received DHCPv6 buffer was dropped because a callout set the skip flag.
+% DHCP6_HOOK_BUFFER_RCVD_SKIP received DHCPv6 buffer was dropped because a callout set the skip flag
 This debug message is printed when a callout installed on buffer6_receive
 hook point set the skip flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to drop the packet.
 
-% DHCP6_HOOK_BUFFER_SEND_SKIP prepared DHCPv6 response was dropped because a callout set the skip flag.
+% DHCP6_HOOK_BUFFER_SEND_SKIP prepared DHCPv6 response was dropped because a callout set the skip flag
 This debug message is printed when a callout installed on buffer6_send
 hook point set the skip flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to drop the packet.
 Server completed all the processing (e.g. may have assigned, updated
 or released leases), but the response will not be send to the client.
 
-% DHCP6_HOOK_LEASE6_RENEW_SKIP DHCPv6 lease was not renewed because a callout set the skip flag.
+% DHCP6_HOOK_LEASE6_RENEW_SKIP DHCPv6 lease was not renewed because a callout set the skip flag
 This debug message is printed when a callout installed on lease6_renew
 hook point set the skip flag. For this particular hook point, the setting
 of the flag by a callout instructs the server to not renew a lease. If
@@ -132,7 +132,15 @@ client requested renewal of multiples leases (by sending multiple IA
 options), the server will skip the renewal of the one in question and
 will proceed with other renewals as usual.
 
-% DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP DHCPv6 address lease was not released because a callout set the skip flag.
+% DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP DHCPv6 address lease was not released because a callout set the skip flag
+This debug message is printed when a callout installed on the
+lease6_release hook point set the skip flag. For this particular hook
+point, the setting of the flag by a callout instructs the server to not
+release a lease. If a client requested the release of multiples leases
+(by sending multiple IA options), the server will retain this particular
+lease and proceed with other releases as usual.
+
+% DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP DHCPv6 prefix lease was not released because a callout set the skip flag
 This debug message is printed when a callout installed on lease6_release
 hook point set the skip flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to not release
@@ -140,20 +148,12 @@ a lease. If client requested release of multiples leases (by sending
 multiple IA options), the server will retains this particular lease and
 will proceed with other renewals as usual.
 
-% DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP DHCPv6 prefix lease was not released because a callout set the skip flag.
-This debug message is printed when a callout installed on lease6_release
-hook point set the skip flag. For this particular hook point, the
-setting of the flag by a callout instructs the server to not release
-a lease. If client requested release of multiples leases (by sending
-multiple IA options), the server will retains this particular lease and
-will proceed with other renewals as usual.
-
-% DHCP6_HOOK_PACKET_RCVD_SKIP received DHCPv6 packet was dropped because a callout set the skip flag.
+% DHCP6_HOOK_PACKET_RCVD_SKIP received DHCPv6 packet was dropped because a callout set the skip flag
 This debug message is printed when a callout installed on the pkt6_receive
 hook point set the skip flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to drop the packet.
 
-% DHCP6_HOOK_PACKET_SEND_SKIP prepared DHCPv6 response was not sent because a callout set the skip flag.
+% DHCP6_HOOK_PACKET_SEND_SKIP prepared DHCPv6 response was not sent because a callout set the skip flag
 This debug message is printed when a callout installed on the pkt6_send
 hook point set the skip flag. For this particular hook point, the setting
 of the flag by a callout instructs the server to drop the packet. This
@@ -161,7 +161,7 @@ effectively means that the client will not get any response, even though
 the server processed client's request and acted on it (e.g. possibly
 allocated a lease).
 
-% DHCP6_HOOK_SUBNET6_SELECT_SKIP no subnet was selected because a callout set the skip flag.
+% DHCP6_HOOK_SUBNET6_SELECT_SKIP no subnet was selected because a callout set the skip flag
 This debug message is printed when a callout installed on the
 subnet6_select hook point set the skip flag. For this particular hook
 point, the setting of the flag instructs the server not to choose a
@@ -218,7 +218,7 @@ received REQUEST) a prefix lease for a given client. There may be many reasons
 for such failure. Each specific failure is logged in a separate log entry.
 
 % DHCP6_LEASE_NA_WITHOUT_DUID address lease for address %1 does not have a DUID
-This error message indicates a database consistency failure. The lease
+This error message indicates a database consistency problem. The lease
 database has an entry indicating that the given address is in use,
 but the lease does not contain any client identification. This is most
 likely due to a software error: please raise a bug report. As a temporary
@@ -327,11 +327,11 @@ as a hint for possible requested prefix.
 % DHCP6_QUERY_DATA received packet length %1, data length %2, data is %3
 A debug message listing the data received from the client or relay.
 
-% DHCP6_RELEASE_NA address %1 belonging to client duid=%2, iaid=%3 was released properly.
+% DHCP6_RELEASE_NA address %1 belonging to client duid=%2, iaid=%3 was released properly
 This debug message indicates that an address was released properly. It
 is a normal operation during client shutdown.
 
-% DHCP6_RELEASE_PD prefix %1 belonging to client duid=%2, iaid=%3 was released properly.
+% DHCP6_RELEASE_PD prefix %1 belonging to client duid=%2, iaid=%3 was released properly
 This debug message indicates that a prefix was released properly. It
 is a normal operation during client shutdown.
 
@@ -351,14 +351,14 @@ intervention (e.g. check if DHCP process has sufficient privileges to
 update the database). It may also be triggered if a lease was manually
 removed from the database during RELEASE message processing.
 
-% DHCP6_RELEASE_NA_FAIL_WRONG_DUID client (duid=%1) tried to release address %2, but it belongs to client (duid=%3)
-This warning message indicates that client tried to release an address
+% DHCP6_RELEASE_NA_FAIL_WRONG_DUID client (duid=%1) tried to release address %2, but it belongs to another client (duid=%3)
+This warning message indicates that a client tried to release an address
 that belongs to a different client. This should not happen in normal
 circumstances and may indicate a misconfiguration of the client.  However,
 since the client releasing the address will stop using it anyway, there
 is a good chance that the situation will correct itself.
 
-% DHCP6_RELEASE_PD_FAIL_WRONG_DUID client (duid=%1) tried to release prefix %2, but it belongs to client (duid=%3)
+% DHCP6_RELEASE_PD_FAIL_WRONG_DUID client (duid=%1) tried to release prefix %2, but it belongs to another client (duid=%3)
 This warning message indicates that client tried to release a prefix
 that belongs to a different client. This should not happen in normal
 circumstances and may indicate a misconfiguration of the client.  However,
@@ -485,26 +485,28 @@ addresses or prefixes.
 This debug message is printed when server receives a message of unknown type.
 That could either mean missing functionality or invalid or broken relay or client.
 The list of formally defined message types is available here:
-www.iana.org/assignments/dhcpv6-parameters.
+http://www.iana.org/assignments/dhcpv6-parameters.
 
 % DHCP6_UNKNOWN_RELEASE_NA received RELEASE from unknown client (IA_NA, duid=%1, iaid=%2)
-This warning message is printed when client attempts to release an address lease,
-but no such lease is known by the server. See DHCP6_UNKNOWN_RENEW_NA for
-possible reasons for such behavior.
+This warning message is printed when client attempts to release an address
+lease, but no such lease is known by the server. See the explanation
+of the status code DHCP6_UNKNOWN_RENEW_NA for possible reasons for
+such behavior.
 
 % DHCP6_UNKNOWN_RELEASE_PD received RELEASE from unknown client (IA_PD, duid=%1, iaid=%2)
-This warning message is printed when client attempts to release an prefix lease,
-but no such lease is known by the server. See DHCP6_UNKNOWN_RENEW_PD for
-possible reasons for such behavior.
+This warning message is printed when client attempts to release an prefix
+lease, but no such lease is known by the server. See the explanation
+of the status code DHCP6_UNKNOWN_RENEW_PD for possible reasons for
+such behavior.
 
 % DHCP6_UNKNOWN_RENEW_NA received unknown IA_NA RENEW from client (duid=%1, iaid=%2) in subnet %3
-This warning message is printed when client attempts to renew an address lease
-(in IA_NA option), but no such lease is known by the server. It typically means
-that client has attempted to use its lease past its lifetime: causes of this
-include a adjustment of the clients date/time setting or poor support
-for sleep/recovery. A properly implemented client will recover from such
-a situation by restarting the lease allocation process after receiving
-a negative reply from the server.
+This warning message is printed when client attempts to renew an address
+lease (in the IA_NA option) but no such lease is known by the server. It
+typically means that client has attempted to use its lease past its
+lifetime: causes of this include a adjustment of the client's date/time
+setting or poor support on the client for sleep/recovery. A properly
+implemented client will recover from such a situation by restarting the
+lease allocation process after receiving a negative reply from the server.
 
 An alternative cause could be that the server has lost its database
 recently and does not recognize its well-behaving clients. This is more
