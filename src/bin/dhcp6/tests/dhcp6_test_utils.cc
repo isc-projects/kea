@@ -295,10 +295,10 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     checkResponse(reply, DHCPV6_REPLY, transid);
     OptionPtr tmp = reply->getOption(code);
     ASSERT_TRUE(tmp);
-    // Check that IA_?? was returned and that there's an address included
+
+    // Check that IA_?? was returned and that there's proper status code
     boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
-
     checkIA_NAStatusCode(ia, STATUS_NoBinding);
 
     // Check that there is no lease added
@@ -321,7 +321,8 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(code);
     ASSERT_TRUE(tmp);
-    // Check that IA_NA was returned and that there's an address included
+
+    // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
     checkIA_NAStatusCode(ia, STATUS_NoBinding);
@@ -340,7 +341,8 @@ Dhcpv6SrvTest::testRenewReject(Lease::Type type, const IOAddress& addr) {
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(code);
     ASSERT_TRUE(tmp);
-    // Check that IA_NA was returned and that there's an address included
+
+    // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
     checkIA_NAStatusCode(ia, STATUS_NoBinding);
@@ -500,7 +502,8 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(code);
     ASSERT_TRUE(tmp);
-    // Check that IA_NA was returned and that there's an address included
+
+    // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
     checkIA_NAStatusCode(ia, STATUS_NoBinding);
@@ -523,7 +526,8 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     checkResponse(reply, DHCPV6_REPLY, transid);
     tmp = reply->getOption(code);
     ASSERT_TRUE(tmp);
-    // Check that IA_NA was returned and that there's an address included
+
+    // Check that IA_?? was returned and that there's proper status code
     ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
     ASSERT_TRUE(ia);
     checkIA_NAStatusCode(ia, STATUS_NoBinding);

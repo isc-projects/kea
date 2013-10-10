@@ -316,20 +316,32 @@ class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
 public:
     /// Name of the server-id file (used in server-id tests)
 
-    // these are empty for now, but let's keep them around
+    /// @brief Constructor that initalizes a simple default configuration
+    ///
+    /// Sets up a single subnet6 with one pool for addresses and second
+    /// pool for prefixes.
     Dhcpv6SrvTest() {
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
                                          2000, 3000, 4000));
-        pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
+        pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"),
+                                   64));
         subnet_->addPool(pool_);
 
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().addSubnet6(subnet_);
 
         // configure PD pool
-        pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 64, 80));
+        pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD,
+                                      IOAddress("2001:db8:1:2::"), 64, 80));
         subnet_->addPool(pd_pool_);
     }
+
+    /// @brief destructor
+    ///
+    /// Removes existing configuration.
+    ~Dhcpv6SrvTest() {
+        CfgMgr::instance().deleteSubnets6();
+    };
 
     /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
     ///        IA_NA option
@@ -445,10 +457,6 @@ public:
     void
     testReleaseBasic(Lease::Type type, const IOAddress& existing,
                      const IOAddress& release_addr);
-
-    ~Dhcpv6SrvTest() {
-        CfgMgr::instance().deleteSubnets6();
-    };
 
     /// @brief Performs negative RELEASE test
     ///
