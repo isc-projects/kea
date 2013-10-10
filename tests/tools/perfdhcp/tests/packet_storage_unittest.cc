@@ -135,9 +135,27 @@ TEST_F(PacketStorageTest, getNextAndRandom) {
 
 // This test verifies that all packets are removed from the storage when
 // clear() function is invoked.
-TEST_F(PacketStorageTest, clear) {
+TEST_F(PacketStorageTest, clearAll) {
     ASSERT_EQ(STORAGE_SIZE, storage_.size());
     ASSERT_NO_THROW(storage_.clear());
+    EXPECT_TRUE(storage_.empty());
+}
+
+// This test verifies that a set of packets can be removed from the
+// storage when a number of packets to be removed is specified. If
+// number of packets to be removed exceeds the storage size, all
+// packets should be removed.
+TEST_F(PacketStorageTest, clear) {
+    // Initially storage should have 20 elements.
+    ASSERT_EQ(STORAGE_SIZE, storage_.size());
+    // Remove 10 of them.
+    ASSERT_NO_THROW(storage_.clear(10));
+    // We should have 10 remaining.
+    ASSERT_EQ(10, storage_.size());
+
+    // Try to remove more elements that actually is. It
+    // should result in removal of all elements.
+    ASSERT_NO_THROW(storage_.clear(15));
     EXPECT_TRUE(storage_.empty());
 }
 
