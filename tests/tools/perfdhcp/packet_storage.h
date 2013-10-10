@@ -73,9 +73,24 @@ public:
         }
     }
 
-    /// \brief Removes all packets from the storage.
-    void clear() {
-        storage_.clear();
+    /// \brief Removes packets from the storage.
+    ///
+    /// It is possible to specify a number of packets to be removed
+    /// from a storage. Packets are removed from the beginning of the
+    /// storage. If specified number is greater than the size of the
+    /// storage, all packets are removed.
+    ///
+    /// @param num A number of packets to be removed. If omitted,
+    /// all packets will be removed.
+    void clear(const uint64_t num = 0) {
+        if (num != 0) {
+            PacketContainerIterator last = storage_.begin();
+            std::advance(last, num > size() ? size() : num);
+            current_pointer_ = storage_.erase(storage_.begin(), last);
+        } else {
+            storage_.clear();
+            current_pointer_ = storage_.begin();
+        }
     }
 
     /// \brief Checks if the storage has no packets.
@@ -128,7 +143,7 @@ public:
     /// \brief Returns number of packets in the storage.
     ///
     /// \return number of packets in the storage.
-    uint32_t size() const {
+    uint64_t size() const {
         return (storage_.size());
     }
 
