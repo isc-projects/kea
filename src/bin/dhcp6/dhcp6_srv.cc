@@ -233,7 +233,7 @@ bool Dhcpv6Srv::run() {
 
         // The packet has just been received so contains the uninterpreted wire
         // data; execute callouts registered for buffer6_receive.
-        if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer6_receive_)) {
+        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_receive_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
             // Delete previously set arguments
@@ -276,7 +276,7 @@ bool Dhcpv6Srv::run() {
         // At this point the information in the packet has been unpacked into
         // the various packet fields and option objects has been cretated.
         // Execute callouts registered for packet6_receive.
-        if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_pkt6_receive_)) {
+        if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_receive_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
             // Delete previously set arguments
@@ -381,7 +381,7 @@ bool Dhcpv6Srv::run() {
             // Options are represented by individual objects, but the
             // output wire data has not been prepared yet.
             // Execute all callouts registered for packet6_send
-            if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_pkt6_send_)) {
+            if (HooksManager::calloutsPresent(Hooks.hook_index_pkt6_send_)) {
                 CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
                 // Delete all previous arguments
@@ -425,7 +425,7 @@ bool Dhcpv6Srv::run() {
                 // Option objects modification does not make sense anymore. Hooks
                 // can only manipulate wire buffer at this stage.
                 // Let's execute all callouts registered for buffer6_send
-                if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_buffer6_send_)) {
+                if (HooksManager::calloutsPresent(Hooks.hook_index_buffer6_send_)) {
                     CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
                     // Delete previously set arguments
@@ -777,7 +777,7 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
     }
 
     // Let's execute all callouts registered for subnet6_receive
-    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_subnet6_select_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_subnet6_select_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(question);
 
         // We're reusing callout_handle from previous calls
@@ -1523,7 +1523,7 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
     bool skip = false;
     // Execute all callouts registered for packet6_send
-    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_renew_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_renew_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete all previous arguments
@@ -1566,11 +1566,12 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 OptionPtr
 Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
                       const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia) {
-    if (!subnet) {
-        // There's no subnet select for this client. There's nothing to renew.
-        boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
 
-        // Insert status code NoAddrsAvail.
+    // Let's create a IA_NA response and fill it in later
+    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
+
+    if (!subnet) {
+        // Insert status code NoBinding
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
                           "Sorry, no known leases for this duid/iaid."));
 
@@ -1586,12 +1587,9 @@ Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
                                                             subnet->getID());
 
     if (!lease) {
-        // client renewing a lease that we don't know about.
+        // Client is renewing a lease that we don't know about.
 
-        // Create empty IA_NA option with IAID matching the request.
-        boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
-
-        // Insert status code NoAddrsAvail.
+        // Insert status code NoBinding
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
                           "Sorry, no known leases for this duid/iaid."));
 
@@ -1603,29 +1601,29 @@ Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         return (ia_rsp);
     }
 
-    // Keep the old data in case the callout tells us to skip update
+    // Keep the old data in case the callout tells us to skip update.
     Lease6 old_data = *lease;
 
+    // Do the actual lease update
     lease->preferred_lft_ = subnet->getPreferred();
     lease->valid_lft_ = subnet->getValid();
     lease->t1_ = subnet->getT1();
     lease->t2_ = subnet->getT2();
     lease->cltt_ = time(NULL);
 
-    // Create empty IA_NA option with IAID matching the request.
-    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
-
+    // Also update IA_PD container with proper T1, T2 values
     ia_rsp->setT1(subnet->getT1());
     ia_rsp->setT2(subnet->getT2());
 
     boost::shared_ptr<Option6IAPrefix>
-      prefix(new Option6IAPrefix(D6O_IAPREFIX, lease->addr_, lease->prefixlen_,
-                                 lease->preferred_lft_, lease->valid_lft_));
+        prefix(new Option6IAPrefix(D6O_IAPREFIX, lease->addr_,
+                                   lease->prefixlen_, lease->preferred_lft_,
+                                   lease->valid_lft_));
     ia_rsp->addOption(prefix);
 
     bool skip = false;
     // Execute all callouts registered for packet6_send
-    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_renew_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_renew_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete all previous arguments
@@ -1641,24 +1639,25 @@ Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         callout_handle->setArgument("ia_pd", ia_rsp);
 
         // Call all installed callouts
-        HooksManager::callCallouts(Hooks.hook_index_lease6_renew_, *callout_handle);
+        HooksManager::callCallouts(Hooks.hook_index_lease6_renew_,
+                                   *callout_handle);
 
-        // Callouts decided to skip the next processing step. The next
-        // processing step would to actually renew the lease, so skip at this
-        // stage means "keep the old lease as it is".
-        if (callout_handle->getSkip()) {
-            skip = true;
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RENEW_SKIP);
-        }
+        // Remember hook's instruction whether we want to skip update or not
+        skip = callout_handle->getSkip();
     }
 
     if (!skip) {
         LeaseMgrFactory::instance().updateLease6(lease);
     } else {
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to actually renew the lease, so skip at this
+        // stage means "keep the old lease as it is".
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RENEW_SKIP);
+
         // Copy back the original date to the lease. For MySQL it doesn't make
         // much sense, but for memfile, the Lease6Ptr points to the actual lease
-        // in memfile, so the actual update is performed when we manipulate fields
-        // of returned Lease6Ptr, the actual updateLease6() is no-op.
+        // in memfile, so the actual update is performed when we manipulate
+        // fields of returned Lease6Ptr, the actual updateLease6() is no-op.
         *lease = old_data;
     }
 
@@ -1709,6 +1708,7 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply,
     for (Option::OptionCollection::iterator opt = renew->options_.begin();
          opt != renew->options_.end(); ++opt) {
         switch (opt->second->getType()) {
+
         case D6O_IA_NA: {
             OptionPtr answer_opt = renewIA_NA(subnet, duid, renew,
                                               boost::dynamic_pointer_cast<
@@ -1719,6 +1719,7 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply,
             }
             break;
         }
+
         case D6O_IA_PD: {
             OptionPtr answer_opt = renewIA_PD(subnet, duid, renew,
                                               boost::dynamic_pointer_cast<
@@ -1765,6 +1766,11 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply) {
     }
     DuidPtr duid(new DUID(opt_duid->getData()));
 
+    // Let's set the status to be success by default. We can override it with
+    // error status if needed. The important thing to understand here is that
+    // the global status code may be set to success only if all IA options were
+    // handled properly. Therefore the releaseIA_NA and releaseIA_PD options
+    // may turn the status code to some error, but can't turn it back to success.
     int general_status = STATUS_Success;
     for (Option::OptionCollection::iterator opt = release->options_.begin();
          opt != release->options_.end(); ++opt) {
@@ -1818,7 +1824,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
         (ia->getOption(D6O_IAADDR));
     if (!release_addr) {
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
-                                           "You did not include address in your RELEASE"));
+                                           "You did not include an address in your RELEASE"));
         general_status = STATUS_NoBinding;
         return (ia_rsp);
     }
@@ -1887,7 +1893,7 @@ Dhcpv6Srv::releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
 
     bool skip = false;
     // Execute all callouts registered for packet6_send
-    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_release_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_release_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete all previous arguments
@@ -1962,14 +1968,15 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
     //
     // This method implements approach 1.
 
-    // That's our response
+    // That's our response. We will fill it in as we check the lease to be
+    // released.
     boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
 
-    boost::shared_ptr<Option6IAPrefix> release_prefix = boost::dynamic_pointer_cast<Option6IAPrefix>
-        (ia->getOption(D6O_IAPREFIX));
+    boost::shared_ptr<Option6IAPrefix> release_prefix =
+        boost::dynamic_pointer_cast<Option6IAPrefix>(ia->getOption(D6O_IAPREFIX));
     if (!release_prefix) {
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
-                                           "You did not include address in your RELEASE"));
+                          "You did not include a prefix in your RELEASE"));
         general_status = STATUS_NoBinding;
         return (ia_rsp);
     }
@@ -1978,9 +1985,9 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
                                                             release_prefix->getAddress());
 
     if (!lease) {
-        // client releasing a lease that we don't know about.
+        // Client releasing a lease that we don't know about.
 
-        // Insert status code NoAddrsAvail.
+        // Insert status code NoBinding.
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
                           "Sorry, no known leases for this duid/iaid, can't release."));
         general_status = STATUS_NoBinding;
@@ -1996,7 +2003,6 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         // Something is gravely wrong here. We do have a lease, but it does not
         // have mandatory DUID information attached. Someone was messing with our
         // database.
-
         LOG_ERROR(dhcp6_logger, DHCP6_LEASE_PD_WITHOUT_DUID)
             .arg(release_prefix->getAddress().toText());
 
@@ -2008,7 +2014,6 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
     if (*duid != *(lease->duid_)) {
         // Sorry, it's not your address. You can't release it.
-
         LOG_INFO(dhcp6_logger, DHCP6_RELEASE_PD_FAIL_WRONG_DUID)
             .arg(duid->toText())
             .arg(release_prefix->getAddress().toText())
@@ -2038,7 +2043,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
     bool skip = false;
     // Execute all callouts registered for packet6_send
-    if (HooksManager::getHooksManager().calloutsPresent(Hooks.hook_index_lease6_release_)) {
+    if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_release_)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete all previous arguments
@@ -2053,13 +2058,7 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
         // Call all installed callouts
         HooksManager::callCallouts(Hooks.hook_index_lease6_release_, *callout_handle);
 
-        // Callouts decided to skip the next processing step. The next
-        // processing step would to send the packet, so skip at this
-        // stage means "drop response".
-        if (callout_handle->getSkip()) {
-            skip = true;
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP);
-        }
+        skip = callout_handle->getSkip();
     }
 
     // Ok, we've passed all checks. Let's release this prefix.
@@ -2067,6 +2066,11 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
     if (!skip) {
         success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
+    } else {
+        // Callouts decided to skip the next processing step. The next
+        // processing step would to send the packet, so skip at this
+        // stage means "drop response".
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RELEASE_PD_SKIP);
     }
 
     // Here the success should be true if we removed lease successfully
@@ -2081,8 +2085,6 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
             .arg(duid->toText())
             .arg(lease->iaid_);
         general_status = STATUS_UnspecFail;
-
-        return (ia_rsp);
     } else {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_RELEASE_PD)
             .arg(lease->addr_.toText())
@@ -2091,9 +2093,9 @@ Dhcpv6Srv::releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
 
         ia_rsp->addOption(createStatusCode(STATUS_Success,
                           "Lease released. Thank you, please come again."));
-
-        return (ia_rsp);
     }
+
+    return (ia_rsp);
 }
 
 Pkt6Ptr
