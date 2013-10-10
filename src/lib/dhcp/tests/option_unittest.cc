@@ -608,6 +608,8 @@ TEST_F(OptionTest, unpackCallback) {
     // Parameters from _1 to _5 are placeholders for the actual values
     // to be passed to the callback function. See: boost::bind documentation
     // at http://www.boost.org/doc/libs/1_54_0/libs/bind/bind.html.
+    // Also, see UnpackOptionsCallback in option.h for description of the
+    // parameter values.
     option.setCallback(boost::bind(&CustomUnpackCallback::execute, &cb,
                                    _1, _2, _3, _4, _5));
     // Parse options. It should result in a call to our callback function.

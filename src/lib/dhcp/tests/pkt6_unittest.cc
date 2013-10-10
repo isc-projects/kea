@@ -108,6 +108,19 @@ public:
     }
 
     /// @brief Create a wire representation of the test packet and clone it.
+    ///
+    /// The purpose of this function is to create a packet to be used to
+    /// check that packet parsing works correctly. The unpack() function
+    /// requires that the data_ field of the object holds the data to be
+    /// parsed. This function creates an on-wire representation of the
+    /// packet by calling pack(). But, the pack() function stores the
+    /// on-wire representation into the output buffer (not the data_ field).
+    /// For this reason, it is not enough to return the packet on which
+    /// pack() is called. This function returns a clone of this packet
+    /// which is created using a constructor taking a buffer and buffer
+    /// length as an input. This constructor is normally used to parse
+    /// received packets. It stores the packet in a data_ field and
+    /// therefore unpack() can be called to parse it.
     Pkt6Ptr packAndClone() {
         Pkt6Ptr parent(new Pkt6(DHCPV6_SOLICIT, 0x020304));
 
