@@ -483,6 +483,24 @@ TestControl::generateDuid(uint8_t& randomized) const {
     return (duid);
 }
 
+uint32_t
+TestControl::getCurrentTimeout() const {
+    CommandOptions& options = CommandOptions::instance();
+    ptime now(microsec_clock::universal_time());
+    // Check that we haven't passed the moment to send the next set of
+    // packets.
+    if (now >= send_due_ ||
+        (options.getRenewRate() != 0 && now >= renew_due_)) {
+        return (0);
+    }
+
+    // There is a due time to send Solicit and Renew. We should adjust
+    // the timeout to the due time which occurs sooner.
+    ptime due = send_due_ > renew_due_ ? renew_due_ : send_due_;
+    time_period due_period(now, due);
+    return (due_period.length().total_microseconds());
+}
+
 int
 TestControl::getElapsedTimeOffset() const {
     int elp_offset = CommandOptions::instance().getIpVersion() == 4 ?
@@ -1110,14 +1128,13 @@ TestControl::processReceivedPacket6(const TestControlSocket& socket,
 
 uint64_t
 TestControl::receivePackets(const TestControlSocket& socket) {
-    int timeout = 0;
     bool receiving = true;
     uint64_t received = 0;
     while (receiving) {
         if (CommandOptions::instance().getIpVersion() == 4) {
             Pkt4Ptr pkt4;
             try {
-                pkt4 = IfaceMgr::instance().receive4(timeout);
+                pkt4 = IfaceMgr::instance().receive4(getCurrentTimeout());
             } catch (const Exception& e) {
                 std::cerr << "Failed to receive DHCPv4 packet: "
                           << e.what() <<  std::endl;
@@ -1135,7 +1152,7 @@ TestControl::receivePackets(const TestControlSocket& socket) {
         } else if (CommandOptions::instance().getIpVersion() == 6) {
             Pkt6Ptr pkt6;
             try {
-                pkt6 = IfaceMgr::instance().receive6(timeout);
+                pkt6 = IfaceMgr::instance().receive6(getCurrentTimeout());
             } catch (const Exception& e) {
                 std::cerr << "Failed to receive DHCPv6 packet: "
                           << e.what() << std::endl;
