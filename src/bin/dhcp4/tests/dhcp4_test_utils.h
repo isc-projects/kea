@@ -39,12 +39,13 @@ public:
     /// Also sets up initial configuration in CfgMgr.
     Dhcpv4SrvTest();
 
+    /// @brief destructor
     virtual ~Dhcpv4SrvTest() {
     }
 
     /// @brief Add 'Parameter Request List' option to the packet.
     ///
-    /// This function PRL option comprising the following option codes:
+    /// This function adds PRL option comprising the following option codes:
     /// - 5 - Name Server
     /// - 15 - Domain Name
     /// - 7 - Log Server
@@ -129,8 +130,18 @@ public:
     /// @param expected_clientid expected value of client-id
     void checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid);
 
+    /// @brief sets default fields in a captured packet
+    ///
+    /// Sets UDP ports, addresses and interface.
+    ///
+    /// @param pkt packet to have default fields set
     void captureSetDefaultFields(const Pkt4Ptr& pkt);
 
+    /// @brief returns captured DISCOVER that went through a relay
+    ///
+    /// See method code for a detailed explanation.
+    ///
+    /// @return relayed DISCOVER
     Pkt4Ptr captureRelayedDiscover();
 
     /// @brief Tests if Discover or Request message is processed correctly

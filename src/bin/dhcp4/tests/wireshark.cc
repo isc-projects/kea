@@ -35,6 +35,10 @@
 /// 6. Coding guidelines line restrictions apply, so wrap your code as necessary
 /// 7. Make sure you decribe the capture appropriately
 /// 8. Follow whatever rest of the methods are doing (set ports, ifaces etc.)
+/// 9. To easily copy packet description, click File... -> Extract packet
+///    dissections -> as plain text file...
+///    (Make sure that the packet is expanded in the view. The text file will
+///    contain whatever expansion level you have in the graphical tree.)
 
 using namespace std;
 using namespace isc::asiolink;
