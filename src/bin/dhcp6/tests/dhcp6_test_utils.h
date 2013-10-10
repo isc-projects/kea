@@ -484,10 +484,6 @@ public:
     /// @param pkt packet that will have its fields set
     void captureSetDefaultFields(const Pkt6Ptr& pkt);
 
-    ~Dhcpv6SrvTest() {
-        CfgMgr::instance().deleteSubnets6();
-    };
-
     /// A subnet used in most tests
     Subnet6Ptr subnet_;
 
