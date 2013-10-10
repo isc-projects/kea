@@ -1,3 +1,8 @@
+688.	[func]		tomek
+	b10-dhcp6: Prefix Delegation support is now extended to
+	Renew and Release messages.
+	(Trac #3153,#3154, git 3207932815f58045acea84ae092e0a5aa7c4bfd7)
+
 687.	[func]		tomek
 	b10-dhcp6: Prefix Delegation (IA_PD and IAPREFIX options) is now
 	supported in Solicit and Request messages.
