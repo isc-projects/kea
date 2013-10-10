@@ -469,6 +469,15 @@ protected:
         return (transid_gen_->generate());
     }
 
+    /// \brief Returns a timeout for packet reception.
+    ///
+    /// The calculation is based on the value of the timestamp
+    /// when the next set of packets is to be sent. If no packet is
+    /// received until then, new packets are sent.
+    ///
+    /// \return A current timeout in microseconds.
+    uint32_t getCurrentTimeout() const;
+
     /// \brief Returns number of exchanges to be started.
     ///
     /// Method returns number of new exchanges to be started as soon
