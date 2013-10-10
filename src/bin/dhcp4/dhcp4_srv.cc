@@ -201,8 +201,7 @@ Dhcpv4Srv::run() {
 
         // The packet has just been received so contains the uninterpreted wire
         // data; execute callouts registered for buffer4_receive.
-        if (HooksManager::getHooksManager()
-            .calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
+        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
             // Delete previously set arguments
@@ -396,8 +395,7 @@ Dhcpv4Srv::run() {
             // Option objects modification does not make sense anymore. Hooks
             // can only manipulate wire buffer at this stage.
             // Let's execute all callouts registered for buffer4_send
-            if (HooksManager::getHooksManager()
-                .calloutsPresent(Hooks.hook_index_buffer4_send_)) {
+            if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_send_)) {
                 CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
                 // Delete previously set arguments
@@ -931,8 +929,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
         bool skip = false;
 
         // Execute all callouts registered for lease4_release
-        if (HooksManager::getHooksManager()
-            .calloutsPresent(Hooks.hook_index_lease4_release_)) {
+        if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_release_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(release);
 
             // Delete all previous arguments

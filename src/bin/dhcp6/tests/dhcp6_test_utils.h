@@ -316,21 +316,32 @@ class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
 public:
     /// Name of the server-id file (used in server-id tests)
 
-    // these are empty for now, but let's keep them around
+    /// @brief Constructor that initalizes a simple default configuration
+    ///
+    /// Sets up a single subnet6 with one pool for addresses and second
+    /// pool for prefixes.
     Dhcpv6SrvTest() {
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
                                          2000, 3000, 4000));
-        pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
+        pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"),
+                                   64));
         subnet_->addPool(pool_);
 
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().addSubnet6(subnet_);
-    }
 
-    void configurePdPool() {
-        pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:2::"), 64, 80));
+        // configure PD pool
+        pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD,
+                                      IOAddress("2001:db8:1:2::"), 64, 80));
         subnet_->addPool(pd_pool_);
     }
+
+    /// @brief destructor
+    ///
+    /// Removes existing configuration.
+    ~Dhcpv6SrvTest() {
+        CfgMgr::instance().deleteSubnets6();
+    };
 
     /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
     ///        IA_NA option
@@ -360,9 +371,7 @@ public:
     // and lifetime values match the configured subnet
     void checkIAAddr(const boost::shared_ptr<Option6IAAddr>& addr,
                      const IOAddress& expected_addr,
-                     Lease::Type type,
-                     uint32_t /* expected_preferred */,
-                     uint32_t /* expected_valid */) {
+                     Lease::Type type) {
 
         // Check that the assigned address is indeed from the configured pool.
         // Note that when comparing addresses, we compare the textual
@@ -379,9 +388,87 @@ public:
     Lease6Ptr checkLease(const DuidPtr& duid, const OptionPtr& ia_na,
                          boost::shared_ptr<Option6IAAddr> addr);
 
+    /// @brief Verifies received IAPrefix option
+    ///
+    /// Verifies if the received IAPrefix option matches the lease in the
+    /// database.
+    ///
+    /// @param duid client's DUID
+    /// @param ia_pd IA_PD option that contains the IAPRefix option
+    /// @param prefix pointer to the IAPREFIX option
+    /// @return corresponding IPv6 lease (if found)
     Lease6Ptr checkPdLease(const DuidPtr& duid, const OptionPtr& ia_pd,
                            boost::shared_ptr<Option6IAPrefix> prefix);
 
+    /// @brief Creates a message with specified IA
+    ///
+    /// A utility function that creates a message of the specified type with
+    /// a specified container (IA_NA or IA_PD) and an address or prefix
+    /// inside it.
+    ///
+    /// @param message_type type of the message (e.g. DHCPV6_SOLICIT)
+    /// @param lease_type type of a lease (TYPE_NA or TYPE_PD)
+    /// @param addr address or prefix to use in IADDRESS or IAPREFIX options
+    /// @param prefix_len length of the prefix (used for prefixes only)
+    /// @param iaid IA identifier (used in IA_XX option)
+    /// @return created message
+    Pkt6Ptr
+    createMessage(uint8_t message_type, Lease::Type lease_type,
+                  const IOAddress& addr, const uint8_t prefix_len,
+                  uint32_t iaid);
+
+    /// @brief Performs basic (positive) RENEW test
+    ///
+    /// See renewBasic and pdRenewBasic tests for detailed explanation.
+    /// In essence the test attempts to perform a successful RENEW scenario.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param existing_addr address to be preinserted into the database
+    /// @param renew_addr address being sent in RENEW
+    /// @param prefix_len length of the prefix (128 for addresses)
+    void
+    testRenewBasic(Lease::Type type, const std::string& existing_addr,
+                   const std::string& renew_addr, const uint8_t prefix_len);
+
+    /// @brief Performs negative RENEW test
+    ///
+    /// See renewReject and pdRenewReject tests for detailed explanation.
+    /// In essence the test attempts to perform couple failed RENEW scenarios.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param addr address being sent in RENEW
+    void
+    testRenewReject(Lease::Type type, const IOAddress& addr);
+
+    /// @brief Performs basic (positive) RELEASE test
+    ///
+    /// See releaseBasic and pdReleaseBasic tests for detailed explanation.
+    /// In essence the test attempts to perform a successful RELEASE scenario.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param existing address to be preinserted into the database
+    /// @param release_addr address being sent in RELEASE
+    void
+    testReleaseBasic(Lease::Type type, const IOAddress& existing,
+                     const IOAddress& release_addr);
+
+    /// @brief Performs negative RELEASE test
+    ///
+    /// See releaseReject and pdReleaseReject tests for detailed explanation.
+    /// In essence the test attempts to perform couple failed RELEASE scenarios.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param addr address being sent in RELEASE
+    void
+    testReleaseReject(Lease::Type type, const IOAddress& addr);
 
     // see wireshark.cc for descriptions
     // The descriptions are too large and too closely related to the
@@ -389,7 +476,6 @@ public:
     Pkt6Ptr captureSimpleSolicit();
     Pkt6Ptr captureRelayedSolicit();
     Pkt6Ptr captureDocsisRelayedSolicit();
-
 
     /// @brief Auxiliary method that sets Pkt6 fields
     ///
