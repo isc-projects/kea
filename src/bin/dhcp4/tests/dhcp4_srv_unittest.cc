@@ -1592,6 +1592,47 @@ TEST_F(Dhcpv4SrvTest, ServerID) {
     EXPECT_EQ(srvid_text, text);
 }
 
+// Checks if callouts installed on pkt4_receive are indeed called and the
+// all necessary parameters are passed.
+//
+// Note that the test name does not follow test naming convention,
+// but the proper hook name is "buffer4_receive".
+TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
+
+    NakedDhcpv4Srv srv(0);
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // added option 82 (relay agent info) with 3 suboptions. The server
+    // is supposed to echo it back in its response.
+    Pkt4Ptr dis = captureRelayedDiscover();
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(dis);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv.run();
+
+    // Check that the server did send a reposonse
+    ASSERT_EQ(1, srv.fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr offer = srv.fake_sent_.front();
+    ASSERT_TRUE(offer);
+
+    // Get Relay Agent Info from query...
+    OptionPtr rai_query = dis->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+
+    // Get Relay Agent Info from response...
+    OptionPtr rai_response = offer->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_response);
+
+    EXPECT_TRUE(rai_response->equal(rai_query));
+}
+
 /// @todo Implement tests for subnetSelect See tests in dhcp6_srv_unittest.cc:
 /// selectSubnetAddr, selectSubnetIface, selectSubnetRelayLinkaddr,
 /// selectSubnetRelayInterfaceId. Note that the concept of interface-id is not
@@ -2112,7 +2153,7 @@ vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
 // but the proper hook name is "buffer4_receive".
 TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
 
-    // Install pkt6_receive_callout
+    // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_receive", buffer4_receive_callout));
 
@@ -2161,7 +2202,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4RreceiveValueChange) {
     // In particular, it should call registered buffer4_receive callback.
     srv_->run();
 
-    // Check that the server did send a reposonce
+    // Check that the server did send a reposonse
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
@@ -2184,7 +2225,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4RreceiveValueChange) {
 // (or rather option objects) in it.
 TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
 
-    // Install pkt6_receive_callout
+    // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_receive", buffer4_receive_skip));
 
@@ -2197,7 +2238,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive6(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt6_receive callback.
+    // In particular, it should call registered pkt4_receive callback.
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
