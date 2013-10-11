@@ -1293,6 +1293,52 @@ TEST_F(Dhcpv4SrvTest, unpackOptions) {
     EXPECT_EQ(0x0, option_bar->getValue());
 }
 
+// Checks whether the server uses default (0.0.0.0) siaddr value, unless
+// explicitly specified
+TEST_F(Dhcpv4SrvTest, siaddrDefault) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+    IOAddress hint("192.0.2.107");
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setYiaddr(hint);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv->processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Verify that it is 0.0.0.0
+    EXPECT_EQ("0.0.0.0", offer->getSiaddr().toText());
+}
+
+// Checks whether the server uses specified siaddr value
+TEST_F(Dhcpv4SrvTest, siaddr) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+    subnet_->setSiaddr(IOAddress("192.0.2.123"));
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv->processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Verify that its value is proper
+    EXPECT_EQ("192.0.2.123", offer->getSiaddr().toText());
+}
+
 // a dummy MAC address
 const uint8_t dummyMacAddr[] = {0, 1, 2, 3, 4, 5};
 
