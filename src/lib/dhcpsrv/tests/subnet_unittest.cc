@@ -58,6 +58,24 @@ TEST(Subnet4Test, in_range) {
     EXPECT_FALSE(subnet.inRange(IOAddress("255.255.255.255")));
 }
 
+// Checks whether siaddr field is handle correctly
+TEST(Subnet4Test, siaddr) {
+    Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
+
+    // Check if the default is 0.0.0.0
+    EXPECT_EQ("0.0.0.0", subnet.getSiaddr().toText());
+
+    // Check that we can set it up
+    EXPECT_NO_THROW(subnet.setSiaddr(IOAddress("1.2.3.4")));
+
+    // Check that we can get it back
+    EXPECT_EQ("1.2.3.4", subnet.getSiaddr().toText());
+
+    // Check that only v4 addresses are supported
+    EXPECT_THROW(subnet.setSiaddr(IOAddress("2001:db8::1")),
+        BadValue);
+}
+
 TEST(Subnet4Test, Pool4InSubnet4) {
 
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3));
