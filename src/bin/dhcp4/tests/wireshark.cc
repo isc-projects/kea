@@ -19,9 +19,9 @@
 #include <util/encode/hex.h>
 
 /// @file   wireshark.cc
-/// 
+///
 /// @brief  contains packet captures imported from Wireshark
-/// 
+///
 /// These are actual packets captured over wire. They are used in various
 /// tests.
 ///
@@ -46,6 +46,19 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 namespace test {
+
+Pkt4Ptr Dhcpv4SrvTest::packetFromCapture(const std::string& hex_string) {
+    std::vector<uint8_t> bin;
+
+    // Decode the hex string and store it in bin (which happens
+    // to be OptionBuffer format)
+    isc::util::encode::decodeHex(hex_string, bin);
+
+    Pkt4Ptr pkt(new Pkt4(&bin[0], bin.size()));
+    captureSetDefaultFields(pkt);
+
+    return (pkt);
+}
 
 void Dhcpv4SrvTest::captureSetDefaultFields(const Pkt4Ptr& pkt) {
     pkt->setRemotePort(546);
@@ -93,7 +106,7 @@ Bootstrap Protocol
     Option: (82) Agent Information Option
     Option: (255) End */
 
-    string hex_string = 
+    string hex_string =
         "010106015d05478d000000000000000000000000000000000afee20120e52ab8151400"
         "0000000000000000000000000000000000000000000000000000000000000000000000"
         "0000000000000000000000000000000000000000000000000000000000000000000000"
@@ -111,16 +124,7 @@ Bootstrap Protocol
         "140003000120e52ab81514390205dc5219010420000002020620e52ab8151409090000"
         "118b0401020300ff";
 
-    std::vector<uint8_t> bin;
-
-    // Decode the hex string and store it in bin (which happens
-    // to be OptionBuffer format)
-    isc::util::encode::decodeHex(hex_string, bin);
-
-    Pkt4Ptr pkt(new Pkt4(&bin[0], bin.size()));
-    captureSetDefaultFields(pkt);
-
-    return (pkt);
+    return (packetFromCapture(hex_string));
 }
 
 }; // end of isc::dhcp::test namespace

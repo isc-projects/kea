@@ -144,6 +144,11 @@ public:
     /// @return relayed DISCOVER
     Pkt4Ptr captureRelayedDiscover();
 
+    /// @brief generates a DHCPv4 packet based on provided hex string
+    ///
+    /// @return created packet
+    Pkt4Ptr packetFromCapture(const std::string& hex_string);
+
     /// @brief Tests if Discover or Request message is processed correctly
     ///
     /// @param msg_type DHCPDISCOVER or DHCPREQUEST
@@ -173,4 +178,4 @@ public:
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 
-#endif // DHCP6_TEST_UTILS_H
+#endif // DHCP4_TEST_UTILS_H
