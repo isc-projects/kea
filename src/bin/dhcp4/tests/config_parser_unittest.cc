@@ -411,6 +411,94 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
     EXPECT_EQ(4000, subnet->getValid());
 }
 
+// Checks if the next-server defined as global parameter is taken into
+// consideration.
+TEST_F(Dhcp4ParserTest, nextServerGlobal) {
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"next-server\": \"1.2.3.4\", "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+}
+
+// Checks if the next-server defined as subnet parameter is taken into
+// consideration.
+TEST_F(Dhcp4ParserTest, nextServerSubnet) {
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"next-server\": \"1.2.3.4\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+}
+
+// Checks if the next-server defined as global value is overridden by subnet
+// specific value.
+TEST_F(Dhcp4ParserTest, nextServerOverride) {
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"next-server\": \"192.0.0.1\", "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"next-server\": \"1.2.3.4\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+}
+
 // This test checks if it is possible to override global values
 // on a per subnet basis.
 TEST_F(Dhcp4ParserTest, subnetLocal) {

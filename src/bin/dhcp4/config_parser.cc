@@ -192,7 +192,8 @@ protected:
             (config_id.compare("rebind-timer") == 0))  {
             parser = new Uint32Parser(config_id, uint32_values_);
         } else if ((config_id.compare("subnet") == 0) ||
-                   (config_id.compare("interface") == 0)) {
+                   (config_id.compare("interface") == 0) ||
+                   (config_id.compare("next-server") == 0)) {
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pool") == 0) {
             parser = new Pool4Parser(config_id, pools_);
@@ -257,14 +258,30 @@ protected:
         Triplet<uint32_t> t2 = getParam("rebind-timer");
         Triplet<uint32_t> valid = getParam("valid-lifetime");
 
-        /// @todo: Convert this to logger once the parser is working reliably
         stringstream tmp;
         tmp << addr.toText() << "/" << (int)len
             << " with params t1=" << t1 << ", t2=" << t2 << ", valid=" << valid;
 
         LOG_INFO(dhcp4_logger, DHCP4_CONFIG_NEW_SUBNET).arg(tmp.str());
 
-        subnet_.reset(new Subnet4(addr, len, t1, t2, valid));
+        Subnet4* subnet4 = new Subnet4(addr, len, t1, t2, valid);
+        subnet_.reset(subnet4);
+
+        // Try global value first
+        try {
+            string next_server = globalContext()->string_values_->getParam("next-server");
+            subnet4->setSiaddr(IOAddress(next_server));
+        } catch (const DhcpConfigError&) {
+            // don't care. next_server is optional. We can live without it
+        }
+
+        // Try subnet specific value if it's available
+        try {
+            string next_server = string_values_->getParam("next-server");
+            subnet4->setSiaddr(IOAddress(next_server));
+        } catch (const DhcpConfigError&) {
+            // don't care. next_server is optional. We can live without it
+        }
     }
 };
 
@@ -359,7 +376,8 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     } else if (config_id.compare("option-def") == 0) {
         parser  = new OptionDefListParser(config_id,
                                           globalContext()->option_defs_);
-    } else if (config_id.compare("version") == 0) {
+    } else if ((config_id.compare("version") == 0) ||
+               (config_id.compare("next-server") == 0)) {
         parser  = new StringParser(config_id,
                                     globalContext()->string_values_);
     } else if (config_id.compare("lease-database") == 0) {
