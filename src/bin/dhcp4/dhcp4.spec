@@ -16,7 +16,7 @@
           "item_default": ""
         }
       },
- 
+
       { "item_name": "interfaces",
         "item_type": "list",
         "item_optional": false,
@@ -46,6 +46,12 @@
         "item_type": "integer",
         "item_optional": false,
         "item_default": 4000
+      },
+
+      { "item_name": "next-server",
+        "item_type": "string",
+        "item_optional": true,
+        "item_default": "0.0.0.0"
       },
 
       { "item_name": "option-def",
@@ -218,6 +224,13 @@
                   "item_optional": false,
                   "item_default": 7200
                 },
+
+                { "item_name": "next-server",
+                    "item_type": "string",
+                    "item_optional": true,
+                    "item_default": "0.0.0.0"
+                },
+
                 { "item_name": "pool",
                   "item_type": "list",
                   "item_optional": false,
@@ -290,7 +303,7 @@
 
         {
             "command_name": "libreload",
-            "command_description": "Reloads the current hooks libraries.", 
+            "command_description": "Reloads the current hooks libraries.",
             "command_args": []
         }
 
