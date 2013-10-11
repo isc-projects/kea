@@ -128,7 +128,7 @@ LibDHCP::optionFactory(Option::Universe u,
 
 
 size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
-                               isc::dhcp::Option::OptionCollection& options,
+                               isc::dhcp::OptionCollection& options,
                                size_t* relay_msg_offset /* = 0 */,
                                size_t* relay_msg_len /* = 0 */) {
     size_t offset = 0;
@@ -206,7 +206,7 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
 }
 
 size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
-                               isc::dhcp::Option::OptionCollection& options) {
+                               isc::dhcp::OptionCollection& options) {
     size_t offset = 0;
 
     // Get the list of stdandard option definitions.
@@ -282,8 +282,8 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
 
 void
 LibDHCP::packOptions(isc::util::OutputBuffer& buf,
-                     const Option::OptionCollection& options) {
-    for (Option::OptionCollection::const_iterator it = options.begin();
+                     const OptionCollection& options) {
+    for (OptionCollection::const_iterator it = options.begin();
          it != options.end(); ++it) {
         it->second->pack(buf);
     }

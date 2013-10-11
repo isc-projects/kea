@@ -310,12 +310,17 @@ public:
     /// @param type option type.
     /// @param begin beginning of the option buffer.
     /// @param end end of the option buffer.
+    /// @param callback An instance of the function which parses packet options.
+    /// If this is set to non NULL value this function will be used instead of
+    /// @c isc::dhcp::LibDHCP::unpackOptions6 and
+    /// isc::dhcp::LibDHCP::unpackOptions4.
     ///
     /// @return instance of the DHCP option.
     /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
                             OptionBufferConstIter begin,
-                            OptionBufferConstIter end) const;
+                            OptionBufferConstIter end,
+                            UnpackOptionsCallback callback = NULL) const;
 
     /// @brief Option factory.
     ///
@@ -330,11 +335,16 @@ public:
     /// @param u option universe (V4 or V6).
     /// @param type option type.
     /// @param buf option buffer.
+    /// @param callback An instance of the function which parses packet options.
+    /// If this is set to non NULL value this function will be used instead of
+    /// @c isc::dhcp::LibDHCP::unpackOptions6 and
+    /// isc::dhcp::LibDHCP::unpackOptions4.
     ///
     /// @return instance of the DHCP option.
     /// @throw InvalidOptionValue if data for the option is invalid.
     OptionPtr optionFactory(Option::Universe u, uint16_t type,
-                            const OptionBuffer& buf = OptionBuffer()) const;
+                            const OptionBuffer& buf = OptionBuffer(),
+                            UnpackOptionsCallback callback = NULL) const;
 
     /// @brief Option factory.
     ///
@@ -437,16 +447,28 @@ public:
     ///
     /// @param u universe (V4 or V6).
     /// @param type option type.
+    /// @param encapsulated_space An option space being encapsulated by the
+    /// options created by this factory function. The options which belong to
+    /// encapsulated option space are sub options of this option.
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
+    /// @param callback An instance of the function which parses packet options.
+    /// If this is set to non NULL value this function will be used instead of
+    /// @c isc::dhcp::LibDHCP::unpackOptions6 and
+    /// isc::dhcp::LibDHCP::unpackOptions4.
     /// @tparam T type of the data field (must be one of the uintX_t or intX_t).
     ///
     /// @throw isc::OutOfRange if provided option buffer length is invalid.
     template<typename T>
     static OptionPtr factoryInteger(Option::Universe u, uint16_t type,
+                                    const std::string& encapsulated_space,
                                     OptionBufferConstIter begin,
-                                    OptionBufferConstIter end) {
-        OptionPtr option(new OptionInt<T>(u, type, begin, end));
+                                    OptionBufferConstIter end,
+                                    UnpackOptionsCallback callback) {
+        OptionPtr option(new OptionInt<T>(u, type, 0));
+        option->setEncapsulatedSpace(encapsulated_space);
+        option->setCallback(callback);
+        option->unpack(begin, end);
         return (option);
     }
 

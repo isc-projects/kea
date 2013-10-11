@@ -15,10 +15,12 @@
 #include <config.h>
 
 #include <dhcp/dhcp6.h>
+#include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 
+#include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -35,6 +37,66 @@ using namespace isc::util;
 using boost::scoped_ptr;
 
 namespace {
+
+/// @brief A class which contains a custom callback function to unpack options.
+///
+/// This is a class used by the tests which verify that the custom callback
+/// functions can be installed to unpack options from a message. When the
+/// callback function is called, the executed_ member is set to true to allow
+/// verification that the callback was really called. Internally, this class
+/// uses libdhcp++ to unpack options so the options parsing algorithm remains
+/// unchanged after installation of the callback.
+class CustomUnpackCallback {
+public:
+
+    /// @brief Constructor
+    ///
+    /// Marks that callback hasn't been called.
+    CustomUnpackCallback()
+        : executed_(false) {
+    }
+
+    /// @brief A callback
+    ///
+    /// Contains custom implementation of the callback.
+    ///
+    /// @param buf a A buffer holding options in on-wire format.
+    /// @param [out] options A reference to the collection where parsed options
+    /// will be stored.
+    /// @param relay_msg_offset Reference to a size_t structure. If specified,
+    /// offset to beginning of relay_msg option will be stored in it.
+    /// @param relay_msg_len reference to a size_t structure. If specified,
+    /// length of the relay_msg option will be stored in it.
+    /// @return An offset to the first byte after last parsed option.
+    size_t execute(const OptionBuffer& buf,
+                   const std::string&,
+                   isc::dhcp::OptionCollection& options,
+                   size_t* relay_msg_offset,
+                   size_t* relay_msg_len) {
+        // Set the executed_ member to true to allow verification that the
+        // callback has been actually called.
+        executed_ = true;
+        // Use default implementation of the unpack algorithm to parse options.
+        return (LibDHCP::unpackOptions6(buf, options, relay_msg_offset,
+                                        relay_msg_len));
+    }
+
+    /// A flag which indicates if callback function has been called.
+    bool executed_;
+};
+
+/// @brief A class which derives from option and exposes protected members.
+class NakedOption : public Option {
+public:
+    /// @brief Constructor
+    ///
+    /// Sets the universe and option type to arbitrary test values.
+    NakedOption() : Option(Option::V6, 258) {
+    }
+
+    using Option::unpackOptions;
+};
+
 class OptionTest : public ::testing::Test {
 public:
     OptionTest(): buf_(255), outBuf_(255) {
@@ -505,4 +567,73 @@ TEST_F(OptionTest, equal) {
 
     EXPECT_TRUE(opt2->equal(opt5));
 }
+
+// This test verifies that the name of the option space being encapsulated by
+// the particular option can be set.
+TEST_F(OptionTest, setEncapsulatedSpace) {
+    Option optv6(Option::V6, 258);
+    EXPECT_TRUE(optv6.getEncapsulatedSpace().empty());
+
+    optv6.setEncapsulatedSpace("dhcp6");
+    EXPECT_EQ("dhcp6", optv6.getEncapsulatedSpace());
+
+    Option optv4(Option::V4, 125);
+    EXPECT_TRUE(optv4.getEncapsulatedSpace().empty());
+
+    optv4.setEncapsulatedSpace("dhcp4");
+    EXPECT_EQ("dhcp4", optv4.getEncapsulatedSpace());
+
+}
+
+// This test verifies that it is possible to specify custom implementation of
+// the option parsing algorithm by installing a callback function.
+TEST_F(OptionTest, unpackCallback) {
+    // Create a buffer which holds two sub options.
+    const char opt_data[] = {
+        0x00, 0x01,  // sub option code  = 1
+        0x00, 0x02,  // sub option length = 2
+        0x00, 0x01,  // sub option data (2 bytes)
+        0x00, 0x02,  // sub option code = 2
+        0x00, 0x02,  // sub option length = 2
+        0x01, 0x01   // sub option data (2 bytes)
+    };
+    OptionBuffer opt_buf(opt_data, opt_data + sizeof(opt_data));
+
+    // Make sure that the flag which indicates if the callback function has
+    // been called is not set. Otherwise, our test doesn't make sense.
+    CustomUnpackCallback cb;
+    ASSERT_FALSE(cb.executed_);
+    // Create an option and install a callback.
+    NakedOption option;
+    // Parameters from _1 to _5 are placeholders for the actual values
+    // to be passed to the callback function. See: boost::bind documentation
+    // at http://www.boost.org/doc/libs/1_54_0/libs/bind/bind.html.
+    // Also, see UnpackOptionsCallback in option.h for description of the
+    // parameter values.
+    option.setCallback(boost::bind(&CustomUnpackCallback::execute, &cb,
+                                   _1, _2, _3, _4, _5));
+    // Parse options. It should result in a call to our callback function.
+    // This function uses LibDHCP to parse options so they should be parsed
+    // correctly.
+    ASSERT_NO_THROW(option.unpackOptions(opt_buf));
+    EXPECT_TRUE(option.getOption(1));
+    EXPECT_TRUE(option.getOption(2));
+    EXPECT_FALSE(option.getOption(3));
+    // The callback should have been registered.
+    EXPECT_TRUE(cb.executed_);
+    // Reset the flag because now we are going to uninstall the callback and
+    // verify that it was NOT called.
+    cb.executed_ = false;
+    // Uninstall the callback.
+    option.setCallback(NULL);
+    ASSERT_NO_THROW(option.unpackOptions(opt_buf));
+    // Options should still get unpacked...
+    EXPECT_TRUE(option.getOption(1));
+    EXPECT_TRUE(option.getOption(2));
+    EXPECT_FALSE(option.getOption(3));
+    // ... but not via callback.
+    EXPECT_FALSE(cb.executed_);
+}
+
+
 }
