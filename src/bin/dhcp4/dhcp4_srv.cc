@@ -584,6 +584,12 @@ Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     if (dst_hw_addr) {
         answer->setRemoteHWAddr(dst_hw_addr);
     }
+
+    // If this packet is relayed, we want to copy Relay Agent Info option
+    OptionPtr rai = question->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai) {
+        answer->addOption(rai);
+    }
 }
 
 void

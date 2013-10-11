@@ -1,3 +1,8 @@
+690.	[bug]		tomek
+	b10-dhcp4: Relay Agent Info option is now echoed back in
+	DHCPv4 responses.
+	(Trac #3184, git 287389c049518bff66bdf6a5a49bb8768be02d8e)
+
 689.	[func]*		marcin
 	b10-dhcp4 and b10-dhcp6 install callback functions which parse options
 	in the received DHCP packets.
