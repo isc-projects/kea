@@ -4388,6 +4388,27 @@ Dhcp4/subnet4	[]	list	(default)
       </para>
     </section>
 
+    <section id="dhcp4-next-server">
+      <title>Next server (siaddr)</title>
+      <para>In some cases, clients want to obtain configuration form the TFTP server.
+      Although there is a dedicated option for it, some devices may use siaddr field
+      in the DHCPv4 packet for that purpose. That specific field can be configured
+      using next-server directive. It is possible to define it in global scope or
+      for a given subnet only. If both are defined, subnet value takes precedence.
+      </para>
+
+<screen>
+&gt; <userinput>config add Dhcp4/next-server</userinput>
+&gt; <userinput>config set Dhcp4/next-server "192.0.2.123"</userinput>
+&gt; <userinput>config commit</userinput>
+<userinput></userinput>
+&gt; <userinput>config add Dhcp4/subnet[0]/next-server</userinput>
+&gt; <userinput>config set Dhcp4/subnet[0]/next-server "192.0.2.234"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+
+    </section>
+
     <section id="dhcp4-std">
       <title>Supported Standards</title>
       <para>The following standards and draft standards are currently
