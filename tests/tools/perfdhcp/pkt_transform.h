@@ -66,7 +66,7 @@ public:
     /// \return false, if pack operation failed.
     static bool pack(const dhcp::Option::Universe universe,
                      const dhcp::OptionBuffer& in_buffer,
-                     const dhcp::Option::OptionCollection& options,
+                     const dhcp::OptionCollection& options,
                      const size_t transid_offset,
                      const uint32_t transid,
                      util::OutputBuffer& out_buffer);
@@ -88,7 +88,7 @@ public:
     /// \return false, if unpack operation failed.
     static bool unpack(const dhcp::Option::Universe universe,
                        const dhcp::OptionBuffer& in_buffer,
-                       const dhcp::Option::OptionCollection& options,
+                       const dhcp::OptionCollection& options,
                        const size_t transid_offset,
                        uint32_t& transid);
 
@@ -135,7 +135,7 @@ private:
     ///
     /// \throw isc::Unexpected if options update failed.
     static void packOptions(const dhcp::OptionBuffer& in_buffer,
-                            const dhcp::Option::OptionCollection& options,
+                            const dhcp::OptionCollection& options,
                             util::OutputBuffer& out_buffer);
 
     /// \brief Reads contents of specified options from buffer.
@@ -159,7 +159,7 @@ private:
     ///
     /// \throw isc::Unexpected if options unpack failed.
     static void unpackOptions(const dhcp::OptionBuffer& in_buffer,
-                              const dhcp::Option::OptionCollection& options);
+                              const dhcp::OptionCollection& options);
 
 };
 

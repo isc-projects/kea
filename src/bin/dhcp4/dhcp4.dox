@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -78,6 +78,11 @@ See \ref dhcpv6ConfigParser.
 
 Configuration inheritance in DHCPv4 follows exactly the same logic as its DHCPv6
 counterpart. See \ref dhcpv6ConfigInherit.
+
+@section dhcpv4OptionsParse Custom functions to parse message options
+
+The DHCPv4 server uses the same logic to supply custom callback function to
+parse message option as DHCPv6 server implementation. See \ref dhcpv6OptionsParse.
 
 @section dhcpv4Other Other DHCPv4 topics
 
