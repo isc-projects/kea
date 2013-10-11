@@ -34,6 +34,7 @@ namespace dhcp {
 Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& prefix,
                                  uint8_t prefix_len, uint32_t pref, uint32_t valid)
     :Option6IAAddr(type, prefix, pref, valid), prefix_len_(prefix_len) {
+    setEncapsulatedSpace("dhcp6");
     // Option6IAAddr will check if prefix is IPv6 and will throw if it is not
     if (prefix_len > 128) {
         isc_throw(BadValue, prefix_len << " is not a valid prefix length. "
@@ -44,6 +45,7 @@ Option6IAPrefix::Option6IAPrefix(uint16_t type, const isc::asiolink::IOAddress& 
 Option6IAPrefix::Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator begin,
                              OptionBuffer::const_iterator end)
     :Option6IAAddr(type, begin, end) {
+    setEncapsulatedSpace("dhcp6");
     unpack(begin, end);
 }
 
@@ -113,7 +115,7 @@ uint16_t Option6IAPrefix::len() {
     uint16_t length = OPTION6_HDR_LEN + OPTION6_IAPREFIX_LEN;
 
     // length of all suboptions
-    for (Option::OptionCollection::const_iterator it = options_.begin();
+    for (OptionCollection::const_iterator it = options_.begin();
          it != options_.end(); ++it) {
         length += (*it).second->len();
     }

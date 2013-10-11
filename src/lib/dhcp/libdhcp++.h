@@ -100,7 +100,7 @@ public:
     /// @param buf output buffer (assembled options will be stored here)
     /// @param options collection of options to store to
     static void packOptions(isc::util::OutputBuffer& buf,
-                            const isc::dhcp::Option::OptionCollection& options);
+                            const isc::dhcp::OptionCollection& options);
 
     /// @brief Parses provided buffer as DHCPv4 options and creates Option objects.
     ///
@@ -111,7 +111,7 @@ public:
     /// @param options Reference to option container. Options will be
     ///        put here.
     static size_t unpackOptions4(const OptionBuffer& buf,
-                                 isc::dhcp::Option::OptionCollection& options);
+                                 isc::dhcp::OptionCollection& options);
 
     /// @brief Parses provided buffer as DHCPv6 options and creates Option objects.
     ///
@@ -133,7 +133,7 @@ public:
     ///        length of the relay_msg option will be stored in it.
     /// @return offset to the first byte after last parsed option
     static size_t unpackOptions6(const OptionBuffer& buf,
-                                 isc::dhcp::Option::OptionCollection& options,
+                                 isc::dhcp::OptionCollection& options,
                                  size_t* relay_msg_offset = 0,
                                  size_t* relay_msg_len = 0);
 
