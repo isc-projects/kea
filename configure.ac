@@ -1288,6 +1288,10 @@ AC_CONFIG_FILES([Makefile
                  src/bin/usermgr/Makefile
                  src/bin/usermgr/tests/Makefile
                  src/bin/tests/Makefile
+                 src/hooks/Makefile
+                 src/hooks/dhcp/Makefile
+                 src/hooks/dhcp/user_chk/Makefile
+                 src/hooks/dhcp/user_chk/tests/Makefile
                  src/lib/Makefile
                  src/lib/asiolink/Makefile
                  src/lib/asiolink/tests/Makefile
