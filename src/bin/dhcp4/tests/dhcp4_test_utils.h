@@ -21,14 +21,53 @@
 
 #include <gtest/gtest.h>
 #include <dhcp/pkt4.h>
+#include <dhcp/pkt_filter.h>
+#include <dhcp/pkt_filter_inet.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease.h>
+#include <dhcp4/dhcp4_srv.h>
 #include <asiolink/io_address.h>
 #include <config/ccsession.h>
+#include <list>
 
 namespace isc {
 namespace dhcp {
 namespace test {
+
+/// @brief Dummy Packet Filtering class.
+///
+/// This class reports capability to respond directly to the client which
+/// doesn't have address configured yet.
+///
+/// All packet and socket handling functions do nothing because they are not
+/// used in unit tests.
+class PktFilterTest : public PktFilter {
+public:
+
+    /// @brief Reports 'direct response' capability.
+    ///
+    /// @return always true.
+    virtual bool isDirectResponseSupported() const {
+        return (true);
+    }
+
+    /// Does nothing.
+    virtual int openSocket(const Iface&, const isc::asiolink::IOAddress&,
+                           const uint16_t, const bool, const bool) {
+        return (0);
+    }
+
+    /// Does nothing.
+    virtual Pkt4Ptr receive(const Iface&, const SocketInfo&) {
+        return Pkt4Ptr();
+    }
+
+    /// Does nothing.
+    virtual int send(const Iface&, uint16_t, const Pkt4Ptr&) {
+        return (0);
+    }
+
+};
 
 class Dhcpv4SrvTest : public ::testing::Test {
 public:
@@ -172,6 +211,102 @@ public:
 
     // Name of a valid network interface
     std::string valid_iface_;
+};
+
+/// @brief "Naked" DHCPv4 server, exposes internal fields
+class NakedDhcpv4Srv: public Dhcpv4Srv {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// This constructor disables default modes of operation used by the
+    /// Dhcpv4Srv class:
+    /// - Send/receive broadcast messages through sockets on interfaces
+    /// which support broadcast traffic.
+    /// - Direct DHCPv4 traffic - communication with clients which do not
+    /// have IP address assigned yet.
+    ///
+    /// Enabling these modes requires root privilges so they must be
+    /// disabled for unit testing.
+    ///
+    /// Note, that disabling broadcast options on sockets does not impact
+    /// the operation of these tests because they use local loopback
+    /// interface which doesn't have broadcast capability anyway. It rather
+    /// prevents setting broadcast options on other (broadcast capable)
+    /// sockets which are opened on other interfaces in Dhcpv4Srv constructor.
+    ///
+    /// The Direct DHCPv4 Traffic capability can be disabled here because
+    /// it is tested with PktFilterLPFTest unittest. The tests which belong
+    /// to PktFilterLPFTest can be enabled on demand when root privileges can
+    /// be guaranteed.
+    ///
+    /// @param port port number to listen on; the default value 0 indicates
+    /// that sockets should not be opened.
+    NakedDhcpv4Srv(uint16_t port = 0)
+        : Dhcpv4Srv(port, "type=memfile", false, false) {
+    }
+
+    /// @brief fakes packet reception
+    /// @param timeout ignored
+    ///
+    /// The method receives all packets queued in receive queue, one after
+    /// another. Once the queue is empty, it initiates the shutdown procedure.
+    ///
+    /// See fake_received_ field for description
+    virtual Pkt4Ptr receivePacket(int /*timeout*/) {
+
+        // If there is anything prepared as fake incoming traffic, use it
+        if (!fake_received_.empty()) {
+            Pkt4Ptr pkt = fake_received_.front();
+            fake_received_.pop_front();
+            return (pkt);
+        }
+
+        // If not, just trigger shutdown and return immediately
+        shutdown();
+        return (Pkt4Ptr());
+    }
+
+    /// @brief fake packet sending
+    ///
+    /// Pretend to send a packet, but instead just store it in fake_send_ list
+    /// where test can later inspect server's response.
+    virtual void sendPacket(const Pkt4Ptr& pkt) {
+        fake_sent_.push_back(pkt);
+    }
+
+    /// @brief adds a packet to fake receive queue
+    ///
+    /// See fake_received_ field for description
+    void fakeReceive(const Pkt4Ptr& pkt) {
+        fake_received_.push_back(pkt);
+    }
+
+    virtual ~NakedDhcpv4Srv() {
+    }
+
+    /// @brief packets we pretend to receive
+    ///
+    /// Instead of setting up sockets on interfaces that change between OSes, it
+    /// is much easier to fake packet reception. This is a list of packets that
+    /// we pretend to have received. You can schedule new packets to be received
+    /// using fakeReceive() and NakedDhcpv4Srv::receivePacket() methods.
+    std::list<Pkt4Ptr> fake_received_;
+
+    std::list<Pkt4Ptr> fake_sent_;
+
+    using Dhcpv4Srv::adjustRemoteAddr;
+    using Dhcpv4Srv::processDiscover;
+    using Dhcpv4Srv::processRequest;
+    using Dhcpv4Srv::processRelease;
+    using Dhcpv4Srv::processDecline;
+    using Dhcpv4Srv::processInform;
+    using Dhcpv4Srv::getServerID;
+    using Dhcpv4Srv::loadServerID;
+    using Dhcpv4Srv::generateServerID;
+    using Dhcpv4Srv::writeServerID;
+    using Dhcpv4Srv::sanityCheck;
+    using Dhcpv4Srv::srvidToString;
 };
 
 }; // end of isc::dhcp::test namespace
