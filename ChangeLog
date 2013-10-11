@@ -1,3 +1,8 @@
+689.	[func]*		marcin
+	b10-dhcp4 and b10-dhcp6 install callback functions which parse options
+	in the received DHCP packets.
+	(Trac #3180, git f73fba3cde9421acbeb9486c615900b0af58fa25)
+
 688.	[func]		tomek
 	b10-dhcp6: Prefix Delegation support is now extended to
 	Renew and Release messages.
