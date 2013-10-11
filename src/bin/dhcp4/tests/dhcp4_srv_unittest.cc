@@ -1604,7 +1604,8 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // added option 82 (relay agent info) with 3 suboptions. The server
     // is supposed to echo it back in its response.
-    Pkt4Ptr dis = captureRelayedDiscover();
+    Pkt4Ptr dis;
+    ASSERT_NO_THROW(dis = captureRelayedDiscover());
 
     // Simulate that we have received that traffic
     srv.fakeReceive(dis);
