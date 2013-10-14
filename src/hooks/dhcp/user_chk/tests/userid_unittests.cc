@@ -147,8 +147,9 @@ TEST(UserIdTest, client_id_type) {
     EXPECT_FALSE(*id < *id2);
 }
 
-TEST(UserIdTest, type_compare) {
+TEST(UserIdTest, mixed_type_compare) {
     UserIdPtr hw, duid, client;
+    // Address are the same
     ASSERT_NO_THROW(hw.reset(new UserId(UserId::HW_ADDRESS,
                                         "01FF02AC030B0709")));
     ASSERT_NO_THROW(duid.reset(new UserId(UserId::DUID,
@@ -157,9 +158,26 @@ TEST(UserIdTest, type_compare) {
                                             "01FF02AC030B0709")));
 
     // Verify that UserIdType influences logical comparators.
-    EXPECT_NE(*hw, *duid);
-    EXPECT_NE(*hw , *client);
-    EXPECT_NE(*duid, *client);
+    EXPECT_TRUE(*hw < *duid);
+    EXPECT_TRUE(*duid < *client);
+
+
+    // Now use different addresses.
+    ASSERT_NO_THROW(hw.reset(new UserId(UserId::HW_ADDRESS,
+                                        "01010101")));
+    ASSERT_NO_THROW(duid.reset(new UserId(UserId::DUID,
+                                         "02020202")));
+    ASSERT_NO_THROW(client.reset(new UserId(UserId::CLIENT_ID,
+                                            "03030303")));
+
+    EXPECT_FALSE(*hw == *duid);
+    EXPECT_TRUE(*hw != *duid);
+    EXPECT_TRUE(*hw < *duid);
+
+    EXPECT_FALSE(*duid == *client);
+    EXPECT_TRUE(*duid != *client);
+    EXPECT_TRUE(*duid < *client);
 }
+
 
 } // end of anonymous namespace
