@@ -15,6 +15,8 @@
 #include <dhcp/hwaddr.h>
 #include <exceptions/exceptions.h>
 #include <user_registry.h>
+#include <user_file.h>
+#include <test_data_files_config.h>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
@@ -24,6 +26,10 @@
 using namespace std;
 
 namespace {
+
+std::string testFilePath(const std::string& name) {
+    return (std::string(USER_CHK_TEST_DIR) + "/" + name);
+}
 
 TEST(UserRegistry, constructor) {
     UserRegistryPtr reg;
@@ -41,7 +47,7 @@ TEST(UserRegistry, userBasics) {
 
     UserPtr user, user2;
     // Verify that a blank user cannot be added.
-    ASSERT_THROW(reg->addUser(user), isc::BadValue);
+    ASSERT_THROW(reg->addUser(user), UserRegistryError);
 
     // Make new users.
     ASSERT_NO_THROW(user.reset(new User(*id)));
@@ -54,7 +60,7 @@ TEST(UserRegistry, userBasics) {
     UserPtr found_user;
     ASSERT_NO_THROW(found_user = reg->findUser(*id));
     EXPECT_TRUE(found_user);
-    EXPECT_EQ(*id, found_user->getUserId());
+    EXPECT_EQ(found_user->getUserId(), *id);
 
     // Verify user not added cannot be found.
     ASSERT_NO_THROW(found_user = reg->findUser(*id2));
@@ -78,14 +84,14 @@ TEST(UserRegistry, findByHWAddr) {
     ASSERT_NO_THROW(reg->addUser(user));
 
     // Make a HWAddr instance using the same id value.
-    isc::dhcp::HWAddr hwaddr(user->getUserId().getId(), 
+    isc::dhcp::HWAddr hwaddr(user->getUserId().getId(),
                              isc::dhcp::HTYPE_ETHER);
 
     // Verify user can be found by HWAddr.
     UserPtr found_user;
     ASSERT_NO_THROW(found_user = reg->findUser(hwaddr));
     EXPECT_TRUE(found_user);
-    EXPECT_EQ(user->getUserId(), found_user->getUserId());
+    EXPECT_EQ(found_user->getUserId(), user->getUserId());
 }
 
 TEST(UserRegistry, findByDUID) {
@@ -106,7 +112,7 @@ TEST(UserRegistry, findByDUID) {
     UserPtr found_user;
     ASSERT_NO_THROW(found_user = reg->findUser(duid));
     EXPECT_TRUE(found_user);
-    EXPECT_EQ(user->getUserId(), found_user->getUserId());
+    EXPECT_EQ(found_user->getUserId(), user->getUserId());
 }
 
 TEST(UserRegistry, findByClientId) {
@@ -127,7 +133,62 @@ TEST(UserRegistry, findByClientId) {
     UserPtr found_user;
     ASSERT_NO_THROW(found_user = reg->findUser(client_id));
     EXPECT_TRUE(found_user);
-    EXPECT_EQ(user->getUserId(), found_user->getUserId());
+    EXPECT_EQ(found_user->getUserId(), user->getUserId());
+}
+
+TEST(UserRegistry, oneOfEach) {
+    UserRegistryPtr reg;
+    ASSERT_NO_THROW(reg.reset(new UserRegistry()));
+
+    // Make user ids.
+    UserIdPtr idh, idc, idd;
+    ASSERT_NO_THROW(idh.reset(new UserId(UserId::HW_ADDRESS, "01010101")));
+    ASSERT_NO_THROW(idc.reset(new UserId(UserId::CLIENT_ID, "02020202")));
+    ASSERT_NO_THROW(idd.reset(new UserId(UserId::DUID, "03030303")));
+
+    UserPtr user;
+    user.reset(new User(*idh));
+    ASSERT_NO_THROW(reg->addUser(user));
+
+    user.reset(new User(*idc));
+    ASSERT_NO_THROW(reg->addUser(user));
+    user.reset(new User(*idd));
+    ASSERT_NO_THROW(reg->addUser(user));
+
+    UserPtr found_user;
+    ASSERT_NO_THROW(found_user = reg->findUser(*idh));
+    ASSERT_NO_THROW(found_user = reg->findUser(*idc));
+    ASSERT_NO_THROW(found_user = reg->findUser(*idd));
+}
+
+TEST(UserRegistry, userFileTest) {
+    UserRegistryPtr reg;
+    ASSERT_NO_THROW(reg.reset(new UserRegistry()));
+
+    // Create the data source.
+    UserDataSourcePtr user_file;
+    ASSERT_NO_THROW(user_file.reset(new
+                                    UserFile(testFilePath("test_users_1.txt"))));
+
+    // Set the registry's data source and refresh the registry.
+    ASSERT_NO_THROW(reg->setSource(user_file));
+    //ASSERT_NO_THROW(reg->refresh());
+    (reg->refresh());
+
+    // Verify we can find all the expected users.
+    UserPtr found_user;
+    UserIdPtr id;
+    ASSERT_NO_THROW(id.reset(new UserId(UserId::HW_ADDRESS, "01ac00f03344")));
+    ASSERT_NO_THROW(found_user = reg->findUser(*id));
+    EXPECT_TRUE(found_user);
+
+    ASSERT_NO_THROW(id.reset(new UserId(UserId::CLIENT_ID, "0899e0cc0707")));
+    ASSERT_NO_THROW(found_user = reg->findUser(*id));
+    EXPECT_TRUE(found_user);
+
+    ASSERT_NO_THROW(id.reset(new UserId(UserId::DUID, "225060de0a0b")));
+    ASSERT_NO_THROW(found_user = reg->findUser(*id));
+    EXPECT_TRUE(found_user);
 }
 
 } // end of anonymous namespace

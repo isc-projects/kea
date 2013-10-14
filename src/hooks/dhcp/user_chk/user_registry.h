@@ -16,12 +16,21 @@
 
 #include <dhcp/hwaddr.h>
 #include <dhcp/duid.h>
+#include <exceptions/exceptions.h>
 #include <user.h>
 #include <user_data_source.h>
 
 #include <string>
 
 using namespace std;
+
+/// @brief Thrown UserRegistry encounters an error
+class UserRegistryError : public isc::Exception {
+public:
+    UserRegistryError(const char* file, size_t line,
+                               const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 typedef std::map<UserId,UserPtr> UserMap;
 

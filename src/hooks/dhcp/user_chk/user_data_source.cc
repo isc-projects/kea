@@ -23,27 +23,27 @@ UserDataSource::~UserDataSource() {
     }
 }
 
-void 
+void
 UserDataSource::open() {
     open_flag_ = false;
 }
 
-UserPtr 
+UserPtr
 UserDataSource::readNextUser() {
     return (UserPtr());
 }
 
-void 
+void
 UserDataSource::close() {
     open_flag_ = false;
 }
 
-bool 
+bool
 UserDataSource::isOpen() const {
     return open_flag_;
 }
 
-void 
+void
 UserDataSource::setOpenFlag(bool value) {
   open_flag_ = value;
 }

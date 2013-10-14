@@ -22,15 +22,17 @@
 
 class UserId {
 public:
+    // Use explicit value to ensure consistent numeric ordering for key
+    // comparisions.
     enum UserIdType {
-        HW_ADDRESS,
-        DUID,
-        CLIENT_ID
+        HW_ADDRESS = 0,
+        DUID = 1,
+        CLIENT_ID = 2
     };
 
     static const char* HW_ADDRESS_STR;
     static const char* DUID_STR;
-    static const char* CLIENT_ID_STR; 
+    static const char* CLIENT_ID_STR;
 
     UserId(UserIdType id_type, const std::vector<uint8_t>& id);
 
@@ -41,7 +43,7 @@ public:
     /// @brief Returns a const reference to the actual id value
     const std::vector<uint8_t>& getId() const;
 
-    /// @brief Returns the UserIdType 
+    /// @brief Returns the UserIdType
     UserIdType getType() const;
 
     /// @brief Returns textual representation of a id (e.g. 00:01:02:03:ff)
@@ -63,10 +65,10 @@ public:
 private:
     void decodeHex(const std::string& input, std::vector<uint8_t>& bytes) const;
 
-    /// @brief The type of id value 
+    /// @brief The type of id value
     UserIdType id_type_;
 
-    /// @brief The id value 
+    /// @brief The id value
     std::vector<uint8_t> id_;
 
 };
@@ -88,6 +90,10 @@ public:
     User(UserId::UserIdType id_type, const std::string& id_str);
 
     ~User();
+
+    const PropertyMap& getProperties() const;
+
+    void setProperties(const PropertyMap& properties);
 
     void setProperty(const std::string& name, const std::string& value);
 
