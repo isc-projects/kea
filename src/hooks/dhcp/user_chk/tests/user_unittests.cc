@@ -35,28 +35,28 @@ TEST(UserTest, construction) {
     ASSERT_NO_THROW(user.reset(new User(*id)));
 
     // Verify construction from a type and an address vector.
-    ASSERT_NO_THROW(user.reset(new User(UserId::HW_ADDRESS, id->getId())));   
-    ASSERT_NO_THROW(user.reset(new User(UserId::DUID, id->getId())));   
-    ASSERT_NO_THROW(user.reset(new User(UserId::CLIENT_ID, id->getId())));   
+    ASSERT_NO_THROW(user.reset(new User(UserId::HW_ADDRESS, id->getId())));
+    ASSERT_NO_THROW(user.reset(new User(UserId::DUID, id->getId())));
+    ASSERT_NO_THROW(user.reset(new User(UserId::CLIENT_ID, id->getId())));
 
     // Verify construction from a type and an address string.
-    ASSERT_NO_THROW(user.reset(new User(UserId::HW_ADDRESS, test_address)));   
-    ASSERT_NO_THROW(user.reset(new User(UserId::DUID, test_address)));   
-    ASSERT_NO_THROW(user.reset(new User(UserId::CLIENT_ID, test_address)));   
+    ASSERT_NO_THROW(user.reset(new User(UserId::HW_ADDRESS, test_address)));
+    ASSERT_NO_THROW(user.reset(new User(UserId::DUID, test_address)));
+    ASSERT_NO_THROW(user.reset(new User(UserId::CLIENT_ID, test_address)));
 }
 
 TEST(UserTest, properties) {
     UserPtr user;
-    ASSERT_NO_THROW(user.reset(new User(UserId::DUID, "01020304050607")));   
+    ASSERT_NO_THROW(user.reset(new User(UserId::DUID, "01020304050607")));
 
     std::string value = "";
     EXPECT_NO_THROW(user->setProperty("one","1"));
     EXPECT_NO_THROW(value = user->getProperty("one"));
-    EXPECT_EQ(value, "1");
+    EXPECT_EQ("1", value);
 
     EXPECT_NO_THROW(user->setProperty("one","1.0"));
     EXPECT_NO_THROW(value = user->getProperty("one"));
-    EXPECT_EQ(value, "1.0");
+    EXPECT_EQ("1.0", value);
 
     EXPECT_NO_THROW(user->delProperty("one"));
     EXPECT_NO_THROW(value = user->getProperty("one"));

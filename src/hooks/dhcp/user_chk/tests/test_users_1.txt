@@ -1,0 +1,3 @@
+{ "type" : "HW_ADDR", "id" : "01AC00F03344", "opt1" : "true" }
+{ "type" : "CLIENT_ID", "id" : "0899e0cc0707", "opt1" : "false" }
+{ "type" : "DUID", "id" : "225060de0a0b", "opt1" : "true" }

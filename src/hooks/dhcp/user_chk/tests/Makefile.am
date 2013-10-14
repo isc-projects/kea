@@ -32,11 +32,13 @@ TESTS += libdhcp_user_chk_unittests
 libdhcp_user_chk_unittests_SOURCES  = 
 libdhcp_user_chk_unittests_SOURCES += ../user.cc ../user.h
 libdhcp_user_chk_unittests_SOURCES += ../user_data_source.cc ../user_data_source.h
+libdhcp_user_chk_unittests_SOURCES += ../user_file.cc ../user_file.h
 libdhcp_user_chk_unittests_SOURCES += ../user_registry.cc ../user_registry.h
 libdhcp_user_chk_unittests_SOURCES += run_unittests.cc
 libdhcp_user_chk_unittests_SOURCES += userid_unittests.cc
 libdhcp_user_chk_unittests_SOURCES += user_unittests.cc
 libdhcp_user_chk_unittests_SOURCES += user_registry_unittests.cc
+libdhcp_user_chk_unittests_SOURCES += user_file_unittests.cc
 
 libdhcp_user_chk_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 
@@ -54,6 +56,7 @@ libdhcp_user_chk_unittests_LDADD = $(top_builddir)/src/lib/log/libb10-log.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 #libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/hooks/dhcp/user_chk/libdhcp_user_chk.la
 libdhcp_user_chk_unittests_LDADD += ${BOTAN_LIBS} ${BOTAN_RPATH}
 libdhcp_user_chk_unittests_LDADD += $(GTEST_LDADD)

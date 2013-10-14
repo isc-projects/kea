@@ -11,32 +11,51 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
-#ifndef _USER_DATA_SOURCE_H
-#define _USER_DATA_SOURCE_H
 
+#ifndef _USER_FILE_H
+#define _USER_FILE_H
+
+#include <exceptions/exceptions.h>
+
+#include <user_data_source.h>
 #include <user.h>
 
-class UserDataSource {
+#include <boost/shared_ptr.hpp>
+#include <fstream>
+#include <string>
 
+using namespace std;
+
+/// @brief Thrown UserFile encounters an error
+class UserFileError : public isc::Exception {
 public:
-    UserDataSource();
-
-    virtual ~UserDataSource();
-
-    virtual void open();
-
-    virtual UserPtr readNextUser();
-
-    virtual void close();
-
-    bool isOpen() const;
-
-    void setOpenFlag(bool value);
-
-private:
-    bool open_flag_;
+    UserFileError(const char* file, size_t line,
+                               const char* what) :
+        isc::Exception(file, line, what) { };
 };
 
-typedef boost::shared_ptr<UserDataSource> UserDataSourcePtr;
+class UserFile : public UserDataSource {
+public:
+    UserFile(const std::string& fname);
+
+    virtual ~UserFile();
+
+    // must throw if open fails.
+    void open();
+
+    UserPtr readNextUser();
+
+    void close();
+
+    UserPtr makeUser(const std::string& user_string);
+
+private:
+    string fname_;
+
+    std::ifstream ifs_;
+
+};
+
+typedef boost::shared_ptr<UserFile> UserFilePtr;
 
 #endif

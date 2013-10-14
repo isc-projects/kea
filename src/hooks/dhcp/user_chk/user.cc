@@ -112,7 +112,8 @@ UserId::operator !=(const UserId & other) const {
 
 bool
 UserId::operator <(const UserId & other) const {
-    return ((this->id_type_ == other.id_type_) && (this->id_ < other.id_));
+    return ((this->id_type_ < other.id_type_) ||
+            ((this->id_type_ == other.id_type_) && (this->id_ < other.id_)));
 }
 
 void
@@ -160,11 +161,11 @@ UserId::lookupTypeStr(UserIdType type) {
 
 UserId::UserIdType
 UserId::lookupType(const std::string& type_str) {
-    if (type_str == HW_ADDRESS_STR) {
+    if (type_str.compare(HW_ADDRESS_STR) == 0) {
         return (HW_ADDRESS);
-    } else if (type_str == DUID_STR) {
+    } else if (type_str.compare(DUID_STR) == 0) {
         return (DUID);
-    } else if (type_str == CLIENT_ID_STR) {
+    } else if (type_str.compare(CLIENT_ID_STR) == 0) {
         return (CLIENT_ID);
     }
 
@@ -187,11 +188,21 @@ User::User(UserId::UserIdType id_type, const std::vector<uint8_t>& id)
     : user_id_(id_type, id) {
 }
 
-User::User(UserId::UserIdType id_type, const std::string& id_str) 
+User::User(UserId::UserIdType id_type, const std::string& id_str)
     : user_id_(id_type, id_str) {
 }
 
 User::~User() {
+}
+
+const PropertyMap&
+User::getProperties() const {
+    return (properties_);
+}
+
+void
+User::setProperties(const PropertyMap& properties) {
+    properties_ = properties;
 }
 
 void User::setProperty(const std::string& name, const std::string& value) {
