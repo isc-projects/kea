@@ -172,8 +172,7 @@ TEST(UserRegistry, userFileTest) {
 
     // Set the registry's data source and refresh the registry.
     ASSERT_NO_THROW(reg->setSource(user_file));
-    //ASSERT_NO_THROW(reg->refresh());
-    (reg->refresh());
+    ASSERT_NO_THROW(reg->refresh());
 
     // Verify we can find all the expected users.
     UserPtr found_user;
