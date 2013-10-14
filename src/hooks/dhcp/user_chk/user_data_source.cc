@@ -14,13 +14,10 @@
 
 #include <user_data_source.h>
 
-UserDataSource::UserDataSource() {
+UserDataSource::UserDataSource() : open_flag_(false) {
 }
 
 UserDataSource::~UserDataSource() {
-    if (open_flag_) {
-        close();
-    }
 }
 
 void
