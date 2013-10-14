@@ -25,6 +25,7 @@ UserFile::UserFile(const std::string& fname) : fname_(fname) {
 }
 
 UserFile::~UserFile(){
+    close();
 };
 
 void
