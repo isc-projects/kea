@@ -32,6 +32,7 @@ CLEANFILES = *.gcno *.gcda
 lib_LTLIBRARIES = libdhcp_user_chk.la
 libdhcp_user_chk_la_SOURCES  =
 libdhcp_user_chk_la_SOURCES += load_unload.cc
+libdhcp_user_chk_la_SOURCES += subnet_select_co.cc
 libdhcp_user_chk_la_SOURCES += user.cc user.h
 libdhcp_user_chk_la_SOURCES += user_data_source.cc user_data_source.h
 libdhcp_user_chk_la_SOURCES += user_file.cc user_file.h

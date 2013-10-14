@@ -14,18 +14,34 @@
 // load_unload.cc
 
 #include <hooks/hooks.h>
+#include <user_registry.h>
+#include <user_file.h>
 
 using namespace isc::hooks;
+
+UserRegistryPtr user_registry;
 
 extern "C" {
 
 int load(LibraryHandle&) {
-    // @todo instantiate registry here
+    // @todo what about exception handling
+
+    // Instantiate the registry.
+    user_registry.reset(new UserRegistry());
+
+    // Create the data source.
+    UserDataSourcePtr user_file(new UserFile("/tmp/user_registry.txt"));
+
+    // Set the registry's data source
+    user_registry->setSource(user_file);
+
+    // Do an initial load of the registry.
+    user_registry->refresh();
     return (0);
 }
 
 int unload() {
-    // @todo destruct registry here
+    user_registry.reset();
     return (0);
 }
 

@@ -30,6 +30,9 @@ if HAVE_GTEST
 TESTS += libdhcp_user_chk_unittests
 
 libdhcp_user_chk_unittests_SOURCES  = 
+libdhcp_user_chk_unittests_SOURCES += ../load_unload.cc
+libdhcp_user_chk_unittests_SOURCES += ../subnet_select_co.cc
+libdhcp_user_chk_unittests_SOURCES += ../version.cc
 libdhcp_user_chk_unittests_SOURCES += ../user.cc ../user.h
 libdhcp_user_chk_unittests_SOURCES += ../user_data_source.cc ../user_data_source.h
 libdhcp_user_chk_unittests_SOURCES += ../user_file.cc ../user_file.h
