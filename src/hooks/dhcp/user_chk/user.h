@@ -17,8 +17,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <vector>
 #include <map>
+#include <stdint.h>
+#include <vector>
 
 class UserId {
 public:
