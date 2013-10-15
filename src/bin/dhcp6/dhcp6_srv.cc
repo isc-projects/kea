@@ -2247,8 +2247,7 @@ Dhcpv6Srv::openActiveSockets(const uint16_t port) {
 
         const IOAddress* unicast = CfgMgr::instance().getUnicast(iface->getName());
         if (unicast) {
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_SOCKET_UNICAST)
-                .arg(unicast->toText())
+            LOG_INFO(dhcp6_logger, DHCP6_SOCKET_UNICAST).arg(unicast->toText())
                 .arg(iface->getName());
             iface_ptr->addUnicast(*unicast);
         }
