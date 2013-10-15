@@ -264,6 +264,18 @@ public:
     /// @return collection of sockets added to interface
     const SocketCollection& getSockets() const { return sockets_; }
 
+    void clearUnicasts() {
+        unicasts_.clear();
+    }
+
+    void addUnicast(const isc::asiolink::IOAddress& addr) {
+        unicasts_.push_back(addr);
+    }
+
+    const AddressCollection& getUnicasts() const {
+        return unicasts_;
+    }
+
 protected:
     /// Socket used to send data.
     SocketCollection sockets_;
@@ -276,6 +288,9 @@ protected:
 
     /// List of assigned addresses.
     AddressCollection addrs_;
+
+    /// List of unicast addresses the server should listen on
+    AddressCollection unicasts_;
 
     /// Link-layer address.
     uint8_t mac_[MAX_MAC_LEN];
