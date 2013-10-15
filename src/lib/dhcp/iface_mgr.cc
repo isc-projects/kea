@@ -368,6 +368,20 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             continue;
         }
 
+        // Open unicast sockets if there are any unicast addresses defined
+        Iface::AddressCollection unicasts = iface->getUnicasts();
+        for (Iface::AddressCollection::iterator addr = unicasts.begin();
+             addr != unicasts.end(); ++addr) {
+
+            sock = openSocket(iface->getName(), *addr, port);
+            if (sock < 0) {
+                isc_throw(SocketConfigError, "failed to open unicast socket");
+            }
+
+            count++;
+
+        }
+
         Iface::AddressCollection addrs = iface->getAddresses();
         for (Iface::AddressCollection::iterator addr = addrs.begin();
              addr != addrs.end();

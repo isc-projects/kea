@@ -16,6 +16,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <string>
 
 using namespace isc::asiolink;
 using namespace isc::util;
@@ -268,7 +269,23 @@ std::string CfgMgr::getDataDir() {
 }
 
 void
-CfgMgr::addActiveIface(const std::string& iface) {
+CfgMgr::addActiveIface(std::string iface) {
+
+    size_t pos = iface.find("/");
+
+    if (pos != std::string::npos) {
+        std::string addr_string = iface.substr(pos + 1);
+        try {
+            IOAddress addr(addr_string);
+            iface = iface.substr(0,pos);
+            unicast_addrs_.insert(make_pair(iface, addr));
+        } catch (...) {
+            isc_throw(BadValue, "Can't convert '" << addr_string
+                      << "' into address in interface defition ('"
+                      << iface << "')");
+        }
+    }
+
     if (isIfaceListedActive(iface)) {
         isc_throw(DuplicateListeningIface,
                   "attempt to add duplicate interface '" << iface << "'"
@@ -292,6 +309,8 @@ CfgMgr::deleteActiveIfaces() {
               DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES);
     active_ifaces_.clear();
     all_ifaces_active_ = false;
+
+    unicast_addrs_.clear();
 }
 
 bool
@@ -317,6 +336,15 @@ CfgMgr::isIfaceListedActive(const std::string& iface) const {
         }
     }
     return (false);
+}
+
+const isc::asiolink::IOAddress*
+CfgMgr::getUnicast(const std::string& iface) const {
+    UnicastIfacesCollection::const_iterator addr = unicast_addrs_.find(iface);
+    if (addr == unicast_addrs_.end()) {
+        return (NULL);
+    }
+    return (&(*addr).second);
 }
 
 CfgMgr::CfgMgr()
