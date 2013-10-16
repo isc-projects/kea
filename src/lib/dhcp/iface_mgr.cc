@@ -1154,16 +1154,50 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
                   << pkt.getIface());
     }
 
+
     const Iface::SocketCollection& socket_collection = iface->getSockets();
+
+    Iface::SocketCollection::const_iterator candidate = socket_collection.end();
+
     Iface::SocketCollection::const_iterator s;
     for (s = socket_collection.begin(); s != socket_collection.end(); ++s) {
-        if ((s->family_ == AF_INET6) &&
-            (!s->addr_.getAddress().to_v6().is_multicast())) {
+
+        // We should not merge those conditions for debugging reasons.
+
+        // V4 sockets are useless for sending v6 packets.
+        if (s->family_ != AF_INET6) {
+            continue;
+        }
+
+        // Sockets bound to multicast address are useless for sending anything.
+        if (s->addr_.getAddress().to_v6().is_multicast()) {
+            continue;
+        }
+
+        if (s->addr_ == pkt.getLocalAddr()) {
+            // This socket is bound to the source address. This is perfect
+            // match, no need to look any further.
             return (s->sockfd_);
         }
-        /// @todo: Add more checks here later. If remote address is
-        /// not link-local, we can't use link local bound socket
-        /// to send data.
+
+        // If we don't have any other candidate, this one will do
+        if (candidate == socket_collection.end()) {
+            candidate = s;
+        } else {
+            // If we want to send something to link-local and the socket is
+            // bound to link-local or we want to send to global and the socket
+            // is bound to global, then use it as candidate
+            if ( (pkt.getRemoteAddr().getAddress().to_v6().is_link_local() &&
+                s->addr_.getAddress().to_v6().is_link_local()) ||
+                 (!pkt.getRemoteAddr().getAddress().to_v6().is_link_local() &&
+                  s->addr_.getAddress().to_v6().is_link_local()) ) {
+                candidate = s;
+            }
+        }
+    }
+
+    if (candidate != socket_collection.end()) {
+        return (candidate->sockfd_);
     }
 
     isc_throw(Unexpected, "Interface " << iface->getFullName()
