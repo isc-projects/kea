@@ -17,31 +17,60 @@
 #include <user_registry.h>
 #include <user_file.h>
 
+#include <iostream>
+#include <fstream>
+
 using namespace isc::hooks;
 
 UserRegistryPtr user_registry;
+std::fstream user_chk_output;
+const char* registry_fname = "/tmp/user_registry.txt";
+const char* user_chk_output_fname = "/tmp/user_check_output.txt";
 
 extern "C" {
 
 int load(LibraryHandle&) {
-    // @todo what about exception handling
 
-    // Instantiate the registry.
-    user_registry.reset(new UserRegistry());
+    // non-zero indicates an error.
+    int ret_val = 0;
+    try {
+        // Instantiate the registry.
+        user_registry.reset(new UserRegistry());
 
-    // Create the data source.
-    UserDataSourcePtr user_file(new UserFile("/tmp/user_registry.txt"));
+        // Create the data source.
+        UserDataSourcePtr user_file(new UserFile(registry_fname));
 
-    // Set the registry's data source
-    user_registry->setSource(user_file);
+        // Set the registry's data source
+        user_registry->setSource(user_file);
 
-    // Do an initial load of the registry.
-    user_registry->refresh();
-    return (0);
+        // Do an initial load of the registry.
+        user_registry->refresh();
+
+        // Open up the output file for user_chk results.
+        user_chk_output.open(user_chk_output_fname,
+                     std::fstream::out | std::fstream::app);
+
+        if (!user_chk_output) {
+            std::cout << "UserCheckHook: cannot open user check output file: "
+                      << user_chk_output_fname << std::endl;
+            ret_val = 1;
+        }
+    }
+    catch (const std::exception& ex) {
+        std::cout << "UserCheckHook: loading user_chk hook lib failed:"
+                  << ex.what() << std::endl;
+        ret_val = 1;
+    }
+
+    return (ret_val);
 }
 
 int unload() {
     user_registry.reset();
+    if (user_chk_output.is_open()) {
+        user_chk_output.close();
+    }
+
     return (0);
 }
 
