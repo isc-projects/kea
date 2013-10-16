@@ -1,3 +1,17 @@
+6XX.	[func]		tomek
+	b10-dhcp6 is now able to listen on global IPv6 unicast addresses.
+	(Trac #3195, git ABCD)
+
+6XX.	[bug]		tomek
+	b10-dhcp6 now handles exceptions better when processing initial
+	configuration. In particular, errors with socket binding do not
+	prevent b10-dhcp6 from establishing configuration session anymore.
+	(Trac #3195, git ABCD)
+
+6XX.	[bug]		tomek
+	b10-dhcp6 now handles IPv6 interface enabling correctly.
+	(Trac #3195, git ABCD)
+
 690.	[bug]		tomek
 	b10-dhcp4: Relay Agent Info option is now echoed back in
 	DHCPv4 responses.
