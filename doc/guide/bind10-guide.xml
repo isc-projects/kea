@@ -4667,6 +4667,37 @@ Dhcp6/subnet6/	list
       </para>
     </section>
 
+    <section id="dhcp6-unicast">
+      <title>Unicast traffic support</title>
+      <para>
+        When DHCPv6 server starts up, by default it listens to the DHCP traffic
+        sent to multicast address ff02::1:2 on each interface that it is
+        configured to listen on (see <xref linkend="dhcp6-interface-selection"/>).
+        In some cases it is useful to configure a server to handle incoming
+        traffic sent to the global unicast addresses as well. The most common
+        reason for that is to have relays send their traffic to the server
+        directly. To configure server to listen on specific unicast address, a
+        notation to specify interfaces has been extended. Interface name can be
+        optionally followed by a slash, followed by global unicast address that
+        server should listen on. That will be done in addition to normal
+        link-local binding + listening on ff02::1:2 address. The sample commands
+        listed below show how to listen on 2001:db8::1 (a global address)
+        configured on the eth1 interface.
+      </para>
+      <para>
+        <screen>
+&gt; <userinput>config set Dhcp6/interfaces[0] eth1/2001:db8::1</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        When configuration gets committed, the server will start to listen on
+        eth1 on link-local address, mutlicast group (ff02::1:2) and 2001:db8::1.
+      </para>
+      <para>
+        It is possible to mix interface names, wildcards and interface name/addresses
+        on the Dhcp6/interface list. It is not possible to specify more than one
+        unicast address on a given interface.
+      </para>
+    </section>
+
     <section>
       <title>Subnet and Address Pool</title>
       <para>
