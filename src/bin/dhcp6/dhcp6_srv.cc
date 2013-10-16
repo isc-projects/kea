@@ -2229,7 +2229,7 @@ Dhcpv6Srv::openActiveSockets(const uint16_t port) {
                       << " trying to reopen sockets after reconfiguration");
         }
         if (CfgMgr::instance().isActiveIface(iface->getName())) {
-            iface_ptr->inactive4_ = false;
+            iface_ptr->inactive6_ = false;
             LOG_INFO(dhcp6_logger, DHCP6_ACTIVATE_INTERFACE)
                 .arg(iface->getFullName());
 
