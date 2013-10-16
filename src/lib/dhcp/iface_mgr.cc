@@ -375,7 +375,8 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
 
             sock = openSocket(iface->getName(), *addr, port);
             if (sock < 0) {
-                isc_throw(SocketConfigError, "failed to open unicast socket");
+                isc_throw(SocketConfigError, "failed to open unicast socket on "
+                          << addr->toText() << " on interface " << iface->getName());
             }
 
             count++;
@@ -403,7 +404,9 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
 
             sock = openSocket(iface->getName(), *addr, port);
             if (sock < 0) {
-                isc_throw(SocketConfigError, "failed to open unicast socket");
+                isc_throw(SocketConfigError, "failed to open link-local socket on "
+                          << addr->toText() << " on interface "
+                          << iface->getName());
             }
 
             // Binding socket to unicast address and then joining multicast group
