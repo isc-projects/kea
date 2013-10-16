@@ -145,6 +145,27 @@ public:
         return (sockets_count);
     }
 
+    /// @brief returns socket bound to a specific address (or NULL)
+    ///
+    /// A helper function, used to pick a socketinfo that is bound to a given
+    /// address.
+    ///
+    /// @param sockets sockets collection
+    /// @param addr address the socket is bound to
+    ///
+    /// @return socket info structure (or NULL)
+    const isc::dhcp::SocketInfo*
+    getSocketByAddr(const isc::dhcp::Iface::SocketCollection& sockets,
+                    const IOAddress& addr) {
+        for (isc::dhcp::Iface::SocketCollection::const_iterator s =
+                 sockets.begin(); s != sockets.end(); ++s) {
+            if (s->addr_ == addr) {
+                return (&(*s));
+            }
+        }
+        return (NULL);
+    }
+
 };
 
 // We need some known interface to work reliably. Loopback interface is named
@@ -1519,5 +1540,100 @@ TEST_F(IfaceMgrTest, controlSession) {
     close(pipefd[1]);
     close(pipefd[0]);
 }
+
+// Test checks if the unicast sockets can be opened.
+// This test is now disabled, because there is no reliable way to test it. We
+// can't even use loopback, beacuse openSockets() skips loopback interface
+// (as it should be, because DHCP server is not supposed to listen on loopback).
+TEST_F(IfaceMgrTest, DISABLED_openUnicastSockets) {
+    /// @todo Need to implement a test that is able to check whether we can open
+    /// unicast sockets. There are 2 problems with it:
+    /// 1. We need to have a non-link-local address on an interface that is
+    ///    up, running, IPv6 and multicast capable
+    /// 2. We need that information on every OS that we run tests on. So far
+    ///    we are only supporting interface detection in Linux.
+    ///
+    /// To achieve this, we will probably need a pre-test setup, similar to what
+    /// BIND9 is doing (i.e. configuring well known addresses on loopback).
+
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Get the interface (todo: which interface)
+    Iface* iface = ifacemgr->getIface("eth0");
+    ASSERT_TRUE(iface);
+    iface->inactive6_ = false;
+
+    // Tell the interface that it should bind to this global interface
+    EXPECT_NO_THROW(iface->addUnicast(IOAddress("2001:db8::1")));
+
+    // Tell IfaceMgr to open sockets. This should trigger at least 2 sockets
+    // to open on eth0: link-local and global. On some systems (Linux), an
+    // additional socket for multicast may be opened.
+    EXPECT_TRUE(ifacemgr->openSockets6(PORT1));
+
+    const Iface::SocketCollection& sockets = iface->getSockets();
+    ASSERT_GE(2, sockets.size());
+
+    // Global unicast should be first
+    EXPECT_TRUE(getSocketByAddr(sockets, IOAddress("2001:db8::1")));
+    EXPECT_TRUE(getSocketByAddr(sockets, IOAddress("figure-out-link-local-addr")));
+}
+
+// This test requires addresses 2001:db8:15c::1/128 and fe80::1/64 to be
+// configured on loopback interface
+//
+// Useful commands:
+// ip a a 2001:db8:15c::1/128 dev lo
+// ip a a fe80::1/64 dev lo
+//
+// If you do not issue those commands before running this test, it will fail.
+TEST_F(IfaceMgrTest, DISABLED_getSocket) {
+    // Testing socket operation in a portable way is tricky
+    // without interface detection implemented.
+
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    IOAddress lo_addr("::1");
+    IOAddress link_local("fe80::1");
+    IOAddress global("2001:db8:15c::1");
+
+    IOAddress dst_link_local("fe80::dead:beef");
+    IOAddress dst_global("2001:db8:15c::dead:beef");
+
+    // Bind loopback address
+    int socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10547);
+    EXPECT_GE(socket1, 0); // socket >= 0
+
+    // Bind link-local address
+    int socket2 = ifacemgr->openSocket(LOOPBACK, link_local, 10547);
+    EXPECT_GE(socket2, 0);
+
+    int socket3 = ifacemgr->openSocket(LOOPBACK, global, 10547);
+    EXPECT_GE(socket3, 0);
+
+    // Let's make sure those sockets are unique
+    EXPECT_NE(socket1, socket2);
+    EXPECT_NE(socket2, socket3);
+    EXPECT_NE(socket3, socket1);
+
+    // Create a packet
+    Pkt6 pkt6(DHCPV6_SOLICIT, 123);
+    pkt6.setIface(LOOPBACK);
+
+    // Check that packets sent to link-local will get socket bound to link local
+    pkt6.setLocalAddr(global);
+    pkt6.setRemoteAddr(dst_global);
+    EXPECT_EQ(socket3, ifacemgr->getSocket(pkt6));
+
+    // Check that packets sent to link-local will get socket bound to link local
+    pkt6.setLocalAddr(link_local);
+    pkt6.setRemoteAddr(dst_link_local);
+    EXPECT_EQ(socket2, ifacemgr->getSocket(pkt6));
+
+    // Close sockets here because the following tests will want to
+    // open sockets on the same ports.
+    ifacemgr->closeSockets();
+}
+
 
 }
