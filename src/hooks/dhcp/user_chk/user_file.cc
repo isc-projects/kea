@@ -17,6 +17,7 @@
 #include <user_file.h>
 
 #include <boost/foreach.hpp>
+#include <errno.h>
 
 UserFile::UserFile(const std::string& fname) : fname_(fname) {
     if (fname_.empty()) {
@@ -35,8 +36,10 @@ UserFile::open() {
     }
 
     ifs_.open(fname_.c_str(), std::ifstream::in);
+    int sav_error = errno;
     if (!ifs_.is_open()) {
-        isc_throw(UserFileError, "cannot open file:" << fname_);
+        isc_throw(UserFileError, "cannot open file:" << fname_
+                                 << " reason: " << strerror(sav_error));
     }
 
     setOpenFlag(true);
