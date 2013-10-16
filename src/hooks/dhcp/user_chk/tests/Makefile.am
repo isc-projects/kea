@@ -34,6 +34,8 @@ libdhcp_user_chk_unittests_SOURCES += ../load_unload.cc
 libdhcp_user_chk_unittests_SOURCES += ../subnet_select_co.cc
 libdhcp_user_chk_unittests_SOURCES += ../version.cc
 libdhcp_user_chk_unittests_SOURCES += ../user.cc ../user.h
+libdhcp_user_chk_unittests_SOURCES += ../user_chk_log.cc ../user_chk_log.h
+libdhcp_user_chk_unittests_SOURCES += ../user_chk_messages.cc ../user_chk_messages.h
 libdhcp_user_chk_unittests_SOURCES += ../user_data_source.cc ../user_data_source.h
 libdhcp_user_chk_unittests_SOURCES += ../user_file.cc ../user_file.h
 libdhcp_user_chk_unittests_SOURCES += ../user_registry.cc ../user_registry.h
@@ -57,6 +59,7 @@ endif
 
 libdhcp_user_chk_unittests_LDADD = $(top_builddir)/src/lib/log/libb10-log.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la

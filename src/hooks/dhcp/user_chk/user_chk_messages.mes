@@ -1,0 +1,42 @@
+# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+% USER_CHK_HOOK_LOAD_ERROR DHCP UserCheckHook could not be loaded: %1
+This is an error message issued when the DHCP UserCheckHook could not be loaded.
+The exact cause should be explained in the log message.  User subnet selection will revert to default processing.
+
+% USER_CHK_HOOK_UNLOAD_ERROR DHCP UserCheckHook an error occurred unloading the library: %1
+This is an error message issued when an error occurs while unloading the
+UserCheckHook library.  This is unlikely to occur and normal operations of the
+library will likely resume when it is next loaded.
+
+% USER_CHK_SUBNET4_SELECT_ERROR DHCP UserCheckHook an unexpected error occured in subnet4_select callout: %1
+This is an error message issued when the DHCP UserCheckHook subnet4_select hook
+encounters an unexpected error.  The message should contain a more detailed
+explanation.
+
+% USER_CHK_SUBNET4_SELECT_REGISTRY_NULL DHCP UserCheckHook UserRegistry has not been created.
+This is an error message issued when the DHCP UserCheckHook subnet4_select hook
+has been invoked but the UserRegistry has not been created.  This is a
+programmatic error and should not occur.
+
+% USER_CHK_SUBNET6_SELECT_ERROR DHCP UserCheckHook an unexpected error occured in subnet6_select callout: %1
+This is an error message issued when the DHCP UserCheckHook subnet6_select hook
+encounters an unexpected error.  The message should contain a more detailed
+explanation.
+
+% USER_CHK_SUBNET6_SELECT_REGISTRY_NULL DHCP UserCheckHook UserRegistry has not been created.
+This is an error message issued when the DHCP UserCheckHook subnet6_select hook
+has been invoked but the UserRegistry has not been created.  This is a
+programmatic error and should not occur.

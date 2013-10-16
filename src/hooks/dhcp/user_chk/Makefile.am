@@ -11,36 +11,34 @@ AM_CXXFLAGS  = $(B10_CXXFLAGS)
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # Define rule to build logging source files from message file
-# hooks_messages.h hooks_messages.cc: s-messages
+user_chk_messages.h user_chk_messages.cc: s-messages
 
-# s-messages: hooks_messages.mes
-# 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/hooks/hooks_messages.mes
-# 	touch $@
+s-messages: user_chk_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/hooks/dhcp/user_chk/user_chk_messages.mes
+	touch $@
 
 # Tell automake that the message files are built as part of the build process
 # (so that they are built before the main library is built).
-# BUILT_SOURCES = hooks_messages.h hooks_messages.cc
-BUILT_SOURCES =
+BUILT_SOURCES = user_chk_messages.h user_chk_messages.cc
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST =
 
 # Get rid of generated message files on a clean
-# CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc s-messages
-CLEANFILES = *.gcno *.gcda
+CLEANFILES = *.gcno *.gcda user_chk_messages.h user_chk_messages.cc s-messages
 
 lib_LTLIBRARIES = libdhcp_user_chk.la
 libdhcp_user_chk_la_SOURCES  =
 libdhcp_user_chk_la_SOURCES += load_unload.cc
 libdhcp_user_chk_la_SOURCES += subnet_select_co.cc
 libdhcp_user_chk_la_SOURCES += user.cc user.h
+libdhcp_user_chk_la_SOURCES += user_chk_log.cc user_chk_log.h
 libdhcp_user_chk_la_SOURCES += user_data_source.cc user_data_source.h
 libdhcp_user_chk_la_SOURCES += user_file.cc user_file.h
 libdhcp_user_chk_la_SOURCES += user_registry.cc user_registry.h
 libdhcp_user_chk_la_SOURCES += version.cc
 
-#nodist_libdhcp_user_chk_la_SOURCES = hooks_messages.cc hooks_messages.h
-nodist_libdhcp_user_chk_la_SOURCES =
+nodist_libdhcp_user_chk_la_SOURCES = user_chk_messages.cc user_chk_messages.h
 
 libdhcp_user_chk_la_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcp_user_chk_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)

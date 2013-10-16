@@ -14,11 +14,13 @@
 // load_unload.cc
 
 #include <hooks/hooks.h>
+#include <user_chk_log.h>
 #include <user_registry.h>
 #include <user_file.h>
 
 #include <iostream>
 #include <fstream>
+#include <errno.h>
 
 using namespace isc::hooks;
 
@@ -30,6 +32,8 @@ const char* user_chk_output_fname = "/tmp/user_check_output.txt";
 extern "C" {
 
 int load(LibraryHandle&) {
+
+    isc::log::MessageInitializer::loadDictionary();
 
     // non-zero indicates an error.
     int ret_val = 0;
@@ -49,16 +53,15 @@ int load(LibraryHandle&) {
         // Open up the output file for user_chk results.
         user_chk_output.open(user_chk_output_fname,
                      std::fstream::out | std::fstream::app);
-
+        int sav_errno = errno;
         if (!user_chk_output) {
-            std::cout << "UserCheckHook: cannot open user check output file: "
-                      << user_chk_output_fname << std::endl;
-            ret_val = 1;
+            isc_throw(isc::Unexpected, "Cannot open output file: "
+                                       << user_chk_output_fname
+                                       << " reason: " << strerror(sav_errno));
         }
     }
     catch (const std::exception& ex) {
-        std::cout << "UserCheckHook: loading user_chk hook lib failed:"
-                  << ex.what() << std::endl;
+        LOG_ERROR(user_chk_logger, USER_CHK_HOOK_LOAD_ERROR).arg(ex.what());
         ret_val = 1;
     }
 
@@ -66,9 +69,15 @@ int load(LibraryHandle&) {
 }
 
 int unload() {
-    user_registry.reset();
-    if (user_chk_output.is_open()) {
-        user_chk_output.close();
+    try {
+        user_registry.reset();
+        if (user_chk_output.is_open()) {
+            user_chk_output.close();
+        }
+    } catch (const std::exception& ex) {
+        // On the off chance something goes awry, catch it and log it.
+        // @todo Not sure if we should return a non-zero result or not.
+        LOG_ERROR(user_chk_logger, USER_CHK_HOOK_UNLOAD_ERROR).arg(ex.what());
     }
 
     return (0);
