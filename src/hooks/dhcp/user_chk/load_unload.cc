@@ -14,7 +14,6 @@
 // load_unload.cc
 
 #include <hooks/hooks.h>
-#include <user_chk_log.h>
 #include <user_registry.h>
 #include <user_file.h>
 
@@ -32,9 +31,6 @@ const char* user_chk_output_fname = "/tmp/user_check_output.txt";
 extern "C" {
 
 int load(LibraryHandle&) {
-
-    isc::log::MessageInitializer::loadDictionary();
-
     // non-zero indicates an error.
     int ret_val = 0;
     try {
@@ -61,7 +57,8 @@ int load(LibraryHandle&) {
         }
     }
     catch (const std::exception& ex) {
-        LOG_ERROR(user_chk_logger, USER_CHK_HOOK_LOAD_ERROR).arg(ex.what());
+        std::cout << "DHCP UserCheckHook could not be loaded: "
+                  << ex.what() << std::endl;
         ret_val = 1;
     }
 
@@ -77,7 +74,8 @@ int unload() {
     } catch (const std::exception& ex) {
         // On the off chance something goes awry, catch it and log it.
         // @todo Not sure if we should return a non-zero result or not.
-        LOG_ERROR(user_chk_logger, USER_CHK_HOOK_UNLOAD_ERROR).arg(ex.what());
+        std::cout << "DHCP UserCheckHook could not be unloaded: "
+                  << ex.what() << std::endl;
     }
 
     return (0);
