@@ -1,3 +1,9 @@
+6XX.	[func]		tomek
+	b10-dhcp4: It is now possible to specify value of siaddr field
+	in DHCPv4 responses. It is used to point out to the next
+	server in the boot process (that typically is TFTP server).
+	(Trac #3191, git ABCD)
+
 690.	[bug]		tomek
 	b10-dhcp4: Relay Agent Info option is now echoed back in
 	DHCPv4 responses.

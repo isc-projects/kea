@@ -154,7 +154,7 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
 
 void Subnet4::setSiaddr(const isc::asiolink::IOAddress& siaddr) {
     if (!siaddr.isV4()) {
-        isc_throw(BadValue, "Can't set siaddr to non-IPv4 addr "
+        isc_throw(BadValue, "Can't set siaddr to non-IPv4 address "
                   << siaddr.toText());
     }
     siaddr_ = siaddr;
