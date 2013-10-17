@@ -466,14 +466,15 @@ public:
             const Triplet<uint32_t>& t2,
             const Triplet<uint32_t>& valid_lifetime);
 
-    /// @brief sets siaddr for the Subnet4
+    /// @brief Sets siaddr for the Subnet4
     ///
     /// Will be used for siaddr field (the next server) that typically is used
     /// as TFTP server. If not specified, the default value of 0.0.0.0 is
     /// used.
     void setSiaddr(const isc::asiolink::IOAddress& siaddr);
 
-    /// @brief returns siaddr for this subnet
+    /// @brief Returns siaddr for this subnet
+    ///
     /// @return siaddr value
     isc::asiolink::IOAddress getSiaddr() const;
 

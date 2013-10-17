@@ -264,15 +264,15 @@ protected:
 
         LOG_INFO(dhcp4_logger, DHCP4_CONFIG_NEW_SUBNET).arg(tmp.str());
 
-        Subnet4* subnet4 = new Subnet4(addr, len, t1, t2, valid);
-        subnet_.reset(subnet4);
+        Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid));
+        subnet_ = subnet4;
 
         // Try global value first
         try {
             string next_server = globalContext()->string_values_->getParam("next-server");
             subnet4->setSiaddr(IOAddress(next_server));
         } catch (const DhcpConfigError&) {
-            // don't care. next_server is optional. We can live without it
+            // Don't care. next_server is optional. We can live without it
         }
 
         // Try subnet specific value if it's available
@@ -280,7 +280,7 @@ protected:
             string next_server = string_values_->getParam("next-server");
             subnet4->setSiaddr(IOAddress(next_server));
         } catch (const DhcpConfigError&) {
-            // don't care. next_server is optional. We can live without it
+            // Don't care. next_server is optional. We can live without it
         }
     }
 };

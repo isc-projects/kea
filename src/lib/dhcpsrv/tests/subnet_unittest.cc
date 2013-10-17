@@ -58,7 +58,7 @@ TEST(Subnet4Test, in_range) {
     EXPECT_FALSE(subnet.inRange(IOAddress("255.255.255.255")));
 }
 
-// Checks whether siaddr field is handle correctly
+// Checks whether siaddr field can be set and retrieved correctly.
 TEST(Subnet4Test, siaddr) {
     Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
 

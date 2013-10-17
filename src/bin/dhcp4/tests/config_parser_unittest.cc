@@ -469,6 +469,57 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
 }
 
+// Test checks several negative scenarios for next-server configuration: bogus
+// address, IPv6 adddress and empty string.
+TEST_F(Dhcp4ParserTest, nextServerNegative) {
+
+    ConstElementPtr status;
+
+    // Config with junk instead of next-server address
+    string config_bogus1 = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"next-server\": \"a.b.c.d\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Config with IPv6 next server address
+    string config_bogus2 = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"next-server\": \"2001:db8::1\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Config with empty next server address
+    string config_bogus3 = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"next-server\": \"\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json1 = Element::fromJSON(config_bogus1);
+    ElementPtr json2 = Element::fromJSON(config_bogus2);
+    ElementPtr json3 = Element::fromJSON(config_bogus2);
+
+    // check if returned status is always a failure
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json1));
+    checkResult(status, 1);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json2));
+    checkResult(status, 1);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
+    checkResult(status, 1);
+}
+
 // Checks if the next-server defined as global value is overridden by subnet
 // specific value.
 TEST_F(Dhcp4ParserTest, nextServerOverride) {
