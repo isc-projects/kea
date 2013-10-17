@@ -4390,7 +4390,7 @@ Dhcp4/subnet4	[]	list	(default)
 
     <section id="dhcp4-next-server">
       <title>Next server (siaddr)</title>
-      <para>In some cases, clients want to obtain configuration form the TFTP server.
+      <para>In some cases, clients want to obtain configuration from the TFTP server.
       Although there is a dedicated option for it, some devices may use siaddr field
       in the DHCPv4 packet for that purpose. That specific field can be configured
       using next-server directive. It is possible to define it in global scope or
