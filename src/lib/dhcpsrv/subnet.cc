@@ -160,12 +160,9 @@ void Subnet4::setSiaddr(const isc::asiolink::IOAddress& siaddr) {
     siaddr_ = siaddr;
 }
 
-    /// @brief returns siaddr for this subnet
-    /// @return siaddr value
 isc::asiolink::IOAddress Subnet4::getSiaddr() const {
     return (siaddr_);
 }
-
 
 const PoolCollection& Subnet::getPools(Lease::Type type) const {
     // check if the type is valid (and throw if it isn't)
