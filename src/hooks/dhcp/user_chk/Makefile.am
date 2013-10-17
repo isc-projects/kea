@@ -38,7 +38,8 @@ libdhcp_user_chk_la_SOURCES += user_file.cc user_file.h
 libdhcp_user_chk_la_SOURCES += user_registry.cc user_registry.h
 libdhcp_user_chk_la_SOURCES += version.cc
 
-nodist_libdhcp_user_chk_la_SOURCES = user_chk_messages.cc user_chk_messages.h
+# Until logging in dynamically loaded libraries is fixed, exclude these.
+#nodist_libdhcp_user_chk_la_SOURCES = user_chk_messages.cc user_chk_messages.h
 
 libdhcp_user_chk_la_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcp_user_chk_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
