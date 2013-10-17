@@ -4,7 +4,6 @@
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/subnet.h>
 #include <user_registry.h>
-#include <user_chk_log.h>
 
 #include <fstream>
 #include <string>
@@ -39,7 +38,8 @@ void generate_output_record(const std::string& id_type_str,
 // This callout is called at the "subnet4_select" hook.
 int subnet4_select(CalloutHandle& handle) {
     if (!user_registry) {
-        LOG_ERROR(user_chk_logger, USER_CHK_SUBNET4_SELECT_REGISTRY_NULL);
+        std::cout << "DHCP UserCheckHook : subnet4_select UserRegistry is null"
+                  << std::endl;
         return (1);
     }
 
@@ -73,8 +73,8 @@ int subnet4_select(CalloutHandle& handle) {
                                    false);
         }
     } catch (const std::exception& ex) {
-        LOG_ERROR(user_chk_logger, USER_CHK_SUBNET4_SELECT_ERROR)
-                 .arg(ex.what());
+        std::cout << "DHCP UserCheckHook : subnet6_select unexpected error: "
+                  << ex.what() << std::endl;
         return (1);
     }
 
@@ -83,7 +83,8 @@ int subnet4_select(CalloutHandle& handle) {
 // This callout is called at the "subnet6_select" hook.
 int subnet6_select(CalloutHandle& handle) {
     if (!user_registry) {
-        LOG_ERROR(user_chk_logger, USER_CHK_SUBNET4_SELECT_REGISTRY_NULL);
+        std::cout << "DHCP UserCheckHook : subnet6_select UserRegistry is null"
+                  << std::endl;
         return (1);
     }
 
@@ -125,8 +126,8 @@ int subnet6_select(CalloutHandle& handle) {
                                    false);
         }
     } catch (const std::exception& ex) {
-        LOG_ERROR(user_chk_logger, USER_CHK_SUBNET6_SELECT_ERROR)
-                                   .arg(ex.what());
+        std::cout << "DHCP UserCheckHook : subnet6_select unexpected error: "
+                  << ex.what() << std::endl;
         return (1);
     }
 
