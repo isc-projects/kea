@@ -160,7 +160,7 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "dhcp-rebinding-time", DHO_DHCP_REBINDING_TIME,
       OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
     { "vendor-class-identifier", DHO_VENDOR_CLASS_IDENTIFIER,
-      OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+      OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "dhcp-client-identifier", DHO_DHCP_CLIENT_IDENTIFIER,
       OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "nwip-domain-name", DHO_NWIP_DOMAIN_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
