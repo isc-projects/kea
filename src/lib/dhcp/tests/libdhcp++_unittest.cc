@@ -890,7 +890,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(OptionInt<uint32_t>));
 
     LibDhcpTest::testStdOptionDefs4(DHO_VENDOR_CLASS_IDENTIFIER, begin, end,
-                                    typeid(Option));
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DHCP_CLIENT_IDENTIFIER, begin, end,
                                     typeid(Option));
