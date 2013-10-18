@@ -517,6 +517,19 @@ protected:
                          const std::string& option_space,
                          isc::dhcp::OptionCollection& options);
 
+    /// @brief Assigns incoming packet to a given class
+    /// @param pkt packet to be classified
+    void classifyPacket(const Pkt4Ptr& pkt);
+
+    /// @brief Performs packet processing specific to a class
+    ///
+    /// This processing is a likely candidate to be pushed into hooks.
+    ///
+    /// @param query incoming client's packet
+    /// @param rsp server's response
+    /// @return true if successful, false otherwise (will prevent sending response)
+    bool classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp);
+
 private:
 
     /// @brief Constructs netmask option based on subnet4

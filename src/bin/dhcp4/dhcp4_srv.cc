@@ -21,6 +21,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_string.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp4/dhcp4_log.h>
@@ -333,6 +334,9 @@ Dhcpv4Srv::run() {
             callout_handle->getArgument("query4", query);
         }
 
+        // Assign this packet to one or more classes if needed
+        classifyPacket(query);
+
         try {
             switch (query->getType()) {
             case DHCPDISCOVER:
@@ -391,7 +395,14 @@ Dhcpv4Srv::run() {
 
         adjustRemoteAddr(query, rsp);
 
-        if (!rsp->getHops()) {
+        if (!classSpecificProcessing(query, rsp)) {
+            /// @todo add more verbosity here
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_PROCESSING_FAILED);
+
+            continue;
+        }
+
+        if (query->getRemotePort() == DHCP4_CLIENT_PORT) {
             rsp->setRemotePort(DHCP4_CLIENT_PORT);
         } else {
             rsp->setRemotePort(DHCP4_SERVER_PORT);
@@ -1781,6 +1792,70 @@ void
 Dhcpv4Srv::ifaceMgrSocket4ErrorHandler(const std::string& errmsg) {
     // Log the reason for socket opening failure and return.
     LOG_WARN(dhcp4_logger, DHCP4_OPEN_SOCKET_FAIL).arg(errmsg);
+}
+
+void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
+    boost::shared_ptr<OptionString> vendor_class =
+        boost::dynamic_pointer_cast<OptionString>(pkt->getOption(DHO_VENDOR_CLASS_IDENTIFIER));
+
+    string classes = "";
+
+    if (!vendor_class) {
+        return;
+    }
+
+    // DOCSIS specific section
+    if (vendor_class->getValue().find("docsis3.0") != std::string::npos) {
+        pkt->addClass("docsis3.0");
+        classes += "docsis3.0 ";
+    }
+
+    if (vendor_class->getValue().find("eRouter1.0") != std::string::npos) {
+        pkt->addClass("eRouter1.0");
+        classes += "eRouter1.0 ";
+    }
+
+    classes += vendor_class->getValue();
+    pkt->addClass(vendor_class->getValue());
+
+    if (!classes.empty()) {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(classes);
+    }
+}
+
+bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp) {
+
+    Subnet4Ptr subnet = selectSubnet(query);
+    if (!subnet) {
+        return (true);
+    }
+
+    if (query->inClass("docsis3.0")) {
+
+        // set next-server
+        // @todo uncomment this once 3191 is merged
+        // rsp->setSiaddr(subnet->getSiaddr());
+
+        Subnet::OptionDescriptor desc =
+            subnet->getOptionDescriptor("dhcp4", DHO_BOOT_FILE_NAME);
+
+        if (desc.option) {
+            boost::shared_ptr<OptionString> boot =
+                boost::dynamic_pointer_cast<OptionString>(desc.option);
+            if (boot) {
+                std::string filename = boot->getValue();
+                rsp->setFile((const uint8_t*)filename.c_str(), filename.size());
+            }
+        }
+    }
+
+    if (query->inClass("eRouter1.0")) {
+
+
+    }
+
+    return (true);
 }
 
 }   // namespace dhcp
