@@ -126,6 +126,7 @@ enum DHCPOptionType {
     DHO_NWIP_DOMAIN_NAME             = 62,
     DHO_NWIP_SUBOPTIONS              = 63,
     DHO_TFTP_SERVER_NAME             = 66,
+    DHO_BOOT_FILE_NAME               = 67,
     DHO_USER_CLASS                   = 77,
     DHO_FQDN                         = 81,
     DHO_DHCP_AGENT_OPTIONS           = 82,
