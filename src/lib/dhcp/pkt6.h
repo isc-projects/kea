@@ -23,6 +23,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
+#include <set>
 
 #include <time.h>
 
@@ -46,6 +47,9 @@ public:
         UDP = 0, // most packets are UDP
         TCP = 1  // there are TCP DHCPv6 packets (bulk leasequery, failover)
     };
+
+    /// Container for storing client classes
+    typedef std::set<std::string> Classes;
 
     /// @brief defines relay search pattern
     ///
@@ -425,6 +429,27 @@ public:
     /// changes to this member such as access scope restriction or
     /// data format change etc.
     OptionBuffer data_;
+
+    /// @brief Checks whether a client belongs to a given class
+    ///
+    /// @param client_class name of the class
+    /// @return true if belongs
+    bool inClass(const std::string& client_class);
+
+    /// @brief Adds packet to a specified class
+    ///
+    /// A packet can be added to the same class repeatedly. Any additional
+    /// attempts to add to a class the packet already belongs to, will be
+    /// ignored silently.
+    ///
+    /// @param client_class name of the class to be added
+    void addClass(const std::string& client_class);
+
+    /// @brief Classes this packet belongs to.
+    ///
+    /// This field is public, so code can iterate over existing classes.
+    /// Having it public also solves the problem of returned reference lifetime.
+    Classes classes_;
 
 protected:
     /// Builds on wire packet for TCP transmission.

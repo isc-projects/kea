@@ -26,6 +26,7 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
 
 #include <time.h>
 
@@ -51,6 +52,9 @@ public:
     /// Mask for the value of flags field in the DHCPv4 message
     /// to check whether client requested broadcast response.
     const static uint16_t FLAG_BROADCAST_MASK = 0x8000;
+
+    /// Container for storing client classes
+    typedef std::set<std::string> Classes;
 
     /// Constructor, used in replying to a message.
     ///
@@ -531,6 +535,27 @@ public:
     /// methods would overly complicate things here and degrade
     /// performance).
     std::vector<uint8_t> data_;
+
+    /// @brief Checks whether a client belongs to a given class
+    ///
+    /// @param client_class name of the class
+    /// @return true if belongs
+    bool inClass(const std::string& client_class);
+
+    /// @brief Adds packet to a specified class
+    ///
+    /// A packet can be added to the same class repeatedly. Any additional
+    /// attempts to add to a class the packet already belongs to, will be
+    /// ignored silently.
+    ///
+    /// @param client_class name of the class to be added
+    void addClass(const std::string& client_class);
+
+    /// @brief Classes this packet belongs to.
+    ///
+    /// This field is public, so code can iterate over existing classes.
+    /// Having it public also solves the problem of returned reference lifetime.
+    Classes classes_;
 
 private:
 

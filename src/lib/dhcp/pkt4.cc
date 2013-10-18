@@ -463,6 +463,18 @@ Pkt4::updateTimestamp() {
     timestamp_ = boost::posix_time::microsec_clock::universal_time();
 }
 
+bool
+Pkt4::inClass(const std::string& client_class) {
+    return (classes_.find(client_class) != classes_.end());
+}
+
+void
+Pkt4::addClass(const std::string& client_class) {
+    if (classes_.find(client_class) == classes_.end()) {
+        classes_.insert(client_class);
+    }
+}
+
 } // end of namespace isc::dhcp
 
 } // end of namespace isc
