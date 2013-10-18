@@ -732,6 +732,9 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_NWIP_SUBOPTIONS, begin, end,
                                     typeid(Option));
 
+    LibDhcpTest::testStdOptionDefs4(DHO_TFTP_SERVER_NAME, begin, end,
+                                    typeid(OptionString));
+
     LibDhcpTest::testStdOptionDefs4(DHO_USER_CLASS, begin, end,
                                     typeid(Option));
 
