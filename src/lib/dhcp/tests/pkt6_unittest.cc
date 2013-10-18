@@ -779,4 +779,31 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
     EXPECT_FALSE(opt);
 }
 
+// Tests whether a packet can be assigned to a class and later
+// checked if it belongs to a given class
+TEST_F(Pkt6Test, clientClasses) {
+    Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
+
+    // Default values (do not belong to any class)
+    EXPECT_FALSE(pkt.inClass("eRouter1.0"));
+    EXPECT_FALSE(pkt.inClass("docsis3.0"));
+    EXPECT_TRUE(pkt.classes_.empty());
+
+    // Add to the first class
+    pkt.addClass("eRouter1.0");
+    EXPECT_TRUE(pkt.inClass("eRouter1.0"));
+    EXPECT_FALSE(pkt.inClass("docsis3.0"));
+    ASSERT_FALSE(pkt.classes_.empty());
+
+    // Add to a second class
+    pkt.addClass("docsis3.0");
+    EXPECT_TRUE(pkt.inClass("eRouter1.0"));
+    EXPECT_TRUE(pkt.inClass("docsis3.0"));
+
+    // Check that it's ok to add to the same class repeatedly
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+}
+
 }
