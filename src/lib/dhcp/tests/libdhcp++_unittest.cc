@@ -706,7 +706,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DHCP_PARAMETER_REQUEST_LIST, begin, end,
-                                    typeid(Option));
+                                    typeid(OptionUint8Array));
 
     LibDhcpTest::testStdOptionDefs4(DHO_DHCP_MESSAGE, begin, end,
                                     typeid(OptionString));
