@@ -32,6 +32,14 @@ This debug message is issued when the DHCP server was unable to process the
 FQDN or Hostname option sent by a client. This is likely because the client's
 name was malformed or due to internal server error.
 
+% DHCP4_CLASS_PROCESSING_FAILED client class specific processing failed
+This debug message means that the server processing that is unique for each
+client class has reported a failure. The response packet will not be sent.
+
+% DHCP4_CLASS_ASSIGNED client packet has been assigned to the following class(es): %1
+This debug message informs that incoming packet has been assigned to specified
+class or classes. This is a norma
+
 % DHCP4_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
 from the BIND 10 control system by the IPv4 DHCP server.
