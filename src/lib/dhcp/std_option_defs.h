@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -68,7 +68,7 @@ RECORD_DECL(FQDN_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "subnet-mask", DHO_SUBNET_MASK, OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
-    { "time-offset", DHO_TIME_OFFSET, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "time-offset", DHO_TIME_OFFSET, OPT_INT32_TYPE, false, NO_RECORD_DEF, "" },
     { "routers", DHO_ROUTERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "time-servers", DHO_TIME_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "name-servers", DHO_NAME_SERVERS, OPT_IPV4_ADDRESS_TYPE,
