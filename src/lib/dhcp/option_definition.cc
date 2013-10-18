@@ -124,12 +124,14 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             return (factoryGeneric(u, type, begin, end));
 
         case OPT_UINT8_TYPE:
-            return (array_type_ ? factoryGeneric(u, type, begin, end) :
+            return (array_type_ ?
+                    factoryIntegerArray<uint8_t>(u, type, begin, end) :
                     factoryInteger<uint8_t>(u, type, getEncapsulatedSpace(),
                                             begin, end, callback));
 
         case OPT_INT8_TYPE:
-            return (array_type_ ? factoryGeneric(u, type, begin, end) :
+            return (array_type_ ?
+                    factoryIntegerArray<int8_t>(u, type, begin, end) :
                     factoryInteger<int8_t>(u, type, getEncapsulatedSpace(),
                                            begin, end, callback));
 
