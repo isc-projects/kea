@@ -64,12 +64,6 @@ UserRegistry::findUser(const isc::dhcp::HWAddr& hwaddr) const {
 }
 
 const UserPtr&
-UserRegistry::findUser(const isc::dhcp::ClientId& client_id) const {
-    UserId id(UserId::CLIENT_ID, client_id.getClientId());
-    return (findUser(id));
-}
-
-const UserPtr&
 UserRegistry::findUser(const isc::dhcp::DUID& duid) const {
     UserId id(UserId::DUID, duid.getDuid());
     return (findUser(id));
@@ -81,10 +75,15 @@ void UserRegistry::refresh() {
                   "UserRegistry: cannot refresh, no data source");
     }
 
+    // If the source isn't open, open it.
     if (!source_->isOpen()) {
         source_->open();
     }
 
+    // Make a copy in case something goes wrong midstream.
+    UserMap backup(users_);
+
+    // Empty the registry then read users from source until source is empty.
     clearall();
     try {
         UserPtr user;
@@ -92,11 +91,15 @@ void UserRegistry::refresh() {
             addUser(user);
         }
     } catch (const std::exception& ex) {
+        // Source was compromsised so restore registry from backup.
+        users_ = backup;
+        // Close the source.
         source_->close();
         isc_throw (UserRegistryError, "UserRegistry: refresh failed during read"
                    << ex.what());
     }
 
+    // Close the source.
     source_->close();
 }
 
@@ -105,6 +108,11 @@ void UserRegistry::clearall() {
 }
 
 void UserRegistry::setSource(UserDataSourcePtr& source) {
+    if (!source) {
+        isc_throw (UserRegistryError,
+                   "UserRegistry: data source cannot be set to null");
+    }
+
     source_ = source;
 }
 

@@ -19,7 +19,7 @@
 #include <boost/foreach.hpp>
 #include <errno.h>
 
-UserFile::UserFile(const std::string& fname) : fname_(fname) {
+UserFile::UserFile(const std::string& fname) : fname_(fname), ifs_() {
     if (fname_.empty()) {
         isc_throw(UserFileError, "file name cannot be blank");
     }
@@ -41,8 +41,6 @@ UserFile::open() {
         isc_throw(UserFileError, "cannot open file:" << fname_
                                  << " reason: " << strerror(sav_error));
     }
-
-    setOpenFlag(true);
 }
 
 UserPtr
@@ -54,17 +52,17 @@ UserFile::readNextUser() {
     if (ifs_.good()) {
         char buf[4096];
 
-        // get the next line
+        // Get the next line.
         ifs_.getline(buf, sizeof(buf));
 
-        // we got something, try to make a user out of it.
+        // We got something, try to make a user out of it.
         if (ifs_.gcount() > 0) {
             return(makeUser(buf));
         }
     }
 
-    // returns an empty user
-    return (UserDataSource::readNextUser());
+    // Returns an empty user on EOF.
+    return (UserPtr());
 }
 
 UserPtr
@@ -88,26 +86,37 @@ UserFile::makeUser(const std::string& user_string) {
     std::string id_type_str;
     std::string id_str;
 
+    // Iterate over the elements, saving of "type" and "id" to their
+    // respective locals.  Anything else is assumed to be an option so
+    // add it to the local property map.
     std::pair<std::string, isc::data::ConstElementPtr> element_pair;
     BOOST_FOREACH (element_pair, elements->mapValue()) {
+        // Get the element's label.
         std::string label = element_pair.first;
-        std::string value = "";
-        element_pair.second->getValue(value);
+
+        // Currently everything must be a string.
+        if (element_pair.second->getType() != isc::data::Element::string) {
+            isc_throw (UserFileError, "UserFile entry: " << user_string
+                       << "has non-string value for : " << label);
+        }
+
+        std::string value = element_pair.second->stringValue();
 
         if (label == "type") {
             id_type_str = value;
         } else if (label == "id") {
             id_str = value;
         } else {
-            if (properties.find(label) != properties.end()) {
-                isc_throw (UserFileError,
-                           "UserFile entry contains duplicate values: "
-                           << user_string);
-            }
+            // JSON parsing reduces any duplicates to the last value parsed,
+            // so we will never see duplicates here.
+            std::cout << "adding propetry: " << label << ":[" << value << "]"
+                      << std::endl;
+
             properties[label]=value;
         }
     }
 
+    // First we attempt to translate the id type.
     UserId::UserIdType id_type;
     try {
         id_type = UserId::lookupType(id_type_str);
@@ -116,25 +125,37 @@ UserFile::makeUser(const std::string& user_string) {
                                   << user_string << " " << ex.what());
     }
 
+    // Id type is valid, so attempt to make the user based on that and
+    // the value we have for "id".
     UserPtr user;
     try {
         user.reset(new User(id_type, id_str));
     } catch (const std::exception& ex) {
         isc_throw (UserFileError, "UserFile cannot create user form entry: "
                                   << user_string << " " << ex.what());
-   }
+    }
 
-
+    // We have a new User, so add in the properties and return it.
     user->setProperties(properties);
     return (user);
 }
 
+bool
+UserFile::isOpen() const {
+    return (ifs_.is_open());
+}
+
 void
 UserFile::close() {
-    if (ifs_.is_open()) {
-        ifs_.close();
+    try {
+        if (ifs_.is_open()) {
+            ifs_.close();
+        }
+    } catch (const std::exception& ex) {
+        // Highly unlikely to occur but let's at least spit out an error.
+        // Beyond that we swallow it for tidiness.
+        std::cout << "UserFile unexpected error closing the file: "
+                  << fname_ << " : " << ex.what() << std::endl;
     }
-
-    setOpenFlag(false);
 }
 

@@ -17,6 +17,7 @@
 
 extern "C" {
 
+/// @brief Version function required by Hooks API for compatibility checks.
 int version() {
     return (BIND10_HOOKS_VERSION);
 }
