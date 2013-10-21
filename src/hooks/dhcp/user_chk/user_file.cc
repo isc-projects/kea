@@ -18,6 +18,7 @@
 
 #include <boost/foreach.hpp>
 #include <errno.h>
+#include <iostream>
 
 UserFile::UserFile(const std::string& fname) : fname_(fname), ifs_() {
     if (fname_.empty()) {
@@ -109,9 +110,6 @@ UserFile::makeUser(const std::string& user_string) {
         } else {
             // JSON parsing reduces any duplicates to the last value parsed,
             // so we will never see duplicates here.
-            std::cout << "adding propetry: " << label << ":[" << value << "]"
-                      << std::endl;
-
             properties[label]=value;
         }
     }
