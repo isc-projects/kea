@@ -72,6 +72,7 @@ public:
     /// Prepares on-wire format of message and all its options.
     /// Options must be stored in options_ field.
     /// Output buffer will be stored in buffer_out_.
+    /// The buffer_out_ is cleared before writting to the buffer.
     ///
     /// @throw InvalidOperation if packing fails
     void
