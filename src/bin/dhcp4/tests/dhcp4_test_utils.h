@@ -114,6 +114,11 @@ public:
     /// @param pkt packet to be checked.
     void optionsCheck(const Pkt4Ptr& pkt);
 
+    /// @brief Check that certain options are not present.
+    ///
+    /// @param pkt A packet to be checked.
+    void noOptionsCheck(const Pkt4Ptr& pkt);
+
     /// @brief generates client-id option
     ///
     /// Generate client-id option of specified length
