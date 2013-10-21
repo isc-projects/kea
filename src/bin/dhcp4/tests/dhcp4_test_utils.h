@@ -183,6 +183,32 @@ public:
     /// @return relayed DISCOVER
     Pkt4Ptr captureRelayedDiscover();
 
+    /// @brief Create packet from output buffer of another packet.
+    ///
+    /// This function creates a packet using an output buffer from another
+    /// packet. This imitates reception of a packet from the wire. The
+    /// unpack function is then called to parse packet contents and to
+    /// create a collection of the options carried by this packet.
+    ///
+    /// This function is useful for unit tests which verify that the received
+    /// packet is parsed correctly. In those cases it is usually inappropriate
+    /// to create an instance of the packet, add options, set packet
+    /// fields and use such packet as an input to processDiscover or
+    /// processRequest function. This is because, such a packet has certain
+    /// options already initialized and there is no way to verify that they
+    /// have been initialized when packet instance was created or wire buffer
+    /// processing. By creating a packet from the buffer we guarantee that the
+    /// new packet is entirely initialized during wire data parsing.
+    ///
+    /// @param src_pkt A source packet, to be copied.
+    /// @param [out] dst_pkt A destination packet.
+    ///
+    /// @return assertion result indicating if a function completed with
+    /// success or failure.
+    static ::testing::AssertionResult
+    createPacketFromBuffer(const Pkt4Ptr& src_pkt,
+                           Pkt4Ptr& dst_pkt);
+
     /// @brief generates a DHCPv4 packet based on provided hex string
     ///
     /// @return created packet
