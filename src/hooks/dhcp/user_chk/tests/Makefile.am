@@ -37,7 +37,7 @@ libdhcp_user_chk_unittests_SOURCES += ../user.cc ../user.h
 libdhcp_user_chk_unittests_SOURCES += ../user_chk_log.cc ../user_chk_log.h
 # Until logging in dynamically loaded libraries is fixed, exclude these.
 #libdhcp_user_chk_unittests_SOURCES += ../user_chk_messages.cc ../user_chk_messages.h
-libdhcp_user_chk_unittests_SOURCES += ../user_data_source.cc ../user_data_source.h
+libdhcp_user_chk_unittests_SOURCES += ../user_data_source.h
 libdhcp_user_chk_unittests_SOURCES += ../user_file.cc ../user_file.h
 libdhcp_user_chk_unittests_SOURCES += ../user_registry.cc ../user_registry.h
 libdhcp_user_chk_unittests_SOURCES += run_unittests.cc

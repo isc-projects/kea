@@ -22,9 +22,9 @@
 #include <sstream>
 
 //********************************* UserId ******************************
+
 const char* UserId::HW_ADDRESS_STR = "HW_ADDR";
 const char* UserId::DUID_STR = "DUID";
-const char* UserId::CLIENT_ID_STR = "CLIENT_ID";
 
 UserId::UserId(UserIdType id_type, const std::vector<uint8_t>& id)
     : id_type_(id_type), id_(id) {
@@ -35,13 +35,12 @@ UserId::UserId(UserIdType id_type, const std::vector<uint8_t>& id)
 
 UserId::UserId(UserIdType id_type, const std::string & id_str) :
     id_type_(id_type) {
-
     if (id_str.empty()) {
         isc_throw(isc::BadValue, "UserId id string may not be blank");
     }
 
-    // logic to convert id_str etc...
-    // input str is expected to be 2-digits per bytes, no delims
+    // Convert the id string to vector.
+    // Input is expected to be 2-digits per bytes, no delimiters.
     std::vector<uint8_t> addr_bytes;
     decodeHex(id_str, addr_bytes);
 
@@ -49,10 +48,6 @@ UserId::UserId(UserIdType id_type, const std::string & id_str) :
     switch (id_type) {
         case HW_ADDRESS: {
             isc::dhcp::HWAddr hwaddr(addr_bytes, isc::dhcp::HTYPE_ETHER);
-            break;
-            }
-        case CLIENT_ID: {
-            isc::dhcp::ClientId client_id(addr_bytes);
             break;
             }
         case DUID: {
@@ -148,9 +143,6 @@ UserId::lookupTypeStr(UserIdType type) {
         case DUID:
             tmp = DUID_STR;
             break;
-        case CLIENT_ID:
-            tmp = CLIENT_ID_STR;
-            break;
         default:
             isc_throw(isc::BadValue, "Invalid UserIdType:" << type);
             break;
@@ -165,8 +157,6 @@ UserId::lookupType(const std::string& type_str) {
         return (HW_ADDRESS);
     } else if (type_str.compare(DUID_STR) == 0) {
         return (DUID);
-    } else if (type_str.compare(CLIENT_ID_STR) == 0) {
-        return (CLIENT_ID);
     }
 
     isc_throw(isc::BadValue, "Invalid UserIdType string:" << type_str);
@@ -210,6 +200,7 @@ void User::setProperty(const std::string& name, const std::string& value) {
         isc_throw (isc::BadValue, "User property name cannot be blank");
     }
 
+    // Note that if the property exists its value will be updated.
     properties_[name]=value;
 }
 
@@ -220,6 +211,9 @@ User::getProperty(const std::string& name) const {
         return ((*it).second);
     }
 
+    // By returning an empty string rather than throwing, we allow the
+    // flexibility of defaulting to blank if not specified.  Let the caller
+    // decide if that is valid or not.
     return ("");
 }
 

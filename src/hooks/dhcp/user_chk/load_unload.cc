@@ -11,7 +11,8 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
-// load_unload.cc
+
+/// @file This file defines the load and unload hooks library functions.
 
 #include <hooks/hooks.h>
 #include <user_registry.h>
@@ -23,13 +24,28 @@
 
 using namespace isc::hooks;
 
+/// @brief Pointer to the registry instance.
 UserRegistryPtr user_registry;
+
+/// @brief Output filestream for recording user check outcomes.
 std::fstream user_chk_output;
+
+/// @brief For now, hard-code registry input file name.
 const char* registry_fname = "/tmp/user_registry.txt";
+
+/// @brief For now, hard-code user check outcome file name.
 const char* user_chk_output_fname = "/tmp/user_check_output.txt";
 
 extern "C" {
 
+/// @brief Called by the Hooks library manager when the library is loaded.
+///
+/// Instantiates the UserRegistry and opens the outcome file. Failure in
+/// either results in a failed return code.
+///
+/// @param unused library handle parameter required by Hooks API.
+///
+/// @return Returns 0 upon success, non-zero upon failure.
 int load(LibraryHandle&) {
     // non-zero indicates an error.
     int ret_val = 0;
@@ -49,14 +65,17 @@ int load(LibraryHandle&) {
         // Open up the output file for user_chk results.
         user_chk_output.open(user_chk_output_fname,
                      std::fstream::out | std::fstream::app);
-        int sav_errno = errno;
+
         if (!user_chk_output) {
+            // Grab the system error message.
+            const char* errmsg = strerror(errno);
             isc_throw(isc::Unexpected, "Cannot open output file: "
                                        << user_chk_output_fname
-                                       << " reason: " << strerror(sav_errno));
+                                       << " reason: " << errmsg);
         }
     }
     catch (const std::exception& ex) {
+        // Log the error and return failure.
         std::cout << "DHCP UserCheckHook could not be loaded: "
                   << ex.what() << std::endl;
         ret_val = 1;
@@ -65,6 +84,11 @@ int load(LibraryHandle&) {
     return (ret_val);
 }
 
+/// @brief Called by the Hooks library manager when the library is unloaded.
+///
+/// Destroys the UserRegistry and closes the outcome file.
+///
+/// @return Always returns 0.
 int unload() {
     try {
         user_registry.reset();
