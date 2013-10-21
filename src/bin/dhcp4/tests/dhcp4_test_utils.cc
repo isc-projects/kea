@@ -321,7 +321,7 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     if (msg_type == DHCPDISCOVER) {
         ASSERT_NO_THROW(
             rsp = srv->processDiscover(req);
-            );
+        );
 
         // Should return OFFER
         ASSERT_TRUE(rsp);
