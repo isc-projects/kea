@@ -274,6 +274,45 @@ void Dhcpv4SrvTest::checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_
     EXPECT_TRUE(expected_clientid->getData() == opt->getData());
 }
 
+::testing::AssertionResult
+Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
+                                      Pkt4Ptr& dst_pkt) {
+    // Create on-wire format of the packet. If pack() has been called
+    // on this instance of the packet already, the next call to pack()
+    // should remove all contents of the output buffer.
+    try {
+        src_pkt->pack();
+    } catch (const Exception& ex) {
+        return (::testing::AssertionFailure() <<
+                "Failed to parse source packet: "
+                << ex.what());
+    }
+    // Get the output buffer from the source packet.
+    const util::OutputBuffer& buf = src_pkt->getBuffer();
+    // Create a copy of the packet using the output buffer from the source
+    // packet.
+    try {
+        dst_pkt.reset(new Pkt4(static_cast<const uint8_t*>(buf.getData()),
+                               buf.getLength()));
+    } catch (const Exception& ex) {
+        return (::testing::AssertionFailure()
+                << "Failed to create a destination packet from the buffer: "
+                << ex.what());
+    }
+
+    try {
+        // Parse the new packet and return to the caller.
+        dst_pkt->unpack();
+    } catch (const Exception& ex) {
+        return (::testing::AssertionFailure()
+                << "Failed to parse a destination packet: "
+                << ex.what());
+    }
+
+    return (::testing::AssertionSuccess());
+}
+
+
 void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     // Create an instance of the tested class.
     boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
@@ -318,9 +357,14 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     // are returned when requested.
     configureRequestedOptions();
 
+    // Create a copy of the original packet by parsing its wire format.
+    // This simulates the real life scenario when we process the packet
+    // which was parsed from its wire format.
+    Pkt4Ptr received;
+    ASSERT_TRUE(createPacketFromBuffer(req, received));
     if (msg_type == DHCPDISCOVER) {
         ASSERT_NO_THROW(
-            rsp = srv->processDiscover(req);
+            rsp = srv->processDiscover(received);
         );
 
         // Should return OFFER
@@ -328,7 +372,7 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
         EXPECT_EQ(DHCPOFFER, rsp->getType());
 
     } else {
-        ASSERT_NO_THROW(rsp = srv->processRequest(req););
+        ASSERT_NO_THROW(rsp = srv->processRequest(received));
 
         // Should return ACK
         ASSERT_TRUE(rsp);
@@ -336,7 +380,7 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
     }
 
-    messageCheck(req, rsp);
+    messageCheck(received, rsp);
 
     // We did not request any options so these should not be present
     // in the RSP.
@@ -348,15 +392,18 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     // Add 'Parameter Request List' option.
     addPrlOption(req);
 
+    ASSERT_TRUE(createPacketFromBuffer(req, received));
+    ASSERT_TRUE(received->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+
     if (msg_type == DHCPDISCOVER) {
-        ASSERT_NO_THROW(rsp = srv->processDiscover(req););
+        ASSERT_NO_THROW(rsp = srv->processDiscover(received));
 
         // Should return non-NULL packet.
         ASSERT_TRUE(rsp);
         EXPECT_EQ(DHCPOFFER, rsp->getType());
 
     } else {
-        ASSERT_NO_THROW(rsp = srv->processRequest(req););
+        ASSERT_NO_THROW(rsp = srv->processRequest(received));
 
         // Should return non-NULL packet.
         ASSERT_TRUE(rsp);
