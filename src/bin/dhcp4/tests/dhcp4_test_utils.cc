@@ -22,6 +22,7 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 
@@ -154,6 +155,20 @@ void Dhcpv4SrvTest::optionsCheck(const Pkt4Ptr& pkt) {
     EXPECT_FALSE(pkt->getOption(DHO_LPR_SERVERS))
         << "domain-name present in the response but it is"
         << " expected not to be present";
+}
+
+void Dhcpv4SrvTest::noOptionsCheck(const Pkt4Ptr& pkt) {
+    // Check that certain options are not returned in the packet.
+    // This is the case, when client didn't ask for them or when
+    // NAK was returned by the server.
+    EXPECT_FALSE(pkt->getOption(DHO_DOMAIN_NAME))
+        << "domain-name present in the response";
+    EXPECT_FALSE(pkt->getOption(DHO_DOMAIN_NAME_SERVERS))
+        << "dns-servers present in the response";
+    EXPECT_FALSE(pkt->getOption(DHO_LOG_SERVERS))
+        << "log-servers present in the response";
+    EXPECT_FALSE(pkt->getOption(DHO_COOKIE_SERVERS))
+        << "cookie-servers present in the response";
 }
 
 OptionPtr Dhcpv4SrvTest::generateClientId(size_t size /*= 4*/) {
@@ -412,6 +427,36 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
     // Check that the requested options are returned.
     optionsCheck(rsp);
+
+    // The following part of the test will test that the NAK is sent when
+    // there is no address pool configured. In the same time, we expect
+    // that the requested options are not included in NAK message, but that
+    // they are only included when yiaddr is set to non-zero value.
+    ASSERT_NO_THROW(subnet_->delPools(Lease::TYPE_V4));
+
+    // There has been a lease allocated for the particular client. So,
+    // even though we deleted the subnet, the client would get the
+    // existing lease (not a NAK). Therefore, we have to change the chaddr
+    // in the packet so as the existing lease is not returned.
+    req->setHWAddr(1, 6, std::vector<uint8_t>(2, 6));
+    ASSERT_TRUE(createPacketFromBuffer(req, received));
+    ASSERT_TRUE(received->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+
+    if (msg_type == DHCPDISCOVER) {
+        ASSERT_NO_THROW(rsp = srv->processDiscover(received));
+        // Should return non-NULL packet.
+        ASSERT_TRUE(rsp);
+    } else {
+        ASSERT_NO_THROW(rsp = srv->processRequest(received));
+        // Should return non-NULL packet.
+        ASSERT_TRUE(rsp);
+    }
+    // We should get the NAK packet with yiaddr set to 0.
+    EXPECT_EQ(DHCPNAK, rsp->getType());
+    ASSERT_EQ("0.0.0.0", rsp->getYiaddr().toText());
+
+    // Make sure that none of the requested options is returned in NAK.
+    noOptionsCheck(rsp);
 }
 
 /// @brief This function cleans up after the test.
