@@ -124,51 +124,87 @@ void Dhcpv4SrvTest::messageCheck(const Pkt4Ptr& q, const Pkt4Ptr& a) {
     EXPECT_TRUE(q->getLocalHWAddr() == a->getLocalHWAddr());
     EXPECT_TRUE(q->getRemoteHWAddr() == a->getRemoteHWAddr());
 
-    // Check that bare minimum of required options are there.
-    // We don't check options requested by a client. Those
-    // are checked elsewhere.
-    EXPECT_TRUE(a->getOption(DHO_SUBNET_MASK));
-    EXPECT_TRUE(a->getOption(DHO_ROUTERS));
+    // Check that the server identifier is present in the response.
+    // Presence (or absence) of other options is checked elsewhere.
     EXPECT_TRUE(a->getOption(DHO_DHCP_SERVER_IDENTIFIER));
-    EXPECT_TRUE(a->getOption(DHO_DHCP_LEASE_TIME));
-    EXPECT_TRUE(a->getOption(DHO_SUBNET_MASK));
-    EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME));
-    EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME_SERVERS));
 
     // Check that something is offered
     EXPECT_TRUE(a->getYiaddr().toText() != "0.0.0.0");
 }
 
-void Dhcpv4SrvTest::optionsCheck(const Pkt4Ptr& pkt) {
-    // Check that the requested and configured options are returned
-    // in the ACK message.
-    EXPECT_TRUE(pkt->getOption(DHO_DOMAIN_NAME))
-        << "domain-name not present in the response";
-    EXPECT_TRUE(pkt->getOption(DHO_DOMAIN_NAME_SERVERS))
-        << "dns-servers not present in the response";
-    EXPECT_TRUE(pkt->getOption(DHO_LOG_SERVERS))
-        << "log-servers not present in the response";
-    EXPECT_TRUE(pkt->getOption(DHO_COOKIE_SERVERS))
-        << "cookie-servers not present in the response";
-    // Check that the requested but not configured options are not
-    // returned in the ACK message.
-    EXPECT_FALSE(pkt->getOption(DHO_LPR_SERVERS))
-        << "domain-name present in the response but it is"
-        << " expected not to be present";
+::testing::AssertionResult
+Dhcpv4SrvTest::basicOptionsPresent(const Pkt4Ptr& pkt) {
+    std::ostringstream errmsg;
+    errmsg << "option missing in the response";
+    if (!pkt->getOption(DHO_DOMAIN_NAME)) {
+        return (::testing::AssertionFailure() << "domain-name " << errmsg);
+
+    } else if (!pkt->getOption(DHO_DOMAIN_NAME_SERVERS)) {
+        return (::testing::AssertionFailure() << "dns-servers " << errmsg);
+
+    } else if (!pkt->getOption(DHO_SUBNET_MASK)) {
+        return (::testing::AssertionFailure() << "subnet-mask " << errmsg);
+
+    } else if (!pkt->getOption(DHO_ROUTERS)) {
+        return (::testing::AssertionFailure() << "routers " << errmsg);
+
+    } else if (!pkt->getOption(DHO_DHCP_LEASE_TIME)) {
+        return (::testing::AssertionFailure() << "dhcp-lease-time " << errmsg);
+
+    }
+    return (::testing::AssertionSuccess());
+
 }
 
-void Dhcpv4SrvTest::noOptionsCheck(const Pkt4Ptr& pkt) {
-    // Check that certain options are not returned in the packet.
-    // This is the case, when client didn't ask for them or when
-    // NAK was returned by the server.
-    EXPECT_FALSE(pkt->getOption(DHO_DOMAIN_NAME))
-        << "domain-name present in the response";
-    EXPECT_FALSE(pkt->getOption(DHO_DOMAIN_NAME_SERVERS))
-        << "dns-servers present in the response";
-    EXPECT_FALSE(pkt->getOption(DHO_LOG_SERVERS))
-        << "log-servers present in the response";
-    EXPECT_FALSE(pkt->getOption(DHO_COOKIE_SERVERS))
-        << "cookie-servers present in the response";
+::testing::AssertionResult
+Dhcpv4SrvTest::noBasicOptions(const Pkt4Ptr& pkt) {
+    std::ostringstream errmsg;
+    errmsg << "option present in the response";
+    if (pkt->getOption(DHO_DOMAIN_NAME)) {
+        return (::testing::AssertionFailure() << "domain-name " << errmsg);
+
+    } else if (pkt->getOption(DHO_DOMAIN_NAME_SERVERS)) {
+        return (::testing::AssertionFailure() << "dns-servers " << errmsg);
+
+    } else if (pkt->getOption(DHO_SUBNET_MASK)) {
+        return (::testing::AssertionFailure() << "subnet-mask " << errmsg);
+
+    } else if (pkt->getOption(DHO_ROUTERS)) {
+        return (::testing::AssertionFailure() << "routers " << errmsg);
+
+    } else if (pkt->getOption(DHO_DHCP_LEASE_TIME)) {
+        return (::testing::AssertionFailure() << "dhcp-lease-time " << errmsg);
+
+    }
+    return (::testing::AssertionSuccess());
+}
+
+::testing::AssertionResult
+Dhcpv4SrvTest::requestedOptionsPresent(const Pkt4Ptr& pkt) {
+    std::ostringstream errmsg;
+    errmsg << "option missing in the response";
+    if (!pkt->getOption(DHO_LOG_SERVERS)) {
+        return (::testing::AssertionFailure() << "log-servers " << errmsg);
+
+    } else if (!pkt->getOption(DHO_COOKIE_SERVERS)) {
+        return (::testing::AssertionFailure() << "cookie-servers " << errmsg);
+
+    }
+    return (::testing::AssertionSuccess());
+}
+
+::testing::AssertionResult
+Dhcpv4SrvTest::noRequestedOptions(const Pkt4Ptr& pkt) {
+    std::ostringstream errmsg;
+    errmsg << "option present in the response";
+    if (pkt->getOption(DHO_LOG_SERVERS)) {
+        return (::testing::AssertionFailure() << "log-servers " << errmsg);
+
+    } else if (pkt->getOption(DHO_COOKIE_SERVERS)) {
+        return (::testing::AssertionFailure() << "cookie-servers " << errmsg);
+
+    }
+    return (::testing::AssertionSuccess());
 }
 
 OptionPtr Dhcpv4SrvTest::generateClientId(size_t size /*= 4*/) {
@@ -397,11 +433,11 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
     messageCheck(received, rsp);
 
+    // Basic options should be present when we got the lease.
+    EXPECT_TRUE(basicOptionsPresent(rsp));
     // We did not request any options so these should not be present
     // in the RSP.
-    EXPECT_FALSE(rsp->getOption(DHO_LOG_SERVERS));
-    EXPECT_FALSE(rsp->getOption(DHO_COOKIE_SERVERS));
-    EXPECT_FALSE(rsp->getOption(DHO_LPR_SERVERS));
+    EXPECT_TRUE(noRequestedOptions(rsp));
 
     // Repeat the test but request some options.
     // Add 'Parameter Request List' option.
@@ -426,7 +462,8 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     }
 
     // Check that the requested options are returned.
-    optionsCheck(rsp);
+    EXPECT_TRUE(basicOptionsPresent(rsp));
+    EXPECT_TRUE(requestedOptionsPresent(rsp));
 
     // The following part of the test will test that the NAK is sent when
     // there is no address pool configured. In the same time, we expect
@@ -456,7 +493,10 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     ASSERT_EQ("0.0.0.0", rsp->getYiaddr().toText());
 
     // Make sure that none of the requested options is returned in NAK.
-    noOptionsCheck(rsp);
+    // Also options such as Routers or Subnet Mask should not be there,
+    // because lease hasn't been acquired.
+    EXPECT_TRUE(noRequestedOptions(rsp));
+    EXPECT_TRUE(noBasicOptions(rsp));
 }
 
 /// @brief This function cleans up after the test.
