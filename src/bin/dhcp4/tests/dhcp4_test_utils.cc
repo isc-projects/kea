@@ -348,9 +348,9 @@ Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
     try {
         src_pkt->pack();
     } catch (const Exception& ex) {
-        return (::testing::AssertionFailure() <<
-                "Failed to parse source packet: "
-                << ex.what());
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "Failed to parse source packet: "
+                                            << ex.what()));
     }
     // Get the output buffer from the source packet.
     const util::OutputBuffer& buf = src_pkt->getBuffer();
@@ -360,9 +360,11 @@ Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
         dst_pkt.reset(new Pkt4(static_cast<const uint8_t*>(buf.getData()),
                                buf.getLength()));
     } catch (const Exception& ex) {
-        return (::testing::AssertionFailure()
-                << "Failed to create a destination packet from the buffer: "
-                << ex.what());
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "Failed to create a"
+                                            " destination packet from"
+                                            " the buffer: "
+                                            << ex.what()));
     }
 
     try {
