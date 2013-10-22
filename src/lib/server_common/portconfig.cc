@@ -37,8 +37,7 @@ parseAddresses(isc::data::ConstElementPtr addresses,
 {
     AddressList result;
     if (addresses) {
-        if (addresses->getType() == Element::list &&
-            !addresses->empty() ) {
+        if (addresses->getType() == Element::list) {
             for (size_t i(0); i < addresses->size(); ++ i) {
                 ConstElementPtr addrPair(addresses->get(i));
                 ConstElementPtr addr(addrPair->get("address"));
