@@ -333,8 +333,13 @@ class MsgqRunTest(unittest.TestCase):
         Check to make sure that an attempt to start a second copy of the MsgQ
         daemon fails.
         """
+
+        self.assertTrue (os.path.exists(SOCKET_PATH))
         self.__retcode = subprocess.call([MSGQ_PATH, '-s', SOCKET_PATH])
         self.assertNotEqual(self.__retcode, 0)
+
+        # Verify that the socket still exists
+        self.assertTrue (os.path.exists(SOCKET_PATH))
 
 if __name__ == '__main__':
     isc.log.init("msgq-tests")
