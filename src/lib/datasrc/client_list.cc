@@ -84,10 +84,6 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
         isc_throw(isc::BadValue, "NULL configuration passed");
     }
 
-    if (config->empty()) {
-        return;
-    }
-
     // TODO: Implement recycling from the old configuration.
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
