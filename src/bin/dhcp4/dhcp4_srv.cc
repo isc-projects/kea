@@ -1287,25 +1287,6 @@ Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
                       << "-byte long buffer.");
         }
 
-        /// @todo: Not sure if this is needed. Perhaps it would be better to extend
-        /// DHO_VIVSO_SUBOPTIONS definitions in std_option_defs.h to cover
-        /// OptionVendor class?
-        if (opt_type == DHO_VIVSO_SUBOPTIONS) {
-            if (offset + 4 > buf.size()) {
-                // Truncated vendor-option. There is expected at least 4 bytes
-                // long enterprise-id field
-                return (offset);
-            }
-
-            // Parse this as vendor option
-            OptionPtr vendor_opt(new OptionVendor(Option::V4, buf.begin() + offset,
-                                                  buf.begin() + offset + opt_len));
-            options.insert(std::make_pair(opt_type, vendor_opt));
-
-            offset += opt_len;
-            continue;
-        }
-
         // Get all definitions with the particular option code. Note that option code
         // is non-unique within this container however at this point we expect
         // to get one option definition with the particular code. If more are
