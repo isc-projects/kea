@@ -546,7 +546,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs4(DHO_TIME_OFFSET, begin, begin + 4,
-                                    typeid(OptionInt<uint32_t>));
+                                    typeid(OptionInt<int32_t>));
 
     LibDhcpTest::testStdOptionDefs4(DHO_ROUTERS, begin, end,
                                     typeid(Option4AddrLst));
@@ -731,6 +731,12 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
 
     LibDhcpTest::testStdOptionDefs4(DHO_NWIP_SUBOPTIONS, begin, end,
                                     typeid(Option));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_TFTP_SERVER_NAME, begin, end,
+                                    typeid(OptionString));
+
+    LibDhcpTest::testStdOptionDefs4(DHO_BOOT_FILE_NAME, begin, end,
+                                    typeid(OptionString));
 
     LibDhcpTest::testStdOptionDefs4(DHO_USER_CLASS, begin, end,
                                     typeid(Option));
