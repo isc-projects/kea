@@ -802,6 +802,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     // try to send/receive data over the closed socket. Closed socket's descriptor is
     // still being hold by IfaceMgr which will try to use it to receive data.
     close(socket1);
+    close(socket2);
     EXPECT_THROW(ifacemgr->receive6(10), SocketReadError);
     EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
 }
@@ -1577,6 +1578,23 @@ TEST_F(IfaceMgrTest, DISABLED_openUnicastSockets) {
     // Global unicast should be first
     EXPECT_TRUE(getSocketByAddr(sockets, IOAddress("2001:db8::1")));
     EXPECT_TRUE(getSocketByAddr(sockets, IOAddress("figure-out-link-local-addr")));
+}
+
+// Checks if there is a protection against unicast duplicates.
+TEST_F(IfaceMgrTest, unicastDuplicates) {
+    NakedIfaceMgr ifacemgr;
+
+    Iface* iface = ifacemgr.getIface(LOOPBACK);
+    if (iface == NULL) {
+        cout << "Local loopback interface not found. Skipping test. " << endl;
+        return;
+    }
+
+    // Tell the interface that it should bind to this global interface
+    EXPECT_NO_THROW(iface->addUnicast(IOAddress("2001:db8::1")));
+
+    // Tell the interface that it should bind to this global interface
+    EXPECT_THROW(iface->addUnicast(IOAddress("2001:db8::1")), BadValue);
 }
 
 // This test requires addresses 2001:db8:15c::1/128 and fe80::1/64 to be

@@ -4696,6 +4696,12 @@ Dhcp6/subnet6/	list
         on the Dhcp6/interface list. It is not possible to specify more than one
         unicast address on a given interface.
       </para>
+      <para>
+        Care should be taken to specify proper unicast addresses. The server will
+        attempt to bind to those addresses specified, without any additional checks.
+        That approach is selected on purpose, so in the software can be used to
+        communicate over uncommon addresses if the administrator desires so.
+      </para>
     </section>
 
     <section>
