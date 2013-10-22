@@ -275,18 +275,18 @@ class MsgQ:
             # connect to the existing socket to see if there is an existing
             # msgq running. Only if that fails do we remove the file and
             # attempt to create a new socket.
-            self._existing = True
+            existing_msgq = True
             try:
                 self._session = isc.cc.Session(self.socket_file)
             except isc.cc.session.SessionError:
-                self._existing = False
+                existing_msgq = False
 
             self._session.close()
             self._session = None
 
-            if self._existing:
+            if existing_msgq:
                 logger.fatal(MSGQ_ALREADY_RUNNING)
-                raise MsgQRunningError("Message Queue daemon already running")
+                raise MsgQRunningError("b10-msgq already running")
 
             os.remove(self.socket_file)
 
