@@ -106,10 +106,6 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
         }
 
         const ConstElementPtr zones = datasrc_conf.get("cache-zones");
-        if (zones->empty()) {
-            return;
-        }
-
         for (size_t i = 0; i < zones->size(); ++i) {
             const dns::Name zone_name(zones->get(i)->stringValue());
             if (!zone_config_.insert(Zones::value_type(zone_name,
