@@ -581,6 +581,10 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // FQDN option requires special processing. Thus, there is
             // a specialized class to handle it.
             return (OptionPtr(new Option6ClientFqdn(begin, end)));
+
+        } else if (getCode() == D6O_VENDOR_OPTS) {
+            return (OptionPtr(new OptionVendor(Option::V6, begin, end)));
+
         }
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
