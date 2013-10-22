@@ -270,7 +270,9 @@ protected:
         // Try global value first
         try {
             string next_server = globalContext()->string_values_->getParam("next-server");
-            subnet4->setSiaddr(IOAddress(next_server));
+            if (!next_server.empty()) {
+                subnet4->setSiaddr(IOAddress(next_server));
+            }
         } catch (const DhcpConfigError&) {
             // Don't care. next_server is optional. We can live without it
         }
@@ -278,7 +280,9 @@ protected:
         // Try subnet specific value if it's available
         try {
             string next_server = string_values_->getParam("next-server");
-            subnet4->setSiaddr(IOAddress(next_server));
+            if (!next_server.empty()) {
+                subnet4->setSiaddr(IOAddress(next_server));
+            }
         } catch (const DhcpConfigError&) {
             // Don't care. next_server is optional. We can live without it
         }

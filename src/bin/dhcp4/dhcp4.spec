@@ -51,7 +51,7 @@
       { "item_name": "next-server",
         "item_type": "string",
         "item_optional": true,
-        "item_default": "0.0.0.0"
+        "item_default": ""
       },
 
       { "item_name": "option-def",
