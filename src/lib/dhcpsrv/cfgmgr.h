@@ -272,7 +272,7 @@ public:
     /// server should listen.
     ///
     /// @param iface A name of the interface being added to the listening set.
-    void addActiveIface(std::string iface);
+    void addActiveIface(const std::string& iface);
 
     /// @brief Sets the flag which indicates that server is supposed to listen
     /// on all available interfaces.
@@ -308,7 +308,9 @@ public:
     /// @brief returns unicast a given interface should listen on (or NULL)
     ///
     /// This method will return an address for a specified interface, if the
-    /// server is supposed to listen on.
+    /// server is supposed to listen on unicast address. This address is
+    /// intended to be used immediately. This pointer is valid only until
+    /// the next configuration change.
     ///
     /// @return IOAddress pointer (or NULL if none)
     const isc::asiolink::IOAddress*

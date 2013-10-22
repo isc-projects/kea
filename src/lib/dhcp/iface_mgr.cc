@@ -177,6 +177,17 @@ IfaceMgr::IfaceMgr()
     }
 }
 
+void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
+    for (Iface::AddressCollection::const_iterator i = unicasts_.begin();
+         i != unicasts_.end(); ++i) {
+        if (*i == addr) {
+            isc_throw(BadValue, "Address " << addr.toText()
+                      << " already defined on the " << name_ << " interface.");
+        }
+    }
+    unicasts_.push_back(addr);
+}
+
 void IfaceMgr::closeSockets() {
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end(); ++iface) {
@@ -343,8 +354,10 @@ bool IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast) {
 
             }
             if (sock < 0) {
+                const char* errstr = strerror(errno);
                 isc_throw(SocketConfigError, "failed to open IPv4 socket"
-                          << " supporting broadcast traffic");
+                          << " supporting broadcast traffic, reason:"
+                          << errstr);
             }
 
             count++;
@@ -375,8 +388,10 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
 
             sock = openSocket(iface->getName(), *addr, port);
             if (sock < 0) {
+                const char* errstr = strerror(errno);
                 isc_throw(SocketConfigError, "failed to open unicast socket on "
-                          << addr->toText() << " on interface " << iface->getName());
+                          << addr->toText() << " on interface " << iface->getName()
+                          << ", reason: " << errstr);
             }
 
             count++;
@@ -404,9 +419,10 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
 
             sock = openSocket(iface->getName(), *addr, port);
             if (sock < 0) {
+                const char* errstr = strerror(errno);
                 isc_throw(SocketConfigError, "failed to open link-local socket on "
                           << addr->toText() << " on interface "
-                          << iface->getName());
+                          << iface->getName() << ", reason: " << errstr);
             }
 
             // Binding socket to unicast address and then joining multicast group
@@ -431,8 +447,10 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
                                    IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
                                    port);
             if (sock2 < 0) {
+                const char* errstr = strerror(errno);
                 isc_throw(SocketConfigError, "Failed to open multicast socket on "
-                          << " interface " << iface->getFullName());
+                          << " interface " << iface->getFullName() << ", reason:"
+                          << errstr);
                 iface->delSocket(sock); // delete previously opened socket
             }
 #endif
@@ -625,7 +643,9 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
         // interface.
         sock.open(asio::ip::udp::v4(), err_code);
         if (err_code) {
-            isc_throw(Unexpected, "failed to open UDPv4 socket");
+            const char* errstr = strerror(errno);
+            isc_throw(Unexpected, "failed to open UDPv4 socket, reason:"
+                      << errstr);
         }
         sock.set_option(asio::socket_base::broadcast(true), err_code);
         if (err_code) {
@@ -1190,7 +1210,7 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
             if ( (pkt.getRemoteAddr().getAddress().to_v6().is_link_local() &&
                 s->addr_.getAddress().to_v6().is_link_local()) ||
                  (!pkt.getRemoteAddr().getAddress().to_v6().is_link_local() &&
-                  s->addr_.getAddress().to_v6().is_link_local()) ) {
+                  !s->addr_.getAddress().to_v6().is_link_local()) ) {
                 candidate = s;
             }
         }
@@ -1225,6 +1245,7 @@ uint16_t IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     isc_throw(Unexpected, "Interface " << iface->getFullName()
               << " does not have any suitable IPv4 sockets open.");
 }
+
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
