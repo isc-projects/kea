@@ -34,14 +34,14 @@ namespace dhcp {
 
 /// @brief Storage for option definitions.
 typedef OptionSpaceContainer<OptionDefContainer,
-                             OptionDefinitionPtr> OptionDefStorage;
+    OptionDefinitionPtr, std::string> OptionDefStorage;
 /// @brief Shared pointer to option definitions storage.
 typedef boost::shared_ptr<OptionDefStorage> OptionDefStoragePtr;
 
 /// Collection of containers holding option spaces. Each container within
 /// a particular option space holds so-called option descriptors.
 typedef OptionSpaceContainer<Subnet::OptionContainer,
-                             Subnet::OptionDescriptor> OptionStorage;
+    Subnet::OptionDescriptor, std::string> OptionStorage;
 /// @brief Shared pointer to option storage.
 typedef boost::shared_ptr<OptionStorage> OptionStoragePtr;
 
@@ -772,6 +772,14 @@ public:
 
     /// @brief Adds the created subnet to a server's configuration.
     virtual void commit() = 0;
+
+    /// @brief tries to convert option_space string to numeric vendor_id
+    ///
+    /// This will work if the option_space has format "vendor-1234".
+    /// This is used to detect whether a given option-space is a vendor
+    /// space or not. Returns 0 if the format is different.
+    /// @return numeric vendor-id (or 0 if the format does not match)
+    static uint32_t optionSpaceToVendorId(const std::string& option_space);
 
 protected:
     /// @brief creates parsers for entries in subnet definition

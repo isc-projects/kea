@@ -597,6 +597,76 @@ TEST(Subnet6Test, getOptionDescriptor) {
     }
 }
 
+
+TEST(Subnet6Test, addVendorOptions) {
+
+    uint32_t vendor_id1 = 12345678;
+    uint32_t vendor_id2 = 87654321;
+    uint32_t vendor_id_bogus = 1111111;
+
+    // Create as subnet to add options to it.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    // Differentiate options by their codes (100-109)
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(subnet->addVendorOption(option, false, vendor_id1));
+    }
+
+    // Add 7 options to another option space. The option codes partially overlap
+    // with option codes that we have added to dhcp6 option space.
+    for (uint16_t code = 105; code < 112; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(subnet->addVendorOption(option, false, vendor_id2));
+    }
+
+    // Get options from the Subnet and check if all 10 are there.
+    Subnet::OptionContainerPtr options = subnet->getVendorOptionDescriptors(vendor_id1);
+    ASSERT_TRUE(options);
+    ASSERT_EQ(10, options->size());
+
+    // Validate codes of options added to dhcp6 option space.
+    uint16_t expected_code = 100;
+    for (Subnet::OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option);
+        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ++expected_code;
+    }
+
+    options = subnet->getVendorOptionDescriptors(vendor_id2);
+    ASSERT_TRUE(options);
+    ASSERT_EQ(7, options->size());
+
+    // Validate codes of options added to isc option space.
+    expected_code = 105;
+    for (Subnet::OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option);
+        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ++expected_code;
+    }
+
+    // Try to get options from a non-existing option space.
+    options = subnet->getVendorOptionDescriptors(vendor_id_bogus);
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+
+    // Delete options from all spaces.
+    subnet->delVendorOptions();
+
+    // Make sure that all options have been removed.
+    options = subnet->getVendorOptionDescriptors(vendor_id1);
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+
+    options = subnet->getVendorOptionDescriptors(vendor_id2);
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+}
+
+
+
 // This test verifies that inRange() and inPool() methods work properly.
 TEST(Subnet6Test, inRangeinPool) {
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));

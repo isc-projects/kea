@@ -180,8 +180,13 @@ public:
     void addOption(const OptionPtr& option, bool persistent,
                    const std::string& option_space);
 
+    void addVendorOption(const OptionPtr& option, bool persistent,
+                         uint32_t vendor_id);
+
     /// @brief Delete all options configured for the subnet.
     void delOptions();
+
+    void delVendorOptions();
 
     /// @brief checks if the specified address is in pools
     ///
@@ -221,6 +226,9 @@ public:
     OptionContainerPtr
     getOptionDescriptors(const std::string& option_space) const;
 
+    OptionContainerPtr
+    getVendorOptionDescriptors(uint32_t vendor_id) const;
+
     /// @brief Return single option descriptor.
     ///
     /// @param option_space name of the option space.
@@ -231,6 +239,9 @@ public:
     OptionDescriptor
     getOptionDescriptor(const std::string& option_space,
                         const uint16_t option_code);
+
+    OptionDescriptor
+    getVendorOptionDescriptor(uint32_t vendor_id, uint16_t option_code);
 
     /// @brief returns the last address that was tried from this pool
     ///
@@ -440,9 +451,14 @@ private:
 
     /// A collection of option spaces grouping option descriptors.
     typedef OptionSpaceContainer<OptionContainer,
-                                 OptionDescriptor> OptionSpaceCollection;
+        OptionDescriptor, std::string> OptionSpaceCollection;
+
+    typedef OptionSpaceContainer<OptionContainer,
+        OptionDescriptor, uint32_t> VendorOptionSpaceCollection;
+
     OptionSpaceCollection option_spaces_;
 
+    VendorOptionSpaceCollection vendor_option_spaces_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object

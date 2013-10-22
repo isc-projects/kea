@@ -25,8 +25,10 @@
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/config_parser.h>
@@ -1138,11 +1140,7 @@ TEST_F(Dhcpv4SrvTest, ServerID) {
     EXPECT_EQ(srvid_text, text);
 }
 
-// Checks if callouts installed on pkt4_receive are indeed called and the
-// all necessary parameters are passed.
-//
-// Note that the test name does not follow test naming convention,
-// but the proper hook name is "buffer4_receive".
+// Checks if received relay agent info option is echoed back to the client
 TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
 
     NakedDhcpv4Srv srv(0);
@@ -1179,6 +1177,87 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
 
     EXPECT_TRUE(rai_response->equal(rai_query));
 }
+
+// Checks if vendor options are parsed correctly and requested vendor options
+// are echoed back.
+TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"data\": \"10.253.175.16\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"10.254.226.0/25\" ],"
+        "    \"subnet\": \"10.254.226.0/24\", "
+        "    \"interface\": \"" + valid_iface_ + "\" "
+        " }, {"
+        "    \"pool\": [ \"192.0.3.0/25\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // added option 82 (relay agent info) with 3 suboptions. The server
+    // is supposed to echo it back in its response.
+    Pkt4Ptr dis;
+    ASSERT_NO_THROW(dis = captureRelayedDiscover());
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(dis);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv.run();
+
+    // Check that the server did send a reposonse
+    ASSERT_EQ(1, srv.fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr offer = srv.fake_sent_.front();
+    ASSERT_TRUE(offer);
+
+    // Get Relay Agent Info from query...
+    OptionPtr vendor_opt_response = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(vendor_opt_response);
+
+    // Check if it's of a correct type
+    boost::shared_ptr<OptionVendor> vendor_opt =
+        boost::dynamic_pointer_cast<OptionVendor>(vendor_opt_response);
+    ASSERT_TRUE(vendor_opt);
+
+    // Get Relay Agent Info from response...
+    OptionPtr tftp_servers_generic = vendor_opt->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(tftp_servers_generic);
+
+    Option4AddrLstPtr tftp_servers =
+        boost::dynamic_pointer_cast<Option4AddrLst>(tftp_servers_generic);
+
+    ASSERT_TRUE(tftp_servers);
+
+    Option4AddrLst::AddressContainer addrs = tftp_servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("10.253.175.16", addrs[0].toText());
+}
+
 
 /// @todo Implement tests for subnetSelect See tests in dhcp6_srv_unittest.cc:
 /// selectSubnetAddr, selectSubnetIface, selectSubnetRelayLinkaddr,
