@@ -269,16 +269,17 @@ std::string CfgMgr::getDataDir() {
 }
 
 void
-CfgMgr::addActiveIface(std::string iface) {
+CfgMgr::addActiveIface(const std::string& iface) {
 
     size_t pos = iface.find("/");
+    std::string iface_copy = iface;
 
     if (pos != std::string::npos) {
         std::string addr_string = iface.substr(pos + 1);
         try {
             IOAddress addr(addr_string);
-            iface = iface.substr(0,pos);
-            unicast_addrs_.insert(make_pair(iface, addr));
+            iface_copy = iface.substr(0,pos);
+            unicast_addrs_.insert(make_pair(iface_copy, addr));
         } catch (...) {
             isc_throw(BadValue, "Can't convert '" << addr_string
                       << "' into address in interface defition ('"
@@ -286,14 +287,14 @@ CfgMgr::addActiveIface(std::string iface) {
         }
     }
 
-    if (isIfaceListedActive(iface)) {
+    if (isIfaceListedActive(iface_copy)) {
         isc_throw(DuplicateListeningIface,
-                  "attempt to add duplicate interface '" << iface << "'"
+                  "attempt to add duplicate interface '" << iface_copy << "'"
                   " to the set of interfaces on which server listens");
     }
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_IFACE)
-        .arg(iface);
-    active_ifaces_.push_back(iface);
+        .arg(iface_copy);
+    active_ifaces_.push_back(iface_copy);
 }
 
 void
