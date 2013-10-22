@@ -355,7 +355,7 @@ private:
     /// A collection of option definitions that can be accessed
     /// using option space name they belong to.
     OptionSpaceContainer<OptionDefContainer,
-                         OptionDefinitionPtr> option_def_spaces_;
+        OptionDefinitionPtr, std::string> option_def_spaces_;
 
     /// @brief Container for defined DHCPv6 option spaces.
     OptionSpaceCollection spaces6_;

@@ -16,6 +16,8 @@
 #define STD_OPTION_DEFS_H
 
 #include <dhcp/option_data_types.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
 
 namespace {
 

@@ -2049,6 +2049,118 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     EXPECT_EQ(1516, optionIA->getT2());
 }
 
+// This test checks if vendor options can be specified in the config file
+// (in hex format), and later retrieved from configured subnet
+TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
+
+    // This configuration string is to configure two options
+    // sharing the code 1 and belonging to the different vendor spaces.
+    // (different vendor-id values).
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"option-one\","
+        "    \"space\": \"vendor-4491\","
+        "    \"code\": 100,"
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
+        " },"
+        " {"
+        "    \"name\": \"option-two\","
+        "    \"space\": \"vendor-1234\","
+        "    \"code\": 100,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": False"
+        " } ],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Options should be now available for the subnet.
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+
+    // Try to get the option from the vendor space 4491
+    Subnet::OptionDescriptor desc1 = subnet->getVendorOptionDescriptor(4491, 100);
+    ASSERT_TRUE(desc1.option);
+    EXPECT_EQ(100, desc1.option->getType());
+    // Try to get the option from the vendor space 1234
+    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(1234, 100);
+    ASSERT_TRUE(desc2.option);
+    EXPECT_EQ(100, desc1.option->getType());
+
+    // Try to get the non-existing option from the non-existing
+    // option space and  expect that option is not returned.
+    Subnet::OptionDescriptor desc3 = subnet->getVendorOptionDescriptor(5678, 38);
+    ASSERT_FALSE(desc3.option);
+}
+
+// This test checks if vendor options can be specified in the config file,
+// (in csv format), and later retrieved from configured subnet
+TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
+
+    // This configuration string is to configure two options
+    // sharing the code 1 and belonging to the different vendor spaces.
+    // (different vendor-id values).
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-4491\","
+        "    \"code\": 100,"
+        "    \"data\": \"this is a string vendor-opt\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 100,"
+        "    \"type\": \"string\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-4491\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Options should be now available for the subnet.
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+
+    // Try to get the option from the vendor space 4491
+    Subnet::OptionDescriptor desc1 = subnet->getVendorOptionDescriptor(4491, 100);
+    ASSERT_TRUE(desc1.option);
+    EXPECT_EQ(100, desc1.option->getType());
+
+    // Try to get the non-existing option from the non-existing
+    // option space and  expect that option is not returned.
+    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(5678, 38);
+    ASSERT_FALSE(desc2.option);
+}
+
 // The goal of this test is to verify that the standard option can
 // be configured to encapsulate multiple other options.
 TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {

@@ -20,7 +20,9 @@
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt4.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcpsrv/addr_utilities.h>
@@ -36,6 +38,7 @@
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 #include <iomanip>
 #include <fstream>
@@ -644,6 +647,62 @@ Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
 }
 
 void
+Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer) {
+    // Get the configured subnet suitable for the incoming packet.
+    Subnet4Ptr subnet = selectSubnet(question);
+    // Leave if there is no subnet matching the incoming packet.
+    // There is no need to log the error message here because
+    // it will be logged in the assignLease() when it fails to
+    // pick the suitable subnet. We don't want to duplicate
+    // error messages in such case.
+    if (!subnet) {
+        return;
+    }
+
+    // Try to get the vendor option
+    boost::shared_ptr<OptionVendor> vendor_req =
+        boost::dynamic_pointer_cast<OptionVendor>(question->getOption(DHO_VIVSO_SUBOPTIONS));
+    if (!vendor_req) {
+        return;
+    }
+
+    uint32_t vendor_id = vendor_req->getVendorId();
+
+    // Let's try to get ORO within that vendor-option
+    /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other vendors
+    /// may have different policies.
+    OptionPtr oro = vendor_req->getOption(DOCSIS3_V4_ORO);
+
+    /// @todo: see OPT_UINT8_TYPE definition in OptionDefinition::optionFactory().
+    /// I think it should be OptionUint8Array, not OptionGeneric
+
+    // Option ORO not found. Don't do anything then.
+    if (!oro) {
+        return;
+    }
+
+    boost::shared_ptr<OptionVendor> vendor_rsp(new OptionVendor(Option::V4, vendor_id));
+
+    // Get the list of options that client requested.
+    bool added = false;
+    const OptionBuffer& requested_opts = oro->getData();
+
+    for (OptionBuffer::const_iterator code = requested_opts.begin();
+         code != requested_opts.end(); ++code) {
+        Subnet::OptionDescriptor desc = subnet->getVendorOptionDescriptor(vendor_id, *code);
+        if (desc.option) {
+            vendor_rsp->addOption(desc.option);
+            added = true;
+        }
+    }
+
+    if (added) {
+        answer->addOption(vendor_rsp);
+    }
+}
+
+
+void
 Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     // Identify options that we always want to send to the
     // client (if they are configured).
@@ -858,6 +917,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     copyDefaultFields(discover, offer);
     appendDefaultOptions(offer, DHCPOFFER);
     appendRequestedOptions(discover, offer);
+    appendRequestedVendorOptions(discover, offer);
 
     assignLease(discover, offer);
 
@@ -881,6 +941,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     copyDefaultFields(request, ack);
     appendDefaultOptions(ack, DHCPACK);
     appendRequestedOptions(request, ack);
+    appendRequestedVendorOptions(request, ack);
 
     // Note that we treat REQUEST message uniformly, regardless if this is a
     // first request (requesting for new address), renewing existing address
@@ -1224,6 +1285,25 @@ Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
             isc_throw(OutOfRange, "Option parse failed. Tried to parse "
                       << offset + opt_len << " bytes from " << buf.size()
                       << "-byte long buffer.");
+        }
+
+        /// @todo: Not sure if this is needed. Perhaps it would be better to extend
+        /// DHO_VIVSO_SUBOPTIONS definitions in std_option_defs.h to cover
+        /// OptionVendor class?
+        if (opt_type == DHO_VIVSO_SUBOPTIONS) {
+            if (offset + 4 > buf.size()) {
+                // Truncated vendor-option. There is expected at least 4 bytes
+                // long enterprise-id field
+                return (offset);
+            }
+
+            // Parse this as vendor option
+            OptionPtr vendor_opt(new OptionVendor(Option::V4, buf.begin() + offset,
+                                                  buf.begin() + offset + opt_len));
+            options.insert(std::make_pair(opt_type, vendor_opt));
+
+            offset += opt_len;
+            continue;
         }
 
         // Get all definitions with the particular option code. Note that option code

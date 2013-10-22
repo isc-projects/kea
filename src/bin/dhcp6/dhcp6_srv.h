@@ -336,6 +336,15 @@ protected:
     /// @param answer server's message (options will be added here)
     void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
+    /// @brief Appends requested vendor options to server's answer.
+    ///
+    /// This is mostly useful for Cable Labs options for now, but the method
+    /// is easily extensible to other vendors.
+    ///
+    /// @param question client's message
+    /// @param answer server's message (vendor options will be added here)
+    void appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
+
     /// @brief Assigns leases.
     ///
     /// It supports addresses (IA_NA) only. It does NOT support temporary
