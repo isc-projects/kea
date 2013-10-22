@@ -55,6 +55,11 @@ public:
     static OptionDefinitionPtr getOptionDef(const Option::Universe u,
                                             const uint16_t code);
 
+
+    static OptionDefinitionPtr getVendorOptionDef(const Option::Universe u,
+                                                  const uint32_t vendor_id,
+                                                  const uint16_t code);
+
     /// @brief Check if the specified option is a standard option.
     ///
     /// @param u universe (V4 or V6)
@@ -149,6 +154,19 @@ public:
                                       uint16_t type,
                                       Option::Factory * factory);
 
+    static const OptionDefContainer*
+    getVendorOption4Defs(uint32_t vendor_id);
+
+    static const OptionDefContainer*
+    getVendorOption6Defs(uint32_t vendor_id);
+
+    static size_t unpackVendorOptions6(uint32_t vendor_id,
+                                       const OptionBuffer& buf,
+                                       isc::dhcp::OptionCollection& options);
+
+    static size_t unpackVendorOptions4(uint32_t vendor_id, const OptionBuffer& buf,
+                                       isc::dhcp::OptionCollection& options);
+
 private:
 
     /// Initialize standard DHCPv4 option definitions.
@@ -170,6 +188,10 @@ private:
     /// is incorrect. This is a programming error.
     static void initStdOptionDefs6();
 
+    static void initVendorOptsDocsis4();
+
+    static void initVendorOptsDocsis6();
+
     /// pointers to factories that produce DHCPv6 options
     static FactoryMap v4factories_;
 
@@ -181,6 +203,10 @@ private:
 
     /// Container with DHCPv6 option definitions.
     static OptionDefContainer v6option_defs_;
+
+    static VendorOptionDefContainers vendor4_defs_;
+
+    static VendorOptionDefContainers vendor6_defs_;
 };
 
 }

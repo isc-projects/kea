@@ -88,6 +88,38 @@ Subnet::getOptionDescriptor(const std::string& option_space,
     return (*range.first);
 }
 
+void Subnet::addVendorOption(const OptionPtr& option, bool persistent,
+                             uint32_t vendor_id){
+
+    validateOption(option);
+
+    vendor_option_spaces_.addItem(OptionDescriptor(option, persistent), vendor_id);
+}
+
+Subnet::OptionContainerPtr
+Subnet::getVendorOptionDescriptors(uint32_t vendor_id) const {
+    return (vendor_option_spaces_.getItems(vendor_id));
+}
+
+Subnet::OptionDescriptor
+Subnet::getVendorOptionDescriptor(uint32_t vendor_id, uint16_t option_code) {
+    OptionContainerPtr options = getVendorOptionDescriptors(vendor_id);
+    if (!options || options->empty()) {
+        return (OptionDescriptor(false));
+    }
+    const OptionContainerTypeIndex& idx = options->get<1>();
+    const OptionContainerTypeRange& range = idx.equal_range(option_code);
+    if (std::distance(range.first, range.second) == 0) {
+        return (OptionDescriptor(false));
+    }
+
+    return (*range.first);
+}
+
+void Subnet::delVendorOptions() {
+    vendor_option_spaces_.clearItems();
+}
+
 isc::asiolink::IOAddress Subnet::getLastAllocated(Lease::Type type) const {
     // check if the type is valid (and throw if it isn't)
     checkType(type);

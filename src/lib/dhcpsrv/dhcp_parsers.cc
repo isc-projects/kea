@@ -429,6 +429,8 @@ OptionDataParser::createOption() {
                 << "')");
     }
 
+    const bool csv_format = boolean_values_->getParam("csv-format");
+
     // Find the Option Definition for the option by its option code.
     // findOptionDefinition will throw if not found, no need to test.
     OptionDefinitionPtr def;
@@ -449,7 +451,10 @@ OptionDataParser::createOption() {
         if (std::distance(range.first, range.second) > 0) {
             def = *range.first;
         }
-        if (!def) {
+
+        // It's ok if we don't have option format if the option is
+        // specified as hex
+        if (!def && csv_format) {
             isc_throw(DhcpConfigError, "definition for the option '"
                       << option_space << "." << option_name
                       << "' having code '" <<  option_code
@@ -459,7 +464,6 @@ OptionDataParser::createOption() {
 
     // Get option data from the configuration database ('data' field).
     const std::string option_data = string_values_->getParam("data");
-    const bool csv_format = boolean_values_->getParam("csv-format");
 
     // Transform string of hexadecimal digits into binary format.
     std::vector<uint8_t> binary;
@@ -1047,8 +1051,16 @@ SubnetConfigParser::createSubnet() {
             }
             // Add sub-options (if any).
             appendSubOptions(option_space, desc.option);
-            // In any case, we add the option to the subnet.
-            subnet_->addOption(desc.option, false, option_space);
+
+            // thomson
+            uint32_t vendor_id = optionSpaceToVendorId(option_space);
+            if (vendor_id) {
+                // This is a vendor option
+                subnet_->addVendorOption(desc.option, false, vendor_id);
+            } else {
+                // This is a normal option
+                subnet_->addOption(desc.option, false, option_space);
+            }
         }
     }
 
@@ -1077,10 +1089,57 @@ SubnetConfigParser::createSubnet() {
             if (!existing_desc.option) {
                 // Add sub-options (if any).
                 appendSubOptions(option_space, desc.option);
-                subnet_->addOption(desc.option, false, option_space);
+
+                uint32_t vendor_id = optionSpaceToVendorId(option_space);
+                if (vendor_id) {
+                    // This is a vendor option
+                    subnet_->addVendorOption(desc.option, false, vendor_id);
+                } else {
+                    // This is a normal option
+                    subnet_->addOption(desc.option, false, option_space);
+                }
             }
         }
     }
+}
+
+uint32_t
+SubnetConfigParser::optionSpaceToVendorId(const std::string& option_space) {
+    if (option_space.size() < 8) {
+        // 8 is a minimal length of "vendor-X" format
+        return (0);
+    }
+    if (option_space.substr(0,7) != "vendor-") {
+        return (0);
+    }
+
+    // text after "vendor-", supposedly numbers only
+    string x = option_space.substr(7);
+
+    int64_t check;
+    try {
+        check = boost::lexical_cast<int64_t>(x);
+    } catch (const boost::bad_lexical_cast &) {
+        /// @todo: Should we throw here?
+        // isc_throw(BadValue, "Failed to parse vendor-X value (" << x
+        //           << ") as unsigned 32-bit integer.");
+        return (0);
+    }
+    if (check > std::numeric_limits<uint32_t>::max()) {
+        /// @todo: Should we throw here?
+        //isc_throw(BadValue, "Value " << x << "is too large"
+        //          << " for unsigned 32-bit integer.");
+        return (0);
+    }
+    if (check < 0) {
+        /// @todo: Should we throw here?
+        // isc_throw(BadValue, "Value " << x << "is negative."
+        //       << " Only 0 or larger are allowed for unsigned 32-bit integer.");
+        return (0);
+    }
+
+    // value is small enough to fit
+    return (static_cast<uint32_t>(check));
 }
 
 isc::dhcp::Triplet<uint32_t>

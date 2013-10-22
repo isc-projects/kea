@@ -25,10 +25,13 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option_int.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_string.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -2014,9 +2017,210 @@ TEST_F(Dhcpv6SrvTest, docsisTraffic) {
     ASSERT_FALSE(srv.fake_sent_.empty());
     Pkt6Ptr adv = srv.fake_sent_.front();
     ASSERT_TRUE(adv);
+}
 
-    /// @todo Check that the ADVERTISE is ok, that it includes all options,
-    /// that is relayed properly, etc.
+// Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
+TEST_F(Dhcpv6SrvTest, docsisVendorOptionsParse) {
+
+    NakedDhcpv6Srv srv(0);
+
+    // Let's get a traffic capture from DOCSIS3.0 modem
+    Pkt6Ptr sol = captureDocsisRelayedSolicit();
+    EXPECT_NO_THROW(sol->unpack());
+
+    // Check if the packet contain
+    OptionPtr opt = sol->getOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(opt);
+
+    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+
+    EXPECT_TRUE(vendor->getOption(1));
+    EXPECT_TRUE(vendor->getOption(36));
+    EXPECT_TRUE(vendor->getOption(35));
+    EXPECT_TRUE(vendor->getOption(2));
+    EXPECT_TRUE(vendor->getOption(3));
+    EXPECT_TRUE(vendor->getOption(4));
+    EXPECT_TRUE(vendor->getOption(5));
+    EXPECT_TRUE(vendor->getOption(6));
+    EXPECT_TRUE(vendor->getOption(7));
+    EXPECT_TRUE(vendor->getOption(8));
+    EXPECT_TRUE(vendor->getOption(9));
+    EXPECT_TRUE(vendor->getOption(10));
+    EXPECT_TRUE(vendor->getOption(15));
+
+    EXPECT_FALSE(vendor->getOption(20));
+    EXPECT_FALSE(vendor->getOption(11));
+    EXPECT_FALSE(vendor->getOption(17));
+}
+
+// Checks if server is able to parse incoming docsis option and extract suboption 1 (docsis ORO)
+TEST_F(Dhcpv6SrvTest, docsisVendorORO) {
+
+    NakedDhcpv6Srv srv(0);
+
+    // Let's get a traffic capture from DOCSIS3.0 modem
+    Pkt6Ptr sol = captureDocsisRelayedSolicit();
+    EXPECT_NO_THROW(sol->unpack());
+
+    // Check if the packet contain
+    OptionPtr opt = sol->getOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(opt);
+
+    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+
+    opt = vendor->getOption(DOCSIS3_V6_ORO);
+    ASSERT_TRUE(opt);
+
+    OptionUint16ArrayPtr oro = boost::dynamic_pointer_cast<OptionUint16Array>(opt);
+    EXPECT_TRUE(oro);
+}
+
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the requested options are actually assigned.
+TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-def\": [ {"
+        "        \"name\": \"config-file\","
+        "        \"code\": 33,"
+        "        \"type\": \"string\","
+        "        \"array\": False,"
+        "        \"record-types\": \"\","
+        "        \"space\": \"vendor-4491\","
+        "        \"encapsulate\": \"\""
+        "     } ],"
+        "    \"option-data\": [ {"
+        "          \"name\": \"config-file\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 33,"
+        "          \"data\": \"normal_erouter_v6.cm\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/64\" ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"renew-timer\": 1000, "
+        "    \"rebind-timer\": 1000, "
+        "    \"preferred-lifetime\": 3000,"
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    NakedDhcpv6Srv srv(0);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+
+    ASSERT_EQ(0, rcode_);
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt6Ptr adv = srv.processSolicit(sol);
+
+    // check if we get response at all
+    ASSERT_TRUE(adv);
+
+    // We did not include any vendor opts in SOLCIT, so there should be none
+    // in ADVERTISE.
+    ASSERT_FALSE(adv->getOption(D6O_VENDOR_OPTS));
+
+    // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
+    // That suboption has code 1 and is a docsis ORO option.
+    boost::shared_ptr<OptionUint16Array> vendor_oro(new OptionUint16Array(Option::V6,
+                                                                          DOCSIS3_V6_ORO));
+    vendor_oro->addValue(DOCSIS3_V6_CONFIG_FILE); // Request option 33
+    OptionPtr vendor(new OptionVendor(Option::V6, 4491));
+    vendor->addOption(vendor_oro);
+    sol->addOption(vendor);
+
+    // Need to process SOLICIT again after requesting new option.
+    adv = srv.processSolicit(sol);
+    ASSERT_TRUE(adv);
+
+    // Check if thre is vendor option response
+    OptionPtr tmp = adv->getOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    OptionPtr docsis33 = vendor_resp->getOption(33);
+    ASSERT_TRUE(docsis33);
+
+    OptionStringPtr config_file = boost::dynamic_pointer_cast<OptionString>(docsis33);
+    ASSERT_TRUE(config_file);
+    EXPECT_EQ("normal_erouter_v6.cm", config_file->getValue());
+}
+
+// Test checks whether it is possible to use option definitions defined in
+// src/lib/dhcp/docsis3_option_defs.h.
+TEST_F(Dhcpv6SrvTest, vendorOptionsDocsisDefinitions) {
+    ConstElementPtr x;
+    string config_prefix = "{ \"interfaces\": [ \"all\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"config-file\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": ";
+    string config_postfix = ","
+        "          \"data\": \"normal_erouter_v6.cm\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/64\" ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"renew-timer\": 1000, "
+        "    \"rebind-timer\": 1000, "
+        "    \"preferred-lifetime\": 3000,"
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface-id\": \"\","
+        "    \"interface\": \"\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // There is docsis3 (vendor-id=4491) vendor option 33, which is a
+    // config-file. Its format is a single string.
+    string config_valid = config_prefix + "33" + config_postfix;
+
+    // There is no option 99 defined in vendor-id=4491. As there is no
+    // definition, the config should fail.
+    string config_bogus = config_prefix + "99" + config_postfix;
+
+    ElementPtr json_bogus = Element::fromJSON(config_bogus);
+    ElementPtr json_valid = Element::fromJSON(config_valid);
+
+    NakedDhcpv6Srv srv(0);
+
+    // This should fail (missing option definition)
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv, json_bogus));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(1, rcode_);
+
+    // This should work (option definition present)
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv, json_valid));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
 }
 
 // This test verifies that the following option structure can be parsed:
