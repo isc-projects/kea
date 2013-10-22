@@ -27,6 +27,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_string.h>
+#include <dhcp/option_vendor.h>
 #include <util/buffer.h>
 
 #include <gtest/gtest.h>
@@ -767,7 +768,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(Option));
 
     LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, begin, end,
-                                    typeid(Option));
+                                    typeid(OptionVendor));
 }
 
 // Test that definitions of standard options have been initialized
