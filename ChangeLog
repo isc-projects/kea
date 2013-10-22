@@ -1,3 +1,9 @@
+691.	[bug]		marcin
+	libdhcp++: Created definitions for standard DHCPv4 options:
+	tftp-server-name (66) and boot-file-name (67). Also, fixed definition
+	of DHCPv4 option time-offset (2).
+	(Trac #3199, git abcd)
+
 690.	[bug]		tomek
 	b10-dhcp4: Relay Agent Info option is now echoed back in
 	DHCPv4 responses.
