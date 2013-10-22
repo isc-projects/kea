@@ -19,9 +19,9 @@
 # <topsrcdir>/tools/reorder_message_file.py to make sure the
 # messages are in the correct order.
 
-% MSGQ_ALREADY_RUNNING Another copy of the message queue daemon is already running.
-Only a single instance of the message queue daemon should ever be run at one
-time. This instance will now terminate.
+% MSGQ_ALREADY_RUNNING Another copy of b10-msgq is already running.
+Only a single instance of b10-msgq should ever be run at one time.
+This instance will now terminate.
 
 % MSGQ_CFGMGR_SUBSCRIBED The config manager subscribed to message queue
 This is a debug message. The message queue has little bit of special handling
