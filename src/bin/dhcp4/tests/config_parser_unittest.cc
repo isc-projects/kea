@@ -481,6 +481,8 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
         "    \"next-server\": \"a.b.c.d\", "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
@@ -491,6 +493,8 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
         "    \"next-server\": \"2001:db8::1\", "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
@@ -501,13 +505,15 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
         "    \"next-server\": \"\", "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         "\"valid-lifetime\": 4000 }";
 
     ElementPtr json1 = Element::fromJSON(config_bogus1);
     ElementPtr json2 = Element::fromJSON(config_bogus2);
-    ElementPtr json3 = Element::fromJSON(config_bogus2);
+    ElementPtr json3 = Element::fromJSON(config_bogus3);
 
     // check if returned status is always a failure
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json1));
@@ -517,7 +523,7 @@ TEST_F(Dhcp4ParserTest, nextServerNegative) {
     checkResult(status, 1);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
-    checkResult(status, 1);
+    checkResult(status, 0);
 }
 
 // Checks if the next-server defined as global value is overridden by subnet
