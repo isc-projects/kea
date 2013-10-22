@@ -371,9 +371,10 @@ Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
         // Parse the new packet and return to the caller.
         dst_pkt->unpack();
     } catch (const Exception& ex) {
-        return (::testing::AssertionFailure()
-                << "Failed to parse a destination packet: "
-                << ex.what());
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "Failed to parse a"
+                                            << " destination packet: "
+                                            << ex.what()));
     }
 
     return (::testing::AssertionSuccess());
