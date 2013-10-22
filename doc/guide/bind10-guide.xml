@@ -4395,6 +4395,9 @@ Dhcp4/subnet4	[]	list	(default)
       in the DHCPv4 packet for that purpose. That specific field can be configured
       using next-server directive. It is possible to define it in global scope or
       for a given subnet only. If both are defined, subnet value takes precedence.
+      The value in subnet can be set to 0.0.0.0, which means that next-server should
+      not be sent. It may also be set to empty string, which means the same as if
+      it was not defined at all - use global value.
       </para>
 
 <screen>
