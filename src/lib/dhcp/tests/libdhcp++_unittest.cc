@@ -845,7 +845,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, begin, end,
-                                    typeid(OptionInt<uint32_t>),
+                                    typeid(OptionVendor),
                                     "vendor-opts-space");
 
     LibDhcpTest::testStdOptionDefs6(D6O_INTERFACE_ID, begin, end,

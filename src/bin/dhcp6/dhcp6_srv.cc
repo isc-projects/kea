@@ -2356,22 +2356,6 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
             continue;
         }
 
-        if (opt_type == D6O_VENDOR_OPTS) {
-            if (offset + 4 > length) {
-                // Truncated vendor-option. There is expected at least 4 bytes
-                // long enterprise-id field
-                return (offset);
-            }
-
-            // Parse this as vendor option
-            OptionPtr vendor_opt(new OptionVendor(Option::V6, buf.begin() + offset,
-                                                  buf.begin() + offset + opt_len));
-            options.insert(std::make_pair(opt_type, vendor_opt));
-
-            offset += opt_len;
-            continue;
-        }
-
         // Get all definitions with the particular option code. Note that option
         // code is non-unique within this container however at this point we
         // expect to get one option definition with the particular code. If more
