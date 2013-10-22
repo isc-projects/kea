@@ -493,6 +493,31 @@ public:
 
 private:
 
+    /// @brief Creates an instance of an option having special format.
+    ///
+    /// The option with special formats are encapsulated by the dedicated
+    /// classes derived from @c Option class. In particular these are:
+    /// - IA_NA
+    /// - IAADDR
+    /// - FQDN
+    /// - VIVSO.
+    ///
+    /// @param u A universe (V4 or V6).
+    /// @param begin beginning of the option buffer.
+    /// @param end end of the option buffer.
+    /// @param callback An instance of the function which parses packet options.
+    /// If this is set to non NULL value this function will be used instead of
+    /// @c isc::dhcp::LibDHCP::unpackOptions6 and
+    /// isc::dhcp::LibDHCP::unpackOptions4.
+    ///
+    /// @return An instance of the option having special format or NULL if
+    /// such an option can't be created because an option with the given
+    /// option code hasn't got the special format.
+    OptionPtr factorySpecialFormatOption(Option::Universe u,
+                                         OptionBufferConstIter begin,
+                                         OptionBufferConstIter end,
+                                         UnpackOptionsCallback callback) const;
+
     /// @brief Check if specified option format is a record with 3 fields
     /// where first one is custom, and two others are uint32.
     ///
