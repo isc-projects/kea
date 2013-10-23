@@ -1340,7 +1340,7 @@ TEST_F(Dhcpv4SrvTest, siaddr) {
 }
 
 // Checks if the next-server defined as global value is overridden by subnet
-// specific value and returned in server messagey. There's also similar test for
+// specific value and returned in server messages. There's also similar test for
 // checking parser only configuration, see Dhcp4ParserTest.nextServerOverride in
 // config_parser_unittest.cc.
 TEST_F(Dhcpv4SrvTest, nextServerOverride) {
