@@ -1052,7 +1052,7 @@ SubnetConfigParser::createSubnet() {
             // Add sub-options (if any).
             appendSubOptions(option_space, desc.option);
 
-            // thomson
+            // Check if the option space defines a vendor-option
             uint32_t vendor_id = optionSpaceToVendorId(option_space);
             if (vendor_id) {
                 // This is a vendor option

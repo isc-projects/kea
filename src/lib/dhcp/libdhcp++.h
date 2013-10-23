@@ -55,7 +55,13 @@ public:
     static OptionDefinitionPtr getOptionDef(const Option::Universe u,
                                             const uint16_t code);
 
-
+    /// @brief Returns vendor option definition for a given vendor-id and code
+    ///
+    /// @param u universe (V4 or V6)
+    /// @param vendor_id enterprise-id for a given vendor
+    /// @param code option code
+    /// @return reference to an option definition being requested
+    /// or NULL pointer if option definition has not been found.
     static OptionDefinitionPtr getVendorOptionDef(const Option::Universe u,
                                                   const uint32_t vendor_id,
                                                   const uint16_t code);
@@ -154,16 +160,46 @@ public:
                                       uint16_t type,
                                       Option::Factory * factory);
 
+    /// @brief returns v4 option definitions for a given vendor
+    ///
+    /// @param vendor_id enterprise-id of a given vendor
+    /// @return a container for a given vendor (or NULL if not option
+    ///         definitions are defined)
     static const OptionDefContainer*
     getVendorOption4Defs(uint32_t vendor_id);
 
+    /// @brief returns v6 option definitions for a given vendor
+    ///
+    /// @param vendor_id enterprise-id of a given vendor
+    /// @return a container for a given vendor (or NULL if not option
+    ///         definitions are defined)
     static const OptionDefContainer*
     getVendorOption6Defs(uint32_t vendor_id);
 
+    /// @brief Parses provided buffer as DHCPv6 vendor options and creates
+    ///        Option objects.
+    ///
+    /// Parses provided buffer and stores created Option objects
+    /// in options container.
+    ///
+    /// @param vendor_id enterprise-id of the vendor
+    /// @param buf Buffer to be parsed.
+    /// @param options Reference to option container. Options will be
+    ///        put here.
     static size_t unpackVendorOptions6(uint32_t vendor_id,
                                        const OptionBuffer& buf,
                                        isc::dhcp::OptionCollection& options);
 
+    /// @brief Parses provided buffer as DHCPv4 vendor options and creates
+    ///        Option objects.
+    ///
+    /// Parses provided buffer and stores created Option objects
+    /// in options container.
+    ///
+    /// @param vendor_id enterprise-id of the vendor
+    /// @param buf Buffer to be parsed.
+    /// @param options Reference to option container. Options will be
+    ///        put here.
     static size_t unpackVendorOptions4(uint32_t vendor_id, const OptionBuffer& buf,
                                        isc::dhcp::OptionCollection& options);
 
@@ -204,8 +240,10 @@ private:
     /// Container with DHCPv6 option definitions.
     static OptionDefContainer v6option_defs_;
 
+    /// Container for v4 vendor option definitions
     static VendorOptionDefContainers vendor4_defs_;
 
+    /// Container for v6 vendor option definitions
     static VendorOptionDefContainers vendor6_defs_;
 };
 

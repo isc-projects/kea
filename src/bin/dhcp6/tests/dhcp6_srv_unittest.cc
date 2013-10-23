@@ -2022,8 +2022,6 @@ TEST_F(Dhcpv6SrvTest, docsisTraffic) {
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
 TEST_F(Dhcpv6SrvTest, docsisVendorOptionsParse) {
 
-    NakedDhcpv6Srv srv(0);
-
     // Let's get a traffic capture from DOCSIS3.0 modem
     Pkt6Ptr sol = captureDocsisRelayedSolicit();
     EXPECT_NO_THROW(sol->unpack());
@@ -2035,10 +2033,10 @@ TEST_F(Dhcpv6SrvTest, docsisVendorOptionsParse) {
     boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
     ASSERT_TRUE(vendor);
 
-    EXPECT_TRUE(vendor->getOption(1));
+    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_ORO));
     EXPECT_TRUE(vendor->getOption(36));
     EXPECT_TRUE(vendor->getOption(35));
-    EXPECT_TRUE(vendor->getOption(2));
+    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_DEVICE_TYPE));
     EXPECT_TRUE(vendor->getOption(3));
     EXPECT_TRUE(vendor->getOption(4));
     EXPECT_TRUE(vendor->getOption(5));
@@ -2046,7 +2044,7 @@ TEST_F(Dhcpv6SrvTest, docsisVendorOptionsParse) {
     EXPECT_TRUE(vendor->getOption(7));
     EXPECT_TRUE(vendor->getOption(8));
     EXPECT_TRUE(vendor->getOption(9));
-    EXPECT_TRUE(vendor->getOption(10));
+    EXPECT_TRUE(vendor->getOption(DOCSIS3_V6_VENDOR_NAME));
     EXPECT_TRUE(vendor->getOption(15));
 
     EXPECT_FALSE(vendor->getOption(20));
@@ -2061,9 +2059,9 @@ TEST_F(Dhcpv6SrvTest, docsisVendorORO) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
     Pkt6Ptr sol = captureDocsisRelayedSolicit();
-    EXPECT_NO_THROW(sol->unpack());
+    ASSERT_NO_THROW(sol->unpack());
 
-    // Check if the packet contain
+    // Check if the packet contains vendor options option
     OptionPtr opt = sol->getOption(D6O_VENDOR_OPTS);
     ASSERT_TRUE(opt);
 

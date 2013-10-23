@@ -42,7 +42,7 @@ public:
     /// @brief Adds a new item to the option_space.
     ///
     /// @param item reference to the item being added.
-    /// @param option_space name of the option space.
+    /// @param option_space name or vendor-id of the option space
     void addItem(const ItemType& item, const Selector& option_space) {
         ItemsContainerPtr items = getItems(option_space);
         items->push_back(item);
@@ -55,7 +55,7 @@ public:
     /// space an empty container is created and returned. However
     /// this container is not added to the list of option spaces.
     ///
-    /// @param option_space name of the option space.
+    /// @param option_space name or vendor-id of the option space.
     ///
     /// @return pointer to the container holding items.
     ItemsContainerPtr getItems(const Selector& option_space) const {
@@ -91,7 +91,7 @@ public:
 
 private:
 
-    /// A map holding container (option space name is the key).
+    /// A map holding container (option space name or vendor-id is the key).
     typedef std::map<Selector, ItemsContainerPtr> OptionSpaceMap;
     OptionSpaceMap option_space_map_;
 };

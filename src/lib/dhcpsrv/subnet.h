@@ -180,12 +180,20 @@ public:
     void addOption(const OptionPtr& option, bool persistent,
                    const std::string& option_space);
 
+
+    /// @brief Adds new vendor option instance to the collection.
+    ///
+    /// @param option option instance.
+    /// @param persistent if true, send an option regardless if client
+    /// requested it or not.
+    /// @param vendor_id enterprise id of the vendor space to add an option to.
     void addVendorOption(const OptionPtr& option, bool persistent,
                          uint32_t vendor_id);
 
     /// @brief Delete all options configured for the subnet.
     void delOptions();
 
+    /// @brief Deletes all vendor options configured for the subnet.
     void delVendorOptions();
 
     /// @brief checks if the specified address is in pools
@@ -226,6 +234,11 @@ public:
     OptionContainerPtr
     getOptionDescriptors(const std::string& option_space) const;
 
+    /// @brief Return a collection of vendor option descriptors.
+    ///
+    /// @param vendor_id enterprise id of the option space.
+    ///
+    /// @return pointer to collection of options configured for a subnet.
     OptionContainerPtr
     getVendorOptionDescriptors(uint32_t vendor_id) const;
 
@@ -240,6 +253,13 @@ public:
     getOptionDescriptor(const std::string& option_space,
                         const uint16_t option_code);
 
+    /// @brief Return single vendor option descriptor.
+    ///
+    /// @param vendor_id enterprise id of the option space.
+    /// @param option_code code of the option to be returned.
+    ///
+    /// @return option descriptor found for the specified option space
+    /// and option code.
     OptionDescriptor
     getVendorOptionDescriptor(uint32_t vendor_id, uint16_t option_code);
 
@@ -453,11 +473,14 @@ private:
     typedef OptionSpaceContainer<OptionContainer,
         OptionDescriptor, std::string> OptionSpaceCollection;
 
+    /// A collection of vendor space option descriptors.
     typedef OptionSpaceContainer<OptionContainer,
         OptionDescriptor, uint32_t> VendorOptionSpaceCollection;
 
+    /// Regular options are kept here
     OptionSpaceCollection option_spaces_;
 
+    /// Vendor options are kept here
     VendorOptionSpaceCollection vendor_option_spaces_;
 };
 

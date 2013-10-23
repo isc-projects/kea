@@ -604,57 +604,7 @@ void LibDHCP::OptionFactoryRegister(Option::Universe u,
 
 void
 LibDHCP::initStdOptionDefs4() {
-    v4option_defs_.clear();
-
-    // Now let's add all option definitions.
-    for (int i = 0; i < OPTION_DEF_PARAMS_SIZE4; ++i) {
-        std::string encapsulates(OPTION_DEF_PARAMS4[i].encapsulates);
-        if (!encapsulates.empty() && OPTION_DEF_PARAMS4[i].array) {
-            isc_throw(isc::BadValue, "invalid standard option definition: "
-                      << "option with code '" << OPTION_DEF_PARAMS4[i].code
-                      << "' may not encapsulate option space '"
-                      << encapsulates << "' because the definition"
-                      << " indicates that this option comprises an array"
-                      << " of values");
-        }
-
-        // Depending whether the option encapsulates an option space or not
-        // we pick different constructor to create an instance of the option
-        // definition.
-        OptionDefinitionPtr definition;
-        if (encapsulates.empty()) {
-            // Option does not encapsulate any option space.
-            definition.reset(new OptionDefinition(OPTION_DEF_PARAMS4[i].name,
-                                                  OPTION_DEF_PARAMS4[i].code,
-                                                  OPTION_DEF_PARAMS4[i].type,
-                                                  OPTION_DEF_PARAMS4[i].array));
-
-        } else {
-            // Option does encapsulate an option space.
-            definition.reset(new OptionDefinition(OPTION_DEF_PARAMS4[i].name,
-                                                  OPTION_DEF_PARAMS4[i].code,
-                                                  OPTION_DEF_PARAMS4[i].type,
-                                                  OPTION_DEF_PARAMS4[i].encapsulates));
-
-        }
-
-        for (int rec = 0; rec < OPTION_DEF_PARAMS4[i].records_size; ++rec) {
-            definition->addRecordField(OPTION_DEF_PARAMS4[i].records[rec]);
-        }
-
-        // Sanity check if the option is valid.
-        try {
-            definition->validate();
-        } catch (const Exception& ex) {
-            // This is unlikely event that validation fails and may
-            // be only caused by programming error. To guarantee the
-            // data consistency we clear all option definitions that
-            // have been added so far and pass the exception forward.
-            v4option_defs_.clear();
-            throw;
-        }
-        v4option_defs_.push_back(definition);
-    }
+    initOptionSpace(v4option_defs_, OPTION_DEF_PARAMS4, OPTION_DEF_PARAMS_SIZE4);
 }
 
 void
