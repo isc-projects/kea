@@ -216,7 +216,7 @@ void ControlledDhcpv6Srv::establishSession() {
         // reopen sockets according to new configuration.
         openActiveSockets(getPort());
 
-    } catch (const DhcpConfigError& ex) {
+    } catch (const std::exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_CONFIG_LOAD_FAIL).arg(ex.what());
 
     }
