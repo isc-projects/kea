@@ -705,8 +705,6 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer
         return;
     }
 
-    uint32_t vendor_id = vendor_req->getVendorId();
-
     // Let's try to get ORO within that vendor-option
     /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other vendors
     /// may have different policies.
@@ -717,6 +715,8 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer
     if (!oro) {
         return;
     }
+
+    uint32_t vendor_id = vendor_req->getVendorId();
 
     boost::shared_ptr<OptionVendor> vendor_rsp(new OptionVendor(Option::V6, vendor_id));
 

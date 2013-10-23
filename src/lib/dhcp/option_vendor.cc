@@ -32,20 +32,28 @@ OptionVendor::OptionVendor(Option::Universe u, OptionBufferConstIter begin,
 void OptionVendor::pack(isc::util::OutputBuffer& buf) {
     packHeader(buf);
 
+    // Store vendor-id
     buf.writeUint32(vendor_id_);
+
+    // The format is slightly different for v4
+    if (universe_ == Option::V4) {
+        // Store data-len1 (it's a length of following suboptions
+        buf.writeUint8(len() - getHeaderLen() - sizeof(uint32_t) - sizeof(uint8_t));
+    }
 
     packOptions(buf);
 }
 
 void OptionVendor::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
     if (distance(begin, end) < sizeof(uint32_t)) {
-        isc_throw(OutOfRange, "Truncated vendor-specific information option");
+        isc_throw(OutOfRange, "Truncated vendor-specific information option"
+                  << ", length=" << distance(begin, end));
     }
 
     vendor_id_ = isc::util::readUint32(&(*begin));
 
     OptionBuffer vendor_buffer(begin +4, end);
-    
+
     if (universe_ == Option::V6) {
         LibDHCP::unpackVendorOptions6(vendor_id_, vendor_buffer, options_);
     } else {
@@ -57,6 +65,11 @@ uint16_t OptionVendor::len() {
     uint16_t length = getHeaderLen();
 
     length += sizeof(uint32_t); // Vendor-id field
+
+    // Data-len field exists in DHCPv4 vendor options only
+    if (universe_ == Option::V4) {
+        length += sizeof(uint8_t);  // data-len
+    }
 
     // length of all suboptions
     for (OptionCollection::iterator it = options_.begin();

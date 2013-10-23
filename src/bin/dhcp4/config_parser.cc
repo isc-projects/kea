@@ -94,13 +94,13 @@ protected:
         } else if (option_space == "dhcp6") {
             isc_throw(DhcpConfigError, "'dhcp6' option space name is reserved"
                      << " for DHCPv6 server");
-        }
-
-        // Check if this is a vendor-option. If it is, get vendor-specific
-        // definition.
-        uint32_t vendor_id = SubnetConfigParser::optionSpaceToVendorId(option_space);
-        if (vendor_id) {
-            def = LibDHCP::getVendorOptionDef(Option::V4, vendor_id, option_code);
+        } else {
+            // Check if this is a vendor-option. If it is, get vendor-specific
+            // definition.
+            uint32_t vendor_id = SubnetConfigParser::optionSpaceToVendorId(option_space);
+            if (vendor_id) {
+                def = LibDHCP::getVendorOptionDef(Option::V4, vendor_id, option_code);
+            }
         }
 
         return (def);

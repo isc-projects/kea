@@ -775,7 +775,8 @@ public:
 
     /// @brief tries to convert option_space string to numeric vendor_id
     ///
-    /// This will work if the option_space has format "vendor-1234".
+    /// This will work if the option_space has format "vendor-X", where
+    /// X can be any value between 1 and MAX_UINT32.
     /// This is used to detect whether a given option-space is a vendor
     /// space or not. Returns 0 if the format is different.
     /// @return numeric vendor-id (or 0 if the format does not match)
