@@ -55,7 +55,7 @@ TEST(UserIdTest, hwAddress_type) {
     ASSERT_NO_THROW(id.reset(new UserId(UserId::HW_ADDRESS, bytes)));
     // Verify that the id can be fetched.
     EXPECT_EQ(id->getType(), UserId::HW_ADDRESS);
-    EXPECT_EQ(bytes, id->getId());
+    EXPECT_TRUE(bytes == id->getId());
 
     // Check relational oeprators when a == b.
     UserIdPtr id2;
@@ -98,7 +98,7 @@ TEST(UserIdTest, duid_type) {
     ASSERT_NO_THROW(id.reset(new UserId(UserId::DUID, bytes)));
     // Verify that the id can be fetched.
     EXPECT_EQ(id->getType(), UserId::DUID);
-    EXPECT_EQ(bytes, id->getId());
+    EXPECT_TRUE(bytes == id->getId());
 
     // Check relational oeprators when a == b.
     UserIdPtr id2;
