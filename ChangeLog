@@ -1,3 +1,17 @@
+695.	[func]		tomek
+	b10-dhcp6 is now able to listen on global IPv6 unicast addresses.
+	(Trac #3195, git 72e601f2a57ab70b25d50877c8e49242739d1c9f)
+
+694.	[bug]		tomek
+	b10-dhcp6 now handles exceptions better when processing initial
+	configuration. In particular, errors with socket binding do not
+	prevent b10-dhcp6 from establishing configuration session anymore.
+	(Trac #3195, git 72e601f2a57ab70b25d50877c8e49242739d1c9f)
+
+693.	[bug]		tomek
+	b10-dhcp6 now handles IPv6 interface enabling correctly.
+	(Trac #3195, git 72e601f2a57ab70b25d50877c8e49242739d1c9f)
+
 692.	[bug]		marcin
 	b10-dhcp4: Fix a bug whereby the Parameter Request List was not parsed
 	by the server and requested DHCPv4 options were not returned to the
