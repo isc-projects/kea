@@ -10,29 +10,34 @@ AM_CXXFLAGS  = $(B10_CXXFLAGS)
 # But older GCC compilers don't have the flag.
 AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
+# Until logging in dynamically loaded libraries is fixed,
 # Define rule to build logging source files from message file
-user_chk_messages.h user_chk_messages.cc: s-messages
+# user_chk_messages.h user_chk_messages.cc: s-messages
 
-s-messages: user_chk_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/hooks/dhcp/user_chk/user_chk_messages.mes
-	touch $@
+# Until logging in dynamically loaded libraries is fixed, exclude these.
+# s-messages: user_chk_messages.mes
+#	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/hooks/dhcp/user_chk/user_chk_messages.mes
+#	touch $@
 
 # Tell automake that the message files are built as part of the build process
 # (so that they are built before the main library is built).
-BUILT_SOURCES = user_chk_messages.h user_chk_messages.cc
+# BUILT_SOURCES = user_chk_messages.h user_chk_messages.cc
+BUILT_SOURCES =
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST =
 
 # Get rid of generated message files on a clean
-CLEANFILES = *.gcno *.gcda user_chk_messages.h user_chk_messages.cc s-messages
+#CLEANFILES = *.gcno *.gcda user_chk_messages.h user_chk_messages.cc s-messages
+CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libdhcp_user_chk.la
 libdhcp_user_chk_la_SOURCES  =
 libdhcp_user_chk_la_SOURCES += load_unload.cc
 libdhcp_user_chk_la_SOURCES += subnet_select_co.cc
 libdhcp_user_chk_la_SOURCES += user.cc user.h
-libdhcp_user_chk_la_SOURCES += user_chk_log.cc user_chk_log.h
+# Until logging in dynamically loaded libraries is fixed, exclude these.
+#libdhcp_user_chk_la_SOURCES += user_chk_log.cc user_chk_log.h
 libdhcp_user_chk_la_SOURCES += user_data_source.h
 libdhcp_user_chk_la_SOURCES += user_file.cc user_file.h
 libdhcp_user_chk_la_SOURCES += user_registry.cc user_registry.h
