@@ -297,6 +297,28 @@ public:
     /// %Option.
     bool haveFqdn4Format() const;
 
+    /// @brief Check if the option has format of Vendor-Identifying Vendor
+    /// Specific Options.
+    ///
+    /// @return Always true.
+    /// @todo The Vendor-Identifying Vendor-Specific Option has a complex format
+    /// which we do not support here. Therefore it is not really possible to
+    /// check that the current definition is valid. We may need to add support
+    /// for such option format or simply do not check the format for certain
+    /// options, e.g. vendor options, IA_NA, IAADDR and always return objects
+    /// of the certain type.
+    bool haveVendor4Format() const;
+
+    /// @brief Check if option has a format of the Vendor-Specific Information
+    /// %Option.
+    ///
+    /// The Vendor-Specific Information %Option comprises 32-bit enterprise id
+    /// and the suboptions.
+    ///
+    /// @return true if option definition conforms to the format of the
+    /// Vendor-Specific Information %Option.
+    bool haveVendor6Format() const;
+
     /// @brief Option factory.
     ///
     /// This function creates an instance of DHCP option using
