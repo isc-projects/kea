@@ -1,3 +1,10 @@
+692.	[bug]		marcin
+	b10-dhcp4: Fix a bug whereby the Parameter Request List was not parsed
+	by the server and requested DHCPv4 options were not returned to the
+	client. Options are not sent back to the client if server failed to
+	assign a lease.
+	(Trac #3200, git 50d91e4c069c6de13680bfaaee3c56b68d6e4ab1)
+
 691.	[bug]		marcin
 	libdhcp++: Created definitions for standard DHCPv4 options:
 	tftp-server-name (66) and boot-file-name (67). Also, fixed definition
