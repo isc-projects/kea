@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef _USER_H
-#define _USER_H
+#ifndef USER_H
+#define USER_H
 
 #include <boost/shared_ptr.hpp>
 
@@ -23,7 +23,7 @@
 
 /// @file user.h This file defines classes: UserId and User.
 /// @brief These classes are used to describe and recognize DHCP lease
-/// requestors (i.e. clients).
+/// clients.
 
 /// @brief Encapsulates a unique identifier for a DHCP client.
 /// This class provides a generic wrapper around the information used to
@@ -120,15 +120,6 @@ public:
     static UserIdType lookupType(const std::string& type_str);
 
 private:
-    /// @brief Converts a string of hex digits to vector of bytes
-    ///
-    /// @param input string of hex digits to convert
-    /// @param bytes vector in which to place the result
-    ///
-    /// @throw isc::BadValue if input string contains invalid hex digits
-    /// or has an odd number of digits.
-    void decodeHex(const std::string& input, std::vector<uint8_t>& bytes) const;
-
     /// @brief The type of id value
     UserIdType id_type_;
 

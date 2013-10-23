@@ -33,6 +33,9 @@ extern std::fstream user_chk_output;
 extern const char* registry_fname;
 extern const char* user_chk_output_fname;
 
+// Functions accessed by the hooks framework use C linkage to avoid the name
+// mangling that accompanies use of the C++ compiler as well as to avoid
+// issues related to namespaces.
 extern "C" {
 
 /// @brief Adds an entry to the end of the user check outcome file.
@@ -115,6 +118,13 @@ int subnet4_select(CalloutHandle& handle) {
     }
 
     try {
+        // Get subnet collection. If it's empty just bail nothing to do.
+        const isc::dhcp::Subnet4Collection *subnets = NULL;
+        handle.getArgument("subnet4collection", subnets);
+        if (subnets->size() == 0) {
+            return 0;
+        }
+
         // Refresh the registry.
         user_registry->refresh();
 
@@ -136,8 +146,6 @@ int subnet4_select(CalloutHandle& handle) {
             // User is not in the registry, so assign them to the last subnet
             // in the collection.  By convention we are assuming this is the
             // restricted subnet.
-            const isc::dhcp::Subnet4Collection *subnets = NULL;
-            handle.getArgument("subnet4collection", subnets);
             Subnet4Ptr subnet = subnets->back();
             handle.setArgument("subnet4", subnet);
             // Add the outcome entry to the output file.
@@ -175,6 +183,13 @@ int subnet6_select(CalloutHandle& handle) {
     }
 
     try {
+        // Get subnet collection. If it's empty just bail nothing to do.
+        const isc::dhcp::Subnet6Collection *subnets = NULL;
+        handle.getArgument("subnet6collection", subnets);
+        if (subnets->size() == 0) {
+            return 0;
+        }
+
         // Refresh the registry.
         user_registry->refresh();
 
@@ -204,8 +219,6 @@ int subnet6_select(CalloutHandle& handle) {
             // User is not in the registry, so assign them to the last subnet
             // in the collection.  By convention we are assuming this is the
             // restricted subnet.
-            const isc::dhcp::Subnet6Collection *subnets = NULL;
-            handle.getArgument("subnet6collection", subnets);
             Subnet6Ptr subnet = subnets->back();
             handle.setArgument("subnet6", subnet);
             // Add the outcome entry to the output file.
