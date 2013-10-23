@@ -90,7 +90,7 @@ TEST(UserTest, properties) {
     EXPECT_EQ("2.0", value);
 
     const PropertyMap& map2 = user->getProperties();
-    EXPECT_EQ(map2, map);
+    EXPECT_TRUE(map2 == map);
 }
 
 } // end of anonymous namespace
