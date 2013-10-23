@@ -144,11 +144,24 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& valid_lifetime)
-    :Subnet(prefix, length, t1, t2, valid_lifetime) {
+    :Subnet(prefix, length, t1, t2, valid_lifetime),
+    siaddr_(IOAddress("0.0.0.0")) {
     if (!prefix.isV4()) {
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
     }
+}
+
+void Subnet4::setSiaddr(const isc::asiolink::IOAddress& siaddr) {
+    if (!siaddr.isV4()) {
+        isc_throw(BadValue, "Can't set siaddr to non-IPv4 address "
+                  << siaddr.toText());
+    }
+    siaddr_ = siaddr;
+}
+
+isc::asiolink::IOAddress Subnet4::getSiaddr() const {
+    return (siaddr_);
 }
 
 const PoolCollection& Subnet::getPools(Lease::Type type) const {

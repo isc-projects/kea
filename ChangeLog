@@ -1,3 +1,9 @@
+696.	[func]		tomek
+	b10-dhcp4: It is now possible to specify value of siaddr field
+	in DHCPv4 responses. It is used to point out to the next
+	server in the boot process (that typically is TFTP server).
+	(Trac #3191, git 541922b5300904a5de2eaeddc3666fc4b654ffba)
+
 695.	[func]		tomek
 	b10-dhcp6 is now able to listen on global IPv6 unicast addresses.
 	(Trac #3195, git 72e601f2a57ab70b25d50877c8e49242739d1c9f)

@@ -1293,6 +1293,136 @@ TEST_F(Dhcpv4SrvTest, unpackOptions) {
     EXPECT_EQ(0x0, option_bar->getValue());
 }
 
+// Checks whether the server uses default (0.0.0.0) siaddr value, unless
+// explicitly specified
+TEST_F(Dhcpv4SrvTest, siaddrDefault) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+    IOAddress hint("192.0.2.107");
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setYiaddr(hint);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv->processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Verify that it is 0.0.0.0
+    EXPECT_EQ("0.0.0.0", offer->getSiaddr().toText());
+}
+
+// Checks whether the server uses specified siaddr value
+TEST_F(Dhcpv4SrvTest, siaddr) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+    subnet_->setSiaddr(IOAddress("192.0.2.123"));
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv->processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Verify that its value is proper
+    EXPECT_EQ("192.0.2.123", offer->getSiaddr().toText());
+}
+
+// Checks if the next-server defined as global value is overridden by subnet
+// specific value and returned in server messages. There's also similar test for
+// checking parser only configuration, see Dhcp4ParserTest.nextServerOverride in
+// config_parser_unittest.cc.
+TEST_F(Dhcpv4SrvTest, nextServerOverride) {
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"next-server\": \"192.0.0.1\", "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"next-server\": \"1.2.3.4\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+
+    // check if returned status is OK
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    EXPECT_EQ(DHCPOFFER, offer->getType());
+
+    EXPECT_EQ("1.2.3.4", offer->getSiaddr().toText());
+}
+
+// Checks if the next-server defined as global value is used in responses
+// when there is no specific value defined in subnet and returned to the client
+// properly. There's also similar test for checking parser only configuration,
+// see Dhcp4ParserTest.nextServerGlobal in config_parser_unittest.cc.
+TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"next-server\": \"192.0.0.1\", "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+
+    // check if returned status is OK
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    EXPECT_EQ(DHCPOFFER, offer->getType());
+
+    EXPECT_EQ("192.0.0.1", offer->getSiaddr().toText());
+}
+
+
 // a dummy MAC address
 const uint8_t dummyMacAddr[] = {0, 1, 2, 3, 4, 5};
 
