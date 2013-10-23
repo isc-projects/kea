@@ -1,3 +1,15 @@
+697.	[func]	tmark
+	Implements "user_check" hooks shared library which supports subnet 
+	selection based upon the contents of a list of known DHCP lease users
+	(i.e. clients).  Adds the following subdirectories to the bind10 src 
+	directory for maintaining hooks shared libraries:
+		-bind10/src/hooks  - base directory for hooks shared libraries
+		-bind10/src/hooks/dhcp - base directory for all hooks libs pertaining 
+		to DHCP(Kea)
+		-bind10/src/hooks/dhcp/user_check - directory containing the user_check
+		 hooks library
+	(Trac #3186, git f36aab92c85498f8511fbbe19fad5e3f787aef68)
+
 696.	[func]		tomek
 	b10-dhcp4: It is now possible to specify value of siaddr field
 	in DHCPv4 responses. It is used to point out to the next
