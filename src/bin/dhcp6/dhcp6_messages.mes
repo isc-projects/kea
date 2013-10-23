@@ -450,6 +450,9 @@ This debug message indicates that a shutdown of the IPv6 server has
 been requested via a call to the 'shutdown' method of the core Dhcpv6Srv
 object.
 
+% DHCP6_SOCKET_UNICAST server is about to open socket on address %1 on interface %2
+This is a debug message that inform that a unicast socket will be opened.
+
 % DHCP6_SRV_CONSTRUCT_ERROR error creating Dhcpv6Srv object, reason: %1
 This error message indicates that during startup, the construction of a
 core component within the IPv6 DHCP server (the Dhcpv6 server object)
