@@ -30,12 +30,17 @@ UserRegistryPtr user_registry;
 /// @brief Output filestream for recording user check outcomes.
 std::fstream user_chk_output;
 
-/// @brief For now, hard-code registry input file name.
-const char* registry_fname = "/tmp/user_registry.txt";
+/// @brief User registry input file name.
+/// @todo Hard-coded for now, this should be configurable.
+const char* registry_fname = "/tmp/user_chk_registry.txt";
 
-/// @brief For now, hard-code user check outcome file name.
-const char* user_chk_output_fname = "/tmp/user_check_output.txt";
+/// @brief User check outcome file name.
+/// @todo Hard-coded for now, this should be configurable.
+const char* user_chk_output_fname = "/tmp/user_chk_outcome.txt";
 
+// Functions accessed by the hooks framework use C linkage to avoid the name
+// mangling that accompanies use of the C++ compiler as well as to avoid
+// issues related to namespaces.
 extern "C" {
 
 /// @brief Called by the Hooks library manager when the library is loaded.

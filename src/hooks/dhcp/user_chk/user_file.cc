@@ -20,7 +20,7 @@
 #include <errno.h>
 #include <iostream>
 
-UserFile::UserFile(const std::string& fname) : fname_(fname), ifs_() {
+UserFile::UserFile(const std::string& fname) : fname_(fname), file_() {
     if (fname_.empty()) {
         isc_throw(UserFileError, "file name cannot be blank");
     }
@@ -36,9 +36,9 @@ UserFile::open() {
         isc_throw (UserFileError, "file is already open");
     }
 
-    ifs_.open(fname_.c_str(), std::ifstream::in);
+    file_.open(fname_.c_str(), std::ifstream::in);
     int sav_error = errno;
-    if (!ifs_.is_open()) {
+    if (!file_.is_open()) {
         isc_throw(UserFileError, "cannot open file:" << fname_
                                  << " reason: " << strerror(sav_error));
     }
@@ -50,14 +50,14 @@ UserFile::readNextUser() {
         isc_throw (UserFileError, "cannot read, file is not open");
     }
 
-    if (ifs_.good()) {
-        char buf[4096];
+    if (file_.good()) {
+        char buf[USER_ENTRY_MAX_LEN];
 
         // Get the next line.
-        ifs_.getline(buf, sizeof(buf));
+        file_.getline(buf, sizeof(buf));
 
         // We got something, try to make a user out of it.
-        if (ifs_.gcount() > 0) {
+        if (file_.gcount() > 0) {
             return(makeUser(buf));
         }
     }
@@ -140,14 +140,14 @@ UserFile::makeUser(const std::string& user_string) {
 
 bool
 UserFile::isOpen() const {
-    return (ifs_.is_open());
+    return (file_.is_open());
 }
 
 void
 UserFile::close() {
     try {
-        if (ifs_.is_open()) {
-            ifs_.close();
+        if (file_.is_open()) {
+            file_.close();
         }
     } catch (const std::exception& ex) {
         // Highly unlikely to occur but let's at least spit out an error.

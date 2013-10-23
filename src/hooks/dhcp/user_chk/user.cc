@@ -15,6 +15,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcp/duid.h>
 #include <exceptions/exceptions.h>
+#include <util/encode/hex.h>
 
 #include <user.h>
 
@@ -42,7 +43,7 @@ UserId::UserId(UserIdType id_type, const std::string & id_str) :
     // Convert the id string to vector.
     // Input is expected to be 2-digits per bytes, no delimiters.
     std::vector<uint8_t> addr_bytes;
-    decodeHex(id_str, addr_bytes);
+    isc::util::encode::decodeHex(id_str, addr_bytes);
 
     // Attempt to instantiate the appropriate id class to leverage validation.
     switch (id_type) {
@@ -109,28 +110,6 @@ bool
 UserId::operator <(const UserId & other) const {
     return ((this->id_type_ < other.id_type_) ||
             ((this->id_type_ == other.id_type_) && (this->id_ < other.id_)));
-}
-
-void
-UserId::decodeHex(const std::string& input, std::vector<uint8_t>& bytes)
-const {
-    int len = input.size();
-    if ((len % 2) != 0) {
-        isc_throw (isc::BadValue,
-                   "input string must be event number of digits: "
-                             << input);
-    }
-
-    for (int i = 0; i < len / 2; i++) {
-        unsigned int tmp;
-        if (sscanf (&input[i*2], "%02x", &tmp) != 1) {
-            isc_throw (isc::BadValue,
-                       "input string contains invalid characters: "
-                                 << input);
-        }
-
-        bytes.push_back(static_cast<uint8_t>(tmp));
-    }
 }
 
 std::string

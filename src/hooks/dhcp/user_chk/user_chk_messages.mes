@@ -14,7 +14,8 @@
 
 % USER_CHK_HOOK_LOAD_ERROR DHCP UserCheckHook could not be loaded: %1
 This is an error message issued when the DHCP UserCheckHook could not be loaded.
-The exact cause should be explained in the log message.  User subnet selection will revert to default processing.
+The exact cause should be explained in the log message.  User subnet selection
+will revert to default processing.
 
 % USER_CHK_HOOK_UNLOAD_ERROR DHCP UserCheckHook an error occurred unloading the library: %1
 This is an error message issued when an error occurs while unloading the

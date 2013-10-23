@@ -1,5 +1,5 @@
 SUBDIRS = lib bin
-# hooks lib could be a configurable switch
+# @todo hooks lib could be a configurable switch
 SUBDIRS += hooks
 
 EXTRA_DIST = \
