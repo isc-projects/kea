@@ -35,6 +35,7 @@ const OptionDefParams DOCSIS3_V4_DEFS[] = {
 /// Number of option definitions defined.
 const int DOCSIS3_V4_DEFS_SIZE  = sizeof(DOCSIS3_V4_DEFS) / sizeof(OptionDefParams);
 
+/// @todo define remaining docsis3 v6 codes
 #define DOCSIS3_V6_ORO 1
 #define DOCSIS3_V6_DEVICE_TYPE 2
 #define DOCSIS3_V6_VENDOR_NAME 10
@@ -62,4 +63,4 @@ const int DOCSIS3_V6_DEFS_SIZE  = sizeof(DOCSIS3_V6_DEFS) / sizeof(OptionDefPara
 
 }; // anonymous namespace
 
-#endif // STD_OPTION_DEFS_H
+#endif // DOCSIS3_OPTION_DEFS_H

@@ -26,6 +26,7 @@ namespace isc {
 namespace dhcp {
 
 /// This class represents vendor-specific information option.
+/// As defined in RFC3925. The option formatting is slightly
 class OptionVendor: public Option {
 
 public:
@@ -56,10 +57,6 @@ public:
     /// byte after stored option.
     ///
     /// @param [out] buf buffer (option will be stored here)
-    ///
-    /// @throw isc::dhcp::InvalidDataType if size of a data field type is not
-    /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
-    /// because it is checked in a constructor.
     void pack(isc::util::OutputBuffer& buf);
 
     /// @brief Parses received buffer
@@ -71,19 +68,16 @@ public:
     /// @param end iterator to end of option data (first byte after option end)
     ///
     /// @throw isc::OutOfRange if provided buffer is shorter than data size.
-    /// @throw isc::dhcp::InvalidDataType if size of a data field type is not
-    /// equal to 1, 2 or 4 bytes. The data type is not checked in this function
-    /// because it is checked in a constructor.
     virtual void unpack(OptionBufferConstIter begin, OptionBufferConstIter end);
 
-    /// @brief Set option value.
+    /// @brief Sets enterprise identifier
     ///
-    /// @param value new option value.
+    /// @param value vendor identifier
     void setVendorId(uint32_t vendor_id) { vendor_id_ = vendor_id; }
 
-    /// @brief Return option value.
+    /// @brief Returns enterprise identifier
     ///
-    /// @return option value.
+    /// @return enterprise identifier
     uint32_t getVendorId() const { return vendor_id_; }
 
     /// @brief returns complete length of option
@@ -101,4 +95,4 @@ private:
 } // isc::dhcp namespace
 } // isc namespace
 
-#endif // OPTION_INT_H
+#endif // OPTION_VENDOR_H

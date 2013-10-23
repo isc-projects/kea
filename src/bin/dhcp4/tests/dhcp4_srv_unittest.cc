@@ -40,6 +40,7 @@
 #include <gtest/gtest.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
+#include <config/ccsession.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -1178,6 +1179,10 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
     EXPECT_TRUE(rai_response->equal(rai_query));
 }
 
+/// @todo move vendor options tests to a separate file.
+/// @todo Add more extensive vendor options tests, including multiple
+///       vendor options
+
 // Checks if vendor options are parsed correctly and requested vendor options
 // are echoed back.
 TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
@@ -1197,10 +1202,10 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
         "\"subnet4\": [ { "
         "    \"pool\": [ \"10.254.226.0/25\" ],"
         "    \"subnet\": \"10.254.226.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
         "    \"interface\": \"" + valid_iface_ + "\" "
-        " }, {"
-        "    \"pool\": [ \"192.0.3.0/25\" ],"
-        "    \"subnet\": \"192.0.3.0/24\" "
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -2711,6 +2716,187 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
     //EXPECT_EQ(leases.size(), 1);
 }
+
+// Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
+TEST_F(Dhcpv4SrvTest, docsisVendorOptionsParse) {
+
+    // Let's get a traffic capture from DOCSIS3.0 modem
+    Pkt4Ptr dis = captureRelayedDiscover();
+    ASSERT_NO_THROW(dis->unpack());
+
+    // Check if the packet contain
+    OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(opt);
+
+    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+
+    // This particular capture that we have included options 1 and 5
+    EXPECT_TRUE(vendor->getOption(1));
+    EXPECT_TRUE(vendor->getOption(5));
+
+    // It did not include options any other options
+    EXPECT_FALSE(vendor->getOption(2));
+    EXPECT_FALSE(vendor->getOption(3));
+    EXPECT_FALSE(vendor->getOption(17));
+}
+
+// Checks if server is able to parse incoming docsis option and extract suboption 1 (docsis ORO)
+TEST_F(Dhcpv4SrvTest, docsisVendorORO) {
+
+    // Let's get a traffic capture from DOCSIS3.0 modem
+    Pkt4Ptr dis = captureRelayedDiscover();
+    EXPECT_NO_THROW(dis->unpack());
+
+    // Check if the packet contains vendor specific information option
+    OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(opt);
+
+    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+
+    opt = vendor->getOption(DOCSIS3_V4_ORO);
+    ASSERT_TRUE(opt);
+
+    OptionUint8ArrayPtr oro = boost::dynamic_pointer_cast<OptionUint8Array>(opt);
+    EXPECT_TRUE(oro);
+}
+
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the requested options are actually assigned.
+TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"all\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"data\": \"192.0.2.1, 192.0.2.2\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.0/25\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"" + valid_iface_ + "\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr to non-zero address as if it was relayed.
+    dis->setGiaddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr offer = srv.processDiscover(dis);
+
+    // check if we get response at all
+    ASSERT_TRUE(offer);
+
+    // We did not include any vendor opts in DISCOVER, so there should be none
+    // in OFFER.
+    ASSERT_FALSE(offer->getOption(DHO_VIVSO_SUBOPTIONS));
+
+    // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
+    // That suboption has code 1 and is a docsis ORO option.
+    boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
+                                                                        DOCSIS3_V4_ORO));
+    vendor_oro->addValue(DOCSIS3_V4_TFTP_SERVERS); // Request option 33
+    OptionPtr vendor(new OptionVendor(Option::V4, 4491));
+    vendor->addOption(vendor_oro);
+    dis->addOption(vendor);
+
+    // Need to process SOLICIT again after requesting new option.
+    offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if thre is vendor option response
+    OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(docsis2);
+
+    Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+    ASSERT_TRUE(tftp_srvs);
+
+    Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
+    ASSERT_EQ(2, addrs.size());
+    EXPECT_EQ("192.0.2.1", addrs[0].toText());
+    EXPECT_EQ("192.0.2.2", addrs[1].toText());
+}
+
+// Test checks whether it is possible to use option definitions defined in
+// src/lib/dhcp/docsis3_option_defs.h.
+TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
+    ConstElementPtr x;
+    string config_prefix = "{ \"interfaces\": [ \"all\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": ";
+    string config_postfix = ","
+        "          \"data\": \"192.0.2.1\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.50\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"renew-timer\": 1000, "
+        "    \"rebind-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // There is docsis3 (vendor-id=4491) vendor option 2, which is a
+    // tftp-server. Its format is list of IPv4 addresses.
+    string config_valid = config_prefix + "2" + config_postfix;
+
+    // There is no option 99 defined in vendor-id=4491. As there is no
+    // definition, the config should fail.
+    string config_bogus = config_prefix + "99" + config_postfix;
+
+    ElementPtr json_bogus = Element::fromJSON(config_bogus);
+    ElementPtr json_valid = Element::fromJSON(config_valid);
+
+    NakedDhcpv4Srv srv(0);
+
+    // This should fail (missing option definition)
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_bogus));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(1, rcode_);
+
+    // This should work (option definition present)
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_valid));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+}
+
 
 }; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace

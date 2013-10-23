@@ -671,10 +671,8 @@ Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer
     // Let's try to get ORO within that vendor-option
     /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other vendors
     /// may have different policies.
-    OptionPtr oro = vendor_req->getOption(DOCSIS3_V4_ORO);
-
-    /// @todo: see OPT_UINT8_TYPE definition in OptionDefinition::optionFactory().
-    /// I think it should be OptionUint8Array, not OptionGeneric
+    OptionUint8ArrayPtr oro =
+        boost::dynamic_pointer_cast<OptionUint8Array>(vendor_req->getOption(DOCSIS3_V4_ORO));
 
     // Option ORO not found. Don't do anything then.
     if (!oro) {
@@ -685,9 +683,9 @@ Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer
 
     // Get the list of options that client requested.
     bool added = false;
-    const OptionBuffer& requested_opts = oro->getData();
+    const std::vector<uint8_t>& requested_opts = oro->getData();
 
-    for (OptionBuffer::const_iterator code = requested_opts.begin();
+    for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
          code != requested_opts.end(); ++code) {
         Subnet::OptionDescriptor desc = subnet->getVendorOptionDescriptor(vendor_id, *code);
         if (desc.option) {

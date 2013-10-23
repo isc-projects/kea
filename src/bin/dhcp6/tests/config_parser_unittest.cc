@@ -2157,9 +2157,12 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
 
     // Try to get the non-existing option from the non-existing
     // option space and  expect that option is not returned.
-    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(5678, 38);
+    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(5678, 100);
     ASSERT_FALSE(desc2.option);
 }
+
+/// @todo add tests similar to vendorOptionsCsv and vendorOptionsHex, but for
+///       vendor options defined in a subnet.
 
 // The goal of this test is to verify that the standard option can
 // be configured to encapsulate multiple other options.
