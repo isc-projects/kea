@@ -701,6 +701,13 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         return;
     }
 
+    // Set up siaddr. Perhaps assignLease is not the best place to call this
+    // as siaddr has nothing to do with a lease, but otherwise we would have
+    // to select subnet twice (performance hit) or update too many functions
+    // at once.
+    // @todo: move subnet selection to a common code
+    answer->setSiaddr(subnet->getSiaddr());
+
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_SELECTED)
         .arg(subnet->toText());
 
