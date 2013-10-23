@@ -372,6 +372,16 @@ OptionDefinition::haveClientFqdnFormat() const {
             (record_fields_[1] == OPT_FQDN_TYPE));
 }
 
+bool
+OptionDefinition::haveVendor4Format() const {
+    return (true);
+}
+
+bool
+OptionDefinition::haveVendor6Format() const {
+    return  (getType() == OPT_UINT32_TYPE && !getEncapsulatedSpace().empty());
+}
+
 template<typename T>
 T
 OptionDefinition::lexicalCastWithRangeCheck(const std::string& value_str)
@@ -582,7 +592,8 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // a specialized class to handle it.
             return (OptionPtr(new Option6ClientFqdn(begin, end)));
 
-        } else if (getCode() == D6O_VENDOR_OPTS) {
+        } else if (getCode() == D6O_VENDOR_OPTS && haveVendor6Format()) {
+            // Vendor-Specific Information.
             return (OptionPtr(new OptionVendor(Option::V6, begin, end)));
 
         }
@@ -590,7 +601,8 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
 
-        } else if (getCode() == DHO_VIVSO_SUBOPTIONS) {
+        } else if (getCode() == DHO_VIVSO_SUBOPTIONS && haveVendor4Format()) {
+            // Vendor-Specific Information.
             return (OptionPtr(new OptionVendor(Option::V4, begin, end)));
 
         }
