@@ -683,7 +683,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer
 
     // Get the list of options that client requested.
     bool added = false;
-    const std::vector<uint8_t>& requested_opts = oro->getData();
+    const std::vector<uint8_t>& requested_opts = oro->getValues();
 
     for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
          code != requested_opts.end(); ++code) {
@@ -914,13 +914,13 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     copyDefaultFields(discover, offer);
     appendDefaultOptions(offer, DHCPOFFER);
-    appendRequestedVendorOptions(discover, offer);
 
     assignLease(discover, offer);
 
     // Adding any other options makes sense only when we got the lease.
     if (offer->getYiaddr() != IOAddress("0.0.0.0")) {
         appendRequestedOptions(discover, offer);
+        appendRequestedVendorOptions(discover, offer);
         // There are a few basic options that we always want to
         // include in the response. If client did not request
         // them we append them for him.
@@ -941,7 +941,6 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
     copyDefaultFields(request, ack);
     appendDefaultOptions(ack, DHCPACK);
-    appendRequestedVendorOptions(request, ack);
 
     // Note that we treat REQUEST message uniformly, regardless if this is a
     // first request (requesting for new address), renewing existing address
@@ -951,6 +950,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     // Adding any other options makes sense only when we got the lease.
     if (ack->getYiaddr() != IOAddress("0.0.0.0")) {
         appendRequestedOptions(request, ack);
+        appendRequestedVendorOptions(request, ack);
         // There are a few basic options that we always want to
         // include in the response. If client did not request
         // them we append them for him.
