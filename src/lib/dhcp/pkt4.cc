@@ -108,6 +108,10 @@ Pkt4::pack() {
         isc_throw(InvalidOperation, "Can't build Pkt4 packet. HWAddr not set.");
     }
 
+    // Clear the output buffer to make sure that consecutive calls to pack()
+    // will not result in concatenation of multiple packet copies.
+    buffer_out_.clear();
+
     try {
         size_t hw_len = hwaddr_->hwaddr_.size();
 

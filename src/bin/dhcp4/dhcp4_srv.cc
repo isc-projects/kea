@@ -758,6 +758,13 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         return;
     }
 
+    // Set up siaddr. Perhaps assignLease is not the best place to call this
+    // as siaddr has nothing to do with a lease, but otherwise we would have
+    // to select subnet twice (performance hit) or update too many functions
+    // at once.
+    // @todo: move subnet selection to a common code
+    answer->setSiaddr(subnet->getSiaddr());
+
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_SELECTED)
         .arg(subnet->toText());
 
@@ -810,13 +817,6 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         opt = OptionPtr(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
         opt->setUint32(lease->valid_lft_);
         answer->addOption(opt);
-
-        // Router (type 3)
-        Subnet::OptionDescriptor opt_routers =
-            subnet->getOptionDescriptor("dhcp4", DHO_ROUTERS);
-        if (opt_routers.option) {
-            answer->addOption(opt_routers.option);
-        }
 
         // Subnet mask (type 1)
         answer->addOption(getNetmaskOption(subnet));
@@ -914,15 +914,18 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     copyDefaultFields(discover, offer);
     appendDefaultOptions(offer, DHCPOFFER);
-    appendRequestedOptions(discover, offer);
     appendRequestedVendorOptions(discover, offer);
 
     assignLease(discover, offer);
 
-    // There are a few basic options that we always want to
-    // include in the response. If client did not request
-    // them we append them for him.
-    appendBasicOptions(discover, offer);
+    // Adding any other options makes sense only when we got the lease.
+    if (offer->getYiaddr() != IOAddress("0.0.0.0")) {
+        appendRequestedOptions(discover, offer);
+        // There are a few basic options that we always want to
+        // include in the response. If client did not request
+        // them we append them for him.
+        appendBasicOptions(discover, offer);
+    }
 
     return (offer);
 }
@@ -938,7 +941,6 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
     copyDefaultFields(request, ack);
     appendDefaultOptions(ack, DHCPACK);
-    appendRequestedOptions(request, ack);
     appendRequestedVendorOptions(request, ack);
 
     // Note that we treat REQUEST message uniformly, regardless if this is a
@@ -946,10 +948,14 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     // or even rebinding.
     assignLease(request, ack);
 
-    // There are a few basic options that we always want to
-    // include in the response. If client did not request
-    // them we append them for him.
-    appendBasicOptions(request, ack);
+    // Adding any other options makes sense only when we got the lease.
+    if (ack->getYiaddr() != IOAddress("0.0.0.0")) {
+        appendRequestedOptions(request, ack);
+        // There are a few basic options that we always want to
+        // include in the response. If client did not request
+        // them we append them for him.
+        appendBasicOptions(request, ack);
+    }
 
     return (ack);
 }

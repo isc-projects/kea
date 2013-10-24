@@ -115,6 +115,7 @@ public:
     /// Options must be stored in options_ field.
     /// Output buffer will be stored in data_. Length
     /// will be set in data_len_.
+    /// The output buffer is cleared before new data is written to it.
     ///
     /// @throw BadValue if packet protocol is invalid, InvalidOperation
     /// if packing fails, or NotImplemented if protocol is TCP (IPv6 over TCP is
@@ -139,7 +140,7 @@ public:
     /// zero length
     ///
     /// @return reference to output buffer
-    const isc::util::OutputBuffer& getBuffer() const { return (bufferOut_); };
+    const isc::util::OutputBuffer& getBuffer() const { return (buffer_out_); };
 
     /// @brief Returns protocol of this packet (UDP or TCP).
     ///
@@ -530,7 +531,7 @@ protected:
     /// remote TCP or UDP port
     uint16_t remote_port_;
 
-    /// output buffer (used during message transmission)
+    /// Output buffer (used during message transmission)
     ///
     /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
@@ -538,7 +539,7 @@ protected:
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
-    isc::util::OutputBuffer bufferOut_;
+    isc::util::OutputBuffer buffer_out_;
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
