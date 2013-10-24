@@ -653,6 +653,18 @@ TEST_F(CfgMgrTest, activateAllIfaces) {
     EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
 }
 
+// This test verifies that RFC6842 (echo client-id) compatibility may be
+// configured.
+TEST_F(CfgMgrTest, echoClientId) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    EXPECT_TRUE(cfg_mgr.echoClientId());
+
+    cfg_mgr.echoClientId(false);
+
+    EXPECT_FALSE(cfg_mgr.echoClientId());
+}
+
 /// @todo Add unit-tests for testing:
 /// - addActiveIface() with invalid interface name
 /// - addActiveIface() with the same interface twice
