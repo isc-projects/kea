@@ -3,7 +3,7 @@ SUBDIRS = .
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/user_chk -I$(top_srcdir)/src/hooks/dhcp/user_chk
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(BOTAN_INCLUDES)
-AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/hooks/dhcp/user_chk/tests\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_srcdir)/src/hooks/dhcp/user_chk/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
@@ -21,7 +21,7 @@ AM_LDFLAGS = -static
 endif
 
 # Unit test data files need to get installed.
-EXTRA_DIST = test_users_1.txt   test_users_err.txt
+EXTRA_DIST = test_users_1.txt test_users_err.txt
 
 CLEANFILES = *.gcno *.gcda
 
@@ -71,6 +71,3 @@ libdhcp_user_chk_unittests_LDADD += ${BOTAN_LIBS} ${BOTAN_RPATH}
 libdhcp_user_chk_unittests_LDADD += $(GTEST_LDADD)
 endif
 noinst_PROGRAMS = $(TESTS)
-
-libdhcp_user_chk_unittestsdir = $(abs_top_builddir)/src/hooks/dhcp/user_chk/tests
-libdhcp_user_chk_unittests_DATA = test_users_1.txt test_users_err.txt
