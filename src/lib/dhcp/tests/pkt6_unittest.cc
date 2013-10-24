@@ -66,6 +66,8 @@ public:
     /// Contains custom implementation of the callback.
     ///
     /// @param buf a A buffer holding options in on-wire format.
+    /// @param option_space A name of the option space encapsulated by the
+    /// option being parsed.
     /// @param [out] options A reference to the collection where parsed options
     /// will be stored.
     /// @param relay_msg_offset Reference to a size_t structure. If specified,
@@ -74,7 +76,7 @@ public:
     /// length of the relay_msg option will be stored in it.
     /// @return An offset to the first byte after last parsed option.
     size_t execute(const OptionBuffer& buf,
-                   const std::string&,
+                   const std::string& option_space,
                    isc::dhcp::OptionCollection& options,
                    size_t* relay_msg_offset,
                    size_t* relay_msg_len) {
@@ -82,7 +84,7 @@ public:
         // callback has been actually called.
         executed_ = true;
         // Use default implementation of the unpack algorithm to parse options.
-        return (LibDHCP::unpackOptions6(buf, options, relay_msg_offset,
+        return (LibDHCP::unpackOptions6(buf, option_space, options, relay_msg_offset,
                                         relay_msg_len));
     }
 
