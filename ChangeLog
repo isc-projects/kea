@@ -1,10 +1,10 @@
 697.	[func]	tmark
-	Implements "user_check" hooks shared library which supports subnet 
+	Implements "user_check" hooks shared library which supports subnet
 	selection based upon the contents of a list of known DHCP lease users
-	(i.e. clients).  Adds the following subdirectories to the bind10 src 
+	(i.e. clients).  Adds the following subdirectories to the bind10 src
 	directory for maintaining hooks shared libraries:
 		-bind10/src/hooks  - base directory for hooks shared libraries
-		-bind10/src/hooks/dhcp - base directory for all hooks libs pertaining 
+		-bind10/src/hooks/dhcp - base directory for all hooks libs pertaining
 		to DHCP(Kea)
 		-bind10/src/hooks/dhcp/user_check - directory containing the user_check
 		 hooks library
