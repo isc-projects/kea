@@ -92,6 +92,9 @@ private:
     uint32_t vendor_id_;  ///< Enterprise-id 
 };
 
+/// Pointer to a vendor option
+typedef boost::shared_ptr<OptionVendor> OptionVendorPtr;
+
 } // isc::dhcp namespace
 } // isc namespace
 
