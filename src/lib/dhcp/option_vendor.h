@@ -25,16 +25,18 @@
 namespace isc {
 namespace dhcp {
 
-/// This class represents vendor-specific information option.
-/// As defined in RFC3925. The option formatting is slightly
+/// @brief This class represents vendor-specific information option.
+///
+/// As specified in RFC3925, the option formatting is slightly different
+/// for DHCPv4 than DHCPv6. The DHCPv4 Option includes additional field
+/// holding vendor data length.
 class OptionVendor: public Option {
-
 public:
     /// @brief Constructor.
     ///
     /// @param u universe (V4 or V6)
     /// @param vendor_id vendor enterprise-id (unique 32 bit integer)
-    OptionVendor(Option::Universe u, uint32_t vendor_id);
+    OptionVendor(Option::Universe u, const uint32_t vendor_id);
 
     /// @brief Constructor.
     ///
@@ -47,17 +49,15 @@ public:
     /// @param end iterator to end of option data (first byte after option end).
     ///
     /// @throw isc::OutOfRange if provided buffer is shorter than data size.
-    /// @throw isc::dhcp::InvalidDataType if data field type provided
-    /// as template parameter is not a supported integer type.
     /// @todo Extend constructor to set encapsulated option space name.
     OptionVendor(Option::Universe u, OptionBufferConstIter begin,
                  OptionBufferConstIter end);
 
-    /// Writes option in wire-format to buf, returns pointer to first unused
-    /// byte after stored option.
+    /// @brief Writes option in wire-format to buf, returns pointer to first
+    /// unused byte after stored option.
     ///
     /// @param [out] buf buffer (option will be stored here)
-    void pack(isc::util::OutputBuffer& buf);
+    virtual void pack(isc::util::OutputBuffer& buf);
 
     /// @brief Parses received buffer
     ///
@@ -73,12 +73,12 @@ public:
     /// @brief Sets enterprise identifier
     ///
     /// @param value vendor identifier
-    void setVendorId(uint32_t vendor_id) { vendor_id_ = vendor_id; }
+    void setVendorId(const uint32_t vendor_id) { vendor_id_ = vendor_id; }
 
     /// @brief Returns enterprise identifier
     ///
     /// @return enterprise identifier
-    uint32_t getVendorId() const { return vendor_id_; }
+    uint32_t getVendorId() const { return (vendor_id_); }
 
     /// @brief returns complete length of option
     ///
@@ -89,7 +89,7 @@ public:
 
 private:
 
-    uint32_t vendor_id_;  ///< Enterprise-id 
+    uint32_t vendor_id_;  ///< Enterprise-id
 };
 
 /// Pointer to a vendor option
