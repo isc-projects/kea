@@ -79,7 +79,7 @@ LibDHCP::getOptionDefs(const Option::Universe u) {
 }
 
 const OptionDefContainer*
-LibDHCP::getVendorOption4Defs(uint32_t vendor_id) {
+LibDHCP::getVendorOption4Defs(const uint32_t vendor_id) {
 
     if (vendor_id == VENDOR_ID_CABLE_LABS &&
         vendor4_defs_.find(VENDOR_ID_CABLE_LABS) == vendor4_defs_.end()) {
@@ -95,7 +95,7 @@ LibDHCP::getVendorOption4Defs(uint32_t vendor_id) {
 }
 
 const OptionDefContainer*
-LibDHCP::getVendorOption6Defs(uint32_t vendor_id) {
+LibDHCP::getVendorOption6Defs(const uint32_t vendor_id) {
 
     if (vendor_id == VENDOR_ID_CABLE_LABS &&
         vendor6_defs_.find(VENDOR_ID_CABLE_LABS) == vendor6_defs_.end()) {
@@ -369,7 +369,7 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
     return (offset);
 }
 
-size_t LibDHCP::unpackVendorOptions6(uint32_t vendor_id,
+size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
                                      const OptionBuffer& buf,
                                      isc::dhcp::OptionCollection& options) {
     size_t offset = 0;
@@ -450,7 +450,7 @@ size_t LibDHCP::unpackVendorOptions6(uint32_t vendor_id,
     return (offset);
 }
 
-size_t LibDHCP::unpackVendorOptions4(uint32_t vendor_id, const OptionBuffer& buf,
+size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffer& buf,
                                      isc::dhcp::OptionCollection& options) {
     size_t offset = 0;
 
