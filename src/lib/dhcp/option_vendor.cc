@@ -18,7 +18,7 @@
 
 using namespace isc::dhcp;
 
-OptionVendor::OptionVendor(Option::Universe u, uint32_t vendor_id)
+OptionVendor::OptionVendor(Option::Universe u, const uint32_t vendor_id)
     :Option(u, u==Option::V4?DHO_VIVSO_SUBOPTIONS:D6O_VENDOR_OPTS), vendor_id_(vendor_id) {
 }
 
@@ -37,14 +37,18 @@ void OptionVendor::pack(isc::util::OutputBuffer& buf) {
 
     // The format is slightly different for v4
     if (universe_ == Option::V4) {
-        // Store data-len1 (it's a length of following suboptions
-        buf.writeUint8(len() - getHeaderLen() - sizeof(uint32_t) - sizeof(uint8_t));
+        // Calculate and store data-len as follows:
+        // data-len = total option length - header length
+        //            - enterprise id field length - data-len field size
+        buf.writeUint8(len() - getHeaderLen() -
+                       sizeof(uint32_t) - sizeof(uint8_t));
     }
 
     packOptions(buf);
 }
 
-void OptionVendor::unpack(OptionBufferConstIter begin, OptionBufferConstIter end) {
+void OptionVendor::unpack(OptionBufferConstIter begin,
+                          OptionBufferConstIter end) {
     if (distance(begin, end) < sizeof(uint32_t)) {
         isc_throw(OutOfRange, "Truncated vendor-specific information option"
                   << ", length=" << distance(begin, end));
