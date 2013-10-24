@@ -79,8 +79,7 @@ public:
     Dhcpv4SrvTest();
 
     /// @brief destructor
-    virtual ~Dhcpv4SrvTest() {
-    }
+    virtual ~Dhcpv4SrvTest();
 
     /// @brief Add 'Parameter Request List' option to the packet.
     ///
