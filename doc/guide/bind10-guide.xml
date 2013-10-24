@@ -4405,6 +4405,10 @@ Dhcp4/subnet4	[]	list	(default)
             Domain Name (15), DNS Servers (6), IP Address Lease Time
             (51), Subnet mask (1), and Routers (3).</simpara>
           </listitem>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3046">RFC 3046</ulink>:
+            Relay Agent Information option is supported.</simpara>
+          </listitem>
       </itemizedlist>
     </section>
 
