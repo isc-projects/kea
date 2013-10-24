@@ -525,7 +525,9 @@ class MsgQ:
             # Append it to buffer (but check the data go away)
             if fileno in self.sendbuffs:
                 (last_sent, buff) = self.sendbuffs[fileno]
-                if now - last_sent > 0.1:
+                tdelta = now - last_sent
+                if tdelta > 0.1:
+                    logger.error(MSGQ_SOCKET_TIMEOUT_ERROR, fileno, tdelta)
                     self.kill_socket(fileno, sock)
                     return False
                 buff += msg
