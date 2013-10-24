@@ -43,12 +43,8 @@ using namespace isc::util;
 
 namespace {
 
-// DHCPv4 suboptions of standard option Relay Agent Information
-const uint16_t OPTION_AGENT_CIRCUIT_ID = 1;
-const uint16_t OPTION_REMOTE_ID = 2;
-const uint16_t OPTION_VSI = 9;
-
 // DHCPv6 suboptions of Vendor Options Option.
+/// @todo move to src/lib/dhcp/docsis3_option_defs.h once #3194 is merged.
 const uint16_t OPTION_CMTS_CAPS = 1025;
 const uint16_t OPTION_CM_MAC = 1026;
 
@@ -502,18 +498,18 @@ TEST_F(LibDhcpTest, packOptions4) {
     // option in on-wire format is correct.
 
     // Create Ciruit ID sub-option and add to RAI.
-    OptionPtr circuit_id(new Option(Option::V4, OPTION_AGENT_CIRCUIT_ID,
+    OptionPtr circuit_id(new Option(Option::V4, RAI_OPTION_AGENT_CIRCUIT_ID,
                                     OptionBuffer(v4_opts + 29,
                                                  v4_opts + 33)));
     rai->addOption(circuit_id);
 
     // Create Remote ID option and add to RAI.
-    OptionPtr remote_id(new Option(Option::V4, OPTION_REMOTE_ID,
+    OptionPtr remote_id(new Option(Option::V4, RAI_OPTION_REMOTE_ID,
                                    OptionBuffer(v4_opts + 35, v4_opts + 41)));
     rai->addOption(remote_id);
 
     // Create Vendor Specific Information and add to RAI.
-    OptionPtr vsi(new Option(Option::V4, OPTION_VSI,
+    OptionPtr vsi(new Option(Option::V4, RAI_OPTION_VSI,
                              OptionBuffer(v4_opts + 43, v4_opts + 52)));
     rai->addOption(vsi);
 
@@ -602,23 +598,23 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     // the generic Option class.
 
     // Check that Circuit ID option is among parsed options.
-    OptionPtr rai_option = rai->getOption(OPTION_AGENT_CIRCUIT_ID);
+    OptionPtr rai_option = rai->getOption(RAI_OPTION_AGENT_CIRCUIT_ID);
     ASSERT_TRUE(rai_option);
-    EXPECT_EQ(OPTION_AGENT_CIRCUIT_ID, rai_option->getType());
+    EXPECT_EQ(RAI_OPTION_AGENT_CIRCUIT_ID, rai_option->getType());
     ASSERT_EQ(6, rai_option->len());
     EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 29, 4));
 
     // Check that Remote ID option is among parsed options.
-    rai_option = rai->getOption(OPTION_REMOTE_ID);
+    rai_option = rai->getOption(RAI_OPTION_REMOTE_ID);
     ASSERT_TRUE(rai_option);
-    EXPECT_EQ(OPTION_REMOTE_ID, rai_option->getType());
+    EXPECT_EQ(RAI_OPTION_REMOTE_ID, rai_option->getType());
     ASSERT_EQ(8, rai_option->len());
     EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 35, 6));
 
     // Check that Vendor Specific Information option is among parsed options.
-    rai_option = rai->getOption(OPTION_VSI);
+    rai_option = rai->getOption(RAI_OPTION_VSI);
     ASSERT_TRUE(rai_option);
-    EXPECT_EQ(OPTION_VSI, rai_option->getType());
+    EXPECT_EQ(RAI_OPTION_VSI, rai_option->getType());
     ASSERT_EQ(11, rai_option->len());
     EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 43, 11));
 
