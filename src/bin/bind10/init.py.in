@@ -337,6 +337,7 @@ class Init:
                 self.__propagate_component_config(new_config['components'])
             return isc.config.ccsession.create_answer(0)
         except Exception as e:
+            logger.error(BIND10_RECONFIGURE_ERROR, e)
             return isc.config.ccsession.create_answer(1, str(e))
 
     def get_processes(self):
@@ -597,6 +598,13 @@ class Init:
             process, the log_starting/log_started methods are not used.
         """
         logger.info(BIND10_STARTING_CC)
+
+        # Unsubscribe from the other CC session first, because we only
+        # monitor one and msgq expects all data sent to us to be read,
+        # or it will close its side of the socket.
+        if self.cc_session is not None:
+            self.cc_session.group_unsubscribe("Init")
+
         self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                       self.config_handler,
                                       self.command_handler,
@@ -764,9 +772,14 @@ class Init:
         it might want to choose if it is for this one).
         """
         logger.info(BIND10_STOP_PROCESS, process)
-        self.cc_session.group_sendmsg(isc.config.ccsession.
-                                      create_command('shutdown', {'pid': pid}),
-                                      recipient, recipient)
+        try:
+            self.cc_session.group_sendmsg(isc.config.ccsession.
+                                          create_command('shutdown',
+                                                         {'pid': pid}),
+                                          recipient, recipient)
+        except:
+            logger.error(BIND10_COMPONENT_SHUTDOWN_ERROR, process)
+            raise
 
     def component_shutdown(self, exitcode=0):
         """
