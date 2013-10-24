@@ -638,10 +638,12 @@ Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     // to be returned to the client.
     for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
          opt != requested_opts.end(); ++opt) {
-        Subnet::OptionDescriptor desc =
-            subnet->getOptionDescriptor("dhcp4", *opt);
-        if (desc.option) {
-            msg->addOption(desc.option);
+        if (!msg->getOption(*opt)) {
+            Subnet::OptionDescriptor desc =
+                subnet->getOptionDescriptor("dhcp4", *opt);
+            if (desc.option && !msg->getOption(*opt)) {
+                msg->addOption(desc.option);
+            }
         }
     }
 }
@@ -687,15 +689,18 @@ Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer
 
     for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
          code != requested_opts.end(); ++code) {
-        Subnet::OptionDescriptor desc = subnet->getVendorOptionDescriptor(vendor_id, *code);
-        if (desc.option) {
-            vendor_rsp->addOption(desc.option);
-            added = true;
+        if  (!vendor_rsp->getOption(*code)) {
+            Subnet::OptionDescriptor desc = subnet->getVendorOptionDescriptor(vendor_id,
+                                                                              *code);
+            if (desc.option) {
+                vendor_rsp->addOption(desc.option);
+                added = true;
+            }
         }
-    }
 
-    if (added) {
-        answer->addOption(vendor_rsp);
+        if (added) {
+            answer->addOption(vendor_rsp);
+        }
     }
 }
 
@@ -705,7 +710,6 @@ Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     // Identify options that we always want to send to the
     // client (if they are configured).
     static const uint16_t required_options[] = {
-        DHO_SUBNET_MASK,
         DHO_ROUTERS,
         DHO_DOMAIN_NAME_SERVERS,
         DHO_DOMAIN_NAME };
