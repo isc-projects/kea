@@ -1,3 +1,9 @@
+698.	[bug]		muks
+	A bug was fixed in the interaction between b10-init and b10-msgq
+	that caused BIND 10 failures after repeated start/stop of
+	components.
+	(Trac #3094, git ed672a898d28d6249ff0c96df12384b0aee403c8
+
 697.	[func]	tmark
 	Implements "user_check" hooks shared library which supports subnet
 	selection based upon the contents of a list of known DHCP lease users
