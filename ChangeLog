@@ -1,3 +1,8 @@
+699.	[bug]		marcin
+	libdhcp++: Options with defined suboptions are now handled properly.
+	In particular, Relay Agent Info options is now echoed back properly.
+	(Trac #3102, git 6f6251bbd761809634aa470f36480d046b4d2a20)
+
 698.	[bug]		muks
 	A bug was fixed in the interaction between b10-init and b10-msgq
 	that caused BIND 10 failures after repeated start/stop of
