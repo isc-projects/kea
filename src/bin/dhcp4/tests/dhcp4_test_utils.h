@@ -109,10 +109,32 @@ public:
     /// @param a answer (server's message)
     void messageCheck(const Pkt4Ptr& q, const Pkt4Ptr& a);
 
-    /// @brief Check that requested options are present.
+    /// @brief Check that certain basic (always added when lease is acquired)
+    /// are present in a message.
     ///
-    /// @param pkt packet to be checked.
-    void optionsCheck(const Pkt4Ptr& pkt);
+    /// @param pkt A message to be checked.
+    /// @return Assertion result which indicates whether test passed or failed.
+    ::testing::AssertionResult basicOptionsPresent(const Pkt4Ptr& pkt);
+
+    /// @brief Check that certain basic (always added when lease is acquired)
+    /// are not present.
+    ///
+    /// @param pkt A packet to be checked.
+    /// @return Assertion result which indicates whether test passed or failed.
+    ::testing::AssertionResult noBasicOptions(const Pkt4Ptr& pkt);
+
+    /// @brief Check that certain requested options are present in the message.
+    ///
+    /// @param pkt A message to be checked.
+    /// @return Assertion result which indicates whether test passed or failed.
+    ::testing::AssertionResult requestedOptionsPresent(const Pkt4Ptr& pkt);
+
+    /// @brief Check that certain options (requested with PRL option)
+    /// are not present.
+    ///
+    /// @param pkt A packet to be checked.
+    /// @return Assertion result which indicates whether test passed or failed.
+    ::testing::AssertionResult noRequestedOptions(const Pkt4Ptr& pkt);
 
     /// @brief generates client-id option
     ///
@@ -183,12 +205,46 @@ public:
     /// @return relayed DISCOVER
     Pkt4Ptr captureRelayedDiscover();
 
+    /// @brief Create packet from output buffer of another packet.
+    ///
+    /// This function creates a packet using an output buffer from another
+    /// packet. This imitates reception of a packet from the wire. The
+    /// unpack function is then called to parse packet contents and to
+    /// create a collection of the options carried by this packet.
+    ///
+    /// This function is useful for unit tests which verify that the received
+    /// packet is parsed correctly. In those cases it is usually inappropriate
+    /// to create an instance of the packet, add options, set packet
+    /// fields and use such packet as an input to processDiscover or
+    /// processRequest function. This is because, such a packet has certain
+    /// options already initialized and there is no way to verify that they
+    /// have been initialized when packet instance was created or wire buffer
+    /// processing. By creating a packet from the buffer we guarantee that the
+    /// new packet is entirely initialized during wire data parsing.
+    ///
+    /// @param src_pkt A source packet, to be copied.
+    /// @param [out] dst_pkt A destination packet.
+    ///
+    /// @return assertion result indicating if a function completed with
+    /// success or failure.
+    static ::testing::AssertionResult
+    createPacketFromBuffer(const Pkt4Ptr& src_pkt,
+                           Pkt4Ptr& dst_pkt);
+
     /// @brief generates a DHCPv4 packet based on provided hex string
     ///
     /// @return created packet
     Pkt4Ptr packetFromCapture(const std::string& hex_string);
 
     /// @brief Tests if Discover or Request message is processed correctly
+    ///
+    /// This test verifies that the Parameter Request List option is handled
+    /// correctly, i.e. it checks that certain options are present in the
+    /// server's response when they are requested and that they are not present
+    /// when they are not requested or NAK occurs.
+    ///
+    /// @todo We need an additional test for PRL option using real traffic
+    /// capture.
     ///
     /// @param msg_type DHCPDISCOVER or DHCPREQUEST
     void testDiscoverRequest(const uint8_t msg_type);

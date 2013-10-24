@@ -4390,6 +4390,30 @@ Dhcp4/subnet4	[]	list	(default)
       </para>
     </section>
 
+    <section id="dhcp4-next-server">
+      <title>Next server (siaddr)</title>
+      <para>In some cases, clients want to obtain configuration from the TFTP server.
+      Although there is a dedicated option for it, some devices may use siaddr field
+      in the DHCPv4 packet for that purpose. That specific field can be configured
+      using next-server directive. It is possible to define it in global scope or
+      for a given subnet only. If both are defined, subnet value takes precedence.
+      The value in subnet can be set to 0.0.0.0, which means that next-server should
+      not be sent. It may also be set to empty string, which means the same as if
+      it was not defined at all - use global value.
+      </para>
+
+<screen>
+&gt; <userinput>config add Dhcp4/next-server</userinput>
+&gt; <userinput>config set Dhcp4/next-server "192.0.2.123"</userinput>
+&gt; <userinput>config commit</userinput>
+<userinput></userinput>
+&gt; <userinput>config add Dhcp4/subnet[0]/next-server</userinput>
+&gt; <userinput>config set Dhcp4/subnet[0]/next-server "192.0.2.234"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+
+    </section>
+
     <section id="dhcp4-std">
       <title>Supported Standards</title>
       <para>The following standards and draft standards are currently
@@ -4666,6 +4690,43 @@ Dhcp6/subnet6/	list
         <screen>
 &gt; <userinput>config remove Dhcp6/interfaces[2]</userinput>
 &gt; <userinput>config commit</userinput></screen>
+      </para>
+    </section>
+
+    <section id="dhcp6-unicast">
+      <title>Unicast traffic support</title>
+      <para>
+        When DHCPv6 server starts up, by default it listens to the DHCP traffic
+        sent to multicast address ff02::1:2 on each interface that it is
+        configured to listen on (see <xref linkend="dhcp6-interface-selection"/>).
+        In some cases it is useful to configure a server to handle incoming
+        traffic sent to the global unicast addresses as well. The most common
+        reason for that is to have relays send their traffic to the server
+        directly. To configure server to listen on specific unicast address, a
+        notation to specify interfaces has been extended. Interface name can be
+        optionally followed by a slash, followed by global unicast address that
+        server should listen on. That will be done in addition to normal
+        link-local binding + listening on ff02::1:2 address. The sample commands
+        listed below show how to listen on 2001:db8::1 (a global address)
+        configured on the eth1 interface.
+      </para>
+      <para>
+        <screen>
+&gt; <userinput>config set Dhcp6/interfaces[0] eth1/2001:db8::1</userinput>
+&gt; <userinput>config commit</userinput></screen>
+        When configuration gets committed, the server will start to listen on
+        eth1 on link-local address, mutlicast group (ff02::1:2) and 2001:db8::1.
+      </para>
+      <para>
+        It is possible to mix interface names, wildcards and interface name/addresses
+        on the Dhcp6/interface list. It is not possible to specify more than one
+        unicast address on a given interface.
+      </para>
+      <para>
+        Care should be taken to specify proper unicast addresses. The server will
+        attempt to bind to those addresses specified, without any additional checks.
+        That approach is selected on purpose, so in the software can be used to
+        communicate over uncommon addresses if the administrator desires so.
       </para>
     </section>
 
