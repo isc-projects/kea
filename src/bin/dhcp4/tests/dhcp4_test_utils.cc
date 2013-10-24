@@ -66,6 +66,12 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     valid_iface_ = ifaces.begin()->getName();
 }
 
+Dhcpv4SrvTest::~Dhcpv4SrvTest() {
+
+    // Make sure that we revert to default value
+    CfgMgr::instance().echoClientId(true);
+}
+
 void Dhcpv4SrvTest::addPrlOption(Pkt4Ptr& pkt) {
 
     OptionUint8ArrayPtr option_prl =
@@ -331,12 +337,21 @@ void Dhcpv4SrvTest::checkServerId(const Pkt4Ptr& rsp, const OptionPtr& expected_
 }
 
 void Dhcpv4SrvTest::checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid) {
+
+    bool include_clientid = CfgMgr::instance().echoClientId();
+
     // check that server included our own client-id
     OptionPtr opt = rsp->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(expected_clientid->getType(), opt->getType());
-    EXPECT_EQ(expected_clientid->len(), opt->len());
-    EXPECT_TRUE(expected_clientid->getData() == opt->getData());
+    if (include_clientid) {
+        // Normal mode: echo back (see RFC6842)
+        ASSERT_TRUE(opt);
+        EXPECT_EQ(expected_clientid->getType(), opt->getType());
+        EXPECT_EQ(expected_clientid->len(), opt->len());
+        EXPECT_TRUE(expected_clientid->getData() == opt->getData());
+    } else {
+        // Backward compatibility mode for pre-RFC6842 devices
+        ASSERT_FALSE(opt);
+    }
 }
 
 ::testing::AssertionResult
