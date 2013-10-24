@@ -34,9 +34,12 @@ TESTS += libdhcp_user_chk_unittests
 
 libdhcp_user_chk_unittests_SOURCES  = 
 libdhcp_user_chk_unittests_SOURCES += ../load_unload.cc
+libdhcp_user_chk_unittests_SOURCES += ../pkt_receive_co.cc
+libdhcp_user_chk_unittests_SOURCES += ../pkt_send_co.cc
 libdhcp_user_chk_unittests_SOURCES += ../subnet_select_co.cc
 libdhcp_user_chk_unittests_SOURCES += ../version.cc
 libdhcp_user_chk_unittests_SOURCES += ../user.cc ../user.h
+libdhcp_user_chk_unittests_SOURCES += ../user_chk.h
 # Until logging in dynamically loaded libraries is fixed, exclude these.
 #libdhcp_user_chk_unittests_SOURCES += ../user_chk_log.cc ../user_chk_log.h
 #libdhcp_user_chk_unittests_SOURCES += ../user_chk_messages.cc ../user_chk_messages.h
