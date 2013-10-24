@@ -1,3 +1,48 @@
+698.	[bug]		muks
+	A bug was fixed in the interaction between b10-init and b10-msgq
+	that caused BIND 10 failures after repeated start/stop of
+	components.
+	(Trac #3094, git ed672a898d28d6249ff0c96df12384b0aee403c8
+
+697.	[func]	tmark
+	Implements "user_check" hooks shared library which supports subnet
+	selection based upon the contents of a list of known DHCP lease users
+	(i.e. clients).  Adds the following subdirectories to the bind10 src
+	directory for maintaining hooks shared libraries:
+		-bind10/src/hooks  - base directory for hooks shared libraries
+		-bind10/src/hooks/dhcp - base directory for all hooks libs pertaining
+		to DHCP(Kea)
+		-bind10/src/hooks/dhcp/user_check - directory containing the user_check
+		 hooks library
+	(Trac #3186, git f36aab92c85498f8511fbbe19fad5e3f787aef68)
+
+696.	[func]		tomek
+	b10-dhcp4: It is now possible to specify value of siaddr field
+	in DHCPv4 responses. It is used to point out to the next
+	server in the boot process (that typically is TFTP server).
+	(Trac #3191, git 541922b5300904a5de2eaeddc3666fc4b654ffba)
+
+695.	[func]		tomek
+	b10-dhcp6 is now able to listen on global IPv6 unicast addresses.
+	(Trac #3195, git 72e601f2a57ab70b25d50877c8e49242739d1c9f)
+
+694.	[bug]		tomek
+	b10-dhcp6 now handles exceptions better when processing initial
+	configuration. In particular, errors with socket binding do not
+	prevent b10-dhcp6 from establishing configuration session anymore.
+	(Trac #3195, git 72e601f2a57ab70b25d50877c8e49242739d1c9f)
+
+693.	[bug]		tomek
+	b10-dhcp6 now handles IPv6 interface enabling correctly.
+	(Trac #3195, git 72e601f2a57ab70b25d50877c8e49242739d1c9f)
+
+692.	[bug]		marcin
+	b10-dhcp4: Fix a bug whereby the Parameter Request List was not parsed
+	by the server and requested DHCPv4 options were not returned to the
+	client. Options are not sent back to the client if server failed to
+	assign a lease.
+	(Trac #3200, git 50d91e4c069c6de13680bfaaee3c56b68d6e4ab1)
+
 691.	[bug]		marcin
 	libdhcp++: Created definitions for standard DHCPv4 options:
 	tftp-server-name (66) and boot-file-name (67). Also, fixed definition

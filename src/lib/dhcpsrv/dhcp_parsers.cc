@@ -231,6 +231,7 @@ InterfaceListConfigParser::commit() {
 
 bool
 InterfaceListConfigParser::isIfaceAdded(const std::string& iface) const {
+
     for (IfaceListStorage::const_iterator it = interfaces_.begin();
          it != interfaces_.end(); ++it) {
         if (iface == *it) {

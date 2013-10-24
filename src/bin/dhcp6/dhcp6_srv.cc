@@ -2284,7 +2284,7 @@ Dhcpv6Srv::openActiveSockets(const uint16_t port) {
                       << " trying to reopen sockets after reconfiguration");
         }
         if (CfgMgr::instance().isActiveIface(iface->getName())) {
-            iface_ptr->inactive4_ = false;
+            iface_ptr->inactive6_ = false;
             LOG_INFO(dhcp6_logger, DHCP6_ACTIVATE_INTERFACE)
                 .arg(iface->getFullName());
 
@@ -2296,6 +2296,15 @@ Dhcpv6Srv::openActiveSockets(const uint16_t port) {
                       DHCP6_DEACTIVATE_INTERFACE).arg(iface->getName());
             iface_ptr->inactive6_ = true;
 
+        }
+
+        iface_ptr->clearUnicasts();
+
+        const IOAddress* unicast = CfgMgr::instance().getUnicast(iface->getName());
+        if (unicast) {
+            LOG_INFO(dhcp6_logger, DHCP6_SOCKET_UNICAST).arg(unicast->toText())
+                .arg(iface->getName());
+            iface_ptr->addUnicast(*unicast);
         }
     }
     // Let's reopen active sockets. openSockets6 will check internally whether
