@@ -118,7 +118,11 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
     try {
         switch(type_) {
         case OPT_EMPTY_TYPE:
-            return (factoryEmpty(u, type));
+            if (getEncapsulatedSpace().empty()) {
+                    return (factoryEmpty(u, type));
+            } else {
+                return (OptionPtr(new OptionCustom(*this, u, begin, end)));
+            }
 
         case OPT_BINARY_TYPE:
             return (factoryGeneric(u, type, begin, end));

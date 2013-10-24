@@ -128,14 +128,22 @@ LibDHCP::optionFactory(Option::Universe u,
 
 
 size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
+                               const std::string& option_space,
                                isc::dhcp::OptionCollection& options,
                                size_t* relay_msg_offset /* = 0 */,
                                size_t* relay_msg_len /* = 0 */) {
     size_t offset = 0;
     size_t length = buf.size();
 
-    // Get the list of stdandard option definitions.
-    const OptionDefContainer& option_defs = LibDHCP::getOptionDefs(Option::V6);
+    // Get the list of standard option definitions.
+    OptionDefContainer option_defs;
+    if (option_space == "dhcp6") {
+        option_defs = LibDHCP::getOptionDefs(Option::V6);
+    }
+    // @todo Once we implement other option spaces we should add else clause
+    // here and gather option definitions for them. For now leaving option_defs
+    // empty will imply creation of generic Option.
+
     // Get the search index #1. It allows to search for option definitions
     // using option code.
     const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
@@ -206,11 +214,19 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
 }
 
 size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
+                               const std::string& option_space,
                                isc::dhcp::OptionCollection& options) {
     size_t offset = 0;
 
     // Get the list of stdandard option definitions.
-    const OptionDefContainer& option_defs = LibDHCP::getOptionDefs(Option::V4);
+    OptionDefContainer option_defs;
+    if (option_space == "dhcp4") {
+        option_defs = LibDHCP::getOptionDefs(Option::V4);
+    }
+    // @todo Once we implement other option spaces we should add else clause
+    // here and gather option definitions for them. For now leaving option_defs
+    // empty will imply creation of generic Option.
+
     // Get the search index #1. It allows to search for option definitions
     // using option code.
     const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
