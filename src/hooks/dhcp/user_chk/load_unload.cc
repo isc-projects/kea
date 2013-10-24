@@ -38,6 +38,12 @@ const char* registry_fname = "/tmp/user_chk_registry.txt";
 /// @todo Hard-coded for now, this should be configurable.
 const char* user_chk_output_fname = "/tmp/user_chk_outcome.txt";
 
+/// @brief Text label of user id in the inbound query in callout context
+const char* query_user_id_label = "query_user_id_label";
+
+/// @brief Text label of registered user pointer in callout context
+const char* registered_user_label = "registered_user";
+
 // Functions accessed by the hooks framework use C linkage to avoid the name
 // mangling that accompanies use of the C++ compiler as well as to avoid
 // issues related to namespaces.
