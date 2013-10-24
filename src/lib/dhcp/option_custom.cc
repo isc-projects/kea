@@ -322,6 +322,7 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
             }
             if (data_size > 0) {
                 buffers.push_back(OptionBuffer(data, data + data_size));
+                data += data_size;
             } else {
                 isc_throw(OutOfRange, "option buffer truncated");
             }
