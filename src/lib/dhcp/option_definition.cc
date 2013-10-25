@@ -19,6 +19,7 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
@@ -361,6 +362,16 @@ OptionDefinition::haveIAAddr6Format() const {
 }
 
 bool
+OptionDefinition::haveIAPrefix6Format() const {
+    return (haveType(OPT_RECORD_TYPE) &&
+            record_fields_.size() == 4 &&
+            record_fields_[0] == OPT_UINT32_TYPE &&
+            record_fields_[1] == OPT_UINT32_TYPE &&
+            record_fields_[2] == OPT_UINT8_TYPE &&
+            record_fields_[3] == OPT_IPV6_ADDRESS_TYPE);
+}
+
+bool
 OptionDefinition::haveFqdn4Format() const {
     return (haveType(OPT_RECORD_TYPE) &&
             record_fields_.size() == 4 &&
@@ -571,6 +582,20 @@ OptionDefinition::factoryIAAddr6(uint16_t type,
 }
 
 OptionPtr
+OptionDefinition::factoryIAPrefix6(uint16_t type,
+                                 OptionBufferConstIter begin,
+                                 OptionBufferConstIter end) {
+    if (std::distance(begin, end) < Option6IAPrefix::OPTION6_IAPREFIX_LEN) {
+        isc_throw(isc::OutOfRange,
+                  "input option buffer has invalid size, expected at least "
+                  << Option6IAPrefix::OPTION6_IAPREFIX_LEN << " bytes");
+    }
+    boost::shared_ptr<Option6IAPrefix> option(new Option6IAPrefix(type, begin,
+                                                                  end));
+    return (option);
+}
+
+OptionPtr
 OptionDefinition::factorySpecialFormatOption(Option::Universe u,
                                              OptionBufferConstIter begin,
                                              OptionBufferConstIter end,
@@ -593,15 +618,15 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // option only for the same reasons as described in
             // for IA_NA and IA_PD above.
             return (factoryIAAddr6(getCode(), begin, end));
+        } else if (getCode() == D6O_IAPREFIX && haveIAPrefix6Format()) {
+            return (factoryIAPrefix6(getCode(), begin, end));
         } else if (getCode() == D6O_CLIENT_FQDN && haveClientFqdnFormat()) {
             // FQDN option requires special processing. Thus, there is
             // a specialized class to handle it.
             return (OptionPtr(new Option6ClientFqdn(begin, end)));
-
         } else if (getCode() == D6O_VENDOR_OPTS && haveVendor6Format()) {
             // Vendor-Specific Information.
             return (OptionPtr(new OptionVendor(Option::V6, begin, end)));
-
         }
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {

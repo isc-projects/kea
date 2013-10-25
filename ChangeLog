@@ -1,3 +1,7 @@
+7XX.	[bug]		tomek
+	libdhcp++: Incoming IAPREFIX option is now parsed properly.
+	(Trac #3211, git ABCD)
+
 700.	[func]		tomek,marcin
 	b10-dhcp4,b10-dhcp6: Support for vendor options has been added. It
 	is now possible to configure vendor options. Server is able to
