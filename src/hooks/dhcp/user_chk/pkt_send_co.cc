@@ -16,7 +16,9 @@
 
 #include <asiolink/io_address.h>
 #include <hooks/hooks.h>
+#include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/option_string.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
@@ -43,6 +45,9 @@ extern std::string getAddrStrIA_NA(OptionPtr options);
 extern std::string getAddrStrIA_PD(OptionPtr options);
 extern bool checkIAStatus(boost::shared_ptr<Option6IA>& ia_opt);
 
+extern void add4Options(Pkt4Ptr& response, UserPtr& user);
+extern void add6Options(Pkt6Ptr& response, UserPtr& user);
+
 /// @brief  This callout is called at the "pkt4_send" hook.
 ///
 /// This function searches the UserRegistry for the client indicated by the
@@ -56,18 +61,13 @@ int pkt4_send(CalloutHandle& handle) {
         Pkt4Ptr response;
         handle.getArgument("response4", response);
 
-        // @todo do we need to filter on type?
-#if 0
         uint8_t packet_type = response->getType();
-        std::cout << "PACKET TYPE IS: " <<
-                  static_cast<int>(packet_type) << std::endl;
-
-        if ((packet_type != DHCPOFFER) && (packet_type != DHCPACK)) {
-            std::cout << "SKIPPING PACKET TYPE IS: "
+        if (packet_type == DHCPNAK) {
+            std::cout << "DHCP UserCheckHook : pkt4_send"
+                      << "skipping packet type: "
                       << static_cast<int>(packet_type) << std::endl;
             return (0);
         }
-#endif
 
         // Get the user id saved from the query packet.
         HWAddrPtr hwaddr;
@@ -89,6 +89,7 @@ int pkt4_send(CalloutHandle& handle) {
             // Add the outcome entry to the output file.
             generate_output_record(UserId::HW_ADDRESS_STR, hwaddr->toText(),
                                    addr.toText(), true);
+            add4Options(response, registered_user);
         } else {
             // add default options based
             // then generate not registered output record
@@ -97,6 +98,8 @@ int pkt4_send(CalloutHandle& handle) {
             // Add the outcome entry to the output file.
             generate_output_record(UserId::HW_ADDRESS_STR, hwaddr->toText(),
                                    addr.toText(), false);
+            // @todo store defaults in a defualt user
+            // add4Options(response, default_user4);
         }
     } catch (const std::exception& ex) {
         std::cout << "DHCP UserCheckHook : pkt4_send unexpected error: "
@@ -105,6 +108,51 @@ int pkt4_send(CalloutHandle& handle) {
     }
 
     return (0);
+}
+
+void add4Options(Pkt4Ptr& response, UserPtr& user) {
+    std::string bootfile = user->getProperty("bootfile");
+    if (!bootfile.empty()) {
+        std::cout << "DHCP UserCheckHook : add4Options "
+              << "adding boot file:" << bootfile << std::endl;
+
+        // Set file field
+        response->setFile((const uint8_t*)(bootfile.c_str()),
+                          bootfile.length());
+
+        // Remove the option if it exists.
+        OptionPtr boot_opt = response->getOption(DHO_BOOT_FILE_NAME);
+        if (boot_opt) {
+            response->delOption(DHO_BOOT_FILE_NAME);
+        }
+
+        // Now add the boot file option.
+        boot_opt.reset(new OptionString(Option::V4, DHO_BOOT_FILE_NAME,
+                                        bootfile));
+
+        response->addOption(boot_opt);
+    }
+    // add next option here
+}
+
+void add6Options(Pkt6Ptr& response, UserPtr& user) {
+    std::string bootfile = user->getProperty("bootfile");
+    if (!bootfile.empty()) {
+        std::cout << "DHCP UserCheckHook : add6Options "
+                  << "adding boot file:" << bootfile << std::endl;
+        OptionPtr vendor = response->getOption(D6O_VENDOR_OPTS);
+        if (vendor) {
+            /// @todo: This will be DOCSIS3_V6_CONFIG_FILE.
+            /// Unfortunately, 3207 was branched from master before
+            /// 3194 was merged in, so this branch does not have
+            /// src/lib/dhcp/docsis3_option_defs.h.
+            vendor->delOption(33);
+            OptionPtr boot_opt(new OptionString(Option::V6, 33,
+                                                bootfile));
+            vendor->addOption(boot_opt);
+        }
+    }
+    // add next option here
 }
 
 /// @brief  This callout is called at the "pkt6_send" hook.
@@ -120,19 +168,13 @@ int pkt6_send(CalloutHandle& handle) {
         Pkt6Ptr response;
         handle.getArgument("response6", response);
 
-        // @todo do we need to filter on type?
-#if 0
         uint8_t packet_type = response->getType();
-        std::cout << "PACKET TYPE IS: " <<
-                  static_cast<int>(packet_type) << std::endl;
-
-        if ((packet_type != DHCPV6_ADVERTISE) &&
-            (packet_type != DHCPV6_REPLY)) {
-            std::cout << "SKIPPING PACKET TYPE IS: "
+        if (packet_type == DHCPV6_DECLINE) {
+            std::cout << "DHCP UserCheckHook : pkt6_send"
+                      << "skipping packet type: "
                       << static_cast<int>(packet_type) << std::endl;
             return (0);
         }
-#endif
 
         // Fetch the lease address as a string
         std::string addr_str = getV6AddrStr(response);
@@ -159,6 +201,7 @@ int pkt6_send(CalloutHandle& handle) {
             // Add the outcome entry to the output file.
             generate_output_record(UserId::DUID_STR, duid->toText(),
                                    addr_str, true);
+            add6Options(response, registered_user);
         } else {
             // add default options based
             // then generate not registered output record
@@ -167,6 +210,8 @@ int pkt6_send(CalloutHandle& handle) {
             // Add the outcome entry to the output file.
             generate_output_record(UserId::DUID_STR, duid->toText(),
                                    addr_str, false);
+            // @todo store defaults in a default user
+            //add6Options(response, default_user6);
         }
     } catch (const std::exception& ex) {
         std::cout << "DHCP UserCheckHook : pkt6_send unexpected error: "
@@ -228,7 +273,8 @@ void generate_output_record(const std::string& id_type_str,
                     << "client=" << id_val_str << std::endl
                     << "addr=" << addr_str << std::endl
                     << "registered=" << (registered ? "yes" : "no")
-                    << std::endl;
+                    << std::endl
+                    << std::endl;   // extra line in between
 
     // @todo Flush is here to ensure output is immediate for demo purposes.
     // Performance would generally dictate not using it.
