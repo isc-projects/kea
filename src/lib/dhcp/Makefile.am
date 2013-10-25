@@ -49,6 +49,7 @@ libb10_dhcp___la_SOURCES += pkt_filter_lpf.cc pkt_filter_lpf.h
 endif
 
 libb10_dhcp___la_SOURCES += std_option_defs.h
+libb10_dhcp___la_SOURCES += docsis3_option_defs.h
 
 libb10_dhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 libb10_dhcp___la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
