@@ -1340,28 +1340,39 @@ TEST_F(TestControlTest, createRenew) {
         generator(new NakedTestControl::IncrementalGenerator());
     tc.setTransidGenerator(generator);
 
+    // Create a Reply packet. The createRenew function will need Reply
+    // packet to create a corresponding Renew.
     Pkt6Ptr reply = createReplyPkt6(1);
     Pkt6Ptr renew;
+    // Check that Renew is created.
     ASSERT_NO_THROW(renew = tc.createRenew(reply));
     ASSERT_TRUE(renew);
     EXPECT_EQ(DHCPV6_RENEW, renew->getType());
     EXPECT_EQ(1, renew->getTransid());
 
+    // Now check that the Renew packet created, has expected options. The
+    // payload of these options should be the same as the payload of the
+    // options in the Reply.
+
+    // Client Identifier
     OptionPtr opt_clientid = renew->getOption(D6O_CLIENTID);
     ASSERT_TRUE(opt_clientid);
     EXPECT_TRUE(reply->getOption(D6O_CLIENTID)->getData() ==
                 opt_clientid->getData());
 
+    // Server identifier
     OptionPtr opt_serverid = renew->getOption(D6O_SERVERID);
     ASSERT_TRUE(opt_serverid);
     EXPECT_TRUE(reply->getOption(D6O_SERVERID)->getData() ==
                 opt_serverid->getData());
 
+    // IA_NA
     OptionPtr opt_ia_na = renew->getOption(D6O_IA_NA);
     ASSERT_TRUE(opt_ia_na);
     EXPECT_TRUE(reply->getOption(D6O_IA_NA)->getData() ==
                 opt_ia_na->getData());
 
+    // IA_PD
     OptionPtr opt_ia_pd = renew->getOption(D6O_IA_PD);
     ASSERT_TRUE(opt_ia_pd);
     EXPECT_TRUE(reply->getOption(D6O_IA_PD)->getData() ==
