@@ -359,6 +359,10 @@ TEST_F(CommandOptionsTest, RenewRate) {
     // Renew rate should be specified.
     EXPECT_THROW(process("perfdhcp -6 -r 10 -f -l ethx all"),
                  isc::InvalidParameter);
+
+    // -f and -i are mutually exclusive
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -f 10 -l ethx -i all"),
+                 isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, ReportDelay) {

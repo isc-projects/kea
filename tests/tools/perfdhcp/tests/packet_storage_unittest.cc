@@ -66,9 +66,17 @@ TEST_F(PacketStorageTest, getNext) {
         EXPECT_EQ(STORAGE_SIZE - i - 1, storage_.size());
     }
     EXPECT_TRUE(storage_.empty());
+    // When storage is empty, the attempt to get the next packet should
+    // result in returning NULL pointer.
     EXPECT_FALSE(storage_.getNext());
+    // Let's try it again to see if the previous call to getNext didn't
+    // put the storage into the state in which the subsequent calls to
+    // getNext would result in incorrect behaviour.
     EXPECT_FALSE(storage_.getNext());
 
+    // Let's add a new packet to the empty storage to check that storage
+    // "recovers" from being empty, i.e. that the internal indicator
+    // which points to current packet reinitializes correctly.
     storage_.append(createPacket6(DHCPV6_REPLY, 100));
     ASSERT_EQ(1, storage_.size());
     Pkt6Ptr packet = storage_.getNext();
@@ -82,16 +90,32 @@ TEST_F(PacketStorageTest, getNext) {
 // empty() and size() functions.
 TEST_F(PacketStorageTest, getRandom) {
     ASSERT_EQ(STORAGE_SIZE, storage_.size());
+    int cnt_equals = 0;
     for (int i = 0; i < STORAGE_SIZE; ++i) {
         Pkt6Ptr packet = storage_.getRandom();
         ASSERT_TRUE(packet) << "NULL packet returned by storage_.getRandom()"
             " for iteration number " << i;
         EXPECT_EQ(STORAGE_SIZE - i - 1, storage_.size());
+        cnt_equals += (i == packet->getTransid() ? 1 : 0);
     }
+    // If the number of times id is equal to i, is the same as the number
+    // of elements then they were NOT accessed randomly.
+    // The odds of 20 elements being randomly  accessed sequential order
+    // is nil isn't it?
+    EXPECT_NE(cnt_equals, STORAGE_SIZE);
+
     EXPECT_TRUE(storage_.empty());
+    // When storage is empty, the attempt to get the random packet should
+    // result in returning NULL pointer.
     EXPECT_FALSE(storage_.getRandom());
+    // Let's try it again to see if the previous call to getRandom didn't
+    // put the storage into the state in which the subsequent calls to
+    // getRandom would result in incorrect behaviour.
     EXPECT_FALSE(storage_.getRandom());
 
+    // Let's add a new packet to the empty storage to check that storage
+    // "recovers" from being empty, i.e. that the internal indicator
+    // which points to the current packet reinitializes correctly.
     storage_.append(createPacket6(DHCPV6_REPLY, 100));
     ASSERT_EQ(1, storage_.size());
     Pkt6Ptr packet = storage_.getRandom();
@@ -109,8 +133,7 @@ TEST_F(PacketStorageTest, getNextAndRandom) {
         Pkt6Ptr packet_random = storage_.getRandom();
         ASSERT_TRUE(packet_random) << "NULL packet returned by"
             " storage_.getRandom() for iteration number " << i;
-        EXPECT_EQ(STORAGE_SIZE - 2 * i - 1, storage_.size());
-        uint32_t random_packet_transid = packet_random->getTransid();
+        EXPECT_EQ(STORAGE_SIZE - 2 *i - 1, storage_.size());
         Pkt6Ptr packet_seq = storage_.getNext();
         ASSERT_TRUE(packet_seq) << "NULL packet returned by"
             " storage_.getNext()  for iteration number " << i;
@@ -120,15 +143,25 @@ TEST_F(PacketStorageTest, getNextAndRandom) {
     EXPECT_FALSE(storage_.getRandom());
     EXPECT_FALSE(storage_.getNext());
 
+    // Append two packets to the storage to check if it can "recover"
+    // from being empty and that new elements can be accessed.
     storage_.append(createPacket6(DHCPV6_REPLY, 100));
     storage_.append(createPacket6(DHCPV6_REPLY, 101));
     ASSERT_EQ(2, storage_.size());
-    Pkt6Ptr packet_random = storage_.getRandom();
-    ASSERT_TRUE(packet_random);
-    EXPECT_EQ(100, packet_random->getTransid());
+    // The newly added elements haven't been accessed yet. So, if we
+    // call getNext the first one should be returned.
     Pkt6Ptr packet_next = storage_.getNext();
     ASSERT_TRUE(packet_next);
-    EXPECT_EQ(101, packet_next->getTransid());
+    // The first packet has transaction id equal to 100.
+    EXPECT_EQ(100, packet_next->getTransid());
+    // There should be just one packet left in the storage.
+    ASSERT_EQ(1, storage_.size());
+    // The call to getRandom should return the sole packet from the
+    // storage.
+    Pkt6Ptr packet_random = storage_.getRandom();
+    ASSERT_TRUE(packet_random);
+    EXPECT_EQ(101, packet_random->getTransid());
+    // Any further calls to getRandom and getNext should return NULL.
     EXPECT_FALSE(storage_.getRandom());
     EXPECT_FALSE(storage_.getNext());
 }
@@ -152,6 +185,12 @@ TEST_F(PacketStorageTest, clear) {
     ASSERT_NO_THROW(storage_.clear(10));
     // We should have 10 remaining.
     ASSERT_EQ(10, storage_.size());
+
+    // Check that the retrieval still works after partial clear.
+    EXPECT_TRUE(storage_.getNext());
+    EXPECT_TRUE(storage_.getRandom());
+    // We should have 10 - 2 = 8 packets in the storage after retrieval.
+    ASSERT_EQ(8, storage_.size());
 
     // Try to remove more elements that actually is. It
     // should result in removal of all elements.

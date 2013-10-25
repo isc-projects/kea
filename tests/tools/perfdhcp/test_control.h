@@ -746,9 +746,8 @@ protected:
 
     /// \brief Send a renew message using provided socket.
     ///
-    /// This function will try to identify an existing lease for which a Renew
-    /// will be sent. If there is no lease that can be renewed this method will
-    /// return false.
+    /// This method will select an existing lease from the Reply packet cache
+    /// If there is no lease that can be renewed this method will return false.
     ///
     /// \param socket An object encapsulating socket to be used to send
     /// a packet.
@@ -1061,7 +1060,7 @@ private:
     boost::posix_time::ptime renew_due_;   ///< Due time to send next set of
                                            ///< Renew requests.
     boost::posix_time::ptime last_renew_;  ///< Indicates when the last Renew
-                                           ///< was sent.
+                                           ///< was attempted.
 
     boost::posix_time::ptime last_report_; ///< Last intermediate report time.
 
