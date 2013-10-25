@@ -308,6 +308,9 @@ protected:
     /// can be sent at the given rate. Note that the Renew packets
     /// are generated for the existing leases, represented here as
     /// replies from the server.
+    /// @todo Instead of cleaning packets periodically we could
+    /// just stop adding new packets when the certain threshold
+    /// has been reached.
     void cleanCachedPackets();
 
     /// \brief Creates IPv6 packet using options from Reply packet.
