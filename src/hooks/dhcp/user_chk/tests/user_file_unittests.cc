@@ -128,7 +128,7 @@ TEST(UserFile, readFile) {
     ASSERT_NO_THROW(user_file->open());
     EXPECT_TRUE(user_file->isOpen());
 
-    // File should contain two valid users. Read and verify each.
+    // File should contain four valid users. Read and verify each.
     UserPtr user;
     int i = 0;
     do {
@@ -140,8 +140,20 @@ TEST(UserFile, readFile) {
                 EXPECT_EQ("true", user->getProperty("opt1"));
                 break;
             case 1:
+                // File entry should have colons in id.
+                EXPECT_EQ(UserId::HW_ADDRESS, user->getUserId().getType());
+                EXPECT_EQ("01ac00f03345", user->getUserId().toText());
+                EXPECT_EQ("true", user->getProperty("opt1"));
+                break;
+            case 2:
                 EXPECT_EQ(UserId::DUID, user->getUserId().getType());
                 EXPECT_EQ("225060de0a0b", user->getUserId().toText());
+                EXPECT_EQ("true", user->getProperty("opt1"));
+                break;
+            case 3:
+                // File entry should have colons in id.
+                EXPECT_EQ(UserId::DUID, user->getUserId().getType());
+                EXPECT_EQ("225060de0a0c", user->getUserId().toText());
                 EXPECT_EQ("true", user->getProperty("opt1"));
                 break;
             default:

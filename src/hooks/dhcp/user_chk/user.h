@@ -63,7 +63,7 @@ public:
     ///
     /// @param id_type The type of user id contained in string.
     /// The string is expected to contain an even number of hex digits
-    /// without delimiters.
+    /// with or without colon (':') as a delimiter.
     ///
     /// @param id a vector of unsigned bytes containing the id
     ///

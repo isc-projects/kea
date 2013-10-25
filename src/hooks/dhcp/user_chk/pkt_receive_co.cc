@@ -64,7 +64,7 @@ int pkt4_receive(CalloutHandle& handle) {
         handle.setContext(registered_user_label, registered_user);
         std::cout << "DHCP UserCheckHook : pkt4_receive user : "
                   << hwaddr->toText() << " is " 
-                  << (registered_user ? " registered" : " not registere")
+                  << (registered_user ? " registered" : " not registered")
                   << std::endl;
     } catch (const std::exception& ex) {
         std::cout << "DHCP UserCheckHook : pkt4_receive unexpected error: "
@@ -117,7 +117,7 @@ int pkt6_receive(CalloutHandle& handle) {
         handle.setContext(registered_user_label, registered_user);
         std::cout << "DHCP UserCheckHook : pkt6_receive user : "
                   << duid->toText() << " is " 
-                  << (registered_user ? " registered" : " not registere")
+                  << (registered_user ? " registered" : " not registered")
                   << std::endl;
     } catch (const std::exception& ex) {
         std::cout << "DHCP UserCheckHook : pkt6_receive unexpected error: "
