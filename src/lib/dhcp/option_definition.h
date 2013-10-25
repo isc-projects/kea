@@ -23,6 +23,7 @@
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/shared_ptr.hpp>
+#include <map>
 
 namespace isc {
 namespace dhcp {
@@ -296,6 +297,28 @@ public:
     /// %Option.
     bool haveFqdn4Format() const;
 
+    /// @brief Check if the option has format of Vendor-Identifying Vendor
+    /// Specific Options.
+    ///
+    /// @return Always true.
+    /// @todo The Vendor-Identifying Vendor-Specific Option has a complex format
+    /// which we do not support here. Therefore it is not really possible to
+    /// check that the current definition is valid. We may need to add support
+    /// for such option format or simply do not check the format for certain
+    /// options, e.g. vendor options, IA_NA, IAADDR and always return objects
+    /// of the certain type.
+    bool haveVendor4Format() const;
+
+    /// @brief Check if option has a format of the Vendor-Specific Information
+    /// %Option.
+    ///
+    /// The Vendor-Specific Information %Option comprises 32-bit enterprise id
+    /// and the suboptions.
+    ///
+    /// @return true if option definition conforms to the format of the
+    /// Vendor-Specific Information %Option.
+    bool haveVendor6Format() const;
+
     /// @brief Option factory.
     ///
     /// This function creates an instance of DHCP option using
@@ -492,6 +515,31 @@ public:
 
 private:
 
+    /// @brief Creates an instance of an option having special format.
+    ///
+    /// The option with special formats are encapsulated by the dedicated
+    /// classes derived from @c Option class. In particular these are:
+    /// - IA_NA
+    /// - IAADDR
+    /// - FQDN
+    /// - VIVSO.
+    ///
+    /// @param u A universe (V4 or V6).
+    /// @param begin beginning of the option buffer.
+    /// @param end end of the option buffer.
+    /// @param callback An instance of the function which parses packet options.
+    /// If this is set to non NULL value this function will be used instead of
+    /// @c isc::dhcp::LibDHCP::unpackOptions6 and
+    /// isc::dhcp::LibDHCP::unpackOptions4.
+    ///
+    /// @return An instance of the option having special format or NULL if
+    /// such an option can't be created because an option with the given
+    /// option code hasn't got the special format.
+    OptionPtr factorySpecialFormatOption(Option::Universe u,
+                                         OptionBufferConstIter begin,
+                                         OptionBufferConstIter end,
+                                         UnpackOptionsCallback callback) const;
+
     /// @brief Check if specified option format is a record with 3 fields
     /// where first one is custom, and two others are uint32.
     ///
@@ -600,6 +648,9 @@ typedef boost::multi_index_container<
 
 /// Pointer to an option definition container.
 typedef boost::shared_ptr<OptionDefContainer> OptionDefContainerPtr;
+
+/// Container that holds various vendor option containers
+typedef std::map<uint32_t, OptionDefContainer> VendorOptionDefContainers;
 
 /// Type of the index #1 - option type.
 typedef OptionDefContainer::nth_index<1>::type OptionDefContainerTypeIndex;

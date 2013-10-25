@@ -100,6 +100,8 @@ Bootstrap Protocol
     Option: (55) Parameter Request List
     Option: (60) Vendor class identifier
     Option: (125) V-I Vendor-specific Information
+      - suboption 1 (Option Request): requesting option 2
+      - suboption 5 (Modem Caps): 117 bytes
     Option: (43) Vendor-Specific Information (CableLabs)
     Option: (61) Client identifier
     Option: (57) Maximum DHCP Message Size
