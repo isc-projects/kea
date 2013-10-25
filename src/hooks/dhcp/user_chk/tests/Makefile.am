@@ -70,6 +70,7 @@ libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.l
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+libdhcp_user_chk_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libdhcp_user_chk_unittests_LDADD += ${BOTAN_LIBS} ${BOTAN_RPATH}
 libdhcp_user_chk_unittests_LDADD += $(GTEST_LDADD)
 endif
