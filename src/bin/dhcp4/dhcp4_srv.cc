@@ -20,7 +20,9 @@
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt4.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcpsrv/addr_utilities.h>
@@ -36,6 +38,7 @@
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 #include <iomanip>
 #include <fstream>
@@ -635,20 +638,78 @@ Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     // to be returned to the client.
     for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
          opt != requested_opts.end(); ++opt) {
-        Subnet::OptionDescriptor desc =
-            subnet->getOptionDescriptor("dhcp4", *opt);
-        if (desc.option) {
-            msg->addOption(desc.option);
+        if (!msg->getOption(*opt)) {
+            Subnet::OptionDescriptor desc =
+                subnet->getOptionDescriptor("dhcp4", *opt);
+            if (desc.option && !msg->getOption(*opt)) {
+                msg->addOption(desc.option);
+            }
         }
     }
 }
+
+void
+Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer) {
+    // Get the configured subnet suitable for the incoming packet.
+    Subnet4Ptr subnet = selectSubnet(question);
+    // Leave if there is no subnet matching the incoming packet.
+    // There is no need to log the error message here because
+    // it will be logged in the assignLease() when it fails to
+    // pick the suitable subnet. We don't want to duplicate
+    // error messages in such case.
+    if (!subnet) {
+        return;
+    }
+
+    // Try to get the vendor option
+    boost::shared_ptr<OptionVendor> vendor_req =
+        boost::dynamic_pointer_cast<OptionVendor>(question->getOption(DHO_VIVSO_SUBOPTIONS));
+    if (!vendor_req) {
+        return;
+    }
+
+    uint32_t vendor_id = vendor_req->getVendorId();
+
+    // Let's try to get ORO within that vendor-option
+    /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other vendors
+    /// may have different policies.
+    OptionUint8ArrayPtr oro =
+        boost::dynamic_pointer_cast<OptionUint8Array>(vendor_req->getOption(DOCSIS3_V4_ORO));
+
+    // Option ORO not found. Don't do anything then.
+    if (!oro) {
+        return;
+    }
+
+    boost::shared_ptr<OptionVendor> vendor_rsp(new OptionVendor(Option::V4, vendor_id));
+
+    // Get the list of options that client requested.
+    bool added = false;
+    const std::vector<uint8_t>& requested_opts = oro->getValues();
+
+    for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
+         code != requested_opts.end(); ++code) {
+        if  (!vendor_rsp->getOption(*code)) {
+            Subnet::OptionDescriptor desc = subnet->getVendorOptionDescriptor(vendor_id,
+                                                                              *code);
+            if (desc.option) {
+                vendor_rsp->addOption(desc.option);
+                added = true;
+            }
+        }
+
+        if (added) {
+            answer->addOption(vendor_rsp);
+        }
+    }
+}
+
 
 void
 Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     // Identify options that we always want to send to the
     // client (if they are configured).
     static const uint16_t required_options[] = {
-        DHO_SUBNET_MASK,
         DHO_ROUTERS,
         DHO_DOMAIN_NAME_SERVERS,
         DHO_DOMAIN_NAME };
@@ -863,6 +924,7 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     // Adding any other options makes sense only when we got the lease.
     if (offer->getYiaddr() != IOAddress("0.0.0.0")) {
         appendRequestedOptions(discover, offer);
+        appendRequestedVendorOptions(discover, offer);
         // There are a few basic options that we always want to
         // include in the response. If client did not request
         // them we append them for him.
@@ -892,6 +954,7 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     // Adding any other options makes sense only when we got the lease.
     if (ack->getYiaddr() != IOAddress("0.0.0.0")) {
         appendRequestedOptions(request, ack);
+        appendRequestedVendorOptions(request, ack);
         // There are a few basic options that we always want to
         // include in the response. If client did not request
         // them we append them for him.
