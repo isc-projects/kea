@@ -453,7 +453,6 @@ public:
     ///
     /// @throw isc::OutOfRange if provided option buffer is too short or
     /// too long. Expected size is 12 bytes.
-    /// @throw isc::BadValue if specified universe value is not V6.
     static OptionPtr factoryIA6(uint16_t type,
                                 OptionBufferConstIter begin,
                                 OptionBufferConstIter end);
@@ -466,7 +465,6 @@ public:
     ///
     /// @throw isc::OutOfRange if provided option buffer is too short or
     /// too long. Expected size is 24 bytes.
-    /// @throw isc::BadValue if specified universe value is not V6.
     static OptionPtr factoryIAAddr6(uint16_t type,
                                     OptionBufferConstIter begin,
                                     OptionBufferConstIter end);
@@ -477,9 +475,8 @@ public:
     /// @param begin iterator pointing to the beginning of the buffer.
     /// @param end iterator pointing to the end of the buffer.
     ///
-    /// @throw isc::OutOfRange if provided option buffer is too short or
-    /// too long. Expected size is 25 bytes.
-    /// @throw isc::BadValue if specified universe value is not V6.
+    /// @throw isc::OutOfRange if provided option buffer is too short.
+    /// Expected minimum size is 25 bytes.
     static OptionPtr factoryIAPrefix6(uint16_t type,
                                       OptionBufferConstIter begin,
                                       OptionBufferConstIter end);
