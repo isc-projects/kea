@@ -29,7 +29,7 @@ namespace perfdhcp {
 /// The main purpose of this class is to support sending Renew and Release
 /// messages from perfdhcp. The Renew and Release messages are sent for existing
 /// leases only. Therefore, the typical use case for this class is that it holds
-/// a list of Rely messages sent by the server in response to Request messages.
+/// a list of Reply messages sent by the server in response to Request messages.
 /// The Request messages hold addresses and/or IPv6 prefixes acquired so they
 /// can be used to identify existing leases. When perfdhcp needs to send Renew
 /// or Release message, it will access one of the elements on this list and
