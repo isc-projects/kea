@@ -1,5 +1,5 @@
 7XX.	[bug]		tomek
-	libdhcp++: Incoming IAPREFIX option is now parsed properly.
+	libdhcp++: Incoming DHCPv6 IAPREFIX option is now parsed properly.
 	(Trac #3211, git ABCD)
 
 700.	[func]		tomek,marcin
