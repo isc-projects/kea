@@ -45,13 +45,29 @@ extern std::string getAddrStrIA_NA(OptionPtr options);
 extern std::string getAddrStrIA_PD(OptionPtr options);
 extern bool checkIAStatus(boost::shared_ptr<Option6IA>& ia_opt);
 
-extern void add4Options(Pkt4Ptr& response, UserPtr& user);
-extern void add6Options(Pkt6Ptr& response, UserPtr& user);
+extern void add4Options(Pkt4Ptr& response, const UserPtr& user);
+extern void add4Option(Pkt4Ptr& response, uint8_t opt_code, 
+                        std::string& opt_value);
+extern void add6Options(Pkt6Ptr& response, const UserPtr& user);
+extern void add6Option(OptionPtr& vendor, uint8_t opt_code, 
+                       std::string& opt_value);
+extern const UserPtr& getDefaultUser4();
+extern const UserPtr& getDefaultUser6();
 
 /// @brief  This callout is called at the "pkt4_send" hook.
 ///
-/// This function searches the UserRegistry for the client indicated by the
-/// inbound IPv4 DHCP packet. If the client is found  @todo
+/// This function generates the user check outcome and adds vendor options
+/// to the IPv4 respons packet based on whether the user is registered or not.
+///
+/// It retrieves a pointer to the registered user from the callout context. 
+/// This value should have been set upstream.  If the registered user pointer
+/// is non-null (i.e the user is registered), then a registered user outcome
+/// is recorded in the outcome output and the vendor properties are altered
+/// based upon this user's properitees. 
+///
+/// A null value means the user is not registered and a unregistered user
+/// outcome is recorded in the outcome output and the vendor properites
+/// are altered based upon the default IPv4 user in the registry (if defined). 
 ///
 /// @param handle CalloutHandle which provides access to context.
 ///
@@ -61,6 +77,7 @@ int pkt4_send(CalloutHandle& handle) {
         Pkt4Ptr response;
         handle.getArgument("response4", response);
 
+        // @todo Determine list of types to process and skip the rest.
         uint8_t packet_type = response->getType();
         if (packet_type == DHCPNAK) {
             std::cout << "DHCP UserCheckHook : pkt4_send"
@@ -98,8 +115,8 @@ int pkt4_send(CalloutHandle& handle) {
             // Add the outcome entry to the output file.
             generate_output_record(UserId::HW_ADDRESS_STR, hwaddr->toText(),
                                    addr.toText(), false);
-            // @todo store defaults in a defualt user
-            // add4Options(response, default_user4);
+
+            add4Options(response, getDefaultUser4());
         }
     } catch (const std::exception& ex) {
         std::cout << "DHCP UserCheckHook : pkt4_send unexpected error: "
@@ -110,84 +127,80 @@ int pkt4_send(CalloutHandle& handle) {
     return (0);
 }
 
-void add4Options(Pkt4Ptr& response, UserPtr& user) {
+/// @brief Adds IPv4 options to the response packet based on given user
+///
+/// Adds or replaces IPv4 options with values from the given user, if
+/// the user has corresponding properties defined. Currently it supports
+/// the following options:
+///
+/// - DHO_BOOT_FILE_NAME from user property "bootfile"
+/// - DHO_TFTP_SERVER_NAME from user property "tftp_server"
+///
+/// @param response IPv4 reponse packet
+/// @param user User from whom properties are sourced 
+void add4Options(Pkt4Ptr& response, const UserPtr& user) {
+    // If user is null, do nothing.
+    if (!user) {
+        return;
+    }
+
+    // If the user has bootfile property, update it in the response.
     std::string opt_value = user->getProperty("bootfile");
     if (!opt_value.empty()) {
         std::cout << "DHCP UserCheckHook : add4Options "
               << "adding boot file:" << opt_value << std::endl;
 
-        // Set file field
+        // Add boot file to packet.
+        add4Option(response, DHO_BOOT_FILE_NAME, opt_value);
+
+        // Boot file also goes in file field.
         response->setFile((const uint8_t*)(opt_value.c_str()),
                           opt_value.length());
-
-        // Remove the option if it exists.
-        OptionPtr opt = response->getOption(DHO_BOOT_FILE_NAME);
-        if (opt) {
-            response->delOption(DHO_BOOT_FILE_NAME);
-        }
-
-        // Now add the boot file option.
-        opt.reset(new OptionString(Option::V4, DHO_BOOT_FILE_NAME, opt_value));
-        response->addOption(opt);
     }
 
+    // If the user has tftp server property, update it in the response.
     opt_value = user->getProperty("tftp_server");
     if (!opt_value.empty()) {
         std::cout << "DHCP UserCheckHook : add4Options "
               << "adding TFTP server:" << opt_value << std::endl;
 
-        // Remove the option if it exists.
-        OptionPtr opt = response->getOption(DHO_TFTP_SERVER_NAME);
-        if (opt) {
-            response->delOption(DHO_TFTP_SERVER_NAME);
-        }
-
-        // Now add the boot file option.
-        opt.reset(new OptionString(Option::V4, DHO_TFTP_SERVER_NAME,
-                                   opt_value));
-        response->addOption(opt);
+        // Add tftp server option to packet.
+        add4Option(response, DHO_TFTP_SERVER_NAME, opt_value);
     }
     // add next option here
 }
 
-void add6Options(Pkt6Ptr& response, UserPtr& user) {
-    OptionPtr vendor = response->getOption(D6O_VENDOR_OPTS);
-    if (!vendor) {
-        return;
+/// @brief Adds/updates are specific IPv4 string option in response packet.
+///
+/// @param response IPV4 response packet to update
+/// @param opt_code DHCP standard numeric code of the option
+/// @param opt_value String value of the option
+void add4Option(Pkt4Ptr& response, uint8_t opt_code, std::string& opt_value) {
+    // Remove the option if it exists.
+    OptionPtr opt = response->getOption(opt_code);
+    if (opt) {
+        response->delOption(opt_code);
     }
 
-    /// @todo: This will be DOCSIS3_V6_CONFIG_FILE.
-    /// Unfortunately, 3207 was branched from master before
-    /// 3194 was merged in, so this branch does not have
-    /// src/lib/dhcp/docsis3_option_defs.h.
-
-    std::string opt_value = user->getProperty("bootfile");
-    if (!opt_value.empty()) {
-        std::cout << "DHCP UserCheckHook : add6Options "
-                  << "adding boot file:" << opt_value << std::endl;
-        vendor->delOption(33);
-        OptionPtr boot_opt(new OptionString(Option::V6, 33, opt_value));
-        vendor->addOption(boot_opt);
-    }
-
-    opt_value = user->getProperty("tftp_server");
-    if (!opt_value.empty()) {
-        std::cout << "DHCP UserCheckHook : add6Options "
-                  << "adding tftp server:" << opt_value << std::endl;
-
-        vendor->delOption(32);
-        OptionPtr opt(new OptionString(Option::V6, 32, opt_value));
-        vendor->addOption(opt);
-    }
-
-    // add next option here
+    // Now add the option.
+    opt.reset(new OptionString(Option::V4, opt_code, opt_value));
+    response->addOption(opt);
 }
 
 /// @brief  This callout is called at the "pkt6_send" hook.
 ///
-/// This function searches the UserRegistry for the client indicated by the
-/// inbound IPv6 DHCP packet. If the client is found  @todo
+/// This function generates the user check outcome and adds vendor options
+/// to the IPv6 respons packet based on whether the user is registered or not.
 ///
+/// It retrieves a pointer to the registered user from the callout context. 
+/// This value should have been set upstream.  If the registered user pointer
+/// is non-null (i.e the user is registered), then a registered user outcome
+/// is recorded in the outcome output and the vendor properties are altered
+/// based upon this user's properitees. 
+///
+/// A null value means the user is not registered and a unregistered user
+/// outcome is recorded in the outcome output and the vendor properites
+/// are altered based upon the default IPv6 user in the registry (if defined). 
 /// @param handle CalloutHandle which provides access to context.
 ///
 /// @return 0 upon success, non-zero otherwise.
@@ -196,6 +209,7 @@ int pkt6_send(CalloutHandle& handle) {
         Pkt6Ptr response;
         handle.getArgument("response6", response);
 
+        // @todo Determine list of types to process and skip the rest.
         uint8_t packet_type = response->getType();
         if (packet_type == DHCPV6_DECLINE) {
             std::cout << "DHCP UserCheckHook : pkt6_send"
@@ -238,8 +252,7 @@ int pkt6_send(CalloutHandle& handle) {
             // Add the outcome entry to the output file.
             generate_output_record(UserId::DUID_STR, duid->toText(),
                                    addr_str, false);
-            // @todo store defaults in a default user
-            //add6Options(response, default_user6);
+            add6Options(response, getDefaultUser6());
         }
     } catch (const std::exception& ex) {
         std::cout << "DHCP UserCheckHook : pkt6_send unexpected error: "
@@ -250,7 +263,72 @@ int pkt6_send(CalloutHandle& handle) {
     return (0);
 }
 
+/// @brief Adds IPv6 vendor options to the response packet based on given user
+///
+/// Adds or replaces IPv6 vendor options with values from the given user, if
+/// the user has the corresponding properties defined. Currently it supports
+/// the following options:
+///
+/// - DOCSIS3_V6_CONFIG_FILE from user property "bootfile"
+/// - DOCSIS3_V6_TFTP_SERVERS from user property "tftp_server"
+///
+/// @param response IPv5 reponse packet
+/// @param user User from whom properties are sourced 
+void add6Options(Pkt6Ptr& response, const UserPtr& user) {
+    if (!user) {
+        return;
+    }
+
+    /// @todo: no packets have vendor opt... do we need to add it
+    /// if its not there?  If so how?
+    OptionPtr vendor = response->getOption(D6O_VENDOR_OPTS);
+    if (!vendor) {
+        std::cout << "DHCP UserCheckHook : add6Options "
+              << "no vendor options punt" << std::endl;
+        return;
+    }
+
+    /// @todo: Use hard coded values (33,32) until we're merged.
+    /// Unfortunately, 3207 was branched from master before
+    /// 3194 was merged in, so this branch does not have
+    /// src/lib/dhcp/docsis3_option_defs.h.
+
+    // If the user defines bootfile, set the option in response.
+    std::string opt_value = user->getProperty("bootfile");
+    if (!opt_value.empty()) {
+        std::cout << "DHCP UserCheckHook : add6Options "
+                  << "adding boot file:" << opt_value << std::endl;
+        add6Option(vendor, 33, opt_value);
+    }
+
+    // If the user defines tftp server, set the option in response.
+    opt_value = user->getProperty("tftp_server");
+    if (!opt_value.empty()) {
+        std::cout << "DHCP UserCheckHook : add6Options "
+                  << "adding tftp server:" << opt_value << std::endl;
+
+        add6Option(vendor, 32, opt_value);
+    }
+
+    // add next option here
+}
+
+/// @brief Adds/updates a specific IPv6 string vendor option.
+///
+/// @param vendor IPv6 vendor option set to update
+/// @param opt_code DHCP standard numeric code of the option
+/// @param opt_value String value of the option
+void add6Option(OptionPtr& vendor, uint8_t opt_code, std::string& opt_value) {
+    vendor->delOption(opt_code);
+    OptionPtr option(new OptionString(Option::V6, opt_code, opt_value));
+    vendor->addOption(option);
+}
+
+
 /// @brief Adds an entry to the end of the user check outcome file.
+///
+/// @todo This ought to be replaced with an abstract output similiar to
+/// UserDataSource to allow greater flexibility.
 ///
 /// Each user entry is written in an ini-like format, with one name-value pair
 /// per line as follows:
@@ -326,7 +404,6 @@ std::string getV6AddrStr (Pkt6Ptr response) {
 }
 
 /// @brief Stringify the lease address in an D6O_IA_NA option set
-/// @todo fill out this out
 std::string getAddrStrIA_NA(OptionPtr options) {
     boost::shared_ptr<Option6IA> ia =
         boost::dynamic_pointer_cast<Option6IA>(options);
@@ -389,7 +466,6 @@ std::string getAddrStrIA_PD(OptionPtr options) {
 }
 
 /// @brief Tests given IA option set for successful status.
-/// @todo fill out this out
 bool checkIAStatus(boost::shared_ptr<Option6IA>& ia) {
     OptionCustomPtr status =
             boost::dynamic_pointer_cast
@@ -408,5 +484,12 @@ bool checkIAStatus(boost::shared_ptr<Option6IA>& ia) {
     return (true);
 }
 
+const UserPtr& getDefaultUser4() {
+   return (user_registry->findUser(UserId(UserId::HW_ADDRESS, "00000000")));
+}
+
+const UserPtr& getDefaultUser6() {
+   return (user_registry->findUser(UserId(UserId::DUID, "0000000000")));
+}
 
 } // end extern "C"
