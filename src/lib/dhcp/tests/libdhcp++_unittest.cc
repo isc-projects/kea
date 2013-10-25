@@ -616,7 +616,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     ASSERT_TRUE(rai_option);
     EXPECT_EQ(RAI_OPTION_VSI, rai_option->getType());
     ASSERT_EQ(11, rai_option->len());
-    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 43, 11));
+    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 43, 9));
 
     // Make sure, that option other than those above is not present.
     EXPECT_FALSE(rai->getOption(10));
