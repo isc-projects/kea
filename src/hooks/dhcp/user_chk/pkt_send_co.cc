@@ -111,47 +111,75 @@ int pkt4_send(CalloutHandle& handle) {
 }
 
 void add4Options(Pkt4Ptr& response, UserPtr& user) {
-    std::string bootfile = user->getProperty("bootfile");
-    if (!bootfile.empty()) {
+    std::string opt_value = user->getProperty("bootfile");
+    if (!opt_value.empty()) {
         std::cout << "DHCP UserCheckHook : add4Options "
-              << "adding boot file:" << bootfile << std::endl;
+              << "adding boot file:" << opt_value << std::endl;
 
         // Set file field
-        response->setFile((const uint8_t*)(bootfile.c_str()),
-                          bootfile.length());
+        response->setFile((const uint8_t*)(opt_value.c_str()),
+                          opt_value.length());
 
         // Remove the option if it exists.
-        OptionPtr boot_opt = response->getOption(DHO_BOOT_FILE_NAME);
-        if (boot_opt) {
+        OptionPtr opt = response->getOption(DHO_BOOT_FILE_NAME);
+        if (opt) {
             response->delOption(DHO_BOOT_FILE_NAME);
         }
 
         // Now add the boot file option.
-        boot_opt.reset(new OptionString(Option::V4, DHO_BOOT_FILE_NAME,
-                                        bootfile));
+        opt.reset(new OptionString(Option::V4, DHO_BOOT_FILE_NAME, opt_value));
+        response->addOption(opt);
+    }
 
-        response->addOption(boot_opt);
+    opt_value = user->getProperty("tftp_server");
+    if (!opt_value.empty()) {
+        std::cout << "DHCP UserCheckHook : add4Options "
+              << "adding TFTP server:" << opt_value << std::endl;
+
+        // Remove the option if it exists.
+        OptionPtr opt = response->getOption(DHO_TFTP_SERVER_NAME);
+        if (opt) {
+            response->delOption(DHO_TFTP_SERVER_NAME);
+        }
+
+        // Now add the boot file option.
+        opt.reset(new OptionString(Option::V4, DHO_TFTP_SERVER_NAME,
+                                   opt_value));
+        response->addOption(opt);
     }
     // add next option here
 }
 
 void add6Options(Pkt6Ptr& response, UserPtr& user) {
-    std::string bootfile = user->getProperty("bootfile");
-    if (!bootfile.empty()) {
-        std::cout << "DHCP UserCheckHook : add6Options "
-                  << "adding boot file:" << bootfile << std::endl;
-        OptionPtr vendor = response->getOption(D6O_VENDOR_OPTS);
-        if (vendor) {
-            /// @todo: This will be DOCSIS3_V6_CONFIG_FILE.
-            /// Unfortunately, 3207 was branched from master before
-            /// 3194 was merged in, so this branch does not have
-            /// src/lib/dhcp/docsis3_option_defs.h.
-            vendor->delOption(33);
-            OptionPtr boot_opt(new OptionString(Option::V6, 33,
-                                                bootfile));
-            vendor->addOption(boot_opt);
-        }
+    OptionPtr vendor = response->getOption(D6O_VENDOR_OPTS);
+    if (!vendor) {
+        return;
     }
+
+    /// @todo: This will be DOCSIS3_V6_CONFIG_FILE.
+    /// Unfortunately, 3207 was branched from master before
+    /// 3194 was merged in, so this branch does not have
+    /// src/lib/dhcp/docsis3_option_defs.h.
+
+    std::string opt_value = user->getProperty("bootfile");
+    if (!opt_value.empty()) {
+        std::cout << "DHCP UserCheckHook : add6Options "
+                  << "adding boot file:" << opt_value << std::endl;
+        vendor->delOption(33);
+        OptionPtr boot_opt(new OptionString(Option::V6, 33, opt_value));
+        vendor->addOption(boot_opt);
+    }
+
+    opt_value = user->getProperty("tftp_server");
+    if (!opt_value.empty()) {
+        std::cout << "DHCP UserCheckHook : add6Options "
+                  << "adding tftp server:" << opt_value << std::endl;
+
+        vendor->delOption(32);
+        OptionPtr opt(new OptionString(Option::V6, 32, opt_value));
+        vendor->addOption(opt);
+    }
+
     // add next option here
 }
 
