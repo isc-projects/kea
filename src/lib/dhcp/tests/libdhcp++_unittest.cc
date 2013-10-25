@@ -23,6 +23,7 @@
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
@@ -1043,8 +1044,8 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_IA_PD, begin, end,
                                     typeid(Option6IA));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_IAPREFIX, begin, end,
-                                    typeid(OptionCustom));
+    LibDhcpTest::testStdOptionDefs6(D6O_IAPREFIX, begin, begin + 25,
+                                    typeid(Option6IAPrefix));
 
     LibDhcpTest::testStdOptionDefs6(D6O_NIS_SERVERS, begin, end,
                                     typeid(Option6AddrLst));

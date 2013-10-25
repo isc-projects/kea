@@ -276,6 +276,11 @@ public:
     /// @return true if specified format is IAADDR option format.
     bool haveIAAddr6Format() const;
 
+    /// @brief Check if specified format is IAPREFIX option format.
+    ///
+    /// @return true if specified format is IAPREFIX option format.
+    bool haveIAPrefix6Format() const;
+
     /// @brief Check if specified format is OPTION_CLIENT_FQDN option format.
     ///
     /// @return true of specified format is OPTION_CLIENT_FQDN option format,
@@ -465,6 +470,19 @@ public:
     static OptionPtr factoryIAAddr6(uint16_t type,
                                     OptionBufferConstIter begin,
                                     OptionBufferConstIter end);
+
+    /// @brief Factory for IAPREFIX-type of option.
+    ///
+    /// @param type option type.
+    /// @param begin iterator pointing to the beginning of the buffer.
+    /// @param end iterator pointing to the end of the buffer.
+    ///
+    /// @throw isc::OutOfRange if provided option buffer is too short or
+    /// too long. Expected size is 25 bytes.
+    /// @throw isc::BadValue if specified universe value is not V6.
+    static OptionPtr factoryIAPrefix6(uint16_t type,
+                                      OptionBufferConstIter begin,
+                                      OptionBufferConstIter end);
 
     /// @brief Factory function to create option with integer value.
     ///
