@@ -1,3 +1,10 @@
+700.	[func]		tomek,marcin
+	b10-dhcp4,b10-dhcp6: Support for vendor options has been added. It
+	is now possible to configure vendor options. Server is able to
+	parse some CableLabs vendor options and send configured	vendor
+	options	in response. The support is not complete.
+	(Trac #3194, git 243ded15bbed0d35e230d00f4e3ee42c3609616c)
+
 699.	[bug]		marcin
 	libdhcp++: Options with defined suboptions are now handled properly.
 	In particular, Relay Agent Info options is now echoed back properly.
