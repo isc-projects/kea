@@ -31,8 +31,11 @@
 #include <sys/socket.h>
 #include <errno.h>
 
-using namespace asio;
-using asio::ip::udp;
+// Note: we intentionally avoid 'using namespace asio' to avoid conflicts with
+// std:: definitions in C++11.
+using asio::io_service;
+using asio::buffer;
+using asio::const_buffer;
 using asio::ip::tcp;
 
 using namespace std;
@@ -107,7 +110,7 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
                 CORO_YIELD acceptor_->async_accept(*socket_, *this);
                 if (ec) {
                     using namespace asio::error;
-                    const error_code::value_type err_val = ec.value();
+                    const asio::error_code::value_type err_val = ec.value();
                     // The following two cases can happen when this server is
                     // stopped: operation_aborted in case it's stopped after
                     // starting accept().  bad_descriptor in case it's stopped
