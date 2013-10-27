@@ -4,7 +4,13 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CXXFLAGS = $(B10_CXXFLAGS)
+#AM_CXXFLAGS = $(B10_CXXFLAGS)
+AM_CXXFLAGS = $(B10_CXXFLAGS) -Wno-tautological-constant-out-of-range-compare
+
+# This flag triggers a spurious warning in message.cc.  Disabling the flag
+# library-wide may be a bit too strong, but hopefully actual defects that
+# this flag would correctly detect would be very rare.
+AM_CXXFLAGS += $(WARNING_NO_TAUTOLOGICAL_CONSTANT_OOR_COMP_CFLAG)
 
 CLEANFILES = *.gcno *.gcda
 CLEANFILES += rrclass.h rrtype.h rrparamregistry.cc rdataclass.h rdataclass.cc s-rdatacode
