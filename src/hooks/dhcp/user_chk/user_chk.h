@@ -20,11 +20,28 @@
 
 using namespace std;
 
+/// @brief Pointer to the registry instance.
 extern UserRegistryPtr user_registry;
+
+/// @brief Output filestream for recording user check outcomes.
 extern std::fstream user_chk_output;
+
+/// @brief User registry input file name.
 extern const char* registry_fname;
+
+/// @brief User check outcome file name.
 extern const char* user_chk_output_fname;
+
+/// @brief Text label of user id in the inbound query in callout context
 extern const char* query_user_id_label;
+
+/// @brief Text label of registered user pointer in callout context
 extern const char* registered_user_label;
+
+/// @brief Text id used to identify the default IPv4 user in the registry
+extern const char* default_user4_id_str;
+
+/// @brief Text id used to identify the default IPv6 user in the registry
+extern const char *default_user6_id_str;
 
 #endif
