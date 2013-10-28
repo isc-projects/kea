@@ -15,8 +15,9 @@
 #ifndef STATS_MGR_H
 #define STATS_MGR_H
 
-#include <iostream>
-#include <map>
+#include <dhcp/pkt4.h>
+#include <dhcp/pkt6.h>
+#include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -27,7 +28,9 @@
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <exceptions/exceptions.h>
+#include <iostream>
+#include <map>
+
 
 namespace isc {
 namespace perfdhcp {
@@ -120,7 +123,8 @@ public:
         XCHG_DO,  ///< DHCPv4 DISCOVER-OFFER
         XCHG_RA,  ///< DHCPv4 REQUEST-ACK
         XCHG_SA,  ///< DHCPv6 SOLICIT-ADVERTISE
-        XCHG_RR   ///< DHCPv6 REQUEST-REPLY
+        XCHG_RR,  ///< DHCPv6 REQUEST-REPLY
+        XCHG_RN   ///< DHCPv6 RENEW-REPLY
     };
 
     /// \brief Exchange Statistics.
@@ -1165,6 +1169,8 @@ public:
             return("SOLICIT-ADVERTISE");
         case XCHG_RR:
             return("REQUEST-REPLY");
+        case XCHG_RN:
+            return("RENEW-REPLY");
         default:
             return("Unknown exchange type");
         }
