@@ -32,14 +32,16 @@ extern "C" {
 
 /// @brief  This callout is called at the "subnet4_select" hook.
 ///
-/// This function searches the UserRegistry for the client indicated by the
-/// inbound IPv4 DHCP packet. If the client is found in the registry output
-/// the generate outcome record and return.
+/// This function alters the selected subnet based upon whether or not the
+/// requesting DHCP client is a "registered user".  It fetches a pointer to
+/// the registered user from the callout context.  This value is presumed to
+/// have been set upstream.  If it is non-null that it points to the client's
+/// user entry in the UserRegistry.  If it is null, the client is not
+/// registered.
 ///
-/// If the client is not found in the registry replace the selected subnet
-/// with the restricted access subnet, then generate the outcome record and
-/// return.  By convention, it is assumed that last subnet in the list of
-/// available subnets is the restricted access subnet.
+/// If the client is registered, then replace the selected subnet with the
+/// restricted access subnet. By convention, it is assumed that last subnet in
+/// the list of available subnets is the restricted access subnet.
 ///
 /// @param handle CalloutHandle which provides access to context.
 ///
@@ -55,8 +57,8 @@ int subnet4_select(CalloutHandle& handle) {
         // Get subnet collection. If it's empty just bail nothing to do.
         const isc::dhcp::Subnet4Collection *subnets = NULL;
         handle.getArgument("subnet4collection", subnets);
-        if (subnets->size() == 0) {
-            return 0;
+        if (subnets->empty()) {
+            return (0);
         }
 
         // Get registered_user pointer.
@@ -85,14 +87,16 @@ int subnet4_select(CalloutHandle& handle) {
 
 /// @brief  This callout is called at the "subnet6_select" hook.
 ///
-/// This function searches the UserRegistry for the client indicated by the
-/// inbound IPv6 DHCP packet. If the client is found in the registry generate
-/// the outcome record and return.
+/// This function alters the selected subnet based upon whether or not the
+/// requesting DHCP client is a "registered user".  It fetches a pointer to
+/// the registered user from the callout context.  This value is presumed to
+/// have been set upstream.  If it is non-null that it points to the client's
+/// user entry in the UserRegistry.  If it is null, the client is not
+/// registered.
 ///
-/// If the client is not found in the registry replace the selected subnet
-/// with the restricted access subnet, then generate the outcome record and
-/// return.  By convention, it is assumed that last subnet in the list of
-/// available subnets is the restricted access subnet.
+/// If the client is registered, then replace the selected subnet with the
+/// restricted access subnet. By convention, it is assumed that last subnet in
+/// the list of available subnets is the restricted access subnet.
 ///
 /// @param handle CalloutHandle which provides access to context.
 ///
@@ -108,11 +112,11 @@ int subnet6_select(CalloutHandle& handle) {
         // Get subnet collection. If it's empty just bail nothing to do.
         const isc::dhcp::Subnet6Collection *subnets = NULL;
         handle.getArgument("subnet6collection", subnets);
-        if (subnets->size() == 0) {
-            return 0;
+        if (subnets->empty()) {
+            return (0);
         }
 
-        // Get registered_user pointer. 
+        // Get registered_user pointer.
         UserPtr registered_user;
         handle.getContext(registered_user_label, registered_user);
 

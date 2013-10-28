@@ -31,8 +31,14 @@ extern "C" {
 
 /// @brief  This callout is called at the "pkt4_receive" hook.
 ///
-/// This function searches the UserRegistry for the client indicated by the
-/// inbound IPv4 DHCP packet. If the client is found  @todo
+/// This function determines if the DHCP client identified by the inbound
+/// DHCP query packet is in the user registry.
+/// Upon entry, the registry is refreshed. Next the hardware address is
+/// extracted from query and saved to the context as the "query_user_id".
+/// This id is then used to search the user registry.  The resultant UserPtr
+/// whether the user is found or not, is saved to the callout context as
+/// "registered_user".   This makes the registered user, if not null, available
+/// to subsequent callouts.
 ///
 /// @param handle CalloutHandle which provides access to context.
 ///
@@ -53,17 +59,17 @@ int pkt4_receive(CalloutHandle& handle) {
         handle.getArgument("query4", query);
         HWAddrPtr hwaddr = query->getHWAddr();
 
-        // Store the id we search with.
+        // Store the id we search with so it is available down the road.
         handle.setContext(query_user_id_label, hwaddr);
 
         // Look for the user in the registry.
         UserPtr registered_user = user_registry->findUser(*hwaddr);
 
-        // store user regardless, empty user pointer means non-found
-        // cheaper than exception throw overhead
+        // Store user regardless. Empty user pointer means non-found. It is
+        // cheaper to fetch it and test it, than to use an exception throw.
         handle.setContext(registered_user_label, registered_user);
         std::cout << "DHCP UserCheckHook : pkt4_receive user : "
-                  << hwaddr->toText() << " is " 
+                  << hwaddr->toText() << " is "
                   << (registered_user ? " registered" : " not registered")
                   << std::endl;
     } catch (const std::exception& ex) {
@@ -77,8 +83,14 @@ int pkt4_receive(CalloutHandle& handle) {
 
 /// @brief  This callout is called at the "pkt6_receive" hook.
 ///
-/// This function searches the UserRegistry for the client indicated by the
-/// inbound IPv6 DHCP packet. If the client is found  @todo
+/// This function determines if the DHCP client identified by the inbound
+/// DHCP query packet is in the user registry.
+/// Upon entry, the registry is refreshed. Next the DUID is extracted from
+/// query and saved to the context as the "query_user_id". This id is then
+/// used to search the user registry.  The resultant UserPtr whether the user
+/// is found or not, is saved to the callout context as "registered_user".
+/// This makes the registered user, if not null, available to subsequent
+/// callouts.
 ///
 /// @param handle CalloutHandle which provides access to context.
 ///
@@ -106,17 +118,17 @@ int pkt6_receive(CalloutHandle& handle) {
         }
         DuidPtr duid = DuidPtr(new DUID(opt_duid->getData()));
 
-        // Store the id we search with.
+        // Store the id we search with so it is available down the road.
         handle.setContext(query_user_id_label, duid);
 
         // Look for the user in the registry.
         UserPtr registered_user = user_registry->findUser(*duid);
 
-        // store user regardless, empty user pointer means non-found
-        // cheaper than exception throw overhead
+        // Store user regardless. Empty user pointer means non-found. It is
+        // cheaper to fetch it and test it, than to use an exception throw.
         handle.setContext(registered_user_label, registered_user);
         std::cout << "DHCP UserCheckHook : pkt6_receive user : "
-                  << duid->toText() << " is " 
+                  << duid->toText() << " is "
                   << (registered_user ? " registered" : " not registered")
                   << std::endl;
     } catch (const std::exception& ex) {
