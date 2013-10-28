@@ -267,6 +267,15 @@ TEST_F(MasterLoadTest, loadRRNoComment) {
                                       "\"aaa;bbb\"")));
 }
 
+TEST_F(MasterLoadTest, nonAbsoluteOwner) {
+    // If the owner name is not absolute, the zone origin is assumed to be
+    // its origin.
+    rr_stream << "example.com 3600 IN A 192.0.2.1";
+    masterLoad(rr_stream, origin, zclass, callback);
+    EXPECT_EQ(1, results.size());
+    EXPECT_EQ(results[0]->getName(), Name("example.com.example.com"));
+}
+
 TEST_F(MasterLoadTest, loadRREmptyAndComment) {
     // There's no RDATA (invalid in this case) but a comment.  This position
     // shouldn't cause any disruption and should be treated as a normal error.
@@ -355,11 +364,6 @@ TEST_F(MasterLoadTest, loadBadRRText) {
     // incomplete RR text
     stringstream rr_stream6("example.com. 3600 IN A");
     EXPECT_THROW(masterLoad(rr_stream6, origin, zclass, callback),
-                 MasterLoadError);
-
-    // owner name is not absolute
-    stringstream rr_stream7("example.com 3600 IN A 192.0.2.1");
-    EXPECT_THROW(masterLoad(rr_stream7, origin, zclass, callback),
                  MasterLoadError);
 }
 
