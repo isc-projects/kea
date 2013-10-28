@@ -46,10 +46,10 @@ extern std::string getAddrStrIA_PD(OptionPtr options);
 extern bool checkIAStatus(boost::shared_ptr<Option6IA>& ia_opt);
 
 extern void add4Options(Pkt4Ptr& response, const UserPtr& user);
-extern void add4Option(Pkt4Ptr& response, uint8_t opt_code, 
+extern void add4Option(Pkt4Ptr& response, uint8_t opt_code,
                         std::string& opt_value);
 extern void add6Options(Pkt6Ptr& response, const UserPtr& user);
-extern void add6Option(OptionPtr& vendor, uint8_t opt_code, 
+extern void add6Option(OptionPtr& vendor, uint8_t opt_code,
                        std::string& opt_value);
 extern const UserPtr& getDefaultUser4();
 extern const UserPtr& getDefaultUser6();
@@ -57,17 +57,17 @@ extern const UserPtr& getDefaultUser6();
 /// @brief  This callout is called at the "pkt4_send" hook.
 ///
 /// This function generates the user check outcome and adds vendor options
-/// to the IPv4 respons packet based on whether the user is registered or not.
+/// to the IPv4 response packet based on whether the user is registered or not.
 ///
-/// It retrieves a pointer to the registered user from the callout context. 
+/// It retrieves a pointer to the registered user from the callout context.
 /// This value should have been set upstream.  If the registered user pointer
 /// is non-null (i.e the user is registered), then a registered user outcome
 /// is recorded in the outcome output and the vendor properties are altered
-/// based upon this user's properitees. 
+/// based upon this user's properties.
 ///
 /// A null value means the user is not registered and a unregistered user
-/// outcome is recorded in the outcome output and the vendor properites
-/// are altered based upon the default IPv4 user in the registry (if defined). 
+/// outcome is recorded in the outcome output and the vendor properties
+/// are altered based upon the default IPv4 user in the registry (if defined).
 ///
 /// @param handle CalloutHandle which provides access to context.
 ///
@@ -136,8 +136,8 @@ int pkt4_send(CalloutHandle& handle) {
 /// - DHO_BOOT_FILE_NAME from user property "bootfile"
 /// - DHO_TFTP_SERVER_NAME from user property "tftp_server"
 ///
-/// @param response IPv4 reponse packet
-/// @param user User from whom properties are sourced 
+/// @param response IPv4 response packet
+/// @param user User from whom properties are sourced
 void add4Options(Pkt4Ptr& response, const UserPtr& user) {
     // If user is null, do nothing.
     if (!user) {
@@ -190,17 +190,17 @@ void add4Option(Pkt4Ptr& response, uint8_t opt_code, std::string& opt_value) {
 /// @brief  This callout is called at the "pkt6_send" hook.
 ///
 /// This function generates the user check outcome and adds vendor options
-/// to the IPv6 respons packet based on whether the user is registered or not.
+/// to the IPv6 response packet based on whether the user is registered or not.
 ///
-/// It retrieves a pointer to the registered user from the callout context. 
+/// It retrieves a pointer to the registered user from the callout context.
 /// This value should have been set upstream.  If the registered user pointer
 /// is non-null (i.e the user is registered), then a registered user outcome
 /// is recorded in the outcome output and the vendor properties are altered
-/// based upon this user's properitees. 
+/// based upon this user's properties.
 ///
 /// A null value means the user is not registered and a unregistered user
-/// outcome is recorded in the outcome output and the vendor properites
-/// are altered based upon the default IPv6 user in the registry (if defined). 
+/// outcome is recorded in the outcome output and the vendor properties
+/// are altered based upon the default IPv6 user in the registry (if defined).
 /// @param handle CalloutHandle which provides access to context.
 ///
 /// @return 0 upon success, non-zero otherwise.
@@ -273,7 +273,7 @@ int pkt6_send(CalloutHandle& handle) {
 /// - DOCSIS3_V6_TFTP_SERVERS from user property "tftp_server"
 ///
 /// @param response IPv5 reponse packet
-/// @param user User from whom properties are sourced 
+/// @param user User from whom properties are sourced
 void add6Options(Pkt6Ptr& response, const UserPtr& user) {
     if (!user) {
         return;
@@ -284,7 +284,7 @@ void add6Options(Pkt6Ptr& response, const UserPtr& user) {
     OptionPtr vendor = response->getOption(D6O_VENDOR_OPTS);
     if (!vendor) {
         std::cout << "DHCP UserCheckHook : add6Options "
-              << "no vendor options punt" << std::endl;
+              << "response has no vendor option to update" << std::endl;
         return;
     }
 
@@ -327,7 +327,7 @@ void add6Option(OptionPtr& vendor, uint8_t opt_code, std::string& opt_value) {
 
 /// @brief Adds an entry to the end of the user check outcome file.
 ///
-/// @todo This ought to be replaced with an abstract output similiar to
+/// @todo This ought to be replaced with an abstract output similar to
 /// UserDataSource to allow greater flexibility.
 ///
 /// Each user entry is written in an ini-like format, with one name-value pair
@@ -388,6 +388,15 @@ void generate_output_record(const std::string& id_type_str,
 }
 
 /// @brief Stringify the lease address or prefix IPv6 response packet
+///
+/// Converts the lease value, either an address or a prefix, into a string
+/// suitable for the user check outcome output.
+///
+/// @param response IPv6 response packet from which to extract the lease value.
+///
+/// @return A string containing the lease value.
+/// @throw isc::BadValue if the response contains neither an IA_NA nor IA_PD
+/// option.
 std::string getV6AddrStr (Pkt6Ptr response) {
     OptionPtr tmp = response->getOption(D6O_IA_NA);
     if (tmp) {
@@ -404,6 +413,16 @@ std::string getV6AddrStr (Pkt6Ptr response) {
 }
 
 /// @brief Stringify the lease address in an D6O_IA_NA option set
+///
+/// Converts the IA_NA lease address into a string suitable for the user check
+/// outcome output.
+///
+/// @param options pointer to the Option6IA instance from which to extract the
+/// lease address.
+///
+/// @return A string containing the lease address.
+///
+/// @throw isc::BadValue if the lease address cannot be extracted from options.
 std::string getAddrStrIA_NA(OptionPtr options) {
     boost::shared_ptr<Option6IA> ia =
         boost::dynamic_pointer_cast<Option6IA>(options);
@@ -432,20 +451,34 @@ std::string getAddrStrIA_NA(OptionPtr options) {
     return (addr.toText());
 }
 
-/// @brief Stringify the delegated prefix in an D6O_IA_DP option set
+/// @brief Stringify the lease prefix in an D6O_IA_PD option set
+///
+/// Converts the IA_PD lease prefix into a string suitable for the user check
+/// outcome output.
+///
+/// @param options pointer to the Option6IA instance from which to extract the
+/// lease prefix.
+///
+/// @return A string containing lease prefix
+///
+/// @throw isc::BadValue if the prefix cannot be extracted from options.
 std::string getAddrStrIA_PD(OptionPtr options) {
     boost::shared_ptr<Option6IA> ia =
         boost::dynamic_pointer_cast<Option6IA>(options);
 
+    // Make sure we have an IA_PD option.
     if (!ia) {
         isc_throw (isc::BadValue, "D6O_IA_PD option invalid");
     }
 
-    // If status indicates a failure return a blank string.
+    // Check the response for success status.  If it isn't a success response
+    // there will not be a lease prefix value which is denoted by returning
+    // an empty string.
     if (!checkIAStatus(ia)) {
         return (std::string(""));
     }
 
+    // Get the prefix option the IA_PD option.
     options = ia->getOption(D6O_IAPREFIX);
     if (!options) {
         isc_throw(isc::BadValue, "D60_IAPREFIX option is missing");
@@ -457,15 +490,26 @@ std::string getAddrStrIA_PD(OptionPtr options) {
         isc_throw (isc::BadValue, "D6O_IA_PD addr option bad");
     }
 
+    // Get the address and prefix length values.
     isc::asiolink::IOAddress addr = addr_option->getAddress();
     uint8_t prefix_len = addr_option->getLength();
 
+    // Build the output string and return it.
     stringstream buf;
     buf << addr.toText() << "/" << static_cast<int>(prefix_len);
     return (buf.str());
 }
 
 /// @brief Tests given IA option set for successful status.
+///
+/// This function is used to determine if the given  Option6IA represents
+/// a successful lease operation.  If it contains no status option or a status
+/// option of 0 (which is defined to mean success), then the option represents
+/// success and should contain a lease value (address or prefix).
+///
+/// @param ia pointer to the Option6IA to test
+///
+/// @return True if the option represents success, false otherwise.
 bool checkIAStatus(boost::shared_ptr<Option6IA>& ia) {
     OptionCustomPtr status =
             boost::dynamic_pointer_cast
@@ -484,12 +528,24 @@ bool checkIAStatus(boost::shared_ptr<Option6IA>& ia) {
     return (true);
 }
 
+/// @brief Fetches the default IPv4 user from the registry.
+///
+/// The default user may be used to provide default property values.
+///
+/// @return A pointer to the IPv4 user or null if not defined.
 const UserPtr& getDefaultUser4() {
-   return (user_registry->findUser(UserId(UserId::HW_ADDRESS, "00000000")));
+   return (user_registry->findUser(UserId(UserId::HW_ADDRESS,
+                                          default_user4_id_str)));
 }
 
+/// @brief Fetches the default IPv6 user from the registry.
+///
+/// The default user may be used to provide default property values.
+///
+/// @return A pointer to the IPv6 user or null if not defined.
 const UserPtr& getDefaultUser6() {
-   return (user_registry->findUser(UserId(UserId::DUID, "0000000000")));
+   return (user_registry->findUser(UserId(UserId::DUID,
+                                          default_user6_id_str)));
 }
 
 } // end extern "C"

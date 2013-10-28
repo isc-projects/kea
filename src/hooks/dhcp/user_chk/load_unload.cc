@@ -44,6 +44,12 @@ const char* query_user_id_label = "query_user_id_label";
 /// @brief Text label of registered user pointer in callout context
 const char* registered_user_label = "registered_user";
 
+/// @brief Text id used to identify the default IPv4 user in the registry
+const char* default_user4_id_str = "00000000";
+
+/// @brief Text id used to identify the default IPv6 user in the registry
+const char *default_user6_id_str = "00000000";
+
 // Functions accessed by the hooks framework use C linkage to avoid the name
 // mangling that accompanies use of the C++ compiler as well as to avoid
 // issues related to namespaces.
