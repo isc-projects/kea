@@ -145,6 +145,11 @@ Element::size() const {
     isc_throw(TypeError, "size() called on a non-list Element");
 }
 
+bool
+Element::empty() const {
+    isc_throw(TypeError, "empty() called on a non-list Element");
+}
+
 ConstElementPtr
 Element::get(const std::string&) const {
     isc_throw(TypeError, "get(string) called on a non-map Element");
