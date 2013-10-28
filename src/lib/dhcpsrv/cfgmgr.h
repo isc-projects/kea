@@ -316,22 +316,22 @@ public:
     const isc::asiolink::IOAddress*
     getUnicast(const std::string& iface) const;
 
-
-    /// @brief sets whether server should send back client-id in DHCPv4
+    /// @brief Sets whether server should send back client-id in DHCPv4
     ///
     /// This is a compatibility flag. The default (true) is compliant with
     /// RFC6842. False is for backward compatibility.
     ///
     /// @param echo should the client-id be sent or not
-    void echoClientId(bool echo) {
+    void echoClientId(const bool echo) {
         echo_v4_client_id_ = echo;
     }
 
-    /// @brief returns whether server should send back client-id in DHCPv4
-    /// @param returns whether v4 client-id should be returned or not
+    /// @brief Returns whether server should send back client-id in DHCPv4.
+    /// @return true if client-id should be returned, false otherwise.
     bool echoClientId() const {
         return (echo_v4_client_id_);
     }
+
 protected:
 
     /// @brief Protected constructor.
