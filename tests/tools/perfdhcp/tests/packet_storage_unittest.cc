@@ -24,6 +24,9 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace perfdhcp;
 
+/// @todo Implement the tests which use Pkt4 objects once the support for
+/// DHCPv4 renewals / releases is added.
+
 /// The number of packets in the test storage.
 const unsigned int STORAGE_SIZE = 20;
 
