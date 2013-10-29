@@ -334,6 +334,37 @@ TEST_F(CommandOptionsTest, Rate) {
                  isc::InvalidParameter);
 }
 
+TEST_F(CommandOptionsTest, RenewRate) {
+    CommandOptions& opt = CommandOptions::instance();
+    // If -f is specified together with -r the command line should
+    // be accepted and the renew rate should be set.
+    EXPECT_NO_THROW(process("perfdhcp -6 -r 10 -f 10 -l ethx all"));
+    EXPECT_EQ(10, opt.getRenewRate());
+    // Check that the release rate can be set to different value than
+    // rate specified as -r<rate>. Also, swap -f na d-r to make sure
+    // that order doesn't matter.
+    EXPECT_NO_THROW(process("perfdhcp -6 -f 5 -r 10 -l ethx all"));
+    EXPECT_EQ(5, opt.getRenewRate());
+    // The renew-rate of 0 is invalid.
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -f 0 - l ethx all"),
+                 isc::InvalidParameter);
+    // If -r<rate> is not specified the -f<renew-rate> should not
+    // be accepted.
+    EXPECT_THROW(process("perfdhcp -6 -f 10 -l ethx all"),
+                 isc::InvalidParameter);
+    // Currently the -f<renew-rate> can be specified for IPv6 mode
+    // only.
+    EXPECT_THROW(process("perfdhcp -4 -r 10 -f 10 -l ethx all"),
+                 isc::InvalidParameter);
+    // Renew rate should be specified.
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -f -l ethx all"),
+                 isc::InvalidParameter);
+
+    // -f and -i are mutually exclusive
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -f 10 -l ethx -i all"),
+                 isc::InvalidParameter);
+}
+
 TEST_F(CommandOptionsTest, ReportDelay) {
     CommandOptions& opt = CommandOptions::instance();
     EXPECT_NO_THROW(process("perfdhcp -r 100 -t 17 -l ethx all"));
