@@ -490,7 +490,7 @@ class Init:
         self.log_starting("b10-msgq")
         msgq_proc = self._make_process_info("b10-msgq", ["b10-msgq"],
                                             self.c_channel_env,
-                                            True, not self.verbose)
+                                            not self.verbose, not self.verbose)
         msgq_proc.spawn()
         self.log_started(msgq_proc.pid)
 
