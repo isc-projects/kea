@@ -611,6 +611,11 @@ ModuleCCSession::checkCommand() {
             return (0);
         }
 
+        // In case it is notification, eat it.
+        if (checkNotification(routing, data)) {
+            return (0);
+        }
+
         /* ignore result messages (in case we're out of sync, to prevent
          * pingpongs */
         if (data->getType() != Element::map ||
@@ -900,6 +905,85 @@ ModuleCCSession::notify(const std::string& group, const std::string& name,
     groupSendMsg(message, isc::cc::CC_GROUP_NOTIFICATION_PREFIX + group,
                  isc::cc::CC_INSTANCE_WILDCARD,
                  isc::cc::CC_TO_WILDCARD, false);
+}
+
+ModuleCCSession::NotificationID
+ModuleCCSession::subscribeNotification(const std::string& notification_group,
+                                       const NotificationCallback& callback)
+{
+    // Either insert a new empty list of callbacks or get an existing one.
+    // Either way, get the iterator for its position.
+    const std::pair<SubscribedNotifications::iterator, bool>& inserted =
+        notifications_.insert(
+            std::pair<std::string, NotificationCallbacks>(notification_group,
+                NotificationCallbacks()));
+    if (inserted.second) {
+        // It was newly inserted. In that case, we need to subscribe to the
+        // group.
+        session_.subscribe(isc::cc::CC_GROUP_NOTIFICATION_PREFIX +
+                           notification_group);
+    }
+    // Insert the callback to the chain
+    NotificationCallbacks& callbacks = inserted.first->second;
+    const NotificationCallbacks::iterator& callback_id =
+        callbacks.insert(callbacks.end(), callback);
+    // Just pack the iterators to form the ID
+    return (NotificationID(inserted.first, callback_id));
+}
+
+void
+ModuleCCSession::unsubscribeNotification(const NotificationID& notification) {
+    NotificationCallbacks& callbacks = notification.first->second;
+    // Remove the callback
+    callbacks.erase(notification.second);
+    // If it became empty, remove it from the map and unsubscribe
+    if (callbacks.empty()) {
+        session_.unsubscribe(isc::cc::CC_GROUP_NOTIFICATION_PREFIX +
+                             notification.first->first);
+        notifications_.erase(notification.first);
+    }
+}
+
+bool
+ModuleCCSession::checkNotification(const data::ConstElementPtr& envelope,
+                                   const data::ConstElementPtr& msg)
+{
+    if (msg->getType() != data::Element::map) {
+        // If it's not a map, then it's not a notification
+        return (false);
+    }
+    if (msg->contains(isc::cc::CC_PAYLOAD_NOTIFICATION)) {
+        // There's a notification inside. Extract its parameters.
+        const std::string& group =
+            envelope->get(isc::cc::CC_HEADER_GROUP)->stringValue();
+        const std::string& notification_group =
+            group.substr(std::string(isc::cc::CC_GROUP_NOTIFICATION_PREFIX).
+                         size());
+        const data::ConstElementPtr& notification =
+            msg->get(isc::cc::CC_PAYLOAD_NOTIFICATION);
+        // The first one is the event that happened
+        const std::string& event = notification->get(0)->stringValue();
+        // Any other params are second. But they may be missing
+        const data::ConstElementPtr params =
+            notification->size() == 1 ? data::ConstElementPtr() :
+            notification->get(1);
+        // Find the chain of notification callbacks
+        const SubscribedNotifications::iterator& chain_iter =
+            notifications_.find(notification_group);
+        if (chain_iter == notifications_.end()) {
+            // This means we no longer have any notifications for this group.
+            // This can happen legally as a race condition - if msgq sends
+            // us a notification, but we unsubscribe before we get to it
+            // in the input stream.
+            return (false);
+        }
+        BOOST_FOREACH(const NotificationCallback& callback,
+                      chain_iter->second) {
+            callback(event, params);
+        }
+        return (true);
+    }
+    return (false); // Not a notification
 }
 
 }
