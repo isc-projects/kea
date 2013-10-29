@@ -1,8 +1,13 @@
-702.    [bug]		kean
+703.    [bug]		kean
 	A bug in b10-msgq was fixed where it would remove the socket file if
 	there was an existing copy of b10-msgq running. It now correctly
 	detects and reports this without removing the socket file.
 	(Trac #433, git c18a49b0435c656669e6f87ef65d44dc98e0e726)
+
+702.	[func]		marcin
+	perfdhcp: support for sending DHCPv6 Renew messages at the specified
+	rate and measure performance.
+	(Trac #3183, git 66f2939830926f4337623b159210103b5a8e2434)
 
 701.	[bug]		tomek
 	libdhcp++: Incoming DHCPv6 IAPREFIX option is now parsed properly.
@@ -69,7 +74,7 @@
 	libdhcp++: Created definitions for standard DHCPv4 options:
 	tftp-server-name (66) and boot-file-name (67). Also, fixed definition
 	of DHCPv4 option time-offset (2).
-	(Trac #3199, git abcd)
+	(Trac #3199, git 6e171110c4dd9ae3b1be828b9516efc65c33460b)
 
 690.	[bug]		tomek
 	b10-dhcp4: Relay Agent Info option is now echoed back in
