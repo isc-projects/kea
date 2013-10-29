@@ -5,7 +5,8 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
-AM_CXXFLAGS += -Wno-unused-parameter # see src/lib/cc/Makefile.am
+AM_CXXFLAGS += -Wno-unused-parameter
+# see src/lib/cc/Makefile.am
 
 CLEANFILES = *.gcno *.gcda
 
