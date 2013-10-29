@@ -1,4 +1,10 @@
-7XX.	[bug]		tomek
+702.    [bug]		kean
+	A bug in b10-msgq was fixed where it would remove the socket file if
+	there was an existing copy of b10-msgq running. It now correctly
+	detects and reports this without removing the socket file.
+	(Trac #433, git c18a49b0435c656669e6f87ef65d44dc98e0e726)
+
+701.	[bug]		tomek
 	libdhcp++: Incoming DHCPv6 IAPREFIX option is now parsed properly.
 	(Trac #3211, git ed43618a2c7b2387d76f99a5a4b1a3e05ac70f5e)
 
