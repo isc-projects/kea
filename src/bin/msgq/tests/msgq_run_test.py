@@ -328,6 +328,22 @@ class MsgqRunTest(unittest.TestCase):
             'group': 'notifications/cc_members'
         }]}, msg)
 
+    def test_multiple_invocations(self):
+        """
+        Check to make sure that an attempt to start a second copy of the MsgQ
+        daemon fails.
+        """
+
+        self.assertTrue (os.path.exists(SOCKET_PATH))
+        self.__retcode = subprocess.call([MSGQ_PATH, '-s', SOCKET_PATH])
+        self.assertNotEqual(self.__retcode, 0)
+
+        # Verify that the socket still exists and works. We re-call
+        # test_send_direct as a means of testing that the existing
+        # daemon is still behaving correctly.
+        self.assertTrue (os.path.exists(SOCKET_PATH))
+        self.test_send_direct()
+
 if __name__ == '__main__':
     isc.log.init("msgq-tests")
     isc.log.resetUnitTestRootLogger()
