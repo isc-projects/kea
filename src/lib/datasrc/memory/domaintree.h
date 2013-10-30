@@ -960,7 +960,10 @@ public:
     ///
     /// \param mem_sgmt A \c MemorySegment from which memory for the new
     /// \c DomainTree is allocated.
-    /// \param return_empty_node TODO
+    /// \param return_empty_node Whether \c find() on this tree should
+    ///                          return empty nodes (which contain no
+    ///                          data). If it's \c true, \c find() will
+    ///                          match and return empty nodes.
     static DomainTree* create(util::MemorySegment& mem_sgmt,
                               bool return_empty_node = false)
     {
