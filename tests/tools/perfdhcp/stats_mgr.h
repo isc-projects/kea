@@ -260,7 +260,7 @@ public:
         /// assumed dropped. Negative value disables it.
         /// \param archive_enabled if true packets archive mode is enabled.
         /// In this mode all packets are stored throughout the test execution.
-        /// \param boot_time time when test started TODO or is to be started?
+        /// \param boot_time time when test was started
         ExchangeStats(const ExchangeType xchg_type,
                       const double drop_time,
                       const bool archive_enabled,
