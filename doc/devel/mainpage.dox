@@ -23,7 +23,7 @@
  * run-time and modifies its behavior you should read the section
  * @ref hooksdgDevelopersGuide.
  *
- * BIND 10 maintanenace information is divided into a number of sections
+ * BIND 10 maintenance information is divided into a number of sections
  * depending on focus.  DNS-specific issues are covered in the
  * @ref dnsMaintenanceGuide while information on DHCP-specific topics can
  * be found in the @ref dhcpMaintenanceGuide.  General BIND 10 topics, not
