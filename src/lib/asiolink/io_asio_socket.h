@@ -344,7 +344,7 @@ public:
     ///
     /// Must be supplied as it is abstract in the base class.
     /// The parameters are unused.
-    virtual void asyncReceive(void* data, size_t, size_t, IOEndpoint*, C&) {
+    virtual void asyncReceive(void*, size_t, size_t, IOEndpoint*, C&) {
     }
 
     /// \brief Checks if the data received is complete.
@@ -357,10 +357,8 @@ public:
     /// \param outbuff Unused.
     ///
     /// \return Always true
-    virtual bool receiveComplete(const void* staging, size_t length,
-                                 size_t& cumulative, size_t& offset,
-                                 size_t& expected,
-                                 isc::util::OutputBufferPtr& outbuff)
+    virtual bool receiveComplete(const void*, size_t, size_t&, size_t&,
+                                 size_t&, isc::util::OutputBufferPtr&)
     {
         return (true);
     }

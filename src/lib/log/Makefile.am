@@ -42,10 +42,6 @@ libb10_log_la_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_GXX
 libb10_log_la_CXXFLAGS += -Wno-unused-parameter
 endif
-if USE_CLANGPP
-# Same for clang++, but we need to turn off -Werror completely.
-libb10_log_la_CXXFLAGS += -Wno-error
-endif
 libb10_log_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libb10_log_la_LIBADD   = $(top_builddir)/src/lib/util/libb10-util.la
 libb10_log_la_LIBADD  += interprocess/libb10-log_interprocess.la
