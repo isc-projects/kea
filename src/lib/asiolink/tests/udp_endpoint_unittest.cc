@@ -37,7 +37,7 @@ TEST(UDPEndpointTest, v4Address) {
 
     EXPECT_TRUE(address == endpoint.getAddress());
     EXPECT_EQ(test_port, endpoint.getPort());
-    EXPECT_EQ(IPPROTO_UDP, endpoint.getProtocol());
+    EXPECT_EQ(static_cast<short>(IPPROTO_UDP), endpoint.getProtocol());
     EXPECT_EQ(AF_INET, endpoint.getFamily());
 }
 
@@ -50,6 +50,6 @@ TEST(UDPEndpointTest, v6Address) {
 
     EXPECT_TRUE(address == endpoint.getAddress());
     EXPECT_EQ(test_port, endpoint.getPort());
-    EXPECT_EQ(IPPROTO_UDP, endpoint.getProtocol());
+    EXPECT_EQ(static_cast<short>(IPPROTO_UDP), endpoint.getProtocol());
     EXPECT_EQ(AF_INET6, endpoint.getFamily());
 }

@@ -46,8 +46,4 @@ EXTRA_DIST = resolve_messages.mes
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 libb10_resolve_la_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# For clang++, we need to turn off -Werror completely.
-libb10_resolve_la_CXXFLAGS += -Wno-error
-endif
 libb10_resolve_la_CPPFLAGS = $(AM_CPPFLAGS)

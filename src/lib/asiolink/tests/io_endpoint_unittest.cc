@@ -41,7 +41,7 @@ TEST(IOEndpointTest, createUDPv4) {
     EXPECT_EQ(53210, ep->getPort());
     EXPECT_EQ(AF_INET, ep->getFamily());
     EXPECT_EQ(AF_INET, ep->getAddress().getFamily());
-    EXPECT_EQ(IPPROTO_UDP, ep->getProtocol());
+    EXPECT_EQ(static_cast<short>(IPPROTO_UDP), ep->getProtocol());
 }
 
 TEST(IOEndpointTest, createTCPv4) {
@@ -51,7 +51,7 @@ TEST(IOEndpointTest, createTCPv4) {
     EXPECT_EQ(5301, ep->getPort());
     EXPECT_EQ(AF_INET, ep->getFamily());
     EXPECT_EQ(AF_INET, ep->getAddress().getFamily());
-    EXPECT_EQ(IPPROTO_TCP, ep->getProtocol());
+    EXPECT_EQ(static_cast<short>(IPPROTO_TCP), ep->getProtocol());
 }
 
 TEST(IOEndpointTest, createUDPv6) {
@@ -62,7 +62,7 @@ TEST(IOEndpointTest, createUDPv6) {
     EXPECT_EQ(5302, ep->getPort());
     EXPECT_EQ(AF_INET6, ep->getFamily());
     EXPECT_EQ(AF_INET6, ep->getAddress().getFamily());
-    EXPECT_EQ(IPPROTO_UDP, ep->getProtocol());
+    EXPECT_EQ(static_cast<short>(IPPROTO_UDP), ep->getProtocol());
 }
 
 TEST(IOEndpointTest, createTCPv6) {
@@ -73,7 +73,7 @@ TEST(IOEndpointTest, createTCPv6) {
     EXPECT_EQ(5303, ep->getPort());
     EXPECT_EQ(AF_INET6, ep->getFamily());
     EXPECT_EQ(AF_INET6, ep->getAddress().getFamily());
-    EXPECT_EQ(IPPROTO_TCP, ep->getProtocol());
+    EXPECT_EQ(static_cast<short>(IPPROTO_TCP), ep->getProtocol());
 }
 
 TEST(IOEndpointTest, equality) {
