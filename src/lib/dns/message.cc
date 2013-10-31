@@ -495,7 +495,7 @@ Message::getTSIGRecord() const {
 
 unsigned int
 Message::getRRCount(const Section section) const {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
     return (impl_->counts_[section]);
@@ -511,7 +511,7 @@ Message::addRRset(const Section section, RRsetPtr rrset) {
         isc_throw(InvalidMessageOperation,
                   "addRRset performed in non-render mode");
     }
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
 
@@ -524,7 +524,7 @@ bool
 Message::hasRRset(const Section section, const Name& name,
                   const RRClass& rrclass, const RRType& rrtype)
 {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
 
@@ -546,7 +546,7 @@ Message::hasRRset(const Section section, const RRsetPtr& rrset) {
 
 bool
 Message::removeRRset(const Section section, RRsetIterator& iterator) {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
 
@@ -575,7 +575,7 @@ Message::clearSection(const Section section) {
         isc_throw(InvalidMessageOperation,
                   "clearSection performed in non-render mode");
     }
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
     if (section == Message::SECTION_QUESTION) {
@@ -732,7 +732,7 @@ int
 MessageImpl::parseSection(const Message::Section section,
                           InputBuffer& buffer, Message::ParseOptions options)
 {
-    assert(section < MessageImpl::NUM_SECTIONS);
+    assert(static_cast<int>(section) < MessageImpl::NUM_SECTIONS);
 
     unsigned int added = 0;
 
@@ -984,7 +984,7 @@ Message::clear(Mode mode) {
 
 void
 Message::appendSection(const Section section, const Message& source) {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
 
@@ -1130,7 +1130,7 @@ Message::endQuestion() const {
 ///
 const SectionIterator<RRsetPtr>
 Message::beginSection(const Section section) const {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
     if (section == SECTION_QUESTION) {
@@ -1143,7 +1143,7 @@ Message::beginSection(const Section section) const {
 
 const SectionIterator<RRsetPtr>
 Message::endSection(const Section section) const {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
     if (section == SECTION_QUESTION) {
