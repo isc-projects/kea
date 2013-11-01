@@ -121,7 +121,7 @@ int subnet4_select(CalloutHandle& handle) {
         // Get subnet collection. If it's empty just bail nothing to do.
         const isc::dhcp::Subnet4Collection *subnets = NULL;
         handle.getArgument("subnet4collection", subnets);
-        if (subnets->size() == 0) {
+        if (subnets->empty()) {
             return 0;
         }
 
@@ -186,7 +186,7 @@ int subnet6_select(CalloutHandle& handle) {
         // Get subnet collection. If it's empty just bail nothing to do.
         const isc::dhcp::Subnet6Collection *subnets = NULL;
         handle.getArgument("subnet6collection", subnets);
-        if (subnets->size() == 0) {
+        if (subnets->empty()) {
             return 0;
         }
 
