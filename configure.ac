@@ -754,6 +754,12 @@ CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
 LIBS="$LIBS $BOTAN_LIBS"
+
+dnl ac_header_preproc is an autoconf symbol (undocumented but stable) that
+dnl is set if the pre-processor phase passes. Thus by adding a custom
+dnl failure handler we can detect the difference between a header no existing
+dnl (or not even passing the pre-processor phase) and a header file resulting
+dnl in compilation failures.
 AC_CHECK_HEADERS([botan/botan.h],,[
 if test "x$ac_header_preproc" = "xyes"; then
   AC_MSG_ERROR([
