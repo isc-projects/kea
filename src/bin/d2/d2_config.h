@@ -15,8 +15,8 @@
 #ifndef D2_CONFIG_H
 #define D2_CONFIG_H
 
-#include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <d2/d2_asio.h>
 #include <d2/d_cfg_mgr.h>
 #include <dhcpsrv/dhcp_parsers.h>
 #include <exceptions/exceptions.h>

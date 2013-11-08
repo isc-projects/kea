@@ -65,7 +65,7 @@ public:
     virtual void operator()(asiodns::IOFetch::Result result);
 
     // Starts asynchronous DNS Update.
-    void doUpdate(asiolink::IOService& io_service,
+    void doUpdate(IOServicePtr& io_service,
                   const asiolink::IOAddress& ns_addr,
                   const uint16_t ns_port,
                   D2UpdateMessage& update,
@@ -162,7 +162,7 @@ DNSClientImpl::getStatus(const asiodns::IOFetch::Result result) {
 }
 
 void
-DNSClientImpl::doUpdate(IOService& io_service,
+DNSClientImpl::doUpdate(IOServicePtr& io_service,
                         const IOAddress& ns_addr,
                         const uint16_t ns_port,
                         D2UpdateMessage& update,
@@ -189,11 +189,11 @@ DNSClientImpl::doUpdate(IOService& io_service,
     // Timeout value is explicitly cast to the int type to avoid warnings about
     // overflows when doing implicit cast. It should have been checked by the
     // caller that the unsigned timeout value will fit into int.
-    IOFetch io_fetch(IOFetch::UDP, io_service, msg_buf, ns_addr, ns_port,
+    IOFetch io_fetch(IOFetch::UDP, *io_service, msg_buf, ns_addr, ns_port,
                      in_buf_, this, static_cast<int>(wait));
     // Post the task to the task queue in the IO service. Caller will actually
     // run these tasks by executing IOService::run.
-    io_service.post(io_fetch);
+    io_service->post(io_fetch);
 }
 
 
@@ -213,7 +213,7 @@ DNSClient::getMaxTimeout() {
 }
 
 void
-DNSClient::doUpdate(IOService&,
+DNSClient::doUpdate(IOServicePtr&,
                     const IOAddress&,
                     const uint16_t,
                     D2UpdateMessage&,
@@ -224,11 +224,16 @@ DNSClient::doUpdate(IOService&,
 }
 
 void
-DNSClient::doUpdate(IOService& io_service,
+DNSClient::doUpdate(IOServicePtr& io_service,
                     const IOAddress& ns_addr,
                     const uint16_t ns_port,
                     D2UpdateMessage& update,
                     const unsigned int wait) {
+    if (!io_service) {
+        isc_throw(isc::BadValue, 
+                  "DNSClient::doUpdate: IOService cannot be null");
+    }
+
     // The underlying implementation which we use to send DNS Updates uses
     // signed integers for timeout. If we want to avoid overflows we need to
     // respect this limitation here.
