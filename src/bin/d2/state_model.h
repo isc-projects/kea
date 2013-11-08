@@ -17,7 +17,6 @@
 
 /// @file state_model.h This file defines the class StateModel.
 
-#include <asiolink/io_service.h>
 #include <exceptions/exceptions.h>
 #include <d2/d2_config.h>
 #include <d2/dns_client.h>

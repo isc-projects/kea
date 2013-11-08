@@ -15,11 +15,11 @@
 #ifndef D_TEST_STUBS_H
 #define D_TEST_STUBS_H
 
-#include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/session.h>
 #include <config/ccsession.h>
 
+#include <d2/d2_asio.h>
 #include <d2/d_controller.h>
 #include <d2/d_cfg_mgr.h>
 

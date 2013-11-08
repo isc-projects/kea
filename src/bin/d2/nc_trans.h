@@ -17,8 +17,8 @@
 
 /// @file nc_trans.h This file defines the class NameChangeTransaction.
 
-#include <asiolink/io_service.h>
 #include <exceptions/exceptions.h>
+#include <d2/d2_asio.h>
 #include <d2/d2_config.h>
 #include <d2/dns_client.h>
 #include <d2/state_model.h>
@@ -163,7 +163,7 @@ public:
     /// @throw NameChangeTransactionError if given an null request,
     /// if forward change is enabled but forward domain is null, if
     /// reverse change is enabled but reverse domain is null.
-    NameChangeTransaction(isc::asiolink::IOService& io_service,
+    NameChangeTransaction(IOServicePtr& io_service,
                           dhcp_ddns::NameChangeRequestPtr& ncr,
                           DdnsDomainPtr& forward_domain,
                           DdnsDomainPtr& reverse_domain);
@@ -376,7 +376,7 @@ public:
 
 private:
     /// @brief The IOService which should be used to for IO processing.
-    isc::asiolink::IOService& io_service_;
+    IOServicePtr io_service_;
 
     /// @brief The NameChangeRequest that the transaction is to fulfill.
     dhcp_ddns::NameChangeRequestPtr ncr_;
