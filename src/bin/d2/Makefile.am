@@ -50,6 +50,7 @@ BUILT_SOURCES = spec_config.h d2_messages.h d2_messages.cc
 pkglibexec_PROGRAMS = b10-dhcp-ddns
 
 b10_dhcp_ddns_SOURCES  = main.cc
+b10_dhcp_ddns_SOURCES += d2_asio.h
 b10_dhcp_ddns_SOURCES += d2_log.cc d2_log.h
 b10_dhcp_ddns_SOURCES += d2_process.cc d2_process.h
 b10_dhcp_ddns_SOURCES += d_controller.cc d_controller.h

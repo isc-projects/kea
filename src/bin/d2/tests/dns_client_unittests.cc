@@ -61,7 +61,7 @@ const long TEST_TIMEOUT = 5 * 1000;
 // timeout is hit. This will result in test failure.
 class DNSClientTest : public virtual ::testing::Test, DNSClient::Callback {
 public:
-    IOService service_;
+    IOServicePtr service_;
     D2UpdateMessagePtr response_;
     DNSClient::Status status_;
     uint8_t receive_buffer_[MAX_SIZE];
@@ -79,11 +79,11 @@ public:
     // in case when response from the server is not received. Tests output would
     // become messy if such errors were logged.
     DNSClientTest()
-        : service_(),
+        : service_(new isc::asiolink::IOService()),
           status_(DNSClient::SUCCESS),
           corrupt_response_(false),
           expect_response_(true),
-          test_timer_(service_) {
+          test_timer_(*service_) {
         asiodns::logger.setSeverity(isc::log::INFO);
         response_.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
         dns_client_.reset(new DNSClient(response_, this));
@@ -108,7 +108,7 @@ public:
     // @param status A status code returned by DNSClient.
     virtual void operator()(DNSClient::Status status) {
         status_ = status;
-        service_.stop();
+        service_->stop();
 
         if (expect_response_) {
             if (!corrupt_response_) {
@@ -139,7 +139,7 @@ public:
     //
     // This callback stops all running (hanging) tasks on IO service.
     void testTimeoutHandler() {
-        service_.stop();
+        service_->stop();
         FAIL() << "Test timeout hit.";
     }
 
@@ -271,7 +271,7 @@ public:
 
         // This starts the execution of tasks posted to IOService. run() blocks
         // until stop() is called in the completion callback function.
-        service_.run();
+        service_->run();
 
     }
 
@@ -295,7 +295,7 @@ public:
         // responses. The reuse address option is set so as both sockets can
         // use the same address. This new socket is bound to the test address
         // and port, where requests will be sent.
-        udp::socket udp_socket(service_.get_io_service(), asio::ip::udp::v4());
+        udp::socket udp_socket(service_->get_io_service(), asio::ip::udp::v4());
         udp_socket.set_option(socket_base::reuse_address(true));
         udp_socket.bind(udp::endpoint(address::from_string(TEST_ADDRESS),
                                       TEST_PORT));
@@ -334,7 +334,7 @@ public:
 
         // Kick of the message exchange by actually running the scheduled
         // "send" and "receive" operations.
-        service_.run();
+        service_->run();
 
         udp_socket.close();
 

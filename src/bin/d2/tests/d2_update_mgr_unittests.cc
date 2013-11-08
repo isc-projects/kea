@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <asiolink/interval_timer.h>
+#include <d2/d2_asio.h>
 #include <d2/d2_update_mgr.h>
 #include <util/time_utilities.h>
 #include <d_test_stubs.h>
@@ -41,7 +41,7 @@ public:
     ///
     /// Parameters match those needed by D2UpdateMgr.
     D2UpdateMgrWrapper(D2QueueMgrPtr& queue_mgr, D2CfgMgrPtr& cfg_mgr,
-                       isc::asiolink::IOService& io_service,
+                       IOServicePtr& io_service,
                        const size_t max_transactions = MAX_TRANSACTIONS_DEFAULT)
         : D2UpdateMgr(queue_mgr, cfg_mgr, io_service, max_transactions) {
     }
@@ -68,7 +68,7 @@ typedef boost::shared_ptr<D2UpdateMgrWrapper> D2UpdateMgrWrapperPtr;
 /// functions.
 class D2UpdateMgrTest : public ConfigParseTest {
 public:
-    isc::asiolink::IOService io_service_;
+    IOServicePtr io_service_;
     D2QueueMgrPtr queue_mgr_;
     D2CfgMgrPtr cfg_mgr_;
     //D2UpdateMgrPtr update_mgr_;
@@ -77,6 +77,7 @@ public:
     size_t canned_count_;
 
     D2UpdateMgrTest() {
+        io_service_.reset(new isc::asiolink::IOService());
         queue_mgr_.reset(new D2QueueMgr(io_service_));
         cfg_mgr_.reset(new D2CfgMgr());
         update_mgr_.reset(new D2UpdateMgrWrapper(queue_mgr_, cfg_mgr_,
@@ -162,7 +163,7 @@ public:
 /// 4. Default construction works and max transactions is defaulted properly
 /// 5. Construction with custom max transactions works properly
 TEST(D2UpdateMgr, construction) {
-    isc::asiolink::IOService io_service;
+    IOServicePtr io_service(new isc::asiolink::IOService());
     D2QueueMgrPtr queue_mgr;
     D2CfgMgrPtr cfg_mgr;
     D2UpdateMgrPtr update_mgr;

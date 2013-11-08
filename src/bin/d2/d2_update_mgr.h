@@ -17,8 +17,8 @@
 
 /// @file d2_update_mgr.h This file defines the class D2UpdateMgr.
 
-#include <asiolink/io_service.h>
 #include <exceptions/exceptions.h>
+#include <d2/d2_asio.h>
 #include <d2/d2_log.h>
 #include <d2/d2_queue_mgr.h>
 #include <d2/d2_cfg_mgr.h>
@@ -100,7 +100,7 @@ public:
     /// @throw D2UpdateMgrError if either the queue manager or configuration
     /// managers are NULL, or max transactions is less than one.
     D2UpdateMgr(D2QueueMgrPtr& queue_mgr, D2CfgMgrPtr& cfg_mgr,
-                isc::asiolink::IOService& io_service,
+                IOServicePtr& io_service,
                 const size_t max_transactions = MAX_TRANSACTIONS_DEFAULT);
 
     /// @brief Destructor
@@ -228,7 +228,7 @@ private:
     /// passed into transactions to manager their IO events.
     /// (For future reference, multi-threaded transactions would each use their
     /// own IOService instance.)
-    isc::asiolink::IOService& io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Maximum number of concurrent transactions.
     size_t max_transactions_;

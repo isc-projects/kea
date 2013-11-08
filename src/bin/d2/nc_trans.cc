@@ -39,7 +39,7 @@ const int NameChangeTransaction::UPDATE_FAILED_EVT;
 const int NameChangeTransaction::NCT_DERIVED_EVENT_MIN;
 
 NameChangeTransaction::
-NameChangeTransaction(isc::asiolink::IOService& io_service,
+NameChangeTransaction(IOServicePtr& io_service,
                       dhcp_ddns::NameChangeRequestPtr& ncr,
                       DdnsDomainPtr& forward_domain,
                       DdnsDomainPtr& reverse_domain)
@@ -48,8 +48,15 @@ NameChangeTransaction(isc::asiolink::IOService& io_service,
      dns_update_status_(DNSClient::OTHER), dns_update_response_(),
      forward_change_completed_(false), reverse_change_completed_(false),
      current_server_list_(), current_server_(), next_server_pos_(0) {
+    // @todo if io_service is NULL we are multi-threading and should
+    // instantiate our own
+    if (!io_service_) {
+        isc_throw(NameChangeTransactionError, "IOServicePtr cannot be null");
+    }
+
     if (!ncr_) {
-        isc_throw(NameChangeTransactionError, "NameChangeRequest cannot null");
+        isc_throw(NameChangeTransactionError,
+                  "NameChangeRequest cannot be null");
     }
 
     if (ncr_->isForwardChange() && !(forward_domain_)) {

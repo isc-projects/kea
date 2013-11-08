@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <asiolink/interval_timer.h>
+#include <d2/d2_asio.h>
 #include <d2/d2_queue_mgr.h>
 #include <dhcp_ddns/ncr_udp.h>
 #include <util/time_utilities.h>
@@ -78,7 +78,7 @@ const long TEST_TIMEOUT = 5 * 1000;
 
 /// @brief Tests that construction with max queue size of zero is not allowed.
 TEST(D2QueueMgrBasicTest, construction1) {
-    isc::asiolink::IOService io_service;
+    IOServicePtr io_service(new isc::asiolink::IOService());
 
     // Verify that constructing with max queue size of zero is not allowed.
     EXPECT_THROW(D2QueueMgr(io_service, 0), D2QueueMgrError);
@@ -86,7 +86,7 @@ TEST(D2QueueMgrBasicTest, construction1) {
 
 /// @brief Tests default construction works.
 TEST(D2QueueMgrBasicTest, construction2) {
-    isc::asiolink::IOService io_service;
+    IOServicePtr io_service(new isc::asiolink::IOService());
 
     // Verify that valid constructor works.
     D2QueueMgrPtr queue_mgr;
@@ -97,7 +97,7 @@ TEST(D2QueueMgrBasicTest, construction2) {
 
 /// @brief Tests construction with custom queue size works properly
 TEST(D2QueueMgrBasicTest, construction3) {
-    isc::asiolink::IOService io_service;
+    IOServicePtr io_service(new isc::asiolink::IOService());
 
     // Verify that custom queue size constructor works.
     D2QueueMgrPtr queue_mgr;
@@ -114,7 +114,7 @@ TEST(D2QueueMgrBasicTest, construction3) {
 /// 4. Peek returns the first entry on the queue without altering queue content
 /// 5. Dequeue removes the first entry on the queue
 TEST(D2QueueMgrBasicTest, basicQueue) {
-    isc::asiolink::IOService io_service;
+    IOServicePtr io_service(new isc::asiolink::IOService());
 
     // Construct the manager with max queue size set to number of messages
     // we'll use.
@@ -206,7 +206,7 @@ bool checkSendVsReceived(NameChangeRequestPtr sent_ncr,
 class QueueMgrUDPTest : public virtual ::testing::Test,
                         NameChangeSender::RequestSendHandler {
 public:
-    isc::asiolink::IOService io_service_;
+    IOServicePtr io_service_;
     NameChangeSenderPtr   sender_;
     isc::asiolink::IntervalTimer test_timer_;
     D2QueueMgrPtr queue_mgr_;
@@ -215,7 +215,8 @@ public:
     std::vector<NameChangeRequestPtr> sent_ncrs_;
     std::vector<NameChangeRequestPtr> received_ncrs_;
 
-    QueueMgrUDPTest() : io_service_(), test_timer_(io_service_) {
+    QueueMgrUDPTest() : io_service_(new isc::asiolink::IOService()),
+        test_timer_(*io_service_) {
         isc::asiolink::IOAddress addr(TEST_ADDRESS);
         // Create our sender instance. Note that reuse_address is true.
         sender_.reset(new NameChangeUDPSender(addr, SENDER_PORT,
@@ -245,7 +246,7 @@ public:
     ///
     /// This callback stops all running (hanging) tasks on IO service.
     void testTimeoutHandler() {
-        io_service_.stop();
+        io_service_->stop();
         FAIL() << "Test timeout hit.";
     }
 };
@@ -296,7 +297,7 @@ TEST_F (QueueMgrUDPTest, stateModel) {
 
     // Stopping requires IO cancel, which result in a callback.
     // So process one event and verify we are STOPPED.
-    io_service_.run_one();
+    io_service_->run_one();
     EXPECT_EQ(D2QueueMgr::STOPPED, queue_mgr_->getMgrState());
 
     // Verify that we can re-enter the RUNNING from STOPPED by starting the
@@ -313,7 +314,7 @@ TEST_F (QueueMgrUDPTest, stateModel) {
 
     // Stopping requires IO cancel, which result in a callback.
     // So process one event and verify we are STOPPED.
-    io_service_.run_one();
+    io_service_->run_one();
     EXPECT_EQ(D2QueueMgr::STOPPED, queue_mgr_->getMgrState());
 
     // Verify that we can remove the listener in the STOPPED state and
@@ -355,7 +356,7 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     ASSERT_EQ(D2QueueMgr::RUNNING, queue_mgr_->getMgrState());
 
     // Place the sender into sending state.
-    ASSERT_NO_THROW(sender_->startSending(io_service_));
+    ASSERT_NO_THROW(sender_->startSending(*io_service_));
     ASSERT_TRUE(sender_->amSending());
 
     // Iterate over the list of requests sending and receiving
@@ -366,8 +367,8 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
         ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
 
         // running two should do the send then the receive
-        io_service_.run_one();
-        io_service_.run_one();
+        io_service_->run_one();
+        io_service_->run_one();
 
         // Verify that the request can be added to the queue and queue
         // size increments accordingly.
@@ -390,8 +391,8 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
         ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
 
         // running two should do the send then the receive
-        EXPECT_NO_THROW(io_service_.run_one());
-        EXPECT_NO_THROW(io_service_.run_one());
+        EXPECT_NO_THROW(io_service_->run_one());
+        EXPECT_NO_THROW(io_service_->run_one());
         EXPECT_EQ(i+1, queue_mgr_->getQueueSize());
     }
 
@@ -400,11 +401,11 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
 
     // Send another. The send should succeed.
     ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
-    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_NO_THROW(io_service_->run_one());
 
     // Now execute the receive which should not throw but should move us
     // to STOPPED_QUEUE_FULL state.
-    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_NO_THROW(io_service_->run_one());
     EXPECT_EQ(D2QueueMgr::STOPPED_QUEUE_FULL, queue_mgr_->getMgrState());
 
     // Verify queue size did not increase beyond max.
@@ -430,10 +431,10 @@ TEST_F (QueueMgrUDPTest, liveFeed) {
     // Verify that we can again receive requests.
     // Send should be fine.
     ASSERT_NO_THROW(sender_->sendRequest(send_ncr));
-    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_NO_THROW(io_service_->run_one());
 
     // Receive should succeed.
-    EXPECT_NO_THROW(io_service_.run_one());
+    EXPECT_NO_THROW(io_service_->run_one());
     EXPECT_EQ(1, queue_mgr_->getQueueSize());
 }
 

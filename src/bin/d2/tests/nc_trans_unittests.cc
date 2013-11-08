@@ -43,7 +43,7 @@ public:
     /// @brief Constructor
     ///
     /// Parameters match those needed by NameChangeTransaction.
-    NameChangeStub(isc::asiolink::IOService& io_service,
+    NameChangeStub(IOServicePtr& io_service,
                    dhcp_ddns::NameChangeRequestPtr& ncr,
                    DdnsDomainPtr forward_domain,
                    DdnsDomainPtr reverse_domain)
@@ -210,9 +210,12 @@ typedef boost::shared_ptr<NameChangeStub> NameChangeStubPtr;
 /// aspects of NameChangeTransaction.
 class NameChangeTransactionTest : public ::testing::Test {
 public:
-    isc::asiolink::IOService io_service_;
+    IOServicePtr io_service_;
     DdnsDomainPtr forward_domain_;
     DdnsDomainPtr reverse_domain_;
+
+    NameChangeTransactionTest() : io_service_(new isc::asiolink::IOService()) {
+    }
 
     virtual ~NameChangeTransactionTest() {
     }
@@ -267,7 +270,7 @@ public:
 /// requires reverse change.
 /// 4. Valid construction functions properly
 TEST(NameChangeTransaction, construction) {
-    isc::asiolink::IOService io_service;
+    IOServicePtr io_service(new isc::asiolink::IOService());
 
     const char* msg_str =
         "{"
