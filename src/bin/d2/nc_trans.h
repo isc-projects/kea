@@ -151,6 +151,12 @@ public:
     static const int NCT_DERIVED_EVENT_MIN = SM_DERIVED_EVENT_MIN + 101;
     //@}
 
+    /// @brief Defualt time to assign to a single DNS udpate.
+    static const unsigned int DNS_UPDATE_DEFAULT_TIMEOUT = 5 * 1000;
+
+    /// @brief Maximum times to attempt a single update on a given server.
+    static const unsigned int MAX_UPDATE_TRIES_PER_SERVER = 3;
+
     /// @brief Constructor
     ///
     /// Instantiates a transaction that is ready to be started.
@@ -191,6 +197,9 @@ public:
     virtual void operator()(DNSClient::Status status);
 
 protected:
+    /// @todo
+    void sendUpdate(bool use_tsig_ = false);
+
     /// @brief Adds events defined by NameChangeTransaction to the event set.
     ///
     /// This method adds the events common to NCR transaction processing to
@@ -248,6 +257,17 @@ protected:
     /// @param explanation is text detailing the error
     virtual void onModelFailure(const std::string& explanation);
 
+    /// @todo
+    void retryTransition(int server_sel_state);
+
+    /// @brief Sets the update request packet to the given packet.
+    ///
+    /// @param request is the new request packet to assign.
+    void setDnsUpdateRequest(D2UpdateMessagePtr& request);
+
+    /// @brief Destroys the current update request packet.
+    void clearDnsUpdateRequest();
+
     /// @brief Sets the update status to the given status value.
     ///
     /// @param status is the new value for the update status.
@@ -257,6 +277,9 @@ protected:
     ///
     /// @param response is the new response packet to assign.
     void setDnsUpdateResponse(D2UpdateMessagePtr& response);
+
+    /// @brief Destroys the current update respons packet.
+    void clearDnsUpdateResponse();
 
     /// @brief Sets the forward change completion flag to the given value.
     ///
@@ -307,6 +330,11 @@ protected:
     /// @return A const pointer reference to the DNSClient
     const DNSClientPtr& getDNSClient() const;
 
+    /// @brief Sets the update attempt count to the given value.
+    ///
+    /// @param value is the new value to assign.
+    void setUpdateAttempts(size_t value);
+
 public:
     /// @brief Fetches the NameChangeRequest for this transaction.
     ///
@@ -344,6 +372,12 @@ public:
     /// the request does not include a reverse change, the pointer will empty.
     DdnsDomainPtr& getReverseDomain();
 
+    /// @brief Fetches the current DNS update request packet.
+    ///
+    /// @return A const pointer reference to the current D2UpdateMessage
+    /// request.
+    const D2UpdateMessagePtr& getDnsUpdateRequest() const;
+
     /// @brief Fetches the most recent DNS update status.
     ///
     /// @return A DNSClient::Status indicating the result of the most recent
@@ -374,6 +408,12 @@ public:
     /// @return True if the reverse change has been completed, false otherwise.
     bool getReverseChangeCompleted() const;
 
+    /// @brief Fetches the update attempt count for the current update.
+    ///
+    /// @return size_t which is the number of times the current request has
+    /// been attempted against the current server.
+    size_t getUpdateAttempts() const;
+
 private:
     /// @brief The IOService which should be used to for IO processing.
     IOServicePtr io_service_;
@@ -398,6 +438,9 @@ private:
     /// @brief The DNSClient instance that will carry out DNS packet exchanges.
     DNSClientPtr dns_client_;
 
+    /// @brief The DNS current update request packet.
+    D2UpdateMessagePtr dns_update_request_;
+
     /// @brief The outcome of the most recently completed DNS packet exchange.
     DNSClient::Status dns_update_status_;
 
@@ -421,6 +464,9 @@ private:
     /// This value is always the position of the next selection in the server
     /// list, which may be beyond the end of the list.
     size_t next_server_pos_;
+
+    // @todo
+    size_t update_attempts_;
 };
 
 /// @brief Defines a pointer to a NameChangeTransaction.

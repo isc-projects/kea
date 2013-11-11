@@ -193,8 +193,12 @@ public:
     using NameChangeTransaction::getCurrentServer;
     using NameChangeTransaction::getDNSClient;
     using NameChangeTransaction::setNcrStatus;
+    using NameChangeTransaction::setDnsUpdateRequest;
+    using NameChangeTransaction::clearDnsUpdateRequest;
     using NameChangeTransaction::setDnsUpdateStatus;
     using NameChangeTransaction::getDnsUpdateResponse;
+    using NameChangeTransaction::setDnsUpdateResponse;
+    using NameChangeTransaction::clearDnsUpdateResponse;
     using NameChangeTransaction::getForwardChangeCompleted;
     using NameChangeTransaction::getReverseChangeCompleted;
     using NameChangeTransaction::setForwardChangeCompleted;
@@ -213,9 +217,9 @@ public:
     IOServicePtr io_service_;
     DdnsDomainPtr forward_domain_;
     DdnsDomainPtr reverse_domain_;
-
+    
     NameChangeTransactionTest() : io_service_(new isc::asiolink::IOService()) {
-    }
+    } 
 
     virtual ~NameChangeTransactionTest() {
     }
@@ -296,6 +300,13 @@ TEST(NameChangeTransaction, construction) {
     ASSERT_NO_THROW(forward_domain.reset(new DdnsDomain("*", "", servers)));
     ASSERT_NO_THROW(reverse_domain.reset(new DdnsDomain("*", "", servers)));
 
+    // Verify that construction with a null IOServicePtr fails.
+    // @todo Subject to change if multi-threading is implemenated.
+    IOServicePtr empty;
+    EXPECT_THROW(NameChangeTransaction(empty, ncr,
+                                       forward_domain, reverse_domain),
+                                       NameChangeTransactionError);
+
     // Verify that construction with an empty NameChangeRequest throws.
     EXPECT_THROW(NameChangeTransaction(io_service, empty_ncr,
                                        forward_domain, reverse_domain),
@@ -366,9 +377,6 @@ TEST_F(NameChangeTransactionTest, accessors) {
     EXPECT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::TIMEOUT));
     EXPECT_EQ(DNSClient::TIMEOUT, name_change->getDnsUpdateStatus());
 
-    // Verify that the DNS update response can be retrieved.
-    EXPECT_FALSE(name_change->getDnsUpdateResponse());
-
     // Verify that the forward change complete flag can be set and fetched.
     EXPECT_NO_THROW(name_change->setForwardChangeCompleted(true));
     EXPECT_TRUE(name_change->getForwardChangeCompleted());
@@ -377,6 +385,55 @@ TEST_F(NameChangeTransactionTest, accessors) {
     EXPECT_NO_THROW(name_change->setReverseChangeCompleted(true));
     EXPECT_TRUE(name_change->getReverseChangeCompleted());
 }
+
+TEST_F(NameChangeTransactionTest, dnsUpdateRequestAccessors) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    // Verify that the DNS update request accessors.
+    D2UpdateMessagePtr req;
+    ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
+
+    // Post construction it is empty.
+    EXPECT_FALSE(name_change->getDnsUpdateRequest());
+
+    /// @param request is the new request packet to assign.
+    ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
+
+    // Post set, we should be able to fetch it.
+    EXPECT_TRUE(name_change->getDnsUpdateRequest());
+
+    // Should be able to clear it.
+    ASSERT_NO_THROW(name_change->clearDnsUpdateRequest());
+
+    // Should be empty again.
+    EXPECT_FALSE(name_change->getDnsUpdateRequest());
+}
+
+TEST_F(NameChangeTransactionTest, dnsUpdateResponseAccessors) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+
+    // Verify that the DNS update response accessors.
+    D2UpdateMessagePtr resp;
+    ASSERT_NO_THROW(resp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND)));
+
+    // Post construction it is empty.
+    EXPECT_FALSE(name_change->getDnsUpdateResponse());
+
+    /// @param request is the new request packet to assign.
+    ASSERT_NO_THROW(name_change->setDnsUpdateResponse(resp));
+
+    // Post set, we should be able to fetch it.
+    EXPECT_TRUE(name_change->getDnsUpdateResponse());
+
+    // Should be able to clear it.
+    ASSERT_NO_THROW(name_change->clearDnsUpdateResponse());
+
+    // Should be empty again.
+    EXPECT_FALSE(name_change->getDnsUpdateResponse());
+}
+
+
 
 /// @brief Tests event and state dictionary construction and verification.
 TEST_F(NameChangeTransactionTest, dictionaryCheck) {
