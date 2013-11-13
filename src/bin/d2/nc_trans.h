@@ -198,7 +198,7 @@ public:
 
 protected:
     /// @todo
-    void sendUpdate(bool use_tsig_ = false);
+    virtual void sendUpdate(bool use_tsig_ = false);
 
     /// @brief Adds events defined by NameChangeTransaction to the event set.
     ///

@@ -92,27 +92,13 @@ StateModel::~StateModel(){
 
 void
 StateModel::startModel(const int start_state) {
-    // First let's build and verify the dictionary of events.
-    try {
-        defineEvents();
-        verifyEvents();
-    } catch (const std::exception& ex) {
-        isc_throw(StateModelError, "Event set is invalid: " << ex.what());
-    }
-
-    // Next let's build and verify the dictionary of states.
-    try {
-        defineStates();
-        verifyStates();
-    } catch (const std::exception& ex) {
-        isc_throw(StateModelError, "State set is invalid: " << ex.what());
-    }
-
-    // Record that we are good to go.
-    dictionaries_initted_ = true;
+    // Intialize dictionaries of events and states.
+    initDictionaries();
 
     // Set the current state to starting state and enter the run loop.
     setState(start_state);
+
+    // Start running the model.
     runModel(START_EVT);
 }
 
@@ -149,6 +135,27 @@ void
 StateModel::nopStateHandler() {
 }
 
+void
+StateModel::initDictionaries() {
+    // First let's build and verify the dictionary of events.
+    try {
+        defineEvents();
+        verifyEvents();
+    } catch (const std::exception& ex) {
+        isc_throw(StateModelError, "Event set is invalid: " << ex.what());
+    }
+
+    // Next let's build and verify the dictionary of states.
+    try {
+        defineStates();
+        verifyStates();
+    } catch (const std::exception& ex) {
+        isc_throw(StateModelError, "State set is invalid: " << ex.what());
+    }
+
+    // Record that we are good to go.
+    dictionaries_initted_ = true;
+}
 
 void
 StateModel::defineEvent(unsigned int event_value, const std::string& label) {

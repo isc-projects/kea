@@ -259,7 +259,7 @@ NameChangeRequest correctly. Some or all of the DNS updates requested as part
 of this update did not succeed. This is a programmatic error and should be
 reported.
 
-% DHCP_DDNS_FORWARD_ADD_REJECTED DNS Server, %1, rejected a DNS update request to add the address mapping for FQDN, %1, with an RCODE: %3
+% DHCP_DDNS_FORWARD_ADD_REJECTED DNS Server, %1, rejected a DNS update request to add the address mapping for FQDN, %2, with an RCODE: %3
 This is an error message issued when an udpate was rejected by the DNS server itwas sent to for the reason given by the RCODE. The rcode values are defined in
 RFC 2136.
 
@@ -277,7 +277,7 @@ This is an error message issued when a unexpected error condition error occurs
 while DHCP_DDNS is carrying out a forward address update.  The request will be
 be aborted.  This is most likely a programmatic issue and should be reported.
 
-% DHCP_DDNS_FORWARD_REPLACE_REJECTED DNS Server, %1, rejected a DNS update request to replace the address mapping for FQDN, %1, with an RCODE: %3
+% DHCP_DDNS_FORWARD_REPLACE_REJECTED DNS Server, %1, rejected a DNS update request to replace the address mapping for FQDN, %2, with an RCODE: %3
 This is an error message issued when an udpate was rejected by the DNS server itwas sent to for the reason given by the RCODE. The rcode values are defined in
 RFC 2136.
 
@@ -295,7 +295,7 @@ This is an error message issued when a unexpected error condition error occurs
 while DHCP_DDNS is carrying out a forward address update.  The request will be
 be aborted.  This is most likely a programmatic issue and should be reported.
 
-% DHCP_DDNS_REVERSE_REPLACE_REJECTED DNS Server, %1, rejected a DNS update request to replace the reverse mapping for FQDN, %1, with an RCODE: %3
+% DHCP_DDNS_REVERSE_REPLACE_REJECTED DNS Server, %1, rejected a DNS update request to replace the reverse mapping for FQDN, %2, with an RCODE: %3
 This is an error message issued when an udpate was rejected by the DNS server itwas sent to for the reason given by the RCODE. The rcode values are defined in
 RFC 2136.
 

@@ -275,10 +275,9 @@ public:
 
     /// @brief Begins execution of the model.
     ///
-    /// This method invokes the define and verify methods for both events and
-    /// states to initialize their respective dictionaries. It then starts
-    /// the model execution setting the current state to the given start state,
-    /// and the event to START_EVT.
+    /// This method invokes initDictionaries method to initialize the event
+    /// and state dictionaries and then starts the model execution setting 
+    /// the current state to the given start state, and the event to START_EVT.
     ///
     /// @param start_state is the state in which to begin execution.
     ///
@@ -323,6 +322,15 @@ public:
     void nopStateHandler();
 
 protected:
+    /// @brief Initializes the event and state dictionaries.
+    ///
+    /// This method invokes the define and verify methods for both events and
+    /// states to initialize their respective dictionaries. 
+    ///
+    /// @throw StateModelError or others indirectly, as this method calls
+    /// dictionary define and verify methods.
+    void initDictionaries();
+
     /// @brief Populates the set of events.
     ///
     /// This method is used to construct the set of valid events. Each class
