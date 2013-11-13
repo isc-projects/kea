@@ -68,8 +68,6 @@ AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
 AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
-CXX_VERSION="unknown"
-
 dnl Determine if weare using GNU sed
 GNU_SED=no
 $SED --version 2> /dev/null | grep -q GNU
@@ -113,6 +111,8 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
 
   AC_MSG_RESULT([$bind10_cxx_flag])
 ])
+
+CXX_VERSION="unknown"
 
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
