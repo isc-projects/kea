@@ -74,6 +74,15 @@ Lease4::Lease4(const Lease4& other)
     }
 }
 
+std::vector<uint8_t>
+Lease4::getClientIdVector() const {
+    if(!client_id_) {
+        return std::vector<uint8_t>();
+    }
+
+    return (client_id_->getClientId());
+}
+
 Lease4&
 Lease4::operator=(const Lease4& other) {
     if (this != &other) {
