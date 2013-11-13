@@ -105,7 +105,7 @@ protected:
     /// various configuration values. Installing the dummy handler
     /// that guarantees to return success causes initial configuration
     /// to be stored for the session being created and that it can
-    /// be later accessed with \ref isc::ConfigData::getFullConfig TODO: cannot resolve reference.
+    /// be later accessed with \ref isc::ConfigData::getFullConfig().
     ///
     /// @param new_config new configuration.
     ///
