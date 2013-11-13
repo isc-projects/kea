@@ -201,8 +201,8 @@ NameAddTransaction::addingFwdAddrsHandler() {
                 // If we get not authorized should we try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_REJECTED)
-                          .arg(getNcr()->getFqdn())
                           .arg(getCurrentServer()->getIpAddress())
+                          .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             }
@@ -301,8 +301,8 @@ NameAddTransaction::replacingFwdAddrsHandler() {
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_REJECTED)
-                          .arg(getNcr()->getFqdn())
                           .arg(getCurrentServer()->getIpAddress())
+                          .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             }
@@ -422,15 +422,12 @@ NameAddTransaction::replacingRevPtrsHandler() {
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_REJECTED)
-                          .arg(getNcr()->getFqdn())
                           .arg(getCurrentServer()->getIpAddress())
+                          .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             }
 
-            // @todo clearing request seems clunky here
-            // safest thing to do is to always rebuild it
-            clearDnsUpdateRequest();
             break;
         }
 
@@ -514,17 +511,23 @@ NameAddTransaction::processAddFailedHandler() {
 
 void
 NameAddTransaction::buildAddFwdAddressRequest() {
-    isc_throw(NotImplemented, "buildAddFwdAddressRequest");
+    // @todo For now construct a blank outbound message.
+    D2UpdateMessagePtr msg(new D2UpdateMessage(D2UpdateMessage::OUTBOUND));
+    setDnsUpdateRequest(msg);
 }
 
 void
 NameAddTransaction::buildReplaceFwdAddressRequest() {
-    isc_throw(NotImplemented, "buildReplaceFwdAddressRequest");
+    // @todo For now construct a blank outbound message.
+    D2UpdateMessagePtr msg(new D2UpdateMessage(D2UpdateMessage::OUTBOUND));
+    setDnsUpdateRequest(msg);
 }
 
 void
 NameAddTransaction::buildReplaceRevPtrsRequest() {
-    isc_throw(NotImplemented, "buildReplaceRevPtrsRequest");
+    // @todo For now construct a blank outbound message.
+    D2UpdateMessagePtr msg(new D2UpdateMessage(D2UpdateMessage::OUTBOUND));
+    setDnsUpdateRequest(msg);
 }
 
 } // namespace isc::d2
