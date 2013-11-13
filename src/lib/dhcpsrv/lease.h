@@ -209,6 +209,12 @@ struct Lease4 : public Lease {
     /// @param other the @c Lease4 object to be copied.
     Lease4(const Lease4& other);
 
+    /// @brief Returns a client identifier.
+    ///
+    /// @return A client identifier as vector, or an empty vector if client
+    /// identifier is NULL.
+    std::vector<uint8_t> getClientIdVector() const;
+
     /// @brief Assignment operator.
     ///
     /// @param other the @c Lease4 object to be assigned.
