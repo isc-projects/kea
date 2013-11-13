@@ -164,14 +164,17 @@ TEST_F(MemfileLeaseMgrTest, getLease4NullClientId) {
     // Let's initialize a specific lease ... But this time
     // We keep its client id for further lookup and
     // We clearly 'reset' it ...
-    Lease4Ptr lease = initializeLease4(straddress4_[4]);
-    ClientIdPtr client_id = lease->client_id_;
-    lease->client_id_ = ClientIdPtr();
-    EXPECT_TRUE(lease_mgr->addLease(lease));
+    Lease4Ptr leaseA = initializeLease4(straddress4_[4]);
+    ClientIdPtr client_id = leaseA->client_id_;
+    leaseA->client_id_ = ClientIdPtr();
+    EXPECT_TRUE(lease_mgr->addLease(leaseA));
 
     Lease4Collection returned = lease_mgr->getLease4(*client_id);
     // Shouldn't have our previous lease ...
     ASSERT_EQ(0, returned.size());
+    Lease4Ptr leaseB = initializeLease4(straddress4_[5]);
+    // Shouldn't throw any null pointer exception
+    EXPECT_NO_THROW(lease_mgr->addLease(leaseB));
 }
 
 // Checks lease4 retrieval through HWAddr
@@ -214,6 +217,22 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetId) {
     EXPECT_TRUE(lease == Lease4Ptr());
     lease = lease_mgr->getLease4(*leaseA->client_id_, hwaddrA, leaseB->subnet_id_);
     EXPECT_TRUE(lease == Lease4Ptr());
+}
+
+TEST_F(MemfileLeaseMgrTest, getLease4ClientIdVector) {
+    const LeaseMgr::ParameterMap pmap;
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
+
+    const std::vector<uint8_t> vec;
+    Lease4Ptr lease = initializeLease4(straddress4_[7]);
+    // Check that this lease has null client-id
+    ASSERT_TRUE(lease->client_id_ == ClientIdPtr());
+    // Check that this return empty vector
+    ASSERT_TRUE(lease->getClientIdVector() == vec);
+    // Let's take a lease with client-id not null
+    lease = initializeLease4(straddress4_[6]);
+    // Check that they return same client-id value
+    ASSERT_TRUE(lease->client_id_->getClientId() == lease->getClientIdVector());
 }
 
 }; // end of anonymous namespace
