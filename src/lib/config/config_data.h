@@ -110,8 +110,8 @@ public:
     isc::data::ConstElementPtr getItemList(const std::string& identifier = "",
                                            bool recurse = false) const;
 
-    /// Returns a map of the top-level configuration items, as currently
-    /// set or their defaults
+    /// \brief Returns a map of the top-level configuration items, as
+    /// currently set or their defaults.
     ///
     /// \return An ElementPtr pointing to a MapElement containing
     ///         the top-level configuration items
