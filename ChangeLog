@@ -1,3 +1,10 @@
+704.	[func]		naokikambe
+	New statistics items related to IP sockets added into b10-xfrin:
+	open, openfail, close, connfail, conn, senderr, and recverr.
+	Their values can be obtained by invoking "Stats show Xfrin" via
+	bindctl while b10-xfrin is running.
+	(Trac #2300, git 4655c110afa0ec6f5669bf53245bffe6b30ece4b)
+
 703.    [bug]		kean
 	A bug in b10-msgq was fixed where it would remove the socket file if
 	there was an existing copy of b10-msgq running. It now correctly
