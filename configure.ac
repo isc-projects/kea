@@ -755,22 +755,23 @@ CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
 LIBS="$LIBS $BOTAN_LIBS"
 
-dnl ac_header_preproc is an autoconf symbol (undocumented but stable) that
-dnl is set if the pre-processor phase passes. Thus by adding a custom
-dnl failure handler we can detect the difference between a header no existing
-dnl (or not even passing the pre-processor phase) and a header file resulting
-dnl in compilation failures.
+# ac_header_preproc is an autoconf symbol (undocumented but stable) that
+# is set if the pre-processor phase passes. Thus by adding a custom
+# failure handler we can detect the difference between a header not existing
+# (or not even passing the pre-processor phase) and a header file resulting
+# in compilation failures.
 AC_CHECK_HEADERS([botan/botan.h],,[
-if test "x$ac_header_preproc" = "xyes"; then
-  AC_MSG_ERROR([
+	if test "x$ac_header_preproc" = "xyes"; then
+		AC_MSG_ERROR([
 botan/botan.h was found but is unusable. The most common cause of this problem
 is attempting to use an updated C++ compiler with older C++ libraries, such as
 the version of Botan that comes with your distribution. If you have updated
 your C++ compiler we highly recommend that you use support libraries such as
 Boost and Botan that were compiled with the same compiler version.])
-else
-  AC_MSG_ERROR([Missing required header files.])
-fi])
+	else
+		AC_MSG_ERROR([Missing required header files.])
+	fi]
+)
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <botan/botan.h>
                           #include <botan/hash.h>
