@@ -102,8 +102,8 @@ public:
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
-    /// @param clientid client identifier
-    virtual Lease4Collection getLease4(const ClientId& clientid) const;
+    /// @param client_id client identifier
+    virtual Lease4Collection getLease4(const ClientId& client_id) const;
 
     /// @brief Returns IPv4 lease for specified client-id/hwaddr/subnet-id tuple
     ///

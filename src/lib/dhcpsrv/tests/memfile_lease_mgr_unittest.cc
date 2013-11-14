@@ -167,14 +167,32 @@ TEST_F(MemfileLeaseMgrTest, getLease4NullClientId) {
     Lease4Ptr leaseA = initializeLease4(straddress4_[4]);
     ClientIdPtr client_id = leaseA->client_id_;
     leaseA->client_id_ = ClientIdPtr();
-    EXPECT_TRUE(lease_mgr->addLease(leaseA));
+    ASSERT_TRUE(lease_mgr->addLease(leaseA));
 
     Lease4Collection returned = lease_mgr->getLease4(*client_id);
     // Shouldn't have our previous lease ...
-    ASSERT_EQ(0, returned.size());
-    Lease4Ptr leaseB = initializeLease4(straddress4_[5]);
+    ASSERT_TRUE(returned.empty());
+
+    // Add another lease with the non-NULL client id, and make sure that the
+    // lookup will not break due to existence of both leases with non-NULL and
+    // NULL client ids.
+    Lease4Ptr leaseB = initializeLease4(straddress4_[0]);
     // Shouldn't throw any null pointer exception
-    EXPECT_NO_THROW(lease_mgr->addLease(leaseB));
+    ASSERT_TRUE(lease_mgr->addLease(leaseB));
+    // Try to get the lease.
+    returned = lease_mgr->getLease4(*client_id);
+    ASSERT_TRUE(returned.empty());
+
+    // Let's make it more interesting and add another lease with NULL client id.
+    Lease4Ptr leaseC = initializeLease4(straddress4_[5]);
+    leaseC->client_id_.reset();
+    ASSERT_TRUE(lease_mgr->addLease(leaseC));
+    returned = lease_mgr->getLease4(*client_id);
+    ASSERT_TRUE(returned.empty());
+
+    // But getting the lease with non-NULL client id should be successful.
+    returned = lease_mgr->getLease4(*leaseB->client_id_);
+    ASSERT_EQ(1, returned.size());
 }
 
 // Checks lease4 retrieval through HWAddr
@@ -219,19 +237,23 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetId) {
     EXPECT_TRUE(lease == Lease4Ptr());
 }
 
+// This test verifies that the client id can be returned as a vector.
+// @todo This test should be moved to the Lease specific unit tests once
+// these tests are created.
 TEST_F(MemfileLeaseMgrTest, getLease4ClientIdVector) {
     const LeaseMgr::ParameterMap pmap;
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
 
-    const std::vector<uint8_t> vec;
     Lease4Ptr lease = initializeLease4(straddress4_[7]);
     // Check that this lease has null client-id
     ASSERT_TRUE(lease->client_id_ == ClientIdPtr());
-    // Check that this return empty vector
-    ASSERT_TRUE(lease->getClientIdVector() == vec);
+    // Check that this returns empty vector
+    ASSERT_TRUE(lease->getClientIdVector().empty());
+
     // Let's take a lease with client-id not null
     lease = initializeLease4(straddress4_[6]);
-    // Check that they return same client-id value
+    ASSERT_TRUE(lease->client_id_);
+    // Check that they return the same client-id value
     ASSERT_TRUE(lease->client_id_->getClientId() == lease->getClientIdVector());
 }
 
