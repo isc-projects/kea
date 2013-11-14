@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -235,26 +235,6 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetId) {
     EXPECT_TRUE(lease == Lease4Ptr());
     lease = lease_mgr->getLease4(*leaseA->client_id_, hwaddrA, leaseB->subnet_id_);
     EXPECT_TRUE(lease == Lease4Ptr());
-}
-
-// This test verifies that the client id can be returned as a vector.
-// @todo This test should be moved to the Lease specific unit tests once
-// these tests are created.
-TEST_F(MemfileLeaseMgrTest, getLease4ClientIdVector) {
-    const LeaseMgr::ParameterMap pmap;
-    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
-
-    Lease4Ptr lease = initializeLease4(straddress4_[7]);
-    // Check that this lease has null client-id
-    ASSERT_TRUE(lease->client_id_ == ClientIdPtr());
-    // Check that this returns empty vector
-    ASSERT_TRUE(lease->getClientIdVector().empty());
-
-    // Let's take a lease with client-id not null
-    lease = initializeLease4(straddress4_[6]);
-    ASSERT_TRUE(lease->client_id_);
-    // Check that they return the same client-id value
-    ASSERT_TRUE(lease->client_id_->getClientId() == lease->getClientIdVector());
 }
 
 }; // end of anonymous namespace
