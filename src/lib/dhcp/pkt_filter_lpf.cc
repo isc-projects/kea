@@ -103,9 +103,29 @@ namespace isc {
 namespace dhcp {
 
 int
-PktFilterLPF::openSocket(const Iface& iface, const isc::asiolink::IOAddress&,
+PktFilterLPF::openSocket(const Iface& iface,
+                         const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
                          const bool) {
+    // Let's check if a socket is already in use
+    int sock_check = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock_check < 0) {
+        isc_throw(SocketConfigError, "Failed to create dgram socket");
+    }
+
+    struct sockaddr_in addr4;
+    memset(& addr4, 0, sizeof(addr4));
+    addr4.sin_family = AF_INET;
+    addr4.sin_addr.s_addr = htonl(addr);
+    addr4.sin_port = htons(port);
+
+    if (bind(sock_check, (struct sockaddr *)& addr4, sizeof(addr4)) < 0) {
+        // We return negative, the proper error message will be displayed
+        // by the IfaceMgr ...
+        close(sock_check);
+        return (-1);
+    }
+    close(sock_check);
 
     int sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock < 0) {

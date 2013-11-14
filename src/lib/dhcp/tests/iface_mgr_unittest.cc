@@ -986,6 +986,40 @@ TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
     EXPECT_TRUE(iface_mgr->isDirectResponseSupported());
 }
 
+TEST_F(IfaceMgrTest, checkPacketFilterLPFSocket) {
+    IOAddress loAddr("127.0.0.1");
+    int socket1 = 0, socket2 = 0;
+    // Create two instances of IfaceMgr.
+    boost::scoped_ptr<NakedIfaceMgr> iface_mgr1(new NakedIfaceMgr());
+    ASSERT_TRUE(iface_mgr1);
+    boost::scoped_ptr<NakedIfaceMgr> iface_mgr2(new NakedIfaceMgr());
+    ASSERT_TRUE(iface_mgr2);
+
+    // Let IfaceMgr figure out which Packet Filter to use when
+    // direct response capability is not desired. It should pick
+    // PktFilterInet.
+    EXPECT_NO_THROW(iface_mgr1->setMatchingPacketFilter(false));
+    // Let's open a loopback socket with handy unpriviliged port number
+    socket1 = iface_mgr1->openSocket(LOOPBACK, loAddr,
+                                     DHCP4_SERVER_PORT + 10000);
+
+    EXPECT_GE(socket1, 0);
+
+    // Then the second use PkFilterLPF mode
+    EXPECT_NO_THROW(iface_mgr2->setMatchingPacketFilter(true));
+    // This socket opening attempt should not return positive value
+    // The first socket already opened same port
+    EXPECT_NO_THROW(
+        socket2 = iface_mgr2->openSocket(LOOPBACK, loAddr,
+                                         DHCP4_SERVER_PORT + 10000);
+    );
+
+    EXPECT_LE(socket2, 0);
+
+    close(socket2);
+    close(socket1);
+}
+
 #else
 
 // This non-Linux specific test checks whether it is possible to use
