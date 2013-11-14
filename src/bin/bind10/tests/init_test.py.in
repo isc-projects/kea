@@ -1651,7 +1651,7 @@ class TestInitComponents(unittest.TestCase):
         pi = init.start_msgq()
         self.assertEqual('b10-msgq', pi.name)
         self.assertEqual(['b10-msgq'], pi.args)
-        self.assertTrue(pi.dev_null_stdout)
+        self.assertEqual(pi.dev_null_stdout, not verbose)
         self.assertEqual(pi.dev_null_stderr, not verbose)
         self.assertEqual({'FOO': 'an env string'}, pi.env)
 
