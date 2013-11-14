@@ -217,7 +217,7 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
         lease->fqdn_rev_ = false;
         lease->fqdn_fwd_ = false;
         lease->hostname_ = "otherhost.example.com.";
-        } else if (address == straddress4_[6]) {
+    } else if (address == straddress4_[6]) {
         lease->hwaddr_ = vector<uint8_t>(6, 0x6e);
         // Same ClientId as straddress4_1
         lease->client_id_ = ClientIdPtr(
