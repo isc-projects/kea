@@ -309,6 +309,7 @@ skipTo(std::istream& in, const std::string& file, int& line,
         }
     }
     throwJSONError(std::string("EOF read, one of \"") + chars + "\" expected", file, line, pos);
+    return (c); // shouldn't reach here, but some compilers require it
 }
 
 // TODO: Should we check for all other official escapes here (and
