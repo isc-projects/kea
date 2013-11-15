@@ -116,7 +116,7 @@ public:
     void testGetLease4HWAddr();
 
     /// @brief Test lease retrieval using client id, HW address and subnet id.
-    void testLease4ClientIdHWAddrSubnetId();
+    void testGetLease4ClientIdHWAddrSubnetId();
 
     // Member variables
     std::vector<std::string>  straddress4_;   ///< String forms of IPv4 addresses
