@@ -16,7 +16,6 @@
 #define MEMFILE_LEASE_MGR_H
 
 #include <dhcp/hwaddr.h>
-#include <dhcpsrv/key_from_key.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/multi_index/indexed_by.hpp>
@@ -267,20 +266,10 @@ protected:
                 // the lease using three attributes: DUID, IAID, Subnet Id.
                 boost::multi_index::composite_key<
                     Lease6,
-                    // The DUID value can't be directly accessed from the Lease6
-                    // object because it is wrapped with the DUID object (actually
-                    // pointer to this object). Therefore we need to use
-                    // KeyFromKeyExtractor class to extract the DUID value from
-                    // this cascaded structure.
-                    KeyFromKeyExtractor<
-                        // The value of the DUID is accessed by the getDuid() method
-                        // from the DUID object.
-                        boost::multi_index::const_mem_fun<DUID, std::vector<uint8_t>,
-                                                          &DUID::getDuid>,
-                        // The DUID object is stored in the duid_ member of the
-                        // Lease6 object.
-                        boost::multi_index::member<Lease6, DuidPtr, &Lease6::duid_>
-                    >,
+                    // The DUID can be retrieved from the Lease6 object using
+                    // a getDuidVector const function.
+                    boost::multi_index::const_mem_fun<Lease6, const std::vector<uint8_t>&,
+                                                      &Lease6::getDuidVector>,
                     // The two other ingredients of this index are IAID and
                     // subnet id.
                     boost::multi_index::member<Lease6, uint32_t, &Lease6::iaid_>,
@@ -330,6 +319,8 @@ protected:
                 // lease: client id and subnet id.
                 boost::multi_index::composite_key<
                     Lease4,
+                    // The client id can be retrieved from the Lease4 object by
+                    // calling getClientIdVector const function.
                     boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
                                                       &Lease4::getClientIdVector>,
                     // The subnet id is accessed through the subnet_id_ member.
@@ -343,6 +334,8 @@ protected:
                 // lease: client id and subnet id.
                 boost::multi_index::composite_key<
                     Lease4,
+                    // The client id can be retrieved from the Lease4 object by
+                    // calling getClientIdVector const function.
                     boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
                                                       &Lease4::getClientIdVector>,
                     // The hardware address is held in the hwaddr_ member of the
