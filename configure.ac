@@ -138,12 +138,6 @@ BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
 	[WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG="-Wno-missing-field-initializers"])
 AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
-# clang's -Wtautological-constant-out-of-range-compare triggers spurious
-# warnings in some of the code, so we have to selectively disable it.
-BIND10_CXX_TRY_FLAG([-Wno-tautological-constant-out-of-range-compare],
-	[WARNING_NO_TAUTOLOGICAL_CONSTANT_OOR_COMP_CFLAG="-Wno-tautological-constant-out-of-range-compare"])
-AC_SUBST(WARNING_NO_TAUTOLOGICAL_CONSTANT_OOR_COMP_CFLAG)
-
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
 CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
