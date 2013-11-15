@@ -64,6 +64,23 @@ callbackWrapper(const RRsetPtr& rrset, MasterLoadCallback callback,
 
     callback(rrset);
 }
+
+template <typename InputType>
+void
+loadHelper(InputType input, const Name& origin,
+           const RRClass& zone_class, MasterLoadCallback callback)
+{
+    RRCollator rr_collator(boost::bind(callbackWrapper, _1, callback, &origin));
+    MasterLoader loader(input, origin, zone_class,
+                        MasterLoaderCallbacks::getNullCallbacks(),
+                        rr_collator.getCallback());
+    try {
+        loader.load();
+    } catch (const MasterLoaderError& ex) {
+        isc_throw(MasterLoadError, ex.what());
+    }
+    rr_collator.flush();
+}
 }
 
 void
@@ -74,35 +91,14 @@ masterLoad(const char* const filename, const Name& origin,
         isc_throw(MasterLoadError, "Name of master file must not be null");
     }
 
-    RRCollator rr_collator(boost::bind(callbackWrapper, _1, callback, &origin));
-    MasterLoader loader(filename, origin, zone_class,
-                        MasterLoaderCallbacks::getNullCallbacks(),
-                        rr_collator.getCallback());
-    try {
-        loader.load();
-    } catch (const MasterLoaderError& ex) {
-        isc_throw(MasterLoadError, ex.what());
-    }
-    rr_collator.flush();
+    loadHelper<const char*>(filename, origin, zone_class, callback);
 }
 
 void
 masterLoad(istream& input, const Name& origin, const RRClass& zone_class,
-           MasterLoadCallback callback, const char* source)
+           MasterLoadCallback callback, const char*)
 {
-    RRCollator rr_collator(boost::bind(callbackWrapper, _1, callback, &origin));
-    MasterLoader loader(input, origin, zone_class,
-                        MasterLoaderCallbacks::getNullCallbacks(),
-                        rr_collator.getCallback());
-    if (source == NULL) {
-        source = "<unknown>";
-    }
-    try {
-        loader.load();
-    } catch (const MasterLoaderError& ex) {
-        isc_throw(MasterLoadError, ex.what());
-    }
-    rr_collator.flush();
+    loadHelper<istream&>(input, origin, zone_class, callback);
 }
 
 } // namespace dns

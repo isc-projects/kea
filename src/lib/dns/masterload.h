@@ -159,14 +159,16 @@ void masterLoad(const char* const filename, const Name& origin,
 /// All descriptions of the other version apply to this version except those
 /// specific to file I/O.
 ///
+/// Note: The 'source' parameter is now ignored, but it was only used in
+/// exception messages on some error.  So the compatibility effect should be
+/// minimal.
+///
 /// \param input An input stream object that is to emit zone's RRs.
 /// \param origin The origin name of the zone.
 /// \param zone_class The RR class of the zone.
 /// \param callback A callback functor or function that is to be called for
 /// each RRset.
-/// \param source A string to use in error messages if zone content is bad
-/// (e.g. the file name when reading from a file). If this value is NULL,
-/// or left out, the error will use the string '<unknown>'
+/// \param source This parameter is now ignored but left for compatibility.
 void masterLoad(std::istream& input, const Name& origin,
                 const RRClass& zone_class, MasterLoadCallback callback,
                 const char* source = NULL);
