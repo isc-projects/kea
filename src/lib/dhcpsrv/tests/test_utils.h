@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -49,7 +49,12 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second);
 /// All concrete LeaseMgr test classes should be derived from it.
 class GenericLeaseMgrTest : public ::testing::Test {
 public:
+
+    /// @brief Default constructor.
     GenericLeaseMgrTest();
+
+    /// @brief Virtual destructor.
+    virtual ~GenericLeaseMgrTest();
 
     /// @brief Initialize Lease4 Fields
     ///
@@ -85,7 +90,7 @@ public:
     ///
     /// @param leases Vector of pointers to leases
     template <typename T>
-        void checkLeasesDifferent(const std::vector<T>& leases) const;
+    void checkLeasesDifferent(const std::vector<T>& leases) const;
 
     /// @brief Creates leases for the test
     ///
@@ -101,6 +106,18 @@ public:
     /// @return vector<Lease6Ptr> Vector of pointers to leases
     std::vector<Lease6Ptr> createLeases6();
 
+    /// @brief Test lease retrieval using client id.
+    void testGetLease4ClientId();
+
+    /// @brief Test lease retrieval when leases with NULL client id are present.
+    void testGetLease4NullClientId();
+
+    /// @brief Test lease retrieval using HW address.
+    void testGetLease4HWAddr();
+
+    /// @brief Test lease retrieval using client id, HW address and subnet id.
+    void testLease4ClientIdHWAddrSubnetId();
+
     // Member variables
     std::vector<std::string>  straddress4_;   ///< String forms of IPv4 addresses
     std::vector<isc::asiolink::IOAddress> ioaddress4_;  ///< IOAddress forms of IPv4 addresses
@@ -108,7 +125,7 @@ public:
     std::vector<Lease::Type> leasetype6_; ///< Lease types
     std::vector<isc::asiolink::IOAddress> ioaddress6_;  ///< IOAddress forms of IPv6 addresses
 
-    LeaseMgr*   lmptr_;             ///< Pointer to the lease manager
+    LeaseMgr* lmptr_;                     ///< Pointer to the lease manager
 };
 
 };

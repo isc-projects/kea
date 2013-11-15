@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -98,9 +98,8 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
     EXPECT_EQ(first->hostname_, second->hostname_);
 }
 
-
 GenericLeaseMgrTest::GenericLeaseMgrTest()
-    :lmptr_(NULL) {
+    : lmptr_(NULL) {
     // Initialize address strings and IOAddresses
     for (int i = 0; ADDRESS4[i] != NULL; ++i) {
         string addr(ADDRESS4[i]);
@@ -119,6 +118,11 @@ GenericLeaseMgrTest::GenericLeaseMgrTest()
         /// a template
         leasetype6_.push_back(LEASETYPE6[i]);
     }
+}
+
+GenericLeaseMgrTest::~GenericLeaseMgrTest() {
+    // Does nothing. The derived classes are expected to clean up, i.e.
+    // remove the lmptr_ pointer.
 }
 
 /// @brief Initialize Lease4 Fields
@@ -468,6 +472,112 @@ GenericLeaseMgrTest::createLeases6() {
 
     return (leases);
 }
+
+void
+GenericLeaseMgrTest::testGetLease4ClientId() {
+    // Let's initialize a specific lease ...
+    Lease4Ptr lease = initializeLease4(straddress4_[1]);
+    EXPECT_TRUE(lmptr_->addLease(lease));
+    Lease4Collection returned = lmptr_->getLease4(*lease->client_id_);
+
+    ASSERT_EQ(1, returned.size());
+    // We should retrieve our lease...
+    detailCompareLease(lease, *returned.begin());
+    lease = initializeLease4(straddress4_[2]);
+    returned = lmptr_->getLease4(*lease->client_id_);
+
+    ASSERT_EQ(0, returned.size());
+}
+
+void
+GenericLeaseMgrTest::testGetLease4NullClientId() {
+    // Let's initialize a specific lease ... But this time
+    // We keep its client id for further lookup and
+    // We clearly 'reset' it ...
+    Lease4Ptr leaseA = initializeLease4(straddress4_[4]);
+    ClientIdPtr client_id = leaseA->client_id_;
+    leaseA->client_id_ = ClientIdPtr();
+    ASSERT_TRUE(lmptr_->addLease(leaseA));
+
+    Lease4Collection returned = lmptr_->getLease4(*client_id);
+    // Shouldn't have our previous lease ...
+    ASSERT_TRUE(returned.empty());
+
+    // Add another lease with the non-NULL client id, and make sure that the
+    // lookup will not break due to existence of both leases with non-NULL and
+    // NULL client ids.
+    Lease4Ptr leaseB = initializeLease4(straddress4_[0]);
+    // Shouldn't throw any null pointer exception
+    ASSERT_TRUE(lmptr_->addLease(leaseB));
+    // Try to get the lease.
+    returned = lmptr_->getLease4(*client_id);
+    ASSERT_TRUE(returned.empty());
+
+    // Let's make it more interesting and add another lease with NULL client id.
+    Lease4Ptr leaseC = initializeLease4(straddress4_[5]);
+    leaseC->client_id_.reset();
+    ASSERT_TRUE(lmptr_->addLease(leaseC));
+    returned = lmptr_->getLease4(*client_id);
+    ASSERT_TRUE(returned.empty());
+
+    // But getting the lease with non-NULL client id should be successful.
+    returned = lmptr_->getLease4(*leaseB->client_id_);
+    ASSERT_EQ(1, returned.size());
+}
+
+void
+GenericLeaseMgrTest::testGetLease4HWAddr() {
+    const LeaseMgr::ParameterMap pmap;
+    // Let's initialize two different leases 4 and just add the first ...
+    Lease4Ptr leaseA = initializeLease4(straddress4_[5]);
+    HWAddr hwaddrA(leaseA->hwaddr_, HTYPE_ETHER);
+    HWAddr hwaddrB(vector<uint8_t>(6, 0x80), HTYPE_ETHER);
+
+    EXPECT_TRUE(lmptr_->addLease(leaseA));
+
+    // we should not have a lease, with this MAC Addr
+    Lease4Collection returned = lmptr_->getLease4(hwaddrB);
+    ASSERT_EQ(0, returned.size());
+
+    // But with this one
+    returned = lmptr_->getLease4(hwaddrA);
+    ASSERT_EQ(1, returned.size());
+}
+
+void
+GenericLeaseMgrTest::testLease4ClientIdHWAddrSubnetId() {
+    Lease4Ptr leaseA = initializeLease4(straddress4_[4]);
+    Lease4Ptr leaseB = initializeLease4(straddress4_[5]);
+    Lease4Ptr leaseC = initializeLease4(straddress4_[6]);
+    // Set NULL client id for one of the leases. This is to make sure that such
+    // a lease may coexist with other leases with non NULL client id.
+    leaseC->client_id_.reset();
+
+    HWAddr hwaddrA(leaseA->hwaddr_, HTYPE_ETHER);
+    HWAddr hwaddrB(leaseB->hwaddr_, HTYPE_ETHER);
+    HWAddr hwaddrC(leaseC->hwaddr_, HTYPE_ETHER);
+    EXPECT_TRUE(lmptr_->addLease(leaseA));
+    EXPECT_TRUE(lmptr_->addLease(leaseB));
+    EXPECT_TRUE(lmptr_->addLease(leaseC));
+    // First case we should retrieve our lease
+    Lease4Ptr lease = lmptr_->getLease4(*leaseA->client_id_, hwaddrA, leaseA->subnet_id_);
+    detailCompareLease(lease, leaseA);
+    // Retrieve the other lease.
+    lease = lmptr_->getLease4(*leaseB->client_id_, hwaddrB, leaseB->subnet_id_);
+    detailCompareLease(lease, leaseB);
+    // The last lease has NULL client id so we will use a different getLease4 function
+    // which doesn't require client id (just a hwaddr and subnet id).
+    lease = lmptr_->getLease4(hwaddrC, leaseC->subnet_id_);
+    detailCompareLease(lease, leaseC);
+
+    // An attempt to retrieve the lease with non matching lease parameters should
+    // result in NULL pointer being returned.
+    lease = lmptr_->getLease4(*leaseA->client_id_, hwaddrB, leaseA->subnet_id_);
+    EXPECT_FALSE(lease);
+    lease = lmptr_->getLease4(*leaseA->client_id_, hwaddrA, leaseB->subnet_id_);
+    EXPECT_FALSE(lease);
+}
+
 
 };
 };
