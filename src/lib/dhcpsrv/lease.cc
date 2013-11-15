@@ -74,10 +74,11 @@ Lease4::Lease4(const Lease4& other)
     }
 }
 
-std::vector<uint8_t>
+const std::vector<uint8_t>&
 Lease4::getClientIdVector() const {
     if(!client_id_) {
-        return std::vector<uint8_t>();
+        static std::vector<uint8_t> empty_vec;
+        return (empty_vec);
     }
 
     return (client_id_->getClientId());

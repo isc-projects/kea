@@ -211,9 +211,14 @@ struct Lease4 : public Lease {
 
     /// @brief Returns a client identifier.
     ///
-    /// @return A client identifier as vector, or an empty vector if client
-    /// identifier is NULL.
-    std::vector<uint8_t> getClientIdVector() const;
+    /// @warning Since the function returns the reference to a vector (not a
+    /// copy), the returned object should be used with caution because it will
+    /// remain valid only for the period of time when an object which returned
+    /// it exists.
+    ///
+    /// @return A reference to a vector holding client identifier,
+    /// or an empty vector if client identifier is NULL.
+    const std::vector<uint8_t>& getClientIdVector() const;
 
     /// @brief Assignment operator.
     ///

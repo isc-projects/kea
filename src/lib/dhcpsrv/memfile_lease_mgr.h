@@ -330,7 +330,7 @@ protected:
                 // lease: client id and subnet id.
                 boost::multi_index::composite_key<
                     Lease4,
-                    boost::multi_index::const_mem_fun<Lease4, std::vector<uint8_t>,
+                    boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
                                                       &Lease4::getClientIdVector>,
                     // The subnet id is accessed through the subnet_id_ member.
                     boost::multi_index::member<Lease, uint32_t, &Lease::subnet_id_>
@@ -343,7 +343,7 @@ protected:
                 // lease: client id and subnet id.
                 boost::multi_index::composite_key<
                     Lease4,
-                    boost::multi_index::const_mem_fun<Lease4, std::vector<uint8_t>,
+                    boost::multi_index::const_mem_fun<Lease4, const std::vector<uint8_t>&,
                                                       &Lease4::getClientIdVector>,
                     // The hardware address is held in the hwaddr_ member of the
                     // Lease4 object.

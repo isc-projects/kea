@@ -545,7 +545,7 @@ GenericLeaseMgrTest::testGetLease4HWAddr() {
 }
 
 void
-GenericLeaseMgrTest::testLease4ClientIdHWAddrSubnetId() {
+GenericLeaseMgrTest::testGetLease4ClientIdHWAddrSubnetId() {
     Lease4Ptr leaseA = initializeLease4(straddress4_[4]);
     Lease4Ptr leaseB = initializeLease4(straddress4_[5]);
     Lease4Ptr leaseC = initializeLease4(straddress4_[6]);

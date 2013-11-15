@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -116,8 +116,13 @@ public:
     /// @brief Constructor based on array and array size
     ClientId(const uint8_t* clientid, size_t len);
 
-    /// @brief Returns reference to the client-id data
-    std::vector<uint8_t> getClientId() const;
+    /// @brief Returns reference to the client-id data.
+    ///
+    /// @warning Since this function returns a reference to the vector (not a
+    /// copy) the returned object must be used with caution because it remains
+    /// valid only for the time period when the object which returned it is
+    /// valid.
+    const std::vector<uint8_t>& getClientId() const;
 
     /// @brief Returns textual representation of a DUID (e.g. 00:01:02:03:ff)
     std::string toText() const;
