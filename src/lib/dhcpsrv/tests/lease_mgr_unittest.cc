@@ -113,6 +113,19 @@ public:
         return (Lease4Collection());
     }
 
+    /// @brief Returns existing IPv4 lease for specified client identifier,
+    /// HW address and subnet identifier.
+    ///
+    /// @param client_id Aclient identifier
+    /// @param hwaddr A HW address.
+    /// @param subnet_id A subnet identifier.
+    ///
+    /// @return A pointer to an existing lease or NULL if lease not found.
+    virtual Lease4Ptr
+    getLease4(const ClientId&, const HWAddr&, SubnetID) const {
+        return (Lease4Ptr());
+    }
+
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
     /// There can be at most one lease for a given HW address in a single
