@@ -527,7 +527,6 @@ GenericLeaseMgrTest::testGetLease4NullClientId() {
 
 void
 GenericLeaseMgrTest::testGetLease4HWAddr() {
-    const LeaseMgr::ParameterMap pmap;
     // Let's initialize two different leases 4 and just add the first ...
     Lease4Ptr leaseA = initializeLease4(straddress4_[5]);
     HWAddr hwaddrA(leaseA->hwaddr_, HTYPE_ETHER);
