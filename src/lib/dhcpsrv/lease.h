@@ -331,6 +331,16 @@ struct Lease6 : public Lease {
         type_(TYPE_NA) {
     }
 
+    /// @brief Returns a reference to a vector representing a DUID.
+    ///
+    /// @warning Since the function returns the reference to a vector (not a
+    /// copy), the returned object should be used with caution because it will
+    /// remain valid only for the period of time when an object which returned
+    /// it exists.
+    ///
+    /// @return A reference to a vector holding a DUID.
+    const std::vector<uint8_t>& getDuidVector() const;
+
     /// @brief Compare two leases for equality
     ///
     /// @param other lease6 object with which to compare

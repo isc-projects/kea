@@ -46,7 +46,7 @@ DUID::DUID(const uint8_t* data, size_t len) {
     duid_ = std::vector<uint8_t>(data, data + len);
 }
 
-std::vector<uint8_t> DUID::getDuid() const {
+const std::vector<uint8_t>& DUID::getDuid() const {
     return (duid_);
 }
 
