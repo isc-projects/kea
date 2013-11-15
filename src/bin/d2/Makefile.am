@@ -76,6 +76,7 @@ b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
+b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 b10_dhcp_ddns_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
