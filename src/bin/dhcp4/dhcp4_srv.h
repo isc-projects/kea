@@ -300,6 +300,12 @@ protected:
 private:
     /// @brief Process Client FQDN %Option sent by a client.
     ///
+    /// This function is called by the @c Dhcpv4Srv::processClientName when
+    /// the client has sent the FQDN option in its message to the server.
+    /// It comprises the actual logic to parse the FQDN option and prepare
+    /// the FQDN option to be sent back to the client in the server's
+    /// response.
+    ///
     /// @param fqdn An DHCPv4 Client FQDN %Option sent by a client.
     /// @param [out] answer A response message to be sent to a client.
     void processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
@@ -433,8 +439,24 @@ protected:
 
     /// @brief Computes DHCID from a lease.
     ///
+    /// This method creates an object which represents DHCID. The DHCID value
+    /// is computed as described in RFC4701. The section 3.3. of RFC4701
+    /// specifies the DHCID RR Identifier Type codes:
+    /// - 0x0000 The 1 octet htype followed by glen octets of chaddr
+    /// - 0x0001 The data octets from the DHCPv4 client's Client Identifier
+    /// option.
+    /// - 0x0002 The client's DUID.
+    ///
+    /// Currently this function supports first two of these identifiers.
+    /// The 0x0001 is preferred over the 0x0000 - if the client identifier
+    /// option is present, the former is used. If the client identifier
+    /// is absent, the latter is used.
+    ///
+    /// @todo Implement support for 0x0002 DHCID identifier type.
+    ///
     /// @param lease A pointer to the structure describing a lease.
     /// @return An object encapsulating DHCID to be used for DNS updates.
+    /// @throw DhcidComputeError If the computation of the DHCID failed.
     static isc::dhcp_ddns::D2Dhcid computeDhcid(const Lease4Ptr& lease);
 
     /// @brief Selects a subnet for a given client's packet.

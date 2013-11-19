@@ -78,9 +78,14 @@ namespace dhcp {
 
 namespace {
 
-// The following constants describe server's behavior with respect to the
+// @todo The following constants describe server's behavior with respect to the
 // DHCPv4 Client FQDN Option sent by a client. They will be removed
 // when DDNS parameters for DHCPv4 are implemented with the ticket #3033.
+
+// @todo Additional configuration parameter which we may consider is the one
+// that controls whether the DHCP server sends the removal NameChangeRequest
+// if it discovers that the entry for the particular client exists or that
+// it always updates the DNS.
 
 // Should server always include the FQDN option in its response, regardless
 // if it has been requested in Parameter Request List Option (Disabled).
@@ -940,31 +945,25 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
         (!lease->fqdn_rev_ && !lease->fqdn_fwd_)) {
         return;
     }
+
+    // Create the DHCID for the NameChangeRequest.
     D2Dhcid dhcid;
     try {
         dhcid  = computeDhcid(lease);
-
     } catch (const DhcidComputeError& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_DHCID_COMPUTE_ERROR)
             .arg(lease->toText())
             .arg(ex.what());
         return;
-
     }
+    // Create NameChangeRequest
     NameChangeRequest ncr(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
                           lease->hostname_, lease->addr_.toText(),
                           dhcid, 0, lease->valid_lft_);
-    if (chg_type == isc::dhcp_ddns::CHG_ADD) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA,
-                  DHCP4_QUEUE_ADDITION_NCR)
-            .arg(ncr.toText());
-
-    } else {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA,
-                  DHCP4_QUEUE_REMOVAL_NCR)
-            .arg(ncr.toText());
-
-    }
+    // And queue it.
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
+        .arg(chg_type == CHG_ADD ? "add" : "remove")
+        .arg(ncr.toText());
     name_change_reqs_.push(ncr);
 }
 
