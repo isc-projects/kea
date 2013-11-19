@@ -353,7 +353,8 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateForwardFqdn) {
 }
 
 // Test that server processes the Hostname option sent by a client and
-// responds with the Hostname option to confirm that the 
+// responds with the Hostname option to confirm that the server has
+// taken responsibility for the update.
 TEST_F(NameDhcpv4SrvTest, serverUpdateHostname) {
     Pkt4Ptr query = generatePktWithHostname(DHCPREQUEST,
                                             "myhost.example.com.");
