@@ -146,8 +146,8 @@ from the acquired address. The message argument indicates the reason for the
 failure.
 
 % DHCP4_NCR_CREATION_FAILED failed to generate name change requests for DNS: %1
-This message indicates that server was unable to generate so called
-NameChangeRequests which should be sent to the b10-dhcp_ddns module to create
+This message indicates that server was unable to generate NameChangeRequests
+which should be sent to the b10-dhcp_ddns module to create
 new DNS records for the lease being acquired or to update existing records
 for the renewed lease. The reason for the failure is printed in the logged
 message.
@@ -229,15 +229,11 @@ failure is given in the message.
 % DHCP4_QUERY_DATA received packet type %1, data is <%2>
 A debug message listing the data received from the client.
 
-% DHCP4_QUEUE_ADDITION_NCR name change request for adding new DNS entry queued: %1
-A debug message which is logged when the NameChangeRequest to add new DNS
-entries for the particular lease has been queued. The parameter of this log
-carries the details of the NameChangeRequest.
-
-% DHCP4_QUEUE_REMOVAL_NCR name change request for removing a DNS entry queued: %1
-A debug message which is logged when the NameChangeRequest to remove existing
-DNS entry for the particular lease has been queued. The parameter of this log
-carries the details of the NameChangeRequest.
+% DHCP4_QUEUE_NCR name change request to %1 DNS entry queued: %2
+A debug message which is logged when the NameChangeRequest to add or remove
+a DNS entries for a particular lease has been queued. The first parameter of
+this log message indicates whether the DNS entry is to be added or removed.
+The second parameter carries the details of the NameChangeRequest.
 
 % DHCP4_RELEASE address %1 belonging to client-id %2, hwaddr %3 was released properly.
 This debug message indicates that an address was released properly. It

@@ -96,7 +96,7 @@ client to indicate that this name will be used to perform DNS update.
 
 The b10-dhcp-ddns process is responsible for the actual communication with the
 DNS, i.e. to send DNS update messages. The b10-dhcp4 module is responsible for
-generating so called @ref isc::dhcp_ddns::NameChangeRequest and sending it to
+generating @ref isc::dhcp_ddns::NameChangeRequest and sending it to
 the b10-dhcp-ddns module. The @ref isc::dhcp_ddns::NameChangeRequest object
 represents changes to the DNS bindings, related to acquisition, renewal or
 release of the DHCP lease. The b10-dhcp4 module implements the simple FIFO queue
@@ -139,7 +139,7 @@ change comparing to the NameChangeRequest is not generated.
 
 The DHCPv4 Client FQDN %Option comprises flags which communicate to the server
 what updates (if any) client expects the server to perform. Server may be
-configured to obey client's preference to do FQDN processing in a different way.
+configured to obey client's preference or to do FQDN processing in a different way.
 If the server overrides client's preference it will communicate it by sending
 the DHCPv4 Client FQDN %Option in its responses to a client, with the appropriate
 flags set.
