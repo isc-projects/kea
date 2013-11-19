@@ -1,3 +1,9 @@
+705.	[bug]		kean
+	When commands are piped into bindctl, no longer attempt to query the
+	user name and password if no default user name and password file is
+	present, or it contains no valid entries.
+	(Trac #264, git 4921d7de6b5623c7e85d2baf8bc978686877345b)
+
 704.	[func]		naokikambe
 	New statistics items related to IP sockets added into b10-xfrin:
 	open, openfail, close, connfail, conn, senderr, and recverr.
