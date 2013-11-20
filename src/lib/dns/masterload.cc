@@ -70,7 +70,8 @@ void
 loadHelper(InputType input, const Name& origin,
            const RRClass& zone_class, MasterLoadCallback callback)
 {
-    RRCollator rr_collator(boost::bind(callbackWrapper, _1, callback, &origin));
+    RRCollator rr_collator(boost::bind(callbackWrapper, _1,
+                                       callback, &origin));
     MasterLoader loader(input, origin, zone_class,
                         MasterLoaderCallbacks::getNullCallbacks(),
                         rr_collator.getCallback());
