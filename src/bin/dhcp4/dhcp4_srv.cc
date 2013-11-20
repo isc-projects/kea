@@ -33,6 +33,7 @@
 #include <dhcpsrv/utils.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
+#include <util/strutil.h>
 
 #include <boost/algorithm/string/erase.hpp>
 
@@ -747,18 +748,31 @@ Dhcpv4Srv::processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer) {
     // It is possible that client has sent both Client FQDN and Hostname
     // option. In such case, server should prefer Client FQDN option and
     // ignore the Hostname option.
-    Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
-        (query->getOption(DHO_FQDN));
-    if (fqdn) {
-        processClientFqdnOption(fqdn, answer);
+    try {
+        Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
+            (query->getOption(DHO_FQDN));
+        if (fqdn) {
+            processClientFqdnOption(fqdn, answer);
 
-    } else {
-        OptionCustomPtr hostname = boost::dynamic_pointer_cast<OptionCustom>
-            (query->getOption(DHO_HOST_NAME));
-        if (hostname) {
-            processHostnameOption(hostname, answer);
+        } else {
+            OptionCustomPtr hostname = boost::dynamic_pointer_cast<OptionCustom>
+                (query->getOption(DHO_HOST_NAME));
+            if (hostname) {
+                processHostnameOption(hostname, answer);
+            }
+
         }
-
+    } catch (const Exception& ex) {
+        // In some rare cases it is possible that the client's name processing
+        // fails. For example, the Hostname option may be malformed, or there
+        // may be an error in the server's logic which would cause multiple
+        // attempts to add the same option to the response message. This
+        // error message aggregates all these errors so they can be diagnosed
+        // from the log. We don't want to throw an exception here because,
+        // it will impact the processing of the whole packet. We rather want
+        // the processing to continue, even if the client's name is wrong.
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_NAME_PROC_FAIL)
+            .arg(ex.what());
     }
 }
 
@@ -855,8 +869,14 @@ Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
         return;
     }
 
-    std::string hostname = opt_hostname->readString();
+    std::string hostname = isc::util::str::trim(opt_hostname->readString());
     unsigned int label_count = OptionDataTypeUtil::getLabelCount(hostname);
+    // The hostname option sent by the client should be at least 1 octet long.
+    // If it isn't we ignore this option.
+    if (label_count == 0) {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_EMPTY_HOSTNAME);
+        return;
+    }
     // Copy construct the hostname provided by the client. It is entirely
     // possible that we will use the hostname option provided by the client
     // to perform the DNS update and we will send the same option to him to
@@ -870,8 +890,12 @@ Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
     // By checking the number of labels present in the hostname we may infer
     // whether client has sent the fully qualified or unqualified hostname.
 
-    // If there is only one label, it is a root. We will have to generate
-    // the whole domain name for the client.
+    // @todo We may want to reconsider whether it is appropriate for the
+    // client to send a root domain name as a Hostname. There are
+    // also extensions to the auto generation of the client's name,
+    // e.g. conversion to the puny code which may be considered at some point.
+    // For now, we just remain liberal and expect that the DNS will handle
+    // conversion if needed and possible.
     if (FQDN_REPLACE_CLIENT_NAME || (label_count < 2)) {
         opt_hostname_resp->writeString("");
     // If there are two labels, it means that the client has specified
