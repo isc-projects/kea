@@ -983,7 +983,8 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
     // Create NameChangeRequest
     NameChangeRequest ncr(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
                           lease->hostname_, lease->addr_.toText(),
-                          dhcid, 0, lease->valid_lft_);
+                          dhcid, lease->cltt_ + lease->valid_lft_,
+                          lease->valid_lft_);
     // And queue it.
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
         .arg(chg_type == CHG_ADD ? "add" : "remove")

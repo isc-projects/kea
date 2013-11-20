@@ -255,8 +255,9 @@ public:
                                  const std::string& addr,
                                  const std::string& fqdn,
                                  const std::string& dhcid,
-                                 const uint16_t expires,
-                                 const uint16_t len) {
+                                 const time_t cltt,
+                                 const uint16_t len,
+                                 const bool not_strict_expire_check = false) {
         NameChangeRequest ncr = srv_->name_change_reqs_.front();
         EXPECT_EQ(type, ncr.getChangeType());
         EXPECT_EQ(forward, ncr.isForwardChange());
@@ -268,7 +269,16 @@ public:
         if (!dhcid.empty()) {
             EXPECT_EQ(dhcid, ncr.getDhcid().toStr());
         }
-        EXPECT_EQ(expires, ncr.getLeaseExpiresOn());
+        // In some cases, the test doesn't have access to the last transmission
+        // time for the particular client. In such cases, the test can use the
+        // current time as cltt but the it may not check the lease expiration time
+        // for equality but rather check that the lease expiration time is not
+        // greater than the current time + lease lifetime.
+        if (not_strict_expire_check) {
+            EXPECT_GE(cltt + len, ncr.getLeaseExpiresOn());
+        } else {
+            EXPECT_EQ(cltt + len, ncr.getLeaseExpiresOn());
+        }
         EXPECT_EQ(len, ncr.getLeaseLength());
         EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr.getStatus());
         srv_->name_change_reqs_.pop();
@@ -476,7 +486,7 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNewLease) {
                             "192.0.2.3", "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436965"
                             "B68B6D438D98E680BF10B09F3BCF",
-                            0, 100);
+                            lease->cltt_, 100);
 }
 
 // Test that no NameChangeRequest is generated when a lease is renewed and
@@ -508,7 +518,7 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNoUpdate) {
                             "192.0.2.3", "lease1.example.com.",
                             "0001013A5B311F5B9FB10DDF8E53689B874F25D"
                             "62CC147C2FF237A64C90E5A597C9B7A",
-                            0, 100);
+                            lease1->cltt_, 100);
 
     lease2->hostname_ = "";
     lease2->fqdn_rev_ = true;
@@ -534,13 +544,13 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenew) {
                             "192.0.2.3", "lease1.example.com.",
                             "0001013A5B311F5B9FB10DDF8E53689B874F25D"
                             "62CC147C2FF237A64C90E5A597C9B7A",
-                            0, 100);
+                            lease1->cltt_, 100);
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "192.0.2.3", "lease2.example.com.",
                             "000101F906D2BB752E1B2EECC5FF2BF434C0B2D"
                             "D6D7F7BD873F4F280165DB8C9DBA7CB",
-                            0, 100);
+                            lease2->cltt_, 100);
 
 }
 
@@ -595,7 +605,8 @@ TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             reply->getYiaddr().toText(), hostname.str(),
                             "", // empty DHCID forces that it is not checked
-                            0, subnet_->getValid());
+                            time(NULL) + subnet_->getValid(),
+                            subnet_->getValid(), true);
 }
 
 // Test that server generates client's hostname from the IP address assigned
@@ -616,7 +627,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestEmptyHostname) {
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             reply->getYiaddr().toText(), hostname.str(),
                             "", // empty DHCID forces that it is not checked
-                            0, subnet_->getValid());
+                            time(NULL), subnet_->getValid(), true);
 }
 
 // Test that client may send two requests, each carrying FQDN option with
@@ -640,7 +651,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsFqdn) {
                             reply->getYiaddr().toText(), "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
                             "965B68B6D438D98E680BF10B09F3BCF",
-                            0, subnet_->getValid());
+                            time(NULL), subnet_->getValid(), true);
 
     // Create another Request message but with a different FQDN. Server
     // should generate two NameChangeRequests: one to remove existing entry,
@@ -661,14 +672,14 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsFqdn) {
                             "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
                             "965B68B6D438D98E680BF10B09F3BCF",
-                            0, subnet_->getValid());
+                            time(NULL), subnet_->getValid(), true);
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             reply->getYiaddr().toText(),
                             "otherhost.example.com.",
                             "000101A5AEEA7498BD5AD9D3BF600E49FF39A7E3"
                             "AFDCE8C3D0E53F35CC584DD63C89CA",
-                            0, subnet_->getValid());
+                            time(NULL), subnet_->getValid(), true);
 }
 
 // Test that client may send two requests, each carrying Hostname option with
@@ -689,7 +700,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
                             reply->getYiaddr().toText(), "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
                             "965B68B6D438D98E680BF10B09F3BCF",
-                            0, subnet_->getValid());
+                            time(NULL), subnet_->getValid(), true);
 
     // Create another Request message but with a different Hostname. Server
     // should generate two NameChangeRequests: one to remove existing entry,
@@ -707,14 +718,14 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
                             "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
                             "965B68B6D438D98E680BF10B09F3BCF",
-                            0, subnet_->getValid());
+                            time(NULL), subnet_->getValid(), true);
 
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             reply->getYiaddr().toText(),
                             "otherhost.example.com.",
                             "000101A5AEEA7498BD5AD9D3BF600E49FF39A7E3"
                             "AFDCE8C3D0E53F35CC584DD63C89CA",
-                            0, subnet_->getValid());
+                            time(NULL), subnet_->getValid(), true);
 }
 
 // Test that when the Release message is sent for the previously acquired
@@ -737,7 +748,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
                             reply->getYiaddr().toText(), "myhost.example.com.",
                             "00010132E91AA355CFBB753C0F0497A5A940436"
                             "965B68B6D438D98E680BF10B09F3BCF",
-                            0, subnet_->getValid());
+                            time(NULL), subnet_->getValid(), true);
 
     // Create a Release message.
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
