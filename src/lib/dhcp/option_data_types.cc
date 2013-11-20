@@ -229,6 +229,14 @@ OptionDataTypeUtil::writeFqdn(const std::string& fqdn,
 
 unsigned int
 OptionDataTypeUtil::getLabelCount(const std::string& text_name) {
+    // The isc::dns::Name class doesn't accept empty names. However, in some
+    // cases we may be dealing with empty names (e.g. sent by the DHCP clients).
+    // Empty names should not be sent as hostnames but if they are, for some
+    // reason, we don't want to throw an exception from this function. We
+    // rather want to signal empty name by returning 0 number of labels.
+    if (text_name.empty()) {
+        return (0);
+    }
     try {
         isc::dns::Name name(text_name);
         return (name.getLabelCount());
