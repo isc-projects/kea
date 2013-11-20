@@ -67,12 +67,12 @@ def check_type(spec_part, value):
         if type(value) != int:
             raise isc.cc.data.DataTypeError(str(value) + " is not an integer")
         if value > sys.maxsize:
-            raise isc.cc.data.DataTypeError(str(value) + " is a too large integer")
+            raise isc.cc.data.DataTypeError(str(value) + " is too large an integer")
     elif data_type == "real":
         if type(value) != float:
             raise isc.cc.data.DataTypeError(str(value) + " is not a real")
         if float(value) > sys.float_info.max:
-            raise isc.cc.data.DataTypeError(str(value) + " is a too large float")
+            raise isc.cc.data.DataTypeError(str(value) + " is too large a float")
     elif data_type == "boolean" and type(value) != bool:
         raise isc.cc.data.DataTypeError(str(value) + " is not a boolean")
     elif data_type == "string" and type(value) != str:
