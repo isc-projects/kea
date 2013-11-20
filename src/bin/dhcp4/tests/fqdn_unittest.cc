@@ -194,11 +194,14 @@ public:
 
     }
 
-    // Test that the Hostname option is returned in the server's response
-    // to the message holding Hostname option sent by a client.
-    void testProcessHostname(const Pkt4Ptr& query,
-                             const std::string& exp_hostname) {
-        ASSERT_TRUE(getHostnameOption(query));
+    // Processes the Hostname option in the client's message and returns
+    // the hostname option which would be sent to the client. It will
+    // throw NULL pointer if the hostname option is not to be included
+    // in the response.
+    OptionCustomPtr processHostname(const Pkt4Ptr& query) {
+        if (!getHostnameOption(query)) {
+            ADD_FAILURE() << "Hostname option not carried in the query";
+        }
 
         Pkt4Ptr answer;
         if (query->getType() == DHCPDISCOVER) {
@@ -208,15 +211,12 @@ public:
             answer.reset(new Pkt4(DHCPACK, 1234));
 
         }
-        ASSERT_NO_THROW(srv_->processClientName(query, answer));
+        srv_->processClientName(query, answer);
 
         OptionCustomPtr hostname = getHostnameOption(answer);
-        ASSERT_TRUE(hostname);
-
-        EXPECT_EQ(exp_hostname, hostname->readString());
+        return (hostname);
 
     }
-
 
     // Test that the client message holding an FQDN is processed and the
     // NameChangeRequests are generated.
@@ -356,10 +356,36 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateForwardFqdn) {
 // responds with the Hostname option to confirm that the server has
 // taken responsibility for the update.
 TEST_F(NameDhcpv4SrvTest, serverUpdateHostname) {
-    Pkt4Ptr query = generatePktWithHostname(DHCPREQUEST,
-                                            "myhost.example.com.");
-    testProcessHostname(query, "myhost.example.com.");
+    Pkt4Ptr query;
+    ASSERT_NO_THROW(query = generatePktWithHostname(DHCPREQUEST,
+                                                    "myhost.example.com."));
+    OptionCustomPtr hostname;
+    ASSERT_NO_THROW(hostname = processHostname(query));
+
+    ASSERT_TRUE(hostname);
+    EXPECT_EQ("myhost.example.com.", hostname->readString());
+
 }
+
+// Test that the server skips processing of the empty Hostname option.
+TEST_F(NameDhcpv4SrvTest, serverUpdateEmptyHostname) {
+    Pkt4Ptr query;
+    ASSERT_NO_THROW(query = generatePktWithHostname(DHCPREQUEST, ""));
+    OptionCustomPtr hostname;
+    ASSERT_NO_THROW(hostname = processHostname(query));
+    EXPECT_FALSE(hostname);
+}
+
+// Test that the server skips processing of a wrong Hostname option.
+TEST_F(NameDhcpv4SrvTest, serverUpdateWrongHostname) {
+    Pkt4Ptr query;
+    ASSERT_NO_THROW(query = generatePktWithHostname(DHCPREQUEST,
+                                                    "abc..example.com"));
+    OptionCustomPtr hostname;
+    ASSERT_NO_THROW(hostname = processHostname(query));
+    EXPECT_FALSE(hostname);
+}
+
 
 // Test that server generates the fully qualified domain name for the client
 // if client supplies the partial name.
@@ -380,8 +406,14 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateForwardPartialNameFqdn) {
 // Test that server generates the fully qualified domain name for the client
 // if client supplies the unqualified name in the Hostname option.
 TEST_F(NameDhcpv4SrvTest, serverUpdateUnqualifiedHostname) {
-    Pkt4Ptr query = generatePktWithHostname(DHCPREQUEST, "myhost");
-    testProcessHostname(query, "myhost.example.com.");
+    Pkt4Ptr query;
+    ASSERT_NO_THROW(query = generatePktWithHostname(DHCPREQUEST, "myhost"));
+    OptionCustomPtr hostname;
+    ASSERT_NO_THROW(hostname =  processHostname(query));
+
+    ASSERT_TRUE(hostname);
+    EXPECT_EQ("myhost.example.com.", hostname->readString());
+
 }
 
 // Test that server sets empty domain-name in the FQDN option when client
@@ -586,7 +618,6 @@ TEST_F(NameDhcpv4SrvTest, processRequestEmptyHostname) {
                             "", // empty DHCID forces that it is not checked
                             0, subnet_->getValid());
 }
-
 
 // Test that client may send two requests, each carrying FQDN option with
 // a different domain-name. Server should use existing lease for the second
