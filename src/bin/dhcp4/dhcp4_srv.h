@@ -293,6 +293,9 @@ protected:
     /// message. In some cases, server may cease to add any options to the
     /// response, i.e. when server doesn't support DNS updates.
     ///
+    /// This function does not throw. It simply logs the debug message if the
+    /// processing of the FQDN or Hostname failed.
+    ///
     /// @param query A DISCOVER or REQUEST message from a cient.
     /// @param [out] answer A response message to be sent to a client.
     void processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer);
@@ -312,6 +315,12 @@ private:
                                  Pkt4Ptr& answer);
 
     /// @brief Process Hostname %Option sent by a client.
+    ///
+    /// This function is called by the @c DHcpv4Srv::processClientName when
+    /// the client has sent the Hostname option in its message to the server.
+    /// It comprises the actual logic to parse the Hostname option and
+    /// prepare the Hostname option to be sent back to the client in the
+    /// server's response.
     ///
     /// @param opt_hostname An @c OptionCustom object encapsulating the Hostname
     /// %Option.
