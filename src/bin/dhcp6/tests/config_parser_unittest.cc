@@ -22,10 +22,12 @@
 #include <dhcp/option_int.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/hooks_manager.h>
 
+#include "test_data_files_config.h"
 #include "test_libraries.h"
 #include "marker_file.h"
 
@@ -52,6 +54,17 @@ using namespace isc::hooks;
 using namespace std;
 
 namespace {
+
+std::string specfile(const std::string& name) {
+    return (std::string(DHCP6_SRC_DIR) + "/" + name);
+}
+
+/// @brief Tests that the spec file is valid.
+/// Verifies that the DHCP6 configuration specification file is valid.
+TEST(Dhcp6SpecTest, basicSpec) {
+    ASSERT_NO_THROW(isc::config::
+                    moduleSpecFromFile(specfile("dhcp6.spec")));
+}
 
 class Dhcp6ParserTest : public ::testing::Test {
 public:
@@ -682,6 +695,8 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 // Goal of this test is to verify if pools can be defined
 // using prefix/length notation. There is no separate test for min-max
 // notation as it was tested in several previous tests.
+// Note this test also verifies that subnets can be configured without
+// prefix delegation pools.
 TEST_F(Dhcp6ParserTest, poolPrefixLen) {
 
     ConstElementPtr x;
@@ -710,6 +725,296 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(3000, subnet->getPreferred());
     EXPECT_EQ(4000, subnet->getValid());
+}
+
+// Goal of this test is to verify the basic parsing of a prefix delegation
+// pool. It uses a single, valid pd pool.
+TEST_F(Dhcp6ParserTest, pdPoolBasics) {
+
+    ConstElementPtr x;
+
+    // Define a single valid pd pool.
+    string config =
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1::\", "
+        "          \"prefix-len\": 64, "
+        "          \"delegated-len\": 128"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }";
+
+    // Convert the JSON string into Elements.
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+
+    // Verify that DHCP6 configuration processing succeeds.
+    // Returned value must be non-empty ConstElementPtr to config result.
+    // rcode should be 0 which indicates successful configuration processing.
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    EXPECT_EQ(0, rcode_);
+
+    // Test that we can retrieve the subnet.
+    Subnet6Ptr subnet = CfgMgr::
+                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
+
+    ASSERT_TRUE(subnet);
+
+    // Fetch the collection of PD pools.  It should have 1 entry.
+    PoolCollection pc;
+    ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
+    EXPECT_EQ(1, pc.size());
+
+    // Get a pointer to the pd pool instance, and verify its contents.
+    Pool6Ptr p6;
+    ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[0]));
+    ASSERT_TRUE(p6);
+    EXPECT_EQ("2001:db8:1::", p6->getFirstAddress().toText());
+    EXPECT_EQ(128, p6->getLength());
+
+    // prefix-len is not directly accessible after pool construction, so
+    // verify that it was interpreted correctly by checking the last address
+    // value.
+    isc::asiolink::IOAddress prefixAddress("2001:db8:1::");
+    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64).toText(),
+              p6->getLastAddress().toText());
+}
+
+// Goal of this test is verify that a list of PD pools can be configured.
+// It also verifies that a subnet may be configured with both regular pools
+// and pd pools.
+TEST_F(Dhcp6ParserTest, pdPoolList) {
+
+    ConstElementPtr x;
+
+    const char* prefixes[] = {
+        "2001:db8:1:1::",
+        "2001:db8:1:2::",
+        "2001:db8:1:3::"
+    };
+
+    string config =
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1:04::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/40\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1:01::\", "
+        "          \"prefix-len\": 72, "
+        "          \"delegated-len\": 80"
+        "        },"
+        "        { \"prefix\": \"2001:db8:1:02::\", "
+        "          \"prefix-len\": 72, "
+        "          \"delegated-len\": 88"
+        "        },"
+        "        { \"prefix\": \"2001:db8:1:03::\", "
+        "          \"prefix-len\": 72, "
+        "          \"delegated-len\": 96"
+        "        }"
+        "],"
+        "\"valid-lifetime\": 4000 }"
+        "] }";
+
+    // Convert the JSON string into Elements.
+    ElementPtr json = Element::fromJSON(config);
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+
+    // Verify that DHCP6 configuration processing succeeds.
+    // Returned value must be non-empty ConstElementPtr to config result.
+    // rcode should be 0 which indicates successful configuration processing.
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    EXPECT_EQ(0, rcode_);
+
+    // Test that we can retrieve the subnet.
+    Subnet6Ptr subnet = CfgMgr::
+                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+
+    // Fetch the collection of NA pools.  It should have 1 entry.
+    PoolCollection pc;
+    ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_NA));
+    EXPECT_EQ(1, pc.size());
+
+    // Fetch the collection of PD pools.  It should have 3 entries.
+    ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
+    EXPECT_EQ(3, pc.size());
+
+    // Loop through the pools and verify their contents.
+    for (int i = 0; i < 3; i++) {
+        Pool6Ptr p6;
+        ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[i]));
+        ASSERT_TRUE(p6);
+        EXPECT_EQ(prefixes[i], p6->getFirstAddress().toText());
+        EXPECT_EQ((80 + (i * 8)), p6->getLength());
+    }
+}
+
+// Goal of this test is to verify the a whole prefix can be delegated and that
+// a whole subnet can be delegated.
+TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
+
+    ConstElementPtr x;
+
+    // Define a single valid pd pool.
+    string config =
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1::\", "
+        "          \"prefix-len\": 64, "
+        "          \"delegated-len\": 64"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }";
+
+    // Convert the JSON string into Elements.
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+
+    // Verify that DHCP6 configuration processing succeeds.
+    // Returned value must be non-empty ConstElementPtr to config result.
+    // rcode should be 0 which indicates successful configuration processing.
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    EXPECT_EQ(0, rcode_);
+
+    // Test that we can retrieve the subnet.
+    Subnet6Ptr subnet = CfgMgr::
+                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
+
+    ASSERT_TRUE(subnet);
+
+    // Fetch the collection of PD pools.  It should have 1 entry.
+    PoolCollection pc;
+    ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
+    EXPECT_EQ(1, pc.size());
+
+    // Get a pointer to the pd pool instance, and verify its contents.
+    Pool6Ptr p6;
+    ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[0]));
+    ASSERT_TRUE(p6);
+    EXPECT_EQ("2001:db8:1::", p6->getFirstAddress().toText());
+    EXPECT_EQ(64, p6->getLength());
+
+    // prefix-len is not directly accessible after pool construction, so
+    // verify that it was interpreted correctly by checking the last address
+    // value.
+    isc::asiolink::IOAddress prefixAddress("2001:db8:1::");
+    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64).toText(),
+              p6->getLastAddress().toText());
+}
+
+
+// Goal of this test is check for proper handling of invalid prefix delegation
+// pool configuration.  It uses an array of invalid configurations to check
+// a variety of configuration errors.
+TEST_F(Dhcp6ParserTest, invalidPdPools) {
+
+    ConstElementPtr x;
+
+    const char *config[] =  {
+        // No prefix.
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { "
+        "          \"prefix-len\": 64, "
+        "          \"delegated-len\": 128"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }",
+        // No prefix-len.
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1::\", "
+        "          \"delegated-len\": 128"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }",
+        // No delegated-len.
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1::\", "
+        "          \"prefix-len\": 64 "
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }",
+        // Delegated length is too short.
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1::\", "
+        "          \"prefix-len\": 128, "
+        "          \"delegated-len\": 64"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }",
+        // Pool is not within the subnet.
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:77::\", "
+        "          \"prefix-len\": 64, "
+        "          \"delegated-len\": 128"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }"
+        };
+
+    ElementPtr json;
+    int num_msgs = sizeof(config)/sizeof(char*);
+    for (int i = 0; i < num_msgs; i++) {
+        // Convert JSON string to Elements.
+        ASSERT_NO_THROW(json = Element::fromJSON(config[i]));
+
+        // Configuration processing should fail without a throw.
+        ASSERT_NO_THROW(x = configureDhcp6Server(srv_, json));
+
+        // Returned value must be non-empty ConstElementPtr to config result.
+        // rcode should be 1 which indicates configuration error.
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        EXPECT_EQ(1, rcode_);
+    }
 }
 
 // The goal of this test is to check whether an option definition
@@ -1743,6 +2048,121 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     EXPECT_EQ(6789, optionIA->getT1());
     EXPECT_EQ(1516, optionIA->getT2());
 }
+
+// This test checks if vendor options can be specified in the config file
+// (in hex format), and later retrieved from configured subnet
+TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
+
+    // This configuration string is to configure two options
+    // sharing the code 1 and belonging to the different vendor spaces.
+    // (different vendor-id values).
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"option-one\","
+        "    \"space\": \"vendor-4491\","
+        "    \"code\": 100,"
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
+        " },"
+        " {"
+        "    \"name\": \"option-two\","
+        "    \"space\": \"vendor-1234\","
+        "    \"code\": 100,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": False"
+        " } ],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Options should be now available for the subnet.
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+
+    // Try to get the option from the vendor space 4491
+    Subnet::OptionDescriptor desc1 = subnet->getVendorOptionDescriptor(4491, 100);
+    ASSERT_TRUE(desc1.option);
+    EXPECT_EQ(100, desc1.option->getType());
+    // Try to get the option from the vendor space 1234
+    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(1234, 100);
+    ASSERT_TRUE(desc2.option);
+    EXPECT_EQ(100, desc1.option->getType());
+
+    // Try to get the non-existing option from the non-existing
+    // option space and  expect that option is not returned.
+    Subnet::OptionDescriptor desc3 = subnet->getVendorOptionDescriptor(5678, 38);
+    ASSERT_FALSE(desc3.option);
+}
+
+// This test checks if vendor options can be specified in the config file,
+// (in csv format), and later retrieved from configured subnet
+TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
+
+    // This configuration string is to configure two options
+    // sharing the code 1 and belonging to the different vendor spaces.
+    // (different vendor-id values).
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-4491\","
+        "    \"code\": 100,"
+        "    \"data\": \"this is a string vendor-opt\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 100,"
+        "    \"type\": \"string\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-4491\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Options should be now available for the subnet.
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+
+    // Try to get the option from the vendor space 4491
+    Subnet::OptionDescriptor desc1 = subnet->getVendorOptionDescriptor(4491, 100);
+    ASSERT_TRUE(desc1.option);
+    EXPECT_EQ(100, desc1.option->getType());
+
+    // Try to get the non-existing option from the non-existing
+    // option space and  expect that option is not returned.
+    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(5678, 100);
+    ASSERT_FALSE(desc2.option);
+}
+
+/// @todo add tests similar to vendorOptionsCsv and vendorOptionsHex, but for
+///       vendor options defined in a subnet.
 
 // The goal of this test is to verify that the standard option can
 // be configured to encapsulate multiple other options.

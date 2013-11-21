@@ -106,4 +106,19 @@ TEST_F(Option6IAAddrTest, basic) {
     EXPECT_NO_THROW(opt.reset());
 }
 
+/// @todo: Write test for (type, addr, pref, valid) constructor
+/// See option6_iaprefix_unittest.cc for similar test
+
+// Tests if broken usage causes exception to be thrown
+TEST_F(Option6IAAddrTest, negative) {
+
+    // Too short. Minimum length is 24
+    EXPECT_THROW(Option6IAAddr(D6O_IAADDR, buf_.begin(), buf_.begin() + 23),
+                 OutOfRange);
+
+    // This option is for IPv6 addresses only
+    EXPECT_THROW(Option6IAAddr(D6O_IAADDR, isc::asiolink::IOAddress("192.0.2.1"),
+                               1000, 2000), BadValue);
+}
+
 }

@@ -16,7 +16,7 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-CLEANFILES  = *.gcno *.gcda spec_config.h d2_messages.h d2_messages.cc
+CLEANFILES  = *.gcno *.gcda spec_config.h d2_messages.h d2_messages.cc s-messages
 
 man_MANS = b10-dhcp-ddns.8
 DISTCLEANFILES = $(man_MANS)
@@ -39,8 +39,11 @@ endif
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
-d2_messages.h d2_messages.cc: d2_messages.mes
+d2_messages.h d2_messages.cc: s-messages
+
+s-messages: d2_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/d2/d2_messages.mes
+	touch $@
 
 BUILT_SOURCES = spec_config.h d2_messages.h d2_messages.cc
 
@@ -59,6 +62,9 @@ b10_dhcp_ddns_SOURCES += d2_update_message.cc d2_update_message.h
 b10_dhcp_ddns_SOURCES += d2_update_mgr.cc d2_update_mgr.h
 b10_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
 b10_dhcp_ddns_SOURCES += dns_client.cc dns_client.h
+b10_dhcp_ddns_SOURCES += labeled_value.cc labeled_value.h
+b10_dhcp_ddns_SOURCES += nc_trans.cc nc_trans.h
+b10_dhcp_ddns_SOURCES += state_model.cc state_model.h
 
 nodist_b10_dhcp_ddns_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes

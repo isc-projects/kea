@@ -79,9 +79,14 @@ See \ref dhcpv6ConfigParser.
 Configuration inheritance in DHCPv4 follows exactly the same logic as its DHCPv6
 counterpart. See \ref dhcpv6ConfigInherit.
 
-@section dhcpv4DDNSIntegration DHCPv4 Server Support for the Dynamic DNS Updates
+@section dhcpv4OptionsParse Custom functions to parse message options
 
-The DHCPv4 server supports processing of the DHCPv4 Client FQDN option (RFC4702)
+The DHCPv4 server uses the same logic to supply custom callback function to
+parse message option as DHCPv6 server implementation. See \ref dhcpv6OptionsParse.
+
+@section dhcpv4DDNSIntegration DHCPv4 Server Support for the Dynamic DNS Updates
+T
+he DHCPv4 server supports processing of the DHCPv4 Client FQDN option (RFC4702)
 and the DHCPv4 Host Name option (RFC2132). Client may send one of these options
 to convey its fully qualified or partial name to the server. The server may use
 this name to perform DNS updates for the client. If server receives both options

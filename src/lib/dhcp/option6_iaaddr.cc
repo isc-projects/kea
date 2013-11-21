@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -35,11 +35,16 @@ Option6IAAddr::Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr
                              uint32_t pref, uint32_t valid)
     :Option(V6, type), addr_(addr), preferred_(pref),
      valid_(valid) {
+    setEncapsulatedSpace("dhcp6");
+    if (!addr.isV6()) {
+        isc_throw(isc::BadValue, addr_.toText() << " is not an IPv6 address");
+    }
 }
 
 Option6IAAddr::Option6IAAddr(uint32_t type, OptionBuffer::const_iterator begin,
                              OptionBuffer::const_iterator end)
     :Option(V6, type), addr_("::") {
+    setEncapsulatedSpace("dhcp6");
     unpack(begin, end);
 }
 
@@ -107,7 +112,7 @@ uint16_t Option6IAAddr::len() {
     // length of all suboptions
     // TODO implement:
     // protected: unsigned short Option::lenHelper(int header_size);
-    for (Option::OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();

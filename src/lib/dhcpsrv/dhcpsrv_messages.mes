@@ -210,6 +210,11 @@ A debug message issued when the server is attempting to obtain an IPv6
 lease from the memory file database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
 
+% DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID obtaining IPv4 lease for client ID %1, hardware address %2 and subnet ID %3
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the memory file database for a client with the specified
+client ID, hardware address and subnet ID.
+
 % DHCPSRV_MEMFILE_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the memory file database for a client with the specified
@@ -247,7 +252,7 @@ recommended.
 A debug message issued when the server is about to add an IPv4 lease
 with the specified address to the MySQL backend database.
 
-% DHCPSRV_MYSQL_ADD_ADDR6 adding IPv6 lease with address %1
+% DHCPSRV_MYSQL_ADD_ADDR6 adding IPv6 lease with address %1, lease type %2
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the MySQL backend database.
 
@@ -270,7 +275,7 @@ the specified address from the MySQL database for the specified address.
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the MySQL database for the specified address.
 
-% DHCPSRV_MYSQL_GET_ADDR6 obtaining IPv6 lease for address %1
+% DHCPSRV_MYSQL_GET_ADDR6 obtaining IPv6 lease for address %1, lease type %2
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the MySQL database for the specified address.
 
@@ -284,12 +289,12 @@ A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
 hardware address.
 
-% DHCPSRV_MYSQL_GET_IAID_DUID obtaining IPv4 leases for IAID %1 and DUID %2
+% DHCPSRV_MYSQL_GET_IAID_DUID obtaining IPv6 leases for IAID %1, DUID %2, lease type %3
 A debug message issued when the server is attempting to obtain a set of
 IPv6 lease from the MySQL database for a client with the specified IAID
 (Identity Association ID) and DUID (DHCP Unique Identifier).
 
-% DHCPSRV_MYSQL_GET_IAID_SUBID_DUID obtaining IPv4 leases for IAID %1, Subnet ID %2 and DUID %3
+% DHCPSRV_MYSQL_GET_IAID_SUBID_DUID obtaining IPv6 leases for IAID %1, Subnet ID %2, DUID %3, lease type %4
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the MySQL database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
@@ -316,7 +321,7 @@ be rolled back and not committed to the database.
 A debug message issued when the server is attempting to update IPv4
 lease from the MySQL database for the specified address.
 
-% DHCPSRV_MYSQL_UPDATE_ADDR6 updating IPv6 lease for address %1
+% DHCPSRV_MYSQL_UPDATE_ADDR6 updating IPv6 lease for address %1, lease type %2
 A debug message issued when the server is attempting to update IPv6
 lease from the MySQL database for the specified address.
 

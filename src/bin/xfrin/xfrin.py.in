@@ -31,6 +31,7 @@ from isc.config.ccsession import *
 from isc.statistics.dns import Counters
 from isc.notify import notify_out
 import isc.util.process
+import isc.util.traceback_handler
 from isc.util.address_formatter import AddressFormatter
 from isc.datasrc import DataSourceClient, ZoneFinder
 import isc.net.parse
@@ -563,8 +564,8 @@ class XfrinConnection(asyncore.dispatcher):
 
     def __init__(self,
                  sock_map, zone_name, rrclass, datasrc_client,
-                 shutdown_event, master_addrinfo, zone_soa, tsig_key=None,
-                 idle_timeout=60):
+                 shutdown_event, master_addrinfo, zone_soa, counters,
+                 tsig_key=None, idle_timeout=60):
         """Constructor of the XfirnConnection class.
 
         Parameters:
@@ -579,6 +580,7 @@ class XfrinConnection(asyncore.dispatcher):
             address and port of the master server.
           zone_soa (RRset or None): SOA RRset of zone's current SOA or None
             if it's not available.
+          counters (Counters): used for statistics counters
           idle_timeout (int): max idle time for read data from socket.
 
         """
@@ -609,6 +611,11 @@ class XfrinConnection(asyncore.dispatcher):
         self._shutdown_event = shutdown_event
         self._master_addrinfo = master_addrinfo
         self._tsig_key = tsig_key
+        # self.tsig_key_name is used for outputting an error massage in
+        # connect_to_master().
+        self.tsig_key_name = None
+        if tsig_key:
+            self.tsig_key_name = self._tsig_key.get_key_name()
         self._tsig_ctx = None
         # tsig_ctx_creator is introduced to allow tests to use a mock class for
         # easier tests (in normal case we always use the default)
@@ -617,7 +624,75 @@ class XfrinConnection(asyncore.dispatcher):
         # keep a record of this specific transfer to log on success
         # (time, rr/s, etc)
         self._transfer_stats = XfrinTransferStats()
-        self._counters = Counters(SPECFILE_LOCATION)
+        self._counters = counters
+
+    def create_socket(self, family, type):
+        """create_socket() overridden from the super class for
+        statistics counter open and openfail"""
+        try:
+            ret = super().create_socket(family, type)
+            # count open
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'open')
+            return ret
+        except:
+            # count openfail
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'openfail')
+            raise
+
+    def close(self):
+        """close() overridden from the super class for
+        statistics counter close"""
+        ret = super().close()
+        # count close
+        self._counters.inc('socket',
+                           'ip' + self._get_ipver_str(),
+                           'tcp', 'close')
+        return ret
+
+    def connect(self, address):
+        """connect() overridden from the super class for
+        statistics counter conn and connfail"""
+        try:
+            ret = super().connect(address)
+            # count conn
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'conn')
+            return ret
+        except:
+            # count connfail
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'connfail')
+            raise
+
+    def send(self, data):
+        """send() overridden from the super class for
+        statistics counter senderr"""
+        try:
+            return super().send(data)
+        except:
+            # count senderr
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'senderr')
+            raise
+
+    def recv(self, buffer_size):
+        """recv() overridden from the super class for
+        statistics counter senderr"""
+        try:
+            return super().recv(buffer_size)
+        except:
+            # count recverr
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'recverr')
+            raise
 
     def init_socket(self):
         '''Initialize the underlyig socket.
@@ -859,9 +934,9 @@ class XfrinConnection(asyncore.dispatcher):
         It raises a ValueError exception on other address families.
 
         """
-        if self.socket.family == socket.AF_INET:
+        if self._master_addrinfo[0] == socket.AF_INET:
             return 'v4'
-        elif self.socket.family == socket.AF_INET6:
+        elif self._master_addrinfo[0] == socket.AF_INET6:
             return 'v6'
         raise ValueError("Invalid address family. "
                          "This is supported only for IP sockets")
@@ -875,37 +950,44 @@ class XfrinConnection(asyncore.dispatcher):
 
         '''
 
-        self._send_query(RRType.SOA)
-        # count soaoutv4 or soaoutv6 requests
-        self._counters.inc('zones', self._rrclass.to_text(),
-                           self._zone_name.to_text(), 'soaout' +
-                           self._get_ipver_str())
-        data_len = self._get_request_response(2)
-        msg_len = socket.htons(struct.unpack('H', data_len)[0])
-        soa_response = self._get_request_response(msg_len)
-        msg = Message(Message.PARSE)
-        msg.from_wire(soa_response, Message.PRESERVE_ORDER)
+        # increment SOA query in progress
+        self._counters.inc('soa_in_progress')
+        try:
+            self._send_query(RRType.SOA)
+            # count soaoutv4 or soaoutv6 requests
+            self._counters.inc('zones', self._rrclass.to_text(),
+                               self._zone_name.to_text(), 'soaout' +
+                               self._get_ipver_str())
+            data_len = self._get_request_response(2)
+            msg_len = socket.htons(struct.unpack('H', data_len)[0])
+            soa_response = self._get_request_response(msg_len)
+            msg = Message(Message.PARSE)
+            msg.from_wire(soa_response, Message.PRESERVE_ORDER)
 
-        # Validate/parse the rest of the response, and extract the SOA
-        # from the answer section
-        soa = self.__parse_soa_response(msg, soa_response)
+            # Validate/parse the rest of the response, and extract the SOA
+            # from the answer section
+            soa = self.__parse_soa_response(msg, soa_response)
 
-        # Compare the two serials.  If ours is 'new', abort with ZoneUptodate.
-        primary_serial = get_soa_serial(soa.get_rdata()[0])
-        if self._request_serial is not None and \
-                self._request_serial >= primary_serial:
-            if self._request_serial != primary_serial:
-                logger.info(XFRIN_ZONE_SERIAL_AHEAD, primary_serial,
-                            self.zone_str(),
-                            format_addrinfo(self._master_addrinfo),
-                            self._request_serial)
-            raise XfrinZoneUptodate
+            # Compare the two serials.  If ours is 'new', abort with ZoneUptodate.
+            primary_serial = get_soa_serial(soa.get_rdata()[0])
+            if self._request_serial is not None and \
+                    self._request_serial >= primary_serial:
+                if self._request_serial != primary_serial:
+                    logger.info(XFRIN_ZONE_SERIAL_AHEAD, primary_serial,
+                                self.zone_str(),
+                                format_addrinfo(self._master_addrinfo),
+                                self._request_serial)
+                raise XfrinZoneUptodate
 
-        return XFRIN_OK
+            return XFRIN_OK
+        finally:
+            # decrement SOA query in progress
+            self._counters.dec('soa_in_progress')
 
     def do_xfrin(self, check_soa, request_type=RRType.AXFR):
         '''Do an xfr session by sending xfr request and parsing responses.'''
 
+        xfer_started = False # Don't set True until xfer is started
         try:
             ret = XFRIN_OK
             self._request_type = request_type
@@ -917,6 +999,9 @@ class XfrinConnection(asyncore.dispatcher):
                 if not self.connect_to_master():
                     raise XfrinException('Unable to reconnect to master')
 
+            xfer_started = True
+            # increment xfer running
+            self._counters.inc(req_str.lower() + '_running')
             # start statistics timer
             # Note: If the timer for the zone is already started but
             # not yet stopped due to some error, the last start time
@@ -1007,6 +1092,9 @@ class XfrinConnection(asyncore.dispatcher):
                                           self._zone_name.to_text(),
                                           'last_' + req_str.lower() +
                                           '_duration')
+            # decrement xfer running only if started
+            if xfer_started:
+                self._counters.dec(req_str.lower() + '_running')
             # Make sure any remaining transaction in the diff is closed
             # (if not yet - possible in case of xfr-level exception) as soon
             # as possible
@@ -1107,7 +1195,7 @@ def __get_initial_xfr_type(zone_soa, request_ixfr, zname, zclass, master_addr):
 
 def __process_xfrin(server, zone_name, rrclass, datasrc_client, zone_soa,
                     shutdown_event, master_addrinfo, check_soa, tsig_key,
-                    request_ixfr, conn_class):
+                    request_ixfr, counters, conn_class):
     conn = None
     exception = None
     ret = XFRIN_FAIL
@@ -1131,7 +1219,7 @@ def __process_xfrin(server, zone_name, rrclass, datasrc_client, zone_soa,
             retry = False
             conn = conn_class(sock_map, zone_name, rrclass, datasrc_client,
                               shutdown_event, master_addrinfo, zone_soa,
-                              tsig_key)
+                              counters, tsig_key)
             conn.init_socket()
             ret = XFRIN_FAIL
             if conn.connect_to_master():
@@ -1178,7 +1266,7 @@ def __process_xfrin(server, zone_name, rrclass, datasrc_client, zone_soa,
 
 def process_xfrin(server, xfrin_recorder, zone_name, rrclass, datasrc_client,
                   zone_soa, shutdown_event, master_addrinfo, check_soa,
-                  tsig_key, request_ixfr, conn_class=XfrinConnection):
+                  tsig_key, request_ixfr, counters, conn_class=XfrinConnection):
     # Even if it should be rare, the main process of xfrin session can
     # raise an exception.  In order to make sure the lock in xfrin_recorder
     # is released in any cases, we delegate the main part to the helper
@@ -1188,7 +1276,7 @@ def process_xfrin(server, xfrin_recorder, zone_name, rrclass, datasrc_client,
     try:
         __process_xfrin(server, zone_name, rrclass, datasrc_client, zone_soa,
                         shutdown_event, master_addrinfo, check_soa, tsig_key,
-                        request_ixfr, conn_class)
+                        request_ixfr, counters, conn_class)
     except Exception as ex:
         # don't log it until we complete decrement().
         exception = ex
@@ -1753,7 +1841,8 @@ class Xfrin:
                                               datasrc_client, zone_soa,
                                               self._shutdown_event,
                                               master_addrinfo, check_soa,
-                                              tsig_key, request_ixfr))
+                                              tsig_key, request_ixfr,
+                                              self._counters))
 
         xfrin_thread.start()
         return (0, 'zone xfrin is started')
@@ -1847,4 +1936,4 @@ def main(xfrin_class, use_signal=True):
     logger.info(XFRIN_EXITING)
 
 if __name__ == '__main__':
-    main(Xfrin)
+    isc.util.traceback_handler.traceback_handler(lambda: main(Xfrin))

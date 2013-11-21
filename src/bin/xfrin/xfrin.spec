@@ -250,6 +250,251 @@
             ]
           }
         }
+      },
+      {
+        "item_name": "ixfr_running",
+        "item_type": "integer",
+        "item_optional": false,
+        "item_default": 0,
+        "item_title": "IXFRs running",
+        "item_description": "Number of IXFRs in progress"
+      },
+      {
+        "item_name": "axfr_running",
+        "item_type": "integer",
+        "item_optional": false,
+        "item_default": 0,
+        "item_title": "AXFRs running",
+        "item_description": "Number of AXFRs in progress"
+      },
+      {
+        "item_name": "soa_in_progress",
+        "item_type": "integer",
+        "item_optional": false,
+        "item_default": 0,
+        "item_title": "SOA queries",
+        "item_description": "Number of SOA queries in progress"
+      },
+      {
+        "item_name": "socket",
+        "item_type": "map",
+        "item_optional": false,
+        "item_default": {
+          "ipv4": {
+            "tcp": {
+              "open": 0,
+              "openfail": 0,
+              "close": 0,
+              "connfail": 0,
+              "conn": 0,
+              "senderr": 0,
+              "recverr": 0
+            }
+          },
+          "ipv6": {
+            "tcp": {
+              "open": 0,
+              "openfail": 0,
+              "close": 0,
+              "connfail": 0,
+              "conn": 0,
+              "senderr": 0,
+              "recverr": 0
+            }
+          }
+        },
+        "item_title": "Socket",
+        "item_description": "A directory name of socket statistics",
+        "map_item_spec": [
+          {
+            "item_name": "ipv4",
+            "item_type": "map",
+            "item_optional": false,
+            "item_default": {
+              "tcp": {
+                "open": 0,
+                "openfail": 0,
+                "close": 0,
+                "connfail": 0,
+                "conn": 0,
+                "senderr": 0,
+                "recverr": 0
+              }
+            },
+            "item_title": "IPv4",
+            "item_description": "A directory name of IPv4",
+            "map_item_spec": [
+              {
+                "item_name": "tcp",
+                "item_type": "map",
+                "item_optional": false,
+                "item_default": {
+                  "open": 0,
+                  "openfail": 0,
+                  "close": 0,
+                  "connfail": 0,
+                  "conn": 0,
+                  "senderr": 0,
+                  "recverr": 0
+                },
+                "item_title": "TCP",
+                "item_description": "A directory name of TCP statistics",
+                "map_item_spec": [
+                  {
+                    "item_name": "open",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Open",
+                    "item_description": "IPv4 TCP sockets opened successfully"
+                  },
+                  {
+                    "item_name": "openfail",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Open failures",
+                    "item_description": "IPv4 TCP sockets open failures"
+                  },
+                  {
+                    "item_name": "close",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Close",
+                    "item_description": "IPv4 TCP sockets closed"
+                  },
+                  {
+                    "item_name": "connfail",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Connect failures",
+                    "item_description": "IPv4 TCP sockets connection failures"
+                  },
+                  {
+                    "item_name": "conn",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Connect",
+                    "item_description": "IPv4 TCP connections established successfully"
+                  },
+                  {
+                    "item_name": "senderr",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Send errors",
+                    "item_description": "IPv4 TCP sockets send errors"
+                  },
+                  {
+                    "item_name": "recverr",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Receive errors",
+                    "item_description": "IPv4 TCP sockets receive errors"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "item_name": "ipv6",
+            "item_type": "map",
+            "item_optional": false,
+            "item_default": {
+              "tcp": {
+                "open": 0,
+                "openfail": 0,
+                "close": 0,
+                "connfail": 0,
+                "conn": 0,
+                "senderr": 0,
+                "recverr": 0
+              }
+            },
+            "item_title": "IPv6",
+            "item_description": "A directory name of IPv6",
+            "map_item_spec": [
+              {
+                "item_name": "tcp",
+                "item_type": "map",
+                "item_optional": false,
+                "item_default": {
+                  "open": 0,
+                  "openfail": 0,
+                  "close": 0,
+                  "connfail": 0,
+                  "conn": 0,
+                  "senderr": 0,
+                  "recverr": 0
+                },
+                "item_title": "TCP",
+                "item_description": "A directory name of TCP statistics",
+                "map_item_spec": [
+                  {
+                    "item_name": "open",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Open",
+                    "item_description": "IPv6 TCP sockets opened successfully"
+                  },
+                  {
+                    "item_name": "openfail",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Open failures",
+                    "item_description": "IPv6 TCP sockets open failures"
+                  },
+                  {
+                    "item_name": "close",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Close",
+                    "item_description": "IPv6 TCP sockets closed"
+                  },
+                  {
+                    "item_name": "connfail",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Connect failures",
+                    "item_description": "IPv6 TCP sockets connection failures"
+                  },
+                  {
+                    "item_name": "conn",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Connect",
+                    "item_description": "IPv6 TCP connections established successfully"
+                  },
+                  {
+                    "item_name": "senderr",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Send errors",
+                    "item_description": "IPv6 TCP sockets send errors"
+                  },
+                  {
+                    "item_name": "recverr",
+                    "item_type": "integer",
+                    "item_optional": false,
+                    "item_default": 0,
+                    "item_title": "Receive errors",
+                    "item_description": "IPv6 TCP sockets receive errors"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   }

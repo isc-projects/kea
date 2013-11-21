@@ -8,8 +8,11 @@ AM_CPPFLAGS += $(SQLITE_CFLAGS)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 # Define rule to build logging source files from message file
-resolve_messages.h resolve_messages.cc: resolve_messages.mes
+resolve_messages.h resolve_messages.cc: s-messages
+
+s-messages: resolve_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/resolve/resolve_messages.mes
+	touch $@
 
 # Tell Automake that the nsasdef.{cc,h} source files are created in the build
 # process, so it must create these before doing anything else.  Although they
@@ -19,7 +22,7 @@ resolve_messages.h resolve_messages.cc: resolve_messages.mes
 # present when they are compiled), the safest option is to create it first.
 BUILT_SOURCES = resolve_messages.h resolve_messages.cc
 
-CLEANFILES = *.gcno *.gcda resolve_messages.cc resolve_messages.h
+CLEANFILES = *.gcno *.gcda resolve_messages.cc resolve_messages.h s-messages
 
 lib_LTLIBRARIES = libb10-resolve.la
 libb10_resolve_la_SOURCES = resolve.h resolve.cc
@@ -35,6 +38,7 @@ libb10_resolve_la_LIBADD = $(top_builddir)/src/lib/dns/libb10-dns++.la
 libb10_resolve_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 libb10_resolve_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
 libb10_resolve_la_LIBADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
+libb10_resolve_la_LIBADD += $(top_builddir)/src/lib/nsas/libb10-nsas.la
 
 # The message file should be in the distribution.
 EXTRA_DIST = resolve_messages.mes
@@ -42,8 +46,4 @@ EXTRA_DIST = resolve_messages.mes
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 libb10_resolve_la_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# For clang++, we need to turn off -Werror completely.
-libb10_resolve_la_CXXFLAGS += -Wno-error
-endif
 libb10_resolve_la_CPPFLAGS = $(AM_CPPFLAGS)

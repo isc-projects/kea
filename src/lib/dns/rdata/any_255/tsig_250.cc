@@ -26,6 +26,7 @@
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
 #include <dns/rcode.h>
+#include <dns/tsigkey.h>
 #include <dns/tsigerror.h>
 #include <dns/rdata/generic/detail/lexer_util.h>
 
@@ -75,6 +76,9 @@ TSIGImpl*
 TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     const Name& algorithm =
         createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
+    const Name& canonical_algorithm_name =
+        (algorithm == TSIGKey::HMACMD5_SHORT_NAME()) ?
+            TSIGKey::HMACMD5_NAME() : algorithm;
 
     const string& time_txt =
         lexer.getNextToken(MasterToken::STRING).getString();
@@ -154,8 +158,8 @@ TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
     // RFC2845 says Other Data is "empty unless Error == BADTIME".
     // However, we don't enforce that.
 
-    return (new TSIGImpl(algorithm, time_signed, fudge, mac, orig_id,
-                         error, other_data));
+    return (new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
+                         orig_id, error, other_data));
 }
 
 /// \brief Constructor from string.
@@ -302,8 +306,11 @@ TSIG::TSIG(InputBuffer& buffer, size_t) :
         buffer.readData(&other_data[0], other_len);
     }
 
-    impl_ = new TSIGImpl(algorithm, time_signed, fudge, mac, original_id,
-                         error, other_data);
+    const Name& canonical_algorithm_name =
+        (algorithm == TSIGKey::HMACMD5_SHORT_NAME()) ?
+            TSIGKey::HMACMD5_NAME() : algorithm;
+    impl_ = new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
+                         original_id, error, other_data);
 }
 
 TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
@@ -324,8 +331,11 @@ TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
         isc_throw(InvalidParameter,
                   "TSIG Other data length and data inconsistent");
     }
-    impl_ = new TSIGImpl(algorithm, time_signed, fudge, mac_size, mac,
-                         original_id, error, other_len, other_data);
+    const Name& canonical_algorithm_name =
+        (algorithm == TSIGKey::HMACMD5_SHORT_NAME()) ?
+            TSIGKey::HMACMD5_NAME() : algorithm;
+    impl_ = new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac_size,
+                         mac, original_id, error, other_len, other_data);
 }
 
 /// \brief The copy constructor.

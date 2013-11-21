@@ -15,8 +15,9 @@
 #ifndef STATS_MGR_H
 #define STATS_MGR_H
 
-#include <iostream>
-#include <map>
+#include <dhcp/pkt4.h>
+#include <dhcp/pkt6.h>
+#include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -27,7 +28,9 @@
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <exceptions/exceptions.h>
+#include <iostream>
+#include <map>
+
 
 namespace isc {
 namespace perfdhcp {
@@ -120,7 +123,8 @@ public:
         XCHG_DO,  ///< DHCPv4 DISCOVER-OFFER
         XCHG_RA,  ///< DHCPv4 REQUEST-ACK
         XCHG_SA,  ///< DHCPv6 SOLICIT-ADVERTISE
-        XCHG_RR   ///< DHCPv6 REQUEST-REPLY
+        XCHG_RR,  ///< DHCPv6 REQUEST-REPLY
+        XCHG_RN   ///< DHCPv6 RENEW-REPLY
     };
 
     /// \brief Exchange Statistics.
@@ -260,6 +264,7 @@ public:
         /// assumed dropped. Negative value disables it.
         /// \param archive_enabled if true packets archive mode is enabled.
         /// In this mode all packets are stored throughout the test execution.
+        /// \param boot_time Holds the timestamp when perfdhcp has been started.
         ExchangeStats(const ExchangeType xchg_type,
                       const double drop_time,
                       const bool archive_enabled,
@@ -1164,6 +1169,8 @@ public:
             return("SOLICIT-ADVERTISE");
         case XCHG_RR:
             return("REQUEST-REPLY");
+        case XCHG_RN:
+            return("RENEW-REPLY");
         default:
             return("Unknown exchange type");
         }
@@ -1183,7 +1190,7 @@ public:
     /// \throw isc::InvalidOperation if no exchange type added to
     /// track statistics.
      void printStats() const {
-        if (exchanges_.size() == 0) {
+        if (exchanges_.empty()) {
             isc_throw(isc::InvalidOperation,
                       "no exchange type added for tracking");
         }
@@ -1238,7 +1245,7 @@ public:
     /// \throw isc::InvalidOperation if no exchange type added to
     /// track statistics or packets archive mode is disabled.
     void printTimestamps() const {
-        if (exchanges_.size() == 0) {
+        if (exchanges_.empty()) {
             isc_throw(isc::InvalidOperation,
                       "no exchange type added for tracking");
         }
@@ -1261,7 +1268,7 @@ public:
     ///
     /// \throw isc::InvalidOperation if no custom counters added for tracking.
     void printCustomCounters() const {
-        if (custom_counters_.size() == 0) {
+        if (custom_counters_.empty()) {
             isc_throw(isc::InvalidOperation, "no custom counters specified");
         }
         for (CustomCountersMapIterator it = custom_counters_.begin();

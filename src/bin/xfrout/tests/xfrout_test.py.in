@@ -309,7 +309,8 @@ class TestXfroutSessionBase(unittest.TestCase):
                                        # When not testing ACLs, simply accept
                                        isc.acl.dns.REQUEST_LOADER.load(
                                            [{"action": "ACCEPT"}]),
-                                       {})
+                                       {},
+                                       xfrout.Counters(xfrout.SPECFILE_LOCATION))
         self.set_request_type(RRType.AXFR) # test AXFR by default
         self.mdata = self.create_request_data()
         self.soa_rrset = create_soa(SOA_CURRENT_VERSION)
@@ -1323,7 +1324,8 @@ class TestUnixSockServer(unittest.TestCase):
             # This would be the handler class, but we just check it is passed
             # the right parametes, so function is enough for that.
             keys = isc.server_common.tsig_keyring.get_keyring()
-            def handler(sock, data, server, keyring, address, acl, config):
+            def handler(sock, data, server, keyring, address, acl, config,
+                        counters):
                 self.assertEqual("sock", sock)
                 self.assertEqual("data", data)
                 self.assertEqual(self.unix, server)
@@ -1331,6 +1333,7 @@ class TestUnixSockServer(unittest.TestCase):
                 self.assertEqual("Address", address)
                 self.assertEqual("acl", acl)
                 self.assertEqual("Zone config", config)
+                self.assertIs(self.unix._counters, counters)
             self.unix.RequestHandlerClass = handler
             self.unix.finish_request("sock", "data")
         finally:
@@ -1629,7 +1632,9 @@ class TestUnixSockServerForCounter(unittest.TestCase):
         xfrout.ThreadingUnixStreamServer = DummySocketserver
         xfrout.super = lambda : DummySocketserver()
         xfrout.select.select = lambda x,y,z: ([None],[None],[None])
-        self.unix = UnixSockServer(None, None, threading.Event(), None, None)
+        self._counters = xfrout.Counters(xfrout.SPECFILE_LOCATION)
+        self.unix = UnixSockServer(None, None, threading.Event(), None, None,
+                                   self._counters)
 
     def tearDown(self):
         ( UnixSockServer._remove_unused_sock_file,
@@ -1659,7 +1664,8 @@ class TestUnixSockServerForCounter(unittest.TestCase):
                           'socket', 'unixdomain', 'openfail')
         xfrout.ThreadingUnixStreamServer = DummySocketserverException
         try:
-            self.unix = UnixSockServer(None, None, None, None, None)
+            self.unix = UnixSockServer(None, None, None, None, None,
+                                       self._counters)
         except Exception:
             pass
         else:
@@ -1700,7 +1706,7 @@ class TestUnixSockServerForCounter(unittest.TestCase):
                           self.unix._counters.get,
                           'socket', 'unixdomain', 'acceptfail')
         xfrout.super = lambda : DummyClassException()
-        self.unix = UnixSockServer(None, None, None, None, None)
+        self.unix = UnixSockServer(None, None, None, None, None, self._counters)
         self.assertRaises(Exception, self.unix.get_request)
         self.assertEqual(
             self.unix._counters.get('socket', 'unixdomain', 'acceptfail'), 1)

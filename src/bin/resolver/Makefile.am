@@ -20,7 +20,7 @@ pkglibexecdir = $(libexecdir)/@PACKAGE@
 
 CLEANFILES  = *.gcno *.gcda
 CLEANFILES += resolver.spec spec_config.h
-CLEANFILES += resolver_messages.cc resolver_messages.h
+CLEANFILES += resolver_messages.cc resolver_messages.h s-messages
 
 man_MANS = b10-resolver.8
 DISTCLEANFILES = $(man_MANS)
@@ -46,9 +46,11 @@ spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
 # Define rule to build logging source files from message file
-resolver_messages.h resolver_messages.cc: resolver_messages.mes
-	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/resolver/resolver_messages.mes
+resolver_messages.h resolver_messages.cc: s-messages
 
+s-messages: resolver_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/resolver/resolver_messages.mes
+	touch $@
 
 BUILT_SOURCES = spec_config.h resolver_messages.cc resolver_messages.h
 
@@ -71,7 +73,6 @@ b10_resolver_LDADD += $(top_builddir)/src/lib/acl/libb10-dnsacl.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
-b10_resolver_LDADD += $(top_builddir)/src/lib/xfr/libb10-xfr.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/server_common/libb10-server-common.la
 b10_resolver_LDADD += $(top_builddir)/src/lib/cache/libb10-cache.la

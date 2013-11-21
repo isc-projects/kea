@@ -199,7 +199,7 @@ public:
     /// output:
     ///0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.9.9.0.0.2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.
     ///
-    /// @param address string containing a valid IPv6 address.
+    /// @param ioaddr string containing a valid IPv6 address.
     ///
     /// @return a std::string containing the reverse order address.
     ///

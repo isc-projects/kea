@@ -439,7 +439,7 @@ TEST_F(OptionDefinitionTest, ipv4AddressArrayTokenized) {
     EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin()));
 }
 
-// The purpose of thie test is to verify that option definition for
+// The purpose of this test is to verify that option definition for
 // 'empty' option can be created and that it returns 'empty' option.
 TEST_F(OptionDefinitionTest, empty) {
     OptionDefinition opt_def("OPTION_RAPID_COMMIT", D6O_RAPID_COMMIT, "empty");
@@ -462,6 +462,49 @@ TEST_F(OptionDefinitionTest, empty) {
     EXPECT_EQ(Option::V4, option_v4->getUniverse());
     EXPECT_EQ(2, option_v4->getHeaderLen());
     EXPECT_EQ(0, option_v4->getData().size());
+}
+
+// The purpose of this test is to verify that when the empty option encapsulates
+// some option space, an instance of the OptionCustom is returned and its
+// suboptions are decoded.
+TEST_F(OptionDefinitionTest, emptyWithSuboptions) {
+    // Create an instance of the 'empty' option definition. This option
+    // encapsulates 'option-foo-space' so when we create a new option
+    // with this definition the OptionCustom should be returned. The
+    // Option Custom is generic option which support variety of formats
+    // and supports decoding suboptions.
+    OptionDefinition opt_def("option-foo", 1024, "empty", "option-foo-space");
+
+    // Define a suboption.
+    const uint8_t subopt_data[] = {
+        0x04, 0x01,  // Option code 1025
+        0x00, 0x04,  // Option len = 4
+        0x01, 0x02, 0x03, 0x04 // Option data
+    };
+
+    // Create an option, having option code 1024 from the definition. Pass
+    // the option buffer containing suboption.
+    OptionPtr option_v6;
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, 1024,
+                                          OptionBuffer(subopt_data,
+                                                       subopt_data +
+                                                       sizeof(subopt_data)))
+    );
+    // Returned option should be of the OptionCustom type.
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionCustom));
+    // Sanity-check length, universe etc.
+    EXPECT_EQ(Option::V6, option_v6->getUniverse());
+    EXPECT_EQ(4, option_v6->getHeaderLen());
+    // This option should have one suboption with the code of 1025.
+    OptionPtr subopt_v6 = option_v6->getOption(1025);
+    EXPECT_TRUE(subopt_v6);
+    // Check that this suboption holds valid data.
+    EXPECT_EQ(1025, subopt_v6->getType());
+    EXPECT_EQ(Option::V6, subopt_v6->getUniverse());
+    EXPECT_EQ(0, memcmp(&subopt_v6->getData()[0], subopt_data + 4, 4));
+
+    // @todo consider having a similar test for V4.
 }
 
 // The purpose of this test is to verify that definition can be
@@ -951,8 +994,8 @@ TEST_F(OptionDefinitionTest, integerInvalidType) {
     // see if it rejects it.
     OptionBuffer buf(1);
     EXPECT_THROW(
-        OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE,
-                                               buf.begin(), buf.end()),
+        OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE, "dhcp6",
+                                               buf.begin(), buf.end(), NULL),
         isc::dhcp::InvalidDataType
     );
 }

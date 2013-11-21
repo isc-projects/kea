@@ -26,8 +26,10 @@ libb10_dhcp___la_SOURCES += option4_addrlst.cc option4_addrlst.h
 libb10_dhcp___la_SOURCES += option4_client_fqdn.cc option4_client_fqdn.h
 libb10_dhcp___la_SOURCES += option6_ia.cc option6_ia.h
 libb10_dhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
+libb10_dhcp___la_SOURCES += option6_iaprefix.cc option6_iaprefix.h
 libb10_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
 libb10_dhcp___la_SOURCES += option6_client_fqdn.cc option6_client_fqdn.h
+libb10_dhcp___la_SOURCES += option_vendor.cc option_vendor.h
 libb10_dhcp___la_SOURCES += option_int.h
 libb10_dhcp___la_SOURCES += option_int_array.h
 libb10_dhcp___la_SOURCES += option.cc option.h
@@ -47,6 +49,7 @@ libb10_dhcp___la_SOURCES += pkt_filter_lpf.cc pkt_filter_lpf.h
 endif
 
 libb10_dhcp___la_SOURCES += std_option_defs.h
+libb10_dhcp___la_SOURCES += docsis3_option_defs.h
 
 libb10_dhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 libb10_dhcp___la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)

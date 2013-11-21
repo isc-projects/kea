@@ -85,33 +85,6 @@ TEST_F(Dhcpv6SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_lease6_release  > 0);
 }
 
-// This function returns buffer for very simple Solicit
-Pkt6* captureSimpleSolicit() {
-    Pkt6* pkt;
-    uint8_t data[] = {
-        1,  // type 1 = SOLICIT
-        0xca, 0xfe, 0x01, // trans-id = 0xcafe01
-        0, 1, // option type 1 (client-id)
-        0, 10, // option lenth 10
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, // DUID
-        0, 3, // option type 3 (IA_NA)
-        0, 12, // option length 12
-        0, 0, 0, 1, // iaid = 1
-        0, 0, 0, 0, // T1 = 0
-        0, 0, 0, 0  // T2 = 0
-    };
-
-    pkt = new Pkt6(data, sizeof(data));
-    pkt->setRemotePort(546);
-    pkt->setRemoteAddr(IOAddress("fe80::1"));
-    pkt->setLocalPort(0);
-    pkt->setLocalAddr(IOAddress("ff02::1:2"));
-    pkt->setIndex(2);
-    pkt->setIface("eth0");
-
-    return (pkt);
-}
-
 /// @brief a class dedicated to Hooks testing in DHCPv6 server
 ///
 /// This class has a number of static members, because each non-static
@@ -951,7 +924,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet6_select) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface(valid_iface_);
-    sol->addOption(generateIA(234, 1500, 3000));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -1019,7 +992,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
     sol->setIface(valid_iface_);
-    sol->addOption(generateIA(234, 1500, 3000));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -1047,7 +1020,7 @@ TEST_F(HooksDhcpv6SrvTest, subnet_select_change) {
     // Advertised address must belong to the second pool (in subnet's range,
     // in dynamic pool)
     EXPECT_TRUE((*subnets)[1]->inRange(addr_opt->getAddress()));
-    EXPECT_TRUE((*subnets)[1]->inPool(addr_opt->getAddress()));
+    EXPECT_TRUE((*subnets)[1]->inPool(Lease::TYPE_NA, addr_opt->getAddress()));
 }
 
 // This test verifies that incoming (positive) RENEW can be handled properly,
@@ -1066,17 +1039,18 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_renew) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
-    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid_, iaid,
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
                                501, 502, 503, 504, subnet_->getID(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Check that T1, T2, preferred, valid and cltt really set and not using
@@ -1090,7 +1064,7 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_renew) {
     // Let's create a RENEW
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(renewed_addr_opt);
@@ -1162,17 +1136,18 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdate_lease6_renew) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
-    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid_, iaid,
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
                                501, 502, 503, 504, subnet_->getID(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Check that T1, T2, preferred, valid and cltt really set and not using
@@ -1186,7 +1161,7 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdate_lease6_renew) {
     // Let's create a RENEW
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(renewed_addr_opt);
@@ -1252,17 +1227,18 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
-    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid_, iaid,
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
                                501, 502, 503, 504, subnet_->getID(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Check that T1, T2, preferred, valid and cltt really set and not using
@@ -1276,7 +1252,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
     // Let's create a RENEW
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RENEW, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr renewed_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(renewed_addr_opt);
@@ -1293,7 +1269,7 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_renew) {
     // Check that our callback was called
     EXPECT_EQ("lease6_renew", callback_name_);
 
-    l = LeaseMgrFactory::instance().getLease6(addr);
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
 
     // Check that the old values are still there and they were not
     // updated by the renewal
@@ -1327,23 +1303,24 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_release) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
-    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid_, iaid,
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
                                501, 502, 503, 504, subnet_->getID(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Let's create a RELEASE
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr released_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(released_addr_opt);
@@ -1375,11 +1352,12 @@ TEST_F(HooksDhcpv6SrvTest, basic_lease6_release) {
 
     // Check that the lease is really gone in the database
     // get lease by address
-    l = LeaseMgrFactory::instance().getLease6(addr);
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
     ASSERT_FALSE(l);
 
     // Get lease by subnetid/duid/iaid combination
-    l = LeaseMgrFactory::instance().getLease6(*duid_, iaid, subnet_->getID());
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, *duid_, iaid,
+                                              subnet_->getID());
     ASSERT_FALSE(l);
 }
 
@@ -1406,23 +1384,24 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_NA, addr));
 
     // Note that preferred, valid, T1 and T2 timers and CLTT are set to invalid
     // value on purpose. They should be updated during RENEW.
-    Lease6Ptr lease(new Lease6(Lease6::LEASE_IA_NA, addr, duid_, iaid,
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid_, iaid,
                                501, 502, 503, 504, subnet_->getID(), 0));
     lease->cltt_ = 1234;
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // Check that the lease is really in the database
-    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(addr);
+    Lease6Ptr l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                        addr);
     ASSERT_TRUE(l);
 
     // Let's create a RELEASE
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_RELEASE, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(iaid, 1500, 3000);
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, iaid, 1500, 3000);
 
     OptionPtr released_addr_opt(new Option6IAAddr(D6O_IAADDR, addr, 300, 500));
     ia->addOption(released_addr_opt);
@@ -1442,11 +1421,13 @@ TEST_F(HooksDhcpv6SrvTest, skip_lease6_release) {
 
     // Check that the lease is still there
     // get lease by address
-    l = LeaseMgrFactory::instance().getLease6(addr);
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                              addr);
     ASSERT_TRUE(l);
 
     // Get lease by subnetid/duid/iaid combination
-    l = LeaseMgrFactory::instance().getLease6(*duid_, iaid, subnet_->getID());
+    l = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, *duid_, iaid,
+                                              subnet_->getID());
     ASSERT_TRUE(l);
 }
 

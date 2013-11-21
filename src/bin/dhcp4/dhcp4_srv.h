@@ -238,6 +238,18 @@ protected:
     /// @param msg outgoing message (options will be added here)
     void appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg);
 
+    /// @brief Appends requested vendor options as requested by client.
+    ///
+    /// This method is similar to \ref appendRequestedOptions(), but uses
+    /// vendor options. The major difference is that vendor-options use
+    /// its own option spaces (there may be more than one distinct set of vendor
+    /// options, each with unique vendor-id). Vendor options are requested
+    /// using separate options within their respective vendor-option spaces.
+    ///
+    /// @param question DISCOVER or REQUEST message from a client.
+    /// @param msg outgoing message (options will be added here)
+    void appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer);
+
     /// @brief Assigns a lease and appends corresponding options
     ///
     /// This method chooses the most appropriate lease for reqesting
@@ -492,6 +504,18 @@ protected:
     /// This method is useful for testing purposes, where its replacement
     /// simulates transmission of a packet. For that purpose it is protected.
     virtual void sendPacket(const Pkt4Ptr& pkt);
+
+    /// @brief Implements a callback function to parse options in the message.
+    ///
+    /// @param buf a A buffer holding options in on-wire format.
+    /// @param option_space A name of the option space which holds definitions
+    /// of to be used to parse options in the packets.
+    /// @param [out] options A reference to the collection where parsed options
+    /// will be stored.
+    /// @return An offset to the first byte after last parsed option.
+    size_t unpackOptions(const OptionBuffer& buf,
+                         const std::string& option_space,
+                         isc::dhcp::OptionCollection& options);
 
 private:
 

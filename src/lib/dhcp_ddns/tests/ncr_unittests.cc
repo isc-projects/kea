@@ -237,129 +237,6 @@ TEST(NameChangeRequestTest, constructionTests) {
 
 }
 
-/// @brief Verifies the fundamentals of converting from and to JSON.
-/// It verifies that:
-/// 1. A NameChangeRequest can be created from a valid JSON string.
-/// 2. A valid JSON string can be created from a NameChangeRequest
-TEST(NameChangeRequestTest, basicJsonTest) {
-    // Define valid JSON rendition of a request.
-    std::string msg_str = "{"
-                            "\"change_type\":1,"
-                            "\"forward_change\":true,"
-                            "\"reverse_change\":false,"
-                            "\"fqdn\":\"walah.walah.com\","
-                            "\"ip_address\":\"192.168.2.1\","
-                            "\"dhcid\":\"010203040A7F8E3D\","
-                            "\"lease_expires_on\":\"20130121132405\","
-                            "\"lease_length\":1300"
-                          "}";
-
-    // Verify that a NameChangeRequests can be instantiated from the
-    // a valid JSON rendition.
-    NameChangeRequestPtr ncr;
-    ASSERT_NO_THROW(ncr  = NameChangeRequest::fromJSON(msg_str));
-    ASSERT_TRUE(ncr);
-
-    // Verify that the JSON string created by the new request equals the
-    // original input string.
-    std::string json_str = ncr->toJSON();
-    EXPECT_EQ(msg_str, json_str);
-}
-
-/// @brief Tests a variety of invalid JSON message strings.
-/// This test iterates over a list of JSON messages, each containing a single
-/// content error. The list of messages is defined by the global array,
-/// invalid_messages. Currently that list contains the following invalid
-/// conditions:
-///  1. Invalid change type
-///  2. Invalid forward change
-///  3. Invalid reverse change
-///  4. Forward and reverse change both false
-///  5. Invalid forward change
-///  6. Blank FQDN
-///  7. Bad IP address
-///  8. Blank DHCID
-///  9. Odd number of digits in DHCID
-/// 10. Text in DHCID
-/// 11. Invalid lease expiration string
-/// 12. Non-integer for lease length.
-/// If more permutations arise they can easily be added to the list.
-TEST(NameChangeRequestTest, invalidMsgChecks) {
-    // Iterate over the list of JSON strings, attempting to create a
-    // NameChangeRequest. The attempt should throw a NcrMessageError.
-    int num_msgs = sizeof(invalid_msgs)/sizeof(char*);
-    for (int i = 0; i < num_msgs; i++) {
-        EXPECT_THROW(NameChangeRequest::fromJSON(invalid_msgs[i]),
-                     NcrMessageError) << "Invalid message not caught idx: "
-                     << i << std::endl << " text:[" << invalid_msgs[i] << "]"
-                     << std::endl;
-    }
-}
-
-/// @brief Tests a variety of valid JSON message strings.
-/// This test iterates over a list of JSON messages, each containing a single
-/// valid request rendition. The list of messages is defined by the global
-/// array, valid_messages. Currently that list contains the following valid
-/// messages:
-///  1. Valid, IPv4 Add
-///  2. Valid, IPv4 Remove
-///  3. Valid, IPv6 Add
-/// If more permutations arise they can easily be added to the list.
-TEST(NameChangeRequestTest, validMsgChecks) {
-    // Iterate over the list of JSON strings, attempting to create a
-    // NameChangeRequest. The attempt should succeed.
-    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
-    for (int i = 0; i < num_msgs; i++) {
-        EXPECT_NO_THROW(NameChangeRequest::fromJSON(valid_msgs[i]))
-                        << "Valid message failed,  message idx: " << i
-                        << std::endl << " text:[" << valid_msgs[i] << "]"
-                        << std::endl;
-    }
-}
-
-/// @brief Tests converting to and from JSON via isc::util buffer classes.
-/// This test verifies that:
-/// 1. A NameChangeRequest can be rendered in JSON written to an OutputBuffer
-/// 2. A InputBuffer containing a valid JSON request rendition can be used
-/// to create a NameChangeRequest.
-TEST(NameChangeRequestTest, toFromBufferTest) {
-    // Define a string containing a valid JSON NameChangeRequest rendition.
-    std::string msg_str = "{"
-                            "\"change_type\":1,"
-                            "\"forward_change\":true,"
-                            "\"reverse_change\":false,"
-                            "\"fqdn\":\"walah.walah.com\","
-                            "\"ip_address\":\"192.168.2.1\","
-                            "\"dhcid\":\"010203040A7F8E3D\","
-                            "\"lease_expires_on\":\"20130121132405\","
-                            "\"lease_length\":1300"
-                          "}";
-
-    // Create a request from JSON directly.
-    NameChangeRequestPtr ncr;
-    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(msg_str));
-
-    // Verify that we output the request as JSON text to a buffer
-    // without error.
-    isc::util::OutputBuffer output_buffer(1024);
-    ASSERT_NO_THROW(ncr->toFormat(FMT_JSON, output_buffer));
-
-    // Make an InputBuffer from the OutputBuffer.
-    isc::util::InputBuffer input_buffer(output_buffer.getData(),
-                                        output_buffer.getLength());
-
-    // Verify that we can create a new request from the InputBuffer.
-    NameChangeRequestPtr ncr2;
-    ASSERT_NO_THROW(ncr2 =
-                    NameChangeRequest::fromFormat(FMT_JSON, input_buffer));
-
-    // Convert the new request to JSON directly.
-    std::string final_str = ncr2->toJSON();
-
-    // Verify that the final string matches the original.
-    ASSERT_EQ(final_str, msg_str);
-}
-
 /// @brief Tests the basic workings of D2Dhcid to and from string conversions.
 /// It verifies that:
 /// 1. DHCID input strings must contain an even number of characters
@@ -564,6 +441,138 @@ TEST_F(DhcidTest, fromHWAddr) {
     hwaddr.reset();
     EXPECT_THROW(dhcid.fromHWAddr(hwaddr, wire_fqdn_),
                  isc::dhcp_ddns::DhcidRdataComputeError);
+}
+
+// test operator<< on D2Dhcid
+TEST(NameChangeRequestTest, leftShiftOperation) {
+    const D2Dhcid dhcid("010203040A7F8E3D");
+
+    ostringstream oss;
+    oss << dhcid;
+    EXPECT_EQ(dhcid.toStr(), oss.str());
+}
+
+/// @brief Verifies the fundamentals of converting from and to JSON.
+/// It verifies that:
+/// 1. A NameChangeRequest can be created from a valid JSON string.
+/// 2. A valid JSON string can be created from a NameChangeRequest
+TEST(NameChangeRequestTest, basicJsonTest) {
+    // Define valid JSON rendition of a request.
+    std::string msg_str = "{"
+                            "\"change_type\":1,"
+                            "\"forward_change\":true,"
+                            "\"reverse_change\":false,"
+                            "\"fqdn\":\"walah.walah.com\","
+                            "\"ip_address\":\"192.168.2.1\","
+                            "\"dhcid\":\"010203040A7F8E3D\","
+                            "\"lease_expires_on\":\"20130121132405\","
+                            "\"lease_length\":1300"
+                          "}";
+
+    // Verify that a NameChangeRequests can be instantiated from the
+    // a valid JSON rendition.
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(ncr  = NameChangeRequest::fromJSON(msg_str));
+    ASSERT_TRUE(ncr);
+
+    // Verify that the JSON string created by the new request equals the
+    // original input string.
+    std::string json_str = ncr->toJSON();
+    EXPECT_EQ(msg_str, json_str);
+}
+
+/// @brief Tests a variety of invalid JSON message strings.
+/// This test iterates over a list of JSON messages, each containing a single
+/// content error. The list of messages is defined by the global array,
+/// invalid_messages. Currently that list contains the following invalid
+/// conditions:
+///  1. Invalid change type
+///  2. Invalid forward change
+///  3. Invalid reverse change
+///  4. Forward and reverse change both false
+///  5. Invalid forward change
+///  6. Blank FQDN
+///  7. Bad IP address
+///  8. Blank DHCID
+///  9. Odd number of digits in DHCID
+/// 10. Text in DHCID
+/// 11. Invalid lease expiration string
+/// 12. Non-integer for lease length.
+/// If more permutations arise they can easily be added to the list.
+TEST(NameChangeRequestTest, invalidMsgChecks) {
+    // Iterate over the list of JSON strings, attempting to create a
+    // NameChangeRequest. The attempt should throw a NcrMessageError.
+    int num_msgs = sizeof(invalid_msgs)/sizeof(char*);
+    for (int i = 0; i < num_msgs; i++) {
+        EXPECT_THROW(NameChangeRequest::fromJSON(invalid_msgs[i]),
+                     NcrMessageError) << "Invalid message not caught idx: "
+                     << i << std::endl << " text:[" << invalid_msgs[i] << "]"
+                     << std::endl;
+    }
+}
+
+/// @brief Tests a variety of valid JSON message strings.
+/// This test iterates over a list of JSON messages, each containing a single
+/// valid request rendition. The list of messages is defined by the global
+/// array, valid_messages. Currently that list contains the following valid
+/// messages:
+///  1. Valid, IPv4 Add
+///  2. Valid, IPv4 Remove
+///  3. Valid, IPv6 Add
+/// If more permutations arise they can easily be added to the list.
+TEST(NameChangeRequestTest, validMsgChecks) {
+    // Iterate over the list of JSON strings, attempting to create a
+    // NameChangeRequest. The attempt should succeed.
+    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+    for (int i = 0; i < num_msgs; i++) {
+        EXPECT_NO_THROW(NameChangeRequest::fromJSON(valid_msgs[i]))
+                        << "Valid message failed,  message idx: " << i
+                        << std::endl << " text:[" << valid_msgs[i] << "]"
+                        << std::endl;
+    }
+}
+
+/// @brief Tests converting to and from JSON via isc::util buffer classes.
+/// This test verifies that:
+/// 1. A NameChangeRequest can be rendered in JSON written to an OutputBuffer
+/// 2. A InputBuffer containing a valid JSON request rendition can be used
+/// to create a NameChangeRequest.
+TEST(NameChangeRequestTest, toFromBufferTest) {
+    // Define a string containing a valid JSON NameChangeRequest rendition.
+    std::string msg_str = "{"
+                            "\"change_type\":1,"
+                            "\"forward_change\":true,"
+                            "\"reverse_change\":false,"
+                            "\"fqdn\":\"walah.walah.com\","
+                            "\"ip_address\":\"192.168.2.1\","
+                            "\"dhcid\":\"010203040A7F8E3D\","
+                            "\"lease_expires_on\":\"20130121132405\","
+                            "\"lease_length\":1300"
+                          "}";
+
+    // Create a request from JSON directly.
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(msg_str));
+
+    // Verify that we output the request as JSON text to a buffer
+    // without error.
+    isc::util::OutputBuffer output_buffer(1024);
+    ASSERT_NO_THROW(ncr->toFormat(FMT_JSON, output_buffer));
+
+    // Make an InputBuffer from the OutputBuffer.
+    isc::util::InputBuffer input_buffer(output_buffer.getData(),
+                                        output_buffer.getLength());
+
+    // Verify that we can create a new request from the InputBuffer.
+    NameChangeRequestPtr ncr2;
+    ASSERT_NO_THROW(ncr2 =
+                    NameChangeRequest::fromFormat(FMT_JSON, input_buffer));
+
+    // Convert the new request to JSON directly.
+    std::string final_str = ncr2->toJSON();
+
+    // Verify that the final string matches the original.
+    ASSERT_EQ(final_str, msg_str);
 }
 
 } // end of anonymous namespace
