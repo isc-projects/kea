@@ -95,7 +95,6 @@ public:
                             const Option6ClientFqdn::DomainNameType
                             fqdn_type,
                             const bool include_oro,
-                            const bool include_fqdn = true,
                             OptionPtr srvid = OptionPtr()) {
         Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(msg_type, 1234));
         pkt->setRemoteAddr(IOAddress("fe80::abcd"));
@@ -114,10 +113,8 @@ public:
             pkt->addOption(srvid);
         }
 
-        if (include_fqdn) {
-            pkt->addOption(createClientFqdn(fqdn_flags, fqdn_domain_name,
+        pkt->addOption(createClientFqdn(fqdn_flags, fqdn_domain_name,
                                             fqdn_type));
-        }
 
         if (include_oro) {
             OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6,
@@ -279,7 +276,7 @@ public:
     /// @param msg_type A type of the client's message.
     /// @param hostname A domain name in the client's FQDN.
     /// @param srv A server object, used to process the message.
-    /// @param test_fqdn A boolean value which indicates whether the FQDN
+    /// @param include_oro A boolean value which indicates whether the ORO
     /// option should be included in the client's message (if true) or not
     /// (if false). In the former case, the function will expect that server
     /// responds with the FQDN option. In the latter case, the function expects
@@ -287,14 +284,14 @@ public:
     void testProcessMessage(const uint8_t msg_type,
                             const std::string& hostname,
                             NakedDhcpv6Srv& srv,
-                            const bool test_fqdn = true) {
+                            const bool include_oro = true) {
         // Create a message of a specified type, add server id and
         // FQDN option.
         OptionPtr srvid = srv.getServerID();
         Pkt6Ptr req = generateMessage(msg_type, Option6ClientFqdn::FLAG_S,
                                       hostname,
                                       Option6ClientFqdn::FULL,
-                                      true, test_fqdn, srvid);
+                                      include_oro, srvid);
 
         // For different client's message types we have to invoke different
         // functions to generate response.
@@ -342,7 +339,7 @@ public:
             ASSERT_TRUE(lease);
         }
 
-        if (test_fqdn) {
+        if (include_oro) {
             ASSERT_TRUE(reply->getOption(D6O_CLIENT_FQDN));
         } else {
             ASSERT_FALSE(reply->getOption(D6O_CLIENT_FQDN));
@@ -762,16 +759,20 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
 }
 
 // Checks that the server does not include DHCPv6 Client FQDN option in its
-// response when client doesn't include this option in a Request.
+// response when client doesn't include ORO option in the Request.
 TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
     NakedDhcpv6Srv srv(0);
 
-    // The last parameter disables the use of DHCPv6 Client FQDN option
-    // in the client's Request. In this case, we expect that the FQDN
-    // option will not be included in the server's response. The
-    // testProcessMessage will check that.
+    // The last parameter disables use of the ORO to request FQDN option
+    // In this case, we expect that the FQDN option will not be included
+    // in the server's response. The testProcessMessage will check that.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com", srv, false);
-    ASSERT_TRUE(srv.name_change_reqs_.empty());
+    ASSERT_EQ(1, srv.name_change_reqs_.size());
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 4000);
 }
 
 }   // end of anonymous namespace
