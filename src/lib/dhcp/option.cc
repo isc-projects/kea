@@ -126,12 +126,19 @@ void Option::unpack(OptionBufferConstIter begin,
 
 void
 Option::unpackOptions(const OptionBuffer& buf) {
+    // If custom option parsing function has been set, use this function
+    // to parse options. Otherwise, use standard function from libdhcp++.
+    if (!callback_.empty()) {
+        callback_(buf, getEncapsulatedSpace(), options_, 0, 0);
+        return;
+    }
+
     switch (universe_) {
     case V4:
-        LibDHCP::unpackOptions4(buf, options_);
+        LibDHCP::unpackOptions4(buf, getEncapsulatedSpace(), options_);
         return;
     case V6:
-        LibDHCP::unpackOptions6(buf, options_);
+        LibDHCP::unpackOptions6(buf, getEncapsulatedSpace(), options_);
         return;
     default:
         isc_throw(isc::BadValue, "Invalid universe type " << universe_);
@@ -146,7 +153,7 @@ uint16_t Option::len() {
     int length = getHeaderLen() + data_.size();
 
     // ... and sum of lengths of all suboptions
-    for (Option::OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -169,7 +176,7 @@ Option::valid() {
 }
 
 OptionPtr Option::getOption(uint16_t opt_type) {
-    isc::dhcp::Option::OptionCollection::const_iterator x =
+    isc::dhcp::OptionCollection::const_iterator x =
         options_.find(opt_type);
     if ( x != options_.end() ) {
         return (*x).second;
@@ -178,7 +185,7 @@ OptionPtr Option::getOption(uint16_t opt_type) {
 }
 
 bool Option::delOption(uint16_t opt_type) {
-    isc::dhcp::Option::OptionCollection::iterator x = options_.find(opt_type);
+    isc::dhcp::OptionCollection::iterator x = options_.find(opt_type);
     if ( x != options_.end() ) {
         options_.erase(x);
         return true; // delete successful

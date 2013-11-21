@@ -418,6 +418,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->add(el), TypeError);
     EXPECT_THROW(el->remove(1), TypeError);
     EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->empty(), TypeError);
     EXPECT_THROW(el->get("foo"), TypeError);
     EXPECT_THROW(el->set("foo", el), TypeError);
     EXPECT_THROW(el->remove("foo"), TypeError);
@@ -441,6 +442,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->add(el), TypeError);
     EXPECT_THROW(el->remove(1), TypeError);
     EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->empty(), TypeError);
     EXPECT_THROW(el->get("foo"), TypeError);
     EXPECT_THROW(el->set("foo", el), TypeError);
     EXPECT_THROW(el->remove("foo"), TypeError);
@@ -464,6 +466,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->add(el), TypeError);
     EXPECT_THROW(el->remove(1), TypeError);
     EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->empty(), TypeError);
     EXPECT_THROW(el->get("foo"), TypeError);
     EXPECT_THROW(el->set("foo", el), TypeError);
     EXPECT_THROW(el->remove("foo"), TypeError);
@@ -487,6 +490,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->add(el), TypeError);
     EXPECT_THROW(el->remove(1), TypeError);
     EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->empty(), TypeError);
     EXPECT_THROW(el->get("foo"), TypeError);
     EXPECT_THROW(el->set("foo", el), TypeError);
     EXPECT_THROW(el->remove("foo"), TypeError);
@@ -497,8 +501,10 @@ TEST(Element, create_and_value_throws) {
     testGetValueList<ConstElementPtr>();
 
     el = Element::createList();
+    EXPECT_TRUE(el->empty());
     v.push_back(Element::create(1));
     EXPECT_TRUE(el->setValue(v));
+    EXPECT_FALSE(el->empty());
     EXPECT_EQ("[ 1 ]", el->str());
 
     testGetValueMap<ElementPtr>();

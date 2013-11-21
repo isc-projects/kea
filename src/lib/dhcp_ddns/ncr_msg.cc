@@ -177,6 +177,11 @@ D2Dhcid::createDigest(const uint8_t identifier_type,
     bytes_.insert(bytes_.end(), secure.begin(), secure.end());
 }
 
+std::ostream&
+operator<<(std::ostream& os, const D2Dhcid& dhcid) {
+    os << dhcid.toStr();
+    return (os);
+}
 
 
 

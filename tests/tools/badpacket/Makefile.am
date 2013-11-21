@@ -21,9 +21,6 @@ badpacket_SOURCES += scan.cc scan.h
 badpacket_SOURCES += version.h
 
 badpacket_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-badpacket_CXXFLAGS += -Wno-error
-endif
 
 badpacket_LDADD  = $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
 badpacket_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la

@@ -16,7 +16,7 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-CLEANFILES  = *.gcno *.gcda spec_config.h dhcp4_messages.h dhcp4_messages.cc
+CLEANFILES  = *.gcno *.gcda spec_config.h dhcp4_messages.h dhcp4_messages.cc s-messages
 
 man_MANS = b10-dhcp4.8
 DISTCLEANFILES = $(man_MANS)
@@ -39,8 +39,11 @@ endif
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
-dhcp4_messages.h dhcp4_messages.cc: dhcp4_messages.mes
+dhcp4_messages.h dhcp4_messages.cc: s-messages
+
+s-messages: dhcp4_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/dhcp4/dhcp4_messages.mes
+	touch $@
 
 BUILT_SOURCES = spec_config.h dhcp4_messages.h dhcp4_messages.cc
 

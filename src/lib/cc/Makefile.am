@@ -13,12 +13,6 @@ if USE_GXX
 AM_CXXFLAGS += -Wno-unused-parameter
 AM_CXXFLAGS += -fno-strict-aliasing
 endif
-if USE_CLANGPP
-# Likewise, ASIO header files will trigger various warnings with clang++.
-# Worse, there doesn't seem to be any option to disable one of the warnings
-# in any way, so we need to turn off -Werror.
-AM_CXXFLAGS += -Wno-error
-endif
 
 lib_LTLIBRARIES = libb10-cc.la
 libb10_cc_la_SOURCES = data.cc data.h session.cc session.h
@@ -29,13 +23,16 @@ nodist_libb10_cc_la_SOURCES += proto_defs.h
 libb10_cc_la_LIBADD = $(top_builddir)/src/lib/log/libb10-log.la
 
 CLEANFILES = *.gcno *.gcda session_config.h cc_messages.cc cc_messages.h \
-	proto_defs.h
+	proto_defs.h s-messages
 
 session_config.h: session_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" session_config.h.pre >$@
 
-cc_messages.cc cc_messages.h: cc_messages.mes
+cc_messages.cc cc_messages.h: s-messages
+
+s-messages: cc_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/cc/cc_messages.mes
+	touch $@
 
 BUILT_SOURCES = session_config.h cc_messages.cc cc_messages.h proto_defs.h
 

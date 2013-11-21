@@ -16,8 +16,8 @@
 #define POOL_H
 
 #include <asiolink/io_address.h>
-
 #include <boost/shared_ptr.hpp>
+#include <dhcpsrv/lease.h>
 
 #include <vector>
 
@@ -31,6 +31,8 @@ namespace dhcp {
 class Pool {
 
 public:
+    /// @note:
+    /// PoolType enum was removed. Please use Lease::Type instead
 
     /// @brief returns Pool-id
     ///
@@ -58,6 +60,25 @@ public:
     /// @return true, if the address is in pool
     bool inRange(const isc::asiolink::IOAddress& addr) const;
 
+    /// @brief Returns pool type (v4, v6 non-temporary, v6 temp, v6 prefix)
+    /// @return returns pool type
+    Lease::Type getType() const {
+        return (type_);
+    }
+
+    /// @brief returns textual representation of the pool
+    ///
+    /// @return textual representation
+    virtual std::string toText() const;
+
+    /// @brief virtual destructor
+    ///
+    /// We need Pool to be a polymorphic class, so we could dynamic cast
+    /// from PoolPtr to Pool6Ptr if we need to. A class becomes polymorphic,
+    /// when there is at least one virtual method.
+    virtual ~Pool() {
+    }
+
 protected:
 
     /// @brief protected constructor
@@ -65,7 +86,12 @@ protected:
     /// This constructor is protected to prevent anyone from instantiating
     /// Pool class directly. Instances of Pool4 and Pool6 should be created
     /// instead.
-    Pool(const isc::asiolink::IOAddress& first,
+    ///
+    /// @param type type of lease that will be served from this pool
+    /// @param first first address of a range
+    /// @param last last address of a range
+    Pool(Lease::Type type,
+         const isc::asiolink::IOAddress& first,
          const isc::asiolink::IOAddress& last);
 
     /// @brief returns the next unique Pool-ID
@@ -91,6 +117,9 @@ protected:
     ///
     /// @todo: This field is currently not used.
     std::string comments_;
+
+    /// @brief defines a lease type that will be served from this pool
+    Lease::Type type_;
 };
 
 /// @brief Pool information for IPv4 addresses
@@ -117,9 +146,6 @@ public:
 /// @brief a pointer an IPv4 Pool
 typedef boost::shared_ptr<Pool4> Pool4Ptr;
 
-/// @brief a container for IPv4 Pools
-typedef std::vector<Pool4Ptr> Pool4Collection;
-
 /// @brief Pool information for IPv6 addresses and prefixes
 ///
 /// It holds information about pool6, i.e. a range of IPv6 address space that
@@ -127,54 +153,74 @@ typedef std::vector<Pool4Ptr> Pool4Collection;
 class Pool6 : public Pool {
 public:
 
-    /// @brief specifies Pool type
-    ///
-    /// Currently there are 3 pool types defined in DHCPv6:
-    /// - Non-temporary addresses (conveyed in IA_NA)
-    /// - Temporary addresses (conveyed in IA_TA)
-    /// - Delegated Prefixes (conveyed in IA_PD)
-    /// There is a new one being worked on (IA_PA, see draft-ietf-dhc-host-gen-id), but
-    /// support for it is not planned for now.
-    typedef enum {
-        TYPE_IA,
-        TYPE_TA,
-        TYPE_PD
-    }  Pool6Type;
-
     /// @brief the constructor for Pool6 "min-max" style definition
     ///
-    /// @param type type of the pool (IA, TA or PD)
+    /// @throw BadValue if PD is define (PD can be only prefix/len)
+    ///
+    /// @param type type of the pool (IA or TA)
     /// @param first the first address in a pool
     /// @param last the last address in a pool
-    Pool6(Pool6Type type, const isc::asiolink::IOAddress& first,
+    Pool6(Lease::Type type, const isc::asiolink::IOAddress& first,
           const isc::asiolink::IOAddress& last);
 
     /// @brief the constructor for Pool6 "prefix/len" style definition
     ///
+    /// For addressed, this is just a prefix/len definition. For prefixes,
+    /// there is one extra additional parameter delegated_len. It specifies
+    /// a size of delegated prefixes that the pool will be split into. For
+    /// example pool 2001:db8::/56, delegated_len=64 means that there is a
+    /// pool 2001:db8::/56. It will be split into 256 prefixes of length /64,
+    /// e.g. 2001:db8:0:1::/64, 2001:db8:0:2::/64 etc.
+    ///
+    /// Naming convention:
+    /// A smaller prefix length yields a shorter prefix which describes a larger
+    /// set of addresses. A larger length yields a longer prefix which describes
+    /// a smaller set of addresses.
+    ///
+    /// Obviously, prefix_len must define shorter or equal prefix length than
+    /// delegated_len, so prefix_len <= delegated_len. Note that it is slightly
+    /// confusing: bigger (larger) prefix actually has smaller prefix length,
+    /// e.g. /56 is a bigger prefix than /64, but has shorter (smaller) prefix
+    /// length.
+    ///
+    /// @throw BadValue if delegated_len is defined for non-PD types or
+    ///        when delegated_len < prefix_len
+    ///
     /// @param type type of the pool (IA, TA or PD)
     /// @param prefix specifies prefix of the pool
-    /// @param prefix_len specifies length of the prefix of the pool
-    Pool6(Pool6Type type, const isc::asiolink::IOAddress& prefix,
-          uint8_t prefix_len);
+    /// @param prefix_len specifies prefix length of the pool
+    /// @param delegated_len specifies lenght of the delegated prefixes
+    Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
+          uint8_t prefix_len, uint8_t delegated_len = 128);
 
     /// @brief returns pool type
     ///
     /// @return pool type
-    Pool6Type getType() const {
+    Lease::Type getType() const {
         return (type_);
     }
 
-private:
-    /// @brief defines a pool type
-    Pool6Type type_;
+    /// @brief returns delegated prefix length
+    ///
+    /// This may be useful for "prefix/len" style definition for
+    /// addresses, but is mostly useful for prefix pools.
+    /// @return prefix length (1-128)
+    uint8_t getLength() {
+        return (prefix_len_);
+    }
 
+    /// @brief returns textual representation of the pool
+    ///
+    /// @return textual representation
+    virtual std::string toText() const;
+
+private:
+    /// @brief Defines prefix length (for TYPE_PD only)
+    uint8_t prefix_len_;
 };
 
 /// @brief a pointer an IPv6 Pool
 typedef boost::shared_ptr<Pool6> Pool6Ptr;
-
-/// @brief a container for IPv6 Pools
-typedef std::vector<Pool6Ptr> Pool6Collection;
 
 /// @brief a pointer to either IPv4 or IPv6 Pool
 typedef boost::shared_ptr<Pool> PoolPtr;

@@ -16,11 +16,15 @@
 ///
 /// @brief  This file contains utility classes used for DHCPv6 server testing
 
+#ifndef DHCP6_TEST_UTILS_H
+#define DHCP6_TEST_UTILS_H
+
 #include <gtest/gtest.h>
 
 #include <dhcp/pkt6.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/iface_mgr.h>
@@ -110,6 +114,7 @@ public:
     using Dhcpv6Srv::sanityCheck;
     using Dhcpv6Srv::loadServerID;
     using Dhcpv6Srv::writeServerID;
+    using Dhcpv6Srv::unpackOptions;
     using Dhcpv6Srv::name_change_reqs_;
 
     /// @brief packets we pretend to receive
@@ -145,14 +150,9 @@ public:
         valid_iface_ = ifaces.begin()->getName();
     }
 
-    // Generate IA_NA option with specified parameters
-    boost::shared_ptr<Option6IA> generateIA(uint32_t iaid, uint32_t t1, uint32_t t2) {
-        boost::shared_ptr<Option6IA> ia =
-            boost::shared_ptr<Option6IA>(new Option6IA(D6O_IA_NA, iaid));
-        ia->setT1(t1);
-        ia->setT2(t2);
-        return (ia);
-    }
+    // Generate IA_NA or IA_PD option with specified parameters
+    boost::shared_ptr<Option6IA> generateIA(uint16_t type, uint32_t iaid,
+                                            uint32_t t1, uint32_t t2);
 
     /// @brief generates interface-id option, based on text
     ///
@@ -317,55 +317,68 @@ class Dhcpv6SrvTest : public NakedDhcpv6SrvTest {
 public:
     /// Name of the server-id file (used in server-id tests)
 
-    // these are empty for now, but let's keep them around
+    /// @brief Constructor that initalizes a simple default configuration
+    ///
+    /// Sets up a single subnet6 with one pool for addresses and second
+    /// pool for prefixes.
     Dhcpv6SrvTest() {
         subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 48, 1000,
                                          2000, 3000, 4000));
-        pool_ = Pool6Ptr(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
+        pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"),
+                                   64));
         subnet_->addPool(pool_);
 
         CfgMgr::instance().deleteSubnets6();
         CfgMgr::instance().addSubnet6(subnet_);
+
+        // configure PD pool
+        pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD,
+                                      IOAddress("2001:db8:1:2::"), 64, 80));
+        subnet_->addPool(pd_pool_);
     }
 
-    // Checks that server response (ADVERTISE or REPLY) contains proper IA_NA option
-    // It returns IAADDR option for each chaining with checkIAAddr method.
-    boost::shared_ptr<Option6IAAddr> checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
-                                            uint32_t expected_t1, uint32_t expected_t2) {
-        OptionPtr tmp = rsp->getOption(D6O_IA_NA);
-        // Can't use ASSERT_TRUE() in method that returns something
-        if (!tmp) {
-            ADD_FAILURE() << "IA_NA option not present in response";
-            return (boost::shared_ptr<Option6IAAddr>());
-        }
+    /// @brief destructor
+    ///
+    /// Removes existing configuration.
+    ~Dhcpv6SrvTest() {
+        CfgMgr::instance().deleteSubnets6();
+    };
 
-        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(tmp);
-        if (!ia) {
-            ADD_FAILURE() << "IA_NA cannot convert option ptr to Option6";
-            return (boost::shared_ptr<Option6IAAddr>());
-        }
+    /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
+    ///        IA_NA option
+    ///
+    /// @param rsp server's response
+    /// @param expected_iaid expected IAID value
+    /// @param expected_t1 expected T1 value
+    /// @param expected_t2 expected T2 value
+    /// @return IAADDR option for easy chaining with checkIAAddr method
+    boost::shared_ptr<Option6IAAddr>
+        checkIA_NA(const Pkt6Ptr& rsp, uint32_t expected_iaid,
+                   uint32_t expected_t1, uint32_t expected_t2);
 
-        EXPECT_EQ(expected_iaid, ia->getIAID());
-        EXPECT_EQ(expected_t1, ia->getT1());
-        EXPECT_EQ(expected_t2, ia->getT2());
-
-        tmp = ia->getOption(D6O_IAADDR);
-        boost::shared_ptr<Option6IAAddr> addr = boost::dynamic_pointer_cast<Option6IAAddr>(tmp);
-        return (addr);
-    }
+    /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
+    ///        IA_PD option
+    ///
+    /// @param rsp server's response
+    /// @param expected_iaid expected IAID value
+    /// @param expected_t1 expected T1 value
+    /// @param expected_t2 expected T2 value
+    /// @return IAPREFIX option for easy chaining with checkIAAddr method
+    boost::shared_ptr<Option6IAPrefix>
+    checkIA_PD(const Pkt6Ptr& rsp, uint32_t expected_iaid,
+               uint32_t expected_t1, uint32_t expected_t2);
 
     // Check that generated IAADDR option contains expected address
     // and lifetime values match the configured subnet
     void checkIAAddr(const boost::shared_ptr<Option6IAAddr>& addr,
                      const IOAddress& expected_addr,
-                     uint32_t /* expected_preferred */,
-                     uint32_t /* expected_valid */) {
+                     Lease::Type type) {
 
         // Check that the assigned address is indeed from the configured pool.
         // Note that when comparing addresses, we compare the textual
         // representation. IOAddress does not support being streamed to
         // an ostream, which means it can't be used in EXPECT_EQ.
-        EXPECT_TRUE(subnet_->inPool(addr->getAddress()));
+        EXPECT_TRUE(subnet_->inPool(type, addr->getAddress()));
         EXPECT_EQ(expected_addr.toText(), addr->getAddress().toText());
         EXPECT_EQ(addr->getPreferred(), subnet_->getPreferred());
         EXPECT_EQ(addr->getValid(), subnet_->getValid());
@@ -374,34 +387,115 @@ public:
     // Checks if the lease sent to client is present in the database
     // and is valid when checked agasint the configured subnet
     Lease6Ptr checkLease(const DuidPtr& duid, const OptionPtr& ia_na,
-                         boost::shared_ptr<Option6IAAddr> addr) {
-        boost::shared_ptr<Option6IA> ia = boost::dynamic_pointer_cast<Option6IA>(ia_na);
+                         boost::shared_ptr<Option6IAAddr> addr);
 
-        Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(addr->getAddress());
-        if (!lease) {
-            std::cout << "Lease for " << addr->getAddress().toText()
-                      << " not found in the database backend.";
-            return (Lease6Ptr());
-        }
+    /// @brief Verifies received IAPrefix option
+    ///
+    /// Verifies if the received IAPrefix option matches the lease in the
+    /// database.
+    ///
+    /// @param duid client's DUID
+    /// @param ia_pd IA_PD option that contains the IAPRefix option
+    /// @param prefix pointer to the IAPREFIX option
+    /// @return corresponding IPv6 lease (if found)
+    Lease6Ptr checkPdLease(const DuidPtr& duid, const OptionPtr& ia_pd,
+                           boost::shared_ptr<Option6IAPrefix> prefix);
 
-        EXPECT_EQ(addr->getAddress().toText(), lease->addr_.toText());
-        EXPECT_TRUE(*lease->duid_ == *duid);
-        EXPECT_EQ(ia->getIAID(), lease->iaid_);
-        EXPECT_EQ(subnet_->getID(), lease->subnet_id_);
+    /// @brief Creates a message with specified IA
+    ///
+    /// A utility function that creates a message of the specified type with
+    /// a specified container (IA_NA or IA_PD) and an address or prefix
+    /// inside it.
+    ///
+    /// @param message_type type of the message (e.g. DHCPV6_SOLICIT)
+    /// @param lease_type type of a lease (TYPE_NA or TYPE_PD)
+    /// @param addr address or prefix to use in IADDRESS or IAPREFIX options
+    /// @param prefix_len length of the prefix (used for prefixes only)
+    /// @param iaid IA identifier (used in IA_XX option)
+    /// @return created message
+    Pkt6Ptr
+    createMessage(uint8_t message_type, Lease::Type lease_type,
+                  const IOAddress& addr, const uint8_t prefix_len,
+                  uint32_t iaid);
 
-        return (lease);
-    }
+    /// @brief Performs basic (positive) RENEW test
+    ///
+    /// See renewBasic and pdRenewBasic tests for detailed explanation.
+    /// In essence the test attempts to perform a successful RENEW scenario.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param existing_addr address to be preinserted into the database
+    /// @param renew_addr address being sent in RENEW
+    /// @param prefix_len length of the prefix (128 for addresses)
+    void
+    testRenewBasic(Lease::Type type, const std::string& existing_addr,
+                   const std::string& renew_addr, const uint8_t prefix_len);
 
-    ~Dhcpv6SrvTest() {
-        CfgMgr::instance().deleteSubnets6();
-    };
+    /// @brief Performs negative RENEW test
+    ///
+    /// See renewReject and pdRenewReject tests for detailed explanation.
+    /// In essence the test attempts to perform couple failed RENEW scenarios.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param addr address being sent in RENEW
+    void
+    testRenewReject(Lease::Type type, const IOAddress& addr);
+
+    /// @brief Performs basic (positive) RELEASE test
+    ///
+    /// See releaseBasic and pdReleaseBasic tests for detailed explanation.
+    /// In essence the test attempts to perform a successful RELEASE scenario.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param existing address to be preinserted into the database
+    /// @param release_addr address being sent in RELEASE
+    void
+    testReleaseBasic(Lease::Type type, const IOAddress& existing,
+                     const IOAddress& release_addr);
+
+    /// @brief Performs negative RELEASE test
+    ///
+    /// See releaseReject and pdReleaseReject tests for detailed explanation.
+    /// In essence the test attempts to perform couple failed RELEASE scenarios.
+    ///
+    /// This method does not throw, but uses gtest macros to signify failures.
+    ///
+    /// @param type type (TYPE_NA or TYPE_PD)
+    /// @param addr address being sent in RELEASE
+    void
+    testReleaseReject(Lease::Type type, const IOAddress& addr);
+
+    // see wireshark.cc for descriptions
+    // The descriptions are too large and too closely related to the
+    // code, so it is kept in .cc rather than traditionally in .h
+    Pkt6Ptr captureSimpleSolicit();
+    Pkt6Ptr captureRelayedSolicit();
+    Pkt6Ptr captureDocsisRelayedSolicit();
+
+    /// @brief Auxiliary method that sets Pkt6 fields
+    ///
+    /// Used to reconstruct captured packets. Sets UDP ports, interface names,
+    /// and other fields to some believable values.
+    /// @param pkt packet that will have its fields set
+    void captureSetDefaultFields(const Pkt6Ptr& pkt);
 
     /// A subnet used in most tests
     Subnet6Ptr subnet_;
 
-    /// A pool used in most tests
+    /// A normal, non-temporary pool used in most tests
     Pool6Ptr pool_;
+
+    /// A prefix pool used in most tests
+    Pool6Ptr pd_pool_;
 };
 
 }; // end of isc::test namespace
 }; // end of isc namespace
+
+#endif // DHCP6_TEST_UTILS_H

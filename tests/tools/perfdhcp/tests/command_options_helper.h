@@ -15,11 +15,15 @@
 #ifndef COMMAND_OPTIONS_HELPER_H
 #define COMMAND_OPTIONS_HELPER_H
 
+#include "../command_options.h"
+#include <exceptions/exceptions.h>
+
+#include <assert.h>
+#include <iterator>
+#include <cstring>
 #include <string>
 #include <vector>
 
-#include <exceptions/exceptions.h>
-#include "../command_options.h"
 
 namespace isc {
 namespace perfdhcp {
@@ -115,7 +119,7 @@ private:
         // Tokenize string (space is a separator) using begin and end iteratos
         std::vector<std::string> tokens(text_iterator, text_end);
 
-        if (tokens.size() > 0) {
+        if (!tokens.empty()) {
             // Allocate array of C-strings where we will store tokens
             results = new char*[tokens.size()];
             // Store tokens in C-strings array

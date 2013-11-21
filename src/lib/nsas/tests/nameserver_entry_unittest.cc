@@ -30,7 +30,6 @@
 #include <dns/name.h>
 #include <exceptions/exceptions.h>
 
-#include "../asiolink.h"
 #include "../address_entry.h"
 #include "../nameserver_entry.h"
 #include "../nameserver_address.h"

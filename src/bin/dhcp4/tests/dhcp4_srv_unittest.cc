@@ -15,18 +15,39 @@
 #include <config.h>
 #include <sstream>
 
+#include <asiolink/io_address.h>
 #include <config/ccsession.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/iface_mgr.h>
+#include <dhcp/option.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option4_addrlst.h>
+#include <dhcp/option_custom.h>
+#include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
+#include <dhcp/pkt_filter.h>
+#include <dhcp/pkt_filter_inet.h>
+#include <dhcp/docsis3_option_defs.h>
+#include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/dhcp4_log.h>
+#include <dhcp4/config_parser.h>
 #include <hooks/server_hooks.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease_mgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/utils.h>
+#include <gtest/gtest.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
+#include <config/ccsession.h>
 
-#include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>
 
 #include <fstream>
 #include <iostream>
+
+#include <arpa/inet.h>
 
 using namespace std;
 using namespace isc;
@@ -34,9 +55,12 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::hooks;
-using namespace isc::test;
+using namespace isc::dhcp::test;
 
 namespace {
+
+/// dummy server-id file location
+const char* SRVID_FILE = "server-id-test.txt";
 
 // Sanity check. Verifies that both Dhcpv4Srv and its derived
 // class NakedDhcpv4Srv can be instantiated and destroyed.
@@ -730,7 +754,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // let's create a lease and put it in the LeaseMgr
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -841,7 +865,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -874,18 +898,16 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     EXPECT_FALSE(l);
 
     // Try to get the lease by hardware address
-    // @todo: Uncomment this once trac2592 is implemented
-    // Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
-    // EXPECT_EQ(leases.size(), 0);
+    Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
+    EXPECT_EQ(leases.size(), 0);
 
     // Try to get it by hw/subnet_id combination
     l = LeaseMgrFactory::instance().getLease4(hw->hwaddr_, subnet_->getID());
     EXPECT_FALSE(l);
 
     // Try by client-id
-    // @todo: Uncomment this once trac2592 is implemented
-    //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
-    //EXPECT_EQ(leases.size(), 0);
+    leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    EXPECT_EQ(leases.size(), 0);
 
     // Try by client-id/subnet-id
     l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
@@ -919,7 +941,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a RELEASE
     // Generate client-id also duid_
@@ -1017,6 +1039,129 @@ TEST_F(Dhcpv4SrvTest, ServerID) {
     EXPECT_EQ(srvid_text, text);
 }
 
+// Checks if received relay agent info option is echoed back to the client
+TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
+
+    NakedDhcpv4Srv srv(0);
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // added option 82 (relay agent info) with 3 suboptions. The server
+    // is supposed to echo it back in its response.
+    Pkt4Ptr dis;
+    ASSERT_NO_THROW(dis = captureRelayedDiscover());
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(dis);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv.run();
+
+    // Check that the server did send a reposonse
+    ASSERT_EQ(1, srv.fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr offer = srv.fake_sent_.front();
+    ASSERT_TRUE(offer);
+
+    // Get Relay Agent Info from query...
+    OptionPtr rai_query = dis->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+
+    // Get Relay Agent Info from response...
+    OptionPtr rai_response = offer->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_response);
+
+    EXPECT_TRUE(rai_response->equal(rai_query));
+}
+
+/// @todo move vendor options tests to a separate file.
+/// @todo Add more extensive vendor options tests, including multiple
+///       vendor options
+
+// Checks if vendor options are parsed correctly and requested vendor options
+// are echoed back.
+TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"data\": \"10.253.175.16\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"10.254.226.0/25\" ],"
+        "    \"subnet\": \"10.254.226.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"" + valid_iface_ + "\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // added option 82 (relay agent info) with 3 suboptions. The server
+    // is supposed to echo it back in its response.
+    Pkt4Ptr dis;
+    ASSERT_NO_THROW(dis = captureRelayedDiscover());
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(dis);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv.run();
+
+    // Check that the server did send a reposonse
+    ASSERT_EQ(1, srv.fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr offer = srv.fake_sent_.front();
+    ASSERT_TRUE(offer);
+
+    // Get Relay Agent Info from query...
+    OptionPtr vendor_opt_response = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(vendor_opt_response);
+
+    // Check if it's of a correct type
+    boost::shared_ptr<OptionVendor> vendor_opt =
+        boost::dynamic_pointer_cast<OptionVendor>(vendor_opt_response);
+    ASSERT_TRUE(vendor_opt);
+
+    // Get Relay Agent Info from response...
+    OptionPtr tftp_servers_generic = vendor_opt->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(tftp_servers_generic);
+
+    Option4AddrLstPtr tftp_servers =
+        boost::dynamic_pointer_cast<Option4AddrLst>(tftp_servers_generic);
+
+    ASSERT_TRUE(tftp_servers);
+
+    Option4AddrLst::AddressContainer addrs = tftp_servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("10.253.175.16", addrs[0].toText());
+}
+
+
 /// @todo Implement tests for subnetSelect See tests in dhcp6_srv_unittest.cc:
 /// selectSubnetAddr, selectSubnetIface, selectSubnetRelayLinkaddr,
 /// selectSubnetRelayInterfaceId. Note that the concept of interface-id is not
@@ -1057,21 +1202,224 @@ TEST_F(Dhcpv4SrvTest, Hooks) {
     EXPECT_TRUE(hook_index_buffer4_send > 0);
 }
 
-    // a dummy MAC address
-    const uint8_t dummyMacAddr[] = {0, 1, 2, 3, 4, 5};
+// This test verifies that the following option structure can be parsed:
+// - option (option space 'foobar')
+//   - sub option (option space 'foo')
+//      - sub option (option space 'bar')
+// @todo Add more thorough unit tests for unpackOptions.
+TEST_F(Dhcpv4SrvTest, unpackOptions) {
+    // Create option definition for each level of encapsulation. Each option
+    // definition is for the option code 1. Options may have the same
+    // option code because they belong to different option spaces.
 
-    // A dummy MAC address, padded with 0s
-    const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0,
-                                     0, 0, 0, 0, 0, 0, 0, 0 };
+    // Top level option encapsulates options which belong to 'space-foo'.
+    OptionDefinitionPtr opt_def(new OptionDefinition("option-foobar", 1, "uint32",
+                                                      "space-foo"));\
+    // Middle option encapsulates options which belong to 'space-bar'
+    OptionDefinitionPtr opt_def2(new OptionDefinition("option-foo", 1, "uint16",
+                                                      "space-bar"));
+    // Low level option doesn't encapsulate any option space.
+    OptionDefinitionPtr opt_def3(new OptionDefinition("option-bar", 1,
+                                                      "uint8"));
 
-    // Let's use some creative test content here (128 chars + \0)
-    const uint8_t dummyFile[] = "Lorem ipsum dolor sit amet, consectetur "
-        "adipiscing elit. Proin mollis placerat metus, at "
-        "lacinia orci ornare vitae. Mauris amet.";
+    // Add option definitions to the Configuration Manager. Each goes under
+    // different option space.
+    CfgMgr& cfgmgr = CfgMgr::instance();
+    ASSERT_NO_THROW(cfgmgr.addOptionDef(opt_def, "space-foobar"));
+    ASSERT_NO_THROW(cfgmgr.addOptionDef(opt_def2, "space-foo"));
+    ASSERT_NO_THROW(cfgmgr.addOptionDef(opt_def3, "space-bar"));
 
-    // Yet another type of test content (64 chars + \0)
-    const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
-        "adipiscing elit posuere.";
+    // Create the buffer holding the structure of options.
+    const char raw_data[] = {
+        // First option starts here.
+        0x01,                   // option code = 1
+        0x0B,                   // option length = 11
+        0x00, 0x01, 0x02, 0x03, // This option carries uint32 value
+        // Sub option starts here.
+        0x01,                   // option code = 1
+        0x05,                   // option length = 5
+        0x01, 0x02,             // this option carries uint16 value
+        // Last option starts here.
+        0x01,                   // option code = 1
+        0x01,                   // option length = 1
+        0x00                    // This option carries a single uint8
+                                // value and has no sub options.
+    };
+    OptionBuffer buf(raw_data, raw_data + sizeof(raw_data));
+
+    // Parse options.
+    NakedDhcpv4Srv srv(0);
+    OptionCollection options;
+    ASSERT_NO_THROW(srv.unpackOptions(buf, "space-foobar", options));
+
+    // There should be one top level option.
+    ASSERT_EQ(1, options.size());
+    boost::shared_ptr<OptionInt<uint32_t> > option_foobar =
+        boost::dynamic_pointer_cast<OptionInt<uint32_t> >(options.begin()->
+                                                          second);
+    ASSERT_TRUE(option_foobar);
+    EXPECT_EQ(1, option_foobar->getType());
+    EXPECT_EQ(0x00010203, option_foobar->getValue());
+    // There should be a middle level option held in option_foobar.
+    boost::shared_ptr<OptionInt<uint16_t> > option_foo =
+        boost::dynamic_pointer_cast<OptionInt<uint16_t> >(option_foobar->
+                                                          getOption(1));
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(1, option_foo->getType());
+    EXPECT_EQ(0x0102, option_foo->getValue());
+    // Finally, there should be a low level option under option_foo.
+    boost::shared_ptr<OptionInt<uint8_t> > option_bar =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >(option_foo->getOption(1));
+    ASSERT_TRUE(option_bar);
+    EXPECT_EQ(1, option_bar->getType());
+    EXPECT_EQ(0x0, option_bar->getValue());
+}
+
+// Checks whether the server uses default (0.0.0.0) siaddr value, unless
+// explicitly specified
+TEST_F(Dhcpv4SrvTest, siaddrDefault) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+    IOAddress hint("192.0.2.107");
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setYiaddr(hint);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv->processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Verify that it is 0.0.0.0
+    EXPECT_EQ("0.0.0.0", offer->getSiaddr().toText());
+}
+
+// Checks whether the server uses specified siaddr value
+TEST_F(Dhcpv4SrvTest, siaddr) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+    subnet_->setSiaddr(IOAddress("192.0.2.123"));
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv->processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Verify that its value is proper
+    EXPECT_EQ("192.0.2.123", offer->getSiaddr().toText());
+}
+
+// Checks if the next-server defined as global value is overridden by subnet
+// specific value and returned in server messages. There's also similar test for
+// checking parser only configuration, see Dhcp4ParserTest.nextServerOverride in
+// config_parser_unittest.cc.
+TEST_F(Dhcpv4SrvTest, nextServerOverride) {
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"next-server\": \"192.0.0.1\", "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"next-server\": \"1.2.3.4\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+
+    // check if returned status is OK
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    EXPECT_EQ(DHCPOFFER, offer->getType());
+
+    EXPECT_EQ("1.2.3.4", offer->getSiaddr().toText());
+}
+
+// Checks if the next-server defined as global value is used in responses
+// when there is no specific value defined in subnet and returned to the client
+// properly. There's also similar test for checking parser only configuration,
+// see Dhcp4ParserTest.nextServerGlobal in config_parser_unittest.cc.
+TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"next-server\": \"192.0.0.1\", "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+
+    // check if returned status is OK
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    EXPECT_EQ(DHCPOFFER, offer->getType());
+
+    EXPECT_EQ("192.0.0.1", offer->getSiaddr().toText());
+}
+
+
+// a dummy MAC address
+const uint8_t dummyMacAddr[] = {0, 1, 2, 3, 4, 5};
+
+// A dummy MAC address, padded with 0s
+const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0,
+                                 0, 0, 0, 0, 0, 0, 0, 0 };
+
+// Let's use some creative test content here (128 chars + \0)
+const uint8_t dummyFile[] = "Lorem ipsum dolor sit amet, consectetur "
+    "adipiscing elit. Proin mollis placerat metus, at "
+    "lacinia orci ornare vitae. Mauris amet.";
+
+// Yet another type of test content (64 chars + \0)
+const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
+    "adipiscing elit posuere.";
 
 /// @brief a class dedicated to Hooks testing in DHCPv4 server
 ///
@@ -1537,7 +1885,7 @@ vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
 // but the proper hook name is "buffer4_receive".
 TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
 
-    // Install pkt6_receive_callout
+    // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_receive", buffer4_receive_callout));
 
@@ -1586,7 +1934,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4RreceiveValueChange) {
     // In particular, it should call registered buffer4_receive callback.
     srv_->run();
 
-    // Check that the server did send a reposonce
+    // Check that the server did send a reposonse
     ASSERT_EQ(1, srv_->fake_sent_.size());
 
     // Make sure that we received a response
@@ -1609,7 +1957,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4RreceiveValueChange) {
 // (or rather option objects) in it.
 TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
 
-    // Install pkt6_receive_callout
+    // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
                         "buffer4_receive", buffer4_receive_skip));
 
@@ -1622,7 +1970,7 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
     // Server will now process to run its normal loop, but instead of calling
     // IfaceMgr::receive6(), it will read all packets from the list set by
     // fakeReceive()
-    // In particular, it should call registered pkt6_receive callback.
+    // In particular, it should call registered pkt4_receive callback.
     srv_->run();
 
     // Check that the server dropped the packet and did not produce any response
@@ -2095,7 +2443,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     // Advertised address must belong to the second pool (in subnet's range,
     // in dynamic pool)
     EXPECT_TRUE((*subnets)[1]->inRange(addr));
-    EXPECT_TRUE((*subnets)[1]->inPool(addr));
+    EXPECT_TRUE((*subnets)[1]->inPool(Lease::TYPE_V4, addr));
 }
 
 // This test verifies that incoming (positive) REQUEST/Renewing can be handled
@@ -2117,7 +2465,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // let's create a lease and put it in the LeaseMgr
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -2201,7 +2549,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // let's create a lease and put it in the LeaseMgr
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -2265,7 +2613,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -2350,7 +2698,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -2397,4 +2745,188 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     //EXPECT_EQ(leases.size(), 1);
 }
 
-} // end of anonymous namespace
+// Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
+TEST_F(Dhcpv4SrvTest, docsisVendorOptionsParse) {
+
+    // Let's get a traffic capture from DOCSIS3.0 modem
+    Pkt4Ptr dis = captureRelayedDiscover();
+    ASSERT_NO_THROW(dis->unpack());
+
+    // Check if the packet contain
+    OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(opt);
+
+    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+
+    // This particular capture that we have included options 1 and 5
+    EXPECT_TRUE(vendor->getOption(1));
+    EXPECT_TRUE(vendor->getOption(5));
+
+    // It did not include options any other options
+    EXPECT_FALSE(vendor->getOption(2));
+    EXPECT_FALSE(vendor->getOption(3));
+    EXPECT_FALSE(vendor->getOption(17));
+}
+
+// Checks if server is able to parse incoming docsis option and extract suboption 1 (docsis ORO)
+TEST_F(Dhcpv4SrvTest, docsisVendorORO) {
+
+    // Let's get a traffic capture from DOCSIS3.0 modem
+    Pkt4Ptr dis = captureRelayedDiscover();
+    EXPECT_NO_THROW(dis->unpack());
+
+    // Check if the packet contains vendor specific information option
+    OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(opt);
+
+    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+
+    opt = vendor->getOption(DOCSIS3_V4_ORO);
+    ASSERT_TRUE(opt);
+
+    OptionUint8ArrayPtr oro = boost::dynamic_pointer_cast<OptionUint8Array>(opt);
+    EXPECT_TRUE(oro);
+}
+
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the requested options are actually assigned.
+TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"all\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"data\": \"192.0.2.1, 192.0.2.2\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.0/25\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"" + valid_iface_ + "\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr to non-zero address as if it was relayed.
+    dis->setGiaddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr offer = srv.processDiscover(dis);
+
+    // check if we get response at all
+    ASSERT_TRUE(offer);
+
+    // We did not include any vendor opts in DISCOVER, so there should be none
+    // in OFFER.
+    ASSERT_FALSE(offer->getOption(DHO_VIVSO_SUBOPTIONS));
+
+    // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
+    // That suboption has code 1 and is a docsis ORO option.
+    boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
+                                                                        DOCSIS3_V4_ORO));
+    vendor_oro->addValue(DOCSIS3_V4_TFTP_SERVERS); // Request option 33
+    OptionPtr vendor(new OptionVendor(Option::V4, 4491));
+    vendor->addOption(vendor_oro);
+    dis->addOption(vendor);
+
+    // Need to process SOLICIT again after requesting new option.
+    offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if thre is vendor option response
+    OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(docsis2);
+
+    Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+    ASSERT_TRUE(tftp_srvs);
+
+    Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
+    ASSERT_EQ(2, addrs.size());
+    EXPECT_EQ("192.0.2.1", addrs[0].toText());
+    EXPECT_EQ("192.0.2.2", addrs[1].toText());
+}
+
+// Test checks whether it is possible to use option definitions defined in
+// src/lib/dhcp/docsis3_option_defs.h.
+TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
+    ConstElementPtr x;
+    string config_prefix = "{ \"interfaces\": [ \"all\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": ";
+    string config_postfix = ","
+        "          \"data\": \"192.0.2.1\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.50\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"renew-timer\": 1000, "
+        "    \"rebind-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // There is docsis3 (vendor-id=4491) vendor option 2, which is a
+    // tftp-server. Its format is list of IPv4 addresses.
+    string config_valid = config_prefix + "2" + config_postfix;
+
+    // There is no option 99 defined in vendor-id=4491. As there is no
+    // definition, the config should fail.
+    string config_bogus = config_prefix + "99" + config_postfix;
+
+    ElementPtr json_bogus = Element::fromJSON(config_bogus);
+    ElementPtr json_valid = Element::fromJSON(config_valid);
+
+    NakedDhcpv4Srv srv(0);
+
+    // This should fail (missing option definition)
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_bogus));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(1, rcode_);
+
+    // This should work (option definition present)
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_valid));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+}
+
+}
+
+    /*I}; // end of isc::dhcp::test namespace
+}; // end of isc::dhcp namespace
+}; // end of isc namespace */

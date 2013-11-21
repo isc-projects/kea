@@ -109,6 +109,14 @@ was called.  The function threw an exception (an error indication)
 during execution, which is an error condition.  The library has been
 unloaded and no callouts from it will be installed.
 
+% HOOKS_LOAD_FRAMEWORK_EXCEPTION 'load' function in hook library %1 threw an exception: reason %2
+A "load" function was found in the library named in the message and
+was called.  Either the hooks framework or the function threw an
+exception (an error indication) during execution, which is an error
+condition; the cause of the exception is recorded in the message.
+The library has been unloaded and no callouts from it will be
+installed.
+
 % HOOKS_LOAD_SUCCESS 'load' function in hook library %1 returned success
 This is a debug message issued when the "load" function has been found
 in a hook library and has been successfully called.
@@ -151,6 +159,13 @@ During the unloading of a library, an "unload" function was found.  It was
 called, but in the process generated an exception (an error indication).
 The unload process continued after this message and the library has
 been unloaded.
+
+% HOOKS_UNLOAD_FRAMEWORK_EXCEPTION 'unload' function in hook library %1 threw an exception, reason %2
+During the unloading of a library, an "unload" function was found.
+It was called, but in the process either it or the hooks framework
+generated an exception (an error indication); the cause of the error
+is recorded in the message.  The unload process continued after
+this message and the library has been unloaded.
 
 % HOOKS_UNLOAD_SUCCESS 'unload' function in hook library %1 returned success
 This is a debug message issued when an "unload" function has been found

@@ -16,12 +16,14 @@
 import unittest
 import os
 import re
+import threading
 
 import isc.log
 from isc.dns import RRClass
 import isc.config
 from isc.config import parse_answer
 import memmgr
+from isc.memmgr.datasrc_info import SegmentInfo
 from isc.testutils.ccsession_mock import MockModuleCCSession
 
 class MyCCSession(MockModuleCCSession, isc.config.ConfigData):
@@ -190,9 +192,14 @@ class TestMemmgr(unittest.TestCase):
         cfg_data = MockConfigData(
             {"classes": {"IN": [{"type": "MasterFiles",
                                  "cache-enable": True, "params": {}}]}})
+        self.__init_called = None
+        def mock_init_segments(param):
+            self.__init_called = param
+        self.__mgr._init_segments = mock_init_segments
         self.__mgr._datasrc_config_handler({}, cfg_data)
         self.assertEqual(1, len(self.__mgr._datasrc_info_list))
         self.assertEqual(1, self.__mgr._datasrc_info_list[0].gen_id)
+        self.assertEqual(self.__init_called, self.__mgr._datasrc_info_list[0])
 
         # Below we're using a mock DataSrcClientMgr for easier tests
         class MockDataSrcClientMgr:
@@ -220,6 +227,7 @@ class TestMemmgr(unittest.TestCase):
             MockDataSrcClientMgr([('sqlite3', 'mapped', None)])
         self.__mgr._datasrc_config_handler(None, None) # params don't matter
         self.assertEqual(2, len(self.__mgr._datasrc_info_list))
+        self.assertEqual(self.__init_called, self.__mgr._datasrc_info_list[1])
         self.assertIsNotNone(
             self.__mgr._datasrc_info_list[1].segment_info_map[
                 (RRClass.IN, 'sqlite3')])
@@ -229,6 +237,104 @@ class TestMemmgr(unittest.TestCase):
         self.__mgr._datasrc_clients_mgr = MockDataSrcClientMgr(None, True)
         self.__mgr._datasrc_config_handler(None, None)
         self.assertEqual(2, len(self.__mgr._datasrc_info_list))
+
+    def test_init_segments(self):
+        """
+        Test the initialization of segments ‒ just load everything found in there.
+        """
+        # Fake a lot of things. These are objects hard to set up, so this is
+        # easier.
+        class SgmtInfo:
+            def __init__(self):
+                self.events = []
+                self.__state = None
+
+            def add_event(self, cmd):
+                self.events.append(cmd)
+                self.__state = SegmentInfo.UPDATING
+
+            def start_update(self):
+                return self.events[0]
+
+            def get_state(self):
+                return self.__state
+
+        sgmt_info = SgmtInfo()
+        class DataSrcInfo:
+            def __init__(self):
+                self.segment_info_map = \
+                    {(isc.dns.RRClass.IN, "name"): sgmt_info}
+        dsrc_info = DataSrcInfo()
+
+        # Pretend to have the builder thread
+        self.__mgr._builder_cv = threading.Condition()
+
+        # Run the initialization
+        self.__mgr._init_segments(dsrc_info)
+
+        # The event was pushed into the segment info
+        command = ('load', None, dsrc_info, isc.dns.RRClass.IN, 'name')
+        self.assertEqual([command], sgmt_info.events)
+        self.assertEqual([command], self.__mgr._builder_command_queue)
+        del self.__mgr._builder_command_queue[:]
+
+    def test_notify_from_builder(self):
+        """
+        Check the notify from builder thing eats the notifications and
+        handles them.
+        """
+        # Some mocks
+        class SgmtInfo:
+            def complete_update():
+                return 'command'
+        sgmt_info = SgmtInfo
+        class DataSrcInfo:
+            def __init__(self):
+                self.segment_info_map = \
+                    {(isc.dns.RRClass.IN, "name"): sgmt_info}
+        dsrc_info = DataSrcInfo()
+        class Sock:
+            def recv(self, size):
+                pass
+        self.__mgr._master_sock = Sock()
+        commands = []
+        def mock_cmd_to_builder(cmd):
+            commands.append(cmd)
+        self.__mgr._cmd_to_builder = mock_cmd_to_builder
+
+        self.__mgr._builder_lock = threading.Lock()
+        # Extract the reference for the queue. We get a copy of the reference
+        # to check it is cleared, not a new empty one installed
+        notif_ref = self.__mgr._builder_response_queue
+        notif_ref.append(('load-completed', dsrc_info, isc.dns.RRClass.IN,
+                          'name'))
+        # Wake up the main thread and let it process the notifications
+        self.__mgr._notify_from_builder()
+        # All notifications are now eaten
+        self.assertEqual([], notif_ref)
+        self.assertEqual(['command'], commands)
+        del commands[:]
+        # The new command is sent
+        # Once again the same, but with the last command - nothing new pushed
+        sgmt_info.complete_update = lambda: None
+        notif_ref.append(('load-completed', dsrc_info, isc.dns.RRClass.IN,
+                          'name'))
+        self.__mgr._notify_from_builder()
+        self.assertEqual([], notif_ref)
+        self.assertEqual([], commands)
+        # This is invalid (unhandled) notification name
+        notif_ref.append(('unhandled',))
+        self.assertRaises(ValueError, self.__mgr._notify_from_builder)
+        self.assertEqual([], notif_ref)
+
+    def test_send_to_builder(self):
+        """
+        Send command to the builder test.
+        """
+        self.__mgr._builder_cv = threading.Condition()
+        self.__mgr._cmd_to_builder(('test',))
+        self.assertEqual([('test',)], self.__mgr._builder_command_queue)
+        del self.__mgr._builder_command_queue[:]
 
 if __name__== "__main__":
     isc.log.resetUnitTestRootLogger()

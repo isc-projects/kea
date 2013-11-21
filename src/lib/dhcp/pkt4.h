@@ -16,6 +16,7 @@
 #define PKT4_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/option.h>
 #include <util/buffer.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
@@ -71,6 +72,7 @@ public:
     /// Prepares on-wire format of message and all its options.
     /// Options must be stored in options_ field.
     /// Output buffer will be stored in buffer_out_.
+    /// The buffer_out_ is cleared before writting to the buffer.
     ///
     /// @throw InvalidOperation if packing fails
     void
@@ -482,6 +484,14 @@ public:
     /// @return remote port
     uint16_t getRemotePort() const { return (remote_port_); }
 
+    /// @brief Set callback function to be used to parse options.
+    ///
+    /// @param callback An instance of the callback function or NULL to
+    /// uninstall callback.
+    void setCallback(UnpackOptionsCallback callback) {
+        callback_ = callback;
+    }
+
     /// @brief Update packet timestamp.
     ///
     /// Updates packet timestamp. This method is invoked
@@ -632,10 +642,13 @@ protected:
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
-    isc::dhcp::Option::OptionCollection options_;
+    isc::dhcp::OptionCollection options_;
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
+
+    /// A callback to be called to unpack options from the packet.
+    UnpackOptionsCallback callback_;
 
 }; // Pkt4 class
 

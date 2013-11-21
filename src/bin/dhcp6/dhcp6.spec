@@ -16,7 +16,7 @@
           "item_default": ""
         }
       },
- 
+
       { "item_name": "interfaces",
         "item_type": "list",
         "item_optional": false,
@@ -254,6 +254,38 @@
                         "item_default": ""
                     }
                 },
+                {
+                  "item_name": "pd-pools",
+                  "item_type": "list",
+                  "item_optional": true,
+                  "item_default": [],
+                  "list_item_spec":
+                  {
+                      "item_name": "pd-pool",
+                      "item_type": "map",
+                      "item_optional": false,
+                      "item_default": {},
+                      "map_item_spec": [
+                      {
+                          "item_name": "prefix",
+                          "item_type": "string",
+                          "item_optional": false,
+                          "item_default": ""
+                       },
+                       {
+                           "item_name": "prefix-len",
+                           "item_type": "integer",
+                           "item_optional": false,
+                           "item_default": 128
+                       },
+                       {
+                           "item_name": "delegated-len",
+                           "item_type": "integer",
+                           "item_optional": false,
+                           "item_default": 128
+                       }]
+                    }
+                },
                 { "item_name": "option-data",
                   "item_type": "list",
                   "item_optional": false,
@@ -313,7 +345,7 @@
 
         {
             "command_name": "libreload",
-            "command_description": "Reloads the current hooks libraries.", 
+            "command_description": "Reloads the current hooks libraries.",
             "command_args": []
         }
     ]

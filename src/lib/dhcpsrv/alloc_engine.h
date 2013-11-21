@@ -25,6 +25,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
+#include <map>
+
 namespace isc {
 namespace dhcp {
 
@@ -68,6 +70,14 @@ protected:
         /// again if necessary. The number of times this method is called will
         /// increase as the number of available leases will decrease.
         ///
+        /// This method can also be used to pick a prefix. We should not rename
+        /// it to pickLease(), because at this early stage there is no concept
+        /// of a lease yet. Here it is a matter of selecting one address or
+        /// prefix from the defined pool, without going into details who it is
+        /// for or who uses it. I thought that pickAddress() is less confusing
+        /// than pickResource(), because nobody would immediately know what the
+        /// resource means in this context.
+        ///
         /// @param subnet next address will be returned from pool of that subnet
         /// @param duid Client's DUID
         /// @param hint client's hint
@@ -77,11 +87,25 @@ protected:
         pickAddress(const SubnetPtr& subnet, const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) = 0;
 
+        /// @brief Default constructor.
+        ///
+        /// Specifies which type of leases this allocator will assign
+        /// @param pool_type specifies pool type (addresses, temp. addr or prefixes)
+        Allocator(Lease::Type pool_type)
+            :pool_type_(pool_type) {
+        }
+
         /// @brief virtual destructor
         virtual ~Allocator() {
         }
     protected:
+
+        /// @brief defines pool type allocation
+        Lease::Type pool_type_;
     };
+
+    /// defines a pointer to allocator
+    typedef boost::shared_ptr<Allocator> AllocatorPtr;
 
     /// @brief Address/prefix allocator that iterates over all addresses
     ///
@@ -95,7 +119,8 @@ protected:
         /// @brief default constructor
         ///
         /// Does not do anything
-        IterativeAllocator();
+        /// @param type - specifies allocation type
+        IterativeAllocator(Lease::Type type);
 
         /// @brief returns the next address from pools in a subnet
         ///
@@ -107,13 +132,31 @@ protected:
             pickAddress(const SubnetPtr& subnet,
                         const DuidPtr& duid,
                         const isc::asiolink::IOAddress& hint);
-    private:
+    protected:
 
-        /// @brief returns an address by one
+        /// @brief Returns an address increased by one
+        ///
+        /// This method works for both IPv4 and IPv6 addresses. For example,
+        /// increase 192.0.2.255 will become 192.0.3.0.
+        ///
         /// @param addr address to be increased
         /// @return address increased by one
-        isc::asiolink::IOAddress increaseAddress(const isc::asiolink::IOAddress& addr);
+        static isc::asiolink::IOAddress
+        increaseAddress(const isc::asiolink::IOAddress& addr);
 
+        /// @brief Returns the next prefix
+        ///
+        /// This method works for IPv6 addresses only. It increases
+        /// specified prefix by a given prefix_len. For example, 2001:db8::
+        /// increased by prefix length /32 will become 2001:db9::. This method
+        /// is used to iterate over IPv6 prefix pools
+        ///
+        /// @param prefix prefix to be increased
+        /// @param prefix_len length of the prefix to be increased
+        /// @return result prefix
+        static isc::asiolink::IOAddress
+        increasePrefix(const isc::asiolink::IOAddress& prefix,
+                       const uint8_t prefix_len);
     };
 
     /// @brief Address/prefix allocator that gets an address based on a hash
@@ -123,7 +166,8 @@ protected:
     public:
 
         /// @brief default constructor (does nothing)
-        HashedAllocator();
+        /// @param type - specifies allocation type
+        HashedAllocator(Lease::Type type);
 
         /// @brief returns an address based on hash calculated from client's DUID.
         ///
@@ -145,7 +189,8 @@ protected:
     public:
 
         /// @brief default constructor (does nothing)
-        RandomAllocator();
+        /// @param type - specifies allocation type
+        RandomAllocator(Lease::Type type);
 
         /// @brief returns an random address from pool of specified subnet
         ///
@@ -180,7 +225,8 @@ protected:
     /// @param engine_type selects allocation algorithm
     /// @param attempts number of attempts for each lease allocation before
     ///        we give up (0 means unlimited)
-    AllocEngine(AllocType engine_type, unsigned int attempts);
+    /// @param ipv6 specifies if the engine should work for IPv4 or IPv6
+    AllocEngine(AllocType engine_type, unsigned int attempts, bool ipv6 = true);
 
     /// @brief Returns IPv4 lease.
     ///
@@ -229,16 +275,13 @@ protected:
     ///
     /// @return Allocated IPv4 lease (or NULL if allocation failed)
     Lease4Ptr
-    allocateAddress4(const SubnetPtr& subnet,
-                     const ClientIdPtr& clientid,
-                     const HWAddrPtr& hwaddr,
-                     const isc::asiolink::IOAddress& hint,
-                     const bool fwd_dns_update,
-                     const bool rev_dns_update,
-                     const std::string& hostname,
-                     bool fake_allocation,
-                     const isc::hooks::CalloutHandlePtr& callout_handle,
-                     Lease4Ptr& old_lease);
+    allocateLease4(const SubnetPtr& subnet, const ClientIdPtr& clientid,
+                   const HWAddrPtr& hwaddr,
+                   const isc::asiolink::IOAddress& hint,
+                   const bool fwd_dns_update, const bool rev_dns_update,
+                   const std::string& hostname, bool fake_allocation,
+                   const isc::hooks::CalloutHandlePtr& callout_handle,
+                   Lease4Ptr& old_lease);
 
     /// @brief Renews a IPv4 lease
     ///
@@ -283,6 +326,7 @@ protected:
     /// @param duid Client's DUID
     /// @param iaid iaid field from the IA_NA container that client sent
     /// @param hint a hint that the client provided
+    /// @param type lease type (IA, TA or PD)
     /// @param fwd_dns_update A boolean value which indicates that server takes
     ///        responsibility for the forward DNS Update for this lease
     ///        (if true).
@@ -295,17 +339,19 @@ protected:
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.
     ///
-    /// @return Allocated IPv6 lease (or NULL if allocation failed)
-    Lease6Ptr
-    allocateAddress6(const Subnet6Ptr& subnet,
-                     const DuidPtr& duid,
-                     uint32_t iaid,
-                     const isc::asiolink::IOAddress& hint,
-                     const bool fwd_dns_update,
-                     const bool rev_dns_update,
-                     const std::string& hostname,
-                     bool fake_allocation,
-                     const isc::hooks::CalloutHandlePtr& callout_handle);
+    /// @return Allocated IPv6 leases (may be empty if allocation failed)
+    Lease6Collection
+    allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid, uint32_t iaid,
+                    const isc::asiolink::IOAddress& hint, Lease::Type type,
+                    const bool fwd_dns_update, const bool rev_dns_update,
+                    const std::string& hostname, bool fake_allocation,
+                    const isc::hooks::CalloutHandlePtr& callout_handle);
+
+    /// @brief returns allocator for a given pool type
+    /// @param type type of pool (V4, IA, TA or PD)
+    /// @throw BadValue if allocator for a given type is missing
+    /// @return pointer to allocator handing a given resource types
+    AllocatorPtr getAllocator(Lease::Type type);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~AllocEngine();
@@ -352,7 +398,10 @@ private:
     /// @param duid client's DUID
     /// @param iaid IAID from the IA_NA container the client sent to us
     /// @param addr an address that was selected and is confirmed to be
-    /// available
+    ///        available
+    /// @param prefix_len length of the prefix (for PD only)
+    ///        should be 128 for other lease types
+    /// @param type lease type (IA, TA or PD)
     /// @param fwd_dns_update A boolean value which indicates that server takes
     ///        responsibility for the forward DNS Update for this lease
     ///        (if true).
@@ -368,7 +417,8 @@ private:
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///         became unavailable)
     Lease6Ptr createLease6(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                           uint32_t iaid, const isc::asiolink::IOAddress& addr,
+                           const uint32_t iaid, const isc::asiolink::IOAddress& addr,
+                           const uint8_t prefix_len, const Lease::Type type,
                            const bool fwd_dns_update, const bool rev_dns_update,
                            const std::string& hostname,
                            const isc::hooks::CalloutHandlePtr& callout_handle,
@@ -415,6 +465,8 @@ private:
     /// @param subnet subnet the lease is allocated from
     /// @param duid client's DUID
     /// @param iaid IAID from the IA_NA container the client sent to us
+    /// @param prefix_len prefix length (for PD leases)
+    ///        Should be 128 for other lease types
     /// @param fwd_dns_update A boolean value which indicates that server takes
     ///        responsibility for the forward DNS Update for this lease
     ///        (if true).
@@ -429,7 +481,8 @@ private:
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
     Lease6Ptr reuseExpiredLease(Lease6Ptr& expired, const Subnet6Ptr& subnet,
-                                const DuidPtr& duid, uint32_t iaid,
+                                const DuidPtr& duid, const uint32_t iaid,
+                                uint8_t prefix_len,
                                 const bool fwd_dns_update,
                                 const bool rev_dns_update,
                                 const std::string& hostname,
@@ -437,7 +490,10 @@ private:
                                 bool fake_allocation = false);
 
     /// @brief a pointer to currently used allocator
-    boost::shared_ptr<Allocator> allocator_;
+    ///
+    /// For IPv4, there will be only one allocator: TYPE_V4
+    /// For IPv6, there will be 3 allocators: TYPE_NA, TYPE_TA, TYPE_PD
+    std::map<Lease::Type, AllocatorPtr> allocators_;
 
     /// @brief number of attempts before we give up lease allocation (0=unlimited)
     unsigned int attempts_;

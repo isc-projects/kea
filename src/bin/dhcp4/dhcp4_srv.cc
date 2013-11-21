@@ -20,7 +20,9 @@
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt4.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcpsrv/addr_utilities.h>
@@ -36,6 +38,8 @@
 #include <util/strutil.h>
 
 #include <boost/algorithm/string/erase.hpp>
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 #include <iomanip>
 #include <fstream>
@@ -167,7 +171,8 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
             .arg(LeaseMgrFactory::instance().getName());
 
         // Instantiate allocation engine
-        alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100));
+        alloc_engine_.reset(new AllocEngine(AllocEngine::ALLOC_ITERATIVE, 100,
+                                            false /* false = IPv4 */));
 
         // Register hook points
         hook_index_pkt4_receive_   = Hooks.hook_index_pkt4_receive_;
@@ -228,12 +233,20 @@ Dhcpv4Srv::run() {
             continue;
         }
 
+        // In order to parse the DHCP options, the server needs to use some
+        // configuration information such as: existing option spaces, option
+        // definitions etc. This is the kind of information which is not
+        // available in the libdhcp, so we need to supply our own implementation
+        // of the option parsing function here, which would rely on the
+        // configuration data.
+        query->setCallback(boost::bind(&Dhcpv4Srv::unpackOptions, this,
+                                       _1, _2, _3));
+
         bool skip_unpack = false;
 
         // The packet has just been received so contains the uninterpreted wire
         // data; execute callouts registered for buffer4_receive.
-        if (HooksManager::getHooksManager()
-            .calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
+        if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_receive_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
             // Delete previously set arguments
@@ -427,8 +440,7 @@ Dhcpv4Srv::run() {
             // Option objects modification does not make sense anymore. Hooks
             // can only manipulate wire buffer at this stage.
             // Let's execute all callouts registered for buffer4_send
-            if (HooksManager::getHooksManager()
-                .calloutsPresent(Hooks.hook_index_buffer4_send_)) {
+            if (HooksManager::calloutsPresent(Hooks.hook_index_buffer4_send_)) {
                 CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
                 // Delete previously set arguments
@@ -656,6 +668,12 @@ Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     if (dst_hw_addr) {
         answer->setRemoteHWAddr(dst_hw_addr);
     }
+
+    // If this packet is relayed, we want to copy Relay Agent Info option
+    OptionPtr rai = question->getOption(DHO_DHCP_AGENT_OPTIONS);
+    if (rai) {
+        answer->addOption(rai);
+    }
 }
 
 void
@@ -701,20 +719,78 @@ Dhcpv4Srv::appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     // to be returned to the client.
     for (std::vector<uint8_t>::const_iterator opt = requested_opts.begin();
          opt != requested_opts.end(); ++opt) {
-        Subnet::OptionDescriptor desc =
-            subnet->getOptionDescriptor("dhcp4", *opt);
-        if (desc.option) {
-            msg->addOption(desc.option);
+        if (!msg->getOption(*opt)) {
+            Subnet::OptionDescriptor desc =
+                subnet->getOptionDescriptor("dhcp4", *opt);
+            if (desc.option && !msg->getOption(*opt)) {
+                msg->addOption(desc.option);
+            }
         }
     }
 }
+
+void
+Dhcpv4Srv::appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer) {
+    // Get the configured subnet suitable for the incoming packet.
+    Subnet4Ptr subnet = selectSubnet(question);
+    // Leave if there is no subnet matching the incoming packet.
+    // There is no need to log the error message here because
+    // it will be logged in the assignLease() when it fails to
+    // pick the suitable subnet. We don't want to duplicate
+    // error messages in such case.
+    if (!subnet) {
+        return;
+    }
+
+    // Try to get the vendor option
+    boost::shared_ptr<OptionVendor> vendor_req =
+        boost::dynamic_pointer_cast<OptionVendor>(question->getOption(DHO_VIVSO_SUBOPTIONS));
+    if (!vendor_req) {
+        return;
+    }
+
+    uint32_t vendor_id = vendor_req->getVendorId();
+
+    // Let's try to get ORO within that vendor-option
+    /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other vendors
+    /// may have different policies.
+    OptionUint8ArrayPtr oro =
+        boost::dynamic_pointer_cast<OptionUint8Array>(vendor_req->getOption(DOCSIS3_V4_ORO));
+
+    // Option ORO not found. Don't do anything then.
+    if (!oro) {
+        return;
+    }
+
+    boost::shared_ptr<OptionVendor> vendor_rsp(new OptionVendor(Option::V4, vendor_id));
+
+    // Get the list of options that client requested.
+    bool added = false;
+    const std::vector<uint8_t>& requested_opts = oro->getValues();
+
+    for (std::vector<uint8_t>::const_iterator code = requested_opts.begin();
+         code != requested_opts.end(); ++code) {
+        if  (!vendor_rsp->getOption(*code)) {
+            Subnet::OptionDescriptor desc = subnet->getVendorOptionDescriptor(vendor_id,
+                                                                              *code);
+            if (desc.option) {
+                vendor_rsp->addOption(desc.option);
+                added = true;
+            }
+        }
+
+        if (added) {
+            answer->addOption(vendor_rsp);
+        }
+    }
+}
+
 
 void
 Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     // Identify options that we always want to send to the
     // client (if they are configured).
     static const uint16_t required_options[] = {
-        DHO_SUBNET_MASK,
         DHO_ROUTERS,
         DHO_DOMAIN_NAME_SERVERS,
         DHO_DOMAIN_NAME };
@@ -1026,6 +1102,13 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         return;
     }
 
+    // Set up siaddr. Perhaps assignLease is not the best place to call this
+    // as siaddr has nothing to do with a lease, but otherwise we would have
+    // to select subnet twice (performance hit) or update too many functions
+    // at once.
+    // @todo: move subnet selection to a common code
+    answer->setSiaddr(subnet->getSiaddr());
+
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_SUBNET_SELECTED)
         .arg(subnet->toText());
 
@@ -1079,12 +1162,12 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // be inserted into the LeaseMgr as well.
     // @todo pass the actual FQDN data.
     Lease4Ptr old_lease;
-    Lease4Ptr lease = alloc_engine_->allocateAddress4(subnet, client_id, hwaddr,
+    Lease4Ptr lease = alloc_engine_->allocateLease4(subnet, client_id, hwaddr,
                                                       hint, fqdn_fwd, fqdn_rev,
                                                       hostname,
-                                                      fake_allocation,
-                                                      callout_handle,
-                                                      old_lease);
+                                                    fake_allocation,
+                                                    callout_handle,
+                                                    old_lease);
 
     if (lease) {
         // We have a lease! Let's set it in the packet and send it back to
@@ -1137,13 +1220,6 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         opt = OptionPtr(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
         opt->setUint32(lease->valid_lft_);
         answer->addOption(opt);
-
-        // Router (type 3)
-        Subnet::OptionDescriptor opt_routers =
-            subnet->getOptionDescriptor("dhcp4", DHO_ROUTERS);
-        if (opt_routers.option) {
-            answer->addOption(opt_routers.option);
-        }
 
         // Subnet mask (type 1)
         answer->addOption(getNetmaskOption(subnet));
@@ -1259,7 +1335,6 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     copyDefaultFields(discover, offer);
     appendDefaultOptions(offer, DHCPOFFER);
-    appendRequestedOptions(discover, offer);
 
     // If DISCOVER message contains the FQDN or Hostname option, server
     // may respond to the client with the appropriate FQDN or Hostname
@@ -1269,10 +1344,15 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
 
     assignLease(discover, offer);
 
-    // There are a few basic options that we always want to
-    // include in the response. If client did not request
-    // them we append them for him.
-    appendBasicOptions(discover, offer);
+    // Adding any other options makes sense only when we got the lease.
+    if (offer->getYiaddr() != IOAddress("0.0.0.0")) {
+        appendRequestedOptions(discover, offer);
+        appendRequestedVendorOptions(discover, offer);
+        // There are a few basic options that we always want to
+        // include in the response. If client did not request
+        // them we append them for him.
+        appendBasicOptions(discover, offer);
+    }
 
     return (offer);
 }
@@ -1288,7 +1368,6 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
     copyDefaultFields(request, ack);
     appendDefaultOptions(ack, DHCPACK);
-    appendRequestedOptions(request, ack);
 
     // If REQUEST message contains the FQDN or Hostname option, server
     // should respond to the client with the appropriate FQDN or Hostname
@@ -1301,10 +1380,15 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
     // or even rebinding.
     assignLease(request, ack);
 
-    // There are a few basic options that we always want to
-    // include in the response. If client did not request
-    // them we append them for him.
-    appendBasicOptions(request, ack);
+    // Adding any other options makes sense only when we got the lease.
+    if (ack->getYiaddr() != IOAddress("0.0.0.0")) {
+        appendRequestedOptions(request, ack);
+        appendRequestedVendorOptions(request, ack);
+        // There are a few basic options that we always want to
+        // include in the response. If client did not request
+        // them we append them for him.
+        appendBasicOptions(request, ack);
+    }
 
     return (ack);
 }
@@ -1359,8 +1443,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
         bool skip = false;
 
         // Execute all callouts registered for lease4_release
-        if (HooksManager::getHooksManager()
-            .calloutsPresent(Hooks.hook_index_lease4_release_)) {
+        if (HooksManager::calloutsPresent(Hooks.hook_index_lease4_release_)) {
             CalloutHandlePtr callout_handle = getCalloutHandle(release);
 
             // Delete all previous arguments
@@ -1594,6 +1677,95 @@ Dhcpv4Srv::openActiveSockets(const uint16_t port,
     if (!IfaceMgr::instance().openSockets4(port, use_bcast)) {
         LOG_WARN(dhcp4_logger, DHCP4_NO_SOCKETS_OPEN);
     }
+}
+
+size_t
+Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
+                          const std::string& option_space,
+                          isc::dhcp::OptionCollection& options) {
+    size_t offset = 0;
+
+    OptionDefContainer option_defs;
+    if (option_space == "dhcp4") {
+        // Get the list of stdandard option definitions.
+        option_defs = LibDHCP::getOptionDefs(Option::V4);
+    } else if (!option_space.empty()) {
+        OptionDefContainerPtr option_defs_ptr =
+            CfgMgr::instance().getOptionDefs(option_space);
+        if (option_defs_ptr != NULL) {
+            option_defs = *option_defs_ptr;
+        }
+    }
+    // Get the search index #1. It allows to search for option definitions
+    // using option code.
+    const OptionDefContainerTypeIndex& idx = option_defs.get<1>();
+
+    // The buffer being read comprises a set of options, each starting with
+    // a one-byte type code and a one-byte length field.
+    while (offset + 1 <= buf.size()) {
+        uint8_t opt_type = buf[offset++];
+
+        // DHO_END is a special, one octet long option
+        if (opt_type == DHO_END)
+            return (offset); // just return. Don't need to add DHO_END option
+
+        // DHO_PAD is just a padding after DHO_END. Let's continue parsing
+        // in case we receive a message without DHO_END.
+        if (opt_type == DHO_PAD)
+            continue;
+
+        if (offset + 1 >= buf.size()) {
+            // opt_type must be cast to integer so as it is not treated as
+            // unsigned char value (a number is presented in error message).
+            isc_throw(OutOfRange, "Attempt to parse truncated option "
+                      << static_cast<int>(opt_type));
+        }
+
+        uint8_t opt_len =  buf[offset++];
+        if (offset + opt_len > buf.size()) {
+            isc_throw(OutOfRange, "Option parse failed. Tried to parse "
+                      << offset + opt_len << " bytes from " << buf.size()
+                      << "-byte long buffer.");
+        }
+
+        // Get all definitions with the particular option code. Note that option code
+        // is non-unique within this container however at this point we expect
+        // to get one option definition with the particular code. If more are
+        // returned we report an error.
+        const OptionDefContainerTypeRange& range = idx.equal_range(opt_type);
+        // Get the number of returned option definitions for the option code.
+        size_t num_defs = distance(range.first, range.second);
+
+        OptionPtr opt;
+        if (num_defs > 1) {
+            // Multiple options of the same code are not supported right now!
+            isc_throw(isc::Unexpected, "Internal error: multiple option definitions"
+                      " for option type " << static_cast<int>(opt_type)
+                      << " returned. Currently it is not supported to initialize"
+                      << " multiple option definitions for the same option code."
+                      << " This will be supported once support for option spaces"
+                      << " is implemented");
+        } else if (num_defs == 0) {
+            opt = OptionPtr(new Option(Option::V4, opt_type,
+                                       buf.begin() + offset,
+                                       buf.begin() + offset + opt_len));
+            opt->setEncapsulatedSpace("dhcp4");
+        } else {
+            // The option definition has been found. Use it to create
+            // the option instance from the provided buffer chunk.
+            const OptionDefinitionPtr& def = *(range.first);
+            assert(def);
+            opt = def->optionFactory(Option::V4, opt_type,
+                                     buf.begin() + offset,
+                                     buf.begin() + offset + opt_len,
+                                     boost::bind(&Dhcpv4Srv::unpackOptions,
+                                                 this, _1, _2, _3));
+        }
+
+        options.insert(std::make_pair(opt_type, opt));
+        offset += opt_len;
+    }
+    return (offset);
 }
 
 

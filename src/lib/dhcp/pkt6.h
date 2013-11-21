@@ -88,7 +88,7 @@ public:
         uint16_t  relay_msg_len_;
 
         /// options received from a specified relay, except relay-msg option
-        isc::dhcp::Option::OptionCollection options_;
+        isc::dhcp::OptionCollection options_;
     };
 
     /// Constructor, used in replying to a message
@@ -115,6 +115,7 @@ public:
     /// Options must be stored in options_ field.
     /// Output buffer will be stored in data_. Length
     /// will be set in data_len_.
+    /// The output buffer is cleared before new data is written to it.
     ///
     /// @throw BadValue if packet protocol is invalid, InvalidOperation
     /// if packing fails, or NotImplemented if protocol is TCP (IPv6 over TCP is
@@ -139,7 +140,7 @@ public:
     /// zero length
     ///
     /// @return reference to output buffer
-    const isc::util::OutputBuffer& getBuffer() const { return (bufferOut_); };
+    const isc::util::OutputBuffer& getBuffer() const { return (buffer_out_); };
 
     /// @brief Returns protocol of this packet (UDP or TCP).
     ///
@@ -242,7 +243,7 @@ public:
     ///
     /// @param type option type we are looking for
     /// @return instance of option collection with requested options
-    isc::dhcp::Option::OptionCollection getOptions(uint16_t type);
+    isc::dhcp::OptionCollection getOptions(uint16_t type);
 
     /// Attempts to delete first suboption of requested type
     ///
@@ -350,7 +351,7 @@ public:
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
-    isc::dhcp::Option::OptionCollection options_;
+    isc::dhcp::OptionCollection options_;
 
     /// @brief Update packet timestamp.
     ///
@@ -387,6 +388,14 @@ public:
     ///         Note that this string is statically allocated and MUST NOT
     ///         be freed by the caller.
     const char* getName() const;
+
+    /// @brief Set callback function to be used to parse options.
+    ///
+    /// @param callback An instance of the callback function or NULL to
+    /// uninstall callback.
+    void setCallback(UnpackOptionsCallback callback) {
+        callback_ = callback;
+    }
 
     /// @brief copies relay information from client's packet to server's response
     ///
@@ -522,7 +531,7 @@ protected:
     /// remote TCP or UDP port
     uint16_t remote_port_;
 
-    /// output buffer (used during message transmission)
+    /// Output buffer (used during message transmission)
     ///
     /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
@@ -530,10 +539,14 @@ protected:
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
-    isc::util::OutputBuffer bufferOut_;
+    isc::util::OutputBuffer buffer_out_;
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
+
+    /// A callback to be called to unpack options from the packet.
+    UnpackOptionsCallback callback_;
+
 }; // Pkt6 class
 
 } // isc::dhcp namespace

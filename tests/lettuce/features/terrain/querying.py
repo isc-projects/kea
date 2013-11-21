@@ -110,6 +110,8 @@ class QueryResult(object):
             self.line_handler = self.parse_answer
         elif line == ";; OPT PSEUDOSECTION:\n":
             self.line_handler = self.parse_opt
+        elif line == ";; QUESTION SECTION:\n":
+            self.line_handler = self.parse_question
         elif line == ";; AUTHORITY SECTION:\n":
             self.line_handler = self.parse_authority
         elif line == ";; ADDITIONAL SECTION:\n":
@@ -290,8 +292,8 @@ def check_last_query(step, item, value):
     assert str(value) == str(lq_val),\
            "Got: " + str(lq_val) + ", expected: " + str(value)
 
-@step('([a-zA-Z]+) section of the last query response should be')
-def check_last_query_section(step, section):
+@step('([a-zA-Z]+) section of the last query response should (exactly )?be')
+def check_last_query_section(step, section, exact):
     """
     Check the entire contents of the given section of the response of the last
     query.
@@ -330,9 +332,10 @@ def check_last_query_section(step, section):
     # replace whitespace of any length by one space
     response_string = re.sub("[ \t]+", " ", response_string)
     expect = re.sub("[ \t]+", " ", step.multiline)
-    # lowercase them
-    response_string = response_string.lower()
-    expect = expect.lower()
+    # lowercase them unless we need to do an exact match
+    if exact is None:
+        response_string = response_string.lower()
+        expect = expect.lower()
     # sort them
     response_string_parts = response_string.split("\n")
     response_string_parts.sort()

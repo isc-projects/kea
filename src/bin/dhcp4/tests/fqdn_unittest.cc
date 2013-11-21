@@ -15,6 +15,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <dhcp/option4_client_fqdn.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp_ddns/ncr_msg.h>
 
@@ -24,10 +25,11 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::dhcp_ddns;
-using namespace isc::test;
 
 namespace {
+
 class NameDhcpv4SrvTest : public Dhcpv4SrvTest {
 public:
     NameDhcpv4SrvTest() : Dhcpv4SrvTest() {

@@ -143,6 +143,10 @@ TEST_F(Rdata_TSIG_Test, fromText) {
     // multi-line rdata
     checkFromText_None("hmac-md5.sig-alg.reg.int. ( 1286779327 300 \n"
                        "0 16020 BADKEY 0 )");
+
+    // short-form HMAC-MD5 name
+    const any::TSIG tsig6("hmac-md5. 1286779327 300 0 16020 BADKEY 0");
+    EXPECT_EQ(0, tsig6.compare(rdata_tsig));
 };
 
 TEST_F(Rdata_TSIG_Test, badText) {

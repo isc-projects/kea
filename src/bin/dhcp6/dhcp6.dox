@@ -167,6 +167,29 @@ Once the configuration is implemented, these constants will be removed.
 
  @todo Add section about setting up options and their definitions with bindctl.
 
+@section dhcpv6OptionsParse Custom functions to parse message options
+
+The DHCPv6 server implementation provides a generic support to define option
+formats and set option values. A number of options formats have been defined
+for standard options in libdhcp++. However, the formats for vendor specific
+options are dynamically configured by the server's administrator and thus can't
+be stored in libdhcp++. Such option formats are stored in the
+@c isc::dhcp::CfgMgr. The libdhcp++ provides functions for recursive parsing
+of options which may be encapsulated by other options up to the any level of
+encapsulation but these functions are unaware of the option formats defined
+in the @c isc::dhcp::CfgMgr because they belong to a different library.
+Therefore, the generic functions @c isc::dhcp::LibDHCP::unpackOptions4 and
+@c isc::dhcp::LibDHCP::unpackOptions6 are only useful to parse standard
+options which definitions are provided in the libdhcp++. In order to overcome
+this problem a callback mechanism has been implemented in @c Option and @c Pkt6
+classes. By installing a callback function on the instance of the @c Pkt6 the
+server may provide a custom implementation of the options parsing algorithm.
+This callback function will take precedence over the @c LibDHCP::unpackOptions6
+and @c LibDHCP::unpackOptions4 functions. With this approach, the callback is
+implemented within the context of the server and it has access to all objects
+which define its configuration (including dynamically created option
+definitions).
+
  @section dhcpv6Other Other DHCPv6 topics
 
  For hooks API support in DHCPv6, see @ref dhcpv6Hooks.

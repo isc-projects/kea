@@ -1375,7 +1375,6 @@ class TestMain(unittest.TestCase):
         self.check_exception(isc.config.ModuleCCSessionError("error"))
         self.check_exception(ddns.DDNSConfigError("error"))
         self.check_exception(isc.cc.SessionTimeout("error"))
-        self.check_exception(Exception("error"))
 
         # Add one that is not a subclass of Exception, and hence not
         # caught. Misuse BaseException for that.

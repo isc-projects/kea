@@ -33,6 +33,7 @@ import threading
 import isc.config.ccsession
 from optparse import OptionParser, OptionValueError
 import isc.util.process
+import isc.util.traceback_handler
 from isc.cc.proto_defs import *
 import isc.log
 from isc.log_messages.msgq_messages import *
@@ -72,6 +73,8 @@ else:
 SPECFILE_LOCATION = SPECFILE_PATH + "/msgq.spec"
 
 class MsgQReceiveError(Exception): pass
+
+class MsgQRunningError(Exception): pass
 
 class MsgQCloseOnReceive(Exception):
     """Exception raised when reading data from a socket results in 'shutdown'.
@@ -267,11 +270,26 @@ class MsgQ:
         """Set up the listener socket.  Internal function."""
         logger.debug(TRACE_BASIC, MSGQ_LISTENER_SETUP, self.socket_file)
 
-        self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-
         if os.path.exists(self.socket_file):
+            # Rather than just blindly removing the socket file, attempt to
+            # connect to the existing socket to see if there is an existing
+            # msgq running. Only if that fails do we remove the file and
+            # attempt to create a new socket.
+            existing_msgq = None
+            try:
+                existing_msgq = isc.cc.Session(self.socket_file)
+            except isc.cc.session.SessionError:
+                existing_msgq = None
+
+            if existing_msgq:
+                existing_msgq.close()
+                logger.fatal(MSGQ_ALREADY_RUNNING)
+                raise MsgQRunningError("b10-msgq already running")
+
             os.remove(self.socket_file)
+
         try:
+            self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.listen_socket.bind(self.socket_file)
             self.listen_socket.listen(1024)
         except Exception as e:
@@ -524,7 +542,9 @@ class MsgQ:
             # Append it to buffer (but check the data go away)
             if fileno in self.sendbuffs:
                 (last_sent, buff) = self.sendbuffs[fileno]
-                if now - last_sent > 0.1:
+                tdelta = now - last_sent
+                if tdelta > 0.1:
+                    logger.error(MSGQ_SOCKET_TIMEOUT_ERROR, fileno, tdelta)
                     self.kill_socket(fileno, sock)
                     return False
                 buff += msg
@@ -779,7 +799,7 @@ def signal_handler(msgq, signal, frame):
     if msgq:
         msgq.stop()
 
-if __name__ == "__main__":
+def main():
     def check_port(option, opt_str, value, parser):
         """Function to insure that the port we are passed is actually
         a valid port number. Used by OptionParser() on startup."""
@@ -806,6 +826,12 @@ if __name__ == "__main__":
 
     signal.signal(signal.SIGTERM,
                   lambda signal, frame: signal_handler(msgq, signal, frame))
+
+    # Ignore SIGPIPE. We handle errors writing to children using try in the
+    # appropriate places and the delivery of a signal is very heavy handed.
+    # Windows doesn't support SIGPIPE so don't try it there.
+    if not sys.platform.startswith('win'):
+        signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
     try:
         msgq.setup()
@@ -855,3 +881,6 @@ if __name__ == "__main__":
     msgq.shutdown()
 
     logger.info(MSGQ_EXITING)
+
+if __name__ == "__main__":
+    isc.util.traceback_handler.traceback_handler(main)

@@ -24,6 +24,7 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
                            Universe u)
     : Option(u, def.getCode(), OptionBuffer()),
       definition_(def) {
+    setEncapsulatedSpace(def.getEncapsulatedSpace());
     createBuffers();
 }
 
@@ -32,6 +33,7 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
                            const OptionBuffer& data)
     : Option(u, def.getCode(), data.begin(), data.end()),
       definition_(def) {
+    setEncapsulatedSpace(def.getEncapsulatedSpace());
     createBuffers(getData());
 }
 
@@ -41,6 +43,7 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
                            OptionBufferConstIter last)
     : Option(u, def.getCode(), first, last),
       definition_(def) {
+    setEncapsulatedSpace(def.getEncapsulatedSpace());
     createBuffers(getData());
 }
 
@@ -246,6 +249,12 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
             // Proceed to the next data field.
             data += data_size;
         }
+
+        // Unpack suboptions if any.
+        if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
+            unpackOptions(OptionBuffer(data, data_buf.end()));
+        }
+
     } else if (data_type != OPT_EMPTY_TYPE) {
         // If data_type value is other than OPT_RECORD_TYPE, our option is
         // empty (have no data at all) or it comprises one or more
@@ -313,9 +322,20 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
             }
             if (data_size > 0) {
                 buffers.push_back(OptionBuffer(data, data + data_size));
+                data += data_size;
             } else {
                 isc_throw(OutOfRange, "option buffer truncated");
             }
+
+            // Unpack suboptions if any.
+            if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
+                unpackOptions(OptionBuffer(data, data_buf.end()));
+            }
+        }
+    } else if (data_type == OPT_EMPTY_TYPE) {
+        // Unpack suboptions if any.
+        if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
+            unpackOptions(OptionBuffer(data, data_buf.end()));
         }
     }
     // If everything went ok we can replace old buffer set with new ones.
@@ -522,7 +542,7 @@ OptionCustom::len() {
     }
 
     // ... and lengths of all suboptions
-    for (OptionCustom::OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();

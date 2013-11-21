@@ -1,4 +1,210 @@
-669.	[func]	tmark
+705.	[bug]		kean
+	When commands are piped into bindctl, no longer attempt to query the
+	user name and password if no default user name and password file is
+	present, or it contains no valid entries.
+	(Trac #264, git 4921d7de6b5623c7e85d2baf8bc978686877345b)
+
+704.	[func]		naokikambe
+	New statistics items related to IP sockets added into b10-xfrin:
+	open, openfail, close, connfail, conn, senderr, and recverr.
+	Their values can be obtained by invoking "Stats show Xfrin" via
+	bindctl while b10-xfrin is running.
+	(Trac #2300, git 4655c110afa0ec6f5669bf53245bffe6b30ece4b)
+
+703.    [bug]		kean
+	A bug in b10-msgq was fixed where it would remove the socket file if
+	there was an existing copy of b10-msgq running. It now correctly
+	detects and reports this without removing the socket file.
+	(Trac #433, git c18a49b0435c656669e6f87ef65d44dc98e0e726)
+
+702.	[func]		marcin
+	perfdhcp: support for sending DHCPv6 Renew messages at the specified
+	rate and measure performance.
+	(Trac #3183, git 66f2939830926f4337623b159210103b5a8e2434)
+
+701.	[bug]		tomek
+	libdhcp++: Incoming DHCPv6 IAPREFIX option is now parsed properly.
+	(Trac #3211, git ed43618a2c7b2387d76f99a5a4b1a3e05ac70f5e)
+
+700.	[func]		tomek,marcin
+	b10-dhcp4,b10-dhcp6: Support for vendor options has been added. It
+	is now possible to configure vendor options. Server is able to
+	parse some CableLabs vendor options and send configured	vendor
+	options	in response. The support is not complete.
+	(Trac #3194, git 243ded15bbed0d35e230d00f4e3ee42c3609616c)
+
+699.	[bug]		marcin
+	libdhcp++: Options with defined suboptions are now handled properly.
+	In particular, Relay Agent Info options is now echoed back properly.
+	(Trac #3102, git 6f6251bbd761809634aa470f36480d046b4d2a20)
+
+698.	[bug]		muks
+	A bug was fixed in the interaction between b10-init and b10-msgq
+	that caused BIND 10 failures after repeated start/stop of
+	components.
+	(Trac #3094, git ed672a898d28d6249ff0c96df12384b0aee403c8
+
+697.	[func]	tmark
+	Implements "user_check" hooks shared library which supports subnet
+	selection based upon the contents of a list of known DHCP lease users
+	(i.e. clients).  Adds the following subdirectories to the bind10 src
+	directory for maintaining hooks shared libraries:
+		-bind10/src/hooks  - base directory for hooks shared libraries
+		-bind10/src/hooks/dhcp - base directory for all hooks libs pertaining
+		to DHCP(Kea)
+		-bind10/src/hooks/dhcp/user_check - directory containing the user_check
+		 hooks library
+	(Trac #3186, git f36aab92c85498f8511fbbe19fad5e3f787aef68)
+
+696.	[func]		tomek
+	b10-dhcp4: It is now possible to specify value of siaddr field
+	in DHCPv4 responses. It is used to point out to the next
+	server in the boot process (that typically is TFTP server).
+	(Trac #3191, git 541922b5300904a5de2eaeddc3666fc4b654ffba)
+
+695.	[func]		tomek
+	b10-dhcp6 is now able to listen on global IPv6 unicast addresses.
+	(Trac #3195, git 72e601f2a57ab70b25d50877c8e49242739d1c9f)
+
+694.	[bug]		tomek
+	b10-dhcp6 now handles exceptions better when processing initial
+	configuration. In particular, errors with socket binding do not
+	prevent b10-dhcp6 from establishing configuration session anymore.
+	(Trac #3195, git 72e601f2a57ab70b25d50877c8e49242739d1c9f)
+
+693.	[bug]		tomek
+	b10-dhcp6 now handles IPv6 interface enabling correctly.
+	(Trac #3195, git 72e601f2a57ab70b25d50877c8e49242739d1c9f)
+
+692.	[bug]		marcin
+	b10-dhcp4: Fix a bug whereby the Parameter Request List was not parsed
+	by the server and requested DHCPv4 options were not returned to the
+	client. Options are not sent back to the client if server failed to
+	assign a lease.
+	(Trac #3200, git 50d91e4c069c6de13680bfaaee3c56b68d6e4ab1)
+
+691.	[bug]		marcin
+	libdhcp++: Created definitions for standard DHCPv4 options:
+	tftp-server-name (66) and boot-file-name (67). Also, fixed definition
+	of DHCPv4 option time-offset (2).
+	(Trac #3199, git 6e171110c4dd9ae3b1be828b9516efc65c33460b)
+
+690.	[bug]		tomek
+	b10-dhcp4: Relay Agent Info option is now echoed back in
+	DHCPv4 responses.
+	(Trac #3184, git 287389c049518bff66bdf6a5a49bb8768be02d8e)
+
+689.	[func]*		marcin
+	b10-dhcp4 and b10-dhcp6 install callback functions which parse options
+	in the received DHCP packets.
+	(Trac #3180, git f73fba3cde9421acbeb9486c615900b0af58fa25)
+
+688.	[func]		tomek
+	b10-dhcp6: Prefix Delegation support is now extended to
+	Renew and Release messages.
+	(Trac #3153,#3154, git 3207932815f58045acea84ae092e0a5aa7c4bfd7)
+
+687.	[func]		tomek
+	b10-dhcp6: Prefix Delegation (IA_PD and IAPREFIX options) is now
+	supported in Solicit and Request messages.
+	(Trac #3152, git a0e73dd74658f2deb22fad2c7a1f56d122aa9021)
+
+686.	[bug]		tomek
+	b10-dhcp6 now sends back relayed traffic to proper port.
+	(Trac #3177, git 6b33de4bea92eecb64b6c673bf1b8ae51f8edcf1)
+
+685.	[func]		tomek
+	libdhcpsrv: Allocation Engine is now able to handle IPv6 prefixes.
+	This will be used in Prefix Delegation.
+	(Trac #3171, git 7d1431b4c887f0c7ee1b26b9b82d3d3b8464b34f)
+
+684.	[func]		muks, vorner
+	API support to delete zone data has been added. With this,
+	DomainTree and RdataSet which form the central zone data
+	structures of b10-auth allow deletion of names and RR data
+	respectively.
+	(Trac #2750, git d3dbe8e1643358d4f88cdbb7a16a32fd384b85b1)
+	(Trac #2751, git 7430591b4ae4c7052cab86ed17d0221db3b524a8)
+
+683.	[bug]		stephen
+	Modifications to fix problems running unit tests if they are statically
+	linked.  This includes provision of an initialization function that
+	must be called by user-written hooks libraries if they are loaded by a
+	statically-linked image.
+	(Trac #3113, git 3d19eee4dbfabc7cf7ae528351ee9e3a334cae92)
+
+682.	[func]		naokikambe
+	New statistics items added into b10-xfrin : ixfr_running, axfr_running,
+	and soa_in_progress.  Their values can be obtained by invoking "Stats
+	show Xfrin" via bindctl when b10-xfrin is running.
+	(Trac #2274, git ca691626a2be16f08754177bb27983a9f4984702)
+
+681.	[func]		tmark
+	Added support for prefix delegation configuration to b10-dhcp6
+	subnets.
+	(Trac# 3151, git 79a22be33825bafa1a0cdfa24d5cb751ab1ae2d3)
+
+680.	[func]		marcin
+	perfdhcp: Added support for requesting IPv6 prefixes using IA_PD
+	option being sent to the server.
+	(Trac #3173, git 4cc844f7cc82c8bd749296a2709ef67af8d9ba87)
+
+679.	[func]		tmark
+	b10-dhcp-ddns Finite state machine logic was refactored into its own class,
+	StateModel.
+	(Trac# 3156, git 6e9227b1b15448e834d1f60dd655e5633ff9745c)
+
+678.	[func]		tmark
+	MySQL backend used by b10-dhcp6 now uses lease type as a
+	filtering parameter in all IPv6 lease queries.
+	(Trac# 3147, git 65b6372b783cb1361fd56efe2b3247bfdbdc47ea)
+
+677.	[func]		tomek
+	libdhcpsrv: CfgMgr is now able to store IA, TA and PD pools in
+	Subnet6 structures.
+	(Trac #3150, git e6f0e89162bac0adae3ce3141437a282d5183162)
+
+676.	[bug]		muks
+	We now also allow the short name ("hmac-md5"), along with the long
+	name ("hmac-md5.sig-alg.reg.int") that was allowed before for
+	HMAC-MD5, so that it is more conveninent to configure TSIG keys
+	using it.
+	(Trac #2762, git c543008573eba65567e9c189824322954c6dd43b)
+
+675.    [func]      vorner
+	If there's an exception not handled in a Python BIND10 component,
+	it is now stored in a temporary file and properly logged, instead
+	of dumping to stderr.
+	(Trac #3095, git 18cf54ed89dee1dd1847053c5210f0ca220590c2)
+
+674.	[func]		tomek
+	Preparatory work for prefix delegation in LeaseMgr. getLease6()
+	renamed to getLeases6(). It now can return more than one lease.
+	(Trac #3146, git 05a05d810be754e7a4d8ca181550867febf6dcc6)
+
+673.	[func]		tomek
+	libdhcp: Added support for IA_PD and IAPREFIX options. New class
+	for IAPREFIX (Option6_IAPrefix) has been added.
+	(Trac #3145, git 3a844e85ecc3067ccd1c01841f4a61366cb278f4)
+
+672.	[func]		tmark
+	Added b10-dhcp-ddnsupdate transaction base class, NameChangeTransaction.
+	This class provides the common structure and methods to implement the state
+	models described in the DHCP_DDNS design, plus integration with DNSClient
+	and its callback mechanism for asynchronous IO with the DNS servers.
+	(Trac #3086, git 079b862c9eb21056fdf957e560b8fe7b218441b6)
+
+671.	[func]		dclink,tomek
+	memfile backend now supports getLease4(hwaddr) and getLease4(client-id)
+	methods. Thanks to David Carlier for contributing a patch.
+	(Trac #2592, git a11683be53db2f9f8f9b71c1d1c163511e0319b3)
+
+670.	[func]		marcin
+	libdhcpsrv: Added support to MySQL lease database backend to
+	store FQDN data for the lease.
+	(Trac #3084, git 79b7d8ee017b57a81cec5099bc028e1494d7e2e9)
+
+669.	[func]		tmark
 	Added main process event loop to D2Process which is the primary
 	application object in b10-dhcp-ddns. This allows DHCP-DDNS
 	to queue requests received from clients for processing while

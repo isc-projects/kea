@@ -52,10 +52,6 @@ run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_GXX
 run_unittests_CXXFLAGS += -Wno-unused-parameter
 endif
-if USE_CLANGPP
-# Same for clang++, but we need to turn off -Werror completely.
-run_unittests_CXXFLAGS += -Wno-error
-endif
 endif
 
 noinst_PROGRAMS = $(TESTS)
