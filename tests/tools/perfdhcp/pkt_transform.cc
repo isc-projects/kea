@@ -32,7 +32,7 @@ namespace perfdhcp {
 bool
 PktTransform::pack(const Option::Universe universe,
                    const OptionBuffer& in_buffer,
-                   const Option::OptionCollection& options,
+                   const OptionCollection& options,
                    const size_t transid_offset,
                    const uint32_t transid,
                    util::OutputBuffer& out_buffer) {
@@ -75,7 +75,7 @@ PktTransform::pack(const Option::Universe universe,
 bool
 PktTransform::unpack(const Option::Universe universe,
                      const OptionBuffer& in_buffer,
-                     const Option::OptionCollection& options,
+                     const OptionCollection& options,
                      const size_t transid_offset,
                      uint32_t& transid) {
 
@@ -113,13 +113,13 @@ PktTransform::unpack(const Option::Universe universe,
 
 void
 PktTransform::packOptions(const OptionBuffer& in_buffer,
-                          const Option::OptionCollection& options,
+                          const OptionCollection& options,
                           util::OutputBuffer& out_buffer) {
     try {
         // If there are any options on the list, we will use provided
         // options offsets to override them in the output buffer
         // with new contents.
-        for (Option::OptionCollection::const_iterator it = options.begin();
+        for (OptionCollection::const_iterator it = options.begin();
              it != options.end(); ++it) {
             // Get options with their position (offset).
             boost::shared_ptr<LocalizedOption> option =
@@ -157,8 +157,8 @@ PktTransform::packOptions(const OptionBuffer& in_buffer,
 
 void
 PktTransform::unpackOptions(const OptionBuffer& in_buffer,
-                            const Option::OptionCollection& options) {
-    for (Option::OptionCollection::const_iterator it = options.begin();
+                            const OptionCollection& options) {
+    for (OptionCollection::const_iterator it = options.begin();
          it != options.end(); ++it) {
 
         boost::shared_ptr<LocalizedOption> option =

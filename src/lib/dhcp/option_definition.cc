@@ -19,6 +19,7 @@
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_definition.h>
@@ -26,6 +27,7 @@
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
+#include <dhcp/option_vendor.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
@@ -113,42 +115,67 @@ OptionDefinition::addRecordField(const OptionDataType data_type) {
 OptionPtr
 OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
                                 OptionBufferConstIter begin,
-                                OptionBufferConstIter end) const {
+                                OptionBufferConstIter end,
+                                UnpackOptionsCallback callback) const {
+
     try {
+        // Some of the options are represented by the specialized classes derived
+        // from Option class (e.g. IA_NA, IAADDR). Although, they can be also
+        // represented by the generic classes, we want the object of the specialized
+        // type to be returned. Therefore, we first check that if we are dealing
+        // with such an option. If the instance is returned we just exit at this
+        // point. If not, we will search for a generic option type to return.
+        OptionPtr option = factorySpecialFormatOption(u, begin, end, callback);
+        if (option) {
+            return (option);
+        }
+
         switch(type_) {
         case OPT_EMPTY_TYPE:
-            return (factoryEmpty(u, type));
+            if (getEncapsulatedSpace().empty()) {
+                    return (factoryEmpty(u, type));
+            } else {
+                return (OptionPtr(new OptionCustom(*this, u, begin, end)));
+            }
 
         case OPT_BINARY_TYPE:
             return (factoryGeneric(u, type, begin, end));
 
         case OPT_UINT8_TYPE:
-            return (array_type_ ? factoryGeneric(u, type, begin, end) :
-                    factoryInteger<uint8_t>(u, type, begin, end));
+            return (array_type_ ?
+                    factoryIntegerArray<uint8_t>(u, type, begin, end) :
+                    factoryInteger<uint8_t>(u, type, getEncapsulatedSpace(),
+                                            begin, end, callback));
 
         case OPT_INT8_TYPE:
-            return (array_type_ ? factoryGeneric(u, type, begin, end) :
-                    factoryInteger<int8_t>(u, type, begin, end));
+            return (array_type_ ?
+                    factoryIntegerArray<int8_t>(u, type, begin, end) :
+                    factoryInteger<int8_t>(u, type, getEncapsulatedSpace(),
+                                           begin, end, callback));
 
         case OPT_UINT16_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint16_t>(u, type, begin, end) :
-                    factoryInteger<uint16_t>(u, type, begin, end));
+                    factoryInteger<uint16_t>(u, type, getEncapsulatedSpace(),
+                                             begin, end, callback));
 
         case OPT_INT16_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint16_t>(u, type, begin, end) :
-                    factoryInteger<int16_t>(u, type, begin, end));
+                    factoryInteger<int16_t>(u, type, getEncapsulatedSpace(),
+                                            begin, end, callback));
 
         case OPT_UINT32_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint32_t>(u, type, begin, end) :
-                    factoryInteger<uint32_t>(u, type, begin, end));
+                    factoryInteger<uint32_t>(u, type, getEncapsulatedSpace(),
+                                             begin, end, callback));
 
         case OPT_INT32_TYPE:
             return (array_type_ ?
                     factoryIntegerArray<uint32_t>(u, type, begin, end) :
-                    factoryInteger<int32_t>(u, type, begin, end));
+                    factoryInteger<int32_t>(u, type, getEncapsulatedSpace(),
+                                            begin, end, callback));
 
         case OPT_IPV4_ADDRESS_TYPE:
             // If definition specifies that an option is an array
@@ -173,37 +200,10 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
             return (OptionPtr(new OptionString(u, type, begin, end)));
 
         default:
-            if (u == Option::V6) {
-                if ((code_ == D6O_IA_NA || code_ == D6O_IA_PD) &&
-                    haveIA6Format()) {
-                    // Return Option6IA instance for IA_PD and IA_NA option
-                    // types only. We don't want to return Option6IA for other
-                    // options that comprise 3 UINT32 data fields because
-                    // Option6IA accessors' and modifiers' names are derived
-                    // from the IA_NA and IA_PD options' field names: IAID,
-                    // T1, T2. Using functions such as getIAID, getT1 etc. for
-                    // options other than IA_NA and IA_PD would be bad practice
-                    // and cause confusion.
-                    return (factoryIA6(type, begin, end));
-
-                } else if (code_ == D6O_IAADDR && haveIAAddr6Format()) {
-                    // Rerurn Option6IAAddr option instance for the IAADDR
-                    // option only for the same reasons as described in
-                    // for IA_NA and IA_PD above.
-                    return (factoryIAAddr6(type, begin, end));
-                } else if (code_ == D6O_CLIENT_FQDN && haveClientFqdnFormat()) {
-                    // FQDN option requires special processing. Thus, there is
-                    // a specialized class to handle it.
-                    return (OptionPtr(new Option6ClientFqdn(begin, end)));
-                }
-            } else {
-                if ((code_ == DHO_FQDN) && haveFqdn4Format()) {
-                    return (OptionPtr(new Option4ClientFqdn(begin, end)));
-                }
-            }
+            // Do nothing. We will return generic option a few lines down.
+            ;
         }
         return (OptionPtr(new OptionCustom(*this, u, begin, end)));
-
     } catch (const Exception& ex) {
         isc_throw(InvalidOptionValue, ex.what());
     }
@@ -211,8 +211,9 @@ OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
 
 OptionPtr
 OptionDefinition::optionFactory(Option::Universe u, uint16_t type,
-                                const OptionBuffer& buf) const {
-    return (optionFactory(u, type, buf.begin(), buf.end()));
+                                const OptionBuffer& buf,
+                                UnpackOptionsCallback callback) const {
+    return (optionFactory(u, type, buf.begin(), buf.end(), callback));
 }
 
 OptionPtr
@@ -361,6 +362,16 @@ OptionDefinition::haveIAAddr6Format() const {
 }
 
 bool
+OptionDefinition::haveIAPrefix6Format() const {
+    return (haveType(OPT_RECORD_TYPE) &&
+            record_fields_.size() == 4 &&
+            record_fields_[0] == OPT_UINT32_TYPE &&
+            record_fields_[1] == OPT_UINT32_TYPE &&
+            record_fields_[2] == OPT_UINT8_TYPE &&
+            record_fields_[3] == OPT_IPV6_ADDRESS_TYPE);
+}
+
+bool
 OptionDefinition::haveFqdn4Format() const {
     return (haveType(OPT_RECORD_TYPE) &&
             record_fields_.size() == 4 &&
@@ -376,6 +387,16 @@ OptionDefinition::haveClientFqdnFormat() const {
             (record_fields_.size() == 2) &&
             (record_fields_[0] == OPT_UINT8_TYPE) &&
             (record_fields_[1] == OPT_FQDN_TYPE));
+}
+
+bool
+OptionDefinition::haveVendor4Format() const {
+    return (true);
+}
+
+bool
+OptionDefinition::haveVendor6Format() const {
+    return  (getType() == OPT_UINT32_TYPE && !getEncapsulatedSpace().empty());
 }
 
 template<typename T>
@@ -560,6 +581,65 @@ OptionDefinition::factoryIAAddr6(uint16_t type,
     return (option);
 }
 
+OptionPtr
+OptionDefinition::factoryIAPrefix6(uint16_t type,
+                                 OptionBufferConstIter begin,
+                                 OptionBufferConstIter end) {
+    if (std::distance(begin, end) < Option6IAPrefix::OPTION6_IAPREFIX_LEN) {
+        isc_throw(isc::OutOfRange,
+                  "input option buffer has invalid size, expected at least "
+                  << Option6IAPrefix::OPTION6_IAPREFIX_LEN << " bytes");
+    }
+    boost::shared_ptr<Option6IAPrefix> option(new Option6IAPrefix(type, begin,
+                                                                  end));
+    return (option);
+}
+
+OptionPtr
+OptionDefinition::factorySpecialFormatOption(Option::Universe u,
+                                             OptionBufferConstIter begin,
+                                             OptionBufferConstIter end,
+                                             UnpackOptionsCallback) const {
+    if (u == Option::V6) {
+        if ((getCode() == D6O_IA_NA || getCode() == D6O_IA_PD) &&
+            haveIA6Format()) {
+            // Return Option6IA instance for IA_PD and IA_NA option
+            // types only. We don't want to return Option6IA for other
+            // options that comprise 3 UINT32 data fields because
+            // Option6IA accessors' and modifiers' names are derived
+            // from the IA_NA and IA_PD options' field names: IAID,
+            // T1, T2. Using functions such as getIAID, getT1 etc. for
+            // options other than IA_NA and IA_PD would be bad practice
+            // and cause confusion.
+            return (factoryIA6(getCode(), begin, end));
+
+        } else if (getCode() == D6O_IAADDR && haveIAAddr6Format()) {
+            // Rerurn Option6IAAddr option instance for the IAADDR
+            // option only for the same reasons as described in
+            // for IA_NA and IA_PD above.
+            return (factoryIAAddr6(getCode(), begin, end));
+        } else if (getCode() == D6O_IAPREFIX && haveIAPrefix6Format()) {
+            return (factoryIAPrefix6(getCode(), begin, end));
+        } else if (getCode() == D6O_CLIENT_FQDN && haveClientFqdnFormat()) {
+            // FQDN option requires special processing. Thus, there is
+            // a specialized class to handle it.
+            return (OptionPtr(new Option6ClientFqdn(begin, end)));
+        } else if (getCode() == D6O_VENDOR_OPTS && haveVendor6Format()) {
+            // Vendor-Specific Information.
+            return (OptionPtr(new OptionVendor(Option::V6, begin, end)));
+        }
+    } else {
+        if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
+            return (OptionPtr(new Option4ClientFqdn(begin, end)));
+
+        } else if (getCode() == DHO_VIVSO_SUBOPTIONS && haveVendor4Format()) {
+            // Vendor-Specific Information.
+            return (OptionPtr(new OptionVendor(Option::V4, begin, end)));
+
+        }
+    }
+    return (OptionPtr());
+}
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

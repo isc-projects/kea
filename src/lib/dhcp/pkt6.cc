@@ -14,6 +14,7 @@
 
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/option.h>
 #include <dhcp/pkt6.h>
 #include <exceptions/exceptions.h>
 
@@ -42,7 +43,7 @@ Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */) 
     remote_addr_("::"),
     local_port_(0),
     remote_port_(0),
-    bufferOut_(0) {
+    buffer_out_(0) {
     data_.resize(buf_len);
     memcpy(&data_[0], buf, buf_len);
 }
@@ -57,7 +58,7 @@ Pkt6::Pkt6(uint8_t msg_type, uint32_t transid, DHCPv6Proto proto /*= UDP*/) :
     remote_addr_("::"),
     local_port_(0),
     remote_port_(0),
-    bufferOut_(0) {
+    buffer_out_(0) {
 }
 
 uint16_t Pkt6::len() {
@@ -134,7 +135,7 @@ OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) {
                   << " There is no info about " << relay_level + 1 << " relay.");
     }
 
-    for (Option::OptionCollection::iterator it = relay_info_[relay_level].options_.begin();
+    for (OptionCollection::iterator it = relay_info_[relay_level].options_.begin();
          it != relay_info_[relay_level].options_.end(); ++it) {
         if ((*it).second->getType() == opt_type) {
             return (it->second);
@@ -148,7 +149,7 @@ uint16_t Pkt6::getRelayOverhead(const RelayInfo& relay) const {
     uint16_t len = DHCPV6_RELAY_HDR_LEN // fixed header
         + Option::OPTION6_HDR_LEN; // header of the relay-msg option
 
-    for (Option::OptionCollection::const_iterator opt = relay.options_.begin();
+    for (OptionCollection::const_iterator opt = relay.options_.begin();
          opt != relay.options_.end(); ++opt) {
         len += (opt->second)->len();
     }
@@ -171,7 +172,7 @@ uint16_t Pkt6::calculateRelaySizes() {
 uint16_t Pkt6::directLen() const {
     uint16_t length = DHCPV6_PKT_HDR_LEN; // DHCPv6 header
 
-    for (Option::OptionCollection::const_iterator it = options_.begin();
+    for (OptionCollection::const_iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -198,6 +199,8 @@ Pkt6::pack() {
 void
 Pkt6::packUDP() {
     try {
+        // Make sure that the buffer is empty before we start writting to it.
+        buffer_out_.clear();
 
         // is this a relayed packet?
         if (!relay_info_.empty()) {
@@ -214,11 +217,11 @@ Pkt6::packUDP() {
                  relay != relay_info_.end(); ++relay) {
 
                 // build relay-forw/relay-repl header (see RFC3315, section 7)
-                bufferOut_.writeUint8(relay->msg_type_);
-                bufferOut_.writeUint8(relay->hop_count_);
-                bufferOut_.writeData(&(relay->linkaddr_.toBytes()[0]),
+                buffer_out_.writeUint8(relay->msg_type_);
+                buffer_out_.writeUint8(relay->hop_count_);
+                buffer_out_.writeData(&(relay->linkaddr_.toBytes()[0]),
                                      isc::asiolink::V6ADDRESS_LEN);
-                bufferOut_.writeData(&relay->peeraddr_.toBytes()[0],
+                buffer_out_.writeData(&relay->peeraddr_.toBytes()[0],
                                      isc::asiolink::V6ADDRESS_LEN);
 
                 // store every option in this relay scope. Usually that will be
@@ -226,31 +229,31 @@ Pkt6::packUDP() {
                 // present here as well (vendor-opts for Cable modems,
                 // subscriber-id, remote-id, options echoed back from Echo
                 // Request Option, etc.)
-                for (Option::OptionCollection::const_iterator opt =
+                for (OptionCollection::const_iterator opt =
                          relay->options_.begin();
                      opt != relay->options_.end(); ++opt) {
-                    (opt->second)->pack(bufferOut_);
+                    (opt->second)->pack(buffer_out_);
                 }
 
                 // and include header relay-msg option. Its payload will be
                 // generated in the next iteration (if there are more relays)
                 // or outside the loop (if there are no more relays and the
                 // payload is a direct message)
-                bufferOut_.writeUint16(D6O_RELAY_MSG);
-                bufferOut_.writeUint16(relay->relay_msg_len_);
+                buffer_out_.writeUint16(D6O_RELAY_MSG);
+                buffer_out_.writeUint16(relay->relay_msg_len_);
             }
 
         }
 
         // DHCPv6 header: message-type (1 octect) + transaction id (3 octets)
-        bufferOut_.writeUint8(msg_type_);
+        buffer_out_.writeUint8(msg_type_);
         // store 3-octet transaction-id
-        bufferOut_.writeUint8( (transid_ >> 16) & 0xff );
-        bufferOut_.writeUint8( (transid_ >> 8) & 0xff );
-        bufferOut_.writeUint8( (transid_) & 0xff );
+        buffer_out_.writeUint8( (transid_ >> 16) & 0xff );
+        buffer_out_.writeUint8( (transid_ >> 8) & 0xff );
+        buffer_out_.writeUint8( (transid_) & 0xff );
 
         // the rest are options
-        LibDHCP::packOptions(bufferOut_, options_);
+        LibDHCP::packOptions(buffer_out_, options_);
     }
     catch (const Exception& e) {
        // An exception is thrown and message will be written to Logger
@@ -324,7 +327,16 @@ Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
     try {
         OptionBuffer opt_buffer(begin, end);
 
-        LibDHCP::unpackOptions6(opt_buffer, options_);
+        // If custom option parsing function has been set, use this function
+        // to parse options. Otherwise, use standard function from libdhcp.
+        if (callback_.empty()) {
+            LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_);
+        } else {
+            // The last two arguments hold the DHCPv6 Relay message offset and
+            // length. Setting them to NULL because we are dealing with the
+            // not-relayed message.
+            callback_(opt_buffer, "dhcp6", options_, NULL, NULL);
+        }
     } catch (const Exception& e) {
         // @todo: throw exception here once we turn this function to void.
         return (false);
@@ -361,8 +373,16 @@ Pkt6::unpackRelayMsg() {
         try {
             // parse the rest as options
             OptionBuffer opt_buffer(&data_[offset], &data_[offset+bufsize]);
-            LibDHCP::unpackOptions6(opt_buffer, relay.options_, &relay_msg_offset,
-                                    &relay_msg_len);
+
+            // If custom option parsing function has been set, use this function
+            // to parse options. Otherwise, use standard function from libdhcp.
+            if (callback_.empty()) {
+                LibDHCP::unpackOptions6(opt_buffer, "dhcp6", relay.options_,
+                                        &relay_msg_offset, &relay_msg_len);
+            } else {
+                callback_(opt_buffer, "dhcp6", relay.options_,
+                          &relay_msg_offset, &relay_msg_len);
+            }
 
             /// @todo: check that each option appears at most once
             //relay.interface_id_ = options->getOption(D6O_INTERFACE_ID);
@@ -438,7 +458,7 @@ Pkt6::toText() {
         << "]:" << remote_port_ << endl;
     tmp << "msgtype=" << static_cast<int>(msg_type_) << ", transid=0x" <<
         hex << transid_ << dec << endl;
-    for (isc::dhcp::Option::OptionCollection::iterator opt=options_.begin();
+    for (isc::dhcp::OptionCollection::iterator opt=options_.begin();
          opt != options_.end();
          ++opt) {
         tmp << opt->second->toText() << std::endl;
@@ -448,18 +468,18 @@ Pkt6::toText() {
 
 OptionPtr
 Pkt6::getOption(uint16_t opt_type) {
-    isc::dhcp::Option::OptionCollection::const_iterator x = options_.find(opt_type);
+    isc::dhcp::OptionCollection::const_iterator x = options_.find(opt_type);
     if (x!=options_.end()) {
         return (*x).second;
     }
     return OptionPtr(); // NULL
 }
 
-isc::dhcp::Option::OptionCollection
+isc::dhcp::OptionCollection
 Pkt6::getOptions(uint16_t opt_type) {
-    isc::dhcp::Option::OptionCollection found;
+    isc::dhcp::OptionCollection found;
 
-    for (Option::OptionCollection::const_iterator x = options_.begin();
+    for (OptionCollection::const_iterator x = options_.begin();
          x != options_.end(); ++x) {
         if (x->first == opt_type) {
             found.insert(make_pair(opt_type, x->second));
@@ -475,7 +495,7 @@ Pkt6::addOption(const OptionPtr& opt) {
 
 bool
 Pkt6::delOption(uint16_t type) {
-    isc::dhcp::Option::OptionCollection::iterator x = options_.find(type);
+    isc::dhcp::OptionCollection::iterator x = options_.find(type);
     if (x!=options_.end()) {
         options_.erase(x);
         return (true); // delete successful
@@ -484,7 +504,7 @@ Pkt6::delOption(uint16_t type) {
 }
 
 void Pkt6::repack() {
-    bufferOut_.writeData(&data_[0], data_.size());
+    buffer_out_.writeData(&data_[0], data_.size());
 }
 
 void

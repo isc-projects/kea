@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,10 +12,16 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef ASIOLINK_H
-#define ASIOLINK_H
+#include <log/logger_support.h>
 
-#include <string>
-#include <sys/socket.h>
+#include <gtest/gtest.h>
 
-#endif // ASIOLINK_H
+int
+main(int argc, char* argv[]) {
+    ::testing::InitGoogleTest(&argc, argv);
+    isc::log::initLogger();
+
+    int result = RUN_ALL_TESTS();
+
+    return (result);
+}

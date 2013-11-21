@@ -772,7 +772,7 @@ InMemoryZoneFinder::findAll(const isc::dns::Name& name,
 // the case of CNAME can be eliminated (these should be guaranteed at the load
 // or update time, but even if they miss a corner case and allows a CNAME to
 // be added at origin, the zone is broken anyway, so we'd just let this
-// method return garbage, too).  As a result, there can be only too cases
+// method return garbage, too).  As a result, there can be only two cases
 // for the result codes: SUCCESS if the requested type of RR exists; NXRRSET
 // otherwise.  Due to its simplicity we implement it separately, rather than
 // sharing the code with findInternal.

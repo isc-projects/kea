@@ -28,6 +28,8 @@
 namespace isc {
 namespace hooks {
 
+class ServerHooks;
+
 /// @brief No such argument
 ///
 /// Thrown if an attempt is made access an argument that does not exist.
@@ -368,6 +370,11 @@ private:
 
     /// Callout manager.
     boost::shared_ptr<CalloutManager> manager_;
+
+    /// Reference to the singleton ServerHooks object.  See the
+    /// @ref hooksmgMaintenanceGuide for information as to why the class holds
+    /// a reference instead of accessing the singleton within the code.
+    ServerHooks& server_hooks_;
 
     /// "Skip" flag, indicating if the caller should bypass remaining callouts.
     bool skip_;

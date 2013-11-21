@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,20 +15,21 @@
 #ifndef TEST_CONTROL_H
 #define TEST_CONTROL_H
 
-#include <string>
-#include <vector>
-
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include "packet_storage.h"
+#include "stats_mgr.h"
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 
-#include "stats_mgr.h"
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+#include <string>
+#include <vector>
 
 namespace isc {
 namespace perfdhcp {
@@ -54,6 +55,13 @@ static const size_t DHCPV6_ELAPSED_TIME_OFFSET = 84;
 static const size_t DHCPV6_SERVERID_OFFSET = 22;
 /// Default DHCPV6 IA_NA offset in the packet template.
 static const size_t DHCPV6_IA_NA_OFFSET = 40;
+
+/// @brief Exception thrown when the required option is not found in a packet.
+class OptionNotFound : public Exception {
+public:
+    OptionNotFound(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// \brief Test Control class.
 ///
@@ -160,7 +168,7 @@ public:
         /// \param socket socket descriptor.
         TestControlSocket(const int socket);
 
-        /// \brief Destriuctor of the socket wrapper class.
+        /// \brief Destructor of the socket wrapper class.
         ///
         /// Destructor closes wrapped socket.
         ~TestControlSocket();
@@ -197,7 +205,7 @@ public:
     /// The default generator pointer.
     typedef boost::shared_ptr<NumberGenerator> NumberGeneratorPtr;
 
-    /// \brief Sequential numbers generatorc class.
+    /// \brief Sequential numbers generator class.
     class SequentialGenerator : public NumberGenerator {
     public:
         /// \brief Constructor.
@@ -213,7 +221,7 @@ public:
             }
         }
 
-        /// \brief Generate number sequentialy.
+        /// \brief Generate number sequentially.
         ///
         /// \return generated number.
         virtual uint32_t generate() {
@@ -241,7 +249,7 @@ public:
     /// brief\ Run performance test.
     ///
     /// Method runs whole performance test. Command line options must
-    /// be parsed prior to running this function. Othewise function will
+    /// be parsed prior to running this function. Otherwise function will
     /// throw exception.
     ///
     /// \throw isc::InvalidOperation if command line options are not parsed.
@@ -280,7 +288,7 @@ protected:
     /// only via \ref instance method.
     TestControl();
 
-    /// \brief Check if test exit condtitions fulfilled.
+    /// \brief Check if test exit conditions fulfilled.
     ///
     /// Method checks if the test exit conditions are fulfilled.
     /// Exit conditions are checked periodically from the
@@ -291,6 +299,27 @@ protected:
     ///
     /// \return true if any of the exit conditions is fulfilled.
     bool checkExitConditions() const;
+
+    /// \brief Removes cached DHCPv6 Reply packets every second.
+    ///
+    /// This function wipes cached Reply packets from the storage.
+    /// The number of packets left in the storage after the call
+    /// to this function should guarantee that the Renew packets
+    /// can be sent at the given rate. Note that the Renew packets
+    /// are generated for the existing leases, represented here as
+    /// replies from the server.
+    /// @todo Instead of cleaning packets periodically we could
+    /// just stop adding new packets when the certain threshold
+    /// has been reached.
+    void cleanCachedPackets();
+
+    /// \brief Creates IPv6 packet using options from Reply packet.
+    ///
+    /// \param reply An instance of the Reply packet which contents should
+    /// be used to create an instance of the Renew packet.
+    ///
+    /// \return created Renew packet.
+    dhcp::Pkt6Ptr createRenew(const dhcp::Pkt6Ptr& reply);
 
     /// \brief Factory function to create DHCPv6 ELAPSED_TIME option.
     ///
@@ -338,6 +367,17 @@ protected:
                                         uint16_t type,
                                         const dhcp::OptionBuffer& buf);
 
+    /// \brief Factory function to create IA_PD option.
+    ///
+    /// this factory function creates DHCPv6 IA_PD option instance.
+    ///
+    /// \param u universe (ignored).
+    /// \param type option-type (ignored).
+    /// \param buf option-buffer carrying sub-options.
+    static dhcp::OptionPtr factoryIapd6(dhcp::Option::Universe u,
+                                        uint16_t type,
+                                        const dhcp::OptionBuffer& buf);
+
     /// \brief Factory function to create DHCPv6 ORO option.
     ///
     /// This factory function creates DHCPv6 Option Request Option instance.
@@ -371,7 +411,7 @@ protected:
 
     /// \brief Factory function to create DHCPv4 Request List option.
     ///
-    /// This factory function creayes DHCPv4 PARAMETER_REQUEST_LIST option
+    /// This factory function creates DHCPv4 PARAMETER_REQUEST_LIST option
     /// instance with the following set of requested options:
     /// - DHO_SUBNET_MASK,
     /// - DHO_BROADCAST_ADDRESS,
@@ -432,6 +472,15 @@ protected:
         return (transid_gen_->generate());
     }
 
+    /// \brief Returns a timeout for packet reception.
+    ///
+    /// The calculation is based on the value of the timestamp
+    /// when the next set of packets is to be sent. If no packet is
+    /// received until then, new packets are sent.
+    ///
+    /// \return A current timeout in microseconds.
+    uint32_t getCurrentTimeout() const;
+
     /// \brief Returns number of exchanges to be started.
     ///
     /// Method returns number of new exchanges to be started as soon
@@ -439,8 +488,13 @@ protected:
     /// is based on current time, due time calculated with
     /// \ref updateSendDue function and expected rate.
     ///
+    /// \param send_due Due time to initiate next chunk set exchanges.
+    /// \param rate A rate at which exchanges are initiated.
+    ///
     /// \return number of exchanges to be started immediately.
-    uint64_t getNextExchangesNum() const;
+    static uint64_t
+    getNextExchangesNum(const boost::posix_time::ptime& send_due,
+                        const int rate);
 
     /// \brief Return template buffer.
     ///
@@ -527,7 +581,7 @@ protected:
     /// \brief Process received DHCPv6 packet.
     ///
     /// Method performs processing of the received DHCPv6 packet,
-    /// updates statistics and responsds to the server if required,
+    /// updates statistics and responds to the server if required,
     /// e.g. when ADVERTISE packet arrives, this function will initiate
     /// REQUEST message to the server.
     ///
@@ -578,7 +632,7 @@ protected:
     /// \brief Register option factory functions for DHCPv4 or DHCPv6.
     ///
     /// Method registers option factory functions for DHCPv4 or DHCPv6,
-    /// depending in whch mode test is currently running.
+    /// depending in which mode test is currently running.
     void registerOptionFactories() const;
 
 
@@ -612,7 +666,7 @@ protected:
     /// type and keeps them around until test finishes. Then they
     /// are printed to the user. If packet of specified type has
     /// been already stored this function perfroms no operation.
-    /// This function does not perform sainty check if packet
+    /// This function does not perform sanity check if packet
     /// pointer is valid. Make sure it is before calling it.
     ///
     /// \param pkt packet to be stored.
@@ -683,6 +737,26 @@ protected:
     void sendPackets(const TestControlSocket &socket,
                      const uint64_t packets_num,
                      const bool preload = false);
+
+    /// \brief Send number of DHCPv6 Renew packets to the server.
+    ///
+    /// \param socket An object representing socket to be used to send packets.
+    /// \param packets_num A number of Renew packets to be send.
+    ///
+    /// \return A number of packets actually sent.
+    uint64_t sendRenewPackets(const TestControlSocket& socket,
+                              const uint64_t packets_num);
+
+    /// \brief Send a renew message using provided socket.
+    ///
+    /// This method will select an existing lease from the Reply packet cache
+    /// If there is no lease that can be renewed this method will return false.
+    ///
+    /// \param socket An object encapsulating socket to be used to send
+    /// a packet.
+    ///
+    /// \return true if packet has been sent, false otherwise.
+    bool sendRenew(const TestControlSocket& socket);
 
     /// \brief Send DHCPv4 REQUEST message.
     ///
@@ -830,9 +904,34 @@ protected:
     /// Method updates due time to initiate next chunk of exchanges.
     /// Function takes current time, last sent packet's time and
     /// expected rate in its calculations.
-    void updateSendDue();
+    ///
+    /// \param last_sent A time when the last exchange was initiated.
+    /// \param rate A rate at which exchangesa re initiated
+    /// \param [out] send_due A reference to the time object to be updated
+    /// with the next due time.
+    void updateSendDue(const boost::posix_time::ptime& last_sent,
+                       const int rate,
+                       boost::posix_time::ptime& send_due);
 
 private:
+
+    /// \brief Copies IA_NA or IA_PD option from one packet to another.
+    ///
+    /// This function checks the lease-type specified in the command line
+    /// with option -e<lease-type>. If 'address-only' value has been specified
+    /// this function expects that IA_NA option is present in the packet
+    /// encapsulated by pkt_from object. If 'prefix-only' value has been
+    /// specified, this function expects that IA_PD option is present in the
+    /// packet encapsulated by pkt_to object.
+    ///
+    /// \param [in] pkt_from A packet from which options should be copied.
+    /// \param [out] pkt_to A packet to which options should be copied.
+    ///
+    /// \throw isc::perfdhcp::OptionNotFound if a required option is not
+    /// found in the packet from which options should be copied.
+    /// \throw isc::BadValue if any of the specified pointers to packets
+    /// is NULL.
+    void copyIaOptions(const dhcp::Pkt6Ptr& pkt_from, dhcp::Pkt6Ptr& pkt_to);
 
     /// \brief Convert binary value to hex string.
     ///
@@ -960,12 +1059,18 @@ private:
     boost::posix_time::ptime send_due_;    ///< Due time to initiate next chunk
                                            ///< of exchanges.
     boost::posix_time::ptime last_sent_;   ///< Indicates when the last exchange
-                                           /// was initiated.
+                                           ///< was initiated.
+    boost::posix_time::ptime renew_due_;   ///< Due time to send next set of
+                                           ///< Renew requests.
+    boost::posix_time::ptime last_renew_;  ///< Indicates when the last Renew
+                                           ///< was attempted.
 
     boost::posix_time::ptime last_report_; ///< Last intermediate report time.
 
     StatsMgr4Ptr stats_mgr4_;  ///< Statistics Manager 4.
     StatsMgr6Ptr stats_mgr6_;  ///< Statistics Manager 6.
+
+    PacketStorage<dhcp::Pkt6> reply_storage_; ///< A storage for reply messages.
 
     NumberGeneratorPtr transid_gen_; ///< Transaction id generator.
     NumberGeneratorPtr macaddr_gen_; ///< Numbers generator for MAC address.

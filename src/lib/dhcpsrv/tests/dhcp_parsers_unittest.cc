@@ -250,6 +250,16 @@ TEST_F(DhcpParserTest, interfaceListParserTest) {
     EXPECT_TRUE(cfg_mgr.isActiveIface("eth2"));
 }
 
+// Checks whether option space can be detected as vendor-id
+TEST_F(DhcpParserTest, vendorOptionSpace) {
+    EXPECT_EQ(0, SubnetConfigParser::optionSpaceToVendorId(""));
+    EXPECT_EQ(0, SubnetConfigParser::optionSpaceToVendorId("dhcp4"));
+    EXPECT_EQ(0, SubnetConfigParser::optionSpaceToVendorId("vendor-"));
+    EXPECT_EQ(1, SubnetConfigParser::optionSpaceToVendorId("vendor-1"));
+    EXPECT_EQ(4491, SubnetConfigParser::optionSpaceToVendorId("vendor-4491"));
+    EXPECT_EQ(12345678, SubnetConfigParser::optionSpaceToVendorId("vendor-12345678"));
+}
+
 /// @brief Test Implementation of abstract OptionDataParser class. Allows
 /// testing basic option parsing.
 class UtestOptionDataParser : public OptionDataParser {
@@ -714,9 +724,8 @@ public:
     template<typename ContainerType, typename ValueType>
     void checkValueEq(const boost::shared_ptr<ContainerType>& ref_values,
                       const boost::shared_ptr<ContainerType>& values) {
-        ValueType param;
-        ASSERT_NO_THROW(param = values->getParam("foo"));
-        EXPECT_EQ(ref_values->getParam("foo"), param);
+        ASSERT_NO_THROW(values->getParam("foo"));
+        EXPECT_EQ(ref_values->getParam("foo"), values->getParam("foo"));
     }
 
     /// @brief Check that the storages of the specific type hold different
@@ -734,9 +743,8 @@ public:
     template<typename ContainerType, typename ValueType>
     void checkValueNeq(const boost::shared_ptr<ContainerType>& ref_values,
                        const boost::shared_ptr<ContainerType>& values) {
-        ValueType param;
-        ASSERT_NO_THROW(param = values->getParam("foo"));
-        EXPECT_NE(ref_values->getParam("foo"), param);
+        ASSERT_NO_THROW(values->getParam("foo"));
+        EXPECT_NE(ref_values->getParam("foo"), values->getParam("foo"));
     }
 
     /// @brief Check that option definition storage in the context holds

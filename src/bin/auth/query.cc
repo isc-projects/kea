@@ -255,7 +255,7 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     if (nsec->getRdataCount() == 0) {
         isc_throw(BadNSEC, "NSEC for WILDCARD_NXRRSET is empty");
     }
-    
+
     ConstZoneFinderContextPtr fcontext =
         finder.find(*qname_, RRType::NSEC(),
                     dnssec_opt_ | ZoneFinder::NO_WILDCARD);

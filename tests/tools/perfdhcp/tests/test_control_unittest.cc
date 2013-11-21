@@ -12,20 +12,21 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "command_options_helper.h"
+#include "../test_control.h"
+
+#include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/iface_mgr.h>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include <cstddef>
 #include <stdint.h>
 #include <string>
 #include <fstream>
 #include <gtest/gtest.h>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-
-#include <exceptions/exceptions.h>
-#include <asiolink/io_address.h>
-#include <dhcp/dhcp4.h>
-#include <dhcp/iface_mgr.h>
-#include "command_options_helper.h"
-#include "../test_control.h"
 
 using namespace std;
 using namespace boost::posix_time;
@@ -40,7 +41,7 @@ using namespace isc::perfdhcp;
 class NakedTestControl: public TestControl {
 public:
 
-    /// \brief Incremental transaction id generaator.
+    /// \brief Incremental transaction id generator.
     ///
     /// This is incremental transaction id generator. It overrides
     /// the default transaction id generator that generates transaction
@@ -63,11 +64,18 @@ public:
         virtual uint32_t generate() {
             return (++transid_);
         }
+
+        /// \brief Return next transaction id value.
+        uint32_t getNext() const {
+            return (transid_ + 1);
+        }
+
     private:
         uint32_t transid_; ///< Last generated transaction id.
     };
 
     using TestControl::checkExitConditions;
+    using TestControl::createRenew;
     using TestControl::factoryElapsedTime6;
     using TestControl::factoryGeneric;
     using TestControl::factoryIana6;
@@ -85,6 +93,9 @@ public:
     using TestControl::processReceivedPacket6;
     using TestControl::registerOptionFactories;
     using TestControl::sendDiscover4;
+    using TestControl::sendPackets;
+    using TestControl::sendRenewPackets;
+    using TestControl::sendRequest6;
     using TestControl::sendSolicit6;
     using TestControl::setDefaults4;
     using TestControl::setDefaults6;
@@ -123,7 +134,7 @@ public:
     /// truncated.
     ///
     /// \param filename template file to be created.
-    /// \param buffer with binary datato be stored in file.
+    /// \param buffer with binary data to be stored in file.
     /// \param size target size of the file.
     /// \param invalid_chars inject invalid chars to the template file.
     /// \return true if file creation successful.
@@ -281,9 +292,9 @@ public:
         return (cnt);
     }
 
-    /// brief Test generation of mulitple DUIDs
+    /// \brief Test generation of mulitple DUIDs
     ///
-    /// Thie method checks the generation of multiple DUIDs. Number
+    /// This method checks the generation of multiple DUIDs. Number
     /// of iterations depends on the number of simulated clients.
     /// It is expected that DUID's size is 14 (consists of DUID-LLT
     /// HW type field, 4 octets of time value and MAC address). The
@@ -497,7 +508,7 @@ public:
 
         // Incremental transaction id generator will generate
         // predictable values of transaction id for each iteration.
-        // This is important because we need to simulate reponses
+        // This is important because we need to simulate responses
         // from the server and use the same transaction ids as in
         // packets sent by client.
         TestControl::NumberGeneratorPtr
@@ -521,7 +532,8 @@ public:
                 boost::shared_ptr<Pkt6>
                     advertise_pkt6(createAdvertisePkt6(transid));
                 // Receive ADVERTISE and send REQUEST.
-                ASSERT_NO_THROW(tc.processReceivedPacket6(sock, advertise_pkt6));
+                ASSERT_NO_THROW(tc.processReceivedPacket6(sock,
+                                                          advertise_pkt6));
                 ++transid;
             }
             if (tc.checkExitConditions()) {
@@ -623,7 +635,6 @@ public:
         CommandOptionsHelper::process(cmdline);
     }
 
-private:
     /// \brief Create DHCPv4 OFFER packet.
     ///
     /// \param transid transaction id.
@@ -644,20 +655,57 @@ private:
     ///
     /// \param transid transaction id.
     /// \return instance of the packet.
-    boost::shared_ptr<Pkt6>
-    createAdvertisePkt6(uint32_t transid) const {
-        OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
+    Pkt6Ptr
+    createAdvertisePkt6(const uint32_t transid) const {
+        boost::shared_ptr<Pkt6> advertise(new Pkt6(DHCPV6_ADVERTISE, transid));
+        // Add IA_NA if requested by the client.
+        if (CommandOptions::instance().getLeaseType()
+            .includes(CommandOptions::LeaseType::ADDRESS)) {
+            OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
+            advertise->addOption(opt_ia_na);
+        }
+        // Add IA_PD if requested by the client.
+        if (CommandOptions::instance().getLeaseType()
+            .includes(CommandOptions::LeaseType::PREFIX)) {
+            OptionPtr opt_ia_pd = Option::factory(Option::V6, D6O_IA_PD);
+            advertise->addOption(opt_ia_pd);
+        }
         OptionPtr opt_serverid(new Option(Option::V6, D6O_SERVERID));
         NakedTestControl tc;
         uint8_t randomized = 0;
         std::vector<uint8_t> duid(tc.generateDuid(randomized));
         OptionPtr opt_clientid(Option::factory(Option::V6, D6O_CLIENTID, duid));
-        boost::shared_ptr<Pkt6> advertise(new Pkt6(DHCPV6_ADVERTISE, transid));
-        advertise->addOption(opt_ia_na);
         advertise->addOption(opt_serverid);
         advertise->addOption(opt_clientid);
         advertise->updateTimestamp();
         return (advertise);
+    }
+
+    Pkt6Ptr
+    createReplyPkt6(const uint32_t transid) const {
+        Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, transid));
+        // Add IA_NA if requested by the client.
+        if (CommandOptions::instance().getLeaseType()
+            .includes(CommandOptions::LeaseType::ADDRESS)) {
+            OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
+            reply->addOption(opt_ia_na);
+        }
+        // Add IA_PD if requested by the client.
+        if (CommandOptions::instance().getLeaseType()
+            .includes(CommandOptions::LeaseType::PREFIX)) {
+            OptionPtr opt_ia_pd = Option::factory(Option::V6, D6O_IA_PD);
+            reply->addOption(opt_ia_pd);
+        }
+        OptionPtr opt_serverid(new Option(Option::V6, D6O_SERVERID));
+        NakedTestControl tc;
+        uint8_t randomized = 0;
+        std::vector<uint8_t> duid(tc.generateDuid(randomized));
+        OptionPtr opt_clientid(Option::factory(Option::V6, D6O_CLIENTID, duid));
+        reply->addOption(opt_serverid);
+        reply->addOption(opt_clientid);
+        reply->updateTimestamp();
+        return (reply);
+
     }
 
 };
@@ -737,7 +785,7 @@ TEST_F(TestControlTest, Options4) {
 
     // Get the option buffer. It should hold the combination of values
     // listed in requested_options array. However their order can be
-    // different in general so we need to search each value separatelly.
+    // different in general so we need to search each value separately.
     const OptionBuffer& requested_options_buf =
         opt_requested_options->getData();
     EXPECT_EQ(requested_options_ref.size(), requested_options_buf.size());
@@ -963,7 +1011,7 @@ TEST_F(TestControlTest, Packet4Exchange) {
     EXPECT_EQ(12, iterations_performed);
 }
 
-TEST_F(TestControlTest, Packet6Exchange) {
+TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
     // Get the local loopback interface to open socket on
     // it and test packets exchanges. We don't want to fail
     // the test if interface is not available.
@@ -998,9 +1046,126 @@ TEST_F(TestControlTest, Packet6Exchange) {
     // then test should be interrupted and actual number of iterations will
     // be 6.
     const int received_num = 3;
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case). All exchanged packets carry the IA_NA option
+    // to simulate the IPv6 address acquisition and to verify that the
+    // IA_NA options returned by the server are processed correctly.
     testPkt6Exchange(iterations_num, received_num, use_templates,
                      iterations_performed);
     EXPECT_EQ(6, iterations_performed);
+}
+
+TEST_F(TestControlTest, Packet6Exchange) {
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback_iface(getLocalLoopback());
+    if (loopback_iface.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test."
+                  << std::endl;
+        return;
+    }
+
+    const int iterations_num = 100;
+    // Set number of iterations to 10.
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -e address-only"
+                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
+    int iterations_performed = 0;
+    // Set number of received packets equal to number of iterations.
+    // This simulates no packet drops.
+    bool use_templates = false;
+
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case). All exchanged packets carry the IA_NA option
+    // to simulate the IPv6 address acqusition and to verify that the IA_NA
+    // options returned by the server are processed correctly.
+    testPkt6Exchange(iterations_num, iterations_num, use_templates,
+                     iterations_performed);
+    // Actual number of iterations should be 10.
+    EXPECT_EQ(10, iterations_performed);
+}
+
+TEST_F(TestControlTest, Packet6ExchangePrefixDelegation) {
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback_iface(getLocalLoopback());
+    if (loopback_iface.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test."
+                  << std::endl;
+        return;
+    }
+
+    const int iterations_num = 100;
+    // Set number of iterations to 10.
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -e prefix-only"
+                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
+    int iterations_performed = 0;
+    // Set number of received packets equal to number of iterations.
+    // This simulates no packet drops.
+    bool use_templates = false;
+
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case). All exchanged packets carry the IA_PD option
+    // to simulate the Prefix Delegation and to verify that the IA_PD options
+    // returned by the server are processed correctly.
+    testPkt6Exchange(iterations_num, iterations_num, use_templates,
+                     iterations_performed);
+    // Actual number of iterations should be 10.
+    EXPECT_EQ(10, iterations_performed);
+}
+
+TEST_F(TestControlTest, Packet6ExchangeAddressAndPrefix) {
+    // Get the local loopback interface to open socket on
+    // it and test packets exchanges. We don't want to fail
+    // the test if interface is not available.
+    std::string loopback_iface(getLocalLoopback());
+    if (loopback_iface.empty()) {
+        std::cout << "Unable to find the loopback interface. Skip test."
+                  << std::endl;
+        return;
+    }
+
+    const int iterations_num = 100;
+    // Set number of iterations to 10.
+    processCmdLine("perfdhcp -l " + loopback_iface
+                   + " -e address-and-prefix"
+                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
+    int iterations_performed = 0;
+    // Set number of received packets equal to number of iterations.
+    // This simulates no packet drops.
+    bool use_templates = false;
+    // Simulate the number of Solicit-Advertise-Request-Reply (SARR) echanges.
+    // The test function generates server's responses and passes it to the
+    // TestControl class methods for processing. The number of exchanges
+    // actually performed is returned in 'iterations_performed' argument. If
+    // processing is successful, the number of performed iterations should be
+    // equal to the number of exchanges specified with the '-n' command line
+    // parameter (10 in this case).  All exchanged packets carry either IA_NA
+    // or IA_PD options to simulate the address and prefix acquisition with
+    // the single message and to verify that the IA_NA and IA_PD options
+    // returned by the server are processed correctly.
+    testPkt6Exchange(iterations_num, iterations_num, use_templates,
+                     iterations_performed);
+    // Actual number of iterations should be 10.
+    EXPECT_EQ(10, iterations_performed);
 }
 
 TEST_F(TestControlTest, PacketTemplates) {
@@ -1017,7 +1182,7 @@ TEST_F(TestControlTest, PacketTemplates) {
     // Size of the file is 2 times larger than binary data size.
     ASSERT_TRUE(createTemplateFile(file1, template1, template1.size() * 2));
     ASSERT_TRUE(createTemplateFile(file2, template2, template2.size() * 2));
-    CommandOptions& options = CommandOptions::instance();
+
     NakedTestControl tc;
 
     ASSERT_NO_THROW(
@@ -1069,7 +1234,8 @@ TEST_F(TestControlTest, RateControl) {
     CommandOptions& options = CommandOptions::instance();
 
     NakedTestControl tc1;
-    uint64_t xchgs_num = tc1.getNextExchangesNum();
+    uint64_t xchgs_num = tc1.getNextExchangesNum(microsec_clock::universal_time(),
+                                                 options.getRate());
     EXPECT_EQ(options.getAggressivity(), xchgs_num);
 
     // The exchange rate is now 1 per second. We don't know how many
@@ -1080,8 +1246,137 @@ TEST_F(TestControlTest, RateControl) {
         processCmdLine("perfdhcp -l 127.0.0.1 -a 1000000 -r 1 all")
     );
     NakedTestControl tc2;
-    xchgs_num = tc2.getNextExchangesNum();
+    xchgs_num = tc2.getNextExchangesNum(microsec_clock::universal_time(),
+                                        options.getRate());
     EXPECT_GT(xchgs_num, 0);
     EXPECT_LT(xchgs_num, options.getAggressivity());
     // @todo add more thorough checks for rate values.
 }
+
+TEST_F(TestControlTest, processRenew) {
+    std::string loopback_iface(getLocalLoopback());
+    if (loopback_iface.empty()) {
+        std::cout << "Skipping the test because loopback interface could"
+            " not be detected" << std::endl;
+        return;
+    }
+    // This command line specifies that the Renew messages should be sent
+    // with the same rate as the Solicit messages.
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l " + loopback_iface +
+                                   " -r 10 -f 10 -R 10 -L 10547 -n 10 ::1"));
+    // Create a test controller class.
+    NakedTestControl tc;
+    tc.initializeStatsMgr();
+    // Set the transaction id generator to sequential to control to guarantee
+    // that transaction ids are predictable.
+    boost::shared_ptr<NakedTestControl::IncrementalGenerator>
+        generator(new NakedTestControl::IncrementalGenerator());
+    tc.setTransidGenerator(generator);
+    // Socket has to be created so as we can actually send packets.
+    int sock_handle = 0;
+    ASSERT_NO_THROW(sock_handle = tc.openSocket());
+    TestControl::TestControlSocket sock(sock_handle);
+
+    // Send a number of Solicit messages. Each generated Solicit will be
+    // assigned a different transaction id, starting from 1 to 10.
+    tc.sendPackets(sock, 10);
+
+    // Simulate Advertise responses from the server. Each advertise is assigned
+    // a transaction id from the range of 1 to 10, so as they match the
+    // transaction ids from the Solicit messages.
+    for (int i = generator->getNext() - 10; i < generator->getNext(); ++i) {
+        Pkt6Ptr advertise(createAdvertisePkt6(i));
+        // If Advertise is matched with the Solicit the call below will
+        // trigger a corresponding Request. They will be assigned
+        // transaction ids from the range from 11 to 20 (the range of
+        // 1 to 10 has been used by Solicit-Advertise).
+        ASSERT_NO_THROW(tc.processReceivedPacket6(sock, advertise));
+    }
+
+    // Requests have been sent, so now let's simulate responses from the server.
+    // Generate corresponding Reply messages with the transaction ids from the
+    // range from 11 to 20.
+    for (int i = generator->getNext() - 10; i < generator->getNext(); ++i) {
+        Pkt6Ptr reply(createReplyPkt6(i));
+        // Each Reply packet corresponds to the new lease acquired. Since
+        // -f<renew-rate> option has been specified, received Reply
+        // messages are held so as Renew messages can be sent for
+        // existing leases.
+        ASSERT_NO_THROW(tc.processReceivedPacket6(sock, reply));
+    }
+
+    uint64_t renew_num;
+    // Try to send 5 Renew packets. It should be successful because
+    // 10 Reply messages has been received. For each of them we should
+    // be able to send Renew.
+    ASSERT_NO_THROW(renew_num = tc.sendRenewPackets(sock, 5));
+    // Make sure that we have sent 5 packets.
+    EXPECT_EQ(5, renew_num);
+
+    // Try to do it again. We should still have 5 Reply packets for
+    // which Renews haven't been sent yet.
+    ASSERT_NO_THROW(renew_num = tc.sendRenewPackets(sock, 5));
+    EXPECT_EQ(5, renew_num);
+
+    // We used all the Reply packets (we sent Renew for each of them
+    // already). Therefore, no further Renew packets should be sent before
+    // We acquire new leases.
+    ASSERT_NO_THROW(renew_num = tc.sendRenewPackets(sock, 5));
+    // Make sure that no Renew has been sent.
+    EXPECT_EQ(0, renew_num);
+}
+
+TEST_F(TestControlTest, createRenew) {
+    // This command line specifies that the Renew messages should be sent
+    // with the same rate as the Solicit messages.
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l lo -r 10 -f 10 -R 10"
+                                   " -L 10547 -n 10 -e address-and-prefix"
+                                   " ::1"));
+    // Create a test controller class.
+    NakedTestControl tc;
+    // Set the transaction id generator because createRenew function requires
+    // it to generate the transaction id for the Renew packet.
+    boost::shared_ptr<NakedTestControl::IncrementalGenerator>
+        generator(new NakedTestControl::IncrementalGenerator());
+    tc.setTransidGenerator(generator);
+
+    // Create a Reply packet. The createRenew function will need Reply
+    // packet to create a corresponding Renew.
+    Pkt6Ptr reply = createReplyPkt6(1);
+    Pkt6Ptr renew;
+    // Check that Renew is created.
+    ASSERT_NO_THROW(renew = tc.createRenew(reply));
+    ASSERT_TRUE(renew);
+    EXPECT_EQ(DHCPV6_RENEW, renew->getType());
+    EXPECT_EQ(1, renew->getTransid());
+
+    // Now check that the Renew packet created, has expected options. The
+    // payload of these options should be the same as the payload of the
+    // options in the Reply.
+
+    // Client Identifier
+    OptionPtr opt_clientid = renew->getOption(D6O_CLIENTID);
+    ASSERT_TRUE(opt_clientid);
+    EXPECT_TRUE(reply->getOption(D6O_CLIENTID)->getData() ==
+                opt_clientid->getData());
+
+    // Server identifier
+    OptionPtr opt_serverid = renew->getOption(D6O_SERVERID);
+    ASSERT_TRUE(opt_serverid);
+    EXPECT_TRUE(reply->getOption(D6O_SERVERID)->getData() ==
+                opt_serverid->getData());
+
+    // IA_NA
+    OptionPtr opt_ia_na = renew->getOption(D6O_IA_NA);
+    ASSERT_TRUE(opt_ia_na);
+    EXPECT_TRUE(reply->getOption(D6O_IA_NA)->getData() ==
+                opt_ia_na->getData());
+
+    // IA_PD
+    OptionPtr opt_ia_pd = renew->getOption(D6O_IA_PD);
+    ASSERT_TRUE(opt_ia_pd);
+    EXPECT_TRUE(reply->getOption(D6O_IA_PD)->getData() ==
+                opt_ia_pd->getData());
+
+}
+

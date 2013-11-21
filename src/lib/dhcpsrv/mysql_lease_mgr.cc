@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -104,6 +104,12 @@ const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 const my_bool MLM_FALSE = 0;                ///< False value
 const my_bool MLM_TRUE = 1;                 ///< True value
 
+/// @brief Maximum length of the hostname stored in DNS.
+///
+/// This length is restricted by the length of the domain-name carried
+/// in the Client FQDN %Option (see RFC4702 and RFC4704).
+const size_t HOSTNAME_MAX_LEN = 255;
+
 ///@}
 
 /// @brief MySQL Selection Statements
@@ -123,68 +129,81 @@ TaggedStatement tagged_statements[] = {
                     "DELETE FROM lease6 WHERE address = ?"},
     {MySqlLeaseMgr::GET_LEASE4_ADDR,
                     "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, expire, subnet_id "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease4 "
                             "WHERE address = ?"},
     {MySqlLeaseMgr::GET_LEASE4_CLIENTID,
                     "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, expire, subnet_id "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease4 "
                             "WHERE client_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_CLIENTID_SUBID,
                     "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, expire, subnet_id "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease4 "
                             "WHERE client_id = ? AND subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE4_HWADDR,
                     "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, expire, subnet_id "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease4 "
                             "WHERE hwaddr = ?"},
     {MySqlLeaseMgr::GET_LEASE4_HWADDR_SUBID,
                     "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, expire, subnet_id "
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease4 "
                             "WHERE hwaddr = ? AND subnet_id = ?"},
     {MySqlLeaseMgr::GET_LEASE6_ADDR,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
-                            "WHERE address = ?"},
+                            "WHERE address = ? AND lease_type = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
-                            "WHERE duid = ? AND iaid = ?"},
+                            "WHERE duid = ? AND iaid = ? AND lease_type = ?"},
     {MySqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID,
                     "SELECT address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len "
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
-                            "WHERE duid = ? AND iaid = ? AND subnet_id = ?"},
+                            "WHERE duid = ? AND iaid = ? AND subnet_id = ? "
+                            "AND lease_type = ?"},
     {MySqlLeaseMgr::GET_VERSION,
                     "SELECT version, minor FROM schema_version"},
     {MySqlLeaseMgr::INSERT_LEASE4,
                     "INSERT INTO lease4(address, hwaddr, client_id, "
-                        "valid_lifetime, expire, subnet_id) "
-                            "VALUES (?, ?, ?, ?, ?, ?)"},
+                        "valid_lifetime, expire, subnet_id, "
+                        "fqdn_fwd, fqdn_rev, hostname) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::INSERT_LEASE6,
                     "INSERT INTO lease6(address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len) "
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"},
+                        "lease_type, iaid, prefix_len, "
+                        "fqdn_fwd, fqdn_rev, hostname) "
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"},
     {MySqlLeaseMgr::UPDATE_LEASE4,
                     "UPDATE lease4 SET address = ?, hwaddr = ?, "
                         "client_id = ?, valid_lifetime = ?, expire = ?, "
-                        "subnet_id = ? "
+                        "subnet_id = ?, fqdn_fwd = ?, fqdn_rev = ?, "
+                        "hostname = ? "
                             "WHERE address = ?"},
     {MySqlLeaseMgr::UPDATE_LEASE6,
                     "UPDATE lease6 SET address = ?, duid = ?, "
                         "valid_lifetime = ?, expire = ?, subnet_id = ?, "
                         "pref_lifetime = ?, lease_type = ?, iaid = ?, "
-                        "prefix_len = ? "
+                        "prefix_len = ?, fqdn_fwd = ?, fqdn_rev = ?, "
+                        "hostname = ? "
                             "WHERE address = ?"},
     // End of list sentinel
     {MySqlLeaseMgr::NUM_STATEMENTS, NULL}
@@ -275,16 +294,18 @@ public:
 
 class MySqlLease4Exchange : public MySqlLeaseExchange {
     /// @brief Set number of database columns for this lease structure
-    static const size_t LEASE_COLUMNS = 6;
+    static const size_t LEASE_COLUMNS = 9;
 
 public:
     /// @brief Constructor
     ///
     /// The initialization of the variables here is only to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
-    MySqlLease4Exchange() : addr4_(0), hwaddr_length_(0), client_id_length_(0) {
+    MySqlLease4Exchange() : addr4_(0), hwaddr_length_(0), client_id_length_(0),
+                            fqdn_fwd_(false), fqdn_rev_(false), hostname_length_(0) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
+        memset(hostname_buffer_, 0, sizeof(hostname_buffer_));
         std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
 
         // Set the column names (for error messages)
@@ -294,7 +315,10 @@ public:
         columns_[3] = "valid_lifetime";
         columns_[4] = "expire";
         columns_[5] = "subnet_id";
-        BOOST_STATIC_ASSERT(5 < LEASE_COLUMNS);
+        columns_[6] = "fqdn_fwd";
+        columns_[7] = "fqdn_rev";
+        columns_[8] = "hostname";
+        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
     }
 
     /// @brief Create MYSQL_BIND objects for Lease4 Pointer
@@ -397,11 +421,32 @@ public:
         // bind_[5].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
+        // fqdn_fwd: boolean
+        bind_[6].buffer_type = MYSQL_TYPE_TINY;
+        bind_[6].buffer = reinterpret_cast<char*>(&lease_->fqdn_fwd_);
+        bind_[6].is_unsigned = MLM_TRUE;
+        // bind_[6].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
+
+        // fqdn_rev: boolean
+        bind_[7].buffer_type = MYSQL_TYPE_TINY;
+        bind_[7].buffer = reinterpret_cast<char*>(&lease_->fqdn_rev_);
+        bind_[7].is_unsigned = MLM_TRUE;
+        // bind_[7].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
+
+        // hostname: varchar(255)
+        bind_[8].buffer_type = MYSQL_TYPE_VARCHAR;
+        bind_[8].buffer = const_cast<char*>(lease_->hostname_.c_str());
+        bind_[8].buffer_length = lease_->hostname_.length();
+        // bind_[8].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(5 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -470,11 +515,34 @@ public:
         // bind_[5].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
+        // fqdn_fwd: boolean
+        bind_[6].buffer_type = MYSQL_TYPE_TINY;
+        bind_[6].buffer = reinterpret_cast<char*>(&fqdn_fwd_);
+        bind_[6].is_unsigned = MLM_TRUE;
+        // bind_[6].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
+
+        // fqdn_rev: boolean
+        bind_[7].buffer_type = MYSQL_TYPE_TINY;
+        bind_[7].buffer = reinterpret_cast<char*>(&fqdn_rev_);
+        bind_[7].is_unsigned = MLM_TRUE;
+        // bind_[7].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
+
+        // hostname: varchar(255)
+        hostname_length_ = sizeof(hostname_buffer_);
+        bind_[8].buffer_type = MYSQL_TYPE_STRING;
+        bind_[8].buffer = reinterpret_cast<char*>(hostname_buffer_);
+        bind_[8].buffer_length = hostname_length_;
+        bind_[8].length = &hostname_length_;
+        // bind_[8].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(5 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -500,10 +568,16 @@ public:
             client_id_length_ = 0;
         }
 
+        // Hostname is passed to Lease4 as a string object. We have to create
+        // it from the buffer holding hostname and the buffer length.
+        std::string hostname(hostname_buffer_,
+                             hostname_buffer_ + hostname_length_);
+
         // note that T1 and T2 are not stored
         return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
                                      client_id_buffer_, client_id_length_,
-                                     valid_lifetime_, 0, 0, cltt, subnet_id_)));
+                                     valid_lifetime_, 0, 0, cltt, subnet_id_,
+                                     fqdn_fwd_, fqdn_rev_, hostname)));
     }
 
     /// @brief Return columns in error
@@ -543,6 +617,15 @@ private:
     Lease4Ptr       lease_;             ///< Pointer to lease object
     uint32_t        subnet_id_;         ///< Subnet identification
     uint32_t        valid_lifetime_;    ///< Lease time
+
+    my_bool         fqdn_fwd_;          ///< Has forward DNS update been
+                                        ///< performed
+    my_bool         fqdn_rev_;          ///< Has reverse DNS update been
+                                        ///< performed
+    char            hostname_buffer_[HOSTNAME_MAX_LEN];
+                                        ///< Client hostname
+    unsigned long   hostname_length_;   ///< Client hostname length
+
 };
 
 
@@ -562,28 +645,34 @@ private:
 
 class MySqlLease6Exchange : public MySqlLeaseExchange {
     /// @brief Set number of database columns for this lease structure
-    static const size_t LEASE_COLUMNS = 9;
+    static const size_t LEASE_COLUMNS = 12;
 
 public:
     /// @brief Constructor
     ///
     /// The initialization of the variables here is nonly to satisfy cppcheck -
     /// all variables are initialized/set in the methods before they are used.
-    MySqlLease6Exchange() : addr6_length_(0), duid_length_(0) {
+    MySqlLease6Exchange() : addr6_length_(0), duid_length_(0),
+                            fqdn_fwd_(false), fqdn_rev_(false),
+                            hostname_length_(0) {
         memset(addr6_buffer_, 0, sizeof(addr6_buffer_));
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
+        memset(hostname_buffer_, 0, sizeof(hostname_buffer_));
         std::fill(&error_[0], &error_[LEASE_COLUMNS], MLM_FALSE);
 
         // Set the column names (for error messages)
-        columns_[0] = "address";
-        columns_[1] = "duid";
-        columns_[2] = "valid_lifetime";
-        columns_[3] = "expire";
-        columns_[4] = "subnet_id";
-        columns_[5] = "pref_lifetime";
-        columns_[6] = "lease_type";
-        columns_[7] = "iaid";
-        columns_[8] = "prefix_len";
+        columns_[0]  = "address";
+        columns_[1]  = "duid";
+        columns_[2]  = "valid_lifetime";
+        columns_[3]  = "expire";
+        columns_[4]  = "subnet_id";
+        columns_[5]  = "pref_lifetime";
+        columns_[6]  = "lease_type";
+        columns_[7]  = "iaid";
+        columns_[8]  = "prefix_len";
+        columns_[9]  = "fqdn_fwd";
+        columns_[10] = "fqdn_rev";
+        columns_[11] = "hostname";
         BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
     }
 
@@ -707,11 +796,32 @@ public:
         // bind_[8].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
+        // fqdn_fwd: boolean
+        bind_[9].buffer_type = MYSQL_TYPE_TINY;
+        bind_[9].buffer = reinterpret_cast<char*>(&lease_->fqdn_fwd_);
+        bind_[9].is_unsigned = MLM_TRUE;
+        // bind_[7].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
+
+        // fqdn_rev: boolean
+        bind_[10].buffer_type = MYSQL_TYPE_TINY;
+        bind_[10].buffer = reinterpret_cast<char*>(&lease_->fqdn_rev_);
+        bind_[10].is_unsigned = MLM_TRUE;
+        // bind_[10].is_null = &MLM_FALSE; // commented out for performance
+                                           // reasons, see memset() above
+
+        // hostname: varchar(255)
+        bind_[11].buffer_type = MYSQL_TYPE_VARCHAR;
+        bind_[11].buffer = const_cast<char*>(lease_->hostname_.c_str());
+        bind_[11].buffer_length = lease_->hostname_.length();
+        // bind_[11].is_null = &MLM_FALSE; // commented out for performance
+                                           // reasons, see memset() above
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -805,11 +915,34 @@ public:
         // bind_[8].is_null = &MLM_FALSE; // commented out for performance
                                           // reasons, see memset() above
 
+        // fqdn_fwd: boolean
+        bind_[9].buffer_type = MYSQL_TYPE_TINY;
+        bind_[9].buffer = reinterpret_cast<char*>(&fqdn_fwd_);
+        bind_[9].is_unsigned = MLM_TRUE;
+        // bind_[9].is_null = &MLM_FALSE; // commented out for performance
+                                          // reasons, see memset() above
+
+        // fqdn_rev: boolean
+        bind_[10].buffer_type = MYSQL_TYPE_TINY;
+        bind_[10].buffer = reinterpret_cast<char*>(&fqdn_rev_);
+        bind_[10].is_unsigned = MLM_TRUE;
+        // bind_[10].is_null = &MLM_FALSE; // commented out for performance
+                                           // reasons, see memset() above
+
+        // hostname: varchar(255)
+        hostname_length_ = sizeof(hostname_buffer_);
+        bind_[11].buffer_type = MYSQL_TYPE_STRING;
+        bind_[11].buffer = reinterpret_cast<char*>(hostname_buffer_);
+        bind_[11].buffer_length = hostname_length_;
+        bind_[11].length = &hostname_length_;
+        // bind_[11].is_null = &MLM_FALSE; // commented out for performance
+                                           // reasons, see memset() above
+
         // Add the error flags
         setErrorIndicators(bind_, error_, LEASE_COLUMNS);
 
         // .. and check that we have the numbers correct at compile time.
-        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
 
         // Add the data to the vector.  Note the end element is one after the
         // end of the array.
@@ -836,34 +969,41 @@ public:
 
         // Set the lease type in a variable of the appropriate data type, which
         // has been initialized with an arbitrary (but valid) value.
-        Lease6::LeaseType type = Lease6::LEASE_IA_NA;
+        Lease::Type type = Lease::TYPE_NA;
         switch (lease_type_) {
-            case Lease6::LEASE_IA_NA:
-                type = Lease6::LEASE_IA_NA;
+            case Lease::TYPE_NA:
+                type = Lease::TYPE_NA;
                 break;
 
-            case Lease6::LEASE_IA_TA:
-                type = Lease6::LEASE_IA_TA;
+            case Lease::TYPE_TA:
+                type = Lease::TYPE_TA;
                 break;
 
-            case Lease6::LEASE_IA_PD:
-                type = Lease6::LEASE_IA_PD;
+            case Lease::TYPE_PD:
+                type = Lease::TYPE_PD;
                 break;
 
             default:
                 isc_throw(BadValue, "invalid lease type returned (" <<
-                          lease_type_ << ") for lease with address " <<
-                          address << ". Only 0, 1, or 2 are allowed.");
+                          static_cast<int>(lease_type_) << ") for lease with "
+                          << "address " << address << ". Only 0, 1, or 2 are "
+                          << "allowed.");
         }
 
         // Set up DUID,
         DuidPtr duid_ptr(new DUID(duid_buffer_, duid_length_));
 
+        // Hostname is passed to Lease6 as a string object, so we have to
+        // create it from the hostname buffer and length.
+        std::string hostname(hostname_buffer_,
+                             hostname_buffer_ + hostname_length_);
+
         // Create the lease and set the cltt (after converting from the
         // expire time retrieved from the database).
         Lease6Ptr result(new Lease6(type, addr, duid_ptr, iaid_,
                                     pref_lifetime_, valid_lifetime_, 0, 0,
-                                    subnet_id_, prefixlen_));
+                                    subnet_id_, fqdn_fwd_, fqdn_rev_,
+                                    hostname, prefixlen_));
         time_t cltt = 0;
         MySqlLeaseMgr::convertFromDatabaseTime(expire_, valid_lifetime_, cltt);
         result->cltt_ = cltt;
@@ -907,6 +1047,14 @@ private:
     uint32_t        pref_lifetime_;     ///< Preferred lifetime
     uint32_t        subnet_id_;         ///< Subnet identification
     uint32_t        valid_lifetime_;    ///< Lease time
+    my_bool         fqdn_fwd_;          ///< Has forward DNS update been
+                                        ///< performed
+    my_bool         fqdn_rev_;          ///< Has reverse DNS update been
+                                        ///< performed
+    char            hostname_buffer_[HOSTNAME_MAX_LEN];
+                                        ///< Client hostname
+    unsigned long   hostname_length_;   ///< Client hostname length
+
 };
 
 
@@ -1106,7 +1254,7 @@ MySqlLeaseMgr::openDatabase() {
                   mysql_error(mysql_));
     }
 
-    // Set SQL mode options for the connection:  SQL mode governs how what 
+    // Set SQL mode options for the connection:  SQL mode governs how what
     // constitutes insertable data for a given column, and how to handle
     // invalid data.  We want to ensure we get the strictest behavior and
     // to reject invalid data with an error.
@@ -1227,7 +1375,8 @@ MySqlLeaseMgr::addLease(const Lease4Ptr& lease) {
 bool
 MySqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_ADD_ADDR6).arg(lease->addr_.toText());
+              DHCPSRV_MYSQL_ADD_ADDR6).arg(lease->addr_.toText())
+              .arg(lease->type_);
 
     // Create the MYSQL_BIND array for the lease
     std::vector<MYSQL_BIND> bind = exchange6_->createBindForSend(lease);
@@ -1504,12 +1653,14 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 
 
 Lease6Ptr
-MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
+MySqlLeaseMgr::getLease6(Lease::Type lease_type,
+                         const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_ADDR6).arg(addr.toText());
+              DHCPSRV_MYSQL_GET_ADDR6).arg(addr.toText())
+              .arg(lease_type);
 
     // Set up the WHERE clause value
-    MYSQL_BIND inbind[1];
+    MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
     std::string addr6 = addr.toText();
@@ -1522,6 +1673,11 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
     inbind[0].buffer_length = addr6_length;
     inbind[0].length = &addr6_length;
 
+    // LEASE_TYPE
+    inbind[1].buffer_type = MYSQL_TYPE_TINY;
+    inbind[1].buffer = reinterpret_cast<char*>(&lease_type);
+    inbind[1].is_unsigned = MLM_TRUE;
+
     Lease6Ptr result;
     getLease(GET_LEASE6_ADDR, inbind, result);
 
@@ -1530,12 +1686,14 @@ MySqlLeaseMgr::getLease6(const isc::asiolink::IOAddress& addr) const {
 
 
 Lease6Collection
-MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
+MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
+                          const DUID& duid, uint32_t iaid) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_GET_IAID_DUID).arg(iaid).arg(duid.toText());
+              DHCPSRV_MYSQL_GET_IAID_DUID).arg(iaid).arg(duid.toText())
+              .arg(lease_type);
 
     // Set up the WHERE clause value
-    MYSQL_BIND inbind[2];
+    MYSQL_BIND inbind[3];
     memset(inbind, 0, sizeof(inbind));
 
     // In the following statement, the DUID is being read.  However, the
@@ -1563,6 +1721,11 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     inbind[1].buffer = reinterpret_cast<char*>(&iaid);
     inbind[1].is_unsigned = MLM_TRUE;
 
+    // LEASE_TYPE
+    inbind[2].buffer_type = MYSQL_TYPE_TINY;
+    inbind[2].buffer = reinterpret_cast<char*>(&lease_type);
+    inbind[2].is_unsigned = MLM_TRUE;
+
     // ... and get the data
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6_DUID_IAID, inbind, result);
@@ -1570,16 +1733,17 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid) const {
     return (result);
 }
 
-
-Lease6Ptr
-MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
-                         SubnetID subnet_id) const {
+Lease6Collection
+MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
+                          const DUID& duid, uint32_t iaid,
+                          SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MYSQL_GET_IAID_SUBID_DUID)
-              .arg(iaid).arg(subnet_id).arg(duid.toText());
+              .arg(iaid).arg(subnet_id).arg(duid.toText())
+              .arg(lease_type);
 
     // Set up the WHERE clause value
-    MYSQL_BIND inbind[3];
+    MYSQL_BIND inbind[4];
     memset(inbind, 0, sizeof(inbind));
 
     // See the earlier description of the use of "const_cast" when accessing
@@ -1602,8 +1766,14 @@ MySqlLeaseMgr::getLease6(const DUID& duid, uint32_t iaid,
     inbind[2].buffer = reinterpret_cast<char*>(&subnet_id);
     inbind[2].is_unsigned = MLM_TRUE;
 
-    Lease6Ptr result;
-    getLease(GET_LEASE6_DUID_IAID_SUBID, inbind, result);
+    // LEASE_TYPE
+    inbind[3].buffer_type = MYSQL_TYPE_TINY;
+    inbind[3].buffer = reinterpret_cast<char*>(&lease_type);
+    inbind[3].is_unsigned = MLM_TRUE;
+
+    // ... and get the data
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6_DUID_IAID_SUBID, inbind, result);
 
     return (result);
 }
@@ -1670,7 +1840,8 @@ MySqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     const StatementIndex stindex = UPDATE_LEASE6;
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MYSQL_UPDATE_ADDR6).arg(lease->addr_.toText());
+              DHCPSRV_MYSQL_UPDATE_ADDR6).arg(lease->addr_.toText())
+              .arg(lease->type_);
 
     // Create the MYSQL_BIND array for the data being updated
     std::vector<MYSQL_BIND> bind = exchange6_->createBindForSend(lease);

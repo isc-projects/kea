@@ -31,7 +31,8 @@ namespace dhcp {
 /// @tparam ContainerType of the container holding items within
 /// option space.
 /// @tparam ItemType type of the item being held by the container.
-template<typename ContainerType, typename ItemType>
+/// @tparam Selector a string (for option spaces) or uint32_t (for vendor options)
+template<typename ContainerType, typename ItemType, typename Selector>
 class OptionSpaceContainer {
 public:
 
@@ -41,8 +42,8 @@ public:
     /// @brief Adds a new item to the option_space.
     ///
     /// @param item reference to the item being added.
-    /// @param option_space name of the option space.
-    void addItem(const ItemType& item, const std::string& option_space) {
+    /// @param option_space name or vendor-id of the option space
+    void addItem(const ItemType& item, const Selector& option_space) {
         ItemsContainerPtr items = getItems(option_space);
         items->push_back(item);
         option_space_map_[option_space] = items;
@@ -54,10 +55,10 @@ public:
     /// space an empty container is created and returned. However
     /// this container is not added to the list of option spaces.
     ///
-    /// @param option_space name of the option space.
+    /// @param option_space name or vendor-id of the option space.
     ///
     /// @return pointer to the container holding items.
-    ItemsContainerPtr getItems(const std::string& option_space) const {
+    ItemsContainerPtr getItems(const Selector& option_space) const {
         const typename OptionSpaceMap::const_iterator& items =
             option_space_map_.find(option_space);
         if (items == option_space_map_.end()) {
@@ -73,8 +74,8 @@ public:
     /// @todo This function is likely to be removed once
     /// we create a structore of OptionSpaces defined
     /// through the configuration manager.
-    std::list<std::string> getOptionSpaceNames() {
-        std::list<std::string> names;
+    std::list<Selector> getOptionSpaceNames() {
+        std::list<Selector> names;
         for (typename OptionSpaceMap::const_iterator space =
                  option_space_map_.begin();
              space != option_space_map_.end(); ++space) {
@@ -90,8 +91,8 @@ public:
 
 private:
 
-    /// A map holding container (option space name is the key).
-    typedef std::map<std::string, ItemsContainerPtr> OptionSpaceMap;
+    /// A map holding container (option space name or vendor-id is the key).
+    typedef std::map<Selector, ItemsContainerPtr> OptionSpaceMap;
     OptionSpaceMap option_space_map_;
 };
 

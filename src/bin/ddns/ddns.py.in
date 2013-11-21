@@ -28,6 +28,7 @@ from isc.config.ccsession import *
 from isc.config.module_spec import ModuleSpecError
 from isc.cc import SessionError, SessionTimeout, ProtocolError
 import isc.util.process
+import isc.util.traceback_handler
 import isc.util.cio.socketsession
 import isc.server_common.tsig_keyring
 from isc.server_common.dns_tcp import DNSTCPContext
@@ -738,9 +739,8 @@ def main(ddns_server=None):
         logger.error(DDNS_CONFIG_ERROR, str(e))
     except SessionTimeout as e:
         logger.error(DDNS_CC_SESSION_TIMEOUT_ERROR)
-    except Exception as e:
-        logger.error(DDNS_UNCAUGHT_EXCEPTION, type(e).__name__, str(e))
-    clear_socket()
+    finally:
+        clear_socket()
 
 if '__main__' == __name__:
-    main()
+    isc.util.traceback_handler.traceback_handler(main)

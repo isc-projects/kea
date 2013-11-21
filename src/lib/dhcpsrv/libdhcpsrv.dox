@@ -61,19 +61,21 @@ separate module, called allocator. Its sole purpose is to pick an address from
 a pool. Allocation engine will then check if the picked address is free and if
 it is not, then will ask allocator to pick again.
 
-At lease 3 allocators will be implemented:
+At least 3 allocators will be implemented:
 
-- Iterative - it iterates over all addresses in available pools, one
-by one. The advantages of this approach are speed (typically it only needs to
-increase last address), the guarantee to cover all addresses and predictability.
-This allocator behaves very good in case of nearing depletion. Even when pools
-are almost completely allocated, it still will be able to allocate outstanding
-leases efficiently. Predictability can also be considered a serious flaw in
-some environments, as prediction of the next address is trivial and can be
-leveraged by an attacker. Another drawback of this allocator is that it does
-not attempt to give the same address to returning clients (clients that released
-or expired their leases and are requesting a new lease will likely to get a 
-different lease). This allocator is implemented in \ref isc::dhcp::AllocEngine::IterativeAllocator.
+- Iterative - it iterates over all resources (addresses or prefixes) in
+available pools, one by one. The advantages of this approach are: speed
+(typically it only needs to increase address just one), the guarantee to cover
+all addresses and predictability.  This allocator behaves reasonably good in
+case of nearing depletion. Even when pools are almost completely allocated, it
+still will be able to allocate outstanding leases efficiently. Predictability
+can also be considered a serious flaw in some environments, as prediction of the
+next address is trivial and can be leveraged by an attacker. Another drawback of
+this allocator is that it does not attempt to give the same address to returning
+clients (clients that released or expired their leases and are requesting a new
+lease will likely to get a different lease). This allocator is not suitable for
+temporary addresses, which must be randomized. This allocator is implemented
+in \ref isc::dhcp::AllocEngine::IterativeAllocator.
 
 - Hashed - ISC-DHCP uses hash of the client-id or DUID to determine, which
 address is tried first. If that address is not available, the result is hashed
@@ -81,13 +83,13 @@ again. That procedure is repeated until available address is found or there
 are no more addresses left. The benefit of that approach is that it provides
 a relative lease stability, so returning old clients are likely to get the same
 address again. The drawbacks are increased computation cost, as each iteration
-requires use of a hashing function. That is especially difficult when the 
+requires use of a hashing function. That is especially difficult when the
 pools are almost depleted. It also may be difficult to guarantee that the
 repeated hashing will iterate over all available addresses in all pools. Flawed
 hash algorithm can go into cycles that iterate over only part of the addresses.
 It is difficult to detect such issues as only some initial seed (client-id
 or DUID) values may trigger short cycles. This allocator is currently not
-implemented.
+implemented. This will be the only allocator allowed for temporary addresses.
 
 - Random - Another possible approach to address selection is randomization. This
 allocator can pick an address randomly from the configured pool. The benefit
@@ -96,5 +98,27 @@ address prediction more difficult. The drawback of this approach is that
 returning clients are almost guaranteed to get a different address. Another
 drawback is that with almost depleted pools it is increasingly difficult to
 "guess" an address that is free. This allocator is currently not implemented.
+
+@subsection allocEngineTypes Different lease types support
+
+Allocation Engine has been extended to support different types of leases. Four
+types are supported: TYPE_V4 (IPv4 addresses), TYPE_NA (normal IPv6 addresses),
+TYPE_TA (temporary IPv6 addresses) and TYPE_PD (delegated prefixes). Support for
+TYPE_TA is partial. Some routines are able to handle it, while other are
+not. The major missing piece is the RandomAllocator, so there is no way to randomly
+generate an address. This defeats the purpose of using temporary addresses for now.
+
+@subsection allocEnginePD Prefix Delegation support in AllocEngine
+
+The Allocation Engine supports allocation of the IPv6 addresses and prefixes.
+For a prefix pool, the iterative allocator "walks over"
+every available pool. It is similar to how it iterates over address pool,
+but instead of increasing address by just one, it walks over the whole delegated
+prefix length in one step. This is implemented in
+isc::dhcp::AllocEngine::IterativeAllocator::increasePrefix(). Functionally the
+increaseAddress(addr) call is equivalent to increasePrefix(addr, 128)
+(increasing by a /128 prefix, i.e. a single address).  However, both methods are
+kept, because increaseAddress() is faster and this is a routine that may be
+called many hundred thousands times per second.
 
 */

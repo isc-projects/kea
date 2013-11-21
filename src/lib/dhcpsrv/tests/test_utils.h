@@ -16,6 +16,8 @@
 #define LIBDHCPSRV_TEST_UTILS_H
 
 #include <dhcpsrv/lease_mgr.h>
+#include <gtest/gtest.h>
+#include <vector>
 
 namespace isc {
 namespace dhcp {
@@ -41,6 +43,73 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second);
 void
 detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second);
 
+/// @brief Test Fixture class with utility functions for LeaseMgr backends
+///
+/// It contains utility functions, like dummy lease creation.
+/// All concrete LeaseMgr test classes should be derived from it.
+class GenericLeaseMgrTest : public ::testing::Test {
+public:
+    GenericLeaseMgrTest();
+
+    /// @brief Initialize Lease4 Fields
+    ///
+    /// Returns a pointer to a Lease4 structure.  Different values are put into
+    /// the lease according to the address passed.
+    ///
+    /// This is just a convenience function for the test methods.
+    ///
+    /// @param address Address to use for the initialization
+    ///
+    /// @return Lease4Ptr.  This will not point to anything if the
+    ///         initialization failed (e.g. unknown address).
+    Lease4Ptr initializeLease4(std::string address);
+
+    /// @brief Initialize Lease6 Fields
+    ///
+    /// Returns a pointer to a Lease6 structure.  Different values are put into
+    /// the lease according to the address passed.
+    ///
+    /// This is just a convenience function for the test methods.
+    ///
+    /// @param address Address to use for the initialization
+    ///
+    /// @return Lease6Ptr.  This will not point to anything if the initialization
+    ///         failed (e.g. unknown address).
+    Lease6Ptr initializeLease6(std::string address);
+
+    /// @brief Check Leases present and different
+    ///
+    /// Checks a vector of lease pointers and ensures that all the leases
+    /// they point to are present and different.  If not, a GTest assertion
+    /// will fail.
+    ///
+    /// @param leases Vector of pointers to leases
+    template <typename T>
+        void checkLeasesDifferent(const std::vector<T>& leases) const;
+
+    /// @brief Creates leases for the test
+    ///
+    /// Creates all leases for the test and checks that they are different.
+    ///
+    /// @return vector<Lease4Ptr> Vector of pointers to leases
+    std::vector<Lease4Ptr> createLeases4();
+
+    /// @brief Creates leases for the test
+    ///
+    /// Creates all leases for the test and checks that they are different.
+    ///
+    /// @return vector<Lease6Ptr> Vector of pointers to leases
+    std::vector<Lease6Ptr> createLeases6();
+
+    // Member variables
+    std::vector<std::string>  straddress4_;   ///< String forms of IPv4 addresses
+    std::vector<isc::asiolink::IOAddress> ioaddress4_;  ///< IOAddress forms of IPv4 addresses
+    std::vector<std::string>  straddress6_;   ///< String forms of IPv6 addresses
+    std::vector<Lease::Type> leasetype6_; ///< Lease types
+    std::vector<isc::asiolink::IOAddress> ioaddress6_;  ///< IOAddress forms of IPv6 addresses
+
+    LeaseMgr*   lmptr_;             ///< Pointer to the lease manager
+};
 
 };
 };

@@ -68,6 +68,13 @@ AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
 AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
+dnl Determine if weare using GNU sed
+GNU_SED=no
+$SED --version 2> /dev/null | grep -q GNU
+if test $? -eq 0; then
+  GNU_SED=yes
+fi
+
 # Linker options
 
 # check -R, "-Wl,-R" or -rpath (we share the AX function defined in
@@ -105,9 +112,12 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   AC_MSG_RESULT([$bind10_cxx_flag])
 ])
 
+CXX_VERSION="unknown"
+
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
 if test "$SUNCXX" = "yes"; then
+CXX_VERSION=`$CXX -V 2> /dev/null | head -1`
 CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
 MULTITHREADING_FLAG="-mt"
 fi
@@ -120,7 +130,8 @@ fi
 # we suppress this particular warning.  Note that it doesn't weaken checks
 # on the source code.
 if test "$CLANGPP" = "yes"; then
-	B10_CXXFLAGS="$B10_CXXFLAGS -Qunused-arguments"
+CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
+B10_CXXFLAGS="$B10_CXXFLAGS -Qunused-arguments"
 fi
 
 BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
@@ -129,6 +140,7 @@ AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
+CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
 B10_CXXFLAGS="$B10_CXXFLAGS -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 case "$host" in
 *-solaris*)
@@ -181,6 +193,7 @@ AC_HELP_STRING([--enable-static-link],
   [build programs with static link [[default=no]]]),
   [enable_static_link=yes], [enable_static_link=no])
 AM_CONDITIONAL(USE_STATIC_LINK, test $enable_static_link = yes)
+AM_COND_IF([USE_STATIC_LINK], [AC_DEFINE([USE_STATIC_LINK], [1], [BIND 10 was statically linked?])])
 
 # Check validity about some libtool options
 if test $enable_static_link = yes -a $enable_static = no; then
@@ -717,6 +730,21 @@ then
             BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
     fi
 fi
+
+dnl Determine the Botan version
+AC_MSG_CHECKING([Botan version])
+cat > conftest.cpp << EOF
+#include <botan/version.h>
+AUTOCONF_BOTAN_VERSION=BOTAN_VERSION_MAJOR . BOTAN_VERSION_MINOR . BOTAN_VERSION_PATCH
+EOF
+
+BOTAN_VERSION=`$CPP $CPPFLAGS $BOTAN_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+if test -z "$BOTAN_VERSION"; then
+  BOTAN_VERSION="unknown"
+fi
+$RM -f conftest.cpp
+AC_MSG_RESULT([$BOTAN_VERSION])
+
 # botan-config script (and the way we call pkg-config) returns -L and -l
 # as one string, but we need them in separate values
 BOTAN_LDFLAGS=
@@ -754,7 +782,24 @@ CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
 LIBS="$LIBS $BOTAN_LIBS"
-AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
+
+# ac_header_preproc is an autoconf symbol (undocumented but stable) that
+# is set if the pre-processor phase passes. Thus by adding a custom
+# failure handler we can detect the difference between a header not existing
+# (or not even passing the pre-processor phase) and a header file resulting
+# in compilation failures.
+AC_CHECK_HEADERS([botan/botan.h],,[
+	if test "x$ac_header_preproc" = "xyes"; then
+		AC_MSG_ERROR([
+botan/botan.h was found but is unusable. The most common cause of this problem
+is attempting to use an updated C++ compiler with older C++ libraries, such as
+the version of Botan that comes with your distribution. If you have updated
+your C++ compiler we highly recommend that you use support libraries such as
+Boost and Botan that were compiled with the same compiler version.])
+	else
+		AC_MSG_ERROR([Missing required header files.])
+	fi]
+)
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <botan/botan.h>
                           #include <botan/hash.h>
@@ -796,6 +841,7 @@ if test "$MYSQL_CONFIG" != "" ; then
 
     MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
     MYSQL_LIBS=`$MYSQL_CONFIG --libs`
+    MYSQL_VERSION=`$MYSQL_CONFIG --version`
 
     AC_SUBST(MYSQL_CPPFLAGS)
     AC_SUBST(MYSQL_LIBS)
@@ -873,6 +919,20 @@ AC_LINK_IFELSE(
         [AC_MSG_RESULT([checking for log4cplus library... no])
          AC_MSG_ERROR([Needs log4cplus library])]
 )
+
+dnl Determine the log4cplus version, used mainly for config.report.
+AC_MSG_CHECKING([log4cplus version])
+cat > conftest.cpp << EOF
+#include <log4cplus/version.h>
+AUTOCONF_LOG4CPLUS_VERSION=LOG4CPLUS_VERSION_STR
+EOF
+
+LOG4CPLUS_VERSION=`$CPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+if test -z "$LOG4CPLUS_VERSION"; then
+  LOG4CPLUS_VERSION="unknown"
+fi
+$RM -f conftest.cpp
+AC_MSG_RESULT([$LOG4CPLUS_VERSION])
 
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
@@ -953,6 +1013,7 @@ AC_SUBST(MULTITHREADING_FLAG)
 GTEST_LDFLAGS=
 GTEST_LDADD=
 DISTCHECK_GTEST_CONFIGURE_FLAG=
+GTEST_VERSION="unknown"
 
 if test "x$enable_gtest" = "xyes" ; then
 
@@ -1008,6 +1069,7 @@ if test "$gtest_path" != "no" ; then
         GTEST_INCLUDES=`${GTEST_CONFIG} --cppflags`
         GTEST_LDFLAGS=`${GTEST_CONFIG} --ldflags`
         GTEST_LDADD=`${GTEST_CONFIG} --libs`
+        GTEST_VERSION=`${GTEST_CONFIG} --version`
         GTEST_FOUND="true"
     else
         AC_MSG_WARN([Unable to locate Google Test gtest-config.])
@@ -1093,6 +1155,8 @@ fi
 AX_SQLITE3_FOR_BIND10
 if test "x$have_sqlite" = "xyes" ; then
   enable_features="$enable_features SQLite3"
+
+  AX_PYTHON_SQLITE3
 fi
 
 #
@@ -1285,6 +1349,10 @@ AC_CONFIG_FILES([Makefile
                  src/bin/usermgr/Makefile
                  src/bin/usermgr/tests/Makefile
                  src/bin/tests/Makefile
+                 src/hooks/Makefile
+                 src/hooks/dhcp/Makefile
+                 src/hooks/dhcp/user_chk/Makefile
+                 src/hooks/dhcp/user_chk/tests/Makefile
                  src/lib/Makefile
                  src/lib/asiolink/Makefile
                  src/lib/asiolink/tests/Makefile
@@ -1461,9 +1529,11 @@ AC_OUTPUT([doc/version.ent
            src/bin/auth/gen-statisticsitems.py.pre
            src/bin/dhcp4/spec_config.h.pre
            src/bin/dhcp6/spec_config.h.pre
+           src/bin/dhcp6/tests/test_data_files_config.h
            src/bin/d2/spec_config.h.pre
            src/bin/d2/tests/test_data_files_config.h
            src/bin/tests/process_rename_test.py
+           src/hooks/dhcp/user_chk/tests/test_data_files_config.h
            src/lib/config/tests/data_def_unittests_config.h
            src/lib/dhcpsrv/tests/test_libraries.h
            src/lib/python/isc/config/tests/config_test
@@ -1471,7 +1541,6 @@ AC_OUTPUT([doc/version.ent
            src/lib/python/isc/notify/tests/notify_out_test
            src/lib/python/isc/log/tests/log_console.py
            src/lib/python/isc/log_messages/work/__init__.py
-           src/lib/python/isc/server_common/bind10_server.py
            src/lib/dns/gen-rdatacode.py
            src/lib/python/bind10_config.py
            src/lib/cc/session_config.h.pre
@@ -1535,39 +1604,69 @@ cat > config.report << END
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 Package:
-  Name:          $PACKAGE_NAME
-  Version:       $PACKAGE_VERSION
+  Name:            ${PACKAGE_NAME}
+  Version:         ${PACKAGE_VERSION}
+  OS Family:       ${OS_TYPE}
+  Using GNU sed:   ${GNU_SED}
 
-C++ Compiler:    $CXX
+C++ Compiler:
+  CXX:             ${CXX}
+  CXX_VERSION:     ${CXX_VERSION}
+  DEFS:            ${DEFS}
+  CPPFLAGS:        ${CPPFLAGS}
+  CXXFLAGS:        ${CXXFLAGS}
+  LDFLAGS:         ${LDFLAGS}
+  B10_CXXFLAGS:    ${B10_CXXFLAGS}
 
-Flags:
-  DEFS:          $DEFS
-  CPPFLAGS:      $CPPFLAGS
-  CXXFLAGS:      $CXXFLAGS
-  LDFLAGS:       $LDFLAGS
-  B10_CXXFLAGS:  $B10_CXXFLAGS
-  OS Family:     $OS_TYPE
-dnl includes too
-  Python:        ${PYTHON_INCLUDES}
-                 ${PYTHON_CXXFLAGS}
-                 ${PYTHON_LDFLAGS}
-                 ${PYTHON_LIB}
-  Boost:         ${BOOST_INCLUDES}
-  Botan:         ${BOTAN_INCLUDES}
-                 ${BOTAN_LDFLAGS}
-                 ${BOTAN_LIBS}
-  Log4cplus:     ${LOG4CPLUS_INCLUDES}
-                 ${LOG4CPLUS_LIBS}
-  SQLite:        $SQLITE_CFLAGS
-                 $SQLITE_LIBS
+Python:
+  PYTHON_VERSION:  ${PYTHON_VERSION}
+  PYTHON_INCLUDES: ${PYTHON_INCLUDES}
+  PYTHON_CXXFLAGS: ${PYTHON_CXXFLAGS}
+  PYTHON_LDFLAGS:  ${PYTHON_LDFLAGS}
+  PYTHON_LIB:      ${PYTHON_LIB}
+
+Boost:
+  BOOST_VERSION:   ${BOOST_VERSION}
+  BOOST_INCLUDES:  ${BOOST_INCLUDES}
+
+Botan:
+  BOTAN_VERSION:   ${BOTAN_VERSION}
+  BOTAN_INCLUDES:  ${BOTAN_INCLUDES}
+  BOTAN_LDFLAGS:   ${BOTAN_LDFLAGS}
+  BOTAN_LIBS:      ${BOTAN_LIBS}
+
+Log4cplus:
+  LOG4CPLUS_VERSION: ${LOG4CPLUS_VERSION}
+  LOG4CPLUS_INCLUDES: ${LOG4CPLUS_INCLUDES}
+  LOG4CPLUS_LIBS:  ${LOG4CPLUS_LIBS}
+
+SQLite:
+  SQLITE_VERSION:  ${SQLITE_VERSION}
+  SQLITE_CFLAGS:   ${SQLITE_CFLAGS}
+  SQLITE_LIBS:     ${SQLITE_LIBS}
 END
 
 # Avoid confusion on DNS/DHCP and only mention MySQL if it
 # were specified on the command line.
 if test "$MYSQL_CPPFLAGS" != "" ; then
 cat >> config.report << END
-  MySQL:         $MYSQL_CPPFLAGS
-                 $MYSQL_LIBS
+
+MySQL:
+  MYSQL_VERSION:   ${MYSQL_VERSION}
+  MYSQL_CPPFLAGS:  ${MYSQL_CPPFLAGS}
+  MYSQL_LIBS:      ${MYSQL_LIBS}
+END
+fi
+
+if test "$enable_gtest" != "no"; then
+cat >> config.report << END
+
+GTest:
+  GTEST_VERSION:   ${GTEST_VERSION}
+  GTEST_INCLUDES:  ${GTEST_INCLUDES}
+  GTEST_LDFLAGS:   ${GTEST_LDFLAGS}
+  GTEST_LDADD:     ${GTEST_LDADD}
+  GTEST_SOURCE:    ${GTEST_SOURCE}
 END
 fi
 
@@ -1590,6 +1689,8 @@ END
 cat config.report
 cat <<EOF
 
-  Now you can type "make" to build BIND 10
+  Now you can type "make" to build BIND 10. Note that if you intend to
+  run "make check", you must run "make" first as some files need to be
+  generated by "make" before "make check" can be run.
 
 EOF

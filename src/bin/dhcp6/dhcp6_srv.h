@@ -206,7 +206,7 @@ protected:
     /// @brief Processes IA_NA option (and assigns addresses if necessary).
     ///
     /// Generates response to IA_NA. This typically includes selecting (and
-    /// allocating a lease in case of REQUEST) a lease and creating
+    /// allocating a lease in case of REQUEST) an address lease and creating
     /// IAADDR option. In case of allocation failure, it may contain
     /// status code option with non-zero status, denoting cause of the
     /// allocation failure.
@@ -224,6 +224,23 @@ protected:
                           Option6IAPtr ia,
                           const Option6ClientFqdnPtr& fqdn);
 
+    /// @brief Processes IA_PD option (and assigns prefixes if necessary).
+    ///
+    /// Generates response to IA_PD. This typically includes selecting (and
+    /// allocating in the case of REQUEST) a prefix lease and creating an
+    /// IAPREFIX option. In case of an allocation failure, it may contain a
+    /// status code option with non-zero status denoting the cause of the
+    /// allocation failure.
+    ///
+    /// @param subnet subnet the client is connected to
+    /// @param duid client's duid
+    /// @param query client's message (typically SOLICIT or REQUEST)
+    /// @param ia pointer to client's IA_PD option (client's request)
+    /// @return IA_PD option (server's response)
+    OptionPtr assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                          const Pkt6Ptr& query,
+                          boost::shared_ptr<Option6IA> ia);
+
     /// @brief Renews specific IA_NA option
     ///
     /// Generates response to IA_NA in Renew. This typically includes finding a
@@ -240,6 +257,20 @@ protected:
                          const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
                          const Option6ClientFqdnPtr& fqdn);
 
+    /// @brief Renews specific IA_PD option
+    ///
+    /// Generates response to IA_PD in Renew. This typically includes finding a
+    /// lease that corresponds to the received prefix. If no such lease is
+    /// found, an IA_PD response is generated with an appropriate status code.
+    ///
+    /// @param subnet subnet the sender belongs to
+    /// @param duid client's duid
+    /// @param query client's message
+    /// @param ia IA_PD option that is being renewed
+    /// @return IA_PD option (server's response)
+    OptionPtr renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                         const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia);
+
     /// @brief Releases specific IA_NA option
     ///
     /// Generates response to IA_NA in Release message. This covers finding and
@@ -255,9 +286,25 @@ protected:
     /// @param duid client's duid
     /// @param query client's message
     /// @param general_status a global status (it may be updated in case of errors)
-    /// @param ia IA_NA option that is being renewed
+    /// @param ia IA_NA option that is being released
     /// @return IA_NA option (server's response)
     OptionPtr releaseIA_NA(const DuidPtr& duid, const Pkt6Ptr& query,
+                           int& general_status,
+                           boost::shared_ptr<Option6IA> ia);
+
+    /// @brief Releases specific IA_PD option
+    ///
+    /// Generates response to IA_PD in Release message. This covers finding and
+    /// removal of a lease that corresponds to the received prefix(es). If no such
+    /// lease is found, an IA_PD response is generated with an appropriate
+    /// status code.
+    ///
+    /// @param duid client's duid
+    /// @param query client's message
+    /// @param general_status a global status (it may be updated in case of errors)
+    /// @param ia IA_PD option that is being released
+    /// @return IA_PD option (server's response)
+    OptionPtr releaseIA_PD(const DuidPtr& duid, const Pkt6Ptr& query,
                            int& general_status,
                            boost::shared_ptr<Option6IA> ia);
 
@@ -288,6 +335,15 @@ protected:
     /// @param question client's message
     /// @param answer server's message (options will be added here)
     void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
+
+    /// @brief Appends requested vendor options to server's answer.
+    ///
+    /// This is mostly useful for Cable Labs options for now, but the method
+    /// is easily extensible to other vendors.
+    ///
+    /// @param question client's message
+    /// @param answer server's message (vendor options will be added here)
+    void appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
     /// @brief Assigns leases.
     ///
@@ -459,6 +515,24 @@ protected:
     /// simulates transmission of a packet. For that purpose it is protected.
     virtual void sendPacket(const Pkt6Ptr& pkt);
 
+    /// @brief Implements a callback function to parse options in the message.
+    ///
+    /// @param buf a A buffer holding options in on-wire format.
+    /// @param option_space A name of the option space which holds definitions
+    /// of to be used to parse options in the packets.
+    /// @param [out] options A reference to the collection where parsed options
+    /// will be stored.
+    /// @param relay_msg_offset Reference to a size_t structure. If specified,
+    /// offset to beginning of relay_msg option will be stored in it.
+    /// @param relay_msg_len reference to a size_t structure. If specified,
+    /// length of the relay_msg option will be stored in it.
+    /// @return An offset to the first byte after last parsed option.
+    size_t unpackOptions(const OptionBuffer& buf,
+                         const std::string& option_space,
+                         isc::dhcp::OptionCollection& options,
+                         size_t* relay_msg_offset,
+                         size_t* relay_msg_len);
+
 private:
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
@@ -472,11 +546,6 @@ private:
     /// Indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
-
-    /// Indexes for registered hook points
-    int hook_index_pkt6_receive_;
-    int hook_index_subnet6_select_;
-    int hook_index_pkt6_send_;
 
     /// UDP port number on which server listens.
     uint16_t port_;

@@ -22,6 +22,7 @@
 #include <d2/d2_log.h>
 #include <d2/d2_queue_mgr.h>
 #include <d2/d2_cfg_mgr.h>
+#include <d2/nc_trans.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -37,57 +38,8 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-//@{
-/// @todo  This is a stub implementation of NameChangeTransaction that is here
-/// strictly to facilitate development of D2UpdateMgr. It will move to its own
-/// source file(s) once NameChangeTransaction class development begins.
-
-/// @brief Defines the key for transactions.
-typedef isc::dhcp_ddns::D2Dhcid TransactionKey;
-
-class NameChangeTransaction {
-public:
-    NameChangeTransaction(isc::asiolink::IOService& io_service,
-                          dhcp_ddns::NameChangeRequestPtr& ncr,
-                          DdnsDomainPtr forward_domain,
-                          DdnsDomainPtr reverse_domain)
-    : io_service_(io_service), ncr_(ncr), forward_domain_(forward_domain),
-      reverse_domain_(reverse_domain) {
-    }
-
-    ~NameChangeTransaction(){
-    }
-
-    const dhcp_ddns::NameChangeRequestPtr& getNcr() const {
-        return (ncr_);
-    }
-
-    const TransactionKey& getTransactionKey() const {
-        return (ncr_->getDhcid());
-    }
-
-    dhcp_ddns::NameChangeStatus getNcrStatus() const {
-        return (ncr_->getStatus());
-    }
-
-private:
-    isc::asiolink::IOService& io_service_;
-
-    dhcp_ddns::NameChangeRequestPtr ncr_;
-
-    DdnsDomainPtr forward_domain_;
-
-    DdnsDomainPtr reverse_domain_;
-};
-
-/// @brief Defines a pointer to a NameChangeTransaction.
-typedef boost::shared_ptr<NameChangeTransaction> NameChangeTransactionPtr;
-
-//@}
-
 /// @brief Defines a list of transactions.
 typedef std::map<TransactionKey, NameChangeTransactionPtr> TransactionList;
-
 
 /// @brief D2UpdateMgr creates and manages update transactions.
 ///

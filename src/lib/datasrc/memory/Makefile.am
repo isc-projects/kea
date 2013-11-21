@@ -40,8 +40,11 @@ nodist_libdatasrc_memory_la_SOURCES = memory_messages.h memory_messages.cc
 EXTRA_DIST  = rdata_serialization_priv.cc
 
 BUILT_SOURCES = memory_messages.h memory_messages.cc
-memory_messages.h memory_messages.cc: Makefile memory_messages.mes
+memory_messages.h memory_messages.cc: s-messages
+
+s-messages: Makefile memory_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/datasrc/memory/memory_messages.mes
+	touch $@
 
 EXTRA_DIST += memory_messages.mes
-CLEANFILES += memory_messages.h memory_messages.cc
+CLEANFILES += memory_messages.h memory_messages.cc s-messages
