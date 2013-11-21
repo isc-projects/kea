@@ -1047,7 +1047,7 @@ Dhcpv6Srv::appendClientFqdn(const Pkt6Ptr& question,
 
     // If FQDN is NULL, it means that client did not request DNS Update, plus
     // server doesn't force updates.
-    if (fqdn) {
+    if (!fqdn) {
         return;
     }
 
