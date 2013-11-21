@@ -91,14 +91,15 @@ public:
                                                            fqdn_type)));
     }
 
-    // Create a message holding DHCPv6 Client FQDN Option.
-    Pkt6Ptr generatePktWithFqdn(uint8_t msg_type,
-                                const uint8_t fqdn_flags,
-                                const std::string& fqdn_domain_name,
-                                const Option6ClientFqdn::DomainNameType
-                                fqdn_type,
-                                const bool include_oro,
-                                OptionPtr srvid = OptionPtr()) {
+    // Create a message which optionally holds DHCPv6 Client FQDN Option.
+    Pkt6Ptr generateMessage(uint8_t msg_type,
+                            const uint8_t fqdn_flags,
+                            const std::string& fqdn_domain_name,
+                            const Option6ClientFqdn::DomainNameType
+                            fqdn_type,
+                            const bool include_oro,
+                            const bool include_fqdn = true,
+                            OptionPtr srvid = OptionPtr()) {
         Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(msg_type, 1234));
         pkt->setRemoteAddr(IOAddress("fe80::abcd"));
         Option6IAPtr ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
@@ -116,8 +117,10 @@ public:
             pkt->addOption(srvid);
         }
 
-        pkt->addOption(createClientFqdn(fqdn_flags, fqdn_domain_name,
-                                        fqdn_type));
+        if (include_fqdn) {
+            pkt->addOption(createClientFqdn(fqdn_flags, fqdn_domain_name,
+                                            fqdn_type));
+        }
 
         if (include_oro) {
             OptionUint16ArrayPtr oro(new OptionUint16Array(Option::V6,
@@ -196,11 +199,11 @@ public:
                   const uint8_t exp_flags,
                   const std::string& exp_domain_name) {
         NakedDhcpv6Srv srv(0);
-        Pkt6Ptr question = generatePktWithFqdn(msg_type,
-                                               in_flags,
-                                               in_domain_name,
-                                               in_domain_type,
-                                               use_oro);
+        Pkt6Ptr question = generateMessage(msg_type,
+                                           in_flags,
+                                           in_domain_name,
+                                           in_domain_type,
+                                           use_oro);
         ASSERT_TRUE(getClientFqdnOption(question));
 
         Option6ClientFqdnPtr answ_fqdn;
@@ -223,14 +226,15 @@ public:
     // lease is acquired.
     void testProcessMessage(const uint8_t msg_type,
                             const std::string& hostname,
-                            NakedDhcpv6Srv& srv) {
+                            NakedDhcpv6Srv& srv,
+                            const bool test_fqdn = true) {
         // Create a message of a specified type, add server id and
         // FQDN option.
         OptionPtr srvid = srv.getServerID();
-        Pkt6Ptr req = generatePktWithFqdn(msg_type, Option6ClientFqdn::FLAG_S,
-                                          hostname,
-                                          Option6ClientFqdn::FULL,
-                                          true, srvid);
+        Pkt6Ptr req = generateMessage(msg_type, Option6ClientFqdn::FLAG_S,
+                                      hostname,
+                                      Option6ClientFqdn::FULL,
+                                      true, test_fqdn, srvid);
 
         // For different client's message types we have to invoke different
         // functions to generate response.
@@ -276,6 +280,12 @@ public:
             Lease6Ptr lease =
                 checkLease(duid_, reply->getOption(D6O_IA_NA), addr);
             ASSERT_TRUE(lease);
+        }
+
+        if (test_fqdn) {
+            ASSERT_TRUE(reply->getOption(D6O_CLIENT_FQDN));
+        } else {
+            ASSERT_FALSE(reply->getOption(D6O_CLIENT_FQDN));
         }
     }
 
@@ -1943,6 +1953,19 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 4000);
 
+}
+
+// Checks that the server does not include DHCPv6 Client FQDN option in its
+// response when client doesn't include this option in a Request.
+TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
+    NakedDhcpv6Srv srv(0);
+
+    // The last parameter disables the use of DHCPv6 Client FQDN option
+    // in the client's Request. In this case, we expect that the FQDN
+    // option will not be included in the server's response. The
+    // testProcessMessage will check that.
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com", srv, false);
+    ASSERT_TRUE(srv.name_change_reqs_.empty());
 }
 
 // Checks if server responses are sent to the proper port.
