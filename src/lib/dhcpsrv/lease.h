@@ -209,6 +209,20 @@ struct Lease4 : public Lease {
     /// @param other the @c Lease4 object to be copied.
     Lease4(const Lease4& other);
 
+    /// @brief Check if two objects encapsulate the lease for the same
+    /// client.
+    ///
+    /// Checks if two @c Lease4 objects have the same address, client id,
+    /// HW address and ext_ value.  If these parameters match it is an
+    /// indication that both objects describe the lease for the same
+    /// client but apparently one is a result of renewal of the other. The
+    /// special case of the matching lease is the one that is equal to another.
+    ///
+    /// @param other A lease to compare with.
+    ///
+    /// @return true if the selected parameters of the two leases match.
+    bool matches(const Lease4& other) const;
+
     /// @brief Assignment operator.
     ///
     /// @param other the @c Lease4 object to be assigned.
@@ -319,6 +333,20 @@ struct Lease6 : public Lease {
                      false, false, ""),
         type_(TYPE_NA) {
     }
+
+    /// @brief Checks if two lease objects encapsulate the lease for the same
+    /// client.
+    ///
+    /// This function compares address, type, prefix length, IAID and DUID
+    /// parameters between two @c Lease6 objects. If these parameters match
+    /// it is an indication that both objects describe the lease for the same
+    /// client but apparently one is a result of renewal of the other. The
+    /// special case of the matching lease is the one that is equal to another.
+    ///
+    /// @param other A lease to compare to.
+    ///
+    /// @return true if selected parameters of the two leases match.
+    bool matches(const Lease6& other) const;
 
     /// @brief Compare two leases for equality
     ///

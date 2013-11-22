@@ -14,6 +14,7 @@
 
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <util/time_utilities.h>
 
 #include <gtest/gtest.h>
@@ -290,6 +291,26 @@ TEST(NameChangeRequestTest, dhcidTest) {
 
 }
 
+/// @brief Test fixture class for testing DHCID creation.
+class DhcidTest : public ::testing::Test {
+public:
+    /// @brief Constructor
+    DhcidTest() {
+        const uint8_t fqdn_data[] = {
+            6, 109, 121, 104, 111, 115, 116,     // myhost.
+            7, 101, 120, 97, 109, 112, 108, 101, // example.
+            3, 99, 111, 109, 0                   // com.
+        };
+        wire_fqdn_.assign(fqdn_data, fqdn_data + sizeof(fqdn_data));
+    }
+
+    /// @brief Destructor
+    virtual ~DhcidTest() {
+    }
+
+    std::vector<uint8_t> wire_fqdn_;
+};
+
 /// Tests that DHCID is correctly created from a DUID and FQDN. The final format
 /// of the DHCID is as follows:
 /// <identifier-type> <digest-type-code> <digest>
@@ -298,25 +319,15 @@ TEST(NameChangeRequestTest, dhcidTest) {
 /// - digest-type-code (1 octet) indicates SHA-256 hashing and is equal 0x1.
 /// - digest = SHA-256(<DUID> <FQDN>)
 /// Note: FQDN is given in the on-wire canonical format.
-TEST(NameChangeRequestTest, dhcidFromDUID) {
+TEST_F(DhcidTest, fromDUID) {
     D2Dhcid dhcid;
 
     // Create DUID.
     uint8_t duid_data[] = { 0, 1, 2, 3, 4, 5, 6 };
     DUID duid(duid_data, sizeof(duid_data));
 
-    // Create FQDN in on-wire format: myhost.example.com. It is encoded
-    // as a set of labels, each preceded by its length. The whole FQDN
-    // is zero-terminated.
-    const uint8_t fqdn_data[] = {
-        6, 109, 121, 104, 111, 115, 116,     // myhost.
-        7, 101, 120, 97, 109, 112, 108, 101, // example.
-        3, 99, 111, 109, 0                   // com.
-    };
-    std::vector<uint8_t> wire_fqdn(fqdn_data, fqdn_data + sizeof(fqdn_data));
-
     // Create DHCID.
-    ASSERT_NO_THROW(dhcid.fromDUID(duid, wire_fqdn));
+    ASSERT_NO_THROW(dhcid.fromDUID(duid, wire_fqdn_));
 
     // The reference DHCID (represented as string of hexadecimal digits)
     // has been calculated using one of the online calculators.
@@ -328,25 +339,15 @@ TEST(NameChangeRequestTest, dhcidFromDUID) {
 }
 
 // Test that DHCID is correctly created when the DUID has minimal length (1).
-TEST(NameChangeRequestTest, dhcidFromMinDUID) {
+TEST_F(DhcidTest, fromMinDUID) {
     D2Dhcid dhcid;
 
     // Create DUID.
     uint8_t duid_data[] = { 1 };
     DUID duid(duid_data, sizeof(duid_data));
 
-    // Create FQDN in on-wire format: myhost.example.com. It is encoded
-    // as a set of labels, each preceded by its length. The whole FQDN
-    // is zero-terminated.
-    const uint8_t fqdn_data[] = {
-        6, 109, 121, 104, 111, 115, 116,     // myhost.
-        7, 101, 120, 97, 109, 112, 108, 101, // example.
-        3, 99, 111, 109, 0                   // com.
-    };
-    std::vector<uint8_t> wire_fqdn(fqdn_data, fqdn_data + sizeof(fqdn_data));
-
     // Create DHCID.
-    ASSERT_NO_THROW(dhcid.fromDUID(duid, wire_fqdn));
+    ASSERT_NO_THROW(dhcid.fromDUID(duid, wire_fqdn_));
 
     // The reference DHCID (represented as string of hexadecimal digits)
     // has been calculated using one of the online calculators.
@@ -358,25 +359,15 @@ TEST(NameChangeRequestTest, dhcidFromMinDUID) {
 }
 
 // Test that DHCID is correctly created when the DUID has maximal length (128).
-TEST(NameChangeRequestTest, dhcidFromMaxDUID) {
+TEST_F(DhcidTest, fromMaxDUID) {
     D2Dhcid dhcid;
 
     // Create DUID.
     std::vector<uint8_t> duid_data(128, 1);
     DUID duid(&duid_data[0], duid_data.size());
 
-    // Create FQDN in on-wire format: myhost.example.com. It is encoded
-    // as a set of labels, each preceded by its length. The whole FQDN
-    // is zero-terminated.
-    const uint8_t fqdn_data[] = {
-        6, 109, 121, 104, 111, 115, 116,     // myhost.
-        7, 101, 120, 97, 109, 112, 108, 101, // example.
-        3, 99, 111, 109, 0                   // com.
-    };
-    std::vector<uint8_t> wire_fqdn(fqdn_data, fqdn_data + sizeof(fqdn_data));
-
     // Create DHCID.
-    ASSERT_NO_THROW(dhcid.fromDUID(duid, wire_fqdn));
+    ASSERT_NO_THROW(dhcid.fromDUID(duid, wire_fqdn_));
 
     // The reference DHCID (represented as string of hexadecimal digits)
     // has been calculated using one of the online calculators.
@@ -385,6 +376,71 @@ TEST(NameChangeRequestTest, dhcidFromMaxDUID) {
 
     // Make sure that the DHCID is valid.
     EXPECT_EQ(dhcid_ref, dhcid.toStr());
+}
+
+// This test verifies that DHCID is properly computed from a buffer holding
+// client identifier data.
+TEST_F(DhcidTest, fromClientId) {
+    D2Dhcid dhcid;
+
+    // Create a buffer holding client id..
+    uint8_t clientid_data[] = { 0, 1, 2, 3, 4, 5, 6 };
+    std::vector<uint8_t> clientid(clientid_data,
+                                  clientid_data + sizeof(clientid_data));
+
+    // Create DHCID.
+    ASSERT_NO_THROW(dhcid.fromClientId(clientid, wire_fqdn_));
+
+    // The reference DHCID (represented as string of hexadecimal digits)
+    // has been calculated using one of the online calculators.
+    std::string dhcid_ref = "0001012191B7B21AF97E0E656DF887C5E2D"
+        "EF30E7758A207EDF4CCB2DE8CA37066021C";
+
+    // Make sure that the DHCID is valid.
+    EXPECT_EQ(dhcid_ref, dhcid.toStr());
+
+    // Make sure that the empty FQDN is not accepted.
+    std::vector<uint8_t> empty_wire_fqdn;
+    EXPECT_THROW(dhcid.fromClientId(clientid, empty_wire_fqdn),
+                 isc::dhcp_ddns::DhcidRdataComputeError);
+
+    // Make sure that the empty client identifier is not accepted.
+    clientid.clear();
+    EXPECT_THROW(dhcid.fromClientId(clientid, wire_fqdn_),
+                 isc::dhcp_ddns::DhcidRdataComputeError);
+
+
+}
+
+// This test verifies that DHCID is properly computed from a HW address.
+TEST_F(DhcidTest, fromHWAddr) {
+    D2Dhcid dhcid;
+
+    // Create a buffer holding client id..
+    uint8_t hwaddr_data[] = { 0, 1, 2, 3, 4, 5, 6 };
+    HWAddrPtr hwaddr(new HWAddr(hwaddr_data, sizeof(hwaddr_data),
+                                HTYPE_ETHER));
+
+    // Create DHCID.
+    ASSERT_NO_THROW(dhcid.fromHWAddr(hwaddr, wire_fqdn_));
+
+    // The reference DHCID (represented as string of hexadecimal digits)
+    // has been calculated using one of the online calculators.
+    std::string dhcid_ref = "0000012247F6DC4423C3E8627434A9D686860"
+        "9D88948F78018B215EDCAA30C0C135035";
+
+    // Make sure that the DHCID is valid.
+    EXPECT_EQ(dhcid_ref, dhcid.toStr());
+
+    // Make sure that the empty FQDN is not accepted.
+    std::vector<uint8_t> empty_wire_fqdn;
+    EXPECT_THROW(dhcid.fromHWAddr(hwaddr, empty_wire_fqdn),
+                 isc::dhcp_ddns::DhcidRdataComputeError);
+
+    // Make sure that the NULL HW address is not accepted.
+    hwaddr.reset();
+    EXPECT_THROW(dhcid.fromHWAddr(hwaddr, wire_fqdn_),
+                 isc::dhcp_ddns::DhcidRdataComputeError);
 }
 
 // test operator<< on D2Dhcid
@@ -518,7 +574,6 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
     // Verify that the final string matches the original.
     ASSERT_EQ(final_str, msg_str);
 }
-
 
 } // end of anonymous namespace
 

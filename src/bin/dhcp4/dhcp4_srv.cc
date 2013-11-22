@@ -35,6 +35,7 @@
 #include <dhcpsrv/utils.h>
 #include <hooks/callout_handle.h>
 #include <hooks/hooks_manager.h>
+#include <util/strutil.h>
 
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/bind.hpp>
@@ -46,6 +47,7 @@
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp_ddns;
 using namespace isc::hooks;
 using namespace isc::log;
 using namespace std;
@@ -78,6 +80,36 @@ Dhcp4Hooks Hooks;
 
 namespace isc {
 namespace dhcp {
+
+namespace {
+
+// @todo The following constants describe server's behavior with respect to the
+// DHCPv4 Client FQDN Option sent by a client. They will be removed
+// when DDNS parameters for DHCPv4 are implemented with the ticket #3033.
+
+// @todo Additional configuration parameter which we may consider is the one
+// that controls whether the DHCP server sends the removal NameChangeRequest
+// if it discovers that the entry for the particular client exists or that
+// it always updates the DNS.
+
+// Should server always include the FQDN option in its response, regardless
+// if it has been requested in Parameter Request List Option (Disabled).
+const bool FQDN_ALWAYS_INCLUDE = false;
+// Enable A RR update delegation to the client (Disabled).
+const bool FQDN_ALLOW_CLIENT_UPDATE = false;
+// Globally enable updates (Enabled).
+const bool FQDN_ENABLE_UPDATE = true;
+// Do update, even if client requested no updates with N flag (Disabled).
+const bool FQDN_OVERRIDE_NO_UPDATE = false;
+// Server performs an update when client requested delegation (Enabled).
+const bool FQDN_OVERRIDE_CLIENT_UPDATE = true;
+// The fully qualified domain-name suffix if partial name provided by
+// a client.
+const char* FQDN_PARTIAL_SUFFIX = "example.com";
+// Should server replace the domain-name supplied by the client (Disabled).
+const bool FQDN_REPLACE_CLIENT_NAME = false;
+
+}
 
 /// @brief file name of a server-id file
 ///
@@ -442,6 +474,9 @@ Dhcpv4Srv::run() {
             LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL)
                 .arg(e.what());
         }
+
+        // Send NameChangeRequests to the b10-dhcp_ddns module.
+        sendNameChangeRequests();
     }
 
     return (true);
@@ -549,6 +584,52 @@ Dhcpv4Srv::srvidToString(const OptionPtr& srvid) {
     }
 
     return (addrs[0].toText());
+}
+
+isc::dhcp_ddns::D2Dhcid
+Dhcpv4Srv::computeDhcid(const Lease4Ptr& lease) {
+    if (!lease) {
+        isc_throw(DhcidComputeError, "a pointer to the lease must be not"
+                  " NULL to compute DHCID");
+
+    } else if (lease->hostname_.empty()) {
+        isc_throw(DhcidComputeError, "unable to compute the DHCID for the"
+                  " lease which has empty hostname set");
+
+    }
+
+    // In order to compute DHCID the client's hostname must be encoded in
+    // canonical wire format. It is unlikely that the FQDN is malformed
+    // because it is validated by the classes which encapsulate options
+    // carrying client FQDN. However, if the client name was carried in the
+    // Hostname option it is more likely as it carries the hostname as a
+    // regular string.
+    std::vector<uint8_t> fqdn_wire;
+    try {
+        OptionDataTypeUtil::writeFqdn(lease->hostname_, fqdn_wire, true);
+
+    } catch (const Exception& ex) {
+        isc_throw(DhcidComputeError, "unable to compute DHCID because the"
+                  " hostname: " << lease->hostname_ << " is invalid");
+
+    }
+
+    // Prefer client id to HW address to compute DHCID. If Client Id is
+    // NULL, use HW address.
+    try {
+        if (lease->client_id_) {
+            return (D2Dhcid(lease->client_id_->getClientId(), fqdn_wire));
+
+        } else {
+            HWAddrPtr hwaddr(new HWAddr(lease->hwaddr_, HTYPE_ETHER));
+            return (D2Dhcid(hwaddr, fqdn_wire));
+        }
+    } catch (const Exception& ex) {
+        isc_throw(DhcidComputeError, "unable to compute DHCID: "
+                  << ex.what());
+
+    }
+
 }
 
 void
@@ -739,6 +820,265 @@ Dhcpv4Srv::appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg) {
 }
 
 void
+Dhcpv4Srv::processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer) {
+    // It is possible that client has sent both Client FQDN and Hostname
+    // option. In such case, server should prefer Client FQDN option and
+    // ignore the Hostname option.
+    try {
+        Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>
+            (query->getOption(DHO_FQDN));
+        if (fqdn) {
+            processClientFqdnOption(fqdn, answer);
+
+        } else {
+            OptionCustomPtr hostname = boost::dynamic_pointer_cast<OptionCustom>
+                (query->getOption(DHO_HOST_NAME));
+            if (hostname) {
+                processHostnameOption(hostname, answer);
+            }
+
+        }
+    } catch (const Exception& ex) {
+        // In some rare cases it is possible that the client's name processing
+        // fails. For example, the Hostname option may be malformed, or there
+        // may be an error in the server's logic which would cause multiple
+        // attempts to add the same option to the response message. This
+        // error message aggregates all these errors so they can be diagnosed
+        // from the log. We don't want to throw an exception here because,
+        // it will impact the processing of the whole packet. We rather want
+        // the processing to continue, even if the client's name is wrong.
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_CLIENT_NAME_PROC_FAIL)
+            .arg(ex.what());
+    }
+}
+
+void
+Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
+                                   Pkt4Ptr& answer) {
+    // Create the DHCPv4 Client FQDN Option to be included in the server's
+    // response to a client.
+    Option4ClientFqdnPtr fqdn_resp(new Option4ClientFqdn(*fqdn));
+
+    // RFC4702, section 4 - set 'NOS' flags to 0.
+    fqdn_resp->setFlag(Option4ClientFqdn::FLAG_S, 0);
+    fqdn_resp->setFlag(Option4ClientFqdn::FLAG_O, 0);
+    fqdn_resp->setFlag(Option4ClientFqdn::FLAG_N, 0);
+
+    // Conditions when N flag has to be set to indicate that server will not
+    // perform DNS updates:
+    // 1. Updates are globally disabled,
+    // 2. Client requested no update and server respects it,
+    // 3. Client requested that the foward DNS update is delegated to the client
+    //    but server neither respects requests for forward update delegation nor
+    //    it is configured to send update on its own when client requested
+    //    delegation.
+    if (!FQDN_ENABLE_UPDATE ||
+        (fqdn->getFlag(Option4ClientFqdn::FLAG_N) &&
+         !FQDN_OVERRIDE_NO_UPDATE) ||
+        (!fqdn->getFlag(Option4ClientFqdn::FLAG_S) &&
+         !FQDN_ALLOW_CLIENT_UPDATE && !FQDN_OVERRIDE_CLIENT_UPDATE)) {
+        fqdn_resp->setFlag(Option4ClientFqdn::FLAG_N, true);
+
+    // Conditions when S flag is set to indicate that server will perform DNS
+    // update on its own:
+    // 1. Client requested that server performs DNS update and DNS updates are
+    //    globally enabled.
+    // 2. Client requested that server delegates forward update to the client
+    //    but server doesn't respect requests for delegation and it is
+    // configured to perform an update on its own when client requested the
+    // delegation.
+    } else  if (fqdn->getFlag(Option4ClientFqdn::FLAG_S) ||
+                (!fqdn->getFlag(Option4ClientFqdn::FLAG_S) &&
+                 !FQDN_ALLOW_CLIENT_UPDATE && FQDN_OVERRIDE_CLIENT_UPDATE)) {
+        fqdn_resp->setFlag(Option4ClientFqdn::FLAG_S, true);
+    }
+
+    // Server MUST set the O flag if it has overriden the client's setting
+    // of S flag.
+    if (fqdn->getFlag(Option4ClientFqdn::FLAG_S) !=
+        fqdn_resp->getFlag(Option4ClientFqdn::FLAG_S)) {
+        fqdn_resp->setFlag(Option4ClientFqdn::FLAG_O, true);
+    }
+
+    // If client suppled partial or empty domain-name, server should generate
+    // one.
+    if (fqdn->getDomainNameType() == Option4ClientFqdn::PARTIAL) {
+        std::ostringstream name;
+        if (fqdn->getDomainName().empty() || FQDN_REPLACE_CLIENT_NAME) {
+            fqdn_resp->setDomainName("", Option4ClientFqdn::PARTIAL);
+
+        } else {
+            name << fqdn->getDomainName();
+            name << "." << FQDN_PARTIAL_SUFFIX;
+            fqdn_resp->setDomainName(name.str(), Option4ClientFqdn::FULL);
+
+        }
+
+    // Server may be configured to replace a name supplied by a client, even if
+    // client supplied fully qualified domain-name. The empty domain-name is
+    // is set to indicate that the name must be generated when the new lease
+    // is acquired.
+    } else if(FQDN_REPLACE_CLIENT_NAME) {
+        fqdn_resp->setDomainName("", Option4ClientFqdn::PARTIAL);
+    }
+
+    // Add FQDN option to the response message. Note that, there may be some
+    // cases when server may choose not to include the FQDN option in a
+    // response to a client. In such cases, the FQDN should be removed from the
+    // outgoing message. In theory we could cease to include the FQDN option
+    // in this function until it is confirmed that it should be included.
+    // However, we include it here for simplicity. Functions used to acquire
+    // lease for a client will scan the response message for FQDN and if it
+    // is found they will take necessary actions to store the FQDN information
+    // in the lease database as well as to generate NameChangeRequests to DNS.
+    // If we don't store the option in the reponse message, we will have to
+    // propagate it in the different way to the functions which acquire the
+    // lease. This would require modifications to the API of this class.
+    answer->addOption(fqdn_resp);
+}
+
+void
+Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
+                                 Pkt4Ptr& answer) {
+    // Do nothing if the DNS updates are disabled.
+    if (!FQDN_ENABLE_UPDATE) {
+        return;
+    }
+
+    std::string hostname = isc::util::str::trim(opt_hostname->readString());
+    unsigned int label_count = OptionDataTypeUtil::getLabelCount(hostname);
+    // The hostname option sent by the client should be at least 1 octet long.
+    // If it isn't we ignore this option.
+    if (label_count == 0) {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_EMPTY_HOSTNAME);
+        return;
+    }
+    // Copy construct the hostname provided by the client. It is entirely
+    // possible that we will use the hostname option provided by the client
+    // to perform the DNS update and we will send the same option to him to
+    // indicate that we accepted this hostname.
+    OptionCustomPtr opt_hostname_resp(new OptionCustom(*opt_hostname));
+
+    // The hostname option may be unqualified or fully qualified. The lab_count
+    // holds the number of labels for the name. The number of 1 means that
+    // there is only root label "." (even for unqualified names, as the
+    // getLabelCount function treats each name as a fully qualified one).
+    // By checking the number of labels present in the hostname we may infer
+    // whether client has sent the fully qualified or unqualified hostname.
+
+    // @todo We may want to reconsider whether it is appropriate for the
+    // client to send a root domain name as a Hostname. There are
+    // also extensions to the auto generation of the client's name,
+    // e.g. conversion to the puny code which may be considered at some point.
+    // For now, we just remain liberal and expect that the DNS will handle
+    // conversion if needed and possible.
+    if (FQDN_REPLACE_CLIENT_NAME || (label_count < 2)) {
+        opt_hostname_resp->writeString("");
+    // If there are two labels, it means that the client has specified
+    // the unqualified name. We have to concatenate the unqalified name
+    // with the domain name.
+    } else if (label_count == 2) {
+        std::ostringstream resp_hostname;
+        resp_hostname << hostname << "." << FQDN_PARTIAL_SUFFIX << ".";
+        opt_hostname_resp->writeString(resp_hostname.str());
+    }
+
+    answer->addOption(opt_hostname_resp);
+}
+
+void
+Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
+                                    const Lease4Ptr& old_lease) {
+    if (!lease) {
+        isc_throw(isc::Unexpected,
+                  "NULL lease specified when creating NameChangeRequest");
+    }
+
+    // If old lease is not NULL, it is an indication that the lease has
+    // just been renewed. In such case we may need to generate the
+    // additional NameChangeRequest to remove an existing entry before
+    // we create a NameChangeRequest to add the entry for an updated lease.
+    // We may also decide not to generate any requests at all. This is when
+    // we discover that nothing has changed in the client's FQDN data.
+    if (old_lease) {
+        if (!lease->matches(*old_lease)) {
+            isc_throw(isc::Unexpected,
+                      "there is no match between the current instance of the"
+                      " lease: " << lease->toText() << ", and the previous"
+                      " instance: " << lease->toText());
+        } else {
+            // There will be a NameChangeRequest generated to remove existing
+            // DNS entries if the following conditions are met:
+            // - The hostname is set for the existing lease, we can't generate
+            //   removal request for non-existent hostname.
+            // - A server has performed reverse, forward or both updates.
+            // - FQDN data between the new and old lease do not match.
+            if  ((lease->hostname_ != old_lease->hostname_) ||
+                 (lease->fqdn_fwd_ != old_lease->fqdn_fwd_) ||
+                 (lease->fqdn_rev_ != old_lease->fqdn_rev_)) {
+                queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
+                                       old_lease);
+
+            // If FQDN data from both leases match, there is no need to update.
+            } else if ((lease->hostname_ == old_lease->hostname_) &&
+                       (lease->fqdn_fwd_ == old_lease->fqdn_fwd_) &&
+                       (lease->fqdn_rev_ == old_lease->fqdn_rev_)) {
+                return;
+            }
+
+        }
+    }
+
+    // We may need to generate the NameChangeRequest for the new lease. It
+    // will be generated only if hostname is set and if forward or reverse
+    // update has been requested.
+    queueNameChangeRequest(isc::dhcp_ddns::CHG_ADD, lease);
+}
+
+void
+Dhcpv4Srv::
+queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
+                       const Lease4Ptr& lease) {
+    // The hostname must not be empty, and at least one type of update
+    // should be requested.
+    if (!lease || lease->hostname_.empty() ||
+        (!lease->fqdn_rev_ && !lease->fqdn_fwd_)) {
+        return;
+    }
+
+    // Create the DHCID for the NameChangeRequest.
+    D2Dhcid dhcid;
+    try {
+        dhcid  = computeDhcid(lease);
+    } catch (const DhcidComputeError& ex) {
+        LOG_ERROR(dhcp4_logger, DHCP4_DHCID_COMPUTE_ERROR)
+            .arg(lease->toText())
+            .arg(ex.what());
+        return;
+    }
+    // Create NameChangeRequest
+    NameChangeRequest ncr(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
+                          lease->hostname_, lease->addr_.toText(),
+                          dhcid, lease->cltt_ + lease->valid_lft_,
+                          lease->valid_lft_);
+    // And queue it.
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
+        .arg(chg_type == CHG_ADD ? "add" : "remove")
+        .arg(ncr.toText());
+    name_change_reqs_.push(ncr);
+}
+
+void
+Dhcpv4Srv::sendNameChangeRequests() {
+    while (!name_change_reqs_.empty()) {
+        // @todo Once next NameChangeRequest is picked from the queue
+        // we should send it to the b10-dhcp_ddns module. Currently we
+        // just drop it.
+        name_change_reqs_.pop();
+    }
+}
+
+void
 Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
     // We need to select a subnet the client is connected in.
@@ -794,6 +1134,28 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
     CalloutHandlePtr callout_handle = getCalloutHandle(question);
 
+    std::string hostname;
+    bool fqdn_fwd = false;
+    bool fqdn_rev = false;
+    OptionCustomPtr opt_hostname;
+    Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
+        Option4ClientFqdn>(answer->getOption(DHO_FQDN));
+    if (fqdn) {
+        hostname = fqdn->getDomainName();
+        fqdn_fwd = fqdn->getFlag(Option4ClientFqdn::FLAG_S);
+        fqdn_rev = !fqdn->getFlag(Option4ClientFqdn::FLAG_N);
+    } else {
+        opt_hostname = boost::dynamic_pointer_cast<OptionCustom>
+            (answer->getOption(DHO_HOST_NAME));
+        if (opt_hostname) {
+            hostname = opt_hostname->readString();
+            // @todo It could be configurable what sort of updates the server
+            // is doing when Hostname option was sent.
+            fqdn_fwd = true;
+            fqdn_rev = true;
+        }
+    }
+
     // Use allocation engine to pick a lease for this client. Allocation engine
     // will try to honour the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
@@ -801,7 +1163,8 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     // @todo pass the actual FQDN data.
     Lease4Ptr old_lease;
     Lease4Ptr lease = alloc_engine_->allocateLease4(subnet, client_id, hwaddr,
-                                                    hint, false, false, "",
+                                                      hint, fqdn_fwd, fqdn_rev,
+                                                      hostname,
                                                     fake_allocation,
                                                     callout_handle,
                                                     old_lease);
@@ -817,6 +1180,42 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
         answer->setYiaddr(lease->addr_);
 
+        // If there has been Client FQDN or Hostname option sent, but the
+        // hostname is empty, it means that server is responsible for
+        // generating the entire hostname for the client. The example of the
+        // client's name, generated from the IP address is: host-192-0-2-3.
+        if ((fqdn || opt_hostname) && lease->hostname_.empty()) {
+            hostname = lease->addr_.toText();
+            // Replace dots with hyphens.
+            std::replace(hostname.begin(), hostname.end(), '.', '-');
+            ostringstream stream;
+            // The partial suffix will need to be replaced with the actual
+            // domain-name for the client when configuration is implemented.
+            stream << "host-" << hostname << "." << FQDN_PARTIAL_SUFFIX << ".";
+            lease->hostname_ = stream.str();
+            // The operations below are rather safe, but we want to catch
+            // any potential exceptions (e.g. invalid lease database backend
+            // implementation) and log an error.
+            try {
+                // The lease update should be safe, because the lease should
+                // be already in the database. In most cases the exception
+                // would be thrown if the lease was missing.
+                LeaseMgrFactory::instance().updateLease4(lease);
+                // The name update in the option should be also safe,
+                // because the generated name is well formed.
+                if (fqdn) {
+                    fqdn->setDomainName(lease->hostname_,
+                                        Option4ClientFqdn::FULL);
+                } else if (opt_hostname) {
+                    opt_hostname->writeString(lease->hostname_);
+                }
+
+            } catch (const Exception& ex) {
+                LOG_ERROR(dhcp4_logger, DHCP4_NAME_GEN_UPDATE_FAIL)
+                    .arg(ex.what());
+            }
+        }
+
         // IP Address Lease time (type 51)
         opt = OptionPtr(new Option(Option::V4, DHO_DHCP_LEASE_TIME));
         opt->setUint32(lease->valid_lft_);
@@ -827,6 +1226,21 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
         // @todo: send renew timer option (T1, option 58)
         // @todo: send rebind timer option (T2, option 59)
+
+        // @todo Currently the NameChangeRequests are always generated if
+        // real (not fake) allocation is being performed. Should we have
+        // control switch to enable/disable NameChangeRequest creation?
+        // Perhaps we need a way to detect whether the b10-dhcp-ddns module
+        // is up an running?
+        if (!fake_allocation) {
+            try {
+                createNameChangeRequests(lease, old_lease);
+            } catch (const Exception& ex) {
+                LOG_ERROR(dhcp4_logger, DHCP4_NCR_CREATION_FAILED)
+                    .arg(ex.what());
+            }
+
+        }
 
     } else {
         // Allocation engine did not allocate a lease. The engine logged
@@ -841,6 +1255,9 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 
         answer->setType(DHCPNAK);
         answer->setYiaddr(IOAddress("0.0.0.0"));
+
+        answer->delOption(DHO_FQDN);
+        answer->delOption(DHO_HOST_NAME);
     }
 }
 
@@ -919,6 +1336,12 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
     copyDefaultFields(discover, offer);
     appendDefaultOptions(offer, DHCPOFFER);
 
+    // If DISCOVER message contains the FQDN or Hostname option, server
+    // may respond to the client with the appropriate FQDN or Hostname
+    // option to indicate that whether it will take responsibility for
+    // updating DNS when the client sends REQUEST message.
+    processClientName(discover, offer);
+
     assignLease(discover, offer);
 
     // Adding any other options makes sense only when we got the lease.
@@ -945,6 +1368,12 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
 
     copyDefaultFields(request, ack);
     appendDefaultOptions(ack, DHCPACK);
+
+    // If REQUEST message contains the FQDN or Hostname option, server
+    // should respond to the client with the appropriate FQDN or Hostname
+    // option to indicate if it takes responsibility for the DNS updates.
+    // This is performed by the function below.
+    processClientName(request, ack);
 
     // Note that we treat REQUEST message uniformly, regardless if this is a
     // first request (requesting for new address), renewing existing address
@@ -979,12 +1408,12 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
     try {
         // Do we have a lease for that particular address?
-        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(release->getYiaddr());
+        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(release->getCiaddr());
 
         if (!lease) {
             // No such lease - bogus release
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_NO_LEASE)
-                .arg(release->getYiaddr().toText())
+                .arg(release->getCiaddr().toText())
                 .arg(release->getHWAddr()->toText())
                 .arg(client_id ? client_id->toText() : "(no client-id)");
             return;
@@ -995,7 +1424,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
         if (lease->hwaddr_ != release->getHWAddr()->hwaddr_) {
             // @todo: Print hwaddr from lease as part of ticket #2589
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_HWADDR)
-                .arg(release->getYiaddr().toText())
+                .arg(release->getCiaddr().toText())
                 .arg(client_id ? client_id->toText() : "(no client-id)")
                 .arg(release->getHWAddr()->toText());
             return;
@@ -1005,7 +1434,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
         // the client sent us.
         if (lease->client_id_ && client_id && *lease->client_id_ != *client_id) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_WRONG_CLIENT_ID)
-                .arg(release->getYiaddr().toText())
+                .arg(release->getCiaddr().toText())
                 .arg(client_id->toText())
                 .arg(lease->client_id_->toText());
             return;
@@ -1045,11 +1474,15 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
             bool success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
 
             if (success) {
-                // Release successful - we're done here
+                // Release successful
                 LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE)
                     .arg(lease->addr_.toText())
                     .arg(client_id ? client_id->toText() : "(no client-id)")
                     .arg(release->getHWAddr()->toText());
+
+                // Remove existing DNS entries for the lease, if any.
+                queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, lease);
+
             } else {
                 // Release failed -
                 LOG_ERROR(dhcp4_logger, DHCP4_RELEASE_FAIL)
