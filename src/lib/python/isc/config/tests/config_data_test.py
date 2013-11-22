@@ -47,6 +47,7 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, "a")
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, [ 1, 2 ])
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, { "a": 1 })
+        self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, 10000000000000000000000)
 
         spec_part = find_spec_part(config_spec, "value2")
         check_type(spec_part, 1.1)
@@ -55,6 +56,7 @@ class TestConfigData(unittest.TestCase):
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, "a")
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, [ 1, 2 ])
         self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, { "a": 1 })
+        self.assertRaises(isc.cc.data.DataTypeError, check_type, spec_part, 2.0000000e+308)
 
         spec_part = find_spec_part(config_spec, "value3")
         check_type(spec_part, True)
