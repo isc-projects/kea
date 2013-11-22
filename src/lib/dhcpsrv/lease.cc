@@ -74,6 +74,16 @@ Lease4::Lease4(const Lease4& other)
     }
 }
 
+const std::vector<uint8_t>&
+Lease4::getClientIdVector() const {
+    if(!client_id_) {
+        static std::vector<uint8_t> empty_vec;
+        return (empty_vec);
+    }
+
+    return (client_id_->getClientId());
+}
+
 bool
 Lease4::matches(const Lease4& other) const {
     if ((client_id_ && !other.client_id_) ||
@@ -147,6 +157,16 @@ Lease6::Lease6(Type type, const isc::asiolink::IOAddress& addr,
     }
 
     cltt_ = time(NULL);
+}
+
+const std::vector<uint8_t>&
+Lease6::getDuidVector() const {
+    if (!duid_) {
+        static std::vector<uint8_t> empty_vec;
+        return (empty_vec);
+    }
+
+    return (duid_->getDuid());
 }
 
 std::string

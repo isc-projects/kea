@@ -209,6 +209,17 @@ struct Lease4 : public Lease {
     /// @param other the @c Lease4 object to be copied.
     Lease4(const Lease4& other);
 
+    /// @brief Returns a client identifier.
+    ///
+    /// @warning Since the function returns the reference to a vector (not a
+    /// copy), the returned object should be used with caution because it will
+    /// remain valid only for the period of time when an object which returned
+    /// it exists.
+    ///
+    /// @return A reference to a vector holding client identifier,
+    /// or an empty vector if client identifier is NULL.
+    const std::vector<uint8_t>& getClientIdVector() const;
+
     /// @brief Check if two objects encapsulate the lease for the same
     /// client.
     ///
@@ -333,6 +344,16 @@ struct Lease6 : public Lease {
                      false, false, ""),
         type_(TYPE_NA) {
     }
+
+    /// @brief Returns a reference to a vector representing a DUID.
+    ///
+    /// @warning Since the function returns the reference to a vector (not a
+    /// copy), the returned object should be used with caution because it will
+    /// remain valid only for the period of time when an object which returned
+    /// it exists.
+    ///
+    /// @return A reference to a vector holding a DUID.
+    const std::vector<uint8_t>& getDuidVector() const;
 
     /// @brief Checks if two lease objects encapsulate the lease for the same
     /// client.
