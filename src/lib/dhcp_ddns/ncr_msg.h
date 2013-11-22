@@ -22,6 +22,7 @@
 
 #include <cc/data.h>
 #include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <util/encode/hex.h>
@@ -39,6 +40,15 @@ public:
     NcrMessageError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+/// @brief Exception thrown when there is an error occured during computation
+/// of the DHCID.
+class DhcidRdataComputeError : public isc::Exception {
+public:
+    DhcidRdataComputeError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 
 /// @brief Defines the types of DNS updates that can be requested.
 enum NameChangeType {
@@ -79,6 +89,22 @@ public:
     D2Dhcid(const std::string& data);
 
     /// @brief Constructor, creates an instance of the @c D2Dhcid from the
+    /// HW address.
+    ///
+    /// @param hwaddr A pointer to the object encapsulating HW address.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
+    D2Dhcid(const isc::dhcp::HWAddrPtr& hwaddr,
+            const std::vector<uint8_t>& wire_fqdn);
+
+    /// @brief Constructor, creates an instance of the @c D2Dhcid from the
+    /// client identifier carried in the Client Identifier option.
+    ///
+    /// @param clientid_data Holds the raw bytes representing client identifier.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
+    D2Dhcid(const std::vector<uint8_t>& clientid_data,
+            const std::vector<uint8_t>& wire_fqdn);
+
+    /// @brief Constructor, creates an instance of the @c D2Dhcid from the
     /// @c isc::dhcp::DUID.
     ///
     /// @param duid An object representing DUID.
@@ -101,6 +127,13 @@ public:
     /// or there is an odd number of digits.
     void fromStr(const std::string& data);
 
+    /// @brief Sets the DHCID value based on the Client Identifier.
+    ///
+    /// @param clientid_data Holds the raw bytes representing client identifier.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
+    void fromClientId(const std::vector<uint8_t>& clientid_data,
+                      const std::vector<uint8_t>& wire_fqdn);
+
     /// @brief Sets the DHCID value based on the DUID and FQDN.
     ///
     /// This function requires that the FQDN conforms to the section 3.5
@@ -111,6 +144,13 @@ public:
     /// @param wire_fqdn A on-wire canonical representation of the FQDN.
     void fromDUID(const isc::dhcp::DUID& duid,
                   const std::vector<uint8_t>& wire_fqdn);
+
+    /// @brief Sets the DHCID value based on the HW address and FQDN.
+    ///
+    /// @param hwaddr A pointer to the object encapsulating HW address.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
+    void fromHWAddr(const isc::dhcp::HWAddrPtr& hwaddr,
+                    const std::vector<uint8_t>& wire_fqdn);
 
     /// @brief Returns a reference to the DHCID byte vector.
     ///
@@ -135,6 +175,22 @@ public:
     }
 
 private:
+
+    /// @brief Creates the DHCID using specified indetifier.
+    ///
+    /// This function creates the DHCID RDATA as specified in RFC4701,
+    /// section 3.5.
+    ///
+    /// @param identifier_type is a less significant byte of the identifier-type
+    /// defined in RFC4701.
+    /// @param identifier_data A buffer holding client identifier raw data -
+    /// e.g. DUID, data carried in the Client Identifier option or client's
+    /// HW address.
+    /// @param A on-wire canonical representation of the FQDN.
+    void createDigest(const uint8_t identifier_type,
+                      const std::vector<uint8_t>& identifier_data,
+                      const std::vector<uint8_t>& wire_fqdn);
+
     /// @brief Storage for the DHCID value in unsigned bytes.
     std::vector<uint8_t> bytes_;
 };

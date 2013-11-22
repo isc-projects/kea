@@ -55,114 +55,12 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::hooks;
+using namespace isc::dhcp::test;
 
-#if 0
 namespace {
 
-class NakedDhcpv4Srv: public Dhcpv4Srv {
-    // "Naked" DHCPv4 server, exposes internal fields
-public:
-
-    /// @brief Constructor.
-    ///
-    /// This constructor disables default modes of operation used by the
-    /// Dhcpv4Srv class:
-    /// - Send/receive broadcast messages through sockets on interfaces
-    /// which support broadcast traffic.
-    /// - Direct DHCPv4 traffic - communication with clients which do not
-    /// have IP address assigned yet.
-    ///
-    /// Enabling these modes requires root privilges so they must be
-    /// disabled for unit testing.
-    ///
-    /// Note, that disabling broadcast options on sockets does not impact
-    /// the operation of these tests because they use local loopback
-    /// interface which doesn't have broadcast capability anyway. It rather
-    /// prevents setting broadcast options on other (broadcast capable)
-    /// sockets which are opened on other interfaces in Dhcpv4Srv constructor.
-    ///
-    /// The Direct DHCPv4 Traffic capability can be disabled here because
-    /// it is tested with PktFilterLPFTest unittest. The tests which belong
-    /// to PktFilterLPFTest can be enabled on demand when root privileges can
-    /// be guaranteed.
-    ///
-    /// @param port port number to listen on; the default value 0 indicates
-    /// that sockets should not be opened.
-    NakedDhcpv4Srv(uint16_t port = 0)
-        : Dhcpv4Srv(port, "type=memfile", false, false) {
-    }
-
-    /// @brief fakes packet reception
-    /// @param timeout ignored
-    ///
-    /// The method receives all packets queued in receive queue, one after
-    /// another. Once the queue is empty, it initiates the shutdown procedure.
-    ///
-    /// See fake_received_ field for description
-    virtual Pkt4Ptr receivePacket(int /*timeout*/) {
-
-        // If there is anything prepared as fake incoming traffic, use it
-        if (!fake_received_.empty()) {
-            Pkt4Ptr pkt = fake_received_.front();
-            fake_received_.pop_front();
-            return (pkt);
-        }
-
-        // If not, just trigger shutdown and return immediately
-        shutdown();
-        return (Pkt4Ptr());
-    }
-
-    /// @brief fake packet sending
-    ///
-    /// Pretend to send a packet, but instead just store it in fake_send_ list
-    /// where test can later inspect server's response.
-    virtual void sendPacket(const Pkt4Ptr& pkt) {
-        fake_sent_.push_back(pkt);
-    }
-
-    /// @brief adds a packet to fake receive queue
-    ///
-    /// See fake_received_ field for description
-    void fakeReceive(const Pkt4Ptr& pkt) {
-        fake_received_.push_back(pkt);
-    }
-
-    virtual ~NakedDhcpv4Srv() {
-    }
-
-    /// @brief packets we pretend to receive
-    ///
-    /// Instead of setting up sockets on interfaces that change between OSes, it
-    /// is much easier to fake packet reception. This is a list of packets that
-    /// we pretend to have received. You can schedule new packets to be received
-    /// using fakeReceive() and NakedDhcpv4Srv::receivePacket() methods.
-    list<Pkt4Ptr> fake_received_;
-
-    list<Pkt4Ptr> fake_sent_;
-
-    using Dhcpv4Srv::adjustRemoteAddr;
-    using Dhcpv4Srv::processDiscover;
-    using Dhcpv4Srv::processRequest;
-    using Dhcpv4Srv::processRelease;
-    using Dhcpv4Srv::processDecline;
-    using Dhcpv4Srv::processInform;
-    using Dhcpv4Srv::getServerID;
-    using Dhcpv4Srv::loadServerID;
-    using Dhcpv4Srv::generateServerID;
-    using Dhcpv4Srv::writeServerID;
-    using Dhcpv4Srv::sanityCheck;
-    using Dhcpv4Srv::srvidToString;
-    using Dhcpv4Srv::unpackOptions;
-};
-#endif
-
 /// dummy server-id file location
-static const char* SRVID_FILE = "server-id-test.txt";
-
-namespace isc {
-namespace dhcp {
-namespace test {
+const char* SRVID_FILE = "server-id-test.txt";
 
 // Sanity check. Verifies that both Dhcpv4Srv and its derived
 // class NakedDhcpv4Srv can be instantiated and destroyed.
@@ -986,7 +884,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     // Generate client-id also duid_
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setRemoteAddr(addr);
-    rel->setYiaddr(addr);
+    rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv->getServerID());
     rel->setHWAddr(hw);
@@ -1049,7 +947,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     // Generate client-id also duid_
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setRemoteAddr(addr);
-    rel->setYiaddr(addr);
+    rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv->getServerID());
     rel->setHWAddr(bogus_hw);
@@ -2734,7 +2632,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     // Generate client-id also duid_
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setRemoteAddr(addr);
-    rel->setYiaddr(addr);
+    rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv_->getServerID());
     rel->setHWAddr(hw);
@@ -3027,7 +2925,8 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
     ASSERT_EQ(0, rcode_);
 }
 
+}
 
-}; // end of isc::dhcp::test namespace
+    /*I}; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace
-}; // end of isc namespace
+}; // end of isc namespace */

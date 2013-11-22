@@ -477,7 +477,7 @@ bool Dhcpv6Srv::run() {
                     .arg(e.what());
             }
 
-            // Send NameChangeRequests to the b10-dhcp_ddns module.
+            // Send NameChangeRequests to the b10-dhcp-ddns module.
             sendNameChangeRequests();
         }
     }
@@ -1215,7 +1215,7 @@ void
 Dhcpv6Srv::sendNameChangeRequests() {
     while (!name_change_reqs_.empty()) {
         // @todo Once next NameChangeRequest is picked from the queue
-        // we should send it to the bind10-dhcp_ddns module. Currently we
+        // we should send it to the b10-dhcp_ddns module. Currently we
         // just drop it.
         name_change_reqs_.pop();
     }
