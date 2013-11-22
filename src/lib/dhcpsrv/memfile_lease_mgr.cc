@@ -80,8 +80,8 @@ Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr) const {
         lease != idx.end(); ++lease) {
 
         // Every Lease4 has a hardware address, so we can compare it
-        if((* lease)->hwaddr_ == hwaddr.hwaddr_) {
-            collection.push_back((* lease));
+        if ((*lease)->hwaddr_ == hwaddr.hwaddr_) {
+            collection.push_back((*lease));
         }
     }
 
@@ -113,9 +113,9 @@ Memfile_LeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
 }
 
 Lease4Collection
-Memfile_LeaseMgr::getLease4(const ClientId& clientid) const {
+Memfile_LeaseMgr::getLease4(const ClientId& client_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_GET_CLIENTID).arg(clientid.toText());
+              DHCPSRV_MEMFILE_GET_CLIENTID).arg(client_id.toText());
     typedef Memfile_LeaseMgr::Lease4Storage::nth_index<0>::type SearchIndex;
     Lease4Collection collection;
     const SearchIndex& idx = storage4_.get<0>();
@@ -124,8 +124,8 @@ Memfile_LeaseMgr::getLease4(const ClientId& clientid) const {
 
         // client-id is not mandatory in DHCPv4. There can be a lease that does
         // not have a client-id. Dereferencing null pointer would be a bad thing
-        if((*lease)->client_id_ && *(*lease)->client_id_ == clientid) {
-            collection.push_back((* lease));
+        if((*lease)->client_id_ && *(*lease)->client_id_ == client_id) {
+            collection.push_back((*lease));
         }
     }
 
