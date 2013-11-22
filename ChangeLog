@@ -1,3 +1,9 @@
+707.	[bug]		muks
+	Using very large numbers (out of bounds) in config values caused
+	BIND 10 to throw an exception. This has been fixed in a patch
+	contributed by David Carlier.
+	(Trac #3114, git 9bd776e36b7f53a6ee2e4d5a2ea79722ba5fe13b)
+
 706.	[func]		marcin
 	b10-dhcp4: Server processes the DHCPv4 Client FQDN and Host Name
 	options sent by a client and generates the response. as a result
