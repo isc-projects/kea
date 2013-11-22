@@ -18,6 +18,9 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
+#include <dhcp/option4_client_fqdn.h>
+#include <dhcp/option_custom.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <hooks/callout_handle.h>
@@ -25,9 +28,17 @@
 #include <boost/noncopyable.hpp>
 
 #include <iostream>
+#include <queue>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Exception thrown when DHCID computation failed.
+class DhcidComputeError : public isc::Exception {
+public:
+    DhcidComputeError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// @brief DHCPv4 server service.
 ///
@@ -262,6 +273,117 @@ protected:
     /// @param msg the message to add options to.
     void appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg);
 
+    /// @brief Processes Client FQDN and Hostname Options sent by a client.
+    ///
+    /// Client may send Client FQDN or Hostname option to communicate its name
+    /// to the server. Server may use this name to perform DNS update for the
+    /// lease being assigned to a client. If server takes responsibility for
+    /// updating DNS for a client it may communicate it by sending the Client
+    /// FQDN or Hostname %Option back to the client. Server select a different
+    /// name than requested by a client to update DNS. In such case, the server
+    /// stores this different name in its response.
+    ///
+    /// Client should not send both Client FQDN and Hostname options. However,
+    /// if client sends both options, server should prefer Client FQDN option
+    /// and ignore the Hostname option. If Client FQDN option is not present,
+    /// the Hostname option is processed.
+    ///
+    /// The Client FQDN %Option is processed by this function as described in
+    /// RFC4702.
+    ///
+    /// In response to a Hostname %Option sent by a client, the server may send
+    /// Hostname option with the same or different hostname. If different
+    /// hostname is sent, it is an indication to the client that server has
+    /// overridden the client's preferred name and will rather use this
+    /// different name to update DNS. However, since Hostname option doesn't
+    /// carry an information whether DNS update will be carried by the server
+    /// or not, the client is responsible for checking whether DNS update
+    /// has been performed.
+    ///
+    /// After successful processing options stored in the first parameter,
+    /// this function may add Client FQDN or Hostname option to the response
+    /// message. In some cases, server may cease to add any options to the
+    /// response, i.e. when server doesn't support DNS updates.
+    ///
+    /// This function does not throw. It simply logs the debug message if the
+    /// processing of the FQDN or Hostname failed.
+    ///
+    /// @param query A DISCOVER or REQUEST message from a cient.
+    /// @param [out] answer A response message to be sent to a client.
+    void processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer);
+
+private:
+    /// @brief Process Client FQDN %Option sent by a client.
+    ///
+    /// This function is called by the @c Dhcpv4Srv::processClientName when
+    /// the client has sent the FQDN option in its message to the server.
+    /// It comprises the actual logic to parse the FQDN option and prepare
+    /// the FQDN option to be sent back to the client in the server's
+    /// response.
+    ///
+    /// @param fqdn An DHCPv4 Client FQDN %Option sent by a client.
+    /// @param [out] answer A response message to be sent to a client.
+    void processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
+                                 Pkt4Ptr& answer);
+
+    /// @brief Process Hostname %Option sent by a client.
+    ///
+    /// This function is called by the @c DHcpv4Srv::processClientName when
+    /// the client has sent the Hostname option in its message to the server.
+    /// It comprises the actual logic to parse the Hostname option and
+    /// prepare the Hostname option to be sent back to the client in the
+    /// server's response.
+    ///
+    /// @param opt_hostname An @c OptionCustom object encapsulating the Hostname
+    /// %Option.
+    /// @param [out] answer A response message to be sent to a client.
+    void processHostnameOption(const OptionCustomPtr& opt_hostname,
+                               Pkt4Ptr& answer);
+
+protected:
+
+    /// @brief Creates NameChangeRequests which correspond to the lease
+    /// which has been acquired.
+    ///
+    /// If this function is called whe an existing lease is renewed, it
+    /// may generate NameChangeRequest to remove existing DNS entries which
+    /// correspond to the old lease instance. This function may cease to
+    /// generate NameChangeRequests if the notion of the client's FQDN hasn't
+    /// changed between an old and new lease.
+    ///
+    /// @param lease A pointer to the new lease which has been acquired.
+    /// @param old_lease A pointer to the instance of the old lease which has
+    /// been replaced by the new lease passed in the first argument. The NULL
+    /// value indicates that the new lease has been allocated, rather than
+    /// lease being renewed.
+    void createNameChangeRequests(const Lease4Ptr& lease,
+                                  const Lease4Ptr& old_lease);
+
+    /// @brief Creates the NameChangeRequest and adds to the queue for
+    /// processing.
+    ///
+    /// This function adds the @c isc::dhcp_ddns::NameChangeRequest to the
+    /// queue and emits the debug message which indicates whether the request
+    /// being added is to remove DNS entry or add a new entry. This function
+    /// is exception free.
+    ///
+    /// @param chg_type A type of the NameChangeRequest (ADD or REMOVE).
+    /// @param lease A lease for which the NameChangeRequest is created and
+    /// queued.
+    void queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
+                                const Lease4Ptr& lease);
+
+    /// @brief Sends all outstanding NameChangeRequests to b10-dhcp-ddns module.
+    ///
+    /// The purpose of this function is to pick all outstanding
+    /// NameChangeRequests from the FIFO queue and send them to b10-dhcp-ddns
+    /// module.
+    ///
+    /// @todo Currently this function simply removes all requests from the
+    /// queue but doesn't send them anywhere. In the future, the
+    /// NameChangeSender will be used to deliver requests to the other module.
+    void sendNameChangeRequests();
+
     /// @brief Attempts to renew received addresses
     ///
     /// Attempts to renew existing lease. This typically includes finding a lease that
@@ -336,6 +458,28 @@ protected:
     /// @return string representation
     static std::string srvidToString(const OptionPtr& opt);
 
+    /// @brief Computes DHCID from a lease.
+    ///
+    /// This method creates an object which represents DHCID. The DHCID value
+    /// is computed as described in RFC4701. The section 3.3. of RFC4701
+    /// specifies the DHCID RR Identifier Type codes:
+    /// - 0x0000 The 1 octet htype followed by glen octets of chaddr
+    /// - 0x0001 The data octets from the DHCPv4 client's Client Identifier
+    /// option.
+    /// - 0x0002 The client's DUID.
+    ///
+    /// Currently this function supports first two of these identifiers.
+    /// The 0x0001 is preferred over the 0x0000 - if the client identifier
+    /// option is present, the former is used. If the client identifier
+    /// is absent, the latter is used.
+    ///
+    /// @todo Implement support for 0x0002 DHCID identifier type.
+    ///
+    /// @param lease A pointer to the structure describing a lease.
+    /// @return An object encapsulating DHCID to be used for DNS updates.
+    /// @throw DhcidComputeError If the computation of the DHCID failed.
+    static isc::dhcp_ddns::D2Dhcid computeDhcid(const Lease4Ptr& lease);
+
     /// @brief Selects a subnet for a given client's packet.
     ///
     /// @param question client's message
@@ -394,6 +538,12 @@ private:
     int hook_index_pkt4_receive_;
     int hook_index_subnet4_select_;
     int hook_index_pkt4_send_;
+
+protected:
+
+    /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects which
+    /// are waiting for sending  to b10-dhcp-ddns module.
+    std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
 };
 
 }; // namespace isc::dhcp

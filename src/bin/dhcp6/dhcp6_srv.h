@@ -434,7 +434,7 @@ protected:
     /// @brief Sends all outstanding NameChangeRequests to bind10-d2 module.
     ///
     /// The purpose of this function is to pick all outstanding
-    /// NameChangeRequests from the FIFO queue and send them to bind10-dhcp-ddns
+    /// NameChangeRequests from the FIFO queue and send them to b10-dhcp-ddns
     /// module.
     ///
     /// @todo Currently this function simply removes all requests from the

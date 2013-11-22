@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -61,6 +61,20 @@ public:
                            buf.end());
     }
 };
+
+// The goal of this test is to verify that the getLabelCount returns the
+// correct number of labels in the domain name specified as a string
+// parameter.
+TEST_F(OptionDataTypesTest, getLabelCount) {
+    EXPECT_EQ(0, OptionDataTypeUtil::getLabelCount(""));
+    EXPECT_EQ(1, OptionDataTypeUtil::getLabelCount("."));
+    EXPECT_EQ(2, OptionDataTypeUtil::getLabelCount("example"));
+    EXPECT_EQ(3, OptionDataTypeUtil::getLabelCount("example.com"));
+    EXPECT_EQ(3, OptionDataTypeUtil::getLabelCount("example.com."));
+    EXPECT_EQ(4, OptionDataTypeUtil::getLabelCount("myhost.example.com"));
+    EXPECT_THROW(OptionDataTypeUtil::getLabelCount(".abc."),
+                 isc::dhcp::BadDataTypeCast);
+}
 
 // The goal of this test is to verify that an IPv4 address being
 // stored in a buffer (wire format) can be read into IOAddress

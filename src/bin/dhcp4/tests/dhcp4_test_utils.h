@@ -357,6 +357,9 @@ public:
     using Dhcpv4Srv::processRelease;
     using Dhcpv4Srv::processDecline;
     using Dhcpv4Srv::processInform;
+    using Dhcpv4Srv::processClientName;
+    using Dhcpv4Srv::computeDhcid;
+    using Dhcpv4Srv::createNameChangeRequests;
     using Dhcpv4Srv::getServerID;
     using Dhcpv4Srv::loadServerID;
     using Dhcpv4Srv::generateServerID;
@@ -364,6 +367,7 @@ public:
     using Dhcpv4Srv::sanityCheck;
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::unpackOptions;
+    using Dhcpv4Srv::name_change_reqs_;
 };
 
 }; // end of isc::dhcp::test namespace
