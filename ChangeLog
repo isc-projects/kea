@@ -1,3 +1,9 @@
+708.	[bug]		dclink,marcin
+	libdhcpsrv: Fixed a bug in Memfile lease database backend which
+	caused DHCPv4 server crashes when leases with NULL client id
+	were present. Thanks to David Carlier for submitting the patch.
+	(Trac #2940, git a232f3d7d92ebcfb7793dc6b67914299c45c715b)
+
 707.	[bug]		muks
 	Using very large numbers (out of bounds) in config values caused
 	BIND 10 to throw an exception. This has been fixed in a patch
