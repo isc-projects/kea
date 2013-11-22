@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -219,6 +219,19 @@ public:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Collection getLease4(const ClientId& clientid) const;
+
+    /// @brief Returns IPv4 lease for the specified client identifier, HW
+    /// address and subnet identifier.
+    ///
+    /// @param client_id A client identifier.
+    /// @param hwaddr Hardware address.
+    /// @param subnet_id A subnet identifier.
+    ///
+    /// @return A pointer to the lease or NULL if the lease is not found.
+    /// @throw isc::NotImplemented On every call as this function is currently
+    /// not implemented for the MySQL backend.
+    virtual Lease4Ptr getLease4(const ClientId& client_id, const HWAddr& hwaddr,
+                                SubnetID subnet_id) const;
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
