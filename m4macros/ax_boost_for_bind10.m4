@@ -70,6 +70,10 @@ fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
 
+# clang can cause false positives with -Werror without -Qunused-arguments.
+# it can be triggered if used with ccache.
+AC_CHECK_DECL([__clang__], [CLANG_CXXFLAGS="-Qunused-arguments"], [])
+
 # Detect whether Boost tries to use threads by default, and, if not,
 # make it sure explicitly.  In some systems the automatic detection
 # may depend on preceding header files, and if inconsistency happens
@@ -87,7 +91,7 @@ AC_TRY_COMPILE([
 # Boost offset_ptr is known to not compile on some platforms, depending on
 # boost version, its local configuration, and compiler.  Detect it.
 CXXFLAGS_SAVED="$CXXFLAGS"
-CXXFLAGS="$CXXFLAGS -Werror"
+CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS -Werror"
 AC_MSG_CHECKING([Boost offset_ptr compiles])
 AC_TRY_COMPILE([
 #include <boost/interprocess/offset_ptr.hpp>
@@ -102,7 +106,7 @@ CXXFLAGS="$CXXFLAGS_SAVED"
 # FreeBSD ports
 if test "X$GXX" = "Xyes"; then
    CXXFLAGS_SAVED="$CXXFLAGS"
-   CXXFLAGS="$CXXFLAGS -Werror"
+   CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS -Werror"
 
    AC_MSG_CHECKING([Boost numeric_cast compiles with -Werror])
    AC_TRY_COMPILE([
@@ -140,11 +144,9 @@ BOOST_MAPPED_FILE_CXXFLAG=
 CXXFLAGS_SAVED="$CXXFLAGS"
 try_flags="no"
 if test "X$GXX" = "Xyes"; then
-  CXXFLAGS="$CXXFLAGS -Wall -Wextra -Werror"
+  CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS -Wall -Wextra -Werror"
   try_flags="$try_flags -Wno-error"
 fi
-# clang can cause false positives with -Werror without -Qunused-arguments
-AC_CHECK_DECL([__clang__], [CXXFLAGS="$CXXFLAGS -Qunused-arguments"], [])
 
 AC_MSG_CHECKING([Boost managed_mapped_file compiles])
 CXXFLAGS_SAVED2="$CXXFLAGS"
@@ -152,7 +154,7 @@ for flag in $try_flags; do
   if test "$flag" != no; then
     BOOST_MAPPED_FILE_CXXFLAG="$flag"
   fi
-  CXXFLAGS="$CXXFLAGS $BOOST_MAPPED_FILE_CXXFLAG"
+  CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS $BOOST_MAPPED_FILE_CXXFLAG"
   AC_TRY_COMPILE([
   #include <boost/interprocess/managed_mapped_file.hpp>
   ],[

@@ -31,8 +31,12 @@
 
 #include <dns/opcode.h>
 
-using namespace asio;
+// Avoid 'using namespace asio' (see tcp_server.cc)
+using asio::io_service;
+using asio::socket_base;
+using asio::buffer;
 using asio::ip::udp;
+using asio::ip::address;
 
 using namespace std;
 using namespace isc::dns;
@@ -56,7 +60,7 @@ struct UDPServer::Data {
      * query, it will only hold parameters until we wait for the
      * first packet. But we do initialize the socket in here.
      */
-    Data(io_service& io_service, const ip::address& addr, const uint16_t port,
+    Data(io_service& io_service, const address& addr, const uint16_t port,
          DNSLookup* lookup, DNSAnswer* answer) :
         io_(io_service), bytes_(0), done_(false),
         lookup_callback_(lookup),
@@ -210,7 +214,7 @@ UDPServer::operator()(asio::error_code ec, size_t length) {
                 // See TCPServer::operator() for details on error handling.
                 if (ec) {
                     using namespace asio::error;
-                    const error_code::value_type err_val = ec.value();
+                    const asio::error_code::value_type err_val = ec.value();
                     if (err_val == operation_aborted ||
                         err_val == bad_descriptor) {
                         return;

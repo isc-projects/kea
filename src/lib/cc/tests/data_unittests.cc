@@ -98,16 +98,24 @@ TEST(Element, from_and_to_json) {
     sv.push_back("\"\xFF\"");
 
     BOOST_FOREACH(const std::string& s, sv) {
-        // test << operator, which uses Element::str()
-        std::ostringstream stream;
-        el = Element::fromJSON(s);
-        stream << *el;
-        EXPECT_EQ(s, stream.str());
+        // Test two types of fromJSON(): with string and istream.
+        for (int i = 0; i < 2; ++i) {
+            // test << operator, which uses Element::str()
+            if (i == 0) {
+                el = Element::fromJSON(s);
+            } else {
+                std::istringstream iss(s);
+                el = Element::fromJSON(iss);
+            }
+            std::ostringstream stream;
+            stream << *el;
+            EXPECT_EQ(s, stream.str());
 
-        // test toWire(ostream), which should also be the same now
-        std::ostringstream wire_stream;
-        el->toWire(wire_stream);
-        EXPECT_EQ(s, wire_stream.str());
+            // test toWire(ostream), which should also be the same now
+            std::ostringstream wire_stream;
+            el->toWire(wire_stream);
+            EXPECT_EQ(s, wire_stream.str());
+        }
     }
 
     // some parse errors
