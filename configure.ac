@@ -212,6 +212,7 @@ AC_HELP_STRING([--disable-setproctitle-check],
 # OS dependent configuration
 SET_ENV_LIBRARY_PATH=no
 ENV_LIBRARY_PATH=LD_LIBRARY_PATH
+bind10_undefined_pthread_behavior=no
 
 case "$host" in
 *-solaris*)
@@ -223,12 +224,24 @@ case "$host" in
 	# Destroying locked mutexes, condition variables being waited
 	# on, etc. are undefined behavior on Solaris, so we set it as
 	# such here.
-	AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
+	bind10_undefined_pthread_behavior=yes
 	;;
 *-apple-darwin*)
 	# Starting with OSX 10.7 (Lion) we must choose which IPv6 API to use
 	# (RFC2292 or RFC3542).
 	CPPFLAGS="$CPPFLAGS -D__APPLE_USE_RFC_3542"
+
+	# In OS X 10.9 (and possibly any future versions?) pthread_cond_destroy
+	# doesn't work as documented, which makes some of unit tests fail.
+	# Testing a specific system and version is not a good practice, but
+	# identifying this behavior would be too heavy (running a program
+	# with multiple threads), so this is a compromise.  In general,
+	# it should be avoided to rely on 'osx_version' unless there's no
+	# viable alternative.
+	osx_version=`/usr/bin/sw_vers -productVersion`
+	if [ test $osx_version = "10.9" ]; then
+		bind10_undefined_pthread_behavior=yes
+	fi
 
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
@@ -252,6 +265,9 @@ esac
 AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
+if [ test $bind10_undefined_pthread_behavior = "yes" ]; then
+   AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
+fi
 
 # Our experiments have shown Solaris 10 has broken support for the
 # IPV6_USE_MIN_MTU socket option for getsockopt(); it doesn't return the value

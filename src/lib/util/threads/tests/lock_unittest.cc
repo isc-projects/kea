@@ -86,9 +86,14 @@ TEST(MutexTest, lockNonBlocking) {
 
 #endif // ENABLE_DEBUG
 
-#ifndef HAS_UNDEFINED_PTHREAD_BEHAVIOR
 // Destroying a locked mutex is a bad idea as well
-TEST(MutexTest, destroyLocked) {
+TEST(MutexTest,
+#ifdef HAS_UNDEFINED_PTHREAD_BEHAVIOR
+     DISABLED_destroyLocked
+#else
+     destroyLocked
+#endif
+) {
     if (!isc::util::unittests::runningOnValgrind()) {
         EXPECT_DEATH_IF_SUPPORTED({
             Mutex* mutex = new Mutex;
@@ -99,7 +104,6 @@ TEST(MutexTest, destroyLocked) {
         }, "");
     }
 }
-#endif // !HAS_UNDEFINED_PTHREAD_BEHAVIOR
 
 // In this test, we try to check if a mutex really locks. We could try that
 // with a deadlock, but that's not practical (the test would not end).

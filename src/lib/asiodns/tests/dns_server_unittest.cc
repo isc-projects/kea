@@ -274,6 +274,7 @@ class TCPClient : public SimpleClient {
         server_ = server;
         socket_.reset(new ip::tcp::socket(service));
         socket_->open(ip::tcp::v6());
+        send_delay_timer_.reset(new deadline_timer(service));
     }
 
 
@@ -324,15 +325,32 @@ class TCPClient : public SimpleClient {
                                 size_t send_bytes)
     {
         if (!error && send_bytes == 2 && send_data_len_delay_ == 0) {
-            sleep(send_data_delay_);
-            socket_->async_send(buffer(data_to_send_.c_str(),
-                                       data_to_send_.size() + 1),
-                    boost::bind(&TCPClient::finishSendHandler, this, _1, _2));
+            // We cannot block here (such as by sleep(3)) since otherwise
+            // the ASIO events may not reliably handled in the server side
+            // as the test expects.  So we use async_wait, and make sure the
+            // control will be given back to the IO service.
+            if (send_data_delay_ > 0) {
+                send_delay_timer_->expires_from_now(boost::posix_time::
+                                                    seconds(send_data_delay_));
+                send_delay_timer_->async_wait(
+                    boost::bind(&TCPClient::sendMessageData, this));
+                return;
+            }
+            sendMessageData();
         }
     }
 
+    void sendMessageData() {
+        socket_->async_send(buffer(data_to_send_.c_str(),
+                                   data_to_send_.size() + 1),
+                            boost::bind(&TCPClient::finishSendHandler, this,
+                                        _1, _2));
+    }
+
     void finishSendHandler(const asio::error_code& error, size_t send_bytes) {
-        if (!error && send_bytes == data_to_send_.size() + 1) {
+        if (error) {
+            getResponseCallBack(error, 0);
+        } else if (send_bytes == data_to_send_.size() + 1) {
             socket_->async_receive(buffer(received_data_, MAX_DATA_LEN),
                    boost::bind(&SimpleClient::getResponseCallBack, this, _1,
                                _2));
@@ -343,6 +361,7 @@ class TCPClient : public SimpleClient {
     ip::tcp::endpoint server_;
     std::string data_to_send_;
     uint16_t data_to_send_len_;
+    boost::shared_ptr<deadline_timer> send_delay_timer_;
 
     size_t send_data_delay_;
     size_t send_data_len_delay_;
