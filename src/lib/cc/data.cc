@@ -275,11 +275,11 @@ skipChars(std::istream& in, const char* chars, int& line, int& pos) {
 }
 
 // skip on the input stream to one of the characters in chars
-// if another character is found this function returns false
+// if another character is found this function throws JSONError
 // unless that character is specified in the optional may_skip
 //
-// the character found is left on the stream
-void
+// It returns the found character (as an int value).
+int
 skipTo(std::istream& in, const std::string& file, int& line,
        int& pos, const char* chars, const char* may_skip="")
 {
@@ -298,18 +298,18 @@ skipTo(std::istream& in, const std::string& file, int& line,
                 if (in.peek() == '\n') {
                     pos = 1;
                     ++line;
+                } else {
+                    ++pos;
                 }
                 in.ignore();
-                ++pos;
             }
-            in.putback(c);
-            --pos;
-            return;
+            return (c);
         } else {
             throwJSONError(std::string("'") + std::string(1, c) + "' read, one of \"" + chars + "\" expected", file, line, pos);
         }
     }
     throwJSONError(std::string("EOF read, one of \"") + chars + "\" expected", file, line, pos);
+    return (c); // shouldn't reach here, but some compilers require it
 }
 
 // TODO: Should we check for all other official escapes here (and
@@ -466,10 +466,11 @@ fromStringstreamList(std::istream& in, const std::string& file, int& line,
         if (in.peek() != ']') {
             cur_list_element = Element::fromJSON(in, file, line, pos);
             list->add(cur_list_element);
-            skipTo(in, file, line, pos, ",]", WHITESPACE);
+            c = skipTo(in, file, line, pos, ",]", WHITESPACE);
+        } else {
+            c = in.get();
+            ++pos;
         }
-        c = in.get();
-        pos++;
     }
     return (list);
 }
@@ -492,15 +493,11 @@ fromStringstreamMap(std::istream& in, const std::string& file, int& line,
 
             skipTo(in, file, line, pos, ":", WHITESPACE);
             // skip the :
-            in.ignore();
-            pos++;
 
             ConstElementPtr value = Element::fromJSON(in, file, line, pos);
             map->set(key, value);
 
-            skipTo(in, file, line, pos, ",}", WHITESPACE);
-            c = in.get();
-            pos++;
+            c = skipTo(in, file, line, pos, ",}", WHITESPACE);
         }
     }
     return (map);
@@ -596,6 +593,7 @@ Element::fromJSON(std::istream& in, const std::string& file, int& line,
             case '+':
             case '.':
                 in.putback(c);
+                --pos;
                 element = fromStringstreamNumber(in, pos);
                 el_read = true;
                 break;
@@ -604,17 +602,20 @@ Element::fromJSON(std::istream& in, const std::string& file, int& line,
             case 'f':
             case 'F':
                 in.putback(c);
+                --pos;
                 element = fromStringstreamBool(in, file, line, pos);
                 el_read = true;
                 break;
             case 'n':
             case 'N':
                 in.putback(c);
+                --pos;
                 element = fromStringstreamNull(in, file, line, pos);
                 el_read = true;
                 break;
             case '"':
                 in.putback('"');
+                --pos;
                 element = fromStringstreamString(in, file, line, pos);
                 el_read = true;
                 break;
