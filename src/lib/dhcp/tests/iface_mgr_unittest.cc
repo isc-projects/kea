@@ -84,13 +84,13 @@ public:
     /// (because real values are rather less than 255). Values greater
     /// than 255 are not recommended because they cause warnings to be
     /// reported by Valgrind when invoking close() on them.
-    virtual int openSocket(const Iface&,
-                           const isc::asiolink::IOAddress&,
-                           const uint16_t,
-                           const bool,
-                           const bool) {
+    virtual SocketInfo openSocket(const Iface&,
+                                  const isc::asiolink::IOAddress& addr,
+                                  const uint16_t port,
+                                  const bool,
+                                  const bool) {
         open_socket_called_ = true;
-        return (255);
+        return (SocketInfo(addr, port, 255));
     }
 
     /// Does nothing
@@ -1152,18 +1152,28 @@ TEST_F(IfaceMgrTest, iface_methods) {
 TEST_F(IfaceMgrTest, socketInfo) {
 
     // Check that socketinfo for IPv4 socket is functional
-    SocketInfo sock1(7, IOAddress("192.0.2.56"), DHCP4_SERVER_PORT + 7);
+    SocketInfo sock1(IOAddress("192.0.2.56"), DHCP4_SERVER_PORT + 7, 7);
     EXPECT_EQ(7, sock1.sockfd_);
+    EXPECT_EQ(-1, sock1.fallbackfd_);
     EXPECT_EQ("192.0.2.56", sock1.addr_.toText());
     EXPECT_EQ(AF_INET, sock1.family_);
     EXPECT_EQ(DHCP4_SERVER_PORT + 7, sock1.port_);
 
+    // Check that non-default value of the fallback socket descriptor is set
+    SocketInfo sock2(IOAddress("192.0.2.53"), DHCP4_SERVER_PORT + 8, 8, 10);
+    EXPECT_EQ(8, sock2.sockfd_);
+    EXPECT_EQ(10, sock2.fallbackfd_);
+    EXPECT_EQ("192.0.2.53", sock2.addr_.toText());
+    EXPECT_EQ(AF_INET, sock2.family_);
+    EXPECT_EQ(DHCP4_SERVER_PORT + 8, sock2.port_);
+
     // Check that socketinfo for IPv6 socket is functional
-    SocketInfo sock2(9, IOAddress("2001:db8:1::56"), DHCP4_SERVER_PORT + 9);
-    EXPECT_EQ(9, sock2.sockfd_);
-    EXPECT_EQ("2001:db8:1::56", sock2.addr_.toText());
-    EXPECT_EQ(AF_INET6, sock2.family_);
-    EXPECT_EQ(DHCP4_SERVER_PORT + 9, sock2.port_);
+    SocketInfo sock3(IOAddress("2001:db8:1::56"), DHCP4_SERVER_PORT + 9, 9);
+    EXPECT_EQ(9, sock3.sockfd_);
+    EXPECT_EQ(-1, sock3.fallbackfd_);
+    EXPECT_EQ("2001:db8:1::56", sock3.addr_.toText());
+    EXPECT_EQ(AF_INET6, sock3.family_);
+    EXPECT_EQ(DHCP4_SERVER_PORT + 9, sock3.port_);
 
     // Now let's test if IfaceMgr handles socket info properly
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
@@ -1171,6 +1181,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
     ASSERT_TRUE(loopback);
     loopback->addSocket(sock1);
     loopback->addSocket(sock2);
+    loopback->addSocket(sock3);
 
     Pkt6 pkt6(DHCPV6_REPLY, 123456);
 
@@ -1225,6 +1236,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
 
     EXPECT_NO_THROW(
         ifacemgr->getIface(LOOPBACK)->delSocket(7);
+        ifacemgr->getIface(LOOPBACK)->delSocket(8);
     );
 
     // It should throw again, there's no usable socket anymore.
