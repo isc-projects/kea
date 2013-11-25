@@ -112,7 +112,7 @@ TEST_F(PktFilterInetTest, openSocket) {
 
     // Try to open socket.
     PktFilterInet pkt_filter;
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
     // Check that socket has been opened.
     ASSERT_GE(socket_, 0);
 
@@ -170,7 +170,7 @@ TEST_F(PktFilterInetTest, send) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
     ASSERT_GE(socket_, 0);
 
     // Send the packet over the socket.
@@ -249,14 +249,14 @@ TEST_F(PktFilterInetTest, receive) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
     ASSERT_GE(socket_, 0);
 
     // Send the packet over the socket.
     ASSERT_NO_THROW(pkt_filter.send(iface, socket_, pkt));
 
     // Receive the packet.
-    SocketInfo socket_info(socket_, IOAddress("127.0.0.1"), PORT);
+    SocketInfo socket_info(IOAddress("127.0.0.1"), PORT, socket_);
     Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, socket_info);
     // Check that the packet has been correctly received.
     ASSERT_TRUE(rcvd_pkt);
