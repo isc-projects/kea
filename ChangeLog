@@ -1,3 +1,8 @@
+709.	[bug]		marcin
+	b10-dhcp6: Server crashed when the client sent FQDN option and did
+	not request FQDN option to be returned.
+	(Trac #3220, git 0f1ed4205a46eb42ef728ba6b0955c9af384e0be)
+
 708.	[bug]		dclink,marcin
 	libdhcpsrv: Fixed a bug in Memfile lease database backend which
 	caused DHCPv4 server crashes when leases with NULL client id
