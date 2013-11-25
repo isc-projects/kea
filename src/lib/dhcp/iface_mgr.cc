@@ -741,7 +741,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
         }
     }
 
-    SocketInfo info(sock, addr, port);
+    SocketInfo info(addr, port, sock);
     iface.addSocket(info);
 
     return (sock);
@@ -754,13 +754,11 @@ int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr,
     // Skip checking if the packet_filter_ is non-NULL because this check
     // has been already done when packet filter object was set.
 
-    int sock = packet_filter_->openSocket(iface, addr, port,
-                                          receive_bcast, send_bcast);
-
-    SocketInfo info(sock, addr, port);
+    SocketInfo info = packet_filter_->openSocket(iface, addr, port,
+                                                 receive_bcast, send_bcast);
     iface.addSocket(info);
 
-    return (sock);
+    return (info.sockfd_);
 }
 
 bool

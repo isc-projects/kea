@@ -102,7 +102,7 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-int
+SocketInfo
 PktFilterLPF::openSocket(const Iface& iface,
                          const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
@@ -123,7 +123,7 @@ PktFilterLPF::openSocket(const Iface& iface,
         // We return negative, the proper error message will be displayed
         // by the IfaceMgr ...
         close(sock_check);
-        return (-1);
+        return (SocketInfo(addr, port, -1));
     }
     close(sock_check);
 
@@ -166,7 +166,8 @@ PktFilterLPF::openSocket(const Iface& iface,
                   << "' to interface '" << iface.getName() << "'");
     }
 
-    return (sock);
+    SocketInfo sock_desc(addr, port, sock);
+    return (sock_desc);
 
 }
 

@@ -44,20 +44,20 @@ public:
         return (false);
     }
 
-    /// @brief Open socket.
+    /// @brief Open primary and fallback socket.
     ///
-    /// @param iface interface descriptor
-    /// @param addr address on the interface to be used to send packets.
-    /// @param port port number.
-    /// @param receive_bcast configure socket to receive broadcast messages
-    /// @param send_bcast configure socket to send broadcast messages.
+    /// @param iface Interface descriptor.
+    /// @param addr Address on the interface to be used to send packets.
+    /// @param port Port number.
+    /// @param receive_bcast Configure socket to receive broadcast messages
+    /// @param send_bcast Configure socket to send broadcast messages.
     ///
-    /// @return created socket's descriptor
-    virtual int openSocket(const Iface& iface,
-                           const isc::asiolink::IOAddress& addr,
-                           const uint16_t port,
-                           const bool receive_bcast,
-                           const bool send_bcast);
+    /// @return A structure describing a primary and fallback socket.
+    virtual SocketInfo openSocket(const Iface& iface,
+                                  const isc::asiolink::IOAddress& addr,
+                                  const uint16_t port,
+                                  const bool receive_bcast,
+                                  const bool send_bcast);
 
     /// @brief Receive packet over specified socket.
     ///

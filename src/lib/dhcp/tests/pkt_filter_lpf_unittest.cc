@@ -124,7 +124,7 @@ TEST_F(PktFilterLPFTest, DISABLED_openSocket) {
 
     // Try to open socket.
     PktFilterLPF pkt_filter;
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
     // Check that socket has been opened.
     ASSERT_GE(socket_, 0);
 
@@ -183,7 +183,7 @@ TEST_F(PktFilterLPFTest, DISABLED_send) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
     ASSERT_GE(socket_, 0);
 
     // Send the packet over the socket.
@@ -273,7 +273,7 @@ TEST_F(PktFilterLPFTest, DISABLED_receive) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
     ASSERT_GE(socket_, 0);
 
     // Send the packet over the socket.
