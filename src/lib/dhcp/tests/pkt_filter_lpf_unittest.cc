@@ -44,25 +44,28 @@ public:
 
     /// @brief Constructor
     ///
-    /// This constructor initializes socket_ member to a negative value.
-    /// Explcit initialization is performed here because some of the
-    /// tests do not initialize this value. In such cases, destructor
-    /// could invoke close() on uninitialized socket descriptor which
-    /// would result in errors being reported by Valgrind.
+    /// This constructor initializes sock_info_ structure to a default value.
+    /// The socket descriptors should be set to a negative value to indicate
+    /// that no socket has been opened. Specific tests will reinitialize this
+    /// structure with the values of the open sockets. For non-negative socket
+    /// descriptors, the class destructor will close associated sockets.
     PktFilterLPFTest()
-        : socket_(-1) {
+        : sock_info_(IOAddress("127.0.0.1"), PORT, -1, -1) {
         // Initialize ifname_ and ifindex_.
         loInit();
     }
 
     /// @brief Destructor
     ///
-    /// Closes open socket (if any).
+    /// Closes open sockets (if any).
     ~PktFilterLPFTest() {
         // Cleanup after each test. This guarantees
-        // that the socket does not hang after a test.
-        if (socket_ >= 0) {
-            close(socket_);
+        // that the sockets do not hang after a test.
+        if (sock_info_.sockfd_ >= 0) {
+            close(sock_info_.sockfd_);
+        }
+        if (sock_info_.fallbackfd_ >=0) {
+            close(sock_info_.fallbackfd_);
         }
     }
 
@@ -89,9 +92,9 @@ public:
         }
     }
 
-    std::string ifname_; ///< Loopback interface name
-    uint16_t ifindex_;   ///< Loopback interface index.
-    int socket_;         ///< Socket descriptor.
+    std::string ifname_;   ///< Loopback interface name
+    uint16_t ifindex_;     ///< Loopback interface index.
+    SocketInfo sock_info_; ///< A structure holding socket information.
 
 };
 
@@ -124,14 +127,18 @@ TEST_F(PktFilterLPFTest, DISABLED_openSocket) {
 
     // Try to open socket.
     PktFilterLPF pkt_filter;
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
-    // Check that socket has been opened.
-    ASSERT_GE(socket_, 0);
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+
+    // Check that the primary socket has been opened.
+    ASSERT_GE(sock_info_.sockfd_, 0);
+    // Check that the fallback socket has been opened too.
+    ASSERT_GE(sock_info_.fallbackfd_, 0);
 
     // Verify that the socket belongs to AF_PACKET family.
     sockaddr_ll sock_address;
     socklen_t sock_address_len = sizeof(sock_address);
-    ASSERT_EQ(0, getsockname(socket_, reinterpret_cast<sockaddr*>(&sock_address),
+    ASSERT_EQ(0, getsockname(sock_info_.sockfd_,
+                             reinterpret_cast<sockaddr*>(&sock_address),
                              &sock_address_len));
     EXPECT_EQ(AF_PACKET, sock_address.sll_family);
 
@@ -141,7 +148,8 @@ TEST_F(PktFilterLPFTest, DISABLED_openSocket) {
     // Verify that the socket has SOCK_RAW type.
     int sock_type;
     socklen_t sock_type_len = sizeof(sock_type);
-    ASSERT_EQ(0, getsockopt(socket_, SOL_SOCKET, SO_TYPE, &sock_type, &sock_type_len));
+    ASSERT_EQ(0, getsockopt(sock_info_.sockfd_, SOL_SOCKET, SO_TYPE,
+                            &sock_type, &sock_type_len));
     EXPECT_EQ(SOCK_RAW, sock_type);
 }
 
@@ -184,30 +192,28 @@ TEST_F(PktFilterLPFTest, DISABLED_send) {
     // options and family set because we have checked that in the
     // openSocket test already.
 
-    SocketInfo sock_info =
-        pkt_filter.openSocket(iface, addr, PORT, false, false);
-    socket_ = sock_info.sockfd_;
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
 
-    ASSERT_GE(socket_, 0);
+    ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Send the packet over the socket.
-    ASSERT_NO_THROW(pkt_filter.send(iface, socket_, pkt));
+    ASSERT_NO_THROW(pkt_filter.send(iface, sock_info_.sockfd_, pkt));
 
     // Read the data from socket.
     fd_set readfds;
     FD_ZERO(&readfds);
-    FD_SET(socket_, &readfds);
+    FD_SET(sock_info_.sockfd_, &readfds);
 
     struct timeval timeout;
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
-    int result = select(socket_ + 1, &readfds, NULL, NULL, &timeout);
+    int result = select(sock_info_.sockfd_ + 1, &readfds, NULL, NULL, &timeout);
     // We should receive some data from loopback interface.
     ASSERT_GT(result, 0);
 
     // Get the actual data.
     uint8_t rcv_buf[RECV_BUF_SIZE];
-    result = recv(socket_, rcv_buf, RECV_BUF_SIZE, 0);
+    result = recv(sock_info_.sockfd_, rcv_buf, RECV_BUF_SIZE, 0);
     ASSERT_GT(result, 0);
 
     Pkt4Ptr dummy_pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 0));
@@ -277,16 +283,14 @@ TEST_F(PktFilterLPFTest, DISABLED_receive) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    SocketInfo sock_info =
-        pkt_filter.openSocket(iface, addr, PORT, false, false);
-    socket_ = sock_info.sockfd_;
-    ASSERT_GE(socket_, 0);
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Send the packet over the socket.
-    ASSERT_NO_THROW(pkt_filter.send(iface, socket_, pkt));
+    ASSERT_NO_THROW(pkt_filter.send(iface, sock_info_.sockfd_, pkt));
 
     // Receive the packet.
-    Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, sock_info);
+    Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, sock_info_);
     // Check that the packet has been correctly received.
     ASSERT_TRUE(rcvd_pkt);
 
