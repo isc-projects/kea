@@ -110,6 +110,30 @@ public:
     /// @return result of sending the packet. It is 0 if successful.
     virtual int send(const Iface& iface, uint16_t sockfd,
                      const Pkt4Ptr& pkt) = 0;
+
+protected:
+
+    /// @brief Default implementation to open a fallback socket.
+    ///
+    /// This method provides a means to open a fallback socket and bind it
+    /// to a given IPv4 address and UDP port. This function may be used by the
+    /// derived classes to create a fallback socket. It can be overriden
+    /// in the derived classes if it happens to be insufficient on some
+    /// environments.
+    ///
+    /// The fallback socket is meant to be opened together with the other socket
+    /// (a.k.a. primary socket) used to receive and handle DHCPv4 traffic. The
+    /// traffic received through the fallback should be dropped. The reasoning
+    /// behind opening the fallback socket is explained in the documentation of
+    /// @s isc::dhcp::SocketInfo structure.
+    ///
+    /// @param addr An IPv4 address to bind the socket to.
+    /// @param port A port number to bind socket to.
+    ///
+    /// @return A fallback socket descriptor. This descriptor should be assigned
+    /// to the @c fallbackfd_ field of the @c isc::dhcp::SocketInfo structure.
+    virtual int openFallbackSocket(const isc::asiolink::IOAddress& addr,
+                                   const uint16_t port);
 };
 
 /// Pointer to a PktFilter object.
