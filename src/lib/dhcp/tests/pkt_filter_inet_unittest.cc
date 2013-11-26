@@ -64,30 +64,12 @@ TEST_F(PktFilterInetTest, openSocket) {
     PktFilterInet pkt_filter;
     sock_info_ = pkt_filter.openSocket(iface, addr, PORT,
                                        false, false);
-    // Check that socket has been opened.
-    ASSERT_GE(sock_info_.sockfd_, 0);
+    // For the packet filter in use, the fallback socket shouldn't be opened.
+    // Fallback is typically opened for raw sockets.
+    EXPECT_LT(sock_info_.fallbackfd_, 0);
 
-    // Verify that the socket belongs to AF_INET family.
-    sockaddr_in sock_address;
-    socklen_t sock_address_len = sizeof(sock_address);
-    ASSERT_EQ(0, getsockname(sock_info_.sockfd_,
-                             reinterpret_cast<sockaddr*>(&sock_address),
-                             &sock_address_len));
-    EXPECT_EQ(AF_INET, sock_address.sin_family);
-
-    // Verify that the socket is bound the appropriate address.
-    const std::string bind_addr(inet_ntoa(sock_address.sin_addr));
-    EXPECT_EQ("127.0.0.1", bind_addr);
-
-    // Verify that the socket is bound to appropriate port.
-    EXPECT_EQ(PORT, ntohs(sock_address.sin_port));
-
-    // Verify that the socket has SOCK_DGRAM type.
-    int sock_type;
-    socklen_t sock_type_len = sizeof(sock_type);
-    ASSERT_EQ(0, getsockopt(sock_info_.sockfd_, SOL_SOCKET, SO_TYPE,
-                            &sock_type, &sock_type_len));
-    EXPECT_EQ(SOCK_DGRAM, sock_type);
+    // Test the primary socket.
+    testDgramSocket(sock_info_.sockfd_);
 }
 
 // This test verifies that the packet is correctly sent over the INET
