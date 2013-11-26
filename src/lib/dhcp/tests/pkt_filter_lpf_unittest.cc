@@ -183,7 +183,11 @@ TEST_F(PktFilterLPFTest, DISABLED_send) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
+
+    SocketInfo sock_info =
+        pkt_filter.openSocket(iface, addr, PORT, false, false);
+    socket_ = sock_info.sockfd_;
+
     ASSERT_GE(socket_, 0);
 
     // Send the packet over the socket.
@@ -193,7 +197,7 @@ TEST_F(PktFilterLPFTest, DISABLED_send) {
     fd_set readfds;
     FD_ZERO(&readfds);
     FD_SET(socket_, &readfds);
-    
+
     struct timeval timeout;
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
@@ -273,15 +277,16 @@ TEST_F(PktFilterLPFTest, DISABLED_receive) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
+    SocketInfo sock_info =
+        pkt_filter.openSocket(iface, addr, PORT, false, false);
+    socket_ = sock_info.sockfd_;
     ASSERT_GE(socket_, 0);
 
     // Send the packet over the socket.
     ASSERT_NO_THROW(pkt_filter.send(iface, socket_, pkt));
 
     // Receive the packet.
-    SocketInfo socket_info(socket_, IOAddress("127.0.0.1"), PORT);
-    Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, socket_info);
+    Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, sock_info);
     // Check that the packet has been correctly received.
     ASSERT_TRUE(rcvd_pkt);
 
