@@ -107,28 +107,17 @@ PktFilterLPF::openSocket(const Iface& iface,
                          const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
                          const bool) {
-    // Let's check if a socket is already in use
-    int sock_check = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock_check < 0) {
-        isc_throw(SocketConfigError, "Failed to create dgram socket");
-    }
 
-    struct sockaddr_in addr4;
-    memset(& addr4, 0, sizeof(addr4));
-    addr4.sin_family = AF_INET;
-    addr4.sin_addr.s_addr = htonl(addr);
-    addr4.sin_port = htons(port);
+    // Open fallback socket first. If it fails, it will give us an indication
+    // that there is another service (perhaps DHCP server) running.
+    // The function will throw an exception and effectivelly cease opening
+    // raw socket below.
+    int fallback = openFallbackSocket(addr, port);
 
-    if (bind(sock_check, (struct sockaddr *)& addr4, sizeof(addr4)) < 0) {
-        // We return negative, the proper error message will be displayed
-        // by the IfaceMgr ...
-        close(sock_check);
-        return (SocketInfo(addr, port, -1));
-    }
-    close(sock_check);
-
+    // The fallback is open, so we are good to open primary socket.
     int sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock < 0) {
+        close(fallback);
         isc_throw(SocketConfigError, "Failed to create raw LPF socket");
     }
 
@@ -146,6 +135,7 @@ PktFilterLPF::openSocket(const Iface& iface,
     if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &filter_program,
                    sizeof(filter_program)) < 0) {
         close(sock);
+        close(fallback);
         isc_throw(SocketConfigError, "Failed to install packet filtering program"
                   << " on the socket " << sock);
     }
@@ -162,11 +152,12 @@ PktFilterLPF::openSocket(const Iface& iface,
     if (bind(sock, reinterpret_cast<const struct sockaddr*>(&sa),
              sizeof(sa)) < 0) {
         close(sock);
+        close(fallback);
         isc_throw(SocketConfigError, "Failed to bind LPF socket '" << sock
                   << "' to interface '" << iface.getName() << "'");
     }
 
-    SocketInfo sock_desc(addr, port, sock);
+    SocketInfo sock_desc(addr, port, sock, fallback);
     return (sock_desc);
 
 }

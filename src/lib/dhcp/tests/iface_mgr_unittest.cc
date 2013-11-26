@@ -117,7 +117,13 @@ public:
     IfaceCollection & getIfacesLst() { return ifaces_; }
 };
 
-// Dummy class for now, but this will be expanded when needed
+/// @brief A test fixture class for IfaceMgr.
+///
+/// @todo Sockets being opened by IfaceMgr tests should be managed by
+/// the test fixture. In particular, the class should close sockets after
+/// each test. Current approach where test cases are responsible for
+/// closing sockets is resource leak prone, especially in case of the
+/// test failure path.
 class IfaceMgrTest : public ::testing::Test {
 public:
     // These are empty for now, but let's keep them around
@@ -1007,17 +1013,23 @@ TEST_F(IfaceMgrTest, checkPacketFilterLPFSocket) {
 
     // Then the second use PkFilterLPF mode
     EXPECT_NO_THROW(iface_mgr2->setMatchingPacketFilter(true));
-    // This socket opening attempt should not return positive value
-    // The first socket already opened same port
-    EXPECT_NO_THROW(
+
+    // The socket is open and bound. Another attempt to open socket and
+    // bind to the same address and port should result in an exception.
+    EXPECT_THROW(
         socket2 = iface_mgr2->openSocket(LOOPBACK, loAddr,
-                                         DHCP4_SERVER_PORT + 10000);
+                                         DHCP4_SERVER_PORT + 10000),
+        isc::dhcp::SocketConfigError
     );
+    // Surprisingly we managed to open another socket. We have to close it
+    // to prevent resource leak.
+    if (socket2 >= 0) {
+        close(socket2);
+    }
 
-    EXPECT_LE(socket2, 0);
-
-    close(socket2);
-    close(socket1);
+    if (socket1 >= 0) {
+        close(socket1);
+    }
 }
 
 #else
