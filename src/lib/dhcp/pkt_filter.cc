@@ -13,15 +13,37 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/pkt_filter.h>
 
 namespace isc {
 namespace dhcp {
 
 int
-PktFilter::openFallbackSocket(const isc::asiolink::IOAddress&,
-                              const uint16_t) {
-    return (0);
+PktFilter::openFallbackSocket(const isc::asiolink::IOAddress& addr,
+                              const uint16_t port) {
+    // Create socket.
+    int sock = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock < 0) {
+        isc_throw(SocketConfigError, "failed to create fallback socket for address "
+                  << addr.toText() << ", port " << port);
+    }
+    // Bind the socket to a specified address and port.
+    struct sockaddr_in addr4;
+    memset(&addr4, 0, sizeof(addr4));
+    addr4.sin_family = AF_INET;
+    addr4.sin_addr.s_addr = htonl(addr);
+    addr4.sin_port = htons(port);
+
+    if (bind(sock, reinterpret_cast<struct sockaddr*>(&addr4), sizeof(addr4)) < 0) {
+        // Remember to close the socket if we failed to bind it.
+        close(sock);
+        isc_throw(SocketConfigError, "failed to bind fallback socket to address "
+                  << addr.toText() << ", port " << port << " - is another DHCP "
+                  "server running?");
+    }
+    // Successfully created and bound a fallback socket. Return a descriptor.
+    return (sock);
 }
 
 
