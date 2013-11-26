@@ -17,6 +17,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter_inet.h>
+#include <dhcp/tests/pkt_filter_test_utils.h>
 
 #include <gtest/gtest.h>
 
@@ -32,63 +33,12 @@ const uint16_t PORT = 10067;
 /// Size of the buffer holding received packets.
 const size_t RECV_BUF_SIZE = 2048;
 
-/// This class handles has simple algorithm checking
-/// presence of loopback interface and initializing
-/// its index.
-class PktFilterInetTest : public ::testing::Test {
+// Test fixture class inherits from the class common for all packet
+// filter tests.
+class PktFilterInetTest : public isc::dhcp::test::PktFilterTest {
 public:
-
-    /// @brief Constructor
-    ///
-    /// This constructor initializes socket_ member to a negative value.
-    /// Explcit initialization is performed here because some of the
-    /// tests do not initialize this value. In such cases, destructor
-    /// could invoke close() on uninitialized socket descriptor which
-    /// would result in errors being reported by Valgrind.
-    PktFilterInetTest()
-        : socket_(-1) {
-        // Initialize ifname_ and ifindex_.
-        loInit();
+    PktFilterInetTest() : PktFilterTest(PORT) {
     }
-
-    /// @brief Destructor
-    ///
-    /// Closes open socket (if any).
-    ~PktFilterInetTest() {
-        // Cleanup after each test. This guarantees
-        // that the socket does not hang after a test.
-        if (socket_ >= 0) {
-            close(socket_);
-        }
-    }
-
-    /// @brief Detect loopback interface.
-    ///
-    /// @todo this function will be removed once cross-OS interface
-    /// detection is implemented
-    void loInit() {
-        if (if_nametoindex("lo") > 0) {
-            ifname_ = "lo";
-            ifindex_ = if_nametoindex("lo");
-
-        } else if (if_nametoindex("lo0") > 0) {
-            ifname_ = "lo0";
-            ifindex_ = if_nametoindex("lo0");
-
-        } else {
-            std::cout << "Failed to detect loopback interface. Neither "
-                      << "lo nor lo0 worked. Giving up." << std::endl;
-            FAIL();
-
-
-
-        }
-    }
-
-    std::string ifname_; ///< Loopback interface name
-    uint16_t ifindex_;   ///< Loopback interface index.
-    int socket_;         ///< Socket descriptor.
-
 };
 
 // This test verifies that the PktFilterInet class reports its lack
@@ -112,14 +62,16 @@ TEST_F(PktFilterInetTest, openSocket) {
 
     // Try to open socket.
     PktFilterInet pkt_filter;
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT,
+                                       false, false);
     // Check that socket has been opened.
-    ASSERT_GE(socket_, 0);
+    ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Verify that the socket belongs to AF_INET family.
     sockaddr_in sock_address;
     socklen_t sock_address_len = sizeof(sock_address);
-    ASSERT_EQ(0, getsockname(socket_, reinterpret_cast<sockaddr*>(&sock_address),
+    ASSERT_EQ(0, getsockname(sock_info_.sockfd_,
+                             reinterpret_cast<sockaddr*>(&sock_address),
                              &sock_address_len));
     EXPECT_EQ(AF_INET, sock_address.sin_family);
 
@@ -133,7 +85,8 @@ TEST_F(PktFilterInetTest, openSocket) {
     // Verify that the socket has SOCK_DGRAM type.
     int sock_type;
     socklen_t sock_type_len = sizeof(sock_type);
-    ASSERT_EQ(0, getsockopt(socket_, SOL_SOCKET, SO_TYPE, &sock_type, &sock_type_len));
+    ASSERT_EQ(0, getsockopt(sock_info_.sockfd_, SOL_SOCKET, SO_TYPE,
+                            &sock_type, &sock_type_len));
     EXPECT_EQ(SOCK_DGRAM, sock_type);
 }
 
@@ -170,27 +123,27 @@ TEST_F(PktFilterInetTest, send) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
-    ASSERT_GE(socket_, 0);
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Send the packet over the socket.
-    ASSERT_NO_THROW(pkt_filter.send(iface, socket_, pkt));
+    ASSERT_NO_THROW(pkt_filter.send(iface, sock_info_.sockfd_, pkt));
 
     // Read the data from socket.
     fd_set readfds;
     FD_ZERO(&readfds);
-    FD_SET(socket_, &readfds);
-    
+    FD_SET(sock_info_.sockfd_, &readfds);
+
     struct timeval timeout;
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
-    int result = select(socket_ + 1, &readfds, NULL, NULL, &timeout);
+    int result = select(sock_info_.sockfd_ + 1, &readfds, NULL, NULL, &timeout);
     // We should receive some data from loopback interface.
     ASSERT_GT(result, 0);
 
     // Get the actual data.
     uint8_t rcv_buf[RECV_BUF_SIZE];
-    result = recv(socket_, rcv_buf, RECV_BUF_SIZE, 0);
+    result = recv(sock_info_.sockfd_, rcv_buf, RECV_BUF_SIZE, 0);
     ASSERT_GT(result, 0);
 
     // Create the DHCPv4 packet from the received data.
@@ -249,15 +202,14 @@ TEST_F(PktFilterInetTest, receive) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false).sockfd_;
-    ASSERT_GE(socket_, 0);
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Send the packet over the socket.
-    ASSERT_NO_THROW(pkt_filter.send(iface, socket_, pkt));
+    ASSERT_NO_THROW(pkt_filter.send(iface, sock_info_.sockfd_, pkt));
 
     // Receive the packet.
-    SocketInfo socket_info(IOAddress("127.0.0.1"), PORT, socket_);
-    Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, socket_info);
+    Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, sock_info_);
     // Check that the packet has been correctly received.
     ASSERT_TRUE(rcvd_pkt);
 
