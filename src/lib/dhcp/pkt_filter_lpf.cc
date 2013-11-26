@@ -230,9 +230,16 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
 
     OutputBuffer buf(14);
 
-    HWAddrPtr hwaddr(new HWAddr(iface.getMac(), iface.getMacLen(),
-                                iface.getHWType()));
-    pkt->setLocalHWAddr(hwaddr);
+    // Some interfaces may have no HW address - e.g. loopback interface.
+    // For these interfaces the HW address length is 0. If this is the case,
+    // then we will rely on the functions which construct the IP/UDP headers
+    // to provide a default HW addres. Otherwise, create the HW address
+    // object using the HW address of the interface.
+    if (iface.getMacLen() > 0) {
+        HWAddrPtr hwaddr(new HWAddr(iface.getMac(), iface.getMacLen(),
+                                    iface.getHWType()));
+        pkt->setLocalHWAddr(hwaddr);
+    }
 
 
     // Ethernet frame header.
