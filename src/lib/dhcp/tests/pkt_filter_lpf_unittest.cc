@@ -18,6 +18,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter_lpf.h>
 #include <dhcp/protocol_util.h>
+#include <dhcp/tests/pkt_filter_test_utils.h>
 #include <util/buffer.h>
 
 #include <gtest/gtest.h>
@@ -36,66 +37,12 @@ const uint16_t PORT = 10067;
 /// Size of the buffer holding received packets.
 const size_t RECV_BUF_SIZE = 2048;
 
-/// This class handles has simple algorithm checking
-/// presence of loopback interface and initializing
-/// its index.
-class PktFilterLPFTest : public ::testing::Test {
+// Test fixture class inherits from the class common for all packet
+// filter tests.
+class PktFilterLPFTest : public isc::dhcp::test::PktFilterTest {
 public:
-
-    /// @brief Constructor
-    ///
-    /// This constructor initializes sock_info_ structure to a default value.
-    /// The socket descriptors should be set to a negative value to indicate
-    /// that no socket has been opened. Specific tests will reinitialize this
-    /// structure with the values of the open sockets. For non-negative socket
-    /// descriptors, the class destructor will close associated sockets.
-    PktFilterLPFTest()
-        : sock_info_(IOAddress("127.0.0.1"), PORT, -1, -1) {
-        // Initialize ifname_ and ifindex_.
-        loInit();
+    PktFilterLPFTest() : PktFilterTest(PORT) {
     }
-
-    /// @brief Destructor
-    ///
-    /// Closes open sockets (if any).
-    ~PktFilterLPFTest() {
-        // Cleanup after each test. This guarantees
-        // that the sockets do not hang after a test.
-        if (sock_info_.sockfd_ >= 0) {
-            close(sock_info_.sockfd_);
-        }
-        if (sock_info_.fallbackfd_ >=0) {
-            close(sock_info_.fallbackfd_);
-        }
-    }
-
-    /// @brief Detect loopback interface.
-    ///
-    /// @todo this function will be removed once cross-OS interface
-    /// detection is implemented
-    void loInit() {
-        if (if_nametoindex("lo") > 0) {
-            ifname_ = "lo";
-            ifindex_ = if_nametoindex("lo");
-
-        } else if (if_nametoindex("lo0") > 0) {
-            ifname_ = "lo0";
-            ifindex_ = if_nametoindex("lo0");
-
-        } else {
-            std::cout << "Failed to detect loopback interface. Neither "
-                      << "lo nor lo0 worked. Giving up." << std::endl;
-            FAIL();
-
-
-
-        }
-    }
-
-    std::string ifname_;   ///< Loopback interface name
-    uint16_t ifindex_;     ///< Loopback interface index.
-    SocketInfo sock_info_; ///< A structure holding socket information.
-
 };
 
 // This test verifies that the PktFilterLPF class reports its capability
