@@ -88,6 +88,10 @@ Iface::closeSockets(const uint16_t family) {
             // Close and delete the socket and move to the
             // next one.
             close(sock->sockfd_);
+            // Close fallback socket if open.
+            if (sock->fallbackfd_) {
+                close(sock->fallbackfd_);
+            }
             sockets_.erase(sock++);
 
         } else {
@@ -148,6 +152,10 @@ bool Iface::delSocket(uint16_t sockfd) {
     while (sock!=sockets_.end()) {
         if (sock->sockfd_ == sockfd) {
             close(sockfd);
+            // Close fallback socket if open.
+            if (sock->fallbackfd_) {
+                close(sock->fallbackfd_);
+            }
             sockets_.erase(sock);
             return (true); //socket found
         }
