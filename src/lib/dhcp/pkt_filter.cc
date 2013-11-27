@@ -16,6 +16,9 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt_filter.h>
 
+#include <sys/fcntl.h>
+#include <sys/socket.h>
+
 namespace isc {
 namespace dhcp {
 
@@ -41,6 +44,15 @@ PktFilter::openFallbackSocket(const isc::asiolink::IOAddress& addr,
         isc_throw(SocketConfigError, "failed to bind fallback socket to address "
                   << addr.toText() << ", port " << port << " - is another DHCP "
                   "server running?");
+    }
+
+    // Set socket to non-blocking mode. This is to prevent the read from the fallback
+    // socket to block message processing on the primary socket.
+    if (fcntl(sock, F_SETFL, O_NONBLOCK) != 0) {
+        close(sock);
+        isc_throw(SocketConfigError, "failed to set SO_NONBLOCK option on the"
+                  " fallback socket, bound to " << addr.toText() << ", port "
+                  << port);
     }
     // Successfully created and bound a fallback socket. Return a descriptor.
     return (sock);
