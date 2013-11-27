@@ -50,11 +50,24 @@ public:
     /// Closes open sockets (if any).
     virtual ~PktFilterTest();
 
+    /// @brief Initializes DHCPv4 message used by tests.
+    void initTestMessage();
+
     /// @brief Detect loopback interface.
     ///
     /// @todo this function will be removed once cross-OS interface
     /// detection is implemented
     void loInit();
+
+    /// @brief Sends a single DHCPv4 message to the loopback address.
+    ///
+    /// This function opens a datagram socket and binds it to the local loopback
+    /// address and client port. The client's port is assumed to be port_ + 1.
+    /// The send_msg_sock_ member holds the socket descriptor so as the socket
+    /// is closed automatically in the destructor. If the function succeeds to
+    /// send a DHCPv4 message, the socket is closed so as the function can be
+    /// called again within the same test.
+    void sendMessage();
 
     /// @brief Test that the datagram socket is opened correctly.
     ///
@@ -63,10 +76,18 @@ public:
     /// @param sock A descriptor of the open socket.
     void testDgramSocket(const int sock) const;
 
+    /// @brief Checks if the received message matches the test_message_.
+    ///
+    /// @param rcvd_msg An instance of the message to be tested.
+    void testRcvdMessage(const Pkt4Ptr& rcvd_msg) const;
+
     std::string ifname_;   ///< Loopback interface name
     uint16_t ifindex_;     ///< Loopback interface index.
     uint16_t port_;        ///< A port number used for the test.
-    isc::dhcp::SocketInfo sock_info_; ///< A structure holding socket information.
+    isc::dhcp::SocketInfo sock_info_; ///< A structure holding socket info.
+    int send_msg_sock_;    ///< Holds a descriptor of the socket used by
+                           ///< sendMessage function.
+    Pkt4Ptr test_message_; ///< A DHCPv4 message used by tests.
 
 };
 
@@ -90,7 +111,7 @@ public:
 
     /// @brief Simulate opening of the socket.
     ///
-    /// This function simulates openinga primary socket. In reality, it doesn't
+    /// This function simulates opening a primary socket. In reality, it doesn't
     /// open a socket but the socket descriptor returned in the SocketInfo
     /// structure is always set to 0.
     ///
