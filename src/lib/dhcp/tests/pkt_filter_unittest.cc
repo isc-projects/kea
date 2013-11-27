@@ -45,16 +45,25 @@ TEST_F(PktFilterBaseClassTest, openFallbackSocket) {
     PktFilterStub pkt_filter;
     ASSERT_NO_THROW(sock_info_.fallbackfd_ =
                     pkt_filter.openFallbackSocket(IOAddress("127.0.0.1"), PORT)
+                    << "Failed to open fallback socket.";
     );
     // Test that the socket has been successfully created.
     testDgramSocket(sock_info_.fallbackfd_);
+
+    // In addition, we should check that the fallback socket is non-blocking.
+    int sock_flags = fcntl(sock_info_.fallbackfd_, F_GETFL);
+    EXPECT_EQ(O_NONBLOCK, sock_flags & O_NONBLOCK)
+        << "Fallback socket is blocking, it should be non-blocking - check"
+        " fallback socket flags (fcntl).";
 
     // Now that we have the socket open, let's try to open another one. This
     // should cause a binding error.
     int another_sock;
     EXPECT_THROW(another_sock =
                  pkt_filter.openFallbackSocket(IOAddress("127.0.0.1"), PORT),
-                 isc::dhcp::SocketConfigError);
+                 isc::dhcp::SocketConfigError)
+        << "it should be not allowed to open and bind two fallback sockets"
+        " to the same address and port. Surprisingly, the socket bound.";
     // Hard to believe we managed to open another socket. But if so, we have
     // to close it to prevent a resource leak.
     if (another_sock >= 0) {

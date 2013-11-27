@@ -165,6 +165,19 @@ PktFilterLPF::openSocket(const Iface& iface,
 Pkt4Ptr
 PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
     uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
+    // First let's get some data from the fallback socket. The data will be
+    // discarded but we don't want the socket buffer to bloat. We get the
+    // packets from the socket in loop but most of the time the loop will
+    // end after receiving one packet. The call to recv returns immediately
+    // when there is no data left on the socket because the socket is
+    // non-blocking.
+    int datalen;
+    do {
+        datalen = recv(socket_info.fallbackfd_, raw_buf, sizeof(raw_buf), 0);
+    } while (datalen >= 0);
+
+    // Now that we finished getting data from the fallback socket, we
+    // have to get the data from the raw socket too.
     int data_len = read(socket_info.sockfd_, raw_buf, sizeof(raw_buf));
     // If negative value is returned by read(), it indicates that an
     // error occured. If returned value is 0, no data was read from the
