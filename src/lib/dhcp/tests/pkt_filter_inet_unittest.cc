@@ -75,27 +75,6 @@ TEST_F(PktFilterInetTest, openSocket) {
 // This test verifies that the packet is correctly sent over the INET
 // datagram socket.
 TEST_F(PktFilterInetTest, send) {
-    // Let's create a DHCPv4 packet.
-    Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 0));
-    ASSERT_TRUE(pkt);
-
-    // Set required fields.
-    pkt->setLocalAddr(IOAddress("127.0.0.1"));
-    pkt->setRemoteAddr(IOAddress("127.0.0.1"));
-    pkt->setRemotePort(PORT);
-    pkt->setLocalPort(PORT + 1);
-    pkt->setIndex(ifindex_);
-    pkt->setIface(ifname_);
-    pkt->setHops(6);
-    pkt->setSecs(42);
-    pkt->setCiaddr(IOAddress("192.0.2.1"));
-    pkt->setSiaddr(IOAddress("192.0.2.2"));
-    pkt->setYiaddr(IOAddress("192.0.2.3"));
-    pkt->setGiaddr(IOAddress("192.0.2.4"));
-
-    // Create the on-wire data.
-    ASSERT_NO_THROW(pkt->pack());
-
     // Packet will be sent over loopback interface.
     Iface iface(ifname_, ifindex_);
     IOAddress addr("127.0.0.1");
@@ -109,7 +88,7 @@ TEST_F(PktFilterInetTest, send) {
     ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Send the packet over the socket.
-    ASSERT_NO_THROW(pkt_filter.send(iface, sock_info_.sockfd_, pkt));
+    ASSERT_NO_THROW(pkt_filter.send(iface, sock_info_.sockfd_, test_message_));
 
     // Read the data from socket.
     fd_set readfds;
@@ -135,47 +114,16 @@ TEST_F(PktFilterInetTest, send) {
     // Parse the packet.
     ASSERT_NO_THROW(rcvd_pkt->unpack());
 
-    // Verify that the received packet matches sent packet.
-    EXPECT_EQ(pkt->getHops(), rcvd_pkt->getHops());
-    EXPECT_EQ(pkt->getOp(),   rcvd_pkt->getOp());
-    EXPECT_EQ(pkt->getSecs(), rcvd_pkt->getSecs());
-    EXPECT_EQ(pkt->getFlags(), rcvd_pkt->getFlags());
-    EXPECT_EQ(pkt->getCiaddr(), rcvd_pkt->getCiaddr());
-    EXPECT_EQ(pkt->getSiaddr(), rcvd_pkt->getSiaddr());
-    EXPECT_EQ(pkt->getYiaddr(), rcvd_pkt->getYiaddr());
-    EXPECT_EQ(pkt->getGiaddr(), rcvd_pkt->getGiaddr());
-    EXPECT_EQ(pkt->getTransid(), rcvd_pkt->getTransid());
-    EXPECT_TRUE(pkt->getSname() == rcvd_pkt->getSname());
-    EXPECT_TRUE(pkt->getFile() == rcvd_pkt->getFile());
-    EXPECT_EQ(pkt->getHtype(), rcvd_pkt->getHtype());
-    EXPECT_EQ(pkt->getHlen(), rcvd_pkt->getHlen());
+    // Check if the received message is correct.
+    testRcvdMessage(rcvd_pkt);
+
 }
 
 // This test verifies that the DHCPv4 packet is correctly received via
 // INET datagram socket and that it matches sent packet.
 TEST_F(PktFilterInetTest, receive) {
-    // Let's create a DHCPv4 packet.
-    Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 0));
-    ASSERT_TRUE(pkt);
 
-    // Set required fields.
-    pkt->setLocalAddr(IOAddress("127.0.0.1"));
-    pkt->setRemoteAddr(IOAddress("127.0.0.1"));
-    pkt->setRemotePort(PORT);
-    pkt->setLocalPort(PORT + 1);
-    pkt->setIndex(ifindex_);
-    pkt->setIface(ifname_);
-    pkt->setHops(6);
-    pkt->setSecs(42);
-    pkt->setCiaddr(IOAddress("192.0.2.1"));
-    pkt->setSiaddr(IOAddress("192.0.2.2"));
-    pkt->setYiaddr(IOAddress("192.0.2.3"));
-    pkt->setGiaddr(IOAddress("192.0.2.4"));
-
-    // Create the on-wire data.
-    ASSERT_NO_THROW(pkt->pack());
-
-    // Packet will be sent over loopback interface.
+    // Packet will be received over loopback interface.
     Iface iface(ifname_, ifindex_);
     IOAddress addr("127.0.0.1");
 
@@ -187,8 +135,8 @@ TEST_F(PktFilterInetTest, receive) {
     sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
     ASSERT_GE(sock_info_.sockfd_, 0);
 
-    // Send the packet over the socket.
-    ASSERT_NO_THROW(pkt_filter.send(iface, sock_info_.sockfd_, pkt));
+    // Send a DHCPv4 message to the local loopback address and server's port.
+    sendMessage();
 
     // Receive the packet.
     Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, sock_info_);
@@ -198,20 +146,8 @@ TEST_F(PktFilterInetTest, receive) {
     // Parse the packet.
     ASSERT_NO_THROW(rcvd_pkt->unpack());
 
-    // Verify that the received packet matches sent packet.
-    EXPECT_EQ(pkt->getHops(), rcvd_pkt->getHops());
-    EXPECT_EQ(pkt->getOp(),   rcvd_pkt->getOp());
-    EXPECT_EQ(pkt->getSecs(), rcvd_pkt->getSecs());
-    EXPECT_EQ(pkt->getFlags(), rcvd_pkt->getFlags());
-    EXPECT_EQ(pkt->getCiaddr(), rcvd_pkt->getCiaddr());
-    EXPECT_EQ(pkt->getSiaddr(), rcvd_pkt->getSiaddr());
-    EXPECT_EQ(pkt->getYiaddr(), rcvd_pkt->getYiaddr());
-    EXPECT_EQ(pkt->getGiaddr(), rcvd_pkt->getGiaddr());
-    EXPECT_EQ(pkt->getTransid(), rcvd_pkt->getTransid());
-    EXPECT_TRUE(pkt->getSname() == rcvd_pkt->getSname());
-    EXPECT_TRUE(pkt->getFile() == rcvd_pkt->getFile());
-    EXPECT_EQ(pkt->getHtype(), rcvd_pkt->getHtype());
-    EXPECT_EQ(pkt->getHlen(), rcvd_pkt->getHlen());
+    // Check if the received message is correct.
+    testRcvdMessage(rcvd_pkt);
 }
 
 } // anonymous namespace
