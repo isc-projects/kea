@@ -20,6 +20,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
 
+#include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -78,17 +79,34 @@ public:
         return (false);
     }
 
-    /// Pretends to open socket. Only records a call to this function.
-    /// This function returns fake socket descriptor (always the same).
-    /// Note that the returned value has been selected to be unique
-    /// (because real values are rather less than 255). Values greater
-    /// than 255 are not recommended because they cause warnings to be
-    /// reported by Valgrind when invoking close() on them.
-    virtual SocketInfo openSocket(const Iface&,
+    /// @brief Pretend to open a socket.
+    ///
+    /// This function doesn't open a real socket. It always returns the
+    /// same fake socket descriptor. It also records the fact that it has
+    /// been called in the public open_socket_called_ member.
+    /// As in the case of opening a real socket, this function will check
+    /// if there is another fake socket "bound" to the same address and port.
+    /// If there is, it will throw an exception. This allows to simulate the
+    /// conditions when one of the sockets can't be open because there is
+    /// a socket already open and test how IfaceMgr will handle it.
+    ///
+    /// @param iface An interface on which the socket is to be opened.
+    /// @param addr An address to which the socket is to be bound.
+    /// @param port A port to which the socket is to be bound.
+    virtual SocketInfo openSocket(const Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port,
                                   const bool,
                                   const bool) {
+        // Check if there is any other socket bound to the specified address
+        // and port on this interface.
+        const Iface::SocketCollection& sockets = iface.getSockets();
+        for (Iface::SocketCollection::const_iterator socket = sockets.begin();
+             socket != sockets.end(); ++socket) {
+            if ((socket->addr_ == addr) && (socket->port_ == port)) {
+                isc_throw(SocketConfigError, "test socket bind error");
+            }
+        }
         open_socket_called_ = true;
         return (SocketInfo(addr, port, 255));
     }
@@ -112,9 +130,83 @@ public:
 class NakedIfaceMgr: public IfaceMgr {
     // "Naked" Interface Manager, exposes internal fields
 public:
+
+    /// @brief Constructor.
     NakedIfaceMgr() {
     }
-    IfaceCollection & getIfacesLst() { return ifaces_; }
+
+    /// @brief Returns the collection of existing interfaces.
+    IfaceCollection& getIfacesLst() { return (ifaces_); }
+
+    /// @brief This function creates fictious interfaces with fictious
+    /// addresses.
+    ///
+    /// These interfaces can be used in tests that don't actually try
+    /// to open the sockets on these interfaces. Some tests use mock
+    /// objects to mimic sockets being open. These interfaces are
+    /// suitable for such tests.
+    void createIfaces() {
+
+        ifaces_.clear();
+
+        // local loopback
+        ifaces_.push_back(createIface("lo", 0, "127.0.0.1"));
+        // eth0
+        ifaces_.push_back(createIface("eth0", 1, "10.0.0.1"));
+        // eth1
+        ifaces_.push_back(createIface("eth1", 2, "192.0.2.3"));
+    }
+
+    /// @brief Create an object representing interface.
+    ///
+    /// Apart from creating an interface, this function also sets the
+    /// interface flags:
+    /// - loopback flag if interface name is "lo"
+    /// - up always true
+    /// - running always true
+    /// - inactive always to false
+    ///
+    /// If one needs to modify the default flag settings, the setIfaceFlags
+    /// function should be used.
+    ///
+    /// @param name A name of the interface to be created.
+    /// @param ifindex An index of the interface to be created.
+    /// @param addr An IP address to be assigned to the interface.
+    ///
+    /// @return An object representing interface.
+    static Iface createIface(const std::string& name, const int ifindex,
+                             const std::string& addr) {
+        Iface iface(name, ifindex);
+        iface.addAddress(IOAddress(addr));
+        if (name == "lo") {
+            iface.flag_loopback_ = true;
+        }
+        iface.flag_up_ = true;
+        iface.flag_running_ = true;
+        iface.inactive4_ = false;
+        return (iface);
+    }
+
+    /// @brief Modified flags on the interface.
+    ///
+    /// @param name A name of the interface.
+    /// @param loopback A new value of the loopback flag.
+    /// @param up A new value of the up flag.
+    /// @param running A new value of the running flag.
+    /// @param inactive A new value of the inactive flag.
+    void setIfaceFlags(const std::string& name, const bool loopback,
+                       const bool up, const bool running,
+                       const bool inactive) {
+        for (IfaceMgr::IfaceCollection::iterator iface = ifaces_.begin();
+             iface != ifaces_.end(); ++iface) {
+            if (iface->getName() == name) {
+                iface->flag_loopback_ = loopback;
+                iface->flag_up_ = up;
+                iface->flag_running_ = running;
+                iface->inactive4_ = inactive;
+            }
+        }
+    }
 };
 
 /// @brief A test fixture class for IfaceMgr.
@@ -126,8 +218,9 @@ public:
 /// test failure path.
 class IfaceMgrTest : public ::testing::Test {
 public:
-    // These are empty for now, but let's keep them around
-    IfaceMgrTest() {
+    /// @brief Constructor.
+    IfaceMgrTest()
+        : errors_count_(0) {
     }
 
     ~IfaceMgrTest() {
@@ -171,6 +264,26 @@ public:
         }
         return (NULL);
     }
+
+    /// @brief Implements an IfaceMgr error handler.
+    ///
+    /// This function can be installed as an error handler for the
+    /// IfaceMgr::openSockets4 function. The error handler is invoked
+    /// when an attempt to open a particular socket fails for any reason.
+    /// Typically, the error handler will log a warning. When the error
+    /// handler returns, the openSockets4 function should continue opening
+    /// sockets on other interfaces.
+    ///
+    /// @param errmsg An error string indicating the reason for failure.
+    void ifaceMgrErrorHandler(const std::string&) {
+        // Increase the counter of invocations to this function. By checking
+        // this number, a test amy check if the expected number of errors
+        // has occurred.
+        ++errors_count_;
+    }
+
+    /// Holds the invocation counter for ifaceMgrErrorHandler.
+    int errors_count_;
 
 };
 
@@ -1090,6 +1203,157 @@ TEST_F(IfaceMgrTest, socket4) {
 
     close(socket1);
 }
+
+// This test verifies that IPv4 sockets are open on all interfaces (except
+// loopback), when interfaces are up, running and active (not disabled from
+// the DHCP configuration).
+TEST_F(IfaceMgrTest, openSockets4) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    // Use the custom packet filter object. This object mimics the socket
+    // opening operation - the real socket is not open.
+    boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
+
+    // Simulate opening sockets using the dummy packet filter.
+    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL));
+
+    // Expect that the sockets are open on both eth0 and eth1.
+    EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
+    EXPECT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
+    // Socket shouldn't have been opened on loopback.
+    EXPECT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
+}
+
+// This test verifies that the socket is not open on the interface which is
+// down, but sockets are open on all other non-loopback interfaces.
+TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
+
+    // Boolean parameters specify that eth0 is:
+    // - not a loopback
+    // - is "down" (not up)
+    // - is not running
+    // - is active (is not inactive)
+    ifacemgr.setIfaceFlags("eth0", false, false, true, false);
+    ASSERT_FALSE(ifacemgr.getIface("eth0")->flag_up_);
+    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL));
+
+    // There should be no socket on eth0 open, because interface was down.
+    EXPECT_TRUE(ifacemgr.getIface("eth0")->getSockets().empty());
+    // Expecting that the socket is open on eth1 because it was up, running
+    // and active.
+    EXPECT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
+    // Never open socket on loopback interface.
+    EXPECT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
+}
+
+// This test verifies that the socket is not open on the interface which is
+// disabled from the DHCP configuration, but sockets are open on all other
+// non-loopback interfaces.
+TEST_F(IfaceMgrTest, openSockets4IfaceInactive) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
+
+    // Boolean parameters specify that eth1 is:
+    // - not a loopback
+    // - is up
+    // - is running
+    // - is inactive
+    ifacemgr.setIfaceFlags("eth1", false, true, true, true);
+    ASSERT_TRUE(ifacemgr.getIface("eth1")->inactive4_);
+    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL));
+
+    // The socket on eth0 should be open because interface is up, running and
+    // active (not disabled through DHCP configuration, for example).
+    EXPECT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
+    // There should be no socket open on eth1 because it was marked inactive.
+    EXPECT_TRUE(ifacemgr.getIface("eth1")->getSockets().empty());
+    // Sockets are not open on loopback interfaces too.
+    EXPECT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
+}
+
+// Test that exception is thrown when trying to bind a new socket to the port
+// and address which is already in use by another socket.
+TEST_F(IfaceMgrTest, openSockets4NoErrorHandler) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
+
+    // Open socket on eth1. The openSockets4 should detect that this
+    // socket has been already open and an attempt to open another socket
+    // and bind to this address and port should fail.
+    ASSERT_NO_THROW(ifacemgr.openSocket("eth1", IOAddress("192.0.2.3"),
+                                        DHCP4_SERVER_PORT));
+
+    // The function throws an exception when it tries to open a socket
+    // and bind it to the address in use.
+    EXPECT_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL),
+                 isc::dhcp::SocketConfigError);
+
+}
+
+// Test that the external error handler is called when trying to bind a new
+// socket to the address and port being in use. The sockets on the other
+// interfaces should open just fine..
+TEST_F(IfaceMgrTest, openSocket4ErrorHandler) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
+
+    // Open socket on eth0. The openSockets4 should detect that this
+    // socket has been already open and an attempt to open another socket
+    // and bind to this address and port should fail.
+    ASSERT_NO_THROW(ifacemgr.openSocket("eth0", IOAddress("10.0.0.1"),
+                                        DHCP4_SERVER_PORT));
+
+    // Install an error handler before trying to open sockets. This handler
+    // should be called when the IfaceMgr fails to open socket on eth0.
+    isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
+        boost::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, _1);
+    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, error_handler));
+    // We expect that an error occured when we tried to open a socket on
+    // eth0, but the socket on eth1 should open just fine.
+    EXPECT_EQ(1, errors_count_);
+
+    // Reset errors count.
+    errors_count_ = 0;
+
+    // Now that we have two sockets open, we can try this again but this time
+    // we should get two errors: one when opening a socket on eth0, another one
+    // when opening a socket on eth1.
+    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, error_handler));
+    EXPECT_EQ(2, errors_count_);
+
+}
+
 
 // Test the Iface structure itself
 TEST_F(IfaceMgrTest, iface) {
