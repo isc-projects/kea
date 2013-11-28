@@ -22,6 +22,7 @@
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
 
+#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
@@ -373,6 +374,13 @@ public:
     bool inactive6_;
 };
 
+/// @brief This type describes the callback function invoked when error occurs
+/// in the IfaceMgr.
+///
+/// @param errmsg An error message.
+typedef
+boost::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
+
 /// @brief Handles network interfaces, transmission and reception.
 ///
 /// IfaceMgr is an interface manager class that detects available network
@@ -620,15 +628,22 @@ public:
     bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT);
 
     /// Opens IPv4 sockets on detected interfaces.
-    /// Will throw exception if socket creation fails.
     ///
     /// @param port specifies port number (usually DHCP4_SERVER_PORT)
     /// @param use_bcast configure sockets to support broadcast messages.
+    /// @param errcb A pointer to a function which should be called everytime
+    /// a socket being opened failed. The presence of the callback function
+    /// (non NULL value) implies that an exception is not thrown when the
+    /// operation on the socket fails. The process of opening sockets will
+    /// continue after callback function returns. The socket which failed
+    /// to open will remain closed.
     ///
-    /// @throw SocketOpenFailure if tried and failed to open socket.
+    /// @throw SocketOpenFailure if tried and failed to open socket and callback
+    /// function hasn't been specified.
     /// @return true if any sockets were open
     bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT,
-                      const bool use_bcast = true);
+                      const bool use_bcast = true,
+                      IfaceMgrErrorMsgCallback errcb = NULL);
 
     /// @brief Closes all open sockets.
     /// Is used in destructor, but also from Dhcpv4Srv and Dhcpv6Srv classes.
@@ -854,6 +869,19 @@ private:
     isc::asiolink::IOAddress
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
+
+    /// @brief Handles an error which occurs during operation on the socket.
+    ///
+    /// If the handler callback is specified (non-NULL), this handler is
+    /// called and the specified error message is passed to it. If the
+    /// handler is not specified, the @c isc::dhcpSocketConfigError exception
+    /// is thrown with the specified message.
+    ///
+    /// @param errmsg An error message to be passed to a handlder function or
+    /// to the @c isc::dhcp::SocketConfigError exception.
+    /// @param handler An error handler function or NULL.
+    void handleSocketConfigError(const std::string& errmsg,
+                                 IfaceMgrErrorMsgCallback handler);
 
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
