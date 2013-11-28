@@ -44,9 +44,9 @@ TEST_F(PktFilterBaseClassTest, openFallbackSocket) {
     // will handle it.
     PktFilterStub pkt_filter;
     ASSERT_NO_THROW(sock_info_.fallbackfd_ =
-                    pkt_filter.openFallbackSocket(IOAddress("127.0.0.1"), PORT)
-                    << "Failed to open fallback socket.";
-    );
+                    pkt_filter.openFallbackSocket(IOAddress("127.0.0.1"), PORT))
+        << "Failed to open fallback socket.";
+
     // Test that the socket has been successfully created.
     testDgramSocket(sock_info_.fallbackfd_);
 

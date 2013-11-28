@@ -292,7 +292,9 @@ void IfaceMgr::stubDetectIfaces() {
     addInterface(iface);
 }
 
-bool IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast) {
+bool
+IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
+                       IfaceMgrErrorMsgCallback error_handler) {
     int sock;
     int count = 0;
 
@@ -339,26 +341,39 @@ bool IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast) {
                 // bind to INADDR_ANY address but we can do it only once. Thus,
                 // if one socket has been bound we can't do it any further.
                 if (!bind_to_device && bcast_num > 0) {
-                    isc_throw(SocketConfigError, "SO_BINDTODEVICE socket option is"
-                              << " not supported on this OS; therefore, DHCP"
-                              << " server can only listen broadcast traffic on"
-                              << " a single interface");
+                    handleSocketConfigError("SO_BINDTODEVICE socket option is"
+                                            " not supported on this OS;"
+                                            " therefore, DHCP server can only"
+                                            " listen broadcast traffic on a"
+                                            " single interface",
+                                            error_handler);
 
                 } else {
-                    // We haven't open any broadcast sockets yet, so we can
-                    // open at least one more.
-                    sock = openSocket(iface->getName(), *addr, port, true, true);
-                    // Binding socket to an interface is not supported so we can't
-                    // open any more broadcast sockets. Increase the number of
-                    // opened broadcast sockets.
+                    try {
+                        // We haven't open any broadcast sockets yet, so we can
+                        // open at least one more.
+                        sock = openSocket(iface->getName(), *addr, port,
+                                          true, true);
+                    } catch (const Exception& ex) {
+                        handleSocketConfigError(ex.what(), error_handler);
+
+                    }
+                    // Binding socket to an interface is not supported so we
+                    // can't open any more broadcast sockets. Increase the
+                    // number of open broadcast sockets.
                     if (!bind_to_device) {
                         ++bcast_num;
                     }
                 }
 
             } else {
-                // Not broadcast capable, do not set broadcast flags.
-                sock = openSocket(iface->getName(), *addr, port, false, false);
+                try {
+                    // Not broadcast capable, do not set broadcast flags.
+                    sock = openSocket(iface->getName(), *addr, port,
+                                      false, false);
+                } catch (const Exception& ex) {
+                    handleSocketConfigError(ex.what(), error_handler);
+                }
 
             }
             if (sock < 0) {
@@ -466,6 +481,21 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
     }
     return (count > 0);
 }
+
+void
+IfaceMgr::handleSocketConfigError(const std::string& errmsg,
+                                  IfaceMgrErrorMsgCallback handler) {
+    // If error handler is installed, we don't want to throw an exception, but
+    // rather call this handler.
+    if (handler != NULL) {
+        handler(errmsg);
+
+    } else {
+        isc_throw(SocketConfigError, errmsg);
+
+    }
+}
+
 
 void
 IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
