@@ -619,7 +619,18 @@ public:
 
     /// Opens IPv6 sockets on detected interfaces.
     ///
-    /// Will throw exception if socket creation fails.
+    /// @todo This function will throw an exception immediately when a socket
+    /// fails to open. This is undersired behavior because it will preclude
+    /// other sockets from opening. We should strive to provide similar mechanism
+    /// that has been introduced for V4 sockets. If socket creation fails the
+    /// appropriate error handler is called and once the handler returns the
+    /// function contnues to open other sockets. The change in the IfaceMgr
+    /// is quite straight forward and it is proven to work for V4. However,
+    /// unit testing it is a bit involved, because for unit testing we need
+    /// a replacement of the openSocket6 function which will mimic the
+    /// behavior of the real socket opening. For the V4 we have the means to
+    /// to achieve that with the replaceable PktFilter class. For V6, the
+    /// implementation is hardcoded in the openSocket6.
     ///
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
     ///
@@ -631,19 +642,19 @@ public:
     ///
     /// @param port specifies port number (usually DHCP4_SERVER_PORT)
     /// @param use_bcast configure sockets to support broadcast messages.
-    /// @param errcb A pointer to a function which should be called everytime
-    /// a socket being opened failed. The presence of the callback function
-    /// (non NULL value) implies that an exception is not thrown when the
-    /// operation on the socket fails. The process of opening sockets will
-    /// continue after callback function returns. The socket which failed
-    /// to open will remain closed.
+    /// @param error_handler A pointer to a callback function which is called
+    /// by the openSockets4 when it fails to open a socket. This parameter
+    /// can be NULL to indicate that the callback should not be used. In such
+    /// case the @c isc::dhcp::SocketConfigError exception is thrown instead.
+    /// When a callback is installed the function will continue when callback
+    /// returns control.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket and callback
     /// function hasn't been specified.
     /// @return true if any sockets were open
     bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT,
                       const bool use_bcast = true,
-                      IfaceMgrErrorMsgCallback errcb = NULL);
+                      IfaceMgrErrorMsgCallback error_handler = NULL);
 
     /// @brief Closes all open sockets.
     /// Is used in destructor, but also from Dhcpv4Srv and Dhcpv6Srv classes.
