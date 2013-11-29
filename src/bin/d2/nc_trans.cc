@@ -102,7 +102,7 @@ NameChangeTransaction::sendUpdate(bool /* use_tsig_ */) {
 
         // @todo time out should ultimately be configurable, down to
         // server level?
-        dns_client_->doUpdate(io_service_, current_server_->getIpAddress(),
+        dns_client_->doUpdate(*io_service_, current_server_->getIpAddress(),
                               current_server_->getPort(), *dns_update_request_,
                               DNS_UPDATE_DEFAULT_TIMEOUT);
 
@@ -116,11 +116,9 @@ NameChangeTransaction::sendUpdate(bool /* use_tsig_ */) {
         // mechansisms and manifested as an unsuccessful IO statu in the
         // DNSClient callback.  Any problem here most likely means the request
         // is corrupt in some way and cannot be completed, therefore we will
-        // log it, mark it as failed, and set next event to NOP_EVT.
-        LOG_ERROR(dctl_logger, DHCP_DDNS_TRANS_SEND_EROR).arg(ex.what());
-        setNcrStatus(dhcp_ddns::ST_FAILED);
-        // @todo is this right?
-        postNextEvent(NOP_EVT);
+        // log it and transition it to failure.
+        LOG_ERROR(dctl_logger, DHCP_DDNS_TRANS_SEND_ERROR).arg(ex.what());
+        transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
     }
 }
 
@@ -183,7 +181,7 @@ NameChangeTransaction::onModelFailure(const std::string& explanation) {
 }
 
 void
-NameChangeTransaction::retryTransition(int server_sel_state) {
+NameChangeTransaction::retryTransition(const int server_sel_state) {
     if (update_attempts_ < MAX_UPDATE_TRIES_PER_SERVER) {
         // Re-enter the current state with same server selected.
         transition(getCurrState(), SERVER_SELECTED_EVT);
@@ -230,7 +228,7 @@ NameChangeTransaction::setReverseChangeCompleted(const bool value) {
 }
 
 void
-NameChangeTransaction::setUpdateAttempts(size_t value) {
+NameChangeTransaction::setUpdateAttempts(const size_t value) {
     update_attempts_ = value;
 }
 

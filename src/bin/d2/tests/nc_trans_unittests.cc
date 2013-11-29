@@ -12,7 +12,18 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <asiolink/interval_timer.h>
 #include <d2/nc_trans.h>
+#include <dns/opcode.h>
+#include <dns/messagerenderer.h>
+#include <log/logger_support.h>
+#include <log/macros.h>
+#include <util/buffer.h>
+
+#include <asio/ip/udp.hpp>
+#include <asio/socket_base.hpp>
+#include <asio.hpp>
+#include <asio/error_code.hpp>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
@@ -23,6 +34,8 @@ using namespace isc;
 using namespace isc::d2;
 
 namespace {
+
+const size_t MAX_MSG_SIZE = 1024;
 
 /// @brief Test derivation of NameChangeTransaction for exercising state
 /// model mechanics.
@@ -40,6 +53,8 @@ public:
     // NameChangeStub events
     static const int SEND_UPDATE_EVT = NCT_DERIVED_EVENT_MIN + 2;
 
+    bool use_stub_callback_;
+
     /// @brief Constructor
     ///
     /// Parameters match those needed by NameChangeTransaction.
@@ -48,11 +63,45 @@ public:
                    DdnsDomainPtr forward_domain,
                    DdnsDomainPtr reverse_domain)
         : NameChangeTransaction(io_service, ncr, forward_domain,
-                                reverse_domain) {
+                                reverse_domain),
+                                use_stub_callback_(false) {
     }
 
     /// @brief Destructor
     virtual ~NameChangeStub() {
+    }
+
+    /// @brief DNSClient callback
+    /// Overrides the callback in NameChangeTranscation to allow testing
+    /// sendUpdate without incorporating exectution of the state model
+    /// into the test.
+    /// It sets the DNS status update and posts IO_COMPLETED_EVT as does
+    /// the normal callback, but rather than invoking runModel it stops
+    /// the IO service.  This allows tests to be constructed that consisted
+    /// of generating a DNS request and invoking sendUpdate to post it and
+    /// wait for response.
+    virtual void operator()(DNSClient::Status status) {
+        if (use_stub_callback_) {
+            setDnsUpdateStatus(status);
+            postNextEvent(IO_COMPLETED_EVT);
+            getIOService()->stop();
+        } else {
+            // For tests which need to use the real callback.
+            NameChangeTransaction::operator()(status);
+        }
+    }
+
+    /// @brief Some tests require a server to be selected.  This method
+    /// selects the first server in the forward domain without involving
+    /// state model execution to do so.
+    bool selectFwdServer() {
+        if (getForwardDomain()) {
+            initServerSelection(getForwardDomain());
+            selectNextServer();
+            return (getCurrentServer());
+        }
+
+        return (false);
     }
 
     /// @brief Empty handler used to statisfy map verification.
@@ -182,12 +231,15 @@ public:
         // Invoke the base call implementation first.
         NameChangeTransaction::verifyStates();
 
-        // Define our states.
+        // Check our states.
         getState(DOING_UPDATE_ST);
     }
 
     // Expose the protected methods to be tested.
     using StateModel::runModel;
+    using StateModel::postNextEvent;
+    using StateModel::setState;
+    using StateModel::initDictionaries;
     using NameChangeTransaction::initServerSelection;
     using NameChangeTransaction::selectNextServer;
     using NameChangeTransaction::getCurrentServer;
@@ -203,6 +255,151 @@ public:
     using NameChangeTransaction::getReverseChangeCompleted;
     using NameChangeTransaction::setForwardChangeCompleted;
     using NameChangeTransaction::setReverseChangeCompleted;
+    using NameChangeTransaction::setUpdateAttempts;
+    using NameChangeTransaction::transition;
+    using NameChangeTransaction::retryTransition;
+    using NameChangeTransaction::sendUpdate;
+};
+
+typedef boost::shared_ptr<asio::ip::udp::socket> SocketPtr;
+
+/// @brief This class simulates a DNS server.  It is capable of performing
+/// an asynchronous read, governed by an IOService, and responding to received
+/// requests in a given manner.
+class FauxServer {
+public:
+    enum  ResponseMode {
+        USE_RCODE,   // Generate a response with a given RCODE
+        CORRUPT_RESP  // Generate a corrupt response
+    };
+
+    asiolink::IOService& io_service_;
+    asiolink::IOAddress& address_;
+    size_t port_;
+    SocketPtr server_socket_;
+    asio::ip::udp::endpoint remote_;
+    uint8_t receive_buffer_[MAX_MSG_SIZE];
+
+    /// @brief Constructor
+    ///
+    /// @param io_service IOService to be used for socket IO.
+    /// @param address  IP address at which the server should listen.
+    /// @param port Port number at which the server should listen.
+    FauxServer(asiolink::IOService& io_service, asiolink::IOAddress& address,
+               size_t port)
+        : io_service_(io_service), address_(address), port_(port),
+          server_socket_() {
+        server_socket_.reset(new asio::ip::udp::
+                             socket(io_service_.get_io_service(),
+                                    asio::ip::udp::v4()));
+        server_socket_->set_option(asio::socket_base::reuse_address(true));
+        server_socket_->bind(asio::ip::udp::
+                             endpoint(address_.getAddress(), port_));
+    }
+
+    /// @brief Destructor
+    virtual ~FauxServer() {
+    }
+
+    /// @brief Initiates an asyncrhonrous receive
+    ///
+    /// Starts the server listening for requests.  Upon completion of the
+    /// the listen, the callback method, requestHandler, is invoked.
+    ///
+    /// @param response_mode Selects how the server responds to a request
+    /// @param response_rcode The Rcode value set in the response. Not used
+    /// for all modes.
+    void receive (const ResponseMode& response_mode,
+                  const dns::Rcode& response_rcode=dns::Rcode::NOERROR()) {
+
+        server_socket_->async_receive_from(asio::buffer(receive_buffer_,
+                                                   sizeof(receive_buffer_)),
+                                      remote_,
+                                      boost::bind(&FauxServer::requestHandler,
+                                                  this, _1, _2,
+                                                  response_mode,
+                                                  response_rcode));
+    }
+
+    /// @brief Socket IO Completion callback
+    ///
+    /// This method servers as the Server's UDP socket receive callback handler.
+    /// When the receive completes the handler is invoked with the
+    /// @param error result code of the recieve (determined by asio layer)
+    /// @param bytes_recvd number of bytes received, if any
+    /// @param response_mode type of response the handler should produce
+    /// @param response_rcode value of Rcode in the response constructed by
+    /// handler
+    void requestHandler(const asio::error_code& error,
+                        std::size_t bytes_recvd,
+                        const ResponseMode& response_mode,
+                        const dns::Rcode& response_rcode) {
+
+        // If we encountered an error or received no data then fail.
+        // We expect the client to send good requests.
+        if (error.value() != 0 || bytes_recvd < 1) {
+            ADD_FAILURE() << "FauxServer receive failed" << error.message();
+            return;
+        }
+
+        // We have a successfully received data. We need to turn it into
+        // a request in order to build a proper response.
+        // Note D2UpdateMessage is geared towards making requests and
+        // reading responses.  This is the opposite perspective so we have
+        // to a bit of roll-your-own here.
+        dns::Message request(dns::Message::PARSE);
+        util::InputBuffer request_buf(receive_buffer_, bytes_recvd);
+        try {
+            request.fromWire(request_buf);
+        } catch (const std::exception& ex) {
+            // If the request cannot be parsed, then fail the test.
+            // We expect the client to send good requests.
+            ADD_FAILURE() << "FauxServer request is corrupt:" << ex.what();
+            return;
+        }
+
+        // The request parsed ok, so let's build a response.
+        // We must use the QID we received in the response or IOFetch will
+        // toss the response out, resulting in eventual timeout.
+        // We fill in the zone with data we know is from the "server".
+        dns::Message response(dns::Message::RENDER);
+        response.setQid(request.getQid());
+        dns::Question question(dns::Name("response.example.com"),
+                               dns::RRClass::ANY(), dns::RRType::SOA());
+        response.addQuestion(question);
+        response.setOpcode(dns::Opcode(dns::Opcode::UPDATE_CODE));
+        response.setHeaderFlag(dns::Message::HEADERFLAG_QR, true);
+
+        // Set the response Rcode to value passed in, default is NOERROR.
+        response.setRcode(response_rcode);
+
+        // Render the response to a buffer.
+        dns::MessageRenderer renderer;
+        util::OutputBuffer response_buf(MAX_MSG_SIZE);
+        renderer.setBuffer(&response_buf);
+        response.toWire(renderer);
+
+        // If mode is to ship garbage, then stomp on part of the rendered
+        // message.
+        if (response_mode == CORRUPT_RESP) {
+            response_buf.writeUint16At(0xFFFF, 2);
+        }
+
+        // Ship the reponse via synchronous send.
+        try {
+            int cnt = server_socket_->send_to(asio::
+                                              buffer(response_buf.getData(),
+                                                     response_buf.getLength()),
+                                              remote_);
+            // Make sure we sent what we expect to send.
+            if (cnt != response_buf.getLength()) {
+                ADD_FAILURE() << "FauxServer sent: " << cnt << " expected: "
+                          << response_buf.getLength();
+            }
+        } catch (const std::exception& ex) {
+            ADD_FAILURE() << "FauxServer send failed: " << ex.what();
+        }
+    }
 };
 
 /// @brief Defines a pointer to a NameChangeStubPtr instance.
@@ -217,16 +414,45 @@ public:
     IOServicePtr io_service_;
     DdnsDomainPtr forward_domain_;
     DdnsDomainPtr reverse_domain_;
-    
-    NameChangeTransactionTest() : io_service_(new isc::asiolink::IOService()) {
-    } 
+    asiolink::IntervalTimer timer_;
+    int run_time_;
+
+    NameChangeTransactionTest()
+        : io_service_(new isc::asiolink::IOService()), timer_(*io_service_),
+         run_time_(0) {
+    }
 
     virtual ~NameChangeTransactionTest() {
     }
 
-    /// @brief Instantiates a NameChangeStub built around a canned
-    /// NameChangeRequest.
+    /// @brief Run the IO service for no more than a given amount of time.
+    ///
+    /// Uses an IntervalTimer to interrupt the invocation of IOService run(),
+    /// after the given number of milliseconds elapse.  The timer executes
+    /// the timesUp() method if it expires.
+    ///
+    /// @param run_time amount of time in milliseconds to allow run to execute.
+    void runTimedIO(int run_time) {
+        run_time_ = run_time;
+        timer_.setup(boost::bind(&NameChangeTransactionTest::timesUp, this),
+                     run_time_);
+        io_service_->run();
+    }
+
+    /// @brief IO Timer expiration handler
+    ///
+    /// Stops the IOSerivce and FAILs the current test.
+    void timesUp() {
+        io_service_->stop();
+        FAIL() << "Test Time: " << run_time_ << " expired";
+    }
+
+    /// @brief  Instantiates a NameChangeStub test transaction
+    /// The transaction is constructed around a predefined (i.e "canned")
+    /// NameChangeRequest. The request has both forward and reverse DNS
+    /// changes requested, and both forward and reverse domains are populated.
     NameChangeStubPtr makeCannedTransaction() {
+        // NCR in JSON form.
         const char* msg_str =
             "{"
             " \"change_type\" : 0 , "
@@ -239,28 +465,36 @@ public:
             " \"lease_length\" : 1300 "
             "}";
 
+        // Create the request from JSON.
         dhcp_ddns::NameChangeRequestPtr ncr;
-
         DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
         DnsServerInfoPtr server;
-
         ncr = dhcp_ddns::NameChangeRequest::fromJSON(msg_str);
 
-        // make forward server list
+        // Make forward DdnsDomain with 2 forward servers.
         server.reset(new DnsServerInfo("forward.example.com",
-                                       isc::asiolink::IOAddress("1.1.1.1")));
+                                       isc::asiolink::IOAddress("127.0.0.1"),
+                                       5301));
         servers->push_back(server);
-        forward_domain_.reset(new DdnsDomain("*", "", servers));
+        server.reset(new DnsServerInfo("forward2.example.com",
+                                       isc::asiolink::IOAddress("127.0.0.1"),
+                                       5302));
 
-        // make reverse server list
-        servers->clear();
-        server.reset(new DnsServerInfo("reverse.example.com",
-                                       isc::asiolink::IOAddress("2.2.2.2")));
         servers->push_back(server);
-        reverse_domain_.reset(new DdnsDomain("*", "", servers));
+        forward_domain_.reset(new DdnsDomain("example.com.", "", servers));
+
+        // Make reverse DdnsDomain with one reverse server.
+        servers.reset(new DnsServerInfoStorage());
+        server.reset(new DnsServerInfo("reverse.example.com",
+                                       isc::asiolink::IOAddress("127.0.0.1"),
+                                       5301));
+        servers->push_back(server);
+        reverse_domain_.reset(new DdnsDomain("2.168.192.in.addr.arpa.",
+                                             "", servers));
+
+        // Instantiate the transaction as would be done by update manager.
         return (NameChangeStubPtr(new NameChangeStub(io_service_, ncr,
                                   forward_domain_, reverse_domain_)));
-
     }
 
 };
@@ -386,21 +620,24 @@ TEST_F(NameChangeTransactionTest, accessors) {
     EXPECT_TRUE(name_change->getReverseChangeCompleted());
 }
 
+/// @brief Tests DNS update request accessor methods.
 TEST_F(NameChangeTransactionTest, dnsUpdateRequestAccessors) {
+    // Create a transction.
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
-    // Verify that the DNS update request accessors.
+
+    // Post transaction construction, there should not be an update request.
+    EXPECT_FALSE(name_change->getDnsUpdateRequest());
+
+    // Create a request.
     D2UpdateMessagePtr req;
     ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
 
-    // Post construction it is empty.
-    EXPECT_FALSE(name_change->getDnsUpdateRequest());
-
-    /// @param request is the new request packet to assign.
+    // Use the setter and then verify we can fetch the request.
     ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
 
     // Post set, we should be able to fetch it.
-    EXPECT_TRUE(name_change->getDnsUpdateRequest());
+    ASSERT_TRUE(name_change->getDnsUpdateRequest());
 
     // Should be able to clear it.
     ASSERT_NO_THROW(name_change->clearDnsUpdateRequest());
@@ -409,18 +646,20 @@ TEST_F(NameChangeTransactionTest, dnsUpdateRequestAccessors) {
     EXPECT_FALSE(name_change->getDnsUpdateRequest());
 }
 
+/// @brief Tests DNS update request accessor methods.
 TEST_F(NameChangeTransactionTest, dnsUpdateResponseAccessors) {
+    // Create a transction.
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
 
-    // Verify that the DNS update response accessors.
+    // Post transaction construction, there should not be an update response.
+    EXPECT_FALSE(name_change->getDnsUpdateResponse());
+
+    // Create a response.
     D2UpdateMessagePtr resp;
     ASSERT_NO_THROW(resp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND)));
 
-    // Post construction it is empty.
-    EXPECT_FALSE(name_change->getDnsUpdateResponse());
-
-    /// @param request is the new request packet to assign.
+    // Use the setter and then verify we can fetch the response.
     ASSERT_NO_THROW(name_change->setDnsUpdateResponse(resp));
 
     // Post set, we should be able to fetch it.
@@ -432,7 +671,6 @@ TEST_F(NameChangeTransactionTest, dnsUpdateResponseAccessors) {
     // Should be empty again.
     EXPECT_FALSE(name_change->getDnsUpdateResponse());
 }
-
 
 
 /// @brief Tests event and state dictionary construction and verification.
@@ -654,6 +892,230 @@ TEST_F(NameChangeTransactionTest, failedUpdateTest) {
     // was not completed.
     EXPECT_EQ(dhcp_ddns::ST_FAILED, name_change->getNcrStatus());
     EXPECT_FALSE(name_change->getForwardChangeCompleted());
+}
+
+/// @brief Tests update attempt accessors.
+TEST_F(NameChangeTransactionTest, updateAttempts) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+
+    // Post transaction construction, update attempts should be 0.
+    EXPECT_EQ(0, name_change->getUpdateAttempts());
+
+    // Set it to a known value.
+    name_change->setUpdateAttempts(5);
+
+    // Verify that the value is as expected.
+    EXPECT_EQ(5, name_change->getUpdateAttempts());
+}
+
+/// @brief Tests retryTransition method
+///
+/// Verifes that while the maximum number of update attempts has not
+/// been exceeded, the method will leave the state unchanged but post a
+/// SERVER_SELECTED_EVT.  Once the maximum is exceeded, the method should
+/// transition to the state given with a next event of SERVER_IO_ERROR_EVT.
+TEST_F(NameChangeTransactionTest, retryTransition) {
+    // Create the transaction.
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+
+    // Define dictionaries.
+    ASSERT_NO_THROW(name_change->initDictionaries());
+
+    // Transition to a known spot.
+    ASSERT_NO_THROW(name_change->transition(
+                    NameChangeStub::DOING_UPDATE_ST,
+                    NameChangeStub::SEND_UPDATE_EVT));
+
+    // Verify we are at the known spot.
+    ASSERT_EQ(NameChangeStub::DOING_UPDATE_ST,
+              name_change->getCurrState());
+    ASSERT_EQ(NameChangeStub::SEND_UPDATE_EVT,
+              name_change->getNextEvent());
+
+    // Verify that we have not exceeded maximum number of attempts.
+    EXPECT_TRUE(name_change->getUpdateAttempts() <
+                NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER);
+
+    // Call retryTransition.
+    ASSERT_NO_THROW(name_change->retryTransition(
+                    NameChangeTransaction::PROCESS_TRANS_FAILED_ST));
+
+    // Since the number of udpate attempts is less than the maximum allowed
+    // we should remain in our current state but with next event of
+    // SERVER_SELECTED_EVT posted.
+    ASSERT_EQ(NameChangeStub::DOING_UPDATE_ST,
+              name_change->getCurrState());
+    ASSERT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
+              name_change->getNextEvent());
+
+    // Now set the number of attempts to the maximum.
+    name_change->setUpdateAttempts(NameChangeTransaction::
+                                   MAX_UPDATE_TRIES_PER_SERVER);
+    // Call retryTransition.
+    ASSERT_NO_THROW(name_change->retryTransition(
+                    NameChangeTransaction::PROCESS_TRANS_FAILED_ST));
+
+    // Since we have exceeded maximum attempts, we should tranisition to
+    // PROCESS_UPDATE_FAILD_ST with a next event of SERVER_IO_ERROR_EVT.
+    ASSERT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
+              name_change->getCurrState());
+    ASSERT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT,
+              name_change->getNextEvent());
+}
+
+/// @brief Tests sendUpdate method when underlying doUpdate throws.
+///
+/// DNSClient::doUpdate can throw for a variety of reasons. This tests
+/// sendUpdate handling of such a throw by passing doUpdate a request
+/// that will not render.
+TEST_F(NameChangeTransactionTest, sendUpdateDoUpdateFailure) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change->initDictionaries());
+    ASSERT_TRUE(name_change->selectFwdServer());
+
+    // Set the transaction's request to an empty DNS update.
+    D2UpdateMessagePtr req;
+    ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
+    ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
+
+    // Verify that sendUpdate does not throw, but it should fail because
+    // the requset won't render.
+    ASSERT_NO_THROW(name_change->sendUpdate());
+
+    // Verify that we transition to failed state and event.
+    ASSERT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
+              name_change->getCurrState());
+    ASSERT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
+              name_change->getNextEvent());
+}
+
+/// @brief Tests sendUpdate method when underlying doUpdate times out.
+TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
+    log::initLogger();
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change->initDictionaries());
+    ASSERT_TRUE(name_change->selectFwdServer());
+
+    // Create a valid request.
+    D2UpdateMessagePtr req;
+    ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
+    ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
+    req->setZone(dns::Name("request.example.com"), dns::RRClass::ANY());
+    req->setRcode(dns::Rcode(dns::Rcode::NOERROR_CODE));
+
+    // Set the flag to use the NameChangeStub's DNSClient callback.
+    name_change->use_stub_callback_ = true;
+
+    // Invoke sendUdpate.
+    ASSERT_NO_THROW(name_change->sendUpdate());
+
+    // Update attempt count should be 1, next event should be NOP_EVT.
+    EXPECT_EQ(1, name_change->getUpdateAttempts());
+    ASSERT_EQ(NameChangeTransaction::NOP_EVT,
+              name_change->getNextEvent());
+
+    // Run IO a bit longer than maximum allowed to permit timeout logic to
+    // execute.
+    runTimedIO(NameChangeTransaction::DNS_UPDATE_DEFAULT_TIMEOUT + 100);
+
+    // Verify that next event is IO_COMPLETED_EVT and DNS status is TIMEOUT.
+    ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
+              name_change->getNextEvent());
+    ASSERT_EQ(DNSClient::TIMEOUT, name_change->getDnsUpdateStatus());
+}
+
+/// @brief Tests sendUpdate method when it receives a corrupt respons from
+/// the server.
+TEST_F(NameChangeTransactionTest, sendUpdateCorruptResponse) {
+    log::initLogger();
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change->initDictionaries());
+    ASSERT_TRUE(name_change->selectFwdServer());
+
+    // Create a server and start it listening.
+    asiolink::IOAddress address("127.0.0.1");
+    FauxServer server(*io_service_, address, 5301);
+    server.receive(FauxServer::CORRUPT_RESP);
+
+    // Create a valid request for the transaction.
+    D2UpdateMessagePtr req;
+    ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
+    ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
+    req->setZone(dns::Name("request.example.com"), dns::RRClass::ANY());
+    req->setRcode(dns::Rcode(dns::Rcode::NOERROR_CODE));
+
+    // Set the flag to use the NameChangeStub's DNSClient callback.
+    name_change->use_stub_callback_ = true;
+
+    // Invoke sendUdpate.
+    ASSERT_NO_THROW(name_change->sendUpdate());
+
+    // Update attempt count should be 1, next event should be NOP_EVT.
+    EXPECT_EQ(1, name_change->getUpdateAttempts());
+    ASSERT_EQ(NameChangeTransaction::NOP_EVT,
+              name_change->getNextEvent());
+
+    // Run the IO for 500 ms.  This should be more than enough time.
+    runTimedIO(500);
+
+    // Verify that next event is IO_COMPLETED_EVT and DNS status is INVALID.
+    ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
+              name_change->getNextEvent());
+    ASSERT_EQ(DNSClient::INVALID_RESPONSE, name_change->getDnsUpdateStatus());
+}
+
+/// @brief Tests sendUpdate method when the exchange succeeds.
+TEST_F(NameChangeTransactionTest, sendUpdate) {
+    log::initLogger();
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_NO_THROW(name_change->initDictionaries());
+    ASSERT_TRUE(name_change->selectFwdServer());
+
+    // Create a server and start it listening.
+    asiolink::IOAddress address("127.0.0.1");
+    FauxServer server(*io_service_, address, 5301);
+    server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+
+    // Create a valid request for the transaction.
+    D2UpdateMessagePtr req;
+    ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
+    ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
+    req->setZone(dns::Name("request.example.com"), dns::RRClass::ANY());
+    req->setRcode(dns::Rcode(dns::Rcode::NOERROR_CODE));
+
+    // Set the flag to use the NameChangeStub's DNSClient callback.
+    name_change->use_stub_callback_ = true;
+
+    // Invoke sendUdpate.
+    ASSERT_NO_THROW(name_change->sendUpdate());
+
+    // Update attempt count should be 1, next event should be NOP_EVT.
+    EXPECT_EQ(1, name_change->getUpdateAttempts());
+    ASSERT_EQ(NameChangeTransaction::NOP_EVT,
+              name_change->getNextEvent());
+
+    // Run the IO for 500 ms.  This should be more than enough time.
+    runTimedIO(500);
+
+    // Verify that next event is IO_COMPLETED_EVT and DNS status is SUCCESS.
+    ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
+              name_change->getNextEvent());
+    ASSERT_EQ(DNSClient::SUCCESS, name_change->getDnsUpdateStatus());
+
+    // Verify that we have a response and it's Rcode is NOERROR,
+    // and the zone is as expected.
+    D2UpdateMessagePtr response = name_change->getDnsUpdateResponse();
+    ASSERT_TRUE(response);
+    ASSERT_EQ(dns::Rcode::NOERROR().getCode(), response->getRcode().getCode());
+    D2ZonePtr zone = response->getZone();
+    EXPECT_TRUE(zone);
+    EXPECT_EQ("response.example.com.", zone->getName().toText());
 }
 
 }

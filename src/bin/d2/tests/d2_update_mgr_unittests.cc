@@ -181,6 +181,12 @@ TEST(D2UpdateMgr, construction) {
 
     ASSERT_NO_THROW(cfg_mgr.reset(new D2CfgMgr()));
 
+    // Verify that constructor fails with invalid io_service.
+    io_service.reset();
+    EXPECT_THROW(D2UpdateMgr(queue_mgr, cfg_mgr, io_service),
+                 D2UpdateMgrError);
+    io_service.reset(new isc::asiolink::IOService());
+
     // Verify that max transactions cannot be zero.
     EXPECT_THROW(D2UpdateMgr(queue_mgr, cfg_mgr, io_service, 0),
                  D2UpdateMgrError);

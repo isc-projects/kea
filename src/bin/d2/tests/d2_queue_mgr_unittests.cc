@@ -78,8 +78,12 @@ const long TEST_TIMEOUT = 5 * 1000;
 
 /// @brief Tests that construction with max queue size of zero is not allowed.
 TEST(D2QueueMgrBasicTest, construction1) {
-    IOServicePtr io_service(new isc::asiolink::IOService());
+    IOServicePtr io_service;
 
+    // Verify that constructing with null IOServicePtr is not allowed.
+    EXPECT_THROW((D2QueueMgr(io_service)), D2QueueMgrError);
+
+    io_service.reset(new isc::asiolink::IOService());
     // Verify that constructing with max queue size of zero is not allowed.
     EXPECT_THROW(D2QueueMgr(io_service, 0), D2QueueMgrError);
 }
