@@ -108,10 +108,15 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
         // will be able to respond directly.
         IfaceMgr::instance().setMatchingPacketFilter(direct_response_desired);
 
+        // Open sockets only if port is non-zero. Port 0 is used
+        // for non-socket related testing.
         if (port) {
-            // open sockets only if port is non-zero. Port 0 is used
-            // for non-socket related testing.
-            IfaceMgr::instance().openSockets4(port_, use_bcast_);
+            // Create error handler. This handler will be called every time
+            // the socket opening operation fails. We use this handler to
+            // log a warning.
+            isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
+                boost::bind(&Dhcpv4Srv::ifaceMgrSocket4ErrorHandler, _1);
+            IfaceMgr::instance().openSockets4(port_, use_bcast_, error_handler);
         }
 
         string srvid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_ID_FILE);
