@@ -295,7 +295,6 @@ void IfaceMgr::stubDetectIfaces() {
 bool
 IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                        IfaceMgrErrorMsgCallback error_handler) {
-    int sock;
     int count = 0;
 
 // This option is used to bind sockets to particular interfaces.
@@ -332,6 +331,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                 continue;
             }
 
+            int sock = -1;
             // If selected interface is broadcast capable set appropriate
             // options on the socket so as it can receive and send broadcast
             // messages.
@@ -347,6 +347,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                                             " listen broadcast traffic on a"
                                             " single interface",
                                             error_handler);
+                    continue;
 
                 } else {
                     try {
@@ -356,6 +357,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                                           true, true);
                     } catch (const Exception& ex) {
                         handleSocketConfigError(ex.what(), error_handler);
+                        continue;
 
                     }
                     // Binding socket to an interface is not supported so we
@@ -373,17 +375,19 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                                       false, false);
                 } catch (const Exception& ex) {
                     handleSocketConfigError(ex.what(), error_handler);
+                    continue;
                 }
 
             }
             if (sock < 0) {
                 const char* errstr = strerror(errno);
-                isc_throw(SocketConfigError, "failed to open IPv4 socket"
-                          << " supporting broadcast traffic, reason:"
-                          << errstr);
+                handleSocketConfigError(std::string("failed to open IPv4 socket,"
+                                                    " reason:") + errstr,
+                                        error_handler);
+            } else {
+                ++count;
             }
 
-            count++;
         }
     }
     return (count > 0);
