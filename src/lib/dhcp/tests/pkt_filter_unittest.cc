@@ -58,7 +58,7 @@ TEST_F(PktFilterBaseClassTest, openFallbackSocket) {
 
     // Now that we have the socket open, let's try to open another one. This
     // should cause a binding error.
-    int another_sock;
+    int another_sock = -1;
     EXPECT_THROW(another_sock =
                  pkt_filter.openFallbackSocket(IOAddress("127.0.0.1"), PORT),
                  isc::dhcp::SocketConfigError)
