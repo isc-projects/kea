@@ -125,7 +125,7 @@ protected:
     /// (a.k.a. primary socket) used to receive and handle DHCPv4 traffic. The
     /// traffic received through the fallback should be dropped. The reasoning
     /// behind opening the fallback socket is explained in the documentation of
-    /// @s isc::dhcp::SocketInfo structure.
+    /// @c isc::dhcp::SocketInfo structure.
     ///
     /// @param addr An IPv4 address to bind the socket to.
     /// @param port A port number to bind socket to.
