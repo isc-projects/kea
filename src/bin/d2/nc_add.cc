@@ -217,8 +217,8 @@ NameAddTransaction::addingFwdAddrsHandler() {
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_IO_ERROR)
-                      .arg(getCurrentServer()->getIpAddress())
-                      .arg(getNcr()->getFqdn());
+                      .arg(getNcr()->getFqdn())
+                      .arg(getCurrentServer()->getIpAddress());
 
             retryTransition(SELECTING_FWD_SERVER_ST);
             break;
@@ -227,8 +227,8 @@ NameAddTransaction::addingFwdAddrsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT)
-                      .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getNcr()->getFqdn());
 
             retryTransition(SELECTING_FWD_SERVER_ST);
             break;
@@ -236,7 +236,8 @@ NameAddTransaction::addingFwdAddrsHandler() {
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_UNKNOWN_FAILURE)
+            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS)
+                      .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->getIpAddress());
 
@@ -317,8 +318,8 @@ NameAddTransaction::replacingFwdAddrsHandler() {
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_IO_ERROR)
-                      .arg(getCurrentServer()->getIpAddress())
-                      .arg(getNcr()->getFqdn());
+                      .arg(getNcr()->getFqdn())
+                      .arg(getCurrentServer()->getIpAddress());
 
             // If we are out of retries on this server, we go back and start
             // all over on a new server.
@@ -329,8 +330,8 @@ NameAddTransaction::replacingFwdAddrsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT)
-                      .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getNcr()->getFqdn());
 
             // If we are out of retries on this server, we go back and start
             // all over on a new server.
@@ -340,7 +341,9 @@ NameAddTransaction::replacingFwdAddrsHandler() {
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_UNKNOWN_FAILURE)
+            LOG_ERROR(dctl_logger,
+                      DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS)
+                      .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->getIpAddress());
 
@@ -438,8 +441,8 @@ NameAddTransaction::replacingRevPtrsHandler() {
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_IO_ERROR)
-                      .arg(getCurrentServer()->getIpAddress())
-                      .arg(getNcr()->getFqdn());
+                      .arg(getNcr()->getFqdn())
+                      .arg(getCurrentServer()->getIpAddress());
 
             // If we are out of retries on this server, we go back and start
             // all over on a new server.
@@ -450,8 +453,8 @@ NameAddTransaction::replacingRevPtrsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT)
-                      .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getNcr()->getFqdn());
 
             // If we are out of retries on this server, we go back and start
             // all over on a new server.
@@ -461,7 +464,9 @@ NameAddTransaction::replacingRevPtrsHandler() {
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_UNKNOWN_FAILURE)
+            LOG_ERROR(dctl_logger,
+                      DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS)
+                      .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->getIpAddress());
 
