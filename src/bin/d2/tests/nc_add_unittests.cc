@@ -37,7 +37,7 @@ public:
 
     virtual ~NameAddStub() {
     }
-    
+
     /// @brief Simulates sending update requests to the DNS server
     /// Allows state handlers which conduct IO to be tested without a server.
     virtual void sendUpdate(bool /* use_tsig_ = false */) {
@@ -45,7 +45,7 @@ public:
         postNextEvent(StateModel::NOP_EVT);
     }
 
-    void fakeResponse(const DNSClient::Status& status, 
+    void fakeResponse(const DNSClient::Status& status,
                       const dns::Rcode& rcode) {
         D2UpdateMessagePtr msg(new D2UpdateMessage(D2UpdateMessage::OUTBOUND));
         setDnsUpdateStatus(status);
@@ -116,8 +116,13 @@ public:
     virtual ~NameAddTransactionTest() {
     }
 
-    /// @brief Instantiates a NameAddTransaction built around a canned
-    /// NameChangeRequest.
+    /// @brief  Instantiates a NameAddStub test transaction
+    /// The transaction is constructed around a predefined (i.e "canned")
+    /// NameChangeRequest. The request has both forward and reverse DNS
+    /// changes requested.  Based upon the change mask, the transaction
+    /// will have either the forward, reverse, or both domains populated.
+    ///
+    /// @param change_mask determines which change directions are requested
     NameAddStubPtr makeCannedTransaction(int change_mask=FWD_AND_REV_CHG) {
         const char* msg_str =
             "{"
@@ -131,40 +136,64 @@ public:
             " \"lease_length\" : 1300 "
             "}";
 
-        dhcp_ddns::NameChangeRequestPtr ncr;
+        // Create NameChangeRequest from JSON string.
+        dhcp_ddns::NameChangeRequestPtr ncr = dhcp_ddns::NameChangeRequest::
+                                              fromJSON(msg_str);
 
-        DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
-        DnsServerInfoPtr server;
-
-        ncr = dhcp_ddns::NameChangeRequest::fromJSON(msg_str);
-
+        // If the change mask does not include a forward change clear the
+        // forward domain; otherise create the domain and its servers.
         if (!(change_mask & FORWARD_CHG)) {
             ncr->setForwardChange(false);
             forward_domain_.reset();
         } else {
-            // make forward server list
-            server.reset(new DnsServerInfo("forward.example.com",
+            // Create the forward domain and then its servers.
+            DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
+            DnsServerInfoPtr server(new DnsServerInfo("forward.example.com",
                                        isc::asiolink::IOAddress("1.1.1.1")));
             servers->push_back(server);
-            forward_domain_.reset(new DdnsDomain("*", "", servers));
+            server.reset(new DnsServerInfo("forward2.example.com",
+                                       isc::asiolink::IOAddress("1.1.1.2")));
+            servers->push_back(server);
+            forward_domain_.reset(new DdnsDomain("example.com.", "", servers));
         }
 
+        // If the change mask does not include a reverse change clear the
+        // reverse domain; otherise create the domain and its servers.
         if (!(change_mask & REVERSE_CHG)) {
             ncr->setReverseChange(false);
             reverse_domain_.reset();
         } else {
-            // make reverse server list
-            servers->clear();
-            server.reset(new DnsServerInfo("reverse.example.com",
-                                       isc::asiolink::IOAddress("2.2.2.2")));
+            // Create the reverse domain and its server.
+            DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
+            DnsServerInfoPtr server(new DnsServerInfo("reverse.example.com",
+                                                      isc::asiolink::
+                                                      IOAddress("2.2.2.2")));
             servers->push_back(server);
-            reverse_domain_.reset(new DdnsDomain("*", "", servers));
+            server.reset(new DnsServerInfo("reverse2.example.com",
+                                           isc::asiolink::
+                                           IOAddress("2.2.2.3")));
+            servers->push_back(server);
+            reverse_domain_.reset(new DdnsDomain("2.168.192.in.addr.arpa.",
+                                                 "", servers));
         }
 
+        // Now create the test transaction as would occur in update manager.
         return (NameAddStubPtr(new NameAddStub(io_service_, ncr,
                                       forward_domain_, reverse_domain_)));
     }
 
+    /// @brief Create a test transaction at a known point in the state model.
+    ///
+    /// Method prepares a new test transaction and sets its state and next
+    /// event values to those given.  This makes the transaction appear to
+    /// be at that point in the state model without having to transition it
+    /// through prerequiste states.   It also provides the ability to set
+    /// which change directions are requested: forward change only, reverse
+    /// change only, or both.
+    ///
+    /// @param state value to set as the current state
+    /// @param event value to post as the next event
+    /// @param change_mask determines which change directions are requested
     NameAddStubPtr prepHandlerTest(unsigned int state, unsigned int event,
                                    unsigned int change_mask = FWD_AND_REV_CHG) {
         NameAddStubPtr name_add = makeCannedTransaction(change_mask);
@@ -238,164 +267,169 @@ TEST_F(NameAddTransactionTest, dictionaryCheck) {
 // It verifies behavior for the following scenarios:
 //
 // 1. Posted event is START_EVT and request includes only a forward change
-// 2. Posted event is START_EVT and request includes both a forward and a 
+// 2. Posted event is START_EVT and request includes both a forward and a
 // reverse change
-// 3. Posted event is START_EVT and request includes only a reverse change 
+// 3. Posted event is START_EVT and request includes only a reverse change
 // 3. Posted event is invalid
 //
 TEST_F(NameAddTransactionTest, readyHandler) {
     NameAddStubPtr name_add;
 
     // Create a transaction which includes only a forward change.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameChangeTransaction::READY_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameChangeTransaction::READY_ST,
                                     StateModel::START_EVT, FORWARD_CHG));
-    // Run readyHandler. 
+    // Run readyHandler.
     EXPECT_NO_THROW(name_add->readyHandler());
 
-    // Verify that a request requiring only a forward change, transitions to 
+    // Verify that a request requiring only a forward change, transitions to
     // selecting a forward server.
-    EXPECT_EQ(NameChangeTransaction::SELECTING_FWD_SERVER_ST, 
+    EXPECT_EQ(NameChangeTransaction::SELECTING_FWD_SERVER_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::SELECT_SERVER_EVT, 
+    EXPECT_EQ(NameChangeTransaction::SELECT_SERVER_EVT,
               name_add->getNextEvent());
 
 
     // Create a transaction which includes both a forward and a reverse change.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameChangeTransaction::READY_ST, 
-                                    StateModel::START_EVT, FORWARD_CHG));
-    // Run readyHandler. 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameChangeTransaction::READY_ST,
+                                    StateModel::START_EVT, FWD_AND_REV_CHG));
+    // Run readyHandler.
     EXPECT_NO_THROW(name_add->readyHandler());
 
     // Verify that a request requiring both forward and reverse, starts with
     // the forward change by transitioning to selecting a forward server.
-    EXPECT_EQ(NameChangeTransaction::SELECTING_FWD_SERVER_ST, 
+    EXPECT_EQ(NameChangeTransaction::SELECTING_FWD_SERVER_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::SELECT_SERVER_EVT, 
+    EXPECT_EQ(NameChangeTransaction::SELECT_SERVER_EVT,
               name_add->getNextEvent());
 
 
     // Create and prep a reverse only transaction.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameChangeTransaction::READY_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameChangeTransaction::READY_ST,
                                     StateModel::START_EVT, REVERSE_CHG));
-    // Run readyHandler. 
+    // Run readyHandler.
     EXPECT_NO_THROW(name_add->readyHandler());
 
-    // Verify that a request requiring only a reverse change, transitions to 
+    // Verify that a request requiring only a reverse change, transitions to
     // selecting a reverse server.
-    EXPECT_EQ(NameChangeTransaction::SELECTING_REV_SERVER_ST, 
+    EXPECT_EQ(NameChangeTransaction::SELECTING_REV_SERVER_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::SELECT_SERVER_EVT, 
+    EXPECT_EQ(NameChangeTransaction::SELECT_SERVER_EVT,
               name_add->getNextEvent());
 
 
     // Create and prep transaction, poised to run the handler but with an
     // invalid event.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameChangeTransaction::READY_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameChangeTransaction::READY_ST,
                                     StateModel::NOP_EVT));
 
-    // Running the readyHandler should throw. 
+    // Running the readyHandler should throw.
     EXPECT_THROW(name_add->readyHandler(), NameAddTransactionError);
 }
 
 // Tests the selectingFwdServerHandler functionality.
 // It verifies behavior for the following scenarios:
 //
-// 1. Posted event is SELECT_SERVER_EVT 
-// 2. Posted event is SERVER_IO_ERROR_EVT 
+// 1. Posted event is SELECT_SERVER_EVT
+// 2. Posted event is SERVER_IO_ERROR_EVT
 // 3. Posted event is invalid
 //
 TEST_F(NameAddTransactionTest, selectingFwdServerHandler) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
+    ASSERT_NO_THROW(name_add =
                     prepHandlerTest(NameChangeTransaction::
-                                    SELECTING_FWD_SERVER_ST, 
+                                    SELECTING_FWD_SERVER_ST,
                                     NameChangeTransaction::SELECT_SERVER_EVT));
-    
-    // Run selectingFwdServerHandler. 
-    EXPECT_NO_THROW(name_add->selectingFwdServerHandler());
 
-    // Verify that a server was selected. 
-    EXPECT_TRUE(name_add->getCurrentServer());
+    // Call selectingFwdServerHandler enough times to select all of the
+    // servers in it's current domain.  The first time, it will be with
+    // next event of SELECT_SERVER_EVT.  Thereafter it will be with a next
+    // event of SERVER_IO_ERROR_EVT.
+    int num_servers = name_add->getForwardDomain()->getServers()->size();
+    for (int i = 0; i < num_servers; i++) {
+        // Run selectingFwdServerHandler.
+        EXPECT_NO_THROW(name_add->selectingFwdServerHandler());
 
-    // Verify that we transitioned correctly.
-    EXPECT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+        // Verify that a server was selected.
+        EXPECT_TRUE(name_add->getCurrentServer());
+
+        // Verify that we transitioned correctly.
+        EXPECT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT, 
+        EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
               name_add->getNextEvent());
 
-    // Post a server IO error event.  This simulates an IO error occuring
-    // and a need to select the a new server.
-    ASSERT_NO_THROW(name_add->postNextEvent(NameChangeTransaction::
-                                            SERVER_IO_ERROR_EVT));
+        // Post a server IO error event.  This simulates an IO error occuring
+        // and a need to select the new server.
+        ASSERT_NO_THROW(name_add->postNextEvent(NameChangeTransaction::
+                                                SERVER_IO_ERROR_EVT));
+    }
 
-    // Run selectingFwdServerHandler. 
+    // We should have exhausted the list of servers. Processing another
+    // SERVER_IO_ERROR_EVT should transition us to failure.
     EXPECT_NO_THROW(name_add->selectingFwdServerHandler());
-
-    // Test domain only has 1 server, so we should have exhausted server
-    // list. Verify that we transitioned correctly.
-    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST, 
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::NO_MORE_SERVERS_EVT, 
+    EXPECT_EQ(NameChangeTransaction::NO_MORE_SERVERS_EVT,
               name_add->getNextEvent());
 
     // Create and prep transaction, poised to run the handler but with an
     // invalid event.
-    ASSERT_NO_THROW(name_add = 
+    ASSERT_NO_THROW(name_add =
                     prepHandlerTest(NameChangeTransaction::
-                                    SELECTING_FWD_SERVER_ST, 
+                                    SELECTING_FWD_SERVER_ST,
                                     StateModel::NOP_EVT));
 
-    // Running the handler should throw. 
-    EXPECT_THROW(name_add->selectingFwdServerHandler(), 
+    // Running the handler should throw.
+    EXPECT_THROW(name_add->selectingFwdServerHandler(),
                  NameAddTransactionError);
 }
 
 // ************************ addingFwdAddrHandler Tests *****************
 
 // Tests that addingFwdAddrsHandler rejects invalid events.
-TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_invalid_event) {
+TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_InvalidEvent) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler but with
     // an invalid event.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST,
                                     NameChangeTransaction::
                                     StateModel::NOP_EVT));
 
-    // Running the handler should throw. 
-    EXPECT_THROW(name_add->addingFwdAddrsHandler(), 
+    // Running the handler should throw.
+    EXPECT_THROW(name_add->addingFwdAddrsHandler(),
                  NameAddTransactionError);
 }
 
-// Tests addingFwdAddrsHandler with the following scenario: 
+// Tests addingFwdAddrsHandler with the following scenario:
 //
 //  The request includes only a forward change.
-//  Initial posted event is SERVER_SELECTED_EVT.  
+//  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request is sent without error.
-//  A server response is received which indicates successful update  
+//  A server response is received which indicates successful update
 //
-TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_fwd_only_add_Ok) {
+TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_FwdOnlyAddOK) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST,
                                     NameChangeTransaction::
                                     SERVER_SELECTED_EVT, FORWARD_CHG));
-  
-    // Should not be an update message yet. 
+
+    // Should not be an update message yet.
     D2UpdateMessagePtr update_msg = name_add->getDnsUpdateRequest();
-    EXPECT_TRUE(!update_msg);
+    ASSERT_FALSE(update_msg);
 
     // At this point completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // Run addingFwdAddrsHandler to construct and send the request. 
+    // Run addingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
     // Verify that an update message was constructed.
@@ -404,9 +438,9 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_fwd_only_add_Ok) {
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
-    EXPECT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+    EXPECT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::NOP_EVT, 
+    EXPECT_EQ(NameChangeTransaction::NOP_EVT,
               name_add->getNextEvent());
 
     // Simulate receiving a succussful update response.
@@ -421,28 +455,28 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_fwd_only_add_Ok) {
 
     // Since it is a forward only change, we should be done.
     // Verify that we transitioned correctly.
-    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST, 
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT, 
+    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT,
               name_add->getNextEvent());
 }
 
-// Tests addingFwdAddrsHandler with the following scenario: 
+// Tests addingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
-//  Initial posted event is SERVER_SELECTED_EVT.  
+//  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request is sent without error.
 //  A server response is received which indicates successful update.
 //
-TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_fwd_and_rev_add_Ok) {
+TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_fwdAndRevAddOK) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST,
                                     NameChangeTransaction::
                                     SERVER_SELECTED_EVT, FWD_AND_REV_CHG));
-  
-    // Run addingFwdAddrsHandler to construct and send the request. 
+
+    // Run addingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
     // Simulate receiving a succussful update response.
@@ -455,36 +489,36 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_fwd_and_rev_add_Ok) {
     EXPECT_TRUE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // Since the request also includes a reverse change we should 
+    // Since the request also includes a reverse change we should
     // be poised to start it. Verify that we transitioned correctly.
-    EXPECT_EQ(NameChangeTransaction::SELECTING_REV_SERVER_ST, 
+    EXPECT_EQ(NameChangeTransaction::SELECTING_REV_SERVER_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::SELECT_SERVER_EVT, 
+    EXPECT_EQ(NameChangeTransaction::SELECT_SERVER_EVT,
               name_add->getNextEvent());
 }
 
-// Tests addingFwdAddrsHandler with the following scenario: 
+// Tests addingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
-//  Initial posted event is SERVER_SELECTED_EVT.  
+//  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request is sent without error.
 //  A server response is received which indicates the FQDN is in use.
 //
-TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_fqdn_in_use) {
+TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_FqdnInUse) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST,
                                     NameChangeTransaction::
                                     SERVER_SELECTED_EVT));
-  
-    // Run addingFwdAddrsHandler to construct and send the request. 
+
+    // Run addingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
     // Simulate receiving a FQDN in use response.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::YXDOMAIN());
 
-    // Run addingFwdAddrsHandler again to process the response. 
+    // Run addingFwdAddrsHandler again to process the response.
     EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
     // Completion flags should still be false.
@@ -493,68 +527,68 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_fqdn_in_use) {
 
     // Since the FQDN is in use, per the RFC we must attempt to replace it.
     // Verify that we transitioned correctly.
-    EXPECT_EQ(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+    EXPECT_EQ(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameAddTransaction::FQDN_IN_USE_EVT, 
+    EXPECT_EQ(NameAddTransaction::FQDN_IN_USE_EVT,
               name_add->getNextEvent());
 }
 
-// Tests addingFwdAddrsHandler with the following scenario: 
+// Tests addingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
-//  Initial posted event is SERVER_SELECTED_EVT.  
+//  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request is sent without error.
 //  A server response is received which indicates the update was rejected.
 //
-TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_other_rcode) {
+TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_OtherRcode) {
     NameAddStubPtr name_add;
 
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST,
                                     NameChangeTransaction::
                                     SERVER_SELECTED_EVT));
 
     // Select a server to satisfy log statements.
     ASSERT_TRUE(name_add->selectFwdServer());
 
-    // Run addingFwdAddrsHandler to construct and send the request. 
+    // Run addingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
     // Simulate receiving server rejection response. Per RFC, anything other
     // than no error or FQDN in use is failure.  Arbitrarily choosing refused.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::REFUSED());
 
-    // Run addingFwdAddrsHandler again to process the response. 
+    // Run addingFwdAddrsHandler again to process the response.
     EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
     // Completion flags should still be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // We should have failed the transaction. Verifiy that we transitioned 
+    // We should have failed the transaction. Verifiy that we transitioned
     // correctly.
-    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST, 
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT, 
+    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
               name_add->getNextEvent());
 }
 
-// Tests addingFwdAddrsHandler with the following scenario: 
+// Tests addingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
-//  Initial posted event is SERVER_SELECTED_EVT.  
+//  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request send times out MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_time_out) {
+TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_Timeout) {
     NameAddStubPtr name_add;
 
     // Create and prep a transaction, poised to run the handler.
-    // The log message issued when this test succeeds, displays the 
+    // The log message issued when this test succeeds, displays the
     // selected server, so we need to select a server before running this
     // test.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST,
                                     NameChangeTransaction::
                                     SERVER_SELECTED_EVT));
 
@@ -563,11 +597,11 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_time_out) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER; 
+    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; i++) {
         const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
 
-        // Run addingFwdAddrsHandler to send the request. 
+        // Run addingFwdAddrsHandler to send the request.
         EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
         const D2UpdateMessagePtr curr_msg = name_add->getDnsUpdateRequest();
@@ -576,15 +610,18 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_time_out) {
             EXPECT_FALSE(prev_msg);
             EXPECT_TRUE(curr_msg);
         } else {
-            // Subsequent passes should reuse the request.
+            // Subsequent passes should reuse the request. We are only
+            // looking to check that we have not replaced the pointer value
+            // with a new pointer.  This tests the on_entry() logic which
+            // clears the request ONLY upon initial entry into the state.
             EXPECT_TRUE(prev_msg == curr_msg);
         }
 
-        // Simulate a server IO timeout. 
+        // Simulate a server IO timeout.
         name_add->setDnsUpdateStatus(DNSClient::TIMEOUT);
         name_add->postNextEvent(NameChangeTransaction::IO_COMPLETED_EVT);
 
-        // Run addingFwdAddrsHandler again to process the response. 
+        // Run addingFwdAddrsHandler again to process the response.
         EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
         // Completion flags should be false.
@@ -593,36 +630,36 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_time_out) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            EXPECT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+            EXPECT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
                     name_add->getNextEvent());
         } else {
             // Server retries should be exhausted, time for a new server.
-            EXPECT_EQ(NameAddTransaction::SELECTING_FWD_SERVER_ST, 
+            EXPECT_EQ(NameAddTransaction::SELECTING_FWD_SERVER_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT,
                     name_add->getNextEvent());
         }
     }
 }
 
-// Tests addingFwdAddrsHandler with the following scenario: 
+// Tests addingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
-//  Initial posted event is SERVER_SELECTED_EVT.  
+//  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request is sent but a corrupt response is received, this occurs
 //  MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_invalid_response) {
+TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_InvalidResponse) {
     NameAddStubPtr name_add;
 
     // Create and prep a transaction, poised to run the handler.
-    // The log message issued when this test succeeds, displays the 
+    // The log message issued when this test succeeds, displays the
     // selected server, so we need to select a server before running this
     // test.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST,
                                     NameChangeTransaction::
                                     SERVER_SELECTED_EVT));
 
@@ -631,16 +668,16 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_invalid_response) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER; 
+    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; i++) {
-        // Run addingFwdAddrsHandler to construct send the request. 
+        // Run addingFwdAddrsHandler to construct send the request.
         EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
-        // Simulate a server IO timeout. 
+        // Simulate a server IO timeout.
         name_add->setDnsUpdateStatus(DNSClient::INVALID_RESPONSE);
         name_add->postNextEvent(NameChangeTransaction::IO_COMPLETED_EVT);
 
-        // Run addingFwdAddrsHandler again to process the response. 
+        // Run addingFwdAddrsHandler again to process the response.
         EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
         // Completion flags should be false.
@@ -649,15 +686,15 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_invalid_response) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            EXPECT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+            EXPECT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
                     name_add->getNextEvent());
         } else {
             // Server retries should be exhausted, time for a new server.
-            EXPECT_EQ(NameAddTransaction::SELECTING_FWD_SERVER_ST, 
+            EXPECT_EQ(NameAddTransaction::SELECTING_FWD_SERVER_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT,
                     name_add->getNextEvent());
         }
     }
@@ -667,44 +704,44 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_invalid_response) {
 // ************************ replacingFwdAddrHandler Tests *****************
 
 // Tests that replacingFwdAddrsHandler rejects invalid events.
-TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_invalid_event) {
+TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_InvalidEvent) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler but with
     // an invalid event.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
                                     NameChangeTransaction::
                                     StateModel::NOP_EVT));
 
-    // Running the handler should throw. 
-    EXPECT_THROW(name_add->replacingFwdAddrsHandler(), 
+    // Running the handler should throw.
+    EXPECT_THROW(name_add->replacingFwdAddrsHandler(),
                  NameAddTransactionError);
 }
 
-// Tests replacingFwdAddrsHandler with the following scenario: 
+// Tests replacingFwdAddrsHandler with the following scenario:
 //
 //  The request includes only a forward change.
-//  Initial posted event is FQDN_IN_USE_EVT.  
+//  Initial posted event is FQDN_IN_USE_EVT.
 //  The update request is sent without error.
 //  A server response is received which indicates successful update.
 //
-TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_fwd_only_add_Ok) {
+TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_FwdOnlyAddOK) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
                                     NameAddTransaction::
                                     FQDN_IN_USE_EVT, FORWARD_CHG));
-  
-    // Should not be an update message yet. 
+
+    // Should not be an update message yet.
     D2UpdateMessagePtr update_msg = name_add->getDnsUpdateRequest();
-    EXPECT_TRUE(!update_msg);
+    ASSERT_FALSE(update_msg);
 
     // At this point completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // Run replacingFwdAddrsHandler to construct and send the request. 
+    // Run replacingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Verify that an update message was constructed.
@@ -713,9 +750,9 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_fwd_only_add_Ok) {
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
-    EXPECT_EQ(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+    EXPECT_EQ(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::NOP_EVT, 
+    EXPECT_EQ(NameChangeTransaction::NOP_EVT,
               name_add->getNextEvent());
 
     // Simulate receiving a succussful update response.
@@ -730,28 +767,28 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_fwd_only_add_Ok) {
 
     // Since it is a forward only change, we should be done.
     // Verify that we transitioned correctly.
-    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST, 
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT, 
+    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT,
               name_add->getNextEvent());
 }
 
-// Tests replacingFwdAddrsHandler with the following scenario: 
+// Tests replacingFwdAddrsHandler with the following scenario:
 //
 //  The request includes only a forward change.
-//  Initial posted event is SERVER_SELECTED_EVT.  
+//  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request is sent without error.
 //  A server response is received which indicates successful update.
 //
-TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_fwd_only_add_Ok_2) {
+TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_FwdOnlyAddOK2) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
                                     NameChangeTransaction::
                                     SERVER_SELECTED_EVT, FORWARD_CHG));
-  
-    // Run replacingFwdAddrsHandler to construct and send the request. 
+
+    // Run replacingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Simulate receiving a succussful update response.
@@ -766,28 +803,28 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_fwd_only_add_Ok_2) {
 
     // Since it is a forward only change, we should be done.
     // Verify that we transitioned correctly.
-    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST, 
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT, 
+    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT,
               name_add->getNextEvent());
 }
 
-// Tests replacingFwdAddrsHandler with the following scenario: 
+// Tests replacingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
 //  Initial posted event is FQDN_IN_USE_EVT.
 //  The update request is sent without error.
 //  A server response is received which indicates successful update.
 //
-TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_fwd_and_rev_add_Ok) {
+TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_FwdAndRevAddOK) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
                                     NameAddTransaction::
                                     FQDN_IN_USE_EVT, FWD_AND_REV_CHG));
-  
-    // Run replacingFwdAddrsHandler to construct and send the request. 
+
+    // Run replacingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Simulate receiving a succussful update response.
@@ -800,37 +837,37 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_fwd_and_rev_add_Ok) {
     EXPECT_TRUE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // Since the request also includes a reverse change we should 
+    // Since the request also includes a reverse change we should
     // be poised to start it. Verify that we transitioned correctly.
-    EXPECT_EQ(NameChangeTransaction::SELECTING_REV_SERVER_ST, 
+    EXPECT_EQ(NameChangeTransaction::SELECTING_REV_SERVER_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::SELECT_SERVER_EVT, 
+    EXPECT_EQ(NameChangeTransaction::SELECT_SERVER_EVT,
               name_add->getNextEvent());
 }
 
 
-// Tests addingFwdAddrsHandler with the following scenario: 
+// Tests addingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
 //  Initial posted event is FQDN_IN_USE_EVT.
 //  The update request is sent without error.
 //  A server response is received which indicates the FQDN is NOT in use.
 //
-TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_fqdn_not_in_use) {
+TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_FqdnNotInUse) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
                                     NameAddTransaction::
                                     FQDN_IN_USE_EVT, FWD_AND_REV_CHG));
-  
-    // Run replacingFwdAddrsHandler to construct and send the request. 
+
+    // Run replacingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Simulate receiving a FQDN not in use response.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NXDOMAIN());
 
-    // Run replacingFwdAddrsHandler again to process the response. 
+    // Run replacingFwdAddrsHandler again to process the response.
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Completion flags should still be false.
@@ -839,64 +876,64 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_fqdn_not_in_use) {
 
     // Since the FQDN is no longer in use, per the RFC, try to add it.
     // Verify that we transitioned correctly.
-    EXPECT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST, 
+    EXPECT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT, 
+    EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
               name_add->getNextEvent());
 }
 
 
-// Tests replacingFwdAddrsHandler with the following scenario: 
+// Tests replacingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
 //  The update request is sent without error.
 //  A server response is received which indicates the update was rejected.
 //
-TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_other_rcode) {
+TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_OtherRcode) {
     NameAddStubPtr name_add;
     // Create the transaction.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
                                     NameAddTransaction::
                                     FQDN_IN_USE_EVT, FWD_AND_REV_CHG));
 
     // Select a server to satisfy log statements.
     ASSERT_TRUE(name_add->selectFwdServer());
 
-    // Run replacingFwdAddrsHandler to construct and send the request. 
+    // Run replacingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Simulate receiving server rejection response. Per RFC, anything other
     // than no error or FQDN in use is failure.  Arbitrarily choosing refused.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::REFUSED());
 
-    // Run replacingFwdAddrsHandler again to process the response. 
+    // Run replacingFwdAddrsHandler again to process the response.
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Completion flags should still be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // We should have failed the transaction. Verifiy that we transitioned 
+    // We should have failed the transaction. Verifiy that we transitioned
     // correctly.
-    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST, 
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT, 
+    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
               name_add->getNextEvent());
 }
 
-// Tests replacingFwdAddrsHandler with the following scenario: 
+// Tests replacingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
 //  Initial posted event is FQDN_IN_USE_EVT.
 //  The update request send times out MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_time_out) {
+TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_Timeout) {
     NameAddStubPtr name_add;
 
     // Create the transaction.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
                                     NameAddTransaction::
                                     FQDN_IN_USE_EVT, FWD_AND_REV_CHG));
 
@@ -906,11 +943,11 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_time_out) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER; 
+    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; i++) {
         const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
 
-        // Run replacingFwdAddrsHandler to send the request. 
+        // Run replacingFwdAddrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
         const D2UpdateMessagePtr curr_msg = name_add->getDnsUpdateRequest();
@@ -919,15 +956,18 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_time_out) {
             EXPECT_FALSE(prev_msg);
             EXPECT_TRUE(curr_msg);
         } else {
-            // Subsequent passes should reuse the request.
+            // Subsequent passes should reuse the request. We are only
+            // looking to check that we have not replaced the pointer value
+            // with a new pointer.  This tests the on_entry() logic which
+            // clears the request ONLY upon initial entry into the state.
             EXPECT_TRUE(prev_msg == curr_msg);
         }
 
-        // Simulate a server IO timeout. 
+        // Simulate a server IO timeout.
         name_add->setDnsUpdateStatus(DNSClient::TIMEOUT);
         name_add->postNextEvent(NameChangeTransaction::IO_COMPLETED_EVT);
 
-        // Run replacingFwdAddrsHandler again to process the response. 
+        // Run replacingFwdAddrsHandler again to process the response.
         EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
         // Completion flags should be false.
@@ -936,33 +976,33 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_time_out) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            EXPECT_EQ(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+            EXPECT_EQ(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
                     name_add->getNextEvent());
         } else {
             // Server retries should be exhausted, time for a new server.
-            EXPECT_EQ(NameAddTransaction::SELECTING_FWD_SERVER_ST, 
+            EXPECT_EQ(NameAddTransaction::SELECTING_FWD_SERVER_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT,
                     name_add->getNextEvent());
         }
     }
 }
 
-// Tests replacingFwdAddrsHandler with the following scenario: 
+// Tests replacingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
 //  Initial posted event is FQDN_IN_USE_EVT.
 //  The update request is sent but a corrupt response is received, this occurs
 //  MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_corrupt_response) {
+TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_CorruptResponse) {
     NameAddStubPtr name_add;
 
     // Create the transaction.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
                                     NameAddTransaction::
                                     FQDN_IN_USE_EVT, FWD_AND_REV_CHG));
 
@@ -971,11 +1011,11 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_corrupt_response) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER; 
+    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; i++) {
         const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
 
-        // Run replacingFwdAddrsHandler to send the request. 
+        // Run replacingFwdAddrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
         const D2UpdateMessagePtr curr_msg = name_add->getDnsUpdateRequest();
@@ -984,15 +1024,18 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_corrupt_response) {
             EXPECT_FALSE(prev_msg);
             EXPECT_TRUE(curr_msg);
         } else {
-            // Subsequent passes should reuse the request.
+            // Subsequent passes should reuse the request. We are only
+            // looking to check that we have not replaced the pointer value
+            // with a new pointer.  This tests the on_entry() logic which
+            // clears the request ONLY upon initial entry into the state.
             EXPECT_TRUE(prev_msg == curr_msg);
         }
 
-        // Simulate a server corrupt response. 
+        // Simulate a server corrupt response.
         name_add->setDnsUpdateStatus(DNSClient::INVALID_RESPONSE);
         name_add->postNextEvent(NameChangeTransaction::IO_COMPLETED_EVT);
 
-        // Run replacingFwdAddrsHandler again to process the response. 
+        // Run replacingFwdAddrsHandler again to process the response.
         EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
         // Completion flags should be false.
@@ -1001,15 +1044,15 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_corrupt_response) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            EXPECT_EQ(NameAddTransaction::REPLACING_FWD_ADDRS_ST, 
+            EXPECT_EQ(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
                     name_add->getNextEvent());
         } else {
             // Server retries should be exhausted, time for a new server.
-            EXPECT_EQ(NameAddTransaction::SELECTING_FWD_SERVER_ST, 
+            EXPECT_EQ(NameAddTransaction::SELECTING_FWD_SERVER_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT,
                     name_add->getNextEvent());
         }
     }
@@ -1018,98 +1061,103 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_corrupt_response) {
 // Tests the selectingRevServerHandler functionality.
 // It verifies behavior for the following scenarios:
 //
-// 1. Posted event is SELECT_SERVER_EVT 
-// 2. Posted event is SERVER_IO_ERROR_EVT 
+// 1. Posted event is SELECT_SERVER_EVT
+// 2. Posted event is SERVER_IO_ERROR_EVT
 // 3. Posted event is invalid
 //
 TEST_F(NameAddTransactionTest, selectingRevServerHandler) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
+    ASSERT_NO_THROW(name_add =
                     prepHandlerTest(NameChangeTransaction::
-                                    SELECTING_REV_SERVER_ST, 
+                                    SELECTING_REV_SERVER_ST,
                                     NameChangeTransaction::SELECT_SERVER_EVT));
-    
-    // Run selectingRevServerHandler. 
+
+    // Call selectingRevServerHandler enough times to select all of the
+    // servers in it's current domain.  The first time, it will be with
+    // next event of SELECT_SERVER_EVT.  Thereafter it will be with a next
+    // event of SERVER_IO_ERROR_EVT.
+    int num_servers = name_add->getReverseDomain()->getServers()->size();
+    for (int i = 0; i < num_servers; i++) {
+        // Run selectingRevServerHandler.
+        EXPECT_NO_THROW(name_add->selectingRevServerHandler());
+
+        // Verify that a server was selected.
+        EXPECT_TRUE(name_add->getCurrentServer());
+
+        // Verify that we transitioned correctly.
+        EXPECT_EQ(NameAddTransaction::REPLACING_REV_PTRS_ST,
+                  name_add->getCurrState());
+        EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
+                  name_add->getNextEvent());
+
+        // Post a server IO error event.  This simulates an IO error occuring
+        // and a need to select the new server.
+        ASSERT_NO_THROW(name_add->postNextEvent(NameChangeTransaction::
+                                                SERVER_IO_ERROR_EVT));
+    }
+
+    // We should have exhausted the list of servers. Processing another
+    // SERVER_IO_ERROR_EVT should transition us to failure.
     EXPECT_NO_THROW(name_add->selectingRevServerHandler());
-
-    // Verify that a server was selected. 
-    EXPECT_TRUE(name_add->getCurrentServer());
-
-    // Verify that we transitioned correctly.
-    EXPECT_EQ(NameAddTransaction::REPLACING_REV_PTRS_ST, 
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT, 
-              name_add->getNextEvent());
-
-    // Post a server IO error event.  This simulates an IO error occuring
-    // and a need to select the a new server.
-    ASSERT_NO_THROW(name_add->postNextEvent(NameChangeTransaction::
-                                            SERVER_IO_ERROR_EVT));
-
-    // Run selectingRevServerHandler. 
-    EXPECT_NO_THROW(name_add->selectingRevServerHandler());
-
-    // Test domain only has 1 server, so we should have exhausted server
-    // list. Verify that we transitioned correctly.
-    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST, 
-              name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::NO_MORE_SERVERS_EVT, 
+    EXPECT_EQ(NameChangeTransaction::NO_MORE_SERVERS_EVT,
               name_add->getNextEvent());
 
     // Create and prep transaction, poised to run the handler but with an
     // invalid event.
-    ASSERT_NO_THROW(name_add = 
+    ASSERT_NO_THROW(name_add =
                     prepHandlerTest(NameChangeTransaction::
-                                    SELECTING_REV_SERVER_ST, 
+                                    SELECTING_REV_SERVER_ST,
                                     StateModel::NOP_EVT));
 
-    // Running the handler should throw. 
-    EXPECT_THROW(name_add->selectingRevServerHandler(), 
+    // Running the handler should throw.
+    EXPECT_THROW(name_add->selectingRevServerHandler(),
                  NameAddTransactionError);
 }
 
 //************************** replacingRevPtrsHandler tests *****************
 
 // Tests that replacingRevPtrsHandler rejects invalid events.
-TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_invalid_event) {
+TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_InvalidEvent) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler but with
     // an invalid event.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST,
                                     NameChangeTransaction::
                                     StateModel::NOP_EVT));
 
-    // Running the handler should throw. 
-    EXPECT_THROW(name_add->replacingRevPtrsHandler(), 
+    // Running the handler should throw.
+    EXPECT_THROW(name_add->replacingRevPtrsHandler(),
                  NameAddTransactionError);
 }
 
-// Tests replacingRevPtrsHandler with the following scenario: 
+// Tests replacingRevPtrsHandler with the following scenario:
 //
 //  The request includes only a reverse change.
-//  Initial posted event is SERVER_SELECTED_EVT.  
+//  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request is sent without error.
 //  A server response is received which indicates successful update.
 //
-TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_fwd_only_add_Ok) {
+TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_FwdOnlyAddOK) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST,
                                     NameAddTransaction::
                                     SERVER_SELECTED_EVT, REVERSE_CHG));
-  
-    // Should not be an update message yet. 
+
+    // Should not be an update message yet.
     D2UpdateMessagePtr update_msg = name_add->getDnsUpdateRequest();
-    EXPECT_TRUE(!update_msg);
+    ASSERT_FALSE(update_msg);
 
     // At this point completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // Run replacingRevPtrsHandler to construct and send the request. 
+    // Run replacingRevPtrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
 
     // Verify that an update message was constructed.
@@ -1118,9 +1166,9 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_fwd_only_add_Ok) {
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
-    EXPECT_EQ(NameAddTransaction::REPLACING_REV_PTRS_ST, 
+    EXPECT_EQ(NameAddTransaction::REPLACING_REV_PTRS_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::NOP_EVT, 
+    EXPECT_EQ(NameChangeTransaction::NOP_EVT,
               name_add->getNextEvent());
 
     // Simulate receiving a succussful update response.
@@ -1135,38 +1183,38 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_fwd_only_add_Ok) {
 
     // Since it is a reverse change, we should be done.
     // Verify that we transitioned correctly.
-    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST, 
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT, 
+    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT,
               name_add->getNextEvent());
 }
 
-// Tests replacingRevPtrsHandler with the following scenario: 
+// Tests replacingRevPtrsHandler with the following scenario:
 //
 //  The request includes only a reverse change.
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request is sent without error.
 //  A server response is received which indicates the update was rejected.
 //
-TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_other_rcode) {
+TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_OtherRcode) {
     NameAddStubPtr name_add;
     // Create the transaction.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST,
                                     NameAddTransaction::
                                     SERVER_SELECTED_EVT, REVERSE_CHG));
 
     // Select a server to satisfy log statements.
     ASSERT_TRUE(name_add->selectRevServer());
 
-    // Run replacingRevPtrsHandler to construct and send the request. 
+    // Run replacingRevPtrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
 
     // Simulate receiving server rejection response. Per RFC, anything other
     // than no error is failure.  Arbitrarily choosing refused.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::REFUSED());
 
-    // Run replacingRevPtrsHandler again to process the response. 
+    // Run replacingRevPtrsHandler again to process the response.
     //EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
     (name_add->replacingRevPtrsHandler());
 
@@ -1174,25 +1222,25 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_other_rcode) {
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // We should have failed the transaction. Verifiy that we transitioned 
+    // We should have failed the transaction. Verifiy that we transitioned
     // correctly.
-    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST, 
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_add->getCurrState());
-    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT, 
+    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
               name_add->getNextEvent());
 }
 
-// Tests replacingRevPtrsHandler with the following scenario: 
+// Tests replacingRevPtrsHandler with the following scenario:
 //
 //  The request includes only a reverse change.
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request send times out MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_time_out) {
+TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_Timeout) {
     NameAddStubPtr name_add;
     // Create the transaction.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST,
                                     NameAddTransaction::
                                     SERVER_SELECTED_EVT, REVERSE_CHG));
 
@@ -1201,11 +1249,11 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_time_out) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER; 
+    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; i++) {
         const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
 
-        // Run replacingRevPtrsHandler to send the request. 
+        // Run replacingRevPtrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
 
         const D2UpdateMessagePtr curr_msg = name_add->getDnsUpdateRequest();
@@ -1214,15 +1262,18 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_time_out) {
             EXPECT_FALSE(prev_msg);
             EXPECT_TRUE(curr_msg);
         } else {
-            // Subsequent passes should reuse the request.
+            // Subsequent passes should reuse the request. We are only
+            // looking to check that we have not replaced the pointer value
+            // with a new pointer.  This tests the on_entry() logic which
+            // clears the request ONLY upon initial entry into the state.
             EXPECT_TRUE(prev_msg == curr_msg);
         }
 
-        // Simulate a server IO timeout. 
+        // Simulate a server IO timeout.
         name_add->setDnsUpdateStatus(DNSClient::TIMEOUT);
         name_add->postNextEvent(NameChangeTransaction::IO_COMPLETED_EVT);
 
-        // Run replacingRevPtrsHandler again to process the response. 
+        // Run replacingRevPtrsHandler again to process the response.
         EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
 
         // Completion flags should be false.
@@ -1231,32 +1282,32 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_time_out) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            EXPECT_EQ(NameAddTransaction::REPLACING_REV_PTRS_ST, 
+            EXPECT_EQ(NameAddTransaction::REPLACING_REV_PTRS_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
                     name_add->getNextEvent());
         } else {
             // Server retries should be exhausted, time for a new server.
-            EXPECT_EQ(NameAddTransaction::SELECTING_REV_SERVER_ST, 
+            EXPECT_EQ(NameAddTransaction::SELECTING_REV_SERVER_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT,
                     name_add->getNextEvent());
         }
     }
 }
 
-// Tests replacingRevPtrsHandler with the following scenario: 
+// Tests replacingRevPtrsHandler with the following scenario:
 //
 //  The request includes only a reverse change.
 //  Initial posted event is SERVER_SELECTED_EVT.
 //  The update request is sent but a corrupt response is received, this occurs
 //  MAX_UPDATE_TRIES_PER_SERVER times.
 //
-TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_corrupt_response) {
+TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_CorruptResponse) {
     NameAddStubPtr name_add;
     // Create the transaction.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST,
                                     NameAddTransaction::
                                     SERVER_SELECTED_EVT, REVERSE_CHG));
 
@@ -1265,11 +1316,11 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_corrupt_response) {
 
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
-    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER; 
+    int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
     for (int i = 1; i <= max_tries; i++) {
         const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
 
-        // Run replacingRevPtrsHandler to send the request. 
+        // Run replacingRevPtrsHandler to send the request.
         EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
 
         const D2UpdateMessagePtr curr_msg = name_add->getDnsUpdateRequest();
@@ -1278,15 +1329,18 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_corrupt_response) {
             EXPECT_FALSE(prev_msg);
             EXPECT_TRUE(curr_msg);
         } else {
-            // Subsequent passes should reuse the request.
+            // Subsequent passes should reuse the request. We are only
+            // looking to check that we have not replaced the pointer value
+            // with a new pointer.  This tests the on_entry() logic which
+            // clears the request ONLY upon initial entry into the state.
             EXPECT_TRUE(prev_msg == curr_msg);
         }
 
-        // Simulate a server corrupt response. 
+        // Simulate a server corrupt response.
         name_add->setDnsUpdateStatus(DNSClient::INVALID_RESPONSE);
         name_add->postNextEvent(NameChangeTransaction::IO_COMPLETED_EVT);
 
-        // Run replacingRevPtrsHandler again to process the response. 
+        // Run replacingRevPtrsHandler again to process the response.
         EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
 
         // Completion flags should be false.
@@ -1295,15 +1349,15 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_corrupt_response) {
 
         if (i < max_tries) {
             // We should be ready to try again.
-            EXPECT_EQ(NameAddTransaction::REPLACING_REV_PTRS_ST, 
+            EXPECT_EQ(NameAddTransaction::REPLACING_REV_PTRS_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
                     name_add->getNextEvent());
         } else {
             // Server retries should be exhausted, time for a new server.
-            EXPECT_EQ(NameAddTransaction::SELECTING_REV_SERVER_ST, 
+            EXPECT_EQ(NameAddTransaction::SELECTING_REV_SERVER_ST,
                       name_add->getCurrState());
-            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT, 
+            EXPECT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT,
                     name_add->getNextEvent());
         }
     }
@@ -1312,19 +1366,19 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_corrupt_response) {
 // Tests the processAddOkHandler functionality.
 // It verifies behavior for the following scenarios:
 //
-// 1. Posted event is UPDATE_OK_EVT 
+// 1. Posted event is UPDATE_OK_EVT
 // 2. Posted event is invalid
 //
 TEST_F(NameAddTransactionTest, processAddOkHandler) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
+    ASSERT_NO_THROW(name_add =
                     prepHandlerTest(NameChangeTransaction::PROCESS_TRANS_OK_ST,
                                     NameChangeTransaction::UPDATE_OK_EVT));
-    // Run processAddOkHandler. 
+    // Run processAddOkHandler.
     EXPECT_NO_THROW(name_add->processAddOkHandler());
 
-    // Verify that a server was selected. 
+    // Verify that a server was selected.
     EXPECT_EQ(dhcp_ddns::ST_COMPLETED, name_add->getNcrStatus());
 
     // Verify that the model has ended.
@@ -1334,45 +1388,45 @@ TEST_F(NameAddTransactionTest, processAddOkHandler) {
 
     // Create and prep transaction, poised to run the handler but with an
     // invalid event.
-    ASSERT_NO_THROW(name_add = 
-                    prepHandlerTest(NameChangeTransaction::PROCESS_TRANS_OK_ST, 
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameChangeTransaction::PROCESS_TRANS_OK_ST,
                                     StateModel::NOP_EVT));
-    // Running the handler should throw. 
+    // Running the handler should throw.
     EXPECT_THROW(name_add->processAddOkHandler(), NameAddTransactionError);
 }
 
 // Tests the processAddFailedHandler functionality.
 // It verifies behavior for the following scenarios:
 //
-// 1. Posted event is UPDATE_FAILED_EVT 
+// 1. Posted event is UPDATE_FAILED_EVT
 // 2. Posted event is invalid
 //
 TEST_F(NameAddTransactionTest, processAddFailedHandler) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
-    ASSERT_NO_THROW(name_add = 
+    ASSERT_NO_THROW(name_add =
                     prepHandlerTest(NameChangeTransaction::
                                     PROCESS_TRANS_FAILED_ST,
                                     NameChangeTransaction::UPDATE_FAILED_EVT));
-    // Run processAddFailedHandler. 
+    // Run processAddFailedHandler.
     EXPECT_NO_THROW(name_add->processAddFailedHandler());
 
-    // Verify that a server was selected. 
+    // Verify that a server was selected.
     EXPECT_EQ(dhcp_ddns::ST_FAILED, name_add->getNcrStatus());
 
     // Verify that the model has ended. (Remember, the transaction failed NOT
-    // the model.  The model should have ended normally.)  
+    // the model.  The model should have ended normally.)
     EXPECT_EQ(StateModel::END_ST, name_add->getCurrState());
     EXPECT_EQ(StateModel::END_EVT, name_add->getNextEvent());
 
 
     // Create and prep transaction, poised to run the handler but with an
     // invalid event.
-    ASSERT_NO_THROW(name_add = 
+    ASSERT_NO_THROW(name_add =
                     prepHandlerTest(NameChangeTransaction::
-                                    PROCESS_TRANS_FAILED_ST, 
+                                    PROCESS_TRANS_FAILED_ST,
                                     StateModel::NOP_EVT));
-    // Running the handler should throw. 
+    // Running the handler should throw.
     EXPECT_THROW(name_add->processAddFailedHandler(), NameAddTransactionError);
 }
 

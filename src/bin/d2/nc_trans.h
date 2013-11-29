@@ -197,7 +197,15 @@ public:
     virtual void operator()(DNSClient::Status status);
 
 protected:
-    /// @todo
+    /// @brief Send the update request to the current server.
+    ///
+    /// This method increments the update attempt count and then passes the
+    /// current update request to the DNSClient instance to be sent to the
+    /// currently selected server.  Since the send is asynchronous, the method
+    /// posts NOP_EVT as the next event and then returns.
+    ///
+    /// If an exception occurs it will be logged and and the transaction will
+    /// be failed.
     virtual void sendUpdate(bool use_tsig_ = false);
 
     /// @brief Adds events defined by NameChangeTransaction to the event set.
@@ -257,8 +265,19 @@ protected:
     /// @param explanation is text detailing the error
     virtual void onModelFailure(const std::string& explanation);
 
-    /// @todo
-    void retryTransition(int server_sel_state);
+    /// @brief Determines the state and next event based on update attempts.
+    ///
+    /// This method will post a next event of SERVER_SELECTED_EVT to the
+    /// current state if the number of udpate attempts has not reached the
+    /// maximum allowed.
+    ///
+    /// If the maximum number of attempts has been reached, it will transition
+    /// to the given state with a next event of SERVER_IO_ERROR_EVT.
+    ///
+    /// @param server_sel_state  State to transition to if maximum attempts
+    /// have been tried.
+    ///
+    void retryTransition(const int server_sel_state);
 
     /// @brief Sets the update request packet to the given packet.
     ///
@@ -278,7 +297,7 @@ protected:
     /// @param response is the new response packet to assign.
     void setDnsUpdateResponse(D2UpdateMessagePtr& response);
 
-    /// @brief Destroys the current update respons packet.
+    /// @brief Destroys the current update response packet.
     void clearDnsUpdateResponse();
 
     /// @brief Sets the forward change completion flag to the given value.
@@ -333,7 +352,13 @@ protected:
     /// @brief Sets the update attempt count to the given value.
     ///
     /// @param value is the new value to assign.
-    void setUpdateAttempts(size_t value);
+    void setUpdateAttempts(const size_t value);
+
+    /// @todo
+    const IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
 
 public:
     /// @brief Fetches the NameChangeRequest for this transaction.
@@ -465,7 +490,7 @@ private:
     /// list, which may be beyond the end of the list.
     size_t next_server_pos_;
 
-    // @todo
+    /// @brief Number of transmit attempts for the current request.
     size_t update_attempts_;
 };
 

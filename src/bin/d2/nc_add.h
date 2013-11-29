@@ -129,12 +129,16 @@ protected:
     /// @throw StateModelError if an event value is undefined.
     virtual void verifyStates();
 
-    /// @brief State handler for R
+    /// @brief State handler for READY_ST.
     ///
     /// Entered from:
     /// - INIT_ST with next event of START_EVT
     ///
-    /// Servers as the starting state handler.
+    /// The READY_ST is the state the model transitions into when the inherited
+    /// method, startTransaction() is invoked.  This handler, therefore, as the
+    /// is the entry point into the state model execuition.h  Its primary task
+    /// is to determine whether to start with a forward DNS change or a
+    /// reverse DNS change.
     ///
     /// Transitions to:
     /// - SELECTING_FWD_SERVER_ST with next event of SERVER_SELECT_ST if request
@@ -144,7 +148,7 @@ protected:
     /// includes only a reverse change.
     ///
     /// @throw NameAddTransactionError if upon entry next event is not
-    /// START_EVT.EADY_ST.
+    /// START_EVT.READY_ST.
     void readyHandler();
 
     /// @brief State handler for SELECTING_FWD_SERVER_ST.
@@ -209,7 +213,14 @@ protected:
     /// schedules an asynchronous send via sendUpdate(), and returns.  Note
     /// that sendUpdate will post NOP_EVT as next event.
     ///
-    /// If the handler is invoked with a next event of IO_COMPELTED_EVT, then
+    /// Posting the NOP_EVT will cause runModel() to suspend execution of
+    /// the state model thus affecting a "wait" for the update IO to complete.
+    /// Update completion occurs via the DNSClient callback operator() method
+    /// inherited from NameChangeTransaction.  When invoked this callback will
+    /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
+    /// resumes execution of the state model.
+    ///
+    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:
@@ -239,7 +250,7 @@ protected:
     /// SERVER_SELECTED_EVT or IO_COMPLETE_EVT.
     void addingFwdAddrsHandler();
 
-    /// @brief State handler for .
+    /// @brief State handler for REPLACING_FWD_ADDRS_ST.
     ///
     /// Entered from:
     /// - ADDING_FWD_ADDRS_ST with next event of FQDN_IN_USE_EVT
@@ -252,7 +263,14 @@ protected:
     /// via sendUpdate(), and returns.  Note that sendUpdate will post NOP_EVT
     /// as the next event.
     ///
-    /// If the handler is invoked with a next event of IO_COMPELTED_EVT, then
+    /// Posting the NOP_EVT will cause runModel() to suspend execution of
+    /// the state model thus affecting a "wait" for the update IO to complete.
+    /// Update completion occurs via the DNSClient callback operator() method
+    /// inherited from NameChangeTransaction.  When invoked this callback will
+    /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
+    /// resumes execution of the state model.
+    ///
+    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:
@@ -296,7 +314,14 @@ protected:
     /// add request, schedules an asynchronous send via sendUpdate(), and
     /// returns.  Note that sendUpdate will post NOP_EVT as next event.
     ///
-    /// If the handler is invoked with a next event of IO_COMPELTED_EVT, then
+    /// Posting the NOP_EVT will cause runModel() to suspend execution of
+    /// the state model thus affecting a "wait" for the update IO to complete.
+    /// Update completion occurs via the DNSClient callback operator() method
+    /// inherited from NameChangeTransaction.  When invoked this callback will
+    /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
+    /// resumes execution of the state model.
+    ///
+    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:

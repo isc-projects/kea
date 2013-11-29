@@ -16,8 +16,8 @@
 #define DNS_CLIENT_H
 
 #include <d2/d2_update_message.h>
-#include <d2/d2_asio.h>
 
+#include <asiolink/io_service.h>
 #include <util/buffer.h>
 
 #include <asiodns/io_fetch.h>
@@ -151,7 +151,7 @@ public:
     ///
     /// @todo Implement TSIG Support. Currently any attempt to call this
     /// function will result in exception.
-    void doUpdate(IOServicePtr& io_service,
+    void doUpdate(asiolink::IOService& io_service,
                   const asiolink::IOAddress& ns_addr,
                   const uint16_t ns_port,
                   D2UpdateMessage& update,
@@ -176,7 +176,7 @@ public:
     /// @param wait A timeout (in seconds) for the response. If a response is
     /// not received within the timeout, exchange is interrupted. This value
     /// must not exceed maximal value for 'int' data type.
-    void doUpdate(IOServicePtr& io_service,
+    void doUpdate(asiolink::IOService& io_service,
                   const asiolink::IOAddress& ns_addr,
                   const uint16_t ns_port,
                   D2UpdateMessage& update,
