@@ -424,7 +424,7 @@ public:
     /// @return true if direct response is supported.
     bool isDirectResponseSupported() const;
 
-    /// @brief Returns interface with specified interface index
+    /// @brief Returns interfac specified interface index
     ///
     /// @param ifindex index of searched interface
     ///
@@ -732,6 +732,15 @@ public:
     /// not having address assigned.
     void setMatchingPacketFilter(const bool direct_response_desired = false);
 
+    /// @brief Adds an interface to list of known interfaces.
+    ///
+    /// @param iface reference to Iface object.
+    /// @note This function must be public because it has to be callable
+    /// from unit tests.
+    void addInterface(const Iface& iface) {
+        ifaces_.push_back(iface);
+    }
+
     /// A value of socket descriptor representing "not specified" state.
     static const int INVALID_SOCKET = -1;
 
@@ -775,13 +784,6 @@ protected:
     ///
     /// @return socket descriptor
     int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, uint16_t port);
-
-    /// @brief Adds an interface to list of known interfaces.
-    ///
-    /// @param iface reference to Iface object.
-    void addInterface(const Iface& iface) {
-        ifaces_.push_back(iface);
-    }
 
     /// @brief Detects network interfaces.
     ///

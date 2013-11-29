@@ -191,6 +191,26 @@ TEST_F(Dhcpv4SrvTest, basic) {
     EXPECT_TRUE(naked_srv->getServerID());
 }
 
+// This test verifies that exception is not thrown when an error occurs during
+// opening sockets. This test forces an error by adding a fictious interface
+// to the IfaceMgr. An attempt to open socket on this interface must always
+// fail. The DHCPv4 installs the error handler function to prevent exceptions
+// being thrown from the openSockets4 function.
+// @todo The server tests for socket should be extended but currently the
+// ability to unit test the sockets code is somewhat limited.
+TEST_F(Dhcpv4SrvTest, openActiveSockets) {
+    ASSERT_NO_THROW(CfgMgr::instance().activateAllIfaces());
+
+    Iface iface("bogusiface", 255);
+    iface.flag_loopback_ = false;
+    iface.flag_up_ = true;
+    iface.flag_running_ = true;
+    iface.inactive4_ = false;
+    iface.addAddress(IOAddress("192.0.0.0"));
+    IfaceMgr::instance().addInterface(iface);
+    ASSERT_NO_THROW(Dhcpv4Srv::openActiveSockets(DHCP4_SERVER_PORT, false));
+}
+
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
 // in the received message.
