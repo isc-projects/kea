@@ -350,17 +350,18 @@ TEST_F(NameAddTransactionTest, selectingFwdServerHandler) {
     // next event of SELECT_SERVER_EVT.  Thereafter it will be with a next
     // event of SERVER_IO_ERROR_EVT.
     int num_servers = name_add->getForwardDomain()->getServers()->size();
-    for (int i = 0; i < num_servers; i++) {
+    for (int i = 0; i < num_servers; ++i) {
         // Run selectingFwdServerHandler.
-        EXPECT_NO_THROW(name_add->selectingFwdServerHandler());
+        ASSERT_NO_THROW(name_add->selectingFwdServerHandler())
+              << " num_servers: " << num_servers << " selections: " << i;
 
         // Verify that a server was selected.
-        EXPECT_TRUE(name_add->getCurrentServer());
+        ASSERT_TRUE(name_add->getCurrentServer());
 
         // Verify that we transitioned correctly.
-        EXPECT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST,
+        ASSERT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST,
               name_add->getCurrState());
-        EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
+        ASSERT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
               name_add->getNextEvent());
 
         // Post a server IO error event.  This simulates an IO error occuring
@@ -598,7 +599,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_Timeout) {
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
-    for (int i = 1; i <= max_tries; i++) {
+    for (int i = 1; i <= max_tries; ++i) {
         const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
 
         // Run addingFwdAddrsHandler to send the request.
@@ -669,7 +670,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_InvalidResponse) {
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
-    for (int i = 1; i <= max_tries; i++) {
+    for (int i = 1; i <= max_tries; ++i) {
         // Run addingFwdAddrsHandler to construct send the request.
         EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
@@ -944,7 +945,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_Timeout) {
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
-    for (int i = 1; i <= max_tries; i++) {
+    for (int i = 1; i <= max_tries; ++i) {
         const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
 
         // Run replacingFwdAddrsHandler to send the request.
@@ -1012,7 +1013,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_CorruptResponse) {
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
-    for (int i = 1; i <= max_tries; i++) {
+    for (int i = 1; i <= max_tries; ++i) {
         const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
 
         // Run replacingFwdAddrsHandler to send the request.
@@ -1078,17 +1079,18 @@ TEST_F(NameAddTransactionTest, selectingRevServerHandler) {
     // next event of SELECT_SERVER_EVT.  Thereafter it will be with a next
     // event of SERVER_IO_ERROR_EVT.
     int num_servers = name_add->getReverseDomain()->getServers()->size();
-    for (int i = 0; i < num_servers; i++) {
+    for (int i = 0; i < num_servers; ++i) {
         // Run selectingRevServerHandler.
-        EXPECT_NO_THROW(name_add->selectingRevServerHandler());
+        ASSERT_NO_THROW(name_add->selectingRevServerHandler())
+              << " num_servers: " << num_servers << " selections: " << i;
 
         // Verify that a server was selected.
-        EXPECT_TRUE(name_add->getCurrentServer());
+        ASSERT_TRUE(name_add->getCurrentServer());
 
         // Verify that we transitioned correctly.
-        EXPECT_EQ(NameAddTransaction::REPLACING_REV_PTRS_ST,
+        ASSERT_EQ(NameAddTransaction::REPLACING_REV_PTRS_ST,
                   name_add->getCurrState());
-        EXPECT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
+        ASSERT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
                   name_add->getNextEvent());
 
         // Post a server IO error event.  This simulates an IO error occuring
@@ -1250,7 +1252,7 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_Timeout) {
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
-    for (int i = 1; i <= max_tries; i++) {
+    for (int i = 1; i <= max_tries; ++i) {
         const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
 
         // Run replacingRevPtrsHandler to send the request.
@@ -1317,7 +1319,7 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_CorruptResponse) {
     // Verify that we can make maximum number of update attempts permitted
     // and then transition to selecting a new server.
     int max_tries = NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
-    for (int i = 1; i <= max_tries; i++) {
+    for (int i = 1; i <= max_tries; ++i) {
         const D2UpdateMessagePtr prev_msg = name_add->getDnsUpdateRequest();
 
         // Run replacingRevPtrsHandler to send the request.

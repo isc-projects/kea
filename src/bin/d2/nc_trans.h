@@ -204,9 +204,12 @@ protected:
     /// currently selected server.  Since the send is asynchronous, the method
     /// posts NOP_EVT as the next event and then returns.
     ///
+    /// @param use_tsig True if the udpate should be include a TSIG key. This
+    /// is not yet implemented.
+    ///
     /// If an exception occurs it will be logged and and the transaction will
     /// be failed.
-    virtual void sendUpdate(bool use_tsig_ = false);
+    virtual void sendUpdate(bool use_tsig = false);
 
     /// @brief Adds events defined by NameChangeTransaction to the event set.
     ///
@@ -354,7 +357,9 @@ protected:
     /// @param value is the new value to assign.
     void setUpdateAttempts(const size_t value);
 
-    /// @todo
+    /// @brief Fetches the IOService the transaction uses for IO processing.
+    ///
+    /// @return returns a const pointer to the IOService.
     const IOServicePtr& getIOService() {
         return (io_service_);
     }
