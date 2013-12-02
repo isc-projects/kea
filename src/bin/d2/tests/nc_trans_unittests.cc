@@ -939,8 +939,8 @@ TEST_F(NameChangeTransactionTest, retryTransition) {
               name_change->getNextEvent());
 
     // Verify that we have not exceeded maximum number of attempts.
-    EXPECT_TRUE(name_change->getUpdateAttempts() <
-                NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER);
+    ASSERT_LT(name_change->getUpdateAttempts(),
+              NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER);
 
     // Call retryTransition.
     ASSERT_NO_THROW(name_change->retryTransition(
@@ -998,7 +998,6 @@ TEST_F(NameChangeTransactionTest, sendUpdateDoUpdateFailure) {
 
 /// @brief Tests sendUpdate method when underlying doUpdate times out.
 TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
-    isc::log::initLogger();
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
     ASSERT_NO_THROW(name_change->initDictionaries());
@@ -1032,10 +1031,9 @@ TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
     ASSERT_EQ(DNSClient::TIMEOUT, name_change->getDnsUpdateStatus());
 }
 
-/// @brief Tests sendUpdate method when it receives a corrupt respons from
+/// @brief Tests sendUpdate method when it receives a corrupt response from
 /// the server.
 TEST_F(NameChangeTransactionTest, sendUpdateCorruptResponse) {
-    isc::log::initLogger();
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
     ASSERT_NO_THROW(name_change->initDictionaries());
@@ -1075,7 +1073,6 @@ TEST_F(NameChangeTransactionTest, sendUpdateCorruptResponse) {
 
 /// @brief Tests sendUpdate method when the exchange succeeds.
 TEST_F(NameChangeTransactionTest, sendUpdate) {
-    isc::log::initLogger();
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
     ASSERT_NO_THROW(name_change->initDictionaries());
