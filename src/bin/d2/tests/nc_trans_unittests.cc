@@ -261,6 +261,10 @@ public:
     using NameChangeTransaction::sendUpdate;
 };
 
+// Declare them so Gtest can see them.
+const int NameChangeStub::DOING_UPDATE_ST;
+const int NameChangeStub::SEND_UPDATE_EVT;
+
 typedef boost::shared_ptr<asio::ip::udp::socket> SocketPtr;
 
 /// @brief This class simulates a DNS server.  It is capable of performing
@@ -994,7 +998,7 @@ TEST_F(NameChangeTransactionTest, sendUpdateDoUpdateFailure) {
 
 /// @brief Tests sendUpdate method when underlying doUpdate times out.
 TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
-    log::initLogger();
+    isc::log::initLogger();
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
     ASSERT_NO_THROW(name_change->initDictionaries());
@@ -1031,7 +1035,7 @@ TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
 /// @brief Tests sendUpdate method when it receives a corrupt respons from
 /// the server.
 TEST_F(NameChangeTransactionTest, sendUpdateCorruptResponse) {
-    log::initLogger();
+    isc::log::initLogger();
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
     ASSERT_NO_THROW(name_change->initDictionaries());
@@ -1071,7 +1075,7 @@ TEST_F(NameChangeTransactionTest, sendUpdateCorruptResponse) {
 
 /// @brief Tests sendUpdate method when the exchange succeeds.
 TEST_F(NameChangeTransactionTest, sendUpdate) {
-    log::initLogger();
+    isc::log::initLogger();
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
     ASSERT_NO_THROW(name_change->initDictionaries());
