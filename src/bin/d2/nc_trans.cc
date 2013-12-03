@@ -38,18 +38,29 @@ const int NameChangeTransaction::UPDATE_FAILED_EVT;
 
 const int NameChangeTransaction::NCT_DERIVED_EVENT_MIN;
 
+const unsigned int NameChangeTransaction::DNS_UPDATE_DEFAULT_TIMEOUT;
+const unsigned int NameChangeTransaction::MAX_UPDATE_TRIES_PER_SERVER;
+
 NameChangeTransaction::
-NameChangeTransaction(isc::asiolink::IOService& io_service,
+NameChangeTransaction(IOServicePtr& io_service,
                       dhcp_ddns::NameChangeRequestPtr& ncr,
                       DdnsDomainPtr& forward_domain,
                       DdnsDomainPtr& reverse_domain)
     : io_service_(io_service), ncr_(ncr), forward_domain_(forward_domain),
-     reverse_domain_(reverse_domain), dns_client_(),
+     reverse_domain_(reverse_domain), dns_client_(), dns_update_request_(),
      dns_update_status_(DNSClient::OTHER), dns_update_response_(),
      forward_change_completed_(false), reverse_change_completed_(false),
-     current_server_list_(), current_server_(), next_server_pos_(0) {
+     current_server_list_(), current_server_(), next_server_pos_(0),
+     update_attempts_(0) {
+    // @todo if io_service is NULL we are multi-threading and should
+    // instantiate our own
+    if (!io_service_) {
+        isc_throw(NameChangeTransactionError, "IOServicePtr cannot be null");
+    }
+
     if (!ncr_) {
-        isc_throw(NameChangeTransactionError, "NameChangeRequest cannot null");
+        isc_throw(NameChangeTransactionError,
+                  "NameChangeRequest cannot be null");
     }
 
     if (ncr_->isForwardChange() && !(forward_domain_)) {
@@ -79,6 +90,36 @@ NameChangeTransaction::operator()(DNSClient::Status status) {
     // It won't exit until we hit the next IO wait or the state model ends.
     setDnsUpdateStatus(status);
     runModel(IO_COMPLETED_EVT);
+}
+
+void
+NameChangeTransaction::sendUpdate(bool /* use_tsig_ */) {
+    try {
+        ++update_attempts_;
+        // @todo add logic to add/replace TSIG key info in request if
+        // use_tsig_ is true. We should be able to navigate to the TSIG key
+        // for the current server.  If not we would need to add that.
+
+        // @todo time out should ultimately be configurable, down to
+        // server level?
+        dns_client_->doUpdate(*io_service_, current_server_->getIpAddress(),
+                              current_server_->getPort(), *dns_update_request_,
+                              DNS_UPDATE_DEFAULT_TIMEOUT);
+
+        // Message is on its way, so the next event should be NOP_EVT.
+        postNextEvent(NOP_EVT);
+    } catch (const std::exception& ex) {
+        // We were unable to initiate the send.
+        // It is presumed that any throw from doUpdate is due to a programmatic
+        // error, such as an unforeseen permutation of data, rather than an IO
+        // failure. IO errors should be caught by the underlying asiolink
+        // mechansisms and manifested as an unsuccessful IO statu in the
+        // DNSClient callback.  Any problem here most likely means the request
+        // is corrupt in some way and cannot be completed, therefore we will
+        // log it and transition it to failure.
+        LOG_ERROR(dctl_logger, DHCP_DDNS_TRANS_SEND_ERROR).arg(ex.what());
+        transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
+    }
 }
 
 void
@@ -140,8 +181,40 @@ NameChangeTransaction::onModelFailure(const std::string& explanation) {
 }
 
 void
+NameChangeTransaction::retryTransition(const int server_sel_state) {
+    if (update_attempts_ < MAX_UPDATE_TRIES_PER_SERVER) {
+        // Re-enter the current state with same server selected.
+        transition(getCurrState(), SERVER_SELECTED_EVT);
+    } else  {
+        // Transition to given server selection state if we are out
+        // of retries.
+        transition(server_sel_state, SERVER_IO_ERROR_EVT);
+    }
+}
+
+void
+NameChangeTransaction::setDnsUpdateRequest(D2UpdateMessagePtr& request) {
+    dns_update_request_ = request;
+}
+
+void
+NameChangeTransaction::clearDnsUpdateRequest() {
+    dns_update_request_.reset();
+}
+
+void
 NameChangeTransaction::setDnsUpdateStatus(const DNSClient::Status& status) {
     dns_update_status_ = status;
+}
+
+void
+NameChangeTransaction::setDnsUpdateResponse(D2UpdateMessagePtr& response) {
+    dns_update_response_ = response;
+}
+
+void
+NameChangeTransaction::clearDnsUpdateResponse() {
+    dns_update_response_.reset();
 }
 
 void
@@ -152,6 +225,11 @@ NameChangeTransaction::setForwardChangeCompleted(const bool value) {
 void
 NameChangeTransaction::setReverseChangeCompleted(const bool value) {
     reverse_change_completed_ = value;
+}
+
+void
+NameChangeTransaction::setUpdateAttempts(const size_t value) {
+    update_attempts_ = value;
 }
 
 const dhcp_ddns::NameChangeRequestPtr&
@@ -220,10 +298,14 @@ NameChangeTransaction::getCurrentServer() const {
     return (current_server_);
 }
 
-
 void
 NameChangeTransaction::setNcrStatus(const dhcp_ddns::NameChangeStatus& status) {
     return (ncr_->setStatus(status));
+}
+
+const D2UpdateMessagePtr&
+NameChangeTransaction::getDnsUpdateRequest() const {
+    return (dns_update_request_);
 }
 
 DNSClient::Status
@@ -244,6 +326,11 @@ NameChangeTransaction::getForwardChangeCompleted() const {
 bool
 NameChangeTransaction::getReverseChangeCompleted() const {
     return (reverse_change_completed_);
+}
+
+size_t
+NameChangeTransaction::getUpdateAttempts() const {
+    return (update_attempts_);
 }
 
 } // namespace isc::d2
