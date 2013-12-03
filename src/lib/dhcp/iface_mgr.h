@@ -617,7 +617,7 @@ public:
                                     const uint16_t port);
 
 
-    /// Opens IPv6 sockets on detected interfaces.
+    /// @brief Opens IPv6 sockets on detected interfaces.
     ///
     /// @todo This function will throw an exception immediately when a socket
     /// fails to open. This is undersired behavior because it will preclude
@@ -638,16 +638,64 @@ public:
     /// @return true if any sockets were open
     bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT);
 
-    /// Opens IPv4 sockets on detected interfaces.
+    /// @brief Opens IPv4 sockets on detected interfaces.
+    ///
+    /// This function attempts to open sockets on all interfaces which have been
+    /// detected by @c IfaceMgr and meet the following conditions:
+    /// - interface is not a local loopback,
+    /// - interface is running (connected),
+    /// - interface is up,
+    /// - interface is active, e.g. selected from the configuration to be used
+    /// to listen DHCPv4 messages,
+    /// - interface has an IPv4 address assigned.
+    ///
+    /// The type of the socket being open depends on the selected Packet Filter
+    /// represented by a class derived from @c isc::dhcp::PktFilter abstract
+    /// class.
+    ///
+    /// It is possible to specify whether sockets should be broadcast capable.
+    /// In most of the cases, the sockets should support broadcast traffic, e.g.
+    /// DHCPv4 server and relay need to listen to broadcast messages sent by
+    /// clients. If the socket has to be open on the particular interface, this
+    /// interface must have broadcast flag set. If this condition is not met,
+    /// the socket will be created in the unicast-only mode. If there are
+    /// multiple broadcast-capable interfaces present, they may be all open
+    /// in a broadcast mode only if the OS supports SO_BINDTODEVICE (bind socket
+    /// to a device) socket option. If this option is not supported, only the
+    /// first broadcast-capable socket will be opened in the broadcast mode.
+    /// The error will be reported for sockets being opened on other interfaces.
+    /// If the socket is bound to a device (interface), the broadcast traffic
+    /// sent to this interface will be received on this interface only.
+    /// This allows the DHCPv4 server or relay to detect the interface on which
+    /// the broadcast message has been received. This interface is later used
+    /// to send a response.
+    ///
+    /// On the systems with multiple interfaces, it is often desired that the
+    /// failure to open a socket on a particular interface doesn't cause a
+    /// fatal error and sockets should be opened on remaining interfaces.
+    /// However, the warning about the failure for the particular socket should
+    /// be communicated to the caller. The libdhcp++ is a common library with
+    /// no logger associated with it. Most of the functions in this library
+    /// communicate errors via exceptions. In case of openSockets4 function
+    /// exception must not be thrown if the function is supposed to continue
+    /// opening sockets, despite an error. Therefore, if such a behavior is
+    /// desired, the error handler function can be passed as a parameter.
+    /// This error handler is called (if present) with an error string.
+    /// Typically, error handler will simply log an error using an application
+    /// logger, but it can do more sophisticated error handling too.
+    ///
+    /// @todo It is possible that additional parameters will have to be added
+    /// to the error handler, e.g. Iface if it was really supposed to do
+    /// some more sophisticated error handling.
+    ///
+    /// If the error handler is not installed (is NULL), the exception is thrown
+    /// for each failure (default behavior).
     ///
     /// @param port specifies port number (usually DHCP4_SERVER_PORT)
     /// @param use_bcast configure sockets to support broadcast messages.
-    /// @param error_handler A pointer to a callback function which is called
-    /// by the openSockets4 when it fails to open a socket. This parameter
-    /// can be NULL to indicate that the callback should not be used. In such
-    /// case the @c isc::dhcp::SocketConfigError exception is thrown instead.
-    /// When a callback is installed the function will continue when callback
-    /// returns control.
+    /// @param error_handler A pointer to an error handler function which is
+    /// called by the openSockets4 when it fails to open a socket. This
+    /// parameter can be NULL to indicate that the callback should not be used.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket and callback
     /// function hasn't been specified.
@@ -883,12 +931,16 @@ private:
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
 
-    /// @brief Handles an error which occurs during operation on the socket.
+    /// @brief Handles an error which occurs during configuration of a socket.
     ///
     /// If the handler callback is specified (non-NULL), this handler is
     /// called and the specified error message is passed to it. If the
     /// handler is not specified, the @c isc::dhcpSocketConfigError exception
     /// is thrown with the specified message.
+    ///
+    /// This function should be called to handle errors which occur during
+    /// socket opening, binding or configuration (e.g. setting socket options
+    /// etc).
     ///
     /// @param errmsg An error message to be passed to a handlder function or
     /// to the @c isc::dhcp::SocketConfigError exception.

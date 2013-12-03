@@ -1107,7 +1107,7 @@ TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 
 TEST_F(IfaceMgrTest, checkPacketFilterLPFSocket) {
     IOAddress loAddr("127.0.0.1");
-    int socket1 = 0, socket2 = 0;
+    int socket1 = -1, socket2 = -1;
     // Create two instances of IfaceMgr.
     boost::scoped_ptr<NakedIfaceMgr> iface_mgr1(new NakedIfaceMgr());
     ASSERT_TRUE(iface_mgr1);
@@ -1138,6 +1138,8 @@ TEST_F(IfaceMgrTest, checkPacketFilterLPFSocket) {
     // to prevent resource leak.
     if (socket2 >= 0) {
         close(socket2);
+        ADD_FAILURE() << "Two sockets opened and bound to the same IP"
+            " address and UDP port";
     }
 
     if (socket1 >= 0) {
