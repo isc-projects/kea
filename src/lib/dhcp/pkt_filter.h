@@ -132,6 +132,8 @@ protected:
     ///
     /// @return A fallback socket descriptor. This descriptor should be assigned
     /// to the @c fallbackfd_ field of the @c isc::dhcp::SocketInfo structure.
+    /// @throw isc::dhcp::SocketConfigError if socket opening, binding or
+    /// configuration fails.
     virtual int openFallbackSocket(const isc::asiolink::IOAddress& addr,
                                    const uint16_t port);
 };
