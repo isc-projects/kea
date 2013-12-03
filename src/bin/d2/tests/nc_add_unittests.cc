@@ -353,21 +353,27 @@ TEST_F(NameAddTransactionTest, selectingFwdServerHandler) {
     for (int i = 0; i < num_servers; ++i) {
         // Run selectingFwdServerHandler.
         ASSERT_NO_THROW(name_add->selectingFwdServerHandler())
-              << " num_servers: " << num_servers << " selections: " << i;
+                        << " num_servers: " << num_servers
+                        << " selections: " << i;
 
         // Verify that a server was selected.
-        ASSERT_TRUE(name_add->getCurrentServer());
+        ASSERT_TRUE(name_add->getCurrentServer())
+                    << " num_servers: " << num_servers << " selections: " << i;
 
         // Verify that we transitioned correctly.
         ASSERT_EQ(NameAddTransaction::ADDING_FWD_ADDRS_ST,
-              name_add->getCurrState());
+                  name_add->getCurrState())
+                  << " num_servers: " << num_servers << " selections: " << i;
         ASSERT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
-              name_add->getNextEvent());
+                  name_add->getNextEvent())
+                  << " num_servers: " << num_servers << " selections: " << i;
 
         // Post a server IO error event.  This simulates an IO error occuring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_add->postNextEvent(NameChangeTransaction::
-                                                SERVER_IO_ERROR_EVT));
+                                                SERVER_IO_ERROR_EVT))
+                        << " num_servers: " << num_servers
+                        << " selections: " << i;
     }
 
     // We should have exhausted the list of servers. Processing another
@@ -1082,21 +1088,28 @@ TEST_F(NameAddTransactionTest, selectingRevServerHandler) {
     for (int i = 0; i < num_servers; ++i) {
         // Run selectingRevServerHandler.
         ASSERT_NO_THROW(name_add->selectingRevServerHandler())
-              << " num_servers: " << num_servers << " selections: " << i;
+                        << " num_servers: " << num_servers
+                        << " selections: " << i;
 
         // Verify that a server was selected.
-        ASSERT_TRUE(name_add->getCurrentServer());
+        ASSERT_TRUE(name_add->getCurrentServer())
+                    << " num_servers: " << num_servers
+                    << " selections: " << i;
 
         // Verify that we transitioned correctly.
         ASSERT_EQ(NameAddTransaction::REPLACING_REV_PTRS_ST,
-                  name_add->getCurrState());
+                  name_add->getCurrState())
+                  << " num_servers: " << num_servers << " selections: " << i;
         ASSERT_EQ(NameChangeTransaction::SERVER_SELECTED_EVT,
-                  name_add->getNextEvent());
+                  name_add->getNextEvent())
+                  << " num_servers: " << num_servers << " selections: " << i;
 
         // Post a server IO error event.  This simulates an IO error occuring
         // and a need to select the new server.
         ASSERT_NO_THROW(name_add->postNextEvent(NameChangeTransaction::
-                                                SERVER_IO_ERROR_EVT));
+                                                SERVER_IO_ERROR_EVT))
+                        << " num_servers: " << num_servers
+                        << " selections: " << i;
     }
 
     // We should have exhausted the list of servers. Processing another
