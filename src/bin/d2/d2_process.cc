@@ -35,13 +35,13 @@ D2Process::D2Process(const char* name, IOServicePtr io_service)
     // been received.  This means that until we receive the configuration,
     // D2 will neither receive nor process NameChangeRequests.
     // Pass in IOService for NCR IO event processing.
-    queue_mgr_.reset(new D2QueueMgr(*getIoService()));
+    queue_mgr_.reset(new D2QueueMgr(getIoService()));
 
     // Instantiate update manager.
     // Pass in both queue manager and configuration manager.
     // Pass in IOService for DNS update transaction IO event processing.
     D2CfgMgrPtr tmp = getD2CfgMgr();
-    update_mgr_.reset(new D2UpdateMgr(queue_mgr_,  tmp,  *getIoService()));
+    update_mgr_.reset(new D2UpdateMgr(queue_mgr_,  tmp,  getIoService()));
 };
 
 void

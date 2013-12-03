@@ -15,9 +15,9 @@
 #ifndef D2_CFG_MGR_H
 #define D2_CFG_MGR_H
 
-#include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
+#include <d2/d2_asio.h>
 #include <d2/d_cfg_mgr.h>
 #include <d2/d2_config.h>
 
