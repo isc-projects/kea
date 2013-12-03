@@ -913,7 +913,7 @@ protected:
                        const int rate,
                        boost::posix_time::ptime& send_due);
 
-private:
+protected:
 
     /// \brief Copies IA_NA or IA_PD option from one packet to another.
     ///
@@ -1056,6 +1056,8 @@ private:
     std::string vector2Hex(const std::vector<uint8_t>& vec,
                            const std::string& separator = "") const;
 
+protected:
+
     boost::posix_time::ptime send_due_;    ///< Due time to initiate next chunk
                                            ///< of exchanges.
     boost::posix_time::ptime last_sent_;   ///< Indicates when the last exchange
@@ -1064,6 +1066,7 @@ private:
                                            ///< Renew requests.
     boost::posix_time::ptime last_renew_;  ///< Indicates when the last Renew
                                            ///< was attempted.
+private:
 
     boost::posix_time::ptime last_report_; ///< Last intermediate report time.
 
