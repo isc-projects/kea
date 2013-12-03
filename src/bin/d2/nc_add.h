@@ -135,10 +135,10 @@ protected:
     /// - INIT_ST with next event of START_EVT
     ///
     /// The READY_ST is the state the model transitions into when the inherited
-    /// method, startTransaction() is invoked.  This handler, therefore, as the
-    /// is the entry point into the state model execution.h  Its primary task
-    /// is to determine whether to start with a forward DNS change or a
-    /// reverse DNS change.
+    /// method, startTransaction() is invoked.  This handler, therefore, is the
+    /// entry point into the state model execution.h  Its primary task is to
+    /// determine whether to start with a forward DNS change or a reverse DNS
+    /// change.
     ///
     /// Transitions to:
     /// - SELECTING_FWD_SERVER_ST with next event of SERVER_SELECT_ST if request
