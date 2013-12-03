@@ -89,7 +89,7 @@ Iface::closeSockets(const uint16_t family) {
             // next one.
             close(sock->sockfd_);
             // Close fallback socket if open.
-            if (sock->fallbackfd_) {
+            if (sock->fallbackfd_ >= 0) {
                 close(sock->fallbackfd_);
             }
             sockets_.erase(sock++);
@@ -153,7 +153,7 @@ bool Iface::delSocket(uint16_t sockfd) {
         if (sock->sockfd_ == sockfd) {
             close(sockfd);
             // Close fallback socket if open.
-            if (sock->fallbackfd_) {
+            if (sock->fallbackfd_ >= 0) {
                 close(sock->fallbackfd_);
             }
             sockets_.erase(sock);

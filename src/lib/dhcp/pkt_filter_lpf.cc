@@ -157,8 +157,7 @@ PktFilterLPF::openSocket(const Iface& iface,
                   << "' to interface '" << iface.getName() << "'");
     }
 
-    SocketInfo sock_desc(addr, port, sock, fallback);
-    return (sock_desc);
+    return (SocketInfo(addr, port, sock, fallback));
 
 }
 
@@ -171,10 +170,18 @@ PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
     // end after receiving one packet. The call to recv returns immediately
     // when there is no data left on the socket because the socket is
     // non-blocking.
+    // @todo In the normal conditions, both the primary socket and the fallback
+    // socket are in sync as they are set to receive packets on the same
+    // address and port. The reception of packets on the fallback socket
+    // shouldn't cause significant lags in packet reception. If we find in the
+    // future that it does, the sort of threshold could be set for the maximum
+    // bytes received on the fallback socket in a single round. Further
+    // optimizations would include an asynchronous read from the fallback socket
+    // when the DHCP server is idle.
     int datalen;
     do {
         datalen = recv(socket_info.fallbackfd_, raw_buf, sizeof(raw_buf), 0);
-    } while (datalen >= 0);
+    } while (datalen > 0);
 
     // Now that we finished getting data from the fallback socket, we
     // have to get the data from the raw socket too.
