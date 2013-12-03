@@ -190,7 +190,7 @@ indicate a network connectivity or system resource issue.
 
 % DHCP_DDNS_QUEUE_MGR_RESUME_ERROR application could not restart the queue manager, reason: %1
 This is an error message indicating that DHCP_DDNS's Queue Manager could not
-be restarted after stopping due to an a full receive queue.  This means that
+be restarted after stopping due to a full receive queue.  This means that
 the application cannot receive requests. This is most likely due to DHCP_DDNS
 configuration parameters referring to resources such as an IP address or port,
 that is no longer unavailable.  DHCP_DDNS will attempt to restart the queue
@@ -258,3 +258,69 @@ This is error message issued when the application fails to process a
 NameChangeRequest correctly. Some or all of the DNS updates requested as part
 of this update did not succeed. This is a programmatic error and should be
 reported.
+
+% DHCP_DDNS_FORWARD_ADD_REJECTED DNS Server, %1, rejected a DNS update request to add the address mapping for FQDN, %2, with an RCODE: %3
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+% DHCP_DDNS_FORWARD_ADD_IO_ERROR DHCP_DDNS encountered an IO error sending a forward mapping add for FQDN %1 to DNS server %2
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a forward address update.  The application will
+retry against the same server or others as appropriate.
+
+% DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while adding forward address mapping for FQDN, %2
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to add a forward address mapping,  is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while adding a forward address mapping for FQDN %2 to DNS server %3
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was adding a forward address mapping.  The request will be
+aborted.  This is most likely a programmatic issue and should be reported.
+
+% DHCP_DDNS_FORWARD_REPLACE_REJECTED DNS Server, %1, rejected a DNS update request to replace the address mapping for FQDN, %2, with an RCODE: %3
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+% DHCP_DDNS_FORWARD_REPLACE_IO_ERROR DHCP_DDNS encountered an IO error sending a forward mapping replace for FQDN %1 to DNS server %2
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a forward address update.  The application will
+retry against the same server or others as appropriate.
+
+% DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while replacing forward address mapping for FQDN, %2
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to replace a forward address mapping,  is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while replacing forward address mapping for FQDN %2 to DNS server %3
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was replacing a forward address mapping.  The request will be
+aborted.  This is most likely a programmatic issue and should be reported.
+
+% DHCP_DDNS_REVERSE_REPLACE_REJECTED DNS Server, %1, rejected a DNS update request to replace the reverse mapping for FQDN, %2, with an RCODE: %3
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+% DHCP_DDNS_REVERSE_REPLACE_IO_ERROR DHCP_DDNS encountered an IO error sending a reverse mapping replacement for FQDN %1 to DNS server %2
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a reverse address update.  The application will
+retry against the same server or others as appropriate.
+
+% DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while replacing reverse address mapping for FQDN, %2
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to replace a reverse address,  is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while replacing reverse address mapping for FQDN %2 to DNS server %3
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was replacing a reverse address mapping.  The request will be
+aborted.  This is most likely a programmatic issue and should be reported.
+
+% DHCP_DDNS_TRANS_SEND_ERROR application encountered an unexpected error while attempting to send a DNS update: %1
+This is error message issued when the application is able to construct an update
+message but the attempt to send it suffered a unexpected error. This is most
+likely a programmatic error, rather than a communications issue. Some or all
+of the DNS updates requested as part of this request did not succeed.

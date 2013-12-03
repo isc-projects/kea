@@ -261,7 +261,7 @@ public:
 
         // Set the response wait time to 0 so as our test is not hanging. This
         // should cause instant timeout.
-        const int timeout = 0;
+        const int timeout = 500;
         // The doUpdate() function starts asynchronous message exchange with DNS
         // server. When message exchange is done or timeout occurs, the
         // completion callback will be triggered. The doUpdate function returns
