@@ -494,11 +494,15 @@ TestControl::getCurrentTimeout() const {
         return (0);
     }
 
-    // There is a due time to send Solicit and Renew. We should adjust
-    // the timeout to the due time which occurs sooner.
-    ptime due = send_due_ > renew_due_ ? renew_due_ : send_due_;
-    time_period due_period(now, due);
-    return (due_period.length().total_microseconds());
+    // If Renews are being sent, we have to adjust the timeout to the nearest
+    // Solicit or Renew, depending on what happens sooner.
+    if (options.getRenewRate() != 0) {
+        ptime due = send_due_ > renew_due_ ? renew_due_ : send_due_;
+        return (time_period(now, due).length().total_microseconds());
+    }
+    // We are not sending Renews, let's adjust the timeout to the nearest
+    // Solicit.
+    return (time_period(now, send_due_).length().total_microseconds());
 }
 
 int

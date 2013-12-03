@@ -84,6 +84,7 @@ public:
     using TestControl::factoryRequestList4;
     using TestControl::generateDuid;
     using TestControl::generateMacAddress;
+    using TestControl::getCurrentTimeout;
     using TestControl::getNextExchangesNum;
     using TestControl::getTemplateBuffer;
     using TestControl::initPacketTemplates;
@@ -99,6 +100,10 @@ public:
     using TestControl::sendSolicit6;
     using TestControl::setDefaults4;
     using TestControl::setDefaults6;
+    using TestControl::send_due_;
+    using TestControl::last_sent_;
+    using TestControl::renew_due_;
+    using TestControl::last_renew_;
 
     NakedTestControl() : TestControl() {
         uint32_t clients_num = CommandOptions::instance().getClientsNum() == 0 ?
@@ -1380,3 +1385,84 @@ TEST_F(TestControlTest, createRenew) {
 
 }
 
+// This test verifies that the current timeout value for waiting for
+// the server's responses is valid. The timeout value corresponds to the
+// time period between now and the next message to be sent from the
+// perfdhcp to a server.
+TEST_F(TestControlTest, getCurrentTimeout) {
+    // Process the command line: set the rate for Discovers to 10,
+    // and set Renew rate to 0 (-f flag absent).
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -4 -l lo -r 10 ::1"));
+    NakedTestControl tc;
+    // Make sure that the renew rate is 0.
+    ASSERT_EQ(0, CommandOptions::instance().getRenewRate());
+    // Simulate the case when we are already behind the due time for
+    // the next Discover to be sent.
+    tc.send_due_ = microsec_clock::universal_time() -
+        boost::posix_time::seconds(3);
+    // Expected timeout value is 0, which means that perfdhcp should
+    // not wait for server's response but rather send the next
+    // message to a server immediately.
+    EXPECT_EQ(0, tc.getCurrentTimeout());
+    // Now, let's do set the due time to a value in the future. The returned
+    // timeout value should be somewhere between now and this time in the
+    // future. The value of ten seconds ahead should be safe and guarantee
+    // that the returned timeout value is non-zero, even though there is a
+    // delay between setting the send_due_ value and invoking the function.
+    tc.send_due_ = microsec_clock::universal_time() +
+        boost::posix_time::seconds(10);
+    uint32_t timeout = tc.getCurrentTimeout();
+    EXPECT_GT(timeout, 0);
+    EXPECT_LE(timeout, 10000000);
+}
+
+// This test verifies that the current timeout value for waiting for the
+// server's responses is valid. In this case, we are simulating that perfdhcp
+// sends Renew requests to the server, apart from the regular 4-way exchanges.
+// The timeout value depends on both the due time to send next Solicit and the
+// due time to send Renew - the timeout should be ajusted to the due time that
+// occurs sooner.
+TEST_F(TestControlTest, getCurrentTimeoutRenew) {
+    // Set the Solicit rate to 10 and the Renew rate 5.
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l lo -r 10 -f 5 ::1"));
+    NakedTestControl tc;
+
+    // Make sure, that the Renew rate has been set to 5.
+    ASSERT_EQ(5, CommandOptions::instance().getRenewRate());
+    // The send_due_ is in the past.
+    tc.send_due_ = microsec_clock::universal_time() -
+        boost::posix_time::seconds(3);
+    // The renew_due_ is in the future.
+    tc.renew_due_ = microsec_clock::universal_time() +
+        boost::posix_time::seconds(3);
+    // The timeout should be adjusted to the send_due_ as it indicates that
+    // Solicit should be sent immediately.
+    EXPECT_EQ(0, tc.getCurrentTimeout());
+
+    // Swap the due times from the previous check. The effect should be the
+    // same.
+    tc.send_due_ = microsec_clock::universal_time() +
+        boost::posix_time::seconds(3);
+    tc.renew_due_ = microsec_clock::universal_time() -
+        boost::posix_time::seconds(3);
+    EXPECT_EQ(0, tc.getCurrentTimeout());
+
+    // Set both due times to the future. The renew due time is to occur
+    // sooner. The timeout should be a value between now and the
+    // renew due time.
+    tc.send_due_ = microsec_clock::universal_time() +
+        boost::posix_time::seconds(10);
+    tc.renew_due_ = microsec_clock::universal_time() +
+        boost::posix_time::seconds(5);
+    EXPECT_GT(tc.getCurrentTimeout(), 0);
+    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
+
+    // Repeat the same check, but swap the due times.
+    tc.send_due_ = microsec_clock::universal_time() +
+        boost::posix_time::seconds(5);
+    tc.renew_due_ = microsec_clock::universal_time() +
+        boost::posix_time::seconds(10);
+    EXPECT_GT(tc.getCurrentTimeout(), 0);
+    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
+
+}
