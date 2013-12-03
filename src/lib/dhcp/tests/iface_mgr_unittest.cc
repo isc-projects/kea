@@ -1105,6 +1105,12 @@ TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
     EXPECT_TRUE(iface_mgr->isDirectResponseSupported());
 }
 
+// This test checks that it is not possible to open two sockets: IP/UDP
+// and raw (LPF) socket and bind to the same address and port. The
+// raw socket should be opened together with the fallback IP/UDP socket.
+// The fallback socket should fail to open when there is another IP/UDP
+// socket bound to the same address and port. Failing to open the fallback
+// socket should preclude the raw socket from being open.
 TEST_F(IfaceMgrTest, checkPacketFilterLPFSocket) {
     IOAddress loAddr("127.0.0.1");
     int socket1 = -1, socket2 = -1;
