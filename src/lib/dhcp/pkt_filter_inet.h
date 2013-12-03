@@ -53,6 +53,8 @@ public:
     /// @param send_bcast Configure socket to send broadcast messages.
     ///
     /// @return A structure describing a primary and fallback socket.
+    /// @throw isc::dhcp::SocketConfigError if error occurs when opening,
+    /// binding or configuring the socket.
     virtual SocketInfo openSocket(const Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
                                   const uint16_t port,
@@ -65,6 +67,10 @@ public:
     /// @param socket_info structure holding socket information
     ///
     /// @return Received packet
+    /// @throw isc::dhcp::SocketReadError if an error occurs during reception
+    /// of the packet.
+    /// @throw An execption thrown by the isc::dhcp::Pkt4 object if DHCPv4
+    /// message parsing fails.
     virtual Pkt4Ptr receive(const Iface& iface, const SocketInfo& socket_info);
 
     /// @brief Send packet over specified socket.
@@ -74,6 +80,8 @@ public:
     /// @param pkt packet to be sent
     ///
     /// @return result of sending a packet. It is 0 if successful.
+    /// @throw isc::dhcp::SocketWriteError if an error occures during sending
+    /// a DHCP message through the socket.
     virtual int send(const Iface& iface, uint16_t sockfd,
                      const Pkt4Ptr& pkt);
 
