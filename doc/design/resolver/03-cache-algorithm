@@ -251,6 +251,6 @@ Custom vs Existing Library (STL etc)
 
 It may have to be discussed, but I guess in many cases we end up
 introducing custom implementation because these caches should be
-highly performance sensitive, directly related our core business, and
-also have to be memory efficient.  But in some sub components we may
+highly performance sensitive, directly related to our core business, and
+also have to be memory efficient.  But in some sub-components we may
 be able to benefit from existing generic libraries.
