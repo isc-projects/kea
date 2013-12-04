@@ -75,7 +75,7 @@ public:
     };
 
     using TestControl::checkExitConditions;
-    using TestControl::createRenew;
+    using TestControl::createMessageFromReply;
     using TestControl::factoryElapsedTime6;
     using TestControl::factoryGeneric;
     using TestControl::factoryIana6;
@@ -629,6 +629,73 @@ public:
         if (clients_num < 2)  {
             EXPECT_EQ(total_dist, 0);
         }
+    }
+
+    /// \brief Test that the DHCPv4 Release or Renew message is created
+    /// correctly and comprises expected options.
+    ///
+    /// \param msg_type A type of the message to be tested: DHCPV6_RELEASE
+    /// or DHCPV6_RENEW.
+    void testCreateRenewRelease(const uint16_t msg_type) {
+        // This command line specifies that the Release/Renew messages should
+        // be sent with the same rate as the Solicit messages.
+        std::ostringstream s;
+        s << "perfdhcp -6 -l lo -r 10 ";
+        s << (msg_type == DHCPV6_RELEASE ? "-F" : "-f") << " 10 ";
+        s << "-R 10 -L 10547 -n 10 -e address-and-prefix ::1";
+        ASSERT_NO_THROW(processCmdLine(s.str()));
+        // Create a test controller class.
+        NakedTestControl tc;
+        // Set the transaction id generator which will be used by the
+        // createRenew or createRelease function to generate transaction id.
+        boost::shared_ptr<NakedTestControl::IncrementalGenerator>
+            generator(new NakedTestControl::IncrementalGenerator());
+        tc.setTransidGenerator(generator);
+
+        // Create a Reply packet. The createRelease or createReply function will
+        // need Reply packet to create a corresponding Release or Reply.
+        Pkt6Ptr reply = createReplyPkt6(1);
+
+        Pkt6Ptr msg;
+        // Check that the message is created.
+        ASSERT_NO_THROW(msg = tc.createMessageFromReply(msg_type, reply));
+
+        ASSERT_TRUE(msg);
+        // Check that the message type and transaction id is correct.
+        EXPECT_EQ(msg_type, msg->getType());
+        EXPECT_EQ(1, msg->getTransid());
+
+        // Check that the message has expected options. These are the same for
+        // Release and Renew.
+
+        // Client Identifier.
+        OptionPtr opt_clientid = msg->getOption(D6O_CLIENTID);
+        ASSERT_TRUE(opt_clientid);
+        EXPECT_TRUE(reply->getOption(D6O_CLIENTID)->getData() ==
+                    opt_clientid->getData());
+
+        // Server identifier
+        OptionPtr opt_serverid = msg->getOption(D6O_SERVERID);
+        ASSERT_TRUE(opt_serverid);
+        EXPECT_TRUE(reply->getOption(D6O_SERVERID)->getData() ==
+                opt_serverid->getData());
+
+        // IA_NA
+        OptionPtr opt_ia_na = msg->getOption(D6O_IA_NA);
+        ASSERT_TRUE(opt_ia_na);
+        EXPECT_TRUE(reply->getOption(D6O_IA_NA)->getData() ==
+                    opt_ia_na->getData());
+
+        // IA_PD
+        OptionPtr opt_ia_pd = msg->getOption(D6O_IA_PD);
+        ASSERT_TRUE(opt_ia_pd);
+        EXPECT_TRUE(reply->getOption(D6O_IA_PD)->getData() ==
+                    opt_ia_pd->getData());
+
+        // Make sure that exception is thrown if the Reply message is NULL.
+        EXPECT_THROW(tc.createMessageFromReply(msg_type, Pkt6Ptr()),
+                     isc::BadValue);
+
     }
 
     /// \brief Parse command line string with CommandOptions.
@@ -1331,58 +1398,16 @@ TEST_F(TestControlTest, processRenew) {
     EXPECT_EQ(0, renew_num);
 }
 
+// This test verifies that the DHCPV6 Renew message is created correctly
+// and that it comprises all required options.
 TEST_F(TestControlTest, createRenew) {
-    // This command line specifies that the Renew messages should be sent
-    // with the same rate as the Solicit messages.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l lo -r 10 -f 10 -R 10"
-                                   " -L 10547 -n 10 -e address-and-prefix"
-                                   " ::1"));
-    // Create a test controller class.
-    NakedTestControl tc;
-    // Set the transaction id generator because createRenew function requires
-    // it to generate the transaction id for the Renew packet.
-    boost::shared_ptr<NakedTestControl::IncrementalGenerator>
-        generator(new NakedTestControl::IncrementalGenerator());
-    tc.setTransidGenerator(generator);
+    testCreateRenewRelease(DHCPV6_RENEW);
+}
 
-    // Create a Reply packet. The createRenew function will need Reply
-    // packet to create a corresponding Renew.
-    Pkt6Ptr reply = createReplyPkt6(1);
-    Pkt6Ptr renew;
-    // Check that Renew is created.
-    ASSERT_NO_THROW(renew = tc.createRenew(reply));
-    ASSERT_TRUE(renew);
-    EXPECT_EQ(DHCPV6_RENEW, renew->getType());
-    EXPECT_EQ(1, renew->getTransid());
-
-    // Now check that the Renew packet created, has expected options. The
-    // payload of these options should be the same as the payload of the
-    // options in the Reply.
-
-    // Client Identifier
-    OptionPtr opt_clientid = renew->getOption(D6O_CLIENTID);
-    ASSERT_TRUE(opt_clientid);
-    EXPECT_TRUE(reply->getOption(D6O_CLIENTID)->getData() ==
-                opt_clientid->getData());
-
-    // Server identifier
-    OptionPtr opt_serverid = renew->getOption(D6O_SERVERID);
-    ASSERT_TRUE(opt_serverid);
-    EXPECT_TRUE(reply->getOption(D6O_SERVERID)->getData() ==
-                opt_serverid->getData());
-
-    // IA_NA
-    OptionPtr opt_ia_na = renew->getOption(D6O_IA_NA);
-    ASSERT_TRUE(opt_ia_na);
-    EXPECT_TRUE(reply->getOption(D6O_IA_NA)->getData() ==
-                opt_ia_na->getData());
-
-    // IA_PD
-    OptionPtr opt_ia_pd = renew->getOption(D6O_IA_PD);
-    ASSERT_TRUE(opt_ia_pd);
-    EXPECT_TRUE(reply->getOption(D6O_IA_PD)->getData() ==
-                opt_ia_pd->getData());
-
+// This test verifies that the DHCPv6 Release message is created correctly
+// and that it comprises all required options.
+TEST_F(TestControlTest, createRelease) {
+    testCreateRenewRelease(DHCPV6_RELEASE);
 }
 
 // This test verifies that the current timeout value for waiting for
