@@ -1087,8 +1087,6 @@ protected:
                                            ///< was attempted.
     boost::posix_time::ptime last_release_;///< Indicates when the last Release
                                            ///< was attempted.
-private:
-
     boost::posix_time::ptime last_report_; ///< Last intermediate report time.
 
     StatsMgr4Ptr stats_mgr4_;  ///< Statistics Manager 4.

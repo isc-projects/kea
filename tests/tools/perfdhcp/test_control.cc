@@ -1286,6 +1286,7 @@ TestControl::reset() {
     renew_due_ = send_due_;
     release_due_ = send_due_;
     last_renew_ = send_due_;
+    last_release_ = send_due_;
     transid_gen_.reset();
     // Actual generators will have to be set later on because we need to
     // get command line parameters first.

@@ -120,6 +120,7 @@ public:
     using TestControl::processReceivedPacket4;
     using TestControl::processReceivedPacket6;
     using TestControl::registerOptionFactories;
+    using TestControl::reset;
     using TestControl::sendDiscover4;
     using TestControl::sendPackets;
     using TestControl::sendMultipleMessages6;
@@ -129,10 +130,15 @@ public:
     using TestControl::setDefaults6;
     using TestControl::send_due_;
     using TestControl::last_sent_;
+    using TestControl::last_report_;
     using TestControl::renew_due_;
     using TestControl::release_due_;
     using TestControl::last_renew_;
     using TestControl::last_release_;
+    using TestControl::transid_gen_;
+    using TestControl::macaddr_gen_;
+    using TestControl::first_packet_serverid_;
+    using TestControl::interrupted_;
 
     NakedTestControl() : TestControl() {
         uint32_t clients_num = CommandOptions::instance().getClientsNum() == 0 ?
@@ -904,6 +910,25 @@ public:
     }
 
 };
+
+// This test verifies that the class members are reset to expected values.
+TEST_F(TestControlTest, reset) {
+    NakedTestControl tc;
+    tc.reset();
+    EXPECT_FALSE(tc.send_due_.is_not_a_date_time());
+    EXPECT_FALSE(tc.last_sent_.is_not_a_date_time());
+    EXPECT_FALSE(tc.last_report_.is_not_a_date_time());
+    EXPECT_FALSE(tc.renew_due_.is_not_a_date_time());
+    EXPECT_FALSE(tc.release_due_.is_not_a_date_time());
+    EXPECT_FALSE(tc.last_renew_.is_not_a_date_time());
+    EXPECT_FALSE(tc.last_release_.is_not_a_date_time());
+    EXPECT_FALSE(tc.send_due_.is_not_a_date_time());
+    EXPECT_FALSE(tc.transid_gen_);
+    EXPECT_FALSE(tc.macaddr_gen_);
+    EXPECT_TRUE(tc.first_packet_serverid_.empty());
+    EXPECT_FALSE(tc.interrupted_);
+
+}
 
 TEST_F(TestControlTest, GenerateDuid) {
     // Simple command line that simulates one client only. Always the
