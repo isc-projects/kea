@@ -190,6 +190,7 @@ operator<<(std::ostream& os, const D2Dhcid& dhcid) {
 NameChangeRequest::NameChangeRequest()
     : change_type_(CHG_ADD), forward_change_(false),
     reverse_change_(false), fqdn_(""), ip_address_(""),
+    ip_io_address_("0.0.0.0"),
     dhcid_(), lease_expires_on_(), lease_length_(0), status_(ST_NEW) {
 }
 
@@ -201,8 +202,12 @@ NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
             const uint32_t lease_length)
     : change_type_(change_type), forward_change_(forward_change),
     reverse_change_(reverse_change), fqdn_(fqdn), ip_address_(ip_address),
+    ip_io_address_("0.0.0.0"),
     dhcid_(dhcid), lease_expires_on_(lease_expires_on),
     lease_length_(lease_length), status_(ST_NEW) {
+
+    // User setter to validate address.
+    setIpAddress(ip_address_);
 
     // Validate the contents. This will throw a NcrMessageError if anything
     // is invalid.
@@ -359,18 +364,10 @@ NameChangeRequest::toJSON() const  {
 void
 NameChangeRequest::validateContent() {
     //@todo This is an initial implementation which provides a minimal amount
-    // of validation.  FQDN, DHCID, and IP Address members are all currently
+    // of validation.  FQDN and DHCID members are all currently
     // strings, these may be replaced with richer classes.
     if (fqdn_ == "") {
         isc_throw(NcrMessageError, "FQDN cannot be blank");
-    }
-
-    // Validate IP Address.
-    try {
-        isc::asiolink::IOAddress io_addr(ip_address_);
-    } catch (const isc::asiolink::IOError& ex) {
-        isc_throw(NcrMessageError,
-                  "Invalid ip address string for ip_address: " << ip_address_);
     }
 
     // Validate the DHCID.
@@ -483,9 +480,15 @@ NameChangeRequest::setFqdn(const std::string& value) {
 
 void
 NameChangeRequest::setIpAddress(const std::string& value) {
-    ip_address_ = value;
+    // Validate IP Address.
+    try {
+        ip_address_ = value;
+        ip_io_address_ = isc::asiolink::IOAddress(ip_address_);
+    } catch (const isc::asiolink::IOError& ex) {
+        isc_throw(NcrMessageError,
+                  "Invalid ip address string for ip_address: " << ip_address_);
+    }
 }
-
 
 void
 NameChangeRequest::setIpAddress(isc::data::ConstElementPtr element) {

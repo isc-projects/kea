@@ -12,7 +12,11 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <d2/d2_cfg_mgr.h>
+#include <d2/d2_cfg_mgr.h>
 #include <d2/nc_add.h>
+#include <dns/messagerenderer.h>
+#include <nc_test_utils.h>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
@@ -32,28 +36,77 @@ public:
                 dhcp_ddns::NameChangeRequestPtr& ncr,
                 DdnsDomainPtr& forward_domain,
                 DdnsDomainPtr& reverse_domain)
-        : NameAddTransaction(io_service, ncr, forward_domain, reverse_domain){
+        : NameAddTransaction(io_service, ncr, forward_domain, reverse_domain),
+          simulate_send_exception_(false) {
     }
 
     virtual ~NameAddStub() {
     }
 
     /// @brief Simulates sending update requests to the DNS server
-    /// Allows state handlers which conduct IO to be tested without a server.
+    ///
+    /// This method simulates the initiation of an asynchronous send of
+    /// a DNS update request. It overrides the actual sendUpdate method in
+    /// the base class, thus avoiding an actual send, yet still increments
+    /// the update attempt count and posts a next event of NOP_EVT.
+    ///
+    /// It will also simulate an exception-based failure of sendUpdate, if
+    /// the simulate_send_exception_ flag is true.
+    ///
+    /// @param use_tsig_ Parameter is unused, but present in the base class
+    /// method.
+    ///
     virtual void sendUpdate(bool /* use_tsig_ = false */) {
+        if (simulate_send_exception_) {
+            // Make the flag a one-shot by resetting it.
+            simulate_send_exception_ = false;
+            // Transition to failed.
+            transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
+            return;
+        }
+
+        // Update send attempt count and post a NOP_EVT.
         setUpdateAttempts(getUpdateAttempts() + 1);
         postNextEvent(StateModel::NOP_EVT);
     }
 
+    /// @brief Simulates receiving a response
+    ///
+    /// This method simulates the completion of a DNSClient send.  This allows
+    /// the state handler logic devoted to dealing with IO completion to be
+    /// fully exercise without requiring any actual IO.  The two primary
+    /// pieces of information gleaned from IO completion are the DNSClient
+    /// status which indicates whether or not the IO exchange was successful
+    /// and the rcode, which indicates the server's reaction to the request.
+    ///
+    /// This method updates the transaction's DNS status value to that of the
+    /// given parameter, and then constructs and DNS update response message
+    /// with the given rcode value.  To complete the simulation it then posts
+    /// a next event of IO_COMPLETED_EVT.
+    ///
+    /// @param status simulated DNSClient status
+    /// @param rcode  simulated server response code
     void fakeResponse(const DNSClient::Status& status,
                       const dns::Rcode& rcode) {
-        D2UpdateMessagePtr msg(new D2UpdateMessage(D2UpdateMessage::OUTBOUND));
+        // Set the DNS update status.  This is normally set in
+        // DNSClient IO completion handler.
         setDnsUpdateStatus(status);
+
+        // Construct an empty message with the given Rcode.
+        D2UpdateMessagePtr msg(new D2UpdateMessage(D2UpdateMessage::OUTBOUND));
         msg->setRcode(rcode);
+
+        // Set the update response to the message.
         setDnsUpdateResponse(msg);
+
+        // Post the IO completion event.
         postNextEvent(NameChangeTransaction::IO_COMPLETED_EVT);
     }
 
+    /// @brief Selects the first forward server.
+    /// Some state handlers require a server to have been selected.
+    /// This selects a server without going through the state
+    /// transition(s) to do so.
     bool selectFwdServer() {
         if (getForwardDomain()) {
             initServerSelection(getForwardDomain());
@@ -64,6 +117,10 @@ public:
         return (false);
     }
 
+    /// @brief Selects the first reverse server.
+    /// Some state handlers require a server to have been selected.
+    /// This selects a server without going through the state
+    /// transition(s) to do so.
     bool selectRevServer() {
         if (getReverseDomain()) {
             initServerSelection(getReverseDomain());
@@ -74,6 +131,8 @@ public:
         return (false);
     }
 
+    /// @brief One-shot flag which will simulate sendUpdate failure if true.
+    bool simulate_send_exception_;
 
     using StateModel::postNextEvent;
     using StateModel::setState;
@@ -92,6 +151,9 @@ public:
     using NameAddTransaction::replacingRevPtrsHandler;
     using NameAddTransaction::processAddOkHandler;
     using NameAddTransaction::processAddFailedHandler;
+    using NameAddTransaction::buildAddFwdAddressRequest;
+    using NameAddTransaction::buildReplaceFwdAddressRequest;
+    using NameAddTransaction::buildReplaceRevPtrsRequest;
 };
 
 typedef boost::shared_ptr<NameAddStub> NameAddStubPtr;
@@ -116,20 +178,21 @@ public:
     virtual ~NameAddTransactionTest() {
     }
 
-    /// @brief  Instantiates a NameAddStub test transaction
-    /// The transaction is constructed around a predefined (i.e "canned")
-    /// NameChangeRequest. The request has both forward and reverse DNS
+    /// @brief Creates a transaction which requests an IPv4 DNS update.
+    ///
+    /// The transaction is constructed around a predefined (i.e. "canned")
+    /// IPv4 NameChangeRequest. The request has both forward and reverse DNS
     /// changes requested.  Based upon the change mask, the transaction
     /// will have either the forward, reverse, or both domains populated.
     ///
     /// @param change_mask determines which change directions are requested
-    NameAddStubPtr makeCannedTransaction(int change_mask=FWD_AND_REV_CHG) {
+    NameAddStubPtr makeTransaction4(int change_mask=FWD_AND_REV_CHG) {
         const char* msg_str =
             "{"
             " \"change_type\" : 0 , "
             " \"forward_change\" : true , "
             " \"reverse_change\" : true , "
-            " \"fqdn\" : \"example.com.\" , "
+            " \"fqdn\" : \"my.forward.example.com.\" , "
             " \"ip_address\" : \"192.168.2.1\" , "
             " \"dhcid\" : \"0102030405060708\" , "
             " \"lease_expires_on\" : \"20130121132405\" , "
@@ -141,53 +204,100 @@ public:
                                               fromJSON(msg_str);
 
         // If the change mask does not include a forward change clear the
-        // forward domain; otherise create the domain and its servers.
+        // forward domain; otherwise create the domain and its servers.
         if (!(change_mask & FORWARD_CHG)) {
             ncr->setForwardChange(false);
             forward_domain_.reset();
         } else {
             // Create the forward domain and then its servers.
-            DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
-            DnsServerInfoPtr server(new DnsServerInfo("forward.example.com",
-                                       isc::asiolink::IOAddress("1.1.1.1")));
-            servers->push_back(server);
-            server.reset(new DnsServerInfo("forward2.example.com",
-                                       isc::asiolink::IOAddress("1.1.1.2")));
-            servers->push_back(server);
-            forward_domain_.reset(new DdnsDomain("example.com.", "", servers));
+            forward_domain_ = makeDomain("example.com.");
+            addDomainServer(forward_domain_, "forward.example.com",
+                            "1.1.1.1");
+            addDomainServer(forward_domain_, "forward2.example.com",
+                            "1.1.1.2");
         }
 
         // If the change mask does not include a reverse change clear the
-        // reverse domain; otherise create the domain and its servers.
+        // reverse domain; otherwise create the domain and its servers.
         if (!(change_mask & REVERSE_CHG)) {
             ncr->setReverseChange(false);
             reverse_domain_.reset();
         } else {
             // Create the reverse domain and its server.
-            DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
-            DnsServerInfoPtr server(new DnsServerInfo("reverse.example.com",
-                                                      isc::asiolink::
-                                                      IOAddress("2.2.2.2")));
-            servers->push_back(server);
-            server.reset(new DnsServerInfo("reverse2.example.com",
-                                           isc::asiolink::
-                                           IOAddress("2.2.2.3")));
-            servers->push_back(server);
-            reverse_domain_.reset(new DdnsDomain("2.168.192.in.addr.arpa.",
-                                                 "", servers));
+            reverse_domain_ = makeDomain("2.168.192.in.addr.arpa.");
+            addDomainServer(reverse_domain_, "reverse.example.com",
+                            "2.2.2.2");
+            addDomainServer(reverse_domain_, "reverse2.example.com",
+                            "2.2.2.3");
         }
 
         // Now create the test transaction as would occur in update manager.
         return (NameAddStubPtr(new NameAddStub(io_service_, ncr,
-                                      forward_domain_, reverse_domain_)));
+                                               forward_domain_,
+                                               reverse_domain_)));
     }
+
+    /// @brief Creates a transaction which requests an IPv6 DNS update.
+    ///
+    /// The transaction is constructed around a predefined (i.e. "canned")
+    /// IPv6 NameChangeRequest. The request has both forward and reverse DNS
+    /// changes requested.  Based upon the change mask, the transaction
+    /// will have either the forward, reverse, or both domains populated.
+    ///
+    /// @param change_mask determines which change directions are requested
+    NameAddStubPtr makeTransaction6(int change_mask=FWD_AND_REV_CHG) {
+        const char* msg_str =
+            "{"
+            " \"change_type\" : 0 , "
+            " \"forward_change\" : true , "
+            " \"reverse_change\" : true , "
+            " \"fqdn\" : \"my6.forward.example.com.\" , "
+            " \"ip_address\" : \"2001:1::100\" , "
+            " \"dhcid\" : \"0102030405060708\" , "
+            " \"lease_expires_on\" : \"20130121132405\" , "
+            " \"lease_length\" : 1300 "
+            "}";
+
+        // Create NameChangeRequest from JSON string.
+        dhcp_ddns::NameChangeRequestPtr ncr = makeNcrFromString(msg_str);
+
+        // If the change mask does not include a forward change clear the
+        // forward domain; otherwise create the domain and its servers.
+        if (!(change_mask & FORWARD_CHG)) {
+            ncr->setForwardChange(false);
+            forward_domain_.reset();
+        } else {
+            // Create the forward domain and then its servers.
+            forward_domain_ = makeDomain("example.com.");
+            addDomainServer(forward_domain_, "fwd6-server.example.com",
+                            "2001:1::5");
+        }
+
+        // If the change mask does not include a reverse change clear the
+        // reverse domain; otherwise create the domain and its servers.
+        if (!(change_mask & REVERSE_CHG)) {
+            ncr->setReverseChange(false);
+            reverse_domain_.reset();
+        } else {
+            // Create the reverse domain and its server.
+            reverse_domain_ = makeDomain("1.2001.ip6.arpa.");
+            addDomainServer(reverse_domain_, "rev6-server.example.com",
+                            "2001:1::6");
+        }
+
+        // Now create the test transaction as would occur in update manager.
+        return (NameAddStubPtr(new NameAddStub(io_service_, ncr,
+                                               forward_domain_,
+                                               reverse_domain_)));
+    }
+
 
     /// @brief Create a test transaction at a known point in the state model.
     ///
     /// Method prepares a new test transaction and sets its state and next
     /// event values to those given.  This makes the transaction appear to
     /// be at that point in the state model without having to transition it
-    /// through prerequiste states.   It also provides the ability to set
+    /// through prerequisite states.   It also provides the ability to set
     /// which change directions are requested: forward change only, reverse
     /// change only, or both.
     ///
@@ -196,7 +306,7 @@ public:
     /// @param change_mask determines which change directions are requested
     NameAddStubPtr prepHandlerTest(unsigned int state, unsigned int event,
                                    unsigned int change_mask = FWD_AND_REV_CHG) {
-        NameAddStubPtr name_add = makeCannedTransaction(change_mask);
+        NameAddStubPtr name_add = makeTransaction4(change_mask);
         name_add->initDictionaries();
         name_add->postNextEvent(event);
         name_add->setState(state);
@@ -248,7 +358,7 @@ TEST(NameAddTransaction, construction) {
 /// @brief Tests event and state dictionary construction and verification.
 TEST_F(NameAddTransactionTest, dictionaryCheck) {
     NameAddStubPtr name_add;
-    ASSERT_NO_THROW(name_add = makeCannedTransaction());
+    ASSERT_NO_THROW(name_add = makeTransaction4());
     // Verify that the event and state dictionary validation fails prior
     // dictionary construction.
     ASSERT_THROW(name_add->verifyEvents(), StateModelError);
@@ -263,6 +373,63 @@ TEST_F(NameAddTransactionTest, dictionaryCheck) {
     ASSERT_NO_THROW(name_add->verifyStates());
 }
 
+/// @brief Tests construction of a DNS update request for adding a forward
+/// dns entry.
+TEST_F(NameAddTransactionTest, buildForwardAdd) {
+    // Create a IPv4 forward add transaction.
+    // Verify the request builds without error.
+    // and then verify the request contents.
+    NameAddStubPtr name_add;
+    ASSERT_NO_THROW(name_add = makeTransaction4());
+    ASSERT_NO_THROW(name_add->buildAddFwdAddressRequest());
+    checkForwardAddRequest(*name_add);
+
+    // Create a IPv6 forward add transaction.
+    // Verify the request builds without error.
+    // and then verify the request contents.
+    ASSERT_NO_THROW(name_add = makeTransaction6());
+    ASSERT_NO_THROW(name_add->buildAddFwdAddressRequest());
+    checkForwardAddRequest(*name_add);
+}
+
+/// @brief Tests construction of a DNS update request for replacing a forward
+/// dns entry.
+TEST_F(NameAddTransactionTest, buildReplaceFwdAddressRequest) {
+    // Create a IPv4 forward replace transaction.
+    // Verify the request builds without error.
+    // and then verify the request contents.
+    NameAddStubPtr name_add;
+    ASSERT_NO_THROW(name_add = makeTransaction4());
+    ASSERT_NO_THROW(name_add->buildReplaceFwdAddressRequest());
+    checkForwardReplaceRequest(*name_add);
+
+    // Create a IPv6 forward replace transaction.
+    // Verify the request builds without error.
+    // and then verify the request contents.
+    ASSERT_NO_THROW(name_add = makeTransaction6());
+    ASSERT_NO_THROW(name_add->buildReplaceFwdAddressRequest());
+    checkForwardReplaceRequest(*name_add);
+}
+
+/// @brief Tests the construction of a DNS update request for replacing a
+/// reverse dns entry.
+TEST_F(NameAddTransactionTest, buildReplaceRevPtrsRequest) {
+    // Create a IPv4 reverse replace transaction.
+    // Verify the request builds without error.
+    // and then verify the request contents.
+    NameAddStubPtr name_add;
+    ASSERT_NO_THROW(name_add = makeTransaction4());
+    ASSERT_NO_THROW(name_add->buildReplaceRevPtrsRequest());
+    checkReverseReplaceRequest(*name_add);
+
+    // Create a IPv6 reverse replace transaction.
+    // Verify the request builds without error.
+    // and then verify the request contents.
+    ASSERT_NO_THROW(name_add = makeTransaction6());
+    ASSERT_NO_THROW(name_add->buildReplaceRevPtrsRequest());
+    checkReverseReplaceRequest(*name_add);
+}
+
 // Tests the readyHandler functionality.
 // It verifies behavior for the following scenarios:
 //
@@ -270,7 +437,7 @@ TEST_F(NameAddTransactionTest, dictionaryCheck) {
 // 2. Posted event is START_EVT and request includes both a forward and a
 // reverse change
 // 3. Posted event is START_EVT and request includes only a reverse change
-// 3. Posted event is invalid
+// 4. Posted event is invalid
 //
 TEST_F(NameAddTransactionTest, readyHandler) {
     NameAddStubPtr name_add;
@@ -439,9 +606,8 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_FwdOnlyAddOK) {
     // Run addingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
-    // Verify that an update message was constructed.
-    update_msg = name_add->getDnsUpdateRequest();
-    EXPECT_TRUE(update_msg);
+    // Verify that an update message was constructed properly.
+    checkForwardAddRequest(*name_add);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
@@ -450,7 +616,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_FwdOnlyAddOK) {
     EXPECT_EQ(NameChangeTransaction::NOP_EVT,
               name_add->getNextEvent());
 
-    // Simulate receiving a succussful update response.
+    // Simulate receiving a successful update response.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NOERROR());
 
     // Run addingFwdAddrsHandler again to process the response.
@@ -486,7 +652,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_fwdAndRevAddOK) {
     // Run addingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
-    // Simulate receiving a succussful update response.
+    // Simulate receiving a successful update response.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NOERROR());
 
     // Run addingFwdAddrsHandler again  to process the response.
@@ -573,7 +739,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_OtherRcode) {
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // We should have failed the transaction. Verifiy that we transitioned
+    // We should have failed the transaction. Verify that we transitioned
     // correctly.
     EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_add->getCurrState());
@@ -680,7 +846,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_InvalidResponse) {
         // Run addingFwdAddrsHandler to construct send the request.
         EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
-        // Simulate a server IO timeout.
+        // Simulate a corrupt server response.
         name_add->setDnsUpdateStatus(DNSClient::INVALID_RESPONSE);
         name_add->postNextEvent(NameChangeTransaction::IO_COMPLETED_EVT);
 
@@ -751,9 +917,8 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_FwdOnlyAddOK) {
     // Run replacingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
-    // Verify that an update message was constructed.
-    update_msg = name_add->getDnsUpdateRequest();
-    EXPECT_TRUE(update_msg);
+    // Verify that an update message was constructed properly.
+    checkForwardReplaceRequest(*name_add);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
@@ -762,7 +927,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_FwdOnlyAddOK) {
     EXPECT_EQ(NameChangeTransaction::NOP_EVT,
               name_add->getNextEvent());
 
-    // Simulate receiving a succussful update response.
+    // Simulate receiving a successful update response.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NOERROR());
 
     // Run replacingFwdAddrsHandler again to process the response.
@@ -798,7 +963,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_FwdOnlyAddOK2) {
     // Run replacingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
-    // Simulate receiving a succussful update response.
+    // Simulate receiving a successful update response.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NOERROR());
 
     // Run replacingFwdAddrsHandler again to process the response.
@@ -834,7 +999,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_FwdAndRevAddOK) {
     // Run replacingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
-    // Simulate receiving a succussful update response.
+    // Simulate receiving a successful update response.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NOERROR());
 
     // Run replacingFwdAddrsHandler again  to process the response.
@@ -853,14 +1018,14 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_FwdAndRevAddOK) {
 }
 
 
-// Tests addingFwdAddrsHandler with the following scenario:
+// Tests replacingFwdAddrsHandler with the following scenario:
 //
 //  The request includes a forward and reverse change.
 //  Initial posted event is FQDN_IN_USE_EVT.
 //  The update request is sent without error.
 //  A server response is received which indicates the FQDN is NOT in use.
 //
-TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_FqdnNotInUse) {
+TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_FqdnNotInUse) {
     NameAddStubPtr name_add;
     // Create and prep a transaction, poised to run the handler.
     ASSERT_NO_THROW(name_add =
@@ -1038,7 +1203,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_CorruptResponse) {
             EXPECT_TRUE(prev_msg == curr_msg);
         }
 
-        // Simulate a server corrupt response.
+        // Simulate a corrupt server response.
         name_add->setDnsUpdateStatus(DNSClient::INVALID_RESPONSE);
         name_add->postNextEvent(NameChangeTransaction::IO_COMPLETED_EVT);
 
@@ -1175,9 +1340,8 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_FwdOnlyAddOK) {
     // Run replacingRevPtrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
 
-    // Verify that an update message was constructed.
-    update_msg = name_add->getDnsUpdateRequest();
-    EXPECT_TRUE(update_msg);
+    // Verify that an update message was constructed properly.
+    checkReverseReplaceRequest(*name_add);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
@@ -1186,7 +1350,7 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_FwdOnlyAddOK) {
     EXPECT_EQ(NameChangeTransaction::NOP_EVT,
               name_add->getNextEvent());
 
-    // Simulate receiving a succussful update response.
+    // Simulate receiving a successful update response.
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NOERROR());
 
     // Run replacingRevPtrsHandler again to process the response.
@@ -1237,7 +1401,7 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_OtherRcode) {
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
     EXPECT_FALSE(name_add->getReverseChangeCompleted());
 
-    // We should have failed the transaction. Verifiy that we transitioned
+    // We should have failed the transaction. Verify that we transitioned
     // correctly.
     EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_add->getCurrState());
@@ -1445,5 +1609,100 @@ TEST_F(NameAddTransactionTest, processAddFailedHandler) {
     EXPECT_THROW(name_add->processAddFailedHandler(), NameAddTransactionError);
 }
 
+// Tests addingFwdAddrsHandler with the following scenario:
+//
+//  The request includes only a forward change.
+//  Initial posted event is SERVER_SELECTED_EVT.
+//  The send update request fails due to an unexpected exception.
+//
+TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_sendUpdateException) {
+    NameAddStubPtr name_add;
+    // Create and prep a transaction, poised to run the handler.
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST,
+                                    NameChangeTransaction::
+                                    SERVER_SELECTED_EVT, FORWARD_CHG));
+
+    name_add->simulate_send_exception_ = true;
+
+    // Run replacingFwdAddrsHandler to construct and send the request.
+    EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
+
+    // Completion flags should be false.
+    EXPECT_FALSE(name_add->getForwardChangeCompleted());
+    EXPECT_FALSE(name_add->getReverseChangeCompleted());
+
+    // Since IO exceptions should be gracefully handled, any that occur
+    // are unanticipated, and deemed unrecoverable, so the transaction should
+    // be transitioned to failure.
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
+              name_add->getCurrState());
+    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
+              name_add->getNextEvent());
+}
+
+// Tests replacingFwdAddrsHandler with the following scenario:
+//
+//  The request includes only a forward change.
+//  Initial posted event is SERVER_SELECTED_EVT.
+//  The send update request fails due to an unexpected exception.
+//
+TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_SendUpdateException) {
+    NameAddStubPtr name_add;
+    // Create and prep a transaction, poised to run the handler.
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
+                                    NameChangeTransaction::
+                                    SERVER_SELECTED_EVT, FORWARD_CHG));
+
+    name_add->simulate_send_exception_ = true;
+
+    // Run replacingFwdAddrsHandler to construct and send the request.
+    EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
+
+    // Completion flags should be false.
+    EXPECT_FALSE(name_add->getForwardChangeCompleted());
+    EXPECT_FALSE(name_add->getReverseChangeCompleted());
+
+    // Since IO exceptions should be gracefully handled, any that occur
+    // are unanticipated, and deemed unrecoverable, so the transaction should
+    // be transitioned to failure.
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
+              name_add->getCurrState());
+    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
+              name_add->getNextEvent());
+}
+
+// Tests replacingRevPtrHandler with the following scenario:
+//
+//  The request includes only a reverse change.
+//  Initial posted event is SERVER_SELECTED_EVT.
+//  The send update request fails due to an unexpected exception.
+//
+TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_SendUpdateException) {
+    NameAddStubPtr name_add;
+    // Create and prep a transaction, poised to run the handler.
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST,
+                                    NameChangeTransaction::
+                                    SERVER_SELECTED_EVT, REVERSE_CHG));
+
+    name_add->simulate_send_exception_ = true;
+
+    // Run replacingRevPtrsHandler to construct and send the request.
+    EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
+
+    // Completion flags should be false.
+    EXPECT_FALSE(name_add->getForwardChangeCompleted());
+    EXPECT_FALSE(name_add->getReverseChangeCompleted());
+
+    // Since IO exceptions should be gracefully handled, any that occur
+    // are unanticipated, and deemed unrecoverable, so the transaction should
+    // be transitioned to failure.
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
+              name_add->getCurrState());
+    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
+              name_add->getNextEvent());
+}
 
 }
