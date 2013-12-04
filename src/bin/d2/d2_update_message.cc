@@ -31,7 +31,7 @@ D2UpdateMessage::D2UpdateMessage(const Direction direction)
     if (direction == OUTBOUND) {
         message_.setOpcode(Opcode(Opcode::UPDATE_CODE));
         message_.setHeaderFlag(dns::Message::HEADERFLAG_QR, false);
-
+        message_.setRcode(Rcode(Rcode::NOERROR_CODE));
     }
 }
 

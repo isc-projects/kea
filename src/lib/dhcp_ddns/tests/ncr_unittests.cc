@@ -575,5 +575,27 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
     ASSERT_EQ(final_str, msg_str);
 }
 
+/// @brief Tests ip address modification and validation
+TEST(NameChangeRequestTest, ipAddresses) {
+    NameChangeRequest ncr;
+
+    // Verify that a valid IPv4 address works.
+    ASSERT_NO_THROW(ncr.setIpAddress("192.168.1.1"));
+    const asiolink::IOAddress& io_addr4 = ncr.getIpIoAddress();
+    EXPECT_EQ(ncr.getIpAddress(), io_addr4.toText());
+    EXPECT_TRUE(ncr.isV4());
+    EXPECT_FALSE(ncr.isV6());
+
+    // Verify that a valid IPv6 address works.
+    ASSERT_NO_THROW(ncr.setIpAddress("2001:1::f3"));
+    const asiolink::IOAddress& io_addr6 = ncr.getIpIoAddress();
+    EXPECT_EQ(ncr.getIpAddress(), io_addr6.toText());
+    EXPECT_FALSE(ncr.isV4());
+    EXPECT_TRUE(ncr.isV6());
+
+    // Verify that an valid address fails.
+    ASSERT_THROW(ncr.setIpAddress("x001:1::f3"),NcrMessageError);
+}
+
 } // end of anonymous namespace
 
