@@ -28,11 +28,12 @@ PktFilterInet::PktFilterInet()
 {
 }
 
-int PktFilterInet::openSocket(const Iface& iface,
-                              const isc::asiolink::IOAddress& addr,
-                              const uint16_t port,
-                              const bool receive_bcast,
-                              const bool send_bcast) {
+SocketInfo
+PktFilterInet::openSocket(const Iface& iface,
+                          const isc::asiolink::IOAddress& addr,
+                          const uint16_t port,
+                          const bool receive_bcast,
+                          const bool send_bcast) {
 
     struct sockaddr_in addr4;
     memset(&addr4, 0, sizeof(sockaddr));
@@ -90,7 +91,8 @@ int PktFilterInet::openSocket(const Iface& iface,
     }
 #endif
 
-    return (sock);
+    SocketInfo sock_desc(addr, port, sock);
+    return (sock_desc);
 
 }
 
