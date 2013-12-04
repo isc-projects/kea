@@ -1,4 +1,4 @@
-801.	[func]	tmark
+711.	[func]	tmark
 	Added the initial implementation of the class, NameAddTransaction, 
 	to b10-dhcp-ddns.  This class provides the state model logic described
 	in the DHCP_DDNS design to add or replace forward and reverse DNS entries
@@ -6,7 +6,7 @@
 	requests, this will be added under Trac# 3241.
 	(Trac# 3207, git 8f99da735a9f39d514c40d0a295f751dc8edfbcd)
 
-800.	[build]		jinmei
+710.	[build]		jinmei
 	Fixed various build time issues for MacOS X 10.9.  Those include
 	some general fixes and improvements:
 	- (libdns++) masterLoad() functions now use the generic MasterLoader
