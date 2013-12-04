@@ -20,6 +20,7 @@
 #define DHCP4_TEST_UTILS_H
 
 #include <gtest/gtest.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
@@ -52,9 +53,10 @@ public:
     }
 
     /// Does nothing.
-    virtual int openSocket(const Iface&, const isc::asiolink::IOAddress&,
-                           const uint16_t, const bool, const bool) {
-        return (0);
+    virtual SocketInfo openSocket(const Iface&,
+                                  const isc::asiolink::IOAddress& addr,
+                                  const uint16_t port, const bool, const bool) {
+        return (SocketInfo(addr, port, 0));
     }
 
     /// Does nothing.

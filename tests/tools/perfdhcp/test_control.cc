@@ -47,7 +47,7 @@ namespace perfdhcp {
 bool TestControl::interrupted_ = false;
 
 TestControl::TestControlSocket::TestControlSocket(const int socket) :
-    SocketInfo(socket, asiolink::IOAddress("127.0.0.1"), 0),
+    SocketInfo(asiolink::IOAddress("127.0.0.1"), 0, socket),
     ifindex_(0), valid_(true) {
     try {
         initSocketData();
