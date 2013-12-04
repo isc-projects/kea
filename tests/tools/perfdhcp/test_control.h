@@ -313,13 +313,23 @@ protected:
     /// has been reached.
     void cleanCachedPackets();
 
-    /// \brief Creates IPv6 packet using options from Reply packet.
+    /// \brief Creates DHCPv6 message from the Reply packet.
     ///
+    /// This function creates DHCPv6 Renew or Release message using the
+    /// data from the Reply message by copying options from the Reply
+    /// message.
+    ///
+    /// \param msg_type A type of the message to be createad.
     /// \param reply An instance of the Reply packet which contents should
-    /// be used to create an instance of the Renew packet.
+    /// be used to create an instance of the new message.
     ///
-    /// \return created Renew packet.
-    dhcp::Pkt6Ptr createRenew(const dhcp::Pkt6Ptr& reply);
+    /// \return created Release or Renew message
+    /// \throw isc::BadValue if the msg_type is neither DHCPV6_RENEW nor
+    /// DHCPV6_RELEASE or if the reply is NULL.
+    /// \throw isc::Unexpected if mandatory options are missing in the
+    /// Reply message.
+    dhcp::Pkt6Ptr createMessageFromReply(const uint16_t msg_type,
+                                         const dhcp::Pkt6Ptr& reply);
 
     /// \brief Factory function to create DHCPv6 ELAPSED_TIME option.
     ///

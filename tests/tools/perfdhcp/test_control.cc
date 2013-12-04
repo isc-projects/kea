@@ -316,28 +316,43 @@ TestControl::checkExitConditions() const {
 }
 
 Pkt6Ptr
-TestControl::createRenew(const Pkt6Ptr& reply) {
-    if (!reply) {
-        isc_throw(isc::BadValue,"Unable to create Renew packet from the Reply packet"
-                  " because the instance of the Reply is NULL");
+TestControl::createMessageFromReply(const uint16_t msg_type,
+                                    const dhcp::Pkt6Ptr& reply) {
+    // Restrict messages to Release and Renew.
+    if (msg_type != DHCPV6_RENEW && msg_type != DHCPV6_RELEASE) {
+        isc_throw(isc::BadValue, "invalid message type " << msg_type
+                  << " to be created from Reply, expected DHCPV6_RENEW or"
+                  " DHCPV6_RELEASE");
     }
-    Pkt6Ptr renew(new Pkt6(DHCPV6_RENEW, generateTransid()));
+    // Get the string representation of the message - to be used for error
+    // logging purposes.
+    const char* msg_type_str = (msg_type == DHCPV6_RENEW ? "Renew" : "Release");
+    // Reply message must be specified.
+    if (!reply) {
+        isc_throw(isc::BadValue, "Unable to create " << msg_type_str
+                  << " message from the Reply message because the instance of"
+                  " the Reply message is NULL");
+    }
+
+    Pkt6Ptr msg(new Pkt6(msg_type, generateTransid()));
     // Client id.
     OptionPtr opt_clientid = reply->getOption(D6O_CLIENTID);
     if (!opt_clientid) {
-        isc_throw(isc::Unexpected, "failed to create Renew packet because client id"
-                  " option has not been found in the Reply from the server");
+        isc_throw(isc::Unexpected, "failed to create " << msg_type_str
+                  << " message because client id option has not been found"
+                  " in the Reply message");
     }
-    renew->addOption(opt_clientid);
+    msg->addOption(opt_clientid);
     // Server id.
     OptionPtr opt_serverid = reply->getOption(D6O_SERVERID);
     if (!opt_serverid) {
-        isc_throw(isc::Unexpected, "failed to create Renew packet because server id"
-                  " option has not been found in the Reply from the server");
+        isc_throw(isc::Unexpected, "failed to create " << msg_type_str
+                  << " because server id option has not been found in the"
+                  " Reply message");
     }
-    renew->addOption(opt_serverid);
-    copyIaOptions(reply, renew);
-    return (renew);
+    msg->addOption(opt_serverid);
+    copyIaOptions(reply, msg);
+    return (msg);
 }
 
 OptionPtr
@@ -1557,7 +1572,7 @@ TestControl::sendRenew(const TestControlSocket& socket) {
     if (!reply) {
         return (false);
     }
-    Pkt6Ptr renew = createRenew(reply);
+    Pkt6Ptr renew = createMessageFromReply(DHCPV6_RENEW, reply);
     setDefaults6(socket, renew);
     renew->pack();
     IfaceMgr::instance().send(renew);
