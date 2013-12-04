@@ -960,7 +960,7 @@ protected:
 
     /// \brief Calculate elapsed time between two packets.
     ///
-    /// \param T Pkt4Ptr or Pkt6Ptr class.
+    /// \tparam T Pkt4Ptr or Pkt6Ptr class.
     /// \param pkt1 first packet.
     /// \param pkt2 second packet.
     /// \throw InvalidOperation if packet timestamps are invalid.
