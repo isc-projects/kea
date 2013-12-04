@@ -148,7 +148,7 @@ response will be received and processed by all clients in the particular
 network. Therefore, the preferred approach is that the server unicasts its
 response to a new address being assigned for the client. This client will
 identify itself as a target of this message by checking chaddr and/or
-Client Identifier value. In the same time, the other clients in the network
+Client Identifier value. At the same time, the other clients in the network
 will not receive the unicast message. The major problem that arises with this
 approach is that the client without an IP address doesn't respond to ARP
 messages. As a result, server's response will not be sent over IP/UDP
