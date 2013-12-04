@@ -18,6 +18,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter_lpf.h>
 #include <dhcp/protocol_util.h>
+#include <dhcp/tests/pkt_filter_test_utils.h>
 #include <util/buffer.h>
 
 #include <gtest/gtest.h>
@@ -36,63 +37,12 @@ const uint16_t PORT = 10067;
 /// Size of the buffer holding received packets.
 const size_t RECV_BUF_SIZE = 2048;
 
-/// This class handles has simple algorithm checking
-/// presence of loopback interface and initializing
-/// its index.
-class PktFilterLPFTest : public ::testing::Test {
+// Test fixture class inherits from the class common for all packet
+// filter tests.
+class PktFilterLPFTest : public isc::dhcp::test::PktFilterTest {
 public:
-
-    /// @brief Constructor
-    ///
-    /// This constructor initializes socket_ member to a negative value.
-    /// Explcit initialization is performed here because some of the
-    /// tests do not initialize this value. In such cases, destructor
-    /// could invoke close() on uninitialized socket descriptor which
-    /// would result in errors being reported by Valgrind.
-    PktFilterLPFTest()
-        : socket_(-1) {
-        // Initialize ifname_ and ifindex_.
-        loInit();
+    PktFilterLPFTest() : PktFilterTest(PORT) {
     }
-
-    /// @brief Destructor
-    ///
-    /// Closes open socket (if any).
-    ~PktFilterLPFTest() {
-        // Cleanup after each test. This guarantees
-        // that the socket does not hang after a test.
-        if (socket_ >= 0) {
-            close(socket_);
-        }
-    }
-
-    /// @brief Detect loopback interface.
-    ///
-    /// @todo this function will be removed once cross-OS interface
-    /// detection is implemented
-    void loInit() {
-        if (if_nametoindex("lo") > 0) {
-            ifname_ = "lo";
-            ifindex_ = if_nametoindex("lo");
-
-        } else if (if_nametoindex("lo0") > 0) {
-            ifname_ = "lo0";
-            ifindex_ = if_nametoindex("lo0");
-
-        } else {
-            std::cout << "Failed to detect loopback interface. Neither "
-                      << "lo nor lo0 worked. Giving up." << std::endl;
-            FAIL();
-
-
-
-        }
-    }
-
-    std::string ifname_; ///< Loopback interface name
-    uint16_t ifindex_;   ///< Loopback interface index.
-    int socket_;         ///< Socket descriptor.
-
 };
 
 // This test verifies that the PktFilterLPF class reports its capability
@@ -124,14 +74,18 @@ TEST_F(PktFilterLPFTest, DISABLED_openSocket) {
 
     // Try to open socket.
     PktFilterLPF pkt_filter;
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
-    // Check that socket has been opened.
-    ASSERT_GE(socket_, 0);
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+
+    // Check that the primary socket has been opened.
+    ASSERT_GE(sock_info_.sockfd_, 0);
+    // Check that the fallback socket has been opened too.
+    ASSERT_GE(sock_info_.fallbackfd_, 0);
 
     // Verify that the socket belongs to AF_PACKET family.
     sockaddr_ll sock_address;
     socklen_t sock_address_len = sizeof(sock_address);
-    ASSERT_EQ(0, getsockname(socket_, reinterpret_cast<sockaddr*>(&sock_address),
+    ASSERT_EQ(0, getsockname(sock_info_.sockfd_,
+                             reinterpret_cast<sockaddr*>(&sock_address),
                              &sock_address_len));
     EXPECT_EQ(AF_PACKET, sock_address.sll_family);
 
@@ -141,39 +95,14 @@ TEST_F(PktFilterLPFTest, DISABLED_openSocket) {
     // Verify that the socket has SOCK_RAW type.
     int sock_type;
     socklen_t sock_type_len = sizeof(sock_type);
-    ASSERT_EQ(0, getsockopt(socket_, SOL_SOCKET, SO_TYPE, &sock_type, &sock_type_len));
+    ASSERT_EQ(0, getsockopt(sock_info_.sockfd_, SOL_SOCKET, SO_TYPE,
+                            &sock_type, &sock_type_len));
     EXPECT_EQ(SOCK_RAW, sock_type);
 }
 
 // This test verifies correctness of sending DHCP packet through the raw
 // socket, whereby all IP stack headers are hand-crafted.
 TEST_F(PktFilterLPFTest, DISABLED_send) {
-        // Let's create a DHCPv4 packet.
-    Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 0));
-    ASSERT_TRUE(pkt);
-
-    // Set required fields.
-    // By setting the local address to broadcast we simulate the
-    // typical scenario when client's request was send to broadcast
-    // address and server by default used it as a source address
-    // in its response. The send() function should be able to detect
-    // it and correct the source address.
-    pkt->setLocalAddr(IOAddress("255.255.255.255"));
-    pkt->setRemoteAddr(IOAddress("127.0.0.1"));
-    pkt->setRemotePort(PORT);
-    pkt->setLocalPort(PORT + 1);
-    pkt->setIndex(ifindex_);
-    pkt->setIface(ifname_);
-    pkt->setHops(6);
-    pkt->setSecs(42);
-    pkt->setCiaddr(IOAddress("192.0.2.1"));
-    pkt->setSiaddr(IOAddress("192.0.2.2"));
-    pkt->setYiaddr(IOAddress("192.0.2.3"));
-    pkt->setGiaddr(IOAddress("192.0.2.4"));
-
-    // Create the on-wire data.
-    ASSERT_NO_THROW(pkt->pack());
-
     // Packet will be sent over loopback interface.
     Iface iface(ifname_, ifindex_);
     IOAddress addr("127.0.0.1");
@@ -183,27 +112,29 @@ TEST_F(PktFilterLPFTest, DISABLED_send) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
-    ASSERT_GE(socket_, 0);
+
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+
+    ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Send the packet over the socket.
-    ASSERT_NO_THROW(pkt_filter.send(iface, socket_, pkt));
+    ASSERT_NO_THROW(pkt_filter.send(iface, sock_info_.sockfd_, test_message_));
 
     // Read the data from socket.
     fd_set readfds;
     FD_ZERO(&readfds);
-    FD_SET(socket_, &readfds);
-    
+    FD_SET(sock_info_.sockfd_, &readfds);
+
     struct timeval timeout;
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
-    int result = select(socket_ + 1, &readfds, NULL, NULL, &timeout);
+    int result = select(sock_info_.sockfd_ + 1, &readfds, NULL, NULL, &timeout);
     // We should receive some data from loopback interface.
     ASSERT_GT(result, 0);
 
     // Get the actual data.
     uint8_t rcv_buf[RECV_BUF_SIZE];
-    result = recv(socket_, rcv_buf, RECV_BUF_SIZE, 0);
+    result = recv(sock_info_.sockfd_, rcv_buf, RECV_BUF_SIZE, 0);
     ASSERT_GT(result, 0);
 
     Pkt4Ptr dummy_pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 0));
@@ -223,48 +154,15 @@ TEST_F(PktFilterLPFTest, DISABLED_send) {
     // Parse the packet.
     ASSERT_NO_THROW(rcvd_pkt->unpack());
 
-    // Verify that the received packet matches sent packet.
-    EXPECT_EQ(pkt->getHops(), rcvd_pkt->getHops());
-    EXPECT_EQ(pkt->getOp(),   rcvd_pkt->getOp());
-    EXPECT_EQ(pkt->getSecs(), rcvd_pkt->getSecs());
-    EXPECT_EQ(pkt->getFlags(), rcvd_pkt->getFlags());
-    EXPECT_EQ(pkt->getCiaddr(), rcvd_pkt->getCiaddr());
-    EXPECT_EQ(pkt->getSiaddr(), rcvd_pkt->getSiaddr());
-    EXPECT_EQ(pkt->getYiaddr(), rcvd_pkt->getYiaddr());
-    EXPECT_EQ(pkt->getGiaddr(), rcvd_pkt->getGiaddr());
-    EXPECT_EQ(pkt->getTransid(), rcvd_pkt->getTransid());
-    EXPECT_TRUE(pkt->getSname() == rcvd_pkt->getSname());
-    EXPECT_TRUE(pkt->getFile() == rcvd_pkt->getFile());
-    EXPECT_EQ(pkt->getHtype(), rcvd_pkt->getHtype());
-    EXPECT_EQ(pkt->getHlen(), rcvd_pkt->getHlen());
+    // Check if the received message is correct.
+    testRcvdMessage(rcvd_pkt);
 }
 
 // This test verifies correctness of reception of the DHCP packet over
 // raw socket, whereby all IP stack headers are hand-crafted.
 TEST_F(PktFilterLPFTest, DISABLED_receive) {
 
-    // Let's create a DHCPv4 packet.
-    Pkt4Ptr pkt(new Pkt4(DHCPOFFER, 0));
-    ASSERT_TRUE(pkt);
-
-    // Set required fields.
-    pkt->setLocalAddr(IOAddress("127.0.0.1"));
-    pkt->setRemoteAddr(IOAddress("127.0.0.1"));
-    pkt->setRemotePort(PORT);
-    pkt->setLocalPort(PORT + 1);
-    pkt->setIndex(ifindex_);
-    pkt->setIface(ifname_);
-    pkt->setHops(6);
-    pkt->setSecs(42);
-    pkt->setCiaddr(IOAddress("192.0.2.1"));
-    pkt->setSiaddr(IOAddress("192.0.2.2"));
-    pkt->setYiaddr(IOAddress("192.0.2.3"));
-    pkt->setGiaddr(IOAddress("192.0.2.4"));
-
-    // Create the on-wire data.
-    ASSERT_NO_THROW(pkt->pack());
-
-    // Packet will be sent over loopback interface.
+    // Packet will be received over loopback interface.
     Iface iface(ifname_, ifindex_);
     IOAddress addr("127.0.0.1");
 
@@ -273,35 +171,22 @@ TEST_F(PktFilterLPFTest, DISABLED_receive) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    socket_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
-    ASSERT_GE(socket_, 0);
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, false, false);
+    ASSERT_GE(sock_info_.sockfd_, 0);
 
-    // Send the packet over the socket.
-    ASSERT_NO_THROW(pkt_filter.send(iface, socket_, pkt));
+    // Send DHCPv4 message to the local loopback address and server's port.
+    sendMessage();
 
-    // Receive the packet.
-    SocketInfo socket_info(socket_, IOAddress("127.0.0.1"), PORT);
-    Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, socket_info);
+    // Receive the packet using LPF packet filter.
+    Pkt4Ptr rcvd_pkt = pkt_filter.receive(iface, sock_info_);
     // Check that the packet has been correctly received.
     ASSERT_TRUE(rcvd_pkt);
 
     // Parse the packet.
     ASSERT_NO_THROW(rcvd_pkt->unpack());
 
-    // Verify that the received packet matches sent packet.
-    EXPECT_EQ(pkt->getHops(), rcvd_pkt->getHops());
-    EXPECT_EQ(pkt->getOp(),   rcvd_pkt->getOp());
-    EXPECT_EQ(pkt->getSecs(), rcvd_pkt->getSecs());
-    EXPECT_EQ(pkt->getFlags(), rcvd_pkt->getFlags());
-    EXPECT_EQ(pkt->getCiaddr(), rcvd_pkt->getCiaddr());
-    EXPECT_EQ(pkt->getSiaddr(), rcvd_pkt->getSiaddr());
-    EXPECT_EQ(pkt->getYiaddr(), rcvd_pkt->getYiaddr());
-    EXPECT_EQ(pkt->getGiaddr(), rcvd_pkt->getGiaddr());
-    EXPECT_EQ(pkt->getTransid(), rcvd_pkt->getTransid());
-    EXPECT_TRUE(pkt->getSname() == rcvd_pkt->getSname());
-    EXPECT_TRUE(pkt->getFile() == rcvd_pkt->getFile());
-    EXPECT_EQ(pkt->getHtype(), rcvd_pkt->getHtype());
-    EXPECT_EQ(pkt->getHlen(), rcvd_pkt->getHlen());
+    // Check if the received message is correct.
+    testRcvdMessage(rcvd_pkt);
 }
 
 } // anonymous namespace

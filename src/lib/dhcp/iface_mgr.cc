@@ -88,6 +88,10 @@ Iface::closeSockets(const uint16_t family) {
             // Close and delete the socket and move to the
             // next one.
             close(sock->sockfd_);
+            // Close fallback socket if open.
+            if (sock->fallbackfd_ >= 0) {
+                close(sock->fallbackfd_);
+            }
             sockets_.erase(sock++);
 
         } else {
@@ -148,6 +152,10 @@ bool Iface::delSocket(uint16_t sockfd) {
     while (sock!=sockets_.end()) {
         if (sock->sockfd_ == sockfd) {
             close(sockfd);
+            // Close fallback socket if open.
+            if (sock->fallbackfd_ >= 0) {
+                close(sock->fallbackfd_);
+            }
             sockets_.erase(sock);
             return (true); //socket found
         }
@@ -284,8 +292,9 @@ void IfaceMgr::stubDetectIfaces() {
     addInterface(iface);
 }
 
-bool IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast) {
-    int sock;
+bool
+IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
+                       IfaceMgrErrorMsgCallback error_handler) {
     int count = 0;
 
 // This option is used to bind sockets to particular interfaces.
@@ -322,6 +331,7 @@ bool IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast) {
                 continue;
             }
 
+            int sock = -1;
             // If selected interface is broadcast capable set appropriate
             // options on the socket so as it can receive and send broadcast
             // messages.
@@ -331,36 +341,53 @@ bool IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast) {
                 // bind to INADDR_ANY address but we can do it only once. Thus,
                 // if one socket has been bound we can't do it any further.
                 if (!bind_to_device && bcast_num > 0) {
-                    isc_throw(SocketConfigError, "SO_BINDTODEVICE socket option is"
-                              << " not supported on this OS; therefore, DHCP"
-                              << " server can only listen broadcast traffic on"
-                              << " a single interface");
+                    handleSocketConfigError("SO_BINDTODEVICE socket option is"
+                                            " not supported on this OS;"
+                                            " therefore, DHCP server can only"
+                                            " listen broadcast traffic on a"
+                                            " single interface",
+                                            error_handler);
+                    continue;
 
                 } else {
-                    // We haven't open any broadcast sockets yet, so we can
-                    // open at least one more.
-                    sock = openSocket(iface->getName(), *addr, port, true, true);
-                    // Binding socket to an interface is not supported so we can't
-                    // open any more broadcast sockets. Increase the number of
-                    // opened broadcast sockets.
+                    try {
+                        // We haven't open any broadcast sockets yet, so we can
+                        // open at least one more.
+                        sock = openSocket(iface->getName(), *addr, port,
+                                          true, true);
+                    } catch (const Exception& ex) {
+                        handleSocketConfigError(ex.what(), error_handler);
+                        continue;
+
+                    }
+                    // Binding socket to an interface is not supported so we
+                    // can't open any more broadcast sockets. Increase the
+                    // number of open broadcast sockets.
                     if (!bind_to_device) {
                         ++bcast_num;
                     }
                 }
 
             } else {
-                // Not broadcast capable, do not set broadcast flags.
-                sock = openSocket(iface->getName(), *addr, port, false, false);
+                try {
+                    // Not broadcast capable, do not set broadcast flags.
+                    sock = openSocket(iface->getName(), *addr, port,
+                                      false, false);
+                } catch (const Exception& ex) {
+                    handleSocketConfigError(ex.what(), error_handler);
+                    continue;
+                }
 
             }
             if (sock < 0) {
                 const char* errstr = strerror(errno);
-                isc_throw(SocketConfigError, "failed to open IPv4 socket"
-                          << " supporting broadcast traffic, reason:"
-                          << errstr);
+                handleSocketConfigError(std::string("failed to open IPv4 socket,"
+                                                    " reason:") + errstr,
+                                        error_handler);
+            } else {
+                ++count;
             }
 
-            count++;
         }
     }
     return (count > 0);
@@ -458,6 +485,21 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
     }
     return (count > 0);
 }
+
+void
+IfaceMgr::handleSocketConfigError(const std::string& errmsg,
+                                  IfaceMgrErrorMsgCallback handler) {
+    // If error handler is installed, we don't want to throw an exception, but
+    // rather call this handler.
+    if (handler != NULL) {
+        handler(errmsg);
+
+    } else {
+        isc_throw(SocketConfigError, errmsg);
+
+    }
+}
+
 
 void
 IfaceMgr::printIfaces(std::ostream& out /*= std::cout*/) {
@@ -741,7 +783,7 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
         }
     }
 
-    SocketInfo info(sock, addr, port);
+    SocketInfo info(addr, port, sock);
     iface.addSocket(info);
 
     return (sock);
@@ -754,13 +796,11 @@ int IfaceMgr::openSocket4(Iface& iface, const IOAddress& addr,
     // Skip checking if the packet_filter_ is non-NULL because this check
     // has been already done when packet filter object was set.
 
-    int sock = packet_filter_->openSocket(iface, addr, port,
-                                          receive_bcast, send_bcast);
-
-    SocketInfo info(sock, addr, port);
+    SocketInfo info = packet_filter_->openSocket(iface, addr, port,
+                                                 receive_bcast, send_bcast);
     iface.addSocket(info);
 
-    return (sock);
+    return (info.sockfd_);
 }
 
 bool

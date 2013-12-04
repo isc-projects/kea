@@ -67,6 +67,7 @@
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
  *   - @subpage libdhcpIfaceMgr
+ *   - @subpage libdhcpPktFilter
  * - @subpage libdhcpsrv
  *   - @subpage leasemgr
  *   - @subpage cfgmgr
