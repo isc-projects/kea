@@ -187,6 +187,8 @@ TEST_F(StatsMgrTest, Exchange) {
                                                       common_transid));
     // This is expected to throw because XCHG_DO was not yet
     // added to Stats Manager for tracking.
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_DO));
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_RA));
     EXPECT_THROW(
         stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet),
         BadValue
@@ -196,8 +198,11 @@ TEST_F(StatsMgrTest, Exchange) {
         BadValue
     );
 
+
     // Adding DISCOVER-OFFER exchanges to be tracked by Stats Manager.
     stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+    ASSERT_TRUE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_DO));
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_RA));
     // The following two attempts are expected to throw because
     // invalid exchange types are passed (XCHG_RA instead of XCHG_DO)
     EXPECT_THROW(
