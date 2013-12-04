@@ -1,3 +1,11 @@
+712.	[func]		marcin,dclink
+	b10-dhcp4: If server fails to open a socket on one interface it
+	will log a warning and continue to open sockets on other interfaces.
+	The warning message is communicated from the libdhcp++ via the
+	error handler function supplied by the DHCPv4 server. Thanks to
+	David Carlier for providing a patch.
+	(Trac #2765, git f49c4b8942cdbafb85414a1925ff6ca1d381f498)
+
 711.	[func]	tmark
 	Added the initial implementation of the class, NameAddTransaction,
 	to b10-dhcp-ddns.  This class provides the state model logic
