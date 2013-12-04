@@ -505,19 +505,25 @@ TestControl::getCurrentTimeout() const {
     // Check that we haven't passed the moment to send the next set of
     // packets.
     if (now >= send_due_ ||
-        (options.getRenewRate() != 0 && now >= renew_due_)) {
+        (options.getRenewRate() != 0 && now >= renew_due_) ||
+        (options.getReleaseRate() != 0 && now >= release_due_)) {
         return (0);
     }
 
-    // If Renews are being sent, we have to adjust the timeout to the nearest
-    // Solicit or Renew, depending on what happens sooner.
-    if (options.getRenewRate() != 0) {
-        ptime due = send_due_ > renew_due_ ? renew_due_ : send_due_;
-        return (time_period(now, due).length().total_microseconds());
+    // Let's assume that the due time for Solicit is the soonest.
+    ptime due = send_due_;
+    // If we are sending Renews and due time for Renew occurs sooner,
+    // set the due time to Renew due time.
+    if ((options.getRenewRate()) != 0 && (renew_due_ < due)) {
+        due = renew_due_;
     }
-    // We are not sending Renews, let's adjust the timeout to the nearest
-    // Solicit.
-    return (time_period(now, send_due_).length().total_microseconds());
+    // If we are sending Releases and the due time for Release occurs
+    // sooner than the current due time, let's use the due for Releases.
+    if ((options.getReleaseRate() != 0) && (release_due_ < due)) {
+        due = release_due_;
+    }
+    // Return the timeout in microseconds.
+    return (time_period(now, due).length().total_microseconds());
 }
 
 int
@@ -714,6 +720,9 @@ TestControl::initializeStatsMgr() {
         if (options.getRenewRate() != 0) {
             stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RN);
         }
+        if (options.getReleaseRate() != 0) {
+            stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RL);
+        }
     }
     if (testDiags('i')) {
         if (options.getIpVersion() == 4) {
@@ -868,14 +877,15 @@ TestControl::sendPackets(const TestControlSocket& socket,
 }
 
 uint64_t
-TestControl::sendRenewPackets(const TestControlSocket& socket,
-                              const uint64_t packets_num) {
-    for (uint64_t i = 0; i < packets_num; ++i) {
-        if (!sendRenew(socket)) {
+TestControl::sendMultipleMessages6(const TestControlSocket& socket,
+                                   const uint32_t msg_type,
+                                   const uint64_t msg_num) {
+    for (uint64_t i = 0; i < msg_num; ++i) {
+        if (!sendMessageFromReply(msg_type, socket)) {
             return (i);
         }
     }
-    return (packets_num);
+    return (msg_num);
 }
 
 void
@@ -1133,14 +1143,15 @@ TestControl::processReceivedPacket6(const TestControlSocket& socket,
             }
         }
     } else if (packet_type == DHCPV6_REPLY) {
-        Pkt6Ptr sent_packet = stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RR,
-                                                          pkt6);
-        if (sent_packet) {
-            if (CommandOptions::instance().getRenewRate() != 0) {
+        if (stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RR, pkt6)) {
+            if (stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RN) ||
+                stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RL)) {
                 reply_storage_.append(pkt6);
             }
-        } else {
-            stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RN, pkt6);
+        } else if (!(stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RN) &&
+                     stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RN, pkt6)) &&
+                   stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RL)) {
+            stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RL, pkt6);
         }
     }
 }
@@ -1273,6 +1284,7 @@ TestControl::reset() {
     last_sent_ = send_due_;
     last_report_ = send_due_;
     renew_due_ = send_due_;
+    release_due_ = send_due_;
     last_renew_ = send_due_;
     transid_gen_.reset();
     // Actual generators will have to be set later on because we need to
@@ -1373,8 +1385,19 @@ TestControl::run() {
             updateSendDue(last_renew_, options.getRenewRate(), renew_due_);
             uint64_t renew_packets_due =
                 getNextExchangesNum(renew_due_, options.getRenewRate());
-            // Send renew packets.
-            sendRenewPackets(socket, renew_packets_due);
+            // Send Renew messages.
+            sendMultipleMessages6(socket, DHCPV6_RENEW, renew_packets_due);
+        }
+
+        // If -F<release-rate> option was specified we have to check how many
+        // Release messages should be sent to catch up with a desired rate.
+        if ((options.getIpVersion() == 6) && (options.getReleaseRate() != 0)) {
+            updateSendDue(last_release_, options.getReleaseRate(),
+                          release_due_);
+            uint64_t release_packets_due =
+                getNextExchangesNum(release_due_, options.getReleaseRate());
+            // Send Release messages.
+            sendMultipleMessages6(socket, DHCPV6_RELEASE, release_packets_due);
         }
 
         // Report delay means that user requested printing number
@@ -1566,21 +1589,35 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
 }
 
 bool
-TestControl::sendRenew(const TestControlSocket& socket) {
-    last_renew_ = microsec_clock::universal_time();
+TestControl::sendMessageFromReply(const uint16_t msg_type,
+                                  const TestControlSocket& socket) {
+    // We only permit Release or Renew messages to be sent using this function.
+    if (msg_type != DHCPV6_RENEW && msg_type != DHCPV6_RELEASE) {
+        isc_throw(isc::BadValue, "invalid message type " << msg_type
+                  << " to be sent, expected DHCPV6_RENEW or DHCPV6_RELEASE");
+    }
+    // We track the timestamp of last Release and Renew in different variables.
+    if (msg_type == DHCPV6_RENEW) {
+        last_renew_ = microsec_clock::universal_time();
+    } else {
+        last_release_ = microsec_clock::universal_time();
+    }
     Pkt6Ptr reply = reply_storage_.getRandom();
     if (!reply) {
         return (false);
     }
-    Pkt6Ptr renew = createMessageFromReply(DHCPV6_RENEW, reply);
-    setDefaults6(socket, renew);
-    renew->pack();
-    IfaceMgr::instance().send(renew);
+    // Prepare the message of the specified type.
+    Pkt6Ptr msg = createMessageFromReply(msg_type, reply);
+    setDefaults6(socket, msg);
+    msg->pack();
+    // And send it.
+    IfaceMgr::instance().send(msg);
     if (!stats_mgr6_) {
         isc_throw(Unexpected, "Statistics Manager for DHCPv6 "
                   "hasn't been initialized");
     }
-    stats_mgr6_->passSentPacket(StatsMgr6::XCHG_RN, renew);
+    stats_mgr6_->passSentPacket((msg_type == DHCPV6_RENEW ? StatsMgr6::XCHG_RN
+                                 : StatsMgr6::XCHG_RL), msg);
     return (true);
 }
 

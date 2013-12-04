@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -124,7 +124,8 @@ public:
         XCHG_RA,  ///< DHCPv4 REQUEST-ACK
         XCHG_SA,  ///< DHCPv6 SOLICIT-ADVERTISE
         XCHG_RR,  ///< DHCPv6 REQUEST-REPLY
-        XCHG_RN   ///< DHCPv6 RENEW-REPLY
+        XCHG_RN,  ///< DHCPv6 RENEW-REPLY
+        XCHG_RL   ///< DHCPv6 RELEASE-REPLY
     };
 
     /// \brief Exchange Statistics.
@@ -869,6 +870,20 @@ public:
                                                drop_time,
                                                archive_enabled_,
                                                boot_time_));
+    }
+
+    /// \brief Check if the exchange type has been specified.
+    ///
+    /// This method checks if the \ref ExchangeStats object of a particular type
+    /// exists (has been added using \ref addExchangeStats function).
+    ///
+    /// \param xchg_type A type of the exchange being repersented by the
+    /// \ref ExchangeStats object.
+    ///
+    /// \return true if the \ref ExchangeStats object has been added for a
+    /// specified exchange type.
+    bool hasExchangeStats(const ExchangeType xchg_type) const {
+        return (exchanges_.find(xchg_type) != exchanges_.end());
     }
 
     /// \brief Add named custom uint64 counter.

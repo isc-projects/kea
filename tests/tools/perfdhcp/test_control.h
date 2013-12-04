@@ -748,25 +748,32 @@ protected:
                      const uint64_t packets_num,
                      const bool preload = false);
 
-    /// \brief Send number of DHCPv6 Renew packets to the server.
+    /// \brief Send number of DHCPv6 Renew or Release messages to the server.
     ///
     /// \param socket An object representing socket to be used to send packets.
-    /// \param packets_num A number of Renew packets to be send.
+    /// \param msg_type A type of the messages to be sent (DHCPV6_RENEW or
+    /// DHCPV6_RELEASE).
+    /// \param msg_num A number of messages to be sent.
     ///
-    /// \return A number of packets actually sent.
-    uint64_t sendRenewPackets(const TestControlSocket& socket,
-                              const uint64_t packets_num);
+    /// \return A number of messages actually sent.
+    uint64_t sendMultipleMessages6(const TestControlSocket& socket,
+                                   const uint32_t msg_type,
+                                   const uint64_t msg_num);
 
-    /// \brief Send a renew message using provided socket.
+    /// \brief Send DHCPv6 Renew or Release message using specified socket.
     ///
     /// This method will select an existing lease from the Reply packet cache
-    /// If there is no lease that can be renewed this method will return false.
+    /// If there is no lease that can be renewed or released this method will
+    /// return false.
     ///
+    /// \param msg_type A type of the message to be sent (DHCPV6_RENEW or
+    /// DHCPV6_RELEASE).
     /// \param socket An object encapsulating socket to be used to send
     /// a packet.
     ///
-    /// \return true if packet has been sent, false otherwise.
-    bool sendRenew(const TestControlSocket& socket);
+    /// \return true if the message has been sent, false otherwise.
+    bool sendMessageFromReply(const uint16_t msg_type,
+                              const TestControlSocket& socket);
 
     /// \brief Send DHCPv4 REQUEST message.
     ///
@@ -1074,7 +1081,11 @@ protected:
                                            ///< was initiated.
     boost::posix_time::ptime renew_due_;   ///< Due time to send next set of
                                            ///< Renew requests.
+    boost::posix_time::ptime release_due_; ///< Due time to send next set of
+                                           ///< Release requests.
     boost::posix_time::ptime last_renew_;  ///< Indicates when the last Renew
+                                           ///< was attempted.
+    boost::posix_time::ptime last_release_;///< Indicates when the last Release
                                            ///< was attempted.
 private:
 
