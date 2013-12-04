@@ -133,6 +133,24 @@ public:
 
     /// @brief Constructor.
     NakedIfaceMgr() {
+        loDetect();
+    }
+
+    /// @brief detects name of the loopback interface
+    ///
+    /// This method detects name of the loopback interface.
+    static void loDetect() {
+        // Poor man's interface detection.  It will go away as soon as proper
+        // interface detection is implemented
+        if (if_nametoindex("lo") > 0) {
+            snprintf(LOOPBACK, BUF_SIZE - 1, "lo");
+        } else if (if_nametoindex("lo0") > 0) {
+            snprintf(LOOPBACK, BUF_SIZE - 1, "lo0");
+        } else {
+            cout << "Failed to detect loopback interface. Neither "
+                 << "lo nor lo0 worked. I give up." << endl;
+            FAIL();
+        }
     }
 
     /// @brief Returns the collection of existing interfaces.
@@ -290,23 +308,9 @@ public:
 // We need some known interface to work reliably. Loopback interface is named
 // lo on Linux and lo0 on BSD boxes. We need to find out which is available.
 // This is not a real test, but rather a workaround that will go away when
-// interface detection is implemented.
-
-// NOTE: At this stage of development, write access to current directory
-// during running tests is required.
+// interface detection is implemented on all OSes.
 TEST_F(IfaceMgrTest, loDetect) {
-
-    // Poor man's interface detection.  It will go away as soon as proper
-    // interface detection is implemented
-    if (if_nametoindex("lo") > 0) {
-        snprintf(LOOPBACK, BUF_SIZE - 1, "lo");
-    } else if (if_nametoindex("lo0") > 0) {
-        snprintf(LOOPBACK, BUF_SIZE - 1, "lo0");
-    } else {
-        cout << "Failed to detect loopback interface. Neither "
-             << "lo nor lo0 worked. I give up." << endl;
-        FAIL();
-    }
+    NakedIfaceMgr::loDetect();
 }
 
 // Uncomment this test to create packet writer. It will
@@ -917,13 +921,6 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     // assume the one or the other will always be chosen for sending data. Therefore
     // we should accept both values as source ports.
     EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
-
-    // try to send/receive data over the closed socket. Closed socket's descriptor is
-    // still being hold by IfaceMgr which will try to use it to receive data.
-    close(socket1);
-    close(socket2);
-    EXPECT_THROW(ifacemgr->receive6(10), SocketReadError);
-    EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
 }
 
 TEST_F(IfaceMgrTest, sendReceive4) {
