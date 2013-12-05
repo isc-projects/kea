@@ -125,6 +125,17 @@ const char *invalid_msgs[] =
      " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
+    // Malformed FQDN
+     "{"
+     " \"change_type\" : 0 , "
+     " \"forward_change\" : true , "
+     " \"reverse_change\" : false , "
+     " \"fqdn\" : \".bad_name\" , "
+     " \"ip_address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
+     " \"lease_length\" : 1300 "
+     "}",
     // Bad IP address
      "{"
      " \"change_type\" : 0 , "
@@ -462,7 +473,7 @@ TEST(NameChangeRequestTest, basicJsonTest) {
                             "\"change_type\":1,"
                             "\"forward_change\":true,"
                             "\"reverse_change\":false,"
-                            "\"fqdn\":\"walah.walah.com\","
+                            "\"fqdn\":\"walah.walah.com.\","
                             "\"ip_address\":\"192.168.2.1\","
                             "\"dhcid\":\"010203040A7F8E3D\","
                             "\"lease_expires_on\":\"20130121132405\","
@@ -543,7 +554,7 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
                             "\"change_type\":1,"
                             "\"forward_change\":true,"
                             "\"reverse_change\":false,"
-                            "\"fqdn\":\"walah.walah.com\","
+                            "\"fqdn\":\"walah.walah.com.\","
                             "\"ip_address\":\"192.168.2.1\","
                             "\"dhcid\":\"010203040A7F8E3D\","
                             "\"lease_expires_on\":\"20130121132405\","
@@ -593,7 +604,7 @@ TEST(NameChangeRequestTest, ipAddresses) {
     EXPECT_FALSE(ncr.isV4());
     EXPECT_TRUE(ncr.isV6());
 
-    // Verify that an valid address fails.
+    // Verify that an invalid address fails.
     ASSERT_THROW(ncr.setIpAddress("x001:1::f3"),NcrMessageError);
 }
 

@@ -182,6 +182,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
+                break;
             }
         }
 
@@ -292,6 +293,7 @@ NameAddTransaction::replacingFwdAddrsHandler() {
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
+                break;
             }
         }
 
@@ -437,6 +439,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
+                break;
             }
         }
 
