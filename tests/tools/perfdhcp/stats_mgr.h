@@ -1186,6 +1186,8 @@ public:
             return("REQUEST-REPLY");
         case XCHG_RN:
             return("RENEW-REPLY");
+        case XCHG_RL:
+            return("RELEASE-REPLY");
         default:
             return("Unknown exchange type");
         }

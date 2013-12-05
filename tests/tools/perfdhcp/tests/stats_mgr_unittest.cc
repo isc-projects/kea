@@ -264,6 +264,29 @@ TEST_F(StatsMgrTest, MultipleExchanges) {
               stats_mgr->getRcvdPacketsNum(StatsMgr6::XCHG_RR));
 }
 
+TEST_F(StatsMgrTest, ExchangeToString) {
+    // Test DHCPv4 specific exchange names.
+    StatsMgr4 stats_mgr4;
+    stats_mgr4.addExchangeStats(StatsMgr4::XCHG_DO);
+    stats_mgr4.addExchangeStats(StatsMgr4::XCHG_RA);
+    EXPECT_EQ("DISCOVER-OFFER",
+              stats_mgr4.exchangeToString(StatsMgr4::XCHG_DO));
+    EXPECT_EQ("REQUEST-ACK", stats_mgr4.exchangeToString(StatsMgr4::XCHG_RA));
+
+    // Test DHCPv6 specific exchange names.
+    StatsMgr6 stats_mgr6;
+    stats_mgr6.addExchangeStats(StatsMgr6::XCHG_SA);
+    stats_mgr6.addExchangeStats(StatsMgr6::XCHG_RR);
+    stats_mgr6.addExchangeStats(StatsMgr6::XCHG_RN);
+    stats_mgr6.addExchangeStats(StatsMgr6::XCHG_RL);
+    EXPECT_EQ("SOLICIT-ADVERTISE",
+              stats_mgr6.exchangeToString(StatsMgr6::XCHG_SA));
+    EXPECT_EQ("REQUEST-REPLY", stats_mgr6.exchangeToString(StatsMgr6::XCHG_RR));
+    EXPECT_EQ("RENEW-REPLY", stats_mgr6.exchangeToString(StatsMgr6::XCHG_RN));
+    EXPECT_EQ("RELEASE-REPLY", stats_mgr6.exchangeToString(StatsMgr6::XCHG_RL));
+
+}
+
 TEST_F(StatsMgrTest, SendReceiveSimple) {
     boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
     boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
