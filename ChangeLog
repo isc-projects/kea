@@ -1,3 +1,7 @@
+6XX.	[doc]		tomek
+	BIND10 Contributor's Guide added.
+	(Trac #3109, git ABCD)
+
 663.	[func]		marcin
 	b10-dhcp6: Server processes the DHCPv6 Client FQDN Option
 	sent by a client and generates the response. The DHCPv6 Client
