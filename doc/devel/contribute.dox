@@ -18,7 +18,7 @@
 
 So you found a bug in BIND10 or plan to develop an extension and want to
 send a patch? Great! This page will explain how to contribute your
-changes and not get disappointed in the process.
+changes smoothly.
 
 @section contributorGuideWritePatch Writing a patch
 
@@ -51,10 +51,13 @@ is portable software. Besides Linux, it is compiled and used on
 relatively uncommon systems like OpenBSD and Solaris 11. Will your code
 compile and work there? What about endianess? It is likely that you used
 a regular x86 architecture machine to write your patch, but the software
-is expected to run on many other architectures.
+is expected to run on many other architectures. You may take a look at
+system specific build notes (http://bind10.isc.org/wiki/SystemSpecificNotes).
+For a complete list of systems we build on, you may take a look at the
+following build farm report: http://git.bind10.isc.org/~tester/builder/builder-new.html .
 
-Does your patch conform to BIND10
-<http://bind10.isc.org/wiki/CodingGuidelines>? You still can submit a
+Does your patch conform to BIND10 coding guidelines
+(http://bind10.isc.org/wiki/CodingGuidelines)? You still can submit a
 patch that does not adhere to it, but that will decrease its chances of
 being accepted. If the deviations are minor, the BIND10 engineer who
 does the review will likely fix the issues. However, if there are lots
