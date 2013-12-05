@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcp_ddns/ncr_msg.h>
+#include <dns/name.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 #include <cryptolink/cryptolink.h>
@@ -160,10 +161,10 @@ D2Dhcid::createDigest(const uint8_t identifier_type,
     }
 
     // The DHCID RDATA has the following structure:
-    // 
+    //
     //    < identifier-type > < digest-type > < digest >
     //
-    // where identifier type 
+    // where identifier type
 
     // Let's allocate the space for the identifier-type (2 bytes) and
     // digest-type (1 byte). This is 3 bytes all together.
@@ -189,8 +190,7 @@ operator<<(std::ostream& os, const D2Dhcid& dhcid) {
 
 NameChangeRequest::NameChangeRequest()
     : change_type_(CHG_ADD), forward_change_(false),
-    reverse_change_(false), fqdn_(""), ip_address_(""),
-    ip_io_address_("0.0.0.0"),
+    reverse_change_(false), fqdn_(""), ip_io_address_("0.0.0.0"),
     dhcid_(), lease_expires_on_(), lease_length_(0), status_(ST_NEW) {
 }
 
@@ -201,13 +201,12 @@ NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
             const uint64_t lease_expires_on,
             const uint32_t lease_length)
     : change_type_(change_type), forward_change_(forward_change),
-    reverse_change_(reverse_change), fqdn_(fqdn), ip_address_(ip_address),
-    ip_io_address_("0.0.0.0"),
+    reverse_change_(reverse_change), fqdn_(fqdn), ip_io_address_("0.0.0.0"),
     dhcid_(dhcid), lease_expires_on_(lease_expires_on),
     lease_length_(lease_length), status_(ST_NEW) {
 
     // User setter to validate address.
-    setIpAddress(ip_address_);
+    setIpAddress(ip_address);
 
     // Validate the contents. This will throw a NcrMessageError if anything
     // is invalid.
@@ -475,18 +474,23 @@ NameChangeRequest::setFqdn(isc::data::ConstElementPtr element) {
 
 void
 NameChangeRequest::setFqdn(const std::string& value) {
-    fqdn_ = value;
+    try {
+        dns::Name tmp(value);
+        fqdn_ = tmp.toText();
+    } catch (const std::exception& ex) {
+        isc_throw(NcrMessageError,
+                  "Invalid FQDN value: " << value << ", reason:" << ex.what());
+    }
 }
 
 void
 NameChangeRequest::setIpAddress(const std::string& value) {
     // Validate IP Address.
     try {
-        ip_address_ = value;
-        ip_io_address_ = isc::asiolink::IOAddress(ip_address_);
+        ip_io_address_ = isc::asiolink::IOAddress(value);
     } catch (const isc::asiolink::IOError& ex) {
         isc_throw(NcrMessageError,
-                  "Invalid ip address string for ip_address: " << ip_address_);
+                  "Invalid ip address string for ip_address: " << value);
     }
 }
 
@@ -586,7 +590,7 @@ NameChangeRequest::toText() const {
            << "Reverse Change: " << (reverse_change_ ? "yes" : "no")
            << std::endl
            << "FQDN: [" << fqdn_ << "]" << std::endl
-           << "IP Address: [" << ip_address_  << "]" << std::endl
+           << "IP Address: [" << ip_io_address_.toText()  << "]" << std::endl
            << "DHCID: [" << dhcid_.toStr() << "]" << std::endl
            << "Lease Expires On: " << getLeaseExpiresOnStr() << std::endl
            << "Lease Length: " << lease_length_ << std::endl;
@@ -600,7 +604,7 @@ NameChangeRequest::operator == (const NameChangeRequest& other) {
             (forward_change_ == other.forward_change_) &&
             (reverse_change_ == other.reverse_change_) &&
             (fqdn_ == other.fqdn_) &&
-            (ip_address_ == other.ip_address_) &&
+            (ip_io_address_ == other.ip_io_address_) &&
             (dhcid_ == other.dhcid_) &&
             (lease_expires_on_ == other.lease_expires_on_) &&
             (lease_length_ == other.lease_length_));

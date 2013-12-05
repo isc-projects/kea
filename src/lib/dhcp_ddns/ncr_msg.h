@@ -23,6 +23,7 @@
 #include <cc/data.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dns/name.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <util/encode/hex.h>
@@ -414,8 +415,8 @@ public:
     /// @brief Fetches the request IP address string.
     ///
     /// @return a string containing the IP address
-    const std::string& getIpAddress() const {
-        return (ip_address_);
+    std::string getIpAddress() const {
+        return (ip_io_address_.toText());
     }
 
     /// @brief Fetches the request IP address as an IOAddress.
@@ -428,14 +429,14 @@ public:
     /// @brief Returns true if the lease address is a IPv4 lease.
     ///
     /// @return boolean true if the lease address family is AF_INET.
-    bool isV4 () {
+    bool isV4 () const {
         return (ip_io_address_.isV4());
     }
 
     /// @brief Returns true if the lease address is a IPv6 lease.
     ///
     /// @return boolean true if the lease address family is AF_INET6.
-    bool isV6 () {
+    bool isV6 () const {
         return (ip_io_address_.isV6());
     }
 
@@ -587,9 +588,6 @@ private:
     /// dns::Name which provides additional validation and domain name
     /// manipulation.
     std::string fqdn_;
-
-    /// @brief The ip address leased to the FQDN.
-    std::string ip_address_;
 
     /// @brief The ip address leased to the FQDN as an IOAddress.
     ///

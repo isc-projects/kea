@@ -37,7 +37,8 @@ public:
                 DdnsDomainPtr& forward_domain,
                 DdnsDomainPtr& reverse_domain)
         : NameAddTransaction(io_service, ncr, forward_domain, reverse_domain),
-          simulate_send_exception_(false) {
+          simulate_send_exception_(false),
+          simulate_build_request_exception_(false) {
     }
 
     virtual ~NameAddStub() {
@@ -70,11 +71,31 @@ public:
         postNextEvent(StateModel::NOP_EVT);
     }
 
+    /// @brief Prepares the initial D2UpdateMessage
+    ///
+    /// This method overrides the NameChangeTransactio implementation to
+    /// provide the ability to simulate an exception throw in the build
+    /// request logic.
+    /// If the one-shot flag, simulate_build_request_exception_ is true,
+    /// this method will throw an exception, otherwise it will invoke the
+    /// base class method, providing normal functionality.
+    ///
+    /// For parameter description see the NameChangeTransaction implementation.
+    virtual D2UpdateMessagePtr prepNewRequest(DdnsDomainPtr domain) {
+        if (simulate_build_request_exception_) {
+            simulate_build_request_exception_ = false;
+            isc_throw (NameAddTransactionError,
+                       "Simulated build requests exception");
+        }
+
+        return (NameChangeTransaction::prepNewRequest(domain));
+    }
+
     /// @brief Simulates receiving a response
     ///
     /// This method simulates the completion of a DNSClient send.  This allows
     /// the state handler logic devoted to dealing with IO completion to be
-    /// fully exercise without requiring any actual IO.  The two primary
+    /// fully exercised without requiring any actual IO.  The two primary
     /// pieces of information gleaned from IO completion are the DNSClient
     /// status which indicates whether or not the IO exchange was successful
     /// and the rcode, which indicates the server's reaction to the request.
@@ -133,6 +154,10 @@ public:
 
     /// @brief One-shot flag which will simulate sendUpdate failure if true.
     bool simulate_send_exception_;
+
+    /// @brief One-shot flag which will simulate an exception when sendUpdate
+    /// failure if true.
+    bool simulate_build_request_exception_;
 
     using StateModel::postNextEvent;
     using StateModel::setState;
@@ -1626,7 +1651,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_sendUpdateException) {
     name_add->simulate_send_exception_ = true;
 
     // Run replacingFwdAddrsHandler to construct and send the request.
-    EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
+    ASSERT_NO_THROW(name_add->addingFwdAddrsHandler());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
@@ -1658,7 +1683,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_SendUpdateException) {
     name_add->simulate_send_exception_ = true;
 
     // Run replacingFwdAddrsHandler to construct and send the request.
-    EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
+    ASSERT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
@@ -1690,7 +1715,7 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_SendUpdateException) {
     name_add->simulate_send_exception_ = true;
 
     // Run replacingRevPtrsHandler to construct and send the request.
-    EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
+    ASSERT_NO_THROW(name_add->replacingRevPtrsHandler());
 
     // Completion flags should be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
@@ -1704,5 +1729,121 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_SendUpdateException) {
     EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
               name_add->getNextEvent());
 }
+
+// Tests addingFwdAddrsHandler with the following scenario:
+//
+//  The request includes only a forward change.
+//  Initial posted event is SERVER_SELECTED_EVT.
+//  The request build fails due to an unexpected exception.
+//
+TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_BuildRequestException) {
+    NameAddStubPtr name_add;
+    // Create and prep a transaction, poised to run the handler.
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::ADDING_FWD_ADDRS_ST,
+                                    NameChangeTransaction::
+                                    SERVER_SELECTED_EVT, FORWARD_CHG));
+
+    // Set the one-shot exception simulation flag.
+    name_add->simulate_build_request_exception_ = true;
+
+    // Run replacingRevPtrsHandler to construct and send the request.
+    // This should fail with a build request throw which should be caught
+    // in the state handler.
+    ASSERT_NO_THROW(name_add->addingFwdAddrsHandler());
+
+    // Verify we did not attempt to send anything.
+    EXPECT_EQ(0, name_add->getUpdateAttempts());
+
+    // Completion flags should be false.
+    EXPECT_FALSE(name_add->getForwardChangeCompleted());
+    EXPECT_FALSE(name_add->getReverseChangeCompleted());
+
+    // Since IO exceptions should be gracefully handled, any that occur
+    // are unanticipated, and deemed unrecoverable, so the transaction should
+    // be transitioned to failure.
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
+              name_add->getCurrState());
+    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
+              name_add->getNextEvent());
+}
+
+// Tests replacingFwdAddrsHandler with the following scenario:
+//
+//  The request includes only a forward change.
+//  Initial posted event is SERVER_SELECTED_EVT.
+//  The request build fails due to an unexpected exception.
+//
+TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_BuildRequestException) {
+    NameAddStubPtr name_add;
+    // Create and prep a transaction, poised to run the handler.
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_FWD_ADDRS_ST,
+                                    NameChangeTransaction::
+                                    SERVER_SELECTED_EVT, FORWARD_CHG));
+
+    // Set the one-shot exception simulation flag.
+    name_add->simulate_build_request_exception_ = true;
+
+    // Run replacingFwdAddrsHandler to construct and send the request.
+    // This should fail with a build request throw which should be caught
+    // in the state handler.
+    ASSERT_NO_THROW(name_add->replacingFwdAddrsHandler());
+
+    // Verify we did not attempt to send anything.
+    EXPECT_EQ(0, name_add->getUpdateAttempts());
+
+    // Completion flags should be false.
+    EXPECT_FALSE(name_add->getForwardChangeCompleted());
+    EXPECT_FALSE(name_add->getReverseChangeCompleted());
+
+    // Since IO exceptions should be gracefully handled, any that occur
+    // are unanticipated, and deemed unrecoverable, so the transaction should
+    // be transitioned to failure.
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
+              name_add->getCurrState());
+    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
+              name_add->getNextEvent());
+}
+
+
+// Tests replacingRevPtrHandler with the following scenario:
+//
+//  The request includes only a reverse change.
+//  Initial posted event is SERVER_SELECTED_EVT.
+//  The request build fails due to an unexpected exception.
+//
+TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_BuildRequestException) {
+    NameAddStubPtr name_add;
+    // Create and prep a transaction, poised to run the handler.
+    ASSERT_NO_THROW(name_add =
+                    prepHandlerTest(NameAddTransaction::REPLACING_REV_PTRS_ST,
+                                    NameChangeTransaction::
+                                    SERVER_SELECTED_EVT, REVERSE_CHG));
+
+    // Set the one-shot exception simulation flag.
+    name_add->simulate_build_request_exception_ = true;
+
+    // Run replacingRevPtrsHandler to construct and send the request.
+    // This should fail with a build request throw which should be caught
+    // in the state handler.
+    ASSERT_NO_THROW(name_add->replacingRevPtrsHandler());
+
+    // Verify we did not attempt to send anything.
+    EXPECT_EQ(0, name_add->getUpdateAttempts());
+
+    // Completion flags should be false.
+    EXPECT_FALSE(name_add->getForwardChangeCompleted());
+    EXPECT_FALSE(name_add->getReverseChangeCompleted());
+
+    // Since IO exceptions should be gracefully handled, any that occur
+    // are unanticipated, and deemed unrecoverable, so the transaction should
+    // be transitioned to failure.
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
+              name_add->getCurrState());
+    EXPECT_EQ(NameChangeTransaction::UPDATE_FAILED_EVT,
+              name_add->getNextEvent());
+}
+
 
 }

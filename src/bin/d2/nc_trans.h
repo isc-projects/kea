@@ -368,11 +368,12 @@ protected:
     ///
     /// Constructs a new "empty", OUTBOUND, request with the message id set
     /// and zone section populated based on the given domain.
+    /// It is declared virtual for test purposes.
     ///
     /// @return A D2UpdateMessagePtr to the new request.
     ///
     /// @throw NameChangeTransactionError if request cannot be constructed.
-    D2UpdateMessagePtr prepNewRequest(DdnsDomainPtr domain);
+    virtual D2UpdateMessagePtr prepNewRequest(DdnsDomainPtr domain);
 
     /// @brief Adds an RData for the lease address to the given RRset.
     ///

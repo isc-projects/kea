@@ -979,7 +979,7 @@ TEST_F(NameChangeTransactionTest, prepNewRequest) {
         NameChangeTransactionError);
 
     // Verify that prepNewRequest fails on invalid zone name.
-    // @todo This test becomes obsolete if/when DdsnDomain enforces valid
+    // @todo This test becomes obsolete if/when DdnsDomain enforces valid
     // names as is done in dns::Name.
     DdnsDomainPtr bsDomain = makeDomain(".badname","");
     ASSERT_THROW(request = name_change->prepNewRequest(bsDomain),
