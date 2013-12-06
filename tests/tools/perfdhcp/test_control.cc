@@ -98,6 +98,21 @@ TestControl::TestControl() {
 }
 
 void
+TestControl::checkLateMessages(RateControl& rate_control) {
+    // If diagnostics is disabled, there is no need to log late sent messages.
+    // If it is enabled and the rate control object indicates that the last
+    // sent message was late, bump up the counter in Stats Manager.
+    if (rate_control.isLateSent() && testDiags('i')) {
+        CommandOptions& options = CommandOptions::instance();
+        if (options.getIpVersion() == 4) {
+            stats_mgr4_->incrementCounter("latesend");
+        } else if (options.getIpVersion() == 6) {
+            stats_mgr6_->incrementCounter("latesend");
+        }
+    }
+}
+
+void
 TestControl::cleanCachedPackets() {
     CommandOptions& options = CommandOptions::instance();
     // When Renews are not sent, Reply packets are not cached so there
@@ -504,23 +519,25 @@ TestControl::getCurrentTimeout() const {
     ptime now(microsec_clock::universal_time());
     // Check that we haven't passed the moment to send the next set of
     // packets.
-    if (now >= send_due_ ||
-        (options.getRenewRate() != 0 && now >= renew_due_) ||
-        (options.getReleaseRate() != 0 && now >= release_due_)) {
+    if (now >= basic_rate_control_.getDue() ||
+        (options.getRenewRate() != 0 && now >= renew_rate_control_.getDue()) ||
+        (options.getReleaseRate() != 0 &&
+         now >= release_rate_control_.getDue())) {
         return (0);
     }
 
     // Let's assume that the due time for Solicit is the soonest.
-    ptime due = send_due_;
+    ptime due = basic_rate_control_.getDue();
     // If we are sending Renews and due time for Renew occurs sooner,
     // set the due time to Renew due time.
-    if ((options.getRenewRate()) != 0 && (renew_due_ < due)) {
-        due = renew_due_;
+    if ((options.getRenewRate()) != 0 && (renew_rate_control_.getDue() < due)) {
+        due = renew_rate_control_.getDue();
     }
     // If we are sending Releases and the due time for Release occurs
     // sooner than the current due time, let's use the due for Releases.
-    if ((options.getReleaseRate() != 0) && (release_due_ < due)) {
-        due = release_due_;
+    if ((options.getReleaseRate() != 0) &&
+        (release_rate_control_.getDue() < due)) {
+        due = release_rate_control_.getDue();
     }
     // Return the timeout in microseconds.
     return (time_period(now, due).length().total_microseconds());
@@ -552,49 +569,6 @@ TestControl::getElapsedTime(const T& pkt1, const T& pkt2) {
                   " between packets");
     }
     return(elapsed_period.length().total_milliseconds());
-}
-
-
-uint64_t
-TestControl::getNextExchangesNum(const boost::posix_time::ptime& send_due,
-                                 const int rate) {
-    CommandOptions& options = CommandOptions::instance();
-    // Get current time.
-    ptime now(microsec_clock::universal_time());
-    if (now >= send_due) {
-        // Reset number of exchanges.
-        uint64_t due_exchanges = 0;
-        // If rate is specified from the command line we have to
-        // synchornize with it.
-        if (rate != 0) {
-            time_period period(send_due, now);
-            time_duration duration = period.length();
-            // due_factor indicates the number of seconds that
-            // sending next chunk of packets will take.
-            double due_factor = duration.fractional_seconds() /
-                time_duration::ticks_per_second();
-            due_factor += duration.total_seconds();
-            // Multiplying due_factor by expected rate gives the number
-            // of exchanges to be initiated.
-            due_exchanges = static_cast<uint64_t>(due_factor * rate);
-            // We want to make sure that at least one packet goes out.
-            if (due_exchanges == 0) {
-                due_exchanges = 1;
-            }
-            // We should not exceed aggressivity as it could have been
-            // restricted from command line.
-            if (due_exchanges > options.getAggressivity()) {
-                due_exchanges = options.getAggressivity();
-            }
-        } else {
-            // Rate is not specified so we rely on aggressivity
-            // which is the number of packets to be sent in
-            // one chunk.
-            due_exchanges = options.getAggressivity();
-        }
-        return (due_exchanges);
-    }
-    return (0);
 }
 
 int
@@ -1280,14 +1254,16 @@ TestControl::registerOptionFactories() const {
 
 void
 TestControl::reset() {
-    send_due_ = microsec_clock::universal_time();
-    last_sent_ = send_due_;
-    last_report_ = send_due_;
-    renew_due_ = send_due_;
-    release_due_ = send_due_;
-    last_renew_ = send_due_;
-    last_release_ = send_due_;
+    CommandOptions& options = CommandOptions::instance();
+    basic_rate_control_.setAggressivity(options.getAggressivity());
+    basic_rate_control_.setRate(options.getRate());
+    renew_rate_control_.setAggressivity(options.getAggressivity());
+    renew_rate_control_.setRate(options.getRenewRate());
+    release_rate_control_.setAggressivity(options.getAggressivity());
+    release_rate_control_.setRate(options.getReleaseRate());
+
     transid_gen_.reset();
+    last_report_ = microsec_clock::universal_time();
     // Actual generators will have to be set later on because we need to
     // get command line parameters first.
     setTransidGenerator(NumberGeneratorPtr());
@@ -1353,11 +1329,10 @@ TestControl::run() {
     // Initialize Statistics Manager. Release previous if any.
     initializeStatsMgr();
     for (;;) {
-        // Calculate send due based on when last exchange was initiated.
-        updateSendDue(last_sent_, options.getRate(), send_due_);
         // Calculate number of packets to be sent to stay
         // catch up with rate.
-        uint64_t packets_due = getNextExchangesNum(send_due_, options.getRate());
+        uint64_t packets_due = basic_rate_control_.getOutboundMessageCount();
+        checkLateMessages(basic_rate_control_);
         if ((packets_due == 0) && testDiags('i')) {
             if (options.getIpVersion() == 4) {
                 stats_mgr4_->incrementCounter("shortwait");
@@ -1383,9 +1358,9 @@ TestControl::run() {
         // If -f<renew-rate> option was specified we have to check how many
         // Renew packets should be sent to catch up with a desired rate.
         if ((options.getIpVersion() == 6) && (options.getRenewRate() != 0)) {
-            updateSendDue(last_renew_, options.getRenewRate(), renew_due_);
             uint64_t renew_packets_due =
-                getNextExchangesNum(renew_due_, options.getRenewRate());
+                renew_rate_control_.getOutboundMessageCount();
+            checkLateMessages(renew_rate_control_);
             // Send Renew messages.
             sendMultipleMessages6(socket, DHCPV6_RENEW, renew_packets_due);
         }
@@ -1393,10 +1368,9 @@ TestControl::run() {
         // If -F<release-rate> option was specified we have to check how many
         // Release messages should be sent to catch up with a desired rate.
         if ((options.getIpVersion() == 6) && (options.getReleaseRate() != 0)) {
-            updateSendDue(last_release_, options.getReleaseRate(),
-                          release_due_);
             uint64_t release_packets_due =
-                getNextExchangesNum(release_due_, options.getReleaseRate());
+                release_rate_control_.getOutboundMessageCount();
+            checkLateMessages(release_rate_control_);
             // Send Release messages.
             sendMultipleMessages6(socket, DHCPV6_RELEASE, release_packets_due);
         }
@@ -1494,7 +1468,7 @@ TestControl::saveFirstPacket(const Pkt6Ptr& pkt) {
 void
 TestControl::sendDiscover4(const TestControlSocket& socket,
                            const bool preload /*= false*/) {
-    last_sent_ = microsec_clock::universal_time();
+    basic_rate_control_.updateSendTime();
     // Generate the MAC address to be passed in the packet.
     uint8_t randomized = 0;
     std::vector<uint8_t> mac_address = generateMacAddress(randomized);
@@ -1539,9 +1513,7 @@ void
 TestControl::sendDiscover4(const TestControlSocket& socket,
                            const std::vector<uint8_t>& template_buf,
                            const bool preload /* = false */) {
-    // last_sent_ has to be updated for each function that initiates
-    // new transaction. The packet exchange synchronization relies on this.
-    last_sent_ = microsec_clock::universal_time();
+    basic_rate_control_.updateSendTime();
     // Get the first argument if mulitple the same arguments specified
     // in the command line. First one refers to DISCOVER packets.
     const uint8_t arg_idx = 0;
@@ -1599,9 +1571,9 @@ TestControl::sendMessageFromReply(const uint16_t msg_type,
     }
     // We track the timestamp of last Release and Renew in different variables.
     if (msg_type == DHCPV6_RENEW) {
-        last_renew_ = microsec_clock::universal_time();
+        renew_rate_control_.updateSendTime();
     } else {
-        last_release_ = microsec_clock::universal_time();
+        release_rate_control_.updateSendTime();
     }
     Pkt6Ptr reply = reply_storage_.getRandom();
     if (!reply) {
@@ -1960,7 +1932,7 @@ TestControl::sendRequest6(const TestControlSocket& socket,
 void
 TestControl::sendSolicit6(const TestControlSocket& socket,
                           const bool preload /*= false*/) {
-    last_sent_ = microsec_clock::universal_time();
+    basic_rate_control_.updateSendTime();
     // Generate DUID to be passed to the packet
     uint8_t randomized = 0;
     std::vector<uint8_t> duid = generateDuid(randomized);
@@ -2009,7 +1981,7 @@ void
 TestControl::sendSolicit6(const TestControlSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const bool preload /*= false*/) {
-    last_sent_ = microsec_clock::universal_time();
+    basic_rate_control_.updateSendTime();
     const int arg_idx = 0;
     // Get transaction id offset.
     size_t transid_offset = getTransactionIdOffset(arg_idx);
@@ -2107,48 +2079,6 @@ TestControl::testDiags(const char diag) const {
     }
     return (false);
 }
-
-void
-TestControl::updateSendDue(const boost::posix_time::ptime& last_sent,
-                           const int rate,
-                           boost::posix_time::ptime& send_due) {
-    // If default constructor was called, this should not happen but
-    // if somebody has changed default constructor it is better to
-    // keep this check.
-    if (last_sent.is_not_a_date_time()) {
-        isc_throw(Unexpected, "time of last sent packet not initialized");
-    }
-    // Get the expected exchange rate.
-    CommandOptions& options = CommandOptions::instance();
-    // If rate was not specified we will wait just one clock tick to
-    // send next packet. This simulates best effort conditions.
-    long duration = 1;
-    if (rate != 0) {
-        // We use number of ticks instead of nanoseconds because
-        // nanosecond resolution may not be available on some
-        // machines. Number of ticks guarantees the highest possible
-        // timer resolution.
-        duration = time_duration::ticks_per_second() / rate;
-    }
-    // Calculate due time to initiate next chunk of exchanges.
-    send_due = last_sent + time_duration(0, 0, 0, duration);
-    // Check if it is already due.
-    ptime now(microsec_clock::universal_time());
-    // \todo verify if this condition is not too tight. In other words
-    // verify if this will not produce too many late sends.
-    // We might want to look at this once we are done implementing
-    // microsecond timeouts in IfaceMgr.
-    if (now > send_due) {
-        if (testDiags('i')) {
-            if (options.getIpVersion() == 4) {
-                stats_mgr4_->incrementCounter("latesend");
-            } else if (options.getIpVersion() == 6) {
-                stats_mgr6_->incrementCounter("latesend");
-            }
-        }
-    }
-}
-
 
 } // namespace perfdhcp
 } // namespace isc
