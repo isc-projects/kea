@@ -15,8 +15,9 @@
 #ifndef TEST_CONTROL_H
 #define TEST_CONTROL_H
 
-#include "packet_storage.h"
-#include "stats_mgr.h"
+#include <tests/tools/perfdhcp/packet_storage.h>
+#include <tests/tools/perfdhcp/rate_control.h>
+#include <tests/tools/perfdhcp/stats_mgr.h>
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp6.h>
@@ -491,21 +492,6 @@ protected:
     /// \return A current timeout in microseconds.
     uint32_t getCurrentTimeout() const;
 
-    /// \brief Returns number of exchanges to be started.
-    ///
-    /// Method returns number of new exchanges to be started as soon
-    /// as possible to satisfy expected rate. Calculation used here
-    /// is based on current time, due time calculated with
-    /// \ref updateSendDue function and expected rate.
-    ///
-    /// \param send_due Due time to initiate next chunk set exchanges.
-    /// \param rate A rate at which exchanges are initiated.
-    ///
-    /// \return number of exchanges to be started immediately.
-    static uint64_t
-    getNextExchangesNum(const boost::posix_time::ptime& send_due,
-                        const int rate);
-
     /// \brief Return template buffer.
     ///
     /// Method returns template buffer at specified index.
@@ -916,21 +902,18 @@ protected:
     /// \return true if diagnostics flag has been set.
     bool testDiags(const char diag) const;
 
-    /// \brief Update due time to initiate next chunk of exchanges.
-    ///
-    /// Method updates due time to initiate next chunk of exchanges.
-    /// Function takes current time, last sent packet's time and
-    /// expected rate in its calculations.
-    ///
-    /// \param last_sent A time when the last exchange was initiated.
-    /// \param rate A rate at which exchangesa re initiated
-    /// \param [out] send_due A reference to the time object to be updated
-    /// with the next due time.
-    void updateSendDue(const boost::posix_time::ptime& last_sent,
-                       const int rate,
-                       boost::posix_time::ptime& send_due);
-
 protected:
+
+    /// \brief Increments counter of late sent messages if required.
+    ///
+    /// This function checks if the message or set of messages of a given type,
+    /// were sent later than their due time. If they were sent late, it is
+    /// an indication that the perfdhcp doesn't catch up with the desired rate
+    /// for sending messages.
+    ///
+    /// \param rate_control An object tracking due times for a particular
+    /// type of messages.
+    void checkLateMessages(RateControl& rate_control);
 
     /// \brief Copies IA_NA or IA_PD option from one packet to another.
     ///
@@ -1073,20 +1056,13 @@ protected:
     std::string vector2Hex(const std::vector<uint8_t>& vec,
                            const std::string& separator = "") const;
 
-protected:
+    /// \brief A rate control class for Discover and Solicit messages.
+    RateControl basic_rate_control_;
+    /// \brief A rate control class for Renew messages.
+    RateControl renew_rate_control_;
+    /// \brief A rate control class for Release messages.
+    RateControl release_rate_control_;
 
-    boost::posix_time::ptime send_due_;    ///< Due time to initiate next chunk
-                                           ///< of exchanges.
-    boost::posix_time::ptime last_sent_;   ///< Indicates when the last exchange
-                                           ///< was initiated.
-    boost::posix_time::ptime renew_due_;   ///< Due time to send next set of
-                                           ///< Renew requests.
-    boost::posix_time::ptime release_due_; ///< Due time to send next set of
-                                           ///< Release requests.
-    boost::posix_time::ptime last_renew_;  ///< Indicates when the last Renew
-                                           ///< was attempted.
-    boost::posix_time::ptime last_release_;///< Indicates when the last Release
-                                           ///< was attempted.
     boost::posix_time::ptime last_report_; ///< Last intermediate report time.
 
     StatsMgr4Ptr stats_mgr4_;  ///< Statistics Manager 4.
