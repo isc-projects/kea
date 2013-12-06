@@ -36,6 +36,10 @@
  *
  * Regardless of your field of expertise, you are encouraged to visit the
  * <a href="http://bind10.isc.org/">BIND10 webpage (http://bind10.isc.org)</a>
+ *
+ * @section contrib Contributor's Guide
+ * - @subpage contributorGuide
+ *
  * @section hooksFramework Hooks Framework
  * - @subpage hooksdgDevelopersGuide
  * - @subpage dhcpv4Hooks
