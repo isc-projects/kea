@@ -351,3 +351,90 @@ additions which were received and accepted by an appropriate DNS server.
 This is an error message issued after DHCP_DDNS attempts to submit DNS mapping
 entry additions have failed.  The precise reason for the failure should be
 documented in preceding log entries.
+
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE A DNS udpate message to remove a forward DNS Address entry could not be constructed for this request: %1  reason: %2
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting a forward address (A or AAAA) removal.  This
+is due to invalid data contained in the NameChangeRequest. The request will be
+aborted.  This is most likely a configuration issue.
+
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED DNS Server, %1, rejected a DNS update request to remove the forward address mapping for FQDN, %2, with an RCODE: %3
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR DHCP_DDNS encountered an IO error sending a forward mapping address removal for FQDN %1 to DNS server %2
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a forward address remove.  The application will retry
+against the same server or others as appropriate.
+
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while removing forward address mapping for FQDN, %2
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to remove a forward address mapping, is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while removing a forward address mapping for FQDN %2 to DNS server %3
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was removing a forward address mapping.  The request will be
+aborted.  This is most likely a programmatic issue and should be reported.
+
+% DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE A DNS udpate message to remove forward DNS RR entries could not be constructed for this request: %1  reason: %2
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting forward RR (DHCID RR) removal.  This is due
+to invalid data contained in the NameChangeRequest. The request will be aborted.This is most likely a configuration issue.
+
+% DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED DNS Server, %1, rejected a DNS update request to remove forward RR entries for FQDN, %2, with an RCODE: %3
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+% DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR DHCP_DDNS encountered an IO error sending a forward RR removal for FQDN %1 to DNS server %2
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a forward RR remove.  The application will retry
+against the same server.
+
+% DHCP_DDNS_FORWARD_REMOVE_RRS_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while removing forward RRs for FQDN, %2
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to remove forward RRs mapping, is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while removing forward RRs for FQDN %2 to DNS server %3
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was removing forward RRs.  The request will be aborted. This is
+most likely a programmatic issue and should be reported.
+
+% DHCP_DDNS_REVERSE_REMOVE_BUILD_FAILURE A DNS update message to remove a reverse DNS entry could not be constructed from this request: %1  reason: %2
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting a reverse PTR removal.  This is
+due to invalid data contained in the NameChangeRequest. The request will be
+aborted.  This is most likely a configuration issue.
+
+% DHCP_DDNS_REVERSE_REMOVE_REJECTED DNS Server, %1, rejected a DNS update request to remove the reverse mapping for FQDN, %2, with an RCODE: %3
+This is an error message issued when an update was rejected by the DNS server
+it was sent to for the reason given by the RCODE. The rcode values are defined
+in RFC 2136.
+
+% DHCP_DDNS_REVERSE_REMOVE_IO_ERROR DHCP_DDNS encountered an IO error sending a reverse mapping remove for FQDN %1 to DNS server %2
+This is an error message issued when a communication error occurs while
+DHCP_DDNS is carrying out a reverse address update.  The application will
+retry against the same server or others as appropriate.
+
+% DHCP_DDNS_REVERSE_REMOVE_RESP_CORRUPT DHCP_DDNS received a corrupt response from the DNS server, %1, while removing reverse address mapping for FQDN, %2
+This is an error message issued when the response received by DHCP_DDNS, to a
+update request to remove a reverse address,  is mangled or malformed.
+The application will retry against the same server or others as appropriate.
+
+% DHCP_DDNS_REVERSE_REMOVE_BAD_DNSCLIENT_STATUS DHCP_DDNS received an unknown DNSClient status: %1, while removing reverse address mapping for FQDN %2 to DNS server %3
+This is an error message issued when DNSClient returns an unrecognized status
+while DHCP_DDNS was removing a reverse address mapping.  The request will be
+aborted.  This is most likely a programmatic issue and should be reported.
+
+% DHCP_DDNS_REMOVE_SUCCEEDED DHCP_DDNS successfully removed the DNS mapping addition for this request: %1
+This is a debug message issued after DHCP_DDNS has submitted DNS mapping
+removals which were received and accepted by an appropriate DNS server.
+
+% DHCP_DDNS_REMOVE_FAILED DHCP_DDNS failed attempting to make DNS mapping removals for this request: %1
+This is an error message issued after DHCP_DDNS attempts to submit DNS mapping
+entry removals have failed.  There precise reason for the failure should be
+documented in preceding log entries.
+

@@ -181,14 +181,14 @@ NameChangeTransaction::onModelFailure(const std::string& explanation) {
 }
 
 void
-NameChangeTransaction::retryTransition(const int server_sel_state) {
+NameChangeTransaction::retryTransition(const int fail_to_state) {
     if (update_attempts_ < MAX_UPDATE_TRIES_PER_SERVER) {
         // Re-enter the current state with same server selected.
         transition(getCurrState(), SERVER_SELECTED_EVT);
     } else  {
-        // Transition to given server selection state if we are out
+        // Transition to given fail_to_state state if we are out
         // of retries.
-        transition(server_sel_state, SERVER_IO_ERROR_EVT);
+        transition(fail_to_state, SERVER_IO_ERROR_EVT);
     }
 }
 
