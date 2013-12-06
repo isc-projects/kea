@@ -92,12 +92,9 @@ public:
     void setRelativeDueTimes(const int send_secs, const int renew_secs = 0,
                              const int release_secs = 0) {
         ptime now = microsec_clock::universal_time();
-        send_due_ = send_secs > 0 ?
-            now + seconds(abs(send_secs)) : now - seconds(abs(send_secs));
-        renew_due_ = renew_secs > 0 ?
-            now + seconds(abs(renew_secs)) : now - seconds(abs(renew_secs));
-        release_due_ = release_secs > 0 ?
-            now + seconds(abs(release_secs)) : now - seconds(abs(release_secs));
+        basic_rate_control_.setRelativeDue(send_secs);
+        renew_rate_control_.setRelativeDue(renew_secs);
+        release_rate_control_.setRelativeDue(release_secs);
 
     }
 
@@ -112,7 +109,6 @@ public:
     using TestControl::generateDuid;
     using TestControl::generateMacAddress;
     using TestControl::getCurrentTimeout;
-    using TestControl::getNextExchangesNum;
     using TestControl::getTemplateBuffer;
     using TestControl::initPacketTemplates;
     using TestControl::initializeStatsMgr;
@@ -128,13 +124,10 @@ public:
     using TestControl::sendSolicit6;
     using TestControl::setDefaults4;
     using TestControl::setDefaults6;
-    using TestControl::send_due_;
-    using TestControl::last_sent_;
+    using TestControl::basic_rate_control_;
+    using TestControl::renew_rate_control_;
+    using TestControl::release_rate_control_;
     using TestControl::last_report_;
-    using TestControl::renew_due_;
-    using TestControl::release_due_;
-    using TestControl::last_renew_;
-    using TestControl::last_release_;
     using TestControl::transid_gen_;
     using TestControl::macaddr_gen_;
     using TestControl::first_packet_serverid_;
@@ -913,16 +906,16 @@ public:
 
 // This test verifies that the class members are reset to expected values.
 TEST_F(TestControlTest, reset) {
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l ethx -r 50 -f 30 -F 10 -a 3 all"));
     NakedTestControl tc;
     tc.reset();
-    EXPECT_FALSE(tc.send_due_.is_not_a_date_time());
-    EXPECT_FALSE(tc.last_sent_.is_not_a_date_time());
+    EXPECT_EQ(3, tc.basic_rate_control_.getAggressivity());
+    EXPECT_EQ(3, tc.renew_rate_control_.getAggressivity());
+    EXPECT_EQ(3, tc.release_rate_control_.getAggressivity());
+    EXPECT_EQ(50, tc.basic_rate_control_.getRate());
+    EXPECT_EQ(30, tc.renew_rate_control_.getRate());
+    EXPECT_EQ(10, tc.release_rate_control_.getRate());
     EXPECT_FALSE(tc.last_report_.is_not_a_date_time());
-    EXPECT_FALSE(tc.renew_due_.is_not_a_date_time());
-    EXPECT_FALSE(tc.release_due_.is_not_a_date_time());
-    EXPECT_FALSE(tc.last_renew_.is_not_a_date_time());
-    EXPECT_FALSE(tc.last_release_.is_not_a_date_time());
-    EXPECT_FALSE(tc.send_due_.is_not_a_date_time());
     EXPECT_FALSE(tc.transid_gen_);
     EXPECT_FALSE(tc.macaddr_gen_);
     EXPECT_TRUE(tc.first_packet_serverid_.empty());
@@ -1444,33 +1437,6 @@ TEST_F(TestControlTest, PacketTemplates) {
         processCmdLine("perfdhcp -l 127.0.0.1 -T " + file5 + " all")
     );
     EXPECT_THROW(tc.initPacketTemplates(), isc::BadValue);
-}
-
-TEST_F(TestControlTest, RateControl) {
-    // We don't specify the exchange rate here so the aggressivity
-    // value will determine how many packets are to be send each
-    // time we query the getNextExchangesNum.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 all"));
-    CommandOptions& options = CommandOptions::instance();
-
-    NakedTestControl tc1;
-    uint64_t xchgs_num = tc1.getNextExchangesNum(microsec_clock::universal_time(),
-                                                 options.getRate());
-    EXPECT_EQ(options.getAggressivity(), xchgs_num);
-
-    // The exchange rate is now 1 per second. We don't know how many
-    // exchanges have to initiated exactly but for sure it has to be
-    // non-zero value. Also, since aggressivity is very high we expect
-    // that it will not be restricted by aggressivity.
-    ASSERT_NO_THROW(
-        processCmdLine("perfdhcp -l 127.0.0.1 -a 1000000 -r 1 all")
-    );
-    NakedTestControl tc2;
-    xchgs_num = tc2.getNextExchangesNum(microsec_clock::universal_time(),
-                                        options.getRate());
-    EXPECT_GT(xchgs_num, 0);
-    EXPECT_LT(xchgs_num, options.getAggressivity());
-    // @todo add more thorough checks for rate values.
 }
 
 TEST_F(TestControlTest, processRenew) {
