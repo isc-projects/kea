@@ -1549,7 +1549,10 @@ Parameters:
                 <term>integer</term>
                 <listitem>
                     <simpara>
-                        A basic integer; can be set directly with <command>config set</command>, to any integer value.
+                        A basic integer; can be set directly with
+                        <command>config set</command>, to any integer
+                        value. The value must not be quoted, or else, it
+                        will be parsed as a string.
                     </simpara>
                 </listitem>
             </varlistentry>
@@ -1557,7 +1560,10 @@ Parameters:
                 <term>real</term>
                 <listitem>
                     <simpara>
-                        A basic floating point number; can be set directly with <command>config set</command>, to any floating point value.
+                        A basic floating point number; can be set
+                        directly with <command>config set</command>, to
+                        any floating point value. The value must not be
+                        quoted, or else, it will be parsed as a string.
                     </simpara>
                 </listitem>
             </varlistentry>
@@ -1565,7 +1571,12 @@ Parameters:
                 <term>boolean</term>
                 <listitem>
                     <simpara>
-                        A basic boolean value; can be set directly with <command>config set</command>, to either <command>true</command> or <command>false</command>.
+                        A basic boolean value; can be set directly with
+                        <command>config set</command>, to either
+                        <command>true</command> or
+                        <command>false</command>. The value must not be
+                        quoted, or else, it will be parsed as a
+                        string. Integer values are not allowed.
                     </simpara>
                 </listitem>
             </varlistentry>
@@ -1573,7 +1584,9 @@ Parameters:
                 <term>string</term>
                 <listitem>
                     <simpara>
-                        A basic string value; can be set directly with <command>config set,</command> so any string. Double quotation marks are optional.
+                        A basic string value; can be set directly with
+                        <command>config set</command> to any
+                        string. Double quotation marks are optional.
                     </simpara>
                 </listitem>
             </varlistentry>
