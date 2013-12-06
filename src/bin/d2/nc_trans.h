@@ -280,7 +280,7 @@ protected:
     /// @param server_sel_state  State to transition to if maximum attempts
     /// have been tried.
     ///
-    void retryTransition(const int server_sel_state);
+    void retryTransition(const int fail_to_state);
 
     /// @brief Sets the update request packet to the given packet.
     ///

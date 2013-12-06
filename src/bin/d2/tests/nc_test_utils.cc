@@ -29,6 +29,8 @@ namespace d2 {
 const char* TEST_DNS_SERVER_IP = "127.0.0.1";
 size_t TEST_DNS_SERVER_PORT = 5301;
 
+//*************************** FauxServer class ***********************
+
 FauxServer::FauxServer(asiolink::IOService& io_service,
                        asiolink::IOAddress& address, size_t port)
     :io_service_(io_service), address_(address), port_(port),
@@ -136,6 +138,135 @@ FauxServer::requestHandler(const asio::error_code& error,
     }
 }
 
+//********************** TransactionTest class ***********************
+
+const unsigned int TransactionTest::FORWARD_CHG = 0x01;
+const unsigned int TransactionTest::REVERSE_CHG = 0x02;
+const unsigned int TransactionTest::FWD_AND_REV_CHG = REVERSE_CHG | FORWARD_CHG;
+
+TransactionTest::TransactionTest()
+    : io_service_(new isc::asiolink::IOService()), ncr_(),
+    timer_(*io_service_), run_time_(0) {
+}
+
+TransactionTest::~TransactionTest() {
+}
+
+void 
+TransactionTest::runTimedIO(int run_time) {
+    run_time_ = run_time;
+    timer_.setup(boost::bind(&TransactionTest::timesUp, this), run_time_);
+    io_service_->run();
+}
+
+void 
+TransactionTest::timesUp() {
+    io_service_->stop();
+    FAIL() << "Test Time: " << run_time_ << " expired";
+}
+
+void 
+TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type, 
+                                         int change_mask) {
+    const char* msg_str =
+        "{"
+        " \"change_type\" : 0 , "
+        " \"forward_change\" : true , "
+        " \"reverse_change\" : true , "
+        " \"fqdn\" : \"my.forward.example.com.\" , "
+        " \"ip_address\" : \"192.168.2.1\" , "
+        " \"dhcid\" : \"0102030405060708\" , "
+        " \"lease_expires_on\" : \"20130121132405\" , "
+        " \"lease_length\" : 1300 "
+        "}";
+
+    // Create NameChangeRequest from JSON string.
+    ncr_ = dhcp_ddns::NameChangeRequest::fromJSON(msg_str);
+
+    // Set the change type.
+    ncr_->setChangeType(chg_type);
+
+    // If the change mask does not include a forward change clear the
+    // forward domain; otherwise create the domain and its servers.
+    if (!(change_mask & FORWARD_CHG)) {
+        ncr_->setForwardChange(false);
+        forward_domain_.reset();
+    } else {
+        // Create the forward domain and then its servers.
+        forward_domain_ = makeDomain("example.com.");
+        addDomainServer(forward_domain_, "forward.example.com", 
+                        "127.0.0.1", 5301);
+        addDomainServer(forward_domain_, "forward2.example.com",
+                        "127.0.0.1", 5302);
+    }
+
+    // If the change mask does not include a reverse change clear the
+    // reverse domain; otherwise create the domain and its servers.
+    if (!(change_mask & REVERSE_CHG)) {
+        ncr_->setReverseChange(false);
+        reverse_domain_.reset();
+    } else {
+        // Create the reverse domain and its server.
+        reverse_domain_ = makeDomain("2.168.192.in.addr.arpa.");
+        addDomainServer(reverse_domain_, "reverse.example.com",
+                        "127.0.0.1", 5301);
+        addDomainServer(reverse_domain_, "reverse2.example.com",
+                        "127.0.0.1", 5302);
+    }
+}
+
+void 
+TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
+                                         int change_mask) {
+    const char* msg_str =
+        "{"
+        " \"change_type\" : 0 , "
+        " \"forward_change\" : true , "
+        " \"reverse_change\" : true , "
+        " \"fqdn\" : \"my6.forward.example.com.\" , "
+        " \"ip_address\" : \"2001:1::100\" , "
+        " \"dhcid\" : \"0102030405060708\" , "
+        " \"lease_expires_on\" : \"20130121132405\" , "
+        " \"lease_length\" : 1300 "
+        "}";
+
+    // Create NameChangeRequest from JSON string.
+    ncr_ = makeNcrFromString(msg_str);
+
+    // Set the change type.
+    ncr_->setChangeType(chg_type);
+
+    // If the change mask does not include a forward change clear the
+    // forward domain; otherwise create the domain and its servers.
+    if (!(change_mask & FORWARD_CHG)) {
+        ncr_->setForwardChange(false);
+        forward_domain_.reset();
+    } else {
+        // Create the forward domain and then its servers.
+        forward_domain_ = makeDomain("example.com.");
+        addDomainServer(forward_domain_, "fwd6-server.example.com",
+                        "::1", 5301);
+        addDomainServer(forward_domain_, "fwd6-server2.example.com",
+                        "::1", 5302);
+    }
+
+    // If the change mask does not include a reverse change clear the
+    // reverse domain; otherwise create the domain and its servers.
+    if (!(change_mask & REVERSE_CHG)) {
+        ncr_->setReverseChange(false);
+        reverse_domain_.reset();
+    } else {
+        // Create the reverse domain and its server.
+        reverse_domain_ = makeDomain("1.2001.ip6.arpa.");
+        addDomainServer(reverse_domain_, "rev6-server.example.com",
+                        "::1", 5301);
+        addDomainServer(reverse_domain_, "rev6-server2.example.com",
+                        "::1", 5302);
+    }
+}
+
+
+//********************** Functions ****************************
 
 void
 checkRRCount(const D2UpdateMessagePtr& request,
@@ -389,6 +520,34 @@ void checkReverseReplaceRequest(NameChangeTransaction& tran) {
     dns::MessageRenderer renderer;
     ASSERT_NO_THROW(request->toWire(renderer));
 }
+
+void checkForwardRemoveAddrsRequest(NameChangeTransaction& tran) {
+    const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
+    ASSERT_TRUE(request);
+
+    // Safety check.
+    dhcp_ddns::NameChangeRequestPtr ncr = tran.getNcr();
+    ASSERT_TRUE(ncr);
+}
+
+void checkForwardRemoveRRsRequest(NameChangeTransaction& tran) {
+    const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
+    ASSERT_TRUE(request);
+
+    // Safety check.
+    dhcp_ddns::NameChangeRequestPtr ncr = tran.getNcr();
+    ASSERT_TRUE(ncr);
+}
+
+void checkReverseRemoveRequest(NameChangeTransaction& tran) {
+    const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
+    ASSERT_TRUE(request);
+
+    // Safety check.
+    dhcp_ddns::NameChangeRequestPtr ncr = tran.getNcr();
+    ASSERT_TRUE(ncr);
+}
+
 
 }; // namespace isc::d2
 }; // namespace isc

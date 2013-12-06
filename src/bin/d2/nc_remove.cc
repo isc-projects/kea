@@ -13,106 +13,109 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <d2/d2_log.h>
-#include <d2/d2_cfg_mgr.h>
-#include <d2/nc_add.h>
+#include <d2/nc_remove.h>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 
-#include <util/buffer.h>
-#include <dns/rdataclass.h>
-
 namespace isc {
 namespace d2 {
 
-// NameAddTransaction states
-const int NameAddTransaction::ADDING_FWD_ADDRS_ST;
-const int NameAddTransaction::REPLACING_FWD_ADDRS_ST;
-const int NameAddTransaction::REPLACING_REV_PTRS_ST;
 
-// NameAddTransaction events
-const int NameAddTransaction::FQDN_IN_USE_EVT;
-const int NameAddTransaction::FQDN_NOT_IN_USE_EVT;
+// NameRemoveTransaction states
+const int NameRemoveTransaction::REMOVING_FWD_ADDRS_ST;
+const int NameRemoveTransaction::REMOVING_FWD_RRS_ST;
+const int NameRemoveTransaction::REMOVING_REV_PTRS_ST;
 
-NameAddTransaction::
-NameAddTransaction(IOServicePtr& io_service,
+// NameRemoveTransaction events
+// @todo none so far
+
+NameRemoveTransaction::
+NameRemoveTransaction(IOServicePtr& io_service,
                    dhcp_ddns::NameChangeRequestPtr& ncr,
                    DdnsDomainPtr& forward_domain,
                    DdnsDomainPtr& reverse_domain)
     : NameChangeTransaction(io_service, ncr, forward_domain, reverse_domain) {
-    if (ncr->getChangeType() != isc::dhcp_ddns::CHG_ADD) {
-        isc_throw (NameAddTransactionError,
-                   "NameAddTransaction, request type must be CHG_ADD");
+    if (ncr->getChangeType() != isc::dhcp_ddns::CHG_REMOVE) {
+        isc_throw (NameRemoveTransactionError,
+                   "NameRemoveTransaction, request type must be CHG_REMOVE");
     }
 }
 
-NameAddTransaction::~NameAddTransaction(){
+NameRemoveTransaction::~NameRemoveTransaction(){
 }
 
 void
-NameAddTransaction::defineEvents() {
+NameRemoveTransaction::defineEvents() {
     // Call superclass impl first.
     NameChangeTransaction::defineEvents();
 
-    // Define NameAddTransaction events.
-    defineEvent(FQDN_IN_USE_EVT, "FQDN_IN_USE_EVT");
-    defineEvent(FQDN_NOT_IN_USE_EVT, "FQDN_NOT_IN_USE_EVT");
+    // Define NameRemoveTransaction events.
+    // @todo none so far
+    // defineEvent(TBD_EVENT, "TBD_EVT");
 }
 
 void
-NameAddTransaction::verifyEvents() {
+NameRemoveTransaction::verifyEvents() {
     // Call superclass impl first.
     NameChangeTransaction::verifyEvents();
 
-    // Verify NameAddTransaction events.
-    getEvent(FQDN_IN_USE_EVT);
-    getEvent(FQDN_NOT_IN_USE_EVT);
+    // Verify NameRemoveTransaction events.
+    // @todo none so far
+    // getEvent(TBD_EVENT);
 }
 
 void
-NameAddTransaction::defineStates() {
+NameRemoveTransaction::defineStates() {
     // Call superclass impl first.
     NameChangeTransaction::defineStates();
 
-    // Define NameAddTransaction states.
+    // Define NameRemoveTransaction states.
     defineState(READY_ST, "READY_ST",
-             boost::bind(&NameAddTransaction::readyHandler, this));
+                boost::bind(&NameRemoveTransaction::readyHandler, this));
 
     defineState(SELECTING_FWD_SERVER_ST, "SELECTING_FWD_SERVER_ST",
-             boost::bind(&NameAddTransaction::selectingFwdServerHandler, this));
+                boost::bind(&NameRemoveTransaction::selectingFwdServerHandler,
+                            this));
 
     defineState(SELECTING_REV_SERVER_ST, "SELECTING_REV_SERVER_ST",
-             boost::bind(&NameAddTransaction::selectingRevServerHandler, this));
+                boost::bind(&NameRemoveTransaction::selectingRevServerHandler,
+                            this));
 
-    defineState(ADDING_FWD_ADDRS_ST, "ADDING_FWD_ADDRS_ST",
-             boost::bind(&NameAddTransaction::addingFwdAddrsHandler, this));
+    defineState(REMOVING_FWD_ADDRS_ST, "REMOVING_FWD_ADDRS_ST",
+                boost::bind(&NameRemoveTransaction::removingFwdAddrsHandler,
+                            this));
 
-    defineState(REPLACING_FWD_ADDRS_ST, "REPLACING_FWD_ADDRS_ST",
-             boost::bind(&NameAddTransaction::replacingFwdAddrsHandler, this));
+    defineState(REMOVING_FWD_RRS_ST, "REMOVING_FWD_RRS_ST",
+                boost::bind(&NameRemoveTransaction::removingFwdRRsHandler,
+                            this));
 
-    defineState(REPLACING_REV_PTRS_ST, "REPLACING_REV_PTRS_ST",
-             boost::bind(&NameAddTransaction::replacingRevPtrsHandler, this));
+    defineState(REMOVING_REV_PTRS_ST, "REMOVING_REV_PTRS_ST",
+                boost::bind(&NameRemoveTransaction::removingRevPtrsHandler,
+                            this));
 
     defineState(PROCESS_TRANS_OK_ST, "PROCESS_TRANS_OK_ST",
-             boost::bind(&NameAddTransaction::processAddOkHandler, this));
+                boost::bind(&NameRemoveTransaction::processRemoveOkHandler,
+                            this));
 
     defineState(PROCESS_TRANS_FAILED_ST, "PROCESS_TRANS_FAILED_ST",
-             boost::bind(&NameAddTransaction::processAddFailedHandler, this));
-
+                boost::bind(&NameRemoveTransaction::processRemoveFailedHandler,
+                            this));
 }
+
 void
-NameAddTransaction::verifyStates() {
+NameRemoveTransaction::verifyStates() {
     // Call superclass impl first.
     NameChangeTransaction::verifyStates();
 
-    // Verify NameAddTransaction states.
-    getState(ADDING_FWD_ADDRS_ST);
-    getState(REPLACING_FWD_ADDRS_ST);
-    getState(REPLACING_REV_PTRS_ST);
+    // Verify NameRemoveTransaction states.
+    getState(REMOVING_FWD_ADDRS_ST);
+    getState(REMOVING_FWD_RRS_ST);
+    getState(REMOVING_REV_PTRS_ST);
 }
 
 void
-NameAddTransaction::readyHandler() {
+NameRemoveTransaction::readyHandler() {
     switch(getNextEvent()) {
     case START_EVT:
         if (getForwardDomain()) {
@@ -126,13 +129,13 @@ NameAddTransaction::readyHandler() {
         break;
     default:
         // Event is invalid.
-        isc_throw(NameAddTransactionError,
+        isc_throw(NameRemoveTransactionError,
                   "Wrong event for context: " << getContextStr());
     }
 }
 
 void
-NameAddTransaction::selectingFwdServerHandler() {
+NameRemoveTransaction::selectingFwdServerHandler() {
     switch(getNextEvent()) {
     case SELECT_SERVER_EVT:
         // First time through for this transaction, so initialize server
@@ -145,14 +148,14 @@ NameAddTransaction::selectingFwdServerHandler() {
         break;
     default:
         // Event is invalid.
-        isc_throw(NameAddTransactionError,
+        isc_throw(NameRemoveTransactionError,
                   "Wrong event for context: " << getContextStr());
     }
 
     // Select the next server from the list of forward servers.
     if (selectNextServer()) {
         // We have a server to try.
-        transition(ADDING_FWD_ADDRS_ST, SERVER_SELECTED_EVT);
+        transition(REMOVING_FWD_ADDRS_ST, SERVER_SELECTED_EVT);
     }
     else {
         // Server list is exhausted, so fail the transaction.
@@ -161,7 +164,7 @@ NameAddTransaction::selectingFwdServerHandler() {
 }
 
 void
-NameAddTransaction::addingFwdAddrsHandler() {
+NameRemoveTransaction::removingFwdAddrsHandler() {
     if (doOnEntry()) {
         // Clear the request on initial transition. This allows us to reuse
         // the request on retries if necessary.
@@ -173,12 +176,13 @@ NameAddTransaction::addingFwdAddrsHandler() {
         if (!getDnsUpdateRequest()) {
             // Request hasn't been constructed yet, so build it.
             try {
-                buildAddFwdAddressRequest();
+                buildRemoveFwdAddressRequest();
             } catch (const std::exception& ex) {
                 // While unlikely, the build might fail if we have invalid
                 // data.  Should that be the case, we need to fail the
                 // transaction.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE)
+                LOG_ERROR(dctl_logger, 
+                          DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE)
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -196,26 +200,16 @@ NameAddTransaction::addingFwdAddrsHandler() {
         case DNSClient::SUCCESS: {
             // We successfully received a response packet from the server.
             const dns::Rcode& rcode = getDnsUpdateResponse()->getRcode();
-            if (rcode == dns::Rcode::NOERROR()) {
-                // We were able to add it. Mark it as done.
-                setForwardChangeCompleted(true);
-
-                // If request calls for reverse update then do that next,
-                // otherwise we can process ok.
-                if (getReverseDomain()) {
-                    transition(SELECTING_REV_SERVER_ST, SELECT_SERVER_EVT);
-                } else {
-                    transition(PROCESS_TRANS_OK_ST, UPDATE_OK_EVT);
-                }
-            } else if (rcode == dns::Rcode::YXDOMAIN()) {
-                // FQDN is in use so we need to attempt to replace
-                // forward address.
-                transition(REPLACING_FWD_ADDRS_ST, FQDN_IN_USE_EVT);
+            if ((rcode == dns::Rcode::NOERROR()) ||
+                (rcode == dns::Rcode::NXDOMAIN())) {
+                // We were able to remove it or it wasn't there, now we
+                // need to remove any other RRs for this FQDN.
+                transition(REMOVING_FWD_RRS_ST, UPDATE_OK_EVT);
             } else {
                 // Per RFC4703 any other value means cease.
                 // If we get not authorized should we try the next server in
                 // the list? @todo  This needs some discussion perhaps.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_REJECTED)
+                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED)
                           .arg(getCurrentServer()->getIpAddress())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
@@ -231,7 +225,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
             // to select the next server for a retry.
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_IO_ERROR)
+            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR)
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->getIpAddress());
 
@@ -241,7 +235,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
         case DNSClient::INVALID_RESPONSE:
             // A response was received but was corrupt. Retry it like an IO
             // error.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT)
+            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT)
                       .arg(getCurrentServer()->getIpAddress())
                       .arg(getNcr()->getFqdn());
 
@@ -251,7 +245,8 @@ NameAddTransaction::addingFwdAddrsHandler() {
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS)
+            LOG_ERROR(dctl_logger, 
+                      DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->getIpAddress());
@@ -265,13 +260,14 @@ NameAddTransaction::addingFwdAddrsHandler() {
 
     default:
         // Event is invalid.
-        isc_throw(NameAddTransactionError,
+        isc_throw(NameRemoveTransactionError,
                   "Wrong event for context: " << getContextStr());
     }
 }
 
+
 void
-NameAddTransaction::replacingFwdAddrsHandler() {
+NameRemoveTransaction::removingFwdRRsHandler() {
     if (doOnEntry()) {
         // Clear the request on initial transition. This allows us to reuse
         // the request on retries if necessary.
@@ -279,17 +275,18 @@ NameAddTransaction::replacingFwdAddrsHandler() {
     }
 
     switch(getNextEvent()) {
-    case FQDN_IN_USE_EVT:
+    case UPDATE_OK_EVT:
     case SERVER_SELECTED_EVT:
         if (!getDnsUpdateRequest()) {
             // Request hasn't been constructed yet, so build it.
             try {
-                buildReplaceFwdAddressRequest();
+                buildRemoveFwdRRsRequest();
             } catch (const std::exception& ex) {
                 // While unlikely, the build might fail if we have invalid
                 // data.  Should that be the case, we need to fail the
                 // transaction.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE)
+                LOG_ERROR(dctl_logger, 
+                          DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE)
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -307,8 +304,13 @@ NameAddTransaction::replacingFwdAddrsHandler() {
         case DNSClient::SUCCESS: {
             // We successfully received a response packet from the server.
             const dns::Rcode& rcode = getDnsUpdateResponse()->getRcode();
-            if (rcode == dns::Rcode::NOERROR()) {
-                // We were able to replace the forward mapping. Mark it as done.
+            // @todo Not sure if NXDOMAIN is ok here, but I think so.
+            // A Rcode of NXDOMAIN would mean there are no RRs for the FQDN,
+            // which is fine.  We were asked to delete them, they are not there
+            // so all is well. 
+            if ((rcode == dns::Rcode::NOERROR()) || 
+                (rcode == dns::Rcode::NXDOMAIN())) {
+                // We were able to remove the forward mapping. Mark it as done.
                 setForwardChangeCompleted(true);
 
                 // If request calls for reverse update then do that next,
@@ -318,16 +320,11 @@ NameAddTransaction::replacingFwdAddrsHandler() {
                 } else {
                     transition(PROCESS_TRANS_OK_ST, UPDATE_OK_EVT);
                 }
-            } else if (rcode == dns::Rcode::NXDOMAIN()) {
-                // FQDN is NOT in use so go back and do the forward add address.
-                // Covers the case that it was there when we tried to add it,
-                // but has since been removed per RFC 4703.
-                transition(ADDING_FWD_ADDRS_ST, SERVER_SELECTED_EVT);
             } else {
                 // Per RFC4703 any other value means cease.
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_REJECTED)
+                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED)
                           .arg(getCurrentServer()->getIpAddress())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
@@ -343,32 +340,38 @@ NameAddTransaction::replacingFwdAddrsHandler() {
             // to select the next server for a retry.
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_IO_ERROR)
+            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR)
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->getIpAddress());
 
-            // If we are out of retries on this server, we go back and start
-            // all over on a new server.
-            retryTransition(SELECTING_FWD_SERVER_ST);
+            // @note If we exhaust the IO retries for the current server 
+            // due to IO failures, we will abort the remaining updates.  
+            // The rational is that we are only in this state, if the remove 
+            // of the forward address RR succeeded (removingFwdAddrsHandler) 
+            // on the current server. Therefore  we should not attempt another
+            // removal on a different server.  This is perhaps a point
+            // for discussion. 
+            // @todo Should we go ahead with the reverse remove?
+            retryTransition(PROCESS_TRANS_FAILED_ST);
             break;
 
         case DNSClient::INVALID_RESPONSE:
             // A response was received but was corrupt. Retry it like an IO
             // error.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT)
+            LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_RESP_CORRUPT)
                       .arg(getCurrentServer()->getIpAddress())
                       .arg(getNcr()->getFqdn());
 
-            // If we are out of retries on this server, we go back and start
-            // all over on a new server.
-            retryTransition(SELECTING_FWD_SERVER_ST);
+            // If we are out of retries on this server abandon the transaction.
+            // (Same logic as the case for TIMEOUT above).
+            retryTransition(PROCESS_TRANS_FAILED_ST);
             break;
 
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
             LOG_ERROR(dctl_logger,
-                      DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS)
+                      DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->getIpAddress());
@@ -382,13 +385,14 @@ NameAddTransaction::replacingFwdAddrsHandler() {
 
     default:
         // Event is invalid.
-        isc_throw(NameAddTransactionError,
+        isc_throw(NameRemoveTransactionError,
                   "Wrong event for context: " << getContextStr());
     }
 }
 
+
 void
-NameAddTransaction::selectingRevServerHandler() {
+NameRemoveTransaction::selectingRevServerHandler() {
     switch(getNextEvent()) {
     case SELECT_SERVER_EVT:
         // First time through for this transaction, so initialize server
@@ -401,14 +405,14 @@ NameAddTransaction::selectingRevServerHandler() {
         break;
     default:
         // Event is invalid.
-        isc_throw(NameAddTransactionError,
+        isc_throw(NameRemoveTransactionError,
                   "Wrong event for context: " << getContextStr());
     }
 
     // Select the next server from the list of forward servers.
     if (selectNextServer()) {
         // We have a server to try.
-        transition(REPLACING_REV_PTRS_ST, SERVER_SELECTED_EVT);
+        transition(REMOVING_REV_PTRS_ST, SERVER_SELECTED_EVT);
     }
     else {
         // Server list is exhausted, so fail the transaction.
@@ -418,7 +422,7 @@ NameAddTransaction::selectingRevServerHandler() {
 
 
 void
-NameAddTransaction::replacingRevPtrsHandler() {
+NameRemoveTransaction::removingRevPtrsHandler() {
     if (doOnEntry()) {
         // Clear the request on initial transition. This allows us to reuse
         // the request on retries if necessary.
@@ -430,12 +434,12 @@ NameAddTransaction::replacingRevPtrsHandler() {
         if (!getDnsUpdateRequest()) {
             // Request hasn't been constructed yet, so build it.
             try {
-                buildReplaceRevPtrsRequest();
+                buildRemoveRevPtrsRequest();
             } catch (const std::exception& ex) {
                 // While unlikely, the build might fail if we have invalid
                 // data.  Should that be the case, we need to fail the
                 // transaction.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_BUILD_FAILURE)
+                LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REMOVE_BUILD_FAILURE)
                           .arg(getNcr()->toText())
                           .arg(ex.what());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -453,15 +457,17 @@ NameAddTransaction::replacingRevPtrsHandler() {
         case DNSClient::SUCCESS: {
             // We successfully received a response packet from the server.
             const dns::Rcode& rcode = getDnsUpdateResponse()->getRcode();
-            if (rcode == dns::Rcode::NOERROR()) {
+            if ((rcode == dns::Rcode::NOERROR()) ||
+                (rcode == dns::Rcode::NXDOMAIN())) {
                 // We were able to update the reverse mapping. Mark it as done.
+                // @todo For now we are also treating NXDOMAIN as success.
                 setReverseChangeCompleted(true);
                 transition(PROCESS_TRANS_OK_ST, UPDATE_OK_EVT);
             } else {
                 // Per RFC4703 any other value means cease.
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
-                LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_REJECTED)
+                LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REMOVE_REJECTED)
                           .arg(getCurrentServer()->getIpAddress())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
@@ -477,7 +483,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
             // to select the next server for a retry.
             // @note For now we treat OTHER as an IO error like TIMEOUT. It
             // is not entirely clear if this is accurate.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_IO_ERROR)
+            LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REMOVE_IO_ERROR)
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->getIpAddress());
 
@@ -489,7 +495,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
         case DNSClient::INVALID_RESPONSE:
             // A response was received but was corrupt. Retry it like an IO
             // error.
-            LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT)
+            LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REMOVE_RESP_CORRUPT)
                       .arg(getCurrentServer()->getIpAddress())
                       .arg(getNcr()->getFqdn());
 
@@ -502,7 +508,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
             LOG_ERROR(dctl_logger,
-                      DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS)
+                      DHCP_DDNS_REVERSE_REMOVE_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->getIpAddress());
@@ -516,48 +522,52 @@ NameAddTransaction::replacingRevPtrsHandler() {
 
     default:
         // Event is invalid.
-        isc_throw(NameAddTransactionError,
+        isc_throw(NameRemoveTransactionError,
                   "Wrong event for context: " << getContextStr());
     }
 }
 
+
 void
-NameAddTransaction::processAddOkHandler() {
+NameRemoveTransaction::processRemoveOkHandler() {
     switch(getNextEvent()) {
     case UPDATE_OK_EVT:
-        LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL, DHCP_DDNS_ADD_SUCCEEDED)
+        LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL, DHCP_DDNS_REMOVE_SUCCEEDED)
                   .arg(getNcr()->toText());
         setNcrStatus(dhcp_ddns::ST_COMPLETED);
         endModel();
         break;
     default:
         // Event is invalid.
-        isc_throw(NameAddTransactionError,
+        isc_throw(NameRemoveTransactionError,
                   "Wrong event for context: " << getContextStr());
     }
 }
 
+
 void
-NameAddTransaction::processAddFailedHandler() {
+NameRemoveTransaction::processRemoveFailedHandler() {
     switch(getNextEvent()) {
     case UPDATE_FAILED_EVT:
     case NO_MORE_SERVERS_EVT:
-        LOG_ERROR(dctl_logger, DHCP_DDNS_ADD_FAILED).arg(getNcr()->toText());
+    case SERVER_IO_ERROR_EVT:
+        LOG_ERROR(dctl_logger, DHCP_DDNS_REMOVE_FAILED).arg(getNcr()->toText());
         setNcrStatus(dhcp_ddns::ST_FAILED);
         endModel();
         break;
     default:
         // Event is invalid.
-        isc_throw(NameAddTransactionError,
+        isc_throw(NameRemoveTransactionError,
                   "Wrong event for context: " << getContextStr());
     }
 }
 
 void
-NameAddTransaction::buildAddFwdAddressRequest() {
+NameRemoveTransaction::buildRemoveFwdAddressRequest() {
     // Construct an empty request.
     D2UpdateMessagePtr request = prepNewRequest(getForwardDomain());
 
+#if 0
     // Construct dns::Name from NCR fqdn.
     dns::Name fqdn(dns::Name(getNcr()->getFqdn()));
 
@@ -586,16 +596,18 @@ NameAddTransaction::buildAddFwdAddressRequest() {
                                 dns::RRType::DHCID(), dns::RRTTL(0)));
     addDhcidRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+#endif
 
     // Set the transaction's update request to the new request.
     setDnsUpdateRequest(request);
 }
 
 void
-NameAddTransaction::buildReplaceFwdAddressRequest() {
+NameRemoveTransaction::buildRemoveFwdRRsRequest() {
     // Construct an empty request.
     D2UpdateMessagePtr request = prepNewRequest(getForwardDomain());
 
+#if 0
     // Construct dns::Name from NCR fqdn.
     dns::Name fqdn(dns::Name(getNcr()->getFqdn()));
 
@@ -631,16 +643,18 @@ NameAddTransaction::buildReplaceFwdAddressRequest() {
                                 getAddressRRType(), dns::RRTTL(0)));
     addLeaseAddressRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+#endif
 
     // Set the transaction's update request to the new request.
     setDnsUpdateRequest(request);
 }
 
 void
-NameAddTransaction::buildReplaceRevPtrsRequest() {
+NameRemoveTransaction::buildRemoveRevPtrsRequest() {
     // Construct an empty request.
     D2UpdateMessagePtr request = prepNewRequest(getReverseDomain());
 
+#if 0
     // Create the reverse IP address "FQDN".
     std::string rev_addr = D2CfgMgr::reverseIpAddress(getNcr()->getIpAddress());
     dns::Name rev_ip(rev_addr);
@@ -671,6 +685,7 @@ NameAddTransaction::buildReplaceRevPtrsRequest() {
                                 dns::RRType::DHCID(), dns::RRTTL(0)));
     addDhcidRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+#endif
 
     // Set the transaction's update request to the new request.
     setDnsUpdateRequest(request);

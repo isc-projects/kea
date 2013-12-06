@@ -12,97 +12,93 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef NC_ADD_H
-#define NC_ADD_H
+#ifndef NC_REMOVE_H
+#define NC_REMOVE_H
 
-/// @file nc_add.h This file defines the class NameAddTransaction.
+/// @file nc_remove.h This file defines the class NameRemoveTransaction.
 
 #include <d2/nc_trans.h>
-#include <dns/rdata.h>
 
 namespace isc {
 namespace d2 {
 
-/// @brief Thrown if the NameAddTransaction encounters a general error.
-class NameAddTransactionError : public isc::Exception {
+/// @brief Thrown if the NameRemoveTransaction encounters a general error.
+class NameRemoveTransactionError : public isc::Exception {
 public:
-    NameAddTransactionError(const char* file, size_t line,
+    NameRemoveTransactionError(const char* file, size_t line,
                                const char* what) :
         isc::Exception(file, line, what) { };
 };
 
-/// @brief Embodies the "life-cycle" required to carry out a DDNS Add update.
+/// @brief Embodies the "life-cycle" required to carry out a DDNS Remove update.
 ///
-/// NameAddTransaction implements a state machine for adding (or replacing) a
-/// forward and/or reverse DNS mapping. This state machine is based upon the
-/// processing logic described in RFC 4703, Sections 5.3 and 5.4.  That logic
-/// may be paraphrased as follows:
+/// NameRemoveTransaction implements a state machine for removing a forward
+/// and/or reverse DNS mappings. This state machine is based upon the processing
+/// logic described in RFC 4703, Section 5.5. That logic may be paraphrased as
+/// follows:
 ///
 /// @code
 ///
 /// If the request includes a forward change:
 ///     Select a forward server
-///     Send the server a request to add the forward entry
-///     If the server responds with already in use:
-///         Send a server a request to delete and then add forward entry
-///
-///     If the forward update is unsuccessful:
+///     Send the server a request to remove client's specific forward address RR
+///     If it succeeds or the server responds with name no longer in use
+///         Send a server a request to delete any other RRs for that FQDN, such
+///         as the DHCID RR.
+///     otherwise
 ///         abandon the update
 ///
 /// If the request includes a reverse change:
 ///     Select a reverse server
-///     Send a server a request to delete and then add reverse entry
+///     Send a server a request to delete reverse entry (PTR RR)
 ///
 /// @endcode
 ///
 /// This class derives from NameChangeTransaction from which it inherits
 /// states, events, and methods common to NameChangeRequest processing.
-class NameAddTransaction : public NameChangeTransaction {
+class NameRemoveTransaction : public NameChangeTransaction {
 public:
 
-    //@{  Additional states needed for NameAdd state model.
-    /// @brief State that attempts to add forward address records.
-    static const int ADDING_FWD_ADDRS_ST = NCT_DERIVED_STATE_MIN + 1;
+    //@{  Additional states needed for NameRemove state model.
+    /// @brief State that attempts to remove specific forward address record.
+    static const int REMOVING_FWD_ADDRS_ST = NCT_DERIVED_STATE_MIN + 1;
 
-    /// @brief State that attempts to replace forward address records.
-    static const int REPLACING_FWD_ADDRS_ST = NCT_DERIVED_STATE_MIN + 2;
+    /// @brief State that attempts to remove any other forward RRs for the DHCID
+    static const int REMOVING_FWD_RRS_ST = NCT_DERIVED_STATE_MIN + 2;
 
-    /// @brief State that attempts to replace reverse PTR records
-    static const int REPLACING_REV_PTRS_ST = NCT_DERIVED_STATE_MIN + 3;
+    /// @brief State that attempts to remove reverse PTR records
+    static const int REMOVING_REV_PTRS_ST = NCT_DERIVED_STATE_MIN + 3;
     //@}
 
-    //@{ Additional events needed for NameAdd state model.
-    /// @brief Event sent when an add attempt fails with address in use.
-    static const int FQDN_IN_USE_EVT = NCT_DERIVED_EVENT_MIN + 1;
-
+    //@{ Additional events needed for NameRemove state model.
     /// @brief Event sent when replace attempt to fails with address not in use.
-    static const int FQDN_NOT_IN_USE_EVT = NCT_DERIVED_EVENT_MIN + 2;
+    /// @todo Currently none have been identified.
     //@}
 
     /// @brief Constructor
     ///
-    /// Instantiates an Add transaction that is ready to be started.
+    /// Instantiates an Remove transaction that is ready to be started.
     ///
     /// @param io_service IO service to be used for IO processing
     /// @param ncr is the NameChangeRequest to fulfill
     /// @param forward_domain is the domain to use for forward DNS updates
     /// @param reverse_domain is the domain to use for reverse DNS updates
     ///
-    /// @throw NameAddTransaction error if given request is not a CHG_ADD,
+    /// @throw NameRemoveTransaction error if given request is not a CHG_REMOVE,
     /// NameChangeTransaction error for base class construction errors.
-    NameAddTransaction(IOServicePtr& io_service,
-                       dhcp_ddns::NameChangeRequestPtr& ncr,
-                       DdnsDomainPtr& forward_domain,
-                       DdnsDomainPtr& reverse_domain);
+    NameRemoveTransaction(IOServicePtr& io_service,
+                          dhcp_ddns::NameChangeRequestPtr& ncr,
+                          DdnsDomainPtr& forward_domain,
+                          DdnsDomainPtr& reverse_domain);
 
     /// @brief Destructor
-    virtual ~NameAddTransaction();
+    virtual ~NameRemoveTransaction();
 
 protected:
-    /// @brief Adds events defined by NameAddTransaction to the event set.
+    /// @brief Removes events defined by NameRemoveTransaction to the event set.
     ///
     /// Invokes NameChangeTransaction's implementation and then defines the
-    /// events unique to NCR Add transaction processing.
+    /// events unique to NCR Remove transaction processing.
     ///
     /// @throw StateModelError if an event definition is invalid or a duplicate.
     virtual void defineEvents();
@@ -110,15 +106,15 @@ protected:
     /// @brief Validates the contents of the set of events.
     ///
     /// Invokes NameChangeTransaction's implementation and then verifies the
-    /// Add transaction's events.
+    /// Remove transaction's events.
     ///
     /// @throw StateModelError if an event value is undefined.
     virtual void verifyEvents();
 
-    /// @brief Adds states defined by NameAddTransaction to the state set.
+    /// @brief Removes states defined by NameRemoveTransaction to the state set.
     ///
     /// Invokes NameChangeTransaction's implementation and then defines the
-    /// states unique to NCR Add transaction processing.
+    /// states unique to NCR Remove transaction processing.
     ///
     /// @throw StateModelError if an state definition is invalid or a duplicate.
     virtual void defineStates();
@@ -126,7 +122,7 @@ protected:
     /// @brief Validates the contents of the set of states.
     ///
     /// Invokes NameChangeTransaction's implementation and then verifies the
-    /// Add transaction's states.
+    /// Remove transaction's states.
     ///
     /// @throw StateModelError if an event value is undefined.
     virtual void verifyStates();
@@ -149,7 +145,7 @@ protected:
     /// - SELECTING_REV_SERVER_ST with next event of SERVER_SELECT_ST if request
     /// includes only a reverse change.
     ///
-    /// @throw NameAddTransactionError if upon entry next event is not
+    /// @throw NameRemoveTransactionError if upon entry next event is not
     /// START_EVT.
     void readyHandler();
 
@@ -157,8 +153,7 @@ protected:
     ///
     /// Entered from:
     /// - READY_ST with next event of SELECT_SERVER_EVT
-    /// - ADDING_FWD_ADDRS_ST with next event of SERVER_IO_ERROR_EVT
-    /// - REPLACING_FWD_ADDRS_ST with next event of SERVER_IO_ERROR_EVT
+    /// - REMOVING_FWD_ADDRS_ST with next event of SERVER_IO_ERROR_EVT
     ///
     /// Selects the server to be used from the forward domain for the forward
     /// DNS update.  If next event is SELECT_SERVER_EVT the handler initializes
@@ -167,13 +162,13 @@ protected:
     /// handler simply attempts to select the next server.
     ///
     /// Transitions to:
-    /// - ADDING_FWD_ADDRS_ST with next event of SERVER_SELECTED upon successful
-    /// server selection
+    /// - REMOVING_FWD_ADDRS_ST with next event of SERVER_SELECTED upon
+    /// successful server selection
     ///
     /// - PROCESS_TRANS_FAILED with next event of NO_MORE_SERVERS_EVT upon
     /// failure to select a server
     ///
-    /// @throw NameAddTransactionError if upon entry next event is not
+    /// @throw NameRemoveTransactionError if upon entry next event is not
     /// SELECT_SERVER_EVT or SERVER_IO_ERROR_EVT.
     void selectingFwdServerHandler();
 
@@ -181,9 +176,8 @@ protected:
     ///
     /// Entered from:
     /// - READY_ST with next event of SELECT_SERVER_EVT
-    /// - ADDING_FWD_ADDRS_ST with next event of SELECT_SERVER_EVT
-    /// - REPLACING_FWD_ADDRS_ST with next event of SELECT_SERVER_EVT
-    /// - REPLACING_REV_PTRS_ST with next event of SERVER_IO_ERROR_EVT
+    /// - REMOVING_FWD_RRS_ST with next event of SELECT_SERVER_EVT
+    /// - REMOVING_REV_PTRS_ST with next event of SERVER_IO_ERROR_EVT
     ///
     /// Selects the server to be used from the reverse domain for the reverse
     /// DNS update.  If next event is SELECT_SERVER_EVT the handler initializes
@@ -192,26 +186,26 @@ protected:
     /// handler simply attempts to select the next server.
     ///
     /// Transitions to:
-    /// - ADDING_REV_PTRS_ST with next event of SERVER_SELECTED upon successful
-    /// server selection
+    /// - REMOVING_REV_PTRS_ST with next event of SERVER_SELECTED upon
+    /// successful server selection
     ///
     /// - PROCESS_TRANS_FAILED with next event of NO_MORE_SERVERS_EVT upon
     /// failure to select a server
     ///
-    /// @throw NameAddTransactionError if upon entry next event is not
+    /// @throw NameRemoveTransactionError if upon entry next event is not
     /// SELECT_SERVER_EVT or SERVER_IO_ERROR_EVT.
     void selectingRevServerHandler();
 
-    /// @brief State handler for ADD_FWD_ADDRS_ST.
+    /// @brief State handler for REMOVING_FWD_ADDRS_ST.
     ///
     /// Entered from:
     /// - SELECTING_FWD_SERVER with next event of SERVER_SELECTED_EVT
-    /// - REPLACING_FWD_ADDRS_ST with next event of SERVER_SELECTED_EVT
     ///
-    /// Attempts to add a forward DNS entry for a given FQDN.  If this is
+    /// Attempts to remove the forward DNS entry for a given FQDN, provided
+    /// a DHCID RR exists which matches the requesting DHCID.  If this is
     /// first invocation of the handler after transitioning into this state,
     /// any previous update request context is deleted.   If next event
-    /// is SERVER_SELECTED_EVT, the handler builds the forward add request,
+    /// is SERVER_SELECTED_EVT, the handler builds the forward remove request,
     /// schedules an asynchronous send via sendUpdate(), and returns.  Note
     /// that sendUpdate will post NOP_EVT as next event.
     ///
@@ -222,25 +216,18 @@ protected:
     /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
     /// resumes execution of the state model.
     ///
-    /// When the handler is invoked with a next event of IO_COMPLETED_EVT,
+    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:
-    /// - SELECTING_REV_SERVER_ST with next event of SELECT_SERVER_EVT upon
-    /// successful addition and the request includes a reverse DNS update.
-    ///
-    /// - PROCESS_TRANS_OK_ST with next event of UPDATE_OK_EVT upon successful
-    /// addition and no reverse DNS update is required.
-    ///
-    /// - REPLACING_FWD_ADDRS_ST with next event of FQDN_IN_USE_EVT if the DNS
-    /// server response indicates that an entry for the given FQDN already
-    /// exists.
+    /// - REMOVING_FWD_RRS_ST with next event of UPDATE_OK_EVT upon successful
+    /// removal or RCODE of indication FQDN is no longer in use (NXDOMAIN).
     ///
     /// - PROCESS_TRANS_FAILED_ST with next event of UPDATE_FAILED_EVT if the
-    /// DNS server rejected the update for any other reason or the IO completed
+    /// DNS server rejected the update for any reason or the IO completed
     /// with an unrecognized status.
     ///
-    /// - RE-ENTER this states with next event of SERVER_SELECTED_EVT_EVT if
+    /// - RE-ENTER this state with next event of SERVER_SELECTED_EVT if
     /// there was an IO error communicating with the server and the number of
     /// per server retries has not been exhausted.
     ///
@@ -248,22 +235,21 @@ protected:
     /// there was an IO error communicating with the server and the number of
     /// per server retries has been exhausted.
     ///
-    /// @throw NameAddTransactionError if upon entry next event is not
-    /// SERVER_SELECTED_EVT or IO_COMPLETE_EVT.
-    void addingFwdAddrsHandler();
+    /// @throw NameRemoveTransactionError if upon entry next event is not
+    /// SERVER_SELECTED_EVT or IO_COMPLETE_EVT
+    void removingFwdAddrsHandler();
 
-    /// @brief State handler for REPLACING_FWD_ADDRS_ST.
+    /// @brief State handler for REMOVING_FWD_RRS_ST.
     ///
     /// Entered from:
-    /// - ADDING_FWD_ADDRS_ST with next event of FQDN_IN_USE_EVT
+    /// - REMOVING_FWD_ADDRS_ST with next event of UPDATE_OK_EVT
     ///
-    /// Attempts to delete and then add a forward DNS entry for a given
-    /// FQDN.  If this is first invocation of the handler after transitioning
-    /// into this state, any previous update request context is deleted.   If
-    /// next event is FDQN_IN_USE_EVT or SERVER_SELECTED_EVT, the handler
-    /// builds the forward replacement request, schedules an asynchronous send
-    /// via sendUpdate(), and returns.  Note that sendUpdate will post NOP_EVT
-    /// as the next event.
+    /// Attempts to delete any remaining RRs associated with the given FQDN
+    /// such as the DHCID RR.  If this is first invocation of the handler after
+    /// transitioning into this state, any previous update request context is
+    /// deleted and the handler builds the forward remove request. It then
+    /// schedules an asynchronous send via sendUpdate(),
+    /// and returns.  Note that sendUpdate will post NOP_EVT as the next event.
     ///
     /// Posting the NOP_EVT will cause runModel() to suspend execution of
     /// the state model thus affecting a "wait" for the update IO to complete.
@@ -272,21 +258,15 @@ protected:
     /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
     /// resumes execution of the state model.
     ///
-    /// When the handler is invoked with a next event of IO_COMPLETED_EVT,
+    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:
     /// - SELECTING_REV_SERVER_ST with a next event of SELECT_SERVER_EVT upon
-    /// successful replacement and the request includes a reverse DNS update.
+    /// successful completion and the request includes a reverse DNS update.
     ///
     /// - PROCESS_TRANS_OK_ST with next event of UPDATE_OK_EVT upon successful
-    /// replacement and the request does not include a reverse DNS update.
-    ///
-    /// - ADDING_FWD_ADDR_STR with a next event of SERVER_SELECTED_EVT  if the
-    /// DNS server response indicates that the FQDN is not in use.  This could
-    /// occur if a previous add attempt indicated the FQDN was in use, but
-    /// that entry has since been removed by another entity prior to this
-    /// replacement attempt.
+    /// completion and the request does not include a reverse DNS update.
     ///
     /// - PROCESS_TRANS_FAILED_ST with a next event of UPDATE_FAILED_EVT if the
     /// DNS server rejected the update for any other reason or the IO completed
@@ -296,25 +276,32 @@ protected:
     /// there was an IO error communicating with the server and the number of
     /// per server retries has not been exhausted.
     ///
-    /// - SELECTING_FWD_SERVER_ST with next event of SERVER_IO_ERROR_EVT if
-    /// there was an IO error communicating with the server and the number of
-    /// per server retries has been exhausted.
+    /// - PROCESS_TRANS_FAILED_ST with a next event of SERVER_IO_ERROR_EVT if
+    /// there we have reached maximum number of retries without success on the
+    /// current server.
     ///
-    /// @throw NameAddTransactionError if upon entry next event is not:
-    /// FQDN_IN_USE_EVT, SERVER_SELECTED_EVT or IO_COMPLETE_EVT.
-    void replacingFwdAddrsHandler();
+    /// @note If we exhaust the IO retries for the current server due to IO
+    /// failures, we will abort the remaining updates.  The rational is that
+    /// we are only in this state, if the remove of the forward address RR
+    /// succeeded (removingFwdAddrsHandler) on the current server so we should
+    /// not attempt another removal on a different server.  This is perhaps a 
+    /// point for discussion. @todo Should we go ahead with the reverse remove?
+    ///
+    /// @throw NameRemoveTransactionError if upon entry next event is not:
+    /// UPDATE_OK_EVT or IO_COMPLETE_EVT
+    void removingFwdRRsHandler();
 
-    /// @brief State handler for REPLACING_REV_PTRS_ST.
+    /// @brief State handler for REMOVING_REV_PTRS_ST.
     ///
     /// Entered from:
     /// - SELECTING_REV_SERVER_ST with a next event of SERVER_SELECTED_EVT
     ///
-    /// Attempts to delete and then add a reverse DNS entry for a given FQDN.
-    /// If this is first invocation of the handler after transitioning into
-    /// this state, any previous update request context is deleted.  If next
-    /// event is SERVER_SELECTED_EVT, the handler builds the reverse replacement
-    /// add request, schedules an asynchronous send via sendUpdate(), and
-    /// returns.  Note that sendUpdate will post NOP_EVT as next event.
+    /// Attempts to delete a reverse DNS entry for a given FQDN. If this is
+    /// first invocation of the handler after transitioning into this state,
+    /// any previous update request context is deleted.  If next event is
+    /// SERVER_SELECTED_EVT, the handler builds the reverse remove request,
+    /// schedules an asynchronous send via sendUpdate(), and then returns.
+    /// Note that sendUpdate will post NOP_EVT as next event.
     ///
     /// Posting the NOP_EVT will cause runModel() to suspend execution of
     /// the state model thus affecting a "wait" for the update IO to complete.
@@ -323,12 +310,12 @@ protected:
     /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
     /// resumes execution of the state model.
     ///
-    /// When the handler is invoked with a next event of IO_COMPLETED_EVT,
+    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:
     /// - PROCESS_TRANS_OK_ST with a next event of UPDATE_OK_EVT upon
-    /// successful replacement.
+    /// successful completion.
     ///
     /// - PROCESS_TRANS_FAILED_ST with a next event of UPDATE_FAILED_EVT If the
     /// DNS server rejected the update for any reason or the IO completed
@@ -342,16 +329,15 @@ protected:
     /// there was an IO error communicating with the server and the number of
     /// per server retries has been exhausted.
     ///
-    /// @throw NameAddTransactionError if upon entry next event is not:
+    /// @throw NameRemoveTransactionError if upon entry next event is not:
     /// SERVER_SELECTED_EVT or IO_COMPLETED_EVT
-    void replacingRevPtrsHandler();
+    void removingRevPtrsHandler();
 
     /// @brief State handler for PROCESS_TRANS_OK_ST.
     ///
     /// Entered from:
-    /// - ADDING_FWD_ADDRS_ST with a next event of UPDATE_OK_EVT
-    /// - REPLACING_FWD_ADDRS_ST with a next event of UPDATE_OK_EVT
-    /// - REPLACING_REV_PTRS_ST with a next event of UPDATE_OK_EVT
+    /// - REMOVING_FWD_RRS_ST with a next event of UPDATE_OK_EVT
+    /// - REMOVING_REV_PTRS_ST with a next event of UPDATE_OK_EVT
     ///
     /// Sets the transaction action status to indicate success and ends
     /// model execution.
@@ -359,18 +345,19 @@ protected:
     /// Transitions to:
     /// - END_ST with a next event of END_EVT.
     ///
-    /// @throw NameAddTransactionError if upon entry next event is not:
+    /// @throw NameRemoveTransactionError if upon entry next event is not:
     /// UPDATE_OK_EVT
-    void processAddOkHandler();
+    void processRemoveOkHandler();
 
     /// @brief State handler for PROCESS_TRANS_FAILED_ST.
     ///
     /// Entered from:
     /// - SELECTING_FWD_SERVER_ST with a next event of NO_MORE_SERVERS
-    /// - ADDING_FWD_ADDRS_ST with a next event of UPDATE_FAILED_EVT
-    /// - REPLACING_FWD_ADDRS_ST with a next event of UPDATE_FAILED_EVT
+    /// - REMOVING_FWD_ADDRS_ST with a next event of UPDATE_FAILED_EVT
+    /// - REMOVING_FWD_RRS_ST with a next event of UPDATE_FAILED_EVT
+    /// - REMOVING_FWD_RRS_ST with a next event of SERVER_IO_ERROR_EVT
     /// - SELECTING_REV_SERVER_ST with a next event of NO_MORE_SERVERS
-    /// - REPLACING_REV_PTRS_ST with a next event of UPDATE_FAILED_EVT
+    /// - REMOVING_REV_PTRS_ST with a next event of UPDATE_FAILED_EVT
     ///
     /// Sets the transaction status to indicate failure and ends
     /// model execution.
@@ -378,71 +365,35 @@ protected:
     /// Transitions to:
     /// - END_ST with a next event of FAIL_EVT.
     ///
-    /// @throw NameAddTransactionError if upon entry next event is not:
+    /// @throw NameRemoveTransactionError if upon entry next event is not:
     /// UPDATE_FAILED_EVT
-    void processAddFailedHandler();
+    void processRemoveFailedHandler();
 
     /// @brief Builds a DNS request to add an forward DNS entry for an FQDN
     ///
-    /// Constructs a DNS update request, based upon the NCR, for adding a
-    /// forward DNS mapping.  Once constructed, the request is stored as
-    /// the transaction's DNS update request.
+    /// @todo - Method not implemented yet
     ///
-    /// The request content is adherent to RFC 4703 section 5.3.1:
-    ///
-    /// Prerequisite RRsets:
-    /// 1. An assertion that the FQDN does not exist
-    ///
-    /// Updates RRsets:
-    /// 1. An FQDN/IP RR addition    (type A for IPv4, AAAA for IPv6)
-    /// 2. An FQDN/DHCID RR addition (type DHCID)
-    ///
-    /// @throw This method does not throw but underlying methods may.
-    void buildAddFwdAddressRequest();
+    /// @throw isc::NotImplemented
+    void buildRemoveFwdAddressRequest();
 
     /// @brief Builds a DNS request to replace forward DNS entry for an FQDN
     ///
-    /// Constructs a DNS update request, based upon the NCR, for replacing a
-    /// forward DNS mapping.  Once constructed, the request is stored as
-    /// the transaction's DNS update request.
+    /// @todo - Method not implemented yet
     ///
-    /// The request content is adherent to RFC 4703 section 5.3.2:
-    ///
-    /// Prerequisite RRsets:
-    /// 1. An assertion that the FQDN is in use
-    /// 2. An assertion that the FQDN/DHCID RR exists for the lease client's
-    /// DHCID.
-    ///
-    /// Updates RRsets:
-    /// 1. A deletion of any existing FQDN RRs (type A for IPv4, AAAA for IPv6)
-    /// 2. A FQDN/IP RR addition (type A for IPv4, AAAA for IPv6)
-    ///
-    /// @throw This method does not throw but underlying methods may.
-    void buildReplaceFwdAddressRequest();
+    /// @throw isc::NotImplemented
+    void buildRemoveFwdRRsRequest();
 
     /// @brief Builds a DNS request to replace a reverse DNS entry for an FQDN
     ///
-    /// Constructs a DNS update request, based upon the NCR, for replacing a
-    /// reverse DNS mapping.  Once constructed, the request is stored as
-    /// the transaction's DNS update request.
+    /// @todo - Method not implemented yet
     ///
-    /// The request content is adherent to RFC 4703 section 5.4:
-    ///
-    /// Prerequisite RRsets:
-    /// - There are not prerequisites.
-    ///
-    /// Updates RRsets:
-    /// 1. A delete of any existing PTR RRs for the lease address
-    /// 2. A delete of any existing DHCID RRs for the lease address
-    /// 3. A PTR RR addition for the lease address and FQDN
-    /// 4. A DHCID RR addition for the lease address and lease client DHCID
-    ///
-    /// @throw This method does not throw but underlying methods may.
-    void buildReplaceRevPtrsRequest();
+    /// @throw isc::NotImplemented
+    void buildRemoveRevPtrsRequest();
 };
 
 /// @brief Defines a pointer to a NameChangeTransaction.
-typedef boost::shared_ptr<NameAddTransaction> NameAddTransactionPtr;
+typedef boost::shared_ptr<NameRemoveTransaction> NameRemoveTransactionPtr;
+
 
 } // namespace isc::d2
 } // namespace isc
