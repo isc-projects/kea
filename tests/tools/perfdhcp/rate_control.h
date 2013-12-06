@@ -104,7 +104,7 @@ public:
 
     /// \brief Sets the new rate.
     ///
-    /// \param A new value of rate.
+    /// \param rate A new value of rate.
     void setRate(const int rate) {
         rate_ = rate;
     }
@@ -115,8 +115,8 @@ public:
     /// the due time. The parameter passed to this function specifies the
     /// (positive or negative) number of seconds relative to current time.
     ///
-    /// \param A number of seconds relative to current time which constitutes
-    /// the new due time.
+    /// \param offset A number of seconds relative to current time which
+    /// constitutes the new due time.
     void setRelativeDue(const int offset);
 
     /// \brief Sets the timestamp of the last sent message to current time.
