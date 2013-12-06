@@ -633,12 +633,19 @@ public:
         /// Method prints main statistics for particular exchange.
         /// Statistics includes: number of sent and received packets,
         /// number of dropped packets and number of orphans.
+        ///
+        /// \todo Currently the number of orphans is not displayed because
+        /// Reply messages received for Renew and Releases are counted as
+        /// orphans for the 4-way exchanges, which is wrong. We will need to
+        /// move the orphans counting out of the Statistics Manager so as
+        /// orphans counter is increased only if the particular message is
+        /// not identified as a reponse to any of the messages sent by perfdhcp.
         void printMainStats() const {
             using namespace std;
             cout << "sent packets: " << getSentPacketsNum() << endl
                  << "received packets: " << getRcvdPacketsNum() << endl
-                 << "drops: " << getDroppedPacketsNum() << endl
-                 << "orphans: " << getOrphans() << endl;
+                 << "drops: " << getDroppedPacketsNum() << endl;
+            //                 << "orphans: " << getOrphans() << endl;
         }
 
         /// \brief Print round trip time packets statistics.
