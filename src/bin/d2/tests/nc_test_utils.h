@@ -21,6 +21,7 @@
 
 #include <asio/ip/udp.hpp>
 #include <asio/socket_base.hpp>
+#include <gtest/gtest.h>
 
 namespace isc {
 namespace d2 {
@@ -93,6 +94,63 @@ public:
                         const ResponseMode& response_mode,
                         const dns::Rcode& response_rcode);
 };
+
+/// @brief Base class Test fixture for testing transactions. 
+class TransactionTest : public ::testing::Test {
+public:
+    IOServicePtr io_service_;
+    dhcp_ddns::NameChangeRequestPtr ncr_;
+    DdnsDomainPtr forward_domain_;
+    DdnsDomainPtr reverse_domain_;
+    asiolink::IntervalTimer timer_;
+    int run_time_;
+
+    static const unsigned int FORWARD_CHG;
+    static const unsigned int REVERSE_CHG;
+    static const unsigned int FWD_AND_REV_CHG; 
+
+    TransactionTest();
+    virtual ~TransactionTest();
+
+    /// @brief Run the IO service for no more than a given amount of time.
+    ///
+    /// Uses an IntervalTimer to interrupt the invocation of IOService run(),
+    /// after the given number of milliseconds elapse.  The timer executes
+    /// the timesUp() method if it expires.
+    ///
+    /// @param run_time amount of time in milliseconds to allow run to execute.
+    void runTimedIO(int run_time);
+
+    /// @brief IO Timer expiration handler
+    ///
+    /// Stops the IOSerivce and fails the current test.
+    virtual void timesUp();
+
+    /// @todo
+    /// @brief Creates a transaction which requests an IPv4 DNS update.
+    ///
+    /// The transaction is constructed around a predefined (i.e. "canned")
+    /// IPv4 NameChangeRequest. The request has both forward and reverse DNS
+    /// changes requested.  Based upon the change mask, the transaction
+    /// will have either the forward, reverse, or both domains populated.
+    ///
+    /// @param change_mask determines which change directions are requested
+    void setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
+                                 int change_mask);
+
+    /// @todo
+    /// @brief Creates a transaction which requests an IPv6 DNS update.
+    ///
+    /// The transaction is constructed around a predefined (i.e. "canned")
+    /// IPv6 NameChangeRequest. The request has both forward and reverse DNS
+    /// changes requested.  Based upon the change mask, the transaction
+    /// will have either the forward, reverse, or both domains populated.
+    ///
+    /// @param change_mask determines which change directions are requested
+    void setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type, 
+                                 int change_mask);
+};
+
 
 /// @brief Tests the number of RRs in a request section against a given count.
 ///
@@ -180,6 +238,31 @@ extern void checkForwardReplaceRequest(NameChangeTransaction& tran);
 ///
 /// @param tran Transaction containing the request to be verified.
 extern void checkReverseReplaceRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a forward address removal DNS update request
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing the forward address DNS entry.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkForwardRemoveAddrsRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a forward RR removal DNS update request
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing forward RR DNS entries.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkForwardRemoveRRsRequest(NameChangeTransaction& tran);
+
+/// @brief Verifies a reverse mapping removal DNS update request
+///
+/// Tests that the DNS Update request for a given transaction, is correct for
+/// removing a reverse DNS mapping.
+///
+/// @param tran Transaction containing the request to be verified.
+extern void checkReverseRemoveRequest(NameChangeTransaction& tran);
+
 
 /// @brief Creates a NameChangeRequest from JSON string.
 ///
