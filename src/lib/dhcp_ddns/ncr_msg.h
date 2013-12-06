@@ -23,6 +23,7 @@
 #include <cc/data.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
+#include <dns/name.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <util/encode/hex.h>
@@ -155,7 +156,7 @@ public:
     /// @brief Returns a reference to the DHCID byte vector.
     ///
     /// @return a reference to the vector.
-    const std::vector<uint8_t>& getBytes() {
+    const std::vector<uint8_t>& getBytes() const {
         return (bytes_);
     }
 
@@ -411,11 +412,32 @@ public:
     /// Element
     void setFqdn(isc::data::ConstElementPtr element);
 
-    /// @brief Fetches the request IP address.
+    /// @brief Fetches the request IP address string.
     ///
     /// @return a string containing the IP address
-    const std::string& getIpAddress() const {
-        return (ip_address_);
+    std::string getIpAddress() const {
+        return (ip_io_address_.toText());
+    }
+
+    /// @brief Fetches the request IP address as an IOAddress.
+    ///
+    /// @return a asiolink::IOAddress containing the IP address
+    const asiolink::IOAddress& getIpIoAddress() const {
+        return (ip_io_address_);
+    }
+
+    /// @brief Returns true if the lease address is a IPv4 lease.
+    ///
+    /// @return boolean true if the lease address family is AF_INET.
+    bool isV4 () const {
+        return (ip_io_address_.isV4());
+    }
+
+    /// @brief Returns true if the lease address is a IPv6 lease.
+    ///
+    /// @return boolean true if the lease address family is AF_INET6.
+    bool isV6 () const {
+        return (ip_io_address_.isV6());
     }
 
     /// @brief Sets the IP address to the given value.
@@ -567,8 +589,13 @@ private:
     /// manipulation.
     std::string fqdn_;
 
-    /// @brief The ip address leased to the FQDN.
-    std::string ip_address_;
+    /// @brief The ip address leased to the FQDN as an IOAddress.
+    ///
+    /// The lease address is used in many places, sometimes as a string
+    /// and sometimes as an IOAddress.  To avoid converting back and forth
+    /// continually over the life span of an NCR, we do it once when the
+    /// ip address is actually set.
+    asiolink::IOAddress ip_io_address_;
 
     /// @brief The lease client's unique DHCID.
     /// @todo Currently, this is uses D2Dhcid it but may be replaced with

@@ -13,10 +13,14 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <d2/d2_log.h>
+#include <d2/d2_cfg_mgr.h>
 #include <d2/nc_add.h>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
+
+#include <util/buffer.h>
+#include <dns/rdataclass.h>
 
 namespace isc {
 namespace d2 {
@@ -168,7 +172,18 @@ NameAddTransaction::addingFwdAddrsHandler() {
     case SERVER_SELECTED_EVT:
         if (!getDnsUpdateRequest()) {
             // Request hasn't been constructed yet, so build it.
-            buildAddFwdAddressRequest();
+            try {
+                buildAddFwdAddressRequest();
+            } catch (const std::exception& ex) {
+                // While unlikely, the build might fail if we have invalid
+                // data.  Should that be the case, we need to fail the
+                // transaction.
+                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE)
+                          .arg(getNcr()->toText())
+                          .arg(ex.what());
+                transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
+                break;
+            }
         }
 
         // Call sendUpdate() to initiate the async send. Note it also sets
@@ -268,7 +283,18 @@ NameAddTransaction::replacingFwdAddrsHandler() {
     case SERVER_SELECTED_EVT:
         if (!getDnsUpdateRequest()) {
             // Request hasn't been constructed yet, so build it.
-            buildReplaceFwdAddressRequest();
+            try {
+                buildReplaceFwdAddressRequest();
+            } catch (const std::exception& ex) {
+                // While unlikely, the build might fail if we have invalid
+                // data.  Should that be the case, we need to fail the
+                // transaction.
+                LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE)
+                          .arg(getNcr()->toText())
+                          .arg(ex.what());
+                transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
+                break;
+            }
         }
 
         // Call sendUpdate() to initiate the async send. Note it also sets
@@ -403,7 +429,18 @@ NameAddTransaction::replacingRevPtrsHandler() {
     case SERVER_SELECTED_EVT:
         if (!getDnsUpdateRequest()) {
             // Request hasn't been constructed yet, so build it.
-            buildReplaceRevPtrsRequest();
+            try {
+                buildReplaceRevPtrsRequest();
+            } catch (const std::exception& ex) {
+                // While unlikely, the build might fail if we have invalid
+                // data.  Should that be the case, we need to fail the
+                // transaction.
+                LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_BUILD_FAILURE)
+                          .arg(getNcr()->toText())
+                          .arg(ex.what());
+                transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
+                break;
+            }
         }
 
         // Call sendUpdate() to initiate the async send. Note it also sets
@@ -488,7 +525,8 @@ void
 NameAddTransaction::processAddOkHandler() {
     switch(getNextEvent()) {
     case UPDATE_OK_EVT:
-        // @todo do we need a log statement here?
+        LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL, DHCP_DDNS_ADD_SUCCEEDED)
+                  .arg(getNcr()->toText());
         setNcrStatus(dhcp_ddns::ST_COMPLETED);
         endModel();
         break;
@@ -503,7 +541,7 @@ void
 NameAddTransaction::processAddFailedHandler() {
     switch(getNextEvent()) {
     case UPDATE_FAILED_EVT:
-        // @todo do we need a log statement here?
+        LOG_ERROR(dctl_logger, DHCP_DDNS_ADD_FAILED).arg(getNcr()->toText());
         setNcrStatus(dhcp_ddns::ST_FAILED);
         endModel();
         break;
@@ -516,23 +554,125 @@ NameAddTransaction::processAddFailedHandler() {
 
 void
 NameAddTransaction::buildAddFwdAddressRequest() {
-    // @todo For now construct a blank outbound message.
-    D2UpdateMessagePtr msg(new D2UpdateMessage(D2UpdateMessage::OUTBOUND));
-    setDnsUpdateRequest(msg);
+    // Construct an empty request.
+    D2UpdateMessagePtr request = prepNewRequest(getForwardDomain());
+
+    // Construct dns::Name from NCR fqdn.
+    dns::Name fqdn(dns::Name(getNcr()->getFqdn()));
+
+    // First build the Prerequisite Section.
+
+    // Create 'FQDN Is Not In Use' prerequisite (RFC 2136, section 2.4.5)
+    // Add the RR to prerequisite section.
+    dns::RRsetPtr prereq(new dns::RRset(fqdn, dns::RRClass::NONE(),
+                             dns::RRType::ANY(), dns::RRTTL(0)));
+    request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
+
+    // Next build the Update Section.
+
+    // Create the FQDN/IP 'add' RR (RFC 2136, section 2.5.1)
+    // Set the message RData to lease address.
+    // Add the RR to update section.
+    dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::IN(),
+                         getAddressRRType(), dns::RRTTL(0)));
+
+    addLeaseAddressRdata(update);
+    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+    // Now create the FQDN/DHCID 'add' RR per RFC 4701)
+    // Set the message RData to DHCID.
+    // Add the RR to update section.
+    update.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
+                                dns::RRType::DHCID(), dns::RRTTL(0)));
+    addDhcidRdata(update);
+    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+
+    // Set the transaction's update request to the new request.
+    setDnsUpdateRequest(request);
 }
 
 void
 NameAddTransaction::buildReplaceFwdAddressRequest() {
-    // @todo For now construct a blank outbound message.
-    D2UpdateMessagePtr msg(new D2UpdateMessage(D2UpdateMessage::OUTBOUND));
-    setDnsUpdateRequest(msg);
+    // Construct an empty request.
+    D2UpdateMessagePtr request = prepNewRequest(getForwardDomain());
+
+    // Construct dns::Name from NCR fqdn.
+    dns::Name fqdn(dns::Name(getNcr()->getFqdn()));
+
+    // First build the Prerequisite Section.
+
+    // Create an 'FQDN Is In Use' prerequisite (RFC 2136, section 2.4.4)
+    // Add it to the pre-requisite section.
+    dns::RRsetPtr prereq(new dns::RRset(fqdn, dns::RRClass::ANY(),
+                               dns::RRType::ANY(), dns::RRTTL(0)));
+    request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
+
+    // Now create an DHCID matches prerequisite RR.
+    // Set the RR's RData to DHCID.
+    // Add it to the pre-requisite section.
+    prereq.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
+                 dns::RRType::DHCID(), dns::RRTTL(0)));
+    addDhcidRdata(prereq);
+    request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
+
+    // Next build the Update Section.
+
+    // Create the FQDN/IP 'delete' RR (RFC 2136, section 2.5.1)
+    // Set the message RData to lease address.
+    // Add the RR to update section.
+    dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::ANY(),
+                         getAddressRRType(), dns::RRTTL(0)));
+    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+
+    // Create the FQDN/IP 'add' RR (RFC 2136, section 2.5.1)
+    // Set the message RData to lease address.
+    // Add the RR to update section.
+    update.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
+                                getAddressRRType(), dns::RRTTL(0)));
+    addLeaseAddressRdata(update);
+    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+
+    // Set the transaction's update request to the new request.
+    setDnsUpdateRequest(request);
 }
 
 void
 NameAddTransaction::buildReplaceRevPtrsRequest() {
-    // @todo For now construct a blank outbound message.
-    D2UpdateMessagePtr msg(new D2UpdateMessage(D2UpdateMessage::OUTBOUND));
-    setDnsUpdateRequest(msg);
+    // Construct an empty request.
+    D2UpdateMessagePtr request = prepNewRequest(getReverseDomain());
+
+    // Create the reverse IP address "FQDN".
+    std::string rev_addr = D2CfgMgr::reverseIpAddress(getNcr()->getIpAddress());
+    dns::Name rev_ip(rev_addr);
+
+    // Reverse replacement has no prerequisites so straight on to
+    // building the Update section.
+
+    // Create the PTR 'delete' RR and add it to update section.
+    dns::RRsetPtr update(new dns::RRset(rev_ip, dns::RRClass::ANY(),
+                         dns::RRType::PTR(), dns::RRTTL(0)));
+    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+
+    // Create the DHCID 'delete' RR and add it to the update section.
+    update.reset(new dns::RRset(rev_ip, dns::RRClass::ANY(),
+                                dns::RRType::DHCID(), dns::RRTTL(0)));
+    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+
+    // Create the FQDN/IP PTR 'add' RR, add the FQDN as the PTR Rdata
+    // then add it to update section.
+    update.reset(new dns::RRset(rev_ip, dns::RRClass::IN(),
+                                dns::RRType::PTR(), dns::RRTTL(0)));
+    addPtrRdata(update);
+    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+
+    // Create the FQDN/IP PTR 'add' RR, add the DHCID Rdata
+    // then add it to update section.
+    update.reset(new dns::RRset(rev_ip, dns::RRClass::IN(),
+                                dns::RRType::DHCID(), dns::RRTTL(0)));
+    addDhcidRdata(update);
+    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
+
+    // Set the transaction's update request to the new request.
+    setDnsUpdateRequest(request);
 }
 
 } // namespace isc::d2
