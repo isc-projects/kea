@@ -19,6 +19,7 @@
 #include <log/logger_support.h>
 #include <log/macros.h>
 #include <util/buffer.h>
+#include <nc_test_utils.h>
 
 #include <asio/ip/udp.hpp>
 #include <asio/socket_base.hpp>
@@ -34,8 +35,6 @@ using namespace isc;
 using namespace isc::d2;
 
 namespace {
-
-const size_t MAX_MSG_SIZE = 1024;
 
 /// @brief Test derivation of NameChangeTransaction for exercising state
 /// model mechanics.
@@ -104,7 +103,7 @@ public:
         return (false);
     }
 
-    /// @brief Empty handler used to statisfy map verification.
+    /// @brief Empty handler used to satisfy map verification.
     void dummyHandler() {
         isc_throw(NameChangeTransactionError,
                   "dummyHandler - invalid event: " << getContextStr());
@@ -259,152 +258,15 @@ public:
     using NameChangeTransaction::transition;
     using NameChangeTransaction::retryTransition;
     using NameChangeTransaction::sendUpdate;
+    using NameChangeTransaction::prepNewRequest;
+    using NameChangeTransaction::addLeaseAddressRdata;
+    using NameChangeTransaction::addDhcidRdata;
+    using NameChangeTransaction::addPtrRdata;
 };
 
 // Declare them so Gtest can see them.
 const int NameChangeStub::DOING_UPDATE_ST;
 const int NameChangeStub::SEND_UPDATE_EVT;
-
-typedef boost::shared_ptr<asio::ip::udp::socket> SocketPtr;
-
-/// @brief This class simulates a DNS server.  It is capable of performing
-/// an asynchronous read, governed by an IOService, and responding to received
-/// requests in a given manner.
-class FauxServer {
-public:
-    enum  ResponseMode {
-        USE_RCODE,   // Generate a response with a given RCODE
-        CORRUPT_RESP  // Generate a corrupt response
-    };
-
-    asiolink::IOService& io_service_;
-    asiolink::IOAddress& address_;
-    size_t port_;
-    SocketPtr server_socket_;
-    asio::ip::udp::endpoint remote_;
-    uint8_t receive_buffer_[MAX_MSG_SIZE];
-
-    /// @brief Constructor
-    ///
-    /// @param io_service IOService to be used for socket IO.
-    /// @param address  IP address at which the server should listen.
-    /// @param port Port number at which the server should listen.
-    FauxServer(asiolink::IOService& io_service, asiolink::IOAddress& address,
-               size_t port)
-        : io_service_(io_service), address_(address), port_(port),
-          server_socket_() {
-        server_socket_.reset(new asio::ip::udp::
-                             socket(io_service_.get_io_service(),
-                                    asio::ip::udp::v4()));
-        server_socket_->set_option(asio::socket_base::reuse_address(true));
-        server_socket_->bind(asio::ip::udp::
-                             endpoint(address_.getAddress(), port_));
-    }
-
-    /// @brief Destructor
-    virtual ~FauxServer() {
-    }
-
-    /// @brief Initiates an asyncrhonrous receive
-    ///
-    /// Starts the server listening for requests.  Upon completion of the
-    /// the listen, the callback method, requestHandler, is invoked.
-    ///
-    /// @param response_mode Selects how the server responds to a request
-    /// @param response_rcode The Rcode value set in the response. Not used
-    /// for all modes.
-    void receive (const ResponseMode& response_mode,
-                  const dns::Rcode& response_rcode=dns::Rcode::NOERROR()) {
-
-        server_socket_->async_receive_from(asio::buffer(receive_buffer_,
-                                                   sizeof(receive_buffer_)),
-                                      remote_,
-                                      boost::bind(&FauxServer::requestHandler,
-                                                  this, _1, _2,
-                                                  response_mode,
-                                                  response_rcode));
-    }
-
-    /// @brief Socket IO Completion callback
-    ///
-    /// This method servers as the Server's UDP socket receive callback handler.
-    /// When the receive completes the handler is invoked with the
-    /// @param error result code of the recieve (determined by asio layer)
-    /// @param bytes_recvd number of bytes received, if any
-    /// @param response_mode type of response the handler should produce
-    /// @param response_rcode value of Rcode in the response constructed by
-    /// handler
-    void requestHandler(const asio::error_code& error,
-                        std::size_t bytes_recvd,
-                        const ResponseMode& response_mode,
-                        const dns::Rcode& response_rcode) {
-
-        // If we encountered an error or received no data then fail.
-        // We expect the client to send good requests.
-        if (error.value() != 0 || bytes_recvd < 1) {
-            ADD_FAILURE() << "FauxServer receive failed" << error.message();
-            return;
-        }
-
-        // We have a successfully received data. We need to turn it into
-        // a request in order to build a proper response.
-        // Note D2UpdateMessage is geared towards making requests and
-        // reading responses.  This is the opposite perspective so we have
-        // to a bit of roll-your-own here.
-        dns::Message request(dns::Message::PARSE);
-        util::InputBuffer request_buf(receive_buffer_, bytes_recvd);
-        try {
-            request.fromWire(request_buf);
-        } catch (const std::exception& ex) {
-            // If the request cannot be parsed, then fail the test.
-            // We expect the client to send good requests.
-            ADD_FAILURE() << "FauxServer request is corrupt:" << ex.what();
-            return;
-        }
-
-        // The request parsed ok, so let's build a response.
-        // We must use the QID we received in the response or IOFetch will
-        // toss the response out, resulting in eventual timeout.
-        // We fill in the zone with data we know is from the "server".
-        dns::Message response(dns::Message::RENDER);
-        response.setQid(request.getQid());
-        dns::Question question(dns::Name("response.example.com"),
-                               dns::RRClass::ANY(), dns::RRType::SOA());
-        response.addQuestion(question);
-        response.setOpcode(dns::Opcode(dns::Opcode::UPDATE_CODE));
-        response.setHeaderFlag(dns::Message::HEADERFLAG_QR, true);
-
-        // Set the response Rcode to value passed in, default is NOERROR.
-        response.setRcode(response_rcode);
-
-        // Render the response to a buffer.
-        dns::MessageRenderer renderer;
-        util::OutputBuffer response_buf(MAX_MSG_SIZE);
-        renderer.setBuffer(&response_buf);
-        response.toWire(renderer);
-
-        // If mode is to ship garbage, then stomp on part of the rendered
-        // message.
-        if (response_mode == CORRUPT_RESP) {
-            response_buf.writeUint16At(0xFFFF, 2);
-        }
-
-        // Ship the reponse via synchronous send.
-        try {
-            int cnt = server_socket_->send_to(asio::
-                                              buffer(response_buf.getData(),
-                                                     response_buf.getLength()),
-                                              remote_);
-            // Make sure we sent what we expect to send.
-            if (cnt != response_buf.getLength()) {
-                ADD_FAILURE() << "FauxServer sent: " << cnt << " expected: "
-                          << response_buf.getLength();
-            }
-        } catch (const std::exception& ex) {
-            ADD_FAILURE() << "FauxServer send failed: " << ex.what();
-        }
-    }
-};
 
 /// @brief Defines a pointer to a NameChangeStubPtr instance.
 typedef boost::shared_ptr<NameChangeStub> NameChangeStubPtr;
@@ -445,7 +307,7 @@ public:
 
     /// @brief IO Timer expiration handler
     ///
-    /// Stops the IOSerivce and FAILs the current test.
+    /// Stops the IOSerivce and fails the current test.
     void timesUp() {
         io_service_->stop();
         FAIL() << "Test Time: " << run_time_ << " expired";
@@ -462,7 +324,7 @@ public:
             " \"change_type\" : 0 , "
             " \"forward_change\" : true , "
             " \"reverse_change\" : true , "
-            " \"fqdn\" : \"example.com.\" , "
+            " \"fqdn\" : \"my.example.com.\" , "
             " \"ip_address\" : \"192.168.2.1\" , "
             " \"dhcid\" : \"0102030405060708\" , "
             " \"lease_expires_on\" : \"20130121132405\" , "
@@ -470,31 +332,20 @@ public:
             "}";
 
         // Create the request from JSON.
-        dhcp_ddns::NameChangeRequestPtr ncr;
-        DnsServerInfoStoragePtr servers(new DnsServerInfoStorage());
-        DnsServerInfoPtr server;
-        ncr = dhcp_ddns::NameChangeRequest::fromJSON(msg_str);
+        dhcp_ddns::NameChangeRequestPtr ncr = dhcp_ddns::NameChangeRequest::
+                                              fromJSON(msg_str);
 
         // Make forward DdnsDomain with 2 forward servers.
-        server.reset(new DnsServerInfo("forward.example.com",
-                                       isc::asiolink::IOAddress("127.0.0.1"),
-                                       5301));
-        servers->push_back(server);
-        server.reset(new DnsServerInfo("forward2.example.com",
-                                       isc::asiolink::IOAddress("127.0.0.1"),
-                                       5302));
-
-        servers->push_back(server);
-        forward_domain_.reset(new DdnsDomain("example.com.", "", servers));
+        forward_domain_ = makeDomain("example.com.");
+        addDomainServer(forward_domain_, "forward.example.com",
+                        "127.0.0.1", 5301);
+        addDomainServer(forward_domain_, "forward2.example.com",
+                        "127.0.0.1", 5302);
 
         // Make reverse DdnsDomain with one reverse server.
-        servers.reset(new DnsServerInfoStorage());
-        server.reset(new DnsServerInfo("reverse.example.com",
-                                       isc::asiolink::IOAddress("127.0.0.1"),
-                                       5301));
-        servers->push_back(server);
-        reverse_domain_.reset(new DdnsDomain("2.168.192.in.addr.arpa.",
-                                             "", servers));
+        reverse_domain_ = makeDomain("2.168.192.in.addr.arpa.");
+        addDomainServer(reverse_domain_, "reverse.example.com",
+                        "127.0.0.1", 5301);
 
         // Instantiate the transaction as would be done by update manager.
         return (NameChangeStubPtr(new NameChangeStub(io_service_, ncr,
@@ -539,7 +390,7 @@ TEST(NameChangeTransaction, construction) {
     ASSERT_NO_THROW(reverse_domain.reset(new DdnsDomain("*", "", servers)));
 
     // Verify that construction with a null IOServicePtr fails.
-    // @todo Subject to change if multi-threading is implemenated.
+    // @todo Subject to change if multi-threading is implemented.
     IOServicePtr empty;
     EXPECT_THROW(NameChangeTransaction(empty, ncr,
                                        forward_domain, reverse_domain),
@@ -626,7 +477,7 @@ TEST_F(NameChangeTransactionTest, accessors) {
 
 /// @brief Tests DNS update request accessor methods.
 TEST_F(NameChangeTransactionTest, dnsUpdateRequestAccessors) {
-    // Create a transction.
+    // Create a transaction.
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
 
@@ -652,7 +503,7 @@ TEST_F(NameChangeTransactionTest, dnsUpdateRequestAccessors) {
 
 /// @brief Tests DNS update request accessor methods.
 TEST_F(NameChangeTransactionTest, dnsUpdateResponseAccessors) {
-    // Create a transction.
+    // Create a transaction.
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
 
@@ -829,9 +680,9 @@ TEST_F(NameChangeTransactionTest, modelFailure) {
     EXPECT_EQ(dhcp_ddns::ST_FAILED, name_change->getNcrStatus());
 }
 
-/// @brief Tests the ability to use startTransaction to initate the state
+/// @brief Tests the ability to use startTransaction to initiate the state
 /// model execution, and DNSClient callback, operator(), to resume the
-/// the model with a update successful outcome.
+/// model with a update successful outcome.
 TEST_F(NameChangeTransactionTest, successfulUpdateTest) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
@@ -867,7 +718,7 @@ TEST_F(NameChangeTransactionTest, successfulUpdateTest) {
 
 /// @brief Tests the ability to use startTransaction to initate the state
 /// model execution, and DNSClient callback, operator(), to resume the
-/// the model with a update failure outcome.
+/// model with a update failure outcome.
 TEST_F(NameChangeTransactionTest, failedUpdateTest) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
@@ -915,7 +766,7 @@ TEST_F(NameChangeTransactionTest, updateAttempts) {
 
 /// @brief Tests retryTransition method
 ///
-/// Verifes that while the maximum number of update attempts has not
+/// Verifies that while the maximum number of update attempts has not
 /// been exceeded, the method will leave the state unchanged but post a
 /// SERVER_SELECTED_EVT.  Once the maximum is exceeded, the method should
 /// transition to the state given with a next event of SERVER_IO_ERROR_EVT.
@@ -946,7 +797,7 @@ TEST_F(NameChangeTransactionTest, retryTransition) {
     ASSERT_NO_THROW(name_change->retryTransition(
                     NameChangeTransaction::PROCESS_TRANS_FAILED_ST));
 
-    // Since the number of udpate attempts is less than the maximum allowed
+    // Since the number of update attempts is less than the maximum allowed
     // we should remain in our current state but with next event of
     // SERVER_SELECTED_EVT posted.
     ASSERT_EQ(NameChangeStub::DOING_UPDATE_ST,
@@ -961,8 +812,8 @@ TEST_F(NameChangeTransactionTest, retryTransition) {
     ASSERT_NO_THROW(name_change->retryTransition(
                     NameChangeTransaction::PROCESS_TRANS_FAILED_ST));
 
-    // Since we have exceeded maximum attempts, we should tranisition to
-    // PROCESS_UPDATE_FAILD_ST with a next event of SERVER_IO_ERROR_EVT.
+    // Since we have exceeded maximum attempts, we should transition to
+    // PROCESS_UPDATE_FAILED_ST with a next event of SERVER_IO_ERROR_EVT.
     ASSERT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
               name_change->getCurrState());
     ASSERT_EQ(NameChangeTransaction::SERVER_IO_ERROR_EVT,
@@ -986,7 +837,7 @@ TEST_F(NameChangeTransactionTest, sendUpdateDoUpdateFailure) {
     ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
 
     // Verify that sendUpdate does not throw, but it should fail because
-    // the requset won't render.
+    // the request won't render.
     ASSERT_NO_THROW(name_change->sendUpdate());
 
     // Verify that we transition to failed state and event.
@@ -1013,7 +864,7 @@ TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
     // Set the flag to use the NameChangeStub's DNSClient callback.
     name_change->use_stub_callback_ = true;
 
-    // Invoke sendUdpate.
+    // Invoke sendUpdate.
     ASSERT_NO_THROW(name_change->sendUpdate());
 
     // Update attempt count should be 1, next event should be NOP_EVT.
@@ -1040,8 +891,7 @@ TEST_F(NameChangeTransactionTest, sendUpdateCorruptResponse) {
     ASSERT_TRUE(name_change->selectFwdServer());
 
     // Create a server and start it listening.
-    asiolink::IOAddress address("127.0.0.1");
-    FauxServer server(*io_service_, address, 5301);
+    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
     server.receive(FauxServer::CORRUPT_RESP);
 
     // Create a valid request for the transaction.
@@ -1054,7 +904,7 @@ TEST_F(NameChangeTransactionTest, sendUpdateCorruptResponse) {
     // Set the flag to use the NameChangeStub's DNSClient callback.
     name_change->use_stub_callback_ = true;
 
-    // Invoke sendUdpate.
+    // Invoke sendUpdate.
     ASSERT_NO_THROW(name_change->sendUpdate());
 
     // Update attempt count should be 1, next event should be NOP_EVT.
@@ -1079,8 +929,7 @@ TEST_F(NameChangeTransactionTest, sendUpdate) {
     ASSERT_TRUE(name_change->selectFwdServer());
 
     // Create a server and start it listening.
-    asiolink::IOAddress address("127.0.0.1");
-    FauxServer server(*io_service_, address, 5301);
+    FauxServer server(*io_service_, *(name_change->getCurrentServer()));
     server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
     // Create a valid request for the transaction.
@@ -1093,7 +942,7 @@ TEST_F(NameChangeTransactionTest, sendUpdate) {
     // Set the flag to use the NameChangeStub's DNSClient callback.
     name_change->use_stub_callback_ = true;
 
-    // Invoke sendUdpate.
+    // Invoke sendUpdate.
     ASSERT_NO_THROW(name_change->sendUpdate());
 
     // Update attempt count should be 1, next event should be NOP_EVT.
@@ -1119,4 +968,107 @@ TEST_F(NameChangeTransactionTest, sendUpdate) {
     EXPECT_EQ("response.example.com.", zone->getName().toText());
 }
 
+/// @brief Tests the prepNewRequest method
+TEST_F(NameChangeTransactionTest, prepNewRequest) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    D2UpdateMessagePtr request;
+
+    // prepNewRequest should fail on empty domain.
+    ASSERT_THROW(request = name_change->prepNewRequest(DdnsDomainPtr()),
+        NameChangeTransactionError);
+
+    // Verify that prepNewRequest fails on invalid zone name.
+    // @todo This test becomes obsolete if/when DdnsDomain enforces valid
+    // names as is done in dns::Name.
+    DdnsDomainPtr bsDomain = makeDomain(".badname","");
+    ASSERT_THROW(request = name_change->prepNewRequest(bsDomain),
+        NameChangeTransactionError);
+
+    // Verify that prepNewRequest properly constructs a message given
+    // valid input.
+    ASSERT_NO_THROW(request = name_change->prepNewRequest(forward_domain_));
+    checkZone(request, forward_domain_->getName());
 }
+
+/// @brief Tests the addLeaseAddressRData method
+TEST_F(NameChangeTransactionTest, addLeaseAddressRData) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    dhcp_ddns::NameChangeRequestPtr ncr = name_change->getNcr();
+
+    // Test a lease rdata add failure.
+    // As you cannot stuff an invalid address into an NCR, the only failure
+    // that can be induced is a mismatch between the RData and the RRset.
+    // Attempt to add a lease address Rdata, this should fail.
+    // Create an Any class/Any type RRset, they are not allowed to contain
+    // rdata.
+    dns::RRsetPtr rrset(new dns::RRset(dns::Name("bs"), dns::RRClass::ANY(),
+                         dns::RRType::ANY(), dns::RRTTL(0)));
+    ASSERT_THROW(name_change->addLeaseAddressRdata(rrset), std::exception);
+
+    // Verify we can add a lease RData to an valid RRset.
+    rrset.reset(new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
+                               name_change->getAddressRRType(), dns::RRTTL(0)));
+    ASSERT_NO_THROW(name_change->addLeaseAddressRdata(rrset));
+
+    // Verify the Rdata was added and the value is correct.
+    ASSERT_EQ(1, rrset->getRdataCount());
+    dns::RdataIteratorPtr rdata_it = rrset->getRdataIterator();
+    ASSERT_TRUE(rdata_it);
+    EXPECT_EQ(ncr->getIpAddress(), rdata_it->getCurrent().toText());
+
+}
+
+/// @brief Tests the addDhcidRData method
+TEST_F(NameChangeTransactionTest, addDhcidRdata) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    dhcp_ddns::NameChangeRequestPtr ncr = name_change->getNcr();
+
+    // Test a DHCID rdata add failure.
+    dns::RRsetPtr rrset(new dns::RRset(dns::Name("bs"), dns::RRClass::ANY(),
+                         dns::RRType::ANY(), dns::RRTTL(0)));
+    ASSERT_THROW(name_change->addDhcidRdata(rrset), std::exception);
+
+    // Verify we can add a lease RData to an valid RRset.
+    rrset.reset(new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
+                               dns::RRType::DHCID(), dns::RRTTL(0)));
+    ASSERT_NO_THROW(name_change->addDhcidRdata(rrset));
+
+    // Verify the Rdata was added and the value is correct.
+    ASSERT_EQ(1, rrset->getRdataCount());
+    dns::RdataIteratorPtr rdata_it = rrset->getRdataIterator();
+    ASSERT_TRUE(rdata_it);
+
+    const std::vector<uint8_t>& ncr_dhcid = ncr->getDhcid().getBytes();
+    util::InputBuffer buffer(ncr_dhcid.data(), ncr_dhcid.size());
+    dns::rdata::in::DHCID rdata_ref(buffer, ncr_dhcid.size());
+    EXPECT_EQ(0, rdata_ref.compare(rdata_it->getCurrent()));
+}
+
+/// @brief Tests the addPtrData method
+TEST_F(NameChangeTransactionTest, addPtrRdata) {
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    dhcp_ddns::NameChangeRequestPtr ncr = name_change->getNcr();
+
+    // Test a PTR rdata add failure.
+    dns::RRsetPtr rrset(new dns::RRset(dns::Name("bs"), dns::RRClass::ANY(),
+                         dns::RRType::ANY(), dns::RRTTL(0)));
+    ASSERT_THROW(name_change->addPtrRdata(rrset), std::exception);
+
+    // Verify we can add a PTR RData to an valid RRset.
+    rrset.reset(new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
+                               dns::RRType::PTR(), dns::RRTTL(0)));
+    ASSERT_NO_THROW(name_change->addPtrRdata(rrset));
+
+    // Verify the Rdata was added and the value is correct.
+    ASSERT_EQ(1, rrset->getRdataCount());
+    dns::RdataIteratorPtr rdata_it = rrset->getRdataIterator();
+    ASSERT_TRUE(rdata_it);
+
+    EXPECT_EQ(ncr->getFqdn(), rdata_it->getCurrent().toText());
+}
+
+}; // anonymous namespace

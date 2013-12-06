@@ -83,6 +83,7 @@ d2_unittests_SOURCES += d2_zone_unittests.cc
 d2_unittests_SOURCES += dns_client_unittests.cc
 d2_unittests_SOURCES += labeled_value_unittests.cc
 d2_unittests_SOURCES += nc_add_unittests.cc
+d2_unittests_SOURCES += nc_test_utils.cc nc_test_utils.h
 d2_unittests_SOURCES += nc_trans_unittests.cc
 d2_unittests_SOURCES += state_model_unittests.cc
 nodist_d2_unittests_SOURCES = ../d2_messages.h ../d2_messages.cc

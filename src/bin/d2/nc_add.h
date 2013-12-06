@@ -18,6 +18,7 @@
 /// @file nc_add.h This file defines the class NameAddTransaction.
 
 #include <d2/nc_trans.h>
+#include <dns/rdata.h>
 
 namespace isc {
 namespace d2 {
@@ -220,7 +221,7 @@ protected:
     /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
     /// resumes execution of the state model.
     ///
-    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
+    /// When the handler is invoked with a next event of IO_COMPLETED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:
@@ -270,7 +271,7 @@ protected:
     /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
     /// resumes execution of the state model.
     ///
-    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
+    /// When the handler is invoked with a next event of IO_COMPLETED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:
@@ -321,7 +322,7 @@ protected:
     /// post a next event of IO_COMPLETED_EVT and then invoke runModel which
     /// resumes execution of the state model.
     ///
-    /// When the handler is invoked with a next event of IO_COMPELTED_EVT,
+    /// When the handler is invoked with a next event of IO_COMPLETED_EVT,
     /// the DNS update status is checked and acted upon accordingly:
     ///
     /// Transitions to:
@@ -380,25 +381,61 @@ protected:
 
     /// @brief Builds a DNS request to add an forward DNS entry for an FQDN
     ///
-    /// @todo - Method not implemented yet
+    /// Constructs a DNS update request, based upon the NCR, for adding a
+    /// forward DNS mapping.  Once constructed, the request is stored as
+    /// the transaction's DNS update request.
     ///
-    /// @throw isc::NotImplemented
+    /// The request content is adherent to RFC 4703 section 5.3.1:
+    ///
+    /// Prerequisite RRsets:
+    /// 1. An assertion that the FQDN does not exist
+    ///
+    /// Updates RRsets:
+    /// 1. An FQDN/IP RR addition    (type A for IPv4, AAAA for IPv6)
+    /// 2. An FQDN/DHCID RR addition (type DHCID)
+    ///
+    /// @throw This method does not throw but underlying methods may.
     void buildAddFwdAddressRequest();
 
     /// @brief Builds a DNS request to replace forward DNS entry for an FQDN
     ///
-    /// @todo - Method not implemented yet
+    /// Constructs a DNS update request, based upon the NCR, for replacing a
+    /// forward DNS mapping.  Once constructed, the request is stored as
+    /// the transaction's DNS update request.
     ///
-    /// @throw isc::NotImplemented
+    /// The request content is adherent to RFC 4703 section 5.3.2:
+    ///
+    /// Prerequisite RRsets:
+    /// 1. An assertion that the FQDN is in use
+    /// 2. An assertion that the FQDN/DHCID RR exists for the lease client's
+    /// DHCID.
+    ///
+    /// Updates RRsets:
+    /// 1. A deletion of any existing FQDN RRs (type A for IPv4, AAAA for IPv6)
+    /// 2. A FQDN/IP RR addition (type A for IPv4, AAAA for IPv6)
+    ///
+    /// @throw This method does not throw but underlying methods may.
     void buildReplaceFwdAddressRequest();
 
     /// @brief Builds a DNS request to replace a reverse DNS entry for an FQDN
     ///
-    /// @todo - Method not implemented yet
+    /// Constructs a DNS update request, based upon the NCR, for replacing a
+    /// reverse DNS mapping.  Once constructed, the request is stored as
+    /// the transaction's DNS update request.
     ///
-    /// @throw isc::NotImplemented
+    /// The request content is adherent to RFC 4703 section 5.4:
+    ///
+    /// Prerequisite RRsets:
+    /// - There are not prerequisites.
+    ///
+    /// Updates RRsets:
+    /// 1. A delete of any existing PTR RRs for the lease address
+    /// 2. A delete of any existing DHCID RRs for the lease address
+    /// 3. A PTR RR addition for the lease address and FQDN
+    /// 4. A DHCID RR addition for the lease address and lease client DHCID
+    ///
+    /// @throw This method does not throw but underlying methods may.
     void buildReplaceRevPtrsRequest();
-
 };
 
 /// @brief Defines a pointer to a NameChangeTransaction.
