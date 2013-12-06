@@ -1,3 +1,7 @@
+714.	[doc]		tomek
+	BIND10 Contributor's Guide added.
+	(Trac #3109, git 016bfae00460b4f88adbfd07ed26759eb294ef10)
+
 713.	[func]		tmark
 	Added DNS update request construction to d2::NameAddTransaction in
 	b10-dhcp-ddns.  The class now generates all DNS update request variations
