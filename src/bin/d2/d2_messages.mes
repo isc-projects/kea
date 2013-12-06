@@ -324,3 +324,30 @@ This is error message issued when the application is able to construct an update
 message but the attempt to send it suffered a unexpected error. This is most
 likely a programmatic error, rather than a communications issue. Some or all
 of the DNS updates requested as part of this request did not succeed.
+
+% DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE A DNS udpate message to add a forward DNS entry could not be constructed for this request: %1, reason: %2
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting a forward address addition.  This is due
+to invalid data contained in the NameChangeRequest. The request will be aborted.
+This is most likely a configuration issue.
+
+% DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE A DNS update message to replace a foward DNS entry could not be constructed from this request: %1, reason: %2
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting a forward address replacement.  This is
+due to invalid data contained in the NameChangeRequest. The request will be
+aborted.  This is most likely a configuration issue.
+
+% DHCP_DDNS_REVERSE_REPLACE_BUILD_FAILURE A DNS update message to replace a reverse DNS entry could not be constructed from this request: %1, reason: %2
+This is an error message issued when an error occurs attempting to construct
+the server bound packet requesting a reverse PTR replacement.  This is
+due to invalid data contained in the NameChangeRequest. The request will be
+aborted.  This is most likely a configuration issue.
+
+% DHCP_DDNS_ADD_SUCCEEDED DHCP_DDNS successfully added the DNS mapping addition for this request: %1
+This is a debug message issued after DHCP_DDNS has submitted DNS mapping
+additions which were received and accepted by an appropriate DNS server.
+
+% DHCP_DDNS_ADD_FAILED DHCP_DDNS failed attempting to make DNS mapping additions for this request: %1
+This is an error message issued after DHCP_DDNS attempts to submit DNS mapping
+entry additions have failed.  The precise reason for the failure should be
+documented in preceding log entries.

@@ -113,7 +113,7 @@ NameChangeTransaction::sendUpdate(bool /* use_tsig_ */) {
         // It is presumed that any throw from doUpdate is due to a programmatic
         // error, such as an unforeseen permutation of data, rather than an IO
         // failure. IO errors should be caught by the underlying asiolink
-        // mechansisms and manifested as an unsuccessful IO statu in the
+        // mechanisms and manifested as an unsuccessful IO status in the
         // DNSClient callback.  Any problem here most likely means the request
         // is corrupt in some way and cannot be completed, therefore we will
         // log it and transition it to failure.
@@ -232,6 +232,83 @@ NameChangeTransaction::setUpdateAttempts(const size_t value) {
     update_attempts_ = value;
 }
 
+D2UpdateMessagePtr
+NameChangeTransaction::prepNewRequest(DdnsDomainPtr domain) {
+    if (!domain) {
+        isc_throw(NameChangeTransactionError,
+                  "prepNewRequest - domain cannot be null");
+    }
+
+    try {
+        // Create a "blank" update request.
+        D2UpdateMessagePtr request(new D2UpdateMessage(D2UpdateMessage::
+                                                       OUTBOUND));
+        // Construct the Zone Section.
+        dns::Name zone_name(domain->getName());
+        request->setZone(zone_name, dns::RRClass::IN());
+        return (request);
+    } catch (const std::exception& ex) {
+        isc_throw(NameChangeTransactionError, "Cannot create new request :"
+                  << ex.what());
+    }
+}
+
+void
+NameChangeTransaction::addLeaseAddressRdata(dns::RRsetPtr& rrset) {
+    if (!rrset) {
+        isc_throw(NameChangeTransactionError,
+                  "addLeaseAddressRdata - RRset cannot cannot be null");
+    }
+
+    try {
+        // Manufacture an RData from the lease address then add it to the RR.
+        if (ncr_->isV4()) {
+            dns::rdata::in::A a_rdata(ncr_->getIpAddress());
+            rrset->addRdata(a_rdata);
+        } else {
+            dns::rdata::in::AAAA rdata(ncr_->getIpAddress());
+            rrset->addRdata(rdata);
+        }
+    } catch (const std::exception& ex) {
+        isc_throw(NameChangeTransactionError, "Cannot add address rdata: "
+                  << ex.what());
+    }
+}
+
+void
+NameChangeTransaction::addDhcidRdata(dns::RRsetPtr& rrset) {
+    if (!rrset) {
+        isc_throw(NameChangeTransactionError,
+                  "addDhcidRdata - RRset cannot cannot be null");
+    }
+
+    try {
+        const std::vector<uint8_t>& ncr_dhcid = ncr_->getDhcid().getBytes();
+        util::InputBuffer buffer(ncr_dhcid.data(), ncr_dhcid.size());
+        dns::rdata::in::DHCID rdata(buffer, ncr_dhcid.size());
+        rrset->addRdata(rdata);
+    } catch (const std::exception& ex) {
+        isc_throw(NameChangeTransactionError, "Cannot add DCHID rdata: "
+                  << ex.what());
+    }
+}
+
+void
+NameChangeTransaction::addPtrRdata(dns::RRsetPtr& rrset) {
+    if (!rrset) {
+        isc_throw(NameChangeTransactionError,
+                  "addPtrRdata - RRset cannot cannot be null");
+    }
+
+    try {
+        dns::rdata::generic::PTR rdata(getNcr()->getFqdn());
+        rrset->addRdata(rdata);
+    } catch (const std::exception& ex) {
+        isc_throw(NameChangeTransactionError, "Cannot add PTR rdata: "
+                  << ex.what());
+    }
+}
+
 const dhcp_ddns::NameChangeRequestPtr&
 NameChangeTransaction::getNcr() const {
     return (ncr_);
@@ -331,6 +408,11 @@ NameChangeTransaction::getReverseChangeCompleted() const {
 size_t
 NameChangeTransaction::getUpdateAttempts() const {
     return (update_attempts_);
+}
+
+const dns::RRType&
+NameChangeTransaction::getAddressRRType() const {
+    return (ncr_->isV4() ?  dns::RRType::A(): dns::RRType::AAAA());
 }
 
 } // namespace isc::d2

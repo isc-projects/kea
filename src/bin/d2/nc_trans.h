@@ -69,7 +69,7 @@ typedef isc::dhcp_ddns::D2Dhcid TransactionKey;
 /// single update to the server and returns the response, asynchronously,
 /// through a callback.  At each point in a transaction's state model, where
 /// an update is to be sent, the model "suspends" until notified by the
-/// DNSClient via the callbacka.  Suspension is done by posting a
+/// DNSClient via the callback.  Suspension is done by posting a
 /// StateModel::NOP_EVT as the next event, stopping the state model execution.
 ///
 /// Resuming state model execution when a DNS update completes is done by a
@@ -204,7 +204,7 @@ protected:
     /// currently selected server.  Since the send is asynchronous, the method
     /// posts NOP_EVT as the next event and then returns.
     ///
-    /// @param use_tsig True if the udpate should be include a TSIG key. This
+    /// @param use_tsig True if the update should be include a TSIG key. This
     /// is not yet implemented.
     ///
     /// If an exception occurs it will be logged and and the transaction will
@@ -215,7 +215,7 @@ protected:
     ///
     /// This method adds the events common to NCR transaction processing to
     /// the set of define events.  It invokes the superclass's implementation
-    /// first to maitain the hierarchical chain of event defintion.
+    /// first to maintain the hierarchical chain of event definition.
     /// Derivations of NameChangeTransaction must invoke its implementation
     /// in like fashion.
     ///
@@ -237,7 +237,7 @@ protected:
     ///
     /// This method adds the states common to NCR transaction processing to
     /// the dictionary of states.  It invokes the superclass's implementation
-    /// first to maitain the hierarchical chain of state defintion.
+    /// first to maintain the hierarchical chain of state definition.
     /// Derivations of NameChangeTransaction must invoke its implementation
     /// in like fashion.
     ///
@@ -261,7 +261,7 @@ protected:
     /// execution encounters a model violation:  attempt to call an unmapped
     /// state, an event not valid for the current state, or an uncaught
     /// exception thrown during a state handler invocation.  When such an
-    /// error occurs the transaction is deemed inoperable, and futher model
+    /// error occurs the transaction is deemed inoperable, and further model
     /// execution cannot be performed.  It marks the transaction as failed by
     /// setting the NCR status to dhcp_ddns::ST_FAILED
     ///
@@ -271,7 +271,7 @@ protected:
     /// @brief Determines the state and next event based on update attempts.
     ///
     /// This method will post a next event of SERVER_SELECTED_EVT to the
-    /// current state if the number of udpate attempts has not reached the
+    /// current state if the number of update attempts has not reached the
     /// maximum allowed.
     ///
     /// If the maximum number of attempts has been reached, it will transition
@@ -334,7 +334,7 @@ protected:
     ///
     /// This method is used to iterate over the list of servers.  If there are
     /// no more servers in the list, it returns false.  Otherwise it sets the
-    /// the current server to the next server and creates a new DNSClient
+    /// current server to the next server and creates a new DNSClient
     /// instance.
     ///
     /// @return True if a server has been selected, false if there are no more
@@ -364,6 +364,49 @@ protected:
         return (io_service_);
     }
 
+    /// @brief Creates a new DNS update request based on the given domain.
+    ///
+    /// Constructs a new "empty", OUTBOUND, request with the message id set
+    /// and zone section populated based on the given domain.
+    /// It is declared virtual for test purposes.
+    ///
+    /// @return A D2UpdateMessagePtr to the new request.
+    ///
+    /// @throw NameChangeTransactionError if request cannot be constructed.
+    virtual D2UpdateMessagePtr prepNewRequest(DdnsDomainPtr domain);
+
+    /// @brief Adds an RData for the lease address to the given RRset.
+    ///
+    /// Creates an in::A() or in:AAAA() RData instance from the NCR
+    /// lease address and adds it to the given RRset.
+    ///
+    /// @param RRset RRset to which to add the RData
+    ///
+    /// @throw NameChangeTransactionError if RData cannot be constructed or
+    /// the RData cannot be added to the given RRset.
+    void addLeaseAddressRdata(dns::RRsetPtr& rrset);
+
+    /// @brief Adds an RData for the lease client's DHCID to the given RRset.
+    ///
+    /// Creates an in::DHCID() RData instance from the NCR DHCID and adds
+    /// it to the given RRset.
+    ///
+    /// @param RRset RRset to which to add the RData
+    ///
+    /// @throw NameChangeTransactionError if RData cannot be constructed or
+    /// the RData cannot be added to the given RRset.
+    void addDhcidRdata(dns::RRsetPtr& rrset);
+
+    /// @brief Adds an RData for the lease FQDN to the given RRset.
+    ///
+    /// Creates an in::PTR() RData instance from the NCR FQDN and adds
+    /// it to the given RRset.
+    ///
+    /// @param RRset RRset to which to add the RData
+    ///
+    /// @throw NameChangeTransactionError if RData cannot be constructed or
+    /// the RData cannot be added to the given RRset.
+    void addPtrRdata(dns::RRsetPtr& rrset);
 
 public:
     /// @brief Fetches the NameChangeRequest for this transaction.
@@ -392,13 +435,13 @@ public:
 
     /// @brief Fetches the forward DdnsDomain.
     ///
-    /// @return A pointer reference to the forward DdnsDomain.  If the
+    /// @return A pointer reference to the forward DdnsDomain.  If 
     /// the request does not include a forward change, the pointer will empty.
     DdnsDomainPtr& getForwardDomain();
 
     /// @brief Fetches the reverse DdnsDomain.
     ///
-    /// @return A pointer reference to the reverse DdnsDomain.  If the
+    /// @return A pointer reference to the reverse DdnsDomain.  If 
     /// the request does not include a reverse change, the pointer will empty.
     DdnsDomainPtr& getReverseDomain();
 
@@ -443,6 +486,12 @@ public:
     /// @return size_t which is the number of times the current request has
     /// been attempted against the current server.
     size_t getUpdateAttempts() const;
+
+    /// @brief Returns the DHCP data type for the lease address
+    ///
+    /// @return constant reference to dns::RRType::A() if the lease address
+    /// is IPv4 or dns::RRType::AAAA() if the lease address is IPv6.
+    const dns::RRType& getAddressRRType() const;
 
 private:
     /// @brief The IOService which should be used to for IO processing.

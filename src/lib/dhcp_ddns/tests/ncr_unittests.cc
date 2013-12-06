@@ -125,6 +125,17 @@ const char *invalid_msgs[] =
      " \"lease_expires_on\" : \"20130121132405\" , "
      " \"lease_length\" : 1300 "
      "}",
+    // Malformed FQDN
+     "{"
+     " \"change_type\" : 0 , "
+     " \"forward_change\" : true , "
+     " \"reverse_change\" : false , "
+     " \"fqdn\" : \".bad_name\" , "
+     " \"ip_address\" : \"192.168.2.1\" , "
+     " \"dhcid\" : \"010203040A7F8E3D\" , "
+     " \"lease_expires_on\" : \"20130121132405\" , "
+     " \"lease_length\" : 1300 "
+     "}",
     // Bad IP address
      "{"
      " \"change_type\" : 0 , "
@@ -462,7 +473,7 @@ TEST(NameChangeRequestTest, basicJsonTest) {
                             "\"change_type\":1,"
                             "\"forward_change\":true,"
                             "\"reverse_change\":false,"
-                            "\"fqdn\":\"walah.walah.com\","
+                            "\"fqdn\":\"walah.walah.com.\","
                             "\"ip_address\":\"192.168.2.1\","
                             "\"dhcid\":\"010203040A7F8E3D\","
                             "\"lease_expires_on\":\"20130121132405\","
@@ -543,7 +554,7 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
                             "\"change_type\":1,"
                             "\"forward_change\":true,"
                             "\"reverse_change\":false,"
-                            "\"fqdn\":\"walah.walah.com\","
+                            "\"fqdn\":\"walah.walah.com.\","
                             "\"ip_address\":\"192.168.2.1\","
                             "\"dhcid\":\"010203040A7F8E3D\","
                             "\"lease_expires_on\":\"20130121132405\","
@@ -573,6 +584,28 @@ TEST(NameChangeRequestTest, toFromBufferTest) {
 
     // Verify that the final string matches the original.
     ASSERT_EQ(final_str, msg_str);
+}
+
+/// @brief Tests ip address modification and validation
+TEST(NameChangeRequestTest, ipAddresses) {
+    NameChangeRequest ncr;
+
+    // Verify that a valid IPv4 address works.
+    ASSERT_NO_THROW(ncr.setIpAddress("192.168.1.1"));
+    const asiolink::IOAddress& io_addr4 = ncr.getIpIoAddress();
+    EXPECT_EQ(ncr.getIpAddress(), io_addr4.toText());
+    EXPECT_TRUE(ncr.isV4());
+    EXPECT_FALSE(ncr.isV6());
+
+    // Verify that a valid IPv6 address works.
+    ASSERT_NO_THROW(ncr.setIpAddress("2001:1::f3"));
+    const asiolink::IOAddress& io_addr6 = ncr.getIpIoAddress();
+    EXPECT_EQ(ncr.getIpAddress(), io_addr6.toText());
+    EXPECT_FALSE(ncr.isV4());
+    EXPECT_TRUE(ncr.isV6());
+
+    // Verify that an invalid address fails.
+    ASSERT_THROW(ncr.setIpAddress("x001:1::f3"),NcrMessageError);
 }
 
 } // end of anonymous namespace
