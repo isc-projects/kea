@@ -1,3 +1,14 @@
+714.	[doc]		tomek
+	BIND10 Contributor's Guide added.
+	(Trac #3109, git 016bfae00460b4f88adbfd07ed26759eb294ef10)
+
+713.	[func]		tmark
+	Added DNS update request construction to d2::NameAddTransaction in
+	b10-dhcp-ddns.  The class now generates all DNS update request variations
+	needed to fulfill it's state machine in compliance with RFC 4703, sections
+	5.3 and 5.4.
+	(Trac# 3207, git dceca9554cb9410dd8d12371b68198b797cb6cfb)
+
 712.	[func]		marcin,dclink
 	b10-dhcp4: If server fails to open a socket on one interface it
 	will log a warning and continue to open sockets on other interfaces.
@@ -6,7 +17,7 @@
 	David Carlier for providing a patch.
 	(Trac #2765, git f49c4b8942cdbafb85414a1925ff6ca1d381f498)
 
-711.	[func]	tmark
+711.	[func]		tmark
 	Added the initial implementation of the class, NameAddTransaction,
 	to b10-dhcp-ddns.  This class provides the state model logic
 	described in the DHCP_DDNS design to add or replace forward and
