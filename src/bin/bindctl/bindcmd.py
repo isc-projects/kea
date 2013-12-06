@@ -446,8 +446,9 @@ WARNING: The Python readline module isn't available, so some command line
                     raise CmdMissParamSyntaxError(cmd.module, cmd.command, name)
                 param_nr += 1
 
-        # Convert parameter value according parameter spec file.
-        # Ignore check for commands belongs to module 'config' or 'execute
+        # Convert parameter value according to parameter spec
+        # file. Ignore check for commands belonging to module 'config'
+        # or 'execute'.
         if cmd.module != CONFIG_MODULE_NAME and\
            cmd.module != command_sets.EXECUTE_MODULE_NAME:
             for param_name in cmd.params:
