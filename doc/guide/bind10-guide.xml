@@ -836,6 +836,11 @@ as a dependency earlier -->
           and documentation, run:
           <screen>$ <userinput>make install</userinput></screen>
         </para>
+        <para>
+          Please don't use any form of parallel or job server options
+          (such as GNU make's <command>-j</command> option) when
+          performing this step. Doing so may cause errors.
+        </para>
         <note>
           <para>The install step may require superuser privileges.</para>
         </note>
