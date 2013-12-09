@@ -235,7 +235,7 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     struct in_pktinfo* pktinfo =(struct in_pktinfo *)CMSG_DATA(cmsg);
     memset(pktinfo, 0, sizeof(struct in_pktinfo));
     pktinfo->ipi_ifindex = pkt->getIndex();
-    m.msg_controllen = cmsg->cmsg_len;
+    m.msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
 #endif
 
     pkt->updateTimestamp();
