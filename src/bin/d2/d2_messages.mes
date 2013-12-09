@@ -138,7 +138,7 @@ error while decoding a response to DNS Update message. Typically, this error
 will be encountered when a response message is malformed.
 
 % DHCP_DDNS_NO_ELIGIBLE_JOBS although there are queued requests, there are pending transactions for each Queue count: %1  Transaction count: %2
-This is a debug messge issued when all of the queued requests represent clients
+This is a debug message issued when all of the queued requests represent clients
 for which there is a an update already in progress.  This may occur under
 normal operations but should be temporary situation.
 
@@ -325,13 +325,13 @@ message but the attempt to send it suffered a unexpected error. This is most
 likely a programmatic error, rather than a communications issue. Some or all
 of the DNS updates requested as part of this request did not succeed.
 
-% DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE A DNS udpate message to add a forward DNS entry could not be constructed for this request: %1, reason: %2
+% DHCP_DDNS_FORWARD_ADD_BUILD_FAILURE A DNS update message to add a forward DNS entry could not be constructed for this request: %1, reason: %2
 This is an error message issued when an error occurs attempting to construct
 the server bound packet requesting a forward address addition.  This is due
 to invalid data contained in the NameChangeRequest. The request will be aborted.
 This is most likely a configuration issue.
 
-% DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE A DNS update message to replace a foward DNS entry could not be constructed from this request: %1, reason: %2
+% DHCP_DDNS_FORWARD_REPLACE_BUILD_FAILURE A DNS update message to replace a forward DNS entry could not be constructed from this request: %1, reason: %2
 This is an error message issued when an error occurs attempting to construct
 the server bound packet requesting a forward address replacement.  This is
 due to invalid data contained in the NameChangeRequest. The request will be
