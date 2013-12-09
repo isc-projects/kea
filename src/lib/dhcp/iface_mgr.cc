@@ -26,7 +26,8 @@
 #include <exceptions/exceptions.h>
 #include <util/io/pktinfo_utilities.h>
 
-
+#include <cstring>
+#include <errno.h>
 #include <fstream>
 #include <sstream>
 
@@ -906,7 +907,8 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
 
     result = sendmsg(getSocket(*pkt), &m, 0);
     if (result < 0) {
-        isc_throw(SocketWriteError, "Pkt6 send failed: sendmsg() returned " << result);
+        isc_throw(SocketWriteError, "pkt6 send failed: sendmsg() returned"
+                  " with an error: " << strerror(errno));
     }
 
     return (result);
