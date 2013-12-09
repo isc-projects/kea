@@ -892,7 +892,15 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     struct in6_pktinfo *pktinfo = convertPktInfo6(CMSG_DATA(cmsg));
     memset(pktinfo, 0, sizeof(struct in6_pktinfo));
     pktinfo->ipi6_ifindex = pkt->getIndex();
-    m.msg_controllen = cmsg->cmsg_len;
+    // According to RFC3542, section 20.2, the msg_controllen field
+    // may be set using CMSG_SPACE (which includes padding) or
+    // using CMSG_LEN. Both forms appear to work fine on Linux, FreeBSD,
+    // NetBSD, but OpenBSD appears to have a bug, discussed here:
+    // http://www.archivum.info/mailing.openbsd.bugs/2009-02/00017/
+    // kernel-6080-msg_controllen-of-IPV6_PKTINFO.html
+    // which causes sendmsg to return EINVAL if the CMSG_LEN is
+    // used to set the msg_controllen value.
+    m.msg_controllen = CMSG_SPACE(sizeof(struct in6_pktinfo));
 
     pkt->updateTimestamp();
 
