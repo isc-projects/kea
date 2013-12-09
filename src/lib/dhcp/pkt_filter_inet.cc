@@ -16,6 +16,8 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter_inet.h>
+#include <errno.h>
+#include <cstring>
 
 using namespace isc::asiolink;
 
@@ -242,7 +244,8 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
 
     int result = sendmsg(sockfd, &m, 0);
     if (result < 0) {
-        isc_throw(SocketWriteError, "pkt4 send failed");
+        isc_throw(SocketWriteError, "pkt4 send failed: sendmsg() returned "
+                  " with an error: " << strerror(errno));
     }
 
     return (result);
