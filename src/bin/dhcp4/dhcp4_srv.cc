@@ -873,10 +873,10 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
     // perform DNS updates:
     // 1. Updates are globally disabled,
     // 2. Client requested no update and server respects it,
-    // 3. Client requested that the foward DNS update is delegated to the client
-    //    but server neither respects requests for forward update delegation nor
-    //    it is configured to send update on its own when client requested
-    //    delegation.
+    // 3. Client requested that the forward DNS update is delegated to the
+    //    client but server neither respects requests for forward update
+    //    delegation nor it is configured to send update on its own when
+    //    client requested delegation.
     if (!FQDN_ENABLE_UPDATE ||
         (fqdn->getFlag(Option4ClientFqdn::FLAG_N) &&
          !FQDN_OVERRIDE_NO_UPDATE) ||
