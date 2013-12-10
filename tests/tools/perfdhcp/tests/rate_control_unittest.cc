@@ -80,6 +80,8 @@ TEST(RateControl, constructor) {
 
     // The 0 value of aggressivity < 1 is not acceptable.
     EXPECT_THROW(RateControl(3, 0), isc::BadValue);
+    // The negative value of rate is not acceptable.
+    EXPECT_THROW(RateControl(-1, 3), isc::BadValue);
 }
 
 // Check the aggressivity accessor.
@@ -98,7 +100,8 @@ TEST(RateControl, getDue) {
     ASSERT_FALSE(rc.getDue().is_not_a_date_time());
     rc.send_due_ = NakedRateControl::currentTime();
     EXPECT_TRUE(NakedRateControl::currentTime() >= rc.getDue());
-    rc.send_due_ = NakedRateControl::currentTime() + boost::posix_time::seconds(10);
+    rc.send_due_ = NakedRateControl::currentTime() +
+        boost::posix_time::seconds(10);
     EXPECT_TRUE(NakedRateControl::currentTime() < rc.getDue());
 }
 
@@ -126,7 +129,7 @@ TEST(RateControl, isLateSent) {
 // it is quite hard to fully test this function as its behaviour strongly
 // depends on time.
 TEST(RateControl, getOutboundMessageCount) {
-    NakedRateControl rc1;
+    NakedRateControl rc1(1000, 1);
     // Set the timestamp of the last sent message well to the past.
     // The resulting due time will be in the past too.
     rc1.last_sent_ =
@@ -146,10 +149,27 @@ TEST(RateControl, getOutboundMessageCount) {
     // to the future. If the resulting due time is well in the future too,
     // the number of messages to be sent must be 0.
     NakedRateControl rc3(10, 3);
-    rc3.last_sent_ = NakedRateControl::currentTime() + boost::posix_time::seconds(5);
+    rc3.last_sent_ = NakedRateControl::currentTime() +
+        boost::posix_time::seconds(5);
     ASSERT_NO_THROW(count = rc3.getOutboundMessageCount());
     EXPECT_EQ(0, count);
 
+}
+
+// Test the aggressivity modifier for valid and invalid values.
+TEST(RateControl, setAggressivity) {
+    NakedRateControl rc;
+    ASSERT_NO_THROW(rc.setAggressivity(1));
+    EXPECT_THROW(rc.setAggressivity(0), isc::BadValue);
+    EXPECT_THROW(rc.setAggressivity(-1), isc::BadValue);
+}
+
+// Test the rate modifier for valid and invalid rate values.
+TEST(RateControl, setRate) {
+    NakedRateControl rc;
+    EXPECT_NO_THROW(rc.setRate(1));
+    EXPECT_NO_THROW(rc.setRate(0));
+    EXPECT_THROW(rc.setRate(-1), isc::BadValue);
 }
 
 // Test the function which calculates the due time to send next set of
@@ -170,7 +190,7 @@ TEST(RateControl, updateSendDue) {
     last_send_due = rc.send_due_;
     ASSERT_NO_THROW(rc.updateSendDue());
     // The value should be modified to the new value.
-    EXPECT_TRUE(rc.send_due_ != last_send_due);
+    EXPECT_TRUE(rc.send_due_ > last_send_due);
 
 }
 
