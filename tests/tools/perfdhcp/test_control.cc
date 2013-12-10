@@ -1117,14 +1117,35 @@ TestControl::processReceivedPacket6(const TestControlSocket& socket,
             }
         }
     } else if (packet_type == DHCPV6_REPLY) {
+        // If the received message is Reply, we have to find out which exchange
+        // type the Reply message belongs to. It is doable by matching the Reply
+        // transaction id with the transaction id of the sent Request, Renew
+        // or Release. First we start with the Request.
         if (stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RR, pkt6)) {
+            // The Reply belongs to Request-Reply exchange type. So, we may need
+            // to keep this Reply in the storage if Renews or/and Releases are
+            // being sent. Note that, Reply messages hold the information about
+            // leases assigned. We use this information to construct Renew and
+            // Release messages.
             if (stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RN) ||
                 stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RL)) {
+                // Renew or Release messages are sent, because StatsMgr has the
+                // specific exchange type specified. Let's append the Reply
+                // message to a storage.
                 reply_storage_.append(pkt6);
             }
+        // The Reply message is not a server's response to the Request message
+        // sent within the 4-way exchange. It may be a response to the Renew
+        // or Release message. In the if clause we first check if StatsMgr
+        // has exchange type for Renew specified, and if it has, if there is
+        // a corresponding Renew message for the received Reply. If not,
+        // we check that StatsMgr has exchange type for Release specified,
+        // as possibly the Reply has been sent in response to Release.
         } else if (!(stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RN) &&
                      stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RN, pkt6)) &&
                    stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RL)) {
+            // At this point, it is only possible that the Reply has been sent
+            // in response to a Release. Try to match the Reply with Release.
             stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RL, pkt6);
         }
     }
