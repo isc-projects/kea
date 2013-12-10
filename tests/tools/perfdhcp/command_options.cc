@@ -743,8 +743,8 @@ CommandOptions::validate() const {
           "-r<rate> must be set to use -D<max-drop>");
     check((getRate() != 0) && (getRenewRate() + getReleaseRate() > getRate()),
           "The sum of Renew rate (-f<renew-rate>) and Release rate"
-          " (-F<release-rate>) must not be greater than the rate specified"
-          " as -r<rate>");
+          " (-F<release-rate>) must not be greater than the exchange"
+          " rate specified as -r<rate>");
     check((getRate() == 0) && (getRenewRate() != 0),
           "Renew rate specified as -f<renew-rate> must not be specified"
           " when -r<rate> parameter is not specified");
@@ -1014,14 +1014,16 @@ CommandOptions::usage() const {
         "\n"
         "DHCPv6 only options:\n"
         "-c: Add a rapid commit option (exchanges will be SA).\n"
-        "-f<renew-rate>: A rate at which IPv6 Renew requests are sent to\n"
-        "    a server. The sum of this value and release-rate must be equal\n"
-        "    or lower than the rate specified as -r<rate>. If -r<rate> is\n"
-        "    not specified, this parameter must not be specified too.\n"
-        "-F<release-rate>: A rate at which IPv6 Release requests are sent to\n"
-        "    a server. The sum of this value and renew-rate must be equal or\n"
-        "    lower than the rate specified as -r<rate>. If -r<rate> is not\n"
-        "    specified, this parameter must not be specified too.\n"
+        "-f<renew-rate>: Rate at which IPv6 Renew requests are sent to\n"
+        "    a server. This value is only valid when used in conjunction with\n"
+        "    the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
+        "    this value and the release-rate (given by -F<rate) must be equal\n"
+        "    to or less than the exchange rate.\n"
+        "-F<release-rate>: Rate at which IPv6 Release requests are sent to\n"
+        "    a server. This value is only valid when used in conjunction with\n"
+        "    the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
+        "    this value and the renew-rate (given by -f<rate) must be equal\n"
+        "    to or less than the exchange rate.\n"
         "\n"
         "The remaining options are used only in conjunction with -r:\n"
         "\n"

@@ -28,9 +28,13 @@ RateControl::RateControl()
 RateControl::RateControl(const int rate, const int aggressivity)
     : send_due_(currentTime()), last_sent_(currentTime()),
       aggressivity_(aggressivity), rate_(rate), late_sent_(false) {
-    if (aggressivity < 1) {
+    if (aggressivity_ < 1) {
         isc_throw(isc::BadValue, "invalid value of aggressivity "
                   << aggressivity << ", expected value is greater than 0");
+    }
+    if (rate_ < 0) {
+        isc_throw(isc::BadValue, "invalid value of rate " << rate
+                  << ", expected non-negative value");
     }
 }
 
@@ -118,6 +122,24 @@ RateControl::updateSendDue() {
     } else {
         late_sent_ = false;
     }
+}
+
+void
+RateControl::setAggressivity(const int aggressivity) {
+    if (aggressivity < 1) {
+        isc_throw(isc::BadValue, "invalid value of aggressivity "
+                  << aggressivity << ", expected value is greater than 0");
+    }
+    aggressivity_ = aggressivity;
+}
+
+void
+RateControl::setRate(const int rate) {
+    if (rate < 0) {
+        isc_throw(isc::BadValue, "invalid value of rate " << rate
+                  << ", expected non-negative value");
+    }
+    rate_ = rate;
 }
 
 void

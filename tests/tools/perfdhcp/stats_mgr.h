@@ -1181,7 +1181,7 @@ public:
     ///
     /// \param xchg_type exchange type.
     /// \return string representing name of the exchange.
-    std::string exchangeToString(ExchangeType xchg_type) const {
+    static std::string exchangeToString(ExchangeType xchg_type) {
         switch(xchg_type) {
         case XCHG_DO:
             return("DISCOVER-OFFER");

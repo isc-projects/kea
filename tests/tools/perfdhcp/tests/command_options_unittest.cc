@@ -351,7 +351,10 @@ TEST_F(CommandOptionsTest, RenewRate) {
     EXPECT_THROW(process("perfdhcp -6 -r 10 -f 11 -l ethx all"),
                  isc::InvalidParameter);
     // The renew-rate of 0 is invalid.
-    EXPECT_THROW(process("perfdhcp -6 -r 10 -f 0 - l ethx all"),
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -f 0 -l ethx all"),
+                 isc::InvalidParameter);
+    // The negative renew-rate is invalid.
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -f -5 -l ethx all"),
                  isc::InvalidParameter);
     // If -r<rate> is not specified the -f<renew-rate> should not
     // be accepted.
@@ -386,6 +389,9 @@ TEST_F(CommandOptionsTest, ReleaseRate) {
                  isc::InvalidParameter);
     // The release-rate of 0 is invalid.
     EXPECT_THROW(process("perfdhcp -6 -r 10 -F 0 -l ethx all"),
+                 isc::InvalidParameter);
+    // The negative rlease-rate is invalid.
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -F -5 -l ethx all"),
                  isc::InvalidParameter);
     // If -r<rate> is not specified the -F<release-rate> should not
     // be accepted.
