@@ -4451,7 +4451,7 @@ Dhcp4/renew-timer	1000	integer	(default)
             available from <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
           </listitem>
           <listitem>
-            <simpara>Interface detection is currently working on Linux
+            <simpara>Raw sockets operation is working on Linux
             only. See <xref linkend="iface-detect"/> for details.</simpara>
           </listitem>
           <listitem>
@@ -5331,10 +5331,6 @@ Dhcp6/renew-timer	1000	integer	(default)
         <listitem>
           <simpara>DNS Update is not supported.</simpara>
         </listitem>
-        <listitem>
-          <simpara>Interface detection is currently working on Linux
-          only. See <xref linkend="iface-detect"/> for details.</simpara>
-        </listitem>
       </itemizedlist>
     </section>
 
@@ -5369,16 +5365,17 @@ Dhcp6/renew-timer	1000	integer	(default)
 <!-- TODO: point to doxygen docs -->
 
     <section id="iface-detect">
-      <title>Interface detection</title>
+      <title>Interface detection and Socket handling</title>
       <para>Both the DHCPv4 and DHCPv6 components share network
       interface detection routines. Interface detection is
-      currently only supported on Linux systems.</para>
+      currently supported on Linux, all BSD family (FreeBSD, NetBSD,
+      OpenBSD), Mac OS X and Solaris 11 systems.</para>
 
-      <para>For non-Linux systems, there is currently a stub
-      implementation provided. The interface manager detects loopback
-      interfaces only as their name (lo or lo0) can be easily predicted.
-      Please contact the BIND 10 development team if you are interested
-      in running DHCP components on systems other than Linux.</para>
+      <para>DHCPv4 requires special raw socket processing to send and receive
+      packets from hosts that do not have IPv4 address assigned yet. Support
+      for this operation is implemented on Linux only, so it is likely that
+      DHCPv4 component will not work in certain cases on systems other than
+      Linux.</para>
     </section>
 
 <!--

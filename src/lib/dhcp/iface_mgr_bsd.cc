@@ -46,21 +46,21 @@ IfaceMgr::detectIfaces() {
     }
 
     typedef map<string, Iface> ifaceLst;
-    ifaceLst::iterator itf;
+    ifaceLst::iterator iface_iter;
     ifaceLst ifaces;
 
     // First lookup for getting interfaces ...
-    for(ifptr = iflist; ifptr != 0; ifptr = ifptr->ifa_next) {
+    for (ifptr = iflist; ifptr != 0; ifptr = ifptr->ifa_next) {
         const char * ifname = ifptr->ifa_name;
         uint ifindex = 0;
 
-        if(!(ifindex = if_nametoindex(ifname))) {
+        if (!(ifindex = if_nametoindex(ifname))) {
             // Interface name does not have corresponding index ...
             freeifaddrs(iflist);
             isc_throw(Unexpected, "Interface " << ifname << " has no index");
         }
 
-        if((itf = ifaces.find(ifname)) != ifaces.end()) {
+        if ((iface_iter = ifaces.find(ifname)) != ifaces.end()) {
             continue;
         }
 
@@ -70,8 +70,8 @@ IfaceMgr::detectIfaces() {
     }
 
     // Second lookup to get MAC and IP addresses
-    for(ifptr = iflist; ifptr != 0; ifptr = ifptr->ifa_next) {
-        if((itf = ifaces.find(ifptr->ifa_name)) == ifaces.end()) {
+    for (ifptr = iflist; ifptr != 0; ifptr = ifptr->ifa_next) {
+        if ((iface_iter = ifaces.find(ifptr->ifa_name)) == ifaces.end()) {
             continue;
         }
         // Common byte pointer for following data
@@ -82,8 +82,8 @@ IfaceMgr::detectIfaces() {
                 reinterpret_cast<struct sockaddr_dl *>(ifptr->ifa_addr);
             ptr = reinterpret_cast<uint8_t *>(LLADDR(ldata));
 
-            itf->second.setHWType(ldata->sdl_type);
-            itf->second.setMac(ptr, ldata->sdl_alen);
+            iface_iter->second.setHWType(ldata->sdl_type);
+            iface_iter->second.setMac(ptr, ldata->sdl_alen);
         } else if(ifptr->ifa_addr->sa_family == AF_INET6) {
             // IPv6 Addr
             struct sockaddr_in6 * adata =
@@ -91,7 +91,7 @@ IfaceMgr::detectIfaces() {
             ptr = reinterpret_cast<uint8_t *>(&adata->sin6_addr);
 
             IOAddress a = IOAddress::fromBytes(AF_INET6, ptr);
-            itf->second.addAddress(a);
+            iface_iter->second.addAddress(a);
         } else {
             // IPv4 Addr
             struct sockaddr_in * adata =
@@ -99,18 +99,16 @@ IfaceMgr::detectIfaces() {
             ptr = reinterpret_cast<uint8_t *>(&adata->sin_addr);
 
             IOAddress a = IOAddress::fromBytes(AF_INET, ptr);
-            itf->second.addAddress(a);
+            iface_iter->second.addAddress(a);
         }
     }
 
     freeifaddrs(iflist);
 
-    // Registers interfaces with at least an IP addresses
-    for(ifaceLst::const_iterator itf = ifaces.begin();
-        itf != ifaces.end(); ++ itf) {
-        if(itf->second.getAddresses().size() > 0) {
-            ifaces_.push_back(itf->second);
-        }
+    // Interfaces registering
+    for(ifaceLst::const_iterator iface_iter = ifaces.begin();
+        iface_iter != ifaces.end(); ++iface_iter) {
+        ifaces_.push_back(iface_iter->second);
     }
 }
 
@@ -119,7 +117,7 @@ IfaceMgr::detectIfaces() {
 /// Like Linux version, os specific flags
 ///
 /// @params flags
-void Iface::setFlags(uint32_t flags) {
+void Iface::setFlags(uint64_t flags) {
     flags_ = flags;
 
     flag_loopback_ = flags & IFF_LOOPBACK;
