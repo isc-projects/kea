@@ -1,3 +1,9 @@
+715.	[bug]		marcin
+	libdhcp++: Used the CMSG_SPACE instead of CMSG_LEN macro to calculate
+	msg_controllen field of the DHCPv6 message. Use of CMSG_LEN causes
+	sendmsg failures on OpenBSD due to the bug kernel/6080 on OpenBSD.
+	(Trac #1824, git 39c9499d001a98c8d2f5792563c28a5eb2cc5fcb)
+
 714.	[doc]		tomek
 	BIND10 Contributor's Guide added.
 	(Trac #3109, git 016bfae00460b4f88adbfd07ed26759eb294ef10)
