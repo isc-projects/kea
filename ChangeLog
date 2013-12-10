@@ -1,3 +1,9 @@
+6XX.	[func]		dclink, tomek
+	libdhcp++: Interface detection implemented for FreeBSD, NetBSD,
+	OpenBSD, Mac OS X and Solaris 11. Thanks to David Carlier for
+	contributing a patch.
+	(Trac #2246, git abcd)
+
 691.	[bug]		marcin
 	libdhcp++: Created definitions for standard DHCPv4 options:
 	tftp-server-name (66) and boot-file-name (67). Also, fixed definition
