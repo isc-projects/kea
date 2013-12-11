@@ -1,3 +1,8 @@
+717.	[bug]		marcin
+	Fixed the bug which incorrectly treated DHCPv4 option codes 224-254 as
+	standard options, barring them from being used as custom options.
+	(Trac #2772, git c6158690c389d75686545459618ae0bf16f2cdb8)
+
 716.	[func]		marcin
 	perfdhcp: added support for sending DHCPv6 Relese messages at the specified
 	rate and measure performance. The orphan messages counters are not
