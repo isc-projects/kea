@@ -1,3 +1,11 @@
+716.	[func]		marcin
+	perfdhcp: added support for sending DHCPv6 Relese messages at the specified
+	rate and measure performance. The orphan messages counters are not
+	displayed for individual exchanges anymore. The following ticket: #3261
+	has been submitted to implement global orphan counting for all exchange
+	types.
+	(Trac #3181, git 684524bc130080e4fa31b65edfd14d58eec37e50)
+
 715.	[bug]		marcin
 	libdhcp++: Used the CMSG_SPACE instead of CMSG_LEN macro to calculate
 	msg_controllen field of the DHCPv6 message. Use of CMSG_LEN causes
