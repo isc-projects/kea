@@ -561,27 +561,28 @@ NameAddTransaction::buildAddFwdAddressRequest() {
     // Construct dns::Name from NCR fqdn.
     dns::Name fqdn(dns::Name(getNcr()->getFqdn()));
 
+    // Content on this request is based on RFC 4703, section 5.3.1
     // First build the Prerequisite Section.
 
-    // Create 'FQDN Is Not In Use' prerequisite (RFC 2136, section 2.4.5)
-    // Add the RR to prerequisite section.
+    // Create 'FQDN Is Not In Use' prerequisite and add it to the
+    // prerequisite section.
+    // Based on RFC 2136, section 2.4.5
     dns::RRsetPtr prereq(new dns::RRset(fqdn, dns::RRClass::NONE(),
                              dns::RRType::ANY(), dns::RRTTL(0)));
     request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
 
     // Next build the Update Section.
 
-    // Create the FQDN/IP 'add' RR (RFC 2136, section 2.5.1)
-    // Set the message RData to lease address.
-    // Add the RR to update section.
+    // Create the FQDN/IP 'add' RR and add it to the to update section.
+    // Based on RFC 2136, section 2.5.1
     dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::IN(),
                          getAddressRRType(), dns::RRTTL(0)));
 
     addLeaseAddressRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
-    // Now create the FQDN/DHCID 'add' RR per RFC 4701)
-    // Set the message RData to DHCID.
-    // Add the RR to update section.
+
+    // Now create the FQDN/DHCID 'add' RR and add it to update section.
+    // Based on RFC 2136, section 2.5.1
     update.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
                                 dns::RRType::DHCID(), dns::RRTTL(0)));
     addDhcidRdata(update);
@@ -599,17 +600,19 @@ NameAddTransaction::buildReplaceFwdAddressRequest() {
     // Construct dns::Name from NCR fqdn.
     dns::Name fqdn(dns::Name(getNcr()->getFqdn()));
 
+    // Content on this request is based on RFC 4703, section 5.3.2
     // First build the Prerequisite Section.
 
-    // Create an 'FQDN Is In Use' prerequisite (RFC 2136, section 2.4.4)
-    // Add it to the pre-requisite section.
+    // Create an 'FQDN Is In Use' prerequisite and add it to the
+    // pre-requisite section.
+    // Based on RFC 2136, section 2.4.4
     dns::RRsetPtr prereq(new dns::RRset(fqdn, dns::RRClass::ANY(),
                                dns::RRType::ANY(), dns::RRTTL(0)));
     request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
 
-    // Now create an DHCID matches prerequisite RR.
-    // Set the RR's RData to DHCID.
-    // Add it to the pre-requisite section.
+    // Create an DHCID matches prerequisite RR and add it to the
+    // pre-requisite section.
+    // Based on RFC 2136, section 2.4.2.
     prereq.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
                  dns::RRType::DHCID(), dns::RRTTL(0)));
     addDhcidRdata(prereq);
@@ -617,16 +620,14 @@ NameAddTransaction::buildReplaceFwdAddressRequest() {
 
     // Next build the Update Section.
 
-    // Create the FQDN/IP 'delete' RR (RFC 2136, section 2.5.1)
-    // Set the message RData to lease address.
-    // Add the RR to update section.
+    // Create the FQDN/IP 'delete' RR and add it to the update section.
+    // Based on RFC 2136, section 2.5.2
     dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::ANY(),
                          getAddressRRType(), dns::RRTTL(0)));
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
 
-    // Create the FQDN/IP 'add' RR (RFC 2136, section 2.5.1)
-    // Set the message RData to lease address.
-    // Add the RR to update section.
+    // Create the FQDN/IP 'add' RR and add it to the update section.
+    // Based on RFC 2136, section 2.5.1
     update.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
                                 getAddressRRType(), dns::RRTTL(0)));
     addLeaseAddressRdata(update);
@@ -645,6 +646,7 @@ NameAddTransaction::buildReplaceRevPtrsRequest() {
     std::string rev_addr = D2CfgMgr::reverseIpAddress(getNcr()->getIpAddress());
     dns::Name rev_ip(rev_addr);
 
+    // Content on this request is based on RFC 4703, section 5.4
     // Reverse replacement has no prerequisites so straight on to
     // building the Update section.
 
