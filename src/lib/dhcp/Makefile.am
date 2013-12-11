@@ -42,6 +42,7 @@ libb10_dhcp___la_SOURCES += protocol_util.cc protocol_util.h
 libb10_dhcp___la_SOURCES += pkt6.cc pkt6.h
 libb10_dhcp___la_SOURCES += pkt4.cc pkt4.h
 libb10_dhcp___la_SOURCES += pkt_filter.h pkt_filter.cc
+libb10_dhcp___la_SOURCES += pkt_filter6.h
 libb10_dhcp___la_SOURCES += pkt_filter_inet.cc pkt_filter_inet.h
 
 if OS_LINUX
