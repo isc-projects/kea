@@ -95,7 +95,7 @@ public:
                         const dns::Rcode& response_rcode);
 };
 
-/// @brief Base class Test fixture for testing transactions. 
+/// @brief Base class Test fixture for testing transactions.
 class TransactionTest : public ::testing::Test {
 public:
     IOServicePtr io_service_;
@@ -105,9 +105,10 @@ public:
     asiolink::IntervalTimer timer_;
     int run_time_;
 
-    static const unsigned int FORWARD_CHG;
-    static const unsigned int REVERSE_CHG;
-    static const unsigned int FWD_AND_REV_CHG; 
+    /// #brief constants used to specify change directions for a transaction.
+    static const unsigned int FORWARD_CHG;      // Only forward change.
+    static const unsigned int REVERSE_CHG;      // Only reverse change.
+    static const unsigned int FWD_AND_REV_CHG;  // Both forward and reverse.
 
     TransactionTest();
     virtual ~TransactionTest();
@@ -126,7 +127,6 @@ public:
     /// Stops the IOSerivce and fails the current test.
     virtual void timesUp();
 
-    /// @todo
     /// @brief Creates a transaction which requests an IPv4 DNS update.
     ///
     /// The transaction is constructed around a predefined (i.e. "canned")
@@ -134,11 +134,13 @@ public:
     /// changes requested.  Based upon the change mask, the transaction
     /// will have either the forward, reverse, or both domains populated.
     ///
+    /// @param change_type selects the type of change requested, CHG_ADD or
+    /// CHG_REMOVE.
     /// @param change_mask determines which change directions are requested
-    void setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
+    /// FORWARD_CHG, REVERSE_CHG, or FWD_AND_REV_CHG.
+    void setupForIPv4Transaction(dhcp_ddns::NameChangeType change_type,
                                  int change_mask);
 
-    /// @todo
     /// @brief Creates a transaction which requests an IPv6 DNS update.
     ///
     /// The transaction is constructed around a predefined (i.e. "canned")
@@ -146,8 +148,11 @@ public:
     /// changes requested.  Based upon the change mask, the transaction
     /// will have either the forward, reverse, or both domains populated.
     ///
+    /// @param change_type selects the type of change requested, CHG_ADD or
+    /// CHG_REMOVE.
     /// @param change_mask determines which change directions are requested
-    void setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type, 
+    /// FORWARD_CHG, REVERSE_CHG, or FWD_AND_REV_CHG.
+    void setupForIPv6Transaction(dhcp_ddns::NameChangeType change_type,
                                  int change_mask);
 };
 
@@ -182,9 +187,14 @@ extern void checkZone(const D2UpdateMessagePtr& request,
 /// @param exp_typ expected RRType value of RRset
 /// @param exp_ttl  expected TTL value of RRset
 /// @param ncr NameChangeRequest on which the RRset is based
+/// @param has_rdata if true, RRset's rdata will be checked based on it's
+/// RRType.  Set this to false if the RRset's type supports Rdata but it does
+/// not contain it.  For instance, prerequisites of type NONE have no Rdata
+/// where udpates of type NONE may.
 extern void checkRR(dns::RRsetPtr rrset, const std::string& exp_name,
                     const dns::RRClass& exp_class, const dns::RRType& exp_type,
-                    unsigned int exp_ttl, dhcp_ddns::NameChangeRequestPtr ncr);
+                    unsigned int exp_ttl, dhcp_ddns::NameChangeRequestPtr ncr,
+                    bool has_rdata=true);
 
 /// @brief Fetches an RR(set) from a given section of a request
 ///
@@ -221,7 +231,7 @@ extern dns::RRsetPtr getRRFromSection(const D2UpdateMessagePtr& request,
 /// adding a forward DNS mapping.
 ///
 /// @param tran Transaction containing the request to be verified.
-extern void checkForwardAddRequest(NameChangeTransaction& tran);
+extern void checkAddFwdAddressRequest(NameChangeTransaction& tran);
 
 /// @brief Verifies a forward mapping replacement DNS update request
 ///
@@ -229,7 +239,7 @@ extern void checkForwardAddRequest(NameChangeTransaction& tran);
 /// replacing a forward DNS mapping.
 ///
 /// @param tran Transaction containing the request to be verified.
-extern void checkForwardReplaceRequest(NameChangeTransaction& tran);
+extern void checkReplaceFwdAddressRequest(NameChangeTransaction& tran);
 
 /// @brief Verifies a reverse mapping replacement DNS update request
 ///
@@ -237,7 +247,7 @@ extern void checkForwardReplaceRequest(NameChangeTransaction& tran);
 /// replacing a reverse DNS mapping.
 ///
 /// @param tran Transaction containing the request to be verified.
-extern void checkReverseReplaceRequest(NameChangeTransaction& tran);
+extern void checkReplaceRevPtrsRequest(NameChangeTransaction& tran);
 
 /// @brief Verifies a forward address removal DNS update request
 ///
@@ -245,7 +255,7 @@ extern void checkReverseReplaceRequest(NameChangeTransaction& tran);
 /// removing the forward address DNS entry.
 ///
 /// @param tran Transaction containing the request to be verified.
-extern void checkForwardRemoveAddrsRequest(NameChangeTransaction& tran);
+extern void checkRemoveFwdAddressRequest(NameChangeTransaction& tran);
 
 /// @brief Verifies a forward RR removal DNS update request
 ///
@@ -253,7 +263,7 @@ extern void checkForwardRemoveAddrsRequest(NameChangeTransaction& tran);
 /// removing forward RR DNS entries.
 ///
 /// @param tran Transaction containing the request to be verified.
-extern void checkForwardRemoveRRsRequest(NameChangeTransaction& tran);
+extern void checkRemoveFwdRRsRequest(NameChangeTransaction& tran);
 
 /// @brief Verifies a reverse mapping removal DNS update request
 ///
@@ -261,7 +271,7 @@ extern void checkForwardRemoveRRsRequest(NameChangeTransaction& tran);
 /// removing a reverse DNS mapping.
 ///
 /// @param tran Transaction containing the request to be verified.
-extern void checkReverseRemoveRequest(NameChangeTransaction& tran);
+extern void checkRemoveRevPtrsRequest(NameChangeTransaction& tran);
 
 
 /// @brief Creates a NameChangeRequest from JSON string.

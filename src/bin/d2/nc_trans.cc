@@ -14,6 +14,7 @@
 
 #include <d2/d2_log.h>
 #include <d2/nc_trans.h>
+#include <dns/rdata.h>
 
 namespace isc {
 namespace d2 {
@@ -262,17 +263,19 @@ NameChangeTransaction::addLeaseAddressRdata(dns::RRsetPtr& rrset) {
 
     try {
         // Manufacture an RData from the lease address then add it to the RR.
+        dns::rdata::ConstRdataPtr rdata;
         if (ncr_->isV4()) {
-            dns::rdata::in::A a_rdata(ncr_->getIpAddress());
-            rrset->addRdata(a_rdata);
+            rdata.reset(new dns::rdata::in::A(ncr_->getIpAddress()));
+            rrset->addRdata(rdata);
         } else {
-            dns::rdata::in::AAAA rdata(ncr_->getIpAddress());
+            rdata.reset(new dns::rdata::in::AAAA(ncr_->getIpAddress()));
             rrset->addRdata(rdata);
         }
     } catch (const std::exception& ex) {
         isc_throw(NameChangeTransactionError, "Cannot add address rdata: "
                   << ex.what());
     }
+
 }
 
 void
@@ -283,14 +286,16 @@ NameChangeTransaction::addDhcidRdata(dns::RRsetPtr& rrset) {
     }
 
     try {
+        dns::rdata::ConstRdataPtr rdata;
         const std::vector<uint8_t>& ncr_dhcid = ncr_->getDhcid().getBytes();
         util::InputBuffer buffer(ncr_dhcid.data(), ncr_dhcid.size());
-        dns::rdata::in::DHCID rdata(buffer, ncr_dhcid.size());
+        rdata.reset(new dns::rdata::in::DHCID(buffer, ncr_dhcid.size()));
         rrset->addRdata(rdata);
     } catch (const std::exception& ex) {
         isc_throw(NameChangeTransactionError, "Cannot add DCHID rdata: "
                   << ex.what());
     }
+
 }
 
 void
@@ -301,7 +306,8 @@ NameChangeTransaction::addPtrRdata(dns::RRsetPtr& rrset) {
     }
 
     try {
-        dns::rdata::generic::PTR rdata(getNcr()->getFqdn());
+        dns::rdata::ConstRdataPtr rdata;
+        rdata.reset(new dns::rdata::generic::PTR(getNcr()->getFqdn()));
         rrset->addRdata(rdata);
     } catch (const std::exception& ex) {
         isc_throw(NameChangeTransactionError, "Cannot add PTR rdata: "
@@ -412,7 +418,7 @@ NameChangeTransaction::getUpdateAttempts() const {
 
 const dns::RRType&
 NameChangeTransaction::getAddressRRType() const {
-    return (ncr_->isV4() ?  dns::RRType::A(): dns::RRType::AAAA());
+    return (ncr_->isV4() ?  dns::RRType::A() : dns::RRType::AAAA());
 }
 
 } // namespace isc::d2

@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <d2/d2_log.h>
+#include <d2/d2_cfg_mgr.h>
 #include <d2/nc_remove.h>
 
 #include <boost/function.hpp>
@@ -28,7 +29,7 @@ const int NameRemoveTransaction::REMOVING_FWD_RRS_ST;
 const int NameRemoveTransaction::REMOVING_REV_PTRS_ST;
 
 // NameRemoveTransaction events
-// @todo none so far
+// Currently NameRemoveTransaction does not define any events.
 
 NameRemoveTransaction::
 NameRemoveTransaction(IOServicePtr& io_service,
@@ -51,7 +52,7 @@ NameRemoveTransaction::defineEvents() {
     NameChangeTransaction::defineEvents();
 
     // Define NameRemoveTransaction events.
-    // @todo none so far
+    // Currently NameRemoveTransaction does not define any events.
     // defineEvent(TBD_EVENT, "TBD_EVT");
 }
 
@@ -61,7 +62,7 @@ NameRemoveTransaction::verifyEvents() {
     NameChangeTransaction::verifyEvents();
 
     // Verify NameRemoveTransaction events.
-    // @todo none so far
+    // Currently NameRemoveTransaction does not define any events.
     // getEvent(TBD_EVENT);
 }
 
@@ -181,7 +182,7 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
                 // While unlikely, the build might fail if we have invalid
                 // data.  Should that be the case, we need to fail the
                 // transaction.
-                LOG_ERROR(dctl_logger, 
+                LOG_ERROR(dctl_logger,
                           DHCP_DDNS_FORWARD_REMOVE_ADDRS_BUILD_FAILURE)
                           .arg(getNcr()->toText())
                           .arg(ex.what());
@@ -245,7 +246,7 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
         default:
             // Any other value and we will fail this transaction, something
             // bigger is wrong.
-            LOG_ERROR(dctl_logger, 
+            LOG_ERROR(dctl_logger,
                       DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
@@ -285,7 +286,7 @@ NameRemoveTransaction::removingFwdRRsHandler() {
                 // While unlikely, the build might fail if we have invalid
                 // data.  Should that be the case, we need to fail the
                 // transaction.
-                LOG_ERROR(dctl_logger, 
+                LOG_ERROR(dctl_logger,
                           DHCP_DDNS_FORWARD_REMOVE_RRS_BUILD_FAILURE)
                           .arg(getNcr()->toText())
                           .arg(ex.what());
@@ -307,8 +308,8 @@ NameRemoveTransaction::removingFwdRRsHandler() {
             // @todo Not sure if NXDOMAIN is ok here, but I think so.
             // A Rcode of NXDOMAIN would mean there are no RRs for the FQDN,
             // which is fine.  We were asked to delete them, they are not there
-            // so all is well. 
-            if ((rcode == dns::Rcode::NOERROR()) || 
+            // so all is well.
+            if ((rcode == dns::Rcode::NOERROR()) ||
                 (rcode == dns::Rcode::NXDOMAIN())) {
                 // We were able to remove the forward mapping. Mark it as done.
                 setForwardChangeCompleted(true);
@@ -344,13 +345,13 @@ NameRemoveTransaction::removingFwdRRsHandler() {
                       .arg(getNcr()->getFqdn())
                       .arg(getCurrentServer()->getIpAddress());
 
-            // @note If we exhaust the IO retries for the current server 
-            // due to IO failures, we will abort the remaining updates.  
-            // The rational is that we are only in this state, if the remove 
-            // of the forward address RR succeeded (removingFwdAddrsHandler) 
+            // @note If we exhaust the IO retries for the current server
+            // due to IO failures, we will abort the remaining updates.
+            // The rational is that we are only in this state, if the remove
+            // of the forward address RR succeeded (removingFwdAddrsHandler)
             // on the current server. Therefore  we should not attempt another
             // removal on a different server.  This is perhaps a point
-            // for discussion. 
+            // for discussion.
             // @todo Should we go ahead with the reverse remove?
             retryTransition(PROCESS_TRANS_FAILED_ST);
             break;
@@ -544,7 +545,6 @@ NameRemoveTransaction::processRemoveOkHandler() {
     }
 }
 
-
 void
 NameRemoveTransaction::processRemoveFailedHandler() {
     switch(getNextEvent()) {
@@ -567,36 +567,28 @@ NameRemoveTransaction::buildRemoveFwdAddressRequest() {
     // Construct an empty request.
     D2UpdateMessagePtr request = prepNewRequest(getForwardDomain());
 
-#if 0
+    // Content on this request is based on RFC 4703, section 5.5, paragraph 4.
     // Construct dns::Name from NCR fqdn.
     dns::Name fqdn(dns::Name(getNcr()->getFqdn()));
+    // First build the Prerequisite Section
 
-    // First build the Prerequisite Section.
-
-    // Create 'FQDN Is Not In Use' prerequisite (RFC 2136, section 2.4.5)
-    // Add the RR to prerequisite section.
-    dns::RRsetPtr prereq(new dns::RRset(fqdn, dns::RRClass::NONE(),
-                             dns::RRType::ANY(), dns::RRTTL(0)));
+    // Create an DHCID matches prerequisite RR and add it to the
+    // pre-requisite section
+    // Based on RFC 2136, section 2.4.2.
+    dns::RRsetPtr prereq(new dns::RRset(fqdn, dns::RRClass::IN(),
+                                        dns::RRType::DHCID(), dns::RRTTL(0)));
+    addDhcidRdata(prereq);
     request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
 
-    // Next build the Update Section.
+    // Next build the Update Section
 
-    // Create the FQDN/IP 'add' RR (RFC 2136, section 2.5.1)
-    // Set the message RData to lease address.
+    // Create the FQDN/IP 'delete' RR and add it to the update section.
     // Add the RR to update section.
-    dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::IN(),
+    // Based on 2136 section 2.5.4
+    dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::NONE(),
                          getAddressRRType(), dns::RRTTL(0)));
-
     addLeaseAddressRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
-    // Now create the FQDN/DHCID 'add' RR per RFC 4701)
-    // Set the message RData to DHCID.
-    // Add the RR to update section.
-    update.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
-                                dns::RRType::DHCID(), dns::RRTTL(0)));
-    addDhcidRdata(update);
-    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
-#endif
 
     // Set the transaction's update request to the new request.
     setDnsUpdateRequest(request);
@@ -607,43 +599,44 @@ NameRemoveTransaction::buildRemoveFwdRRsRequest() {
     // Construct an empty request.
     D2UpdateMessagePtr request = prepNewRequest(getForwardDomain());
 
-#if 0
     // Construct dns::Name from NCR fqdn.
     dns::Name fqdn(dns::Name(getNcr()->getFqdn()));
 
+    // Content on this request is based on RFC 4703, section 5.5, paragraph 5.
     // First build the Prerequisite Section.
-
-    // Create an 'FQDN Is In Use' prerequisite (RFC 2136, section 2.4.4)
-    // Add it to the pre-requisite section.
-    dns::RRsetPtr prereq(new dns::RRset(fqdn, dns::RRClass::ANY(),
-                               dns::RRType::ANY(), dns::RRTTL(0)));
-    request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
 
     // Now create an DHCID matches prerequisite RR.
     // Set the RR's RData to DHCID.
     // Add it to the pre-requisite section.
-    prereq.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
-                 dns::RRType::DHCID(), dns::RRTTL(0)));
+    // Based on RFC 2136, section 2.4.2.
+    dns::RRsetPtr prereq(new dns::RRset(fqdn, dns::RRClass::IN(),
+                         dns::RRType::DHCID(), dns::RRTTL(0)));
     addDhcidRdata(prereq);
+    request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
+
+    // Create an assertion that there are no A RRs for the FQDN.
+    // Add it to the pre-reqs.
+    // Based on RFC 2136, section 2.4.3.
+    prereq.reset(new dns::RRset(fqdn, dns::RRClass::NONE(),
+                                dns::RRType::A(), dns::RRTTL(0)));
+    request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
+
+    // Create an assertion that there are no A RRs for the FQDN.
+    // Add it to the pre-reqs.
+    // Based on RFC 2136, section 2.4.3.
+    prereq.reset(new dns::RRset(fqdn, dns::RRClass::NONE(),
+                                dns::RRType::AAAA(), dns::RRTTL(0)));
     request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
 
     // Next build the Update Section.
 
-    // Create the FQDN/IP 'delete' RR (RFC 2136, section 2.5.1)
+    // Create the 'delete' of all RRs for FQDN.
     // Set the message RData to lease address.
     // Add the RR to update section.
+    // Based on RFC 2136, section 2.5.3.
     dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::ANY(),
-                         getAddressRRType(), dns::RRTTL(0)));
+                         dns::RRType::ANY(), dns::RRTTL(0)));
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
-
-    // Create the FQDN/IP 'add' RR (RFC 2136, section 2.5.1)
-    // Set the message RData to lease address.
-    // Add the RR to update section.
-    update.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
-                                getAddressRRType(), dns::RRTTL(0)));
-    addLeaseAddressRdata(update);
-    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
-#endif
 
     // Set the transaction's update request to the new request.
     setDnsUpdateRequest(request);
@@ -654,38 +647,30 @@ NameRemoveTransaction::buildRemoveRevPtrsRequest() {
     // Construct an empty request.
     D2UpdateMessagePtr request = prepNewRequest(getReverseDomain());
 
-#if 0
     // Create the reverse IP address "FQDN".
     std::string rev_addr = D2CfgMgr::reverseIpAddress(getNcr()->getIpAddress());
     dns::Name rev_ip(rev_addr);
 
-    // Reverse replacement has no prerequisites so straight on to
-    // building the Update section.
+    // Content on this request is based on RFC 4703, section 5.5, paragraph 2.
+    // First build the Prerequisite Section.
+    // (Note that per RFC 4703, section 5.4, there is no need to validate
+    // DHCID RR for PTR entries.)
 
-    // Create the PTR 'delete' RR and add it to update section.
+    // Create an assertion that the PTRDNAME in the PTR record matches the
+    // client's FQDN for the address that was released.
+    // Based on RFC 2136, section 3.2.3
+    dns::RRsetPtr prereq(new dns::RRset(rev_ip, dns::RRClass::IN(),
+                                        dns::RRType::PTR(), dns::RRTTL(0)));
+    addPtrRdata(prereq);
+    request->addRRset(D2UpdateMessage::SECTION_PREREQUISITE, prereq);
+
+    // Now, build the Update section.
+
+    // Create a delete of any RRs for the FQDN and add it to update section.
+    // Based on RFC 2136, section 3.4.2.3
     dns::RRsetPtr update(new dns::RRset(rev_ip, dns::RRClass::ANY(),
-                         dns::RRType::PTR(), dns::RRTTL(0)));
+                         dns::RRType::ANY(), dns::RRTTL(0)));
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
-
-    // Create the DHCID 'delete' RR and add it to the update section.
-    update.reset(new dns::RRset(rev_ip, dns::RRClass::ANY(),
-                                dns::RRType::DHCID(), dns::RRTTL(0)));
-    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
-
-    // Create the FQDN/IP PTR 'add' RR, add the FQDN as the PTR Rdata
-    // then add it to update section.
-    update.reset(new dns::RRset(rev_ip, dns::RRClass::IN(),
-                                dns::RRType::PTR(), dns::RRTTL(0)));
-    addPtrRdata(update);
-    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
-
-    // Create the FQDN/IP PTR 'add' RR, add the DHCID Rdata
-    // then add it to update section.
-    update.reset(new dns::RRset(rev_ip, dns::RRClass::IN(),
-                                dns::RRType::DHCID(), dns::RRTTL(0)));
-    addDhcidRdata(update);
-    request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
-#endif
 
     // Set the transaction's update request to the new request.
     setDnsUpdateRequest(request);
