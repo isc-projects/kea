@@ -284,7 +284,7 @@ protected:
     /// failures, we will abort the remaining updates.  The rational is that
     /// we are only in this state, if the remove of the forward address RR
     /// succeeded (removingFwdAddrsHandler) on the current server so we should
-    /// not attempt another removal on a different server.  This is perhaps a 
+    /// not attempt another removal on a different server.  This is perhaps a
     /// point for discussion. @todo Should we go ahead with the reverse remove?
     ///
     /// @throw NameRemoveTransactionError if upon entry next event is not:
@@ -369,25 +369,58 @@ protected:
     /// UPDATE_FAILED_EVT
     void processRemoveFailedHandler();
 
-    /// @brief Builds a DNS request to add an forward DNS entry for an FQDN
+    /// @brief Builds a DNS request to remove a forward DNS address for a FQDN.
     ///
-    /// @todo - Method not implemented yet
+    /// Constructs a DNS update request, based upon the NCR, for removing a
+    /// forward DNS address mapping. Once constructed, the request is stored as
+    /// the transaction's DNS update request.
     ///
-    /// @throw isc::NotImplemented
+    /// The request content is adherent to RFC 4703 section 5.5, paragraph 4.
+    ///
+    /// Prerequisite RRsets:
+    /// 1. An assertion that a matching DHCID RR exists
+    ///
+    /// Updates RRsets:
+    /// 1. A delete of the FQDN/IP RR (type A for IPv4, AAAA for IPv6)
+    ///
+    /// @throw This method does not throw but underlying methods may.
     void buildRemoveFwdAddressRequest();
 
-    /// @brief Builds a DNS request to replace forward DNS entry for an FQDN
+    /// @brief Builds a DNS request to remove all forward DNS RRs for a FQDN.
     ///
-    /// @todo - Method not implemented yet
+    /// Constructs a DNS update request, based upon the NCR, for removing any
+    /// remaining forward DNS RRs, once all A or AAAA entries for the FQDN
+    /// have been removed. Once constructed, the request is stored as the
+    /// transaction's DNS update request.
     ///
-    /// @throw isc::NotImplemented
+    /// The request content is adherent to RFC 4703 section 5.5, paragraph 5.
+    ///
+    /// Prerequisite RRsets:
+    /// 1. An assertion that a matching DHCID RR exists
+    /// 2. An assertion that no A RRs for the FQDN exist
+    /// 3. An assertion that no AAAA RRs for the FQDN exist
+    ///
+    /// Updates RRsets:
+    /// 1. A delete of all RRs for the FQDN
+    ///
+    /// @throw This method does not throw but underlying methods may.
     void buildRemoveFwdRRsRequest();
 
-    /// @brief Builds a DNS request to replace a reverse DNS entry for an FQDN
+    /// @brief Builds a DNS request to remove a reverse DNS entry for a FQDN
     ///
-    /// @todo - Method not implemented yet
+    /// Constructs a DNS update request, based upon the NCR, for removing a
+    /// reverse DNS mapping.  Once constructed, the request is stored as
+    /// the transaction's DNS update request.
     ///
-    /// @throw isc::NotImplemented
+    /// The request content is adherent to RFC 4703 section 5.5, paragraph 2:
+    ///
+    /// Prerequisite RRsets:
+    /// 1. An assertion that a PTR record matching the client's FQDN exists.
+    ///
+    /// Updates RRsets:
+    /// 1. A delete of all RRs for the FQDN
+    ///
+    /// @throw This method does not throw but underlying methods may.
     void buildRemoveRevPtrsRequest();
 };
 
