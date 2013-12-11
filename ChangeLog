@@ -26,7 +26,7 @@
 	b10-dhcp-ddns.  The class now generates all DNS update request variations
 	needed to fulfill it's state machine in compliance with RFC 4703, sections
 	5.3 and 5.4.
-	(Trac# 3207, git dceca9554cb9410dd8d12371b68198b797cb6cfb)
+	(Trac# 3241, git dceca9554cb9410dd8d12371b68198b797cb6cfb)
 
 712.	[func]		marcin,dclink
 	b10-dhcp4: If server fails to open a socket on one interface it
@@ -43,7 +43,7 @@
 	reverse DNS entries for a given FQDN.  It does not yet construct
 	the actual DNS update requests, this will be added under Trac#
 	3241.
-	(Trac# 3207, git 8f99da735a9f39d514c40d0a295f751dc8edfbcd)
+	(Trac# 3087, git 8f99da735a9f39d514c40d0a295f751dc8edfbcd)
 
 710.	[build]		jinmei
 	Fixed various build time issues for MacOS X 10.9.  Those include
