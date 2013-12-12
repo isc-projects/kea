@@ -93,7 +93,7 @@ public:
 
 /// @brief A stub implementation of the PktFilter class.
 ///
-/// This class implements abstract methods of the @c isc::dhcp::test::PktFilter
+/// This class implements abstract methods of the @c isc::dhcp::PktFilter
 /// class. It is used by unit tests, which test protected methods of the
 /// @c isc::dhcp::test::PktFilter class. The implemented abstract methods are
 /// no-op.

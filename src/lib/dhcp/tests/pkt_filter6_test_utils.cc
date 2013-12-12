@@ -176,6 +176,28 @@ PktFilter6Test::testRcvdMessage(const Pkt6Ptr& rcvd_msg) const {
     EXPECT_EQ(test_message_->getTransid(), rcvd_msg->getTransid());
 }
 
+PktFilter6Stub::PktFilter6Stub()
+    : open_socket_count_ (0) {
+}
+
+SocketInfo
+PktFilter6Stub::openSocket(const Iface&, const isc::asiolink::IOAddress& addr,
+                           const uint16_t port) {
+    ++open_socket_count_;
+    return (SocketInfo(addr, port, 0));
+}
+
+Pkt6Ptr
+PktFilter6Stub::receive(const SocketInfo&) {
+    return Pkt6Ptr();
+}
+
+int
+PktFilter6Stub::send(const Iface&, uint16_t, const Pkt6Ptr&) {
+    return (0);
+}
+
+
 } // end of isc::dhcp::test namespace
 } // end of isc::dhcp namespace
 } // end of isc namespace

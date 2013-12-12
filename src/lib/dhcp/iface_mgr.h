@@ -21,6 +21,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
+#include <dhcp/pkt_filter6.h>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
@@ -746,21 +747,44 @@ public:
         session_callback_ = callback;
     }
 
-    /// @brief Set Packet Filter object to handle send/receive packets.
+    /// @brief Set packet filter object to handle sending and receiving DHCPv4
+    /// messages.
     ///
-    /// Packet Filters expose low-level functions handling sockets opening
-    /// and sending/receiving packets through those sockets. This function
-    /// sets custom Packet Filter (represented by a class derived from PktFilter)
-    /// to be used by IfaceMgr. Note that there must be no IPv4 sockets open
-    /// when this function is called. Call closeSockets(AF_INET) to close
-    /// all hanging IPv4 sockets opened by the current packet filter object.
+    /// Packet filter objects provide means for the @c IfaceMgr to open sockets
+    /// for IPv4 packets reception and sending. This function sets custom packet
+    /// filter (represented by a class derived from PktFilter) to be used by
+    /// @c IfaceMgr. Note that there must be no IPv4 sockets open when this
+    /// function is called. Call closeSockets(AF_INET) to close all hanging IPv4
+    /// sockets opened by the current packet filter object.
     ///
-    /// @param packet_filter new packet filter to be used by IfaceMgr to send/receive
-    /// packets and open sockets.
+    /// @param packet_filter A pointer to the new packet filter object to be
+    /// used by @c IfaceMgr.
     ///
     /// @throw InvalidPacketFilter if provided packet filter object is NULL.
-    /// @throw PacketFilterChangeDenied if there are open IPv4 sockets
+    /// @throw PacketFilterChangeDenied if there are open IPv4 sockets.
     void setPacketFilter(const PktFilterPtr& packet_filter);
+
+    /// @brief Set packet filter object to handle sending and receving DHCPv6
+    /// messages.
+    ///
+    /// Packet filter objects provide means for the @c IfaceMgr to open sockets
+    /// for IPv6 packets reception and sending. This function sets the new
+    /// instance of the packet filter which will be used by @c IfaceMgr to send
+    /// and receive DHCPv6 messages, until replaced by another packet filter.
+    ///
+    /// It is required that DHCPv6 messages are send and received using methods
+    /// of the same object that was used to open socket. Therefore, it is
+    /// required that all IPv6 sockets are closed prior to calling this
+    /// function. Call closeSockets(AF_INET6) to close all hanging IPv6 sockets
+    /// opened by the current packet filter object.
+    ///
+    /// @param packet_filter A pointer to the new packet filter object to be
+    /// used by @c IfaceMgr.
+    ///
+    /// @throw isc::dhcp::InvalidPacketFilter if specified object is NULL.
+    /// @throw isc::dhcp::PacketFilterChangeDenied if there are open IPv6
+    /// sockets.
+    void setPacketFilter(const PktFilter6Ptr& packet_filter);
 
     /// @brief Set Packet Filter object to handle send/receive packets.
     ///
@@ -896,23 +920,6 @@ protected:
     SessionCallback session_callback_;
 private:
 
-    /// @brief Joins IPv6 multicast group on a socket.
-    ///
-    /// Socket must be created and bound to an address. Note that this
-    /// address is different than the multicast address. For example DHCPv6
-    /// server should bind its socket to link-local address (fe80::1234...)
-    /// and later join ff02::1:2 multicast group.
-    ///
-    /// @param sock socket fd (socket must be bound)
-    /// @param ifname interface name (for link-scoped multicast groups)
-    /// @param mcast multicast address to join (e.g. "ff02::1:2")
-    ///
-    /// @return true if multicast join was successful
-    ///
-    bool
-    joinMulticast(int sock, const std::string& ifname,
-                  const std::string& mcast);
-
     /// @brief Identifies local network address to be used to
     /// connect to remote address.
     ///
@@ -948,6 +955,14 @@ private:
     void handleSocketConfigError(const std::string& errmsg,
                                  IfaceMgrErrorMsgCallback handler);
 
+    /// @brief Checks if there is at least one socket of the specified family
+    /// open.
+    ///
+    /// @param family A socket family.
+    ///
+    /// @return true if there is at least one socket open, false otherwise.
+    bool hasOpenSocket(const uint16_t family) const;
+
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
     /// sockets. It is possible to supply custom object using
@@ -957,6 +972,8 @@ private:
     /// Packet Filter is the one used for unit testing, which doesn't
     /// open sockets but rather mimics their behavior (mock object).
     PktFilterPtr packet_filter_;
+
+    PktFilter6Ptr packet_filter6_;
 };
 
 }; // namespace isc::dhcp
