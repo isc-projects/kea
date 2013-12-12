@@ -15,6 +15,9 @@
 #ifndef PKT_FILTER6_H
 #define PKT_FILTER6_H
 
+#include <asiolink/io_address.h>
+#include <dhcp/pkt6.h>
+
 namespace isc {
 namespace dhcp {
 
@@ -86,12 +89,10 @@ public:
     /// This function receives a single DHCPv6 message through using a socket
     /// open on a specified interface.
     ///
-    /// @param iface interface
-    /// @param socket_info structure holding socket information
+    /// @param socket_info A structure holding socket information.
     ///
     /// @return A pointer to received message.
-    virtual Pkt6Ptr receive(const Iface& iface,
-                            const SocketInfo& socket_info) = 0;
+    virtual Pkt6Ptr receive(const SocketInfo& socket_info) = 0;
 
     /// @brief Send DHCPv6 message through a specified interface and socket.
     ///
@@ -106,6 +107,23 @@ public:
     /// @return A result of sending the message. It is 0 if successful.
     virtual int send(const Iface& iface, uint16_t sockfd,
                      const Pkt6Ptr& pkt) = 0;
+
+protected:
+
+    /// @brief Joins IPv6 multicast group on a socket.
+    ///
+    /// Socket must be created and bound to an address. Note that this
+    /// address is different than the multicast address. For example DHCPv6
+    /// server should bind its socket to link-local address (fe80::1234...)
+    /// and later join ff02::1:2 multicast group.
+    ///
+    /// @param sock A socket descriptor (socket must be bound).
+    /// @param ifname An interface name (for link-scoped multicast groups).
+    /// @param mcast A multicast address to join (e.g. "ff02::1:2").
+    ///
+    /// @return true if multicast join was successful
+    static bool joinMulticast(int sock, const std::string& ifname,
+                              const std::string & mcast);
 
 };
 
