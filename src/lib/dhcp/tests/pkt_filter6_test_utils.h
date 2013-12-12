@@ -91,6 +91,59 @@ public:
 
 };
 
+/// @brief A stub implementation of the PktFilter6 class.
+///
+/// This class implements abstract methods of the @c isc::dhcp::PktFilter class.
+/// The methods of this class mimic operations on sockets, but they neither
+/// open actual sockets, nor perform any send nor receive operations on them.
+class PktFilter6Stub : public PktFilter6 {
+public:
+
+    /// @brief Constructor
+    PktFilter6Stub();
+
+    /// @brief Simulate opening of a socket.
+    ///
+    /// This function simulates opening a socket. In reality, it doesn't open a
+    /// socket but the socket descriptor returned in the SocketInfo structure is
+    /// always set to 0. On each call to this function, the counter of
+    /// invocations is increased by one. This is useful to check if packet
+    /// filter object has been correctly installed and is used by @c IfaceMgr.
+    ///
+    /// @param iface Interface descriptor.
+    /// @param addr Address on the interface to be used to send packets.
+    /// @param port Port number.
+    ///
+    /// @return A structure describing a primary and fallback socket.
+    virtual SocketInfo openSocket(const Iface& iface,
+                                  const isc::asiolink::IOAddress& addr,
+                                  const uint16_t port);
+
+    /// @brief Simulate reception of the DHCPv6 message.
+    ///
+    /// @param socket_info A structure holding socket information.
+    ///
+    /// @return Always a NULL object.
+    virtual Pkt6Ptr receive(const SocketInfo& socket_info);
+
+    /// @brief Simulate sending a DHCPv6 message.
+    ///
+    /// This function does nothing.
+    ///
+    /// @param iface Interface to be used to send packet.
+    /// @param sockfd A socket descriptor
+    /// @param pkt A packet to be sent.
+    ///
+    /// @note All parameters are ignored.
+    ///
+    /// @return 0.
+    virtual int send(const Iface& iface, uint16_t sockfd, const Pkt6Ptr& pkt);
+
+    /// Holds the number of invocations to PktFilter6Stub::openSocket.
+    int open_socket_count_;
+
+};
+
 }; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

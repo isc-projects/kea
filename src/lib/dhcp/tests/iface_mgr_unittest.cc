@@ -19,6 +19,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
+#include <dhcp/tests/pkt_filter6_test_utils.h>
 
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -1072,6 +1073,49 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
     iface_mgr->closeSockets(AF_INET);
     EXPECT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
 }
+
+// This test checks that the default packet filter for DHCPv6 can be replaced
+// with the custom one.
+TEST_F(IfaceMgrTest, setPacketFilter6) {
+    // Create an instance of IfaceMgr.
+    boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
+    ASSERT_TRUE(iface_mgr);
+
+    // Try to set NULL packet filter object and make sure it is rejected.
+    boost::shared_ptr<test::PktFilter6Stub> custom_packet_filter;
+    EXPECT_THROW(iface_mgr->setPacketFilter(custom_packet_filter),
+                 isc::dhcp::InvalidPacketFilter);
+
+    // Create valid object and check if it can be set.
+    custom_packet_filter.reset(new test::PktFilter6Stub());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
+
+    // Try to open socket using IfaceMgr. It should call the openSocket()
+    // function on the packet filter object we have set.
+    IOAddress loAddr("::1");
+    int socket1 = 0;
+    EXPECT_NO_THROW(
+        socket1 = iface_mgr->openSocket(LOOPBACK, loAddr,
+                                        DHCP6_SERVER_PORT + 10000);
+    );
+    // Check that openSocket function has been actually called on the packet
+    // filter object.
+    EXPECT_EQ(1, custom_packet_filter->open_socket_count_);
+    // Also check that the returned socket descriptor has an expected value.
+    EXPECT_EQ(0, socket1);
+
+    // Replacing current packet filter object, while there are sockets open,
+    // is not allowed!
+    EXPECT_THROW(iface_mgr->setPacketFilter(custom_packet_filter),
+                 PacketFilterChangeDenied);
+
+    // So, let's close the IPv6 sockets and retry. Now it should succeed.
+    iface_mgr->closeSockets(AF_INET6);
+    EXPECT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
+
+}
+
 
 #if defined OS_LINUX
 
