@@ -96,7 +96,7 @@ public:
 
     /// @brief Send DHCPv6 message through a specified interface and socket.
     ///
-    /// Thie function sends a DHCPv6 message through a specified interface and
+    /// This function sends a DHCPv6 message through a specified interface and
     /// socket. In general, there may be multiple sockets open on a single
     /// interface as a single interface may have multiple IPv6 addresses.
     ///
@@ -107,8 +107,6 @@ public:
     /// @return A result of sending the message. It is 0 if successful.
     virtual int send(const Iface& iface, uint16_t sockfd,
                      const Pkt6Ptr& pkt) = 0;
-
-protected:
 
     /// @brief Joins IPv6 multicast group on a socket.
     ///
