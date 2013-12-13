@@ -1645,6 +1645,24 @@ TEST_F(IfaceMgrTest, openSockets6IfaceInactive) {
 
 }
 
+// That that the openSockets6 function does not throw if there are no interfaces
+// detected. This function is expected to return false.
+TEST_F(IfaceMgrTest, openSockets6NoIfaces) {
+    NakedIfaceMgr ifacemgr;
+    // Remove existing interfaces.
+    ifacemgr.getIfacesLst().clear();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // This value indicates if at least one socket opens. There are no
+    // interfaces, so it should be set to false.
+    bool socket_open;
+    ASSERT_NO_THROW(socket_open = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_FALSE(socket_open);
+}
+
 // Test the Iface structure itself
 TEST_F(IfaceMgrTest, iface) {
     boost::scoped_ptr<Iface> iface;
