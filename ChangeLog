@@ -2,7 +2,7 @@
 	libdhcp++: Interface detection implemented for FreeBSD, NetBSD,
 	OpenBSD, Mac OS X and Solaris 11. Thanks to David Carlier for
 	contributing a patch.
-	(Trac #2246, git abcd)
+	(Trac #2246, git d8045b5e1580a1d0b89a232fd61c10d25a95e769)
 
 717.	[bug]		marcin
 	Fixed the bug which incorrectly treated DHCPv4 option codes 224-254 as
