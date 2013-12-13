@@ -582,9 +582,14 @@ TEST_F(Dhcp4ParserTest, echoClientId) {
     ElementPtr json_false = Element::fromJSON(config_false);
     ElementPtr json_true = Element::fromJSON(config_true);
 
+    // Let's check the default. It should be true
+    EXPECT_TRUE(CfgMgr::instance().echoClientId());
+
+    // Now check that "false" configuration is really applied.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json_false));
     EXPECT_FALSE(CfgMgr::instance().echoClientId());
 
+    // Now check that "true" configuration is really applied.
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json_true));
     EXPECT_TRUE(CfgMgr::instance().echoClientId());
 

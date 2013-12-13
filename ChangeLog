@@ -1,3 +1,9 @@
+XXX.	[func]		tomek
+	b10-dhcp4: Support for sending back client-id (RFC6842) has been
+	added now. Also a flag (echo-client-id) has been added, so it is
+	possible to enable backward compatibility (echo-client-id false).
+	(Trac #3210, git abcd)
+
 698.	[bug]		muks
 	A bug was fixed in the interaction between b10-init and b10-msgq
 	that caused BIND 10 failures after repeated start/stop of

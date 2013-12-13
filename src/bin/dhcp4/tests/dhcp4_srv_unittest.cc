@@ -687,7 +687,9 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     cout << "Offered address to client3=" << addr3.toText() << endl;
 }
 
-// Checks whether echoing back client-id is controllable
+// Checks whether echoing back client-id is controllable, i.e.
+// whether the server obeys echo-client-id and sends (or not)
+// client-id
 TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     NakedDhcpv4Srv srv(0);
 
@@ -702,7 +704,6 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
     checkClientId(offer, clientid);
-    EXPECT_TRUE(offer->getOption(DHO_DHCP_CLIENT_IDENTIFIER));
 
     CfgMgr::instance().echoClientId(false);
     offer = srv.processDiscover(dis);
@@ -710,7 +711,6 @@ TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
     // Check if we get response at all
     checkResponse(offer, DHCPOFFER, 1234);
     checkClientId(offer, clientid);
-    EXPECT_FALSE(offer->getOption(DHO_DHCP_CLIENT_IDENTIFIER));
 }
 
 // This test verifies that incoming REQUEST can be handled properly, that an
