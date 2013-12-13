@@ -1,0 +1,2 @@
+{ "type" : "HW_ADDR", "id" : "01AC00F03344", "opt1" : "true" }
+{ "type" : "DUID", "id" : "225060de0a0b", "opt1" : "true" }

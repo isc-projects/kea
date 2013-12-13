@@ -104,7 +104,7 @@ FakeSession::recvmsg(ConstElementPtr& msg, bool nonblock, int) {
     //cout << "[XX] client asks for message " << endl;
     if (messages_ &&
         messages_->getType() == Element::list &&
-        messages_->size() > 0) {
+        !messages_->empty()) {
         msg = messages_->get(0);
         messages_->remove(0);
     } else {
@@ -127,7 +127,7 @@ FakeSession::recvmsg(ConstElementPtr& env, ConstElementPtr& msg, bool nonblock,
     env = ElementPtr();
     if (messages_ &&
         messages_->getType() == Element::list &&
-        messages_->size() > 0) {
+        !messages_->empty()) {
         // do we need initial message to have env[group] and [to] too?
         msg = messages_->get(0);
         messages_->remove(0);
@@ -210,13 +210,13 @@ FakeSession::reply(ConstElementPtr envelope, ConstElementPtr newmsg) {
 
 bool
 FakeSession::hasQueuedMsgs() const {
-    return (msg_queue_ && msg_queue_->size() > 0);
+    return (msg_queue_ && !msg_queue_->empty());
 }
 
 ConstElementPtr
 FakeSession::getFirstMessage(std::string& group, std::string& to) const {
     ConstElementPtr el;
-    if (msg_queue_ && msg_queue_->size() > 0) {
+    if (msg_queue_ && !msg_queue_->empty()) {
         el = msg_queue_->get(0);
         msg_queue_->remove(0);
         group = el->get(0)->stringValue();

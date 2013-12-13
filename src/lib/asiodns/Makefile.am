@@ -38,10 +38,6 @@ EXTRA_DIST = asiodns_messages.mes
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 libb10_asiodns_la_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# Same for clang++, but we need to turn off -Werror completely.
-libb10_asiodns_la_CXXFLAGS += -Wno-error
-endif
 libb10_asiodns_la_CPPFLAGS = $(AM_CPPFLAGS)
 libb10_asiodns_la_LIBADD  = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 libb10_asiodns_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la

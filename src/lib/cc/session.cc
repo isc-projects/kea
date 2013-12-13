@@ -535,7 +535,7 @@ Session::reply(ConstElementPtr envelope, ConstElementPtr newmsg) {
 
 bool
 Session::hasQueuedMsgs() const {
-    return (impl_->queue_->size() > 0);
+    return (!impl_->queue_->empty());
 }
 
 void

@@ -102,13 +102,22 @@ using namespace isc::util;
 namespace isc {
 namespace dhcp {
 
-int
-PktFilterLPF::openSocket(const Iface& iface, const isc::asiolink::IOAddress&,
+SocketInfo
+PktFilterLPF::openSocket(const Iface& iface,
+                         const isc::asiolink::IOAddress& addr,
                          const uint16_t port, const bool,
                          const bool) {
 
+    // Open fallback socket first. If it fails, it will give us an indication
+    // that there is another service (perhaps DHCP server) running.
+    // The function will throw an exception and effectivelly cease opening
+    // raw socket below.
+    int fallback = openFallbackSocket(addr, port);
+
+    // The fallback is open, so we are good to open primary socket.
     int sock = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
     if (sock < 0) {
+        close(fallback);
         isc_throw(SocketConfigError, "Failed to create raw LPF socket");
     }
 
@@ -126,6 +135,7 @@ PktFilterLPF::openSocket(const Iface& iface, const isc::asiolink::IOAddress&,
     if (setsockopt(sock, SOL_SOCKET, SO_ATTACH_FILTER, &filter_program,
                    sizeof(filter_program)) < 0) {
         close(sock);
+        close(fallback);
         isc_throw(SocketConfigError, "Failed to install packet filtering program"
                   << " on the socket " << sock);
     }
@@ -142,17 +152,39 @@ PktFilterLPF::openSocket(const Iface& iface, const isc::asiolink::IOAddress&,
     if (bind(sock, reinterpret_cast<const struct sockaddr*>(&sa),
              sizeof(sa)) < 0) {
         close(sock);
+        close(fallback);
         isc_throw(SocketConfigError, "Failed to bind LPF socket '" << sock
                   << "' to interface '" << iface.getName() << "'");
     }
 
-    return (sock);
+    return (SocketInfo(addr, port, sock, fallback));
 
 }
 
 Pkt4Ptr
 PktFilterLPF::receive(const Iface& iface, const SocketInfo& socket_info) {
     uint8_t raw_buf[IfaceMgr::RCVBUFSIZE];
+    // First let's get some data from the fallback socket. The data will be
+    // discarded but we don't want the socket buffer to bloat. We get the
+    // packets from the socket in loop but most of the time the loop will
+    // end after receiving one packet. The call to recv returns immediately
+    // when there is no data left on the socket because the socket is
+    // non-blocking.
+    // @todo In the normal conditions, both the primary socket and the fallback
+    // socket are in sync as they are set to receive packets on the same
+    // address and port. The reception of packets on the fallback socket
+    // shouldn't cause significant lags in packet reception. If we find in the
+    // future that it does, the sort of threshold could be set for the maximum
+    // bytes received on the fallback socket in a single round. Further
+    // optimizations would include an asynchronous read from the fallback socket
+    // when the DHCP server is idle.
+    int datalen;
+    do {
+        datalen = recv(socket_info.fallbackfd_, raw_buf, sizeof(raw_buf), 0);
+    } while (datalen > 0);
+
+    // Now that we finished getting data from the fallback socket, we
+    // have to get the data from the raw socket too.
     int data_len = read(socket_info.sockfd_, raw_buf, sizeof(raw_buf));
     // If negative value is returned by read(), it indicates that an
     // error occured. If returned value is 0, no data was read from the
@@ -209,9 +241,16 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
 
     OutputBuffer buf(14);
 
-    HWAddrPtr hwaddr(new HWAddr(iface.getMac(), iface.getMacLen(),
-                                iface.getHWType()));
-    pkt->setLocalHWAddr(hwaddr);
+    // Some interfaces may have no HW address - e.g. loopback interface.
+    // For these interfaces the HW address length is 0. If this is the case,
+    // then we will rely on the functions which construct the IP/UDP headers
+    // to provide a default HW addres. Otherwise, create the HW address
+    // object using the HW address of the interface.
+    if (iface.getMacLen() > 0) {
+        HWAddrPtr hwaddr(new HWAddr(iface.getMac(), iface.getMacLen(),
+                                    iface.getHWType()));
+        pkt->setLocalHWAddr(hwaddr);
+    }
 
 
     // Ethernet frame header.

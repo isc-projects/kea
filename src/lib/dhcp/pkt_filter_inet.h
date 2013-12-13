@@ -44,20 +44,22 @@ public:
         return (false);
     }
 
-    /// @brief Open socket.
+    /// @brief Open primary and fallback socket.
     ///
-    /// @param iface interface descriptor
-    /// @param addr address on the interface to be used to send packets.
-    /// @param port port number.
-    /// @param receive_bcast configure socket to receive broadcast messages
-    /// @param send_bcast configure socket to send broadcast messages.
+    /// @param iface Interface descriptor.
+    /// @param addr Address on the interface to be used to send packets.
+    /// @param port Port number.
+    /// @param receive_bcast Configure socket to receive broadcast messages
+    /// @param send_bcast Configure socket to send broadcast messages.
     ///
-    /// @return created socket's descriptor
-    virtual int openSocket(const Iface& iface,
-                           const isc::asiolink::IOAddress& addr,
-                           const uint16_t port,
-                           const bool receive_bcast,
-                           const bool send_bcast);
+    /// @return A structure describing a primary and fallback socket.
+    /// @throw isc::dhcp::SocketConfigError if error occurs when opening,
+    /// binding or configuring the socket.
+    virtual SocketInfo openSocket(const Iface& iface,
+                                  const isc::asiolink::IOAddress& addr,
+                                  const uint16_t port,
+                                  const bool receive_bcast,
+                                  const bool send_bcast);
 
     /// @brief Receive packet over specified socket.
     ///
@@ -65,6 +67,10 @@ public:
     /// @param socket_info structure holding socket information
     ///
     /// @return Received packet
+    /// @throw isc::dhcp::SocketReadError if an error occurs during reception
+    /// of the packet.
+    /// @throw An execption thrown by the isc::dhcp::Pkt4 object if DHCPv4
+    /// message parsing fails.
     virtual Pkt4Ptr receive(const Iface& iface, const SocketInfo& socket_info);
 
     /// @brief Send packet over specified socket.
@@ -74,6 +80,8 @@ public:
     /// @param pkt packet to be sent
     ///
     /// @return result of sending a packet. It is 0 if successful.
+    /// @throw isc::dhcp::SocketWriteError if an error occures during sending
+    /// a DHCP message through the socket.
     virtual int send(const Iface& iface, uint16_t sockfd,
                      const Pkt4Ptr& pkt);
 

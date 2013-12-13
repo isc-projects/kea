@@ -15,15 +15,13 @@
 #ifndef D_PROCESS_H
 #define D_PROCESS_H
 
-#include <asiolink/asiolink.h>
 #include <cc/data.h>
+#include <d2/d2_asio.h>
 #include <d2/d_cfg_mgr.h>
 
 #include <boost/shared_ptr.hpp>
 
 #include <exceptions/exceptions.h>
-
-typedef boost::shared_ptr<isc::asiolink::IOService> IOServicePtr;
 
 namespace isc {
 namespace d2 {

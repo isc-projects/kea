@@ -30,7 +30,6 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dns;
 using namespace std;
-using namespace boost;
 
 namespace {
 
@@ -57,7 +56,7 @@ private:
     ConstElementPtr configuration_;
 };
 
-typedef shared_ptr<FakeList> ListPtr;
+typedef boost::shared_ptr<FakeList> ListPtr;
 
 // Forward declaration.  We need precise definition of DatasrcConfigTest
 // to complete this function.
@@ -77,8 +76,8 @@ datasrcConfigHandler(DatasrcConfigTest* fake_server, const std::string&,
 
 class DatasrcConfigTest : public ::testing::Test {
 public:
-    void setDataSrcClientLists(shared_ptr<std::map<dns::RRClass, ListPtr> >
-                               new_lists)
+    void setDataSrcClientLists(boost::shared_ptr<std::map<dns::RRClass,
+                               ListPtr> > new_lists)
     {
         lists_.clear();         // first empty it
 
@@ -159,7 +158,7 @@ testConfigureDataSource(DatasrcConfigTest& test,
 {
     // We use customized (faked lists) for the List type.  This makes it
     // possible to easily look that they were called.
-    shared_ptr<std::map<dns::RRClass, ListPtr> > lists =
+    boost::shared_ptr<std::map<dns::RRClass, ListPtr> > lists =
         configureDataSourceGeneric<FakeList>(config);
     test.setDataSrcClientLists(lists);
 }

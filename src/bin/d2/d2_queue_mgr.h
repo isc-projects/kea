@@ -17,9 +17,8 @@
 
 /// @file d2_queue_mgr.h This file defines the class D2QueueMgr.
 
-#include <asiolink/io_address.h>
-#include <asiolink/io_service.h>
 #include <exceptions/exceptions.h>
+#include <d2/d2_asio.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcp_ddns/ncr_io.h>
 
@@ -166,7 +165,7 @@ public:
     /// This value must be greater than zero. It defaults to MAX_QUEUE_DEFAULT.
     ///
     /// @throw D2QueueMgrError if max_queue_size is zero.
-    D2QueueMgr(isc::asiolink::IOService& io_service,
+    D2QueueMgr(IOServicePtr& io_service,
                const size_t max_queue_size = MAX_QUEUE_DEFAULT);
 
     /// @brief Destructor
@@ -328,7 +327,7 @@ public:
     void updateStopState();
 
     /// @brief IOService that our listener should use for IO management.
-    isc::asiolink::IOService& io_service_;
+    IOServicePtr io_service_;
 
     /// @brief Dictates the maximum number of entries allowed in the queue.
     size_t max_queue_size_;

@@ -249,6 +249,12 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
             // Proceed to the next data field.
             data += data_size;
         }
+
+        // Unpack suboptions if any.
+        if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
+            unpackOptions(OptionBuffer(data, data_buf.end()));
+        }
+
     } else if (data_type != OPT_EMPTY_TYPE) {
         // If data_type value is other than OPT_RECORD_TYPE, our option is
         // empty (have no data at all) or it comprises one or more
@@ -316,9 +322,20 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
             }
             if (data_size > 0) {
                 buffers.push_back(OptionBuffer(data, data + data_size));
+                data += data_size;
             } else {
                 isc_throw(OutOfRange, "option buffer truncated");
             }
+
+            // Unpack suboptions if any.
+            if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
+                unpackOptions(OptionBuffer(data, data_buf.end()));
+            }
+        }
+    } else if (data_type == OPT_EMPTY_TYPE) {
+        // Unpack suboptions if any.
+        if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
+            unpackOptions(OptionBuffer(data, data_buf.end()));
         }
     }
     // If everything went ok we can replace old buffer set with new ones.

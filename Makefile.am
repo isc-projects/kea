@@ -21,11 +21,11 @@ dist_doc_DATA = AUTHORS COPYING ChangeLog README
 .PHONY: check-valgrind check-valgrind-suppress
 
 install-exec-hook:
-	-@echo -e "\033[1;33m" # switch to yellow color text
+	-@tput smso  # Start standout mode
 	@echo "NOTE: BIND 10 does not automatically start DNS services when it is run"
 	@echo "      in its default configuration. Please see the Guide for information"
 	@echo "      on how to configure these services to be started automatically."
-	-@echo -e "\033[m" # switch back to normal
+	-@tput rmso  # End standout mode
 
 check-valgrind:
 if HAVE_VALGRIND

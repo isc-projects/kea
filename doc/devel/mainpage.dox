@@ -23,7 +23,7 @@
  * run-time and modifies its behavior you should read the section
  * @ref hooksdgDevelopersGuide.
  *
- * BIND 10 maintanenace information is divided into a number of sections
+ * BIND 10 maintenance information is divided into a number of sections
  * depending on focus.  DNS-specific issues are covered in the
  * @ref dnsMaintenanceGuide while information on DHCP-specific topics can
  * be found in the @ref dhcpMaintenanceGuide.  General BIND 10 topics, not
@@ -36,6 +36,10 @@
  *
  * Regardless of your field of expertise, you are encouraged to visit the
  * <a href="http://bind10.isc.org/">BIND10 webpage (http://bind10.isc.org)</a>
+ *
+ * @section contrib Contributor's Guide
+ * - @subpage contributorGuide
+ *
  * @section hooksFramework Hooks Framework
  * - @subpage hooksdgDevelopersGuide
  * - @subpage dhcpv4Hooks
@@ -54,6 +58,7 @@
  *   - @subpage dhcpv4ConfigParser
  *   - @subpage dhcpv4ConfigInherit
  *   - @subpage dhcpv4OptionsParse
+ *   - @subpage dhcpv4DDNSIntegration
  *   - @subpage dhcpv4Other
  * - @subpage dhcp6
  *   - @subpage dhcpv6Session
@@ -66,6 +71,7 @@
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
  *   - @subpage libdhcpIfaceMgr
+ *   - @subpage libdhcpPktFilter
  * - @subpage libdhcpsrv
  *   - @subpage leasemgr
  *   - @subpage cfgmgr

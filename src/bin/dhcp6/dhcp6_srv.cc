@@ -17,6 +17,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/duid.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
@@ -26,6 +27,7 @@
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
 #include <dhcp/option_custom.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
 #include <dhcp6/dhcp6_log.h>
@@ -475,7 +477,7 @@ bool Dhcpv6Srv::run() {
                     .arg(e.what());
             }
 
-            // Send NameChangeRequests to the b10-dhcp_ddns module.
+            // Send NameChangeRequests to the b10-dhcp-ddns module.
             sendNameChangeRequests();
         }
     }
@@ -680,6 +682,57 @@ Dhcpv6Srv::appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
         if (desc.option) {
             answer->addOption(desc.option);
         }
+    }
+}
+
+void
+Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer) {
+    // Get the configured subnet suitable for the incoming packet.
+    Subnet6Ptr subnet = selectSubnet(question);
+    // Leave if there is no subnet matching the incoming packet.
+    // There is no need to log the error message here because
+    // it will be logged in the assignLease() when it fails to
+    // pick the suitable subnet. We don't want to duplicate
+    // error messages in such case.
+    if (!subnet) {
+        return;
+    }
+
+    // Try to get the vendor option
+    boost::shared_ptr<OptionVendor> vendor_req =
+        boost::dynamic_pointer_cast<OptionVendor>(question->getOption(D6O_VENDOR_OPTS));
+    if (!vendor_req) {
+        return;
+    }
+
+    // Let's try to get ORO within that vendor-option
+    /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other vendors
+    /// may have different policies.
+    boost::shared_ptr<OptionUint16Array> oro =
+        boost::dynamic_pointer_cast<OptionUint16Array>(vendor_req->getOption(DOCSIS3_V6_ORO));
+
+    // Option ORO not found. Don't do anything then.
+    if (!oro) {
+        return;
+    }
+
+    uint32_t vendor_id = vendor_req->getVendorId();
+
+    boost::shared_ptr<OptionVendor> vendor_rsp(new OptionVendor(Option::V6, vendor_id));
+
+    // Get the list of options that client requested.
+    bool added = false;
+    const std::vector<uint16_t>& requested_opts = oro->getValues();
+    BOOST_FOREACH(uint16_t opt, requested_opts) {
+        Subnet::OptionDescriptor desc = subnet->getVendorOptionDescriptor(vendor_id, opt);
+        if (desc.option) {
+            vendor_rsp->addOption(desc.option);
+            added = true;
+        }
+    }
+
+    if (added) {
+        answer->addOption(vendor_rsp);
     }
 }
 
@@ -994,7 +1047,7 @@ Dhcpv6Srv::appendClientFqdn(const Pkt6Ptr& question,
 
     // If FQDN is NULL, it means that client did not request DNS Update, plus
     // server doesn't force updates.
-    if (fqdn) {
+    if (!fqdn) {
         return;
     }
 
@@ -1162,7 +1215,7 @@ void
 Dhcpv6Srv::sendNameChangeRequests() {
     while (!name_change_reqs_.empty()) {
         // @todo Once next NameChangeRequest is picked from the queue
-        // we should send it to the bind10-dhcp_ddns module. Currently we
+        // we should send it to the b10-dhcp_ddns module. Currently we
         // just drop it.
         name_change_reqs_.pop();
     }
@@ -2114,6 +2167,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     copyDefaultOptions(solicit, advertise);
     appendDefaultOptions(solicit, advertise);
     appendRequestedOptions(solicit, advertise);
+    appendRequestedVendorOptions(solicit, advertise);
 
     Option6ClientFqdnPtr fqdn = processClientFqdn(solicit);
     assignLeases(solicit, advertise, fqdn);
@@ -2135,6 +2189,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     copyDefaultOptions(request, reply);
     appendDefaultOptions(request, reply);
     appendRequestedOptions(request, reply);
+    appendRequestedVendorOptions(request, reply);
 
     Option6ClientFqdnPtr fqdn = processClientFqdn(request);
     assignLeases(request, reply, fqdn);
@@ -2229,7 +2284,7 @@ Dhcpv6Srv::openActiveSockets(const uint16_t port) {
                       << " trying to reopen sockets after reconfiguration");
         }
         if (CfgMgr::instance().isActiveIface(iface->getName())) {
-            iface_ptr->inactive4_ = false;
+            iface_ptr->inactive6_ = false;
             LOG_INFO(dhcp6_logger, DHCP6_ACTIVATE_INTERFACE)
                 .arg(iface->getFullName());
 
@@ -2241,6 +2296,15 @@ Dhcpv6Srv::openActiveSockets(const uint16_t port) {
                       DHCP6_DEACTIVATE_INTERFACE).arg(iface->getName());
             iface_ptr->inactive6_ = true;
 
+        }
+
+        iface_ptr->clearUnicasts();
+
+        const IOAddress* unicast = CfgMgr::instance().getUnicast(iface->getName());
+        if (unicast) {
+            LOG_INFO(dhcp6_logger, DHCP6_SOCKET_UNICAST).arg(unicast->toText())
+                .arg(iface->getName());
+            iface_ptr->addUnicast(*unicast);
         }
     }
     // Let's reopen active sockets. openSockets6 will check internally whether
