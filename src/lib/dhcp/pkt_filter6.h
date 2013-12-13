@@ -39,15 +39,16 @@ class Iface;
 /// are not meant to be called directly, except unit testing.
 ///
 /// The @c IfaceMgr is responsible for managing the pool of sockets. In
-/// particular, @IfaceMgr detects interfaces suitable to send/receive DHCPv6
+/// particular, @c IfaceMgr detects interfaces suitable to send/receive DHCPv6
 /// messages. When it intends to open a socket on a particular interface, it
 /// will call the PktFilter6::openSocket. If this call is successful, the
 /// structure describing a new socket is returned.
 ///
 /// In order to send or receive a DHCPv6 message through this socket,
-/// the @IfaceMgr must use PktFilter6::send or PktFilter6::receive functions of
-/// the same class that has been used to open a socket, i.e. all send/receive
-/// operations should be performed using this particular class.
+/// the @c IfaceMgr must use PktFilter6::send or PktFilter6::receive
+/// functions of the same class that has been used to open a socket,
+/// i.e. all send/receive operations should be performed using this
+/// particular class.
 ///
 /// The major motivation behind creating a separate class, to manage low level
 /// operations using sockets, is to make @c IfaceMgr unit testable. By providing
