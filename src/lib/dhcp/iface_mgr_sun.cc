@@ -60,7 +60,8 @@ IfaceMgr::detectIfaces() {
             isc_throw(Unexpected, "Interface " << ifname << " has no index");
         }
 
-        if((iface_iter = ifaces.find(ifname)) != iface.end()) {
+        iface_iter = ifaces.find(ifname);
+        if(iface_iter != ifaceLst.end()) {
             continue;
         }
 
@@ -71,7 +72,9 @@ IfaceMgr::detectIfaces() {
 
     // Second lookup to get MAC and IP addresses
     for (ifptr = iflist; ifptr != 0; ifptr = ifptr->ifa_next) {
-        if ((itf = ifaces.find(ifptr->ifa_name)) == ifaces.end()) {
+
+        iface_iter = ifaces.find(ifptr->ifa_name);
+        if (iface_iter == ifaces.end()) {
             continue;
         }
         // Common byte pointer for following data
