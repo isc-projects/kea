@@ -118,6 +118,10 @@ Feature: Xfrin incoming notify handling
       | zones.IN.example.org..last_axfr_duration |            |       0.0 |
       | soa_in_progress                          |          0 |           |
       | axfr_running                             |          0 |           |
+      | socket.ipv6.tcp.open                     |            |         1 |
+      | socket.ipv6.tcp.close                    |            |         1 |
+      | socket.ipv6.tcp.conn                     |            |         1 |
+      | socket.ipv6.tcp.connfail                 |          0 |           |
 
     #
     # Test for handling incoming notify only in IPv4
@@ -226,6 +230,10 @@ Feature: Xfrin incoming notify handling
       | zones.IN.example.org..last_axfr_duration |            |       0.0 |
       | soa_in_progress                          |          0 |           |
       | axfr_running                             |          0 |           |
+      | socket.ipv4.tcp.open                     |            |         1 |
+      | socket.ipv4.tcp.close                    |            |         1 |
+      | socket.ipv4.tcp.conn                     |            |         1 |
+      | socket.ipv4.tcp.connfail                 |          0 |           |
 
     #
     # Test for Xfr request rejected
@@ -338,6 +346,10 @@ Feature: Xfrin incoming notify handling
       | zones.IN.example.org..xfrfail   |            |         1 |
       | soa_in_progress                 |            |         0 |
       | axfr_running                    |            |         0 |
+      | socket.ipv6.tcp.open            |            |         1 |
+      | socket.ipv6.tcp.close           |            |         1 |
+      | socket.ipv6.tcp.conn            |            |         1 |
+      | socket.ipv6.tcp.connfail        |          0 |           |
 
     #
     # Test for Xfr request rejected in IPv4
@@ -450,6 +462,10 @@ Feature: Xfrin incoming notify handling
       | zones.IN.example.org..xfrfail   |            |         1 |
       | soa_in_progress                 |            |         0 |
       | axfr_running                    |            |         0 |
+      | socket.ipv4.tcp.open            |            |         1 |
+      | socket.ipv4.tcp.close           |            |         1 |
+      | socket.ipv4.tcp.conn            |            |         1 |
+      | socket.ipv4.tcp.connfail        |          0 |           |
 
     #
     # Test for unreachable slave
@@ -613,3 +629,46 @@ Feature: Xfrin incoming notify handling
     Then wait for master stderr message NOTIFY_OUT_TIMEOUT not NOTIFY_OUT_REPLY_RECEIVED
 
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+
+    #
+    # Test for unreachable master
+    #
+    Scenario: Handle incoming notify (unreachable master)
+
+    And I have bind10 running with configuration xfrin/retransfer_slave_notify.conf
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
+    And wait for bind10 stderr message AUTH_SERVER_STARTED
+    And wait for bind10 stderr message XFRIN_STARTED
+    And wait for bind10 stderr message ZONEMGR_STARTED
+
+    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+
+    #
+    # Test1 for Xfrin statistics
+    #
+    check initial statistics not containing example.org for Xfrin
+
+    #
+    # execute reftransfer for Xfrin
+    #
+    When I send bind10 the command Xfrin retransfer example.org IN
+    Then wait for new bind10 stderr message XFRIN_CONNECT_MASTER
+    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED
+
+    #
+    # Test2 for Xfrin statistics
+    #
+    # check initial statistics
+    #
+
+    # wait until the last stats requesting is finished
+    wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+    wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
+
+    When I query statistics socket of bind10 module Xfrin with cmdctl
+    The statistics counters are 0 in category .Xfrin.socket.ipv6.tcp except for the following items
+      | item_name | min_value |
+      | open      |         1 |
+      | close     |         1 |
+      | connfail  |         1 |

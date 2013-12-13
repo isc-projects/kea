@@ -579,19 +579,54 @@ TEST_F(CfgMgrTest, optionSpace6) {
 TEST_F(CfgMgrTest, addActiveIface) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
-    cfg_mgr.addActiveIface("eth0");
-    cfg_mgr.addActiveIface("eth1");
+    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth0"));
+    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth1"));
 
     EXPECT_TRUE(cfg_mgr.isActiveIface("eth0"));
     EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
     EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
 
-    cfg_mgr.deleteActiveIfaces();
+    EXPECT_NO_THROW(cfg_mgr.deleteActiveIfaces());
 
     EXPECT_FALSE(cfg_mgr.isActiveIface("eth0"));
     EXPECT_FALSE(cfg_mgr.isActiveIface("eth1"));
     EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
 }
+
+
+// This test verifies that it is possible to specify interfaces that server
+// should listen on.
+TEST_F(CfgMgrTest, addUnicastAddresses) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth1/2001:db8::1"));
+    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth2/2001:db8::2"));
+    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth3"));
+
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth2"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth3"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth4"));
+
+    ASSERT_TRUE(cfg_mgr.getUnicast("eth1"));
+    EXPECT_EQ("2001:db8::1", cfg_mgr.getUnicast("eth1")->toText());
+    EXPECT_EQ("2001:db8::2", cfg_mgr.getUnicast("eth2")->toText());
+    EXPECT_FALSE(cfg_mgr.getUnicast("eth3"));
+    EXPECT_FALSE(cfg_mgr.getUnicast("eth4"));
+
+    EXPECT_NO_THROW(cfg_mgr.deleteActiveIfaces());
+
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth3"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth4"));
+
+    ASSERT_FALSE(cfg_mgr.getUnicast("eth1"));
+    ASSERT_FALSE(cfg_mgr.getUnicast("eth2"));
+    EXPECT_FALSE(cfg_mgr.getUnicast("eth3"));
+    EXPECT_FALSE(cfg_mgr.getUnicast("eth4"));
+}
+
 
 // This test verifies that it is possible to set the flag which configures the
 // server to listen on all interfaces.
@@ -617,6 +652,27 @@ TEST_F(CfgMgrTest, activateAllIfaces) {
     EXPECT_FALSE(cfg_mgr.isActiveIface("eth1"));
     EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
 }
+
+/// @todo Add unit-tests for testing:
+/// - addActiveIface() with invalid interface name
+/// - addActiveIface() with the same interface twice
+/// - addActiveIface() with a bogus address
+///
+/// This is somewhat tricky. Care should be taken here, because it is rather
+/// difficult to decide if interface name is valid or not. Some servers, e.g.
+/// dibbler, allow to specify interface names that are not currently present in
+/// the system. The server accepts them, but upon discovering that they are
+/// yet available (for different definitions of not being available), adds
+/// the to to-be-activated list.
+///
+/// Cases covered by dibbler are:
+/// - missing interface (e.g. PPP connection that is not established yet)
+/// - downed interface (no link local address, no way to open sockets)
+/// - up, but not running interface (wifi up, but not associated)
+/// - tentative addresses (interface up and running, but DAD procedure is
+///   still in progress)
+/// - weird interfaces without link-local addresses (don't ask, 6rd tunnels
+///   look weird to me as well)
 
 // No specific tests for getSubnet6. That method (2 overloaded versions) is tested
 // in Dhcpv6SrvTest.selectSubnetAddr and Dhcpv6SrvTest.selectSubnetIface

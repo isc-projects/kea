@@ -44,7 +44,6 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::testutils;
-using boost::shared_ptr;
 using namespace isc::datasrc::test;
 using namespace isc::datasrc::memory::test;
 using namespace isc::datasrc::memory;
@@ -1612,7 +1611,7 @@ TEST_F(InMemoryZoneFinderTest, findOrphanRRSIG) {
 // handling)
 TEST_F(InMemoryZoneFinderTest, NSECNonExistentTest) {
     const Name name("example.com.");
-    shared_ptr<ZoneTableSegment> ztable_segment(
+    boost::shared_ptr<ZoneTableSegment> ztable_segment(
          new ZoneTableSegmentMock(class_, mem_sgmt_));
     updater_.reset();
     loadZoneIntoTable(*ztable_segment, name, class_,
@@ -1775,7 +1774,7 @@ TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3MissingOrigin) {
      setNSEC3HashCreator(&creator);
 
      const Name name("example.com.");
-     shared_ptr<ZoneTableSegment> ztable_segment(
+     boost::shared_ptr<ZoneTableSegment> ztable_segment(
           new ZoneTableSegmentMock(class_, mem_sgmt_));
      updater_.reset();
      loadZoneIntoTable(*ztable_segment, name, class_,

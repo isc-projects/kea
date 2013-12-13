@@ -15,10 +15,10 @@
 #ifndef D_CONTROLLER_H
 #define D_CONTROLLER_H
 
-#include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/session.h>
 #include <config/ccsession.h>
+#include <d2/d2_asio.h>
 #include <d2/d2_log.h>
 #include <d2/d_process.h>
 #include <exceptions/exceptions.h>

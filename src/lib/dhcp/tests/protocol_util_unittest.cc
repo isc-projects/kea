@@ -340,7 +340,7 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
 
     // Protocol type is UDP.
     uint8_t proto = in_buf.readUint8();
-    EXPECT_EQ(IPPROTO_UDP, proto);
+    EXPECT_EQ(static_cast<short>(IPPROTO_UDP), proto);
 
     // Check that the checksum is correct. The reference checksum value
     // has been calculated manually.

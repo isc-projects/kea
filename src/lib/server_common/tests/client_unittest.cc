@@ -63,7 +63,8 @@ protected:
 
 TEST_F(ClientTest, constructIPv4) {
     EXPECT_EQ(AF_INET, client4->getRequestSourceEndpoint().getFamily());
-    EXPECT_EQ(IPPROTO_UDP, client4->getRequestSourceEndpoint().getProtocol());
+    EXPECT_EQ(static_cast<short>(IPPROTO_UDP),
+              client4->getRequestSourceEndpoint().getProtocol());
     EXPECT_EQ("192.0.2.1",
               client4->getRequestSourceEndpoint().getAddress().toText());
     EXPECT_EQ(53214, client4->getRequestSourceEndpoint().getPort());
@@ -77,7 +78,8 @@ TEST_F(ClientTest, constructIPv4) {
 
 TEST_F(ClientTest, constructIPv6) {
     EXPECT_EQ(AF_INET6, client6->getRequestSourceEndpoint().getFamily());
-    EXPECT_EQ(IPPROTO_TCP, client6->getRequestSourceEndpoint().getProtocol());
+    EXPECT_EQ(static_cast<short>(IPPROTO_TCP),
+              client6->getRequestSourceEndpoint().getProtocol());
     EXPECT_EQ("2001:db8::1",
               client6->getRequestSourceEndpoint().getAddress().toText());
     EXPECT_EQ(53216, client6->getRequestSourceEndpoint().getPort());

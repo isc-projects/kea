@@ -108,6 +108,10 @@ Pkt4::pack() {
         isc_throw(InvalidOperation, "Can't build Pkt4 packet. HWAddr not set.");
     }
 
+    // Clear the output buffer to make sure that consecutive calls to pack()
+    // will not result in concatenation of multiple packet copies.
+    buffer_out_.clear();
+
     try {
         size_t hw_len = hwaddr_->hwaddr_.size();
 
@@ -215,7 +219,7 @@ Pkt4::unpack() {
     // a vector as an input.
     buffer_in.readVector(opts_buffer, opts_len);
     if (callback_.empty()) {
-        LibDHCP::unpackOptions4(opts_buffer, options_);
+        LibDHCP::unpackOptions4(opts_buffer, "dhcp4", options_);
     } else {
         // The last two arguments are set to NULL because they are
         // specific to DHCPv6 options parsing. They are unused for

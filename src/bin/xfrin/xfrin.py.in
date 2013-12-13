@@ -611,6 +611,11 @@ class XfrinConnection(asyncore.dispatcher):
         self._shutdown_event = shutdown_event
         self._master_addrinfo = master_addrinfo
         self._tsig_key = tsig_key
+        # self.tsig_key_name is used for outputting an error massage in
+        # connect_to_master().
+        self.tsig_key_name = None
+        if tsig_key:
+            self.tsig_key_name = self._tsig_key.get_key_name()
         self._tsig_ctx = None
         # tsig_ctx_creator is introduced to allow tests to use a mock class for
         # easier tests (in normal case we always use the default)
@@ -620,6 +625,74 @@ class XfrinConnection(asyncore.dispatcher):
         # (time, rr/s, etc)
         self._transfer_stats = XfrinTransferStats()
         self._counters = counters
+
+    def create_socket(self, family, type):
+        """create_socket() overridden from the super class for
+        statistics counter open and openfail"""
+        try:
+            ret = super().create_socket(family, type)
+            # count open
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'open')
+            return ret
+        except:
+            # count openfail
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'openfail')
+            raise
+
+    def close(self):
+        """close() overridden from the super class for
+        statistics counter close"""
+        ret = super().close()
+        # count close
+        self._counters.inc('socket',
+                           'ip' + self._get_ipver_str(),
+                           'tcp', 'close')
+        return ret
+
+    def connect(self, address):
+        """connect() overridden from the super class for
+        statistics counter conn and connfail"""
+        try:
+            ret = super().connect(address)
+            # count conn
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'conn')
+            return ret
+        except:
+            # count connfail
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'connfail')
+            raise
+
+    def send(self, data):
+        """send() overridden from the super class for
+        statistics counter senderr"""
+        try:
+            return super().send(data)
+        except:
+            # count senderr
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'senderr')
+            raise
+
+    def recv(self, buffer_size):
+        """recv() overridden from the super class for
+        statistics counter senderr"""
+        try:
+            return super().recv(buffer_size)
+        except:
+            # count recverr
+            self._counters.inc('socket',
+                               'ip' + self._get_ipver_str(),
+                               'tcp', 'recverr')
+            raise
 
     def init_socket(self):
         '''Initialize the underlyig socket.
@@ -861,9 +934,9 @@ class XfrinConnection(asyncore.dispatcher):
         It raises a ValueError exception on other address families.
 
         """
-        if self.socket.family == socket.AF_INET:
+        if self._master_addrinfo[0] == socket.AF_INET:
             return 'v4'
-        elif self.socket.family == socket.AF_INET6:
+        elif self._master_addrinfo[0] == socket.AF_INET6:
             return 'v6'
         raise ValueError("Invalid address family. "
                          "This is supported only for IP sockets")

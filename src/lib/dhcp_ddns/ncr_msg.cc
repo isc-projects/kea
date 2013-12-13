@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcp_ddns/ncr_msg.h>
+#include <dns/name.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 #include <cryptolink/cryptolink.h>
@@ -25,13 +26,38 @@
 namespace isc {
 namespace dhcp_ddns {
 
+
 /********************************* D2Dhcid ************************************/
+
+namespace {
+
+///
+/// @name Constants which define DHCID identifier-type
+//@{
+/// DHCID created from client's HW address.
+const uint8_t DHCID_ID_HWADDR   = 0x0;
+/// DHCID created from client identifier.
+const uint8_t DHCID_ID_CLIENTID = 0x1;
+/// DHCID created from DUID.
+const uint8_t DHCID_ID_DUID     = 0x2;
+
+}
 
 D2Dhcid::D2Dhcid() {
 }
 
 D2Dhcid::D2Dhcid(const std::string& data) {
     fromStr(data);
+}
+
+D2Dhcid::D2Dhcid(const isc::dhcp::HWAddrPtr& hwaddr,
+                 const std::vector<uint8_t>& wire_fqdn) {
+    fromHWAddr(hwaddr, wire_fqdn);
+}
+
+D2Dhcid::D2Dhcid(const std::vector<uint8_t>& clientid_data,
+                 const std::vector<uint8_t>& wire_fqdn) {
+    fromClientId(clientid_data, wire_fqdn);
 }
 
 D2Dhcid::D2Dhcid(const isc::dhcp::DUID& duid,
@@ -56,32 +82,61 @@ D2Dhcid::toStr() const {
 }
 
 void
+D2Dhcid::fromClientId(const std::vector<uint8_t>& clientid_data,
+                      const std::vector<uint8_t>& wire_fqdn) {
+    createDigest(DHCID_ID_CLIENTID, clientid_data, wire_fqdn);
+}
+
+void
+D2Dhcid::fromHWAddr(const isc::dhcp::HWAddrPtr& hwaddr,
+                    const std::vector<uint8_t>& wire_fqdn) {
+    if (!hwaddr) {
+        isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
+                  "unable to compute DHCID from the HW address, "
+                  "NULL pointer has been specified");
+    } else if (hwaddr->hwaddr_.empty()) {
+        isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
+                  "unable to compute DHCID from the HW address, "
+                  "HW address is empty");
+    }
+    std::vector<uint8_t> hwaddr_data;
+    hwaddr_data.push_back(hwaddr->htype_);
+    hwaddr_data.insert(hwaddr_data.end(), hwaddr->hwaddr_.begin(),
+                       hwaddr->hwaddr_.end());
+    createDigest(DHCID_ID_HWADDR, hwaddr_data, wire_fqdn);
+}
+
+
+void
 D2Dhcid::fromDUID(const isc::dhcp::DUID& duid,
                   const std::vector<uint8_t>& wire_fqdn) {
-    // DHCID created from DUID starts with two bytes representing
-    // a type of the identifier. The value of 0x0002 indicates that
-    // DHCID has been created from DUID. The 3rd byte is equal to 1
-    // which indicates that the SHA-256 algorithm is used to create
-    // a DHCID digest. This value is called digest-type.
-    static uint8_t dhcid_header[] = { 0x00, 0x02, 0x01 };
 
+    createDigest(DHCID_ID_DUID, duid.getDuid(), wire_fqdn);
+}
+
+void
+D2Dhcid::createDigest(const uint8_t identifier_type,
+                      const std::vector<uint8_t>& identifier_data,
+                      const std::vector<uint8_t>& wire_fqdn) {
     // We get FQDN in the wire format, so we don't know if it is
     // valid. It is caller's responsibility to make sure it is in
     // the valid format. Here we just make sure it is not empty.
     if (wire_fqdn.empty()) {
-        isc_throw(isc::dhcp_ddns::NcrMessageError,
+        isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
                   "empty FQDN used to create DHCID");
     }
 
-    // Get the wire representation of the DUID.
-    std::vector<uint8_t> data = duid.getDuid();
-    // It should be DUID class responsibility to validate the DUID
-    // but let's be on the safe side here and make sure that empty
-    // DUID is not returned.
-    if (data.empty()) {
-        isc_throw(isc::dhcp_ddns::NcrMessageError,
+    // It is a responsibility of the classes which encapsulate client
+    // identifiers, e.g. DUID, to validate the client identifier data.
+    // But let's be on the safe side and at least check that it is not
+    // empty.
+    if (identifier_data.empty()) {
+        isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
                   "empty DUID used to create DHCID");
     }
+
+    // A data buffer will be used to compute the digest.
+    std::vector<uint8_t> data = identifier_data;
 
     // Append FQDN in the wire format.
     data.insert(data.end(), wire_fqdn.begin(), wire_fqdn.end());
@@ -100,14 +155,26 @@ D2Dhcid::fromDUID(const isc::dhcp::DUID& duid,
         secure = sha.process(static_cast<const Botan::byte*>(&data[0]),
                              data.size());
     } catch (const std::exception& ex) {
-        isc_throw(isc::dhcp_ddns::NcrMessageError,
+        isc_throw(isc::dhcp_ddns::DhcidRdataComputeError,
                   "error while generating DHCID from DUID: "
                   << ex.what());
     }
 
-    // The exception unsafe part is finished, so we can finally replace
-    // the contents of bytes_.
-    bytes_.assign(dhcid_header, dhcid_header + sizeof(dhcid_header));
+    // The DHCID RDATA has the following structure:
+    //
+    //    < identifier-type > < digest-type > < digest >
+    //
+    // where identifier type
+
+    // Let's allocate the space for the identifier-type (2 bytes) and
+    // digest-type (1 byte). This is 3 bytes all together.
+    bytes_.resize(3);
+    // Leave first byte 0 and set the second byte. Those two bytes
+    // form the identifier-type.
+    bytes_[1] = identifier_type;
+    // Third byte is always equal to 1, which specifies SHA-256 digest type.
+    bytes_[2] = 1;
+    // Now let's append the digest.
     bytes_.insert(bytes_.end(), secure.begin(), secure.end());
 }
 
@@ -117,11 +184,13 @@ operator<<(std::ostream& os, const D2Dhcid& dhcid) {
     return (os);
 }
 
+
+
 /**************************** NameChangeRequest ******************************/
 
 NameChangeRequest::NameChangeRequest()
     : change_type_(CHG_ADD), forward_change_(false),
-    reverse_change_(false), fqdn_(""), ip_address_(""),
+    reverse_change_(false), fqdn_(""), ip_io_address_("0.0.0.0"),
     dhcid_(), lease_expires_on_(), lease_length_(0), status_(ST_NEW) {
 }
 
@@ -132,9 +201,12 @@ NameChangeRequest::NameChangeRequest(const NameChangeType change_type,
             const uint64_t lease_expires_on,
             const uint32_t lease_length)
     : change_type_(change_type), forward_change_(forward_change),
-    reverse_change_(reverse_change), fqdn_(fqdn), ip_address_(ip_address),
+    reverse_change_(reverse_change), fqdn_(fqdn), ip_io_address_("0.0.0.0"),
     dhcid_(dhcid), lease_expires_on_(lease_expires_on),
     lease_length_(lease_length), status_(ST_NEW) {
+
+    // User setter to validate address.
+    setIpAddress(ip_address);
 
     // Validate the contents. This will throw a NcrMessageError if anything
     // is invalid.
@@ -291,18 +363,10 @@ NameChangeRequest::toJSON() const  {
 void
 NameChangeRequest::validateContent() {
     //@todo This is an initial implementation which provides a minimal amount
-    // of validation.  FQDN, DHCID, and IP Address members are all currently
+    // of validation.  FQDN and DHCID members are all currently
     // strings, these may be replaced with richer classes.
     if (fqdn_ == "") {
         isc_throw(NcrMessageError, "FQDN cannot be blank");
-    }
-
-    // Validate IP Address.
-    try {
-        isc::asiolink::IOAddress io_addr(ip_address_);
-    } catch (const isc::asiolink::IOError& ex) {
-        isc_throw(NcrMessageError,
-                  "Invalid ip address string for ip_address: " << ip_address_);
     }
 
     // Validate the DHCID.
@@ -410,14 +474,25 @@ NameChangeRequest::setFqdn(isc::data::ConstElementPtr element) {
 
 void
 NameChangeRequest::setFqdn(const std::string& value) {
-    fqdn_ = value;
+    try {
+        dns::Name tmp(value);
+        fqdn_ = tmp.toText();
+    } catch (const std::exception& ex) {
+        isc_throw(NcrMessageError,
+                  "Invalid FQDN value: " << value << ", reason:" << ex.what());
+    }
 }
 
 void
 NameChangeRequest::setIpAddress(const std::string& value) {
-    ip_address_ = value;
+    // Validate IP Address.
+    try {
+        ip_io_address_ = isc::asiolink::IOAddress(value);
+    } catch (const isc::asiolink::IOError& ex) {
+        isc_throw(NcrMessageError,
+                  "Invalid ip address string for ip_address: " << value);
+    }
 }
-
 
 void
 NameChangeRequest::setIpAddress(isc::data::ConstElementPtr element) {
@@ -515,7 +590,7 @@ NameChangeRequest::toText() const {
            << "Reverse Change: " << (reverse_change_ ? "yes" : "no")
            << std::endl
            << "FQDN: [" << fqdn_ << "]" << std::endl
-           << "IP Address: [" << ip_address_  << "]" << std::endl
+           << "IP Address: [" << ip_io_address_.toText()  << "]" << std::endl
            << "DHCID: [" << dhcid_.toStr() << "]" << std::endl
            << "Lease Expires On: " << getLeaseExpiresOnStr() << std::endl
            << "Lease Length: " << lease_length_ << std::endl;
@@ -529,7 +604,7 @@ NameChangeRequest::operator == (const NameChangeRequest& other) {
             (forward_change_ == other.forward_change_) &&
             (reverse_change_ == other.reverse_change_) &&
             (fqdn_ == other.fqdn_) &&
-            (ip_address_ == other.ip_address_) &&
+            (ip_io_address_ == other.ip_io_address_) &&
             (dhcid_ == other.dhcid_) &&
             (lease_expires_on_ == other.lease_expires_on_) &&
             (lease_length_ == other.lease_length_));
