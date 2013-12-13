@@ -4416,19 +4416,22 @@ Dhcp4/subnet4	[]	list	(default)
 
     <section id="dhcp4-echo-client-id">
       <title>Echoing client-id (RFC6842)</title>
-      <para>Original DHCPv4 spec (RFC2131) states that the DHCPv4 server must not
-      send back client-id options when responding to clients. However, in some cases
-      that confused clients that did not have MAC address or client-id. See RFC6842
-      for details. That behavior has changed with the publication of RFC6842 which
-      updated RFC2131. That update now states that the server must send client-id.
-      That is the default behaviour that Kea offers. However, in some cases older
-      devices that do not support RFC6842 may refuse to accept responses that include
-      client-id options. To enable backward compatibility, an optional flag has been
-      introduced. To configure it, use the following commands:</para>
+      <para>Original DHCPv4 spec (RFC2131) states that the DHCPv4
+      server must not send back client-id options when responding to
+      clients. However, in some cases that confused clients that did
+      not have MAC address or client-id. See RFC6842 for details. That
+      behavior has changed with the publication of RFC6842 which
+      updated RFC2131. That update now states that the server must
+      send client-id if client sent it. That is the default behaviour
+      that Kea offers. However, in some cases older devices that do
+      not support RFC6842 may refuse to accept responses that include
+      client-id option. To enable backward compatibility, an optional
+      flag has been introduced. To configure it, use the following
+      commands:</para>
 
 <screen>
 &gt; <userinput>config add Dhcp4/echo-client-id</userinput>
-&gt; <userinput>config set Dhcp4/echo-client-id True"</userinput>
+&gt; <userinput>config set Dhcp4/echo-client-id False</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
 
