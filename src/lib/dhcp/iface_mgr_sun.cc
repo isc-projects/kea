@@ -54,14 +54,14 @@ IfaceMgr::detectIfaces() {
         const char * ifname = ifptr->ifa_name;
         uint ifindex = 0;
 
-        if(!(ifindex = if_nametoindex(ifname))) {
+        if (!(ifindex = if_nametoindex(ifname))) {
             // Interface name does not have corresponding index ...
             freeifaddrs(iflist);
             isc_throw(Unexpected, "Interface " << ifname << " has no index");
         }
 
         iface_iter = ifaces.find(ifname);
-        if(iface_iter != ifaceLst.end()) {
+        if (iface_iter != ifaces.end()) {
             continue;
         }
 
@@ -79,7 +79,7 @@ IfaceMgr::detectIfaces() {
         }
         // Common byte pointer for following data
         const uint8_t * ptr = 0;
-        if(ifptr->ifa_addr->sa_family == AF_LINK) {
+        if (ifptr->ifa_addr->sa_family == AF_LINK) {
             // HWAddr
             struct sockaddr_dl * ldata =
                 reinterpret_cast<struct sockaddr_dl *>(ifptr->ifa_addr);
@@ -87,7 +87,7 @@ IfaceMgr::detectIfaces() {
 
             iface_iter->second.setHWType(ldata->sdl_type);
             iface_iter->second.setMac(ptr, ldata->sdl_alen);
-        } else if(ifptr->ifa_addr->sa_family == AF_INET6) {
+        } else if (ifptr->ifa_addr->sa_family == AF_INET6) {
             // IPv6 Addr
             struct sockaddr_in6 * adata =
                 reinterpret_cast<struct sockaddr_in6 *>(ifptr->ifa_addr);
