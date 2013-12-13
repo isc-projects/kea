@@ -485,7 +485,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
                           << iface->getName() << ", reason: " << errstr);
             }
 
-            // Binding socket to unicast address and then joining multicast group
+            /*            // Binding socket to unicast address and then joining multicast group
             // works well on Mac OS (and possibly other BSDs), but does not work
             // on Linux.
             if ( !PktFilter6::joinMulticast(sock, iface->getName(),
@@ -494,7 +494,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
                 isc_throw(SocketConfigError, "Failed to join "
                           << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
                           << " multicast group.");
-            }
+                          } */
 
             count++;
 
