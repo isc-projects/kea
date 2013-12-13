@@ -26,6 +26,7 @@ run_unittests_SOURCES += perf_pkt6_unittest.cc
 run_unittests_SOURCES += perf_pkt4_unittest.cc
 run_unittests_SOURCES += localized_option_unittest.cc
 run_unittests_SOURCES += packet_storage_unittest.cc
+run_unittests_SOURCES += rate_control_unittest.cc
 run_unittests_SOURCES += stats_mgr_unittest.cc
 run_unittests_SOURCES += test_control_unittest.cc
 run_unittests_SOURCES += command_options_helper.h
@@ -33,6 +34,7 @@ run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/command_options.cc
 run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/pkt_transform.cc
 run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/perf_pkt6.cc
 run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/perf_pkt4.cc
+run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/rate_control.cc
 run_unittests_SOURCES += $(top_builddir)/tests/tools/perfdhcp/test_control.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)

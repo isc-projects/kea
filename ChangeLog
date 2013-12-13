@@ -4,6 +4,25 @@
 	contributing a patch.
 	(Trac #2246, git abcd)
 
+717.	[bug]		marcin
+	Fixed the bug which incorrectly treated DHCPv4 option codes 224-254 as
+	standard options, barring them from being used as custom options.
+	(Trac #2772, git c6158690c389d75686545459618ae0bf16f2cdb8)
+
+716.	[func]		marcin
+	perfdhcp: added support for sending DHCPv6 Relese messages at the specified
+	rate and measure performance. The orphan messages counters are not
+	displayed for individual exchanges anymore. The following ticket: #3261
+	has been submitted to implement global orphan counting for all exchange
+	types.
+	(Trac #3181, git 684524bc130080e4fa31b65edfd14d58eec37e50)
+
+715.	[bug]		marcin
+	libdhcp++: Used the CMSG_SPACE instead of CMSG_LEN macro to calculate
+	msg_controllen field of the DHCPv6 message. Use of CMSG_LEN causes
+	sendmsg failures on OpenBSD due to the bug kernel/6080 on OpenBSD.
+	(Trac #1824, git 39c9499d001a98c8d2f5792563c28a5eb2cc5fcb)
+
 714.	[doc]		tomek
 	BIND10 Contributor's Guide added.
 	(Trac #3109, git 016bfae00460b4f88adbfd07ed26759eb294ef10)
@@ -13,7 +32,7 @@
 	b10-dhcp-ddns.  The class now generates all DNS update request variations
 	needed to fulfill it's state machine in compliance with RFC 4703, sections
 	5.3 and 5.4.
-	(Trac# 3207, git dceca9554cb9410dd8d12371b68198b797cb6cfb)
+	(Trac# 3241, git dceca9554cb9410dd8d12371b68198b797cb6cfb)
 
 712.	[func]		marcin,dclink
 	b10-dhcp4: If server fails to open a socket on one interface it
@@ -30,7 +49,7 @@
 	reverse DNS entries for a given FQDN.  It does not yet construct
 	the actual DNS update requests, this will be added under Trac#
 	3241.
-	(Trac# 3207, git 8f99da735a9f39d514c40d0a295f751dc8edfbcd)
+	(Trac# 3087, git 8f99da735a9f39d514c40d0a295f751dc8edfbcd)
 
 710.	[build]		jinmei
 	Fixed various build time issues for MacOS X 10.9.  Those include
