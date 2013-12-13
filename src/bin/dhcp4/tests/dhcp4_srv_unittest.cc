@@ -870,7 +870,6 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
     checkClientId(ack, clientid);
-    EXPECT_TRUE(ack->getOption(DHO_DHCP_CLIENT_IDENTIFIER));
 
     CfgMgr::instance().echoClientId(false);
     ack = srv.processDiscover(dis);
@@ -878,7 +877,6 @@ TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
     // Check if we get response at all
     checkResponse(ack, DHCPOFFER, 1234);
     checkClientId(ack, clientid);
-    EXPECT_FALSE(ack->getOption(DHO_DHCP_CLIENT_IDENTIFIER));
 }
 
 
