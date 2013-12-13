@@ -399,6 +399,8 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
 }
 
 void commitGlobalOptions() {
+    // Although the function is modest for now, it is certain that the number
+    // of global switches will increase over time, hence the name.
 
     // Set whether v4 server is supposed to echo back client-id (yes = RFC6842
     // compatible, no = backward compatibility)
