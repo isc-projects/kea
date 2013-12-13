@@ -79,11 +79,15 @@ public:
     /// @param iface Interface descriptor.
     /// @param addr Address on the interface to be used to send packets.
     /// @param port Port number.
+    /// @param join_multicast A boolean parameter which indicates whether
+    /// socket should join All_DHCP_Relay_Agents_and_servers multicast
+    /// group.
     ///
     /// @return A structure describing a primary and fallback socket.
     virtual SocketInfo openSocket(const Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
-                                  const uint16_t port) = 0;
+                                  const uint16_t port,
+                                  const bool join_multicast) = 0;
 
     /// @brief Receive DHCPv6 message on the interface.
     ///

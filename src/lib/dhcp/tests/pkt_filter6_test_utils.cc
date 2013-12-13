@@ -182,7 +182,7 @@ PktFilter6Stub::PktFilter6Stub()
 
 SocketInfo
 PktFilter6Stub::openSocket(const Iface&, const isc::asiolink::IOAddress& addr,
-                           const uint16_t port) {
+                           const uint16_t port, const bool) {
     ++open_socket_count_;
     return (SocketInfo(addr, port, 0));
 }
