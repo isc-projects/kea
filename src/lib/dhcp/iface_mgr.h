@@ -552,8 +552,8 @@ public:
     /// @param ifname name of the interface
     /// @param addr address to be bound.
     /// @param port UDP port.
-    /// @param receive_bcast configure IPv4 socket to receive broadcast messages.
-    /// This parameter is ignored for IPv6 sockets.
+    /// @param receive_bcast configure IPv4 socket to receive broadcast
+    /// messages or IPv6 socket to join multicast group.
     /// @param send_bcast configure IPv4 socket to send broadcast messages.
     /// This parameter is ignored for IPv6 sockets.
     ///
@@ -575,11 +575,13 @@ public:
     /// Instead, the method searches through the addresses on the specified
     /// interface and selects one that matches the address family.
     ///
+    /// @note This method does not join the socket to the multicast group.
+    ///
     /// @param ifname name of the interface
     /// @param port UDP port
     /// @param family address family (AF_INET or AF_INET6)
-    /// @return socket descriptor, if socket creation, binding and multicast
-    /// group join were all successful.
+    /// @return socket descriptor, if socket creation and binding was
+    /// successful.
     /// @throw isc::Unexpected if failed to create and bind socket.
     /// @throw isc::BadValue if there is no address on specified interface
     /// that belongs to given family.
@@ -592,10 +594,12 @@ public:
     /// This methods differs from \ref openSocket in that it does not require
     /// the specification of the interface to which the socket will be bound.
     ///
+    /// @note This method does not join the socket to the multicast group.
+    ///
     /// @param addr address to be bound
     /// @param port UDP port
-    /// @return socket descriptor, if socket creation, binding and multicast
-    /// group join were all successful.
+    /// @return socket descriptor, if socket creation and binding was
+    /// successful.
     /// @throw isc::Unexpected if failed to create and bind socket
     /// @throw isc::BadValue if specified address is not available on
     /// any interface
@@ -609,10 +613,12 @@ public:
     /// identified, \ref openSocket is called to open a socket and bind it to
     /// the interface, address and port.
     ///
+    /// @note This method does not join the socket to a multicast group.
+    ///
     /// @param remote_addr remote address to connect to
     /// @param port UDP port
-    /// @return socket descriptor, if socket creation, binding and multicast
-    /// group join were all successful.
+    /// @return socket descriptor, if socket creation and binding was
+    /// successful.
     /// @throw isc::Unexpected if failed to create and bind socket
     int openSocketFromRemoteAddress(const isc::asiolink::IOAddress& remote_addr,
                                     const uint16_t port);
@@ -853,9 +859,13 @@ protected:
     /// @param iface reference to interface structure.
     /// @param addr an address the created socket should be bound to
     /// @param port a port that created socket should be bound to
+    /// @param join_multicast A boolean parameter which indicates whether
+    /// socket should join All_DHCP_Relay_Agents_and_servers multicast
+    /// group.
     ///
     /// @return socket descriptor
-    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, uint16_t port);
+    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr,
+                    uint16_t port, const bool join_multicast);
 
     /// @brief Detects network interfaces.
     ///

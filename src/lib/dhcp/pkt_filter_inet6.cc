@@ -32,7 +32,8 @@ PktFilterInet6::PktFilterInet6()
 SocketInfo
 PktFilterInet6::openSocket(const Iface& iface,
                            const isc::asiolink::IOAddress& addr,
-                           const uint16_t port) {
+                           const uint16_t port,
+                           const bool join_multicast) {
     struct sockaddr_in6 addr6;
     memset(&addr6, 0, sizeof(addr6));
     addr6.sin6_family = AF_INET6;
@@ -90,7 +91,7 @@ PktFilterInet6::openSocket(const Iface& iface,
         // are link and site-scoped, so there is no sense to join those groups
         // with global addresses.
 
-        if (!joinMulticast(sock, iface.getName(),
+        if (join_multicast && !joinMulticast(sock, iface.getName(),
                            std::string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS))) {
             close(sock);
             isc_throw(SocketConfigError, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS

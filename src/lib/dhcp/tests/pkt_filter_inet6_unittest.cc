@@ -49,7 +49,7 @@ TEST_F(PktFilterInet6Test, openSocket) {
 
     // Try to open socket.
     PktFilterInet6 pkt_filter;
-    sock_info_ = pkt_filter.openSocket(iface, addr, PORT);
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, true);
     // For the packet filter in use, the fallback socket shouldn't be opened.
     // Fallback is typically opened for raw IPv4 sockets.
     EXPECT_LT(sock_info_.fallbackfd_, 0);
@@ -70,7 +70,7 @@ TEST_F(PktFilterInet6Test, send) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    sock_info_ = pkt_filter.openSocket(iface, addr, PORT);
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT, true);
     ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Send the packet over the socket.
@@ -118,7 +118,7 @@ TEST_F(PktFilterInet6Test, receive) {
     // Open socket. We don't check that the socket has appropriate
     // options and family set because we have checked that in the
     // openSocket test already.
-    sock_info_ = pkt_filter.openSocket(iface, addr, PORT + 1);
+    sock_info_ = pkt_filter.openSocket(iface, addr, PORT + 1, true);
     ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Send a DHCPv6 message to the local loopback address and server's port.

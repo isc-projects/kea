@@ -596,7 +596,7 @@ int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
         return openSocket4(*iface, addr, port, receive_bcast, send_bcast);
 
     } else if (addr.isV6()) {
-        return openSocket6(*iface, addr, port);
+        return openSocket6(*iface, addr, port, receive_bcast);
 
     } else {
         isc_throw(BadValue, "Failed to detect family of address: "
@@ -625,7 +625,7 @@ int IfaceMgr::openSocketFromIface(const std::string& ifname,
             if (addr_it->getFamily() == family) {
                 // We have interface and address so let's open socket.
                 // This may cause isc::Unexpected exception.
-                return (openSocket(iface->getName(), *addr_it, port));
+                return (openSocket(iface->getName(), *addr_it, port, false));
             }
             ++addr_it;
         }
@@ -669,7 +669,7 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
             if (*addr_it == addr) {
                 // Open socket using local interface, address and port.
                 // This may cause isc::Unexpected exception.
-                return (openSocket(iface->getName(), *addr_it, port));
+                return (openSocket(iface->getName(), *addr_it, port, false));
             }
         }
     }
@@ -749,9 +749,11 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
 
 
 int
-IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
+IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
+                      const bool join_multicast) {
     // Assuming that packet filter is not NULL, because its modifier checks it.
-    SocketInfo info = packet_filter6_->openSocket(iface, addr, port);
+    SocketInfo info = packet_filter6_->openSocket(iface, addr, port,
+                                                  join_multicast);
     iface.addSocket(info);
 
     return (info.sockfd_);
