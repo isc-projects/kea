@@ -58,6 +58,24 @@ TEST(Subnet4Test, in_range) {
     EXPECT_FALSE(subnet.inRange(IOAddress("255.255.255.255")));
 }
 
+// Checks whether siaddr field can be set and retrieved correctly.
+TEST(Subnet4Test, siaddr) {
+    Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
+
+    // Check if the default is 0.0.0.0
+    EXPECT_EQ("0.0.0.0", subnet.getSiaddr().toText());
+
+    // Check that we can set it up
+    EXPECT_NO_THROW(subnet.setSiaddr(IOAddress("1.2.3.4")));
+
+    // Check that we can get it back
+    EXPECT_EQ("1.2.3.4", subnet.getSiaddr().toText());
+
+    // Check that only v4 addresses are supported
+    EXPECT_THROW(subnet.setSiaddr(IOAddress("2001:db8::1")),
+        BadValue);
+}
+
 TEST(Subnet4Test, Pool4InSubnet4) {
 
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3));
@@ -596,6 +614,76 @@ TEST(Subnet6Test, getOptionDescriptor) {
         EXPECT_EQ(code, desc.option->getType());
     }
 }
+
+
+TEST(Subnet6Test, addVendorOptions) {
+
+    uint32_t vendor_id1 = 12345678;
+    uint32_t vendor_id2 = 87654321;
+    uint32_t vendor_id_bogus = 1111111;
+
+    // Create as subnet to add options to it.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    // Differentiate options by their codes (100-109)
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(subnet->addVendorOption(option, false, vendor_id1));
+    }
+
+    // Add 7 options to another option space. The option codes partially overlap
+    // with option codes that we have added to dhcp6 option space.
+    for (uint16_t code = 105; code < 112; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(subnet->addVendorOption(option, false, vendor_id2));
+    }
+
+    // Get options from the Subnet and check if all 10 are there.
+    Subnet::OptionContainerPtr options = subnet->getVendorOptionDescriptors(vendor_id1);
+    ASSERT_TRUE(options);
+    ASSERT_EQ(10, options->size());
+
+    // Validate codes of options added to dhcp6 option space.
+    uint16_t expected_code = 100;
+    for (Subnet::OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option);
+        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ++expected_code;
+    }
+
+    options = subnet->getVendorOptionDescriptors(vendor_id2);
+    ASSERT_TRUE(options);
+    ASSERT_EQ(7, options->size());
+
+    // Validate codes of options added to isc option space.
+    expected_code = 105;
+    for (Subnet::OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option);
+        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ++expected_code;
+    }
+
+    // Try to get options from a non-existing option space.
+    options = subnet->getVendorOptionDescriptors(vendor_id_bogus);
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+
+    // Delete options from all spaces.
+    subnet->delVendorOptions();
+
+    // Make sure that all options have been removed.
+    options = subnet->getVendorOptionDescriptors(vendor_id1);
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+
+    options = subnet->getVendorOptionDescriptors(vendor_id2);
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+}
+
+
 
 // This test verifies that inRange() and inPool() methods work properly.
 TEST(Subnet6Test, inRangeinPool) {

@@ -305,6 +305,17 @@ public:
     /// interfaces on which server is configured to listen.
     bool isActiveIface(const std::string& iface) const;
 
+    /// @brief returns unicast a given interface should listen on (or NULL)
+    ///
+    /// This method will return an address for a specified interface, if the
+    /// server is supposed to listen on unicast address. This address is
+    /// intended to be used immediately. This pointer is valid only until
+    /// the next configuration change.
+    ///
+    /// @return IOAddress pointer (or NULL if none)
+    const isc::asiolink::IOAddress*
+    getUnicast(const std::string& iface) const;
+
 protected:
 
     /// @brief Protected constructor.
@@ -355,7 +366,7 @@ private:
     /// A collection of option definitions that can be accessed
     /// using option space name they belong to.
     OptionSpaceContainer<OptionDefContainer,
-                         OptionDefinitionPtr> option_def_spaces_;
+        OptionDefinitionPtr, std::string> option_def_spaces_;
 
     /// @brief Container for defined DHCPv6 option spaces.
     OptionSpaceCollection spaces6_;
@@ -371,6 +382,12 @@ private:
     typedef std::list<std::string> ActiveIfacesCollection;
     std::list<std::string> active_ifaces_;
     //@}
+
+    /// @name a collection of unicast addresses and the interfaces names the
+    //        server is supposed to listen on
+    //@{
+    typedef std::map<std::string, isc::asiolink::IOAddress> UnicastIfacesCollection;
+    UnicastIfacesCollection unicast_addrs_;
 
     /// A flag which indicates that server should listen on all available
     /// interfaces.

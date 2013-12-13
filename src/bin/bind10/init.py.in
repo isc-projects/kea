@@ -337,6 +337,7 @@ class Init:
                 self.__propagate_component_config(new_config['components'])
             return isc.config.ccsession.create_answer(0)
         except Exception as e:
+            logger.error(BIND10_RECONFIGURE_ERROR, e)
             return isc.config.ccsession.create_answer(1, str(e))
 
     def get_processes(self):
@@ -489,7 +490,7 @@ class Init:
         self.log_starting("b10-msgq")
         msgq_proc = self._make_process_info("b10-msgq", ["b10-msgq"],
                                             self.c_channel_env,
-                                            True, not self.verbose)
+                                            not self.verbose, not self.verbose)
         msgq_proc.spawn()
         self.log_started(msgq_proc.pid)
 
@@ -597,6 +598,13 @@ class Init:
             process, the log_starting/log_started methods are not used.
         """
         logger.info(BIND10_STARTING_CC)
+
+        # Unsubscribe from the other CC session first, because we only
+        # monitor one and msgq expects all data sent to us to be read,
+        # or it will close its side of the socket.
+        if self.cc_session is not None:
+            self.cc_session.group_unsubscribe("Init")
+
         self.ccs = isc.config.ModuleCCSession(SPECFILE_LOCATION,
                                       self.config_handler,
                                       self.command_handler,
@@ -733,8 +741,12 @@ class Init:
         try:
             self.cc_session = isc.cc.Session(self.msgq_socket_file)
             logger.fatal(BIND10_MSGQ_ALREADY_RUNNING)
-            return "b10-msgq already running, or socket file not cleaned , " +\
-                "cannot start"
+            if self.msgq_socket_file is not None:
+              socket_name = "socket file '" + self.msg_socket_file + "'"
+            else:
+              socket_name = "default socket file"
+            return "b10-msgq already running, or " + socket_name +\
+                " not cleaned - cannot start"
         except isc.cc.session.SessionError:
             # this is the case we want, where the msgq is not running
             pass
@@ -764,9 +776,14 @@ class Init:
         it might want to choose if it is for this one).
         """
         logger.info(BIND10_STOP_PROCESS, process)
-        self.cc_session.group_sendmsg(isc.config.ccsession.
-                                      create_command('shutdown', {'pid': pid}),
-                                      recipient, recipient)
+        try:
+            self.cc_session.group_sendmsg(isc.config.ccsession.
+                                          create_command('shutdown',
+                                                         {'pid': pid}),
+                                          recipient, recipient)
+        except:
+            logger.error(BIND10_COMPONENT_SHUTDOWN_ERROR, process)
+            raise
 
     def component_shutdown(self, exitcode=0):
         """

@@ -22,6 +22,7 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 
@@ -43,6 +44,7 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"), IOAddress("192.0.2.110")));
     subnet_->addPool(pool_);
 
+    CfgMgr::instance().deleteActiveIfaces();
     CfgMgr::instance().deleteSubnets4();
     CfgMgr::instance().addSubnet4(subnet_);
 
@@ -123,37 +125,101 @@ void Dhcpv4SrvTest::messageCheck(const Pkt4Ptr& q, const Pkt4Ptr& a) {
     EXPECT_TRUE(q->getLocalHWAddr() == a->getLocalHWAddr());
     EXPECT_TRUE(q->getRemoteHWAddr() == a->getRemoteHWAddr());
 
-    // Check that bare minimum of required options are there.
-    // We don't check options requested by a client. Those
-    // are checked elsewhere.
-    EXPECT_TRUE(a->getOption(DHO_SUBNET_MASK));
-    EXPECT_TRUE(a->getOption(DHO_ROUTERS));
+    // Check that the server identifier is present in the response.
+    // Presence (or absence) of other options is checked elsewhere.
     EXPECT_TRUE(a->getOption(DHO_DHCP_SERVER_IDENTIFIER));
-    EXPECT_TRUE(a->getOption(DHO_DHCP_LEASE_TIME));
-    EXPECT_TRUE(a->getOption(DHO_SUBNET_MASK));
-    EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME));
-    EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME_SERVERS));
 
     // Check that something is offered
     EXPECT_TRUE(a->getYiaddr().toText() != "0.0.0.0");
 }
 
-void Dhcpv4SrvTest::optionsCheck(const Pkt4Ptr& pkt) {
-    // Check that the requested and configured options are returned
-    // in the ACK message.
-    EXPECT_TRUE(pkt->getOption(DHO_DOMAIN_NAME))
-        << "domain-name not present in the response";
-    EXPECT_TRUE(pkt->getOption(DHO_DOMAIN_NAME_SERVERS))
-        << "dns-servers not present in the response";
-    EXPECT_TRUE(pkt->getOption(DHO_LOG_SERVERS))
-        << "log-servers not present in the response";
-    EXPECT_TRUE(pkt->getOption(DHO_COOKIE_SERVERS))
-        << "cookie-servers not present in the response";
-    // Check that the requested but not configured options are not
-    // returned in the ACK message.
-    EXPECT_FALSE(pkt->getOption(DHO_LPR_SERVERS))
-        << "domain-name present in the response but it is"
-        << " expected not to be present";
+::testing::AssertionResult
+Dhcpv4SrvTest::basicOptionsPresent(const Pkt4Ptr& pkt) {
+    std::ostringstream errmsg;
+    errmsg << "option missing in the response";
+    if (!pkt->getOption(DHO_DOMAIN_NAME)) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "domain-name " << errmsg));
+
+    } else if (!pkt->getOption(DHO_DOMAIN_NAME_SERVERS)) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "dns-servers " << errmsg));
+
+    } else if (!pkt->getOption(DHO_SUBNET_MASK)) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "subnet-mask " << errmsg));
+
+    } else if (!pkt->getOption(DHO_ROUTERS)) {
+        return (::testing::AssertionFailure(::testing::Message() << "routers "
+                                            << errmsg));
+
+    } else if (!pkt->getOption(DHO_DHCP_LEASE_TIME)) {
+        return (::testing::AssertionFailure(::testing::Message() <<
+                                            "dhcp-lease-time " << errmsg));
+
+    }
+    return (::testing::AssertionSuccess());
+
+}
+
+::testing::AssertionResult
+Dhcpv4SrvTest::noBasicOptions(const Pkt4Ptr& pkt) {
+    std::ostringstream errmsg;
+    errmsg << "option present in the response";
+    if (pkt->getOption(DHO_DOMAIN_NAME)) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "domain-name " << errmsg));
+
+    } else if (pkt->getOption(DHO_DOMAIN_NAME_SERVERS)) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "dns-servers " << errmsg));
+
+    } else if (pkt->getOption(DHO_SUBNET_MASK)) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "subnet-mask " << errmsg));
+
+    } else if (pkt->getOption(DHO_ROUTERS)) {
+        return (::testing::AssertionFailure(::testing::Message() << "routers "
+                                            << errmsg));
+
+    } else if (pkt->getOption(DHO_DHCP_LEASE_TIME)) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "dhcp-lease-time " << errmsg));
+
+    }
+    return (::testing::AssertionSuccess());
+}
+
+::testing::AssertionResult
+Dhcpv4SrvTest::requestedOptionsPresent(const Pkt4Ptr& pkt) {
+    std::ostringstream errmsg;
+    errmsg << "option missing in the response";
+    if (!pkt->getOption(DHO_LOG_SERVERS)) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "log-servers " << errmsg));
+
+    } else if (!pkt->getOption(DHO_COOKIE_SERVERS)) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "cookie-servers " << errmsg));
+
+    }
+    return (::testing::AssertionSuccess());
+}
+
+::testing::AssertionResult
+Dhcpv4SrvTest::noRequestedOptions(const Pkt4Ptr& pkt) {
+    std::ostringstream errmsg;
+    errmsg << "option present in the response";
+    if (pkt->getOption(DHO_LOG_SERVERS)) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "log-servers " << errmsg));
+
+    } else if (pkt->getOption(DHO_COOKIE_SERVERS)) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "cookie-servers " << errmsg));
+
+    }
+    return (::testing::AssertionSuccess());
 }
 
 OptionPtr Dhcpv4SrvTest::generateClientId(size_t size /*= 4*/) {
@@ -274,6 +340,48 @@ void Dhcpv4SrvTest::checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_
     EXPECT_TRUE(expected_clientid->getData() == opt->getData());
 }
 
+::testing::AssertionResult
+Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
+                                      Pkt4Ptr& dst_pkt) {
+    // Create on-wire format of the packet. If pack() has been called
+    // on this instance of the packet already, the next call to pack()
+    // should remove all contents of the output buffer.
+    try {
+        src_pkt->pack();
+    } catch (const Exception& ex) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "Failed to parse source packet: "
+                                            << ex.what()));
+    }
+    // Get the output buffer from the source packet.
+    const util::OutputBuffer& buf = src_pkt->getBuffer();
+    // Create a copy of the packet using the output buffer from the source
+    // packet.
+    try {
+        dst_pkt.reset(new Pkt4(static_cast<const uint8_t*>(buf.getData()),
+                               buf.getLength()));
+    } catch (const Exception& ex) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "Failed to create a"
+                                            " destination packet from"
+                                            " the buffer: "
+                                            << ex.what()));
+    }
+
+    try {
+        // Parse the new packet and return to the caller.
+        dst_pkt->unpack();
+    } catch (const Exception& ex) {
+        return (::testing::AssertionFailure(::testing::Message()
+                                            << "Failed to parse a"
+                                            << " destination packet: "
+                                            << ex.what()));
+    }
+
+    return (::testing::AssertionSuccess());
+}
+
+
 void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     // Create an instance of the tested class.
     boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
@@ -318,17 +426,22 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     // are returned when requested.
     configureRequestedOptions();
 
+    // Create a copy of the original packet by parsing its wire format.
+    // This simulates the real life scenario when we process the packet
+    // which was parsed from its wire format.
+    Pkt4Ptr received;
+    ASSERT_TRUE(createPacketFromBuffer(req, received));
     if (msg_type == DHCPDISCOVER) {
         ASSERT_NO_THROW(
-            rsp = srv->processDiscover(req);
-            );
+            rsp = srv->processDiscover(received);
+        );
 
         // Should return OFFER
         ASSERT_TRUE(rsp);
         EXPECT_EQ(DHCPOFFER, rsp->getType());
 
     } else {
-        ASSERT_NO_THROW(rsp = srv->processRequest(req););
+        ASSERT_NO_THROW(rsp = srv->processRequest(received));
 
         // Should return ACK
         ASSERT_TRUE(rsp);
@@ -336,27 +449,30 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
     }
 
-    messageCheck(req, rsp);
+    messageCheck(received, rsp);
 
+    // Basic options should be present when we got the lease.
+    EXPECT_TRUE(basicOptionsPresent(rsp));
     // We did not request any options so these should not be present
     // in the RSP.
-    EXPECT_FALSE(rsp->getOption(DHO_LOG_SERVERS));
-    EXPECT_FALSE(rsp->getOption(DHO_COOKIE_SERVERS));
-    EXPECT_FALSE(rsp->getOption(DHO_LPR_SERVERS));
+    EXPECT_TRUE(noRequestedOptions(rsp));
 
     // Repeat the test but request some options.
     // Add 'Parameter Request List' option.
     addPrlOption(req);
 
+    ASSERT_TRUE(createPacketFromBuffer(req, received));
+    ASSERT_TRUE(received->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+
     if (msg_type == DHCPDISCOVER) {
-        ASSERT_NO_THROW(rsp = srv->processDiscover(req););
+        ASSERT_NO_THROW(rsp = srv->processDiscover(received));
 
         // Should return non-NULL packet.
         ASSERT_TRUE(rsp);
         EXPECT_EQ(DHCPOFFER, rsp->getType());
 
     } else {
-        ASSERT_NO_THROW(rsp = srv->processRequest(req););
+        ASSERT_NO_THROW(rsp = srv->processRequest(received));
 
         // Should return non-NULL packet.
         ASSERT_TRUE(rsp);
@@ -364,7 +480,41 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     }
 
     // Check that the requested options are returned.
-    optionsCheck(rsp);
+    EXPECT_TRUE(basicOptionsPresent(rsp));
+    EXPECT_TRUE(requestedOptionsPresent(rsp));
+
+    // The following part of the test will test that the NAK is sent when
+    // there is no address pool configured. In the same time, we expect
+    // that the requested options are not included in NAK message, but that
+    // they are only included when yiaddr is set to non-zero value.
+    ASSERT_NO_THROW(subnet_->delPools(Lease::TYPE_V4));
+
+    // There has been a lease allocated for the particular client. So,
+    // even though we deleted the subnet, the client would get the
+    // existing lease (not a NAK). Therefore, we have to change the chaddr
+    // in the packet so as the existing lease is not returned.
+    req->setHWAddr(1, 6, std::vector<uint8_t>(2, 6));
+    ASSERT_TRUE(createPacketFromBuffer(req, received));
+    ASSERT_TRUE(received->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+
+    if (msg_type == DHCPDISCOVER) {
+        ASSERT_NO_THROW(rsp = srv->processDiscover(received));
+        // Should return non-NULL packet.
+        ASSERT_TRUE(rsp);
+    } else {
+        ASSERT_NO_THROW(rsp = srv->processRequest(received));
+        // Should return non-NULL packet.
+        ASSERT_TRUE(rsp);
+    }
+    // We should get the NAK packet with yiaddr set to 0.
+    EXPECT_EQ(DHCPNAK, rsp->getType());
+    ASSERT_EQ("0.0.0.0", rsp->getYiaddr().toText());
+
+    // Make sure that none of the requested options is returned in NAK.
+    // Also options such as Routers or Subnet Mask should not be there,
+    // because lease hasn't been acquired.
+    EXPECT_TRUE(noRequestedOptions(rsp));
+    EXPECT_TRUE(noBasicOptions(rsp));
 }
 
 /// @brief This function cleans up after the test.

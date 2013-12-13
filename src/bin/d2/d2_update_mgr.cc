@@ -24,7 +24,7 @@ namespace d2 {
 const size_t D2UpdateMgr::MAX_TRANSACTIONS_DEFAULT;
 
 D2UpdateMgr::D2UpdateMgr(D2QueueMgrPtr& queue_mgr, D2CfgMgrPtr& cfg_mgr,
-                         isc::asiolink::IOService& io_service,
+                         IOServicePtr& io_service,
                          const size_t max_transactions)
     :queue_mgr_(queue_mgr), cfg_mgr_(cfg_mgr), io_service_(io_service) {
     if (!queue_mgr_) {
@@ -34,6 +34,10 @@ D2UpdateMgr::D2UpdateMgr(D2QueueMgrPtr& queue_mgr, D2CfgMgrPtr& cfg_mgr,
     if (!cfg_mgr_) {
         isc_throw(D2UpdateMgrError,
                   "D2UpdateMgr configuration manager cannot be null");
+    }
+
+    if (!io_service_) {
+        isc_throw(D2UpdateMgrError, "IOServicePtr cannot be null");
     }
 
     // Use setter to do validation.

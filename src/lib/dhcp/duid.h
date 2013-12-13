@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -58,12 +58,13 @@ class DUID {
 
     /// @brief Returns a const reference to the actual DUID value
     ///
-    /// Note: For safety reasons, this method returns a copy of data as
-    /// otherwise the reference would be only valid as long as the object that
-    /// returned it. In any case, this method should be used only sporadically.
-    /// If there are frequent uses, we must implement some other method
-    /// (e.g. storeSelf()) that will avoid data copying.
-    std::vector<uint8_t> getDuid() const;
+    /// @warning Since this function returns a reference to the vector (not a
+    /// copy) the returned object must be used with caution because it remains
+    /// valid only for the time period when the object which returned it is
+    /// valid.
+    ///
+    /// @return A reference to a vector holding a DUID.
+    const std::vector<uint8_t>& getDuid() const;
 
     /// @brief Returns the DUID type
     DUIDType getType() const;
@@ -116,8 +117,15 @@ public:
     /// @brief Constructor based on array and array size
     ClientId(const uint8_t* clientid, size_t len);
 
-    /// @brief Returns reference to the client-id data
-    std::vector<uint8_t> getClientId() const;
+    /// @brief Returns reference to the client-id data.
+    ///
+    /// @warning Since this function returns a reference to the vector (not a
+    /// copy) the returned object must be used with caution because it remains
+    /// valid only for the time period when the object which returned it is
+    /// valid.
+    ///
+    /// @return A reference to a vector holding a client identifier.
+    const std::vector<uint8_t>& getClientId() const;
 
     /// @brief Returns textual representation of a DUID (e.g. 00:01:02:03:ff)
     std::string toText() const;
