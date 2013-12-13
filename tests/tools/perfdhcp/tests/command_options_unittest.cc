@@ -168,6 +168,8 @@ protected:
         EXPECT_EQ(CommandOptions::DORA_SARR, opt.getExchangeMode());
         EXPECT_TRUE(opt.getLeaseType().is(CommandOptions::LeaseType::ADDRESS));
         EXPECT_EQ(0, opt.getRate());
+        EXPECT_EQ(0, opt.getRenewRate());
+        EXPECT_EQ(0, opt.getReleaseRate());
         EXPECT_EQ(0, opt.getReportDelay());
         EXPECT_EQ(0, opt.getClientsNum());
 
@@ -341,12 +343,18 @@ TEST_F(CommandOptionsTest, RenewRate) {
     EXPECT_NO_THROW(process("perfdhcp -6 -r 10 -f 10 -l ethx all"));
     EXPECT_EQ(10, opt.getRenewRate());
     // Check that the release rate can be set to different value than
-    // rate specified as -r<rate>. Also, swap -f na d-r to make sure
+    // rate specified as -r<rate>. Also, swap -f and -r to make sure
     // that order doesn't matter.
     EXPECT_NO_THROW(process("perfdhcp -6 -f 5 -r 10 -l ethx all"));
     EXPECT_EQ(5, opt.getRenewRate());
+    // The renew rate should not be greater than the rate.
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -f 11 -l ethx all"),
+                 isc::InvalidParameter);
     // The renew-rate of 0 is invalid.
-    EXPECT_THROW(process("perfdhcp -6 -r 10 -f 0 - l ethx all"),
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -f 0 -l ethx all"),
+                 isc::InvalidParameter);
+    // The negative renew-rate is invalid.
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -f -5 -l ethx all"),
                  isc::InvalidParameter);
     // If -r<rate> is not specified the -f<renew-rate> should not
     // be accepted.
@@ -362,6 +370,62 @@ TEST_F(CommandOptionsTest, RenewRate) {
 
     // -f and -i are mutually exclusive
     EXPECT_THROW(process("perfdhcp -6 -r 10 -f 10 -l ethx -i all"),
+                 isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, ReleaseRate) {
+    CommandOptions& opt = CommandOptions::instance();
+    // If -F is specified together with -r the command line should
+    // be accepted and the release rate should be set.
+    EXPECT_NO_THROW(process("perfdhcp -6 -r 10 -F 10 -l ethx all"));
+    EXPECT_EQ(10, opt.getReleaseRate());
+    // Check that the release rate can be set to different value than
+    // rate specified as -r<rate>. Also, swap -F and -r to make sure
+    // that order doesn't matter.
+    EXPECT_NO_THROW(process("perfdhcp -6 -F 5 -r 10 -l ethx all"));
+    EXPECT_EQ(5, opt.getReleaseRate());
+    // The release rate should not be greater than the rate.
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -F 11 -l ethx all"),
+                 isc::InvalidParameter);
+    // The release-rate of 0 is invalid.
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -F 0 -l ethx all"),
+                 isc::InvalidParameter);
+    // The negative rlease-rate is invalid.
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -F -5 -l ethx all"),
+                 isc::InvalidParameter);
+    // If -r<rate> is not specified the -F<release-rate> should not
+    // be accepted.
+    EXPECT_THROW(process("perfdhcp -6 -F 10 -l ethx all"),
+                 isc::InvalidParameter);
+    // Currently the -F<release-rate> can be specified for IPv6 mode
+    // only.
+    EXPECT_THROW(process("perfdhcp -4 -r 10 -F 10 -l ethx all"),
+                 isc::InvalidParameter);
+    // Release rate should be specified.
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -F -l ethx all"),
+                 isc::InvalidParameter);
+
+    // -F and -i are mutually exclusive
+    EXPECT_THROW(process("perfdhcp -6 -r 10 -F 10 -l ethx -i all"),
+                 isc::InvalidParameter);
+}
+
+TEST_F(CommandOptionsTest, ReleaseRenew) {
+    CommandOptions& opt = CommandOptions::instance();
+    // It should be possible to specify the -F, -f and -r options.
+    EXPECT_NO_THROW(process("perfdhcp -6 -r 10 -F 3 -f 5 -l ethx all"));
+    EXPECT_EQ(10, opt.getRate());
+    EXPECT_EQ(3, opt.getReleaseRate());
+    EXPECT_EQ(5, opt.getRenewRate());
+    // It should be possible to specify the -F and -f with the values which
+    // sum is equal to the rate specified as -r<rate>.
+    EXPECT_NO_THROW(process("perfdhcp -6 -r 8 -F 3 -f 5 -l ethx all"));
+    EXPECT_EQ(8, opt.getRate());
+    EXPECT_EQ(3, opt.getReleaseRate());
+    EXPECT_EQ(5, opt.getRenewRate());
+    // Check that the sum of the release and renew rate is not greater
+    // than the rate specified as -r<rate>.
+    EXPECT_THROW(process("perfdhcp -6 -F 6 -f 5 -r 10 -l ethx all"),
                  isc::InvalidParameter);
 }
 
