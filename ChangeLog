@@ -1,4 +1,11 @@
-7XX.	[func]		dclink, tomek
+719.	[func]		tomek
+	b10-dhcp4: Support for sending back client-id (RFC6842) has been
+	added now. Also a configuration parameter (echo-client-id) has
+	been added, so it is possible to enable backward compatibility
+	("echo-client-id false").
+	(Trac #3210, git 88a4858db206dfcd53a227562198f308f7779a72)
+
+718.	[func]		dclink, tomek
 	libdhcp++: Interface detection implemented for FreeBSD, NetBSD,
 	OpenBSD, Mac OS X and Solaris 11. Thanks to David Carlier for
 	contributing a patch.
