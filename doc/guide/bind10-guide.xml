@@ -4426,8 +4426,8 @@ Dhcp4/subnet4	[]	list	(default)
       that Kea offers. However, in some cases older devices that do
       not support RFC6842 may refuse to accept responses that include
       client-id option. To enable backward compatibility, an optional
-      flag has been introduced. To configure it, use the following
-      commands:</para>
+      configuration parameter has been introduced. To configure it,
+      use the following commands:</para>
 
 <screen>
 &gt; <userinput>config add Dhcp4/echo-client-id</userinput>
