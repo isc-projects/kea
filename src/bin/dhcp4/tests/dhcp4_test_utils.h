@@ -81,8 +81,7 @@ public:
     Dhcpv4SrvTest();
 
     /// @brief destructor
-    virtual ~Dhcpv4SrvTest() {
-    }
+    virtual ~Dhcpv4SrvTest();
 
     /// @brief Add 'Parameter Request List' option to the packet.
     ///
@@ -189,6 +188,11 @@ public:
     void checkServerId(const Pkt4Ptr& rsp, const OptionPtr& expected_srvid);
 
     /// @brief Checks if server response (OFFER, ACK, NAK) includes proper client-id
+    ///
+    /// This method follows values reported by CfgMgr in echoClientId() method.
+    /// Depending on its configuration, the client-id is either mandatory or
+    /// forbidden to appear in the response.
+    ///
     /// @param rsp response packet to be validated
     /// @param expected_clientid expected value of client-id
     void checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid);
