@@ -263,20 +263,17 @@ NameChangeTransaction::addLeaseAddressRdata(dns::RRsetPtr& rrset) {
 
     try {
         // Manufacture an RData from the lease address then add it to the RR.
+        dns::rdata::ConstRdataPtr rdata;
         if (ncr_->isV4()) {
-            dns::rdata::ConstRdataPtr rdata(new dns::rdata::in::
-                                            A(ncr_->getIpAddress()));
-            rrset->addRdata(rdata);
+            rdata.reset(new dns::rdata::in::A(ncr_->getIpAddress()));
         } else {
-            dns::rdata::ConstRdataPtr rdata(new dns::rdata::in::
-                                            AAAA(ncr_->getIpAddress()));
-            rrset->addRdata(rdata);
+            rdata.reset(new dns::rdata::in::AAAA(ncr_->getIpAddress()));
         }
+        rrset->addRdata(rdata);
     } catch (const std::exception& ex) {
         isc_throw(NameChangeTransactionError, "Cannot add address rdata: "
                   << ex.what());
     }
-
 }
 
 void
