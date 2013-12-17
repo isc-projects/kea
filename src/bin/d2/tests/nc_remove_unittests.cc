@@ -33,9 +33,9 @@ namespace {
 class NameRemoveStub : public NameRemoveTransaction {
 public:
     NameRemoveStub(IOServicePtr& io_service,
-                dhcp_ddns::NameChangeRequestPtr& ncr,
-                DdnsDomainPtr& forward_domain,
-                DdnsDomainPtr& reverse_domain)
+                   dhcp_ddns::NameChangeRequestPtr& ncr,
+                   DdnsDomainPtr& forward_domain,
+                   DdnsDomainPtr& reverse_domain)
         : NameRemoveTransaction(io_service, ncr, forward_domain,
                                 reverse_domain),
           simulate_send_exception_(false),
@@ -328,7 +328,6 @@ TEST_F(NameRemoveTransactionTest, buildRemoveFwdAddressRequest) {
     // and then verify the request contents.
     NameRemoveStubPtr name_remove;
     ASSERT_NO_THROW(name_remove = makeTransaction4(FORWARD_CHG));
-    (name_remove->buildRemoveFwdAddressRequest());
     ASSERT_NO_THROW(name_remove->buildRemoveFwdAddressRequest());
     checkRemoveFwdAddressRequest(*name_remove);
 
