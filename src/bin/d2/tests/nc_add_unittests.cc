@@ -407,14 +407,14 @@ TEST_F(NameAddTransactionTest, buildForwardAdd) {
     NameAddStubPtr name_add;
     ASSERT_NO_THROW(name_add = makeTransaction4());
     ASSERT_NO_THROW(name_add->buildAddFwdAddressRequest());
-    checkForwardAddRequest(*name_add);
+    checkAddFwdAddressRequest(*name_add);
 
     // Create a IPv6 forward add transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
     ASSERT_NO_THROW(name_add = makeTransaction6());
     ASSERT_NO_THROW(name_add->buildAddFwdAddressRequest());
-    checkForwardAddRequest(*name_add);
+    checkAddFwdAddressRequest(*name_add);
 }
 
 /// @brief Tests construction of a DNS update request for replacing a forward
@@ -426,14 +426,14 @@ TEST_F(NameAddTransactionTest, buildReplaceFwdAddressRequest) {
     NameAddStubPtr name_add;
     ASSERT_NO_THROW(name_add = makeTransaction4());
     ASSERT_NO_THROW(name_add->buildReplaceFwdAddressRequest());
-    checkForwardReplaceRequest(*name_add);
+    checkReplaceFwdAddressRequest(*name_add);
 
     // Create a IPv6 forward replace transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
     ASSERT_NO_THROW(name_add = makeTransaction6());
     ASSERT_NO_THROW(name_add->buildReplaceFwdAddressRequest());
-    checkForwardReplaceRequest(*name_add);
+    checkReplaceFwdAddressRequest(*name_add);
 }
 
 /// @brief Tests the construction of a DNS update request for replacing a
@@ -445,14 +445,14 @@ TEST_F(NameAddTransactionTest, buildReplaceRevPtrsRequest) {
     NameAddStubPtr name_add;
     ASSERT_NO_THROW(name_add = makeTransaction4());
     ASSERT_NO_THROW(name_add->buildReplaceRevPtrsRequest());
-    checkReverseReplaceRequest(*name_add);
+    checkReplaceRevPtrsRequest(*name_add);
 
     // Create a IPv6 reverse replace transaction.
     // Verify the request builds without error.
     // and then verify the request contents.
     ASSERT_NO_THROW(name_add = makeTransaction6());
     ASSERT_NO_THROW(name_add->buildReplaceRevPtrsRequest());
-    checkReverseReplaceRequest(*name_add);
+    checkReplaceRevPtrsRequest(*name_add);
 }
 
 // Tests the readyHandler functionality.
@@ -632,7 +632,7 @@ TEST_F(NameAddTransactionTest, addingFwdAddrsHandler_FwdOnlyAddOK) {
     EXPECT_NO_THROW(name_add->addingFwdAddrsHandler());
 
     // Verify that an update message was constructed properly.
-    checkForwardAddRequest(*name_add);
+    checkAddFwdAddressRequest(*name_add);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
@@ -943,7 +943,7 @@ TEST_F(NameAddTransactionTest, replacingFwdAddrsHandler_FwdOnlyAddOK) {
     EXPECT_NO_THROW(name_add->replacingFwdAddrsHandler());
 
     // Verify that an update message was constructed properly.
-    checkForwardReplaceRequest(*name_add);
+    checkReplaceFwdAddressRequest(*name_add);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
@@ -1366,7 +1366,7 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_FwdOnlyAddOK) {
     EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
 
     // Verify that an update message was constructed properly.
-    checkReverseReplaceRequest(*name_add);
+    checkReplaceRevPtrsRequest(*name_add);
 
     // Verify that we are still in this state and next event is NOP_EVT.
     // This indicates we "sent" the message and are waiting for IO completion.
@@ -1419,8 +1419,7 @@ TEST_F(NameAddTransactionTest, replacingRevPtrsHandler_OtherRcode) {
     name_add->fakeResponse(DNSClient::SUCCESS, dns::Rcode::REFUSED());
 
     // Run replacingRevPtrsHandler again to process the response.
-    //EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
-    (name_add->replacingRevPtrsHandler());
+    EXPECT_NO_THROW(name_add->replacingRevPtrsHandler());
 
     // Completion flags should still be false.
     EXPECT_FALSE(name_add->getForwardChangeCompleted());
@@ -1632,6 +1631,29 @@ TEST_F(NameAddTransactionTest, processAddFailedHandler) {
                                     StateModel::NOP_EVT));
     // Running the handler should throw.
     EXPECT_THROW(name_add->processAddFailedHandler(), NameAddTransactionError);
+}
+
+// Tests the processAddFailedHandler functionality.
+// It verifies behavior for posted event of NO_MORE_SERVERS_EVT.
+TEST_F(NameAddTransactionTest, processAddFailedHandler_NoMoreServers) {
+    NameAddStubPtr name_remove;
+    // Create and prep a transaction, poised to run the handler.
+    ASSERT_NO_THROW(name_remove =
+                    prepHandlerTest(NameChangeTransaction::
+                                    PROCESS_TRANS_FAILED_ST,
+                                    NameChangeTransaction::
+                                    NO_MORE_SERVERS_EVT));
+
+    // Run processAddFailedHandler.
+    EXPECT_NO_THROW(name_remove->processAddFailedHandler());
+
+    // Verify that a server was selected.
+    EXPECT_EQ(dhcp_ddns::ST_FAILED, name_remove->getNcrStatus());
+
+    // Verify that the model has ended. (Remember, the transaction failed NOT
+    // the model.  The model should have ended normally.)
+    EXPECT_EQ(StateModel::END_ST, name_remove->getCurrState());
+    EXPECT_EQ(StateModel::END_EVT, name_remove->getNextEvent());
 }
 
 // Tests addingFwdAddrsHandler with the following scenario:

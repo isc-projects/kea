@@ -997,19 +997,10 @@ TEST_F(NameChangeTransactionTest, addLeaseAddressRData) {
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
     dhcp_ddns::NameChangeRequestPtr ncr = name_change->getNcr();
 
-    // Test a lease rdata add failure.
-    // As you cannot stuff an invalid address into an NCR, the only failure
-    // that can be induced is a mismatch between the RData and the RRset.
-    // Attempt to add a lease address Rdata, this should fail.
-    // Create an Any class/Any type RRset, they are not allowed to contain
-    // rdata.
-    dns::RRsetPtr rrset(new dns::RRset(dns::Name("bs"), dns::RRClass::ANY(),
-                         dns::RRType::ANY(), dns::RRTTL(0)));
-    ASSERT_THROW(name_change->addLeaseAddressRdata(rrset), std::exception);
-
     // Verify we can add a lease RData to an valid RRset.
-    rrset.reset(new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
-                               name_change->getAddressRRType(), dns::RRTTL(0)));
+    dns::RRsetPtr rrset(new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
+                                       name_change->getAddressRRType(),
+                                       dns::RRTTL(0)));
     ASSERT_NO_THROW(name_change->addLeaseAddressRdata(rrset));
 
     // Verify the Rdata was added and the value is correct.
@@ -1026,14 +1017,9 @@ TEST_F(NameChangeTransactionTest, addDhcidRdata) {
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
     dhcp_ddns::NameChangeRequestPtr ncr = name_change->getNcr();
 
-    // Test a DHCID rdata add failure.
-    dns::RRsetPtr rrset(new dns::RRset(dns::Name("bs"), dns::RRClass::ANY(),
-                         dns::RRType::ANY(), dns::RRTTL(0)));
-    ASSERT_THROW(name_change->addDhcidRdata(rrset), std::exception);
-
     // Verify we can add a lease RData to an valid RRset.
-    rrset.reset(new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
-                               dns::RRType::DHCID(), dns::RRTTL(0)));
+    dns::RRsetPtr rrset(new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
+                                       dns::RRType::DHCID(), dns::RRTTL(0)));
     ASSERT_NO_THROW(name_change->addDhcidRdata(rrset));
 
     // Verify the Rdata was added and the value is correct.
@@ -1053,14 +1039,9 @@ TEST_F(NameChangeTransactionTest, addPtrRdata) {
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
     dhcp_ddns::NameChangeRequestPtr ncr = name_change->getNcr();
 
-    // Test a PTR rdata add failure.
-    dns::RRsetPtr rrset(new dns::RRset(dns::Name("bs"), dns::RRClass::ANY(),
-                         dns::RRType::ANY(), dns::RRTTL(0)));
-    ASSERT_THROW(name_change->addPtrRdata(rrset), std::exception);
-
     // Verify we can add a PTR RData to an valid RRset.
-    rrset.reset(new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
-                               dns::RRType::PTR(), dns::RRTTL(0)));
+    dns::RRsetPtr rrset (new dns::RRset(dns::Name("bs"), dns::RRClass::IN(),
+                                        dns::RRType::PTR(), dns::RRTTL(0)));
     ASSERT_NO_THROW(name_change->addPtrRdata(rrset));
 
     // Verify the Rdata was added and the value is correct.
