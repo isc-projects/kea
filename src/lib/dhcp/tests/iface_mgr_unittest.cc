@@ -1481,7 +1481,7 @@ TEST_F(IfaceMgrTest, openSockets6LinkLocal) {
     ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
 
     // Simulate opening sockets using the dummy packet filter.
-    bool success;
+    bool success = false;
     ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
     EXPECT_TRUE(success);
 
@@ -1522,7 +1522,7 @@ TEST_F(IfaceMgrTest, openSockets6Unicast) {
     ifacemgr.getIface("eth0")->addUnicast(IOAddress("2001:db8:1::1"));
 
     // Simulate opening sockets using the dummy packet filter.
-    bool success;
+    bool success = false;
     ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
     EXPECT_TRUE(success);
 
@@ -1569,7 +1569,7 @@ TEST_F(IfaceMgrTest, openSockets6IfaceDown) {
     ifacemgr.setIfaceFlags("eth0", false, false, false, false, false);
 
     // Simulate opening sockets using the dummy packet filter.
-    bool success;
+    bool success = false;
     ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
     EXPECT_TRUE(success);
 
@@ -1618,7 +1618,7 @@ TEST_F(IfaceMgrTest, openSockets6IfaceInactive) {
     ifacemgr.setIfaceFlags("eth1", false, true, true, false, true);
 
     // Simulate opening sockets using the dummy packet filter.
-    bool success;
+    bool success = false;
     ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
     EXPECT_TRUE(success);
 
@@ -1658,7 +1658,7 @@ TEST_F(IfaceMgrTest, openSockets6NoIfaces) {
 
     // This value indicates if at least one socket opens. There are no
     // interfaces, so it should be set to false.
-    bool socket_open;
+    bool socket_open = false;
     ASSERT_NO_THROW(socket_open = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
     EXPECT_FALSE(socket_open);
 }
