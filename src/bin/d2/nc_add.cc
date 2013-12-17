@@ -557,7 +557,7 @@ NameAddTransaction::processAddFailedHandler() {
     case UPDATE_FAILED_EVT:
     case NO_MORE_SERVERS_EVT:
         LOG_ERROR(dctl_logger, DHCP_DDNS_ADD_FAILED).arg(getNcr()->toText())
-        .arg(getContextStr());
+        .arg(getEventLabel(getNextEvent()));
         setNcrStatus(dhcp_ddns::ST_FAILED);
         endModel();
         break;
