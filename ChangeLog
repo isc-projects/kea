@@ -1,3 +1,11 @@
+720.	[func]		tmark
+	Added the initial implementation of the class, NameAddTransaction,
+	to b10-dhcp-ddns.  This class provides a state machine which implements
+	the logic required to remove forward and reverse DNS entries as described
+	in RFC 4703, section 5.5. This includes the ability to construct the
+	necessary DNS requests.
+	(trac# 3088     git ca58ac00fce4cb5f46e534d7ffadb2db4e4ffaf3)
+
 719.	[func]		tomek
 	b10-dhcp4: Support for sending back client-id (RFC6842) has been
 	added now. Also a configuration parameter (echo-client-id) has
