@@ -65,6 +65,7 @@ b10_dhcp_ddns_SOURCES += d2_zone.cc d2_zone.h
 b10_dhcp_ddns_SOURCES += dns_client.cc dns_client.h
 b10_dhcp_ddns_SOURCES += labeled_value.cc labeled_value.h
 b10_dhcp_ddns_SOURCES += nc_add.cc nc_add.h
+b10_dhcp_ddns_SOURCES += nc_remove.cc nc_remove.h
 b10_dhcp_ddns_SOURCES += nc_trans.cc nc_trans.h
 b10_dhcp_ddns_SOURCES += state_model.cc state_model.h
 
