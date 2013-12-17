@@ -288,6 +288,9 @@ public:
         enabled_ = false;
     }
 
+    /// @brief Returns a text representation for the server.
+    std::string toText() const;
+
 
 private:
     /// @brief The resolvable name of the server. If not blank, then the
@@ -305,6 +308,9 @@ private:
     /// enabled for use. It defaults to true.
     bool enabled_;
 };
+
+std::ostream&
+operator<<(std::ostream& os, const DnsServerInfo& server);
 
 /// @brief Defines a pointer for DnsServerInfo instances.
 typedef boost::shared_ptr<DnsServerInfo> DnsServerInfoPtr;

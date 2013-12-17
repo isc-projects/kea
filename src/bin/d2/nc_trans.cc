@@ -80,6 +80,7 @@ NameChangeTransaction::~NameChangeTransaction(){
 
 void
 NameChangeTransaction::startTransaction() {
+    setNcrStatus(dhcp_ddns::ST_PENDING);
     startModel(READY_ST);
 }
 
@@ -89,6 +90,12 @@ NameChangeTransaction::operator()(DNSClient::Status status) {
     // set to indicate IO completed.
     // runModel is exception safe so we are good to call it here.
     // It won't exit until we hit the next IO wait or the state model ends.
+    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
+              DHCP_DDNS_UPDATE_RESPONSE_RECEIVED)
+              .arg(getTransactionKey().toStr())
+              .arg(current_server_->toText())
+              .arg(status);
+
     setDnsUpdateStatus(status);
     runModel(IO_COMPLETED_EVT);
 }
@@ -109,6 +116,10 @@ NameChangeTransaction::sendUpdate(bool /* use_tsig_ */) {
 
         // Message is on its way, so the next event should be NOP_EVT.
         postNextEvent(NOP_EVT);
+        LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
+                  DHCP_DDNS_UPDATE_REQUEST_SENT)
+                  .arg(getTransactionKey().toStr())
+                  .arg(current_server_->toText());
     } catch (const std::exception& ex) {
         // We were unable to initiate the send.
         // It is presumed that any throw from doUpdate is due to a programmatic
@@ -200,6 +211,7 @@ NameChangeTransaction::setDnsUpdateRequest(D2UpdateMessagePtr& request) {
 
 void
 NameChangeTransaction::clearDnsUpdateRequest() {
+    update_attempts_ = 0;
     dns_update_request_.reset();
 }
 

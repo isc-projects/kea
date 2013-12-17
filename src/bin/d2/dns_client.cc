@@ -45,7 +45,7 @@ public:
     // A buffer holding response from a DNS.
     util::OutputBufferPtr in_buf_;
     // A caller-supplied object holding a parsed response from DNS.
-    D2UpdateMessagePtr response_;
+    D2UpdateMessagePtr& response_;
     // A caller-supplied external callback which is invoked when DNS message
     // exchange is complete or interrupted.
     DNSClient::Callback* callback_;
@@ -104,12 +104,6 @@ DNSClientImpl::DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
                       << proto_ << "' specified for DNS Updates");
         }
     }
-
-    if (!response_) {
-        isc_throw(BadValue, "a pointer to an object to encapsulate the DNS"
-                  " server must be provided; found NULL value");
-
-    }
 }
 
 DNSClientImpl::~DNSClientImpl() {
@@ -122,6 +116,11 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
     DNSClient::Status status = getStatus(result);
     if (status == DNSClient::SUCCESS) {
         InputBuffer response_buf(in_buf_->getData(), in_buf_->getLength());
+        // Allocate a new response message. (Note that Message::fromWire
+        // may only be run once per message, so we need to start fresh
+        // each time.)
+        response_.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
+
         // Server's response may be corrupted. In such case, fromWire will
         // throw an exception. We want to catch this exception to return
         // appropriate status code to the caller and log this event.

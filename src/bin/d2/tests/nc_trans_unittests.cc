@@ -686,6 +686,7 @@ TEST_F(NameChangeTransactionTest, modelFailure) {
 TEST_F(NameChangeTransactionTest, successfulUpdateTest) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_TRUE(name_change->selectFwdServer());
 
     EXPECT_TRUE(name_change->isModelNew());
     EXPECT_FALSE(name_change->getForwardChangeCompleted());
@@ -722,6 +723,7 @@ TEST_F(NameChangeTransactionTest, successfulUpdateTest) {
 TEST_F(NameChangeTransactionTest, failedUpdateTest) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_TRUE(name_change->selectFwdServer());
 
     // Launch the transaction by calling startTransaction.  The state model
     // should run up until the "IO" operation is initiated in DOING_UPDATE_ST.

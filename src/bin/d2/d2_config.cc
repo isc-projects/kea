@@ -21,6 +21,8 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <string>
+
 namespace isc {
 namespace d2 {
 
@@ -47,6 +49,20 @@ DnsServerInfo::DnsServerInfo(const std::string& hostname,
 }
 
 DnsServerInfo::~DnsServerInfo() {
+}
+
+std::string
+DnsServerInfo::toText() const {
+    std::ostringstream stream;
+    stream << (getIpAddress().toText()) << " port:" << getPort();
+    return (stream.str());
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, const DnsServerInfo& server) {
+    os << server.toText();
+    return (os);
 }
 
 // *********************** DdnsDomain  *************************
@@ -253,7 +269,7 @@ TSIGKeyInfoParser::commit() {
 
 TSIGKeyInfoListParser::TSIGKeyInfoListParser(const std::string& list_name,
                                        TSIGKeyInfoMapPtr keys)
-    :list_name_(list_name), keys_(keys), local_keys_(new TSIGKeyInfoMap()), 
+    :list_name_(list_name), keys_(keys), local_keys_(new TSIGKeyInfoMap()),
      parsers_() {
     if (!keys_) {
         isc_throw(D2CfgError, "TSIGKeyInfoListParser ctor:"
@@ -291,9 +307,9 @@ TSIGKeyInfoListParser::commit() {
     BOOST_FOREACH(isc::dhcp::ParserPtr parser, parsers_) {
         parser->commit();
     }
-  
+
     // Now that we know we have a valid list, commit that list to the
-    // area given to us during construction (i.e. to the d2 context).   
+    // area given to us during construction (i.e. to the d2 context).
     *keys_ = *local_keys_;
 }
 

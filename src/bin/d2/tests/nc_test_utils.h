@@ -50,6 +50,8 @@ public:
     SocketPtr server_socket_;
     asio::ip::udp::endpoint remote_;
     uint8_t receive_buffer_[TEST_MSG_MAX];
+    bool receive_pending_;
+    bool perpetual_receive_;
 
     /// @brief Constructor
     ///
@@ -93,17 +95,56 @@ public:
                         std::size_t bytes_recvd,
                         const ResponseMode& response_mode,
                         const dns::Rcode& response_rcode);
+
+    bool isReceivePending() {
+        return receive_pending_;
+    }
+};
+
+class TimedIO {
+public:
+    IOServicePtr io_service_;
+    asiolink::IntervalTimer timer_;
+    int run_time_;
+
+    // Constructor
+    TimedIO();
+
+    // Destructor
+    virtual ~TimedIO();
+
+    /// @brief IO Timer expiration handler
+    ///
+    /// Stops the IOService and fails the current test.
+    virtual void timesUp();
+
+    /// @brief Runs IOService till time expires or at least one handler executes.
+    ///
+    /// This method first polls IOService to run any ready handlers.  If no
+    /// handlers are ready, it starts the internal time to run for the given
+    /// amount of time and invokes service's run_one method.  This method
+    /// blocks until at least one handler executes or the IO Service is stopped.
+    /// Upon completion of this method the timer is cancelled.  Should the
+    /// timer expires prior to run_one returning, the timesUp handler will be
+    /// invoked which stops the IO service and fails the test.
+    ///
+    /// Note that this method closely mimics the runIO method in D2Process.
+    ///
+    /// @param run_time maximum length of time to run in milliseconds before
+    /// timing out.
+    ///
+    /// @return Returns the number of handlers executed or zero. A return of
+    /// zero indicates that the IOService has been stopped.
+    int runTimedIO(int run_time);
+
 };
 
 /// @brief Base class Test fixture for testing transactions.
-class TransactionTest : public ::testing::Test {
+class TransactionTest : public TimedIO,  public ::testing::Test {
 public:
-    IOServicePtr io_service_;
     dhcp_ddns::NameChangeRequestPtr ncr_;
     DdnsDomainPtr forward_domain_;
     DdnsDomainPtr reverse_domain_;
-    asiolink::IntervalTimer timer_;
-    int run_time_;
 
     /// #brief constants used to specify change directions for a transaction.
     static const unsigned int FORWARD_CHG;      // Only forward change.
@@ -112,20 +153,6 @@ public:
 
     TransactionTest();
     virtual ~TransactionTest();
-
-    /// @brief Run the IO service for no more than a given amount of time.
-    ///
-    /// Uses an IntervalTimer to interrupt the invocation of IOService run(),
-    /// after the given number of milliseconds elapse.  The timer executes
-    /// the timesUp() method if it expires.
-    ///
-    /// @param run_time amount of time in milliseconds to allow run to execute.
-    void runTimedIO(int run_time);
-
-    /// @brief IO Timer expiration handler
-    ///
-    /// Stops the IOSerivce and fails the current test.
-    virtual void timesUp();
 
     /// @brief Creates a transaction which requests an IPv4 DNS update.
     ///
@@ -190,7 +217,7 @@ extern void checkZone(const D2UpdateMessagePtr& request,
 /// @param has_rdata if true, RRset's rdata will be checked based on it's
 /// RRType.  Set this to false if the RRset's type supports Rdata but it does
 /// not contain it.  For instance, prerequisites of type NONE have no Rdata
-/// where udpates of type NONE may.
+/// where updates of type NONE may.
 extern void checkRR(dns::RRsetPtr rrset, const std::string& exp_name,
                     const dns::RRClass& exp_class, const dns::RRType& exp_type,
                     unsigned int exp_ttl, dhcp_ddns::NameChangeRequestPtr ncr,
@@ -307,6 +334,12 @@ extern DdnsDomainPtr makeDomain(const std::string& zone_name,
 extern void addDomainServer(DdnsDomainPtr& domain, const std::string& name,
                             const std::string& ip = TEST_DNS_SERVER_IP,
                             const size_t port = TEST_DNS_SERVER_PORT);
+
+/// @brief Creates a hex text dump of the given data buffer.
+///
+/// @param data pointer to the data to dump
+/// @param len size (in bytes) of data
+extern std::string toHexText(const uint8_t* data, size_t len);
 
 }; // namespace isc::d2
 }; // namespace isc
