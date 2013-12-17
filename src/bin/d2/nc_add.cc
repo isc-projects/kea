@@ -61,10 +61,18 @@ NameAddTransaction::defineEvents() {
 
 void
 NameAddTransaction::verifyEvents() {
-    // Call superclass impl first.
+    // Call superclass implementation first to verify its events. These are
+    // events common to all transactions, and they must be defined.
+    // SELECT_SERVER_EVT
+    // SERVER_SELECTED_EVT
+    // SERVER_IO_ERROR_EVT
+    // NO_MORE_SERVERS_EVT
+    // IO_COMPLETED_EVT
+    // UPDATE_OK_EVT
+    // UPDATE_FAILED_EVT
     NameChangeTransaction::verifyEvents();
 
-    // Verify NameAddTransaction events.
+    // Verify NameAddTransaction events by attempting to fetch them.
     getEvent(FQDN_IN_USE_EVT);
     getEvent(FQDN_NOT_IN_USE_EVT);
 }
@@ -102,10 +110,16 @@ NameAddTransaction::defineStates() {
 }
 void
 NameAddTransaction::verifyStates() {
-    // Call superclass impl first.
+    // Call superclass implementation first to verify its states. These are
+    // states common to all transactions, and they must be defined.
+    // READY_ST
+    // SELECTING_FWD_SERVER_ST
+    // SELECTING_REV_SERVER_ST
+    // PROCESS_TRANS_OK_ST
+    // PROCESS_TRANS_FAILED_ST
     NameChangeTransaction::verifyStates();
 
-    // Verify NameAddTransaction states.
+    // Verify NameAddTransaction states by attempting to fetch them.
     getState(ADDING_FWD_ADDRS_ST);
     getState(REPLACING_FWD_ADDRS_ST);
     getState(REPLACING_REV_PTRS_ST);
@@ -542,7 +556,8 @@ NameAddTransaction::processAddFailedHandler() {
     switch(getNextEvent()) {
     case UPDATE_FAILED_EVT:
     case NO_MORE_SERVERS_EVT:
-        LOG_ERROR(dctl_logger, DHCP_DDNS_ADD_FAILED).arg(getNcr()->toText());
+        LOG_ERROR(dctl_logger, DHCP_DDNS_ADD_FAILED).arg(getNcr()->toText())
+        .arg(getContextStr());
         setNcrStatus(dhcp_ddns::ST_FAILED);
         endModel();
         break;

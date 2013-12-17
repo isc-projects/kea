@@ -110,7 +110,8 @@ protected:
     /// @brief Validates the contents of the set of events.
     ///
     /// Invokes NameChangeTransaction's implementation and then verifies the
-    /// Add transaction's events.
+    /// Add transaction's.  This tests that the needed events are in the event
+    /// dictionary.
     ///
     /// @throw StateModelError if an event value is undefined.
     virtual void verifyEvents();
@@ -126,7 +127,8 @@ protected:
     /// @brief Validates the contents of the set of states.
     ///
     /// Invokes NameChangeTransaction's implementation and then verifies the
-    /// Add transaction's states.
+    /// Add transaction's states. This tests that the needed states are in the
+    /// state dictionary.
     ///
     /// @throw StateModelError if an event value is undefined.
     virtual void verifyStates();
@@ -441,7 +443,7 @@ protected:
     void buildReplaceRevPtrsRequest();
 };
 
-/// @brief Defines a pointer to a NameChangeTransaction.
+/// @brief Defines a pointer to a NameAddTransaction.
 typedef boost::shared_ptr<NameAddTransaction> NameAddTransactionPtr;
 
 } // namespace isc::d2
