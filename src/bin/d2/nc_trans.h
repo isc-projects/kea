@@ -152,7 +152,15 @@ public:
     //@}
 
     /// @brief Defualt time to assign to a single DNS udpate.
+#if 0
+    /// @todo  This value will be configurable in the near future, but
+    /// until it is there is no way to replace its value.  For now
+    /// we will define it to be relatively short, so unit tests will
+    /// run within reasonable amount of time.
     static const unsigned int DNS_UPDATE_DEFAULT_TIMEOUT = 5 * 1000;
+#else
+    static const unsigned int DNS_UPDATE_DEFAULT_TIMEOUT = 100;
+#endif
 
     /// @brief Maximum times to attempt a single update on a given server.
     static const unsigned int MAX_UPDATE_TRIES_PER_SERVER = 3;
@@ -287,7 +295,8 @@ protected:
     /// @param request is the new request packet to assign.
     void setDnsUpdateRequest(D2UpdateMessagePtr& request);
 
-    /// @brief Destroys the current update request packet.
+    /// @brief Destroys the current update request packet and resets
+    /// udpate attempts count..
     void clearDnsUpdateRequest();
 
     /// @brief Sets the update status to the given status value.
@@ -340,17 +349,6 @@ protected:
     /// @return True if a server has been selected, false if there are no more
     /// servers from which to select.
     bool selectNextServer();
-
-    /// @brief Fetches the currently selected server.
-    ///
-    /// @return A const pointer reference to the DnsServerInfo of the current
-    /// server.
-    const DnsServerInfoPtr& getCurrentServer() const;
-
-    /// @brief Fetches the DNSClient instance
-    ///
-    /// @return A const pointer reference to the DNSClient
-    const DNSClientPtr& getDNSClient() const;
 
     /// @brief Sets the update attempt count to the given value.
     ///
@@ -444,6 +442,17 @@ public:
     /// @return A pointer reference to the reverse DdnsDomain.  If
     /// the request does not include a reverse change, the pointer will empty.
     DdnsDomainPtr& getReverseDomain();
+
+    /// @brief Fetches the currently selected server.
+    ///
+    /// @return A const pointer reference to the DnsServerInfo of the current
+    /// server.
+    const DnsServerInfoPtr& getCurrentServer() const;
+
+    /// @brief Fetches the DNSClient instance
+    ///
+    /// @return A const pointer reference to the DNSClient
+    const DNSClientPtr& getDNSClient() const;
 
     /// @brief Fetches the current DNS update request packet.
     ///
