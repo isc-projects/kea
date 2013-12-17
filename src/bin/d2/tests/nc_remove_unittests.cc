@@ -96,7 +96,7 @@ public:
     ///
     /// This method simulates the completion of a DNSClient send.  This allows
     /// the state handler logic devoted to dealing with IO completion to be
-    /// fully exercise without requiring any actual IO.  The two primary
+    /// fully exercised without requiring any actual IO.  The two primary
     /// pieces of information gleaned from IO completion are the DNSClient
     /// status which indicates whether or not the IO exchange was successful
     /// and the rcode, which indicates the server's reaction to the request.
@@ -292,13 +292,13 @@ TEST(NameRemoveTransaction, construction) {
 
     // Verify that construction with wrong change type fails.
     EXPECT_THROW(NameRemoveTransaction(io_service, ncr,
-                                    forward_domain, reverse_domain),
-                                    NameRemoveTransactionError);
+                                       forward_domain, reverse_domain),
+                                       NameRemoveTransactionError);
 
     // Verify that a valid construction attempt works.
     ncr->setChangeType(isc::dhcp_ddns::CHG_REMOVE);
     EXPECT_NO_THROW(NameRemoveTransaction(io_service, ncr,
-                                       forward_domain, reverse_domain));
+                                          forward_domain, reverse_domain));
 }
 
 /// @brief Tests event and state dictionary construction and verification.
