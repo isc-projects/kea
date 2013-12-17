@@ -162,6 +162,13 @@ protected:
     void makeTransaction(isc::dhcp_ddns::NameChangeRequestPtr& ncr);
 
 public:
+    /// @brief Gets the UpdateMgr's IOService.
+    ///
+    /// @return returns a reference to the IOService
+    const IOServicePtr& getIOService() {
+        return (io_service_);
+    }
+
     /// @brief Returns the maximum number of concurrent transactions.
     size_t getMaxTransactions() const {
         return (max_transactions_);
@@ -186,6 +193,9 @@ public:
 
     /// @brief Returns the transaction list end position.
     TransactionList::iterator transactionListEnd();
+
+    /// @brief Returns the transaction list beg position.
+    TransactionList::iterator transactionListBegin();
 
     /// @brief Convenience method that checks transaction list for the given key
     ///

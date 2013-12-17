@@ -13,6 +13,8 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <d2/d2_update_mgr.h>
+#include <d2/nc_add.h>
+#include <d2/nc_remove.h>
 
 #include <sstream>
 #include <iostream>
@@ -85,16 +87,12 @@ D2UpdateMgr::checkFinishedTransactions() {
     TransactionList::iterator it = transaction_list_.begin();
     while (it != transaction_list_.end()) {
         NameChangeTransactionPtr trans = (*it).second;
-        switch (trans->getNcrStatus())  {
-        case dhcp_ddns::ST_COMPLETED:
+        if (trans->isModelDone()) {
+            // @todo  Addtional actions based on NCR status could be
+            // performed here.
             transaction_list_.erase(it++);
-            break;
-        case dhcp_ddns::ST_FAILED:
-            transaction_list_.erase(it++);
-            break;
-        default:
+        } else {
             ++it;
-            break;
         }
     }
 }
@@ -163,12 +161,24 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
     }
 
     // We matched to the required servers, so construct the transaction.
-    NameChangeTransactionPtr trans(new NameChangeTransaction(io_service_,
-                                                             next_ncr,
-                                                             forward_domain,
-                                                             reverse_domain));
+    // @todo If multi-threading is implemented, one would pass in an
+    // empty IOServicePtr, rather than our instance value.  This would cause
+    // the transaction to instantiate its own, separate IOService to handle
+    // the transaction's IO.
+    NameChangeTransactionPtr trans;
+    if (next_ncr->getChangeType() == dhcp_ddns::CHG_ADD) {
+        trans.reset(new NameAddTransaction(io_service_, next_ncr,
+                                           forward_domain, reverse_domain));
+    } else {
+        trans.reset(new NameRemoveTransaction(io_service_, next_ncr,
+                                           forward_domain, reverse_domain));
+    }
+
     // Add the new transaction to the list.
     transaction_list_[key] = trans;
+
+    // Start it.
+    trans->startTransaction();
 }
 
 TransactionList::iterator
@@ -187,6 +197,11 @@ D2UpdateMgr::removeTransaction(const TransactionKey& key) {
     if (pos != transactionListEnd()) {
         transaction_list_.erase(pos);
     }
+}
+
+TransactionList::iterator
+D2UpdateMgr::transactionListBegin() {
+    return (transaction_list_.begin());
 }
 
 TransactionList::iterator
