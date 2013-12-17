@@ -277,7 +277,7 @@ protected:
     /// If the maximum number of attempts has been reached, it will transition
     /// to the given state with a next event of SERVER_IO_ERROR_EVT.
     ///
-    /// @param server_sel_state  State to transition to if maximum attempts
+    /// @param fail_to_state  State to transition to if maximum attempts
     /// have been tried.
     ///
     void retryTransition(const int fail_to_state);
@@ -435,13 +435,13 @@ public:
 
     /// @brief Fetches the forward DdnsDomain.
     ///
-    /// @return A pointer reference to the forward DdnsDomain.  If 
+    /// @return A pointer reference to the forward DdnsDomain.  If
     /// the request does not include a forward change, the pointer will empty.
     DdnsDomainPtr& getForwardDomain();
 
     /// @brief Fetches the reverse DdnsDomain.
     ///
-    /// @return A pointer reference to the reverse DdnsDomain.  If 
+    /// @return A pointer reference to the reverse DdnsDomain.  If
     /// the request does not include a reverse change, the pointer will empty.
     DdnsDomainPtr& getReverseDomain();
 

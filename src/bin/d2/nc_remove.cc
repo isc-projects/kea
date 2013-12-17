@@ -58,10 +58,18 @@ NameRemoveTransaction::defineEvents() {
 
 void
 NameRemoveTransaction::verifyEvents() {
-    // Call superclass impl first.
+    // Call superclass implementation first to verify its events. These are
+    // events common to all transactions, and they must be defined.
+    // SELECT_SERVER_EVT
+    // SERVER_SELECTED_EVT
+    // SERVER_IO_ERROR_EVT
+    // NO_MORE_SERVERS_EVT
+    // IO_COMPLETED_EVT
+    // UPDATE_OK_EVT
+    // UPDATE_FAILED_EVT
     NameChangeTransaction::verifyEvents();
 
-    // Verify NameRemoveTransaction events.
+    // Verify NameRemoveTransaction events by attempting to fetch them.
     // Currently NameRemoveTransaction does not define any events.
     // getEvent(TBD_EVENT);
 }
@@ -106,10 +114,16 @@ NameRemoveTransaction::defineStates() {
 
 void
 NameRemoveTransaction::verifyStates() {
-    // Call superclass impl first.
+    // Call superclass implementation first to verify its states. These are
+    // states common to all transactions, and they must be defined.
+    // READY_ST
+    // SELECTING_FWD_SERVER_ST
+    // SELECTING_REV_SERVER_ST
+    // PROCESS_TRANS_OK_ST
+    // PROCESS_TRANS_FAILED_ST
     NameChangeTransaction::verifyStates();
 
-    // Verify NameRemoveTransaction states.
+    // Verify NameRemoveTransaction states by attempting to fetch them.
     getState(REMOVING_FWD_ADDRS_ST);
     getState(REMOVING_FWD_RRS_ST);
     getState(REMOVING_REV_PTRS_ST);
@@ -551,7 +565,8 @@ NameRemoveTransaction::processRemoveFailedHandler() {
     case UPDATE_FAILED_EVT:
     case NO_MORE_SERVERS_EVT:
     case SERVER_IO_ERROR_EVT:
-        LOG_ERROR(dctl_logger, DHCP_DDNS_REMOVE_FAILED).arg(getNcr()->toText());
+        LOG_ERROR(dctl_logger, DHCP_DDNS_REMOVE_FAILED).arg(getNcr()->toText())
+        .arg(getEventLabel(getNextEvent()));
         setNcrStatus(dhcp_ddns::ST_FAILED);
         endModel();
         break;

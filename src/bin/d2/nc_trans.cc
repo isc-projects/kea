@@ -263,12 +263,13 @@ NameChangeTransaction::addLeaseAddressRdata(dns::RRsetPtr& rrset) {
 
     try {
         // Manufacture an RData from the lease address then add it to the RR.
-        dns::rdata::ConstRdataPtr rdata;
         if (ncr_->isV4()) {
-            rdata.reset(new dns::rdata::in::A(ncr_->getIpAddress()));
+            dns::rdata::ConstRdataPtr rdata(new dns::rdata::in::
+                                            A(ncr_->getIpAddress()));
             rrset->addRdata(rdata);
         } else {
-            rdata.reset(new dns::rdata::in::AAAA(ncr_->getIpAddress()));
+            dns::rdata::ConstRdataPtr rdata(new dns::rdata::in::
+                                            AAAA(ncr_->getIpAddress()));
             rrset->addRdata(rdata);
         }
     } catch (const std::exception& ex) {
@@ -286,10 +287,10 @@ NameChangeTransaction::addDhcidRdata(dns::RRsetPtr& rrset) {
     }
 
     try {
-        dns::rdata::ConstRdataPtr rdata;
         const std::vector<uint8_t>& ncr_dhcid = ncr_->getDhcid().getBytes();
         util::InputBuffer buffer(ncr_dhcid.data(), ncr_dhcid.size());
-        rdata.reset(new dns::rdata::in::DHCID(buffer, ncr_dhcid.size()));
+        dns::rdata::ConstRdataPtr rdata (new dns::rdata::in::
+                                         DHCID(buffer, ncr_dhcid.size()));
         rrset->addRdata(rdata);
     } catch (const std::exception& ex) {
         isc_throw(NameChangeTransactionError, "Cannot add DCHID rdata: "
@@ -306,8 +307,8 @@ NameChangeTransaction::addPtrRdata(dns::RRsetPtr& rrset) {
     }
 
     try {
-        dns::rdata::ConstRdataPtr rdata;
-        rdata.reset(new dns::rdata::generic::PTR(getNcr()->getFqdn()));
+        dns::rdata::ConstRdataPtr rdata(new dns::rdata::generic::
+                                        PTR(getNcr()->getFqdn()));
         rrset->addRdata(rdata);
     } catch (const std::exception& ex) {
         isc_throw(NameChangeTransactionError, "Cannot add PTR rdata: "

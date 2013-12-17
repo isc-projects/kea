@@ -95,7 +95,7 @@ public:
     virtual ~NameRemoveTransaction();
 
 protected:
-    /// @brief Removes events defined by NameRemoveTransaction to the event set.
+    /// @brief Adds events defined by NameRemoveTransaction to the event set.
     ///
     /// Invokes NameChangeTransaction's implementation and then defines the
     /// events unique to NCR Remove transaction processing.
@@ -106,12 +106,13 @@ protected:
     /// @brief Validates the contents of the set of events.
     ///
     /// Invokes NameChangeTransaction's implementation and then verifies the
-    /// Remove transaction's events.
+    /// Remove transaction's events. This tests that the needed events are in
+    /// the event dictionary.
     ///
     /// @throw StateModelError if an event value is undefined.
     virtual void verifyEvents();
 
-    /// @brief Removes states defined by NameRemoveTransaction to the state set.
+    /// @brief Adds states defined by NameRemoveTransaction to the state set.
     ///
     /// Invokes NameChangeTransaction's implementation and then defines the
     /// states unique to NCR Remove transaction processing.
@@ -122,7 +123,8 @@ protected:
     /// @brief Validates the contents of the set of states.
     ///
     /// Invokes NameChangeTransaction's implementation and then verifies the
-    /// Remove transaction's states.
+    /// Remove transaction's states.  This tests that the needed states are in
+    /// the state dictionary.
     ///
     /// @throw StateModelError if an event value is undefined.
     virtual void verifyStates();
@@ -134,7 +136,7 @@ protected:
     ///
     /// The READY_ST is the state the model transitions into when the inherited
     /// method, startTransaction() is invoked.  This handler, therefore, is the
-    /// entry point into the state model execution.h  Its primary task is to
+    /// entry point into the state model execution.  Its primary task is to
     /// determine whether to start with a forward DNS change or a reverse DNS
     /// change.
     ///
@@ -424,7 +426,7 @@ protected:
     void buildRemoveRevPtrsRequest();
 };
 
-/// @brief Defines a pointer to a NameChangeTransaction.
+/// @brief Defines a pointer to a NameRemoveTransaction.
 typedef boost::shared_ptr<NameRemoveTransaction> NameRemoveTransactionPtr;
 
 
