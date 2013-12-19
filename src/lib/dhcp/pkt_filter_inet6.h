@@ -34,7 +34,7 @@ public:
     /// Initializes a control buffer used in the message transmission.
     PktFilterInet6();
 
-    /// @brief Open a socket.
+    /// @brief Opens a socket.
     ///
     /// This function open an IPv6 socket on an interface and binds it to a
     /// specified UDP port and IP address.
@@ -54,10 +54,13 @@ public:
                                   const uint16_t port,
                                   const bool join_multicast);
 
-    /// @brief Receive DHCPv6 message on the interface.
+    /// @brief Receives DHCPv6 message on the interface.
     ///
-    /// This function receives a single DHCPv6 message through using a socket
-    /// open on a specified interface.
+    /// This function receives a single DHCPv6 message through a socket
+    /// open on a specified interface. This function will block if there is
+    /// no message waiting on the specified socket. Therefore the @c IfaceMgr
+    /// must first check that there is any message on the socket (using
+    /// select function) prior to calling this function.
     ///
     /// @param socket_info A structure holding socket information.
     ///
@@ -66,7 +69,7 @@ public:
     /// reception.
     virtual Pkt6Ptr receive(const SocketInfo& socket_info);
 
-    /// @brief Send DHCPv6 message through a specified interface and socket.
+    /// @brief Sends DHCPv6 message through a specified interface and socket.
     ///
     /// Thie function sends a DHCPv6 message through a specified interface and
     /// socket. In general, there may be multiple sockets open on a single

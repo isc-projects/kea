@@ -22,6 +22,8 @@ PktFilter6::joinMulticast(int sock, const std::string& ifname,
                           const std::string & mcast) {
 
     struct ipv6_mreq mreq;
+    memset(&mreq, 0, sizeof(ipv6_mreq));
+
     // Convert the multicast address to a binary form.
     if (inet_pton(AF_INET6, mcast.c_str(), &mreq.ipv6mr_multiaddr) <= 0) {
         return (false);

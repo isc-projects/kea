@@ -976,13 +976,17 @@ private:
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
     /// sockets. It is possible to supply custom object using
-    /// setPacketFilter class. Various Packet Filters differ mainly by using
+    /// setPacketFilter method. Various Packet Filters differ mainly by using
     /// different types of sockets, e.g. SOCK_DGRAM,  SOCK_RAW and different
     /// families, e.g. AF_INET, AF_PACKET etc. Another possible type of
     /// Packet Filter is the one used for unit testing, which doesn't
     /// open sockets but rather mimics their behavior (mock object).
     PktFilterPtr packet_filter_;
 
+    /// Holds instance of a class derived from PktFilter6, used by the
+    /// IfaceMgr to manage sockets used to send and receive DHCPv6
+    /// messages. It is possible to supply a custom object using
+    /// setPacketFilter method.
     PktFilter6Ptr packet_filter6_;
 };
 

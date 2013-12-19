@@ -47,7 +47,7 @@ PktFilterInet6::openSocket(const Iface& iface,
     addr6.sin6_len = sizeof(addr6);
 #endif
 
-    // TODO: use sockcreator once it becomes available
+    // @todo use sockcreator once it becomes available
 
     // make a socket
     int sock = socket(AF_INET6, SOCK_DGRAM, 0);
@@ -55,8 +55,7 @@ PktFilterInet6::openSocket(const Iface& iface,
         isc_throw(SocketConfigError, "Failed to create UDP6 socket.");
     }
 
-    // Set the REUSEADDR option so that we don't fail to start if
-    // we're being restarted.
+    // Set SO_REUSEADDR option.
     int flag = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
                    (char *)&flag, sizeof(flag)) < 0) {
@@ -85,18 +84,15 @@ PktFilterInet6::openSocket(const Iface& iface,
     }
 #endif
 
-    // multicast stuff
-    if (addr.getAddress().to_v6().is_multicast()) {
-        // both mcast (ALL_DHCP_RELAY_AGENTS_AND_SERVERS and ALL_DHCP_SERVERS)
-        // are link and site-scoped, so there is no sense to join those groups
-        // with global addresses.
-
-        if (join_multicast && !joinMulticast(sock, iface.getName(),
-                           std::string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS))) {
-            close(sock);
-            isc_throw(SocketConfigError, "Failed to join " << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
-                      << " multicast group.");
-        }
+    // Join All_DHCP_Relay_Agents_and_Servers multicast group if
+    // requested.
+    if (join_multicast &&
+        !joinMulticast(sock, iface.getName(),
+                       std::string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS))) {
+        close(sock);
+        isc_throw(SocketConfigError, "Failed to join "
+                  << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
+                  << " multicast group.");
     }
 
     return (SocketInfo(addr, port, sock));

@@ -477,24 +477,22 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
                 continue;
             }
 
-            sock = openSocket(iface->getName(), *addr, port);
+            // Open socket and join multicast group only if the interface
+            // is multicast-capable.
+            // @todo The DHCPv6 requires multicast so we may want to think
+            // whether we want to open the socket on a multicast-incapable
+            // interface or not. For now, we prefer to be liberal and allow
+            // it for some odd use cases which may utilize non-multicast
+            // interfaces. Perhaps a warning should be emitted if the
+            // interface is not a multicast one.
+            sock = openSocket(iface->getName(), *addr, port,
+                              iface->flag_multicast_);
             if (sock < 0) {
                 const char* errstr = strerror(errno);
-                isc_throw(SocketConfigError, "failed to open link-local socket on "
-                          << addr->toText() << " on interface "
+                isc_throw(SocketConfigError, "failed to open link-local"
+                          " socket on " << addr->toText() << " on interface "
                           << iface->getName() << ", reason: " << errstr);
             }
-
-            /*            // Binding socket to unicast address and then joining multicast group
-            // works well on Mac OS (and possibly other BSDs), but does not work
-            // on Linux.
-            if ( !PktFilter6::joinMulticast(sock, iface->getName(),
-                                            string(ALL_DHCP_RELAY_AGENTS_AND_SERVERS))) {
-                close(sock);
-                isc_throw(SocketConfigError, "Failed to join "
-                          << ALL_DHCP_RELAY_AGENTS_AND_SERVERS
-                          << " multicast group.");
-                          } */
 
             count++;
 
@@ -502,16 +500,18 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
 #if defined(OS_LINUX)
             // To receive multicast traffic, Linux requires binding socket to
             // a multicast group. That in turn doesn't work on NetBSD.
-
-            int sock2 = openSocket(iface->getName(),
-                                   IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
-                                   port);
-            if (sock2 < 0) {
-                const char* errstr = strerror(errno);
-                isc_throw(SocketConfigError, "Failed to open multicast socket on "
-                          << " interface " << iface->getFullName() << ", reason:"
-                          << errstr);
-                iface->delSocket(sock); // delete previously opened socket
+            if (iface->flag_multicast_) {
+                int sock2 =
+                    openSocket(iface->getName(),
+                               IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
+                               port);
+                if (sock2 < 0) {
+                    const char* errstr = strerror(errno);
+                    isc_throw(SocketConfigError, "Failed to open multicast"
+                              " socket on interface " << iface->getFullName()
+                              << ", reason:" << errstr);
+                    iface->delSocket(sock); // delete previously opened socket
+                }
             }
 #endif
         }
