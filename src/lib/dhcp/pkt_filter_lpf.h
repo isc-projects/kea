@@ -24,11 +24,10 @@ namespace dhcp {
 
 /// @brief Packet handling class using Linux Packet Filtering
 ///
-/// This class provides methods to send and recive packet using raw sockets
-/// and Linux Packet Filtering.
-///
-/// @warning This class is not implemented yet. Therefore all functions
-/// currently throw isc::NotImplemented exception.
+/// This class provides methods to send and recive DHCPv4 messages using raw
+/// sockets and Linux Packet Filtering. It is used by @c isc::dhcp::IfaceMgr
+/// to send DHCPv4 messages to the hosts which don't have an IPv4 address
+/// assigned yet.
 class PktFilterLPF : public PktFilter {
 public:
 

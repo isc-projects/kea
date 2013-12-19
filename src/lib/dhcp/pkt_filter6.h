@@ -65,16 +65,26 @@ class Iface;
 /// but simply create a pool of fake interfaces which configuration
 /// can be freely modified by a test. This however implies that operations
 /// on sockets must be simulated.
+///
+/// @note This class is named after @c PktFilter abstract class which exposes
+/// similar interface for DHVPv4. However, the PktFilter class is devoted to
+/// solve the problem of sending DHCPv4 messages to the hosts which don't have
+/// an IP address yet (a.k.a. direct DHCPv4 traffic). Where required, the
+/// custom implementations of @c PktFilter are provided to send and receive
+/// messages through raw sockets. In order to filter out the desired traffic
+/// Linux Packet Filtering or Berkeley Packet Filtering is used, hence the
+/// name of the class. In case of DHCPv6 regular IPv6/UDPv6 sockets are used
+/// and derived classes do not use Linux or Berkeley Packet Filtering.
 class PktFilter6 {
 public:
 
     /// @brief Virtual Destructor.
     virtual ~PktFilter6() { }
 
-    /// @brief Open a socket.
+    /// @brief Opens a socket.
     ///
     /// This function open an IPv6 socket on an interface and binds it to a
-    /// specified UDP port and IP address.
+    /// specified UDP port and IPv6 address.
     ///
     /// @param iface Interface descriptor.
     /// @param addr Address on the interface to be used to send packets.
@@ -89,7 +99,7 @@ public:
                                   const uint16_t port,
                                   const bool join_multicast) = 0;
 
-    /// @brief Receive DHCPv6 message on the interface.
+    /// @brief Receives DHCPv6 message on the interface.
     ///
     /// This function receives a single DHCPv6 message through using a socket
     /// open on a specified interface.
@@ -99,7 +109,7 @@ public:
     /// @return A pointer to received message.
     virtual Pkt6Ptr receive(const SocketInfo& socket_info) = 0;
 
-    /// @brief Send DHCPv6 message through a specified interface and socket.
+    /// @brief Sends DHCPv6 message through a specified interface and socket.
     ///
     /// This function sends a DHCPv6 message through a specified interface and
     /// socket. In general, there may be multiple sockets open on a single

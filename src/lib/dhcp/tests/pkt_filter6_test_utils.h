@@ -81,7 +81,7 @@ public:
     /// @param rcvd_msg An instance of the message to be tested.
     void testRcvdMessage(const Pkt6Ptr& rcvd_msg) const;
 
-    std::string ifname_;   ///< Loopback interface name
+    std::string ifname_;   ///< Loopback interface name.
     uint16_t ifindex_;     ///< Loopback interface index.
     uint16_t port_;        ///< A port number used for the test.
     isc::dhcp::SocketInfo sock_info_; ///< A structure holding socket info.
