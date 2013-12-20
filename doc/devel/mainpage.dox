@@ -81,10 +81,10 @@
  * - @subpage libdhcp_ddns
  *
  * @section miscellaneousTopics Miscellaneous Topics
- * - @subpage LoggingApi
- *   - @subpage LoggingApiOverview
- *   - @subpage LoggingApiLoggerNames
- *   - @subpage LoggingApiLoggingMessages
+ * - @subpage logBind10Logging
+ *   - @subpage logBasicIdeas
+ *   - @subpage logDeveloperUse
+ *   - @subpage logNotes
  * - @subpage SocketSessionUtility
  * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
  *
