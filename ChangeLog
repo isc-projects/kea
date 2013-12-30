@@ -1,3 +1,9 @@
+7XX.	[bug]		tomek
+	b10-dhcp4,b10-dhcp6: Both servers used to unnecessarily increase
+	subnet-id values after reconfiguration. The subnet-ids are now reset
+	to 1 every time a server is reconfigured.
+	(Trac #3234, git abcd)
+
 720.	[func]		tmark
 	Added the initial implementation of the class, NameAddTransaction,
 	to b10-dhcp-ddns.  This class provides a state machine which implements
