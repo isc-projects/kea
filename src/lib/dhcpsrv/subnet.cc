@@ -24,6 +24,9 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
+// This is an initial value of subnet-id. See comments in subnet.h for details.
+SubnetID Subnet::static_id_ = 1;
+
 Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const Triplet<uint32_t>& t1,
                const Triplet<uint32_t>& t2,
