@@ -1487,97 +1487,98 @@ AC_CONFIG_FILES([Makefile
                  tests/lettuce/Makefile
                  m4macros/Makefile
                  dns++.pc
-               ])
-AC_OUTPUT([doc/version.ent
-           src/bin/cfgmgr/b10-cfgmgr.py
-           src/bin/cfgmgr/tests/b10-cfgmgr_test.py
-           src/bin/cfgmgr/plugins/datasrc.spec.pre
-           src/bin/cmdctl/cmdctl.py
-           src/bin/cmdctl/run_b10-cmdctl.sh
-           src/bin/cmdctl/tests/cmdctl_test
-           src/bin/cmdctl/cmdctl.spec.pre
-           src/bin/dbutil/dbutil.py
-           src/bin/dbutil/run_dbutil.sh
-           src/bin/dbutil/tests/dbutil_test.sh
-           src/bin/ddns/ddns.py
-           src/bin/dhcp4/tests/marker_file.h
-           src/bin/dhcp4/tests/test_libraries.h
-           src/bin/dhcp6/tests/marker_file.h
-           src/bin/dhcp6/tests/test_libraries.h
-           src/bin/xfrin/tests/xfrin_test
-           src/bin/xfrin/xfrin.py
-           src/bin/xfrin/run_b10-xfrin.sh
-           src/bin/xfrout/xfrout.py
-           src/bin/xfrout/xfrout.spec.pre
-           src/bin/xfrout/tests/xfrout_test
-           src/bin/xfrout/tests/xfrout_test.py
-           src/bin/xfrout/run_b10-xfrout.sh
-           src/bin/resolver/resolver.spec.pre
-           src/bin/resolver/spec_config.h.pre
-           src/bin/zonemgr/zonemgr.py
-           src/bin/zonemgr/zonemgr.spec.pre
-           src/bin/zonemgr/tests/zonemgr_test
-           src/bin/zonemgr/run_b10-zonemgr.sh
-           src/bin/sysinfo/sysinfo.py
-           src/bin/sysinfo/run_sysinfo.sh
-           src/bin/stats/stats.py
-           src/bin/stats/stats_httpd.py
-           src/bin/bind10/init.py
-           src/bin/bind10/run_bind10.sh
-           src/bin/bind10/tests/init_test.py
-           src/bin/bindctl/run_bindctl.sh
-           src/bin/bindctl/bindctl_main.py
-           src/bin/bindctl/tests/bindctl_test
-           src/bin/loadzone/run_loadzone.sh
-           src/bin/loadzone/tests/correct/correct_test.sh
-           src/bin/loadzone/loadzone.py
-           src/bin/usermgr/run_b10-cmdctl-usermgr.sh
-           src/bin/usermgr/b10-cmdctl-usermgr.py
-           src/bin/memmgr/memmgr.py
-           src/bin/memmgr/memmgr.spec.pre
-           src/bin/msgq/msgq.py
-           src/bin/msgq/run_msgq.sh
-           src/bin/auth/auth.spec.pre
-           src/bin/auth/spec_config.h.pre
-           src/bin/auth/tests/testdata/example.zone
-           src/bin/auth/tests/testdata/example-base.zone
-           src/bin/auth/tests/testdata/example-nsec3.zone
-           src/bin/auth/gen-statisticsitems.py.pre
-           src/bin/dhcp4/spec_config.h.pre
-           src/bin/dhcp6/spec_config.h.pre
-           src/bin/dhcp6/tests/test_data_files_config.h
-           src/bin/d2/spec_config.h.pre
-           src/bin/d2/tests/test_data_files_config.h
-           src/bin/tests/process_rename_test.py
-           src/hooks/dhcp/user_chk/tests/test_data_files_config.h
-           src/lib/config/tests/data_def_unittests_config.h
-           src/lib/dhcpsrv/tests/test_libraries.h
-           src/lib/python/isc/config/tests/config_test
-           src/lib/python/isc/cc/tests/cc_test
-           src/lib/python/isc/notify/tests/notify_out_test
-           src/lib/python/isc/log/tests/log_console.py
-           src/lib/python/isc/log_messages/work/__init__.py
-           src/lib/dns/gen-rdatacode.py
-           src/lib/python/bind10_config.py
-           src/lib/cc/session_config.h.pre
-           src/lib/cc/tests/session_unittests_config.h
-           src/lib/datasrc/datasrc_config.h.pre
-           src/lib/hooks/tests/marker_file.h
-           src/lib/hooks/tests/test_libraries.h
-           src/lib/log/tests/console_test.sh
-           src/lib/log/tests/destination_test.sh
-           src/lib/log/tests/init_logger_test.sh
-           src/lib/log/tests/buffer_logger_test.sh
-           src/lib/log/tests/local_file_test.sh
-           src/lib/log/tests/logger_lock_test.sh
-           src/lib/log/tests/severity_test.sh
-           src/lib/log/tests/tempdir.h
-           src/lib/util/python/doxygen2pydoc.py
-           src/lib/util/python/mkpywrapper.py
-           src/lib/util/python/gen_wiredata.py
-           src/lib/server_common/tests/data_path.h
-           tests/lettuce/setup_intree_bind10.sh
-          ], [
+                 doc/version.ent
+                 src/bin/cfgmgr/b10-cfgmgr.py
+                 src/bin/cfgmgr/tests/b10-cfgmgr_test.py
+                 src/bin/cfgmgr/plugins/datasrc.spec.pre
+                 src/bin/cmdctl/cmdctl.py
+                 src/bin/cmdctl/run_b10-cmdctl.sh
+                 src/bin/cmdctl/tests/cmdctl_test
+                 src/bin/cmdctl/cmdctl.spec.pre
+                 src/bin/dbutil/dbutil.py
+                 src/bin/dbutil/run_dbutil.sh
+                 src/bin/dbutil/tests/dbutil_test.sh
+                 src/bin/ddns/ddns.py
+                 src/bin/dhcp4/tests/marker_file.h
+                 src/bin/dhcp4/tests/test_libraries.h
+                 src/bin/dhcp6/tests/marker_file.h
+                 src/bin/dhcp6/tests/test_libraries.h
+                 src/bin/xfrin/tests/xfrin_test
+                 src/bin/xfrin/xfrin.py
+                 src/bin/xfrin/run_b10-xfrin.sh
+                 src/bin/xfrout/xfrout.py
+                 src/bin/xfrout/xfrout.spec.pre
+                 src/bin/xfrout/tests/xfrout_test
+                 src/bin/xfrout/tests/xfrout_test.py
+                 src/bin/xfrout/run_b10-xfrout.sh
+                 src/bin/resolver/resolver.spec.pre
+                 src/bin/resolver/spec_config.h.pre
+                 src/bin/zonemgr/zonemgr.py
+                 src/bin/zonemgr/zonemgr.spec.pre
+                 src/bin/zonemgr/tests/zonemgr_test
+                 src/bin/zonemgr/run_b10-zonemgr.sh
+                 src/bin/sysinfo/sysinfo.py
+                 src/bin/sysinfo/run_sysinfo.sh
+                 src/bin/stats/stats.py
+                 src/bin/stats/stats_httpd.py
+                 src/bin/bind10/init.py
+                 src/bin/bind10/run_bind10.sh
+                 src/bin/bind10/tests/init_test.py
+                 src/bin/bindctl/run_bindctl.sh
+                 src/bin/bindctl/bindctl_main.py
+                 src/bin/bindctl/tests/bindctl_test
+                 src/bin/loadzone/run_loadzone.sh
+                 src/bin/loadzone/tests/correct/correct_test.sh
+                 src/bin/loadzone/loadzone.py
+                 src/bin/usermgr/run_b10-cmdctl-usermgr.sh
+                 src/bin/usermgr/b10-cmdctl-usermgr.py
+                 src/bin/memmgr/memmgr.py
+                 src/bin/memmgr/memmgr.spec.pre
+                 src/bin/msgq/msgq.py
+                 src/bin/msgq/run_msgq.sh
+                 src/bin/auth/auth.spec.pre
+                 src/bin/auth/spec_config.h.pre
+                 src/bin/auth/tests/testdata/example.zone
+                 src/bin/auth/tests/testdata/example-base.zone
+                 src/bin/auth/tests/testdata/example-nsec3.zone
+                 src/bin/auth/gen-statisticsitems.py.pre
+                 src/bin/dhcp4/spec_config.h.pre
+                 src/bin/dhcp6/spec_config.h.pre
+                 src/bin/dhcp6/tests/test_data_files_config.h
+                 src/bin/d2/spec_config.h.pre
+                 src/bin/d2/tests/test_data_files_config.h
+                 src/bin/tests/process_rename_test.py
+                 src/hooks/dhcp/user_chk/tests/test_data_files_config.h
+                 src/lib/config/tests/data_def_unittests_config.h
+                 src/lib/dhcpsrv/tests/test_libraries.h
+                 src/lib/python/isc/config/tests/config_test
+                 src/lib/python/isc/cc/tests/cc_test
+                 src/lib/python/isc/notify/tests/notify_out_test
+                 src/lib/python/isc/log/tests/log_console.py
+                 src/lib/python/isc/log_messages/work/__init__.py
+                 src/lib/dns/gen-rdatacode.py
+                 src/lib/python/bind10_config.py
+                 src/lib/cc/session_config.h.pre
+                 src/lib/cc/tests/session_unittests_config.h
+                 src/lib/datasrc/datasrc_config.h.pre
+                 src/lib/hooks/tests/marker_file.h
+                 src/lib/hooks/tests/test_libraries.h
+                 src/lib/log/tests/console_test.sh
+                 src/lib/log/tests/destination_test.sh
+                 src/lib/log/tests/init_logger_test.sh
+                 src/lib/log/tests/buffer_logger_test.sh
+                 src/lib/log/tests/local_file_test.sh
+                 src/lib/log/tests/logger_lock_test.sh
+                 src/lib/log/tests/severity_test.sh
+                 src/lib/log/tests/tempdir.h
+                 src/lib/util/python/doxygen2pydoc.py
+                 src/lib/util/python/mkpywrapper.py
+                 src/lib/util/python/gen_wiredata.py
+                 src/lib/server_common/tests/data_path.h
+                 tests/lettuce/setup_intree_bind10.sh
+])
+
+ AC_CONFIG_COMMANDS([permissions], [
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/xfrin/run_b10-xfrin.sh
            chmod +x src/bin/xfrout/run_b10-xfrout.sh
@@ -1609,6 +1610,7 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/python/isc/log/tests/log_console.py
           ])
+
 AC_OUTPUT
 
 dnl Print the results
