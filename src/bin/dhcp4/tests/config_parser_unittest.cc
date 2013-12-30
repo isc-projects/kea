@@ -410,7 +410,71 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(4000, subnet->getValid());
+
+    // Check that subnet-id is 1
+    EXPECT_EQ(1, subnet->getID());
 }
+
+// Goal of this test is to verify that multiple subnets get unique
+// subnet-ids. Also, test checks that it's possible to do reconfiguration
+// multiple times.
+TEST_F(Dhcp4ParserTest, multipleSubnets) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"subnet\": \"192.0.4.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"subnet\": \"192.0.5.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    int cnt = 0; // Number of reconfigurations
+
+    do {
+        ElementPtr json = Element::fromJSON(config);
+
+        EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(0, rcode_);
+
+        const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+        ASSERT_TRUE(subnets);
+        ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+        // Check subnet-ids of each subnet (it should be monotonously increasing)
+        EXPECT_EQ(1, subnets->at(0)->getID());
+        EXPECT_EQ(2, subnets->at(1)->getID());
+        EXPECT_EQ(3, subnets->at(2)->getID());
+        EXPECT_EQ(4, subnets->at(3)->getID());
+
+        // Repeat reconfiguration process 10 times and check that the subnet-id
+        // is set to the same value. Technically, just two iterations would be
+        // sufficient, but it's nice to have a test that exercises reconfiguration
+        // a bit.
+    } while (++cnt < 10);
+}
+
 
 // Checks if the next-server defined as global parameter is taken into
 // consideration.

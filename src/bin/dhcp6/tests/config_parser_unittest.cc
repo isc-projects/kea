@@ -436,6 +436,63 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(3000, subnet->getPreferred());
     EXPECT_EQ(4000, subnet->getValid());
+
+    // Check that subnet-id is 1
+    EXPECT_EQ(1, subnet->getID());
+}
+
+// Goal of this test is to verify that multiple subnets get unique
+// subnet-ids. Also, test checks that it's possible to do reconfiguration
+// multiple times.
+TEST_F(Dhcp6ParserTest, multipleSubnets) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:4::/80\" ],"
+        "    \"subnet\": \"2001:db8:4::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    int cnt = 0; // Number of reconfigurations
+
+    do {
+        ElementPtr json = Element::fromJSON(config);
+
+        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(0, rcode_);
+
+        const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+        ASSERT_TRUE(subnets);
+        ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+        // Check subnet-ids of each subnet (it should be monotonously increasing)
+        EXPECT_EQ(1, subnets->at(0)->getID());
+        EXPECT_EQ(2, subnets->at(1)->getID());
+        EXPECT_EQ(3, subnets->at(2)->getID());
+        EXPECT_EQ(4, subnets->at(3)->getID());
+
+        // Repeat reconfiguration process 10 times and check that the subnet-id
+        // is set to the same value. Technically, just two iterations would be
+        // sufficient, but it's nice to have a test that exercises reconfiguration
+        // a bit.
+    } while (++cnt < 10);
 }
 
 // This test checks if it is possible to override global values
