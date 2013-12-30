@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <exceptions/exceptions.h>
-#include <tests/tools/perfdhcp/rate_control.h>
+#include "rate_control.h"
 #include <gtest/gtest.h>
 
 

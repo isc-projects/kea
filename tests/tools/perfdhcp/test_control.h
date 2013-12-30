@@ -15,9 +15,9 @@
 #ifndef TEST_CONTROL_H
 #define TEST_CONTROL_H
 
-#include <tests/tools/perfdhcp/packet_storage.h>
-#include <tests/tools/perfdhcp/rate_control.h>
-#include <tests/tools/perfdhcp/stats_mgr.h>
+#include "packet_storage.h"
+#include "rate_control.h"
+#include "stats_mgr.h"
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp6.h>
