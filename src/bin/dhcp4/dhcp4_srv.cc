@@ -1808,15 +1808,15 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     if (vendor_class->getValue().find("docsis3.0") != std::string::npos) {
         pkt->addClass("docsis3.0");
         classes += "docsis3.0 ";
-    }
-
+    } else
     if (vendor_class->getValue().find("eRouter1.0") != std::string::npos) {
         pkt->addClass("eRouter1.0");
         classes += "eRouter1.0 ";
+    }else
+    {
+        classes += vendor_class->getValue();
+        pkt->addClass(vendor_class->getValue());
     }
-
-    classes += vendor_class->getValue();
-    pkt->addClass(vendor_class->getValue());
 
     if (!classes.empty()) {
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
@@ -1833,10 +1833,12 @@ bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp
 
     if (query->inClass("docsis3.0")) {
 
-        // set next-server
-        // @todo uncomment this once 3191 is merged
-        // rsp->setSiaddr(subnet->getSiaddr());
+        // Set next-server. This is TFTP server address. Cable modems will
+        // download their configuration from that server.
+        rsp->setSiaddr(subnet->getSiaddr());
 
+        // Now try to set up file field in DHCPv4 packet. We will just copy
+        // content of the boot-file option, which contains the same information.
         Subnet::OptionDescriptor desc =
             subnet->getOptionDescriptor("dhcp4", DHO_BOOT_FILE_NAME);
 
@@ -1852,7 +1854,8 @@ bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp
 
     if (query->inClass("eRouter1.0")) {
 
-
+        // Do not set TFTP server address for eRouter devices.
+        rsp->setSiaddr(IOAddress("0.0.0.0"));
     }
 
     return (true);
