@@ -533,6 +533,16 @@ protected:
                          size_t* relay_msg_offset,
                          size_t* relay_msg_len);
 
+    /// @brief Assigns incoming packet to zero or more classes.
+    ///
+    /// @note For now, the client classification is very simple. It just uses
+    /// content of the vendor-class-identifier option as a class. The resulting
+    /// class will be stored in packet (see @ref isc::dhcp::Pkt6::classes_ and
+    /// @ref isc::dhcp::Pkt6::inClass).
+    ///
+    /// @param pkt packet to be classified
+    void classifyPacket(const Pkt6Ptr& pkt);
+
 private:
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using

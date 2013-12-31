@@ -27,6 +27,10 @@ successfully established a session with the BIND 10 control channel.
 This debug message is issued just before the IPv6 DHCP server attempts
 to establish a session with the BIND 10 control channel.
 
+% DHCP6_CLASS_ASSIGNED client packet has been assigned to the following class(es): %1
+This debug message informs that incoming packet has been assigned to specified
+class or classes. This is a norma
+
 % DHCP6_CLIENTID_MISSING mandatory client-id option is missing, message from %1 dropped
 This error message indicates that the received message is being dropped
 because it does not include the mandatory client-id option necessary for

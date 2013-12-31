@@ -310,6 +310,9 @@ bool Dhcpv6Srv::run() {
             callout_handle->getArgument("query6", query);
         }
 
+        // Assign this packet to a class, if possible
+        classifyPacket(query);
+
         try {
                 NameChangeRequestPtr ncr;
             switch (query->getType()) {
@@ -2409,6 +2412,37 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
     return (offset);
 }
 
+void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
+
+    boost::shared_ptr<OptionCustom> vclass =
+        boost::dynamic_pointer_cast<OptionCustom>(pkt->getOption(D6O_VENDOR_CLASS));
+
+    if (!vclass) {
+        return;
+    }
+
+    string classes = "";
+
+    // DOCSIS specific section
+    if (vclass->readString(2).find("docsis3.0") != std::string::npos) {
+        pkt->addClass("docsis3.0");
+        classes += "docsis3.0 ";
+    } else
+    if (vclass->readString(2).find("eRouter1.0") != std::string::npos) {
+        pkt->addClass("eRouter1.0");
+        classes += "eRouter1.0 ";
+    }else
+    {
+        // Otherwise use the string as is
+        classes += vclass->readString(2);
+        pkt->addClass(vclass->readString(2));
+    }
+
+    if (!classes.empty()) {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
+            .arg(classes);
+    }
+}
 
 };
 };

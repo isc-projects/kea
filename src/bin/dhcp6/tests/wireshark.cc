@@ -17,9 +17,9 @@
 #include <string>
 
 /// @file   wireshark.cc
-/// 
+///
 /// @brief  contains packet captures imported from Wireshark
-/// 
+///
 /// These are actual packets captured over wire. They are used in various
 /// tests.
 ///
@@ -33,6 +33,10 @@
 /// 6. Coding guidelines line restrictions apply, so wrap your code as necessary
 /// 7. Make sure you decribe the capture appropriately
 /// 8. Follow whatever rest of the methods are doing (set ports, ifaces etc.)
+/// 9. To easily copy packet description, click File... -> Extract packet
+///    dissections -> as plain text file...
+///    (Make sure that the packet is expanded in the view. The text file will
+///    contain whatever expansion level you have in the graphical tree.)
 
 using namespace std;
 
@@ -81,7 +85,7 @@ Pkt6Ptr Dhcpv6SrvTest::captureRelayedSolicit() {
     //     - ORO (7)
 
     // string exported from Wireshark
-    string hex_string = 
+    string hex_string =
         "0c0500000000000000000000000000000000fc00000000000000000000000000000900"
         "12000231350009002c010517100001000e0001000151b5e46208002758f1e80003000c"
         "000000010000000000000000000600020007";
@@ -102,7 +106,7 @@ Pkt6Ptr Dhcpv6SrvTest::captureRelayedSolicit() {
 Pkt6Ptr isc::test::Dhcpv6SrvTest::captureDocsisRelayedSolicit() {
 
     // This is an actual DOCSIS packet
-    // RELAY-FORW (12) 
+    // RELAY-FORW (12)
     //  - Relay Message
     //    - SOLICIT (1)
     //      - client-id
@@ -132,7 +136,7 @@ Pkt6Ptr isc::test::Dhcpv6SrvTest::captureDocsisRelayedSolicit() {
     //    - Suboption 1026: Cable Modem MAC addr = 10:0d:7f:00:07:88
 
     // string exported from Wireshark
-    string hex_string = 
+    string hex_string =
         "0c002a0288fe00fe00015a8d09fffe7af955fe80000000000000120d7ffffe00078800"
         "090189010d397f0001000a00030001100d7f000788000300287f000788000000000000"
         "000000050018000000000000000000000000000000000000000000000000000e000000"
@@ -147,6 +151,142 @@ Pkt6Ptr isc::test::Dhcpv6SrvTest::captureDocsisRelayedSolicit() {
         "323200080006303030393542000900084347343030305444000a00074e657467656172"
         "000f000745524f5554455200120012427531264361312f3000100d7f00078800000011"
         "00160000118b040100040102030004020006100d7f000788";
+
+    std::vector<uint8_t> bin;
+
+    // Decode the hex string and store it in bin (which happens
+    // to be OptionBuffer format)
+    isc::util::encode::decodeHex(hex_string, bin);
+
+    Pkt6Ptr pkt(new Pkt6(&bin[0], bin.size()));
+    captureSetDefaultFields(pkt);
+    return (pkt);
+}
+
+/// returns a buffer with relayed SOLICIT (from DOCSIS3.0 eRouter)
+Pkt6Ptr isc::test::Dhcpv6SrvTest::captureeRouterRelayedSolicit() {
+
+/* Packet description exported from wireshark:
+DHCPv6
+    Message type: Relay-forw (12)
+    Hopcount: 0
+    Link address: 2001:558:ffa8::1 (2001:558:ffa8::1)
+    Peer address: fe80::22e5:2aff:feb8:1515 (fe80::22e5:2aff:feb8:1515)
+    Relay Message
+        Option: Relay Message (9)
+        Length: 241
+        Value: 01a90044000e000000140000000600080011001700180019...
+        DHCPv6
+            Message type: Solicit (1)
+            Transaction ID: 0xa90044
+            Rapid Commit
+                Option: Rapid Commit (14)
+                Length: 0
+            Reconfigure Accept
+                Option: Reconfigure Accept (20)
+                Length: 0
+            Option Request
+                Option: Option Request (6)
+                Length: 8
+                Value: 0011001700180019
+                Requested Option code: Vendor-specific Information (17)
+                Requested Option code: DNS recursive name server (23)
+                Requested Option code: Domain Search List (24)
+                Requested Option code: Identity Association for Prefix Delegation (25)
+            Vendor Class
+                Option: Vendor Class (16)
+                Length: 16
+                Value: 0000118b000a65526f75746572312e30
+                Enterprise ID: Cable Television Laboratories, Inc. (4491)
+                vendor-class-data: eRouter1.0
+            Vendor-specific Information
+                Option: Vendor-specific Information (17)
+                Length: 112
+                Value: 0000118b0002000745524f555445520003000b45434d3a45...
+                Enterprise ID: Cable Television Laboratories, Inc. (4491)
+                Suboption: Device Type =  (2)"EROUTER"
+                Suboption: Embedded Components =  (3)"ECM:EROUTER"
+                Suboption: Serial Number =  (4)"2BR229U40044C"
+                Suboption: Hardware Version =  (5)"1.04"
+                Suboption: Software Version =  (6)"V1.33.03"
+                Suboption: Boot ROM Version =  (7)"2.3.0R2"
+                Suboption: Organization Unique Identifier =  (8)"00095B"
+                Suboption: Model Number =  (9)"CG3000DCR"
+                Suboption: Vendor Name =  (10)"Netgear"
+            Client Identifier
+                Option: Client Identifier (1)
+                Length: 10
+                Value: 0003000120e52ab81515
+                DUID: 0003000120e52ab81515
+                DUID Type: link-layer address (3)
+                Hardware type: Ethernet (1)
+                Link-layer address: 20:e5:2a:b8:15:15
+            Identity Association for Prefix Delegation
+                Option: Identity Association for Prefix Delegation (25)
+                Length: 41
+                Value: 2ab815150000000000000000001a00190000000000000000...
+                IAID: 2ab81515
+                T1: 0
+                T2: 0
+                IA Prefix
+                    Option: IA Prefix (26)
+                    Length: 25
+                    Value: 000000000000000038000000000000000000000000000000...
+                    Preferred lifetime: 0
+                    Valid lifetime: 0
+                    Prefix length: 56
+                    Prefix address: :: (::)
+            Identity Association for Non-temporary Address
+                Option: Identity Association for Non-temporary Address (3)
+                Length: 12
+                Value: 2ab815150000000000000000
+                IAID: 2ab81515
+                T1: 0
+                T2: 0
+            Elapsed time
+                Option: Elapsed time (8)
+                Length: 2
+                Value: 0000
+                Elapsed time: 0 ms
+    Vendor-specific Information
+        Option: Vendor-specific Information (17)
+        Length: 22
+        Value: 0000118b0402000620e52ab815140401000401020300
+        Enterprise ID: Cable Television Laboratories, Inc. (4491)
+        Suboption: CM MAC Address Option =  (1026)20:e5:2a:b8:15:14
+        Suboption: CMTS Capabilities Option :  (1025)
+    Interface-Id
+        Option: Interface-Id (18)
+        Length: 4
+        Value: 00000022
+        Interface-ID:
+    Remote Identifier
+        Option: Remote Identifier (37)
+        Length: 14
+        Value: 0000101300015c228d4110000122
+        Enterprise ID: Arris Interactive LLC (4115)
+        Remote-ID: 00015c228d4110000122
+    DHCP option 53
+        Option: Unknown (53)
+        Length: 10
+        Value: 0003000100015c228d3d
+        DUID: 0003000100015c228d3d
+        DUID Type: link-layer address (3)
+        Hardware type: Ethernet (1)
+        Link-layer address: 00:01:5c:22:8d:3d */
+
+    // string exported from Wireshark
+    string hex_string =
+        "0c0020010558ffa800000000000000000001fe8000000000000022e52afffeb8151500"
+        "0900f101a90044000e000000140000000600080011001700180019001000100000118b"
+        "000a65526f75746572312e30001100700000118b0002000745524f555445520003000b"
+        "45434d3a45524f555445520004000d3242523232395534303034344300050004312e30"
+        "340006000856312e33332e303300070007322e332e3052320008000630303039354200"
+        "090009434733303030444352000a00074e6574676561720001000a0003000120e52ab8"
+        "1515001900292ab815150000000000000000001a001900000000000000003800000000"
+        "0000000000000000000000000003000c2ab81515000000000000000000080002000000"
+        "1100160000118b0402000620e52ab81514040100040102030000120004000000220025"
+        "000e0000101300015c228d41100001220035000a0003000100015c228d3d";
 
     std::vector<uint8_t> bin;
 
