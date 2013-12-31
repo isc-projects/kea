@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,9 @@
 #ifndef STATS_MGR_H
 #define STATS_MGR_H
 
-#include <iostream>
-#include <map>
+#include <dhcp/pkt4.h>
+#include <dhcp/pkt6.h>
+#include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -27,7 +28,9 @@
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <exceptions/exceptions.h>
+#include <iostream>
+#include <map>
+
 
 namespace isc {
 namespace perfdhcp {
@@ -120,7 +123,9 @@ public:
         XCHG_DO,  ///< DHCPv4 DISCOVER-OFFER
         XCHG_RA,  ///< DHCPv4 REQUEST-ACK
         XCHG_SA,  ///< DHCPv6 SOLICIT-ADVERTISE
-        XCHG_RR   ///< DHCPv6 REQUEST-REPLY
+        XCHG_RR,  ///< DHCPv6 REQUEST-REPLY
+        XCHG_RN,  ///< DHCPv6 RENEW-REPLY
+        XCHG_RL   ///< DHCPv6 RELEASE-REPLY
     };
 
     /// \brief Exchange Statistics.
@@ -628,12 +633,19 @@ public:
         /// Method prints main statistics for particular exchange.
         /// Statistics includes: number of sent and received packets,
         /// number of dropped packets and number of orphans.
+        ///
+        /// \todo Currently the number of orphans is not displayed because
+        /// Reply messages received for Renew and Releases are counted as
+        /// orphans for the 4-way exchanges, which is wrong. We will need to
+        /// move the orphans counting out of the Statistics Manager so as
+        /// orphans counter is increased only if the particular message is
+        /// not identified as a reponse to any of the messages sent by perfdhcp.
         void printMainStats() const {
             using namespace std;
             cout << "sent packets: " << getSentPacketsNum() << endl
                  << "received packets: " << getRcvdPacketsNum() << endl
-                 << "drops: " << getDroppedPacketsNum() << endl
-                 << "orphans: " << getOrphans() << endl;
+                 << "drops: " << getDroppedPacketsNum() << endl;
+            //                 << "orphans: " << getOrphans() << endl;
         }
 
         /// \brief Print round trip time packets statistics.
@@ -865,6 +877,20 @@ public:
                                                drop_time,
                                                archive_enabled_,
                                                boot_time_));
+    }
+
+    /// \brief Check if the exchange type has been specified.
+    ///
+    /// This method checks if the \ref ExchangeStats object of a particular type
+    /// exists (has been added using \ref addExchangeStats function).
+    ///
+    /// \param xchg_type A type of the exchange being repersented by the
+    /// \ref ExchangeStats object.
+    ///
+    /// \return true if the \ref ExchangeStats object has been added for a
+    /// specified exchange type.
+    bool hasExchangeStats(const ExchangeType xchg_type) const {
+        return (exchanges_.find(xchg_type) != exchanges_.end());
     }
 
     /// \brief Add named custom uint64 counter.
@@ -1155,7 +1181,7 @@ public:
     ///
     /// \param xchg_type exchange type.
     /// \return string representing name of the exchange.
-    std::string exchangeToString(ExchangeType xchg_type) const {
+    static std::string exchangeToString(ExchangeType xchg_type) {
         switch(xchg_type) {
         case XCHG_DO:
             return("DISCOVER-OFFER");
@@ -1165,6 +1191,10 @@ public:
             return("SOLICIT-ADVERTISE");
         case XCHG_RR:
             return("REQUEST-REPLY");
+        case XCHG_RN:
+            return("RENEW-REPLY");
+        case XCHG_RL:
+            return("RELEASE-REPLY");
         default:
             return("Unknown exchange type");
         }

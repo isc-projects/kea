@@ -15,11 +15,15 @@
 #ifndef COMMAND_OPTIONS_HELPER_H
 #define COMMAND_OPTIONS_HELPER_H
 
+#include "../command_options.h"
+#include <exceptions/exceptions.h>
+
+#include <assert.h>
+#include <iterator>
+#include <cstring>
 #include <string>
 #include <vector>
 
-#include <exceptions/exceptions.h>
-#include "../command_options.h"
 
 namespace isc {
 namespace perfdhcp {

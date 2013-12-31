@@ -1622,6 +1622,15 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid) const {
     return (result);
 }
 
+Lease4Ptr
+MySqlLeaseMgr::getLease4(const ClientId&, const HWAddr&, SubnetID) const {
+    /// This function is currently not implemented because allocation engine
+    /// searches for the lease using HW address or client identifier.
+    /// It never uses both parameters in the same time. We need to
+    /// consider if this function is needed at all.
+    isc_throw(NotImplemented, "The MySqlLeaseMgr::getLease4 function was"
+              " called, but it is not implemented");
+}
 
 Lease4Ptr
 MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {

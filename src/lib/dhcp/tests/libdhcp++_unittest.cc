@@ -23,10 +23,12 @@
 #include <dhcp/option6_client_fqdn.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_string.h>
+#include <dhcp/option_vendor.h>
 #include <util/buffer.h>
 
 #include <gtest/gtest.h>
@@ -42,6 +44,12 @@ using namespace isc::dhcp;
 using namespace isc::util;
 
 namespace {
+
+// DHCPv6 suboptions of Vendor Options Option.
+/// @todo move to src/lib/dhcp/docsis3_option_defs.h once #3194 is merged.
+const uint16_t OPTION_CMTS_CAPS = 1025;
+const uint16_t OPTION_CM_MAC = 1026;
+
 class LibDhcpTest : public ::testing::Test {
 public:
     LibDhcpTest() { }
@@ -105,6 +113,33 @@ public:
         testStdOptionDefs(Option::V6, code, begin, end, expected_type,
                           encapsulates);
     }
+
+    /// @brief Create a sample DHCPv4 option 43 with suboptions.
+    static OptionBuffer createVendorOption() {
+        const uint8_t opt_data[] = {
+            0x2B, 0x0D,  // Vendor-Specific Information (CableLabs)
+            // Suboptions start here...
+            0x02, 0x05,  // Device Type Option (length = 5)
+            'D', 'u', 'm', 'm', 'y',
+            0x04, 0x04,   // Serial Number Option (length = 4)
+            0x42, 0x52, 0x32, 0x32 // Serial number
+        };
+        return (OptionBuffer(opt_data, opt_data + sizeof(opt_data)));
+    }
+
+    /// @brief Create a sample DHCPv4 option 82 with suboptions.
+    static OptionBuffer createAgentInformationOption() {
+        const uint8_t opt_data[] = {
+            0x52, 0x0E, // Agent Information Option (length = 14)
+            // Suboptions start here...
+            0x01, 0x04, // Agent Circuit ID (length = 4)
+            0x20, 0x00, 0x00, 0x02, // ID
+            0x02, 0x06, // Agent Remote ID
+            0x20, 0xE5, 0x2A, 0xB8, 0x15, 0x14 // ID
+        };
+        return (OptionBuffer(opt_data, opt_data + sizeof(opt_data)));
+    }
+
 private:
 
     /// @brief Test DHCPv4 or DHCPv6 option definition.
@@ -177,7 +212,19 @@ const uint8_t v6packed[] = {
     0, 2, 0, 3, 105, 106, 107, // SERVER_ID (7 bytes)
     0, 14, 0, 0, // RAPID_COMMIT (0 bytes)
     0,  6, 0, 4, 108, 109, 110, 111, // ORO (8 bytes)
-    0,  8, 0, 2, 112, 113 // ELAPSED_TIME (6 bytes)
+    0,  8, 0, 2, 112, 113, // ELAPSED_TIME (6 bytes)
+    // Vendor Specific Information Option starts here
+    0x00, 0x11,  // VSI Option Code
+    0x00, 0x16,  // VSI Option Length
+    0x00, 0x00, 0x11, 0x8B, // Enterprise ID
+    0x04, 0x01,  // CMTS Capabilities Option
+    0x00, 0x04,  // Length
+    0x01, 0x02,
+    0x03, 0x00,  // DOCSIS Version Number
+    0x04, 0x02,  // CM MAC Address Suboption
+    0x00, 0x06,  // Length
+    0x74, 0x56, 0x12, 0x29, 0x97, 0xD0, // Actual MAC Address
+
 };
 
 TEST_F(LibDhcpTest, optionFactory) {
@@ -267,11 +314,23 @@ TEST_F(LibDhcpTest, packOptions6) {
     OptionPtr opt4(new Option(Option::V6, 6, buf.begin() + 8, buf.begin() + 12));
     OptionPtr opt5(new Option(Option::V6, 8, buf.begin() + 12, buf.begin() + 14));
 
+    OptionPtr cm_mac(new Option(Option::V6, OPTION_CM_MAC,
+                                OptionBuffer(v6packed + 54, v6packed  + 60)));
+
+    OptionPtr cmts_caps(new Option(Option::V6, OPTION_CMTS_CAPS,
+                                   OptionBuffer(v6packed + 46, v6packed + 50)));
+
+    boost::shared_ptr<OptionInt<uint32_t> >
+        vsi(new OptionInt<uint32_t>(Option::V6, D6O_VENDOR_OPTS, 4491));
+    vsi->addOption(cm_mac);
+    vsi->addOption(cmts_caps);
+
     opts.insert(make_pair(opt1->getType(), opt1));
     opts.insert(make_pair(opt1->getType(), opt2));
     opts.insert(make_pair(opt1->getType(), opt3));
     opts.insert(make_pair(opt1->getType(), opt4));
     opts.insert(make_pair(opt1->getType(), opt5));
+    opts.insert(make_pair(opt1->getType(), vsi));
 
     OutputBuffer assembled(512);
 
@@ -293,10 +352,10 @@ TEST_F(LibDhcpTest, unpackOptions6) {
 
     EXPECT_NO_THROW ({
             LibDHCP::unpackOptions6(OptionBuffer(buf.begin(), buf.begin() + sizeof(v6packed)),
-                                    options);
+                                    "dhcp6", options);
     });
 
-    EXPECT_EQ(options.size(), 5); // there should be 5 options
+    EXPECT_EQ(options.size(), 6); // there should be 5 options
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(1);
     ASSERT_FALSE(x == options.end()); // option 1 should exist
@@ -357,6 +416,27 @@ TEST_F(LibDhcpTest, unpackOptions6) {
     // Returned value should be equivalent to two byte values: 112, 113
     EXPECT_EQ(0x7071, opt_elapsed_time->getValue());
 
+    // Check if Vendor Specific Information Option along with suboptions
+    // have been parsed correctly.
+    x = options.find(D6O_VENDOR_OPTS);
+    EXPECT_FALSE(x == options.end());
+    EXPECT_EQ(D6O_VENDOR_OPTS, x->second->getType());
+    EXPECT_EQ(26, x->second->len());
+
+    // CM MAC Address Option
+    OptionPtr cm_mac = x->second->getOption(OPTION_CM_MAC);
+    ASSERT_TRUE(cm_mac);
+    EXPECT_EQ(OPTION_CM_MAC, cm_mac->getType());
+    ASSERT_EQ(10, cm_mac->len());
+    EXPECT_EQ(0, memcmp(&cm_mac->getData()[0], v6packed + 54, 6));
+
+    // CMTS Capabilities
+    OptionPtr cmts_caps = x->second->getOption(OPTION_CMTS_CAPS);
+    ASSERT_TRUE(cmts_caps);
+    EXPECT_EQ(OPTION_CMTS_CAPS, cmts_caps->getType());
+    ASSERT_EQ(8, cmts_caps->len());
+    EXPECT_EQ(0, memcmp(&cmts_caps->getData()[0], v6packed + 46, 4));
+
     x = options.find(0);
     EXPECT_TRUE(x == options.end()); // option 0 not found
 
@@ -380,7 +460,12 @@ static uint8_t v4_opts[] = {
     60,  3, 10, 11, 12, // Class Id
     14,  3, 20, 21, 22, // Merit Dump File
     254, 3, 30, 31, 32, // Reserved
-    128, 3, 40, 41, 42  // Vendor specific
+    128, 3, 40, 41, 42, // Vendor specific
+    0x52, 0x19,         // RAI
+    0x01, 0x04, 0x20, 0x00, 0x00, 0x02, // Agent Circuit ID
+    0x02, 0x06, 0x20, 0xE5, 0x2A, 0xB8, 0x15, 0x14, // Agent Remote ID
+    0x09, 0x09, 0x00, 0x00, 0x11, 0x8B, 0x04, // Vendor Specific Information
+    0x01, 0x02, 0x03, 0x00  // Vendor Specific Information continued
 };
 
 TEST_F(LibDhcpTest, packOptions4) {
@@ -399,20 +484,53 @@ TEST_F(LibDhcpTest, packOptions4) {
     OptionPtr opt4(new Option(Option::V4,254, payload[3]));
     OptionPtr opt5(new Option(Option::V4,128, payload[4]));
 
+    // Add RAI option, which comprises 3 sub-options.
+
+    // Get the option definition for RAI option. This option is represented
+    // by OptionCustom which requires a definition to be passed to
+    // the constructor.
+    OptionDefinitionPtr rai_def = LibDHCP::getOptionDef(Option::V4,
+                                                        DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_def);
+    // Create RAI option.
+    OptionCustomPtr rai(new OptionCustom(*rai_def, Option::V4));
+
+    // The sub-options are created using the bits of v4_opts buffer because
+    // we want to use this buffer as a reference to verify that produced
+    // option in on-wire format is correct.
+
+    // Create Ciruit ID sub-option and add to RAI.
+    OptionPtr circuit_id(new Option(Option::V4, RAI_OPTION_AGENT_CIRCUIT_ID,
+                                    OptionBuffer(v4_opts + 29,
+                                                 v4_opts + 33)));
+    rai->addOption(circuit_id);
+
+    // Create Remote ID option and add to RAI.
+    OptionPtr remote_id(new Option(Option::V4, RAI_OPTION_REMOTE_ID,
+                                   OptionBuffer(v4_opts + 35, v4_opts + 41)));
+    rai->addOption(remote_id);
+
+    // Create Vendor Specific Information and add to RAI.
+    OptionPtr vsi(new Option(Option::V4, RAI_OPTION_VSI,
+                             OptionBuffer(v4_opts + 43, v4_opts + 52)));
+    rai->addOption(vsi);
+
     isc::dhcp::OptionCollection opts; // list of options
+    // Note that we insert each option under the same option code into
+    // the map. This gurantees that options are packed in the same order
+    // they were added. Otherwise, options would get sorted by code and
+    // the resulting buffer wouldn't match with the reference buffer.
     opts.insert(make_pair(opt1->getType(), opt1));
     opts.insert(make_pair(opt1->getType(), opt2));
     opts.insert(make_pair(opt1->getType(), opt3));
     opts.insert(make_pair(opt1->getType(), opt4));
     opts.insert(make_pair(opt1->getType(), opt5));
-
-    vector<uint8_t> expVect(v4_opts, v4_opts + sizeof(v4_opts));
+    opts.insert(make_pair(opt1->getType(), rai));
 
     OutputBuffer buf(100);
     EXPECT_NO_THROW(LibDHCP::packOptions(buf, opts));
     ASSERT_EQ(buf.getLength(), sizeof(v4_opts));
     EXPECT_EQ(0, memcmp(v4_opts, buf.getData(), sizeof(v4_opts)));
-
 }
 
 TEST_F(LibDhcpTest, unpackOptions4) {
@@ -421,7 +539,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     isc::dhcp::OptionCollection options; // list of options
 
     ASSERT_NO_THROW(
-        LibDHCP::unpackOptions4(v4packed, options);
+        LibDHCP::unpackOptions4(v4packed, "dhcp4", options);
     );
 
     isc::dhcp::OptionCollection::const_iterator x = options.find(12);
@@ -464,6 +582,48 @@ TEST_F(LibDhcpTest, unpackOptions4) {
     EXPECT_EQ(5, x->second->len()); // total option length 5
     EXPECT_EQ(0, memcmp(&x->second->getData()[0], v4_opts + 22, 3)); // data len=3
 
+    // Checking DHCP Relay Agent Information Option.
+    x = options.find(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_FALSE(x == options.end());
+    EXPECT_EQ(DHO_DHCP_AGENT_OPTIONS, x->second->getType());
+    // RAI is represented by OptionCustom.
+    OptionCustomPtr rai = boost::dynamic_pointer_cast<OptionCustom>(x->second);
+    ASSERT_TRUE(rai);
+    // RAI should have 3 sub-options: Circuit ID, Agent Remote ID, Vendor
+    // Specific Information option. Note that by parsing these suboptions we
+    // are checking that unpackOptions4 differentiates between standard option
+    // space called "dhcp4" and other option spaces. These sub-options do not
+    // belong to standard option space and should be parsed using different
+    // option definitions.
+    // @todo Currently, definitions for option space "dhcp-agent-options-space"
+    // are not defined. Therefore all suboptions will be represented here by
+    // the generic Option class.
+
+    // Check that Circuit ID option is among parsed options.
+    OptionPtr rai_option = rai->getOption(RAI_OPTION_AGENT_CIRCUIT_ID);
+    ASSERT_TRUE(rai_option);
+    EXPECT_EQ(RAI_OPTION_AGENT_CIRCUIT_ID, rai_option->getType());
+    ASSERT_EQ(6, rai_option->len());
+    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 29, 4));
+
+    // Check that Remote ID option is among parsed options.
+    rai_option = rai->getOption(RAI_OPTION_REMOTE_ID);
+    ASSERT_TRUE(rai_option);
+    EXPECT_EQ(RAI_OPTION_REMOTE_ID, rai_option->getType());
+    ASSERT_EQ(8, rai_option->len());
+    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 35, 6));
+
+    // Check that Vendor Specific Information option is among parsed options.
+    rai_option = rai->getOption(RAI_OPTION_VSI);
+    ASSERT_TRUE(rai_option);
+    EXPECT_EQ(RAI_OPTION_VSI, rai_option->getType());
+    ASSERT_EQ(11, rai_option->len());
+    EXPECT_EQ(0, memcmp(&rai_option->getData()[0], v4_opts + 43, 9));
+
+    // Make sure, that option other than those above is not present.
+    EXPECT_FALSE(rai->getOption(10));
+
+    // Check the same for the global option space.
     x = options.find(0);
     EXPECT_TRUE(x == options.end()); // option 0 not found
 
@@ -472,6 +632,7 @@ TEST_F(LibDhcpTest, unpackOptions4) {
 
     x = options.find(2);
     EXPECT_TRUE(x == options.end()); // option 2 not found
+
 }
 
 TEST_F(LibDhcpTest, isStandardOption4) {
@@ -482,7 +643,10 @@ TEST_F(LibDhcpTest, isStandardOption4) {
                                           187, 188, 189, 190, 191, 192, 193, 194, 195,
                                           196, 197, 198, 199, 200, 201, 202, 203, 204,
                                           205, 206, 207, 214, 215, 216, 217, 218, 219,
-                                          222, 223 };
+                                          222, 223, 224, 225, 226, 227, 228, 229, 230,
+                                          231, 232, 233, 234, 235, 236, 237, 238, 239,
+                                          240, 241, 242, 243, 244, 245, 246, 247, 248,
+                                          249, 250, 251, 252, 253, 254 };
     const size_t unassigned_num = sizeof(unassigned_codes) / sizeof(unassigned_codes[0]);
 
     // Try all possible option codes.
@@ -653,8 +817,8 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_DEFAULT_TCP_TTL, begin, begin + 1,
                                     typeid(OptionInt<uint8_t>));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_TCP_KEEPALIVE_INTERVAL, begin, begin + 4,
-                                    typeid(OptionInt<uint32_t>));
+    LibDhcpTest::testStdOptionDefs4(DHO_TCP_KEEPALIVE_INTERVAL, begin,
+                                    begin + 4, typeid(OptionInt<uint32_t>));
 
     LibDhcpTest::testStdOptionDefs4(DHO_TCP_KEEPALIVE_GARBAGE, begin, begin + 1,
                                     typeid(OptionCustom));
@@ -668,8 +832,13 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_NTP_SERVERS, begin, end,
                                     typeid(Option4AddrLst));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_VENDOR_ENCAPSULATED_OPTIONS, begin, end,
-                                    typeid(Option),
+    // The following option requires well formed buffer to be created from.
+    // Not just a dummy one. This buffer includes some suboptions.
+    OptionBuffer vendor_opts_buf = createVendorOption();
+    LibDhcpTest::testStdOptionDefs4(DHO_VENDOR_ENCAPSULATED_OPTIONS,
+                                    vendor_opts_buf.begin(),
+                                    vendor_opts_buf.end(),
+                                    typeid(OptionCustom),
                                     "vendor-encapsulated-options-space");
 
     LibDhcpTest::testStdOptionDefs4(DHO_NETBIOS_NAME_SERVERS, begin, end,
@@ -744,8 +913,14 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_FQDN, begin, begin + 3,
                                     typeid(Option4ClientFqdn));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_AGENT_OPTIONS, begin, end,
-                                    typeid(Option), "dhcp-agent-options-space");
+    // The following option requires well formed buffer to be created from.
+    // Not just a dummy one. This buffer includes some suboptions.
+    OptionBuffer agent_info_buf = createAgentInformationOption();
+    LibDhcpTest::testStdOptionDefs4(DHO_DHCP_AGENT_OPTIONS,
+                                    agent_info_buf.begin(),
+                                    agent_info_buf.end(),
+                                    typeid(OptionCustom),
+                                    "dhcp-agent-options-space");
 
     LibDhcpTest::testStdOptionDefs4(DHO_AUTHENTICATE, begin, end,
                                     typeid(Option));
@@ -767,7 +942,7 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
                                     typeid(Option));
 
     LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, begin, end,
-                                    typeid(Option));
+                                    typeid(OptionVendor));
 }
 
 // Test that definitions of standard options have been initialized
@@ -844,7 +1019,7 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(OptionCustom));
 
     LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, begin, end,
-                                    typeid(OptionInt<uint32_t>),
+                                    typeid(OptionVendor),
                                     "vendor-opts-space");
 
     LibDhcpTest::testStdOptionDefs6(D6O_INTERFACE_ID, begin, end,
@@ -872,8 +1047,8 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_IA_PD, begin, end,
                                     typeid(Option6IA));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_IAPREFIX, begin, end,
-                                    typeid(OptionCustom));
+    LibDhcpTest::testStdOptionDefs6(D6O_IAPREFIX, begin, begin + 25,
+                                    typeid(Option6IAPrefix));
 
     LibDhcpTest::testStdOptionDefs6(D6O_NIS_SERVERS, begin, end,
                                     typeid(Option6AddrLst));

@@ -44,6 +44,7 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"), IOAddress("192.0.2.110")));
     subnet_->addPool(pool_);
 
+    CfgMgr::instance().deleteActiveIfaces();
     CfgMgr::instance().deleteSubnets4();
     CfgMgr::instance().addSubnet4(subnet_);
 
@@ -64,6 +65,12 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     }
 
     valid_iface_ = ifaces.begin()->getName();
+}
+
+Dhcpv4SrvTest::~Dhcpv4SrvTest() {
+
+    // Make sure that we revert to default value
+    CfgMgr::instance().echoClientId(true);
 }
 
 void Dhcpv4SrvTest::addPrlOption(Pkt4Ptr& pkt) {
@@ -331,12 +338,21 @@ void Dhcpv4SrvTest::checkServerId(const Pkt4Ptr& rsp, const OptionPtr& expected_
 }
 
 void Dhcpv4SrvTest::checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid) {
+
+    bool include_clientid = CfgMgr::instance().echoClientId();
+
     // check that server included our own client-id
     OptionPtr opt = rsp->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    ASSERT_TRUE(opt);
-    EXPECT_EQ(expected_clientid->getType(), opt->getType());
-    EXPECT_EQ(expected_clientid->len(), opt->len());
-    EXPECT_TRUE(expected_clientid->getData() == opt->getData());
+    if (include_clientid) {
+        // Normal mode: echo back (see RFC6842)
+        ASSERT_TRUE(opt);
+        EXPECT_EQ(expected_clientid->getType(), opt->getType());
+        EXPECT_EQ(expected_clientid->len(), opt->len());
+        EXPECT_TRUE(expected_clientid->getData() == opt->getData());
+    } else {
+        // Backward compatibility mode for pre-RFC6842 devices
+        ASSERT_FALSE(opt);
+    }
 }
 
 ::testing::AssertionResult

@@ -836,6 +836,11 @@ as a dependency earlier -->
           and documentation, run:
           <screen>$ <userinput>make install</userinput></screen>
         </para>
+        <para>
+          Please don't use any form of parallel or job server options
+          (such as GNU make's <command>-j</command> option) when
+          performing this step. Doing so may cause errors.
+        </para>
         <note>
           <para>The install step may require superuser privileges.</para>
         </note>
@@ -4414,6 +4419,29 @@ Dhcp4/subnet4	[]	list	(default)
 
     </section>
 
+    <section id="dhcp4-echo-client-id">
+      <title>Echoing client-id (RFC6842)</title>
+      <para>Original DHCPv4 spec (RFC2131) states that the DHCPv4
+      server must not send back client-id options when responding to
+      clients. However, in some cases that confused clients that did
+      not have MAC address or client-id. See RFC6842 for details. That
+      behavior has changed with the publication of RFC6842 which
+      updated RFC2131. That update now states that the server must
+      send client-id if client sent it. That is the default behaviour
+      that Kea offers. However, in some cases older devices that do
+      not support RFC6842 may refuse to accept responses that include
+      client-id option. To enable backward compatibility, an optional
+      configuration parameter has been introduced. To configure it,
+      use the following commands:</para>
+
+<screen>
+&gt; <userinput>config add Dhcp4/echo-client-id</userinput>
+&gt; <userinput>config set Dhcp4/echo-client-id False</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+
+    </section>
+
     <section id="dhcp4-std">
       <title>Supported Standards</title>
       <para>The following standards and draft standards are currently
@@ -4424,10 +4452,19 @@ Dhcp4/subnet4	[]	list	(default)
             REQUEST, RELEASE, ACK, and NAK.</simpara>
           </listitem>
           <listitem>
-            <simpara><ulink url="http://tools.ietf.org/html/rfc2132">RFC 2132</ulink>: Supported options are: PAD (0),
+            <simpara><ulink url="http://tools.ietf.org/html/rfc2132">RFC 2132</ulink>:
+            Supported options are: PAD (0),
             END(255), Message Type(53), DHCP Server Identifier (54),
             Domain Name (15), DNS Servers (6), IP Address Lease Time
             (51), Subnet mask (1), and Routers (3).</simpara>
+          </listitem>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3046">RFC 3046</ulink>:
+            Relay Agent Information option is supported.</simpara>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc6842">RFC 6842</ulink>:
+            Server by default sends back client-id option. That capability may be
+            disabled. See <xref linkend="dhcp4-echo-client-id"/> for details.
+            </simpara>
           </listitem>
       </itemizedlist>
     </section>
@@ -4451,21 +4488,6 @@ Dhcp4/renew-timer	1000	integer	(default)
 &gt; <userinput>config commit</userinput></screen>
           </para>
         </listitem>
-          <listitem>
-            <simpara>During the initial IPv4 node configuration, the
-            server is expected to send packets to a node that does not
-            have IPv4 address assigned yet. The server requires
-            certain tricks (or hacks) to transmit such packets. This
-            is not implemented yet, therefore DHCPv4 server supports
-            relayed traffic only (that is, normal point to point
-            communication).</simpara>
-          </listitem>
-
-          <listitem>
-            <simpara>Upon start, the server will open sockets on all
-            interfaces that are not loopback, are up and running and
-            have IPv4 address.</simpara>
-          </listitem>
 
           <listitem>
             <simpara>The DHCPv4 server does not support
@@ -4475,7 +4497,7 @@ Dhcp4/renew-timer	1000	integer	(default)
             available from <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
           </listitem>
           <listitem>
-            <simpara>Interface detection is currently working on Linux
+            <simpara>Raw sockets operation is working on Linux
             only. See <xref linkend="iface-detect"/> for details.</simpara>
           </listitem>
           <listitem>
@@ -5392,10 +5414,6 @@ Dhcp6/renew-timer	1000	integer	(default)
         <listitem>
           <simpara>DNS Update is not supported.</simpara>
         </listitem>
-        <listitem>
-          <simpara>Interface detection is currently working on Linux
-          only. See <xref linkend="iface-detect"/> for details.</simpara>
-        </listitem>
       </itemizedlist>
     </section>
 
@@ -5430,16 +5448,17 @@ Dhcp6/renew-timer	1000	integer	(default)
 <!-- TODO: point to doxygen docs -->
 
     <section id="iface-detect">
-      <title>Interface detection</title>
+      <title>Interface detection and Socket handling</title>
       <para>Both the DHCPv4 and DHCPv6 components share network
       interface detection routines. Interface detection is
-      currently only supported on Linux systems.</para>
+      currently supported on Linux, all BSD family (FreeBSD, NetBSD,
+      OpenBSD), Mac OS X and Solaris 11 systems.</para>
 
-      <para>For non-Linux systems, there is currently a stub
-      implementation provided. The interface manager detects loopback
-      interfaces only as their name (lo or lo0) can be easily predicted.
-      Please contact the BIND 10 development team if you are interested
-      in running DHCP components on systems other than Linux.</para>
+      <para>DHCPv4 requires special raw socket processing to send and receive
+      packets from hosts that do not have IPv4 address assigned yet. Support
+      for this operation is implemented on Linux only, so it is likely that
+      DHCPv4 component will not work in certain cases on systems other than
+      Linux.</para>
     </section>
 
 <!--

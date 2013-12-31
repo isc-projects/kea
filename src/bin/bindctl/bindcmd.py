@@ -272,6 +272,11 @@ WARNING: The Python readline module isn't available, so some command line
         else:
             self._print('Login failed: either the user name or password is '
                         'invalid.\n')
+
+        # If this was not an interactive session do not prompt for login info.
+        if not sys.stdin.isatty():
+            return False
+
         while True:
             count = count + 1
             if count > 3:

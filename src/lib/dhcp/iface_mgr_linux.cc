@@ -502,7 +502,7 @@ void IfaceMgr::detectIfaces() {
 /// on different OSes.
 ///
 /// @param flags flags bitfield read from OS
-void Iface::setFlags(uint32_t flags) {
+void Iface::setFlags(uint64_t flags) {
     flags_ = flags;
 
     flag_loopback_ = flags & IFF_LOOPBACK;

@@ -37,10 +37,6 @@ libb10_asiolink_la_SOURCES += local_socket.h local_socket.cc
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 libb10_asiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# Same for clang++, but we need to turn off -Werror completely.
-libb10_asiolink_la_CXXFLAGS += -Wno-error
-endif
 libb10_asiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
 libb10_asiolink_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 

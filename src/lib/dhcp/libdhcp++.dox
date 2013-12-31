@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,8 +19,9 @@
 
 libdhcp++ is an all-purpose DHCP-manipulation library, written in
 C++. It offers packet parsing and assembly, DHCPv4 and DHCPv6
-options parsing and ssembly, interface detection (currently on
-Linux systems only) and socket operations. It is a generic purpose library that
+options parsing and assembly, interface detection (currently on
+Linux, FreeBSD, NetBSD, OpenBSD, Max OS X, and Solaris 11) and socket operations.
+It is a generic purpose library that
 can be used by server, client, relay, performance tools and other DHCP-related
 tools. For server specific library, see \ref libdhcpsrv. Please do not
 add any server-specific code to libdhcp++ and use \ref libdhcpsrv instead.
@@ -136,5 +137,53 @@ Another useful methods are dedicated to transmission
 (isc::dhcp::IfaceMgr::receive4() and isc::dhcp::IfaceMgr::receive6()).
 Note that receive4() and receive6() methods may return NULL, e.g.
 when timeout is reached or if dhcp daemon receives a signal.
+
+@section libdhcpPktFilter Switchable Packet Filter objects used by Interface Manager
+
+The well known problem of DHCPv4 implementation is that it must be able to
+provision devices which don't have an IPv4 address yet (the IPv4 address is
+one of the configuration parameters provided by DHCP server to a client).
+One way to communicate with such a device is to send server's response to
+a broadcast address. An obvious drawback of this approach is that the server's
+response will be received and processed by all clients in the particular
+network. Therefore, the preferred approach is that the server unicasts its
+response to a new address being assigned for the client. This client will
+identify itself as a target of this message by checking chaddr and/or
+Client Identifier value. At the same time, the other clients in the network
+will not receive the unicast message. The major problem that arises with this
+approach is that the client without an IP address doesn't respond to ARP
+messages. As a result, server's response will not be sent over IP/UDP
+socket because the system kernel will fail to resolve client's link-layer
+address.
+
+Kea supports the use of raw sockets to create a complete Data-link/IP/UDP/DHCPv4
+stack. By creating each layer of the outgoing packet, the Kea logic has full
+control over the frame contents and it may bypass the use of ARP to inject the
+link layer address into the frame. The raw socket is bound to a specific interface,
+not to the IP address/UDP port. Therefore, the system kernel doesn't have
+means to verify that Kea is listening to the DHCP traffic on the specific address
+and port. This has two major implications:
+- It is possible to run another DHCPv4 sever instance which will bind socket to the
+same address and port.
+- An attempt to send a unicast message to the DHCPv4 server will result in ICMP
+"Port Unreachable" message being sent by the kernel (which is unaware that the
+DHCPv4 service is actually running).
+In order to overcome these issues, the isc::dhcp::PktFilterLPF opens a
+regular IP/UDP socket which coexists with the raw socket. The socket is referred
+to as "fallback socket" in the Kea code. All packets received through this socket
+are discarded.
+
+In general, the use of datagram sockets is preferred over raw sockets.
+For convenience, the switchable Packet Filter objects are used to manage
+sockets for different purposes. These objects implement the socket opening
+operation and sending/receiving messages over this socket. For example:
+the isc::dhcp::PktFilterLPF object opens a raw socket.
+The isc::dhcp::PktFilterLPF::send and isc::dhcp::PktFilterLPF::receive
+methods encode/decode full data-link/IP/UDP/DHCPv4 stack. The
+isc::dhcp::PktFilterInet supports sending and receiving messages over
+the regular IP/UDP socket. The isc::dhcp::PktFilterInet should be used in all
+cases when an application using the libdhcp++ doesn't require sending
+DHCP messages to a device which doesn't have an address yet.
+
 
 */

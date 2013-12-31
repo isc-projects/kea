@@ -66,17 +66,19 @@ public:
     /// Contains custom implementation of the callback.
     ///
     /// @param buf a A buffer holding options in on-wire format.
+    /// @param option_space A name of the option space being encapsulated by
+    /// the option being parsed.
     /// @param [out] options A reference to the collection where parsed options
     /// will be stored.
     /// @return An offset to the first byte after last parsed option.
     size_t execute(const OptionBuffer& buf,
-                   const std::string&,
+                   const std::string& option_space,
                    isc::dhcp::OptionCollection& options) {
         // Set the executed_ member to true to allow verification that the
         // callback has been actually called.
         executed_ = true;
         // Use default implementation of the unpack algorithm to parse options.
-        return (LibDHCP::unpackOptions4(buf, options));
+        return (LibDHCP::unpackOptions4(buf, option_space, options));
     }
 
     /// A flag which indicates if callback function has been called.

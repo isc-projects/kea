@@ -94,6 +94,13 @@ protected:
         } else if (option_space == "dhcp6") {
             isc_throw(DhcpConfigError, "'dhcp6' option space name is reserved"
                      << " for DHCPv6 server");
+        } else {
+            // Check if this is a vendor-option. If it is, get vendor-specific
+            // definition.
+            uint32_t vendor_id = SubnetConfigParser::optionSpaceToVendorId(option_space);
+            if (vendor_id) {
+                def = LibDHCP::getVendorOptionDef(Option::V4, vendor_id, option_code);
+            }
         }
 
         return (def);
@@ -208,7 +215,6 @@ protected:
 
         return (parser);
     }
-
 
     /// @brief Determines if the given option space name and code describe
     /// a standard option for the DCHP4 server.
@@ -388,6 +394,8 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
         parser = new DbAccessParser(config_id);
     } else if (config_id.compare("hooks-libraries") == 0) {
         parser = new HooksLibrariesParser(config_id);
+    } else if (config_id.compare("echo-client-id") == 0) {
+        parser = new BooleanParser(config_id, globalContext()->boolean_values_);
     } else {
         isc_throw(NotImplemented,
                 "Parser error: Global configuration parameter not supported: "
@@ -395,6 +403,20 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     }
 
     return (parser);
+}
+
+void commitGlobalOptions() {
+    // Although the function is modest for now, it is certain that the number
+    // of global switches will increase over time, hence the name.
+
+    // Set whether v4 server is supposed to echo back client-id (yes = RFC6842
+    // compatible, no = backward compatibility)
+    try {
+        bool echo_client_id = globalContext()->boolean_values_->getParam("echo-client-id");
+        CfgMgr::instance().echoClientId(echo_client_id);
+    } catch (...) {
+        // Ignore errors. This flag is optional
+    }
 }
 
 isc::data::ConstElementPtr
@@ -529,6 +551,9 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 iface_parser->commit();
             }
 
+            // Apply global options
+            commitGlobalOptions();
+
             // This occurs last as if it succeeds, there is no easy way
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
@@ -572,4 +597,3 @@ ParserContextPtr& globalContext() {
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
-

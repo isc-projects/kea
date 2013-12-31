@@ -162,7 +162,7 @@ DNSClientImpl::getStatus(const asiodns::IOFetch::Result result) {
 }
 
 void
-DNSClientImpl::doUpdate(IOService& io_service,
+DNSClientImpl::doUpdate(asiolink::IOService& io_service,
                         const IOAddress& ns_addr,
                         const uint16_t ns_port,
                         D2UpdateMessage& update,
@@ -191,6 +191,7 @@ DNSClientImpl::doUpdate(IOService& io_service,
     // caller that the unsigned timeout value will fit into int.
     IOFetch io_fetch(IOFetch::UDP, io_service, msg_buf, ns_addr, ns_port,
                      in_buf_, this, static_cast<int>(wait));
+
     // Post the task to the task queue in the IO service. Caller will actually
     // run these tasks by executing IOService::run.
     io_service.post(io_fetch);
@@ -213,7 +214,7 @@ DNSClient::getMaxTimeout() {
 }
 
 void
-DNSClient::doUpdate(IOService&,
+DNSClient::doUpdate(asiolink::IOService&,
                     const IOAddress&,
                     const uint16_t,
                     D2UpdateMessage&,
@@ -224,7 +225,7 @@ DNSClient::doUpdate(IOService&,
 }
 
 void
-DNSClient::doUpdate(IOService& io_service,
+DNSClient::doUpdate(asiolink::IOService& io_service,
                     const IOAddress& ns_addr,
                     const uint16_t ns_port,
                     D2UpdateMessage& update,

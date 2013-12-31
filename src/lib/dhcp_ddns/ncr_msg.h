@@ -22,6 +22,8 @@
 
 #include <cc/data.h>
 #include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
+#include <dns/name.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
 #include <util/encode/hex.h>
@@ -39,6 +41,15 @@ public:
     NcrMessageError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
+
+/// @brief Exception thrown when there is an error occured during computation
+/// of the DHCID.
+class DhcidRdataComputeError : public isc::Exception {
+public:
+    DhcidRdataComputeError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 
 /// @brief Defines the types of DNS updates that can be requested.
 enum NameChangeType {
@@ -79,6 +90,22 @@ public:
     D2Dhcid(const std::string& data);
 
     /// @brief Constructor, creates an instance of the @c D2Dhcid from the
+    /// HW address.
+    ///
+    /// @param hwaddr A pointer to the object encapsulating HW address.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
+    D2Dhcid(const isc::dhcp::HWAddrPtr& hwaddr,
+            const std::vector<uint8_t>& wire_fqdn);
+
+    /// @brief Constructor, creates an instance of the @c D2Dhcid from the
+    /// client identifier carried in the Client Identifier option.
+    ///
+    /// @param clientid_data Holds the raw bytes representing client identifier.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
+    D2Dhcid(const std::vector<uint8_t>& clientid_data,
+            const std::vector<uint8_t>& wire_fqdn);
+
+    /// @brief Constructor, creates an instance of the @c D2Dhcid from the
     /// @c isc::dhcp::DUID.
     ///
     /// @param duid An object representing DUID.
@@ -101,6 +128,13 @@ public:
     /// or there is an odd number of digits.
     void fromStr(const std::string& data);
 
+    /// @brief Sets the DHCID value based on the Client Identifier.
+    ///
+    /// @param clientid_data Holds the raw bytes representing client identifier.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
+    void fromClientId(const std::vector<uint8_t>& clientid_data,
+                      const std::vector<uint8_t>& wire_fqdn);
+
     /// @brief Sets the DHCID value based on the DUID and FQDN.
     ///
     /// This function requires that the FQDN conforms to the section 3.5
@@ -112,10 +146,17 @@ public:
     void fromDUID(const isc::dhcp::DUID& duid,
                   const std::vector<uint8_t>& wire_fqdn);
 
+    /// @brief Sets the DHCID value based on the HW address and FQDN.
+    ///
+    /// @param hwaddr A pointer to the object encapsulating HW address.
+    /// @param wire_fqdn A on-wire canonical representation of the FQDN.
+    void fromHWAddr(const isc::dhcp::HWAddrPtr& hwaddr,
+                    const std::vector<uint8_t>& wire_fqdn);
+
     /// @brief Returns a reference to the DHCID byte vector.
     ///
     /// @return a reference to the vector.
-    const std::vector<uint8_t>& getBytes() {
+    const std::vector<uint8_t>& getBytes() const {
         return (bytes_);
     }
 
@@ -135,6 +176,22 @@ public:
     }
 
 private:
+
+    /// @brief Creates the DHCID using specified indetifier.
+    ///
+    /// This function creates the DHCID RDATA as specified in RFC4701,
+    /// section 3.5.
+    ///
+    /// @param identifier_type is a less significant byte of the identifier-type
+    /// defined in RFC4701.
+    /// @param identifier_data A buffer holding client identifier raw data -
+    /// e.g. DUID, data carried in the Client Identifier option or client's
+    /// HW address.
+    /// @param A on-wire canonical representation of the FQDN.
+    void createDigest(const uint8_t identifier_type,
+                      const std::vector<uint8_t>& identifier_data,
+                      const std::vector<uint8_t>& wire_fqdn);
+
     /// @brief Storage for the DHCID value in unsigned bytes.
     std::vector<uint8_t> bytes_;
 };
@@ -355,11 +412,32 @@ public:
     /// Element
     void setFqdn(isc::data::ConstElementPtr element);
 
-    /// @brief Fetches the request IP address.
+    /// @brief Fetches the request IP address string.
     ///
     /// @return a string containing the IP address
-    const std::string& getIpAddress() const {
-        return (ip_address_);
+    std::string getIpAddress() const {
+        return (ip_io_address_.toText());
+    }
+
+    /// @brief Fetches the request IP address as an IOAddress.
+    ///
+    /// @return a asiolink::IOAddress containing the IP address
+    const asiolink::IOAddress& getIpIoAddress() const {
+        return (ip_io_address_);
+    }
+
+    /// @brief Returns true if the lease address is a IPv4 lease.
+    ///
+    /// @return boolean true if the lease address family is AF_INET.
+    bool isV4 () const {
+        return (ip_io_address_.isV4());
+    }
+
+    /// @brief Returns true if the lease address is a IPv6 lease.
+    ///
+    /// @return boolean true if the lease address family is AF_INET6.
+    bool isV6 () const {
+        return (ip_io_address_.isV6());
     }
 
     /// @brief Sets the IP address to the given value.
@@ -511,8 +589,13 @@ private:
     /// manipulation.
     std::string fqdn_;
 
-    /// @brief The ip address leased to the FQDN.
-    std::string ip_address_;
+    /// @brief The ip address leased to the FQDN as an IOAddress.
+    ///
+    /// The lease address is used in many places, sometimes as a string
+    /// and sometimes as an IOAddress.  To avoid converting back and forth
+    /// continually over the life span of an NCR, we do it once when the
+    /// ip address is actually set.
+    asiolink::IOAddress ip_io_address_;
 
     /// @brief The lease client's unique DHCID.
     /// @todo Currently, this is uses D2Dhcid it but may be replaced with
