@@ -1673,6 +1673,35 @@ TEST_F(Dhcpv6SrvTest, unpackOptions) {
     EXPECT_EQ(0x0, option_bar->getValue());
 }
 
+// Checks if client packets are classified properly
+TEST_F(Dhcpv6SrvTest, clientClassification) {
+
+    NakedDhcpv6Srv srv(0);
+
+    // Let's create a relayed SOLICIT. This particular relayed SOLICIT has
+    // vendor-class set to docsis3.0
+    Pkt6Ptr sol1;
+    ASSERT_NO_THROW(sol1 = captureDocsisRelayedSolicit());
+    ASSERT_NO_THROW(sol1->unpack());
+
+    srv.classifyPacket(sol1);
+
+    // It should belong to docsis3.0 class. It should not belong to eRouter1.0
+    EXPECT_TRUE(sol1->inClass("docsis3.0"));
+    EXPECT_FALSE(sol1->inClass("eRouter1.0"));
+
+    // Let's get a relayed SOLICIT. This particular relayed SOLICIT has
+    // vendor-class set to eRouter1.0
+    Pkt6Ptr sol2;
+    ASSERT_NO_THROW(sol2 = captureeRouterRelayedSolicit());
+    ASSERT_NO_THROW(sol2->unpack());
+
+    srv.classifyPacket(sol2);
+
+    EXPECT_TRUE(sol2->inClass("eRouter1.0"));
+    EXPECT_FALSE(sol2->inClass("docsis3.0"));
+}
+
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
