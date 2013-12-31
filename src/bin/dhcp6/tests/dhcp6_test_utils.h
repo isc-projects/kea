@@ -112,6 +112,7 @@ public:
     using Dhcpv6Srv::createStatusCode;
     using Dhcpv6Srv::selectSubnet;
     using Dhcpv6Srv::sanityCheck;
+    using Dhcpv6Srv::classifyPacket;
     using Dhcpv6Srv::loadServerID;
     using Dhcpv6Srv::writeServerID;
     using Dhcpv6Srv::unpackOptions;
@@ -477,6 +478,7 @@ public:
     Pkt6Ptr captureSimpleSolicit();
     Pkt6Ptr captureRelayedSolicit();
     Pkt6Ptr captureDocsisRelayedSolicit();
+    Pkt6Ptr captureeRouterRelayedSolicit();
 
     /// @brief Auxiliary method that sets Pkt6 fields
     ///
