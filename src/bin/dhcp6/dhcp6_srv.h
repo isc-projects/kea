@@ -336,6 +336,15 @@ protected:
     /// @param answer server's message (options will be added here)
     void appendRequestedOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
+    /// @brief Appends requested vendor options to server's answer.
+    ///
+    /// This is mostly useful for Cable Labs options for now, but the method
+    /// is easily extensible to other vendors.
+    ///
+    /// @param question client's message
+    /// @param answer server's message (vendor options will be added here)
+    void appendRequestedVendorOptions(const Pkt6Ptr& question, Pkt6Ptr& answer);
+
     /// @brief Assigns leases.
     ///
     /// It supports addresses (IA_NA) only. It does NOT support temporary
@@ -425,7 +434,7 @@ protected:
     /// @brief Sends all outstanding NameChangeRequests to bind10-d2 module.
     ///
     /// The purpose of this function is to pick all outstanding
-    /// NameChangeRequests from the FIFO queue and send them to bind10-dhcp-ddns
+    /// NameChangeRequests from the FIFO queue and send them to b10-dhcp-ddns
     /// module.
     ///
     /// @todo Currently this function simply removes all requests from the

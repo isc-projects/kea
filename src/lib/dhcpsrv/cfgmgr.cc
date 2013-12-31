@@ -350,7 +350,7 @@ CfgMgr::getUnicast(const std::string& iface) const {
 
 CfgMgr::CfgMgr()
     : datadir_(DHCP_DATA_DIR),
-      all_ifaces_active_(false) {
+      all_ifaces_active_(false), echo_v4_client_id_(true) {
     // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
     // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
     // See AM_CPPFLAGS definition in Makefile.am

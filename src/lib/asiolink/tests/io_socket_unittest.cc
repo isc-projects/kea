@@ -23,8 +23,10 @@
 using namespace isc::asiolink;
 
 TEST(IOSocketTest, dummySockets) {
-    EXPECT_EQ(IPPROTO_UDP, IOSocket::getDummyUDPSocket().getProtocol());
-    EXPECT_EQ(IPPROTO_TCP, IOSocket::getDummyTCPSocket().getProtocol());
+    EXPECT_EQ(static_cast<short>(IPPROTO_UDP),
+              IOSocket::getDummyUDPSocket().getProtocol());
+    EXPECT_EQ(static_cast<short>(IPPROTO_TCP),
+              IOSocket::getDummyTCPSocket().getProtocol());
     EXPECT_EQ(-1, IOSocket::getDummyUDPSocket().getNative());
     EXPECT_EQ(-1, IOSocket::getDummyTCPSocket().getNative());
 }

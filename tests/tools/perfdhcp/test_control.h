@@ -15,20 +15,22 @@
 #ifndef TEST_CONTROL_H
 #define TEST_CONTROL_H
 
-#include <string>
-#include <vector>
-
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
-#include <boost/function.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include "packet_storage.h"
+#include "rate_control.h"
+#include "stats_mgr.h"
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 
-#include "stats_mgr.h"
+#include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/function.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
+#include <string>
+#include <vector>
 
 namespace isc {
 namespace perfdhcp {
@@ -299,6 +301,37 @@ protected:
     /// \return true if any of the exit conditions is fulfilled.
     bool checkExitConditions() const;
 
+    /// \brief Removes cached DHCPv6 Reply packets every second.
+    ///
+    /// This function wipes cached Reply packets from the storage.
+    /// The number of packets left in the storage after the call
+    /// to this function should guarantee that the Renew packets
+    /// can be sent at the given rate. Note that the Renew packets
+    /// are generated for the existing leases, represented here as
+    /// replies from the server.
+    /// @todo Instead of cleaning packets periodically we could
+    /// just stop adding new packets when the certain threshold
+    /// has been reached.
+    void cleanCachedPackets();
+
+    /// \brief Creates DHCPv6 message from the Reply packet.
+    ///
+    /// This function creates DHCPv6 Renew or Release message using the
+    /// data from the Reply message by copying options from the Reply
+    /// message.
+    ///
+    /// \param msg_type A type of the message to be createad.
+    /// \param reply An instance of the Reply packet which contents should
+    /// be used to create an instance of the new message.
+    ///
+    /// \return created Release or Renew message
+    /// \throw isc::BadValue if the msg_type is neither DHCPV6_RENEW nor
+    /// DHCPV6_RELEASE or if the reply is NULL.
+    /// \throw isc::Unexpected if mandatory options are missing in the
+    /// Reply message.
+    dhcp::Pkt6Ptr createMessageFromReply(const uint16_t msg_type,
+                                         const dhcp::Pkt6Ptr& reply);
+
     /// \brief Factory function to create DHCPv6 ELAPSED_TIME option.
     ///
     /// This factory function creates DHCPv6 ELAPSED_TIME option instance.
@@ -450,15 +483,14 @@ protected:
         return (transid_gen_->generate());
     }
 
-    /// \brief Returns number of exchanges to be started.
+    /// \brief Returns a timeout for packet reception.
     ///
-    /// Method returns number of new exchanges to be started as soon
-    /// as possible to satisfy expected rate. Calculation used here
-    /// is based on current time, due time calculated with
-    /// \ref updateSendDue function and expected rate.
+    /// The calculation is based on the value of the timestamp
+    /// when the next set of packets is to be sent. If no packet is
+    /// received until then, new packets are sent.
     ///
-    /// \return number of exchanges to be started immediately.
-    uint64_t getNextExchangesNum() const;
+    /// \return A current timeout in microseconds.
+    uint32_t getCurrentTimeout() const;
 
     /// \brief Return template buffer.
     ///
@@ -702,6 +734,33 @@ protected:
                      const uint64_t packets_num,
                      const bool preload = false);
 
+    /// \brief Send number of DHCPv6 Renew or Release messages to the server.
+    ///
+    /// \param socket An object representing socket to be used to send packets.
+    /// \param msg_type A type of the messages to be sent (DHCPV6_RENEW or
+    /// DHCPV6_RELEASE).
+    /// \param msg_num A number of messages to be sent.
+    ///
+    /// \return A number of messages actually sent.
+    uint64_t sendMultipleMessages6(const TestControlSocket& socket,
+                                   const uint32_t msg_type,
+                                   const uint64_t msg_num);
+
+    /// \brief Send DHCPv6 Renew or Release message using specified socket.
+    ///
+    /// This method will select an existing lease from the Reply packet cache
+    /// If there is no lease that can be renewed or released this method will
+    /// return false.
+    ///
+    /// \param msg_type A type of the message to be sent (DHCPV6_RENEW or
+    /// DHCPV6_RELEASE).
+    /// \param socket An object encapsulating socket to be used to send
+    /// a packet.
+    ///
+    /// \return true if the message has been sent, false otherwise.
+    bool sendMessageFromReply(const uint16_t msg_type,
+                              const TestControlSocket& socket);
+
     /// \brief Send DHCPv4 REQUEST message.
     ///
     /// Method creates and sends DHCPv4 REQUEST message to the server.
@@ -843,14 +902,18 @@ protected:
     /// \return true if diagnostics flag has been set.
     bool testDiags(const char diag) const;
 
-    /// \brief Update due time to initiate next chunk of exchanges.
-    ///
-    /// Method updates due time to initiate next chunk of exchanges.
-    /// Function takes current time, last sent packet's time and
-    /// expected rate in its calculations.
-    void updateSendDue();
+protected:
 
-private:
+    /// \brief Increments counter of late sent messages if required.
+    ///
+    /// This function checks if the message or set of messages of a given type,
+    /// were sent later than their due time. If they were sent late, it is
+    /// an indication that the perfdhcp doesn't catch up with the desired rate
+    /// for sending messages.
+    ///
+    /// \param rate_control An object tracking due times for a particular
+    /// type of messages.
+    void checkLateMessages(RateControl& rate_control);
 
     /// \brief Copies IA_NA or IA_PD option from one packet to another.
     ///
@@ -880,7 +943,7 @@ private:
 
     /// \brief Calculate elapsed time between two packets.
     ///
-    /// \param T Pkt4Ptr or Pkt6Ptr class.
+    /// \tparam T Pkt4Ptr or Pkt6Ptr class.
     /// \param pkt1 first packet.
     /// \param pkt2 second packet.
     /// \throw InvalidOperation if packet timestamps are invalid.
@@ -993,15 +1056,19 @@ private:
     std::string vector2Hex(const std::vector<uint8_t>& vec,
                            const std::string& separator = "") const;
 
-    boost::posix_time::ptime send_due_;    ///< Due time to initiate next chunk
-                                           ///< of exchanges.
-    boost::posix_time::ptime last_sent_;   ///< Indicates when the last exchange
-                                           /// was initiated.
+    /// \brief A rate control class for Discover and Solicit messages.
+    RateControl basic_rate_control_;
+    /// \brief A rate control class for Renew messages.
+    RateControl renew_rate_control_;
+    /// \brief A rate control class for Release messages.
+    RateControl release_rate_control_;
 
     boost::posix_time::ptime last_report_; ///< Last intermediate report time.
 
     StatsMgr4Ptr stats_mgr4_;  ///< Statistics Manager 4.
     StatsMgr6Ptr stats_mgr6_;  ///< Statistics Manager 6.
+
+    PacketStorage<dhcp::Pkt6> reply_storage_; ///< A storage for reply messages.
 
     NumberGeneratorPtr transid_gen_; ///< Transaction id generator.
     NumberGeneratorPtr macaddr_gen_; ///< Numbers generator for MAC address.

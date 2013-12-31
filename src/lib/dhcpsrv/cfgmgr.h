@@ -316,6 +316,22 @@ public:
     const isc::asiolink::IOAddress*
     getUnicast(const std::string& iface) const;
 
+    /// @brief Sets whether server should send back client-id in DHCPv4
+    ///
+    /// This is a compatibility flag. The default (true) is compliant with
+    /// RFC6842. False is for backward compatibility.
+    ///
+    /// @param echo should the client-id be sent or not
+    void echoClientId(const bool echo) {
+        echo_v4_client_id_ = echo;
+    }
+
+    /// @brief Returns whether server should send back client-id in DHCPv4.
+    /// @return true if client-id should be returned, false otherwise.
+    bool echoClientId() const {
+        return (echo_v4_client_id_);
+    }
+
 protected:
 
     /// @brief Protected constructor.
@@ -366,7 +382,7 @@ private:
     /// A collection of option definitions that can be accessed
     /// using option space name they belong to.
     OptionSpaceContainer<OptionDefContainer,
-                         OptionDefinitionPtr> option_def_spaces_;
+        OptionDefinitionPtr, std::string> option_def_spaces_;
 
     /// @brief Container for defined DHCPv6 option spaces.
     OptionSpaceCollection spaces6_;
@@ -392,6 +408,9 @@ private:
     /// A flag which indicates that server should listen on all available
     /// interfaces.
     bool all_ifaces_active_;
+
+    /// Indicates whether v4 server should send back client-id
+    bool echo_v4_client_id_;
 };
 
 } // namespace isc::dhcp

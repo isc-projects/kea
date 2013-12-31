@@ -1,4 +1,3 @@
-
 // Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
@@ -16,10 +15,11 @@
 #ifndef COMMAND_OPTIONS_H
 #define COMMAND_OPTIONS_H
 
+#include <boost/noncopyable.hpp>
+
+#include <stdint.h>
 #include <string>
 #include <vector>
-
-#include <boost/noncopyable.hpp>
 
 namespace isc {
 namespace perfdhcp {
@@ -154,6 +154,16 @@ public:
     ///
     /// \return exchange rate per second.
     int getRate() const { return rate_; }
+
+    /// \brief Returns a rate at which DHCPv6 Renew messages are sent.
+    ///
+    /// \return A rate at which IPv6 Renew messages are sent.
+    int getRenewRate() const { return (renew_rate_); }
+
+    /// \brief Returns a rate at which DHCPv6 Release messages are sent.
+    ///
+    /// \return A rate at which DHCPv6 Release messages are sent.
+    int getReleaseRate() const { return (release_rate_); }
 
     /// \brief Returns delay between two performance reports.
     ///
@@ -461,6 +471,10 @@ private:
     LeaseType lease_type_;
     /// Rate in exchange per second
     int rate_;
+    /// A rate at which DHCPv6 Renew messages are sent.
+    int renew_rate_;
+    /// A rate at which DHCPv6 Release messages are sent.
+    int release_rate_;
     /// Delay between generation of two consecutive
     /// performance reports
     int report_delay_;

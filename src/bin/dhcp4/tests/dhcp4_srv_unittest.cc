@@ -25,8 +25,10 @@
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/config_parser.h>
@@ -38,6 +40,7 @@
 #include <gtest/gtest.h>
 #include <hooks/server_hooks.h>
 #include <hooks/hooks_manager.h>
+#include <config/ccsession.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -52,114 +55,12 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::hooks;
+using namespace isc::dhcp::test;
 
-#if 0
 namespace {
 
-class NakedDhcpv4Srv: public Dhcpv4Srv {
-    // "Naked" DHCPv4 server, exposes internal fields
-public:
-
-    /// @brief Constructor.
-    ///
-    /// This constructor disables default modes of operation used by the
-    /// Dhcpv4Srv class:
-    /// - Send/receive broadcast messages through sockets on interfaces
-    /// which support broadcast traffic.
-    /// - Direct DHCPv4 traffic - communication with clients which do not
-    /// have IP address assigned yet.
-    ///
-    /// Enabling these modes requires root privilges so they must be
-    /// disabled for unit testing.
-    ///
-    /// Note, that disabling broadcast options on sockets does not impact
-    /// the operation of these tests because they use local loopback
-    /// interface which doesn't have broadcast capability anyway. It rather
-    /// prevents setting broadcast options on other (broadcast capable)
-    /// sockets which are opened on other interfaces in Dhcpv4Srv constructor.
-    ///
-    /// The Direct DHCPv4 Traffic capability can be disabled here because
-    /// it is tested with PktFilterLPFTest unittest. The tests which belong
-    /// to PktFilterLPFTest can be enabled on demand when root privileges can
-    /// be guaranteed.
-    ///
-    /// @param port port number to listen on; the default value 0 indicates
-    /// that sockets should not be opened.
-    NakedDhcpv4Srv(uint16_t port = 0)
-        : Dhcpv4Srv(port, "type=memfile", false, false) {
-    }
-
-    /// @brief fakes packet reception
-    /// @param timeout ignored
-    ///
-    /// The method receives all packets queued in receive queue, one after
-    /// another. Once the queue is empty, it initiates the shutdown procedure.
-    ///
-    /// See fake_received_ field for description
-    virtual Pkt4Ptr receivePacket(int /*timeout*/) {
-
-        // If there is anything prepared as fake incoming traffic, use it
-        if (!fake_received_.empty()) {
-            Pkt4Ptr pkt = fake_received_.front();
-            fake_received_.pop_front();
-            return (pkt);
-        }
-
-        // If not, just trigger shutdown and return immediately
-        shutdown();
-        return (Pkt4Ptr());
-    }
-
-    /// @brief fake packet sending
-    ///
-    /// Pretend to send a packet, but instead just store it in fake_send_ list
-    /// where test can later inspect server's response.
-    virtual void sendPacket(const Pkt4Ptr& pkt) {
-        fake_sent_.push_back(pkt);
-    }
-
-    /// @brief adds a packet to fake receive queue
-    ///
-    /// See fake_received_ field for description
-    void fakeReceive(const Pkt4Ptr& pkt) {
-        fake_received_.push_back(pkt);
-    }
-
-    virtual ~NakedDhcpv4Srv() {
-    }
-
-    /// @brief packets we pretend to receive
-    ///
-    /// Instead of setting up sockets on interfaces that change between OSes, it
-    /// is much easier to fake packet reception. This is a list of packets that
-    /// we pretend to have received. You can schedule new packets to be received
-    /// using fakeReceive() and NakedDhcpv4Srv::receivePacket() methods.
-    list<Pkt4Ptr> fake_received_;
-
-    list<Pkt4Ptr> fake_sent_;
-
-    using Dhcpv4Srv::adjustRemoteAddr;
-    using Dhcpv4Srv::processDiscover;
-    using Dhcpv4Srv::processRequest;
-    using Dhcpv4Srv::processRelease;
-    using Dhcpv4Srv::processDecline;
-    using Dhcpv4Srv::processInform;
-    using Dhcpv4Srv::getServerID;
-    using Dhcpv4Srv::loadServerID;
-    using Dhcpv4Srv::generateServerID;
-    using Dhcpv4Srv::writeServerID;
-    using Dhcpv4Srv::sanityCheck;
-    using Dhcpv4Srv::srvidToString;
-    using Dhcpv4Srv::unpackOptions;
-};
-#endif
-
 /// dummy server-id file location
-static const char* SRVID_FILE = "server-id-test.txt";
-
-namespace isc {
-namespace dhcp {
-namespace test {
+const char* SRVID_FILE = "server-id-test.txt";
 
 // Sanity check. Verifies that both Dhcpv4Srv and its derived
 // class NakedDhcpv4Srv can be instantiated and destroyed.
@@ -186,6 +87,26 @@ TEST_F(Dhcpv4SrvTest, basic) {
 
     ASSERT_NO_THROW(naked_srv.reset(new NakedDhcpv4Srv(0)));
     EXPECT_TRUE(naked_srv->getServerID());
+}
+
+// This test verifies that exception is not thrown when an error occurs during
+// opening sockets. This test forces an error by adding a fictious interface
+// to the IfaceMgr. An attempt to open socket on this interface must always
+// fail. The DHCPv4 installs the error handler function to prevent exceptions
+// being thrown from the openSockets4 function.
+// @todo The server tests for socket should be extended but currently the
+// ability to unit test the sockets code is somewhat limited.
+TEST_F(Dhcpv4SrvTest, openActiveSockets) {
+    ASSERT_NO_THROW(CfgMgr::instance().activateAllIfaces());
+
+    Iface iface("bogusiface", 255);
+    iface.flag_loopback_ = false;
+    iface.flag_up_ = true;
+    iface.flag_running_ = true;
+    iface.inactive4_ = false;
+    iface.addAddress(IOAddress("192.0.0.0"));
+    IfaceMgr::instance().addInterface(iface);
+    ASSERT_NO_THROW(Dhcpv4Srv::openActiveSockets(DHCP4_SERVER_PORT, false));
 }
 
 // This test verifies that the destination address of the response
@@ -687,6 +608,32 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     cout << "Offered address to client3=" << addr3.toText() << endl;
 }
 
+// Checks whether echoing back client-id is controllable, i.e.
+// whether the server obeys echo-client-id and sends (or not)
+// client-id
+TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    checkClientId(offer, clientid);
+
+    CfgMgr::instance().echoClientId(false);
+    offer = srv.processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    checkClientId(offer, clientid);
+}
+
 // This test verifies that incoming REQUEST can be handled properly, that an
 // ACK is generated, that the response has an address and that address
 // really belongs to the configured pool.
@@ -827,6 +774,30 @@ TEST_F(Dhcpv4SrvTest, ManyRequests) {
     cout << "Offered address to client1=" << addr1.toText() << endl;
     cout << "Offered address to client2=" << addr2.toText() << endl;
     cout << "Offered address to client3=" << addr3.toText() << endl;
+}
+
+// Checks whether echoing back client-id is controllable
+TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get ACK
+    Pkt4Ptr ack = srv.processRequest(dis);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPACK, 1234);
+    checkClientId(ack, clientid);
+
+    CfgMgr::instance().echoClientId(false);
+    ack = srv.processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPOFFER, 1234);
+    checkClientId(ack, clientid);
 }
 
 
@@ -983,7 +954,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     // Generate client-id also duid_
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setRemoteAddr(addr);
-    rel->setYiaddr(addr);
+    rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv->getServerID());
     rel->setHWAddr(hw);
@@ -1046,7 +1017,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     // Generate client-id also duid_
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setRemoteAddr(addr);
-    rel->setYiaddr(addr);
+    rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv->getServerID());
     rel->setHWAddr(bogus_hw);
@@ -1138,11 +1109,7 @@ TEST_F(Dhcpv4SrvTest, ServerID) {
     EXPECT_EQ(srvid_text, text);
 }
 
-// Checks if callouts installed on pkt4_receive are indeed called and the
-// all necessary parameters are passed.
-//
-// Note that the test name does not follow test naming convention,
-// but the proper hook name is "buffer4_receive".
+// Checks if received relay agent info option is echoed back to the client
 TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
 
     NakedDhcpv4Srv srv(0);
@@ -1179,6 +1146,91 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
 
     EXPECT_TRUE(rai_response->equal(rai_query));
 }
+
+/// @todo move vendor options tests to a separate file.
+/// @todo Add more extensive vendor options tests, including multiple
+///       vendor options
+
+// Checks if vendor options are parsed correctly and requested vendor options
+// are echoed back.
+TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"data\": \"10.253.175.16\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"10.254.226.0/25\" ],"
+        "    \"subnet\": \"10.254.226.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"" + valid_iface_ + "\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // added option 82 (relay agent info) with 3 suboptions. The server
+    // is supposed to echo it back in its response.
+    Pkt4Ptr dis;
+    ASSERT_NO_THROW(dis = captureRelayedDiscover());
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(dis);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv.run();
+
+    // Check that the server did send a reposonse
+    ASSERT_EQ(1, srv.fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr offer = srv.fake_sent_.front();
+    ASSERT_TRUE(offer);
+
+    // Get Relay Agent Info from query...
+    OptionPtr vendor_opt_response = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(vendor_opt_response);
+
+    // Check if it's of a correct type
+    boost::shared_ptr<OptionVendor> vendor_opt =
+        boost::dynamic_pointer_cast<OptionVendor>(vendor_opt_response);
+    ASSERT_TRUE(vendor_opt);
+
+    // Get Relay Agent Info from response...
+    OptionPtr tftp_servers_generic = vendor_opt->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(tftp_servers_generic);
+
+    Option4AddrLstPtr tftp_servers =
+        boost::dynamic_pointer_cast<Option4AddrLst>(tftp_servers_generic);
+
+    ASSERT_TRUE(tftp_servers);
+
+    Option4AddrLst::AddressContainer addrs = tftp_servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("10.253.175.16", addrs[0].toText());
+}
+
 
 /// @todo Implement tests for subnetSelect See tests in dhcp6_srv_unittest.cc:
 /// selectSubnetAddr, selectSubnetIface, selectSubnetRelayLinkaddr,
@@ -2650,7 +2702,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
     // Generate client-id also duid_
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setRemoteAddr(addr);
-    rel->setYiaddr(addr);
+    rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv_->getServerID());
     rel->setHWAddr(hw);
@@ -2763,6 +2815,188 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
     //EXPECT_EQ(leases.size(), 1);
 }
 
-}; // end of isc::dhcp::test namespace
+// Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
+TEST_F(Dhcpv4SrvTest, docsisVendorOptionsParse) {
+
+    // Let's get a traffic capture from DOCSIS3.0 modem
+    Pkt4Ptr dis = captureRelayedDiscover();
+    ASSERT_NO_THROW(dis->unpack());
+
+    // Check if the packet contain
+    OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(opt);
+
+    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+
+    // This particular capture that we have included options 1 and 5
+    EXPECT_TRUE(vendor->getOption(1));
+    EXPECT_TRUE(vendor->getOption(5));
+
+    // It did not include options any other options
+    EXPECT_FALSE(vendor->getOption(2));
+    EXPECT_FALSE(vendor->getOption(3));
+    EXPECT_FALSE(vendor->getOption(17));
+}
+
+// Checks if server is able to parse incoming docsis option and extract suboption 1 (docsis ORO)
+TEST_F(Dhcpv4SrvTest, docsisVendorORO) {
+
+    // Let's get a traffic capture from DOCSIS3.0 modem
+    Pkt4Ptr dis = captureRelayedDiscover();
+    EXPECT_NO_THROW(dis->unpack());
+
+    // Check if the packet contains vendor specific information option
+    OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(opt);
+
+    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+
+    opt = vendor->getOption(DOCSIS3_V4_ORO);
+    ASSERT_TRUE(opt);
+
+    OptionUint8ArrayPtr oro = boost::dynamic_pointer_cast<OptionUint8Array>(opt);
+    EXPECT_TRUE(oro);
+}
+
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the requested options are actually assigned.
+TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"all\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"data\": \"192.0.2.1, 192.0.2.2\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.0/25\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"" + valid_iface_ + "\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr to non-zero address as if it was relayed.
+    dis->setGiaddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr offer = srv.processDiscover(dis);
+
+    // check if we get response at all
+    ASSERT_TRUE(offer);
+
+    // We did not include any vendor opts in DISCOVER, so there should be none
+    // in OFFER.
+    ASSERT_FALSE(offer->getOption(DHO_VIVSO_SUBOPTIONS));
+
+    // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
+    // That suboption has code 1 and is a docsis ORO option.
+    boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
+                                                                        DOCSIS3_V4_ORO));
+    vendor_oro->addValue(DOCSIS3_V4_TFTP_SERVERS); // Request option 33
+    OptionPtr vendor(new OptionVendor(Option::V4, 4491));
+    vendor->addOption(vendor_oro);
+    dis->addOption(vendor);
+
+    // Need to process SOLICIT again after requesting new option.
+    offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if thre is vendor option response
+    OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(docsis2);
+
+    Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+    ASSERT_TRUE(tftp_srvs);
+
+    Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
+    ASSERT_EQ(2, addrs.size());
+    EXPECT_EQ("192.0.2.1", addrs[0].toText());
+    EXPECT_EQ("192.0.2.2", addrs[1].toText());
+}
+
+// Test checks whether it is possible to use option definitions defined in
+// src/lib/dhcp/docsis3_option_defs.h.
+TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
+    ConstElementPtr x;
+    string config_prefix = "{ \"interfaces\": [ \"all\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": ";
+    string config_postfix = ","
+        "          \"data\": \"192.0.2.1\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.50\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"renew-timer\": 1000, "
+        "    \"rebind-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // There is docsis3 (vendor-id=4491) vendor option 2, which is a
+    // tftp-server. Its format is list of IPv4 addresses.
+    string config_valid = config_prefix + "2" + config_postfix;
+
+    // There is no option 99 defined in vendor-id=4491. As there is no
+    // definition, the config should fail.
+    string config_bogus = config_prefix + "99" + config_postfix;
+
+    ElementPtr json_bogus = Element::fromJSON(config_bogus);
+    ElementPtr json_valid = Element::fromJSON(config_valid);
+
+    NakedDhcpv4Srv srv(0);
+
+    // This should fail (missing option definition)
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_bogus));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(1, rcode_);
+
+    // This should work (option definition present)
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_valid));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+}
+
+}
+
+    /*I}; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace
-}; // end of isc namespace
+}; // end of isc namespace */

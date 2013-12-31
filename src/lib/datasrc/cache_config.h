@@ -17,6 +17,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/name.h>
 #include <dns/dns_fwd.h>
 #include <cc/data.h>
 #include <datasrc/memory/load_action.h>

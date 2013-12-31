@@ -210,6 +210,9 @@ public:
 
     /// Returns the number of elements in the list.
     virtual size_t size() const;
+
+    /// Return true if there are no elements in the list.
+    virtual bool empty() const;
     //@}
 
 
@@ -479,6 +482,7 @@ public:
     void remove(int i) { l.erase(l.begin() + i); };
     void toJSON(std::ostream& ss) const;
     size_t size() const { return (l.size()); }
+    bool empty() const { return (l.empty()); }
     bool equals(const Element& other) const;
 };
 

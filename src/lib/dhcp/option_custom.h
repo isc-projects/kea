@@ -105,7 +105,6 @@ public:
     template<typename T>
     void addArrayDataField(const T value) {
         checkArrayType();
-
         OptionDataType data_type = definition_.getType();
         if (OptionDataTypeTraits<T>::type != data_type) {
             isc_throw(isc::dhcp::InvalidDataType,

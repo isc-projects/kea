@@ -12,19 +12,21 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "command_options.h"
+#include <exceptions/exceptions.h>
+#include <dhcp/iface_mgr.h>
+#include <dhcp/duid.h>
+
+#include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+
 #include <config.h>
+#include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
 
-#include <boost/lexical_cast.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-
-#include <exceptions/exceptions.h>
-#include <dhcp/iface_mgr.h>
-#include <dhcp/duid.h>
-#include "command_options.h"
 
 using namespace std;
 using namespace isc;
@@ -111,6 +113,8 @@ CommandOptions::reset() {
     exchange_mode_ = DORA_SARR;
     lease_type_.set(LeaseType::ADDRESS);
     rate_ = 0;
+    renew_rate_ = 0;
+    release_rate_ = 0;
     report_delay_ = 0;
     clients_num_ = 0;
     mac_template_.assign(mac, mac + 6);
@@ -208,7 +212,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
     while((opt = getopt(argc, argv, "hv46r:t:R:b:n:p:d:D:l:P:a:L:"
-                        "s:iBc1T:X:O:E:S:I:x:w:e:")) != -1) {
+                        "s:iBc1T:X:O:E:S:I:x:w:e:f:F:")) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
             stream << " " << optarg;
@@ -297,6 +301,17 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case 'E':
             elp_offset_ = nonNegativeInteger("value of time-offset: -E<value>"
                                              " must not be a negative integer");
+            break;
+
+        case 'f':
+            renew_rate_ = positiveInteger("value of the renew rate: -f<renew-rate>"
+                                          " must be a positive integer");
+            break;
+
+        case 'F':
+            release_rate_ = positiveInteger("value of the release rate:"
+                                            " -F<release-rate> must be a"
+                                            " positive integer");
             break;
 
         case 'h':
@@ -680,6 +695,10 @@ CommandOptions::validate() const {
           "-B is not compatible with IPv6 (-6)");
     check((getIpVersion() != 6) && (isRapidCommit() != 0),
           "-6 (IPv6) must be set to use -c");
+    check((getIpVersion() != 6) && (getRenewRate() !=0),
+          "-f<renew-rate> may be used with -6 (IPv6) only");
+    check((getIpVersion() != 6) && (getReleaseRate() != 0),
+          "-F<release-rate> may be used with -6 (IPv6) only");
     check((getExchangeMode() == DO_SA) && (getNumRequests().size() > 1),
           "second -n<num-request> is not compatible with -i");
     check((getIpVersion() == 4) && !getLeaseType().is(LeaseType::ADDRESS),
@@ -692,44 +711,58 @@ CommandOptions::validate() const {
           "second -d<drop-time> is not compatible with -i");
     check((getExchangeMode() == DO_SA) &&
           ((getMaxDrop().size() > 1) || (getMaxDropPercentage().size() > 1)),
-          "second -D<max-drop> is not compatible with -i\n");
+          "second -D<max-drop> is not compatible with -i");
     check((getExchangeMode() == DO_SA) && (isUseFirst()),
-          "-1 is not compatible with -i\n");
+          "-1 is not compatible with -i");
     check((getExchangeMode() == DO_SA) && (getTemplateFiles().size() > 1),
-          "second -T<template-file> is not compatible with -i\n");
+          "second -T<template-file> is not compatible with -i");
     check((getExchangeMode() == DO_SA) && (getTransactionIdOffset().size() > 1),
-          "second -X<xid-offset> is not compatible with -i\n");
+          "second -X<xid-offset> is not compatible with -i");
     check((getExchangeMode() == DO_SA) && (getRandomOffset().size() > 1),
-          "second -O<random-offset is not compatible with -i\n");
+          "second -O<random-offset is not compatible with -i");
     check((getExchangeMode() == DO_SA) && (getElapsedTimeOffset() >= 0),
-          "-E<time-offset> is not compatible with -i\n");
+          "-E<time-offset> is not compatible with -i");
     check((getExchangeMode() == DO_SA) && (getServerIdOffset() >= 0),
-          "-S<srvid-offset> is not compatible with -i\n");
+          "-S<srvid-offset> is not compatible with -i");
     check((getExchangeMode() == DO_SA) && (getRequestedIpOffset() >= 0),
-          "-I<ip-offset> is not compatible with -i\n");
+          "-I<ip-offset> is not compatible with -i");
+    check((getExchangeMode() == DO_SA) && (getRenewRate() != 0),
+          "-f<renew-rate> is not compatible with -i");
+    check((getExchangeMode() == DO_SA) && (getReleaseRate() != 0),
+          "-F<release-rate> is not compatible with -i");
     check((getExchangeMode() != DO_SA) && (isRapidCommit() != 0),
-          "-i must be set to use -c\n");
+          "-i must be set to use -c");
     check((getRate() == 0) && (getReportDelay() != 0),
-          "-r<rate> must be set to use -t<report>\n");
+          "-r<rate> must be set to use -t<report>");
     check((getRate() == 0) && (getNumRequests().size() > 0),
-          "-r<rate> must be set to use -n<num-request>\n");
+          "-r<rate> must be set to use -n<num-request>");
     check((getRate() == 0) && (getPeriod() != 0),
-          "-r<rate> must be set to use -p<test-period>\n");
+          "-r<rate> must be set to use -p<test-period>");
     check((getRate() == 0) &&
           ((getMaxDrop().size() > 0) || getMaxDropPercentage().size() > 0),
-          "-r<rate> must be set to use -D<max-drop>\n");
+          "-r<rate> must be set to use -D<max-drop>");
+    check((getRate() != 0) && (getRenewRate() + getReleaseRate() > getRate()),
+          "The sum of Renew rate (-f<renew-rate>) and Release rate"
+          " (-F<release-rate>) must not be greater than the exchange"
+          " rate specified as -r<rate>");
+    check((getRate() == 0) && (getRenewRate() != 0),
+          "Renew rate specified as -f<renew-rate> must not be specified"
+          " when -r<rate> parameter is not specified");
+    check((getRate() == 0) && (getReleaseRate() != 0),
+          "Release rate specified as -F<release-rate> must not be specified"
+          " when -r<rate> parameter is not specified");
     check((getTemplateFiles().size() < getTransactionIdOffset().size()),
-          "-T<template-file> must be set to use -X<xid-offset>\n");
+          "-T<template-file> must be set to use -X<xid-offset>");
     check((getTemplateFiles().size() < getRandomOffset().size()),
-          "-T<template-file> must be set to use -O<random-offset>\n");
+          "-T<template-file> must be set to use -O<random-offset>");
     check((getTemplateFiles().size() < 2) && (getElapsedTimeOffset() >= 0),
-          "second/request -T<template-file> must be set to use -E<time-offset>\n");
+          "second/request -T<template-file> must be set to use -E<time-offset>");
     check((getTemplateFiles().size() < 2) && (getServerIdOffset() >= 0),
           "second/request -T<template-file> must be set to "
-          "use -S<srvid-offset>\n");
+          "use -S<srvid-offset>");
     check((getTemplateFiles().size() < 2) && (getRequestedIpOffset() >= 0),
           "second/request -T<template-file> must be set to "
-          "use -I<ip-offset>\n");
+          "use -I<ip-offset>");
 
 }
 
@@ -737,6 +770,8 @@ void
 CommandOptions::check(bool condition, const std::string& errmsg) const {
     // The same could have been done with macro or just if statement but
     // we prefer functions to macros here
+    std::ostringstream stream;
+    stream << errmsg << "\n";
     if (condition) {
         isc_throw(isc::InvalidParameter, errmsg);
     }
@@ -792,6 +827,12 @@ CommandOptions::printCommandLine() const {
     std::cout << "lease-type=" << getLeaseType().toText() << std::endl;
     if (rate_ != 0) {
         std::cout << "rate[1/s]=" << rate_ <<  std::endl;
+    }
+    if (getRenewRate() != 0) {
+        std::cout << "renew-rate[1/s]=" << getRenewRate() << std::endl;
+    }
+    if (getReleaseRate() != 0) {
+        std::cout << "release-rate[1/s]=" << getReleaseRate() << std::endl;
     }
     if (report_delay_ != 0) {
         std::cout << "report[s]=" << report_delay_ << std::endl;
@@ -875,13 +916,15 @@ CommandOptions::printCommandLine() const {
 void
 CommandOptions::usage() const {
     std::cout <<
-        "perfdhcp [-hv] [-4|-6] [-e<lease-type>] [-r<rate>] [-t<report>]\n"
-        "    [-R<range>] [-b<base>] [-n<num-request>] [-p<test-period>]\n"
-        "    [-d<drop-time>] [-D<max-drop>] [-l<local-addr|interface>]\n"
-        "    [-P<preload>] [-a<aggressivity>] [-L<local-port>] [-s<seed>]\n"
-        "    [-i] [-B] [-c] [-1] [-T<template-file>] [-X<xid-offset>]\n"
-        "    [-O<random-offset] [-E<time-offset>] [-S<srvid-offset>]\n"
-        "    [-I<ip-offset>] [-x<diagnostic-selector>] [-w<wrapped>] [server]\n"
+        "perfdhcp [-hv] [-4|-6] [-e<lease-type>] [-r<rate>] [-f<renew-rate>]\n"
+        "         [-F<release-rate>] [-t<report>] [-R<range>] [-b<base>]\n"
+        "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
+        "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
+        "         [-a<aggressivity>] [-L<local-port>] [-s<seed>] [-i] [-B]\n"
+        "         [-c] [-1] [-T<template-file>] [-X<xid-offset>]\n"
+        "         [-O<random-offset] [-E<time-offset>] [-S<srvid-offset>]\n"
+        "         [-I<ip-offset>] [-x<diagnostic-selector>] [-w<wrapped>]\n"
+        "         [server]\n"
         "\n"
         "The [server] argument is the name/address of the DHCP server to\n"
         "contact.  For DHCPv4 operation, exchanges are initiated by\n"
@@ -971,6 +1014,16 @@ CommandOptions::usage() const {
         "\n"
         "DHCPv6 only options:\n"
         "-c: Add a rapid commit option (exchanges will be SA).\n"
+        "-f<renew-rate>: Rate at which IPv6 Renew requests are sent to\n"
+        "    a server. This value is only valid when used in conjunction with\n"
+        "    the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
+        "    this value and the release-rate (given by -F<rate) must be equal\n"
+        "    to or less than the exchange rate.\n"
+        "-F<release-rate>: Rate at which IPv6 Release requests are sent to\n"
+        "    a server. This value is only valid when used in conjunction with\n"
+        "    the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
+        "    this value and the renew-rate (given by -f<rate) must be equal\n"
+        "    to or less than the exchange rate.\n"
         "\n"
         "The remaining options are used only in conjunction with -r:\n"
         "\n"

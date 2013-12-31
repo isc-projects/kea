@@ -109,9 +109,16 @@ protected:
         } else if (option_space == "dhcp4") {
             isc_throw(DhcpConfigError, "'dhcp4' option space name is reserved"
                      << " for DHCPv4 server");
+        } else {
+            // Check if this is a vendor-option. If it is, get vendor-specific
+            // definition.
+            uint32_t vendor_id = SubnetConfigParser::optionSpaceToVendorId(option_space);
+            if (vendor_id) {
+                def = LibDHCP::getVendorOptionDef(Option::V6, vendor_id, option_code);
+            }
         }
 
-        return def;
+        return (def);
     }
 };
 

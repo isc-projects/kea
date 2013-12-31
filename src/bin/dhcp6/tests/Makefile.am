@@ -69,6 +69,7 @@ libco2_la_LDFLAGS = -avoid-version -export-dynamic -module
 TESTS += dhcp6_unittests
 dhcp6_unittests_SOURCES  = dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
+dhcp6_unittests_SOURCES += fqdn_unittest.cc
 dhcp6_unittests_SOURCES += hooks_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc

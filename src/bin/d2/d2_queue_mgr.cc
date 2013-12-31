@@ -22,10 +22,13 @@ namespace d2 {
 // Makes constant visible to Google test macros.
 const size_t D2QueueMgr::MAX_QUEUE_DEFAULT;
 
-D2QueueMgr::D2QueueMgr(isc::asiolink::IOService& io_service,
-                       const size_t max_queue_size)
+D2QueueMgr::D2QueueMgr(IOServicePtr& io_service, const size_t max_queue_size)
     : io_service_(io_service), max_queue_size_(max_queue_size),
       mgr_state_(NOT_INITTED), target_stop_state_(NOT_INITTED) {
+    if (!io_service_) {
+        isc_throw(D2QueueMgrError, "IOServicePtr cannot be null");
+    }
+
     // Use setter to do validation.
     setMaxQueueSize(max_queue_size);
 }
@@ -129,7 +132,7 @@ D2QueueMgr::startListening() {
 
     // Instruct the listener to start listening and set state accordingly.
     try {
-        listener_->startListening(io_service_);
+        listener_->startListening(*io_service_);
         mgr_state_ = RUNNING;
     } catch (const isc::Exception& ex) {
         isc_throw(D2QueueMgrError, "D2QueueMgr listener start failed: "

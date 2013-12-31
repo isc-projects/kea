@@ -59,6 +59,7 @@ nodist_b10_dhcp4_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 EXTRA_DIST += dhcp4_messages.mes
 
 b10_dhcp4_LDADD  = $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+b10_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la

@@ -16,6 +16,8 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter_inet.h>
+#include <errno.h>
+#include <cstring>
 
 using namespace isc::asiolink;
 
@@ -28,11 +30,12 @@ PktFilterInet::PktFilterInet()
 {
 }
 
-int PktFilterInet::openSocket(const Iface& iface,
-                              const isc::asiolink::IOAddress& addr,
-                              const uint16_t port,
-                              const bool receive_bcast,
-                              const bool send_bcast) {
+SocketInfo
+PktFilterInet::openSocket(const Iface& iface,
+                          const isc::asiolink::IOAddress& addr,
+                          const uint16_t port,
+                          const bool receive_bcast,
+                          const bool send_bcast) {
 
     struct sockaddr_in addr4;
     memset(&addr4, 0, sizeof(sockaddr));
@@ -90,7 +93,8 @@ int PktFilterInet::openSocket(const Iface& iface,
     }
 #endif
 
-    return (sock);
+    SocketInfo sock_desc(addr, port, sock);
+    return (sock_desc);
 
 }
 
@@ -233,14 +237,15 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     struct in_pktinfo* pktinfo =(struct in_pktinfo *)CMSG_DATA(cmsg);
     memset(pktinfo, 0, sizeof(struct in_pktinfo));
     pktinfo->ipi_ifindex = pkt->getIndex();
-    m.msg_controllen = cmsg->cmsg_len;
+    m.msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
 #endif
 
     pkt->updateTimestamp();
 
     int result = sendmsg(sockfd, &m, 0);
     if (result < 0) {
-        isc_throw(SocketWriteError, "pkt4 send failed");
+        isc_throw(SocketWriteError, "pkt4 send failed: sendmsg() returned "
+                  " with an error: " << strerror(errno));
     }
 
     return (result);
