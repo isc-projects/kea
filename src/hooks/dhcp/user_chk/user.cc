@@ -22,6 +22,8 @@
 #include <iomanip>
 #include <sstream>
 
+namespace user_chk {
+
 //********************************* UserId ******************************
 
 const char* UserId::HW_ADDRESS_STR = "HW_ADDR";
@@ -215,3 +217,5 @@ const UserId&
 User::getUserId() const {
     return (user_id_);
 }
+
+} // namespace user_chk

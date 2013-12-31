@@ -25,7 +25,7 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 BUILT_SOURCES =
 
 # Ensure that the message file is included in the distribution
-EXTRA_DIST =
+EXTRA_DIST = libdhcp_user_chk.dox
 
 # Get rid of generated message files on a clean
 #CLEANFILES = *.gcno *.gcda user_chk_messages.h user_chk_messages.cc s-messages

@@ -25,6 +25,8 @@
 
 using namespace std;
 
+namespace user_chk {
+
 /// @brief Thrown a UserFile encounters an error.
 /// Note that it derives from UserDataSourceError to comply with the interface.
 class UserFileError : public UserDataSourceError {
@@ -132,5 +134,7 @@ private:
 
 /// @brief Defines a smart pointer to a UserFile.
 typedef boost::shared_ptr<UserFile> UserFilePtr;
+
+} // namespace user_chk
 
 #endif

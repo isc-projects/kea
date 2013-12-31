@@ -20,6 +20,8 @@
 #include <errno.h>
 #include <iostream>
 
+namespace user_chk {
+
 UserFile::UserFile(const std::string& fname) : fname_(fname), file_() {
     if (fname_.empty()) {
         isc_throw(UserFileError, "file name cannot be blank");
@@ -157,3 +159,4 @@ UserFile::close() {
     }
 }
 
+} // namespace user_chk

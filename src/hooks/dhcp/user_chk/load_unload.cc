@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// @file This file defines the load and unload hooks library functions.
+/// @file load_unload.cc Defines the load and unload hooks library functions.
 
 #include <hooks/hooks.h>
 #include <user_registry.h>
@@ -23,6 +23,7 @@
 #include <errno.h>
 
 using namespace isc::hooks;
+using namespace user_chk;
 
 /// @brief Pointer to the registry instance.
 UserRegistryPtr user_registry;
@@ -39,15 +40,21 @@ const char* registry_fname = "/tmp/user_chk_registry.txt";
 const char* user_chk_output_fname = "/tmp/user_chk_outcome.txt";
 
 /// @brief Text label of user id in the inbound query in callout context
-const char* query_user_id_label = "query_user_id_label";
+const char* query_user_id_label = "query_user_id";
 
 /// @brief Text label of registered user pointer in callout context
 const char* registered_user_label = "registered_user";
 
 /// @brief Text id used to identify the default IPv4 user in the registry
+/// The format is a string containing an even number of hex digits.  This
+/// value is to look up the default IPv4 user in the user registry for the
+/// the purpose of retrieving default values for user options.
 const char* default_user4_id_str = "00000000";
 
 /// @brief Text id used to identify the default IPv6 user in the registry
+/// The format is a string containing an even number of hex digits.  This
+/// value is to look up the default IPv6 user in the user registry for the
+/// the purpose of retrieving default values for user options.
 const char *default_user6_id_str = "00000000";
 
 // Functions accessed by the hooks framework use C linkage to avoid the name
