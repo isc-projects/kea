@@ -101,7 +101,7 @@ following two entries:
 
     - "type" whose value is "HW_ADDR" for IPv4 users or "DUID" for IPv6 users
     - "id" whose value is either the hardware address or the DUID from the
-    request formatted as a sring of hex digits, without delimiters.
+    request formatted as a sring of hex digits, with or without ":" delimiters.
 
 and may have the one or more of the following entries:
 
@@ -112,14 +112,13 @@ and may have the one or more of the following entries:
 Sample user registry file is shown below:
 
 @code
-{ "type" : "HW_ADDR", "id" : "0c0e0a01ff04", "bootfile" : "/tmp/v4bootfile" }
-{ "type" : "HW_ADDR", "id" : "0c0e0a01ff06", "tftp_server" : "tftp.v4.example.com" }
-{ "type" : "DUID", "id" : "0001000119efe63b000c01020304", "bootfile" : "/tmp/v6bootfile" }
-{ "type" : "DUID", "id" : "0001000119efe63b000c01020306", "tftp_server" : "tftp.v6.example.com" }
+{ "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:04", "bootfile" : "/tmp/v4bootfile" }
+{ "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:06", "tftp_server" : "tftp.v4.example.com" }
+{ "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04", "bootfile" : "/tmp/v6bootfile" }
+{ "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:06", "tftp_server" : "tftp.v6.example.com" }
 @endcode
 
-Note, that it is possible to specify additional attributes. They will be loaded and stored with the user's entry in the registry. This allows the library to be
-extended to perform additional actions based on these attributes.
+It is possible to specify additional attributes. They will be loaded and stored with the user's entry in the registry. This allows the library to be extended to perform additional actions based on these attributes.
 
 Upon start up the library will attempt to load this file.  If it does not exist
 the library will unload.
@@ -163,37 +162,46 @@ id_type=HW_ADDR
 client=hwtype=1 0c:0e:0a:01:ff:04
 addr=175.16.1.100
 registered=yes
+
 id_type=HW_ADDR
 client=hwtype=1 0c:0e:0a:01:ff:05
 addr=152.0.2.10
 registered=no
+
 id_type=HW_ADDR
 client=hwtype=1 0c:0e:0a:01:ff:06
 addr=175.16.1.101
 registered=yes
+
 id_type=HW_ADDR
 client=hwtype=1 0c:0e:0a:01:ff:04
 addr=175.16.1.102
 registered=yes
+
 id_type=DUID
 client=00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04
 addr=2001:db8:2::1:0:0/96
 registered=yes
+
 id_type=DUID
 client=00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04
 addr=2001:db8:2::
 registered=yes
+
 id_type=DUID
 client=00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:05
 addr=5005:778:2::
 registered=no
+
 id_type=DUID
 client=00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:06
 addr=2001:db8:2::1
 registered=yes
+
 @endcode
 
 Note the library always opens this file in append mode and does not limit its size.
+
 
 
 */
