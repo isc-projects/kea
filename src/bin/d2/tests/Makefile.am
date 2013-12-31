@@ -51,7 +51,8 @@ if HAVE_GTEST
 
 TESTS += d2_unittests
 
-d2_unittests_SOURCES = ../d2_log.h ../d2_log.cc
+d2_unittests_SOURCES = ../d2_asio.h
+d2_unittests_SOURCES += ../d2_log.h ../d2_log.cc
 d2_unittests_SOURCES += ../d_process.h
 d2_unittests_SOURCES += ../d_controller.cc ../d2_controller.h
 d2_unittests_SOURCES += ../d2_process.cc ../d2_process.h
@@ -65,6 +66,8 @@ d2_unittests_SOURCES += ../d2_update_mgr.cc ../d2_update_mgr.h
 d2_unittests_SOURCES += ../d2_zone.cc ../d2_zone.h
 d2_unittests_SOURCES += ../dns_client.cc ../dns_client.h
 d2_unittests_SOURCES += ../labeled_value.cc ../labeled_value.h
+d2_unittests_SOURCES += ../nc_add.cc ../nc_add.h
+d2_unittests_SOURCES += ../nc_remove.cc ../nc_remove.h
 d2_unittests_SOURCES += ../nc_trans.cc ../nc_trans.h
 d2_unittests_SOURCES += ../state_model.cc ../state_model.h
 d2_unittests_SOURCES += d_test_stubs.cc d_test_stubs.h
@@ -80,6 +83,9 @@ d2_unittests_SOURCES += d2_update_mgr_unittests.cc
 d2_unittests_SOURCES += d2_zone_unittests.cc
 d2_unittests_SOURCES += dns_client_unittests.cc
 d2_unittests_SOURCES += labeled_value_unittests.cc
+d2_unittests_SOURCES += nc_add_unittests.cc
+d2_unittests_SOURCES += nc_remove_unittests.cc
+d2_unittests_SOURCES += nc_test_utils.cc nc_test_utils.h
 d2_unittests_SOURCES += nc_trans_unittests.cc
 d2_unittests_SOURCES += state_model_unittests.cc
 nodist_d2_unittests_SOURCES = ../d2_messages.h ../d2_messages.cc
@@ -94,6 +100,7 @@ d2_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la

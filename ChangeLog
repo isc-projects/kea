@@ -1,3 +1,155 @@
+720.	[func]		tmark
+	Added the initial implementation of the class, NameAddTransaction,
+	to b10-dhcp-ddns.  This class provides a state machine which implements
+	the logic required to remove forward and reverse DNS entries as described
+	in RFC 4703, section 5.5. This includes the ability to construct the
+	necessary DNS requests.
+	(Trac# 3088, git ca58ac00fce4cb5f46e534d7ffadb2db4e4ffaf3)
+
+719.	[func]		tomek
+	b10-dhcp4: Support for sending back client-id (RFC6842) has been
+	added now. Also a configuration parameter (echo-client-id) has
+	been added, so it is possible to enable backward compatibility
+	("echo-client-id false").
+	(Trac #3210, git 88a4858db206dfcd53a227562198f308f7779a72)
+
+718.	[func]		dclink, tomek
+	libdhcp++: Interface detection implemented for FreeBSD, NetBSD,
+	OpenBSD, Mac OS X and Solaris 11. Thanks to David Carlier for
+	contributing a patch.
+	(Trac #2246, git d8045b5e1580a1d0b89a232fd61c10d25a95e769)
+
+717.	[bug]		marcin
+	Fixed the bug which incorrectly treated DHCPv4 option codes 224-254 as
+	standard options, barring them from being used as custom options.
+	(Trac #2772, git c6158690c389d75686545459618ae0bf16f2cdb8)
+
+716.	[func]		marcin
+	perfdhcp: added support for sending DHCPv6 Relese messages at the specified
+	rate and measure performance. The orphan messages counters are not
+	displayed for individual exchanges anymore. The following ticket: #3261
+	has been submitted to implement global orphan counting for all exchange
+	types.
+	(Trac #3181, git 684524bc130080e4fa31b65edfd14d58eec37e50)
+
+715.	[bug]		marcin
+	libdhcp++: Used the CMSG_SPACE instead of CMSG_LEN macro to calculate
+	msg_controllen field of the DHCPv6 message. Use of CMSG_LEN causes
+	sendmsg failures on OpenBSD due to the bug kernel/6080 on OpenBSD.
+	(Trac #1824, git 39c9499d001a98c8d2f5792563c28a5eb2cc5fcb)
+
+714.	[doc]		tomek
+	BIND10 Contributor's Guide added.
+	(Trac #3109, git 016bfae00460b4f88adbfd07ed26759eb294ef10)
+
+713.	[func]		tmark
+	Added DNS update request construction to d2::NameAddTransaction in
+	b10-dhcp-ddns.  The class now generates all DNS update request variations
+	needed to fulfill it's state machine in compliance with RFC 4703, sections
+	5.3 and 5.4.
+	(Trac# 3241, git dceca9554cb9410dd8d12371b68198b797cb6cfb)
+
+712.	[func]		marcin,dclink
+	b10-dhcp4: If server fails to open a socket on one interface it
+	will log a warning and continue to open sockets on other interfaces.
+	The warning message is communicated from the libdhcp++ via the
+	error handler function supplied by the DHCPv4 server. Thanks to
+	David Carlier for providing a patch.
+	(Trac #2765, git f49c4b8942cdbafb85414a1925ff6ca1d381f498)
+
+711.	[func]		tmark
+	Added the initial implementation of the class, NameAddTransaction,
+	to b10-dhcp-ddns.  This class provides the state model logic
+	described in the DHCP_DDNS design to add or replace forward and
+	reverse DNS entries for a given FQDN.  It does not yet construct
+	the actual DNS update requests, this will be added under Trac#
+	3241.
+	(Trac# 3087, git 8f99da735a9f39d514c40d0a295f751dc8edfbcd)
+
+710.	[build]		jinmei
+	Fixed various build time issues for MacOS X 10.9.  Those include
+	some general fixes and improvements:
+	- (libdns++) masterLoad() functions now use the generic MasterLoader
+	  class as backend, eliminating the restrictions of the previous
+	  versions.
+	- (libcc) fixed a minor portability bug in the JSON parser.  Although
+	  the only known affected system is OS X 10.9 at the moment, that
+	  could potentially cause disruption on other existing and future
+	  systems.
+	Other notes:
+	- if built with googletest, gtest 1.7 (and possibly higher) is
+	  required.
+	- many older versions of Boost don't work.  A known workable version
+	  is 1.54.
+	(Trac #3213, git d4e570f097fe0eb9009b177a4af285cde0c636cc)
+
+709.	[bug]		marcin
+	b10-dhcp6: Server crashed when the client sent FQDN option and did
+	not request FQDN option to be returned.
+	(Trac #3220, git 0f1ed4205a46eb42ef728ba6b0955c9af384e0be)
+
+708.	[bug]		dclink,marcin
+	libdhcpsrv: Fixed a bug in Memfile lease database backend which
+	caused DHCPv4 server crashes when leases with NULL client id
+	were present. Thanks to David Carlier for submitting the patch.
+	(Trac #2940, git a232f3d7d92ebcfb7793dc6b67914299c45c715b)
+
+707.	[bug]		muks
+	Using very large numbers (out of bounds) in config values caused
+	BIND 10 to throw an exception. This has been fixed in a patch
+	contributed by David Carlier.
+	(Trac #3114, git 9bd776e36b7f53a6ee2e4d5a2ea79722ba5fe13b)
+
+706.	[func]		marcin
+	b10-dhcp4: Server processes the DHCPv4 Client FQDN and Host Name
+	options sent by a client and generates the response. as a result
+	of processing, the server generates NameChangeRequests which
+	represent changes to DNS mappings for a particular lease (addition
+	or removal of DNS mappings).
+	Currently all generated NameChangeRequests are dropped. Sending
+	them to b10-dhcp-ddns will be implemented with the future tickets.
+	(Trac #3035, git f617e6af8cdf068320d14626ecbe14a73a6da22)
+
+705.	[bug]		kean
+	When commands are piped into bindctl, no longer attempt to query the
+	user name and password if no default user name and password file is
+	present, or it contains no valid entries.
+	(Trac #264, git 4921d7de6b5623c7e85d2baf8bc978686877345b)
+
+704.	[func]		naokikambe
+	New statistics items related to IP sockets added into b10-xfrin:
+	open, openfail, close, connfail, conn, senderr, and recverr.
+	Their values can be obtained by invoking "Stats show Xfrin" via
+	bindctl while b10-xfrin is running.
+	(Trac #2300, git 4655c110afa0ec6f5669bf53245bffe6b30ece4b)
+
+703.    [bug]		kean
+	A bug in b10-msgq was fixed where it would remove the socket file if
+	there was an existing copy of b10-msgq running. It now correctly
+	detects and reports this without removing the socket file.
+	(Trac #433, git c18a49b0435c656669e6f87ef65d44dc98e0e726)
+
+702.	[func]		marcin
+	perfdhcp: support for sending DHCPv6 Renew messages at the specified
+	rate and measure performance.
+	(Trac #3183, git 66f2939830926f4337623b159210103b5a8e2434)
+
+701.	[bug]		tomek
+	libdhcp++: Incoming DHCPv6 IAPREFIX option is now parsed properly.
+	(Trac #3211, git ed43618a2c7b2387d76f99a5a4b1a3e05ac70f5e)
+
+700.	[func]		tomek,marcin
+	b10-dhcp4,b10-dhcp6: Support for vendor options has been added. It
+	is now possible to configure vendor options. Server is able to
+	parse some CableLabs vendor options and send configured	vendor
+	options	in response. The support is not complete.
+	(Trac #3194, git 243ded15bbed0d35e230d00f4e3ee42c3609616c)
+
+699.	[bug]		marcin
+	libdhcp++: Options with defined suboptions are now handled properly.
+	In particular, Relay Agent Info options is now echoed back properly.
+	(Trac #3102, git 6f6251bbd761809634aa470f36480d046b4d2a20)
+
 698.	[bug]		muks
 	A bug was fixed in the interaction between b10-init and b10-msgq
 	that caused BIND 10 failures after repeated start/stop of
@@ -47,7 +199,7 @@
 	libdhcp++: Created definitions for standard DHCPv4 options:
 	tftp-server-name (66) and boot-file-name (67). Also, fixed definition
 	of DHCPv4 option time-offset (2).
-	(Trac #3199, git abcd)
+	(Trac #3199, git 6e171110c4dd9ae3b1be828b9516efc65c33460b)
 
 690.	[bug]		tomek
 	b10-dhcp4: Relay Agent Info option is now echoed back in

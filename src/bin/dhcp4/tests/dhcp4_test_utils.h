@@ -20,6 +20,7 @@
 #define DHCP4_TEST_UTILS_H
 
 #include <gtest/gtest.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
@@ -52,9 +53,10 @@ public:
     }
 
     /// Does nothing.
-    virtual int openSocket(const Iface&, const isc::asiolink::IOAddress&,
-                           const uint16_t, const bool, const bool) {
-        return (0);
+    virtual SocketInfo openSocket(const Iface&,
+                                  const isc::asiolink::IOAddress& addr,
+                                  const uint16_t port, const bool, const bool) {
+        return (SocketInfo(addr, port, 0));
     }
 
     /// Does nothing.
@@ -79,8 +81,7 @@ public:
     Dhcpv4SrvTest();
 
     /// @brief destructor
-    virtual ~Dhcpv4SrvTest() {
-    }
+    virtual ~Dhcpv4SrvTest();
 
     /// @brief Add 'Parameter Request List' option to the packet.
     ///
@@ -187,6 +188,11 @@ public:
     void checkServerId(const Pkt4Ptr& rsp, const OptionPtr& expected_srvid);
 
     /// @brief Checks if server response (OFFER, ACK, NAK) includes proper client-id
+    ///
+    /// This method follows values reported by CfgMgr in echoClientId() method.
+    /// Depending on its configuration, the client-id is either mandatory or
+    /// forbidden to appear in the response.
+    ///
     /// @param rsp response packet to be validated
     /// @param expected_clientid expected value of client-id
     void checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid);
@@ -357,6 +363,9 @@ public:
     using Dhcpv4Srv::processRelease;
     using Dhcpv4Srv::processDecline;
     using Dhcpv4Srv::processInform;
+    using Dhcpv4Srv::processClientName;
+    using Dhcpv4Srv::computeDhcid;
+    using Dhcpv4Srv::createNameChangeRequests;
     using Dhcpv4Srv::getServerID;
     using Dhcpv4Srv::loadServerID;
     using Dhcpv4Srv::generateServerID;
@@ -364,6 +373,7 @@ public:
     using Dhcpv4Srv::sanityCheck;
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::unpackOptions;
+    using Dhcpv4Srv::name_change_reqs_;
 };
 
 }; // end of isc::dhcp::test namespace

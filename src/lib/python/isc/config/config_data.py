@@ -24,6 +24,7 @@ import isc.cc.data
 import isc.config.module_spec
 import ast
 import copy
+import sys
 
 class ConfigDataError(Exception): pass
 
@@ -62,10 +63,16 @@ def check_type(spec_part, value):
     else:
         raise isc.cc.data.DataTypeError(str("Incorrect specification part for type checking"))
 
-    if data_type == "integer" and type(value) != int:
-        raise isc.cc.data.DataTypeError(str(value) + " is not an integer")
-    elif data_type == "real" and type(value) != float:
-        raise isc.cc.data.DataTypeError(str(value) + " is not a real")
+    if data_type == "integer":
+        if type(value) != int:
+            raise isc.cc.data.DataTypeError(str(value) + " is not an integer")
+        if value > sys.maxsize:
+            raise isc.cc.data.DataTypeError(str(value) + " is too large an integer")
+    elif data_type == "real":
+        if type(value) != float:
+            raise isc.cc.data.DataTypeError(str(value) + " is not a real")
+        if float(value) > sys.float_info.max:
+            raise isc.cc.data.DataTypeError(str(value) + " is too large a float")
     elif data_type == "boolean" and type(value) != bool:
         raise isc.cc.data.DataTypeError(str(value) + " is not a boolean")
     elif data_type == "string" and type(value) != str:

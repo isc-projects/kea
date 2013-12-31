@@ -187,6 +187,8 @@ TEST_F(StatsMgrTest, Exchange) {
                                                       common_transid));
     // This is expected to throw because XCHG_DO was not yet
     // added to Stats Manager for tracking.
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_DO));
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_RA));
     EXPECT_THROW(
         stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet),
         BadValue
@@ -196,8 +198,11 @@ TEST_F(StatsMgrTest, Exchange) {
         BadValue
     );
 
+
     // Adding DISCOVER-OFFER exchanges to be tracked by Stats Manager.
     stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+    ASSERT_TRUE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_DO));
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_RA));
     // The following two attempts are expected to throw because
     // invalid exchange types are passed (XCHG_RA instead of XCHG_DO)
     EXPECT_THROW(
@@ -257,6 +262,21 @@ TEST_F(StatsMgrTest, MultipleExchanges) {
               stats_mgr->getRcvdPacketsNum(StatsMgr6::XCHG_SA));
     EXPECT_EQ(request_packets_num,
               stats_mgr->getRcvdPacketsNum(StatsMgr6::XCHG_RR));
+}
+
+TEST_F(StatsMgrTest, ExchangeToString) {
+    // Test DHCPv4 specific exchange names.
+    EXPECT_EQ("DISCOVER-OFFER",
+              StatsMgr4::exchangeToString(StatsMgr4::XCHG_DO));
+    EXPECT_EQ("REQUEST-ACK", StatsMgr4::exchangeToString(StatsMgr4::XCHG_RA));
+
+    // Test DHCPv6 specific exchange names.
+    EXPECT_EQ("SOLICIT-ADVERTISE",
+              StatsMgr6::exchangeToString(StatsMgr6::XCHG_SA));
+    EXPECT_EQ("REQUEST-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RR));
+    EXPECT_EQ("RENEW-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RN));
+    EXPECT_EQ("RELEASE-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RL));
+
 }
 
 TEST_F(StatsMgrTest, SendReceiveSimple) {

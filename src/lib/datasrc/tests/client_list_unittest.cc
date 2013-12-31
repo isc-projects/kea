@@ -47,9 +47,8 @@ using isc::datasrc::memory::ZoneTableSegment;
 using isc::datasrc::memory::InMemoryZoneFinder;
 using namespace isc::data;
 using namespace isc::dns;
-// don't import the entire boost namespace.  It will unexpectedly hide uintXX_t
-// for some systems.
-using boost::shared_ptr;
+// note: don't use 'using [namespace]' for shared_ptr.  It would conflict with
+// C++ std:: definitions.
 using namespace std;
 
 namespace {
@@ -79,7 +78,7 @@ public:
         if (type == "MasterFiles") {
             return (DataSourcePair(0, DataSourceClientContainerPtr()));
         }
-        shared_ptr<MockDataSourceClient>
+        boost::shared_ptr<MockDataSourceClient>
             ds(new MockDataSourceClient(type, configuration));
         // Make sure it is deleted when the test list is deleted.
         to_delete_.push_back(ds);
@@ -88,7 +87,7 @@ public:
 private:
     // Hold list of data sources created internally, so they are preserved
     // until the end of the test and then deleted.
-    vector<shared_ptr<MockDataSourceClient> > to_delete_;
+    vector<boost::shared_ptr<MockDataSourceClient> > to_delete_;
 };
 
 const char* ds_zones[][3] = {
@@ -144,7 +143,7 @@ public:
             "}]"))
     {
         for (size_t i(0); i < ds_count; ++ i) {
-            shared_ptr<MockDataSourceClient>
+            boost::shared_ptr<MockDataSourceClient>
                 ds(new MockDataSourceClient(ds_zones[i]));
             ds_.push_back(ds);
             ds_info_.push_back(ConfigurableClientList::DataSourceInfo(
@@ -230,7 +229,7 @@ public:
     }
     // Check the positive result is as we expect it.
     void positiveResult(const ClientList::FindResult& result,
-                        const shared_ptr<MockDataSourceClient>& dsrc,
+                        const boost::shared_ptr<MockDataSourceClient>& dsrc,
                         const Name& name, bool exact,
                         const char* test, bool from_cache = false)
     {
@@ -242,10 +241,10 @@ public:
         // alive, even when we don't know what it is.
         // Any better idea how to test it actually keeps the thing
         // alive?
-        EXPECT_NE(shared_ptr<ClientList::FindResult::LifeKeeper>(),
+        EXPECT_NE(boost::shared_ptr<ClientList::FindResult::LifeKeeper>(),
                   result.life_keeper_);
         if (from_cache) {
-            EXPECT_NE(shared_ptr<InMemoryZoneFinder>(),
+            EXPECT_NE(boost::shared_ptr<InMemoryZoneFinder>(),
                       boost::dynamic_pointer_cast<InMemoryZoneFinder>(
                           result.finder_)) << "Finder is not from cache";
             EXPECT_TRUE(NULL !=
@@ -308,7 +307,7 @@ public:
         EXPECT_EQ(type, ds->type_);
         EXPECT_TRUE(Element::fromJSON(params)->equals(*ds->configuration_));
         EXPECT_EQ(cache, list_->getDataSources()[index].cache_ !=
-                  shared_ptr<InMemoryClient>());
+                  boost::shared_ptr<InMemoryClient>());
     }
     ConfigurableClientList::CacheStatus doReload(
         const Name& origin, const string& datasrc_name = "");
@@ -316,9 +315,9 @@ public:
         int numZones, const string& zoneName);
 
     const RRClass rrclass_;
-    shared_ptr<TestedList> list_;
+    boost::shared_ptr<TestedList> list_;
     const ClientList::FindResult negative_result_;
-    vector<shared_ptr<MockDataSourceClient> > ds_;
+    vector<boost::shared_ptr<MockDataSourceClient> > ds_;
     vector<ConfigurableClientList::DataSourceInfo> ds_info_;
     const ConstElementPtr config_elem_, config_elem_zones_;
 };
@@ -401,7 +400,7 @@ TEST_P(ListTest, selfTest) {
     EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("aaa")).code);
     EXPECT_EQ(result::NOTFOUND, ds_[0]->findZone(Name("zzz")).code);
     // Nothing to keep alive here.
-    EXPECT_EQ(shared_ptr<ClientList::FindResult::LifeKeeper>(),
+    EXPECT_EQ(boost::shared_ptr<ClientList::FindResult::LifeKeeper>(),
                   negative_result_.life_keeper_);
 }
 
@@ -804,7 +803,8 @@ TEST_P(ListTest, cacheZones) {
     checkDS(0, "type1", "[\"example.org\", \"example.com\", \"exmaple.cz\"]",
             true);
 
-    const shared_ptr<InMemoryClient> cache(list_->getDataSources()[0].cache_);
+    const boost::shared_ptr<InMemoryClient> cache(
+        list_->getDataSources()[0].cache_);
     EXPECT_EQ(2, cache->getZoneCount());
 
     EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.org")).code);
@@ -840,7 +840,8 @@ TEST_P(ListTest, badCache) {
         "}]"));
     list_->configure(elem1, true); // shouldn't cause disruption
     checkDS(0, "test_type", "[\"example.org\"]", true);
-    const shared_ptr<InMemoryClient> cache(list_->getDataSources()[0].cache_);
+    const boost::shared_ptr<InMemoryClient> cache(
+        list_->getDataSources()[0].cache_);
     EXPECT_EQ(1, cache->getZoneCount());
     EXPECT_EQ(result::SUCCESS, cache->findZone(Name("example.org")).code);
     // Now, the zone doesn't give an iterator
@@ -895,7 +896,8 @@ TEST_P(ListTest,
         "}]"));
     list_->configure(elem, true); // no disruption
     checkDS(0, "test_type", "[\"example.org\"]", true);
-    const shared_ptr<InMemoryClient> cache(list_->getDataSources()[0].cache_);
+    const boost::shared_ptr<InMemoryClient> cache(
+        list_->getDataSources()[0].cache_);
 
     // Likewise, reload attempt will fail.
     EXPECT_EQ(ConfigurableClientList::CACHE_NOT_WRITABLE,
