@@ -553,8 +553,10 @@ public:
 
     /// @brief Classes this packet belongs to.
     ///
-    /// This field is public, so code can iterate over existing classes.
-    /// Having it public also solves the problem of returned reference lifetime.
+    /// This field is public, so the code outside of Pkt4 class can iterate over
+    /// existing classes. Having it public also solves the problem of returned
+    /// reference lifetime. It is preferred to use @ref inClass and @ref addClass
+    /// should be used to operate on this field.
     Classes classes_;
 
 private:
