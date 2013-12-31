@@ -15,4 +15,8 @@
 /// Defines the logger used by the user check hooks library.
 #include <user_chk_log.h>
 
+namespace user_chk {
+
 isc::log::Logger user_chk_logger("user_chk");
+
+} // namespace user_chk

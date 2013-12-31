@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// @file Defines the pkt4_send and pkt6_send callout functions.
+/// @file pkt_send.cc Defines the pkt4_send and pkt6_send callout functions.
 
 #include <asiolink/io_address.h>
 #include <hooks/hooks.h>
@@ -23,40 +23,41 @@
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
 #include <dhcp/option6_iaprefix.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <user_chk.h>
 
 using namespace isc::dhcp;
 using namespace isc::hooks;
+using namespace user_chk;
 using namespace std;
+
+// prototypes for local helper functions
+void generate_output_record(const std::string& id_type_str,
+                            const std::string& id_val_str,
+                            const std::string& addr_str,
+                            const bool& registered);
+std::string getV6AddrStr (Pkt6Ptr response);
+std::string getAddrStrIA_NA(OptionPtr options);
+std::string getAddrStrIA_PD(OptionPtr options);
+bool checkIAStatus(boost::shared_ptr<Option6IA>& ia_opt);
+
+void add4Options(Pkt4Ptr& response, const UserPtr& user);
+void add4Option(Pkt4Ptr& response, uint8_t opt_code, std::string& opt_value);
+void add6Options(Pkt6Ptr& response, const UserPtr& user);
+void add6Option(OptionPtr& vendor, uint8_t opt_code, std::string& opt_value);
+const UserPtr& getDefaultUser4();
+const UserPtr& getDefaultUser6();
 
 // Functions accessed by the hooks framework use C linkage to avoid the name
 // mangling that accompanies use of the C++ compiler as well as to avoid
 // issues related to namespaces.
 extern "C" {
 
-extern void generate_output_record(const std::string& id_type_str,
-                            const std::string& id_val_str,
-                            const std::string& addr_str,
-                            const bool& registered);
-extern std::string getV6AddrStr (Pkt6Ptr response);
-extern std::string getAddrStrIA_NA(OptionPtr options);
-extern std::string getAddrStrIA_PD(OptionPtr options);
-extern bool checkIAStatus(boost::shared_ptr<Option6IA>& ia_opt);
-
-extern void add4Options(Pkt4Ptr& response, const UserPtr& user);
-extern void add4Option(Pkt4Ptr& response, uint8_t opt_code,
-                        std::string& opt_value);
-extern void add6Options(Pkt6Ptr& response, const UserPtr& user);
-extern void add6Option(OptionPtr& vendor, uint8_t opt_code,
-                       std::string& opt_value);
-extern const UserPtr& getDefaultUser4();
-extern const UserPtr& getDefaultUser6();
-
 /// @brief  This callout is called at the "pkt4_send" hook.
 ///
-/// This function generates the user check outcome and adds vendor options
+/// This function generates the user check outcome and modifies options
 /// to the IPv4 response packet based on whether the user is registered or not.
 ///
 /// It retrieves a pointer to the registered user from the callout context.
@@ -77,7 +78,6 @@ int pkt4_send(CalloutHandle& handle) {
         Pkt4Ptr response;
         handle.getArgument("response4", response);
 
-        // @todo Determine list of types to process and skip the rest.
         uint8_t packet_type = response->getType();
         if (packet_type == DHCPNAK) {
             std::cout << "DHCP UserCheckHook : pkt4_send"
@@ -127,69 +127,9 @@ int pkt4_send(CalloutHandle& handle) {
     return (0);
 }
 
-/// @brief Adds IPv4 options to the response packet based on given user
-///
-/// Adds or replaces IPv4 options with values from the given user, if
-/// the user has corresponding properties defined. Currently it supports
-/// the following options:
-///
-/// - DHO_BOOT_FILE_NAME from user property "bootfile"
-/// - DHO_TFTP_SERVER_NAME from user property "tftp_server"
-///
-/// @param response IPv4 response packet
-/// @param user User from whom properties are sourced
-void add4Options(Pkt4Ptr& response, const UserPtr& user) {
-    // If user is null, do nothing.
-    if (!user) {
-        return;
-    }
-
-    // If the user has bootfile property, update it in the response.
-    std::string opt_value = user->getProperty("bootfile");
-    if (!opt_value.empty()) {
-        std::cout << "DHCP UserCheckHook : add4Options "
-              << "adding boot file:" << opt_value << std::endl;
-
-        // Add boot file to packet.
-        add4Option(response, DHO_BOOT_FILE_NAME, opt_value);
-
-        // Boot file also goes in file field.
-        response->setFile((const uint8_t*)(opt_value.c_str()),
-                          opt_value.length());
-    }
-
-    // If the user has tftp server property, update it in the response.
-    opt_value = user->getProperty("tftp_server");
-    if (!opt_value.empty()) {
-        std::cout << "DHCP UserCheckHook : add4Options "
-              << "adding TFTP server:" << opt_value << std::endl;
-
-        // Add tftp server option to packet.
-        add4Option(response, DHO_TFTP_SERVER_NAME, opt_value);
-    }
-    // add next option here
-}
-
-/// @brief Adds/updates are specific IPv4 string option in response packet.
-///
-/// @param response IPV4 response packet to update
-/// @param opt_code DHCP standard numeric code of the option
-/// @param opt_value String value of the option
-void add4Option(Pkt4Ptr& response, uint8_t opt_code, std::string& opt_value) {
-    // Remove the option if it exists.
-    OptionPtr opt = response->getOption(opt_code);
-    if (opt) {
-        response->delOption(opt_code);
-    }
-
-    // Now add the option.
-    opt.reset(new OptionString(Option::V4, opt_code, opt_value));
-    response->addOption(opt);
-}
-
 /// @brief  This callout is called at the "pkt6_send" hook.
 ///
-/// This function generates the user check outcome and adds vendor options
+/// This function generates the user check outcome and modifies options
 /// to the IPv6 response packet based on whether the user is registered or not.
 ///
 /// It retrieves a pointer to the registered user from the callout context.
@@ -263,6 +203,69 @@ int pkt6_send(CalloutHandle& handle) {
     return (0);
 }
 
+} // extern C
+
+/// @brief Adds IPv4 options to the response packet based on given user
+///
+/// Adds or replaces IPv4 options with values from the given user, if
+/// the user has corresponding properties defined. Currently it supports
+/// the following options:
+///
+/// - DHO_BOOT_FILE_NAME from user property "bootfile"
+/// - DHO_TFTP_SERVER_NAME from user property "tftp_server"
+///
+/// @param response IPv4 response packet
+/// @param user User from whom properties are sourced
+void add4Options(Pkt4Ptr& response, const UserPtr& user) {
+    // If user is null, do nothing.
+    if (!user) {
+        return;
+    }
+
+    // If the user has bootfile property, update it in the response.
+    std::string opt_value = user->getProperty("bootfile");
+    if (!opt_value.empty()) {
+        std::cout << "DHCP UserCheckHook : add4Options "
+              << "adding boot file:" << opt_value << std::endl;
+
+        // Add boot file to packet.
+        add4Option(response, DHO_BOOT_FILE_NAME, opt_value);
+
+        // Boot file also goes in file field.
+        response->setFile((const uint8_t*)(opt_value.c_str()),
+                          opt_value.length());
+    }
+
+    // If the user has tftp server property, update it in the response.
+    opt_value = user->getProperty("tftp_server");
+    if (!opt_value.empty()) {
+        std::cout << "DHCP UserCheckHook : add4Options "
+              << "adding TFTP server:" << opt_value << std::endl;
+
+        // Add tftp server option to packet.
+        add4Option(response, DHO_TFTP_SERVER_NAME, opt_value);
+    }
+    // add next option here
+}
+
+/// @brief Adds/updates are specific IPv4 string option in response packet.
+///
+/// @param response IPV4 response packet to update
+/// @param opt_code DHCP standard numeric code of the option
+/// @param opt_value String value of the option
+void add4Option(Pkt4Ptr& response, uint8_t opt_code, std::string& opt_value) {
+    // Remove the option if it exists.
+    OptionPtr opt = response->getOption(opt_code);
+    if (opt) {
+        response->delOption(opt_code);
+    }
+
+    // Now add the option.
+    opt.reset(new OptionString(Option::V4, opt_code, opt_value));
+    response->addOption(opt);
+}
+
+
 /// @brief Adds IPv6 vendor options to the response packet based on given user
 ///
 /// Adds or replaces IPv6 vendor options with values from the given user, if
@@ -279,7 +282,7 @@ void add6Options(Pkt6Ptr& response, const UserPtr& user) {
         return;
     }
 
-    /// @todo: no packets have vendor opt... do we need to add it
+    /// @todo: if packets have no vendor opt... do we need to add it
     /// if its not there?  If so how?
     OptionPtr vendor = response->getOption(D6O_VENDOR_OPTS);
     if (!vendor) {
@@ -288,17 +291,12 @@ void add6Options(Pkt6Ptr& response, const UserPtr& user) {
         return;
     }
 
-    /// @todo: Use hard coded values (33,32) until we're merged.
-    /// Unfortunately, 3207 was branched from master before
-    /// 3194 was merged in, so this branch does not have
-    /// src/lib/dhcp/docsis3_option_defs.h.
-
     // If the user defines bootfile, set the option in response.
     std::string opt_value = user->getProperty("bootfile");
     if (!opt_value.empty()) {
         std::cout << "DHCP UserCheckHook : add6Options "
                   << "adding boot file:" << opt_value << std::endl;
-        add6Option(vendor, 33, opt_value);
+        add6Option(vendor, DOCSIS3_V6_CONFIG_FILE, opt_value);
     }
 
     // If the user defines tftp server, set the option in response.
@@ -307,7 +305,7 @@ void add6Options(Pkt6Ptr& response, const UserPtr& user) {
         std::cout << "DHCP UserCheckHook : add6Options "
                   << "adding tftp server:" << opt_value << std::endl;
 
-        add6Option(vendor, 32, opt_value);
+        add6Option(vendor, DOCSIS3_V6_TFTP_SERVERS, opt_value);
     }
 
     // add next option here
@@ -390,14 +388,16 @@ void generate_output_record(const std::string& id_type_str,
 /// @brief Stringify the lease address or prefix IPv6 response packet
 ///
 /// Converts the lease value, either an address or a prefix, into a string
-/// suitable for the user check outcome output.
+/// suitable for the user check outcome output.  Note that this will use
+/// the first address or prefix in the response for responses with more than
+/// one value.
 ///
 /// @param response IPv6 response packet from which to extract the lease value.
 ///
 /// @return A string containing the lease value.
 /// @throw isc::BadValue if the response contains neither an IA_NA nor IA_PD
 /// option.
-std::string getV6AddrStr (Pkt6Ptr response) {
+std::string getV6AddrStr(Pkt6Ptr response) {
     OptionPtr tmp = response->getOption(D6O_IA_NA);
     if (tmp) {
         return(getAddrStrIA_NA(tmp));
@@ -548,4 +548,3 @@ const UserPtr& getDefaultUser6() {
                                           default_user6_id_str)));
 }
 
-} // end extern "C"

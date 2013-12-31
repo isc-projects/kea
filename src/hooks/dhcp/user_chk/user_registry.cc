@@ -15,6 +15,8 @@
 #include <user_registry.h>
 #include <user.h>
 
+namespace user_chk {
+
 UserRegistry::UserRegistry() {
 }
 
@@ -120,3 +122,4 @@ const UserDataSourcePtr& UserRegistry::getSource() {
     return (source_);
 }
 
+} // namespace user_chk

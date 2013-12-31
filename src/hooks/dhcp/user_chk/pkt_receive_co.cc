@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// @file Defines the pkt4_receive and pkt6_receive callout functions.
+/// @file pkt_receive.cc Defines the pkt4_receive and pkt6_receive callout functions.
 
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
@@ -22,6 +22,7 @@
 
 using namespace isc::dhcp;
 using namespace isc::hooks;
+using namespace user_chk;
 using namespace std;
 
 // Functions accessed by the hooks framework use C linkage to avoid the name
