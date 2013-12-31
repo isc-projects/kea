@@ -19,6 +19,10 @@
 #include <string>
 
 using namespace std;
+using namespace user_chk;
+
+// The following constants are used throughout the library.  They are defined
+// in load_unload.cc
 
 /// @brief Pointer to the registry instance.
 extern UserRegistryPtr user_registry;
@@ -42,6 +46,6 @@ extern const char* registered_user_label;
 extern const char* default_user4_id_str;
 
 /// @brief Text id used to identify the default IPv6 user in the registry
-extern const char *default_user6_id_str;
+extern const char* default_user6_id_str;
 
 #endif

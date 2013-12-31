@@ -12,7 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-/// @file Defines the subnet4_select and subnet6_select callout functions.
+/// @file subnet_select.cc Defines the subnet4_select and subnet6_select callout functions.
 
 #include <hooks/hooks.h>
 #include <dhcp/pkt4.h>
@@ -23,6 +23,7 @@
 
 using namespace isc::dhcp;
 using namespace isc::hooks;
+using namespace user_chk;
 using namespace std;
 
 // Functions accessed by the hooks framework use C linkage to avoid the name
