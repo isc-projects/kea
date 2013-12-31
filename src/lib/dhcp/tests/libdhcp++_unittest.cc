@@ -30,6 +30,9 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <util/buffer.h>
+#include <util/encode/hex.h>
+
+#include <boost/pointer_cast.hpp>
 
 #include <gtest/gtest.h>
 
@@ -1122,4 +1125,42 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
                                     typeid(Option6AddrLst));
 }
 
+// tests whether v6 vendor-class option can be parsed properly.
+TEST_F(LibDhcpTest, vendorClass6) {
+
+    isc::dhcp::OptionCollection options; // Will store parsed option here
+
+    // Exported from wireshark: vendor-class option with enterprise-id = 4491
+    // and a single data entry containing "eRouter1.0"
+    string vendor_class_hex = "001000100000118b000a65526f75746572312e30";
+    OptionBuffer bin;
+
+    // Decode the hex string and store it in bin (which happens
+    // to be OptionBuffer format)
+    isc::util::encode::decodeHex(vendor_class_hex, bin);
+
+    EXPECT_NO_THROW ({
+            LibDHCP::unpackOptions6(bin, "dhcp6", options);
+        });
+
+    EXPECT_EQ(options.size(), 1); // There should be 1 option.
+
+    // Option vendor-class should be there
+    ASSERT_FALSE(options.find(D6O_VENDOR_CLASS) == options.end());
+
+    // It should be of type OptionCustom
+    boost::shared_ptr<OptionCustom> vclass =
+        boost::dynamic_pointer_cast<OptionCustom> (options.begin()->second);
+    ASSERT_TRUE(vclass);
+
+    // Let's investigate if the option content is correct
+
+    // 3 fields expected: vendor-id, data-len and data
+    ASSERT_EQ(3, vclass->getDataFieldsNum());
+
+    EXPECT_EQ(4491, vclass->readInteger<uint32_t>(0)); // vendor-id=4491
+    EXPECT_EQ(10, vclass->readInteger<uint16_t>(1)); // data len = 10
+    EXPECT_EQ("eRouter1.0", vclass->readString(2)); // data="eRouter1.0"
 }
+
+} // end of anonymous space
