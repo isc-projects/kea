@@ -98,6 +98,21 @@ TestControl::TestControl() {
 }
 
 void
+TestControl::checkLateMessages(RateControl& rate_control) {
+    // If diagnostics is disabled, there is no need to log late sent messages.
+    // If it is enabled and the rate control object indicates that the last
+    // sent message was late, bump up the counter in Stats Manager.
+    if (rate_control.isLateSent() && testDiags('i')) {
+        CommandOptions& options = CommandOptions::instance();
+        if (options.getIpVersion() == 4) {
+            stats_mgr4_->incrementCounter("latesend");
+        } else if (options.getIpVersion() == 6) {
+            stats_mgr6_->incrementCounter("latesend");
+        }
+    }
+}
+
+void
 TestControl::cleanCachedPackets() {
     CommandOptions& options = CommandOptions::instance();
     // When Renews are not sent, Reply packets are not cached so there
@@ -316,28 +331,43 @@ TestControl::checkExitConditions() const {
 }
 
 Pkt6Ptr
-TestControl::createRenew(const Pkt6Ptr& reply) {
-    if (!reply) {
-        isc_throw(isc::BadValue,"Unable to create Renew packet from the Reply packet"
-                  " because the instance of the Reply is NULL");
+TestControl::createMessageFromReply(const uint16_t msg_type,
+                                    const dhcp::Pkt6Ptr& reply) {
+    // Restrict messages to Release and Renew.
+    if (msg_type != DHCPV6_RENEW && msg_type != DHCPV6_RELEASE) {
+        isc_throw(isc::BadValue, "invalid message type " << msg_type
+                  << " to be created from Reply, expected DHCPV6_RENEW or"
+                  " DHCPV6_RELEASE");
     }
-    Pkt6Ptr renew(new Pkt6(DHCPV6_RENEW, generateTransid()));
+    // Get the string representation of the message - to be used for error
+    // logging purposes.
+    const char* msg_type_str = (msg_type == DHCPV6_RENEW ? "Renew" : "Release");
+    // Reply message must be specified.
+    if (!reply) {
+        isc_throw(isc::BadValue, "Unable to create " << msg_type_str
+                  << " message from the Reply message because the instance of"
+                  " the Reply message is NULL");
+    }
+
+    Pkt6Ptr msg(new Pkt6(msg_type, generateTransid()));
     // Client id.
     OptionPtr opt_clientid = reply->getOption(D6O_CLIENTID);
     if (!opt_clientid) {
-        isc_throw(isc::Unexpected, "failed to create Renew packet because client id"
-                  " option has not been found in the Reply from the server");
+        isc_throw(isc::Unexpected, "failed to create " << msg_type_str
+                  << " message because client id option has not been found"
+                  " in the Reply message");
     }
-    renew->addOption(opt_clientid);
+    msg->addOption(opt_clientid);
     // Server id.
     OptionPtr opt_serverid = reply->getOption(D6O_SERVERID);
     if (!opt_serverid) {
-        isc_throw(isc::Unexpected, "failed to create Renew packet because server id"
-                  " option has not been found in the Reply from the server");
+        isc_throw(isc::Unexpected, "failed to create " << msg_type_str
+                  << " because server id option has not been found in the"
+                  " Reply message");
     }
-    renew->addOption(opt_serverid);
-    copyIaOptions(reply, renew);
-    return (renew);
+    msg->addOption(opt_serverid);
+    copyIaOptions(reply, msg);
+    return (msg);
 }
 
 OptionPtr
@@ -489,16 +519,28 @@ TestControl::getCurrentTimeout() const {
     ptime now(microsec_clock::universal_time());
     // Check that we haven't passed the moment to send the next set of
     // packets.
-    if (now >= send_due_ ||
-        (options.getRenewRate() != 0 && now >= renew_due_)) {
+    if (now >= basic_rate_control_.getDue() ||
+        (options.getRenewRate() != 0 && now >= renew_rate_control_.getDue()) ||
+        (options.getReleaseRate() != 0 &&
+         now >= release_rate_control_.getDue())) {
         return (0);
     }
 
-    // There is a due time to send Solicit and Renew. We should adjust
-    // the timeout to the due time which occurs sooner.
-    ptime due = send_due_ > renew_due_ ? renew_due_ : send_due_;
-    time_period due_period(now, due);
-    return (due_period.length().total_microseconds());
+    // Let's assume that the due time for Solicit is the soonest.
+    ptime due = basic_rate_control_.getDue();
+    // If we are sending Renews and due time for Renew occurs sooner,
+    // set the due time to Renew due time.
+    if ((options.getRenewRate()) != 0 && (renew_rate_control_.getDue() < due)) {
+        due = renew_rate_control_.getDue();
+    }
+    // If we are sending Releases and the due time for Release occurs
+    // sooner than the current due time, let's use the due for Releases.
+    if ((options.getReleaseRate() != 0) &&
+        (release_rate_control_.getDue() < due)) {
+        due = release_rate_control_.getDue();
+    }
+    // Return the timeout in microseconds.
+    return (time_period(now, due).length().total_microseconds());
 }
 
 int
@@ -527,49 +569,6 @@ TestControl::getElapsedTime(const T& pkt1, const T& pkt2) {
                   " between packets");
     }
     return(elapsed_period.length().total_milliseconds());
-}
-
-
-uint64_t
-TestControl::getNextExchangesNum(const boost::posix_time::ptime& send_due,
-                                 const int rate) {
-    CommandOptions& options = CommandOptions::instance();
-    // Get current time.
-    ptime now(microsec_clock::universal_time());
-    if (now >= send_due) {
-        // Reset number of exchanges.
-        uint64_t due_exchanges = 0;
-        // If rate is specified from the command line we have to
-        // synchornize with it.
-        if (rate != 0) {
-            time_period period(send_due, now);
-            time_duration duration = period.length();
-            // due_factor indicates the number of seconds that
-            // sending next chunk of packets will take.
-            double due_factor = duration.fractional_seconds() /
-                time_duration::ticks_per_second();
-            due_factor += duration.total_seconds();
-            // Multiplying due_factor by expected rate gives the number
-            // of exchanges to be initiated.
-            due_exchanges = static_cast<uint64_t>(due_factor * rate);
-            // We want to make sure that at least one packet goes out.
-            if (due_exchanges == 0) {
-                due_exchanges = 1;
-            }
-            // We should not exceed aggressivity as it could have been
-            // restricted from command line.
-            if (due_exchanges > options.getAggressivity()) {
-                due_exchanges = options.getAggressivity();
-            }
-        } else {
-            // Rate is not specified so we rely on aggressivity
-            // which is the number of packets to be sent in
-            // one chunk.
-            due_exchanges = options.getAggressivity();
-        }
-        return (due_exchanges);
-    }
-    return (0);
 }
 
 int
@@ -694,6 +693,9 @@ TestControl::initializeStatsMgr() {
         }
         if (options.getRenewRate() != 0) {
             stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RN);
+        }
+        if (options.getReleaseRate() != 0) {
+            stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RL);
         }
     }
     if (testDiags('i')) {
@@ -849,14 +851,15 @@ TestControl::sendPackets(const TestControlSocket& socket,
 }
 
 uint64_t
-TestControl::sendRenewPackets(const TestControlSocket& socket,
-                              const uint64_t packets_num) {
-    for (uint64_t i = 0; i < packets_num; ++i) {
-        if (!sendRenew(socket)) {
+TestControl::sendMultipleMessages6(const TestControlSocket& socket,
+                                   const uint32_t msg_type,
+                                   const uint64_t msg_num) {
+    for (uint64_t i = 0; i < msg_num; ++i) {
+        if (!sendMessageFromReply(msg_type, socket)) {
             return (i);
         }
     }
-    return (packets_num);
+    return (msg_num);
 }
 
 void
@@ -1114,14 +1117,36 @@ TestControl::processReceivedPacket6(const TestControlSocket& socket,
             }
         }
     } else if (packet_type == DHCPV6_REPLY) {
-        Pkt6Ptr sent_packet = stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RR,
-                                                          pkt6);
-        if (sent_packet) {
-            if (CommandOptions::instance().getRenewRate() != 0) {
+        // If the received message is Reply, we have to find out which exchange
+        // type the Reply message belongs to. It is doable by matching the Reply
+        // transaction id with the transaction id of the sent Request, Renew
+        // or Release. First we start with the Request.
+        if (stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RR, pkt6)) {
+            // The Reply belongs to Request-Reply exchange type. So, we may need
+            // to keep this Reply in the storage if Renews or/and Releases are
+            // being sent. Note that, Reply messages hold the information about
+            // leases assigned. We use this information to construct Renew and
+            // Release messages.
+            if (stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RN) ||
+                stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RL)) {
+                // Renew or Release messages are sent, because StatsMgr has the
+                // specific exchange type specified. Let's append the Reply
+                // message to a storage.
                 reply_storage_.append(pkt6);
             }
-        } else {
-            stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RN, pkt6);
+        // The Reply message is not a server's response to the Request message
+        // sent within the 4-way exchange. It may be a response to the Renew
+        // or Release message. In the if clause we first check if StatsMgr
+        // has exchange type for Renew specified, and if it has, if there is
+        // a corresponding Renew message for the received Reply. If not,
+        // we check that StatsMgr has exchange type for Release specified,
+        // as possibly the Reply has been sent in response to Release.
+        } else if (!(stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RN) &&
+                     stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RN, pkt6)) &&
+                   stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RL)) {
+            // At this point, it is only possible that the Reply has been sent
+            // in response to a Release. Try to match the Reply with Release.
+            stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RL, pkt6);
         }
     }
 }
@@ -1250,12 +1275,16 @@ TestControl::registerOptionFactories() const {
 
 void
 TestControl::reset() {
-    send_due_ = microsec_clock::universal_time();
-    last_sent_ = send_due_;
-    last_report_ = send_due_;
-    renew_due_ = send_due_;
-    last_renew_ = send_due_;
+    CommandOptions& options = CommandOptions::instance();
+    basic_rate_control_.setAggressivity(options.getAggressivity());
+    basic_rate_control_.setRate(options.getRate());
+    renew_rate_control_.setAggressivity(options.getAggressivity());
+    renew_rate_control_.setRate(options.getRenewRate());
+    release_rate_control_.setAggressivity(options.getAggressivity());
+    release_rate_control_.setRate(options.getReleaseRate());
+
     transid_gen_.reset();
+    last_report_ = microsec_clock::universal_time();
     // Actual generators will have to be set later on because we need to
     // get command line parameters first.
     setTransidGenerator(NumberGeneratorPtr());
@@ -1321,11 +1350,10 @@ TestControl::run() {
     // Initialize Statistics Manager. Release previous if any.
     initializeStatsMgr();
     for (;;) {
-        // Calculate send due based on when last exchange was initiated.
-        updateSendDue(last_sent_, options.getRate(), send_due_);
         // Calculate number of packets to be sent to stay
         // catch up with rate.
-        uint64_t packets_due = getNextExchangesNum(send_due_, options.getRate());
+        uint64_t packets_due = basic_rate_control_.getOutboundMessageCount();
+        checkLateMessages(basic_rate_control_);
         if ((packets_due == 0) && testDiags('i')) {
             if (options.getIpVersion() == 4) {
                 stats_mgr4_->incrementCounter("shortwait");
@@ -1351,11 +1379,21 @@ TestControl::run() {
         // If -f<renew-rate> option was specified we have to check how many
         // Renew packets should be sent to catch up with a desired rate.
         if ((options.getIpVersion() == 6) && (options.getRenewRate() != 0)) {
-            updateSendDue(last_renew_, options.getRenewRate(), renew_due_);
             uint64_t renew_packets_due =
-                getNextExchangesNum(renew_due_, options.getRenewRate());
-            // Send renew packets.
-            sendRenewPackets(socket, renew_packets_due);
+                renew_rate_control_.getOutboundMessageCount();
+            checkLateMessages(renew_rate_control_);
+            // Send Renew messages.
+            sendMultipleMessages6(socket, DHCPV6_RENEW, renew_packets_due);
+        }
+
+        // If -F<release-rate> option was specified we have to check how many
+        // Release messages should be sent to catch up with a desired rate.
+        if ((options.getIpVersion() == 6) && (options.getReleaseRate() != 0)) {
+            uint64_t release_packets_due =
+                release_rate_control_.getOutboundMessageCount();
+            checkLateMessages(release_rate_control_);
+            // Send Release messages.
+            sendMultipleMessages6(socket, DHCPV6_RELEASE, release_packets_due);
         }
 
         // Report delay means that user requested printing number
@@ -1451,7 +1489,7 @@ TestControl::saveFirstPacket(const Pkt6Ptr& pkt) {
 void
 TestControl::sendDiscover4(const TestControlSocket& socket,
                            const bool preload /*= false*/) {
-    last_sent_ = microsec_clock::universal_time();
+    basic_rate_control_.updateSendTime();
     // Generate the MAC address to be passed in the packet.
     uint8_t randomized = 0;
     std::vector<uint8_t> mac_address = generateMacAddress(randomized);
@@ -1496,9 +1534,7 @@ void
 TestControl::sendDiscover4(const TestControlSocket& socket,
                            const std::vector<uint8_t>& template_buf,
                            const bool preload /* = false */) {
-    // last_sent_ has to be updated for each function that initiates
-    // new transaction. The packet exchange synchronization relies on this.
-    last_sent_ = microsec_clock::universal_time();
+    basic_rate_control_.updateSendTime();
     // Get the first argument if mulitple the same arguments specified
     // in the command line. First one refers to DISCOVER packets.
     const uint8_t arg_idx = 0;
@@ -1547,21 +1583,35 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
 }
 
 bool
-TestControl::sendRenew(const TestControlSocket& socket) {
-    last_renew_ = microsec_clock::universal_time();
+TestControl::sendMessageFromReply(const uint16_t msg_type,
+                                  const TestControlSocket& socket) {
+    // We only permit Release or Renew messages to be sent using this function.
+    if (msg_type != DHCPV6_RENEW && msg_type != DHCPV6_RELEASE) {
+        isc_throw(isc::BadValue, "invalid message type " << msg_type
+                  << " to be sent, expected DHCPV6_RENEW or DHCPV6_RELEASE");
+    }
+    // We track the timestamp of last Release and Renew in different variables.
+    if (msg_type == DHCPV6_RENEW) {
+        renew_rate_control_.updateSendTime();
+    } else {
+        release_rate_control_.updateSendTime();
+    }
     Pkt6Ptr reply = reply_storage_.getRandom();
     if (!reply) {
         return (false);
     }
-    Pkt6Ptr renew = createRenew(reply);
-    setDefaults6(socket, renew);
-    renew->pack();
-    IfaceMgr::instance().send(renew);
+    // Prepare the message of the specified type.
+    Pkt6Ptr msg = createMessageFromReply(msg_type, reply);
+    setDefaults6(socket, msg);
+    msg->pack();
+    // And send it.
+    IfaceMgr::instance().send(msg);
     if (!stats_mgr6_) {
         isc_throw(Unexpected, "Statistics Manager for DHCPv6 "
                   "hasn't been initialized");
     }
-    stats_mgr6_->passSentPacket(StatsMgr6::XCHG_RN, renew);
+    stats_mgr6_->passSentPacket((msg_type == DHCPV6_RENEW ? StatsMgr6::XCHG_RN
+                                 : StatsMgr6::XCHG_RL), msg);
     return (true);
 }
 
@@ -1903,7 +1953,7 @@ TestControl::sendRequest6(const TestControlSocket& socket,
 void
 TestControl::sendSolicit6(const TestControlSocket& socket,
                           const bool preload /*= false*/) {
-    last_sent_ = microsec_clock::universal_time();
+    basic_rate_control_.updateSendTime();
     // Generate DUID to be passed to the packet
     uint8_t randomized = 0;
     std::vector<uint8_t> duid = generateDuid(randomized);
@@ -1952,7 +2002,7 @@ void
 TestControl::sendSolicit6(const TestControlSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const bool preload /*= false*/) {
-    last_sent_ = microsec_clock::universal_time();
+    basic_rate_control_.updateSendTime();
     const int arg_idx = 0;
     // Get transaction id offset.
     size_t transid_offset = getTransactionIdOffset(arg_idx);
@@ -2050,48 +2100,6 @@ TestControl::testDiags(const char diag) const {
     }
     return (false);
 }
-
-void
-TestControl::updateSendDue(const boost::posix_time::ptime& last_sent,
-                           const int rate,
-                           boost::posix_time::ptime& send_due) {
-    // If default constructor was called, this should not happen but
-    // if somebody has changed default constructor it is better to
-    // keep this check.
-    if (last_sent.is_not_a_date_time()) {
-        isc_throw(Unexpected, "time of last sent packet not initialized");
-    }
-    // Get the expected exchange rate.
-    CommandOptions& options = CommandOptions::instance();
-    // If rate was not specified we will wait just one clock tick to
-    // send next packet. This simulates best effort conditions.
-    long duration = 1;
-    if (rate != 0) {
-        // We use number of ticks instead of nanoseconds because
-        // nanosecond resolution may not be available on some
-        // machines. Number of ticks guarantees the highest possible
-        // timer resolution.
-        duration = time_duration::ticks_per_second() / rate;
-    }
-    // Calculate due time to initiate next chunk of exchanges.
-    send_due = last_sent + time_duration(0, 0, 0, duration);
-    // Check if it is already due.
-    ptime now(microsec_clock::universal_time());
-    // \todo verify if this condition is not too tight. In other words
-    // verify if this will not produce too many late sends.
-    // We might want to look at this once we are done implementing
-    // microsecond timeouts in IfaceMgr.
-    if (now > send_due) {
-        if (testDiags('i')) {
-            if (options.getIpVersion() == 4) {
-                stats_mgr4_->incrementCounter("latesend");
-            } else if (options.getIpVersion() == 6) {
-                stats_mgr6_->incrementCounter("latesend");
-            }
-        }
-    }
-}
-
 
 } // namespace perfdhcp
 } // namespace isc
