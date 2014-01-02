@@ -2158,7 +2158,7 @@ void parse_ifconfig(const std::string& textFile, IfaceMgr::IfaceCollection& ifac
 // TODO: temporarily disabled, see ticket #1529
 TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
 
-    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
     IfaceMgr::IfaceCollection& detectedIfaces = ifacemgr->getIfacesLst();
 
     const std::string textFile = "ifconfig.txt";
@@ -2263,10 +2263,192 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
             FAIL();
         }
     }
+}
+#endif
+
+#if defined(OS_BSD)
+#include <net/if_dl.h>
+#endif
+
+#include <sys/socket.h>
+#include <net/if.h>
+#include <ifaddrs.h>
+
+/// @brief Checks the index of this interface
+/// @param iface Kea interface structure to be checked
+/// @param ifptr original structure returned by getifaddrs
+/// @return true if index is returned properly
+bool
+checkIfIndex(const Iface & iface,
+             struct ifaddrs *& ifptr) {
+    return (iface.getIndex() == if_nametoindex(ifptr->ifa_name));
+}
+
+/// @brief Checks if the interface has proper flags set
+/// @param iface Kea interface structure to be checked
+/// @param ifptr original structure returned by getifaddrs
+/// @return true if flags are set properly
+bool
+checkIfFlags(const Iface & iface,
+             struct ifaddrs *& ifptr) {
+        bool flag_loopback_ = ifptr->ifa_flags & IFF_LOOPBACK;
+        bool flag_up_ = ifptr->ifa_flags & IFF_UP;
+        bool flag_running_ = ifptr->ifa_flags & IFF_RUNNING;
+        bool flag_multicast_ = ifptr->ifa_flags & IFF_MULTICAST;
+
+    return ((iface.flag_loopback_ == flag_loopback_) &&
+                        (iface.flag_up_ == flag_up_) &&
+                        (iface.flag_running_ == flag_running_) &&
+                        (iface.flag_multicast_ == flag_multicast_));
+}
+
+/// @brief Checks if MAC Address/IP Addresses are properly well formed
+/// @param iface Kea interface structure to be checked
+/// @param ifptr original structure returned by getifaddrs
+/// @return true if addresses are returned properly
+bool
+checkIfAddrs(const Iface & iface, struct ifaddrs *& ifptr) {
+    const unsigned char * p = 0;
+#if defined(OS_LINUX)
+    // Workaround for Linux ...
+    if(ifptr->ifa_data != 0) {
+        // We avoid localhost as it has no MAC Address
+        if (!strncmp(iface.getName().c_str(), "lo", 2)) {
+            return (true);
+        }
+
+        struct ifreq ifr;
+        memset(& ifr.ifr_name, 0, sizeof ifr.ifr_name);
+        strncpy(ifr.ifr_name, iface.getName().c_str(), sizeof ifr.ifr_name);
+
+        int s = -1; // Socket descriptor
+
+        if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+            isc_throw(Unexpected, "Cannot create AF_INET socket");
+        }
+
+        if (ioctl(s, SIOCGIFHWADDR, & ifr) < 0) {
+            close(s);
+            isc_throw(Unexpected, "Cannot set SIOCGIFHWADDR flag");
+        }
+
+        const uint8_t * p =
+            reinterpret_cast<uint8_t *>(ifr.ifr_ifru.ifru_hwaddr.sa_data);
+
+        close(s);
+
+        /// @todo: Check MAC address length. For some interfaces it is
+        /// different than 6. Some have 0, while some exotic ones (like
+        /// infiniband) have 20.
+        return (!memcmp(p, iface.getMac(), iface.getMacLen()));
+    }
+#endif
+
+    if(!ifptr->ifa_addr) {
+        return (false);
+    }
+
+    switch(ifptr->ifa_addr->sa_family) {
+#if defined(OS_BSD)
+        case AF_LINK: {
+            // We avoid localhost as it has no MAC Address
+            if (!strncmp(iface.getName().c_str(), "lo", 2)) {
+                return (true);
+            }
+
+            struct sockaddr_dl * hwdata =
+                   reinterpret_cast<struct sockaddr_dl *>(ifptr->ifa_addr);
+            p = reinterpret_cast<uint8_t *>(LLADDR(hwdata));
+
+            // Extract MAC address length
+            if (hwdata->sdl_alen != iface.getMacLen()) {
+                return (false);
+            }
+
+            return (!memcmp(p, iface.getMac(), hwdata->sdl_alen));
+        }
+#endif
+        case AF_INET: {
+            struct sockaddr_in * v4data =
+                   reinterpret_cast<struct sockaddr_in *>(ifptr->ifa_addr);
+            p = reinterpret_cast<uint8_t *>(& v4data->sin_addr);
+
+            IOAddress addrv4 = IOAddress::fromBytes(AF_INET, p);
+
+            for (Iface::AddressCollection::const_iterator a =
+                     iface.getAddresses().begin();
+                 a != iface.getAddresses().end(); ++ a) {
+                if(a->isV4() && (*a) == addrv4) {
+                    return (true);
+                }
+            }
+
+            return (false);
+        }
+        case AF_INET6: {
+            struct sockaddr_in6 * v6data =
+                   reinterpret_cast<struct sockaddr_in6 *>(ifptr->ifa_addr);
+            p = reinterpret_cast<uint8_t *>(& v6data->sin6_addr);
+
+            IOAddress addrv6 = IOAddress::fromBytes(AF_INET6, p);
+
+            for(Iface::AddressCollection::const_iterator a =
+                    iface.getAddresses().begin();
+                a != iface.getAddresses().end(); ++ a) {
+                if(a->isV6() && (*a) == addrv6) {
+                    return (true);
+                }
+            }
+
+            return (false);
+        }
+        default:
+            return (true);
+    }
+}
+
+TEST_F(IfaceMgrTest, detectIfaces) {
+
+    NakedIfaceMgr* ifacemgr = new NakedIfaceMgr();
+    IfaceMgr::IfaceCollection& detectedIfaces = ifacemgr->getIfacesLst();
+
+    // We are using struct ifaddrs as it is the only good portable one
+    // ifreq and ioctls are far from portabe. For BSD ifreq::ifa_flags field
+    // is only a short which, nowadays, can be negative
+    struct ifaddrs * iflist = 0, * ifptr = 0;
+
+    if(getifaddrs(& iflist) != 0) {
+        isc_throw(Unexpected, "Cannot detect interfaces");
+    }
+
+    for (ifptr = iflist; ifptr != 0; ifptr = ifptr->ifa_next) {
+        for (IfaceMgr::IfaceCollection::const_iterator i = detectedIfaces.begin();
+            i != detectedIfaces.end(); ++ i) {
+            if (!strncmp(ifptr->ifa_name, (*i).getName().c_str(),
+                         (*i).getName().size())) {
+
+                // Typically unit-tests try to be silent. But interface detection
+                // is tricky enough to warrant additional prints.
+                std::cout << "Checking interface " << i->getName() << std::endl;
+
+                // Check if interface index is reported properly
+                EXPECT_TRUE(checkIfIndex(*i, ifptr));
+
+                // Check if flags are reported properly
+                EXPECT_TRUE(checkIfFlags(*i, ifptr));
+
+                // Check if addresses are reported properly
+                EXPECT_TRUE(checkIfAddrs(*i, ifptr));
+
+            }
+        }
+    }
+
+    freeifaddrs(iflist);
+    iflist = 0;
 
     delete ifacemgr;
 }
-#endif
 
 volatile bool callback_ok;
 

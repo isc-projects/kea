@@ -54,6 +54,12 @@
         "item_default": ""
       },
 
+      { "item_name": "echo-client-id",
+        "item_type": "boolean",
+        "item_optional": true,
+        "item_default": true
+      },
+
       { "item_name": "option-def",
         "item_type": "list",
         "item_optional": false,

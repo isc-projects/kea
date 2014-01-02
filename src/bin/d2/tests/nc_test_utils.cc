@@ -29,6 +29,11 @@ namespace d2 {
 const char* TEST_DNS_SERVER_IP = "127.0.0.1";
 size_t TEST_DNS_SERVER_PORT = 5301;
 
+const bool HAS_RDATA = true;
+const bool NO_RDATA = false;
+
+//*************************** FauxServer class ***********************
+
 FauxServer::FauxServer(asiolink::IOService& io_service,
                        asiolink::IOAddress& address, size_t port)
     :io_service_(io_service), address_(address), port_(port),
@@ -136,6 +141,135 @@ FauxServer::requestHandler(const asio::error_code& error,
     }
 }
 
+//********************** TransactionTest class ***********************
+
+const unsigned int TransactionTest::FORWARD_CHG = 0x01;
+const unsigned int TransactionTest::REVERSE_CHG = 0x02;
+const unsigned int TransactionTest::FWD_AND_REV_CHG = REVERSE_CHG | FORWARD_CHG;
+
+TransactionTest::TransactionTest()
+    : io_service_(new isc::asiolink::IOService()), ncr_(),
+    timer_(*io_service_), run_time_(0) {
+}
+
+TransactionTest::~TransactionTest() {
+}
+
+void
+TransactionTest::runTimedIO(int run_time) {
+    run_time_ = run_time;
+    timer_.setup(boost::bind(&TransactionTest::timesUp, this), run_time_);
+    io_service_->run();
+}
+
+void
+TransactionTest::timesUp() {
+    io_service_->stop();
+    FAIL() << "Test Time: " << run_time_ << " expired";
+}
+
+void
+TransactionTest::setupForIPv4Transaction(dhcp_ddns::NameChangeType chg_type,
+                                         int change_mask) {
+    const char* msg_str =
+        "{"
+        " \"change_type\" : 0 , "
+        " \"forward_change\" : true , "
+        " \"reverse_change\" : true , "
+        " \"fqdn\" : \"my.forward.example.com.\" , "
+        " \"ip_address\" : \"192.168.2.1\" , "
+        " \"dhcid\" : \"0102030405060708\" , "
+        " \"lease_expires_on\" : \"20130121132405\" , "
+        " \"lease_length\" : 1300 "
+        "}";
+
+    // Create NameChangeRequest from JSON string.
+    ncr_ = dhcp_ddns::NameChangeRequest::fromJSON(msg_str);
+
+    // Set the change type.
+    ncr_->setChangeType(chg_type);
+
+    // If the change mask does not include a forward change clear the
+    // forward domain; otherwise create the domain and its servers.
+    if (!(change_mask & FORWARD_CHG)) {
+        ncr_->setForwardChange(false);
+        forward_domain_.reset();
+    } else {
+        // Create the forward domain and then its servers.
+        forward_domain_ = makeDomain("example.com.");
+        addDomainServer(forward_domain_, "forward.example.com",
+                        "127.0.0.1", 5301);
+        addDomainServer(forward_domain_, "forward2.example.com",
+                        "127.0.0.1", 5302);
+    }
+
+    // If the change mask does not include a reverse change clear the
+    // reverse domain; otherwise create the domain and its servers.
+    if (!(change_mask & REVERSE_CHG)) {
+        ncr_->setReverseChange(false);
+        reverse_domain_.reset();
+    } else {
+        // Create the reverse domain and its server.
+        reverse_domain_ = makeDomain("2.168.192.in.addr.arpa.");
+        addDomainServer(reverse_domain_, "reverse.example.com",
+                        "127.0.0.1", 5301);
+        addDomainServer(reverse_domain_, "reverse2.example.com",
+                        "127.0.0.1", 5302);
+    }
+}
+
+void
+TransactionTest::setupForIPv6Transaction(dhcp_ddns::NameChangeType chg_type,
+                                         int change_mask) {
+    const char* msg_str =
+        "{"
+        " \"change_type\" : 0 , "
+        " \"forward_change\" : true , "
+        " \"reverse_change\" : true , "
+        " \"fqdn\" : \"my6.forward.example.com.\" , "
+        " \"ip_address\" : \"2001:1::100\" , "
+        " \"dhcid\" : \"0102030405060708\" , "
+        " \"lease_expires_on\" : \"20130121132405\" , "
+        " \"lease_length\" : 1300 "
+        "}";
+
+    // Create NameChangeRequest from JSON string.
+    ncr_ = makeNcrFromString(msg_str);
+
+    // Set the change type.
+    ncr_->setChangeType(chg_type);
+
+    // If the change mask does not include a forward change clear the
+    // forward domain; otherwise create the domain and its servers.
+    if (!(change_mask & FORWARD_CHG)) {
+        ncr_->setForwardChange(false);
+        forward_domain_.reset();
+    } else {
+        // Create the forward domain and then its servers.
+        forward_domain_ = makeDomain("example.com.");
+        addDomainServer(forward_domain_, "fwd6-server.example.com",
+                        "::1", 5301);
+        addDomainServer(forward_domain_, "fwd6-server2.example.com",
+                        "::1", 5302);
+    }
+
+    // If the change mask does not include a reverse change clear the
+    // reverse domain; otherwise create the domain and its servers.
+    if (!(change_mask & REVERSE_CHG)) {
+        ncr_->setReverseChange(false);
+        reverse_domain_.reset();
+    } else {
+        // Create the reverse domain and its server.
+        reverse_domain_ = makeDomain("1.2001.ip6.arpa.");
+        addDomainServer(reverse_domain_, "rev6-server.example.com",
+                        "::1", 5301);
+        addDomainServer(reverse_domain_, "rev6-server2.example.com",
+                        "::1", 5302);
+    }
+}
+
+
+//********************** Functions ****************************
 
 void
 checkRRCount(const D2UpdateMessagePtr& request,
@@ -158,13 +292,15 @@ checkZone(const D2UpdateMessagePtr& request, const std::string& exp_zone_name) {
 void
 checkRR(dns::RRsetPtr rrset, const std::string& exp_name,
               const dns::RRClass& exp_class, const dns::RRType& exp_type,
-              unsigned int exp_ttl, dhcp_ddns::NameChangeRequestPtr ncr) {
+              unsigned int exp_ttl, dhcp_ddns::NameChangeRequestPtr ncr,
+              bool has_rdata) {
     // Verify the FQDN/DHCID RR fields.
     EXPECT_EQ(exp_name, rrset->getName().toText());
     EXPECT_EQ(exp_class.getCode(), rrset->getClass().getCode());
     EXPECT_EQ(exp_type.getCode(), rrset->getType().getCode());
     EXPECT_EQ(exp_ttl, rrset->getTTL().getValue());
-    if (exp_type == dns::RRType::ANY() || exp_class == dns::RRClass::ANY()) {
+    if ((!has_rdata) || 
+       (exp_type == dns::RRType::ANY() || exp_class == dns::RRClass::ANY())) {
         // ANY types do not have RData
         ASSERT_EQ(0, rrset->getRdataCount());
         return;
@@ -229,7 +365,7 @@ void addDomainServer(DdnsDomainPtr& domain, const std::string& name,
 
 // Verifies that the contents of the given transaction's  DNS update request
 // is correct for adding a forward DNS entry
-void checkForwardAddRequest(NameChangeTransaction& tran) {
+void checkAddFwdAddressRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -276,7 +412,7 @@ void checkForwardAddRequest(NameChangeTransaction& tran) {
 
 // Verifies that the contents of the given transaction's  DNS update request
 // is correct for replacing a forward DNS entry
-void checkForwardReplaceRequest(NameChangeTransaction& tran) {
+void checkReplaceFwdAddressRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -332,7 +468,7 @@ void checkForwardReplaceRequest(NameChangeTransaction& tran) {
 
 // Verifies that the contents of the given transaction's  DNS update request
 // is correct for replacing a reverse DNS entry
-void checkReverseReplaceRequest(NameChangeTransaction& tran) {
+void checkReplaceRevPtrsRequest(NameChangeTransaction& tran) {
     const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
     ASSERT_TRUE(request);
 
@@ -389,6 +525,134 @@ void checkReverseReplaceRequest(NameChangeTransaction& tran) {
     dns::MessageRenderer renderer;
     ASSERT_NO_THROW(request->toWire(renderer));
 }
+
+void checkRemoveFwdAddressRequest(NameChangeTransaction& tran) {
+    const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
+    ASSERT_TRUE(request);
+
+    // Safety check.
+    dhcp_ddns::NameChangeRequestPtr ncr = tran.getNcr();
+    ASSERT_TRUE(ncr);
+
+    std::string exp_zone_name = tran.getForwardDomain()->getName();
+    std::string exp_fqdn = ncr->getFqdn();
+
+    // Verify the zone section.
+    checkZone(request, exp_zone_name);
+
+    // Verify there is 1 RR in the PREREQUISITE Section.
+    checkRRCount(request, D2UpdateMessage::SECTION_PREREQUISITE, 1);
+
+    // Verify the DHCID matching assertion RR.
+    dns::RRsetPtr rrset;
+    ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
+                                                  SECTION_PREREQUISITE, 0));
+    checkRR(rrset, exp_fqdn, dns::RRClass::IN(), dns::RRType::DHCID(),
+            0, ncr);
+
+    // Verify there is 1 RR in the UPDATE Section.
+    checkRRCount(request, D2UpdateMessage::SECTION_UPDATE, 1);
+
+    // Verify the FQDN/IP delete RR.
+    const dns::RRType& exp_ip_rr_type = tran.getAddressRRType();
+    ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
+                                                  SECTION_UPDATE, 0));
+    checkRR(rrset, exp_fqdn, dns::RRClass::NONE(), exp_ip_rr_type,
+            0, ncr);
+
+    // Verify that it will render toWire without throwing.
+    dns::MessageRenderer renderer;
+    ASSERT_NO_THROW(request->toWire(renderer));
+}
+
+void checkRemoveFwdRRsRequest(NameChangeTransaction& tran) {
+    const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
+    ASSERT_TRUE(request);
+
+    // Safety check.
+    dhcp_ddns::NameChangeRequestPtr ncr = tran.getNcr();
+    ASSERT_TRUE(ncr);
+
+    std::string exp_zone_name = tran.getForwardDomain()->getName();
+    std::string exp_fqdn = ncr->getFqdn();
+
+    // Verify the zone section.
+    checkZone(request, exp_zone_name);
+
+    // Verify there is 1 RR in the PREREQUISITE Section.
+    checkRRCount(request, D2UpdateMessage::SECTION_PREREQUISITE, 3);
+
+    // Verify the DHCID matches assertion.
+    dns::RRsetPtr rrset;
+    ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
+                                                  SECTION_PREREQUISITE, 0));
+    checkRR(rrset, exp_fqdn, dns::RRClass::IN(), dns::RRType::DHCID(),
+            0, ncr);
+
+    // Verify the NO A RRs assertion.
+    ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
+                                                  SECTION_PREREQUISITE, 1));
+    checkRR(rrset, exp_fqdn, dns::RRClass::NONE(), dns::RRType::A(),
+            0, ncr, NO_RDATA);
+
+    // Verify the NO AAAA RRs assertion.
+    ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
+                                                  SECTION_PREREQUISITE, 2));
+    checkRR(rrset, exp_fqdn, dns::RRClass::NONE(), dns::RRType::AAAA(),
+            0, ncr, NO_RDATA);
+
+    // Verify there is 1 RR in the UPDATE Section.
+    checkRRCount(request, D2UpdateMessage::SECTION_UPDATE, 1);
+
+    // Verify the delete all for the FQDN RR.
+    ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
+                                                  SECTION_UPDATE, 0));
+    checkRR(rrset, exp_fqdn, dns::RRClass::ANY(), dns::RRType::ANY(),
+            0, ncr);
+
+    // Verify that it will render toWire without throwing.
+    dns::MessageRenderer renderer;
+    ASSERT_NO_THROW(request->toWire(renderer));
+}
+
+void checkRemoveRevPtrsRequest(NameChangeTransaction& tran) {
+    const D2UpdateMessagePtr& request = tran.getDnsUpdateRequest();
+    ASSERT_TRUE(request);
+
+    // Safety check.
+    dhcp_ddns::NameChangeRequestPtr ncr = tran.getNcr();
+    ASSERT_TRUE(ncr);
+
+    std::string exp_zone_name = tran.getReverseDomain()->getName();
+    std::string exp_rev_addr = D2CfgMgr::reverseIpAddress(ncr->getIpAddress());
+
+    // Verify the zone section.
+    checkZone(request, exp_zone_name);
+
+    // Verify there is 1 RR in the PREREQUISITE Section.
+    checkRRCount(request, D2UpdateMessage::SECTION_PREREQUISITE, 1);
+
+    // Verify the FQDN-PTRNAME assertion RR.
+    dns::RRsetPtr rrset;
+    ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
+                                                  SECTION_PREREQUISITE, 0));
+    checkRR(rrset, exp_rev_addr, dns::RRClass::IN(), dns::RRType::PTR(),
+            0, ncr);
+
+    // Verify there is 1 RR in the UPDATE Section.
+    checkRRCount(request, D2UpdateMessage::SECTION_UPDATE, 1);
+
+    // Verify the delete all for the FQDN RR.
+    ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
+                                                  SECTION_UPDATE, 0));
+    checkRR(rrset, exp_rev_addr, dns::RRClass::ANY(), dns::RRType::ANY(),
+            0, ncr);
+
+    // Verify that it will render toWire without throwing.
+    dns::MessageRenderer renderer;
+    ASSERT_NO_THROW(request->toWire(renderer));
+}
+
 
 }; // namespace isc::d2
 }; // namespace isc

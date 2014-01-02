@@ -653,8 +653,10 @@ Dhcpv4Srv::copyDefaultFields(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     answer->setGiaddr(question->getGiaddr());
 
     // Let's copy client-id to response. See RFC6842.
+    // It is possible to disable RFC6842 to keep backward compatibility
+    bool echo = CfgMgr::instance().echoClientId();
     OptionPtr client_id = question->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-    if (client_id) {
+    if (client_id && echo) {
         answer->addOption(client_id);
     }
 

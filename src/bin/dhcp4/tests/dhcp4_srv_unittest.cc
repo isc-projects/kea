@@ -608,6 +608,32 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     cout << "Offered address to client3=" << addr3.toText() << endl;
 }
 
+// Checks whether echoing back client-id is controllable, i.e.
+// whether the server obeys echo-client-id and sends (or not)
+// client-id
+TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    checkClientId(offer, clientid);
+
+    CfgMgr::instance().echoClientId(false);
+    offer = srv.processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    checkClientId(offer, clientid);
+}
+
 // This test verifies that incoming REQUEST can be handled properly, that an
 // ACK is generated, that the response has an address and that address
 // really belongs to the configured pool.
@@ -748,6 +774,30 @@ TEST_F(Dhcpv4SrvTest, ManyRequests) {
     cout << "Offered address to client1=" << addr1.toText() << endl;
     cout << "Offered address to client2=" << addr2.toText() << endl;
     cout << "Offered address to client3=" << addr3.toText() << endl;
+}
+
+// Checks whether echoing back client-id is controllable
+TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get ACK
+    Pkt4Ptr ack = srv.processRequest(dis);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPACK, 1234);
+    checkClientId(ack, clientid);
+
+    CfgMgr::instance().echoClientId(false);
+    ack = srv.processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPOFFER, 1234);
+    checkClientId(ack, clientid);
 }
 
 

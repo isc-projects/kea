@@ -208,9 +208,10 @@ public:
     ///
     /// @note Implementation of this method is OS-dependent as bits have
     /// different meaning on each OS.
+    /// We need to make it 64 bits, because Solaris uses 64, not 32 bits.
     ///
     /// @param flags bitmask value returned by OS in interface detection
-    void setFlags(uint32_t flags);
+    void setFlags(uint64_t flags);
 
     /// @brief Returns interface index.
     ///
@@ -364,7 +365,9 @@ public:
 
     /// Interface flags (this value is as is returned by OS,
     /// it may mean different things on different OSes).
-    uint32_t flags_;
+    /// Solaris based os have unsigned long flags field (64 bits).
+    /// It is usually 32 bits, though.
+    uint64_t flags_;
 
     /// Indicates that IPv4 sockets should (true) or should not (false)
     /// be opened on this interface.

@@ -163,9 +163,9 @@ LibDHCP::isStandardOption(const Option::Universe u, const uint16_t code) {
               code == 126 ||
               code == 127 ||
               (code > 146 && code < 150) ||
-              (code > 177  && code < 208) ||
+              (code > 177 && code < 208) ||
               (code > 213 && code <  220) ||
-              (code > 221 && code < 224))) {
+              (code > 221 && code < 255))) {
                 return (true);
             }
 
