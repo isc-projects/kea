@@ -557,6 +557,47 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
 }
 
+// Check whether it is possible to configure echo-client-id
+TEST_F(Dhcp4ParserTest, echoClientId) {
+
+    ConstElementPtr status;
+
+    string config_false = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"echo-client-id\": false,"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    string config_true = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"echo-client-id\": true,"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json_false = Element::fromJSON(config_false);
+    ElementPtr json_true = Element::fromJSON(config_true);
+
+    // Let's check the default. It should be true
+    ASSERT_TRUE(CfgMgr::instance().echoClientId());
+
+    // Now check that "false" configuration is really applied.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json_false));
+    ASSERT_FALSE(CfgMgr::instance().echoClientId());
+
+    // Now check that "true" configuration is really applied.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json_true));
+    ASSERT_TRUE(CfgMgr::instance().echoClientId());
+
+    // In any case revert back to the default value (true)
+    CfgMgr::instance().echoClientId(true);
+}
+
 // This test checks if it is possible to override global values
 // on a per subnet basis.
 TEST_F(Dhcp4ParserTest, subnetLocal) {

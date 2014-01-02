@@ -74,8 +74,32 @@ public:
         uint32_t transid_; ///< Last generated transaction id.
     };
 
+    /// \brief Sets the due times for sedning Solicit, Renew and Release.
+    ///
+    /// There are three class members that hold the due time for sending DHCP
+    /// messages:
+    /// - send_due_ - due time to send Solicit,
+    /// - renew_due_ - due time to send Renew,
+    /// - release_due_ - due time to send Release.
+    /// Some tests in this test suite need to modify these values relative to
+    /// the current time. This function modifies this values using time
+    /// offset values (positive or negative) specified as a difference in
+    /// seconds between current time and the due time.
+    ///
+    /// \param send_secs An offset of the due time for Solicit.
+    /// \param renew_secs An offset of the due time for Renew.
+    /// \param release_secs An offset of the due time for Release.
+    void setRelativeDueTimes(const int send_secs, const int renew_secs = 0,
+                             const int release_secs = 0) {
+        ptime now = microsec_clock::universal_time();
+        basic_rate_control_.setRelativeDue(send_secs);
+        renew_rate_control_.setRelativeDue(renew_secs);
+        release_rate_control_.setRelativeDue(release_secs);
+
+    }
+
     using TestControl::checkExitConditions;
-    using TestControl::createRenew;
+    using TestControl::createMessageFromReply;
     using TestControl::factoryElapsedTime6;
     using TestControl::factoryGeneric;
     using TestControl::factoryIana6;
@@ -84,7 +108,7 @@ public:
     using TestControl::factoryRequestList4;
     using TestControl::generateDuid;
     using TestControl::generateMacAddress;
-    using TestControl::getNextExchangesNum;
+    using TestControl::getCurrentTimeout;
     using TestControl::getTemplateBuffer;
     using TestControl::initPacketTemplates;
     using TestControl::initializeStatsMgr;
@@ -92,13 +116,22 @@ public:
     using TestControl::processReceivedPacket4;
     using TestControl::processReceivedPacket6;
     using TestControl::registerOptionFactories;
+    using TestControl::reset;
     using TestControl::sendDiscover4;
     using TestControl::sendPackets;
-    using TestControl::sendRenewPackets;
+    using TestControl::sendMultipleMessages6;
     using TestControl::sendRequest6;
     using TestControl::sendSolicit6;
     using TestControl::setDefaults4;
     using TestControl::setDefaults6;
+    using TestControl::basic_rate_control_;
+    using TestControl::renew_rate_control_;
+    using TestControl::release_rate_control_;
+    using TestControl::last_report_;
+    using TestControl::transid_gen_;
+    using TestControl::macaddr_gen_;
+    using TestControl::first_packet_serverid_;
+    using TestControl::interrupted_;
 
     NakedTestControl() : TestControl() {
         uint32_t clients_num = CommandOptions::instance().getClientsNum() == 0 ?
@@ -626,6 +659,167 @@ public:
         }
     }
 
+    /// \brief Test that the DHCPv4 Release or Renew message is created
+    /// correctly and comprises expected options.
+    ///
+    /// \param msg_type A type of the message to be tested: DHCPV6_RELEASE
+    /// or DHCPV6_RENEW.
+    void testCreateRenewRelease(const uint16_t msg_type) {
+        // This command line specifies that the Release/Renew messages should
+        // be sent with the same rate as the Solicit messages.
+        std::ostringstream s;
+        s << "perfdhcp -6 -l lo -r 10 ";
+        s << (msg_type == DHCPV6_RELEASE ? "-F" : "-f") << " 10 ";
+        s << "-R 10 -L 10547 -n 10 -e address-and-prefix ::1";
+        ASSERT_NO_THROW(processCmdLine(s.str()));
+        // Create a test controller class.
+        NakedTestControl tc;
+        // Set the transaction id generator which will be used by the
+        // createRenew or createRelease function to generate transaction id.
+        boost::shared_ptr<NakedTestControl::IncrementalGenerator>
+            generator(new NakedTestControl::IncrementalGenerator());
+        tc.setTransidGenerator(generator);
+
+        // Create a Reply packet. The createRelease or createReply function will
+        // need Reply packet to create a corresponding Release or Reply.
+        Pkt6Ptr reply = createReplyPkt6(1);
+
+        Pkt6Ptr msg;
+        // Check that the message is created.
+        ASSERT_NO_THROW(msg = tc.createMessageFromReply(msg_type, reply));
+
+        ASSERT_TRUE(msg);
+        // Check that the message type and transaction id is correct.
+        EXPECT_EQ(msg_type, msg->getType());
+        EXPECT_EQ(1, msg->getTransid());
+
+        // Check that the message has expected options. These are the same for
+        // Release and Renew.
+
+        // Client Identifier.
+        OptionPtr opt_clientid = msg->getOption(D6O_CLIENTID);
+        ASSERT_TRUE(opt_clientid);
+        EXPECT_TRUE(reply->getOption(D6O_CLIENTID)->getData() ==
+                    opt_clientid->getData());
+
+        // Server identifier
+        OptionPtr opt_serverid = msg->getOption(D6O_SERVERID);
+        ASSERT_TRUE(opt_serverid);
+        EXPECT_TRUE(reply->getOption(D6O_SERVERID)->getData() ==
+                opt_serverid->getData());
+
+        // IA_NA
+        OptionPtr opt_ia_na = msg->getOption(D6O_IA_NA);
+        ASSERT_TRUE(opt_ia_na);
+        EXPECT_TRUE(reply->getOption(D6O_IA_NA)->getData() ==
+                    opt_ia_na->getData());
+
+        // IA_PD
+        OptionPtr opt_ia_pd = msg->getOption(D6O_IA_PD);
+        ASSERT_TRUE(opt_ia_pd);
+        EXPECT_TRUE(reply->getOption(D6O_IA_PD)->getData() ==
+                    opt_ia_pd->getData());
+
+        // Make sure that exception is thrown if the Reply message is NULL.
+        EXPECT_THROW(tc.createMessageFromReply(msg_type, Pkt6Ptr()),
+                     isc::BadValue);
+
+    }
+
+    /// \brief Test sending DHCPv6 Releases or Renews.
+    ///
+    /// This function simulates acquiring 10 leases from the server. Returned
+    /// Reply messages are cached and used to send Renew or Release messages.
+    /// The maxmimal number of Renew or Release messages which can be sent is
+    /// equal to the number of leases acquired (10). This function also checks
+    /// that an attempt to send more Renew or Release messages than the number
+    /// of leases acquired will fail.
+    ///
+    /// \param msg_type A type of the message which is simulated to be sent
+    /// (DHCPV6_RENEW or DHCPV6_RELEASE).
+    void testSendRenewRelease(const uint16_t msg_type) {
+        std::string loopback_iface(getLocalLoopback());
+        if (loopback_iface.empty()) {
+            std::cout << "Skipping the test because loopback interface could"
+                " not be detected" << std::endl;
+            return;
+        }
+        // Build a command line. Depending on the message type, we will use
+        // -f<renew-rate> or -F<release-rate> parameter.
+        std::ostringstream s;
+        s << "perfdhcp -6 -l " << loopback_iface << " -r 10 ";
+        s << (msg_type == DHCPV6_RENEW ? "-f" : "-F");
+        s << " 10 -R 10 -L 10547 -n 10 ::1";
+        ASSERT_NO_THROW(processCmdLine(s.str()));
+        // Create a test controller class.
+        NakedTestControl tc;
+        tc.initializeStatsMgr();
+        // Set the transaction id generator to sequential to control to
+        // guarantee that transaction ids are predictable.
+        boost::shared_ptr<NakedTestControl::IncrementalGenerator>
+            generator(new NakedTestControl::IncrementalGenerator());
+        tc.setTransidGenerator(generator);
+        // Socket has to be created so as we can actually send packets.
+        int sock_handle = 0;
+        ASSERT_NO_THROW(sock_handle = tc.openSocket());
+        TestControl::TestControlSocket sock(sock_handle);
+
+        // Send a number of Solicit messages. Each generated Solicit will be
+        // assigned a different transaction id, starting from 1 to 10.
+        tc.sendPackets(sock, 10);
+
+        // Simulate Advertise responses from the server. Each advertise is
+        // assigned a transaction id from the range of 1 to 10, so as they
+        // match the transaction ids from the Solicit messages.
+        for (int i = generator->getNext() - 10; i < generator->getNext(); ++i) {
+            Pkt6Ptr advertise(createAdvertisePkt6(i));
+            // If Advertise is matched with the Solicit the call below will
+            // trigger a corresponding Request. They will be assigned
+            // transaction ids from the range from 11 to 20 (the range of
+            // 1 to 10 has been used by Solicit-Advertise).
+            ASSERT_NO_THROW(tc.processReceivedPacket6(sock, advertise));
+    }
+
+        // Requests have been sent, so now let's simulate responses from the
+        // server. Generate corresponding Reply messages with the transaction
+        // ids from the range from 11 to 20.
+        for (int i = generator->getNext() - 10; i < generator->getNext(); ++i) {
+            Pkt6Ptr reply(createReplyPkt6(i));
+            // Each Reply packet corresponds to the new lease acquired. Since
+            // -f<renew-rate> option has been specified, received Reply
+            // messages are held so as Renew messages can be sent for
+            // existing leases.
+            ASSERT_NO_THROW(tc.processReceivedPacket6(sock, reply));
+        }
+
+        uint64_t msg_num;
+        // Try to send 5 messages. It should be successful because 10 Reply
+        // messages has been received. For each of them we should be able to
+        // send Renew or Release.
+        ASSERT_NO_THROW(
+            msg_num = tc.sendMultipleMessages6(sock, msg_type, 5)
+        );
+        // Make sure that we have sent 5 messages.
+        EXPECT_EQ(5, msg_num);
+
+        // Try to do it again. We should still have 5 Reply packets for
+        // which Renews or Releases haven't been sent yet.
+        ASSERT_NO_THROW(
+            msg_num = tc.sendMultipleMessages6(sock, msg_type, 5)
+        );
+        EXPECT_EQ(5, msg_num);
+
+        // We used all the Reply packets (we sent Renew or Release for each of
+        // them already). Therefore, no further Renew or Release messages should
+        // be sent before we acquire new leases.
+        ASSERT_NO_THROW(
+            msg_num = tc.sendMultipleMessages6(sock, msg_type, 5)
+        );
+        // Make sure that no message has been sent.
+        EXPECT_EQ(0, msg_num);
+
+    }
+
     /// \brief Parse command line string with CommandOptions.
     ///
     /// \param cmdline command line string to be parsed.
@@ -709,6 +903,25 @@ public:
     }
 
 };
+
+// This test verifies that the class members are reset to expected values.
+TEST_F(TestControlTest, reset) {
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l ethx -r 50 -f 30 -F 10 -a 3 all"));
+    NakedTestControl tc;
+    tc.reset();
+    EXPECT_EQ(3, tc.basic_rate_control_.getAggressivity());
+    EXPECT_EQ(3, tc.renew_rate_control_.getAggressivity());
+    EXPECT_EQ(3, tc.release_rate_control_.getAggressivity());
+    EXPECT_EQ(50, tc.basic_rate_control_.getRate());
+    EXPECT_EQ(30, tc.renew_rate_control_.getRate());
+    EXPECT_EQ(10, tc.release_rate_control_.getRate());
+    EXPECT_FALSE(tc.last_report_.is_not_a_date_time());
+    EXPECT_FALSE(tc.transid_gen_);
+    EXPECT_FALSE(tc.macaddr_gen_);
+    EXPECT_TRUE(tc.first_packet_serverid_.empty());
+    EXPECT_FALSE(tc.interrupted_);
+
+}
 
 TEST_F(TestControlTest, GenerateDuid) {
     // Simple command line that simulates one client only. Always the
@@ -1226,157 +1439,166 @@ TEST_F(TestControlTest, PacketTemplates) {
     EXPECT_THROW(tc.initPacketTemplates(), isc::BadValue);
 }
 
-TEST_F(TestControlTest, RateControl) {
-    // We don't specify the exchange rate here so the aggressivity
-    // value will determine how many packets are to be send each
-    // time we query the getNextExchangesNum.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 all"));
-    CommandOptions& options = CommandOptions::instance();
-
-    NakedTestControl tc1;
-    uint64_t xchgs_num = tc1.getNextExchangesNum(microsec_clock::universal_time(),
-                                                 options.getRate());
-    EXPECT_EQ(options.getAggressivity(), xchgs_num);
-
-    // The exchange rate is now 1 per second. We don't know how many
-    // exchanges have to initiated exactly but for sure it has to be
-    // non-zero value. Also, since aggressivity is very high we expect
-    // that it will not be restricted by aggressivity.
-    ASSERT_NO_THROW(
-        processCmdLine("perfdhcp -l 127.0.0.1 -a 1000000 -r 1 all")
-    );
-    NakedTestControl tc2;
-    xchgs_num = tc2.getNextExchangesNum(microsec_clock::universal_time(),
-                                        options.getRate());
-    EXPECT_GT(xchgs_num, 0);
-    EXPECT_LT(xchgs_num, options.getAggressivity());
-    // @todo add more thorough checks for rate values.
-}
-
 TEST_F(TestControlTest, processRenew) {
-    std::string loopback_iface(getLocalLoopback());
-    if (loopback_iface.empty()) {
-        std::cout << "Skipping the test because loopback interface could"
-            " not be detected" << std::endl;
-        return;
-    }
-    // This command line specifies that the Renew messages should be sent
-    // with the same rate as the Solicit messages.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l " + loopback_iface +
-                                   " -r 10 -f 10 -R 10 -L 10547 -n 10 ::1"));
-    // Create a test controller class.
-    NakedTestControl tc;
-    tc.initializeStatsMgr();
-    // Set the transaction id generator to sequential to control to guarantee
-    // that transaction ids are predictable.
-    boost::shared_ptr<NakedTestControl::IncrementalGenerator>
-        generator(new NakedTestControl::IncrementalGenerator());
-    tc.setTransidGenerator(generator);
-    // Socket has to be created so as we can actually send packets.
-    int sock_handle = 0;
-    ASSERT_NO_THROW(sock_handle = tc.openSocket());
-    TestControl::TestControlSocket sock(sock_handle);
-
-    // Send a number of Solicit messages. Each generated Solicit will be
-    // assigned a different transaction id, starting from 1 to 10.
-    tc.sendPackets(sock, 10);
-
-    // Simulate Advertise responses from the server. Each advertise is assigned
-    // a transaction id from the range of 1 to 10, so as they match the
-    // transaction ids from the Solicit messages.
-    for (int i = generator->getNext() - 10; i < generator->getNext(); ++i) {
-        Pkt6Ptr advertise(createAdvertisePkt6(i));
-        // If Advertise is matched with the Solicit the call below will
-        // trigger a corresponding Request. They will be assigned
-        // transaction ids from the range from 11 to 20 (the range of
-        // 1 to 10 has been used by Solicit-Advertise).
-        ASSERT_NO_THROW(tc.processReceivedPacket6(sock, advertise));
-    }
-
-    // Requests have been sent, so now let's simulate responses from the server.
-    // Generate corresponding Reply messages with the transaction ids from the
-    // range from 11 to 20.
-    for (int i = generator->getNext() - 10; i < generator->getNext(); ++i) {
-        Pkt6Ptr reply(createReplyPkt6(i));
-        // Each Reply packet corresponds to the new lease acquired. Since
-        // -f<renew-rate> option has been specified, received Reply
-        // messages are held so as Renew messages can be sent for
-        // existing leases.
-        ASSERT_NO_THROW(tc.processReceivedPacket6(sock, reply));
-    }
-
-    uint64_t renew_num;
-    // Try to send 5 Renew packets. It should be successful because
-    // 10 Reply messages has been received. For each of them we should
-    // be able to send Renew.
-    ASSERT_NO_THROW(renew_num = tc.sendRenewPackets(sock, 5));
-    // Make sure that we have sent 5 packets.
-    EXPECT_EQ(5, renew_num);
-
-    // Try to do it again. We should still have 5 Reply packets for
-    // which Renews haven't been sent yet.
-    ASSERT_NO_THROW(renew_num = tc.sendRenewPackets(sock, 5));
-    EXPECT_EQ(5, renew_num);
-
-    // We used all the Reply packets (we sent Renew for each of them
-    // already). Therefore, no further Renew packets should be sent before
-    // We acquire new leases.
-    ASSERT_NO_THROW(renew_num = tc.sendRenewPackets(sock, 5));
-    // Make sure that no Renew has been sent.
-    EXPECT_EQ(0, renew_num);
+    testSendRenewRelease(DHCPV6_RENEW);
 }
 
+TEST_F(TestControlTest, processRelease) {
+    testSendRenewRelease(DHCPV6_RELEASE);
+}
+
+// This test verifies that the DHCPV6 Renew message is created correctly
+// and that it comprises all required options.
 TEST_F(TestControlTest, createRenew) {
-    // This command line specifies that the Renew messages should be sent
-    // with the same rate as the Solicit messages.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l lo -r 10 -f 10 -R 10"
-                                   " -L 10547 -n 10 -e address-and-prefix"
-                                   " ::1"));
-    // Create a test controller class.
+    testCreateRenewRelease(DHCPV6_RENEW);
+}
+
+// This test verifies that the DHCPv6 Release message is created correctly
+// and that it comprises all required options.
+TEST_F(TestControlTest, createRelease) {
+    testCreateRenewRelease(DHCPV6_RELEASE);
+}
+
+// This test verifies that the current timeout value for waiting for
+// the server's responses is valid. The timeout value corresponds to the
+// time period between now and the next message to be sent from the
+// perfdhcp to a server.
+TEST_F(TestControlTest, getCurrentTimeout) {
+    // Process the command line: set the rate for Discovers to 10,
+    // and set Renew rate to 0 (-f flag absent).
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -4 -l lo -r 10 ::1"));
     NakedTestControl tc;
-    // Set the transaction id generator because createRenew function requires
-    // it to generate the transaction id for the Renew packet.
-    boost::shared_ptr<NakedTestControl::IncrementalGenerator>
-        generator(new NakedTestControl::IncrementalGenerator());
-    tc.setTransidGenerator(generator);
+    // Make sure that the renew rate is 0.
+    ASSERT_EQ(0, CommandOptions::instance().getRenewRate());
+    // Simulate the case when we are already behind the due time for
+    // the next Discover to be sent.
+    tc.setRelativeDueTimes(-3);
+    // Expected timeout value is 0, which means that perfdhcp should
+    // not wait for server's response but rather send the next
+    // message to a server immediately.
+    EXPECT_EQ(0, tc.getCurrentTimeout());
+    // Now, let's do set the due time to a value in the future. The returned
+    // timeout value should be somewhere between now and this time in the
+    // future. The value of ten seconds ahead should be safe and guarantee
+    // that the returned timeout value is non-zero, even though there is a
+    // delay between setting the send_due_ value and invoking the function.
+    tc.setRelativeDueTimes(10);
+    uint32_t timeout = tc.getCurrentTimeout();
+    EXPECT_GT(timeout, 0);
+    EXPECT_LE(timeout, 10000000);
+}
 
-    // Create a Reply packet. The createRenew function will need Reply
-    // packet to create a corresponding Renew.
-    Pkt6Ptr reply = createReplyPkt6(1);
-    Pkt6Ptr renew;
-    // Check that Renew is created.
-    ASSERT_NO_THROW(renew = tc.createRenew(reply));
-    ASSERT_TRUE(renew);
-    EXPECT_EQ(DHCPV6_RENEW, renew->getType());
-    EXPECT_EQ(1, renew->getTransid());
+// This test verifies that the current timeout value for waiting for the
+// server's responses is valid. In this case, we are simulating that perfdhcp
+// sends Renew requests to the server, apart from the regular 4-way exchanges.
+// The timeout value depends on both the due time to send next Solicit and the
+// due time to send Renew - the timeout should be ajusted to the due time that
+// occurs sooner.
+TEST_F(TestControlTest, getCurrentTimeoutRenew) {
+    // Set the Solicit rate to 10 and the Renew rate 5.
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l lo -r 10 -f 5 ::1"));
+    NakedTestControl tc;
 
-    // Now check that the Renew packet created, has expected options. The
-    // payload of these options should be the same as the payload of the
-    // options in the Reply.
+    // Make sure, that the Renew rate has been set to 5.
+    ASSERT_EQ(5, CommandOptions::instance().getRenewRate());
+    // The send_due_ is in the past, the renew_due_ is in the future.
+    tc.setRelativeDueTimes(-3, 3);
+    EXPECT_EQ(0, tc.getCurrentTimeout());
 
-    // Client Identifier
-    OptionPtr opt_clientid = renew->getOption(D6O_CLIENTID);
-    ASSERT_TRUE(opt_clientid);
-    EXPECT_TRUE(reply->getOption(D6O_CLIENTID)->getData() ==
-                opt_clientid->getData());
+    // Swap the due times from the previous check. The effect should be the
+    // same.
+    tc.setRelativeDueTimes(3, -3);
+    EXPECT_EQ(0, tc.getCurrentTimeout());
 
-    // Server identifier
-    OptionPtr opt_serverid = renew->getOption(D6O_SERVERID);
-    ASSERT_TRUE(opt_serverid);
-    EXPECT_TRUE(reply->getOption(D6O_SERVERID)->getData() ==
-                opt_serverid->getData());
+    // Set both due times to the future. The renew due time is to occur
+    // sooner. The timeout should be a value between now and the
+    // renew due time.
+    tc.setRelativeDueTimes(10, 5);
+    EXPECT_GT(tc.getCurrentTimeout(), 0);
+    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
 
-    // IA_NA
-    OptionPtr opt_ia_na = renew->getOption(D6O_IA_NA);
-    ASSERT_TRUE(opt_ia_na);
-    EXPECT_TRUE(reply->getOption(D6O_IA_NA)->getData() ==
-                opt_ia_na->getData());
-
-    // IA_PD
-    OptionPtr opt_ia_pd = renew->getOption(D6O_IA_PD);
-    ASSERT_TRUE(opt_ia_pd);
-    EXPECT_TRUE(reply->getOption(D6O_IA_PD)->getData() ==
-                opt_ia_pd->getData());
+    // Repeat the same check, but swap the due times.
+    tc.setRelativeDueTimes(5, 10);
+    EXPECT_GT(tc.getCurrentTimeout(), 0);
+    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
 
 }
 
+// This test verifies that the current timeout value for waiting for the
+// server's responses is valid. In this case, we are simulating that perfdhcp
+// sends Release requests to the server, apart from the regular 4-way exchanges.
+TEST_F(TestControlTest, getCurrentTimeoutRelease) {
+    // Set the Solicit rate to 10 and the Release rate 5.
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l lo -r 10 -F 5 ::1"));
+    NakedTestControl tc;
+
+    // Make sure, that the Release rate has been set to 5.
+    ASSERT_EQ(5, CommandOptions::instance().getReleaseRate());
+    // The send_due_ is in the past, the renew_due_ is in the future.
+    tc.setRelativeDueTimes(-3, 0, 3);
+    EXPECT_EQ(0, tc.getCurrentTimeout());
+
+    // Swap the due times from the previous check. The effect should be the
+    // same.
+    tc.setRelativeDueTimes(3, 0, -3);
+    EXPECT_EQ(0, tc.getCurrentTimeout());
+
+    // Set both due times to the future. The renew due time is to occur
+    // sooner. The timeout should be a value between now and the
+    // release due time.
+    tc.setRelativeDueTimes(10, 0, 5);
+    EXPECT_GT(tc.getCurrentTimeout(), 0);
+    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
+
+    // Repeat the same check, but swap the due times.
+    tc.setRelativeDueTimes(5, 0, 10);
+    EXPECT_GT(tc.getCurrentTimeout(), 0);
+    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
+
+}
+
+// This test verifies that the current timeout value for waiting for the
+// server's responses is valid. In this case, we are simulating that perfdhcp
+// sends both Renew and Release requests to the server, apart from the regular
+// 4-way exchanges.
+TEST_F(TestControlTest, getCurrentTimeoutRenewRelease) {
+    // Set the Solicit rate to 10 and, Renew rate to 5, Release rate to 3.
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l lo -r 10 -f 5 -F 3 ::1"));
+    NakedTestControl tc;
+
+    // Make sure the Renew and Release rates has been set to a non-zero value.
+    ASSERT_EQ(5, CommandOptions::instance().getRenewRate());
+    ASSERT_EQ(3, CommandOptions::instance().getReleaseRate());
+
+    // If any of the due times is in the past, the timeout value should be 0,
+    // to indicate that the next message should be sent immediately.
+    tc.setRelativeDueTimes(-3, 3, 5);
+    EXPECT_EQ(0, tc.getCurrentTimeout());
+
+    tc.setRelativeDueTimes(-3, 5, 3);
+    EXPECT_EQ(0, tc.getCurrentTimeout());
+
+    tc.setRelativeDueTimes(3, -3, 5);
+    EXPECT_EQ(0, tc.getCurrentTimeout());
+
+    tc.setRelativeDueTimes(3, 2, -5);
+    EXPECT_EQ(0, tc.getCurrentTimeout());
+
+    tc.setRelativeDueTimes(-3, -2, -5);
+    EXPECT_EQ(0, tc.getCurrentTimeout());
+
+    // If due times are in the future, the timeout value should be aligned to
+    // the due time which occurs the soonest.
+    tc.setRelativeDueTimes(10, 9, 8);
+    EXPECT_GT(tc.getCurrentTimeout(), 0);
+    EXPECT_LE(tc.getCurrentTimeout(), 8000000);
+
+    tc.setRelativeDueTimes(10, 8, 9);
+    EXPECT_GT(tc.getCurrentTimeout(), 0);
+    EXPECT_LE(tc.getCurrentTimeout(), 8000000);
+
+    tc.setRelativeDueTimes(5, 8, 9);
+    EXPECT_GT(tc.getCurrentTimeout(), 0);
+    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
+
+}
