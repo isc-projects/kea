@@ -237,23 +237,11 @@ public:
     createPacketFromBuffer(const Pkt4Ptr& src_pkt,
                            Pkt4Ptr& dst_pkt);
 
+
     /// @brief generates a DHCPv4 packet based on provided hex string
     ///
     /// @return created packet
     Pkt4Ptr packetFromCapture(const std::string& hex_string);
-
-    /// @brief Tests if Discover or Request message is processed correctly
-    ///
-    /// This test verifies that the Parameter Request List option is handled
-    /// correctly, i.e. it checks that certain options are present in the
-    /// server's response when they are requested and that they are not present
-    /// when they are not requested or NAK occurs.
-    ///
-    /// @todo We need an additional test for PRL option using real traffic
-    /// capture.
-    ///
-    /// @param msg_type DHCPDISCOVER or DHCPREQUEST
-    void testDiscoverRequest(const uint8_t msg_type);
 
     /// @brief This function cleans up after the test.
     virtual void TearDown();
@@ -271,8 +259,6 @@ public:
 
     isc::data::ConstElementPtr comment_;
 
-    // Name of a valid network interface
-    std::string valid_iface_;
 };
 
 /// @brief Test fixture class to be used for tests which require fake
@@ -299,11 +285,8 @@ public:
     /// These interfaces replace the real interfaces detected by the IfaceMgr.
     Dhcpv4SrvFakeIfaceTest();
 
-    /// @brief Destructor.
-    ///
-    /// Re-detects the network interfaces. Also, sets the default packet filter
-    /// class, in case the test has changed it.
-    virtual ~Dhcpv4SrvFakeIfaceTest();
+    /// @brief Restores the original interface configuration.
+    virtual void TearDown();
 
     /// @brief Creates an instance of the interface.
     ///
@@ -314,6 +297,20 @@ public:
     /// @return Iface Instance of the interface.
     static Iface createIface(const std::string& name, const int ifindex,
                              const std::string& addr);
+
+    /// @brief Tests if Discover or Request message is processed correctly
+    ///
+    /// This test verifies that the Parameter Request List option is handled
+    /// correctly, i.e. it checks that certain options are present in the
+    /// server's response when they are requested and that they are not present
+    /// when they are not requested or NAK occurs.
+    ///
+    /// @todo We need an additional test for PRL option using real traffic
+    /// capture.
+    ///
+    /// @param msg_type DHCPDISCOVER or DHCPREQUEST
+    void testDiscoverRequest(const uint8_t msg_type);
+
 };
 
 /// @brief "Naked" DHCPv4 server, exposes internal fields
@@ -382,6 +379,7 @@ public:
     ///
     /// See fake_received_ field for description
     void fakeReceive(const Pkt4Ptr& pkt) {
+        pkt->setIface("eth0");
         fake_received_.push_back(pkt);
     }
 
