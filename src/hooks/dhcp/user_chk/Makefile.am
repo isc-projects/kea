@@ -25,7 +25,7 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 BUILT_SOURCES =
 
 # Ensure that the message file is included in the distribution
-EXTRA_DIST =
+EXTRA_DIST = libdhcp_user_chk.dox
 
 # Get rid of generated message files on a clean
 #CLEANFILES = *.gcno *.gcda user_chk_messages.h user_chk_messages.cc s-messages
@@ -34,8 +34,11 @@ CLEANFILES = *.gcno *.gcda
 lib_LTLIBRARIES = libdhcp_user_chk.la
 libdhcp_user_chk_la_SOURCES  =
 libdhcp_user_chk_la_SOURCES += load_unload.cc
+libdhcp_user_chk_la_SOURCES += pkt_receive_co.cc
+libdhcp_user_chk_la_SOURCES += pkt_send_co.cc
 libdhcp_user_chk_la_SOURCES += subnet_select_co.cc
 libdhcp_user_chk_la_SOURCES += user.cc user.h
+libdhcp_user_chk_la_SOURCES += user_chk.h
 # Until logging in dynamically loaded libraries is fixed, exclude these.
 #libdhcp_user_chk_la_SOURCES += user_chk_log.cc user_chk_log.h
 libdhcp_user_chk_la_SOURCES += user_data_source.h

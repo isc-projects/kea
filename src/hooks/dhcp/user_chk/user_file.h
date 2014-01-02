@@ -25,6 +25,8 @@
 
 using namespace std;
 
+namespace user_chk {
+
 /// @brief Thrown a UserFile encounters an error.
 /// Note that it derives from UserDataSourceError to comply with the interface.
 class UserFileError : public UserDataSourceError {
@@ -44,7 +46,8 @@ public:
 /// where:
 ///
 /// <user_type>  text label of the id type: "HW_ADDR" or "DUID"
-/// <user_id>  the user's id as a string of hex digits without delimiters
+/// <user_id>  the user's id as a string of hex digits with or without
+/// colons (':') as a delimiter
 /// (options) zero or more string elements as name-value pairs, separated by
 /// commas: "opt1" : "val1",  "other_opt", "77" ...
 ///
@@ -131,5 +134,7 @@ private:
 
 /// @brief Defines a smart pointer to a UserFile.
 typedef boost::shared_ptr<UserFile> UserFilePtr;
+
+} // namespace user_chk
 
 #endif
