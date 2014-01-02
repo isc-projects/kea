@@ -667,6 +667,7 @@ INPUT                  = ../src/bin/auth \
                          ../src/bin/dhcp6 \
                          ../src/bin/resolver \
                          ../src/bin/sockcreator \
+                         ../src/hooks/dhcp/user_chk \
                          ../src/lib/acl \
                          ../src/lib/asiolink \
                          ../src/lib/bench \

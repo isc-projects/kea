@@ -18,6 +18,8 @@
 #include <exceptions/exceptions.h>
 #include <user.h>
 
+namespace user_chk {
+
 /// @brief Thrown if UserDataSource encounters an error
 class UserDataSourceError : public isc::Exception {
 public:
@@ -71,5 +73,7 @@ public:
 
 /// @brief Defines a smart pointer to a UserDataSource.
 typedef boost::shared_ptr<UserDataSource> UserDataSourcePtr;
+
+} // namespace user_chk
 
 #endif

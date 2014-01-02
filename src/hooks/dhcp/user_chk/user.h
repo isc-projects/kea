@@ -21,6 +21,8 @@
 #include <stdint.h>
 #include <vector>
 
+namespace user_chk {
+
 /// @file user.h This file defines classes: UserId and User.
 /// @brief These classes are used to describe and recognize DHCP lease
 /// clients.
@@ -63,7 +65,7 @@ public:
     ///
     /// @param id_type The type of user id contained in string.
     /// The string is expected to contain an even number of hex digits
-    /// without delimiters.
+    /// with or without colon (':') as a delimiter.
     ///
     /// @param id a vector of unsigned bytes containing the id
     ///
@@ -245,5 +247,7 @@ private:
 
 /// @brief Defines a smart pointer to a User.
 typedef boost::shared_ptr<User> UserPtr;
+
+} // namespace user_chk
 
 #endif

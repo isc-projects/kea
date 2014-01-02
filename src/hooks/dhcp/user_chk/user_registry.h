@@ -26,6 +26,8 @@
 
 using namespace std;
 
+namespace user_chk {
+
 /// @brief Thrown UserRegistry encounters an error
 class UserRegistryError : public isc::Exception {
 public:
@@ -124,5 +126,7 @@ private:
 
 /// @brief Define a smart pointer to a UserRegistry.
 typedef boost::shared_ptr<UserRegistry> UserRegistryPtr;
+
+} // namespace user_chk
 
 #endif
