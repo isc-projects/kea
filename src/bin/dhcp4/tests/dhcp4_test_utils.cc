@@ -547,6 +547,36 @@ void Dhcpv4SrvTest::TearDown() {
     }
 }
 
+Dhcpv4SrvFakeIfaceTest::Dhcpv4SrvFakeIfaceTest() : Dhcpv4SrvTest() {
+    IfaceMgr& ifacemgr = IfaceMgr::instance();
+    ifacemgr.clearIfaces();
+
+    ifacemgr.addInterface(createIface("lo", 0, "127.0.0.1"));
+    ifacemgr.addInterface(createIface("eth0", 0, "192.0.3.1"));
+    ifacemgr.addInterface(createIface("eth1", 0, "10.0.0.1"));
+}
+
+Dhcpv4SrvFakeIfaceTest::~Dhcpv4SrvFakeIfaceTest() {
+    IfaceMgr& ifacemgr = IfaceMgr::instance();
+    ifacemgr.setPacketFilter(PktFilterPtr(new PktFilterInet()));
+    ifacemgr.clearIfaces();
+    ifacemgr.detectIfaces();
+}
+
+Iface
+Dhcpv4SrvFakeIfaceTest::createIface(const std::string& name, const int ifindex,
+                                    const std::string& addr) {
+    Iface iface(name, ifindex);
+    iface.addAddress(IOAddress(addr));
+    if (name == "lo") {
+        iface.flag_loopback_ = true;
+    }
+    iface.flag_up_ = true;
+    iface.flag_running_ = true;
+    iface.inactive4_ = false;
+    return (iface);
+}
+
 }; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
