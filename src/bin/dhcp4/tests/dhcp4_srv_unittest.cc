@@ -62,53 +62,6 @@ namespace {
 /// dummy server-id file location
 const char* SRVID_FILE = "server-id-test.txt";
 
-// Sanity check. Verifies that both Dhcpv4Srv and its derived
-// class NakedDhcpv4Srv can be instantiated and destroyed.
-TEST_F(Dhcpv4SrvTest, basic) {
-
-    // Check that the base class can be instantiated
-    boost::scoped_ptr<Dhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000, "type=memfile",
-                                            false, false)));
-    srv.reset();
-    // We have to close open sockets because further in this test we will
-    // call the Dhcpv4Srv constructor again. This constructor will try to
-    // set the appropriate packet filter class for IfaceMgr. This requires
-    // that all sockets are closed.
-    IfaceMgr::instance().closeSockets();
-
-    // Check that the derived class can be instantiated
-    boost::scoped_ptr<NakedDhcpv4Srv> naked_srv;
-    ASSERT_NO_THROW(
-        naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
-    EXPECT_TRUE(naked_srv->getServerID());
-    // Close sockets again for the next test.
-    IfaceMgr::instance().closeSockets();
-
-    ASSERT_NO_THROW(naked_srv.reset(new NakedDhcpv4Srv(0)));
-    EXPECT_TRUE(naked_srv->getServerID());
-}
-
-// This test verifies that exception is not thrown when an error occurs during
-// opening sockets. This test forces an error by adding a fictious interface
-// to the IfaceMgr. An attempt to open socket on this interface must always
-// fail. The DHCPv4 installs the error handler function to prevent exceptions
-// being thrown from the openSockets4 function.
-// @todo The server tests for socket should be extended but currently the
-// ability to unit test the sockets code is somewhat limited.
-TEST_F(Dhcpv4SrvTest, openActiveSockets) {
-    ASSERT_NO_THROW(CfgMgr::instance().activateAllIfaces());
-
-    Iface iface("bogusiface", 255);
-    iface.flag_loopback_ = false;
-    iface.flag_up_ = true;
-    iface.flag_running_ = true;
-    iface.inactive4_ = false;
-    iface.addAddress(IOAddress("192.0.0.0"));
-    IfaceMgr::instance().addInterface(iface);
-    ASSERT_NO_THROW(Dhcpv4Srv::openActiveSockets(DHCP4_SERVER_PORT, false));
-}
-
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
 // in the received message.
@@ -301,6 +254,53 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcast) {
     EXPECT_EQ("255.255.255.255", resp->getRemoteAddr().toText());
 }
 
+// Sanity check. Verifies that both Dhcpv4Srv and its derived
+// class NakedDhcpv4Srv can be instantiated and destroyed.
+TEST_F(Dhcpv4SrvTest, basic) {
+
+    // Check that the base class can be instantiated
+    boost::scoped_ptr<Dhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000, "type=memfile",
+                                            false, false)));
+    srv.reset();
+    // We have to close open sockets because further in this test we will
+    // call the Dhcpv4Srv constructor again. This constructor will try to
+    // set the appropriate packet filter class for IfaceMgr. This requires
+    // that all sockets are closed.
+    IfaceMgr::instance().closeSockets();
+
+    // Check that the derived class can be instantiated
+    boost::scoped_ptr<NakedDhcpv4Srv> naked_srv;
+    ASSERT_NO_THROW(
+        naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
+    EXPECT_TRUE(naked_srv->getServerID());
+    // Close sockets again for the next test.
+    IfaceMgr::instance().closeSockets();
+
+    ASSERT_NO_THROW(naked_srv.reset(new NakedDhcpv4Srv(0)));
+    EXPECT_TRUE(naked_srv->getServerID());
+}
+
+// This test verifies that exception is not thrown when an error occurs during
+// opening sockets. This test forces an error by adding a fictious interface
+// to the IfaceMgr. An attempt to open socket on this interface must always
+// fail. The DHCPv4 installs the error handler function to prevent exceptions
+// being thrown from the openSockets4 function.
+// @todo The server tests for socket should be extended but currently the
+// ability to unit test the sockets code is somewhat limited.
+TEST_F(Dhcpv4SrvTest, openActiveSockets) {
+    ASSERT_NO_THROW(CfgMgr::instance().activateAllIfaces());
+
+    Iface iface("bogusiface", 255);
+    iface.flag_loopback_ = false;
+    iface.flag_up_ = true;
+    iface.flag_running_ = true;
+    iface.inactive4_ = false;
+    iface.addAddress(IOAddress("192.0.0.0"));
+    IfaceMgr::instance().addInterface(iface);
+    ASSERT_NO_THROW(Dhcpv4Srv::openActiveSockets(DHCP4_SERVER_PORT, false));
+}
+
 // Verifies that DISCOVER message can be processed correctly,
 // that the OFFER message generated in response is valid and
 // contains necessary options.
@@ -309,7 +309,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcast) {
 // are other tests that verify correctness of the allocation
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
-TEST_F(Dhcpv4SrvTest, processDiscover) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, processDiscover) {
     testDiscoverRequest(DHCPDISCOVER);
 }
 
@@ -321,11 +321,11 @@ TEST_F(Dhcpv4SrvTest, processDiscover) {
 // are other tests that verify correctness of the allocation
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
-TEST_F(Dhcpv4SrvTest, processRequest) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, processRequest) {
     testDiscoverRequest(DHCPREQUEST);
 }
 
-TEST_F(Dhcpv4SrvTest, processRelease) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, processRelease) {
     NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPRELEASE, 1234));
 
@@ -333,7 +333,7 @@ TEST_F(Dhcpv4SrvTest, processRelease) {
     EXPECT_NO_THROW(srv.processRelease(pkt));
 }
 
-TEST_F(Dhcpv4SrvTest, processDecline) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, processDecline) {
     NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPDECLINE, 1234));
 
@@ -341,7 +341,7 @@ TEST_F(Dhcpv4SrvTest, processDecline) {
     EXPECT_NO_THROW(srv.processDecline(pkt));
 }
 
-TEST_F(Dhcpv4SrvTest, processInform) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, processInform) {
     NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPINFORM, 1234));
 
@@ -398,7 +398,7 @@ TEST_F(Dhcpv4SrvTest, serverReceivedPacketName) {
 // - copy of client-id
 // - server-id
 // - offered address
-TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverBasic) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -406,6 +406,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
+    dis->setIface("eth0");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -435,7 +436,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
 // - copy of client-id
 // - server-id
 // - offered address
-TEST_F(Dhcpv4SrvTest, DiscoverHint) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverHint) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("192.0.2.107");
@@ -445,6 +446,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverHint) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setYiaddr(hint);
+    dis->setIface("eth0");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -475,7 +477,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverHint) {
 // - copy of client-id
 // - server-id
 // - offered address
-TEST_F(Dhcpv4SrvTest, DiscoverNoClientId) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverNoClientId) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("192.0.2.107");
@@ -484,6 +486,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverNoClientId) {
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setYiaddr(hint);
     dis->setHWAddr(generateHWAddr(6));
+    dis->setIface("eth0");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -513,7 +516,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverNoClientId) {
 // - copy of client-id
 // - server-id
 // - offered address (!= hint)
-TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverInvalidHint) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("10.1.2.3");
@@ -523,6 +526,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setYiaddr(hint);
+    dis->setIface("eth0");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -551,7 +555,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
 // and this is a correct behavior. It is REQUEST that will fail for the third
 // client. OFFER is basically saying "if you send me a request, you will
 // probably get an address like this" (there are no guarantees).
-TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, ManyDiscovers) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -562,6 +566,11 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     dis1->setRemoteAddr(IOAddress("192.0.2.1"));
     dis2->setRemoteAddr(IOAddress("192.0.2.2"));
     dis3->setRemoteAddr(IOAddress("192.0.2.3"));
+
+    // Assign interfaces
+    dis1->setIface("eth0");
+    dis2->setIface("eth0");
+    dis3->setIface("eth0");
 
     // Different client-id sizes
     OptionPtr clientid1 = generateClientId(4); // length 4
@@ -623,7 +632,7 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
 // - assigned address
 //
 // Test verifies that the lease is actually in the database.
-TEST_F(Dhcpv4SrvTest, RequestBasic) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, RequestBasic) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -633,6 +642,7 @@ TEST_F(Dhcpv4SrvTest, RequestBasic) {
     OptionPtr clientid = generateClientId();
     req->addOption(clientid);
     req->setYiaddr(hint);
+    req->setIface("eth0");
 
     // Pass it to the server and get an advertise
     Pkt4Ptr ack = srv->processRequest(req);
@@ -668,7 +678,7 @@ TEST_F(Dhcpv4SrvTest, RequestBasic) {
 // - copy of client-id
 // - server-id
 // - assigned address (different for each client)
-TEST_F(Dhcpv4SrvTest, ManyRequests) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, ManyRequests) {
 
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
@@ -685,6 +695,11 @@ TEST_F(Dhcpv4SrvTest, ManyRequests) {
     req1->setRemoteAddr(relay);
     req2->setRemoteAddr(relay);
     req3->setRemoteAddr(relay);
+
+    // Assign interfaces
+    req1->setIface("eth0");
+    req2->setIface("eth0");
+    req3->setIface("eth0");
 
     req1->setYiaddr(req_addr1);
     req2->setYiaddr(req_addr2);
@@ -760,7 +775,7 @@ TEST_F(Dhcpv4SrvTest, ManyRequests) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA that includes IAADDR
 // - lease is actually renewed in LeaseMgr
-TEST_F(Dhcpv4SrvTest, RenewBasic) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, RenewBasic) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -800,6 +815,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     req->setRemoteAddr(IOAddress(addr));
     req->setYiaddr(addr);
     req->setCiaddr(addr); // client's address
+    req->setIface("eth0");
 
     req->addOption(clientid);
     req->addOption(srv->getServerID());
@@ -840,7 +856,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
 // @todo: Implement tests for rejecting renewals
 
 // This test verifies if the sanityCheck() really checks options presence.
-TEST_F(Dhcpv4SrvTest, sanityCheck) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, sanityCheck) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -871,7 +887,7 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
 // This test verifies that incoming (positive) RELEASE can be handled properly.
 // As there is no REPLY in DHCPv4, the only thing to verify here is that
 // the lease is indeed removed from the database.
-TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, ReleaseBasic) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -908,6 +924,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     rel->addOption(clientid);
     rel->addOption(srv->getServerID());
     rel->setHWAddr(hw);
+    rel->setIface("eth0");
 
     // Pass it to the server and hope for a REPLY
     // Note: this is no response to RELEASE in DHCPv4
@@ -942,7 +959,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
 // 1. there is no such lease at all
 // 2. there is such a lease, but it is assigned to a different IAID
 // 3. there is such a lease, but it belongs to a different client
-TEST_F(Dhcpv4SrvTest, ReleaseReject) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, ReleaseReject) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -971,6 +988,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     rel->addOption(clientid);
     rel->addOption(srv->getServerID());
     rel->setHWAddr(bogus_hw);
+    rel->setIface("eth0");
 
     // Case 1: No lease known to server
     SCOPED_TRACE("CASE 1: Lease is not known to the server");
@@ -1031,7 +1049,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
 
 // This test verifies if the server-id disk operations (read, write) are
 // working properly.
-TEST_F(Dhcpv4SrvTest, ServerID) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, ServerID) {
     NakedDhcpv4Srv srv(0);
 
     string srvid_text = "192.0.2.100";
@@ -1060,7 +1078,7 @@ TEST_F(Dhcpv4SrvTest, ServerID) {
 }
 
 // Checks if received relay agent info option is echoed back to the client
-TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, relayAgentInfoEcho) {
 
     NakedDhcpv4Srv srv(0);
 
@@ -1103,7 +1121,7 @@ TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
 
 // Checks if vendor options are parsed correctly and requested vendor options
 // are echoed back.
-TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsDocsis) {
 
     NakedDhcpv4Srv srv(0);
 
@@ -1123,7 +1141,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"valid-lifetime\": 4000,"
-        "    \"interface\": \"" + valid_iface_ + "\" "
+        "    \"interface\": \"eth0\" "
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -1297,7 +1315,7 @@ TEST_F(Dhcpv4SrvTest, unpackOptions) {
 
 // Checks whether the server uses default (0.0.0.0) siaddr value, unless
 // explicitly specified
-TEST_F(Dhcpv4SrvTest, siaddrDefault) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, siaddrDefault) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("192.0.2.107");
@@ -1307,6 +1325,7 @@ TEST_F(Dhcpv4SrvTest, siaddrDefault) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setYiaddr(hint);
+    dis->setIface("eth0");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -1320,13 +1339,14 @@ TEST_F(Dhcpv4SrvTest, siaddrDefault) {
 }
 
 // Checks whether the server uses specified siaddr value
-TEST_F(Dhcpv4SrvTest, siaddr) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, siaddr) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     subnet_->setSiaddr(IOAddress("192.0.2.123"));
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -1345,7 +1365,7 @@ TEST_F(Dhcpv4SrvTest, siaddr) {
 // specific value and returned in server messages. There's also similar test for
 // checking parser only configuration, see Dhcp4ParserTest.nextServerOverride in
 // config_parser_unittest.cc.
-TEST_F(Dhcpv4SrvTest, nextServerOverride) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, nextServerOverride) {
 
     NakedDhcpv4Srv srv(0);
 
@@ -1372,6 +1392,7 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -1387,7 +1408,7 @@ TEST_F(Dhcpv4SrvTest, nextServerOverride) {
 // when there is no specific value defined in subnet and returned to the client
 // properly. There's also similar test for checking parser only configuration,
 // see Dhcp4ParserTest.nextServerGlobal in config_parser_unittest.cc.
-TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, nextServerGlobal) {
 
     NakedDhcpv4Srv srv(0);
 
@@ -1413,6 +1434,7 @@ TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -1449,7 +1471,7 @@ const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
 /// can't modify non-static members (for obvious reasons), so many
 /// fields are declared static. It is still better to keep them as
 /// one class rather than unrelated collection of global objects.
-class HooksDhcpv4SrvTest : public Dhcpv4SrvTest {
+class HooksDhcpv4SrvTest : public Dhcpv4SrvFakeIfaceTest {
 
 public:
 
@@ -1936,7 +1958,7 @@ TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
 
 // Checks if callouts installed on buffer4_receive is able to change
 // the values and the parameters are indeed used by the server.
-TEST_F(HooksDhcpv4SrvTest, buffer4RreceiveValueChange) {
+TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
 
     // Install callback that modifies MAC addr of incoming packet
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2357,7 +2379,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
         "\"subnet4\": [ { "
         "    \"pool\": [ \"192.0.2.0/25\" ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"interface\": \"" + valid_iface_ + "\" "
+        "    \"interface\": \"eth0\" "
         " }, {"
         "    \"pool\": [ \"192.0.3.0/25\" ],"
         "    \"subnet\": \"192.0.3.0/24\" "
@@ -2376,7 +2398,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     // Prepare discover packet. Server should select first subnet for it
     Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     sol->setRemoteAddr(IOAddress("192.0.2.1"));
-    sol->setIface(valid_iface_);
+    sol->setIface("eth0");
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -2423,7 +2445,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
         "\"subnet4\": [ { "
         "    \"pool\": [ \"192.0.2.0/25\" ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"interface\": \"" + valid_iface_ + "\" "
+        "    \"interface\": \"eth0\" "
         " }, {"
         "    \"pool\": [ \"192.0.3.0/25\" ],"
         "    \"subnet\": \"192.0.3.0/24\" "
@@ -2442,7 +2464,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
     // Prepare discover packet. Server should select first subnet for it
     Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     sol->setRemoteAddr(IOAddress("192.0.2.1"));
-    sol->setIface(valid_iface_);
+    sol->setIface("eth0");
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -2504,6 +2526,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
     req->setRemoteAddr(IOAddress(addr));
     req->setYiaddr(addr);
     req->setCiaddr(addr); // client's address
+    req->setIface("eth0");
 
     req->addOption(clientid);
     req->addOption(srv_->getServerID());
@@ -2595,6 +2618,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
     req->setRemoteAddr(IOAddress(addr));
     req->setYiaddr(addr);
     req->setCiaddr(addr); // client's address
+    req->setIface("eth0");
 
     req->addOption(clientid);
     req->addOption(srv_->getServerID());
@@ -2766,7 +2790,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
 }
 
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
-TEST_F(Dhcpv4SrvTest, docsisVendorOptionsParse) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, docsisVendorOptionsParse) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
     Pkt4Ptr dis = captureRelayedDiscover();
@@ -2790,7 +2814,7 @@ TEST_F(Dhcpv4SrvTest, docsisVendorOptionsParse) {
 }
 
 // Checks if server is able to parse incoming docsis option and extract suboption 1 (docsis ORO)
-TEST_F(Dhcpv4SrvTest, docsisVendorORO) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, docsisVendorORO) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
     Pkt4Ptr dis = captureRelayedDiscover();
@@ -2812,7 +2836,7 @@ TEST_F(Dhcpv4SrvTest, docsisVendorORO) {
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
-TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsORO) {
 
     NakedDhcpv4Srv srv(0);
 
@@ -2833,7 +2857,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
         "    \"rebind-timer\": 2000, "
         "    \"renew-timer\": 1000, "
         "    \"valid-lifetime\": 4000,"
-        "    \"interface\": \"" + valid_iface_ + "\" "
+        "    \"interface\": \"eth0\" "
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -2849,6 +2873,8 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
     dis->setGiaddr(IOAddress("192.0.2.1"));
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
+    // Set interface. It is required by the server to generate server id.
+    dis->setIface("eth0");
 
     // Pass it to the server and get an advertise
     Pkt4Ptr offer = srv.processDiscover(dis);
@@ -2896,7 +2922,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
 
 // Test checks whether it is possible to use option definitions defined in
 // src/lib/dhcp/docsis3_option_defs.h.
-TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr x;
     string config_prefix = "{ \"interfaces\": [ \"all\" ],"
         "\"rebind-timer\": 2000, "
