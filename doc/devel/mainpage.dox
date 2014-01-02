@@ -46,6 +46,7 @@
  * - @subpage dhcpv6Hooks
  * - @subpage hooksComponentDeveloperGuide
  * - @subpage hooksmgMaintenanceGuide
+ * - @subpage libdhcp_user_chk
  *
  * @section dnsMaintenanceGuide DNS Maintenance Guide
  * - Authoritative DNS (todo)

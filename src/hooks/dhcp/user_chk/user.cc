@@ -22,6 +22,8 @@
 #include <iomanip>
 #include <sstream>
 
+namespace user_chk {
+
 //********************************* UserId ******************************
 
 const char* UserId::HW_ADDRESS_STR = "HW_ADDR";
@@ -43,7 +45,14 @@ UserId::UserId(UserIdType id_type, const std::string & id_str) :
     // Convert the id string to vector.
     // Input is expected to be 2-digits per bytes, no delimiters.
     std::vector<uint8_t> addr_bytes;
-    isc::util::encode::decodeHex(id_str, addr_bytes);
+
+    // Strip out colon delimeters, decodeHex doesn't like them.
+    std::string clean_id_str = id_str;
+    std::string::iterator end_pos = std::remove(clean_id_str.begin(),
+                                                clean_id_str.end(), ':');
+    clean_id_str.erase(end_pos, clean_id_str.end());
+
+    isc::util::encode::decodeHex(clean_id_str, addr_bytes);
 
     // Attempt to instantiate the appropriate id class to leverage validation.
     switch (id_type) {
@@ -208,3 +217,5 @@ const UserId&
 User::getUserId() const {
     return (user_id_);
 }
+
+} // namespace user_chk

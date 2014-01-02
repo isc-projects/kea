@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 
 using namespace std;
+using namespace user_chk;
 
 namespace {
 
@@ -77,6 +78,11 @@ TEST(UserIdTest, hwAddress_type) {
     EXPECT_FALSE(*id == *id2);
     EXPECT_TRUE(*id != *id2);
     EXPECT_FALSE(*id < *id2);
+
+    // Verify that colon delimiters are ok.
+    ASSERT_NO_THROW(id2.reset(new UserId(UserId::HW_ADDRESS,
+                                         "01:FF:02:AC:03:0B:07:07")));
+    EXPECT_FALSE(*id == *id2);
 }
 
 /// @brief Test making and using DUID type UserIds
@@ -118,6 +124,11 @@ TEST(UserIdTest, duid_type) {
     EXPECT_FALSE(*id == *id2);
     EXPECT_TRUE(*id != *id2);
     EXPECT_FALSE(*id < *id2);
+
+    // Verify that colon delimiters are ok.
+    ASSERT_NO_THROW(id2.reset(new UserId(UserId::DUID,
+                                         "01:FF:02:AC:03:0B:07:08")));
+    EXPECT_TRUE(*id == *id2);
 }
 
 /// @brief Tests that UserIds of different types compare correctly.
@@ -134,6 +145,5 @@ TEST(UserIdTest, mixed_type_compare) {
     EXPECT_TRUE(*hw != *duid);
     EXPECT_TRUE(*hw < *duid);
 }
-
 
 } // end of anonymous namespace
