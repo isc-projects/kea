@@ -101,9 +101,9 @@ following two entries:
 
     - "type" whose value is "HW_ADDR" for IPv4 users or "DUID" for IPv6 users
     - "id" whose value is either the hardware address or the DUID from the
-    request formatted as a sring of hex digits, with or without ":" delimiters.
+    request formatted as a string of hex digits, with or without ":" delimiters.
 
-and may have the one or more of the following entries:
+and may have the zero or more of the following entries:
 
     - "bootfile" whose value is the pathname of the desired file
     - "tftp_server" whose value is the hostname or IP address of the desired
