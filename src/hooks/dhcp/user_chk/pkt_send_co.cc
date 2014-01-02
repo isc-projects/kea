@@ -149,15 +149,6 @@ int pkt6_send(CalloutHandle& handle) {
         Pkt6Ptr response;
         handle.getArgument("response6", response);
 
-        // @todo Determine list of types to process and skip the rest.
-        uint8_t packet_type = response->getType();
-        if (packet_type == DHCPV6_DECLINE) {
-            std::cout << "DHCP UserCheckHook : pkt6_send"
-                      << "skipping packet type: "
-                      << static_cast<int>(packet_type) << std::endl;
-            return (0);
-        }
-
         // Fetch the lease address as a string
         std::string addr_str = getV6AddrStr(response);
         if (addr_str.empty()) {
