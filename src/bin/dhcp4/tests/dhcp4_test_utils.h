@@ -31,6 +31,8 @@
 #include <config/ccsession.h>
 #include <list>
 
+#include <boost/shared_ptr.hpp>
+
 namespace isc {
 namespace dhcp {
 namespace test {
@@ -70,6 +72,8 @@ public:
     }
 
 };
+
+typedef boost::shared_ptr<PktFilterTest> PktFilterTestPtr;
 
 class Dhcpv4SrvTest : public ::testing::Test {
 public:
@@ -269,6 +273,47 @@ public:
 
     // Name of a valid network interface
     std::string valid_iface_;
+};
+
+/// @brief Test fixture class to be used for tests which require fake
+/// interfaces.
+///
+/// The DHCPv4 server must always append the server identifier to its response.
+/// The server identifier is typically an IP address assigned to the interface
+/// on which the query has been received. The DHCPv4 server uses IfaceMgr to
+/// check this address. In order to test this functionality, a set of interfaces
+/// must be known to the test. This test fixture class creates a set of well
+/// known (fake) interfaces which can be assigned to the test DHCPv4 messages
+/// so as the response (including server identifier) can be validated.
+/// The real interfaces are removed from the IfaceMgr in the constructor and
+/// they are re-assigned in the destructor.
+class Dhcpv4SrvFakeIfaceTest : public Dhcpv4SrvTest {
+public:
+    /// @brief Constructor.
+    ///
+    /// Creates a set of fake interfaces:
+    /// - lo, index: 0, address: 127.0.0.1
+    /// - eth0, index: 1, address: 192.0.3.1
+    /// - eth1, index: 2, address: 10.0.0.1
+    ///
+    /// These interfaces replace the real interfaces detected by the IfaceMgr.
+    Dhcpv4SrvFakeIfaceTest();
+
+    /// @brief Destructor.
+    ///
+    /// Re-detects the network interfaces. Also, sets the default packet filter
+    /// class, in case the test has changed it.
+    virtual ~Dhcpv4SrvFakeIfaceTest();
+
+    /// @brief Creates an instance of the interface.
+    ///
+    /// @param name Name of the interface.
+    /// @param ifindex Index of the interface.
+    /// @param addr IP address assigned to the interface, represented as string.
+    ///
+    /// @return Iface Instance of the interface.
+    static Iface createIface(const std::string& name, const int ifindex,
+                             const std::string& addr);
 };
 
 /// @brief "Naked" DHCPv4 server, exposes internal fields
