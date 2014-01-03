@@ -72,7 +72,7 @@ public:
 
     /// @brief Sets enterprise identifier
     ///
-    /// @param value vendor identifier
+    /// @param vendor_id vendor identifier
     void setVendorId(const uint32_t vendor_id) { vendor_id_ = vendor_id; }
 
     /// @brief Returns enterprise identifier
