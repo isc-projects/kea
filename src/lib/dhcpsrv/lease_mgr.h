@@ -214,7 +214,7 @@ public:
     /// @param subnet_id A subnet identifier.
     ///
     /// @return A pointer to the lease or NULL if the lease is not found.
-    virtual Lease4Ptr getLease4(const ClientId& clientid, const HWAddr& hwaddr,
+    virtual Lease4Ptr getLease4(const ClientId& client_id, const HWAddr& hwaddr,
                                 SubnetID subnet_id) const = 0;
 
     /// @brief Returns existing IPv4 lease for specified client-id
