@@ -399,7 +399,7 @@ void Dhcpv4SrvTest::TearDown() {
 }
 
 Dhcpv4SrvFakeIfaceTest::Dhcpv4SrvFakeIfaceTest()
-: Dhcpv4SrvTest() {
+: Dhcpv4SrvTest(), current_pkt_filter_() {
     // Remove current interface configuration. Instead we want to add
     // a couple of fake interfaces.
     IfaceMgr& ifacemgr = IfaceMgr::instance();
@@ -414,7 +414,8 @@ Dhcpv4SrvFakeIfaceTest::Dhcpv4SrvFakeIfaceTest()
     // In order to use fake interfaces we have to supply the custom
     // packet filtering class, which can mimic opening sockets on
     // fake interafaces.
-    ifacemgr.setPacketFilter(PktFilterPtr(new PktFilterTest()));
+    current_pkt_filter_.reset(new PktFilterTest());
+    ifacemgr.setPacketFilter(current_pkt_filter_);
     ifacemgr.openSockets4();
 }
 
