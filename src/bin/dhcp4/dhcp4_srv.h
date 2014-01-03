@@ -175,7 +175,7 @@ protected:
     /// @param pkt packet to be checked
     /// @param serverid expectation regarding server-id option
     /// @throw RFCViolation if any issues are detected
-    void sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid);
+    static void sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid);
 
     /// @brief Processes incoming DISCOVER and returns response.
     ///
@@ -469,39 +469,6 @@ protected:
     /// @param [out] response response packet which addresses are to be adjusted.
     static void adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response);
 
-    /// @brief Returns server-identifier option
-    ///
-    /// @return server-id option
-    OptionPtr getServerID() { return serverid_; }
-
-    /// @brief Sets server-identifier.
-    ///
-    /// This method attempts to set server-identifier DUID. It tries to
-    /// load previously stored IP from configuration. If there is no previously
-    /// stored server identifier, it will pick up one address from configured
-    /// and supported network interfaces.
-    ///
-    /// @throws isc::Unexpected Failed to obtain server identifier (i.e. no
-    //          previously stored configuration and no network interfaces available)
-    void generateServerID();
-
-    /// @brief attempts to load server-id from a file
-    ///
-    /// Tries to load duid from a text file. If the load is successful,
-    /// it creates server-id option and stores it in serverid_ (to be used
-    /// later by getServerID()).
-    ///
-    /// @param file_name name of the server-id file to load
-    /// @return true if load was successful, false otherwise
-    bool loadServerID(const std::string& file_name);
-
-    /// @brief attempts to write server-id to a file
-    /// Tries to write server-id content (stored in serverid_) to a text file.
-    ///
-    /// @param file_name name of the server-id file to write
-    /// @return true if write was successful, false otherwise
-    bool writeServerID(const std::string& file_name);
-
     /// @brief converts server-id to text
     /// Converts content of server-id option to a text representation, e.g.
     /// "192.0.2.1"
@@ -537,9 +504,6 @@ protected:
     /// @param question client's message
     /// @return selected subnet (or NULL if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& question);
-
-    /// server DUID (to be sent in server-identifier option)
-    OptionPtr serverid_;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.

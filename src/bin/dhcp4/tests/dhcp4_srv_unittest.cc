@@ -44,7 +44,6 @@
 
 #include <boost/scoped_ptr.hpp>
 
-#include <fstream>
 #include <iostream>
 
 #include <arpa/inet.h>
@@ -58,9 +57,6 @@ using namespace isc::hooks;
 using namespace isc::dhcp::test;
 
 namespace {
-
-/// dummy server-id file location
-const char* SRVID_FILE = "server-id-test.txt";
 
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
@@ -371,12 +367,10 @@ TEST_F(Dhcpv4SrvTest, basic) {
     boost::scoped_ptr<NakedDhcpv4Srv> naked_srv;
     ASSERT_NO_THROW(
         naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
-    EXPECT_TRUE(naked_srv->getServerID());
     // Close sockets again for the next test.
     IfaceMgr::instance().closeSockets();
 
     ASSERT_NO_THROW(naked_srv.reset(new NakedDhcpv4Srv(0)));
-    EXPECT_TRUE(naked_srv->getServerID());
 }
 
 // This test verifies that exception is not thrown when an error occurs during
@@ -962,24 +956,26 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
     pkt->setHWAddr(generateHWAddr(6));
 
     // Server-id is optional for information-request, so
-    EXPECT_NO_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::OPTIONAL));
+    EXPECT_NO_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::OPTIONAL));
 
     // Empty packet, no server-id
-    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::MANDATORY), RFCViolation);
+    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY),
+                 RFCViolation);
 
     pkt->addOption(srv->getServerID());
 
     // Server-id is mandatory and present = no exception
-    EXPECT_NO_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::MANDATORY));
+    EXPECT_NO_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY));
 
     // Server-id is forbidden, but present => exception
-    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::FORBIDDEN),
+    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::FORBIDDEN),
                  RFCViolation);
 
     // There's no client-id and no HWADDR. Server needs something to
     // identify the client
     pkt->setHWAddr(generateHWAddr(0));
-    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::MANDATORY), RFCViolation);
+    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY),
+                 RFCViolation);
 }
 
 // This test verifies that incoming (positive) RELEASE can be handled properly.
@@ -1143,36 +1139,6 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ReleaseReject) {
     // Check that the lease is not there
     l = LeaseMgrFactory::instance().getLease4(addr);
     EXPECT_FALSE(l);
-}
-
-// This test verifies if the server-id disk operations (read, write) are
-// working properly.
-TEST_F(Dhcpv4SrvFakeIfaceTest, ServerID) {
-    NakedDhcpv4Srv srv(0);
-
-    string srvid_text = "192.0.2.100";
-    IOAddress srvid(srvid_text);
-
-    fstream file1(SRVID_FILE, ios::out | ios::trunc);
-    file1 << srvid_text;
-    file1.close();
-
-    // Test reading from a file
-    EXPECT_TRUE(srv.loadServerID(SRVID_FILE));
-    ASSERT_TRUE(srv.getServerID());
-    EXPECT_EQ(srvid_text, srv.srvidToString(srv.getServerID()));
-
-    // Now test writing to a file
-    EXPECT_EQ(0, unlink(SRVID_FILE));
-    EXPECT_NO_THROW(srv.writeServerID(SRVID_FILE));
-
-    fstream file2(SRVID_FILE, ios::in);
-    ASSERT_TRUE(file2.good());
-    string text;
-    file2 >> text;
-    file2.close();
-
-    EXPECT_EQ(srvid_text, text);
 }
 
 // Checks if received relay agent info option is echoed back to the client
