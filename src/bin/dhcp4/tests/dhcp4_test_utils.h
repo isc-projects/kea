@@ -21,6 +21,7 @@
 
 #include <gtest/gtest.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/option4_addrlst.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
@@ -359,6 +360,15 @@ public:
     /// that sockets should not be opened.
     NakedDhcpv4Srv(uint16_t port = 0)
         : Dhcpv4Srv(port, "type=memfile", false, false) {
+        // Create fixed server id.
+        server_id_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                            asiolink::IOAddress("192.0.3.1")));
+    }
+
+    /// @brief Returns fixed server identifier assigned to the naked server
+    /// instance.
+    OptionPtr getServerID() const {
+        return (server_id_);
     }
 
     /// @brief fakes packet reception
@@ -401,6 +411,9 @@ public:
     virtual ~NakedDhcpv4Srv() {
     }
 
+    /// @brief Dummy server identifier option used by various tests.
+    OptionPtr server_id_;
+
     /// @brief packets we pretend to receive
     ///
     /// Instead of setting up sockets on interfaces that change between OSes, it
@@ -421,10 +434,6 @@ public:
     using Dhcpv4Srv::processClientName;
     using Dhcpv4Srv::computeDhcid;
     using Dhcpv4Srv::createNameChangeRequests;
-    using Dhcpv4Srv::getServerID;
-    using Dhcpv4Srv::loadServerID;
-    using Dhcpv4Srv::generateServerID;
-    using Dhcpv4Srv::writeServerID;
     using Dhcpv4Srv::sanityCheck;
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::unpackOptions;

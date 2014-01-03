@@ -37,12 +37,10 @@
 #include <hooks/hooks_manager.h>
 #include <util/strutil.h>
 
-#include <boost/algorithm/string/erase.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
 #include <iomanip>
-#include <fstream>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -111,21 +109,9 @@ const bool FQDN_REPLACE_CLIENT_NAME = false;
 
 }
 
-/// @brief file name of a server-id file
-///
-/// Server must store its server identifier in persistent storage that must not
-/// change between restarts. This is name of the file that is created in dataDir
-/// (see isc::dhcp::CfgMgr::getDataDir()). It is a text file that uses
-/// regular IPv4 address, e.g. 192.0.2.1. Server will create it during
-/// first run and then use it afterwards.
-static const char* SERVER_ID_FILE = "b10-dhcp4-serverid";
-
-// These are hardcoded parameters. Currently this is a skeleton server that only
-// grants those options and a single, fixed, hardcoded lease.
-
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
                      const bool direct_response_desired)
-: serverid_(), shutdown_(true), alloc_engine_(), port_(port),
+: shutdown_(true), alloc_engine_(), port_(port),
     use_bcast_(use_bcast), hook_index_pkt4_receive_(-1),
     hook_index_subnet4_select_(-1), hook_index_pkt4_send_(-1) {
 
@@ -151,24 +137,6 @@ Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
             isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
                 boost::bind(&Dhcpv4Srv::ifaceMgrSocket4ErrorHandler, _1);
             IfaceMgr::instance().openSockets4(port_, use_bcast_, error_handler);
-        }
-
-        string srvid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_ID_FILE);
-        if (loadServerID(srvid_file)) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_SERVERID_LOADED)
-                .arg(srvidToString(getServerID()))
-                .arg(srvid_file);
-        } else {
-            generateServerID();
-            LOG_INFO(dhcp4_logger, DHCP4_SERVERID_GENERATED)
-                .arg(srvidToString(getServerID()))
-                .arg(srvid_file);
-
-            if (!writeServerID(srvid_file)) {
-                LOG_WARN(dhcp4_logger, DHCP4_SERVERID_WRITE_FAIL)
-                    .arg(srvid_file);
-            }
-
         }
 
         // Instantiate LeaseMgr
@@ -473,90 +441,6 @@ Dhcpv4Srv::run() {
         sendNameChangeRequests();
     }
 
-    return (true);
-}
-
-bool
-Dhcpv4Srv::loadServerID(const std::string& file_name) {
-
-    // load content of the file into a string
-    fstream f(file_name.c_str(), ios::in);
-    if (!f.is_open()) {
-        return (false);
-    }
-
-    string hex_string;
-    f >> hex_string;
-    f.close();
-
-    // remove any spaces
-    boost::algorithm::erase_all(hex_string, " ");
-
-    try {
-        IOAddress addr(hex_string);
-
-        if (!addr.isV4()) {
-            return (false);
-        }
-
-        // Now create server-id option
-        serverid_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER, addr));
-
-    } catch(...) {
-        // any kind of malformed input (empty string, IPv6 address, complete
-        // garbate etc.)
-        return (false);
-    }
-
-    return (true);
-}
-
-void
-Dhcpv4Srv::generateServerID() {
-
-    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
-
-    // Let's find suitable interface.
-    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
-         iface != ifaces.end(); ++iface) {
-
-        // Let's don't use loopback.
-        if (iface->flag_loopback_) {
-            continue;
-        }
-
-        // Let's skip downed interfaces. It is better to use working ones.
-        if (!iface->flag_up_) {
-            continue;
-        }
-
-        const Iface::AddressCollection addrs = iface->getAddresses();
-
-        for (Iface::AddressCollection::const_iterator addr = addrs.begin();
-             addr != addrs.end(); ++addr) {
-            if (addr->getFamily() != AF_INET) {
-                continue;
-            }
-
-            serverid_ = OptionPtr(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                                     *addr));
-            return;
-        }
-
-
-    }
-
-    isc_throw(BadValue, "No suitable interfaces for server-identifier found");
-}
-
-bool
-Dhcpv4Srv::writeServerID(const std::string& file_name) {
-    fstream f(file_name.c_str(), ios::out | ios::trunc);
-    if (!f.good()) {
-        return (false);
-    }
-    f << srvidToString(getServerID());
-    f.close();
     return (true);
 }
 
