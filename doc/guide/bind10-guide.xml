@@ -4378,20 +4378,15 @@ Dhcp4/subnet4	[]	list	(default)
       <para>
         The DHCPv4 protocol uses a "server identifier" for clients to be able
         to discriminate between several servers present on the same link: this
-        value is an IPv4 address of the server. When started for the first time,
-        the DHCPv4 server will choose one of its IPv4 addresses as its server-id,
-        and store the chosen value to a file. That file will be read by the server
-        and the contained value used whenever the server is subsequently started.
+        value is an IPv4 address of the server. The server chooses the IPv4 address
+        of the interface on which the message from the client (or relay) has been
+        received. A single server instance will use multiple server identifiers
+        if it is receiving queries on multiple interfaces.
       </para>
       <para>
-        It is unlikely that this parameter should ever need to be changed.
-        However, if such a need arises, stop the server, edit the file and restart
-        the server. (The file is named b10-dhcp4-serverid and by default is
-        stored in the "var" subdirectory of the directory in which BIND 10 is installed.
-        This can be changed when BIND 10 is built by using "--localstatedir"
-        on the "configure" command line.)  The file is a text file that should
-        contain an IPv4 address. Spaces are ignored, and no extra characters are allowed
-        in this file.
+        Currently there is no mechanism to override the default server identifiers
+        by an administrator. In the future, the configuration mechanism will be used
+        to specify the custom server identifier.
       </para>
     </section>
 
