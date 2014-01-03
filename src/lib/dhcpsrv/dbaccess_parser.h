@@ -94,7 +94,7 @@ public:
     ///
     /// Creates an instance of this parser.
     ///
-    /// @param name Name of the parameter used to access the configuration.
+    /// @param param_name Name of the parameter used to access the configuration.
     ///
     /// @return Pointer to a DbAccessParser.  The caller is responsible for
     ///         destroying the parser after use.

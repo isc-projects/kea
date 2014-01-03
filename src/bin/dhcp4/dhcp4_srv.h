@@ -247,7 +247,7 @@ protected:
     /// using separate options within their respective vendor-option spaces.
     ///
     /// @param question DISCOVER or REQUEST message from a client.
-    /// @param msg outgoing message (options will be added here)
+    /// @param answer outgoing message (options will be added here)
     void appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer);
 
     /// @brief Assigns a lease and appends corresponding options
