@@ -258,26 +258,6 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     // are valid because they are checked by the function called.
     writeEthernetHeader(pkt, buf);
 
-    // This object represents broadcast address. We will compare the
-    // local packet address with it a few lines below. Having static
-    // variable guarantees that this object is created only once, not
-    // every time this function is called.
-    static const isc::asiolink::IOAddress bcast_addr("255.255.255.255");
-
-    // It is likely that the local address in pkt object is set to
-    // broadcast address. This is the case if server received the
-    // client's packet on broadcast address. Therefore, we need to
-    // correct it here and assign the actual source address.
-    if (pkt->getLocalAddr() == bcast_addr) {
-        const Iface::SocketCollection& sockets = iface.getSockets();
-        for (Iface::SocketCollection::const_iterator it = sockets.begin();
-             it != sockets.end(); ++it) {
-            if (sockfd == it->sockfd_) {
-                pkt->setLocalAddr(it->addr_);
-            }
-        }
-    }
-
     // IP and UDP header
     writeIpUdpHeader(pkt, buf);
 
