@@ -396,9 +396,61 @@ protected:
 
     /// @brief Appends default options to a message
     ///
+    /// Currently it is only a Message Type option. This function does not add
+    /// the Server Identifier option as this option must be added using
+    /// @c Dhcpv4Srv::appendServerID.
+    ///
     /// @param msg message object (options will be added to it)
     /// @param msg_type specifies message type
     void appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type);
+
+    /// @brief Adds server identifier option to the server's response.
+    ///
+    /// This method adds a server identifier to the DHCPv4 message. It exects
+    /// that the local (source) address is set for this message. If address is
+    /// not set, it will throw an exception. This method also expects that the
+    /// server identifier option is not present in the specified message.
+    /// Otherwise, it will throw an exception on attempt to add a duplicate
+    /// server identifier option.
+    ///
+    /// @note This method doesn't throw exceptions by itself but the underlying
+    /// classes being used my throw. The reason for this method to not sanity
+    /// check the specified message is that it is meant to be called internally
+    /// by the @c Dhcpv4Srv class.
+    ///
+    /// @param [out] response DHCPv4 message to which the server identifier
+    /// option should be added.
+    static void appendServerID(const Pkt4Ptr& response);
+
+    /// @brief Set IP/UDP and interface parameters for the DHCPv4 response.
+    ///
+    /// This method sets the following parameters for the DHCPv4 message being
+    /// sent to a client:
+    /// - client unicast or a broadcast address,
+    /// - client or relay port,
+    /// - server address,
+    /// - server port,
+    /// - name and index of the interface which is to be used to send the
+    /// message.
+    ///
+    /// Internally it calls the @c Dhcpv4Srv::adjustRemoteAddr to figure
+    /// out the destination address (client unicast address or broadcast
+    /// address).
+    ///
+    /// The destination port is always DHCPv4 client (68) or relay (67) port,
+    /// depending if the response will be sent directly to a client (hops = 0),
+    /// or through a relay (hops > 0).
+    ///
+    /// The source port is always set to DHCPv4 server port (67).
+    ///
+    /// The interface selected for the response is always the same as the
+    /// one through which the query has been received.
+    ///
+    /// The source address for the response is the IPv4 address assigned to
+    /// the interface being used to send the response. This function uses
+    /// @c IfaceMgr to get the socket bound to the IPv4 address on the
+    /// particular interface.
+    static void adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response);
 
     /// @brief Sets remote addresses for outgoing packet.
     ///
@@ -414,8 +466,8 @@ protected:
     /// function.
     ///
     /// @param question instance of a packet received by a server.
-    /// @param [out] msg response packet which addresses are to be adjusted.
-    void adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg);
+    /// @param [out] response response packet which addresses are to be adjusted.
+    static void adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response);
 
     /// @brief Returns server-identifier option
     ///

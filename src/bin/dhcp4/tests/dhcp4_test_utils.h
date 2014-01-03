@@ -47,11 +47,18 @@ namespace test {
 class PktFilterTest : public PktFilter {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// Sets the 'direct response' capability to true.
+    PktFilterTest()
+        : direct_resp_supported_(true) {
+    }
+
     /// @brief Reports 'direct response' capability.
     ///
     /// @return always true.
     virtual bool isDirectResponseSupported() const {
-        return (true);
+        return (direct_resp_supported_);
     }
 
     /// Does nothing.
@@ -70,6 +77,10 @@ public:
     virtual int send(const Iface&, uint16_t, const Pkt4Ptr&) {
         return (0);
     }
+
+    /// @brief Holds a boolean value which indicates whether direct response
+    /// capability is supported (true) or not (false).
+    bool direct_resp_supported_;
 
 };
 
@@ -311,6 +322,10 @@ public:
     /// @param msg_type DHCPDISCOVER or DHCPREQUEST
     void testDiscoverRequest(const uint8_t msg_type);
 
+    /// @brief Holds a pointer to the packet filter object currently used
+    /// by the IfaceMgr.
+    PktFilterTestPtr current_pkt_filter_;
+
 };
 
 /// @brief "Naked" DHCPv4 server, exposes internal fields
@@ -396,7 +411,8 @@ public:
 
     std::list<Pkt4Ptr> fake_sent_;
 
-    using Dhcpv4Srv::adjustRemoteAddr;
+    using Dhcpv4Srv::adjustIfaceData;
+    using Dhcpv4Srv::appendServerID;
     using Dhcpv4Srv::processDiscover;
     using Dhcpv4Srv::processRequest;
     using Dhcpv4Srv::processRelease;

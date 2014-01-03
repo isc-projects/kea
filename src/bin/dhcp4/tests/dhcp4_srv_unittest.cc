@@ -65,18 +65,24 @@ const char* SRVID_FILE = "server-id-test.txt";
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
 // in the received message.
-TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelay) {
-    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
-
+TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRelay) {
     // Create the instance of the incoming packet.
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
-    // Set the giaddr to non-zero address as if it was relayed.
+    // Set the giaddr to non-zero address and hops to non-zero value
+    // as if it was relayed.
     req->setGiaddr(IOAddress("192.0.2.1"));
+    req->setHops(2);
     // Set ciaddr to zero. This simulates the client which applies
     // for the new lease.
     req->setCiaddr(IOAddress("0.0.0.0"));
     // Clear broadcast flag.
     req->setFlags(0x0000);
+
+    // Set local address, port and interface.
+    req->setLocalAddr(IOAddress("192.0.3.1"));
+    req->setLocalPort(1001);
+    req->setIface("eth0");
+    req->setIndex(1);
 
     // Create a response packet. Assume that the new lease have
     // been created and new address allocated. This address is
@@ -85,12 +91,24 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelay) {
     resp->setYiaddr(IOAddress("192.0.2.100"));
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Set hops value for the response.
+    resp->setHops(req->getHops());
 
     // This function never throws.
-    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
+    // The query has been relayed, so the response must be sent to the port 67.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
+    // Local address should be copied from the query message.
+    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+    // The local port is always DHCPv4 server port 67.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+    // We will send response over the same interface which was used to receive
+    // query.
+    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
 
     // Let's do another test and set other fields: ciaddr and
     // flags. By doing it, we want to make sure that the relay
@@ -103,7 +121,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelay) {
     // Clear remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
 
     // Response should be sent back to the relay address.
     EXPECT_EQ("192.0.2.50", resp->getRemoteAddr().toText());
@@ -113,9 +131,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRelay) {
 // is set to ciaddr when giaddr is set to zero and the ciaddr is set to
 // non-zero address in the received message. This is the case when the
 // client is in Renew or Rebind state.
-TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewRebind) {
-    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
-
+TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRenew) {
     // Create instance of the incoming packet.
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
 
@@ -132,6 +148,15 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewRebind) {
     // whether to unicast the response to the acquired address or
     // broadcast it.
     req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
+    // This is a direct message, so the hops should be cleared.
+    req->setHops(0);
+    // Set local unicast address as if we are renewing a lease.
+    req->setLocalAddr(IOAddress("192.0.3.1"));
+    // Request is received on the DHCPv4 server port.
+    req->setLocalPort(DHCP4_SERVER_PORT);
+    // Set the interface. The response should be sent over the same interface.
+    req->setIface("eth0");
+    req->setIndex(1);
 
     // Create a response.
     boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
@@ -142,11 +167,25 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewRebind) {
     resp->setYiaddr(IOAddress("192.0.2.13"));
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Copy hops value from the query.
+    resp->setHops(req->getHops());
 
-    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
 
     // Check that server responds to ciaddr
     EXPECT_EQ("192.0.2.15", resp->getRemoteAddr().toText());
+    // The query was non-relayed, so the response should be sent to a DHCPv4
+    // client port 68.
+    EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getRemotePort());
+    // The response should be sent from the unicast address on which the
+    // query has been received.
+    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+    // The response should be sent from the DHCPv4 server port.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+    // The interface data should match the data in the query.
+    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
+
 }
 
 // This test verifies that the destination address of the response message
@@ -156,9 +195,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressRenewRebind) {
 // of the response should be set to yiaddr if server supports direct responses
 // to the client which doesn't have an address yet or broadcast if the server
 // doesn't support direct responses.
-TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelect) {
-    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
-
+TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataSelect) {
     // Create instance of the incoming packet.
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
 
@@ -170,13 +207,31 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelect) {
     // Let's clear the broadcast flag.
     req->setFlags(0);
 
+    // This is a non-relayed message, so let's clear hops count.
+    req->setHops(0);
+    // The query is sent to the broadcast address in the Select state.
+    req->setLocalAddr(IOAddress("255.255.255.255"));
+    // The query has been received on the DHCPv4 server port 67.
+    req->setLocalPort(DHCP4_SERVER_PORT);
+    // Set the interface. The response should be sent via the same interface.
+    req->setIface("eth0");
+    req->setIndex(1);
+
     // Create a response.
     boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
     // Assign some new address for this client.
     resp->setYiaddr(IOAddress("192.0.2.13"));
-
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Copy hops count.
+    resp->setHops(req->getHops());
+
+    // We want to test the case, when the server (packet filter) doesn't support
+    // ddirect responses to the client which doesn't have an address yet. In
+    // case, the server should send its response to the broadcast address.
+    // We can control whether the current packet filter returns that its support
+    // direct responses or not.
+    current_pkt_filter_->direct_resp_supported_ = false;
 
     // When running unit tests, the IfaceMgr is using the default Packet
     // Filtering class, PktFilterInet. This class does not support direct
@@ -184,24 +239,36 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelect) {
     // are zero and client has just got new lease, the assigned address is
     // carried in yiaddr. In order to send this address to the client,
     // server must broadcast its response.
-    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
 
     // Check that the response is sent to broadcast address as the
     // server doesn't have capability to respond directly.
     EXPECT_EQ("255.255.255.255", resp->getRemoteAddr().toText());
 
+    // Although the query has been sent to the broadcast address, the
+    // server should select a unicast address on the particular interface
+    // as a source address for the response.
+    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+
+    // The response should be sent from the DHCPv4 server port.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+
+    // The response should be sent via the same interface through which
+    // query has been received.
+    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
+
     // We also want to test the case when the server has capability to
     // respond directly to the client which is not configured. Server
     // makes decision whether it responds directly or broadcast its
-    // response based on the capability reported by IfaceMgr. In order
-    // to set this capability we have to provide a dummy Packet Filter
-    // class which would report the support for direct responses.
-    // This class is called PktFilterTest.
-    IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterTest()));
+    // response based on the capability reported by IfaceMgr. We can
+    // control whether the current packet filter returns that it supports
+    // direct responses or not.
+    current_pkt_filter_->direct_resp_supported_ = true;
 
     // Now we expect that the server will send its response to the
     // address assigned for the client.
-    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
 
     EXPECT_EQ("192.0.2.13", resp->getRemoteAddr().toText());
 }
@@ -211,9 +278,7 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressSelect) {
 // query. Client sets this flag to indicate that it can't receive direct
 // responses from the server when it doesn't have its interface configured.
 // Server must respect broadcast flag.
-TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcast) {
-    boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
-
+TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataBroadcast) {
     // Create instance of the incoming packet.
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
 
@@ -221,6 +286,13 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcast) {
     req->setGiaddr(IOAddress("0.0.0.0"));
     // Clear client address as it hasn't got any address configured yet.
     req->setCiaddr(IOAddress("0.0.0.0"));
+    // The query is sent to the broadcast address in the Select state.
+    req->setLocalAddr(IOAddress("255.255.255.255"));
+    // The query has been received on the DHCPv4 server port 67.
+    req->setLocalPort(DHCP4_SERVER_PORT);
+    // Set the interface. The response should be sent via the same interface.
+    req->setIface("eth0");
+    req->setIndex(1);
 
     // Let's set the broadcast flag.
     req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
@@ -233,25 +305,51 @@ TEST_F(Dhcpv4SrvTest, adjustRemoteAddressBroadcast) {
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    // When running unit tests, the IfaceMgr is using the default Packet
-    // Filtering class, PktFilterInet. This class does not support direct
-    // responses to the clients without address assigned. If giaddr and
-    // ciaddr are zero and client has just got the new lease, the assigned
-    // address is carried in yiaddr. In order to send this address to the
-    // client, server must send the response to the broadcast address when
-    // direct response is not supported. This conflicts with the purpose
-    // of this test which is supposed to verify that responses are sent
-    // to broadcast address only, when broadcast flag is set. Therefore,
-    // in order to simulate that direct responses are supported we have
-    // to replace the default packet filtering class with a dummy class
-    // which reports direct response capability.
-    IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterTest()));
-
-    ASSERT_NO_THROW(srv->adjustRemoteAddr(req, resp));
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
 
     // Server must repond to broadcast address when client desired that
     // by setting the broadcast flag in its request.
     EXPECT_EQ("255.255.255.255", resp->getRemoteAddr().toText());
+
+    // Although the query has been sent to the broadcast address, the
+    // server should select a unicast address on the particular interface
+    // as a source address for the response.
+    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+
+    // The response should be sent from the DHCPv4 server port.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+
+    // The response should be sent via the same interface through which
+    // query has been received.
+    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
+
+}
+
+// This test verifies that the server identifier option is appended to
+// a specified DHCPv4 message and the server identifier is correct.
+TEST_F(Dhcpv4SrvTest, appendServerID) {
+    Pkt4Ptr response(new Pkt4(DHCPDISCOVER, 1234));
+    // Set a local address. It is required by the function under test
+    // to create the Server Identifier option.
+    response->setLocalAddr(IOAddress("192.0.3.1"));
+
+    // Append the Server Identifier.
+    ASSERT_NO_THROW(NakedDhcpv4Srv::appendServerID(response));
+
+    // Make sure that the option has been added.
+    OptionPtr opt = response->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+    ASSERT_TRUE(opt);
+    Option4AddrLstPtr opt_server_id =
+        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
+    ASSERT_TRUE(opt_server_id);
+
+    // The option is represented as a list of IPv4 addresses but with
+    // only one address added.
+    Option4AddrLst::AddressContainer addrs = opt_server_id->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    // This address should match the local address of the packet.
+    EXPECT_EQ("192.0.3.1", addrs[0].toText());
 }
 
 // Sanity check. Verifies that both Dhcpv4Srv and its derived
@@ -856,7 +954,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, RenewBasic) {
 // @todo: Implement tests for rejecting renewals
 
 // This test verifies if the sanityCheck() really checks options presence.
-TEST_F(Dhcpv4SrvFakeIfaceTest, sanityCheck) {
+TEST_F(Dhcpv4SrvTest, sanityCheck) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
