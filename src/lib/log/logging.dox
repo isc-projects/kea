@@ -115,7 +115,7 @@ have a parent.  The reason for this hierarchy is that unless a logger
 is explicitly assigned an attribute (such as severity of messages it
 should log), it picks it up from the parent.  In BIND 10, each component
 (b10-auth, b10-resolver etc.)  has a root logger (named after the program)
-and every other logger is in the component a child of that.  So in the
+and every other logger in the component is a child of that.  So in the
 example above, the error/syslog attributes could be associated with the
 b10-resolver logger while the debug/file attributes are associated with
 the logger associated with the cache.
@@ -134,9 +134,9 @@ It also means that other attributes can be associated with the message,
 for example, an explanation of the meaning of the message and other
 information such as remedial action in the case of errors.
 
-Each message is identified by an identifier e.g. "LOG_WRITE_ERROR".
-Within the program, this is the symbol passed to the logging system.
-That uses the symbol as an index into a dictionary to retrieve the message
+Each message has an identifier such as "LOG_WRITE_ERROR".
+Within the program, this is the symbol passed to the logging system
+which uses the symbol as an index into a dictionary to retrieve the message
 associated with it (e.g. "unable to open %1 for input"), after which it
 substitutes any message parameters (in this example, the name of the file
 where the write operation failed) and logs the result to the destination.
@@ -187,7 +187,7 @@ The following sections describe these steps in more detail.
 
 @subsection logMessageFiles Create a Message File
 
-A message file is a file containing message definitions.  Typically there
+A message file contains message definitions.  Typically there
 will be one message file for each component that uses BIND 10 logging.
 An example file could be:
 
@@ -528,7 +528,7 @@ a header file.</li>
 LOG_ERROR(logger, LOG_WRITE_ERROR).arg("output.txt");
 LOG_DEBUG(nsas_logger, NSAS_DBG_TRACE, NSAS_LOOKUP_CANCEL).arg(zone);
 @endcode
-All macros (with the exception of LOG_DEBUG) take two arguments,
+All macros (with the exception of LOG_DEBUG) take two arguments:
 the C++ logger object that will be used to log the message, and the
 identification of the message to be logged.  LOG_DEBUG takes three
 arguments, the additional one being the debug level associated with
@@ -566,7 +566,7 @@ name share the same configuration.</li>
 
 <li>Issue calls to the logging methods:
 @code
-logger.error(LOG_WRITE_ERROR, "output.txt");
+logger.error(LOG_WRITE_ERROR, "output.txt")
 @endcode
 The message parameters are included as trailing arguments in the
 logger call.</li>
