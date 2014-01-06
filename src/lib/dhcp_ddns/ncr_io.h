@@ -66,6 +66,31 @@
 namespace isc {
 namespace dhcp_ddns {
 
+/// @brief Defines the list of socket protocols supported.
+enum NameChangeProtocol {
+  NCR_UDP,
+  NCR_TCP
+};
+
+/// @brief Function which converts labels to  NameChangeProtocol enum values.
+///
+/// @param protocol_str text to convert to an enum.
+/// Valid string values: "UDP", "TCP"
+///
+/// @return NameChangeProtocol value which maps to the given string.
+///
+/// @throw isc::BadValue if given a string value which does not map to an
+/// enum value.
+extern NameChangeProtocol stringToNcrProtocol(const std::string& protocol_str);
+
+/// @brief Function which converts NameChangeProtocol enums to text labels.
+///
+/// @param protocol enum value to convert to label
+///
+/// @return std:string containing the text label if the value is valid, or
+/// "UNKNOWN" if not.
+extern std::string ncrProtocolToString(NameChangeProtocol protocol);
+
 /// @brief Exception thrown if an NcrListenerError encounters a general error.
 class NcrListenerError : public isc::Exception {
 public:

@@ -1163,5 +1163,111 @@ SubnetConfigParser::getParam(const std::string& name) {
     return (Triplet<uint32_t>(value));
 }
 
+//**************************** D2ClientConfigParser **********************
+D2ClientConfigParser::D2ClientConfigParser(const std::string& entry_name)
+    : entry_name_(entry_name), boolean_values_(new BooleanStorage()),
+      uint32_values_(new Uint32Storage()), string_values_(new StringStorage()),
+      local_client_config_() {
+}
+
+D2ClientConfigParser::~D2ClientConfigParser() {
+}
+
+void
+D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
+    BOOST_FOREACH(ConfigPair param, client_config->mapValue()) {
+        ParserPtr parser(createConfigParser(param.first));
+        parser->build(param.second);
+        parser->commit();
+    }
+
+    bool enable_updates = boolean_values_->getParam("enable-updates");
+    if (!enable_updates) {
+        // If it's not enabled, don't bother validating the rest.  This
+        // allows for an abbreviated config entry that only contains
+        // the flag.  The default constructor creates a disabled instance.
+        local_client_config_.reset(new D2ClientConfig());
+        return;
+    }
+
+    // Get all parameters that are needed to create the D2ClientConfig.
+    asiolink::IOAddress server_ip(string_values_->getParam("server-ip"));
+
+    uint32_t server_port = uint32_values_->getParam("server-port");
+
+    dhcp_ddns::NameChangeProtocol
+    ncr_protocol = dhcp_ddns:: stringToNcrProtocol(string_values_->
+                                                   getParam("ncr-protocol"));
+
+    dhcp_ddns::NameChangeFormat
+    ncr_format = dhcp_ddns::stringToNcrFormat(string_values_->
+                                              getParam("ncr-format"));
+
+    std::string generated_prefix = string_values_->getParam("generated-prefix");
+    std::string qualifying_suffix = string_values_->
+                                    getParam("qualifying-suffix");
+
+    bool remove_on_renew = boolean_values_->getParam("remove-on-renew");
+    bool always_include_fqdn = boolean_values_->getParam("always-include-fqdn");
+    bool allow_client_update = boolean_values_->getParam("allow-client-update");
+    bool override_no_update = boolean_values_->getParam("override-no-update");
+    bool override_client_update = boolean_values_->
+                                  getParam("override-client-update");
+    bool replace_client_name = boolean_values_->getParam("replace-client-name");
+
+    // Attempt to create the new client config.
+    local_client_config_.reset(new D2ClientConfig(enable_updates, server_ip,
+                                                  server_port, ncr_protocol,
+                                                  ncr_format, remove_on_renew,
+                                                  always_include_fqdn,
+                                                  allow_client_update,
+                                                  override_no_update,
+                                                  override_client_update,
+                                                  replace_client_name,
+                                                  generated_prefix,
+                                                  qualifying_suffix));
+}
+
+isc::dhcp::ParserPtr
+D2ClientConfigParser::createConfigParser(const std::string& config_id) {
+    DhcpConfigParser* parser = NULL;
+    if (config_id.compare("server-port") == 0) {
+        parser = new Uint32Parser(config_id, uint32_values_);
+    } else if ((config_id.compare("server-ip") == 0) ||
+        (config_id.compare("ncr-protocol") == 0) ||
+        (config_id.compare("ncr-format") == 0) ||
+        (config_id.compare("generated-prefix") == 0) ||
+        (config_id.compare("qualifying-suffix") == 0)) {
+        parser = new StringParser(config_id, string_values_);
+    } else if ((config_id.compare("enable-updates") == 0) ||
+        (config_id.compare("remove-on-renew") == 0) ||
+        (config_id.compare("always-include-fqdn") == 0) ||
+        (config_id.compare("allow-client-update") == 0) ||
+        (config_id.compare("override-no-update") == 0) ||
+        (config_id.compare("override-client-update") == 0) ||
+        (config_id.compare("replace-client-name") == 0)) {
+        parser = new BooleanParser(config_id, boolean_values_);
+    } else {
+        isc_throw(NotImplemented,
+            "parser error: D2ClientConfig parameter not supported: "
+            << config_id);
+    }
+
+    return (isc::dhcp::ParserPtr(parser));
+}
+
+void
+D2ClientConfigParser::commit() {
+    // @todo if local_client_config_ is empty then shutdown the listener...
+    // @todo Should this also attempt to start a listener?
+    // In keeping with Interface, Subnet, and Hooks parsers, then this
+    // should initialize the listener.  Failure to init it, should cause
+    // rollback.  This gets sticky, because who owns the listener instance?
+    // Does CfgMgr maintain it or does the server class?  If the latter
+    // how do we get that value here?
+    // I'm thinkikng D2ClientConfig could contain the listener instance
+    CfgMgr::instance().setD2ClientConfig(local_client_config_);
+}
+
 };  // namespace dhcp
 };  // namespace isc

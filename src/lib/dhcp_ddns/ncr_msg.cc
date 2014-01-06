@@ -26,6 +26,22 @@
 namespace isc {
 namespace dhcp_ddns {
 
+NameChangeFormat stringToNcrFormat(const std::string& fmt_str) {
+    if (fmt_str == "JSON") {
+        return FMT_JSON;
+    }
+
+    isc_throw(BadValue, "Invalid NameChangeRequest format:" << fmt_str);
+}
+
+
+std::string ncrFormatToString(NameChangeFormat format) {
+    if (format == FMT_JSON) {
+        return ("JSON");
+    }
+
+    return ("UNKNOWN");
+}
 
 /********************************* D2Dhcid ************************************/
 
