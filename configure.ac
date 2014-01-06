@@ -1365,6 +1365,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/dhcp4/spec_config.h.pre
                  src/bin/dhcp4/tests/Makefile
                  src/bin/dhcp4/tests/marker_file.h
+                 src/bin/dhcp4/tests/test_data_files_config.h
                  src/bin/dhcp4/tests/test_libraries.h
                  src/bin/dhcp6/Makefile
                  src/bin/dhcp6/spec_config.h.pre
