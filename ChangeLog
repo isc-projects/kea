@@ -1,15 +1,16 @@
-721.	[func]      tmark
-	Updates the user_chk example hooks shared library with callouts for packet 
-	receive and packet send.  Decision outcome now includes the lease or prefix
-	assigned.  The user registry now supports a default user entry. 
+721.	[func]		tmark
+	Updates the user_chk example hooks shared library with callouts
+	for packet receive and packet send.  Decision outcome now includes
+	the lease or prefix assigned.  The user registry now supports a
+	default user entry.
 	(Trac #3207, git 34fddf2e75b80d9e517a8f9c3321aa4878cda795)
 
 720.	[func]		tmark
 	Added the initial implementation of the class, NameAddTransaction,
-	to b10-dhcp-ddns.  This class provides a state machine which implements
-	the logic required to remove forward and reverse DNS entries as described
-	in RFC 4703, section 5.5. This includes the ability to construct the
-	necessary DNS requests.
+	to b10-dhcp-ddns.  This class provides a state machine which
+	implements the logic required to remove forward and reverse DNS
+	entries as described in RFC 4703, section 5.5. This includes the
+	ability to construct the necessary DNS requests.
 	(Trac# 3088, git ca58ac00fce4cb5f46e534d7ffadb2db4e4ffaf3)
 
 719.	[func]		tomek
