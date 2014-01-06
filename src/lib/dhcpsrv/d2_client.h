@@ -69,7 +69,7 @@ public:
     /// a DNS update when renewing a lease.
     /// (Note: b10-dhcp-ddns is implemented per RFC 4703 and such a remove
     /// is unnecessary).
-    /// @param always_include_fdqn Enables always including the FQDN option in
+    /// @param always_include_fqdn Enables always including the FQDN option in
     /// DHCP responses.
     /// @param allow_client_update Enables delegation of updates to clients
     /// @param override_no_update Enables updates, even if clients request no
@@ -82,19 +82,19 @@ public:
     /// @param  qualifying_suffix Suffix to use to qualify partial domain-names.
     ///
     /// @throw D2ClientError if given an invalid protocol or format.
-    D2ClientConfig(const  bool enable_updates_,
-                   const isc::asiolink::IOAddress& server_ip_,
-                   const size_t server_port_,
-                   const dhcp_ddns::NameChangeProtocol& ncr_protocol_,
-                   const dhcp_ddns::NameChangeFormat& ncr_format_,
-                   const bool remove_on_renew_,
-                   const bool always_include_fqdn_,
-                   const bool allow_client_update_,
-                   const bool override_no_update_,
-                   const bool override_client_update_,
-                   const bool replace_client_name_,
-                   const std::string& generated_prefix_,
-                   const std::string& qualifying_suffix_);
+    D2ClientConfig(const bool enable_updates,
+                   const isc::asiolink::IOAddress& server_ip,
+                   const size_t server_port,
+                   const dhcp_ddns::NameChangeProtocol& ncr_protocol,
+                   const dhcp_ddns::NameChangeFormat& ncr_format,
+                   const bool remove_on_renew,
+                   const bool always_include_fqdn,
+                   const bool allow_client_update,
+                   const bool override_no_update,
+                   const bool override_client_update,
+                   const bool replace_client_name,
+                   const std::string& generated_prefix,
+                   const std::string& qualifying_suffix);
 
     /// @brief Default constructor
     /// The default constructor creates an instance that has updates disabled.
@@ -255,7 +255,7 @@ public:
     /// @throw D2ClientError if passed an empty pointer.
     void setD2ClientConfig(D2ClientConfigPtr& new_config);
 
-    /// @param Convenience method for checking if DHCP-DDNS updates are enabled.
+    /// @brief Convenience method for checking if DHCP-DDNS is enabled.
     ///
     /// @return True if the D2 configuration is enabled.
     bool isDhcpDdnsEnabled();
