@@ -40,6 +40,7 @@ import csv
 import random
 import time
 import signal
+import errno
 from isc.config import ccsession
 import isc.cc.proto_defs
 import isc.util.process
@@ -523,7 +524,17 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
             logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_STARTED,
                          server_address[0], server_address[1])
         except socket.error as err:
-            raise CmdctlException("Error creating server, because: %s \n" % str(err))
+            if err.errno == errno.EADDRINUSE:
+                raise CmdctlException(("Error creating server, because " +\
+                                       "port %d on address %s is " +\
+                                       "already in use. Please stop " +\
+                                       "the application that uses it or " +\
+                                       "see the guide about using a " +\
+                                       "different port for b10-cmdctl.") % \
+                                      (server_address[1], \
+                                       server_address[0]))
+            else:
+                raise CmdctlException("Error creating server, because: %s" % str(err))
 
         self.user_sessions = {}
         self.idle_timeout = idle_timeout
