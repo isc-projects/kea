@@ -903,7 +903,8 @@ public:
 
     /// @brief Creates a parser for the given "dhcp-ddns" member element id.
     ///
-    /// The elements currently supported are:
+    /// The elements currently supported are (see isc::dhcp::D2ClientConfig
+    /// for details on each):
     /// -# enable-updates
     /// -# server-ip
     /// -# server-port
@@ -917,7 +918,6 @@ public:
     /// -# replace-client-name
     /// -# generated-prefix
     /// -# qualifying-suffix
-    /// (see d2::D2ClientConfig for details on each.)
     ///
     /// @param config_id is the "item_name" for a specific member element of
     /// the "dns_server" specification.
