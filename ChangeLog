@@ -1,3 +1,8 @@
+722.	[bug]		muks
+	b10-cmdctl now prints a more operator-friendly message when the
+	address+port that b10-cmdctl listens on is already in use.
+	(Trac #3227, git 5ec35e37dbb46f66ff0f6a9d9a6a87a393b37934)
+
 721.	[func]		tmark
 	Updates the user_chk example hooks shared library with callouts
 	for packet receive and packet send.  Decision outcome now includes
