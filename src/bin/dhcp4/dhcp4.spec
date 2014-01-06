@@ -292,7 +292,110 @@
                   }
                 } ]
          }
-      }
+      },
+
+      { "item_name": "dhcp-ddns",
+        "item_type": "map",
+        "item_optional": false,
+        "item_default": {"enable-updates": false},
+        "map_item_spec": [
+            {
+                "item_name": "enable-updates",
+                "item_type": "boolean",
+                "item_optional": false,
+                "item_default": False,
+                "item_description" : "Enables DDNS update processing"
+            },
+            {
+                "item_name": "server_ip",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "127.0.0.1",
+                "item_description" : "IP address of b10-dhcp-ddns"
+            },
+            {
+                "item_name": "server_port",
+                "item_type": "integer",
+                "item_optional": true,
+                "item_default": 5301,
+                "item_description" : "port number of b10-dhcp-ddns"
+            },
+            {
+                "item_name": "ncr_protocol",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "UDP",
+                "item_description" : "Socket protocol to use with b10-dhcp-ddns"
+            },
+            {
+                "item_name": "ncr_format",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "JSON",
+                "item_description" : "Format of the update request packet"
+            },
+            {
+                "item_name": "remove-on-renew",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": false,
+                "item_description": "Should server request a DNS Remove, before a DNS Update on renewals"
+            },
+            {
+
+                "item_name": "always-include-fqdn",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": False,
+                "item_description": "Should server always include the FQDN option in its response"
+            },
+            {
+
+                "item_name": "allow-client-update",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": False,
+                "item_description": "Enable AAAA RR update delegation to the client"
+            },
+            {
+                "item_name": "override-no-update",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": false,
+                "item_description": "Do update, even if client requested no updates with N flag"
+            },
+            {
+                "item_name": "override-client-update",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": true,
+                "item_description": "Server performs an update even if client requested delegation"
+            },
+            {
+                "item_name": "replace-client-name",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": false,
+                "item_description": "Should server replace the domain-name supplied by the client"
+            },
+            {
+                "item_name": "generated-prefix",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "myhost",
+                "item_description": "Prefix to use when generating the client's name"
+            },
+
+            {
+                "item_name": "qualifying-suffix",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "example.com",
+                "item_description": "Fully qualified domain-name suffix if partial name provided by client"
+            },
+        ]
+      },
+
     ],
     "commands": [
         {
