@@ -196,7 +196,7 @@ public:
     /// - running always true
     /// - inactive always to false
     /// - multicast always to true
-    /// - broadcast always to true
+    /// - broadcast always to false
     ///
     /// If one needs to modify the default flag settings, the setIfaceFlags
     /// function should be used.
@@ -211,7 +211,12 @@ public:
             iface.flag_loopback_ = true;
         }
         iface.flag_multicast_ = true;
-        iface.flag_broadcast_ = true;
+        // On BSD systems, the SO_BINDTODEVICE option is not supported.
+        // Therefore the IfaceMgr will throw an exception on attempt to
+        // open sockets on more than one broadcast-capable interface at
+        // the same time. In order to prevent this error, we mark all
+        // interfaces broadcast-incapable for unit testing.
+        iface.flag_broadcast_ = false;
         iface.flag_up_ = true;
         iface.flag_running_ = true;
         iface.inactive4_ = false;
