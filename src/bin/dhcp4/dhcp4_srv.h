@@ -406,7 +406,7 @@ protected:
 
     /// @brief Adds server identifier option to the server's response.
     ///
-    /// This method adds a server identifier to the DHCPv4 message. It exects
+    /// This method adds a server identifier to the DHCPv4 message. It epxects
     /// that the local (source) address is set for this message. If address is
     /// not set, it will throw an exception. This method also expects that the
     /// server identifier option is not present in the specified message.
