@@ -42,8 +42,9 @@ Debug information. An instance of SQLite data source is being created.
 % DATASRC_SQLITE_DESTROY SQLite data source destroyed
 Debug information. An instance of SQLite data source is being destroyed.
 
-% DATASRC_SQLITE_DROPCONN SQLite3Database is being deinitialized
-The object around a database connection is being destroyed.
+% DATASRC_SQLITE_DROPCONN SQLite3 database '%1' is being closed
+The object around a database connection is being destroyed. If the
+SQLite3 database file was open, it will be closed now.
 
 % DATASRC_SQLITE_ENCLOSURE looking for zone containing '%1'
 Debug information. The SQLite data source is trying to identify which zone
