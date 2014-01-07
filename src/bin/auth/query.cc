@@ -393,6 +393,17 @@ Query::process(datasrc::ClientList& client_list,
         response_->setRcode(Rcode::SERVFAIL());
         return;
     }
+
+    if (qtype == RRType::RRSIG()) {
+        // We will not serve RRSIGs directly. See #2226 and the
+        // following thread for discussion why:
+        // http://www.ietf.org/mail-archive/web/dnsext/current/msg07123.html
+        // RRSIGs go together with their covered RRset.
+        response_->setHeaderFlag(Message::HEADERFLAG_AA);
+        response_->setRcode(Rcode::REFUSED());
+        return;
+    }
+
     ZoneFinder& zfinder = *result.finder_;
 
     // We have authority for a zone that contain the query name (possibly
