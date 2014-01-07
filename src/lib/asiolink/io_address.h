@@ -232,6 +232,22 @@ private:
     asio::ip::address asio_address_;
 };
 
+/// \brief Insert the IOAddress as a string into stream.
+///
+/// This method converts the \c address into a string and inserts it
+/// into the output stream \c os.
+///
+/// This function overloads the global operator<< to behave as described
+/// in ostream::operator<< but applied to \c IOAddress objects.
+///
+/// \param os A \c std::ostream object on which the insertion operation is
+/// performed.
+/// \param address The \c IOAddress object output by the operation.
+/// \return A reference to the same \c std::ostream object referenced by
+/// parameter \c os after the insertion operation.
+std::ostream&
+operator<<(std::ostream& os, const IOAddress& address);
+
 } // namespace asiolink
 } // namespace isc
 #endif // IO_ADDRESS_H
