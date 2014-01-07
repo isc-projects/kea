@@ -190,7 +190,7 @@ void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
     for (Iface::AddressCollection::const_iterator i = unicasts_.begin();
          i != unicasts_.end(); ++i) {
         if (*i == addr) {
-            isc_throw(BadValue, "Address " << addr.toText()
+            isc_throw(BadValue, "Address " << addr
                       << " already defined on the " << name_ << " interface.");
         }
     }
@@ -569,7 +569,7 @@ int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
 
     } else {
         isc_throw(BadValue, "Failed to detect family of address: "
-                  << addr.toText());
+                  << addr);
     }
 }
 
@@ -644,7 +644,7 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
     }
     // If we got here it means that we did not find specified address
     // on any available interface.
-    isc_throw(BadValue, "There is no such address " << addr.toText());
+    isc_throw(BadValue, "There is no such address " << addr);
 }
 
 int IfaceMgr::openSocketFromRemoteAddress(const IOAddress& remote_addr,
@@ -751,7 +751,8 @@ int IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port) {
 
     if (bind(sock, (struct sockaddr *)&addr6, sizeof(addr6)) < 0) {
         close(sock);
-        isc_throw(SocketConfigError, "Failed to bind socket " << sock << " to " << addr.toText()
+        isc_throw(SocketConfigError, "Failed to bind socket " << sock
+                  << " to " << addr
                   << "/port=" << port);
     }
 #ifdef IPV6_RECVPKTINFO

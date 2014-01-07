@@ -316,10 +316,10 @@ TEST_F(Pkt4Test, fixedFields) {
     EXPECT_EQ(dummySecs, pkt->getSecs());
     EXPECT_EQ(dummyFlags, pkt->getFlags());
 
-    EXPECT_EQ(dummyCiaddr.toText(), pkt->getCiaddr().toText());
-    EXPECT_EQ(dummyYiaddr.toText(), pkt->getYiaddr().toText());
-    EXPECT_EQ(dummySiaddr.toText(), pkt->getSiaddr().toText());
-    EXPECT_EQ(dummyGiaddr.toText(), pkt->getGiaddr().toText());
+    EXPECT_EQ(dummyCiaddr, pkt->getCiaddr());
+    EXPECT_EQ(dummyYiaddr, pkt->getYiaddr());
+    EXPECT_EQ(dummySiaddr, pkt->getSiaddr());
+    EXPECT_EQ(dummyGiaddr, pkt->getGiaddr());
 
     // Chaddr contains link-layer addr (MAC). It is no longer always 16 bytes
     // long and its length depends on hlen value (it is up to 16 bytes now).
@@ -382,10 +382,10 @@ TEST_F(Pkt4Test, fixedFieldsUnpack) {
     EXPECT_EQ(dummySecs, pkt->getSecs());
     EXPECT_EQ(dummyFlags, pkt->getFlags());
 
-    EXPECT_EQ(dummyCiaddr.toText(), pkt->getCiaddr().toText());
-    EXPECT_EQ(string("1.2.3.4"), pkt->getYiaddr().toText());
-    EXPECT_EQ(string("192.0.2.255"), pkt->getSiaddr().toText());
-    EXPECT_EQ(string("255.255.255.255"), pkt->getGiaddr().toText());
+    EXPECT_EQ(dummyCiaddr, pkt->getCiaddr());
+    EXPECT_EQ("1.2.3.4", pkt->getYiaddr().toText());
+    EXPECT_EQ("192.0.2.255", pkt->getSiaddr().toText());
+    EXPECT_EQ("255.255.255.255", pkt->getGiaddr().toText());
 
     // chaddr is always 16 bytes long and contains link-layer addr (MAC)
     EXPECT_EQ(0, memcmp(dummyChaddr, &pkt->getHWAddr()->hwaddr_[0], dummyHlen));

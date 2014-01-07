@@ -29,7 +29,7 @@ PktFilter::openFallbackSocket(const isc::asiolink::IOAddress& addr,
     int sock = socket(AF_INET, SOCK_DGRAM, 0);
     if (sock < 0) {
         isc_throw(SocketConfigError, "failed to create fallback socket for"
-                  " address " << addr.toText() << ", port " << port
+                  " address " << addr << ", port " << port
                   << ", reason: " << strerror(errno));
     }
     // Bind the socket to a specified address and port.
@@ -44,7 +44,7 @@ PktFilter::openFallbackSocket(const isc::asiolink::IOAddress& addr,
         // Remember to close the socket if we failed to bind it.
         close(sock);
         isc_throw(SocketConfigError, "failed to bind fallback socket to"
-                  " address " << addr.toText() << ", port " << port
+                  " address " << addr << ", port " << port
                   << ", reason: " << strerror(errno)
                   << " - is another DHCP server running?");
     }
@@ -54,7 +54,7 @@ PktFilter::openFallbackSocket(const isc::asiolink::IOAddress& addr,
     if (fcntl(sock, F_SETFL, O_NONBLOCK) != 0) {
         close(sock);
         isc_throw(SocketConfigError, "failed to set SO_NONBLOCK option on the"
-                  " fallback socket, bound to " << addr.toText() << ", port "
+                  " fallback socket, bound to " << addr << ", port "
                   << port << ", reason: " << strerror(errno));
     }
     // Successfully created and bound a fallback socket. Return a descriptor.

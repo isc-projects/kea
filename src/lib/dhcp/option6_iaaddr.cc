@@ -37,7 +37,7 @@ Option6IAAddr::Option6IAAddr(uint16_t type, const isc::asiolink::IOAddress& addr
      valid_(valid) {
     setEncapsulatedSpace("dhcp6");
     if (!addr.isV6()) {
-        isc_throw(isc::BadValue, addr_.toText() << " is not an IPv6 address");
+        isc_throw(isc::BadValue, addr_ << " is not an IPv6 address");
     }
 }
 
@@ -57,8 +57,7 @@ void Option6IAAddr::pack(isc::util::OutputBuffer& buf) {
     buf.writeUint16(len() - getHeaderLen());
 
     if (!addr_.isV6()) {
-        isc_throw(isc::BadValue, addr_.toText()
-                  << " is not an IPv6 address");
+        isc_throw(isc::BadValue, addr_ << " is not an IPv6 address");
     }
     buf.writeData(&addr_.toBytes()[0], isc::asiolink::V6ADDRESS_LEN);
 
@@ -93,7 +92,7 @@ std::string Option6IAAddr::toText(int indent /* =0 */) {
     for (int i=0; i<indent; i++)
         tmp << " ";
 
-    tmp << "type=" << type_ << "(IAADDR) addr=" << addr_.toText()
+    tmp << "type=" << type_ << "(IAADDR) addr=" << addr_
         << ", preferred-lft=" << preferred_  << ", valid-lft="
         << valid_ << endl;
 

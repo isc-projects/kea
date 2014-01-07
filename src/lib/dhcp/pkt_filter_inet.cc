@@ -79,7 +79,8 @@ PktFilterInet::openSocket(const Iface& iface,
 
     if (bind(sock, (struct sockaddr *)&addr4, sizeof(addr4)) < 0) {
         close(sock);
-        isc_throw(SocketConfigError, "Failed to bind socket " << sock << " to " << addr.toText()
+        isc_throw(SocketConfigError, "Failed to bind socket " << sock
+                  << " to " << addr
                   << "/port=" << port);
     }
 

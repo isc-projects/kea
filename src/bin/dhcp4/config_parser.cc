@@ -265,7 +265,7 @@ protected:
         Triplet<uint32_t> valid = getParam("valid-lifetime");
 
         stringstream tmp;
-        tmp << addr.toText() << "/" << (int)len
+        tmp << addr << "/" << (int)len
             << " with params t1=" << t1 << ", t2=" << t2 << ", valid=" << valid;
 
         LOG_INFO(dhcp4_logger, DHCP4_CONFIG_NEW_SUBNET).arg(tmp.str());

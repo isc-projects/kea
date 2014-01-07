@@ -497,12 +497,12 @@ protected:
                       "parser error: interface (defined for locally reachable "
                       "subnets) and interface-id (defined for subnets reachable"
                       " via relays) cannot be defined at the same time for "
-                      "subnet " << addr.toText() << "/" << (int)len);
+                      "subnet " << addr << "/" << (int)len);
             }
         }
 
         stringstream tmp;
-        tmp << addr.toText() << "/" << static_cast<int>(len)
+        tmp << addr << "/" << static_cast<int>(len)
             << " with params t1=" << t1 << ", t2=" << t2 << ", pref="
             << pref << ", valid=" << valid;
 
