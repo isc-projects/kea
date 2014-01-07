@@ -4,13 +4,19 @@
 AC_PREREQ([2.59])
 AC_INIT(bind10, 20130529, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
-# serial-tests is not available in automake version before 1.13. In
-# automake 1.13 and higher, AM_PROG_INSTALL is undefined, so we'll check
-# that and conditionally use serial-tests.
-AM_INIT_AUTOMAKE(
-	[foreign]
-	m4_ifndef([AM_PROG_INSTALL], [serial-tests])
-)
+
+# serial-tests is not available in automake version before 1.13, so
+# we'll check that and conditionally use serial-tests. This check is
+# adopted from code by Richard W.M. Jones:
+# https://www.redhat.com/archives/libguestfs/2013-February/msg00102.html
+m4_define([serial_tests], [
+    m4_esyscmd([automake --version |
+                head -1 |
+                awk '{split ($NF,a,"."); if (a[1] == 1 && a[2] >= 12) { print "serial-tests" }}'
+    ])
+])
+AM_INIT_AUTOMAKE(foreign serial_tests)
+
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
