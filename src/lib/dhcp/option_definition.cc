@@ -497,7 +497,7 @@ OptionDefinition::writeToBuffer(const std::string& value,
             asiolink::IOAddress address(value);
             if (!address.isV4() && !address.isV6()) {
                 isc_throw(BadDataTypeCast, "provided address "
-                          << address.toText()
+                          << address
                           << " is not a valid IPv4 or IPv6 address.");
             }
             OptionDataTypeUtil::writeAddress(address, buf);

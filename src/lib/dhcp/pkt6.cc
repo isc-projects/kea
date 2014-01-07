@@ -453,8 +453,8 @@ Pkt6::unpackTCP() {
 std::string
 Pkt6::toText() {
     stringstream tmp;
-    tmp << "localAddr=[" << local_addr_.toText() << "]:" << local_port_
-        << " remoteAddr=[" << remote_addr_.toText()
+    tmp << "localAddr=[" << local_addr_ << "]:" << local_port_
+        << " remoteAddr=[" << remote_addr_
         << "]:" << remote_port_ << endl;
     tmp << "msgtype=" << static_cast<int>(msg_type_) << ", transid=0x" <<
         hex << transid_ << dec << endl;

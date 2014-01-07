@@ -84,7 +84,7 @@ TEST(IOAddressTest, fromBytes) {
     EXPECT_NO_THROW({
         addr = IOAddress::fromBytes(AF_INET, v4);
     });
-    EXPECT_EQ(addr.toText(), IOAddress("192.0.2.3").toText());
+    EXPECT_EQ(addr, IOAddress("192.0.2.3"));
 }
 
 TEST(IOAddressTest, toBytesV4) {

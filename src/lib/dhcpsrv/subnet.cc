@@ -263,8 +263,7 @@ Subnet::addPool(const PoolPtr& pool) {
     IOAddress last_addr = pool->getLastAddress();
 
     if (!inRange(first_addr) || !inRange(last_addr)) {
-        isc_throw(BadValue, "Pool (" << first_addr.toText() << "-"
-                  << last_addr.toText()
+        isc_throw(BadValue, "Pool (" << first_addr << "-" << last_addr
                   << " does not belong in this (" << prefix_.toText() << "/"
                   << static_cast<int>(prefix_len_) << ") subnet");
     }

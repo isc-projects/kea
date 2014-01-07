@@ -359,7 +359,7 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
         in_buf.readData(src_addr_data, 4);
         src_addr = IOAddress::fromBytes(AF_INET, src_addr_data);
     );
-    EXPECT_EQ(IOAddress("192.0.2.1").toText(), src_addr.toText());
+    EXPECT_EQ(IOAddress("192.0.2.1"), src_addr);
 
     // Validate destination address.
     IOAddress dest_addr("::1");
@@ -368,7 +368,7 @@ TEST(ProtocolUtilTest, writeIpUdpHeader) {
         in_buf.readData(dest_addr_data, 4);
         dest_addr = IOAddress::fromBytes(AF_INET, dest_addr_data);
     );
-    EXPECT_EQ(IOAddress("192.0.2.111").toText(), dest_addr.toText());
+    EXPECT_EQ(IOAddress("192.0.2.111"), dest_addr);
 
     // UDP header starts here.
 
