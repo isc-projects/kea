@@ -642,12 +642,12 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     checkClientId(reply3, clientid3);
 
     // Finally check that the addresses offered are different
-    EXPECT_NE(addr1->getAddress().toText(), addr2->getAddress().toText());
-    EXPECT_NE(addr2->getAddress().toText(), addr3->getAddress().toText());
-    EXPECT_NE(addr3->getAddress().toText(), addr1->getAddress().toText());
-    cout << "Offered address to client1=" << addr1->getAddress().toText() << endl;
-    cout << "Offered address to client2=" << addr2->getAddress().toText() << endl;
-    cout << "Offered address to client3=" << addr3->getAddress().toText() << endl;
+    EXPECT_NE(addr1->getAddress(), addr2->getAddress());
+    EXPECT_NE(addr2->getAddress(), addr3->getAddress());
+    EXPECT_NE(addr3->getAddress(), addr1->getAddress());
+    cout << "Offered address to client1=" << addr1->getAddress() << endl;
+    cout << "Offered address to client2=" << addr2->getAddress() << endl;
+    cout << "Offered address to client3=" << addr3->getAddress() << endl;
 }
 
 // This test verifies that incoming REQUEST can be handled properly, that a
@@ -852,12 +852,12 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     checkClientId(reply3, clientid3);
 
     // Finally check that the addresses offered are different
-    EXPECT_NE(addr1->getAddress().toText(), addr2->getAddress().toText());
-    EXPECT_NE(addr2->getAddress().toText(), addr3->getAddress().toText());
-    EXPECT_NE(addr3->getAddress().toText(), addr1->getAddress().toText());
-    cout << "Assigned address to client1=" << addr1->getAddress().toText() << endl;
-    cout << "Assigned address to client2=" << addr2->getAddress().toText() << endl;
-    cout << "Assigned address to client3=" << addr3->getAddress().toText() << endl;
+    EXPECT_NE(addr1->getAddress(), addr2->getAddress());
+    EXPECT_NE(addr2->getAddress(), addr3->getAddress());
+    EXPECT_NE(addr3->getAddress(), addr1->getAddress());
+    cout << "Assigned address to client1=" << addr1->getAddress() << endl;
+    cout << "Assigned address to client2=" << addr2->getAddress() << endl;
+    cout << "Assigned address to client3=" << addr3->getAddress() << endl;
 }
 
 // This test verifies that incoming (positive) RENEW can be handled properly, that a

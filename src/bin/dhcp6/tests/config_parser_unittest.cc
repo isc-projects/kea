@@ -783,8 +783,7 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     // verify that it was interpreted correctly by checking the last address
     // value.
     isc::asiolink::IOAddress prefixAddress("2001:db8:1::");
-    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64).toText(),
-              p6->getLastAddress().toText());
+    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64), p6->getLastAddress());
 }
 
 // Goal of this test is verify that a list of PD pools can be configured.
@@ -917,8 +916,7 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
     // verify that it was interpreted correctly by checking the last address
     // value.
     isc::asiolink::IOAddress prefixAddress("2001:db8:1::");
-    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64).toText(),
-              p6->getLastAddress().toText());
+    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64), p6->getLastAddress());
 }
 
 

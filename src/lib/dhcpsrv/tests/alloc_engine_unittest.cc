@@ -281,10 +281,10 @@ public:
         ASSERT_TRUE(lease);
 
         // Allocated address must be different
-        EXPECT_NE(used_addr.toText(), lease->addr_.toText());
+        EXPECT_NE(used_addr, lease->addr_);
 
         // We should NOT get what we asked for, because it is used already
-        EXPECT_NE(requested.toText(), lease->addr_.toText());
+        EXPECT_NE(requested, lease->addr_);
 
         // Do all checks on the lease
         checkLease6(lease, type, expected_pd_len);
@@ -325,7 +325,7 @@ public:
         ASSERT_TRUE(lease);
 
         // We should NOT get what we asked for, because it is used already
-        EXPECT_NE(hint.toText(), lease->addr_.toText());
+        EXPECT_NE(hint, lease->addr_);
 
         // Do all checks on the lease
         checkLease6(lease, type, expected_pd_len);
@@ -476,7 +476,7 @@ TEST_F(AllocEngine6Test, allocWithValidHint6) {
                                        false);
 
     // We should get what we asked for
-    EXPECT_EQ(lease->addr_.toText(), "2001:db8:1::15");
+    EXPECT_EQ("2001:db8:1::15", lease->addr_.toText());
 }
 
 // This test checks if the address allocation with a hint that is in range,
@@ -864,7 +864,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
                     CalloutHandlePtr())));
     // Check that we got that single lease
     ASSERT_TRUE(lease);
-    EXPECT_EQ(addr.toText(), lease->addr_.toText());
+    EXPECT_EQ(addr, lease->addr_);
 
     // Do all checks on the lease (if subnet-id, preferred/valid times are ok etc.)
     checkLease6(lease, Lease::TYPE_NA, 128);
@@ -876,7 +876,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
 
     // Check that we got that single lease
     ASSERT_TRUE(lease);
-    EXPECT_EQ(addr.toText(), lease->addr_.toText());
+    EXPECT_EQ(addr, lease->addr_);
 }
 
 // This test checks if an expired lease can be reused in REQUEST (actual allocation)
@@ -912,7 +912,7 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
 
     // Check that he got that single lease
     ASSERT_TRUE(lease);
-    EXPECT_EQ(addr.toText(), lease->addr_.toText());
+    EXPECT_EQ(addr, lease->addr_);
 
     // Check that the lease is indeed updated in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
@@ -1075,10 +1075,10 @@ TEST_F(AllocEngine4Test, allocWithUsedHint4) {
     ASSERT_TRUE(lease);
 
     // Allocated address must be different
-    EXPECT_TRUE(used->addr_.toText() != lease->addr_.toText());
+    EXPECT_NE(used->addr_, lease->addr_);
 
     // We should NOT get what we asked for, because it is used already
-    EXPECT_TRUE(lease->addr_.toText() != "192.0.2.106");
+    EXPECT_NE("192.0.2.106", lease->addr_.toText());
 
     // Do all checks on the lease
     checkLease4(lease);
@@ -1115,7 +1115,7 @@ TEST_F(AllocEngine4Test, allocBogusHint4) {
     EXPECT_FALSE(old_lease_);
 
     // We should NOT get what we asked for, because it is used already
-    EXPECT_TRUE(lease->addr_.toText() != "10.1.1.1");
+    EXPECT_NE("10.1.1.1", lease->addr_.toText());
 
     // Do all checks on the lease
     checkLease4(lease);
@@ -1371,7 +1371,7 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
                                      old_lease_);
     // Check that we got that single lease
     ASSERT_TRUE(lease);
-    EXPECT_EQ(addr.toText(), lease->addr_.toText());
+    EXPECT_EQ(addr, lease->addr_);
 
     // We are reusing expired lease, the old (expired) instance should be
     // returned. The returned instance should be the same as the original
@@ -1384,13 +1384,13 @@ TEST_F(AllocEngine4Test, discoverReuseExpiredLease4) {
 
     // CASE 2: Asking specifically for this address
     lease = engine->allocateLease4(subnet_, clientid_, hwaddr_,
-                                     IOAddress(addr.toText()),
+                                     IOAddress(addr),
                                      false, false, "",
                                      true, CalloutHandlePtr(),
                                      old_lease_);
     // Check that we got that single lease
     ASSERT_TRUE(lease);
-    EXPECT_EQ(addr.toText(), lease->addr_.toText());
+    EXPECT_EQ(addr, lease->addr_);
 
     // We are updating expired lease. The copy of the old lease should be
     // returned and it should be equal to the original lease.
@@ -1425,14 +1425,14 @@ TEST_F(AllocEngine4Test, requestReuseExpiredLease4) {
 
     // A client comes along, asking specifically for this address
     lease = engine->allocateLease4(subnet_, clientid_, hwaddr_,
-                                     IOAddress(addr.toText()),
+                                     IOAddress(addr),
                                      false, true, "host.example.com.",
                                      false, CalloutHandlePtr(),
                                      old_lease_);
 
     // Check that he got that single lease
     ASSERT_TRUE(lease);
-    EXPECT_EQ(addr.toText(), lease->addr_.toText());
+    EXPECT_EQ(addr, lease->addr_);
 
     // Check that the lease is indeed updated in LeaseMgr
     Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(addr);
@@ -1481,7 +1481,7 @@ TEST_F(AllocEngine4Test, renewLease4) {
                                 callout_handle, false);
     // Check that he got that single lease
     ASSERT_TRUE(lease);
-    EXPECT_EQ(addr.toText(), lease->addr_.toText());
+    EXPECT_EQ(addr, lease->addr_);
 
     // Check that the lease matches subnet_, hwaddr_,clientid_ parameters
     checkLease4(lease);

@@ -51,7 +51,7 @@ Option6IAPrefix::Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator beg
 
 void Option6IAPrefix::pack(isc::util::OutputBuffer& buf) {
     if (!addr_.isV6()) {
-        isc_throw(isc::BadValue, addr_.toText() << " is not an IPv6 address");
+        isc_throw(isc::BadValue, addr_ << " is not an IPv6 address");
     }
 
     buf.writeUint16(type_);
