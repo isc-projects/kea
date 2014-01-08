@@ -162,14 +162,22 @@ TEST_F(RRsetTest, addRdataPtr) {
     rrset_a_empty.addRdata(createRdata(rrset_a_empty.getType(),
                                        rrset_a_empty.getClass(),
                                        "192.0.2.2"));
-
     addRdataTestCommon(rrset_a);
+}
 
+TEST_F(RRsetTest, addRdataPtrMismatched) {
     // Pointer version of addRdata() doesn't type check and does allow to
     //add a different type of Rdata as a result.
+
+    // Type mismatch
     rrset_a_empty.addRdata(createRdata(RRType::NS(), RRClass::IN(),
                                        "ns.example.com."));
-    EXPECT_EQ(3, rrset_a_empty.getRdataCount());
+    EXPECT_EQ(1, rrset_a_empty.getRdataCount());
+
+    // Class mismatch
+    rrset_ch_txt.addRdata(createRdata(RRType::TXT(), RRClass::IN(),
+                                      "Test String"));
+    EXPECT_EQ(1, rrset_ch_txt.getRdataCount());
 }
 
 TEST_F(RRsetTest, iterator) {
