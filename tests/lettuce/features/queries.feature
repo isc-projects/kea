@@ -412,3 +412,21 @@ Feature: Querying feature
           | qryauthans    |          2 |
           | qrynxrrset    |          1 |
           | rcode.noerror |          2 |
+
+    Scenario: Querying non-existing name in root zone from sqlite3 should work
+        Given I have bind10 running with configuration root.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Stats should be running
+        And bind10 module Resolver should not be running
+        And bind10 module Xfrout should not be running
+        And bind10 module Zonemgr should not be running
+        And bind10 module Xfrin should not be running
+        And bind10 module StatsHttpd should not be running
+
+        A query for . type SOA should have rcode NOERROR
+        A query for nonexistent. type A should have rcode NXDOMAIN
+        Then wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE not AUTH_PROCESS_FAIL
