@@ -1154,11 +1154,13 @@ Dhcpv4Srv::adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response) {
 
     // For the non-relayed message, the destination port is the client's port.
     // For the relayed message, the server/relay port is a destination.
-    if (!response->getHops()) {
-        response->setRemotePort(DHCP4_CLIENT_PORT);
-    } else {
-        response->setRemotePort(DHCP4_SERVER_PORT);
-    }
+    // Note that the call to this function may throw if invalid combination
+    // of hops and giaddr is found (hops = 0 if giaddr = 0 and hops != 0 if
+    // giaddr != 0). The exception will propagate down and eventually cause the
+    // packet to be discarded.
+    response->setRemotePort(query->isRelayed() ? DHCP4_SERVER_PORT :
+                            DHCP4_CLIENT_PORT);
+
     // In many cases the query is sent to a broadcast address. This address
     // appears as a local address in the query message. Therefore we can't
     // simply copy local address from the query and use it as a source
