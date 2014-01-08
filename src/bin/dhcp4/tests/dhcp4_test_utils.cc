@@ -484,8 +484,9 @@ Dhcpv4SrvFakeIfaceTest::testDiscoverRequest(const uint8_t msg_type) {
     req->setLocalHWAddr(1, 6, mac);
     // Set target IP address.
     req->setRemoteAddr(IOAddress("192.0.2.55"));
-    // Set relay address.
+    // Set relay address and hops.
     req->setGiaddr(IOAddress("192.0.2.10"));
+    req->setHops(1);
 
     // We are going to test that certain options are returned
     // in the response message when requested using 'Parameter

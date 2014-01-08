@@ -484,6 +484,24 @@ public:
     /// @return remote port
     uint16_t getRemotePort() const { return (remote_port_); }
 
+    /// @brief Checks if a DHCPv4 message has been relayed.
+    ///
+    /// This function returns a boolean value which indicates whether a DHCPv4
+    /// message has been relayed (if true is returned) or not (if false).
+    ///
+    /// This function uses a combination of Giaddr and Hops. It is expected that
+    /// if Giaddr is not 0, the Hops is greater than 0. In this case the message
+    /// is considered relayed. If Giaddr is 0, the Hops value must also be 0. In
+    /// this case the message is considered non-relayed. For any other
+    /// combination of Giaddr and Hops, an exception is thrown to indicate that
+    /// the message is malformed.
+    ///
+    /// @return Boolean value which indicates whether the message is relayed
+    /// (true) or non-relayed (false).
+    /// @throw isc::BadValue if invalid combination of Giaddr and Hops values is
+    /// found.
+    bool isRelayed() const;
+
     /// @brief Set callback function to be used to parse options.
     ///
     /// @param callback An instance of the callback function or NULL to

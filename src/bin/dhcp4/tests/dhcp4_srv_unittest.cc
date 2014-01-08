@@ -322,6 +322,40 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataBroadcast) {
 
 }
 
+// This test verifies that exception is thrown of the invalid combination
+// of giaddr and hops is specified in a client's message.
+TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataInvalid) {
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+
+    // The hops and giaddr values are used to determine if the client's
+    // message has been relayed or sent directly. The allowed combinations
+    // are (giaddr = 0 and hops = 0) or (giaddr != 0 and hops != 0). Any
+    // other combination is invalid and the adjustIfaceData should throw
+    // an exception. We will test that exception is indeed thrown.
+    req->setGiaddr(IOAddress("0.0.0.0"));
+    req->setHops(1);
+
+    // Clear client address as it hasn't got any address configured yet.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+    // The query is sent to the broadcast address in the Select state.
+    req->setLocalAddr(IOAddress("255.255.255.255"));
+    // The query has been received on the DHCPv4 server port 67.
+    req->setLocalPort(DHCP4_SERVER_PORT);
+    // Set the interface. The response should be sent via the same interface.
+    req->setIface("eth0");
+    req->setIndex(1);
+
+    // Create a response.
+    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Assign some new address for this client.
+    resp->setYiaddr(IOAddress("192.0.2.13"));
+
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+
+    EXPECT_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp), isc::BadValue);
+}
+
 // This test verifies that the server identifier option is appended to
 // a specified DHCPv4 message and the server identifier is correct.
 TEST_F(Dhcpv4SrvTest, appendServerID) {
@@ -2933,8 +2967,10 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsORO) {
     ASSERT_EQ(0, rcode_);
 
     boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
-    // Set the giaddr to non-zero address as if it was relayed.
+    // Set the giaddr and hops to non-zero address as if it was relayed.
     dis->setGiaddr(IOAddress("192.0.2.1"));
+    dis->setHops(1);
+
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     // Set interface. It is required by the server to generate server id.
