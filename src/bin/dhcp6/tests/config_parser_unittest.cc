@@ -495,6 +495,131 @@ TEST_F(Dhcp6ParserTest, multipleSubnets) {
     } while (++cnt < 10);
 }
 
+// Goal of this test is to verify that a previously configured subnet can be
+// deleted in subsequent reconfiguration.
+TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
+    ConstElementPtr x;
+
+    // All four subnets
+    string config4 = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:4::/80\" ],"
+        "    \"subnet\": \"2001:db8:4::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Three subnets (the last one removed)
+    string config_first3 = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Second subnet removed
+    string config_second_removed = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:4::/80\" ],"
+        "    \"subnet\": \"2001:db8:4::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // CASE 1: Configure 4 subnets, then reconfigure and remove the
+    // last one.
+
+    ElementPtr json = Element::fromJSON(config4);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+    // Do the reconfiguration (the last subnet is removed)
+    json = Element::fromJSON(config_first3);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size()); // We expect 3 subnets now (4th is removed)
+
+    EXPECT_EQ(1, subnets->at(0)->getID());
+    EXPECT_EQ(2, subnets->at(1)->getID());
+    EXPECT_EQ(3, subnets->at(2)->getID());
+
+    /// CASE 2: Configure 4 subnets, then reconfigure and remove one
+    /// from in between (not first, not last)
+
+#if 0
+    /// @todo: Uncomment subnet removal test as part of #3281.
+    json = Element::fromJSON(config4);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    // Do reconfiguration
+    json = Element::fromJSON(config_second_removed);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size()); // We expect 4 subnets
+
+    EXPECT_EQ(1, subnets->at(0)->getID());
+    // The second subnet (with subnet-id = 2) is no longer there
+    EXPECT_EQ(3, subnets->at(1)->getID());
+    EXPECT_EQ(4, subnets->at(2)->getID());
+#endif
+}
+
+
+
 // This test checks if it is possible to override global values
 // on a per subnet basis.
 TEST_F(Dhcp6ParserTest, subnetLocal) {
