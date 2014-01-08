@@ -382,6 +382,13 @@ public:
     /// Still, this version would offer a more intuitive interface and is
     /// provided as such.
     ///
+    /// NOTE: Because a new Rdata object is constructed, this method can
+    /// throw a std::bad_cast exception if this RRset's class is NONE,
+    /// or if some other error occurs. If you want to be able to add
+    /// RDATA to an RRset whose class is NONE, please use the other
+    /// variant of \c addRdata() which accepts a \c ConstRdataPtr
+    /// argument.
+    ///
     /// \param rdata A reference to a \c rdata::RdataPtr (derived) class
     /// object, a copy of which is to be added to the \c RRset.
     virtual void addRdata(const rdata::Rdata& rdata) = 0;
