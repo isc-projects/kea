@@ -438,8 +438,7 @@ protected:
     /// address).
     ///
     /// The destination port is always DHCPv4 client (68) or relay (67) port,
-    /// depending if the response will be sent directly to a client (hops = 0),
-    /// or through a relay (hops > 0).
+    /// depending if the response will be sent directly to a client.
     ///
     /// The source port is always set to DHCPv4 server port (67).
     ///
