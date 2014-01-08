@@ -21,6 +21,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
+#include <dhcp/pkt_filter6.h>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
@@ -554,8 +555,8 @@ public:
     /// @param ifname name of the interface
     /// @param addr address to be bound.
     /// @param port UDP port.
-    /// @param receive_bcast configure IPv4 socket to receive broadcast messages.
-    /// This parameter is ignored for IPv6 sockets.
+    /// @param receive_bcast configure IPv4 socket to receive broadcast
+    /// messages or IPv6 socket to join multicast group.
     /// @param send_bcast configure IPv4 socket to send broadcast messages.
     /// This parameter is ignored for IPv6 sockets.
     ///
@@ -577,11 +578,13 @@ public:
     /// Instead, the method searches through the addresses on the specified
     /// interface and selects one that matches the address family.
     ///
+    /// @note This method does not join the socket to the multicast group.
+    ///
     /// @param ifname name of the interface
     /// @param port UDP port
     /// @param family address family (AF_INET or AF_INET6)
-    /// @return socket descriptor, if socket creation, binding and multicast
-    /// group join were all successful.
+    /// @return socket descriptor, if socket creation and binding was
+    /// successful.
     /// @throw isc::Unexpected if failed to create and bind socket.
     /// @throw isc::BadValue if there is no address on specified interface
     /// that belongs to given family.
@@ -594,10 +597,12 @@ public:
     /// This methods differs from \ref openSocket in that it does not require
     /// the specification of the interface to which the socket will be bound.
     ///
+    /// @note This method does not join the socket to the multicast group.
+    ///
     /// @param addr address to be bound
     /// @param port UDP port
-    /// @return socket descriptor, if socket creation, binding and multicast
-    /// group join were all successful.
+    /// @return socket descriptor, if socket creation and binding was
+    /// successful.
     /// @throw isc::Unexpected if failed to create and bind socket
     /// @throw isc::BadValue if specified address is not available on
     /// any interface
@@ -611,10 +616,12 @@ public:
     /// identified, \ref openSocket is called to open a socket and bind it to
     /// the interface, address and port.
     ///
+    /// @note This method does not join the socket to a multicast group.
+    ///
     /// @param remote_addr remote address to connect to
     /// @param port UDP port
-    /// @return socket descriptor, if socket creation, binding and multicast
-    /// group join were all successful.
+    /// @return socket descriptor, if socket creation and binding was
+    /// successful.
     /// @throw isc::Unexpected if failed to create and bind socket
     int openSocketFromRemoteAddress(const isc::asiolink::IOAddress& remote_addr,
                                     const uint16_t port);
@@ -749,21 +756,44 @@ public:
         session_callback_ = callback;
     }
 
-    /// @brief Set Packet Filter object to handle send/receive packets.
+    /// @brief Set packet filter object to handle sending and receiving DHCPv4
+    /// messages.
     ///
-    /// Packet Filters expose low-level functions handling sockets opening
-    /// and sending/receiving packets through those sockets. This function
-    /// sets custom Packet Filter (represented by a class derived from PktFilter)
-    /// to be used by IfaceMgr. Note that there must be no IPv4 sockets open
-    /// when this function is called. Call closeSockets(AF_INET) to close
-    /// all hanging IPv4 sockets opened by the current packet filter object.
+    /// Packet filter objects provide means for the @c IfaceMgr to open sockets
+    /// for IPv4 packets reception and sending. This function sets custom packet
+    /// filter (represented by a class derived from PktFilter) to be used by
+    /// @c IfaceMgr. Note that there must be no IPv4 sockets open when this
+    /// function is called. Call closeSockets(AF_INET) to close all hanging IPv4
+    /// sockets opened by the current packet filter object.
     ///
-    /// @param packet_filter new packet filter to be used by IfaceMgr to send/receive
-    /// packets and open sockets.
+    /// @param packet_filter A pointer to the new packet filter object to be
+    /// used by @c IfaceMgr.
     ///
     /// @throw InvalidPacketFilter if provided packet filter object is NULL.
-    /// @throw PacketFilterChangeDenied if there are open IPv4 sockets
+    /// @throw PacketFilterChangeDenied if there are open IPv4 sockets.
     void setPacketFilter(const PktFilterPtr& packet_filter);
+
+    /// @brief Set packet filter object to handle sending and receving DHCPv6
+    /// messages.
+    ///
+    /// Packet filter objects provide means for the @c IfaceMgr to open sockets
+    /// for IPv6 packets reception and sending. This function sets the new
+    /// instance of the packet filter which will be used by @c IfaceMgr to send
+    /// and receive DHCPv6 messages, until replaced by another packet filter.
+    ///
+    /// It is required that DHCPv6 messages are send and received using methods
+    /// of the same object that was used to open socket. Therefore, it is
+    /// required that all IPv6 sockets are closed prior to calling this
+    /// function. Call closeSockets(AF_INET6) to close all hanging IPv6 sockets
+    /// opened by the current packet filter object.
+    ///
+    /// @param packet_filter A pointer to the new packet filter object to be
+    /// used by @c IfaceMgr.
+    ///
+    /// @throw isc::dhcp::InvalidPacketFilter if specified object is NULL.
+    /// @throw isc::dhcp::PacketFilterChangeDenied if there are open IPv6
+    /// sockets.
+    void setPacketFilter(const PktFilter6Ptr& packet_filter);
 
     /// @brief Set Packet Filter object to handle send/receive packets.
     ///
@@ -832,9 +862,13 @@ protected:
     /// @param iface reference to interface structure.
     /// @param addr an address the created socket should be bound to
     /// @param port a port that created socket should be bound to
+    /// @param join_multicast A boolean parameter which indicates whether
+    /// socket should join All_DHCP_Relay_Agents_and_servers multicast
+    /// group.
     ///
     /// @return socket descriptor
-    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, uint16_t port);
+    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr,
+                    uint16_t port, const bool join_multicast);
 
     /// @brief Detects network interfaces.
     ///
@@ -899,23 +933,6 @@ protected:
     SessionCallback session_callback_;
 private:
 
-    /// @brief Joins IPv6 multicast group on a socket.
-    ///
-    /// Socket must be created and bound to an address. Note that this
-    /// address is different than the multicast address. For example DHCPv6
-    /// server should bind its socket to link-local address (fe80::1234...)
-    /// and later join ff02::1:2 multicast group.
-    ///
-    /// @param sock socket fd (socket must be bound)
-    /// @param ifname interface name (for link-scoped multicast groups)
-    /// @param mcast multicast address to join (e.g. "ff02::1:2")
-    ///
-    /// @return true if multicast join was successful
-    ///
-    bool
-    joinMulticast(int sock, const std::string& ifname,
-                  const std::string& mcast);
-
     /// @brief Identifies local network address to be used to
     /// connect to remote address.
     ///
@@ -951,15 +968,29 @@ private:
     void handleSocketConfigError(const std::string& errmsg,
                                  IfaceMgrErrorMsgCallback handler);
 
+    /// @brief Checks if there is at least one socket of the specified family
+    /// open.
+    ///
+    /// @param family A socket family.
+    ///
+    /// @return true if there is at least one socket open, false otherwise.
+    bool hasOpenSocket(const uint16_t family) const;
+
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
     /// sockets. It is possible to supply custom object using
-    /// setPacketFilter class. Various Packet Filters differ mainly by using
+    /// setPacketFilter method. Various Packet Filters differ mainly by using
     /// different types of sockets, e.g. SOCK_DGRAM,  SOCK_RAW and different
     /// families, e.g. AF_INET, AF_PACKET etc. Another possible type of
     /// Packet Filter is the one used for unit testing, which doesn't
     /// open sockets but rather mimics their behavior (mock object).
     PktFilterPtr packet_filter_;
+
+    /// Holds instance of a class derived from PktFilter6, used by the
+    /// IfaceMgr to manage sockets used to send and receive DHCPv6
+    /// messages. It is possible to supply a custom object using
+    /// setPacketFilter method.
+    PktFilter6Ptr packet_filter6_;
 };
 
 }; // namespace isc::dhcp
