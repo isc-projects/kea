@@ -869,8 +869,11 @@ struct SectionFormatter {
     void operator()(const T& entry) {
         if (section_ == Message::SECTION_QUESTION) {
             output_ += ";";
+            output_ += entry->toText();
+            output_ += "\n";
+        } else {
+            output_ += entry->toText();
         }
-        output_ += entry->toText();
     }
     const Message::Section section_;
     string& output_;
