@@ -185,5 +185,50 @@ the regular IP/UDP socket. The isc::dhcp::PktFilterInet should be used in all
 cases when an application using the libdhcp++ doesn't require sending
 DHCP messages to a device which doesn't have an address yet.
 
+@section libdhcpPktFilter6 Switchable Packet Filters for DHCPv6
+
+The DHCPv6 implementation doesn't suffer from the problems described in \ref
+libdhcpPktFilter. Therefore, the socket creation and methods used to send
+and receive DHCPv6 messages are common for all OSes. However, there is
+still a need to customize the operations on the sockets to reliably unit test
+the \ref isc::dhcp::IfaceMgr logic.
+
+The \ref isc::dhcp::IfaceMgr::openSockets6 function examines configuration
+of detected interfaces for their availability to listen DHCPv6 traffic. For
+all running interfaces (except local loopback) it will try to open a socket
+and bind it to the link local or global unicast address. The socket will
+not be opened on the interface which is down or for which it was explicitly
+specified that it should not be used to listen to DHCPv6 messages. There is
+a substantial amount of logic in this function that has to be unit tested for
+various interface configurations, e.g.:
+- multiple interfaces with link-local addresses only
+- multiple interfaces, some of them having global unicast addresses,
+- multiple interfaces, some of them disabled
+- no interfaces
+
+The \ref isc::dhcp::IfaceMgr::openSockets6 function attempts to open
+sockets on detected interfaces. At the same time, the number of interfaces,
+and their configuration is specific to OS where the tests are being run.
+So the test doesn't have any means to configure interfaces for the test case
+being run. Moreover, a unit test should not change the configuration of the
+system. For example, a change to the configuration of the interface which
+is used to access the machine running a test, may effectively break the
+access to this machine.
+
+In order to overcome the problem described above, the unit tests use
+fake interfaces which can be freely added, configured and removed from the
+\ref isc::dhcp::IfaceMgr. Obviously, it is not possible to open a socket
+on a fake interface, nor use it to send or receive IP packets. To mimic
+socket operations on fake interfaces it is required that the functions
+which open sockets, send messages and receive messages have to be
+customizable. This is achieved by implementation of replaceable packet
+filter objects which derive from the \ref isc::dhcp::PktFilter6 class.
+The default implementation of this class is \ref isc::dhcp::PktFilterInet6
+which creates a regular datagram IPv6/UDPv6 socket. The unit tests use a
+stub implementation isc::dhcp::test::PktFilter6Stub which contains no-op
+functions.
+
+Use \ref isc::dhcp::IfaceMgr::setPacketFilter function to set the custom packet
+filter object to be used by Interface Manager.
 
 */
