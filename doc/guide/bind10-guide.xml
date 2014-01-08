@@ -4476,6 +4476,21 @@ Dhcp4/subnet4	[]	list	(default)
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
       <itemizedlist>
+          <listitem> <!-- see tickets #3234, #3281 -->
+            <para>
+              On-line configuration has some limitations. Adding new subnets or
+              modifying existing ones work, as is removing the last subnet from
+              the list. However, removing non-last (e.g. removing subnet 1,2 or 3 if
+              there are 4 subnets configured) will cause issues. The problem is
+              caused by simplistic subnet-id assignment. The subnets are always
+              numbered, starting from 1. That subnet-id is then used in leases
+              that are stored in the lease database. Removing non-last subnet will
+              cause the configuration information to mismatch data in the lease
+              database. It is possible to manually update subnet-id fields in
+              MySQL database, but it is awkward and error prone process. A better
+              reconfiguration support is planned.
+            </para>
+          </listitem>
           <listitem>
           <para>
             On startup, the DHCPv4 server does not get the full configuration from
@@ -5388,6 +5403,22 @@ should include options from the isc option space:
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
       <itemizedlist>
+
+          <listitem> <!-- see tickets #3234, #3281 -->
+            <para>
+              On-line configuration has some limitations. Adding new subnets or
+              modifying existing ones work, as is removing the last subnet from
+              the list. However, removing non-last (e.g. removing subnet 1,2 or 3 if
+              there are 4 subnets configured) will cause issues. The problem is
+              caused by simplistic subnet-id assignment. The subnets are always
+              numbered, starting from 1. That subnet-id is then used in leases
+              that are stored in the lease database. Removing non-last subnet will
+              cause the configuration information to mismatch data in the lease
+              database. It is possible to manually update subnet-id fields in
+              MySQL database, but it is awkward and error prone process. A better
+              reconfiguration support is planned.
+            </para>
+          </listitem>
 
         <listitem>
           <para>

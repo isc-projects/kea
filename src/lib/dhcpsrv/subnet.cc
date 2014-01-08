@@ -31,7 +31,7 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const Triplet<uint32_t>& t1,
                const Triplet<uint32_t>& t2,
                const Triplet<uint32_t>& valid_lifetime)
-    :id_(getNextID()), prefix_(prefix), prefix_len_(len), t1_(t1),
+    :id_(generateNextID()), prefix_(prefix), prefix_len_(len), t1_(t1),
      t2_(t2), valid_(valid_lifetime),
      last_allocated_ia_(lastAddrInPrefix(prefix, len)),
      last_allocated_ta_(lastAddrInPrefix(prefix, len)),
