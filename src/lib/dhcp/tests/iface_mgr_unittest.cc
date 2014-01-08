@@ -19,6 +19,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
+#include <dhcp/tests/pkt_filter6_test_utils.h>
 
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -35,6 +36,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using boost::scoped_ptr;
 
 namespace {
@@ -156,7 +158,7 @@ public:
     /// @brief Returns the collection of existing interfaces.
     IfaceCollection& getIfacesLst() { return (ifaces_); }
 
-    /// @brief This function creates fictious interfaces with fictious
+    /// @brief This function creates fictitious interfaces with fictious
     /// addresses.
     ///
     /// These interfaces can be used in tests that don't actually try
@@ -168,11 +170,21 @@ public:
         ifaces_.clear();
 
         // local loopback
-        ifaces_.push_back(createIface("lo", 0, "127.0.0.1"));
+        Iface lo = createIface("lo", 0);
+        lo.addAddress(IOAddress("127.0.0.1"));
+        lo.addAddress(IOAddress("::1"));
+        ifaces_.push_back(lo);
         // eth0
-        ifaces_.push_back(createIface("eth0", 1, "10.0.0.1"));
+        Iface eth0 = createIface("eth0", 1);
+        eth0.addAddress(IOAddress("10.0.0.1"));
+        eth0.addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+        eth0.addAddress(IOAddress("2001:db8:1::1"));
+        ifaces_.push_back(eth0);
         // eth1
-        ifaces_.push_back(createIface("eth1", 2, "192.0.2.3"));
+        Iface eth1 = createIface("eth1", 2);
+        eth1.addAddress(IOAddress("192.0.2.3"));
+        eth1.addAddress(IOAddress("fe80::3a60:77ff:fed5:abcd"));
+        ifaces_.push_back(eth1);
     }
 
     /// @brief Create an object representing interface.
@@ -183,29 +195,59 @@ public:
     /// - up always true
     /// - running always true
     /// - inactive always to false
+    /// - multicast always to true
+    /// - broadcast always to false
     ///
     /// If one needs to modify the default flag settings, the setIfaceFlags
     /// function should be used.
     ///
     /// @param name A name of the interface to be created.
     /// @param ifindex An index of the interface to be created.
-    /// @param addr An IP address to be assigned to the interface.
     ///
     /// @return An object representing interface.
-    static Iface createIface(const std::string& name, const int ifindex,
-                             const std::string& addr) {
+    static Iface createIface(const std::string& name, const int ifindex) {
         Iface iface(name, ifindex);
-        iface.addAddress(IOAddress(addr));
         if (name == "lo") {
             iface.flag_loopback_ = true;
         }
+        iface.flag_multicast_ = true;
+        // On BSD systems, the SO_BINDTODEVICE option is not supported.
+        // Therefore the IfaceMgr will throw an exception on attempt to
+        // open sockets on more than one broadcast-capable interface at
+        // the same time. In order to prevent this error, we mark all
+        // interfaces broadcast-incapable for unit testing.
+        iface.flag_broadcast_ = false;
         iface.flag_up_ = true;
         iface.flag_running_ = true;
         iface.inactive4_ = false;
+        iface.inactive6_ = false;
         return (iface);
     }
 
-    /// @brief Modified flags on the interface.
+    /// @brief Checks if the specified interface has a socket bound to a
+    /// specified adddress.
+    ///
+    /// @param iface_name A name of the interface.
+    /// @param addr An address to be checked for binding.
+    ///
+    /// @return true if there is a socket bound to the specified address.
+    bool isBound(const std::string& iface_name, const std::string& addr) {
+        Iface* iface = getIface(iface_name);
+        if (iface == NULL) {
+            ADD_FAILURE() << "the interface " << iface_name << " doesn't exist";
+            return (false);
+        }
+        const Iface::SocketCollection& sockets = iface->getSockets();
+        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
+             sock != sockets.end(); ++sock) {
+            if (sock->addr_ == IOAddress(addr)) {
+                return (true);
+            }
+        }
+        return (false);
+    }
+
+    /// @brief Modify flags on the interface.
     ///
     /// @param name A name of the interface.
     /// @param loopback A new value of the loopback flag.
@@ -214,14 +256,16 @@ public:
     /// @param inactive A new value of the inactive flag.
     void setIfaceFlags(const std::string& name, const bool loopback,
                        const bool up, const bool running,
-                       const bool inactive) {
+                       const bool inactive4,
+                       const bool inactive6) {
         for (IfaceMgr::IfaceCollection::iterator iface = ifaces_.begin();
              iface != ifaces_.end(); ++iface) {
             if (iface->getName() == name) {
                 iface->flag_loopback_ = loopback;
                 iface->flag_up_ = up;
                 iface->flag_running_ = running;
-                iface->inactive4_ = inactive;
+                iface->inactive4_ = inactive4;
+                iface->inactive6_ = inactive6;
             }
         }
     }
@@ -242,6 +286,43 @@ public:
     }
 
     ~IfaceMgrTest() {
+    }
+
+    /// @brief Tests the number of IPv6 sockets on interface
+    ///
+    /// This function checks the expected number of open IPv6 sockets on the
+    /// specified interface. On non-Linux systems, sockets are bound to a
+    /// link-local address and the number of unicast addresses specified.
+    /// On Linux systems, there is one more socket bound to a ff02::1:2
+    /// multicast address.
+    ///
+    /// @param iface An interface on which sockets are open.
+    /// @param unicast_num A number of unicast addresses bound.
+    /// @param link_local_num A number of link local addresses bound.
+    void checkSocketsCount6(const Iface& iface, const int unicast_num,
+                            const int link_local_num = 1) {
+        // On local-loopback interface, there should be no sockets.
+        if (iface.flag_loopback_) {
+            ASSERT_TRUE(iface.getSockets().empty())
+                << "expected empty socket set on loopback interface "
+                << iface.getName();
+            return;
+        }
+#if defined OS_LINUX
+        // On Linux, for each link-local address there may be an
+        // additional socket opened and bound to ff02::1:2. This socket
+        // is only opened if the interface is multicast-capable.
+        ASSERT_EQ(unicast_num + (iface.flag_multicast_ ? link_local_num : 0)
+                  + link_local_num, iface.getSockets().size())
+            << "invalid number of sockets on interface "
+            << iface.getName();
+#else
+        // On non-Linux, there is no additional socket.
+        ASSERT_EQ(unicast_num + link_local_num, iface.getSockets().size())
+            << "invalid number of sockets on interface "
+            << iface.getName();
+
+#endif
     }
 
     // Get ther number of IPv4 or IPv6 sockets on the loopback interface
@@ -1073,6 +1154,49 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
     EXPECT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
 }
 
+// This test checks that the default packet filter for DHCPv6 can be replaced
+// with the custom one.
+TEST_F(IfaceMgrTest, setPacketFilter6) {
+    // Create an instance of IfaceMgr.
+    boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
+    ASSERT_TRUE(iface_mgr);
+
+    // Try to set NULL packet filter object and make sure it is rejected.
+    boost::shared_ptr<PktFilter6Stub> custom_packet_filter;
+    EXPECT_THROW(iface_mgr->setPacketFilter(custom_packet_filter),
+                 isc::dhcp::InvalidPacketFilter);
+
+    // Create valid object and check if it can be set.
+    custom_packet_filter.reset(new PktFilter6Stub());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
+
+    // Try to open socket using IfaceMgr. It should call the openSocket()
+    // function on the packet filter object we have set.
+    IOAddress loAddr("::1");
+    int socket1 = 0;
+    EXPECT_NO_THROW(
+        socket1 = iface_mgr->openSocket(LOOPBACK, loAddr,
+                                        DHCP6_SERVER_PORT + 10000);
+    );
+    // Check that openSocket function has been actually called on the packet
+    // filter object.
+    EXPECT_EQ(1, custom_packet_filter->open_socket_count_);
+    // Also check that the returned socket descriptor has an expected value.
+    EXPECT_EQ(0, socket1);
+
+    // Replacing current packet filter object, while there are sockets open,
+    // is not allowed!
+    EXPECT_THROW(iface_mgr->setPacketFilter(custom_packet_filter),
+                 PacketFilterChangeDenied);
+
+    // So, let's close the IPv6 sockets and retry. Now it should succeed.
+    iface_mgr->closeSockets(AF_INET6);
+    EXPECT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
+
+}
+
+
 #if defined OS_LINUX
 
 // This Linux specific test checks whether it is possible to use
@@ -1251,7 +1375,7 @@ TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
     // - is "down" (not up)
     // - is not running
     // - is active (is not inactive)
-    ifacemgr.setIfaceFlags("eth0", false, false, true, false);
+    ifacemgr.setIfaceFlags("eth0", false, false, true, false, false);
     ASSERT_FALSE(ifacemgr.getIface("eth0")->flag_up_);
     ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL));
 
@@ -1282,7 +1406,7 @@ TEST_F(IfaceMgrTest, openSockets4IfaceInactive) {
     // - is up
     // - is running
     // - is inactive
-    ifacemgr.setIfaceFlags("eth1", false, true, true, true);
+    ifacemgr.setIfaceFlags("eth1", false, true, true, true, false);
     ASSERT_TRUE(ifacemgr.getIface("eth1")->inactive4_);
     ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL));
 
@@ -1359,6 +1483,332 @@ TEST_F(IfaceMgrTest, openSocket4ErrorHandler) {
 
 }
 
+// This test checks that the sockets are open and bound to link local addresses
+// only, if unicast addresses are not specified.
+TEST_F(IfaceMgrTest, openSockets6LinkLocal) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Simulate opening sockets using the dummy packet filter.
+    bool success = false;
+    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_TRUE(success);
+
+    // Check that the number of sockets is correct on each interface.
+    checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface("eth0"), 0);
+    checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
+
+    // Sockets on eth0 should be bound to link-local and should not be bound
+    // to global unicast address, even though this address is configured on
+    // the eth0.
+    EXPECT_TRUE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
+    EXPECT_FALSE(ifacemgr.isBound("eth0", "2001:db8:1::1"));
+    // Socket on eth1 should be bound to link local only.
+    EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
+
+    // If we are on Linux, there is one more socket bound to ff02::1:2
+#if defined OS_LINUX
+    EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+#endif
+}
+
+// This test checks that socket is not open on the interface which doesn't
+// have a link-local address.
+TEST_F(IfaceMgrTest, openSockets6NoLinkLocal) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Remove a link local address from eth0. If there is no link-local
+    // address, the socket should not open.
+    ASSERT_TRUE(ifacemgr.getIface("eth0")->
+                delAddress(IOAddress("fe80::3a60:77ff:fed5:cdef")));
+
+    // Simulate opening sockets using the dummy packet filter.
+    bool success = false;
+    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_TRUE(success);
+
+    // Check that the number of sockets is correct on each interface.
+    checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    // The thrid parameter specifies that the number of link-local
+    // addresses for eth0 is equal to 0.
+    checkSocketsCount6(*ifacemgr.getIface("eth0"), 0, 0);
+    checkSocketsCount6(*ifacemgr.getIface("eth1"), 0, 1);
+
+    // There should be no sockets open on eth0 because it neither has
+    // link-local nor global unicast addresses.
+    EXPECT_FALSE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
+    EXPECT_FALSE(ifacemgr.isBound("eth0", "2001:db8:1::1"));
+    // Socket on eth1 should be bound to link local only.
+    EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
+
+    // If we are on Linux, there is one more socket bound to ff02::1:2
+#if defined OS_LINUX
+    EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+#endif
+
+}
+
+// This test checks that socket is open on the non-muticast-capable
+// interface. This socket simply doesn't join multicast group.
+TEST_F(IfaceMgrTest, openSockets6NotMulticast) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Make eth0 multicast-incapable.
+    ifacemgr.getIface("eth0")->flag_multicast_ = false;
+
+    // Simulate opening sockets using the dummy packet filter.
+    bool success = false;
+    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_TRUE(success);
+
+    // Check that the number of sockets is correct on each interface.
+    checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface("eth0"), 0);
+    checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
+
+    // Sockets on eth0 should be bound to link-local and should not be bound
+    // to global unicast address, even though this address is configured on
+    // the eth0.
+    EXPECT_TRUE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
+    EXPECT_FALSE(ifacemgr.isBound("eth0", "2001:db8:1::1"));
+    // The eth0 is not a multicast-capable interface, so the socket should
+    // not be bound to the multicast address.
+    EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    // Socket on eth1 should be bound to link local only.
+    EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
+
+    // If we are on Linux, there is one more socket bound to ff02::1:2
+    // on eth1.
+#if defined OS_LINUX
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+#endif
+}
+
+// This test checks that the sockets are opened and bound to link local
+// and unicast addresses which have been explicitly specified.
+TEST_F(IfaceMgrTest, openSockets6Unicast) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Configure the eth0 to open socket on the unicast address, apart
+    // from link-local address.
+    ifacemgr.getIface("eth0")->addUnicast(IOAddress("2001:db8:1::1"));
+
+    // Simulate opening sockets using the dummy packet filter.
+    bool success = false;
+    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_TRUE(success);
+
+    // Check that we have correct number of sockets on each interface.
+    checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface("eth0"), 1); // one unicast address.
+    checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
+
+    // eth0 should have two sockets, one bound to link-local, another one
+    // bound to unicast address.
+    EXPECT_TRUE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
+    EXPECT_TRUE(ifacemgr.isBound("eth0", "2001:db8:1::1"));
+    // eth1 should have one socket, bound to link-local address.
+    EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
+
+    // If we are on Linux, there is one more socket bound to ff02::1:2
+#if defined OS_LINUX
+    EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+#endif
+
+}
+
+// This test checks that the socket is open and bound to a global unicast
+// address if the link-local address does not exist for the particular
+// interface.
+TEST_F(IfaceMgrTest, openSockets6UnicastOnly) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Configure the eth0 to open socket on the unicast address, apart
+    // from link-local address.
+    ifacemgr.getIface("eth0")->addUnicast(IOAddress("2001:db8:1::1"));
+    // Explicitly remove the link-local address from eth0.
+    ASSERT_TRUE(ifacemgr.getIface("eth0")->
+                delAddress(IOAddress("fe80::3a60:77ff:fed5:cdef")));
+
+    // Simulate opening sockets using the dummy packet filter.
+    bool success = false;
+    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_TRUE(success);
+
+    // Check that we have correct number of sockets on each interface.
+    checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface("eth0"), 1, 0);
+    checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
+
+    // The link-local address is not present on eth0. Therefore, no socket
+    // must be bound to this address, nor to multicast address.
+    EXPECT_FALSE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
+    EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    // There should be one socket bound to unicast address.
+    EXPECT_TRUE(ifacemgr.isBound("eth0", "2001:db8:1::1"));
+    // eth1 should have one socket, bound to link-local address.
+    EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
+
+    // If we are on Linux, there is one more socket bound to ff02::1:2
+#if defined OS_LINUX
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+#endif
+
+}
+
+// This test checks that no sockets are open for the interface which is down.
+TEST_F(IfaceMgrTest, openSockets6IfaceDown) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Configure the eth0 to open socket on the unicast address, apart
+    // from link-local address.
+    ifacemgr.getIface("eth0")->addUnicast(IOAddress("2001:db8:1::1"));
+
+    // Boolean parameters specify that eth0 is:
+    // - not a loopback
+    // - is "down" (not up)
+    // - is not running
+    // - is active for both v4 and v6
+    ifacemgr.setIfaceFlags("eth0", false, false, false, false, false);
+
+    // Simulate opening sockets using the dummy packet filter.
+    bool success = false;
+    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_TRUE(success);
+
+    // Check that we have correct number of sockets on each interface.
+    checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    // There should be no sockets on eth0 because interface is down.
+    ASSERT_TRUE(ifacemgr.getIface("eth0")->getSockets().empty());
+    checkSocketsCount6(*ifacemgr.getIface("eth1"), 0);
+
+    // eth0 should have no sockets because the interface is down.
+    EXPECT_FALSE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
+    EXPECT_FALSE(ifacemgr.isBound("eth0", "2001:db8:1::1"));
+    EXPECT_FALSE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+    // eth1 should have one socket, bound to link-local address.
+    EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
+
+    // If we are on Linux, there is one more socket bound to ff02::1:2
+#if defined OS_LINUX
+    EXPECT_TRUE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+#endif
+
+}
+
+// This test checks that no sockets are open for the interface which is
+// inactive.
+TEST_F(IfaceMgrTest, openSockets6IfaceInactive) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Configure the eth0 to open socket on the unicast address, apart
+    // from link-local address.
+    ifacemgr.getIface("eth0")->addUnicast(IOAddress("2001:db8:1::1"));
+
+    // Boolean parameters specify that eth1 is:
+    // - not a loopback
+    // - is up
+    // - is running
+    // - is active for v4
+    // - is inactive for v6
+    ifacemgr.setIfaceFlags("eth1", false, true, true, false, true);
+
+    // Simulate opening sockets using the dummy packet filter.
+    bool success = false;
+    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_TRUE(success);
+
+    // Check that we have correct number of sockets on each interface.
+    checkSocketsCount6(*ifacemgr.getIface("lo"), 0);
+    checkSocketsCount6(*ifacemgr.getIface("eth0"), 1); // one unicast address
+    // There should be no sockets on eth1 because interface is inactive
+    ASSERT_TRUE(ifacemgr.getIface("eth1")->getSockets().empty());
+
+    // eth0 should have one socket bound to a link-local address, another one
+    // bound to unicast address.
+    EXPECT_TRUE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
+    EXPECT_TRUE(ifacemgr.isBound("eth0", "2001:db8:1::1"));
+
+    // eth1 shouldn't have a socket bound to link local address because
+    // interface is inactive.
+    EXPECT_FALSE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
+    EXPECT_FALSE(ifacemgr.isBound("eth1", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+
+    // If we are on Linux, there is one more socket bound to ff02::1:2
+#if defined OS_LINUX
+    EXPECT_TRUE(ifacemgr.isBound("eth0", ALL_DHCP_RELAY_AGENTS_AND_SERVERS));
+#endif
+
+}
+
+// Test that the openSockets6 function does not throw if there are no interfaces
+// detected. This function is expected to return false.
+TEST_F(IfaceMgrTest, openSockets6NoIfaces) {
+    NakedIfaceMgr ifacemgr;
+    // Remove existing interfaces.
+    ifacemgr.getIfacesLst().clear();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // This value indicates if at least one socket opens. There are no
+    // interfaces, so it should be set to false.
+    bool socket_open = false;
+    ASSERT_NO_THROW(socket_open = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_FALSE(socket_open);
+}
 
 // Test the Iface structure itself
 TEST_F(IfaceMgrTest, iface) {

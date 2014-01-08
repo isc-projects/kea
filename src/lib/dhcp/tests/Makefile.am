@@ -50,7 +50,9 @@ libdhcp___unittests_SOURCES += pkt4_unittest.cc
 libdhcp___unittests_SOURCES += pkt6_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_inet_unittest.cc
+libdhcp___unittests_SOURCES += pkt_filter_inet6_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_test_utils.h pkt_filter_test_utils.cc
+libdhcp___unittests_SOURCES += pkt_filter6_test_utils.h pkt_filter6_test_utils.cc
 
 if OS_LINUX
 libdhcp___unittests_SOURCES += pkt_filter_lpf_unittest.cc
