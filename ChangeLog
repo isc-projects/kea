@@ -1,3 +1,12 @@
+723.	[bug]		marcin
+	libdhcp++: Implemented unit tests for the IfaceMgr's routine which opens
+	IPv6 sockets on detected interfaces. The IfaceMgr logic performing low
+	level operations on sockets has been moved to a separate class. By
+	providing a custom implementation of this class, the unit tests may
+	use fake interfaces with custom configuration and thus cover wide
+	range of test scenarios for the function.
+	(Trac #3251, git 21d2f7ec425f8461b545687104cd76a42da61b2e)
+
 722.	[bug]		muks
 	b10-cmdctl now prints a more operator-friendly message when the
 	address+port that b10-cmdctl listens on is already in use.
