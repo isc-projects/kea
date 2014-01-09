@@ -72,7 +72,10 @@ AbstractRRset::toText() const {
     return (s);
 }
 
-namespace {
+namespace { // unnamed namespace
+
+// FIXME: This method's code should somehow be unified with
+// BasicRRsetImpl::toWire() below to avoid duplication.
 template <typename T>
 inline unsigned int
 rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit) {
@@ -125,7 +128,8 @@ rrsetToWire(const AbstractRRset& rrset, T& output, const size_t limit) {
 
     return (n);
 }
-}
+
+} // end of unnamed namespace
 
 unsigned int
 AbstractRRset::toWire(OutputBuffer& buffer) const {
@@ -178,12 +182,14 @@ public:
     vector<ConstRdataPtr> rdatalist_;
 };
 
+// FIXME: This method's code should somehow be unified with
+// rrsetToWire() above to avoid duplication.
 unsigned int
 BasicRRsetImpl::toWire(AbstractMessageRenderer& renderer, size_t limit) const {
     unsigned int n = 0;
 
     if (rdatalist_.empty()) {
-        isc_throw(EmptyRRset, "ToWire() is attempted for an empty RRset");
+        isc_throw(EmptyRRset, "toWire() is attempted for an empty RRset");
     }
 
     // sort the set of Rdata based on rrset-order and sortlist, and possible
