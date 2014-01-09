@@ -216,11 +216,13 @@ TEST_F(RRsetTest, toWireBuffer) {
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, buffer.getData(),
                         buffer.getLength(), &wiredata[0], wiredata.size());
 
-    // toWire() cannot be performed for an empty RRset.
+    // toWire() cannot be performed for an empty RRset except when
+    // class=ANY or class=NONE.
     buffer.clear();
     EXPECT_THROW(rrset_a_empty.toWire(buffer), EmptyRRset);
 
-    // Unless it is type ANY or None
+    // When class=ANY or class=NONE, toWire() can also be performed for
+    // an empty RRset.
     buffer.clear();
     rrset_any_a_empty.toWire(buffer);
     wiredata.clear();
@@ -245,7 +247,8 @@ TEST_F(RRsetTest, toWireRenderer) {
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
                         renderer.getLength(), &wiredata[0], wiredata.size());
 
-    // toWire() cannot be performed for an empty RRset.
+    // toWire() cannot be performed for an empty RRset except when
+    // class=ANY or class=NONE.
     buffer.clear();
     EXPECT_THROW(rrset_a_empty.toWire(buffer), EmptyRRset);
 
