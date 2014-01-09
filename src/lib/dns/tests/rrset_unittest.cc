@@ -249,8 +249,8 @@ TEST_F(RRsetTest, toWireRenderer) {
     buffer.clear();
     EXPECT_THROW(rrset_a_empty.toWire(buffer), EmptyRRset);
 
-    // Unless it is type ANY or None
-    // toWire() can also be performed for an empty RRset.
+    // When class=ANY or class=NONE, toWire() can also be performed for
+    // an empty RRset.
     buffer.clear();
     rrset_any_a_empty.toWire(buffer);
     wiredata.clear();
