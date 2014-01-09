@@ -17,6 +17,7 @@
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/foreach.hpp>
 
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
@@ -164,6 +165,9 @@ public:
     BasicRRsetImpl(const Name& name, const RRClass& rrclass,
                    const RRType& rrtype, const RRTTL& ttl) :
         name_(name), rrclass_(rrclass), rrtype_(rrtype), ttl_(ttl) {}
+
+    unsigned int toWire(AbstractMessageRenderer& renderer, size_t limit) const;
+
     Name name_;
     RRClass rrclass_;
     RRType rrtype_;
@@ -173,6 +177,42 @@ public:
     // is only used in the internal implementation we'll live with it.
     vector<ConstRdataPtr> rdatalist_;
 };
+
+unsigned int
+BasicRRsetImpl::toWire(AbstractMessageRenderer& renderer, size_t limit) const {
+    unsigned int n = 0;
+
+    if (rdatalist_.empty()) {
+        isc_throw(EmptyRRset, "ToWire() is attempted for an empty RRset");
+    }
+
+    // sort the set of Rdata based on rrset-order and sortlist, and possible
+    // other options.  Details to be considered.
+    BOOST_FOREACH(const ConstRdataPtr& rdata, rdatalist_) {
+        const size_t pos0 = renderer.getLength();
+        assert(pos0 < 65536);
+
+        name_.toWire(renderer);
+        rrtype_.toWire(renderer);
+        rrclass_.toWire(renderer);
+        ttl_.toWire(renderer);
+
+        const size_t pos = renderer.getLength();
+        renderer.skip(sizeof(uint16_t)); // leave the space for RDLENGTH
+        rdata->toWire(renderer);
+        renderer.writeUint16At(renderer.getLength() - pos - sizeof(uint16_t),
+                               pos);
+
+        if (limit > 0 && renderer.getLength() > limit) {
+            // truncation is needed
+            renderer.trim(renderer.getLength() - pos0);
+            return (n);
+        }
+        ++n;
+    }
+
+    return (n);
+}
 
 BasicRRset::BasicRRset(const Name& name, const RRClass& rrclass,
                        const RRType& rrtype, const RRTTL& ttl)
@@ -241,7 +281,12 @@ BasicRRset::toWire(OutputBuffer& buffer) const {
 
 unsigned int
 BasicRRset::toWire(AbstractMessageRenderer& renderer) const {
-    return (AbstractRRset::toWire(renderer));
+    const unsigned int rrs_written = impl_->toWire(renderer,
+                                                   renderer.getLengthLimit());
+    if (impl_->rdatalist_.size() > rrs_written) {
+        renderer.setTruncated();
+    }
+    return (rrs_written);
 }
 
 RRset::RRset(const Name& name, const RRClass& rrclass,
