@@ -186,11 +186,25 @@ public:
 // rrsetToWire() above to avoid duplication.
 unsigned int
 BasicRRsetImpl::toWire(AbstractMessageRenderer& renderer, size_t limit) const {
-    unsigned int n = 0;
-
     if (rdatalist_.empty()) {
-        isc_throw(EmptyRRset, "toWire() is attempted for an empty RRset");
+        // empty rrsets are only allowed for classes ANY and NONE
+        if (rrclass_ != RRClass::ANY() &&
+            rrclass_ != RRClass::NONE()) {
+            isc_throw(EmptyRRset, "toWire() is attempted for an empty RRset");
+        }
+
+        // For an empty RRset, write the name, type, class and TTL once,
+        // followed by empty rdata.
+        name_.toWire(renderer);
+        rrtype_.toWire(renderer);
+        rrclass_.toWire(renderer);
+        ttl_.toWire(renderer);
+        renderer.writeUint16(0);
+        // Still counts as 1 'rr'; it does show up in the message
+        return (1);
     }
+
+    unsigned int n = 0;
 
     // sort the set of Rdata based on rrset-order and sortlist, and possible
     // other options.  Details to be considered.
