@@ -315,15 +315,13 @@ RRset::getRRsigDataCount() const {
 
 unsigned int
 RRset::toWire(OutputBuffer& buffer) const {
-    unsigned int rrs_written;
-
-    rrs_written = rrsetToWire<OutputBuffer>(*this, buffer, 0);
+    unsigned int rrs_written = BasicRRset::toWire(buffer);
     if (getRdataCount() > rrs_written) {
         return (rrs_written);
     }
 
     if (rrsig_) {
-        rrs_written += rrsetToWire<OutputBuffer>(*(rrsig_.get()), buffer, 0);
+        rrs_written += rrsig_->toWire(buffer);
     }
 
     return (rrs_written);
@@ -331,24 +329,17 @@ RRset::toWire(OutputBuffer& buffer) const {
 
 unsigned int
 RRset::toWire(AbstractMessageRenderer& renderer) const {
-    unsigned int rrs_written;
-
-    rrs_written =
-        rrsetToWire<AbstractMessageRenderer>(*this, renderer,
-                                             renderer.getLengthLimit());
+    unsigned int rrs_written = BasicRRset::toWire(renderer);
     if (getRdataCount() > rrs_written) {
-        renderer.setTruncated();
         return (rrs_written);
     }
 
     if (rrsig_) {
-        rrs_written +=
-            rrsetToWire<AbstractMessageRenderer>(*(rrsig_.get()), renderer,
-                                                 renderer.getLengthLimit());
-    }
+        rrs_written += rrsig_->toWire(renderer);
 
-    if (getRdataCount() + getRRsigDataCount() > rrs_written) {
-        renderer.setTruncated();
+        if (getRdataCount() + getRRsigDataCount() > rrs_written) {
+            renderer.setTruncated();
+        }
     }
 
     return (rrs_written);
