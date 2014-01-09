@@ -37,20 +37,6 @@ using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::dns::rdata;
 
-// This is a "constant" vector storing desired RR types for the additional
-// section.  The vector is filled first time it's used.
-namespace {
-const vector<RRType>&
-A_AND_AAAA() {
-    static vector<RRType> needed_types;
-    if (needed_types.empty()) {
-        needed_types.push_back(RRType::A());
-        needed_types.push_back(RRType::AAAA());
-    }
-    return (needed_types);
-}
-}
-
 namespace isc {
 namespace auth {
 
