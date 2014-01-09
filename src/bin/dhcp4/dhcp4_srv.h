@@ -400,6 +400,7 @@ protected:
     /// the Server Identifier option as this option must be added using
     /// @c Dhcpv4Srv::appendServerID.
     ///
+    ///
     /// @param msg message object (options will be added to it)
     /// @param msg_type specifies message type
     void appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type);
@@ -417,6 +418,9 @@ protected:
     /// classes being used my throw. The reason for this method to not sanity
     /// check the specified message is that it is meant to be called internally
     /// by the @c Dhcpv4Srv class.
+    ///
+    /// @note This method is static because it is not dependent on the class
+    /// state.
     ///
     /// @param [out] response DHCPv4 message to which the server identifier
     /// option should be added.
@@ -449,6 +453,9 @@ protected:
     /// the interface being used to send the response. This function uses
     /// @c IfaceMgr to get the socket bound to the IPv4 address on the
     /// particular interface.
+    ///
+    /// @note This method is static because it is not dependent on the class
+    /// state.
     static void adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response);
 
     /// @brief Sets remote addresses for outgoing packet.
@@ -464,9 +471,14 @@ protected:
     /// are valid. Make sure that pointers are correct before calling this
     /// function.
     ///
+    /// @note This method is static because it is not dependent on the class
+    /// state.
+    ///
     /// @param question instance of a packet received by a server.
-    /// @param [out] response response packet which addresses are to be adjusted.
-    static void adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response);
+    /// @param [out] response response packet which addresses are to be
+    /// adjusted.
+    static void adjustRemoteAddr(const Pkt4Ptr& question,
+                                 const Pkt4Ptr& response);
 
     /// @brief converts server-id to text
     /// Converts content of server-id option to a text representation, e.g.
