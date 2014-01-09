@@ -1187,7 +1187,7 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
     static const IOAddress bcast_addr("255.255.255.255");
 
     // If received relayed message, server responds to the relay address.
-    if (question->getGiaddr() != zero_addr) {
+    if (question->isRelayed()) {
         response->setRemoteAddr(question->getGiaddr());
 
     // If giaddr is 0 but client set ciaddr, server should unicast the
