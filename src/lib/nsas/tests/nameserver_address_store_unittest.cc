@@ -287,7 +287,10 @@ TEST_F(NameserverAddressStoreTest, emptyLookup) {
     EXPECT_EQ(2, resolver_->requests.size());
 
     // Ask another question with different zone but the same nameserver
-    authority_->setName(Name("example.com."));
+    authority_.reset(new RRset(Name("example.com."), RRClass::IN(), RRType::NS(),
+                               RRTTL(128)));
+    authority_->addRdata(ConstRdataPtr
+                         (new rdata::generic::NS(Name("ns.example.com."))));
     nsas.lookupAndAnswer("example.com.", RRClass::IN(), authority_,
         getCallback());
 
@@ -339,7 +342,10 @@ TEST_F(NameserverAddressStoreTest, unreachableNS) {
     EXPECT_NO_THROW(resolver_->asksIPs(Name("ns.example.com."), 0, 1));
 
     // Ask another question with different zone but the same nameserver
-    authority_->setName(Name("example.com."));
+    authority_.reset(new RRset(Name("example.com."), RRClass::IN(), RRType::NS(),
+                               RRTTL(128)));
+    authority_->addRdata(ConstRdataPtr
+                         (new rdata::generic::NS(Name("ns.example.com."))));
     nsas.lookupAndAnswer("example.com.", RRClass::IN(), authority_,
         getCallback());
 
@@ -356,7 +362,10 @@ TEST_F(NameserverAddressStoreTest, unreachableNS) {
     // When we ask one same and one other zone with the same nameserver,
     // it should generate no questions and answer right away
     nsas.lookup("example.net.", RRClass::IN(), getCallback());
-    authority_->setName(Name("example.org."));
+    authority_.reset(new RRset(Name("example.org."), RRClass::IN(), RRType::NS(),
+                               RRTTL(128)));
+    authority_->addRdata(ConstRdataPtr
+                         (new rdata::generic::NS(Name("ns.example.com."))));
     nsas.lookupAndAnswer("example.org.", RRClass::IN(), authority_,
         getCallback());
 
@@ -427,7 +436,10 @@ TEST_F(NameserverAddressStoreTest, CombinedTest) {
 
     // But when ask for a different zone with the first nameserver, it should
     // ask again, as it is evicted already
-    authority_->setName(Name("example.com."));
+    authority_.reset(new RRset(Name("example.com."), RRClass::IN(), RRType::NS(),
+                               RRTTL(128)));
+    authority_->addRdata(ConstRdataPtr
+                         (new rdata::generic::NS(Name("ns.example.com."))));
     nsas.lookupAndAnswer("example.com.", RRClass::IN(), authority_,
         getCallback());
     EXPECT_EQ(request_count + 2, resolver_->requests.size());

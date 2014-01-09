@@ -230,12 +230,6 @@ public:
     /// TTL of the \c RRset.
     virtual const RRTTL& getTTL() const = 0;
 
-    /// \brief Updates the owner name of the \c RRset.
-    ///
-    /// \param name A reference to a \c Name class object to be copied as the
-    /// new name.
-    virtual void setName(const Name& name) = 0;
-
     /// \brief Updates the TTL of the \c RRset.
     ///
     /// \param ttl A reference to a \c RRTTL class object to be copied as the
@@ -680,17 +674,6 @@ public:
     /// TTL of the \c RRset.
     virtual const RRTTL& getTTL() const;
 
-    /// \brief Updates the owner name of the \c RRset.
-    ///
-    /// This method normally does not throw an exception, but could throw
-    /// some standard exception on resource allocation failure if the
-    /// internal copy of the \c name involves resource allocation and it
-    /// fails.
-    ///
-    /// \param name A reference to a \c Name class object to be copied as the
-    /// new name.
-    virtual void setName(const Name& name);
-
     /// \brief Updates the TTL of the \c RRset.
     ///
     /// This method never throws an exception.
@@ -840,14 +823,6 @@ public:
     ///
     /// See \c AbstractRRset::toWire(OutputBuffer&)const.
     virtual unsigned int toWire(isc::util::OutputBuffer& buffer) const;
-
-    /// \brief Updates the owner name of the \c RRset, including RRSIGs if any
-    virtual void setName(const Name& n) {
-        BasicRRset::setName(n);
-        if (rrsig_) {
-            rrsig_->setName(n);
-        }
-    }
 
     /// \brief Updates the owner name of the \c RRset, including RRSIGs if any
     virtual void setTTL(const RRTTL& ttl) {
