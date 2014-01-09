@@ -114,11 +114,6 @@ TEST_F(RRsetTest, setTTL) {
     EXPECT_EQ(RRTTL(0), rrset_a.getTTL());
 }
 
-TEST_F(RRsetTest, setName) {
-    rrset_a.setName(test_nsname);
-    EXPECT_EQ(test_nsname, rrset_a.getName());
-}
-
 TEST_F(RRsetTest, isSameKind) {
     RRset rrset_w(test_name, RRClass::IN(), RRType::A(), RRTTL(3600));
     RRset rrset_x(test_name, RRClass::IN(), RRType::A(), RRTTL(3600));
