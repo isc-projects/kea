@@ -672,8 +672,6 @@ TEST_F(CfgMgrTest, echoClientId) {
 
 // This test checks the D2ClientMgr wrapper methods.
 TEST_F(CfgMgrTest, d2ClientConfig) {
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-
     // After CfgMgr construction, D2 configuration should be disabled.
     // Fetch it and verify this is the case.
     D2ClientConfigPtr original_config = CfgMgr::instance().getD2ClientConfig();
