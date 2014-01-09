@@ -70,11 +70,6 @@ class TestModuleSpec(unittest.TestCase):
         self.assertEqual(RRTTL(0), self.rrset_a.get_ttl());
         self.assertRaises(TypeError, self.rrset_a.set_ttl, 1)
 
-    def test_set_name(self):
-        self.rrset_a.set_name(self.test_nsname);
-        self.assertEqual(self.test_nsname, self.rrset_a.get_name());
-        self.assertRaises(TypeError, self.rrset_a.set_name, 1)
-
     def test_add_rdata(self):
         # no iterator to read out yet (TODO: add addition test once implemented)
 

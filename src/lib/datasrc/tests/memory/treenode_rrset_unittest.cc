@@ -661,7 +661,6 @@ TEST_F(TreeNodeRRsetTest, unexpectedMethods) {
     TreeNodeRRset rrset(rrclass_, www_node_, a_rdataset_, true);
 
     EXPECT_THROW(rrset.setTTL(RRTTL(0)), isc::Unexpected);
-    EXPECT_THROW(rrset.setName(Name("example")), isc::Unexpected);
     EXPECT_THROW(rrset.addRdata(createRdata(RRType::A(), rrclass_, "0.0.0.0")),
                  isc::Unexpected);
     RdataPtr sig_rdata = createRdata(
