@@ -37,6 +37,38 @@
 #include <string.h>
 #include <sys/select.h>
 
+/// @brief A macro which handles an error in IfaceMgr.
+///
+/// There are certain cases when IfaceMgr may hit an error which shouldn't
+/// result in interruption of the function processing. A typical case is
+/// the function which opens sockets on available interfaces for a DHCP
+/// server. If this function fails to open a socket on a specific interface
+/// (for example, there is another socket already open on this interface
+/// and bound to the same address and port), it is desired that the server
+/// logs a warning but will try to open sockets on other interfaces. In order
+/// to log an error, the IfaceMgr will use the error handler function provided
+/// by the server and pass an error string to it. When the handler function
+/// returns, the IfaceMgr will proceed to open other sockets. It is allowed
+/// that the error handler function is not installed (is NULL). In these
+/// cases it is expected that the exception is thrown instead. A possible
+/// solution would be to enclose this conditional behavior in a function.
+/// However, despite the hate for macros, the macro seems to be a bit
+/// better solution in this case as it allows to convenietly pass an
+/// error string in a stream (not as a string).
+///
+/// @param ex_type Exception to be thrown if error_handler is NULL.
+/// @param handler Error handler function to be called or NULL to indicate
+/// that exception should be thrown instead.
+/// @param stream stream object holding an error string.
+#define ifacemgr_error(ex_type, handler, stream) \
+    std::ostringstream oss__; \
+    oss__ << stream; \
+    if (handler) { \
+        handler(oss__.str()); \
+    } else { \
+        isc_throw(ex_type, oss__); \
+    }
+
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::util::io::internal;
@@ -426,8 +458,9 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
     return (count > 0);
 }
 
-bool IfaceMgr::openSockets6(const uint16_t port) {
-    int sock;
+bool
+IfaceMgr::openSockets6(const uint16_t port,
+                       IfaceMgrErrorMsgCallback error_handler) {
     int count = 0;
 
     for (IfaceCollection::iterator iface = ifaces_.begin();
@@ -446,12 +479,15 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
         for (Iface::AddressCollection::iterator addr = unicasts.begin();
              addr != unicasts.end(); ++addr) {
 
-            sock = openSocket(iface->getName(), *addr, port);
-            if (sock < 0) {
-                const char* errstr = strerror(errno);
-                isc_throw(SocketConfigError, "failed to open unicast socket on "
-                          << addr->toText() << " on interface " << iface->getName()
-                          << ", reason: " << errstr);
+            try {
+                openSocket(iface->getName(), *addr, port);
+
+            } catch (const Exception& ex) {
+                ifacemgr_error(SocketConfigError, error_handler,
+                               "Failed to open unicast socket on  interface "
+                               << iface->getName() << ", reason: "
+                               << ex.what());
+                continue;
             }
 
             count++;
@@ -485,13 +521,18 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             // it for some odd use cases which may utilize non-multicast
             // interfaces. Perhaps a warning should be emitted if the
             // interface is not a multicast one.
-            sock = openSocket(iface->getName(), *addr, port,
-                              iface->flag_multicast_);
-            if (sock < 0) {
-                const char* errstr = strerror(errno);
-                isc_throw(SocketConfigError, "failed to open link-local"
-                          " socket on " << addr->toText() << " on interface "
-                          << iface->getName() << ", reason: " << errstr);
+            int sock;
+            try {
+                sock = openSocket(iface->getName(), *addr, port,
+                                  iface->flag_multicast_);
+
+            } catch (const Exception& ex) {
+                ifacemgr_error(SocketConfigError, error_handler,
+                               "Failed to open link-local socket on "
+                               " interface " << iface->getName() << ": "
+                               << ex.what());
+                continue;
+
             }
 
             count++;
@@ -501,16 +542,18 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             // To receive multicast traffic, Linux requires binding socket to
             // a multicast group. That in turn doesn't work on NetBSD.
             if (iface->flag_multicast_) {
-                int sock2 =
+                try {
                     openSocket(iface->getName(),
                                IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
                                port);
-                if (sock2 < 0) {
-                    const char* errstr = strerror(errno);
-                    isc_throw(SocketConfigError, "Failed to open multicast"
-                              " socket on interface " << iface->getFullName()
-                              << ", reason:" << errstr);
-                    iface->delSocket(sock); // delete previously opened socket
+                } catch (const Exception& ex) {
+                    // Delete previously opened socket.
+                    iface->delSocket(sock);
+                    ifacemgr_error(SocketConfigError, error_handler,
+                                   "Failed to open multicast socket on"
+                                   " interface " << iface->getFullName()
+                                   << ", reason: " << ex.what());
+                    continue;
                 }
             }
 #endif
