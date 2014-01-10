@@ -50,6 +50,16 @@ public:
         DNSProtocolError(file, line, what) {}
     virtual const Rcode& getRcode() const;
 };
+
+///
+/// \brief Base class for name parser exceptions.
+///
+class NameParserException : public isc::Exception {
+public:
+    NameParserException(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 }
 }
 #endif  // DNS_EXCEPTIONS_H
