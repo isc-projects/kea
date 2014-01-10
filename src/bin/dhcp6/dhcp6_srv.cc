@@ -45,6 +45,7 @@
 #include <util/io_utilities.h>
 #include <util/range_utilities.h>
 
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string/erase.hpp>
@@ -152,7 +153,12 @@ Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
                 LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
                 return;
             }
-            IfaceMgr::instance().openSockets6(port_);
+            // Create error handler. This handler will be called every time
+            // the socket opening operation fails. We use this handler to
+            // log a warning.
+            isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
+                boost::bind(&Dhcpv6Srv::ifaceMgrSocket6ErrorHandler, _1);
+            IfaceMgr::instance().openSockets6(port_, error_handler);
         }
 
         string duid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_DUID_FILE);
@@ -2311,7 +2317,9 @@ Dhcpv6Srv::openActiveSockets(const uint16_t port) {
     // sockets are marked active or inactive.
     // @todo Optimization: we should not reopen all sockets but rather select
     // those that have been affected by the new configuration.
-    if (!IfaceMgr::instance().openSockets6(port)) {
+    isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
+        boost::bind(&Dhcpv6Srv::ifaceMgrSocket6ErrorHandler, _1);
+    if (!IfaceMgr::instance().openSockets6(port, error_handler)) {
         LOG_WARN(dhcp6_logger, DHCP6_NO_SOCKETS_OPEN);
     }
 }
@@ -2409,6 +2417,11 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
     return (offset);
 }
 
+void
+Dhcpv6Srv::ifaceMgrSocket6ErrorHandler(const std::string& errmsg) {
+    // Log the reason for socket opening failure and return.
+    LOG_WARN(dhcp6_logger, DHCP6_OPEN_SOCKET_FAIL).arg(errmsg);
+}
 
 };
 };
