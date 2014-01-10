@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -58,7 +58,7 @@ public:
     /// @brief Constructor
     ///
     /// @param enable_updates Enables DHCP-DDNS updates
-    /// @param server_ip IP address of the b10-dhcp-ddns server
+    /// @param server_ip IP address of the b10-dhcp-ddns server (IPv4 or IPv6)
     /// @param server_port IP port of the b10-dhcp-ddns server
     /// @param ncr_protocol Socket protocol to use with b10-dhcp-ddns
     /// Currently only UDP is supported.
@@ -71,7 +71,6 @@ public:
     /// is unnecessary).
     /// @param always_include_fqdn Enables always including the FQDN option in
     /// DHCP responses.
-    /// @param allow_client_update Enables delegation of updates to clients
     /// @param override_no_update Enables updates, even if clients request no
     /// updates.
     /// @param override_client_update Perform updates, even if client requested
@@ -89,7 +88,6 @@ public:
                    const dhcp_ddns::NameChangeFormat& ncr_format,
                    const bool remove_on_renew,
                    const bool always_include_fqdn,
-                   const bool allow_client_update,
                    const bool override_no_update,
                    const bool override_client_update,
                    const bool replace_client_name,
@@ -108,7 +106,7 @@ public:
         return(enable_updates_);
     }
 
-    /// @brief Return the IP address of b10-dhcp-ddns.
+    /// @brief Return the IP address of b10-dhcp-ddns (IPv4 or IPv6).
     const isc::asiolink::IOAddress& getServerIp() const {
         return(server_ip_);
     }
@@ -136,11 +134,6 @@ public:
     /// @brief Return whether or not FQDN is always included in DHCP responses.
     bool getAlwaysIncludeFqdn() const {
         return(always_include_fqdn_);
-    }
-
-    /// @brief Return whether or not updates can be delegated to clients.
-    bool getAllowClientUpdate() const {
-        return(allow_client_update_);
     }
 
     /// @brief Return if updates are done even if clients request no updates.
@@ -177,11 +170,19 @@ public:
     /// @brief Generates a string representation of the class contents.
     std::string toText() const;
 
+protected:
+    /// @brief Validates member values.
+    ///
+    /// Method is used by the constructor to validate member contents.
+    ///
+    /// @throw D2ClientError if given an invalid protocol or format.
+    virtual void validateContents();
+
 private:
     /// @brief Indicates whether or not DHCP DDNS updating is enabled.
     bool enable_updates_;
 
-    /// @brief IP address of the b10-dhcp-ddns server.
+    /// @brief IP address of the b10-dhcp-ddns server (IPv4 or IPv6).
     isc::asiolink::IOAddress server_ip_;
 
     /// @brief IP port of the b10-dhcp-ddns server.
@@ -204,9 +205,6 @@ private:
 
     /// @brief Should Kea always include the FQDN option in its response.
     bool always_include_fqdn_;
-
-    /// @brief Should Kea permit the client to do updates.
-    bool allow_client_update_;
 
     /// @brief Should Kea perform updates, even if client requested no updates.
     /// Overrides the client request for no updates via the N flag.
@@ -236,7 +234,7 @@ typedef boost::shared_ptr<D2ClientConfig> D2ClientConfigPtr;
 /// Provides services for managing the current D2ClientConfig and managing
 /// communications with D2. (@todo The latter will be added once communication
 /// with D2 is implemented through the integration of
-/// dhcp_ddns::NameChangeSender interface(s).
+/// dhcp_ddns::NameChangeSender interface(s)).
 ///
 class D2ClientMgr {
 public:
@@ -258,7 +256,7 @@ public:
     /// @brief Convenience method for checking if DHCP-DDNS is enabled.
     ///
     /// @return True if the D2 configuration is enabled.
-    bool isDhcpDdnsEnabled();
+    bool ddnsEnabled();
 
     /// @brief Fetches the DHCP-DDNS configuration pointer.
     ///

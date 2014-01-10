@@ -354,8 +354,8 @@ CfgMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
 }
 
 bool
-CfgMgr::isDhcpDdnsEnabled() {
-    return (d2_client_mgr_.isDhcpDdnsEnabled());
+CfgMgr::ddnsEnabled() {
+    return (d2_client_mgr_.ddnsEnabled());
 }
 
 const D2ClientConfigPtr&

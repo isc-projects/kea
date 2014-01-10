@@ -298,37 +298,38 @@
         "item_type": "map",
         "item_optional": false,
         "item_default": {"enable-updates": false},
+        "item_description" : "Contains parameters pertaining DHCP-driven DDNS updates",
         "map_item_spec": [
             {
                 "item_name": "enable-updates",
                 "item_type": "boolean",
                 "item_optional": false,
-                "item_default": False,
+                "item_default": false,
                 "item_description" : "Enables DDNS update processing"
             },
             {
-                "item_name": "server_ip",
+                "item_name": "server-ip",
                 "item_type": "string",
                 "item_optional": true,
                 "item_default": "127.0.0.1",
-                "item_description" : "IP address of b10-dhcp-ddns"
+                "item_description" : "IP address of b10-dhcp-ddns (IPv4 or IPv6)"
             },
             {
-                "item_name": "server_port",
+                "item_name": "server-port",
                 "item_type": "integer",
                 "item_optional": true,
-                "item_default": 5301,
+                "item_default": 53001,
                 "item_description" : "port number of b10-dhcp-ddns"
             },
             {
-                "item_name": "ncr_protocol",
+                "item_name": "ncr-protocol",
                 "item_type": "string",
                 "item_optional": true,
                 "item_default": "UDP",
                 "item_description" : "Socket protocol to use with b10-dhcp-ddns"
             },
             {
-                "item_name": "ncr_format",
+                "item_name": "ncr-format",
                 "item_type": "string",
                 "item_optional": true,
                 "item_default": "JSON",
@@ -339,23 +340,15 @@
                 "item_type": "boolean",
                 "item_optional": true,
                 "item_default": false,
-                "item_description": "Should server request a DNS Remove, before a DNS Update on renewals"
+                "item_description": "Enable requesting a DNS Remove, before a DNS Update on renewals"
             },
             {
 
                 "item_name": "always-include-fqdn",
                 "item_type": "boolean",
                 "item_optional": true,
-                "item_default": False,
-                "item_description": "Should server always include the FQDN option in its response"
-            },
-            {
-
-                "item_name": "allow-client-update",
-                "item_type": "boolean",
-                "item_optional": true,
-                "item_default": False,
-                "item_description": "Enable AAAA RR update delegation to the client"
+                "item_default": false,
+                "item_description": "Enable always including the FQDN option in its response"
             },
             {
                 "item_name": "override-no-update",
@@ -368,7 +361,7 @@
                 "item_name": "override-client-update",
                 "item_type": "boolean",
                 "item_optional": true,
-                "item_default": true,
+                "item_default": false,
                 "item_description": "Server performs an update even if client requested delegation"
             },
             {

@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +31,6 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                      NameChangeFormat& ncr_format,
                                const bool remove_on_renew,
                                const bool always_include_fqdn,
-                               const bool allow_client_update,
                                const bool override_no_update,
                                const bool override_client_update,
                                const bool replace_client_name,
@@ -44,29 +43,12 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
     ncr_format_(ncr_format),
     remove_on_renew_(remove_on_renew),
     always_include_fqdn_(always_include_fqdn),
-    allow_client_update_(allow_client_update),
     override_no_update_(override_no_update),
     override_client_update_(override_client_update),
     replace_client_name_(replace_client_name),
     generated_prefix_(generated_prefix),
     qualifying_suffix_(qualifying_suffix) {
-    if (ncr_format_ != dhcp_ddns::FMT_JSON) {
-        isc_throw(D2ClientError, "D2ClientConfig: NCR Format:"
-                    << dhcp_ddns::ncrFormatToString(ncr_format)
-                    << " is not yet supported");
-    }
-
-    if (ncr_protocol_ != dhcp_ddns::NCR_UDP) {
-        isc_throw(D2ClientError, "D2ClientConfig: NCR Protocol:"
-                    << dhcp_ddns::ncrProtocolToString(ncr_protocol)
-                    << " is not yet supported");
-    }
-
-    // @todo perhaps more validation we should do yet?
-    // Are there any invalid combinations of options we need to test against?
-    // For instance are allow_client_update and override_client_update mutually
-    // exclusive?
-    // Also do we care about validating contents if it's disabled?
+    validateContents();
 }
 
 D2ClientConfig::D2ClientConfig()
@@ -77,15 +59,34 @@ D2ClientConfig::D2ClientConfig()
       ncr_format_(dhcp_ddns::FMT_JSON),
       remove_on_renew_(false),
       always_include_fqdn_(false),
-      allow_client_update_(false),
       override_no_update_(false),
       override_client_update_(false),
       replace_client_name_(false),
       generated_prefix_(""),
       qualifying_suffix_("") {
+    validateContents();
 }
 
 D2ClientConfig::~D2ClientConfig(){};
+
+void
+D2ClientConfig::validateContents() {
+    if (ncr_format_ != dhcp_ddns::FMT_JSON) {
+        isc_throw(D2ClientError, "D2ClientConfig: NCR Format:"
+                    << dhcp_ddns::ncrFormatToString(ncr_format_)
+                    << " is not yet supported");
+    }
+
+    if (ncr_protocol_ != dhcp_ddns::NCR_UDP) {
+        isc_throw(D2ClientError, "D2ClientConfig: NCR Protocol:"
+                    << dhcp_ddns::ncrProtocolToString(ncr_protocol_)
+                    << " is not yet supported");
+    }
+
+    // @todo perhaps more validation we should do yet?
+    // Are there any invalid combinations of options we need to test against?
+    // Also do we care about validating contents if it's disabled?
+}
 
 bool
 D2ClientConfig::operator == (const D2ClientConfig& other) const {
@@ -96,7 +97,6 @@ D2ClientConfig::operator == (const D2ClientConfig& other) const {
             (ncr_format_ == other.ncr_format_) &&
             (remove_on_renew_ == other.remove_on_renew_) &&
             (always_include_fqdn_ == other.always_include_fqdn_) &&
-            (allow_client_update_ == other.allow_client_update_) &&
             (override_no_update_ == other.override_no_update_) &&
             (override_client_update_ == other.override_client_update_) &&
             (replace_client_name_ == other.replace_client_name_) &&
@@ -121,8 +121,6 @@ D2ClientConfig::toText() const {
                << ", ncr_format: " << ncr_format_
                << ", remove_on_renew: " << (remove_on_renew_ ? "yes" : "no")
                << ", always_include_fqdn: " << (always_include_fqdn_ ?
-                                                "yes" : "no")
-               << ", allow_client_update: " << (allow_client_update_ ?
                                                 "yes" : "no")
                << ", override_no_update: " << (override_no_update_ ?
                                                "yes" : "no")
@@ -169,12 +167,12 @@ D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
     // For now we just update the configuration.
     d2_client_config_ = new_config;
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_CFG_DHCP_DDNS)
-              .arg(!isDhcpDdnsEnabled() ? "DHCP-DDNS updates disabled" :
+              .arg(!ddnsEnabled() ? "DHCP-DDNS updates disabled" :
                    "DHCP_DDNS updates enabled");
 }
 
 bool
-D2ClientMgr::isDhcpDdnsEnabled() {
+D2ClientMgr::ddnsEnabled() {
     return (d2_client_config_->getEnableUpdates());
 }
 

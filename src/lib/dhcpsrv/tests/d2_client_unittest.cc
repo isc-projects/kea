@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -26,7 +26,7 @@ using namespace isc;
 
 namespace {
 
-// brief Checks constructors and accessors of D2ClientConfig.
+/// @brief Checks constructors and accessors of D2ClientConfig.
 TEST(D2ClientConfigTest, constructorsAndAccessors) {
     D2ClientConfigPtr d2_client_config;
 
@@ -43,7 +43,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     dhcp_ddns::NameChangeFormat ncr_format = dhcp_ddns::FMT_JSON;
     bool remove_on_renew = true;
     bool always_include_fqdn = true;
-    bool allow_client_update = true;
     bool override_no_update = true;
     bool override_client_update = true;
     bool replace_client_name = true;
@@ -59,7 +58,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                           ncr_format,
                                                           remove_on_renew,
                                                           always_include_fqdn,
-                                                          allow_client_update,
                                                           override_no_update,
                                                          override_client_update,
                                                           replace_client_name,
@@ -77,7 +75,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     EXPECT_EQ(d2_client_config->getNcrFormat(), ncr_format);
     EXPECT_EQ(d2_client_config->getRemoveOnRenew(), remove_on_renew);
     EXPECT_EQ(d2_client_config->getAlwaysIncludeFqdn(), always_include_fqdn);
-    EXPECT_EQ(d2_client_config->getAllowClientUpdate(), allow_client_update);
     EXPECT_EQ(d2_client_config->getOverrideNoUpdate(), override_no_update);
     EXPECT_EQ(d2_client_config->getOverrideClientUpdate(),
               override_client_update);
@@ -90,7 +87,7 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                     *d2_client_config << std::endl);
 
     // Verify that constructor does not allow use of NCR_TCP.
-    // @todo obviously this becomes invalid once TCP is supported.
+    /// @todo obviously this becomes invalid once TCP is supported.
     ASSERT_THROW(d2_client_config.reset(new
                                         D2ClientConfig(enable_updates,
                                                        server_ip,
@@ -99,7 +96,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                        ncr_format,
                                                        remove_on_renew,
                                                        always_include_fqdn,
-                                                       allow_client_update,
                                                        override_no_update,
                                                        override_client_update,
                                                        replace_client_name,
@@ -107,11 +103,11 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                        qualifying_suffix)),
                  D2ClientError);
 
-    // @todo if additional validation is added to ctor, this test needs to
-    // expand accordingly.
+    /// @todo if additional validation is added to ctor, this test needs to
+    /// expand accordingly.
 }
 
-// Tests the equality and inequality operators of D2ClientConfig.
+/// @brief Tests the equality and inequality operators of D2ClientConfig.
 TEST(D2ClientConfigTest, equalityOperator) {
     D2ClientConfigPtr ref_config;
     D2ClientConfigPtr test_config;
@@ -123,7 +119,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(ref_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true, true,
+                    true, true, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(ref_config);
 
@@ -131,7 +127,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true, true,
+                    true, true, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_TRUE(*ref_config == *test_config);
@@ -141,7 +137,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(false,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true, true,
+                    true, true, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -151,7 +147,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     test_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true, true,
+                    true, true, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -161,7 +157,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 333,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true, true,
+                    true, true, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -171,7 +167,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    false, true, true, true, true, true,
+                    false, true, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -181,17 +177,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, false, true, true, true, true,
-                    "pre-fix", "suf-fix")));
-    ASSERT_TRUE(test_config);
-    EXPECT_FALSE(*ref_config == *test_config);
-    EXPECT_TRUE(*ref_config != *test_config);
-
-    // Check a configuration that differs only by allow_client_update.
-    ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
-                    ref_address, 477,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, false, true, true, true,
+                    true, false, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -201,7 +187,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, false, true, true,
+                    true, true, false, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -211,7 +197,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, false, true,
+                    true, true, true, false, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -221,7 +207,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true, false,
+                    true, true, true, true, false,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -231,7 +217,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true, true,
+                    true, true, true, true, true,
                     "bogus", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -241,14 +227,14 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true, true,
+                    true, true, true, true, true,
                     "pre-fix", "bogus")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
 }
 
-// This test checks the D2ClientMgr constructor.
+/// @brief Checks the D2ClientMgr constructor.
 TEST(D2ClientMgr, constructor) {
     D2ClientMgrPtr d2_client_mgr;
 
@@ -262,12 +248,12 @@ TEST(D2ClientMgr, constructor) {
     EXPECT_FALSE(original_config->getEnableUpdates());
 
     // Make sure convenience method agrees.
-    EXPECT_FALSE(d2_client_mgr->isDhcpDdnsEnabled());
+    EXPECT_FALSE(d2_client_mgr->ddnsEnabled());
 }
 
-// This test checks passing the D2ClientMgr a valid D2 client configuration.
-// @todo Once NameChangeSender is integrated, this test needs to expand, and
-// additional scenario tests will need to be written.
+/// @brief Checks passing the D2ClientMgr a valid D2 client configuration.
+/// @todo Once NameChangeSender is integrated, this test needs to expand, and
+/// additional scenario tests will need to be written.
 TEST(D2ClientMgr, validConfig) {
     D2ClientMgrPtr d2_client_mgr;
 
@@ -284,7 +270,7 @@ TEST(D2ClientMgr, validConfig) {
     ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig(true,
                                   isc::asiolink::IOAddress("127.0.0.1"), 477,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  true, true, true, true, true, true,
+                                  true, true, true, true, true,
                                   "pre-fix", "suf-fix")));
 
     // Verify that we can assign a new, non-empty configuration.
@@ -296,7 +282,7 @@ TEST(D2ClientMgr, validConfig) {
     EXPECT_TRUE(updated_config->getEnableUpdates());
 
     // Make sure convenience method agrees with the updated configuration.
-    EXPECT_TRUE(d2_client_mgr->isDhcpDdnsEnabled());
+    EXPECT_TRUE(d2_client_mgr->ddnsEnabled());
 
     // Make sure the configuration we fetched is the one  we assigned,
     // and not the original configuration.

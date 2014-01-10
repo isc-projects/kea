@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -64,6 +64,7 @@ std::string specfile(const std::string& name) {
 /// Verifies that the BIND10 DHCP-DDNS configuration specification file
 //  is valid.
 TEST(Dhcp4SpecTest, basicSpec) {
+    (isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));
     ASSERT_NO_THROW(isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));
 }
 
@@ -2327,7 +2328,7 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
 
     // Verify that the convenience method agrees.
-    ASSERT_FALSE(CfgMgr::instance().isDhcpDdnsEnabled());
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
 
     string config_str = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
@@ -2338,7 +2339,7 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : true, "
         "     \"server-ip\" : \"192.168.2.1\", "
-        "     \"server-port\" : 5301, "
+        "     \"server-port\" : 777, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"remove-on-renew\" : true, "
@@ -2362,7 +2363,7 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
     checkResult(status, 0);
 
     // Verify that DHCP-DDNS updating is enabled.
-    EXPECT_TRUE(CfgMgr::instance().isDhcpDdnsEnabled());
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
 
     // Verify that the D2 configuration can be retrieved.
     d2_client_config = CfgMgr::instance().getD2ClientConfig();
@@ -2371,12 +2372,11 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
     // Verify that the configuration values are correct.
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
     EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
-    EXPECT_EQ(5301, d2_client_config->getServerPort());
+    EXPECT_EQ(777, d2_client_config->getServerPort());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
     EXPECT_TRUE(d2_client_config->getRemoveOnRenew());
     EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
-    EXPECT_TRUE(d2_client_config->getAllowClientUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
     EXPECT_TRUE(d2_client_config->getReplaceClientName());
@@ -2427,7 +2427,7 @@ TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
 
     // Verify that the convenience method agrees.
-    ASSERT_FALSE(CfgMgr::instance().isDhcpDdnsEnabled());
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
 }
 
 }
