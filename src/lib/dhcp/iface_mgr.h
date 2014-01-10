@@ -643,10 +643,14 @@ public:
     /// implementation is hardcoded in the openSocket6.
     ///
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
+    /// @param error_handler A pointer to an error handler function which is
+    /// called by the openSockets6 when it fails to open a socket. This
+    /// parameter can be NULL to indicate that the callback should not be used.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
-    bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT);
+    bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT,
+                      IfaceMgrErrorMsgCallback error_handler = NULL);
 
     /// @brief Opens IPv4 sockets on detected interfaces.
     ///
