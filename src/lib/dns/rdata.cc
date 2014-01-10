@@ -15,6 +15,7 @@
 #include <exceptions/exceptions.h>
 
 #include <util/buffer.h>
+#include <util/encode/hex.h>
 
 #include <dns/name.h>
 #include <dns/messagerenderer.h>
@@ -212,93 +213,87 @@ Generic::Generic(isc::util::InputBuffer& buffer, size_t rdata_len) {
 }
 
 void
-Generic::constructHelper(const std::string& rdata_string) {
-    istringstream iss(rdata_string);
-    string unknown_mark;
-    iss >> unknown_mark;
-    if (unknown_mark != "\\#") {
+Generic::constructFromLexer(MasterLexer& lexer) {
+    const MasterToken& token = lexer.getNextToken(MasterToken::STRING);
+    if (token.getString() != "\\#") {
         isc_throw(InvalidRdataText,
-                  "Missing the special token (\\#) for generic RDATA encoding");
+                  "Missing the special token (\\#) for "
+                  "unknown RDATA encoding");
     }
 
-    // RDLENGTH: read into a string so that we can easily reject invalid tokens
-    string rdlen_txt;
-    iss >> rdlen_txt;
-    istringstream iss_rdlen(rdlen_txt);
-    int32_t rdlen;
-    iss_rdlen >> rdlen;
-    if (iss_rdlen.rdstate() != ios::eofbit) {
-        isc_throw(InvalidRdataText,
-                  "Invalid representation for a generic RDLENGTH");
-    }
-    if (rdlen < 0 || rdlen > 0xffff) {
-        isc_throw(InvalidRdataLength, "RDATA length is out of range");
-    }
-    iss >> ws;                  // skip any white spaces
+    uint32_t rdlen;
 
-    // Hexadecimal encoding of RDATA: each segment must consist of an even
-    // number of hex digits.
-    vector<uint8_t> data;
-    while (!iss.eof() && data.size() < rdlen) {
-        // extract two characters, which should compose a single byte of data.
-        char buf[2];
-        iss.read(buf, sizeof(buf));
-        if ((iss.rdstate() & (ios::badbit | ios::failbit)) != 0) {
-            isc_throw(InvalidRdataText,
-                      "Invalid hex encoding of generic RDATA");
-        }
-
-        // convert it to a single byte integer as a hex digit.
-        istringstream iss_byte(string(buf, sizeof(buf)));
-        unsigned int ch;
-        iss_byte >> hex >> ch;
-        if (iss_byte.rdstate() != ios::eofbit) {
-            isc_throw(InvalidRdataText,
-                      "Invalid hex encoding of generic RDATA");
-        }
-        data.push_back(ch);
-        iss >> ws;              // skip spaces
-    }
-
-    if (!iss.eof()) {
+    try {
+        rdlen = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    } catch (const MasterLexer::LexerError& ex) {
         isc_throw(InvalidRdataLength,
-                  "RDLENGTH is too small for generic RDATA");
+                  "Unknown RDATA length is invalid");
+    }
+
+    if (rdlen > 65535) {
+        isc_throw(InvalidRdataLength,
+                  "Unknown RDATA length is out of range: " << rdlen);
+    }
+
+    vector<uint8_t> data;
+
+    if (rdlen > 0) {
+        string hex_txt;
+        string hex_part;
+        // Whitespace is allowed within hex data, so read to the end of input.
+        while (true) {
+            const MasterToken& token =
+                lexer.getNextToken(MasterToken::STRING, true);
+            if ((token.getType() == MasterToken::END_OF_FILE) ||
+                (token.getType() == MasterToken::END_OF_LINE)) {
+                break;
+            }
+            token.getString(hex_part);
+            hex_txt.append(hex_part);
+        }
+
+        lexer.ungetToken();
+
+        try {
+            isc::util::encode::decodeHex(hex_txt, data);
+        } catch (const isc::BadValue& ex) {
+            isc_throw(InvalidRdataText,
+                      "Invalid hex encoding of generic RDATA: " << ex.what());
+        }
     }
 
     if (data.size() != rdlen) {
         isc_throw(InvalidRdataLength,
-                  "Generic RDATA code doesn't match RDLENGTH");
+                  "Unknown RDATA hex data doesn't match RDLENGTH: "
+                  << data.size() << " vs. " << rdlen);
     }
 
     impl_ = new GenericImpl(data);
 }
 
 Generic::Generic(const std::string& rdata_string) {
-    constructHelper(rdata_string);
+    try {
+        std::istringstream ss(rdata_string);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
+
+        constructFromLexer(lexer);
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for unknown RDATA: "
+                      << rdata_string);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct unknown RDATA "
+                  "from '" << rdata_string << "': " << ex.what());
+    }
 }
 
 Generic::Generic(MasterLexer& lexer, const Name*,
                  MasterLoader::Options,
                  MasterLoaderCallbacks&)
 {
-    std::string s;
-
-    while (true) {
-        const MasterToken& token = lexer.getNextToken();
-        if ((token.getType() == MasterToken::END_OF_FILE) ||
-            (token.getType() == MasterToken::END_OF_LINE)) {
-            lexer.ungetToken(); // let the upper layer handle the end-of token
-            break;
-        }
-
-        if (!s.empty()) {
-            s += " ";
-        }
-
-        s += token.getString();
-    }
-
-    constructHelper(s);
+    constructFromLexer(lexer);
 }
 
 Generic::~Generic() {
