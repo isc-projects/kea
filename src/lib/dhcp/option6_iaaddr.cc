@@ -79,10 +79,10 @@ void Option6IAAddr::unpack(OptionBuffer::const_iterator begin,
     addr_ = IOAddress::fromBytes(AF_INET6, &(*begin));
     begin += V6ADDRESS_LEN;
 
-    preferred_ = readUint32( &(*begin) );
+    preferred_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
 
-    valid_ = readUint32( &(*begin) );
+    valid_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
 
     unpackOptions(OptionBuffer(begin, end));

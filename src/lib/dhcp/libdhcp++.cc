@@ -223,10 +223,10 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
     // The buffer being read comprises a set of options, each starting with
     // a two-byte type code and a two-byte length field.
     while (offset + 4 <= length) {
-        uint16_t opt_type = isc::util::readUint16(&buf[offset]);
+        uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
-        uint16_t opt_len = isc::util::readUint16(&buf[offset]);
+        uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
         if (offset + opt_len > length) {
@@ -405,10 +405,10 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
     // The buffer being read comprises a set of options, each starting with
     // a two-byte type code and a two-byte length field.
     while (offset + 4 <= length) {
-        uint16_t opt_type = isc::util::readUint16(&buf[offset]);
+        uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
-        uint16_t opt_len = isc::util::readUint16(&buf[offset]);
+        uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
         if (offset + opt_len > length) {

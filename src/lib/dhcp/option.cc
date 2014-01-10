@@ -255,7 +255,7 @@ uint16_t Option::getUint16() {
                   << " that has size " << data_.size());
     }
 
-    return ( readUint16(&data_[0]) );
+    return (readUint16(&data_[0], data_.size()));
 }
 
 uint32_t Option::getUint32() {
@@ -263,7 +263,7 @@ uint32_t Option::getUint32() {
         isc_throw(OutOfRange, "Attempt to read uint32 from option " << type_
                   << " that has size " << data_.size());
     }
-    return ( readUint32(&data_[0]) );
+    return (readUint32(&data_[0], data_.size()));
 }
 
 void Option::setUint8(uint8_t value) {
@@ -273,12 +273,12 @@ void Option::setUint8(uint8_t value) {
 
 void Option::setUint16(uint16_t value) {
   data_.resize(2);
-  writeUint16(value, &data_[0]);
+  writeUint16(value, &data_[0], data_.size());
 }
 
 void Option::setUint32(uint32_t value) {
   data_.resize(4);
-  writeUint32(value, &data_[0]);
+  writeUint32(value, &data_[0], data_.size());
 }
 
 bool Option::equal(const OptionPtr& other) const {
