@@ -604,9 +604,10 @@ Dhcpv6Srv::generateServerID() {
         seconds -= DUID_TIME_EPOCH;
 
         OptionBuffer srvid(8 + iface->getMacLen());
-        writeUint16(DUID::DUID_LLT, &srvid[0]);
-        writeUint16(HWTYPE_ETHERNET, &srvid[2]);
-        writeUint32(static_cast<uint32_t>(seconds), &srvid[4]);
+        writeUint16(DUID::DUID_LLT, &srvid[0], srvid.size());
+        writeUint16(HWTYPE_ETHERNET, &srvid[2], srvid.size() - 2);
+        writeUint32(static_cast<uint32_t>(seconds), &srvid[4],
+                    srvid.size() - 4);
         memcpy(&srvid[0] + 8, iface->getMac(), iface->getMacLen());
 
         serverid_ = OptionPtr(new Option(Option::V6, D6O_SERVERID,
@@ -620,8 +621,8 @@ Dhcpv6Srv::generateServerID() {
     // See Section 9.3 of RFC3315 for details.
 
     OptionBuffer srvid(12);
-    writeUint16(DUID::DUID_EN, &srvid[0]);
-    writeUint32(ENTERPRISE_ID_ISC, &srvid[2]);
+    writeUint16(DUID::DUID_EN, &srvid[0], srvid.size());
+    writeUint32(ENTERPRISE_ID_ISC, &srvid[2], srvid.size() - 2);
 
     // Length of the identifier is company specific. I hereby declare
     // ISC "standard" of 6 bytes long pseudo-random numbers.
@@ -2344,10 +2345,10 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
     // The buffer being read comprises a set of options, each starting with
     // a two-byte type code and a two-byte length field.
     while (offset + 4 <= length) {
-        uint16_t opt_type = isc::util::readUint16(&buf[offset]);
+        uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
-        uint16_t opt_len = isc::util::readUint16(&buf[offset]);
+        uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
         if (offset + opt_len > length) {

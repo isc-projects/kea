@@ -188,7 +188,7 @@ TEST(UDPSocket, processReceivedData) {
     // two bytes of the buffer.
     uint16_t count = 0;
     for (uint32_t i = 0; i < (2 << 16); ++i, ++count) {
-        writeUint16(count, inbuff);
+        writeUint16(count, inbuff, sizeof (inbuff));
 
         // Set some random values
         cumulative = 5;

@@ -76,10 +76,10 @@ void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
 
-    preferred_ = readUint32( &(*begin) );
+    preferred_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
 
-    valid_ = readUint32( &(*begin) );
+    valid_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
 
     prefix_len_ = *begin;

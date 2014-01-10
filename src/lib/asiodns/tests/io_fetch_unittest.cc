@@ -280,7 +280,7 @@ public:
         cumulative_ += length;
         bool complete = false;
         if (cumulative_ > 2) {
-            uint16_t dns_length = readUint16(receive_buffer_);
+            uint16_t dns_length = readUint16(receive_buffer_, sizeof (receive_buffer_));
             complete = ((dns_length + 2) == cumulative_);
         }
 
@@ -310,7 +310,10 @@ public:
         send_buffer_.clear();
         send_buffer_.push_back(0);
         send_buffer_.push_back(0);
-        writeUint16(return_data_.size(), &send_buffer_[0]);
+        // send_buffer_.capacity() seems more logical below, but the
+        // code above fills in the first two bytes and size() becomes 2
+        // (sizeof uint16_t).
+        writeUint16(return_data_.size(), &send_buffer_[0], send_buffer_.size());
         copy(return_data_.begin(), return_data_.end(), back_inserter(send_buffer_));
         if (return_data_.size() >= 2) {
             send_buffer_[2] = qid_0;
