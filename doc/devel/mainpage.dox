@@ -74,6 +74,7 @@
  *   - @subpage libdhcpIfaceMgr
  *   - @subpage libdhcpPktFilter
  *   - @subpage libdhcpPktFilter6
+ *   - @subpage libdhcpErrorLogging
  * - @subpage libdhcpsrv
  *   - @subpage leasemgr
  *   - @subpage cfgmgr
