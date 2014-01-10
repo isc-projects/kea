@@ -101,7 +101,16 @@ public:
     }
 };
 
-class TimedIO {
+/// @brief Provides a means to process IOService IO for a finite amount of time.
+///
+/// This class instantiates an IOService provides a single method, runTimedIO
+/// which will run the IOService for no more than a finite amount of time,
+/// at least one event is executed or the IOService is stopped.
+/// It provides an overridable handler for timer expiration event.  It is
+/// intended to be used as a base class for test fixtures that need to process
+/// IO by providing them a consistent way to do so while retaining a safety valve
+/// so tests do not hang.
+class TimedIO  {
 public:
     IOServicePtr io_service_;
     asiolink::IntervalTimer timer_;

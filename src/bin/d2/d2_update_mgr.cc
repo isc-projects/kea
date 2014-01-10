@@ -171,7 +171,7 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
                                            forward_domain, reverse_domain));
     } else {
         trans.reset(new NameRemoveTransaction(io_service_, next_ncr,
-                                           forward_domain, reverse_domain));
+                                              forward_domain, reverse_domain));
     }
 
     // Add the new transaction to the list.

@@ -89,7 +89,7 @@ public:
           test_timer_(service_),
           received_(0), expected_(0) {
         asiodns::logger.setSeverity(isc::log::INFO);
-        response_.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
+        response_.reset();
         dns_client_.reset(new DNSClient(response_, this));
 
         // Set the test timeout to break any running tasks if they hang.

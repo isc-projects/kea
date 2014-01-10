@@ -152,15 +152,10 @@ public:
     //@}
 
     /// @brief Defualt time to assign to a single DNS udpate.
-#if 0
-    /// @todo  This value will be configurable in the near future, but
-    /// until it is there is no way to replace its value.  For now
-    /// we will define it to be relatively short, so unit tests will
-    /// run within reasonable amount of time.
-    static const unsigned int DNS_UPDATE_DEFAULT_TIMEOUT = 5 * 1000;
-#else
+    /// @todo  This value will be made configurable in the very near future
+    /// under trac3268. For now we will define it to 100 milliseconds
+    /// so unit tests will run within a reasonable amount of time.
     static const unsigned int DNS_UPDATE_DEFAULT_TIMEOUT = 100;
-#endif
 
     /// @brief Maximum times to attempt a single update on a given server.
     static const unsigned int MAX_UPDATE_TRIES_PER_SERVER = 3;
@@ -296,7 +291,7 @@ protected:
     void setDnsUpdateRequest(D2UpdateMessagePtr& request);
 
     /// @brief Destroys the current update request packet and resets
-    /// udpate attempts count..
+    /// udpate attempts count.
     void clearDnsUpdateRequest();
 
     /// @brief Sets the update status to the given status value.

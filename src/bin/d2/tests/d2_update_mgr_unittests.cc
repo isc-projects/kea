@@ -32,7 +32,7 @@ using namespace isc::d2;
 
 namespace {
 
-/// @brief Wrapper class for D2UpdateMgr to provide access non-public methods.
+/// @brief Wrapper class for D2UpdateMgr providing access to non-public methods.
 ///
 /// This class facilitates testing by making non-public methods accessible so
 /// they can be invoked directly in test routines.
