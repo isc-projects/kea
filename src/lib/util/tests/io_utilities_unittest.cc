@@ -42,11 +42,15 @@ TEST(asioutil, readUint16) {
             data[0] = i8;
             data[1] = j8;
             buffer.setPosition(0);
-            EXPECT_EQ(buffer.readUint16(), readUint16(data));
+            EXPECT_EQ(buffer.readUint16(), readUint16(data, sizeof (data)));
         }
     }
 }
 
+TEST(asioutil, readUint16OutOfRange) {
+    uint8_t data;
+    EXPECT_THROW(readUint16(&data, sizeof (data)), isc::OutOfRange);
+}
 
 TEST(asioutil, writeUint16) {
 
@@ -64,13 +68,19 @@ TEST(asioutil, writeUint16) {
         buffer.writeUint16(i16);
 
         // ... and the test data
-        writeUint16(i16, test);
+        writeUint16(i16, test, sizeof (test));
 
         // ... and compare
         const uint8_t* ref = static_cast<const uint8_t*>(buffer.getData());
         EXPECT_EQ(ref[0], test[0]);
         EXPECT_EQ(ref[1], test[1]);
     }
+}
+
+TEST(asioutil, writeUint16OutOfRange) {
+    uint16_t i16 = 42;
+    uint8_t data;
+    EXPECT_THROW(writeUint16(i16, &data, sizeof (data)), isc::OutOfRange);
 }
 
 // test data shared amount readUint32 and writeUint32 tests
@@ -93,11 +103,15 @@ TEST(asioutil, readUint32) {
             uint32_t tmp = htonl(test32[i]);
             memcpy(&data[offset], &tmp, sizeof(uint32_t));
 
-            EXPECT_EQ(test32[i], readUint32(&data[offset]));
+            EXPECT_EQ(test32[i], readUint32(&data[offset], sizeof (uint32_t)));
         }
     }
 }
 
+TEST(asioutil, readUint32OutOfRange) {
+    uint8_t data[3];
+    EXPECT_THROW(readUint32(data, sizeof (data)), isc::OutOfRange);
+}
 
 TEST(asioutil, writeUint32) {
     uint8_t data[8];
@@ -107,7 +121,7 @@ TEST(asioutil, writeUint32) {
     // it 4 times.
     for (int offset=0; offset < 4; offset++) {
         for (int i=0; i < sizeof(test32)/sizeof(uint32_t); i++) {
-            uint8_t* ptr = writeUint32(test32[i], &data[offset]);
+            uint8_t* ptr = writeUint32(test32[i], &data[offset], sizeof (uint32_t));
 
             EXPECT_EQ(&data[offset]+sizeof(uint32_t), ptr);
 
@@ -116,4 +130,10 @@ TEST(asioutil, writeUint32) {
             EXPECT_EQ(0, memcmp(&tmp, &data[offset], sizeof(uint32_t)));
         }
     }
+}
+
+TEST(asioutil, writeUint32OutOfRange) {
+    uint32_t i32 = 28;
+    uint8_t data[3];
+    EXPECT_THROW(writeUint32(i32, data, sizeof (data)), isc::OutOfRange);
 }
