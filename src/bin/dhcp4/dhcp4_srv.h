@@ -175,7 +175,7 @@ protected:
     /// @param pkt packet to be checked
     /// @param serverid expectation regarding server-id option
     /// @throw RFCViolation if any issues are detected
-    void sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid);
+    static void sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid);
 
     /// @brief Processes incoming DISCOVER and returns response.
     ///
@@ -396,9 +396,67 @@ protected:
 
     /// @brief Appends default options to a message
     ///
+    /// Currently it is only a Message Type option. This function does not add
+    /// the Server Identifier option as this option must be added using
+    /// @c Dhcpv4Srv::appendServerID.
+    ///
+    ///
     /// @param msg message object (options will be added to it)
     /// @param msg_type specifies message type
     void appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type);
+
+    /// @brief Adds server identifier option to the server's response.
+    ///
+    /// This method adds a server identifier to the DHCPv4 message. It epxects
+    /// that the local (source) address is set for this message. If address is
+    /// not set, it will throw an exception. This method also expects that the
+    /// server identifier option is not present in the specified message.
+    /// Otherwise, it will throw an exception on attempt to add a duplicate
+    /// server identifier option.
+    ///
+    /// @note This method doesn't throw exceptions by itself but the underlying
+    /// classes being used my throw. The reason for this method to not sanity
+    /// check the specified message is that it is meant to be called internally
+    /// by the @c Dhcpv4Srv class.
+    ///
+    /// @note This method is static because it is not dependent on the class
+    /// state.
+    ///
+    /// @param [out] response DHCPv4 message to which the server identifier
+    /// option should be added.
+    static void appendServerID(const Pkt4Ptr& response);
+
+    /// @brief Set IP/UDP and interface parameters for the DHCPv4 response.
+    ///
+    /// This method sets the following parameters for the DHCPv4 message being
+    /// sent to a client:
+    /// - client unicast or a broadcast address,
+    /// - client or relay port,
+    /// - server address,
+    /// - server port,
+    /// - name and index of the interface which is to be used to send the
+    /// message.
+    ///
+    /// Internally it calls the @c Dhcpv4Srv::adjustRemoteAddr to figure
+    /// out the destination address (client unicast address or broadcast
+    /// address).
+    ///
+    /// The destination port is always DHCPv4 client (68) or relay (67) port,
+    /// depending if the response will be sent directly to a client.
+    ///
+    /// The source port is always set to DHCPv4 server port (67).
+    ///
+    /// The interface selected for the response is always the same as the
+    /// one through which the query has been received.
+    ///
+    /// The source address for the response is the IPv4 address assigned to
+    /// the interface being used to send the response. This function uses
+    /// @c IfaceMgr to get the socket bound to the IPv4 address on the
+    /// particular interface.
+    ///
+    /// @note This method is static because it is not dependent on the class
+    /// state.
+    static void adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response);
 
     /// @brief Sets remote addresses for outgoing packet.
     ///
@@ -413,42 +471,14 @@ protected:
     /// are valid. Make sure that pointers are correct before calling this
     /// function.
     ///
+    /// @note This method is static because it is not dependent on the class
+    /// state.
+    ///
     /// @param question instance of a packet received by a server.
-    /// @param [out] msg response packet which addresses are to be adjusted.
-    void adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg);
-
-    /// @brief Returns server-identifier option
-    ///
-    /// @return server-id option
-    OptionPtr getServerID() { return serverid_; }
-
-    /// @brief Sets server-identifier.
-    ///
-    /// This method attempts to set server-identifier DUID. It tries to
-    /// load previously stored IP from configuration. If there is no previously
-    /// stored server identifier, it will pick up one address from configured
-    /// and supported network interfaces.
-    ///
-    /// @throws isc::Unexpected Failed to obtain server identifier (i.e. no
-    //          previously stored configuration and no network interfaces available)
-    void generateServerID();
-
-    /// @brief attempts to load server-id from a file
-    ///
-    /// Tries to load duid from a text file. If the load is successful,
-    /// it creates server-id option and stores it in serverid_ (to be used
-    /// later by getServerID()).
-    ///
-    /// @param file_name name of the server-id file to load
-    /// @return true if load was successful, false otherwise
-    bool loadServerID(const std::string& file_name);
-
-    /// @brief attempts to write server-id to a file
-    /// Tries to write server-id content (stored in serverid_) to a text file.
-    ///
-    /// @param file_name name of the server-id file to write
-    /// @return true if write was successful, false otherwise
-    bool writeServerID(const std::string& file_name);
+    /// @param [out] response response packet which addresses are to be
+    /// adjusted.
+    static void adjustRemoteAddr(const Pkt4Ptr& question,
+                                 const Pkt4Ptr& response);
 
     /// @brief converts server-id to text
     /// Converts content of server-id option to a text representation, e.g.
@@ -485,9 +515,6 @@ protected:
     /// @param question client's message
     /// @return selected subnet (or NULL if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& question);
-
-    /// server DUID (to be sent in server-identifier option)
-    OptionPtr serverid_;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
