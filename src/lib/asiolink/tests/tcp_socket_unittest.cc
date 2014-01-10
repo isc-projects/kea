@@ -227,7 +227,7 @@ serverRead(tcp::socket& socket, TCPCallback& server_cb) {
         // If we have read at least two bytes, we can work out how much we
         // should be reading.
         if (server_cb.cumulative() >= 2) {
-           server_cb.expected() = readUint16(server_cb.data());
+            server_cb.expected() = readUint16(server_cb.data(), server_cb.length());
             if ((server_cb.expected() + 2) == server_cb.cumulative()) {
 
                 // Amount of data read from socket equals the size of the
@@ -261,7 +261,7 @@ TEST(TCPSocket, processReceivedData) {
     }
 
     // Check that the method will handle various receive sizes.
-    writeUint16(PACKET_SIZE, inbuff);
+    writeUint16(PACKET_SIZE, inbuff, sizeof (inbuff));
 
     cumulative = 0;
     offset = 0;
@@ -408,7 +408,7 @@ TEST(TCPSocket, SequenceTest) {
     server_cb.length() = 0;
     server_cb.cumulative() = 0;
 
-    writeUint16(sizeof(INBOUND_DATA), server_cb.data());
+    writeUint16(sizeof(INBOUND_DATA), server_cb.data(), 2);
     copy(INBOUND_DATA, (INBOUND_DATA + sizeof(INBOUND_DATA) - 1),
         (server_cb.data() + 2));
     server_socket.async_send(asio::buffer(server_cb.data(),

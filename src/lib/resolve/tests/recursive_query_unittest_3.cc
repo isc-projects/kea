@@ -336,7 +336,8 @@ public:
         tcp_cumulative_ += length;
         bool complete = false;
         if (tcp_cumulative_ > 2) {
-            uint16_t dns_length = readUint16(tcp_receive_buffer_);
+            uint16_t dns_length = readUint16(tcp_receive_buffer_,
+                                             sizeof (tcp_receive_buffer_));
             complete = ((dns_length + 2) == tcp_cumulative_);
         }
 
