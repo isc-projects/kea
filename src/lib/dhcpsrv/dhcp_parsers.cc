@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1209,7 +1209,6 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
 
     bool remove_on_renew = boolean_values_->getParam("remove-on-renew");
     bool always_include_fqdn = boolean_values_->getParam("always-include-fqdn");
-    bool allow_client_update = boolean_values_->getParam("allow-client-update");
     bool override_no_update = boolean_values_->getParam("override-no-update");
     bool override_client_update = boolean_values_->
                                   getParam("override-client-update");
@@ -1220,7 +1219,6 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
                                                   server_port, ncr_protocol,
                                                   ncr_format, remove_on_renew,
                                                   always_include_fqdn,
-                                                  allow_client_update,
                                                   override_no_update,
                                                   override_client_update,
                                                   replace_client_name,

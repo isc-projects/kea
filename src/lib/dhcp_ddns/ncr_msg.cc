@@ -18,16 +18,19 @@
 #include <asiolink/io_error.h>
 #include <cryptolink/cryptolink.h>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <botan/sha2_32.h>
 
 #include <sstream>
 #include <limits>
 
+
 namespace isc {
 namespace dhcp_ddns {
 
+
 NameChangeFormat stringToNcrFormat(const std::string& fmt_str) {
-    if (fmt_str == "JSON") {
+    if (boost::iequals(fmt_str, "JSON")) {
         return FMT_JSON;
     }
 
@@ -40,7 +43,9 @@ std::string ncrFormatToString(NameChangeFormat format) {
         return ("JSON");
     }
 
-    return ("UNKNOWN");
+    std::ostringstream stream;
+    stream  << "UNKNOWN(" << format << ")";
+    return (stream.str());
 }
 
 /********************************* D2Dhcid ************************************/

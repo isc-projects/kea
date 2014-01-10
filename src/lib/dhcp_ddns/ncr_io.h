@@ -67,6 +67,10 @@ namespace isc {
 namespace dhcp_ddns {
 
 /// @brief Defines the list of socket protocols supported.
+/// Currently only UDP is implemented.
+/// @todo TCP is intended to be implemented prior 1.0 release.
+/// @todo Give some thought to an ANY protocol which might try
+/// first as UDP then as TCP, etc.
 enum NameChangeProtocol {
   NCR_UDP,
   NCR_TCP

@@ -611,6 +611,7 @@ TEST(NameChangeRequestTest, ipAddresses) {
 /// @brief Tests conversion of NameChangeFormat between enum and strings.
 TEST(NameChangeFormatTest, formatEnumConversion){
     ASSERT_EQ(stringToNcrFormat("JSON"), dhcp_ddns::FMT_JSON);
+    ASSERT_EQ(stringToNcrFormat("jSoN"), dhcp_ddns::FMT_JSON);
     ASSERT_THROW(stringToNcrFormat("bogus"), isc::BadValue);
 
     ASSERT_EQ(ncrFormatToString(dhcp_ddns::FMT_JSON), "JSON");
@@ -619,7 +620,9 @@ TEST(NameChangeFormatTest, formatEnumConversion){
 /// @brief Tests conversion of NameChangeProtocol between enum and strings.
 TEST(NameChangeProtocolTest, protocolEnumConversion){
     ASSERT_EQ(stringToNcrProtocol("UDP"), dhcp_ddns::NCR_UDP);
+    ASSERT_EQ(stringToNcrProtocol("udP"), dhcp_ddns::NCR_UDP);
     ASSERT_EQ(stringToNcrProtocol("TCP"), dhcp_ddns::NCR_TCP);
+    ASSERT_EQ(stringToNcrProtocol("Tcp"), dhcp_ddns::NCR_TCP);
     ASSERT_THROW(stringToNcrProtocol("bogus"), isc::BadValue);
 
     ASSERT_EQ(ncrProtocolToString(dhcp_ddns::NCR_UDP), "UDP");

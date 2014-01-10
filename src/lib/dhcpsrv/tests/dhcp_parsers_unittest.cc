@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -682,7 +682,7 @@ TEST_F(ParseConfigTest, validHooksLibrariesTest) {
 // Check with a set of libraries, some of which are invalid.
 TEST_F(ParseConfigTest, invalidHooksLibrariesTest) {
 
-    // @todo Initialize global library context to null
+    /// @todo Initialize global library context to null
 
     // Configuration string.  This contains an invalid library which should
     // trigger an error in the "build" stage.
@@ -711,18 +711,17 @@ TEST_F(ParseConfigTest, invalidHooksLibrariesTest) {
 /// @brief Checks that a valid, enabled D2 client configuration works correctly.
 TEST_F(ParseConfigTest, validD2Config) {
 
-    // Configuration string.  This contains a set of valid libraries.
+    // Configuration string containing valid values.
     std::string config_str =
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true, "
         "     \"server-ip\" : \"192.168.2.1\", "
-        "     \"server-port\" : 5301, "
+        "     \"server-port\" : 3432, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
-        "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -736,7 +735,7 @@ TEST_F(ParseConfigTest, validD2Config) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // Verify that DHCP-DDNS is enabled and we can fetch the configuration.
-    EXPECT_TRUE(CfgMgr::instance().isDhcpDdnsEnabled());
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
     D2ClientConfigPtr d2_client_config;
     ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
     ASSERT_TRUE(d2_client_config);
@@ -744,17 +743,60 @@ TEST_F(ParseConfigTest, validD2Config) {
     // Verify that the configuration values are as expected.
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
     EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
-    EXPECT_EQ(5301, d2_client_config->getServerPort());
+    EXPECT_EQ(3432, d2_client_config->getServerPort());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
     EXPECT_TRUE(d2_client_config->getRemoveOnRenew());
     EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
-    EXPECT_TRUE(d2_client_config->getAllowClientUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
     EXPECT_TRUE(d2_client_config->getReplaceClientName());
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+
+    // Another valid Configuration string.
+    // This one has IPV6 server ip, control flags false,
+    // empty prefix/suffix
+    std::string config_str2 =
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"3005::1\", "
+        "     \"server-port\" : 43567, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"remove-on-renew\" : false, "
+        "     \"always-include-fqdn\" : false, "
+        "     \"override-no-update\" : false, "
+        "     \"override-client-update\" : false, "
+        "     \"replace-client-name\" : false, "
+        "     \"generated-prefix\" : \"\", "
+        "     \"qualifying-suffix\" : \"\" "
+        "    }"
+        "}";
+
+    // Verify that the configuration string parses.
+    rcode = parseConfiguration(config_str2);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Verify that DHCP-DDNS is enabled and we can fetch the configuration.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are as expected.
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("3005::1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(43567, d2_client_config->getServerPort());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_FALSE(d2_client_config->getRemoveOnRenew());
+    EXPECT_FALSE(d2_client_config->getAlwaysIncludeFqdn());
+    EXPECT_FALSE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_FALSE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_FALSE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ("", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("", d2_client_config->getQualifyingSuffix());
 }
 
 /// @brief Checks that D2 client can be configured with enable flag of
@@ -774,7 +816,7 @@ TEST_F(ParseConfigTest, validDisabledD2Config) {
     ASSERT_TRUE(rcode == 0) << error_text_;
 
     // Verify that DHCP-DDNS is disabled.
-    EXPECT_FALSE(CfgMgr::instance().isDhcpDdnsEnabled());
+    EXPECT_FALSE(CfgMgr::instance().ddnsEnabled());
 
     // Make sure fetched config agrees.
     D2ClientConfigPtr d2_client_config;
@@ -797,12 +839,11 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "    {"
         "     \"enable-updates\" : true, "
         //"     \"server-ip\" : \"192.168.2.1\", "
-        "     \"server-port\" : 5301, "
+        "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
-        "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -815,12 +856,11 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "    {"
         "     \"enable-updates\" : true, "
         "     \"server-ip\" : \"x192.168.2.1\", "
-        "     \"server-port\" : 5301, "
+        "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
-        "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -833,12 +873,11 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "    {"
         "     \"enable-updates\" : true, "
         "     \"server-ip\" : \"192.168.2.1\", "
-        "     \"server-port\" : 5301, "
+        "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"Bogus\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
-        "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -851,12 +890,11 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "    {"
         "     \"enable-updates\" : true, "
         "     \"server-ip\" : \"192.168.2.1\", "
-        "     \"server-port\" : 5301, "
+        "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"TCP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
-        "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -869,12 +907,11 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "    {"
         "     \"enable-updates\" : true, "
         "     \"server-ip\" : \"192.168.2.1\", "
-        "     \"server-port\" : 5301, "
+        "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"Bogus\", "
         "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
-        "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -887,12 +924,11 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "    {"
         "     \"enable-updates\" : true, "
         "     \"server-ip\" : \"192.168.2.1\", "
-        // "     \"server-port\" : 5301, "
+        // "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
-        "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "

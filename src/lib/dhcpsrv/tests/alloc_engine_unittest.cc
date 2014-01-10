@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -154,7 +154,7 @@ public:
         EXPECT_TRUE(false == lease->fqdn_fwd_);
         EXPECT_TRUE(false == lease->fqdn_rev_);
         EXPECT_TRUE(*lease->duid_ == *duid_);
-        // @todo: check cltt
+        /// @todo: check cltt
     }
 
     /// @brief Checks if specified address is increased properly
@@ -408,7 +408,7 @@ public:
             EXPECT_TRUE(*lease->client_id_ == *clientid_);
         }
         EXPECT_TRUE(lease->hwaddr_ == hwaddr_->hwaddr_);
-        // @todo: check cltt
+        /// @todo: check cltt
      }
 
     virtual ~AllocEngine4Test() {
