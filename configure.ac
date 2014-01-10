@@ -410,6 +410,24 @@ fi
 AC_SUBST(PYTHON_LIB)
 LDFLAGS=$LDFLAGS_SAVED
 
+# Python 3.2 changed the return type of internal hash function to
+# Py_hash_t and some platforms (such as Solaris) strictly check for long
+# vs Py_hash_t. So we detect and use the appropriate return type.
+# Remove this test (and associated changes in pydnspp_config.h.in) when
+# we require Python 3.2.
+have_py_hash_t=0
+CPPFLAGS_SAVED="$CPPFLAGS"
+CPPFLAGS=${PYTHON_INCLUDES}
+AC_MSG_CHECKING(for Py_hash_t)
+AC_TRY_COMPILE([#include <Python.h>
+                Py_hash_t h;],,
+    [AC_MSG_RESULT(yes)
+     have_py_hash_t=1],
+    [AC_MSG_RESULT(no)])
+CPPFLAGS="$CPPFLAGS_SAVED"
+HAVE_PY_HASH_T=$have_py_hash_t
+AC_SUBST(HAVE_PY_HASH_T)
+
 # Check for the setproctitle module
 if test "$setproctitle_check" = "yes" ; then
     AC_MSG_CHECKING(for setproctitle module)
@@ -1478,6 +1496,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/dns/gen-rdatacode.py
                  src/lib/dns/Makefile
                  src/lib/dns/python/Makefile
+                 src/lib/dns/python/pydnspp_config.h
                  src/lib/dns/python/tests/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/dns/tests/testdata/Makefile
