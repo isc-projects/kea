@@ -955,23 +955,6 @@ private:
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
 
-    /// @brief Handles an error which occurs during configuration of a socket.
-    ///
-    /// If the handler callback is specified (non-NULL), this handler is
-    /// called and the specified error message is passed to it. If the
-    /// handler is not specified, the @c isc::dhcpSocketConfigError exception
-    /// is thrown with the specified message.
-    ///
-    /// This function should be called to handle errors which occur during
-    /// socket opening, binding or configuration (e.g. setting socket options
-    /// etc).
-    ///
-    /// @param errmsg An error message to be passed to a handlder function or
-    /// to the @c isc::dhcp::SocketConfigError exception.
-    /// @param handler An error handler function or NULL.
-    void handleSocketConfigError(const std::string& errmsg,
-                                 IfaceMgrErrorMsgCallback handler);
-
     /// @brief Checks if there is at least one socket of the specified family
     /// open.
     ///
