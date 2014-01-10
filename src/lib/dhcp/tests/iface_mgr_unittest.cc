@@ -577,6 +577,25 @@ TEST_F(IfaceMgrTest, getIface) {
     EXPECT_EQ(static_cast<void*>(NULL), ifacemgr->getIface("wifi15") );
 }
 
+TEST_F(IfaceMgrTest, clearIfaces) {
+    NakedIfaceMgr ifacemgr;
+    // Create a set of fake interfaces. At the same time, remove the actual
+    // interfaces that have been detected by the IfaceMgr.
+    ifacemgr.createIfaces();
+
+    ASSERT_GT(ifacemgr.countIfaces(), 0);
+
+    boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
+
+    ASSERT_NO_THROW(ifacemgr.openSockets4());
+
+    ifacemgr.clearIfaces();
+
+    EXPECT_EQ(0, ifacemgr.countIfaces());
+}
+
 TEST_F(IfaceMgrTest, receiveTimeout6) {
     using namespace boost::posix_time;
     std::cout << "Testing DHCPv6 packet reception timeouts."
@@ -1328,7 +1347,7 @@ TEST_F(IfaceMgrTest, socket4) {
     pkt.setIface(LOOPBACK);
 
     // Expect that we get the socket that we just opened.
-    EXPECT_EQ(socket1, ifacemgr->getSocket(pkt));
+    EXPECT_EQ(socket1, ifacemgr->getSocket(pkt).sockfd_);
 
     close(socket1);
 }
@@ -1963,7 +1982,7 @@ TEST_F(IfaceMgrTest, socketInfo) {
 
     // Socket info is set, packet has well defined interface. It should work.
     pkt4.setIface(LOOPBACK);
-    EXPECT_EQ(7, ifacemgr->getSocket(pkt4));
+    EXPECT_EQ(7, ifacemgr->getSocket(pkt4).sockfd_);
 
     EXPECT_NO_THROW(
         ifacemgr->getIface(LOOPBACK)->delSocket(7);

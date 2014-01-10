@@ -325,6 +325,8 @@ void IfaceMgr::stubDetectIfaces() {
     addInterface(iface);
 }
 
+
+
 bool
 IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                        IfaceMgrErrorMsgCallback error_handler) {
@@ -585,6 +587,11 @@ IfaceMgr::getIface(const std::string& ifname) {
     return (NULL); // not found
 }
 
+void
+IfaceMgr::clearIfaces() {
+    ifaces_.clear();
+}
+
 int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
                          const uint16_t port, const bool receive_bcast,
                          const bool send_bcast) {
@@ -794,7 +801,7 @@ IfaceMgr::send(const Pkt4Ptr& pkt) {
     }
 
     // Assuming that packet filter is not NULL, because its modifier checks it.
-    return (packet_filter_->send(*iface, getSocket(*pkt), pkt));
+    return (packet_filter_->send(*iface, getSocket(*pkt).sockfd_, pkt));
 }
 
 
@@ -994,8 +1001,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
     Iface* iface = getIface(pkt.getIface());
     if (iface == NULL) {
-        isc_throw(BadValue, "Tried to find socket for non-existent interface "
-                  << pkt.getIface());
+        isc_throw(BadValue, "Tried to find socket for non-existent interface");
     }
 
 
@@ -1048,18 +1054,18 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
               << " does not have any suitable IPv6 sockets open.");
 }
 
-uint16_t IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
+SocketInfo
+IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     Iface* iface = getIface(pkt.getIface());
     if (iface == NULL) {
-        isc_throw(BadValue, "Tried to find socket for non-existent interface "
-                  << pkt.getIface());
+        isc_throw(BadValue, "Tried to find socket for non-existent interface");
     }
 
     const Iface::SocketCollection& socket_collection = iface->getSockets();
     Iface::SocketCollection::const_iterator s;
     for (s = socket_collection.begin(); s != socket_collection.end(); ++s) {
         if (s->family_ == AF_INET) {
-            return (s->sockfd_);
+            return (*s);
         }
         /// TODO: Add more checks here later. If remote address is
         /// not link-local, we can't use link local bound socket

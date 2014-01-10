@@ -289,26 +289,6 @@ both clones use the same client-id.
 % DHCP4_RESPONSE_DATA responding with packet type %1, data is <%2>
 A debug message listing the data returned to the client.
 
-% DHCP4_SERVERID_GENERATED server-id %1 has been generated and will be stored in %2
-This informational messages indicates that the server was not able to
-read its server identifier and has generated a new one. This server-id
-will be stored in a file and will be read (and used) whenever the server
-is restarted. This is normal behavior when the server is started for the
-first time. If this message is printed every time the server is started,
-please check that the server has sufficient permission to write its
-server-id file and that the file is not corrupt.
-
-% DHCP4_SERVERID_LOADED server-id %1 has been loaded from file %2
-This debug message indicates that the server loaded its server identifier.
-That value is sent in all server responses and clients use it to
-discriminate between servers. This is a part of normal startup or
-reconfiguration procedure.
-
-% DHCP4_SERVERID_WRITE_FAIL server was not able to write its ID to file %1
-This warning message indicates that server was not able to write its
-server identifier to a file. The most likely cause is is that the server
-does not have permissions to write the server id file.
-
 % DHCP4_SERVER_FAILED server failed: %1
 The IPv4 DHCP server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.

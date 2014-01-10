@@ -55,16 +55,6 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
 
     // it's ok if that fails. There should not be such a file anyway
     unlink(SRVID_FILE);
-
-    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
-
-    // There must be some interface detected
-    if (ifaces.empty()) {
-        // We can't use ASSERT in constructor
-        ADD_FAILURE() << "No interfaces detected.";
-    }
-
-    valid_iface_ = ifaces.begin()->getName();
 }
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
@@ -325,9 +315,6 @@ Lease4Ptr Dhcpv4SrvTest::checkLease(const Pkt4Ptr& rsp,
     return (lease);
 }
 
-/// @brief Checks if server response (OFFER, ACK, NAK) includes proper server-id
-/// @param rsp response packet to be validated
-/// @param expected_srvid expected value of server-id
 void Dhcpv4SrvTest::checkServerId(const Pkt4Ptr& rsp, const OptionPtr& expected_srvid) {
     // Check that server included its server-id
     OptionPtr opt = rsp->getOption(DHO_DHCP_SERVER_IDENTIFIER);
@@ -396,8 +383,88 @@ Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
     return (::testing::AssertionSuccess());
 }
 
+void Dhcpv4SrvTest::TearDown() {
 
-void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
+    CfgMgr::instance().deleteSubnets4();
+
+    // Let's clean up if there is such a file.
+    unlink(SRVID_FILE);
+
+    // Close all open sockets.
+    IfaceMgr::instance().closeSockets();
+
+    // Some unit tests override the default packet filtering class, used
+    // by the IfaceMgr. The dummy class, called PktFilterTest, reports the
+    // capability to directly respond to the clients without IP address
+    // assigned. This capability is not supported by the default packet
+    // filtering class: PktFilterInet. Therefore setting the dummy class
+    // allows to test scenarios, when server responds to the broadcast address
+    // on client's request, despite having support for direct response.
+    // The following call restores the use of original packet filtering class
+    // after the test.
+    try {
+        IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterInet()));
+
+    } catch (const Exception& ex) {
+        FAIL() << "Failed to restore the default (PktFilterInet) packet filtering"
+               << " class after the test. Exception has been caught: "
+               << ex.what();
+    }
+
+}
+
+Dhcpv4SrvFakeIfaceTest::Dhcpv4SrvFakeIfaceTest()
+: Dhcpv4SrvTest(), current_pkt_filter_() {
+    // Remove current interface configuration. Instead we want to add
+    // a couple of fake interfaces.
+    IfaceMgr& ifacemgr = IfaceMgr::instance();
+    ifacemgr.closeSockets();
+    ifacemgr.clearIfaces();
+
+    // Add fake interfaces.
+    ifacemgr.addInterface(createIface("lo", 0, "127.0.0.1"));
+    ifacemgr.addInterface(createIface("eth0", 1, "192.0.3.1"));
+    ifacemgr.addInterface(createIface("eth1", 2, "10.0.0.1"));
+
+    // In order to use fake interfaces we have to supply the custom
+    // packet filtering class, which can mimic opening sockets on
+    // fake interafaces.
+    current_pkt_filter_.reset(new PktFilterTest());
+    ifacemgr.setPacketFilter(current_pkt_filter_);
+    ifacemgr.openSockets4();
+}
+
+void
+Dhcpv4SrvFakeIfaceTest::TearDown() {
+    // The base class function restores the original packet filtering class.
+    Dhcpv4SrvTest::TearDown();
+    // The base class however, doesn't re-detect real interfaces.
+    try {
+        IfaceMgr::instance().clearIfaces();
+        IfaceMgr::instance().detectIfaces();
+
+    } catch (const Exception& ex) {
+        FAIL() << "Failed to restore interface configuration after using"
+            " fake interfaces";
+    }
+}
+
+Iface
+Dhcpv4SrvFakeIfaceTest::createIface(const std::string& name, const int ifindex,
+                                    const std::string& addr) {
+    Iface iface(name, ifindex);
+    iface.addAddress(IOAddress(addr));
+    if (name == "lo") {
+        iface.flag_loopback_ = true;
+    }
+    iface.flag_up_ = true;
+    iface.flag_running_ = true;
+    iface.inactive4_ = false;
+    return (iface);
+}
+
+void
+Dhcpv4SrvFakeIfaceTest::testDiscoverRequest(const uint8_t msg_type) {
     // Create an instance of the tested class.
     boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
 
@@ -432,8 +499,9 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     req->setLocalHWAddr(1, 6, mac);
     // Set target IP address.
     req->setRemoteAddr(IOAddress("192.0.2.55"));
-    // Set relay address.
+    // Set relay address and hops.
     req->setGiaddr(IOAddress("192.0.2.10"));
+    req->setHops(1);
 
     // We are going to test that certain options are returned
     // in the response message when requested using 'Parameter
@@ -446,6 +514,8 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     // which was parsed from its wire format.
     Pkt4Ptr received;
     ASSERT_TRUE(createPacketFromBuffer(req, received));
+    // Set interface. It is required for the server to generate server id.
+    received->setIface("eth0");
     if (msg_type == DHCPDISCOVER) {
         ASSERT_NO_THROW(
             rsp = srv->processDiscover(received);
@@ -478,6 +548,9 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
 
     ASSERT_TRUE(createPacketFromBuffer(req, received));
     ASSERT_TRUE(received->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
+
+    // Set interface. It is required for the server to generate server id.
+    received->setIface("eth0");
 
     if (msg_type == DHCPDISCOVER) {
         ASSERT_NO_THROW(rsp = srv->processDiscover(received));
@@ -512,6 +585,9 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     ASSERT_TRUE(createPacketFromBuffer(req, received));
     ASSERT_TRUE(received->getOption(DHO_DHCP_PARAMETER_REQUEST_LIST));
 
+    // Set interface. It is required for the server to generate server id.
+    received->setIface("eth0");
+
     if (msg_type == DHCPDISCOVER) {
         ASSERT_NO_THROW(rsp = srv->processDiscover(received));
         // Should return non-NULL packet.
@@ -530,36 +606,6 @@ void Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     // because lease hasn't been acquired.
     EXPECT_TRUE(noRequestedOptions(rsp));
     EXPECT_TRUE(noBasicOptions(rsp));
-}
-
-/// @brief This function cleans up after the test.
-void Dhcpv4SrvTest::TearDown() {
-
-    CfgMgr::instance().deleteSubnets4();
-
-    // Let's clean up if there is such a file.
-    unlink(SRVID_FILE);
-
-    // Close all open sockets.
-    IfaceMgr::instance().closeSockets();
-
-    // Some unit tests override the default packet filtering class, used
-    // by the IfaceMgr. The dummy class, called PktFilterTest, reports the
-    // capability to directly respond to the clients without IP address
-    // assigned. This capability is not supported by the default packet
-    // filtering class: PktFilterInet. Therefore setting the dummy class
-    // allows to test scenarios, when server responds to the broadcast address
-    // on client's request, despite having support for direct response.
-    // The following call restores the use of original packet filtering class
-    // after the test.
-    try {
-        IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterInet()));
-
-    } catch (const Exception& ex) {
-        FAIL() << "Failed to restore the default (PktFilterInet) packet filtering"
-               << " class after the test. Exception has been caught: "
-               << ex.what();
-    }
 }
 
 }; // end of isc::dhcp::test namespace
