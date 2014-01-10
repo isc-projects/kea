@@ -344,7 +344,7 @@ public:
     /// @param Convenience method for checking if DHCP-DDNS updates are enabled.
     ///
     /// @return True if the D2 configuration is enabled.
-    bool isDhcpDdnsEnabled();
+    bool ddnsEnabled();
 
     /// @brief Fetches the DHCP-DDNS configuration pointer.
     ///
