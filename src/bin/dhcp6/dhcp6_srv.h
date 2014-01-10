@@ -534,6 +534,16 @@ protected:
                          size_t* relay_msg_len);
 
 private:
+
+    /// @brief Implements the error handler for socket open failure.
+    ///
+    /// This callback function is installed on the @c isc::dhcp::IfaceMgr
+    /// when IPv6 sockets are being open. When socket fails to open for
+    /// any reason, this function is called. It simply logs the error message.
+    ///
+    /// @param errmsg An error message containing a cause of the failure.
+    static void ifaceMgrSocket6ErrorHandler(const std::string& errmsg);
+
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
     /// It must be a pointer, because we will support changing engines
