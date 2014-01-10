@@ -80,6 +80,10 @@ NameChangeTransaction::~NameChangeTransaction(){
 
 void
 NameChangeTransaction::startTransaction() {
+    LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
+              DHCP_DDNS_STARTING_TRANSACTION)
+              .arg(getTransactionKey().toStr());
+
     setNcrStatus(dhcp_ddns::ST_PENDING);
     startModel(READY_ST);
 }
@@ -366,8 +370,9 @@ NameChangeTransaction::selectNextServer() {
     if ((current_server_list_) &&
         (next_server_pos_ < current_server_list_->size())) {
         current_server_  = (*current_server_list_)[next_server_pos_];
-        dns_update_response_.reset(new
-                                   D2UpdateMessage(D2UpdateMessage::INBOUND));
+        // Toss out any previous response.
+        dns_update_response_.reset();
+
         // @todo  Protocol is set on DNSClient constructor.  We need
         // to propagate a configuration value downward, probably starting
         // at global, then domain, then server
