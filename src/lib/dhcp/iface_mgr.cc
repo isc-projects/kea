@@ -396,7 +396,6 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                 continue;
             }
 
-            int sock = -1;
             // If selected interface is broadcast capable set appropriate
             // options on the socket so as it can receive and send broadcast
             // messages.
@@ -406,22 +405,24 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                 // bind to INADDR_ANY address but we can do it only once. Thus,
                 // if one socket has been bound we can't do it any further.
                 if (!bind_to_device && bcast_num > 0) {
-                    handleSocketConfigError("SO_BINDTODEVICE socket option is"
-                                            " not supported on this OS;"
-                                            " therefore, DHCP server can only"
-                                            " listen broadcast traffic on a"
-                                            " single interface",
-                                            error_handler);
+                    ifacemgr_error(SocketConfigError, error_handler,
+                                   "SO_BINDTODEVICE socket option is"
+                                   " not supported on this OS;"
+                                   " therefore, DHCP server can only"
+                                   " listen broadcast traffic on a"
+                                   " single interface");
                     continue;
 
                 } else {
                     try {
                         // We haven't open any broadcast sockets yet, so we can
                         // open at least one more.
-                        sock = openSocket(iface->getName(), *addr, port,
-                                          true, true);
+                        openSocket(iface->getName(), *addr, port, true, true);
                     } catch (const Exception& ex) {
-                        handleSocketConfigError(ex.what(), error_handler);
+                        ifacemgr_error(SocketConfigError, error_handler,
+                                       "failed to open socket on interface "
+                                       << iface->getName() << ", reason: "
+                                       << ex.what());
                         continue;
 
                     }
@@ -436,22 +437,17 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             } else {
                 try {
                     // Not broadcast capable, do not set broadcast flags.
-                    sock = openSocket(iface->getName(), *addr, port,
-                                      false, false);
+                    openSocket(iface->getName(), *addr, port, false, false);
                 } catch (const Exception& ex) {
-                    handleSocketConfigError(ex.what(), error_handler);
+                    ifacemgr_error(SocketConfigError, error_handler,
+                                   "failed to open socket on interface "
+                                   << iface->getName() << ", reason: "
+                                   << ex.what());
                     continue;
                 }
 
             }
-            if (sock < 0) {
-                const char* errstr = strerror(errno);
-                handleSocketConfigError(std::string("failed to open IPv4 socket,"
-                                                    " reason:") + errstr,
-                                        error_handler);
-            } else {
-                ++count;
-            }
+            ++count;
 
         }
     }
@@ -551,7 +547,7 @@ IfaceMgr::openSockets6(const uint16_t port,
                     iface->delSocket(sock);
                     ifacemgr_error(SocketConfigError, error_handler,
                                    "Failed to open multicast socket on"
-                                   " interface " << iface->getFullName()
+                                   " interface " << iface->getName()
                                    << ", reason: " << ex.what());
                     continue;
                 }
@@ -560,20 +556,6 @@ IfaceMgr::openSockets6(const uint16_t port,
         }
     }
     return (count > 0);
-}
-
-void
-IfaceMgr::handleSocketConfigError(const std::string& errmsg,
-                                  IfaceMgrErrorMsgCallback handler) {
-    // If error handler is installed, we don't want to throw an exception, but
-    // rather call this handler.
-    if (handler != NULL) {
-        handler(errmsg);
-
-    } else {
-        isc_throw(SocketConfigError, errmsg);
-
-    }
 }
 
 void
