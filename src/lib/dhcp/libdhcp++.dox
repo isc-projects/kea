@@ -231,7 +231,7 @@ functions.
 Use \ref isc::dhcp::IfaceMgr::setPacketFilter function to set the custom packet
 filter object to be used by Interface Manager.
 
-@section libdhcpErrorLogging Logging non-fatal errors in IfaceMgr.
+@section libdhcpErrorLogging Logging non-fatal errors in IfaceMgr
 
 The libdhcp++ is a common library, meant to be used by various components,
 such as DHCP servers, relays and clients. It is also used by a perfdhcp
