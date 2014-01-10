@@ -1,3 +1,11 @@
+724.	[bug]		marcin
+	b10-dhcp4: Different server identifiers are used for the packets
+	being sent through different interfaces. The server uses IPv4 address
+	assigned to the particular interface as a server identifier. This
+	guarantees that the unicast packet sent by a relay or a client, to
+	the address being a server identifier, will reach the server.
+	(Trac #3231, git c7a229f15089670d2bfde6e9f0530c30ce6f8cf8)
+
 723.	[bug]		marcin
 	libdhcp++: Implemented unit tests for the IfaceMgr's routine which opens
 	IPv6 sockets on detected interfaces. The IfaceMgr logic performing low
