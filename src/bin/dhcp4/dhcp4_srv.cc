@@ -37,12 +37,10 @@
 #include <hooks/hooks_manager.h>
 #include <util/strutil.h>
 
-#include <boost/algorithm/string/erase.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
 #include <iomanip>
-#include <fstream>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -111,62 +109,34 @@ const bool FQDN_REPLACE_CLIENT_NAME = false;
 
 }
 
-/// @brief file name of a server-id file
-///
-/// Server must store its server identifier in persistent storage that must not
-/// change between restarts. This is name of the file that is created in dataDir
-/// (see isc::dhcp::CfgMgr::getDataDir()). It is a text file that uses
-/// regular IPv4 address, e.g. 192.0.2.1. Server will create it during
-/// first run and then use it afterwards.
-static const char* SERVER_ID_FILE = "b10-dhcp4-serverid";
-
-// These are hardcoded parameters. Currently this is a skeleton server that only
-// grants those options and a single, fixed, hardcoded lease.
-
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
                      const bool direct_response_desired)
-: serverid_(), shutdown_(true), alloc_engine_(), port_(port),
+: shutdown_(true), alloc_engine_(), port_(port),
     use_bcast_(use_bcast), hook_index_pkt4_receive_(-1),
     hook_index_subnet4_select_(-1), hook_index_pkt4_send_(-1) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
     try {
-        // First call to instance() will create IfaceMgr (it's a singleton)
-        // it may throw something if things go wrong.
-        // The 'true' value of the call to setMatchingPacketFilter imposes
-        // that IfaceMgr will try to use the mechanism to respond directly
-        // to the client which doesn't have address assigned. This capability
-        // may be lacking on some OSes, so there is no guarantee that server
-        // will be able to respond directly.
-        IfaceMgr::instance().setMatchingPacketFilter(direct_response_desired);
-
-        // Open sockets only if port is non-zero. Port 0 is used
-        // for non-socket related testing.
+        // Open sockets only if port is non-zero. Port 0 is used for testing
+        // purposes in two cases:
+        // - when non-socket related testing is performed
+        // - when the particular test supplies its own packet filtering class.
         if (port) {
+            // First call to instance() will create IfaceMgr (it's a singleton)
+            // it may throw something if things go wrong.
+            // The 'true' value of the call to setMatchingPacketFilter imposes
+            // that IfaceMgr will try to use the mechanism to respond directly
+            // to the client which doesn't have address assigned. This capability
+            // may be lacking on some OSes, so there is no guarantee that server
+            // will be able to respond directly.
+            IfaceMgr::instance().setMatchingPacketFilter(direct_response_desired);
+
             // Create error handler. This handler will be called every time
             // the socket opening operation fails. We use this handler to
             // log a warning.
             isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
                 boost::bind(&Dhcpv4Srv::ifaceMgrSocket4ErrorHandler, _1);
             IfaceMgr::instance().openSockets4(port_, use_bcast_, error_handler);
-        }
-
-        string srvid_file = CfgMgr::instance().getDataDir() + "/" + string(SERVER_ID_FILE);
-        if (loadServerID(srvid_file)) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_SERVERID_LOADED)
-                .arg(srvidToString(getServerID()))
-                .arg(srvid_file);
-        } else {
-            generateServerID();
-            LOG_INFO(dhcp4_logger, DHCP4_SERVERID_GENERATED)
-                .arg(srvidToString(getServerID()))
-                .arg(srvid_file);
-
-            if (!writeServerID(srvid_file)) {
-                LOG_WARN(dhcp4_logger, DHCP4_SERVERID_WRITE_FAIL)
-                    .arg(srvid_file);
-            }
-
         }
 
         // Instantiate LeaseMgr
@@ -389,19 +359,6 @@ Dhcpv4Srv::run() {
             continue;
         }
 
-        adjustRemoteAddr(query, rsp);
-
-        if (!rsp->getHops()) {
-            rsp->setRemotePort(DHCP4_CLIENT_PORT);
-        } else {
-            rsp->setRemotePort(DHCP4_SERVER_PORT);
-        }
-
-        rsp->setLocalAddr(query->getLocalAddr());
-        rsp->setLocalPort(DHCP4_SERVER_PORT);
-        rsp->setIface(query->getIface());
-        rsp->setIndex(query->getIndex());
-
         // Specifies if server should do the packing
         bool skip_pack = false;
 
@@ -484,90 +441,6 @@ Dhcpv4Srv::run() {
         sendNameChangeRequests();
     }
 
-    return (true);
-}
-
-bool
-Dhcpv4Srv::loadServerID(const std::string& file_name) {
-
-    // load content of the file into a string
-    fstream f(file_name.c_str(), ios::in);
-    if (!f.is_open()) {
-        return (false);
-    }
-
-    string hex_string;
-    f >> hex_string;
-    f.close();
-
-    // remove any spaces
-    boost::algorithm::erase_all(hex_string, " ");
-
-    try {
-        IOAddress addr(hex_string);
-
-        if (!addr.isV4()) {
-            return (false);
-        }
-
-        // Now create server-id option
-        serverid_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER, addr));
-
-    } catch(...) {
-        // any kind of malformed input (empty string, IPv6 address, complete
-        // garbate etc.)
-        return (false);
-    }
-
-    return (true);
-}
-
-void
-Dhcpv4Srv::generateServerID() {
-
-    const IfaceMgr::IfaceCollection& ifaces = IfaceMgr::instance().getIfaces();
-
-    // Let's find suitable interface.
-    for (IfaceMgr::IfaceCollection::const_iterator iface = ifaces.begin();
-         iface != ifaces.end(); ++iface) {
-
-        // Let's don't use loopback.
-        if (iface->flag_loopback_) {
-            continue;
-        }
-
-        // Let's skip downed interfaces. It is better to use working ones.
-        if (!iface->flag_up_) {
-            continue;
-        }
-
-        const Iface::AddressCollection addrs = iface->getAddresses();
-
-        for (Iface::AddressCollection::const_iterator addr = addrs.begin();
-             addr != addrs.end(); ++addr) {
-            if (addr->getFamily() != AF_INET) {
-                continue;
-            }
-
-            serverid_ = OptionPtr(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                                     *addr));
-            return;
-        }
-
-
-    }
-
-    isc_throw(BadValue, "No suitable interfaces for server-identifier found");
-}
-
-bool
-Dhcpv4Srv::writeServerID(const std::string& file_name) {
-    fstream f(file_name.c_str(), ios::out | ios::trunc);
-    if (!f.good()) {
-        return (false);
-    }
-    f << srvidToString(getServerID());
-    f.close();
     return (true);
 }
 
@@ -690,10 +563,19 @@ Dhcpv4Srv::appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type) {
     // add Message Type Option (type 53)
     msg->setType(msg_type);
 
-    // DHCP Server Identifier (type 54)
-    msg->addOption(getServerID());
-
     // more options will be added here later
+}
+
+void
+Dhcpv4Srv::appendServerID(const Pkt4Ptr& response) {
+    // The source address for the outbound message should have been set already.
+    // This is the address that to the best of the server's knowledge will be
+    // available from the client.
+    // @todo: perhaps we should consider some more sophisticated server id
+    // generation, but for the current use cases, it should be ok.
+    response->addOption(OptionPtr(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                                     response->getLocalAddr()))
+                        );
 }
 
 void
@@ -1269,7 +1151,36 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
 }
 
 void
-Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg) {
+Dhcpv4Srv::adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response) {
+    adjustRemoteAddr(query, response);
+
+    // For the non-relayed message, the destination port is the client's port.
+    // For the relayed message, the server/relay port is a destination.
+    // Note that the call to this function may throw if invalid combination
+    // of hops and giaddr is found (hops = 0 if giaddr = 0 and hops != 0 if
+    // giaddr != 0). The exception will propagate down and eventually cause the
+    // packet to be discarded.
+    response->setRemotePort(query->isRelayed() ? DHCP4_SERVER_PORT :
+                            DHCP4_CLIENT_PORT);
+
+    // In many cases the query is sent to a broadcast address. This address
+    // appears as a local address in the query message. Therefore we can't
+    // simply copy local address from the query and use it as a source
+    // address for the response. Instead, we have to check what address our
+    // socket is bound to and use it as a source address. This operation
+    // may throw if for some reason the socket is closed.
+    // @todo Consider an optimization that we use local address from
+    // the query if this address is not broadcast.
+    SocketInfo sock_info = IfaceMgr::instance().getSocket(*query);
+    // Set local adddress, port and interface.
+    response->setLocalAddr(sock_info.addr_);
+    response->setLocalPort(DHCP4_SERVER_PORT);
+    response->setIface(query->getIface());
+    response->setIndex(query->getIndex());
+}
+
+void
+Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, const Pkt4Ptr& response) {
     // Let's create static objects representing zeroed and broadcast
     // addresses. We will use them further in this function to test
     // other addresses against them. Since they are static, they will
@@ -1278,22 +1189,22 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     static const IOAddress bcast_addr("255.255.255.255");
 
     // If received relayed message, server responds to the relay address.
-    if (question->getGiaddr() != zero_addr) {
-        msg->setRemoteAddr(question->getGiaddr());
+    if (question->isRelayed()) {
+        response->setRemoteAddr(question->getGiaddr());
 
     // If giaddr is 0 but client set ciaddr, server should unicast the
     // response to ciaddr.
     } else if (question->getCiaddr() != zero_addr) {
-        msg->setRemoteAddr(question->getCiaddr());
+        response->setRemoteAddr(question->getCiaddr());
 
     // We can't unicast the response to the client when sending NAK,
     // because we haven't allocated address for him. Therefore,
     // NAK is broadcast.
-    } else if (msg->getType() == DHCPNAK) {
-        msg->setRemoteAddr(bcast_addr);
+    } else if (response->getType() == DHCPNAK) {
+        response->setRemoteAddr(bcast_addr);
 
     // If yiaddr is set it means that we have created a lease for a client.
-    } else if (msg->getYiaddr() != zero_addr) {
+    } else if (response->getYiaddr() != zero_addr) {
         // If the broadcast bit is set in the flags field, we have to
         // send the response to broadcast address. Client may have requested it
         // because it doesn't support reception of messages on the interface
@@ -1302,13 +1213,13 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg) {
         // directly to a client without address assigned.
         const bool bcast_flag = ((question->getFlags() & Pkt4::FLAG_BROADCAST_MASK) != 0);
         if (!IfaceMgr::instance().isDirectResponseSupported() || bcast_flag) {
-            msg->setRemoteAddr(bcast_addr);
+            response->setRemoteAddr(bcast_addr);
 
         // Client cleared the broadcast bit and we support direct responses
         // so we should unicast the response to a newly allocated address -
         // yiaddr.
         } else {
-            msg->setRemoteAddr(msg->getYiaddr());
+            response->setRemoteAddr(response ->getYiaddr());
 
         }
 
@@ -1316,7 +1227,7 @@ Dhcpv4Srv::adjustRemoteAddr(const Pkt4Ptr& question, Pkt4Ptr& msg) {
     // found ourselves at this point, the rational thing to do is to respond
     // to the address we got the query from.
     } else {
-        msg->setRemoteAddr(question->getRemoteAddr());
+        response->setRemoteAddr(question->getRemoteAddr());
 
     }
 }
@@ -1361,6 +1272,12 @@ Dhcpv4Srv::processDiscover(Pkt4Ptr& discover) {
         appendBasicOptions(discover, offer);
     }
 
+    // Set the src/dest IP address, port and interface for the outgoing
+    // packet.
+    adjustIfaceData(discover, offer);
+
+    appendServerID(offer);
+
     return (offer);
 }
 
@@ -1396,6 +1313,12 @@ Dhcpv4Srv::processRequest(Pkt4Ptr& request) {
         // them we append them for him.
         appendBasicOptions(request, ack);
     }
+
+    // Set the src/dest IP address, port and interface for the outgoing
+    // packet.
+    adjustIfaceData(request, ack);
+
+    appendServerID(ack);
 
     return (ack);
 }

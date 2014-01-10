@@ -798,4 +798,27 @@ TEST_F(Pkt4Test, hwaddrSrcRemote) {
                            remote_addr->hwaddr_.begin()));
 }
 
+// This test verifies that the check for a message being relayed is correct.
+// It also checks that the exception is thrown if the combination of hops and
+// giaddr is invalid.
+TEST_F(Pkt4Test, isRelayed) {
+    Pkt4 pkt(DHCPDISCOVER, 1234);
+    // By default, the hops and giaddr should be 0.
+    ASSERT_EQ("0.0.0.0", pkt.getGiaddr().toText());
+    ASSERT_EQ(0, pkt.getHops());
+    // For hops = 0 and giaddr = 0, the message is non-relayed.
+    EXPECT_FALSE(pkt.isRelayed());
+    // Set giaddr but leave hops = 0. This should result in exception.
+    pkt.setGiaddr(IOAddress("10.0.0.1"));
+    EXPECT_THROW(pkt.isRelayed(), isc::BadValue);
+    // Set hops. Now both hops and giaddr is set. The message is relayed.
+    pkt.setHops(10);
+    EXPECT_TRUE(pkt.isRelayed());
+    // Set giaddr to 0. For hops being set to non-zero value the function
+    // should throw an exception.
+    pkt.setGiaddr(IOAddress("0.0.0.0"));
+    EXPECT_THROW(pkt.isRelayed(), isc::BadValue);
+
+}
+
 } // end of anonymous namespace

@@ -463,6 +463,26 @@ Pkt4::updateTimestamp() {
     timestamp_ = boost::posix_time::microsec_clock::universal_time();
 }
 
+bool
+Pkt4::isRelayed() const {
+    static const IOAddress zero_addr("0.0.0.0");
+    // For non-relayed message both Giaddr and Hops are zero.
+    if (getGiaddr() == zero_addr && getHops() == 0) {
+        return (false);
+
+    // For relayed message, both Giaddr and Hops are non-zero.
+    } else if (getGiaddr() != zero_addr && getHops() > 0) {
+        return (true);
+    }
+    // In any other case, the packet is considered malformed.
+    isc_throw(isc::BadValue, "invalid combination of giaddr = "
+              << getGiaddr().toText() << " and hops = "
+              << static_cast<int>(getHops()) << ". Valid values"
+              " are: (giaddr = 0 and hops = 0) or (giaddr != 0 and"
+              "hops != 0)");
+
+}
+
 } // end of namespace isc::dhcp
 
 } // end of namespace isc

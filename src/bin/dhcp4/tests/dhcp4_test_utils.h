@@ -21,6 +21,7 @@
 
 #include <gtest/gtest.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/option4_addrlst.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
@@ -30,6 +31,8 @@
 #include <asiolink/io_address.h>
 #include <config/ccsession.h>
 #include <list>
+
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace dhcp {
@@ -45,11 +48,18 @@ namespace test {
 class PktFilterTest : public PktFilter {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// Sets the 'direct response' capability to true.
+    PktFilterTest()
+        : direct_resp_supported_(true) {
+    }
+
     /// @brief Reports 'direct response' capability.
     ///
     /// @return always true.
     virtual bool isDirectResponseSupported() const {
-        return (true);
+        return (direct_resp_supported_);
     }
 
     /// Does nothing.
@@ -69,7 +79,13 @@ public:
         return (0);
     }
 
+    /// @brief Holds a boolean value which indicates whether direct response
+    /// capability is supported (true) or not (false).
+    bool direct_resp_supported_;
+
 };
+
+typedef boost::shared_ptr<PktFilterTest> PktFilterTestPtr;
 
 class Dhcpv4SrvTest : public ::testing::Test {
 public:
@@ -237,23 +253,11 @@ public:
     createPacketFromBuffer(const Pkt4Ptr& src_pkt,
                            Pkt4Ptr& dst_pkt);
 
+
     /// @brief generates a DHCPv4 packet based on provided hex string
     ///
     /// @return created packet
     Pkt4Ptr packetFromCapture(const std::string& hex_string);
-
-    /// @brief Tests if Discover or Request message is processed correctly
-    ///
-    /// This test verifies that the Parameter Request List option is handled
-    /// correctly, i.e. it checks that certain options are present in the
-    /// server's response when they are requested and that they are not present
-    /// when they are not requested or NAK occurs.
-    ///
-    /// @todo We need an additional test for PRL option using real traffic
-    /// capture.
-    ///
-    /// @param msg_type DHCPDISCOVER or DHCPREQUEST
-    void testDiscoverRequest(const uint8_t msg_type);
 
     /// @brief This function cleans up after the test.
     virtual void TearDown();
@@ -271,8 +275,62 @@ public:
 
     isc::data::ConstElementPtr comment_;
 
-    // Name of a valid network interface
-    std::string valid_iface_;
+};
+
+/// @brief Test fixture class to be used for tests which require fake
+/// interfaces.
+///
+/// The DHCPv4 server must always append the server identifier to its response.
+/// The server identifier is typically an IP address assigned to the interface
+/// on which the query has been received. The DHCPv4 server uses IfaceMgr to
+/// check this address. In order to test this functionality, a set of interfaces
+/// must be known to the test. This test fixture class creates a set of well
+/// known (fake) interfaces which can be assigned to the test DHCPv4 messages
+/// so as the response (including server identifier) can be validated.
+/// The real interfaces are removed from the IfaceMgr in the constructor and
+/// they are re-assigned in the destructor.
+class Dhcpv4SrvFakeIfaceTest : public Dhcpv4SrvTest {
+public:
+    /// @brief Constructor.
+    ///
+    /// Creates a set of fake interfaces:
+    /// - lo, index: 0, address: 127.0.0.1
+    /// - eth0, index: 1, address: 192.0.3.1
+    /// - eth1, index: 2, address: 10.0.0.1
+    ///
+    /// These interfaces replace the real interfaces detected by the IfaceMgr.
+    Dhcpv4SrvFakeIfaceTest();
+
+    /// @brief Restores the original interface configuration.
+    virtual void TearDown();
+
+    /// @brief Creates an instance of the interface.
+    ///
+    /// @param name Name of the interface.
+    /// @param ifindex Index of the interface.
+    /// @param addr IP address assigned to the interface, represented as string.
+    ///
+    /// @return Iface Instance of the interface.
+    static Iface createIface(const std::string& name, const int ifindex,
+                             const std::string& addr);
+
+    /// @brief Tests if Discover or Request message is processed correctly
+    ///
+    /// This test verifies that the Parameter Request List option is handled
+    /// correctly, i.e. it checks that certain options are present in the
+    /// server's response when they are requested and that they are not present
+    /// when they are not requested or NAK occurs.
+    ///
+    /// @todo We need an additional test for PRL option using real traffic
+    /// capture.
+    ///
+    /// @param msg_type DHCPDISCOVER or DHCPREQUEST
+    void testDiscoverRequest(const uint8_t msg_type);
+
+    /// @brief Holds a pointer to the packet filter object currently used
+    /// by the IfaceMgr.
+    PktFilterTestPtr current_pkt_filter_;
+
 };
 
 /// @brief "Naked" DHCPv4 server, exposes internal fields
@@ -306,6 +364,15 @@ public:
     /// that sockets should not be opened.
     NakedDhcpv4Srv(uint16_t port = 0)
         : Dhcpv4Srv(port, "type=memfile", false, false) {
+        // Create fixed server id.
+        server_id_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                            asiolink::IOAddress("192.0.3.1")));
+    }
+
+    /// @brief Returns fixed server identifier assigned to the naked server
+    /// instance.
+    OptionPtr getServerID() const {
+        return (server_id_);
     }
 
     /// @brief fakes packet reception
@@ -341,11 +408,15 @@ public:
     ///
     /// See fake_received_ field for description
     void fakeReceive(const Pkt4Ptr& pkt) {
+        pkt->setIface("eth0");
         fake_received_.push_back(pkt);
     }
 
     virtual ~NakedDhcpv4Srv() {
     }
+
+    /// @brief Dummy server identifier option used by various tests.
+    OptionPtr server_id_;
 
     /// @brief packets we pretend to receive
     ///
@@ -357,7 +428,8 @@ public:
 
     std::list<Pkt4Ptr> fake_sent_;
 
-    using Dhcpv4Srv::adjustRemoteAddr;
+    using Dhcpv4Srv::adjustIfaceData;
+    using Dhcpv4Srv::appendServerID;
     using Dhcpv4Srv::processDiscover;
     using Dhcpv4Srv::processRequest;
     using Dhcpv4Srv::processRelease;
@@ -366,10 +438,6 @@ public:
     using Dhcpv4Srv::processClientName;
     using Dhcpv4Srv::computeDhcid;
     using Dhcpv4Srv::createNameChangeRequests;
-    using Dhcpv4Srv::getServerID;
-    using Dhcpv4Srv::loadServerID;
-    using Dhcpv4Srv::generateServerID;
-    using Dhcpv4Srv::writeServerID;
     using Dhcpv4Srv::sanityCheck;
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::unpackOptions;

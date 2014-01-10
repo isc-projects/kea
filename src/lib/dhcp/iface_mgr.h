@@ -444,8 +444,7 @@ public:
     /// @return interface with requested name (or NULL if no such
     ///         interface is present)
     ///
-    Iface*
-    getIface(const std::string& ifname);
+    Iface* getIface(const std::string& ifname);
 
     /// @brief Returns container with all interfaces.
     ///
@@ -454,7 +453,22 @@ public:
     /// main() function completes, you should not worry much about this.
     ///
     /// @return container with all interfaces.
-    const IfaceCollection& getIfaces() { return ifaces_; }
+    const IfaceCollection& getIfaces() { return (ifaces_); }
+
+    /// @brief Removes detected interfaces.
+    ///
+    /// This method removes all detected interfaces. This method should be
+    /// used by unit tests to supply a custom set of interfaces. For example:
+    /// a unit test may create a pool of fake interfaces and use the custom
+    /// @c PktFilter class to mimic socket operation on these interfaces.
+    void clearIfaces();
+
+    /// @brief Detects network interfaces.
+    ///
+    /// This method will eventually detect available interfaces. For now
+    /// it offers stub implementation. First interface name and link-local
+    /// IPv6 address is read from interfaces.txt file.
+    void detectIfaces();
 
     /// @brief Return most suitable socket for transmitting specified IPv6 packet.
     ///
@@ -469,7 +483,7 @@ public:
     /// @return a socket descriptor
     uint16_t getSocket(const isc::dhcp::Pkt6& pkt);
 
-    /// @brief Return most suitable socket for transmitting specified IPv6 packet.
+    /// @brief Return most suitable socket for transmitting specified IPv4 packet.
     ///
     /// This method takes Pkt4 (see overloaded implementation that takes
     /// Pkt6) and chooses appropriate socket to send it. This method
@@ -479,8 +493,8 @@ public:
     ///
     /// @param pkt a packet to be transmitted
     ///
-    /// @return a socket descriptor
-    uint16_t getSocket(const isc::dhcp::Pkt4& pkt);
+    /// @return A structure describing a socket.
+    SocketInfo getSocket(const isc::dhcp::Pkt4& pkt);
 
     /// Debugging method that prints out all available interfaces.
     ///
@@ -869,14 +883,6 @@ protected:
     /// @return socket descriptor
     int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr,
                     uint16_t port, const bool join_multicast);
-
-    /// @brief Detects network interfaces.
-    ///
-    /// This method will eventually detect available interfaces. For now
-    /// it offers stub implementation. First interface name and link-local
-    /// IPv6 address is read from interfaces.txt file.
-    void
-    detectIfaces();
 
     /// @brief Stub implementation of network interface detection.
     ///

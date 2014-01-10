@@ -30,9 +30,9 @@ using namespace isc::dhcp_ddns;
 
 namespace {
 
-class NameDhcpv4SrvTest : public Dhcpv4SrvTest {
+class NameDhcpv4SrvTest : public Dhcpv4SrvFakeIfaceTest {
 public:
-    NameDhcpv4SrvTest() : Dhcpv4SrvTest() {
+    NameDhcpv4SrvTest() : Dhcpv4SrvFakeIfaceTest() {
         srv_ = new NakedDhcpv4Srv(0);
     }
     virtual ~NameDhcpv4SrvTest() {
@@ -110,6 +110,7 @@ public:
                                 const bool include_clientid = true) {
         Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
         pkt->setRemoteAddr(IOAddress("192.0.2.3"));
+        pkt->setIface("eth0");
         // For DISCOVER we don't include server id, because client broadcasts
         // the message to all servers.
         if (msg_type != DHCPDISCOVER) {
@@ -580,7 +581,6 @@ TEST_F(NameDhcpv4SrvTest, processDiscover) {
 
     Pkt4Ptr reply;
     ASSERT_NO_THROW(reply = srv_->processDiscover(req));
-
     checkResponse(reply, DHCPOFFER, 1234);
 
     EXPECT_TRUE(srv_->name_change_reqs_.empty());
@@ -615,6 +615,9 @@ TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
 // to it when Hostname option carries the top level domain-name.
 TEST_F(NameDhcpv4SrvTest, processRequestEmptyHostname) {
     Pkt4Ptr req = generatePktWithHostname(DHCPREQUEST, ".");
+    // Set interface for the incoming packet. The server requires it to
+    // generate client id.
+    req->setIface("eth0");
 
     Pkt4Ptr reply;
     ASSERT_NO_THROW(reply = srv_->processRequest(req));
@@ -691,6 +694,11 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsFqdn) {
 TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
     Pkt4Ptr req1 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
 
+    // Set interface for the incoming packet. The server requires it to
+    // generate client id.
+    req1->setIface("eth0");
+
+
     Pkt4Ptr reply;
     ASSERT_NO_THROW(reply = srv_->processRequest(req1));
 
@@ -708,6 +716,10 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
     // should generate two NameChangeRequests: one to remove existing entry,
     // another one to add new entry with updated domain-name.
     Pkt4Ptr req2 = generatePktWithHostname(DHCPREQUEST, "otherhost");
+
+    // Set interface for the incoming packet. The server requires it to
+    // generate client id.
+    req2->setIface("eth0");
 
     ASSERT_NO_THROW(reply = srv_->processRequest(req2));
 
