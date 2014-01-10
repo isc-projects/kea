@@ -44,7 +44,14 @@ class DNSClientImpl : public asiodns::IOFetch::Callback {
 public:
     // A buffer holding response from a DNS.
     util::OutputBufferPtr in_buf_;
-    // A caller-supplied object holding a parsed response from DNS.
+    // A caller-supplied object which will hold the parsed response from DNS.
+    // The response object is (or descends from) isc::dns::Message and is
+    // populated using Message::fromWire().  This method may only be called
+    // once in the lifetime of a Message instance.  Therefore, response_ is a
+    // pointer reference thus allowing this class to replace the object
+    // pointed to with a new Message instance each time a message is
+    // received. This allows a single DNSClientImpl instance to be used in
+    // for multiple, sequential IOFetch calls.
     D2UpdateMessagePtr& response_;
     // A caller-supplied external callback which is invoked when DNS message
     // exchange is complete or interrupted.
@@ -80,6 +87,12 @@ DNSClientImpl::DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
                              const DNSClient::Protocol proto)
     : in_buf_(new OutputBuffer(DEFAULT_BUFFER_SIZE)),
       response_(response_placeholder), callback_(callback), proto_(proto) {
+
+    // Response should be an empty pointer. It gets populated by the
+    // operator() method.
+    if (response_) {
+        isc_throw(isc::BadValue, "Response buffer pointer should be null");
+    }
 
     // @todo Currently we only support UDP. The support for TCP is planned for
     // the future release.
