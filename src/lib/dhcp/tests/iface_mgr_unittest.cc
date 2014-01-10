@@ -1446,7 +1446,7 @@ TEST_F(IfaceMgrTest, openSockets4NoErrorHandler) {
 
 // Test that the external error handler is called when trying to bind a new
 // socket to the address and port being in use. The sockets on the other
-// interfaces should open just fine..
+// interfaces should open just fine.
 TEST_F(IfaceMgrTest, openSocket4ErrorHandler) {
     NakedIfaceMgr ifacemgr;
 
@@ -1808,6 +1808,77 @@ TEST_F(IfaceMgrTest, openSockets6NoIfaces) {
     bool socket_open = false;
     ASSERT_NO_THROW(socket_open = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
     EXPECT_FALSE(socket_open);
+}
+
+// Test that exception is thrown when trying to bind a new socket to the port
+// and address which is already in use by another socket.
+TEST_F(IfaceMgrTest, openSockets6NoErrorHandler) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Open socket on eth0. The openSockets6 should detect that this
+    // socket has been already open and an attempt to open another socket
+    // and bind to this address and port should fail.
+    ASSERT_NO_THROW(ifacemgr.openSocket("eth0",
+                                        IOAddress("fe80::3a60:77ff:fed5:cdef"),
+                                        DHCP6_SERVER_PORT));
+
+    // The function throws an exception when it tries to open a socket
+    // and bind it to the address in use.
+    EXPECT_THROW(ifacemgr.openSockets6(DHCP6_SERVER_PORT),
+                 isc::dhcp::SocketConfigError);
+
+}
+
+// Test that the external error handler is called when trying to bind a new
+// socket to the address and port being in use. The sockets on the other
+// interfaces should open just fine.
+TEST_F(IfaceMgrTest, openSocket6ErrorHandler) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Open socket on eth0. The openSockets6 should detect that this
+    // socket has been already open and an attempt to open another socket
+    // and bind to this address and port should fail.
+    ASSERT_NO_THROW(ifacemgr.openSocket("eth0",
+                                        IOAddress("fe80::3a60:77ff:fed5:cdef"),
+                                        DHCP6_SERVER_PORT));
+
+    // Install an error handler before trying to open sockets. This handler
+    // should be called when the IfaceMgr fails to open socket on eth0.
+    isc::dhcp::IfaceMgrErrorMsgCallback error_handler =
+        boost::bind(&IfaceMgrTest::ifaceMgrErrorHandler, this, _1);
+    //    ASSERT_NO_THROW(ifacemgr.openSockets6(DHCP6_SERVER_PORT, error_handler));
+    try {
+        ifacemgr.openSockets6(DHCP6_SERVER_PORT, error_handler);
+    } catch (const Exception& ex) {
+        std::cout << ex.what() << std::endl;
+    }
+    // We expect that an error occured when we tried to open a socket on
+    // eth0, but the socket on eth1 should open just fine.
+    EXPECT_EQ(1, errors_count_);
+
+    // Reset errors count.
+    errors_count_ = 0;
+
+    // Now that we have two sockets open, we can try this again but this time
+    // we should get two errors: one when opening a socket on eth0, another one
+    // when opening a socket on eth1.
+    ASSERT_NO_THROW(ifacemgr.openSockets6(DHCP6_SERVER_PORT, error_handler));
+    EXPECT_EQ(2, errors_count_);
+
 }
 
 // Test the Iface structure itself

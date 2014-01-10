@@ -109,6 +109,11 @@ public:
     /// always set to 0. On each call to this function, the counter of
     /// invocations is increased by one. This is useful to check if packet
     /// filter object has been correctly installed and is used by @c IfaceMgr.
+    /// As in the case of opening a real socket, this function will check
+    /// if there is another fake socket "bound" to the same address and port.
+    /// If there is, it will throw an exception. This allows to simulate the
+    /// conditions when one of the sockets can't be open because there is
+    /// a socket already open and test how IfaceMgr will handle it.
     ///
     /// @param iface Interface descriptor.
     /// @param addr Address on the interface to be used to send packets.

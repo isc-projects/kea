@@ -181,8 +181,17 @@ PktFilter6Stub::PktFilter6Stub()
 }
 
 SocketInfo
-PktFilter6Stub::openSocket(const Iface&, const isc::asiolink::IOAddress& addr,
+PktFilter6Stub::openSocket(const Iface& iface, const isc::asiolink::IOAddress& addr,
                            const uint16_t port, const bool) {
+    // Check if there is any other socket bound to the specified address
+    // and port on this interface.
+    const Iface::SocketCollection& sockets = iface.getSockets();
+    for (Iface::SocketCollection::const_iterator socket = sockets.begin();
+         socket != sockets.end(); ++socket) {
+        if ((socket->addr_ == addr) && (socket->port_ == port)) {
+            isc_throw(SocketConfigError, "test socket bind error");
+        }
+    }
     ++open_socket_count_;
     return (SocketInfo(addr, port, 0));
 }
