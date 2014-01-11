@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -44,13 +44,24 @@ public:
         CORRUPT_RESP  // Generate a corrupt response
     };
 
+    // Reference to IOService to use for IO processing.
     asiolink::IOService& io_service_;
+    // IP address at which to listen for requests.
     const asiolink::IOAddress& address_;
+    // Port on which to listen for requests.
     size_t port_;
+    // Socket on which listening is done.
     SocketPtr server_socket_;
+    // Stores the end point of requesting client.
     asio::ip::udp::endpoint remote_;
+    // Buffer in which received packets are stuffed.
     uint8_t receive_buffer_[TEST_MSG_MAX];
+    // Flag which indicates if a receive has been initiated but
+    // not yet completed.
     bool receive_pending_;
+    // Indicates if server is in perpetual receive mode. If true once
+    // a receive has been completed, a new one will be automatically
+    // initiated.
     bool perpetual_receive_;
 
     /// @brief Constructor
@@ -64,7 +75,7 @@ public:
     /// @brief Constructor
     ///
     /// @param io_service IOService to be used for socket IO.
-    /// @param server DnServerInfo of server the DNS server. This supplies the
+    /// @param server DnsServerInfo of server the DNS server. This supplies the
     /// server's ip address and port.
     FauxServer(asiolink::IOService& io_service, DnsServerInfo& server);
 
@@ -96,6 +107,7 @@ public:
                         const ResponseMode& response_mode,
                         const dns::Rcode& response_rcode);
 
+    /// @brief Returns true if a receive has been started but not completed.
     bool isReceivePending() {
         return receive_pending_;
     }
@@ -106,10 +118,10 @@ public:
 /// This class instantiates an IOService provides a single method, runTimedIO
 /// which will run the IOService for no more than a finite amount of time,
 /// at least one event is executed or the IOService is stopped.
-/// It provides an overridable handler for timer expiration event.  It is
+/// It provides an virtual handler for timer expiration event.  It is
 /// intended to be used as a base class for test fixtures that need to process
-/// IO by providing them a consistent way to do so while retaining a safety valve
-/// so tests do not hang.
+/// IO by providing them a consistent way to do so while retaining a safety
+/// valve so tests do not hang.
 class TimedIO  {
 public:
     IOServicePtr io_service_;
@@ -127,7 +139,7 @@ public:
     /// Stops the IOService and fails the current test.
     virtual void timesUp();
 
-    /// @brief Runs IOService till time expires or at least one handler executes.
+    /// @brief Processes IO till time expires or at least one handler executes.
     ///
     /// This method first polls IOService to run any ready handlers.  If no
     /// handlers are ready, it starts the internal time to run for the given
