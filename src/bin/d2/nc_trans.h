@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -373,7 +373,7 @@ protected:
     /// Creates an in::A() or in:AAAA() RData instance from the NCR
     /// lease address and adds it to the given RRset.
     ///
-    /// @param RRset RRset to which to add the RData
+    /// @param rrset RRset to which to add the RData
     ///
     /// @throw NameChangeTransactionError if RData cannot be constructed or
     /// the RData cannot be added to the given RRset.
@@ -384,7 +384,7 @@ protected:
     /// Creates an in::DHCID() RData instance from the NCR DHCID and adds
     /// it to the given RRset.
     ///
-    /// @param RRset RRset to which to add the RData
+    /// @param rrset RRset to which to add the RData
     ///
     /// @throw NameChangeTransactionError if RData cannot be constructed or
     /// the RData cannot be added to the given RRset.
@@ -395,7 +395,7 @@ protected:
     /// Creates an in::PTR() RData instance from the NCR FQDN and adds
     /// it to the given RRset.
     ///
-    /// @param RRset RRset to which to add the RData
+    /// @param rrset RRset to which to add the RData
     ///
     /// @throw NameChangeTransactionError if RData cannot be constructed or
     /// the RData cannot be added to the given RRset.
