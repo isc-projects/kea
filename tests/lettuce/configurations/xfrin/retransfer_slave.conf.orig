@@ -10,7 +10,7 @@
     "Auth": {
         "listen_on": [ {
             "address": "::1",
-            "port": 47806
+            "port": 56176
         } ]
     },
     "data_sources": {

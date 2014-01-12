@@ -7,7 +7,7 @@ Feature: Xfrin incoming notify handling
     server or slave server is unreachable.
 
     Scenario: Handle incoming notify
-    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
+    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 56174 as master
     And wait for master stderr message BIND10_STARTED_CC
     And wait for master stderr message CMDCTL_STARTED
     And wait for master stderr message AUTH_SERVER_STARTED
@@ -22,12 +22,12 @@ Feature: Xfrin incoming notify handling
     And wait for bind10 stderr message XFRIN_STARTED
     And wait for bind10 stderr message ZONEMGR_STARTED
 
-    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+    A query for www.example.org to [::1]:56176 should have rcode NXDOMAIN
 
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+    check initial statistics not containing example.org for Xfrout with cmdctl port 56174 except for the following items
       | item_name                | min_value | max_value |
       | socket.unixdomain.open   |         0 |         1 |
     # Note: .Xfrout.socket.unixdomain.open can be either expected to
@@ -49,7 +49,7 @@ Feature: Xfrin incoming notify handling
     # reason is same as the case of .Xfrout.socket.unixdomain.open. as described
     # above.
 
-    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    When I send bind10 with cmdctl port 56174 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
     # From this point we can't reliably 'wait for new' because the ordering
@@ -61,7 +61,7 @@ Feature: Xfrin incoming notify handling
     Then wait for bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
     Then wait for master stderr message NOTIFY_OUT_REPLY_RECEIVED
 
-    A query for www.example.org to [::1]:47806 should have rcode NOERROR
+    A query for www.example.org to [::1]:56176 should have rcode NOERROR
     # Make sure handling statistics command handling checked below is
     # after this query
     And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
@@ -73,14 +73,14 @@ Feature: Xfrin incoming notify handling
     #
 
     # wait until the last stats requesting is finished
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 56174
     # note that this does not 100% guarantee the stats updated Xfrout
     # statistics.  But there doesn't seem to be a better log message that
     # suggests this event.
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     last bindctl output should not contain "error"
 
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 56174
     The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value |
       | _SERVER_.notifyoutv6     |          1 |
@@ -88,7 +88,7 @@ Feature: Xfrin incoming notify handling
       | example.org..notifyoutv6 |          1 |
       | example.org..xfrreqdone  |          1 |
 
-    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 56174
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
       | item_name | item_value |
       | open      |          1 |
@@ -127,7 +127,7 @@ Feature: Xfrin incoming notify handling
     # Test for handling incoming notify only in IPv4
     #
     Scenario: Handle incoming notify (IPv4)
-    Given I have bind10 running with configuration xfrin/retransfer_master_v4.conf with cmdctl port 47804 as master
+    Given I have bind10 running with configuration xfrin/retransfer_master_v4.conf with cmdctl port 56174 as master
     And wait for master stderr message BIND10_STARTED_CC
     And wait for master stderr message CMDCTL_STARTED
     And wait for master stderr message AUTH_SERVER_STARTED
@@ -142,12 +142,12 @@ Feature: Xfrin incoming notify handling
     And wait for bind10 stderr message XFRIN_STARTED
     And wait for bind10 stderr message ZONEMGR_STARTED
 
-    A query for www.example.org to 127.0.0.1:47806 should have rcode NXDOMAIN
+    A query for www.example.org to 127.0.0.1:56176 should have rcode NXDOMAIN
 
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+    check initial statistics not containing example.org for Xfrout with cmdctl port 56174 except for the following items
       | item_name                | min_value | max_value |
       | socket.unixdomain.open   |         0 |         1 |
     # Note: See above about .Xfrout.socket.unixdomain.open.
@@ -161,7 +161,7 @@ Feature: Xfrin incoming notify handling
       | axfr_running    |         0 |         1 |
     # Note: See above about soa_in_progress and axfr_running of Xfrin
 
-    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    When I send bind10 with cmdctl port 56174 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
     # From this point we can't reliably 'wait for new' because the ordering
@@ -173,7 +173,7 @@ Feature: Xfrin incoming notify handling
     Then wait for bind10 stderr message ZONEMGR_RECEIVE_XFRIN_SUCCESS
     Then wait for master stderr message NOTIFY_OUT_REPLY_RECEIVED
 
-    A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
+    A query for www.example.org to 127.0.0.1:56176 should have rcode NOERROR
     # Make sure handling statistics command handling checked below is
     # after this query
     And wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE
@@ -185,14 +185,14 @@ Feature: Xfrin incoming notify handling
     #
 
     # wait until the last stats requesting is finished
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 56174
     # note that this does not 100% guarantee the stats updated Xfrout
     # statistics.  But there doesn't seem to be a better log message that
     # suggests this event.
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     last bindctl output should not contain "error"
 
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 56174
     The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value |
       | _SERVER_.notifyoutv4     |          1 |
@@ -200,7 +200,7 @@ Feature: Xfrin incoming notify handling
       | example.org..notifyoutv4 |          1 |
       | example.org..xfrreqdone  |          1 |
 
-    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 56174
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
       | item_name | item_value |
       | open      |          1 |
@@ -239,7 +239,7 @@ Feature: Xfrin incoming notify handling
     # Test for Xfr request rejected
     #
     Scenario: Handle incoming notify (XFR request rejected)
-    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
+    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 56174 as master
     And wait for master stderr message BIND10_STARTED_CC
     And wait for master stderr message CMDCTL_STARTED
     And wait for master stderr message AUTH_SERVER_STARTED
@@ -254,12 +254,12 @@ Feature: Xfrin incoming notify handling
     And wait for bind10 stderr message XFRIN_STARTED
     And wait for bind10 stderr message ZONEMGR_STARTED
 
-    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+    A query for www.example.org to [::1]:56176 should have rcode NXDOMAIN
 
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+    check initial statistics not containing example.org for Xfrout with cmdctl port 56174 except for the following items
       | item_name                | min_value | max_value |
       | socket.unixdomain.open   |         0 |         1 |
     # Note: See above about .Xfrout.socket.unixdomain.open.
@@ -277,14 +277,14 @@ Feature: Xfrin incoming notify handling
     # set transfer_acl rejection
     # Local xfr requests from Xfrin module would be rejected here.
     #
-    When I send bind10 the following commands with cmdctl port 47804
+    When I send bind10 the following commands with cmdctl port 56174
     """
     config set Xfrout/zone_config[0]/transfer_acl [{"action":  "REJECT", "from": "::1"}]
     config commit
     """
     last bindctl output should not contain Error
 
-    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    When I send bind10 with cmdctl port 56174 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
     # can't use 'wait for new' below.
@@ -294,7 +294,7 @@ Feature: Xfrin incoming notify handling
     Then wait for bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED not ZONEMGR_RECEIVE_XFRIN_SUCCESS
     Then wait for master stderr message NOTIFY_OUT_REPLY_RECEIVED
 
-    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+    A query for www.example.org to [::1]:56176 should have rcode NXDOMAIN
 
     #
     # Test3 for Xfrout statistics
@@ -303,11 +303,11 @@ Feature: Xfrin incoming notify handling
     #
 
     # wait until the last stats requesting is finished
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 56174
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     last bindctl output should not contain "error"
 
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 56174
     The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value | min_value | max_value |
       | _SERVER_.notifyoutv6     |          1 |           |           |
@@ -318,7 +318,7 @@ Feature: Xfrin incoming notify handling
     # up to 3. See this for details
     # http://git.bind10.isc.org/~tester/builder/BIND10-lettuce/20120918210000-MacOS/logs/lettuce.out
 
-    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 56174
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
       | item_name | item_value |
       | open      |          1 |
@@ -355,7 +355,7 @@ Feature: Xfrin incoming notify handling
     # Test for Xfr request rejected in IPv4
     #
     Scenario: Handle incoming notify (XFR request rejected in IPv4)
-    Given I have bind10 running with configuration xfrin/retransfer_master_v4.conf with cmdctl port 47804 as master
+    Given I have bind10 running with configuration xfrin/retransfer_master_v4.conf with cmdctl port 56174 as master
     And wait for master stderr message BIND10_STARTED_CC
     And wait for master stderr message CMDCTL_STARTED
     And wait for master stderr message AUTH_SERVER_STARTED
@@ -370,12 +370,12 @@ Feature: Xfrin incoming notify handling
     And wait for bind10 stderr message XFRIN_STARTED
     And wait for bind10 stderr message ZONEMGR_STARTED
 
-    A query for www.example.org to 127.0.0.1:47806 should have rcode NXDOMAIN
+    A query for www.example.org to 127.0.0.1:56176 should have rcode NXDOMAIN
 
     #
     # Test1 for Xfrout statistics
     #
-    check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
+    check initial statistics not containing example.org for Xfrout with cmdctl port 56174 except for the following items
       | item_name                | min_value | max_value |
       | socket.unixdomain.open   |         0 |         1 |
     # Note: See above about .Xfrout.socket.unixdomain.open.
@@ -393,14 +393,14 @@ Feature: Xfrin incoming notify handling
     # set transfer_acl rejection
     # Local xfr requests from Xfrin module would be rejected here.
     #
-    When I send bind10 the following commands with cmdctl port 47804
+    When I send bind10 the following commands with cmdctl port 56174
     """
     config set Xfrout/zone_config[0]/transfer_acl [{"action":  "REJECT", "from": "127.0.0.1"}]
     config commit
     """
     last bindctl output should not contain Error
 
-    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    When I send bind10 with cmdctl port 56174 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
     # can't use 'wait for new' below.
@@ -410,7 +410,7 @@ Feature: Xfrin incoming notify handling
     Then wait for bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED not ZONEMGR_RECEIVE_XFRIN_SUCCESS
     Then wait for master stderr message NOTIFY_OUT_REPLY_RECEIVED
 
-    A query for www.example.org to 127.0.0.1:47806 should have rcode NXDOMAIN
+    A query for www.example.org to 127.0.0.1:56176 should have rcode NXDOMAIN
 
     #
     # Test3 for Xfrout statistics
@@ -418,12 +418,12 @@ Feature: Xfrin incoming notify handling
     # check statistics change
     #
 
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 56174
     # wait until stats request at least after NOTIFY_OUT_REPLY_RECEIVED
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     last bindctl output should not contain "error"
 
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 56174
     The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value | min_value | max_value |
       | _SERVER_.notifyoutv4     |          1 |           |           |
@@ -434,7 +434,7 @@ Feature: Xfrin incoming notify handling
     # up to 3. See this for details
     # http://git.bind10.isc.org/~tester/builder/BIND10-lettuce/20120918210000-MacOS/logs/lettuce.out
 
-    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 56174
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
       | item_name | item_value |
       | open      |          1 |
@@ -471,7 +471,7 @@ Feature: Xfrin incoming notify handling
     # Test for unreachable slave
     #
     Scenario: Handle incoming notify (unreachable slave)
-    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
+    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 56174 as master
     And wait for master stderr message BIND10_STARTED_CC
     And wait for master stderr message CMDCTL_STARTED
     And wait for master stderr message AUTH_SERVER_STARTED
@@ -479,7 +479,7 @@ Feature: Xfrin incoming notify handling
     And wait for master stderr message ZONEMGR_STARTED
     And wait for master stderr message STATS_STARTING
 
-    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    When I send bind10 with cmdctl port 56174 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new master stderr message NOTIFY_OUT_SENDING_NOTIFY
     Then wait for new master stderr message NOTIFY_OUT_TIMEOUT
@@ -490,18 +490,18 @@ Feature: Xfrin incoming notify handling
     # check statistics change
     #
 
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 56174
     # wait until stats request at least after NOTIFY_OUT_TIMEOUT
     wait for new master stderr message XFROUT_RECEIVED_GETSTATS_COMMAND
     last bindctl output should not contain "error"
 
-    When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics zones of bind10 module Xfrout with cmdctl port 56174
     The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | min_value | max_value |
       | _SERVER_.notifyoutv6     |         1 |         5 |
       | example.org..notifyoutv6 |         1 |         5 |
 
-    When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
+    When I query statistics socket of bind10 module Xfrout with cmdctl port 56174
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
       | item_name | item_value |
       | open      |          1 |
@@ -510,7 +510,7 @@ Feature: Xfrin incoming notify handling
     # Test for NOTIFY that would result in NOTAUTH
     #
     Scenario: Handle incoming notify that does match authoritative zones
-    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
+    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 56174 as master
     And wait for master stderr message BIND10_STARTED_CC
     And wait for master stderr message CMDCTL_STARTED
     And wait for master stderr message AUTH_SERVER_STARTED
@@ -529,7 +529,7 @@ Feature: Xfrin incoming notify handling
     # replace master's data source with unmatched zone for slave's zone.
     # we restart Xfrout to make it sure.
     #
-    When I send bind10 the following commands with cmdctl port 47804
+    When I send bind10 the following commands with cmdctl port 56174
     """
     config set data_sources/classes/IN[0]/params/database_file data/ixfr-out/zones.sqlite3
     config set Auth/database_file data/ixfr-out/zones.sqlite3
@@ -540,20 +540,20 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
     And wait for new master stderr message XFROUT_STARTED
 
-    A query for www.example.com to [::1]:47806 should have rcode REFUSED
+    A query for www.example.com to [::1]:56176 should have rcode REFUSED
 
-    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.com IN
+    When I send bind10 with cmdctl port 56174 the command Xfrout notify example.com IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY_NOTAUTH
     Then wait for new master stderr message NOTIFY_OUT_REPLY_RECEIVED
 
-    A query for www.example.com to [::1]:47806 should have rcode REFUSED
+    A query for www.example.com to [::1]:56176 should have rcode REFUSED
 
     #
     # Test for NOTIFY that's not in the secondaries list
     #
     Scenario: Handle incoming notify that is not in the secondaries list
-    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
+    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 56174 as master
     And wait for master stderr message BIND10_STARTED_CC
     And wait for master stderr message CMDCTL_STARTED
     And wait for master stderr message AUTH_SERVER_STARTED
@@ -580,22 +580,22 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
     And wait for new bind10 stderr message ZONEMGR_STARTED
 
-    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+    A query for www.example.org to [::1]:56176 should have rcode NXDOMAIN
 
-    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    When I send bind10 with cmdctl port 56174 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
     Then wait for new bind10 stderr message ZONEMGR_RECEIVE_NOTIFY
     Then wait for new bind10 stderr message ZONEMGR_ZONE_NOTIFY_NOT_SECONDARY
     Then wait for new master stderr message NOTIFY_OUT_REPLY_RECEIVED
 
-    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+    A query for www.example.org to [::1]:56176 should have rcode NXDOMAIN
 
     #
     # Test for NOTIFY when zonemgr is not running
     #
     Scenario: Handle incoming notify while zonemgr is not running
-    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
+    Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 56174 as master
     And wait for master stderr message BIND10_STARTED_CC
     And wait for master stderr message CMDCTL_STARTED
     And wait for master stderr message AUTH_SERVER_STARTED
@@ -620,15 +620,15 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
     And wait for new bind10 stderr message BIND10_PROCESS_ENDED
 
-    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+    A query for www.example.org to [::1]:56176 should have rcode NXDOMAIN
 
-    When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
+    When I send bind10 with cmdctl port 56174 the command Xfrout notify example.org IN
     Then wait for master stderr message XFROUT_NOTIFY_COMMAND
     Then wait for new bind10 stderr message AUTH_RECEIVED_NOTIFY
     Then wait for new bind10 stderr message AUTH_ZONEMGR_NOTEXIST not AUTH_ZONEMGR_ERROR
     Then wait for master stderr message NOTIFY_OUT_TIMEOUT not NOTIFY_OUT_REPLY_RECEIVED
 
-    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+    A query for www.example.org to [::1]:56176 should have rcode NXDOMAIN
 
     #
     # Test for unreachable master
@@ -642,7 +642,7 @@ Feature: Xfrin incoming notify handling
     And wait for bind10 stderr message XFRIN_STARTED
     And wait for bind10 stderr message ZONEMGR_STARTED
 
-    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+    A query for www.example.org to [::1]:56176 should have rcode NXDOMAIN
 
     #
     # Test1 for Xfrin statistics
