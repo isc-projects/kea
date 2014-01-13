@@ -1074,6 +1074,44 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
                  RFCViolation);
 }
 
+TEST_F(Dhcpv6SrvTest, testServerid){
+	NakedDhcpv6Srv srv(0);
+	
+    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    req->setRemoteAddr(IOAddress("fe80::abcd"));
+    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_PD, 234, 1500, 3000);
+
+    // with a valid hint
+    IOAddress hint("2001:db8:1:2:f::");
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_PD, hint));
+    OptionPtr hint_opt(new Option6IAPrefix(D6O_IAPREFIX, hint, 64, 300, 500));
+    ia->addOption(hint_opt);
+    req->addOption(ia);
+    OptionPtr clientid = generateClientId();
+    req->addOption(clientid);
+
+    // server-id is mandatory in REQUEST
+    // but add there something else
+    std::vector<uint8_t> bin;
+
+    //diud_llt with time = 0, macaddress = 00:00:00:00:00:00
+    isc::util::encode::decodeHex("0001000100000000000000000000", bin);
+    // Now create server-id option
+    OptionPtr serverid = OptionPtr(new Option(Option::V6, D6O_SERVERID, bin));
+
+    req->addOption(serverid);
+    
+    // I moved testServerid in src/bin/dhcp6/dhcp6_srv.h 
+    // above the protected part.
+    EXPECT_THROW(srv.testServerid(req),ServerID_mismatch);
+	
+    req->delOption(D6O_SERVERID);
+    
+    req->addOption(srv.getServerID());
+    
+    EXPECT_NO_THROW(srv.testServerid(req));
+}
+
 // This test verifies if selectSubnet() selects proper subnet for a given
 // source address.
 TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
