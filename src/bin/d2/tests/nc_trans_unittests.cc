@@ -578,7 +578,16 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
     // they are correct after each selection.
     DnsServerInfoPtr prev_server = name_change->getCurrentServer();
     DNSClientPtr prev_client = name_change->getDNSClient();
-    D2UpdateMessagePtr prev_response = name_change->getDnsUpdateResponse();
+
+    // Verify response pointer is empty.
+    EXPECT_FALSE(name_change->getDnsUpdateResponse());
+
+    // Create dummy response so we can verify it is cleared at each
+    // new server select.
+    D2UpdateMessagePtr dummyResp;
+    dummyResp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
+    ASSERT_NO_THROW(name_change->setDnsUpdateResponse(dummyResp));
+    ASSERT_TRUE(name_change->getDnsUpdateResponse());
 
     // Iteratively select through the list of servers.
     int passes = 0;
@@ -591,17 +600,22 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
         // Verify that the new values are not empty.
         EXPECT_TRUE(server);
         EXPECT_TRUE(client);
-        EXPECT_TRUE(response);
+
+        // Verify response pointer is now empty.
+        EXPECT_FALSE(name_change->getDnsUpdateResponse());
 
         // Verify that the new values are indeed new.
         EXPECT_NE(server, prev_server);
         EXPECT_NE(client, prev_client);
-        EXPECT_NE(response, prev_response);
 
         // Remember the selected values for the next pass.
         prev_server = server;
         prev_client = client;
-        prev_response = response;
+
+        // Create new dummy response.
+        dummyResp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
+        ASSERT_NO_THROW(name_change->setDnsUpdateResponse(dummyResp));
+        ASSERT_TRUE(name_change->getDnsUpdateResponse());
 
         ++passes;
     }
@@ -626,12 +640,11 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
     ASSERT_NO_THROW(name_change->initServerSelection(domain));
 
     // The server selection process determines the current server,
-    // instantiates a new DNSClient, and a DNS response message buffer.
+    // instantiates a new DNSClient, and resets the DNS response message buffer.
     // We need to save the values before each selection, so we can verify
     // they are correct after each selection.
     prev_server = name_change->getCurrentServer();
     prev_client = name_change->getDNSClient();
-    prev_response = name_change->getDnsUpdateResponse();
 
     // Iteratively select through the list of servers.
     passes = 0;
@@ -644,17 +657,22 @@ TEST_F(NameChangeTransactionTest, serverSelectionTest) {
         // Verify that the new values are not empty.
         EXPECT_TRUE(server);
         EXPECT_TRUE(client);
-        EXPECT_TRUE(response);
+
+        // Verify response pointer is now empty.
+        EXPECT_FALSE(name_change->getDnsUpdateResponse());
 
         // Verify that the new values are indeed new.
         EXPECT_NE(server, prev_server);
         EXPECT_NE(client, prev_client);
-        EXPECT_NE(response, prev_response);
 
         // Remember the selected values for the next pass.
         prev_server = server;
         prev_client = client;
-        prev_response = response;
+
+        // Create new dummy response.
+        dummyResp.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
+        ASSERT_NO_THROW(name_change->setDnsUpdateResponse(dummyResp));
+        ASSERT_TRUE(name_change->getDnsUpdateResponse());
 
         ++passes;
     }
@@ -686,6 +704,7 @@ TEST_F(NameChangeTransactionTest, modelFailure) {
 TEST_F(NameChangeTransactionTest, successfulUpdateTest) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_TRUE(name_change->selectFwdServer());
 
     EXPECT_TRUE(name_change->isModelNew());
     EXPECT_FALSE(name_change->getForwardChangeCompleted());
@@ -722,6 +741,7 @@ TEST_F(NameChangeTransactionTest, successfulUpdateTest) {
 TEST_F(NameChangeTransactionTest, failedUpdateTest) {
     NameChangeStubPtr name_change;
     ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ASSERT_TRUE(name_change->selectFwdServer());
 
     // Launch the transaction by calling startTransaction.  The state model
     // should run up until the "IO" operation is initiated in DOING_UPDATE_ST.

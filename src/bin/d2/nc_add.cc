@@ -230,7 +230,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
                 // If we get not authorized should we try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_REJECTED)
-                          .arg(getCurrentServer()->getIpAddress())
+                          .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -247,7 +247,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_IO_ERROR)
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             retryTransition(SELECTING_FWD_SERVER_ST);
             break;
@@ -256,7 +256,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT)
-                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
             retryTransition(SELECTING_FWD_SERVER_ST);
@@ -268,7 +268,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             break;
@@ -342,7 +342,7 @@ NameAddTransaction::replacingFwdAddrsHandler() {
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_REJECTED)
-                          .arg(getCurrentServer()->getIpAddress())
+                          .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -359,7 +359,7 @@ NameAddTransaction::replacingFwdAddrsHandler() {
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_IO_ERROR)
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             // If we are out of retries on this server, we go back and start
             // all over on a new server.
@@ -370,7 +370,7 @@ NameAddTransaction::replacingFwdAddrsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT)
-                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
             // If we are out of retries on this server, we go back and start
@@ -385,7 +385,7 @@ NameAddTransaction::replacingFwdAddrsHandler() {
                       DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             break;
@@ -476,7 +476,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_REJECTED)
-                          .arg(getCurrentServer()->getIpAddress())
+                          .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -493,7 +493,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_IO_ERROR)
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             // If we are out of retries on this server, we go back and start
             // all over on a new server.
@@ -504,7 +504,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT)
-                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
             // If we are out of retries on this server, we go back and start
@@ -519,7 +519,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
                       DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             break;
@@ -557,7 +557,7 @@ NameAddTransaction::processAddFailedHandler() {
     case UPDATE_FAILED_EVT:
     case NO_MORE_SERVERS_EVT:
         LOG_ERROR(dctl_logger, DHCP_DDNS_ADD_FAILED).arg(getNcr()->toText())
-        .arg(getContextStr());
+        .arg(getEventLabel(getNextEvent()));
         setNcrStatus(dhcp_ddns::ST_FAILED);
         endModel();
         break;
