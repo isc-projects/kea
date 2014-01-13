@@ -225,7 +225,7 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
                 // If we get not authorized should we try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_REJECTED)
-                          .arg(getCurrentServer()->getIpAddress())
+                          .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -242,7 +242,7 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_IO_ERROR)
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             retryTransition(SELECTING_FWD_SERVER_ST);
             break;
@@ -251,7 +251,7 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_ADDRS_RESP_CORRUPT)
-                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
             retryTransition(SELECTING_FWD_SERVER_ST);
@@ -264,7 +264,7 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
                       DHCP_DDNS_FORWARD_REMOVE_ADDRS_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             break;
@@ -340,7 +340,7 @@ NameRemoveTransaction::removingFwdRRsHandler() {
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_REJECTED)
-                          .arg(getCurrentServer()->getIpAddress())
+                          .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -357,7 +357,7 @@ NameRemoveTransaction::removingFwdRRsHandler() {
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_IO_ERROR)
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             // @note If we exhaust the IO retries for the current server
             // due to IO failures, we will abort the remaining updates.
@@ -374,7 +374,7 @@ NameRemoveTransaction::removingFwdRRsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REMOVE_RRS_RESP_CORRUPT)
-                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
             // If we are out of retries on this server abandon the transaction.
@@ -389,7 +389,7 @@ NameRemoveTransaction::removingFwdRRsHandler() {
                       DHCP_DDNS_FORWARD_REMOVE_RRS_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             break;
@@ -483,7 +483,7 @@ NameRemoveTransaction::removingRevPtrsHandler() {
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REMOVE_REJECTED)
-                          .arg(getCurrentServer()->getIpAddress())
+                          .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -500,7 +500,7 @@ NameRemoveTransaction::removingRevPtrsHandler() {
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REMOVE_IO_ERROR)
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             // If we are out of retries on this server, we go back and start
             // all over on a new server.
@@ -511,7 +511,7 @@ NameRemoveTransaction::removingRevPtrsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REMOVE_RESP_CORRUPT)
-                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
             // If we are out of retries on this server, we go back and start
@@ -526,7 +526,7 @@ NameRemoveTransaction::removingRevPtrsHandler() {
                       DHCP_DDNS_REVERSE_REMOVE_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             break;

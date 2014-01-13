@@ -16,6 +16,7 @@
 #include <d2/d2_update_mgr.h>
 #include <util/time_utilities.h>
 #include <d_test_stubs.h>
+#include <nc_test_utils.h>
 
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
@@ -31,9 +32,9 @@ using namespace isc::d2;
 
 namespace {
 
-/// @brief Wrapper class for D2UpdateMgr to provide acces non-public methods.
+/// @brief Wrapper class for D2UpdateMgr providing access to non-public methods.
 ///
-/// This class faciliates testing by making non-public methods accessible so
+/// This class facilitates testing by making non-public methods accessible so
 /// they can be invoked directly in test routines.
 class D2UpdateMgrWrapper : public D2UpdateMgr {
 public:
@@ -66,18 +67,15 @@ typedef boost::shared_ptr<D2UpdateMgrWrapper> D2UpdateMgrWrapperPtr;
 /// D2CfgMgr.  This fixture provides an instance of each, plus a canned,
 /// valid DHCP_DDNS configuration sufficient to test D2UpdateMgr's basic
 /// functions.
-class D2UpdateMgrTest : public ConfigParseTest {
+class D2UpdateMgrTest : public TimedIO, public ConfigParseTest {
 public:
-    IOServicePtr io_service_;
     D2QueueMgrPtr queue_mgr_;
     D2CfgMgrPtr cfg_mgr_;
-    //D2UpdateMgrPtr update_mgr_;
     D2UpdateMgrWrapperPtr update_mgr_;
     std::vector<NameChangeRequestPtr> canned_ncrs_;
     size_t canned_count_;
 
     D2UpdateMgrTest() {
-        io_service_.reset(new isc::asiolink::IOService());
         queue_mgr_.reset(new D2QueueMgr(io_service_));
         cfg_mgr_.reset(new D2CfgMgr());
         update_mgr_.reset(new D2UpdateMgrWrapper(queue_mgr_, cfg_mgr_,
@@ -99,8 +97,8 @@ public:
         " \"change_type\" : 0 , "
         " \"forward_change\" : true , "
         " \"reverse_change\" : false , "
-        " \"fqdn\" : \"walah.walah.org.\" , "
-        " \"ip_address\" : \"192.168.2.1\" , "
+        " \"fqdn\" : \"my.example.com.\" , "
+        " \"ip_address\" : \"192.168.1.2\" , "
         " \"dhcid\" : \"0102030405060708\" , "
         " \"lease_expires_on\" : \"20130121132405\" , "
         " \"lease_length\" : 1300 "
@@ -112,6 +110,8 @@ public:
             dhcp_ddns::NameChangeRequestPtr ncr = NameChangeRequest::
                                                   fromJSON(msg_str);
             ncr->setDhcid(dhcids[i]);
+            ncr->setChangeType(i % 2 == 0 ?
+                               dhcp_ddns::CHG_ADD : dhcp_ddns::CHG_REMOVE);
             canned_ncrs_.push_back(ncr);
         }
     }
@@ -126,9 +126,9 @@ public:
                   "\"tsig_keys\": [] ,"
                   "\"forward_ddns\" : {"
                   "\"ddns_domains\": [ "
-                  "{ \"name\": \"two.three.org.\" , "
+                  "{ \"name\": \"example.com.\" , "
                   "  \"dns_servers\" : [ "
-                  "  { \"ip_address\": \"127.0.0.1\" } "
+                  "  { \"ip_address\": \"127.0.0.1\", \"port\" : 5301  } "
                   "  ] },"
                   "{ \"name\": \"org.\" , "
                   "  \"dns_servers\" : [ "
@@ -139,7 +139,7 @@ public:
                   "\"ddns_domains\": [ "
                   "{ \"name\": \"1.168.192.in-addr.arpa.\" , "
                   "  \"dns_servers\" : [ "
-                  "  { \"ip_address\": \"127.0.0.1\" } "
+                  "  { \"ip_address\": \"127.0.0.1\", \"port\" : 5301 } "
                   "  ] }, "
                   "{ \"name\": \"2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.\" , "
                   "  \"dns_servers\" : [ "
@@ -151,6 +151,101 @@ public:
         ASSERT_TRUE(fromJSON(canned_config_));
         answer_ = cfg_mgr_->parseConfig(config_set_);
         ASSERT_TRUE(checkAnswer(0));
+    }
+
+    /// @brief Fakes the completion of a given transaction.
+    ///
+    /// @param index index of the request from which the transaction was formed.
+    /// @param status completion status to assign to the request
+    void completeTransaction(const size_t index,
+                             const dhcp_ddns::NameChangeStatus& status) {
+        // add test on index
+        if (index >= canned_count_) {
+            ADD_FAILURE() << "request index is out of range: " << index;
+        }
+
+        const dhcp_ddns::D2Dhcid key = canned_ncrs_[index]->getDhcid();
+
+        // locate the transaction based on the request DHCID
+        TransactionList::iterator pos = update_mgr_->findTransaction(key);
+        if (pos == update_mgr_->transactionListEnd()) {
+            ADD_FAILURE() << "cannot find transaction for key: " << key.toStr();
+        }
+
+        NameChangeTransactionPtr trans = (*pos).second;
+        // Update the status of the request
+        trans->getNcr()->setStatus(status);
+        // End the model.
+        trans->endModel();
+    }
+
+    /// @brief Determines if any transactions are waiting for IO completion.
+    ///
+    /// @returns True if isModelWaiting() is true for at least one of the current
+    /// transactions.
+    bool anyoneWaiting() {
+        TransactionList::iterator it = update_mgr_->transactionListBegin();
+        while (it != update_mgr_->transactionListEnd()) {
+            if (((*it).second)->isModelWaiting()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// @brief Process events until all requests have been completed.
+    ///
+    /// This method iteratively calls D2UpdateMgr::sweep and executes
+    /// IOService calls until both the request queue and transaction list
+    /// are empty or a timeout occurs.  Note that in addition to the safety
+    /// timer, the number of passes through the loop is also limited to
+    /// a given number.  This is a failsafe to guard against an infinite loop
+    /// in the test.
+    ///
+    /// @param timeout_millisec Maximum amount of time to allow IOService to
+    /// run before failing the test.  Note, If the intent of a test is to
+    /// verify proper handling of DNSClient timeouts, the value must be
+    /// slightly larger than that being used for DNSClient timeout value.
+    /// @param max_passes Maximum number of times through the loop before
+    /// failing the test.  The default value of twenty is likely large enough
+    /// for most tests.  The number of passes required for a given test can
+    /// vary.
+    void processAll(unsigned int timeout_millisec =
+                    NameChangeTransaction::DNS_UPDATE_DEFAULT_TIMEOUT + 100,
+                    size_t max_passes = 20) {
+        // Loop until all the transactions have been dequeued and run through to
+        // completion.
+        size_t passes = 0;
+        size_t handlers = 0;
+        while (update_mgr_->getQueueCount() ||
+            update_mgr_->getTransactionCount()) {
+            ++passes;
+            update_mgr_->sweep();
+            // If any transactions are waiting on IO, run the service.
+            if (anyoneWaiting()) {
+                int cnt = runTimedIO(timeout_millisec);
+
+                // If cnt is zero then the service stopped unexpectedly.
+                if (cnt == 0) {
+                    ADD_FAILURE()
+                        << "processALL: IO service stopped unexpectedly,"
+                        << " passes: " << passes << ", handlers executed: "
+                        << handlers;
+                }
+
+                handlers += cnt;
+            }
+
+            // This is a last resort fail safe to ensure we don't go around
+            // forever. We cut it off the number of passes at 20.  This is
+            // roughly twice the number for the longest test (currently,
+            // multiTransactionTimeout).
+            if (passes > max_passes) {
+                ADD_FAILURE() << "processALL failed, too many passes: "
+                    << passes <<  ", total handlers executed: " << handlers;
+            }
+        }
     }
 
 };
@@ -168,12 +263,12 @@ TEST(D2UpdateMgr, construction) {
     D2CfgMgrPtr cfg_mgr;
     D2UpdateMgrPtr update_mgr;
 
-    // Verify that constrctor fails if given an invalid queue manager.
+    // Verify that constructor fails if given an invalid queue manager.
     ASSERT_NO_THROW(cfg_mgr.reset(new D2CfgMgr()));
     EXPECT_THROW(D2UpdateMgr(queue_mgr, cfg_mgr, io_service),
                  D2UpdateMgrError);
 
-    // Verify that constrctor fails if given an invalid config manager.
+    // Verify that constructor fails if given an invalid config manager.
     ASSERT_NO_THROW(queue_mgr.reset(new D2QueueMgr(io_service)));
     ASSERT_NO_THROW(cfg_mgr.reset());
     EXPECT_THROW(D2UpdateMgr(queue_mgr, cfg_mgr, io_service),
@@ -212,10 +307,10 @@ TEST(D2UpdateMgr, construction) {
 /// This test verifies that:
 /// 1. A transaction can be added to the list.
 /// 2. Finding a transaction in the list by key works correctly.
-/// 3. Looking for a non-existant transaction works properly.
+/// 3. Looking for a non-existent transaction works properly.
 /// 4. Attempting to add a transaction for a DHCID already in the list fails.
 /// 5. Removing a transaction by key works properly.
-/// 6. Attempting to remove an non-existant transaction does no harm.
+/// 6. Attempting to remove an non-existent transaction does no harm.
 TEST_F(D2UpdateMgrTest, transactionList) {
     // Grab a canned request for test purposes.
     NameChangeRequestPtr& ncr = canned_ncrs_[0];
@@ -248,7 +343,7 @@ TEST_F(D2UpdateMgrTest, transactionList) {
     EXPECT_NO_THROW(update_mgr_->removeTransaction(ncr->getDhcid()));
     EXPECT_EQ(0, update_mgr_->getTransactionCount());
 
-    // Verify the we can try to remove a non-existant transaction without harm.
+    // Verify the we can try to remove a non-existent transaction without harm.
     EXPECT_NO_THROW(update_mgr_->removeTransaction(ncr->getDhcid()));
 }
 
@@ -266,12 +361,32 @@ TEST_F(D2UpdateMgrTest, checkFinishedTransaction) {
     for (int i = 0; i < canned_count_; i++) {
         EXPECT_NO_THROW(update_mgr_->makeTransaction(canned_ncrs_[i]));
     }
-    // Verfiy we have that the transaçtion count is correct.
+    // Verify we have that the transaction count is correct.
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
 
-    // Set two of the transactions to finished states.
-    (canned_ncrs_[1])->setStatus(dhcp_ddns::ST_COMPLETED);
-    (canned_ncrs_[3])->setStatus(dhcp_ddns::ST_FAILED);
+    // Verify that all four transactions have been started.
+    TransactionList::iterator pos;
+    EXPECT_NO_THROW(pos = update_mgr_->transactionListBegin());
+    while (pos != update_mgr_->transactionListEnd()) {
+        NameChangeTransactionPtr trans = (*pos).second;
+        ASSERT_EQ(dhcp_ddns::ST_PENDING, trans->getNcrStatus());
+        ASSERT_TRUE(trans->isModelRunning());
+        ++pos;
+    }
+
+    // Verify that invoking checkFinishedTransactions does not throw.
+    EXPECT_NO_THROW(update_mgr_->checkFinishedTransactions());
+
+    // Since nothing is running IOService, the all four transactions should
+    // still be in the list.
+    EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
+
+    // Now "complete" two of the four.
+    // Simulate a successful completion.
+    completeTransaction(1, dhcp_ddns::ST_COMPLETED);
+
+    // Simulate a failed completion.
+    completeTransaction(3, dhcp_ddns::ST_FAILED);
 
     // Verify that invoking checkFinishedTransactions does not throw.
     EXPECT_NO_THROW(update_mgr_->checkFinishedTransactions());
@@ -323,9 +438,9 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     EXPECT_EQ(1, update_mgr_->getQueueCount());
 
     // Verify that invoking pickNextJob:
-    // 1. does not throw
-    // 2. does not make a new transaction
-    // 3. does not dequeu the entry
+    // 1. Does not throw
+    // 2. Does not make a new transaction
+    // 3. Does not dequeue the entry
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
     EXPECT_EQ(1, update_mgr_->getQueueCount());
@@ -345,9 +460,9 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
     ASSERT_NO_THROW(queue_mgr_->enqueue(bogus_ncr));
 
     // Verify that invoking pickNextJob:
-    // 1. does not throw
-    // 2. does not make a new transaction
-    // 3. does dequeue the entry
+    // 1. Does not throw
+    // 2. Does not make a new transaction
+    // 3. Does dequeue the entry
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
     EXPECT_EQ(0, update_mgr_->getTransactionCount());
     EXPECT_EQ(0, update_mgr_->getQueueCount());
@@ -360,17 +475,17 @@ TEST_F(D2UpdateMgrTest, pickNextJob) {
 
     // Verify that invoking pickNextJob:
     // 1. does not throw
-    // 2. does not make a new transaction
-    // 3. does dequeue the entry
+    // 2. Does not make a new transaction
+    // 3. Does dequeue the entry
     EXPECT_NO_THROW(update_mgr_->pickNextJob());
     EXPECT_EQ(0, update_mgr_->getTransactionCount());
     EXPECT_EQ(0, update_mgr_->getQueueCount());
 }
 
 /// @brief Tests D2UpdateManager's sweep method.
-/// Since sweep is primarly a wrapper around chechFinishedTransactions and
+/// Since sweep is primarily a wrapper around checkFinishedTransactions and
 /// pickNextJob, along with checks on maximum transaction limits, it mostly
-/// verifies that these three pieces work togther to move process jobs.
+/// verifies that these three pieces work together to move process jobs.
 /// Most of what is tested here is tested above.
 TEST_F(D2UpdateMgrTest, sweep) {
     // Ensure we have at least 4 canned requests with which to work.
@@ -399,7 +514,7 @@ TEST_F(D2UpdateMgrTest, sweep) {
     // Verify max transactions can't be less than current transaction count.
     EXPECT_THROW(update_mgr_->setMaxTransactions(1), D2UpdateMgrError);
 
-    // Queue up a request for a DCHID which has a transaction in progress.
+    // Queue up a request for a DHCID which has a transaction in progress.
     dhcp_ddns::NameChangeRequestPtr
         subsequent_ncr(new dhcp_ddns::NameChangeRequest(*(canned_ncrs_[2])));
     EXPECT_NO_THROW(queue_mgr_->enqueue(subsequent_ncr));
@@ -412,7 +527,7 @@ TEST_F(D2UpdateMgrTest, sweep) {
     EXPECT_EQ(1, update_mgr_->getQueueCount());
 
     // Mark the transaction complete.
-    (canned_ncrs_[2])->setStatus(dhcp_ddns::ST_COMPLETED);
+    completeTransaction(2, dhcp_ddns::ST_COMPLETED);
 
     // Verify that invoking sweep, cleans up the completed transaction,
     // dequeues the queued job and adds its transaction to the list.
@@ -428,7 +543,7 @@ TEST_F(D2UpdateMgrTest, sweep) {
     EXPECT_EQ(1, update_mgr_->getQueueCount());
 
     // Verify that sweep does not dequeue the new request as we are at
-    // transaction count.
+    // maximum transaction count.
     EXPECT_NO_THROW(update_mgr_->sweep());
     EXPECT_EQ(canned_count_, update_mgr_->getTransactionCount());
     EXPECT_EQ(1, update_mgr_->getQueueCount());
@@ -445,6 +560,213 @@ TEST_F(D2UpdateMgrTest, sweep) {
     // Verify that clearing transaction list works.
     EXPECT_NO_THROW(update_mgr_->clearTransactionList());
     EXPECT_EQ(0, update_mgr_->getTransactionCount());
+}
+
+/// @brief Tests integration of NameAddTransaction
+/// This test verifies that update manager can create and manage a
+/// NameAddTransaction from start to finish.  It utilizes a fake server
+/// which responds to all requests sent with NOERROR, simulating a
+/// successful addition.  The transaction processes both forward and
+/// reverse changes.
+TEST_F(D2UpdateMgrTest, addTransaction) {
+    // Put each transaction on the queue.
+    canned_ncrs_[0]->setChangeType(dhcp_ddns::CHG_ADD);
+    canned_ncrs_[0]->setReverseChange(true);
+    ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[0]));
+
+    // Call sweep once, this should:
+    // 1. Dequeue the request
+    // 2. Create the transaction
+    // 3. Start the transaction
+    ASSERT_NO_THROW(update_mgr_->sweep());
+
+    // Get a copy of the transaction.
+    TransactionList::iterator pos = update_mgr_->transactionListBegin();
+    ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
+    NameChangeTransactionPtr trans = (*pos).second;
+    ASSERT_TRUE(trans);
+
+    // At this point the transaction should have constructed
+    // and sent the DNS request.
+    ASSERT_TRUE(trans->getCurrentServer());
+    ASSERT_TRUE(trans->isModelRunning());
+    ASSERT_EQ(1, trans->getUpdateAttempts());
+    ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
+
+    // Create a server based on the transaction's current server, and
+    // start it listening.
+    FauxServer server(*io_service_, *(trans->getCurrentServer()));
+    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+
+    // Run sweep and IO until everything is done.
+    processAll();
+
+    // Verify that model succeeded.
+    EXPECT_FALSE(trans->didModelFail());
+
+    // Both completion flags should be true.
+    EXPECT_TRUE(trans->getForwardChangeCompleted());
+    EXPECT_TRUE(trans->getReverseChangeCompleted());
+
+    // Verify that we went through success state.
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST,
+              trans->getPrevState());
+    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT,
+              trans->getLastEvent());
+}
+
+/// @brief Tests integration of NameRemoveTransaction
+/// This test verifies that update manager can create and manage a
+/// NameRemoveTransaction from start to finish.  It utilizes a fake server
+/// which responds to all requests sent with NOERROR, simulating a
+/// successful addition.  The transaction processes both forward and
+/// reverse changes.
+TEST_F(D2UpdateMgrTest, removeTransaction) {
+    // Put each transaction on the queue.
+    canned_ncrs_[0]->setChangeType(dhcp_ddns::CHG_REMOVE);
+    canned_ncrs_[0]->setReverseChange(true);
+    ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[0]));
+
+    // Call sweep once, this should:
+    // 1. Dequeue the request
+    // 2. Create the transaction
+    // 3. Start the transaction
+    ASSERT_NO_THROW(update_mgr_->sweep());
+
+    // Get a copy of the transaction.
+    TransactionList::iterator pos = update_mgr_->transactionListBegin();
+    ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
+    NameChangeTransactionPtr trans = (*pos).second;
+    ASSERT_TRUE(trans);
+
+    // At this point the transaction should have constructed
+    // and sent the DNS request.
+    ASSERT_TRUE(trans->getCurrentServer());
+    ASSERT_TRUE(trans->isModelRunning());
+    ASSERT_EQ(1, trans->getUpdateAttempts());
+    ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
+
+    // Create a server based on the transaction's current server,
+    // and start it listening.
+    FauxServer server(*io_service_, *(trans->getCurrentServer()));
+    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+
+    // Run sweep and IO until everything is done.
+    processAll();
+
+    // Verify that model succeeded.
+    EXPECT_FALSE(trans->didModelFail());
+
+    // Both completion flags should be true.
+    EXPECT_TRUE(trans->getForwardChangeCompleted());
+    EXPECT_TRUE(trans->getReverseChangeCompleted());
+
+    // Verify that we went through success state.
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_OK_ST,
+              trans->getPrevState());
+    EXPECT_EQ(NameChangeTransaction::UPDATE_OK_EVT,
+              trans->getLastEvent());
+}
+
+
+/// @brief Tests handling of a transaction which fails.
+/// This test verifies that update manager correctly concludes a transaction
+/// which fails to complete successfully.  The failure simulated is repeated
+/// corrupt responses from the server, which causes an exhaustion of the
+/// available servers.
+TEST_F(D2UpdateMgrTest, errorTransaction) {
+    // Put each transaction on the queue.
+    ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[0]));
+
+    // Call sweep once, this should:
+    // 1. Dequeue the request
+    // 2. Create the transaction
+    // 3. Start the transaction
+    ASSERT_NO_THROW(update_mgr_->sweep());
+
+    // Get a copy of the transaction.
+    TransactionList::iterator pos = update_mgr_->transactionListBegin();
+    ASSERT_TRUE (pos != update_mgr_->transactionListEnd());
+    NameChangeTransactionPtr trans = (*pos).second;
+    ASSERT_TRUE(trans);
+
+    ASSERT_TRUE(trans->isModelRunning());
+    ASSERT_EQ(1, trans->getUpdateAttempts());
+    ASSERT_EQ(StateModel::NOP_EVT, trans->getNextEvent());
+    ASSERT_TRUE(trans->getCurrentServer());
+
+    // Create a server and start it listening.
+    FauxServer server(*io_service_, *(trans->getCurrentServer()));
+    server.receive(FauxServer::CORRUPT_RESP);
+
+    // Run sweep and IO until everything is done.
+    processAll();
+
+    // Verify that model succeeded.
+    EXPECT_FALSE(trans->didModelFail());
+
+    // Both completion flags should be false.
+    EXPECT_FALSE(trans->getForwardChangeCompleted());
+    EXPECT_FALSE(trans->getReverseChangeCompleted());
+
+    // Verify that we went through success state.
+    EXPECT_EQ(NameChangeTransaction::PROCESS_TRANS_FAILED_ST,
+              trans->getPrevState());
+    EXPECT_EQ(NameChangeTransaction::NO_MORE_SERVERS_EVT,
+              trans->getLastEvent());
+
+
+}
+
+/// @brief Tests processing of multiple transactions.
+/// This test verifies that update manager can create and manage a multiple
+/// transactions, concurrently.  It uses a fake server that responds to all
+/// requests sent with NOERROR, simulating successful DNS updates. The
+/// transactions are a mix of both adds and removes.
+TEST_F(D2UpdateMgrTest, multiTransaction) {
+    // Queue up all the requests.
+    int test_count = canned_count_;
+    for (int i = test_count; i > 0; i--) {
+        canned_ncrs_[i-1]->setReverseChange(true);
+        ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i-1]));
+    }
+
+    // Create a server and start it listening. Note this relies on the fact
+    // that all of configured servers have the same address.
+    // and start it listening.
+    asiolink::IOAddress server_ip("127.0.0.1");
+    FauxServer server(*io_service_, server_ip, 5301);
+    server.receive(FauxServer::USE_RCODE, dns::Rcode::NOERROR());
+
+    // Run sweep and IO until everything is done.
+    processAll();
+
+    for (int i = 0; i < test_count; i++) {
+        EXPECT_EQ(dhcp_ddns::ST_COMPLETED, canned_ncrs_[i]->getStatus());
+    }
+}
+
+/// @brief Tests processing of multiple transactions.
+/// This test verifies that update manager can create and manage a multiple
+/// transactions, concurrently.  It uses a fake server that responds to all
+/// requests sent with NOERROR, simulating successful DNS updates. The
+/// transactions are a mix of both adds and removes.
+TEST_F(D2UpdateMgrTest, multiTransactionTimeout) {
+    // Queue up all the requests.
+    int test_count = canned_count_;
+    for (int i = test_count; i > 0; i--) {
+        canned_ncrs_[i-1]->setReverseChange(true);
+        ASSERT_NO_THROW(queue_mgr_->enqueue(canned_ncrs_[i-1]));
+    }
+
+    // No server is running, so everything will time out.
+
+    // Run sweep and IO until everything is done.
+    processAll();
+
+    for (int i = 0; i < test_count; i++) {
+        EXPECT_EQ(dhcp_ddns::ST_FAILED, canned_ncrs_[i]->getStatus());
+    }
 }
 
 }

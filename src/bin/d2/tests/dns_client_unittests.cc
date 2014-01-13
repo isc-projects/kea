@@ -25,6 +25,7 @@
 #include <boost/bind.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
+#include <nc_test_utils.h>
 
 using namespace std;
 using namespace isc;
@@ -69,6 +70,8 @@ public:
     bool corrupt_response_;
     bool expect_response_;
     asiolink::IntervalTimer test_timer_;
+    int received_;
+    int expected_;
 
     // @brief Constructor.
     //
@@ -83,9 +86,10 @@ public:
           status_(DNSClient::SUCCESS),
           corrupt_response_(false),
           expect_response_(true),
-          test_timer_(service_) {
+          test_timer_(service_),
+          received_(0), expected_(0) {
         asiodns::logger.setSeverity(isc::log::INFO);
-        response_.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
+        response_.reset();
         dns_client_.reset(new DNSClient(response_, this));
 
         // Set the test timeout to break any running tasks if they hang.
@@ -108,7 +112,10 @@ public:
     // @param status A status code returned by DNSClient.
     virtual void operator()(DNSClient::Status status) {
         status_ = status;
-        service_.stop();
+        if (!expected_ || (expected_ == ++received_))
+        {
+            service_.stop();
+        }
 
         if (expect_response_) {
             if (!corrupt_response_) {
@@ -121,7 +128,7 @@ public:
                           response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
                 D2ZonePtr zone = response_->getZone();
                 ASSERT_TRUE(zone);
-                EXPECT_EQ("example.com.", zone->getName().toText());
+                EXPECT_EQ("response.example.com.", zone->getName().toText());
                 EXPECT_EQ(RRClass::IN().getCode(), zone->getClass().getCode());
 
             } else {
@@ -187,9 +194,6 @@ public:
     // It also verifies that the constructor will not throw if the supplied
     // callback object is NULL.
     void runConstructorTest() {
-        D2UpdateMessagePtr null_response;
-        EXPECT_THROW(DNSClient(null_response, this, DNSClient::UDP),
-                     isc::BadValue);
         EXPECT_NO_THROW(DNSClient(response_, NULL, DNSClient::UDP));
 
         // The TCP Transport is not supported right now. So, we return exception
@@ -284,7 +288,7 @@ public:
         // Create a request DNS Update message.
         D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
         ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
-        ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
+        ASSERT_NO_THROW(message.setZone(Name("response.example.com"), RRClass::IN()));
 
         // In order to perform the full test, when the client sends the request
         // and receives a response from the server, we have to emulate the
@@ -322,11 +326,13 @@ public:
         // The socket is now ready to receive the data. Let's post some request
         // message then.
         const int timeout = 5;
+        expected_++;
         dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS), TEST_PORT,
                              message, timeout);
 
         // It is possible to request that two packets are sent concurrently.
         if (two_sends) {
+            expected_++;
             dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS), TEST_PORT,
                                   message, timeout);
 
@@ -338,6 +344,10 @@ public:
 
         udp_socket.close();
 
+        // Since the callback, operator(), calls stop() on the io_service,
+        // we must reset it in order for subsequent calls to run() or
+        // run_one() to work.
+        service_.get_io_service().reset();
     }
 };
 
@@ -393,6 +403,7 @@ TEST_F(DNSClientTest, sendReceiveCurrupted) {
 TEST_F(DNSClientTest, sendReceiveTwice) {
     runSendReceiveTest(false, false);
     runSendReceiveTest(false, false);
+    EXPECT_EQ(2, received_);
 }
 
 // Verify that it is possible to use the DNSClient instance to perform the
@@ -401,7 +412,13 @@ TEST_F(DNSClientTest, sendReceiveTwice) {
 // 2. send
 // 3. receive
 // 4. receive
-TEST_F(DNSClientTest, concurrentSendReceive) {
+// @todo  THIS Test does not function. The method runSendReceive only
+// schedules one "server" receive.  In other words only one request is
+// listened for and then received. Once it is received, the operator()
+// method calls stop() on the io_service, which causes the second receive
+// to be cancelled.  It is also unclear, what the asio layer does with a
+// second receive on the same socket.
+TEST_F(DNSClientTest, DISABLED_concurrentSendReceive) {
     runSendReceiveTest(false, true);
 }
 
