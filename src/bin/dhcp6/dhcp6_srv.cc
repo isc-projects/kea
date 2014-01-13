@@ -763,6 +763,16 @@ Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
 }
 
 void
+Dhcpv6Srv::testServerid(const Pkt6Ptr& pkt){
+	OptionPtr serverid = pkt->getOption(D6O_SERVERID); 
+
+	// I just want to throw exception when server id's don't mach.
+	if !(getServerID()->getData() == serverid->getData()) 
+		//if received serverid isn't same with our, drop message
+		isc_throw(ServerID_mismatch, "Receievd serverid isn't ours");
+}
+
+void
 Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                        RequirementLevel serverid) {
     OptionCollection client_ids = pkt->getOptions(D6O_CLIENTID);
@@ -801,12 +811,20 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                       << server_ids.size() << "), exactly 1 expected in message "
                       << pkt->getName());
         }
-        break;
+        // test server received server id to check if that's ours id
+        // RFCViolation will be thrown if we didn't get exaclty one server_id so
+        // checking server_ids.size() here is pointless.
+       	testServerid(pkt);
+       	break;
 
     case OPTIONAL:
         if (server_ids.size() > 1) {
             isc_throw(RFCViolation, "Too many (" << server_ids.size()
                       << ") server-id options received in " << pkt->getName());
+        }
+        if (server_ids.size() == 1) {
+        			// test server received server id to check if that's ours id 
+                	testServerid(pkt);
         }
     }
 }
