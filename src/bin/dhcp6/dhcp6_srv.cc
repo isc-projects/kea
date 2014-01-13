@@ -767,7 +767,7 @@ Dhcpv6Srv::testServerid(const Pkt6Ptr& pkt){
 	OptionPtr serverid = pkt->getOption(D6O_SERVERID); 
 
 	// I just want to throw exception when server id's don't mach.
-	if !(getServerID()->getData() == serverid->getData()) 
+	if (!(getServerID()->getData() == serverid->getData())) 
 		//if received serverid isn't same with our, drop message
 		isc_throw(ServerID_mismatch, "Receievd serverid isn't ours");
 }
