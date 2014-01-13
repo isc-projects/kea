@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1029,6 +1029,52 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, RenewBasic) {
     EXPECT_GE(1, abs(cltt - expected));
 
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+}
+
+// This test verifies that the logic which matches server identifier in the
+// received message with server identifiers used by a server works correctly:
+// - a message with no server identifier is accepted,
+// - a message with a server identifier which matches one of the server
+// identifiers used by a server is accepted,
+// - a message with a server identifier which doesn't match any server
+// identifier used by a server, is not accepted.
+TEST_F(Dhcpv4SrvFakeIfaceTest, acceptServerId) {
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 1234));
+    // If no server identifier option is present, the message is always
+    // accepted.
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+    // Add a server identifier option which doesn't match server ids being
+    // used by the server. The accepted server ids are the IPv4 addresses
+    // configured on the interfaces. The 10.1.2.3 is not configured on
+    // any interface.
+    OptionPtr other_serverid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                                IOAddress("10.1.2.3")));
+    pkt->addOption(other_serverid);
+    EXPECT_FALSE(srv.acceptServerId(pkt));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Add a server id being an IPv4 address configured on eth0 interface.
+    // A DHCPv4 message holding this server identifier should be accepted.
+    OptionPtr eth0_serverid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                               IOAddress("192.0.3.1")));
+    ASSERT_NO_THROW(pkt->addOption(eth0_serverid));
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Add a server id being an IPv4 address configured on eth1 interface.
+    // A DHCPv4 message holding this server identifier should be accepted.
+    OptionPtr eth1_serverid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
+                                               IOAddress("10.0.0.1")));
+    ASSERT_NO_THROW(pkt->addOption(eth1_serverid));
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
 }
 
 // @todo: Implement tests for rejecting renewals

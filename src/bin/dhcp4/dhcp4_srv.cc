@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1523,6 +1523,34 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
     }
 
     return (subnet);
+}
+
+bool
+Dhcpv4Srv::acceptServerId(const Pkt4Ptr& pkt) const {
+    // This function is meant to be called internally by the server class, so
+    // we rely on the caller to sanity check the pointer and we don't check
+    // it here.
+
+    // Check if server identifier option is present. If it is not present
+    // we accept the message because it is targetted to all servers.
+    // Note that we don't check cases that server identifier is mandatory
+    // but not present. This is meant to be sanity checked in other
+    // functions.
+    OptionPtr option = pkt->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+    if (!option) {
+        return (true);
+    }
+    // Server identifier is present. Let's convert it to 4-byte address
+    // and try to match with server identifiers used by the server.
+    Option4AddrLstPtr option_addrs =
+        boost::dynamic_pointer_cast<Option4AddrLst>(option);
+    Option4AddrLst::AddressContainer addrs = option_addrs->getAddresses();
+
+    if (addrs.size() != 1) {
+        return (false);
+    }
+
+    return (IfaceMgr::instance().hasOpenSocket(addrs[0]));
 }
 
 void
