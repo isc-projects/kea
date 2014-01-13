@@ -131,6 +131,14 @@ protected:
     void sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                      RequirementLevel serverid);
 
+    /// @brief compare received server id with ours server id
+    ///
+    /// Verifies received ServerID with generated ServerID
+    ///
+    /// @param pkt packet to be checked
+    /// @throw ServerID_mismatch if server_ids are not equal
+    void testServerid(const Pkt6Ptr& pkt);
+    
     /// @brief Processes incoming SOLICIT and returns response.
     ///
     /// Processes received SOLICIT message and verifies that its sender
