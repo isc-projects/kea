@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -269,6 +269,7 @@ public:
             }
         }
     }
+
 };
 
 /// @brief A test fixture class for IfaceMgr.
@@ -1502,6 +1503,43 @@ TEST_F(IfaceMgrTest, openSocket4ErrorHandler) {
 
 }
 
+// This test verifies that the function correctly checks that the v4 socket is
+// open and bound to a specific address.
+TEST_F(IfaceMgrTest, hasOpenSocketForAddress4) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    // Use the custom packet filter object. This object mimics the socket
+    // opening operation - the real socket is not open.
+    boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
+
+    // Simulate opening sockets using the dummy packet filter.
+    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL));
+
+    // Expect that the sockets are open on both eth0 and eth1.
+    ASSERT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
+    ASSERT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
+    // Socket shouldn't have been opened on loopback.
+    ASSERT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
+
+    // Check that there are sockets bound to addresses that we have
+    // set for interfaces.
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("192.0.2.3")));
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("10.0.0.1")));
+    // Check that there is no socket for the address which is not
+    // configured on any interface.
+    EXPECT_FALSE(ifacemgr.hasOpenSocket(IOAddress("10.1.1.1")));
+
+    // Check that v4 sockets are open, but no v6 socket is open.
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(AF_INET));
+    EXPECT_FALSE(ifacemgr.hasOpenSocket(AF_INET6));
+
+}
+
 // This test checks that the sockets are open and bound to link local addresses
 // only, if unicast addresses are not specified.
 TEST_F(IfaceMgrTest, openSockets6LinkLocal) {
@@ -1827,6 +1865,40 @@ TEST_F(IfaceMgrTest, openSockets6NoIfaces) {
     bool socket_open = false;
     ASSERT_NO_THROW(socket_open = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
     EXPECT_FALSE(socket_open);
+}
+
+// This test verifies that the function correctly checks that the v6 socket is
+// open and bound to a specific address.
+TEST_F(IfaceMgrTest, hasOpenSocketForAddress6) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Simulate opening sockets using the dummy packet filter.
+    bool success = false;
+    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_TRUE(success);
+
+    // Make sure that the sockets are bound as expected.
+    ASSERT_TRUE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
+    EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
+
+    // There should be v6 sockets only, no v4 sockets.
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(AF_INET6));
+    EXPECT_FALSE(ifacemgr.hasOpenSocket(AF_INET));
+
+    // Check that there are sockets bound to the addresses we have configured
+    // for interfaces.
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("fe80::3a60:77ff:fed5:cdef")));
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("fe80::3a60:77ff:fed5:abcd")));
+    // Check that there is no socket bound to the address which hasn't been
+    // configured on any interface.
+    EXPECT_FALSE(ifacemgr.hasOpenSocket(IOAddress("fe80::3a60:77ff:feed:1")));
 }
 
 // Test the Iface structure itself
