@@ -358,6 +358,10 @@ extern void addDomainServer(DdnsDomainPtr& domain, const std::string& name,
 
 /// @brief Creates a hex text dump of the given data buffer.
 ///
+/// This method is not used for testing but is handy for debugging.  It creates
+/// a pleasantly formatted string of 2-digits per byte separated by spaces with
+/// 16 bytes per line.
+///
 /// @param data pointer to the data to dump
 /// @param len size (in bytes) of data
 extern std::string toHexText(const uint8_t* data, size_t len);
