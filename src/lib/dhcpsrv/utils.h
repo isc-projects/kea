@@ -34,6 +34,21 @@ RFCViolation(const char* file, size_t line, const char* what) :
     isc::Exception(file, line, what) {}
 };
 
+class ServerID_mismatch : public isc::Exception {
+public:
+
+/// @brief constructor
+///
+/// @param file name of the file, where exception occurred
+/// @param line line of the file, where exception occurred
+/// @param what text description of the issue that caused exception
+ServerID_mismatch(const char* file, size_t line, const char* what) :
+    isc::Exception(file, line, what) {}
+};
+
+
+
+
 }; // namespace isc::dhcp
 }; // namespace isc
 
