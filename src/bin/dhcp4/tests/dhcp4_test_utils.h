@@ -438,6 +438,7 @@ public:
     using Dhcpv4Srv::processClientName;
     using Dhcpv4Srv::computeDhcid;
     using Dhcpv4Srv::createNameChangeRequests;
+    using Dhcpv4Srv::acceptServerId;
     using Dhcpv4Srv::sanityCheck;
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::unpackOptions;
