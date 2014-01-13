@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -836,6 +836,24 @@ public:
         ifaces_.push_back(iface);
     }
 
+    /// @brief Checks if there is at least one socket of the specified family
+    /// open.
+    ///
+    /// @param family A socket family.
+    ///
+    /// @return true if there is at least one socket open, false otherwise.
+    bool hasOpenSocket(const uint16_t family) const;
+
+    /// @brief Checks if there is a socket open and bound to an address.
+    ///
+    /// This function checks if one of the sockets opened by the IfaceMgr is
+    /// bound to the IP address specified as the method parameter.
+    ///
+    /// @param addr Address of the socket being searched.
+    ///
+    /// @return true if there is a socket bound to the specified address.
+    bool hasOpenSocket(const isc::asiolink::IOAddress& addr) const;
+
     /// A value of socket descriptor representing "not specified" state.
     static const int INVALID_SOCKET = -1;
 
@@ -973,14 +991,6 @@ private:
     /// @param handler An error handler function or NULL.
     void handleSocketConfigError(const std::string& errmsg,
                                  IfaceMgrErrorMsgCallback handler);
-
-    /// @brief Checks if there is at least one socket of the specified family
-    /// open.
-    ///
-    /// @param family A socket family.
-    ///
-    /// @return true if there is at least one socket open, false otherwise.
-    bool hasOpenSocket(const uint16_t family) const;
 
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these

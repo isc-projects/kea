@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -279,6 +279,24 @@ IfaceMgr::hasOpenSocket(const uint16_t family) const {
             // Check if the socket matches specified family.
             if (sock->family_ == family) {
                 // There is at least one socket open, so return.
+                return (true);
+            }
+        }
+    }
+    // There are no open sockets found for the specified family.
+    return (false);
+}
+
+bool
+IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
+    // Iterate over all interfaces and search for open sockets.
+    for (IfaceCollection::const_iterator iface = ifaces_.begin();
+         iface != ifaces_.end(); ++iface) {
+        const Iface::SocketCollection& sockets = iface->getSockets();
+        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
+             sock != sockets.end(); ++sock) {
+            // Check if the socket address matches the specified address.
+            if (sock->addr_ == addr) {
                 return (true);
             }
         }
