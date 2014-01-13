@@ -259,6 +259,14 @@ Dhcpv4Srv::run() {
             }
         }
 
+        // Check if the DHCPv4 packet has been sent to us, to to someone else.
+        // If it hasn't been sent to us, drop it!
+        if (!acceptServerId(query)) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_NOT_FOR_US)
+                .arg(query->getIface());
+            continue;
+        }
+
         // When receiving a packet without message type option, getType() will
         // throw. Let's set type to -1 as default error indicator.
         int type = -1;
@@ -1544,6 +1552,11 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& pkt) const {
     // and try to match with server identifiers used by the server.
     Option4AddrLstPtr option_addrs =
         boost::dynamic_pointer_cast<Option4AddrLst>(option);
+    // Unable to convert the option to the option type which encapsulates it.
+    // We treat this as non-matching server id.
+    if (!option_addrs) {
+        return (false);
+    }
     Option4AddrLst::AddressContainer addrs = option_addrs->getAddresses();
 
     if (addrs.size() != 1) {
