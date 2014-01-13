@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -159,6 +159,7 @@ public:
     /// @param name the unique label used to identify this key
     /// @param algorithm the name of the encryption alogirthm this key uses.
     /// (@todo This will be a fixed list of choices)
+    ///
     /// @param secret the secret component of this key
     TSIGKeyInfo(const std::string& name, const std::string& algorithm,
                 const std::string& secret);
@@ -288,6 +289,9 @@ public:
         enabled_ = false;
     }
 
+    /// @brief Returns a text representation for the server.
+    std::string toText() const;
+
 
 private:
     /// @brief The resolvable name of the server. If not blank, then the
@@ -305,6 +309,9 @@ private:
     /// enabled for use. It defaults to true.
     bool enabled_;
 };
+
+std::ostream&
+operator<<(std::ostream& os, const DnsServerInfo& server);
 
 /// @brief Defines a pointer for DnsServerInfo instances.
 typedef boost::shared_ptr<DnsServerInfo> DnsServerInfoPtr;

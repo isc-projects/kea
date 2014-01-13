@@ -37,7 +37,8 @@ const bool NO_RDATA = false;
 FauxServer::FauxServer(asiolink::IOService& io_service,
                        asiolink::IOAddress& address, size_t port)
     :io_service_(io_service), address_(address), port_(port),
-     server_socket_() {
+     server_socket_(), receive_pending_(false), perpetual_receive_(true) {
+
     server_socket_.reset(new asio::ip::udp::socket(io_service_.get_io_service(),
                                                    asio::ip::udp::v4()));
     server_socket_->set_option(asio::socket_base::reuse_address(true));
@@ -47,7 +48,8 @@ FauxServer::FauxServer(asiolink::IOService& io_service,
 FauxServer::FauxServer(asiolink::IOService& io_service,
                        DnsServerInfo& server)
     :io_service_(io_service), address_(server.getIpAddress()),
-     port_(server.getPort()), server_socket_() {
+     port_(server.getPort()), server_socket_(), receive_pending_(false),
+     perpetual_receive_(true) {
     server_socket_.reset(new asio::ip::udp::socket(io_service_.get_io_service(),
                                                    asio::ip::udp::v4()));
     server_socket_->set_option(asio::socket_base::reuse_address(true));
@@ -61,6 +63,11 @@ FauxServer::~FauxServer() {
 void
 FauxServer::receive (const ResponseMode& response_mode,
                      const dns::Rcode& response_rcode) {
+    if (receive_pending_) {
+        return;
+    }
+
+    receive_pending_ = true;
     server_socket_->async_receive_from(asio::buffer(receive_buffer_,
                                                     sizeof(receive_buffer_)),
                                        remote_,
@@ -79,6 +86,7 @@ FauxServer::requestHandler(const asio::error_code& error,
     // We expect the client to send good requests.
     if (error.value() != 0 || bytes_recvd < 1) {
         ADD_FAILURE() << "FauxServer receive failed" << error.message();
+        receive_pending_ = false;
         return;
     }
 
@@ -95,10 +103,11 @@ FauxServer::requestHandler(const asio::error_code& error,
         // If the request cannot be parsed, then fail the test.
         // We expect the client to send good requests.
         ADD_FAILURE() << "FauxServer request is corrupt:" << ex.what();
+        receive_pending_ = false;
         return;
     }
 
-    // The request parsed ok, so let's build a response.
+    // The request parsed OK, so let's build a response.
     // We must use the QID we received in the response or IOFetch will
     // toss the response out, resulting in eventual timeout.
     // We fill in the zone with data we know is from the "server".
@@ -125,7 +134,7 @@ FauxServer::requestHandler(const asio::error_code& error,
         response_buf.writeUint16At(0xFFFF, 2);
     }
 
-    // Ship the reponse via synchronous send.
+    // Ship the response via synchronous send.
     try {
         int cnt = server_socket_->send_to(asio::
                                           buffer(response_buf.getData(),
@@ -139,6 +148,42 @@ FauxServer::requestHandler(const asio::error_code& error,
     } catch (const std::exception& ex) {
         ADD_FAILURE() << "FauxServer send failed: " << ex.what();
     }
+
+    receive_pending_ = false;
+    if (perpetual_receive_) {
+        // Schedule the next receive
+        receive (response_mode, response_rcode);
+    }
+}
+
+
+//********************** TimedIO class ***********************
+
+TimedIO::TimedIO()
+    : io_service_(new isc::asiolink::IOService()),
+     timer_(*io_service_), run_time_(0) {
+}
+
+TimedIO::~TimedIO() {
+}
+
+int
+TimedIO::runTimedIO(int run_time) {
+    run_time_ = run_time;
+    int cnt = io_service_->get_io_service().poll();
+    if (cnt == 0) {
+        timer_.setup(boost::bind(&TransactionTest::timesUp, this), run_time_);
+        cnt = io_service_->get_io_service().run_one();
+        timer_.cancel();
+    }
+
+    return (cnt);
+}
+
+void
+TimedIO::timesUp() {
+    io_service_->stop();
+    FAIL() << "Test Time: " << run_time_ << " expired";
 }
 
 //********************** TransactionTest class ***********************
@@ -147,25 +192,10 @@ const unsigned int TransactionTest::FORWARD_CHG = 0x01;
 const unsigned int TransactionTest::REVERSE_CHG = 0x02;
 const unsigned int TransactionTest::FWD_AND_REV_CHG = REVERSE_CHG | FORWARD_CHG;
 
-TransactionTest::TransactionTest()
-    : io_service_(new isc::asiolink::IOService()), ncr_(),
-    timer_(*io_service_), run_time_(0) {
+TransactionTest::TransactionTest() : ncr_() {
 }
 
 TransactionTest::~TransactionTest() {
-}
-
-void
-TransactionTest::runTimedIO(int run_time) {
-    run_time_ = run_time;
-    timer_.setup(boost::bind(&TransactionTest::timesUp, this), run_time_);
-    io_service_->run();
-}
-
-void
-TransactionTest::timesUp() {
-    io_service_->stop();
-    FAIL() << "Test Time: " << run_time_ << " expired";
 }
 
 void
@@ -299,7 +329,7 @@ checkRR(dns::RRsetPtr rrset, const std::string& exp_name,
     EXPECT_EQ(exp_class.getCode(), rrset->getClass().getCode());
     EXPECT_EQ(exp_type.getCode(), rrset->getType().getCode());
     EXPECT_EQ(exp_ttl, rrset->getTTL().getValue());
-    if ((!has_rdata) || 
+    if ((!has_rdata) ||
        (exp_type == dns::RRType::ANY() || exp_class == dns::RRClass::ANY())) {
         // ANY types do not have RData
         ASSERT_EQ(0, rrset->getRdataCount());
@@ -653,6 +683,20 @@ void checkRemoveRevPtrsRequest(NameChangeTransaction& tran) {
     ASSERT_NO_THROW(request->toWire(renderer));
 }
 
+std::string toHexText(const uint8_t* data, size_t len) {
+    std::ostringstream stream;
+    stream << "Data length is: " << len << std::endl;
+    for (int i = 0; i < len; ++i) {
+        if (i > 0 && ((i % 16) == 0)) {
+            stream << std::endl;
+        }
+
+        stream << setfill('0') << setw(2) << setbase(16)
+               << static_cast<unsigned int>(data[i]) << " ";
+    }
+
+    return (stream.str());
+}
 
 }; // namespace isc::d2
 }; // namespace isc

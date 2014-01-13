@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -152,7 +152,10 @@ public:
     //@}
 
     /// @brief Defualt time to assign to a single DNS udpate.
-    static const unsigned int DNS_UPDATE_DEFAULT_TIMEOUT = 5 * 1000;
+    /// @todo  This value will be made configurable in the very near future
+    /// under trac3268. For now we will define it to 100 milliseconds
+    /// so unit tests will run within a reasonable amount of time.
+    static const unsigned int DNS_UPDATE_DEFAULT_TIMEOUT = 100;
 
     /// @brief Maximum times to attempt a single update on a given server.
     static const unsigned int MAX_UPDATE_TRIES_PER_SERVER = 3;
@@ -287,7 +290,8 @@ protected:
     /// @param request is the new request packet to assign.
     void setDnsUpdateRequest(D2UpdateMessagePtr& request);
 
-    /// @brief Destroys the current update request packet.
+    /// @brief Destroys the current update request packet and resets
+    /// udpate attempts count.
     void clearDnsUpdateRequest();
 
     /// @brief Sets the update status to the given status value.
@@ -341,17 +345,6 @@ protected:
     /// servers from which to select.
     bool selectNextServer();
 
-    /// @brief Fetches the currently selected server.
-    ///
-    /// @return A const pointer reference to the DnsServerInfo of the current
-    /// server.
-    const DnsServerInfoPtr& getCurrentServer() const;
-
-    /// @brief Fetches the DNSClient instance
-    ///
-    /// @return A const pointer reference to the DNSClient
-    const DNSClientPtr& getDNSClient() const;
-
     /// @brief Sets the update attempt count to the given value.
     ///
     /// @param value is the new value to assign.
@@ -380,7 +373,7 @@ protected:
     /// Creates an in::A() or in:AAAA() RData instance from the NCR
     /// lease address and adds it to the given RRset.
     ///
-    /// @param RRset RRset to which to add the RData
+    /// @param rrset RRset to which to add the RData
     ///
     /// @throw NameChangeTransactionError if RData cannot be constructed or
     /// the RData cannot be added to the given RRset.
@@ -391,7 +384,7 @@ protected:
     /// Creates an in::DHCID() RData instance from the NCR DHCID and adds
     /// it to the given RRset.
     ///
-    /// @param RRset RRset to which to add the RData
+    /// @param rrset RRset to which to add the RData
     ///
     /// @throw NameChangeTransactionError if RData cannot be constructed or
     /// the RData cannot be added to the given RRset.
@@ -402,7 +395,7 @@ protected:
     /// Creates an in::PTR() RData instance from the NCR FQDN and adds
     /// it to the given RRset.
     ///
-    /// @param RRset RRset to which to add the RData
+    /// @param rrset RRset to which to add the RData
     ///
     /// @throw NameChangeTransactionError if RData cannot be constructed or
     /// the RData cannot be added to the given RRset.
@@ -444,6 +437,17 @@ public:
     /// @return A pointer reference to the reverse DdnsDomain.  If
     /// the request does not include a reverse change, the pointer will empty.
     DdnsDomainPtr& getReverseDomain();
+
+    /// @brief Fetches the currently selected server.
+    ///
+    /// @return A const pointer reference to the DnsServerInfo of the current
+    /// server.
+    const DnsServerInfoPtr& getCurrentServer() const;
+
+    /// @brief Fetches the DNSClient instance
+    ///
+    /// @return A const pointer reference to the DNSClient
+    const DNSClientPtr& getDNSClient() const;
 
     /// @brief Fetches the current DNS update request packet.
     ///
