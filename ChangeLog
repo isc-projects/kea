@@ -1,3 +1,10 @@
+725.	[func]		tmark
+	b10-dhcp-ddns D2UpdateMgr now uses the newly implemented
+	NameAddTransaction and NameRemoveTransaction classes.  This allows
+	it conduction actual DNS update exchanges based upon queued
+	NameChangeRequests.
+	(Trac# 3089, git 9ff948a169e1c1f3ad9e1bad1568375590a3ef42)
+
 724.	[bug]		marcin
 	b10-dhcp4: Different server identifiers are used for the packets
 	being sent through different interfaces. The server uses IPv4 address
