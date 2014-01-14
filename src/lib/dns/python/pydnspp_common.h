@@ -15,6 +15,8 @@
 #ifndef LIBDNS_PYTHON_COMMON_H
 #define LIBDNS_PYTHON_COMMON_H 1
 
+#include <dns/python/pydnspp_config.h>
+
 #include <Python.h>
 
 #include <boost/static_assert.hpp>
@@ -59,11 +61,6 @@ int addClassVariable(PyTypeObject& c, const char* name, PyObject* obj);
 ///
 /// \return true on success, false on failure
 bool initClass(PyTypeObject& type, const char* name, PyObject* mod);
-
-// Short term workaround for unifying the return type of tp_hash
-#if PY_MINOR_VERSION < 2
-typedef long Py_hash_t;
-#endif
 
 /// \brief Convert a hash value of arbitrary type to a Python hash value.
 ///
