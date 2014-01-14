@@ -1,3 +1,10 @@
+728.	[func]		marcin
+	b10-dhcp6: If server fails to open a socket on one interface it
+	will log a warning and continue to open sockets on other interfaces.
+	The warning message is communicated from the libdhcp++ via the
+	error handler function supplied by the DHCPv6 server.
+	(Trac #3252, git af5eada1bba906697ee92df3fcc25cc0e3979221)
+
 727.	[func]		muks
 	RRset::setName() has now been removed.
 	(Trac #2335, git c918027a387da8514acf7e125fd52c8378113662)
