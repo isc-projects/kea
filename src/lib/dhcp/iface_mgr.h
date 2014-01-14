@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -643,24 +643,43 @@ public:
 
     /// @brief Opens IPv6 sockets on detected interfaces.
     ///
-    /// @todo This function will throw an exception immediately when a socket
-    /// fails to open. This is undersired behavior because it will preclude
-    /// other sockets from opening. We should strive to provide similar mechanism
-    /// that has been introduced for V4 sockets. If socket creation fails the
-    /// appropriate error handler is called and once the handler returns the
-    /// function contnues to open other sockets. The change in the IfaceMgr
-    /// is quite straight forward and it is proven to work for V4. However,
-    /// unit testing it is a bit involved, because for unit testing we need
-    /// a replacement of the openSocket6 function which will mimic the
-    /// behavior of the real socket opening. For the V4 we have the means to
-    /// to achieve that with the replaceable PktFilter class. For V6, the
-    /// implementation is hardcoded in the openSocket6.
+    /// On the systems with multiple interfaces, it is often desired that the
+    /// failure to open a socket on a particular interface doesn't cause a
+    /// fatal error and sockets should be opened on remaining interfaces.
+    /// However, the warning about the failure for the particular socket should
+    /// be communicated to the caller. The libdhcp++ is a common library with
+    /// no logger associated with it. Most of the functions in this library
+    /// communicate errors via exceptions. In case of openSockets6 function
+    /// exception must not be thrown if the function is supposed to continue
+    /// opening sockets, despite an error. Therefore, if such a behavior is
+    /// desired, the error handler function can be passed as a parameter.
+    /// This error handler is called (if present) with an error string.
+    /// Typically, error handler will simply log an error using an application
+    /// logger, but it can do more sophisticated error handling too.
+    ///
+    /// @todo It is possible that additional parameters will have to be added
+    /// to the error handler, e.g. Iface if it was really supposed to do
+    /// some more sophisticated error handling.
+    ///
+    /// If the error handler is not installed (is NULL), the exception is thrown
+    /// for each failure (default behavior).
+    ///
+    /// @warning This function does not check if there has been any sockets
+    /// already open by the @c IfaceMgr. Therefore a caller should call
+    /// @c IfaceMgr::closeSockets(AF_INET6) before calling this function.
+    /// If there are any sockets open, the function may either throw an
+    /// exception or invoke an error handler on attempt to bind the new socket
+    /// to the same address and port.
     ///
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
+    /// @param error_handler A pointer to an error handler function which is
+    /// called by the openSockets6 when it fails to open a socket. This
+    /// parameter can be NULL to indicate that the callback should not be used.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
-    bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT);
+    bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT,
+                      IfaceMgrErrorMsgCallback error_handler = NULL);
 
     /// @brief Opens IPv4 sockets on detected interfaces.
     ///
@@ -714,6 +733,13 @@ public:
     ///
     /// If the error handler is not installed (is NULL), the exception is thrown
     /// for each failure (default behavior).
+    ///
+    /// @warning This function does not check if there has been any sockets
+    /// already open by the @c IfaceMgr. Therefore a caller should call
+    /// @c IfaceMgr::closeSockets(AF_INET) before calling this function.
+    /// If there are any sockets open, the function may either throw an
+    /// exception or invoke an error handler on attempt to bind the new socket
+    /// to the same address and port.
     ///
     /// @param port specifies port number (usually DHCP4_SERVER_PORT)
     /// @param use_bcast configure sockets to support broadcast messages.
@@ -956,23 +982,6 @@ private:
     isc::asiolink::IOAddress
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
-
-    /// @brief Handles an error which occurs during configuration of a socket.
-    ///
-    /// If the handler callback is specified (non-NULL), this handler is
-    /// called and the specified error message is passed to it. If the
-    /// handler is not specified, the @c isc::dhcpSocketConfigError exception
-    /// is thrown with the specified message.
-    ///
-    /// This function should be called to handle errors which occur during
-    /// socket opening, binding or configuration (e.g. setting socket options
-    /// etc).
-    ///
-    /// @param errmsg An error message to be passed to a handlder function or
-    /// to the @c isc::dhcp::SocketConfigError exception.
-    /// @param handler An error handler function or NULL.
-    void handleSocketConfigError(const std::string& errmsg,
-                                 IfaceMgrErrorMsgCallback handler);
 
     /// @brief Checks if there is at least one socket of the specified family
     /// open.
