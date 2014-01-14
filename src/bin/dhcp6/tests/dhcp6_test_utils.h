@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -111,6 +111,7 @@ public:
     using Dhcpv6Srv::createRemovalNameChangeRequest;
     using Dhcpv6Srv::createStatusCode;
     using Dhcpv6Srv::selectSubnet;
+    using Dhcpv6Srv::testServerID;
     using Dhcpv6Srv::sanityCheck;
     using Dhcpv6Srv::loadServerID;
     using Dhcpv6Srv::writeServerID;
