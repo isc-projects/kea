@@ -254,6 +254,18 @@ TEST_F(Rdata_SSHFP_Test, getFingerprintType) {
     EXPECT_EQ(1, rdata_sshfp.getFingerprintType());
 }
 
+TEST_F(Rdata_SSHFP_Test, getFingerprint) {
+    const std::vector<uint8_t>& fingerprint =
+        rdata_sshfp.getFingerprint();
+
+    EXPECT_EQ(rdata_sshfp.getFingerprintLength(),
+              fingerprint.size());
+    for (int i = 0; i < fingerprint.size(); ++i) {
+        EXPECT_EQ(rdata_sshfp_wiredata[i + 2],
+                  fingerprint.at(i));
+    }
+}
+
 TEST_F(Rdata_SSHFP_Test, getFingerprintLength) {
     EXPECT_EQ(20, rdata_sshfp.getFingerprintLength());
 }
