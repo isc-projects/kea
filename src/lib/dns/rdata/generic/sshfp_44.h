@@ -45,7 +45,7 @@ public:
     ///
     uint8_t getAlgorithmNumber() const;
     uint8_t getFingerprintType() const;
-    size_t getFingerprintLen() const;
+    size_t getFingerprintLength() const;
 
 private:
     SSHFPImpl* constructFromLexer(MasterLexer& lexer);
