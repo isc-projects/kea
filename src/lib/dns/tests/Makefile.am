@@ -59,6 +59,7 @@ run_unittests_SOURCES += rdata_nsec3param_like_unittest.cc
 run_unittests_SOURCES += rdata_rrsig_unittest.cc
 run_unittests_SOURCES += rdata_rp_unittest.cc
 run_unittests_SOURCES += rdata_srv_unittest.cc
+run_unittests_SOURCES += rdata_tlsa_unittest.cc
 run_unittests_SOURCES += rdata_minfo_unittest.cc
 run_unittests_SOURCES += rdata_tsig_unittest.cc
 run_unittests_SOURCES += rdata_naptr_unittest.cc
