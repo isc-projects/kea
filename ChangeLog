@@ -150,7 +150,7 @@
 
 706.	[func]		marcin
 	b10-dhcp4: Server processes the DHCPv4 Client FQDN and Host Name
-	options sent by a client and generates the response. as a result
+	options sent by a client and generates the response. As a result
 	of processing, the server generates NameChangeRequests which
 	represent changes to DNS mappings for a particular lease (addition
 	or removal of DNS mappings).
