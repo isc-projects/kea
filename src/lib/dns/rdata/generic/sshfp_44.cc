@@ -294,7 +294,7 @@ SSHFP::getFingerprintType() const {
 }
 
 size_t
-SSHFP::getFingerprintLen() const {
+SSHFP::getFingerprintLength() const {
     return (impl_->fingerprint_.size());
 }
 
