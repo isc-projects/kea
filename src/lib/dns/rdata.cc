@@ -212,7 +212,7 @@ Generic::Generic(isc::util::InputBuffer& buffer, size_t rdata_len) {
     impl_ = new GenericImpl(data);
 }
 
-void
+GenericImpl*
 Generic::constructFromLexer(MasterLexer& lexer) {
     const MasterToken& token = lexer.getNextToken(MasterToken::STRING);
     if (token.getString() != "\\#") {
@@ -268,16 +268,23 @@ Generic::constructFromLexer(MasterLexer& lexer) {
                   << data.size() << " vs. " << rdlen);
     }
 
-    impl_ = new GenericImpl(data);
+    return (new GenericImpl(data));
 }
 
-Generic::Generic(const std::string& rdata_string) {
+Generic::Generic(const std::string& rdata_string) :
+    impl_(NULL)
+{
+    // We use auto_ptr here because if there is an exception in this
+    // constructor, the destructor is not called and there could be a
+    // leak of the GenericImpl that constructFromLexer() returns.
+    std::auto_ptr<GenericImpl> impl_ptr(NULL);
+
     try {
         std::istringstream ss(rdata_string);
         MasterLexer lexer;
         lexer.pushSource(ss);
 
-        constructFromLexer(lexer);
+        impl_ptr.reset(constructFromLexer(lexer));
 
         if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
             isc_throw(InvalidRdataText, "extra input text for unknown RDATA: "
@@ -287,13 +294,15 @@ Generic::Generic(const std::string& rdata_string) {
         isc_throw(InvalidRdataText, "Failed to construct unknown RDATA "
                   "from '" << rdata_string << "': " << ex.what());
     }
+
+    impl_ = impl_ptr.release();
 }
 
 Generic::Generic(MasterLexer& lexer, const Name*,
                  MasterLoader::Options,
-                 MasterLoaderCallbacks&)
+                 MasterLoaderCallbacks&) :
+    impl_(constructFromLexer(lexer))
 {
-    constructFromLexer(lexer);
 }
 
 Generic::~Generic() {
