@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1073,24 +1073,13 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
     EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::MANDATORY),
                  RFCViolation);
 }
-
-TEST_F(Dhcpv6SrvTest, testServerid){
+// Check that server is testing if received ServerID is equal to one beenig used by server
+TEST_F(Dhcpv6SrvTest, testServerID){
 	NakedDhcpv6Srv srv(0);
-	
-    Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
-    req->setRemoteAddr(IOAddress("fe80::abcd"));
-    boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_PD, 234, 1500, 3000);
 
-    // with a valid hint
-    IOAddress hint("2001:db8:1:2:f::");
-    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_PD, hint));
-    OptionPtr hint_opt(new Option6IAPrefix(D6O_IAPREFIX, hint, 64, 300, 500));
-    ia->addOption(hint_opt);
-    req->addOption(ia);
-    OptionPtr clientid = generateClientId();
-    req->addOption(clientid);
+	Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
 
-    // server-id is mandatory in REQUEST
+    // server-id is MANDATORY in REQUEST
     // but add there something else
     std::vector<uint8_t> bin;
 
@@ -1100,16 +1089,21 @@ TEST_F(Dhcpv6SrvTest, testServerid){
     OptionPtr serverid = OptionPtr(new Option(Option::V6, D6O_SERVERID, bin));
 
     req->addOption(serverid);
-    
-    // I moved testServerid in src/bin/dhcp6/dhcp6_srv.h 
-    // above the protected part.
-    EXPECT_THROW(srv.testServerid(req),ServerID_mismatch);
-	
+
+    //Shoud be dropped
+    EXPECT_FALSE(srv.testServerID(req));
+
     req->delOption(D6O_SERVERID);
-    
     req->addOption(srv.getServerID());
-    
-    EXPECT_NO_THROW(srv.testServerid(req));
+
+    //with proper ServerID we expect true
+    EXPECT_TRUE(srv.testServerID(req));
+
+    // server-id is FORBIDDEN in SOLICIT, so check if server is not
+    // dropping corect message
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+
+    EXPECT_TRUE(srv.testServerID(req));
 }
 
 // This test verifies if selectSubnet() selects proper subnet for a given
