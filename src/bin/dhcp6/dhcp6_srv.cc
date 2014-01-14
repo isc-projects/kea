@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -205,6 +205,29 @@ void Dhcpv6Srv::sendPacket(const Pkt6Ptr& packet) {
     IfaceMgr::instance().send(packet);
 }
 
+bool
+Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt){
+	OptionCollection server_ids = pkt->getOptions(D6O_SERVERID);
+	// if we find serverid option, lets test it.
+	/// @todo: In case we get message that has ServerID option forbidden
+	/// by the RFC, we will drop this loging DHCP6_PACKET_RECEIVED_MISMATCH_SERVERID
+	/// not RFCViolation. Some things should be double checked here and in sanityCheck
+	if (server_ids.size() == 1){
+		// Let us test received ServerID if it is same as ServerID
+		// which is beeing used by server
+		OptionPtr server_id = pkt->getOption(D6O_SERVERID);
+		if (getServerID()->getData() != server_id->getData()){
+			LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_PACKET_RECEIVED_MISMATCH_SERVERID)
+				.arg(pkt->getName())
+				.arg(pkt->getTransid())
+				.arg(pkt->getIface());
+			return false;
+		}
+	}
+	// retunr True if: no serverid received or ServerIDs matching
+	return true;
+}
+
 bool Dhcpv6Srv::run() {
     while (!shutdown_) {
         /// @todo Calculate actual timeout to the next event (e.g. lease
@@ -277,6 +300,12 @@ bool Dhcpv6Srv::run() {
                 continue;
             }
         }
+        // Check received query if it carry ServerID that matches ServerID
+        // that beeing used by the server.
+        if (!testServerID(query)){
+        	continue;
+        }
+
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_RECEIVED)
             .arg(query->getName());
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_QUERY_DATA)
@@ -763,16 +792,6 @@ Dhcpv6Srv::createStatusCode(uint16_t code, const std::string& text) {
 }
 
 void
-Dhcpv6Srv::testServerid(const Pkt6Ptr& pkt){
-	OptionPtr serverid = pkt->getOption(D6O_SERVERID); 
-
-	// I just want to throw exception when server id's don't mach.
-	if (!(getServerID()->getData() == serverid->getData())) 
-		//if received serverid isn't same with our, drop message
-		isc_throw(ServerID_mismatch, "Receievd serverid isn't ours");
-}
-
-void
 Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                        RequirementLevel serverid) {
     OptionCollection client_ids = pkt->getOptions(D6O_CLIENTID);
@@ -811,20 +830,12 @@ Dhcpv6Srv::sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                       << server_ids.size() << "), exactly 1 expected in message "
                       << pkt->getName());
         }
-        // test server received server id to check if that's ours id
-        // RFCViolation will be thrown if we didn't get exaclty one server_id so
-        // checking server_ids.size() here is pointless.
-       	testServerid(pkt);
-       	break;
+        break;
 
     case OPTIONAL:
         if (server_ids.size() > 1) {
             isc_throw(RFCViolation, "Too many (" << server_ids.size()
                       << ") server-id options received in " << pkt->getName());
-        }
-        if (server_ids.size() == 1) {
-        			// test server received server id to check if that's ours id 
-                	testServerid(pkt);
         }
     }
 }
