@@ -67,11 +67,6 @@ TreeNodeRRset::getTTL() const {
 }
 
 void
-TreeNodeRRset::setName(const Name&) {
-    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
-}
-
-void
 TreeNodeRRset::setTTL(const RRTTL&) {
     isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
 }
