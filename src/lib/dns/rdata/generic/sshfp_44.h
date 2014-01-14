@@ -17,6 +17,7 @@
 #include <stdint.h>
 
 #include <string>
+#include <vector>
 
 #include <dns/name.h>
 #include <dns/rdata.h>
@@ -45,6 +46,7 @@ public:
     ///
     uint8_t getAlgorithmNumber() const;
     uint8_t getFingerprintType() const;
+    const std::vector<uint8_t>& getFingerprint() const;
     size_t getFingerprintLength() const;
 
 private:

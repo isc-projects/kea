@@ -14,8 +14,6 @@
 
 #include <config.h>
 
-#include <string>
-
 #include <boost/lexical_cast.hpp>
 
 #include <exceptions/exceptions.h>
@@ -291,6 +289,11 @@ SSHFP::getAlgorithmNumber() const {
 uint8_t
 SSHFP::getFingerprintType() const {
     return (impl_->fingerprint_type_);
+}
+
+const std::vector<uint8_t>&
+SSHFP::getFingerprint() const {
+    return (impl_->fingerprint_);
 }
 
 size_t
