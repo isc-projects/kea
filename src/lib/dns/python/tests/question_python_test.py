@@ -70,9 +70,9 @@ class QuestionTest(unittest.TestCase):
     
     def test_to_text(self):
     
-        self.assertEqual("foo.example.com. IN NS\n", self.test_question1.to_text())
-        self.assertEqual("foo.example.com. IN NS\n", str(self.test_question1))
-        self.assertEqual("bar.example.com. CH A\n", self.test_question2.to_text())
+        self.assertEqual("foo.example.com. IN NS", self.test_question1.to_text())
+        self.assertEqual("foo.example.com. IN NS", str(self.test_question1))
+        self.assertEqual("bar.example.com. CH A", self.test_question2.to_text())
     
     def test_to_wire_buffer(self):
         obuffer = bytes()
