@@ -104,8 +104,9 @@ SSHFP::constructFromLexer(MasterLexer& lexer) {
 /// valid hex encoding of the fingerprint. For compatibility with BIND 9,
 /// whitespace is allowed in the hex text (RFC4255 is silent on the matter).
 ///
-/// \throw InvalidRdataText if any fields are missing, out of their valid
-/// ranges, or incorrect.
+/// \throw InvalidRdataText if any fields are missing, are out of their
+/// valid ranges or are incorrect, or if the fingerprint is not a valid
+/// hex string.
 ///
 /// \param sshfp_str A string containing the RDATA to be created
 SSHFP::SSHFP(const string& sshfp_str) :
@@ -141,7 +142,7 @@ SSHFP::SSHFP(const string& sshfp_str) :
 /// of an SSHFP RDATA.
 ///
 /// \throw MasterLexer::LexerError General parsing error such as missing field.
-/// \throw InvalidRdataText Fields are out of their valid range, or are
+/// \throw InvalidRdataText Fields are out of their valid range or are
 /// incorrect, or if the fingerprint is not a valid hex string.
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for the
