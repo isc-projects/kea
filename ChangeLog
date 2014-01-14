@@ -72,7 +72,7 @@
 	(Trac #2772, git c6158690c389d75686545459618ae0bf16f2cdb8)
 
 716.	[func]		marcin
-	perfdhcp: added support for sending DHCPv6 Relese messages at the specified
+	perfdhcp: added support for sending DHCPv6 Release messages at the specified
 	rate and measure performance. The orphan messages counters are not
 	displayed for individual exchanges anymore. The following ticket: #3261
 	has been submitted to implement global orphan counting for all exchange
@@ -96,7 +96,7 @@
 	5.3 and 5.4.
 	(Trac# 3241, git dceca9554cb9410dd8d12371b68198b797cb6cfb)
 
-712.	[func]		marcin,dclink
+712.	[func]		marcin, dclink
 	b10-dhcp4: If server fails to open a socket on one interface it
 	will log a warning and continue to open sockets on other interfaces.
 	The warning message is communicated from the libdhcp++ via the
@@ -135,7 +135,7 @@
 	not request FQDN option to be returned.
 	(Trac #3220, git 0f1ed4205a46eb42ef728ba6b0955c9af384e0be)
 
-708.	[bug]		dclink,marcin
+708.	[bug]		dclink, marcin
 	libdhcpsrv: Fixed a bug in Memfile lease database backend which
 	caused DHCPv4 server crashes when leases with NULL client id
 	were present. Thanks to David Carlier for submitting the patch.
@@ -185,8 +185,8 @@
 	libdhcp++: Incoming DHCPv6 IAPREFIX option is now parsed properly.
 	(Trac #3211, git ed43618a2c7b2387d76f99a5a4b1a3e05ac70f5e)
 
-700.	[func]		tomek,marcin
-	b10-dhcp4,b10-dhcp6: Support for vendor options has been added. It
+700.	[func]		tomek, marcin
+	b10-dhcp4, b10-dhcp6: Support for vendor options has been added. It
 	is now possible to configure vendor options. Server is able to
 	parse some CableLabs vendor options and send configured	vendor
 	options	in response. The support is not complete.
@@ -261,7 +261,7 @@
 688.	[func]		tomek
 	b10-dhcp6: Prefix Delegation support is now extended to
 	Renew and Release messages.
-	(Trac #3153,#3154, git 3207932815f58045acea84ae092e0a5aa7c4bfd7)
+	(Trac #3153, #3154, git 3207932815f58045acea84ae092e0a5aa7c4bfd7)
 
 687.	[func]		tomek
 	b10-dhcp6: Prefix Delegation (IA_PD and IAPREFIX options) is now
@@ -326,7 +326,7 @@
 676.	[bug]		muks
 	We now also allow the short name ("hmac-md5"), along with the long
 	name ("hmac-md5.sig-alg.reg.int") that was allowed before for
-	HMAC-MD5, so that it is more conveninent to configure TSIG keys
+	HMAC-MD5, so that it is more convenient to configure TSIG keys
 	using it.
 	(Trac #2762, git c543008573eba65567e9c189824322954c6dd43b)
 
@@ -353,8 +353,8 @@
 	and its callback mechanism for asynchronous IO with the DNS servers.
 	(Trac #3086, git 079b862c9eb21056fdf957e560b8fe7b218441b6)
 
-671.	[func]		dclink,tomek
-	memfile backend now supports getLease4(hwaddr) and getLease4(client-id)
+671.	[func]		dclink, tomek
+	The memfile backend now supports getLease4(hwaddr) and getLease4(client-id)
 	methods. Thanks to David Carlier for contributing a patch.
 	(Trac #2592, git a11683be53db2f9f8f9b71c1d1c163511e0319b3)
 
@@ -635,7 +635,7 @@
 626.	[func]		tmark
 	Created the initial implementation of DHCP-DDNS service
 	controller class, D2Controller, and the abstract class from
-	which it derives,DControllerBase. D2Controller manages the
+	which it derives, DControllerBase. D2Controller manages the
 	lifecycle and BIND10 integration of the DHCP-DDNS application
 	process, D2Process. Also note, module name is now
 	b10-dhcp-ddns.
@@ -1070,7 +1070,7 @@ bind10-1.0.0-rc released on February 14, 2013
 	The lease6 now has the one additional index: iaid/subnet_id/duid.
 	Adding these indexes significantly improves lease acquisition
 	performance.
-	(Trac #2699,#2703, git 54bbed5fcbe237c5a49b515ae4c55148723406ce)
+	(Trac #2699, #2703, git 54bbed5fcbe237c5a49b515ae4c55148723406ce)
 
 573.	[bug]		stephen
 	Fixed problem whereby the DHCP server crashed if it ran out of
@@ -1296,7 +1296,7 @@ bind10-1.0.0-rc released on February 14, 2013
 542.	[func]		marcin
 	Created OptionSpace and OptionSpace6 classes to represent DHCP
 	option spaces. The option spaces are used to group instances
-	and definitions of options having uniqe codes. A special type
+	and definitions of options having unique codes. A special type
 	of option space is the so-called "vendor specific option space"
 	which groups sub-options sent within Vendor Encapsulated Options.
 	The new classes are not used yet but they will be used once
@@ -1391,7 +1391,7 @@ bind10-1.0.0-beta released on December 20, 2012
 	b10-loadzone was fully overhauled.  It now uses C++-based zone
 	parser and loader library, performing stricter checks, having
 	more complete support for master file formats, producing more
-	helpful logs, is more extendable for various types of data
+	helpful logs, is more extendible for various types of data
 	sources, and yet much faster than the old version.  In
 	functionality the new version should be generally backwards
 	compatible to the old version, but there are some
@@ -1756,7 +1756,7 @@ bind10-devel-20121115 released on November 15, 2012
 	A new library (libb10-dhcpsrv) has been created. At present, it
 	only holds the code for the DHCP Configuration Manager. Currently
 	this object only supports basic configuration storage for the DHCPv6
-	server,	but that capability will be expanded.
+	server, but that capability will be expanded.
 	(Trac #2238, git 6f29861b92742da34be9ae76968e82222b5bfd7d)
 
 bind10-devel-20120927 released on September 27, 2012
@@ -2087,7 +2087,7 @@ bind10-devel-20120517 released on May 17, 2012
 	The in-memory data source can now load zones from the
 	sqlite3 data source, so that zones stored in the database
 	(and updated for example by xfrin) can be served from memory.
-	(Trac #1789,#1790,#1792,#1793,#1911,
+	(Trac #1789, #1790, #1792, #1793, #1911,
 	git 93f11d2a96ce4dba9308889bdb9be6be4a765b27)
 
 438.	[bug]		naokikambe
@@ -2157,7 +2157,7 @@ bind10-devel-20120517 released on May 17, 2012
 	now manipulates them in the separate table for the NSEC3 namespace.
 	As a result b10-xfrin now correctly updates NSEC3-signed zones by
 	inbound zone transfers.
-	(Trac #1781,#1788,#1891, git 672f129700dae33b701bb02069cf276238d66be3)
+	(Trac #1781, #1788, #1891, git 672f129700dae33b701bb02069cf276238d66be3)
 
 426.	[bug]		vorner
 	The NSEC3 records are now included when transferring a
@@ -2617,11 +2617,11 @@ bind10-devel-20120119 released on January 19, 2012
 	(Trac #1508, #1509, #1510,
 	git edc5b3c12eb45437361484c843794416ad86bb00)
 
-361.	[func]		vorner,jelte,jinmei
+361.	[func]		vorner, jelte, jinmei
 	The socket creator is now used to provide sockets. It means you can
 	reconfigure the ports and addresses at runtime even when the rest
 	of the bind10 runs as non root user.
-	(Trac #805,#1522, git 1830215f884e3b5efda52bd4dbb120bdca863a6a)
+	(Trac #805, #1522, git 1830215f884e3b5efda52bd4dbb120bdca863a6a)
 
 360.	[bug]		vorner
 	Fixed problem where bindctl crashed when a duplicate non-string
@@ -2701,7 +2701,7 @@ bind10-devel-20120119 released on January 19, 2012
 	interface was awkward. To get all the RRsets of a single domain, use
 	the new findAll method (the same applies to python version, the method
 	is named find_all).
-	(Trac #1483,#1484, git 0020456f8d118c9f3fd6fc585757c822b79a96f6)
+	(Trac #1483, #1484, git 0020456f8d118c9f3fd6fc585757c822b79a96f6)
 
 349.	[bug]		dvv
 	resolver: If an upstream server responds with FORMERR to an EDNS
@@ -3119,7 +3119,7 @@ bind10-devel-20111014 released on October 14, 2011
 	Stats module can read these through the config manager. Stats
 	module and stats httpd report statistics data and statistics
 	schema by each module via both bindctl and HTTP/XML.
-	(Trac #928,#929,#930,#1175,
+	(Trac #928, #929, #930, #1175,
 	git 054699635affd9c9ecbe7a108d880829f3ba229e)
 
 290.	[func]		jinmei
@@ -3337,7 +3337,7 @@ bind10-devel-20110705 released on July 05, 2011
 	Logging now correctly initialized in b10-auth.  Also, fixed
 	bug whereby querying for "version.bind txt ch" would cause
 	b10-auth to crash if BIND 10 was started with the "-v" switch.
-	(Trac #1022,#1023, git 926a65fa08617be677a93e9e388df0f229b01067)
+	(Trac #1022, #1023, git 926a65fa08617be677a93e9e388df0f229b01067)
 
 258.	[build]		jelte
 	Now builds and runs with Python 3.2
@@ -3504,7 +3504,7 @@ bind10-devel-20110519 released on May 19, 2011
 	(Trac #900, git b395258c708b49a5da8d0cffcb48d83294354ba3)
 
 231.	[func]*		vorner
-    The logging interface changed slightly. We use
+	The logging interface changed slightly. We use
 	logger.foo(MESSAGE_ID).arg(bar); instead of logger.foo(MESSAGE_ID,
 	bar); internally. The message definitions use '%1,%2,...'
 	instead of '%s,%d', which allows us to cope better with
@@ -4599,7 +4599,7 @@ bind10-devel-20100701 released on July 1, 2010
 	(Trac #251, svn r2310)
 
 59.	[bug]		jinmei
-	lib/datasrc,bin/auth: The authoritative server could return a
+	lib/datasrc, bin/auth: The authoritative server could return a
 	SERVFAIL with a partial answer if it finds a data source broken
 	while looking for an answer.  This can happen, for example, if a
 	zone that doesn't have an NS RR is configured and loaded as a
