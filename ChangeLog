@@ -1,3 +1,7 @@
+727.	[func]		muks
+	RRset::setName() has now been removed.
+	(Trac #2335, git c918027a387da8514acf7e125fd52c8378113662)
+
 726.	[bug]		muks
 	Don't print trailing newlines in Question::toText() output by
 	default.  This fixes some logging that were split with a line
