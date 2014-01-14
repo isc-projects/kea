@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -117,15 +117,16 @@ public:
     /// @param port UDP port on which server should listen.
     static void openActiveSockets(const uint16_t port);
 
-    /// @brief compare received server id with ours server id
-    ///
-    /// Verifies received ServerID with generated ServerID
-    ///
-    /// @param pkt packet to be checked
-    /// @throw ServerID_mismatch if server_ids are not equal
-    void testServerid(const Pkt6Ptr& pkt);
-    
 protected:
+
+    /// @brief Compare received server id with our server id
+    ///
+    /// Checks if the server id carried in a query from a client matches
+    /// server identifier being used by the server.
+    ///
+    /// @param pkt DHCPv6 packet carrying server identifier to be checked.
+    /// @return True or False
+    bool testServerID(const Pkt6Ptr& pkt);
 
     /// @brief verifies if specified packet meets RFC requirements
     ///
@@ -138,7 +139,7 @@ protected:
     /// @throw RFCViolation if any issues are detected
     void sanityCheck(const Pkt6Ptr& pkt, RequirementLevel clientid,
                      RequirementLevel serverid);
-    
+
     /// @brief Processes incoming SOLICIT and returns response.
     ///
     /// Processes received SOLICIT message and verifies that its sender
