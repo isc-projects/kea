@@ -38,7 +38,7 @@ using namespace isc::util::encode;
 struct SSHFPImpl {
     // straightforward representation of SSHFP RDATA fields
     SSHFPImpl(uint8_t algorithm, uint8_t fingerprint_type,
-              vector<uint8_t>& fingerprint) :
+              const vector<uint8_t>& fingerprint) :
         algorithm_(algorithm),
         fingerprint_type_(fingerprint_type),
         fingerprint_(fingerprint)
