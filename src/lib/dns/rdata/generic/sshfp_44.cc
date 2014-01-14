@@ -80,7 +80,11 @@ SSHFP::constructFromLexer(MasterLexer& lexer) {
     // If fingerprint is missing, it's OK. See the API documentation of the
     // constructor.
     if (fingerprint_str.size() > 0) {
-        decodeHex(fingerprint_str, fingerprint);
+        try {
+            decodeHex(fingerprint_str, fingerprint);
+        } catch (const isc::BadValue& e) {
+            isc_throw(InvalidRdataText, "Bad SSHFP fingerprint: " << e.what());
+        }
     }
 
     return (new SSHFPImpl(algorithm, fingerprint_type, fingerprint));
@@ -126,9 +130,6 @@ SSHFP::SSHFP(const string& sshfp_str) :
     } catch (const MasterLexer::LexerError& ex) {
         isc_throw(InvalidRdataText, "Failed to construct SSHFP from '" <<
                   sshfp_str << "': " << ex.what());
-    } catch (const isc::BadValue& e) {
-        isc_throw(InvalidRdataText,
-                  "Bad SSHFP fingerprint: " << e.what());
     }
 
     impl_ = impl_ptr.release();
@@ -141,8 +142,7 @@ SSHFP::SSHFP(const string& sshfp_str) :
 ///
 /// \throw MasterLexer::LexerError General parsing error such as missing field.
 /// \throw InvalidRdataText Fields are out of their valid range, or are
-/// incorrect.
-/// \throw BadValue Fingerprint is not a valid hex string.
+/// incorrect, or if the fingerprint is not a valid hex string.
 ///
 /// \param lexer A \c MasterLexer object parsing a master file for the
 /// RDATA to be created
