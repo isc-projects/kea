@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -263,6 +263,10 @@ A debug message noting that the server has received the specified type
 of packet.  Note that a packet marked as UNKNOWN may well be a valid
 DHCP packet, just a type not expected by the server (e.g. it will report
 a received OFFER packet as UNKNOWN).
+
+% DHCP6_PACKET_RECEIVED_MISMATCH_SERVERID %1 packet received, with transaction id %2 on interface %3 containing mismatch ServerID
+A debug message noting that server has received message with ServerID
+option that not matching ServerID that server is using.
 
 % DHCP6_PACKET_RECEIVE_FAIL error on attempt to receive packet: %1
 The IPv6 DHCP server tried to receive a packet but an error
