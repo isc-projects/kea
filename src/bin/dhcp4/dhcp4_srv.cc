@@ -1551,22 +1551,26 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& pkt) const {
     }
     // Server identifier is present. Let's convert it to 4-byte address
     // and try to match with server identifiers used by the server.
-    Option4AddrLstPtr option_addrs =
-        boost::dynamic_pointer_cast<Option4AddrLst>(option);
+    OptionCustomPtr option_custom =
+        boost::dynamic_pointer_cast<OptionCustom>(option);
     // Unable to convert the option to the option type which encapsulates it.
     // We treat this as non-matching server id.
-    if (!option_addrs) {
+    if (!option_custom) {
         return (false);
     }
-    Option4AddrLst::AddressContainer addrs = option_addrs->getAddresses();
-
     // The server identifier option should carry exactly one IPv4 address.
-    // This option is encapsulated by the class which accepts a list of
-    // IPv4 addresses. So, there is a potential risk that the client has sent
-    // a server identifier option with multiple addresses and it has been
-    // parsed by the server. Here we are filtering out such malformed
-    // messages here.
-    if (addrs.size() != 1) {
+    // If the option definition for the server identifier doesn't change,
+    // the OptionCustom object should have exactly one IPv4 address and
+    // this check is somewhat redundant. On the other hand, if someone
+    // breaks option it may be better to check that here.
+    if (option_custom->getDataFieldsNum() != 1) {
+        return (false);
+    }
+
+    // The server identifier MUST be an IPv4 address. If given address is
+    // v6, it is wrong.
+    IOAddress server_id = option_custom->readAddress();
+    if (!server_id.isV4()) {
         return (false);
     }
 
@@ -1578,7 +1582,7 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& pkt) const {
     // performance hit should be acceptable. If it turns out to
     // be significant, we will have to cache server identifiers
     // when sockets are opened.
-    return (IfaceMgr::instance().hasOpenSocket(addrs[0]));
+    return (IfaceMgr::instance().hasOpenSocket(server_id));
 }
 
 void
