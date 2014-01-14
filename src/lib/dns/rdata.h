@@ -378,7 +378,7 @@ public:
     //@}
 
 private:
-    void constructFromLexer(MasterLexer& lexer);
+    GenericImpl* constructFromLexer(MasterLexer& lexer);
 
     GenericImpl* impl_;
 };
