@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -249,6 +249,10 @@ configured to receive the traffic.
 % DHCP6_OPEN_SOCKET opening sockets on port %1
 A debug message issued during startup, this indicates that the IPv6 DHCP
 server is about to open sockets on the specified port.
+
+% DHCP6_OPEN_SOCKET_FAIL failed to create socket: %1
+A warning message issued when IfaceMgr fails to open and bind a socket. The reason
+for the failure is appended as an argument of the log message.
 
 % DHCP6_PACKET_PARSE_FAIL failed to parse incoming packet
 The IPv6 DHCP server has received a packet that it is unable to interpret.
