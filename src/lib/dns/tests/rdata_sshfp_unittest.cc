@@ -227,7 +227,8 @@ TEST_F(Rdata_SSHFP_Test, toWire) {
     this->obuffer.clear();
     rdata_sshfp.toWire(this->obuffer);
 
-    EXPECT_EQ(22, this->obuffer.getLength());
+    EXPECT_EQ(sizeof (rdata_sshfp_wiredata),
+              this->obuffer.getLength());
 
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         this->obuffer.getData(),
