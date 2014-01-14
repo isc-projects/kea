@@ -1560,10 +1560,24 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& pkt) const {
     }
     Option4AddrLst::AddressContainer addrs = option_addrs->getAddresses();
 
+    // The server identifier option should carry exactly one IPv4 address.
+    // This option is encapsulated by the class which accepts a list of
+    // IPv4 addresses. So, there is a potential risk that the client has sent
+    // a server identifier option with multiple addresses and it has been
+    // parsed by the server. Here we are filtering out such malformed
+    // messages here.
     if (addrs.size() != 1) {
         return (false);
     }
 
+    // This function iterates over all interfaces on which the
+    // server is listening to find the one which has a socket bound
+    // to the address carried in the server identifier option.
+    // This has some performance implications. However, given that
+    // typically there will be just a few active interfaces the
+    // performance hit should be acceptable. If it turns out to
+    // be significant, we will have to cache server identifiers
+    // when sockets are opened.
     return (IfaceMgr::instance().hasOpenSocket(addrs[0]));
 }
 
