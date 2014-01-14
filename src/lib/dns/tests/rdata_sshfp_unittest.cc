@@ -254,8 +254,8 @@ TEST_F(Rdata_SSHFP_Test, getFingerprintType) {
     EXPECT_EQ(1, rdata_sshfp.getFingerprintType());
 }
 
-TEST_F(Rdata_SSHFP_Test, getFingerprintLen) {
-    EXPECT_EQ(20, rdata_sshfp.getFingerprintLen());
+TEST_F(Rdata_SSHFP_Test, getFingerprintLength) {
+    EXPECT_EQ(20, rdata_sshfp.getFingerprintLength());
 }
 
 TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromWire) {
@@ -273,7 +273,7 @@ TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromWire) {
 
     EXPECT_EQ(4, rdf.getAlgorithmNumber());
     EXPECT_EQ(9, rdf.getFingerprintType());
-    EXPECT_EQ(0, rdf.getFingerprintLen());
+    EXPECT_EQ(0, rdf.getFingerprintLength());
 
     this->obuffer.clear();
     rdf.toWire(this->obuffer);
@@ -297,7 +297,7 @@ TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromString) {
 
     EXPECT_EQ(5, rdata_sshfp2.getAlgorithmNumber());
     EXPECT_EQ(6, rdata_sshfp2.getFingerprintType());
-    EXPECT_EQ(0, rdata_sshfp2.getFingerprintLen());
+    EXPECT_EQ(0, rdata_sshfp2.getFingerprintLength());
 
     this->obuffer.clear();
     rdata_sshfp2.toWire(this->obuffer);
