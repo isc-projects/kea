@@ -522,7 +522,7 @@ Message::addRRset(const Section section, RRsetPtr rrset) {
 
 bool
 Message::hasRRset(const Section section, const Name& name,
-                  const RRClass& rrclass, const RRType& rrtype)
+                  const RRClass& rrclass, const RRType& rrtype) const
 {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
@@ -540,8 +540,9 @@ Message::hasRRset(const Section section, const Name& name,
 }
 
 bool
-Message::hasRRset(const Section section, const RRsetPtr& rrset) {
-    return (hasRRset(section, rrset->getName(), rrset->getClass(), rrset->getType()));
+Message::hasRRset(const Section section, const RRsetPtr& rrset) const {
+    return (hasRRset(section, rrset->getName(),
+                     rrset->getClass(), rrset->getType()));
 }
 
 bool
