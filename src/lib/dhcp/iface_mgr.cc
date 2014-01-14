@@ -60,14 +60,16 @@
 /// @param handler Error handler function to be called or NULL to indicate
 /// that exception should be thrown instead.
 /// @param stream stream object holding an error string.
-#define ifacemgr_error(ex_type, handler, stream) \
+#define IFACEMGR_ERROR(ex_type, handler, stream) \
+{ \
     std::ostringstream oss__; \
     oss__ << stream; \
     if (handler) { \
         handler(oss__.str()); \
     } else { \
         isc_throw(ex_type, oss__); \
-    }
+    } \
+} \
 
 using namespace std;
 using namespace isc::asiolink;
@@ -405,7 +407,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                 // bind to INADDR_ANY address but we can do it only once. Thus,
                 // if one socket has been bound we can't do it any further.
                 if (!bind_to_device && bcast_num > 0) {
-                    ifacemgr_error(SocketConfigError, error_handler,
+                    IFACEMGR_ERROR(SocketConfigError, error_handler,
                                    "SO_BINDTODEVICE socket option is"
                                    " not supported on this OS;"
                                    " therefore, DHCP server can only"
@@ -419,7 +421,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                         // open at least one more.
                         openSocket(iface->getName(), *addr, port, true, true);
                     } catch (const Exception& ex) {
-                        ifacemgr_error(SocketConfigError, error_handler,
+                        IFACEMGR_ERROR(SocketConfigError, error_handler,
                                        "failed to open socket on interface "
                                        << iface->getName() << ", reason: "
                                        << ex.what());
@@ -439,7 +441,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                     // Not broadcast capable, do not set broadcast flags.
                     openSocket(iface->getName(), *addr, port, false, false);
                 } catch (const Exception& ex) {
-                    ifacemgr_error(SocketConfigError, error_handler,
+                    IFACEMGR_ERROR(SocketConfigError, error_handler,
                                    "failed to open socket on interface "
                                    << iface->getName() << ", reason: "
                                    << ex.what());
@@ -479,7 +481,7 @@ IfaceMgr::openSockets6(const uint16_t port,
                 openSocket(iface->getName(), *addr, port);
 
             } catch (const Exception& ex) {
-                ifacemgr_error(SocketConfigError, error_handler,
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "Failed to open unicast socket on  interface "
                                << iface->getName() << ", reason: "
                                << ex.what());
@@ -517,13 +519,23 @@ IfaceMgr::openSockets6(const uint16_t port,
             // it for some odd use cases which may utilize non-multicast
             // interfaces. Perhaps a warning should be emitted if the
             // interface is not a multicast one.
+
+            // The sock variable will hold a socket descriptor. It may be
+            // used to close a socket if the function fails to bind to
+            // multicast address on Linux systems. Because we only bind
+            // a socket to multicast address on Linux, on other systems
+            // the sock variable will be initialized but unused. We have
+            // to suppress the cppcheck warning which shows up on non-Linux
+            // systems.
+            // cppcheck-suppress variableScope
             int sock;
             try {
+                // cppcheck-suppress unreadVariable
                 sock = openSocket(iface->getName(), *addr, port,
                                   iface->flag_multicast_);
 
             } catch (const Exception& ex) {
-                ifacemgr_error(SocketConfigError, error_handler,
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "Failed to open link-local socket on "
                                " interface " << iface->getName() << ": "
                                << ex.what());
@@ -545,7 +557,7 @@ IfaceMgr::openSockets6(const uint16_t port,
                 } catch (const Exception& ex) {
                     // Delete previously opened socket.
                     iface->delSocket(sock);
-                    ifacemgr_error(SocketConfigError, error_handler,
+                    IFACEMGR_ERROR(SocketConfigError, error_handler,
                                    "Failed to open multicast socket on"
                                    " interface " << iface->getName()
                                    << ", reason: " << ex.what());
