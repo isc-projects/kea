@@ -220,11 +220,6 @@ BasicRRset::getTTL() const {
 }
 
 void
-BasicRRset::setName(const Name& name) {
-    impl_->name_ = name;
-}
-
-void
 BasicRRset::setTTL(const RRTTL& ttl) {
     impl_->ttl_ = ttl;
 }
