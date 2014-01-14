@@ -259,10 +259,11 @@ Dhcpv4Srv::run() {
             }
         }
 
-        // Check if the DHCPv4 packet has been sent to us, to to someone else.
+        // Check if the DHCPv4 packet has been sent to us or to someone else.
         // If it hasn't been sent to us, drop it!
         if (!acceptServerId(query)) {
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_NOT_FOR_US)
+                .arg(query->getTransid())
                 .arg(query->getIface());
             continue;
         }
