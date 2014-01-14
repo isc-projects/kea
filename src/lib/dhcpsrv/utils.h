@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -33,21 +33,6 @@ public:
 RFCViolation(const char* file, size_t line, const char* what) :
     isc::Exception(file, line, what) {}
 };
-
-class ServerID_mismatch : public isc::Exception {
-public:
-
-/// @brief constructor
-///
-/// @param file name of the file, where exception occurred
-/// @param line line of the file, where exception occurred
-/// @param what text description of the issue that caused exception
-ServerID_mismatch(const char* file, size_t line, const char* what) :
-    isc::Exception(file, line, what) {}
-};
-
-
-
 
 }; // namespace isc::dhcp
 }; // namespace isc
