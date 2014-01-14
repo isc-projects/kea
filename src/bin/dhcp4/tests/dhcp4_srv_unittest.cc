@@ -1046,12 +1046,16 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, acceptServerId) {
     // accepted.
     EXPECT_TRUE(srv.acceptServerId(pkt));
 
+    // Create definition of the server identifier option.
+    OptionDefinition def("server-identifier", DHO_DHCP_SERVER_IDENTIFIER,
+                         "ipv4-address", false);
+
     // Add a server identifier option which doesn't match server ids being
     // used by the server. The accepted server ids are the IPv4 addresses
     // configured on the interfaces. The 10.1.2.3 is not configured on
-    // any interface.
-    OptionPtr other_serverid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                                IOAddress("10.1.2.3")));
+    // any interfaces.
+    OptionCustomPtr other_serverid(new OptionCustom(def, Option::V6));
+    other_serverid->writeAddress(IOAddress("10.1.2.3"));
     pkt->addOption(other_serverid);
     EXPECT_FALSE(srv.acceptServerId(pkt));
 
@@ -1060,8 +1064,8 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, acceptServerId) {
 
     // Add a server id being an IPv4 address configured on eth0 interface.
     // A DHCPv4 message holding this server identifier should be accepted.
-    OptionPtr eth0_serverid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                               IOAddress("192.0.3.1")));
+    OptionCustomPtr eth0_serverid(new OptionCustom(def, Option::V6));
+    eth0_serverid->writeAddress(IOAddress("192.0.3.1"));
     ASSERT_NO_THROW(pkt->addOption(eth0_serverid));
     EXPECT_TRUE(srv.acceptServerId(pkt));
 
@@ -1070,8 +1074,8 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, acceptServerId) {
 
     // Add a server id being an IPv4 address configured on eth1 interface.
     // A DHCPv4 message holding this server identifier should be accepted.
-    OptionPtr eth1_serverid(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
-                                               IOAddress("10.0.0.1")));
+    OptionCustomPtr eth1_serverid(new OptionCustom(def, Option::V6));
+    eth1_serverid->writeAddress(IOAddress("10.0.0.1"));
     ASSERT_NO_THROW(pkt->addOption(eth1_serverid));
     EXPECT_TRUE(srv.acceptServerId(pkt));
 
