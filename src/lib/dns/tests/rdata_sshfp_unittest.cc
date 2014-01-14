@@ -59,11 +59,6 @@ protected:
                 rdata_str, rdata_sshfp, true, true);
     }
 
-    void checkFromText_BadValue(const string& rdata_str) {
-        checkFromText<generic::SSHFP, InvalidRdataText, BadValue>(
-            rdata_str, rdata_sshfp, true, true);
-    }
-
     void checkFromText_BadString(const string& rdata_str) {
         checkFromText
             <generic::SSHFP, InvalidRdataText, isc::Exception>(
@@ -138,8 +133,8 @@ TEST_F(Rdata_SSHFP_Test, badText) {
     checkFromText_LexerError("1");
     checkFromText_LexerError("ONE 2 123456789abcdef67890123456789abcdef67890");
     checkFromText_LexerError("1 TWO 123456789abcdef67890123456789abcdef67890");
-    checkFromText_BadValue("1 2 BUCKLEMYSHOE");
-    checkFromText_BadValue(sshfp_txt + " extra text");
+    checkFromText_InvalidText("1 2 BUCKLEMYSHOE");
+    checkFromText_InvalidText(sshfp_txt + " extra text");
 
     // yes, these are redundant to the last test cases in algorithmTypes
     checkFromText_InvalidText(
