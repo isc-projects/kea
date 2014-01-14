@@ -25,12 +25,13 @@
 	(Trac #3231, git c7a229f15089670d2bfde6e9f0530c30ce6f8cf8)
 
 723.	[bug]		marcin
-	libdhcp++: Implemented unit tests for the IfaceMgr's routine which opens
-	IPv6 sockets on detected interfaces. The IfaceMgr logic performing low
-	level operations on sockets has been moved to a separate class. By
-	providing a custom implementation of this class, the unit tests may
-	use fake interfaces with custom configuration and thus cover wide
-	range of test scenarios for the function.
+	libdhcp++: Implemented unit tests for the IfaceMgr's routine
+	which opens IPv6 sockets on detected interfaces. The IfaceMgr
+	logic performing low level operations on sockets has been
+	moved to a separate class. By providing a custom implementation
+	of this class, the unit tests may use fake interfaces with
+	custom configuration and thus cover wide range of test
+	scenarios for the function.
 	(Trac #3251, git 21d2f7ec425f8461b545687104cd76a42da61b2e)
 
 722.	[bug]		muks
@@ -72,11 +73,11 @@
 	(Trac #2772, git c6158690c389d75686545459618ae0bf16f2cdb8)
 
 716.	[func]		marcin
-	perfdhcp: added support for sending DHCPv6 Release messages at the specified
-	rate and measure performance. The orphan messages counters are not
-	displayed for individual exchanges anymore. The following ticket: #3261
-	has been submitted to implement global orphan counting for all exchange
-	types.
+	perfdhcp: added support for sending DHCPv6 Release messages
+	at the specified rate and measure performance. The orphan
+	messages counters are not displayed for individual exchanges
+	anymore. The following ticket: #3261 has been submitted to
+	implement global orphan counting for all exchange types.
 	(Trac #3181, git 684524bc130080e4fa31b65edfd14d58eec37e50)
 
 715.	[bug]		marcin
@@ -90,10 +91,10 @@
 	(Trac #3109, git 016bfae00460b4f88adbfd07ed26759eb294ef10)
 
 713.	[func]		tmark
-	Added DNS update request construction to d2::NameAddTransaction in
-	b10-dhcp-ddns.  The class now generates all DNS update request variations
-	needed to fulfill it's state machine in compliance with RFC 4703, sections
-	5.3 and 5.4.
+	Added DNS update request construction to d2::NameAddTransaction
+	in b10-dhcp-ddns.  The class now generates all DNS update
+	request variations needed to fulfill it's state machine in
+	compliance with RFC 4703, sections 5.3 and 5.4.
 	(Trac# 3241, git dceca9554cb9410dd8d12371b68198b797cb6cfb)
 
 712.	[func]		marcin, dclink
@@ -170,7 +171,7 @@
 	bindctl while b10-xfrin is running.
 	(Trac #2300, git 4655c110afa0ec6f5669bf53245bffe6b30ece4b)
 
-703.    [bug]		kean
+703.	[bug]		kean
 	A bug in b10-msgq was fixed where it would remove the socket file if
 	there was an existing copy of b10-msgq running. It now correctly
 	detects and reports this without removing the socket file.
@@ -203,16 +204,16 @@
 	components.
 	(Trac #3094, git ed672a898d28d6249ff0c96df12384b0aee403c8
 
-697.	[func]	tmark
+697.	[func]		tmark
 	Implements "user_check" hooks shared library which supports subnet
 	selection based upon the contents of a list of known DHCP lease users
 	(i.e. clients).  Adds the following subdirectories to the bind10 src
 	directory for maintaining hooks shared libraries:
-		-bind10/src/hooks  - base directory for hooks shared libraries
-		-bind10/src/hooks/dhcp - base directory for all hooks libs pertaining
-		to DHCP(Kea)
-		-bind10/src/hooks/dhcp/user_check - directory containing the user_check
-		 hooks library
+	bind10/src/hooks - base directory for hooks shared libraries;
+	bind10/src/hooks/dhcp - base directory for all hooks libs
+	pertaining to DHCP (Kea);
+	bind10/src/hooks/dhcp/user_check - directory containing the
+	user_check hooks library.
 	(Trac #3186, git f36aab92c85498f8511fbbe19fad5e3f787aef68)
 
 696.	[func]		tomek
@@ -286,16 +287,18 @@
 	(Trac #2751, git 7430591b4ae4c7052cab86ed17d0221db3b524a8)
 
 683.	[bug]		stephen
-	Modifications to fix problems running unit tests if they are statically
-	linked.  This includes provision of an initialization function that
-	must be called by user-written hooks libraries if they are loaded by a
-	statically-linked image.
+	Modifications to fix problems running unit tests if they
+	are statically linked.  This includes provision of an
+	initialization function that must be called by user-written
+	hooks libraries if they are loaded by a statically-linked
+	image.
 	(Trac #3113, git 3d19eee4dbfabc7cf7ae528351ee9e3a334cae92)
 
 682.	[func]		naokikambe
-	New statistics items added into b10-xfrin : ixfr_running, axfr_running,
-	and soa_in_progress.  Their values can be obtained by invoking "Stats
-	show Xfrin" via bindctl when b10-xfrin is running.
+	New statistics items added into b10-xfrin : ixfr_running,
+	axfr_running, and soa_in_progress.  Their values can be
+	obtained by invoking "Stats show Xfrin" via bindctl when
+	b10-xfrin is running.
 	(Trac #2274, git ca691626a2be16f08754177bb27983a9f4984702)
 
 681.	[func]		tmark
@@ -309,8 +312,8 @@
 	(Trac #3173, git 4cc844f7cc82c8bd749296a2709ef67af8d9ba87)
 
 679.	[func]		tmark
-	b10-dhcp-ddns Finite state machine logic was refactored into its own class,
-	StateModel.
+	b10-dhcp-ddns: Finite state machine logic was refactored
+	into its own class, StateModel.
 	(Trac# 3156, git 6e9227b1b15448e834d1f60dd655e5633ff9745c)
 
 678.	[func]		tmark
@@ -330,7 +333,7 @@
 	using it.
 	(Trac #2762, git c543008573eba65567e9c189824322954c6dd43b)
 
-675.    [func]      vorner
+675.	[func]		vorner
 	If there's an exception not handled in a Python BIND10 component,
 	it is now stored in a temporary file and properly logged, instead
 	of dumping to stderr.
@@ -347,15 +350,18 @@
 	(Trac #3145, git 3a844e85ecc3067ccd1c01841f4a61366cb278f4)
 
 672.	[func]		tmark
-	Added b10-dhcp-ddnsupdate transaction base class, NameChangeTransaction.
-	This class provides the common structure and methods to implement the state
-	models described in the DHCP_DDNS design, plus integration with DNSClient
-	and its callback mechanism for asynchronous IO with the DNS servers.
+	Added b10-dhcp-ddnsupdate transaction base class,
+	NameChangeTransaction.  This class provides the common
+	structure and methods to implement the state models described
+	in the DHCP_DDNS design, plus integration with DNSClient
+	and its callback mechanism for asynchronous IO with the
+	DNS servers.
 	(Trac #3086, git 079b862c9eb21056fdf957e560b8fe7b218441b6)
 
 671.	[func]		dclink, tomek
-	The memfile backend now supports getLease4(hwaddr) and getLease4(client-id)
-	methods. Thanks to David Carlier for contributing a patch.
+	The memfile backend now supports getLease4(hwaddr) and
+	getLease4(client-id) methods. Thanks to David Carlier for
+	contributing a patch.
 	(Trac #2592, git a11683be53db2f9f8f9b71c1d1c163511e0319b3)
 
 670.	[func]		marcin
@@ -415,7 +421,7 @@
 	as in deprecated ASCII format.
 	(Trac# 3082, git 1b434debfbf4a43070eb480fa0975a6eff6429d4)
 
-661.    [func]		stephen
+661.	[func]		stephen
 	Copy additional header files to the BIND 10 installation directory
 	to allow the building of DHCP hooks libraries against an installed
 	version of BIND 10.
