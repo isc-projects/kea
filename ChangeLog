@@ -1,3 +1,10 @@
+726.	[bug]		muks
+	Don't print trailing newlines in Question::toText() output by
+	default.  This fixes some logging that were split with a line
+	feed.  It is possible to get the old behavior by passing
+	toText(true).  Message::toText() output is unchanged.
+	(Trac #571, git 7286499d5206c6d2aa8a59a5247c3841a772a43e)
+
 725.	[func]		tmark
 	b10-dhcp-ddns D2UpdateMgr now uses the newly implemented
 	NameAddTransaction and NameRemoveTransaction classes.  This allows
