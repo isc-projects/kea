@@ -1,0 +1,6 @@
+# Test where certificate association data is missing.
+
+# TLSA RDATA, RDLEN=35
+0023
+# CERTIFICATE_USAGE=0 SELECTOR=0 MATCHING_TYPE=1 CERTIFICATE_ASSOCIATION_DATA=(missing)
+00 00 01
