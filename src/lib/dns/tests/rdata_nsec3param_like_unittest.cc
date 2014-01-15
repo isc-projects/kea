@@ -22,14 +22,16 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
 #include <string>
 #include <vector>
 
 using namespace std;
-using isc::UnitTestUtil;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 
@@ -230,8 +232,8 @@ toWireCheck(RRType rrtype, OUTPUT_TYPE& output, const string& data_file) {
     output.clear();
     output.writeUint16(rdlen);
     createRdata(rrtype, RRClass::IN(), buffer, rdlen)->toWire(output);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, output.getData(),
-                        output.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  output.getData(), output.getLength());
 }
 
 TYPED_TEST(NSEC3PARAMLikeTest, toWire) {

@@ -40,6 +40,7 @@
 #include <dns/tsigrecord.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
 using namespace std;
 using namespace isc;
@@ -48,6 +49,7 @@ using namespace isc::util;
 using namespace isc::util::encode;
 using namespace isc::dns::rdata;
 using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 // See dnssectime.cc
 namespace isc {
@@ -224,15 +226,14 @@ commonSignChecks(ConstTSIGRecordPtr tsig, uint16_t expected_qid,
     EXPECT_EQ(expected_timesigned, tsig_rdata.getTimeSigned());
     EXPECT_EQ(300, tsig_rdata.getFudge());
     EXPECT_EQ(expected_maclen, tsig_rdata.getMACSize());
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        tsig_rdata.getMAC(), tsig_rdata.getMACSize(),
-                        expected_mac, expected_maclen);
+    matchWireData(expected_mac, expected_maclen,
+                  tsig_rdata.getMAC(), tsig_rdata.getMACSize());
+
     EXPECT_EQ(expected_qid, tsig_rdata.getOriginalID());
     EXPECT_EQ(expected_error, tsig_rdata.getError());
     EXPECT_EQ(expected_otherlen, tsig_rdata.getOtherLen());
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        tsig_rdata.getOtherData(), tsig_rdata.getOtherLen(),
-                        expected_otherdata, expected_otherlen);
+    matchWireData(expected_otherdata, expected_otherlen,
+                  tsig_rdata.getOtherData(), tsig_rdata.getOtherLen());
 }
 
 void
