@@ -1,3 +1,9 @@
+730.	[bug]		tomek
+	b10-dhcp4, b10-dhcp6: Both servers used to unnecessarily increase
+	subnet-id values after reconfiguration. The subnet-ids are now reset
+	to 1 every time a server is reconfigured.
+	(Trac #3234, git 31e416087685a6dadc3047fdbb0927bbf60095aa)
+
 729.	[bug]		marcin
 	b10-dhcp4 discards DHCPv4 messages carrying server identifiers
 	which don't match server identifiers used by the server.
