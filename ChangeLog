@@ -1,3 +1,8 @@
+729.	[bug]		marcin
+	b10-dhcp4 discards DHCPv4 messages carrying server identifiers
+	which don't match server identifiers used by the server.
+	(Trac #3279, git 805d2b269c6bf3e7be68c13f1da1709d8150a666)
+
 728.	[func]		marcin
 	b10-dhcp6: If server fails to open a socket on one interface it
 	will log a warning and continue to open sockets on other interfaces.
