@@ -571,7 +571,7 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
         "    \"name\": \"foo\","
         "    \"space\": \"isc\","
         "    \"code\": 100,"
-        "    \"data\": \"192.168.2.1\","
+        "    \"data\": \"192.0.2.0\","
         "    \"csv-format\": True"
         " } ]"
         "}";
@@ -586,7 +586,7 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
 
     // Verify that the option definition is correct.
     std::string val = "type=100, len=4, data fields:\n "
-                      " #0 192.168.2.1 ( ipv4-address ) \n";
+                      " #0 192.0.2.0 ( ipv4-address ) \n";
 
     EXPECT_EQ(val, opt_ptr->toText());
 }
@@ -716,7 +716,7 @@ TEST_F(ParseConfigTest, validD2Config) {
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-ip\" : \"192.0.2.0\", "
         "     \"server-port\" : 3432, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
@@ -742,7 +742,7 @@ TEST_F(ParseConfigTest, validD2Config) {
 
     // Verify that the configuration values are as expected.
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
-    EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ("192.0.2.0", d2_client_config->getServerIp().toText());
     EXPECT_EQ(3432, d2_client_config->getServerPort());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
@@ -761,7 +761,7 @@ TEST_F(ParseConfigTest, validD2Config) {
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"3005::1\", "
+        "     \"server-ip\" : \"2001:db8::\", "
         "     \"server-port\" : 43567, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
@@ -786,7 +786,7 @@ TEST_F(ParseConfigTest, validD2Config) {
 
     // Verify that the configuration values are as expected.
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
-    EXPECT_EQ("3005::1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ("2001:db8::", d2_client_config->getServerIp().toText());
     EXPECT_EQ(43567, d2_client_config->getServerPort());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
@@ -838,7 +838,7 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true, "
-        //"     \"server-ip\" : \"192.168.2.1\", "
+        //"     \"server-ip\" : \"192.0.2.0\", "
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
@@ -855,7 +855,7 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"x192.168.2.1\", "
+        "     \"server-ip\" : \"x192.0.2.0\", "
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
@@ -872,7 +872,7 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-ip\" : \"192.0.2.0\", "
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"Bogus\", "
         "     \"ncr-format\" : \"JSON\", "
@@ -889,7 +889,7 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-ip\" : \"192.0.2.0\", "
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"TCP\", "
         "     \"ncr-format\" : \"JSON\", "
@@ -906,7 +906,7 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-ip\" : \"192.0.2.0\", "
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"Bogus\", "
@@ -923,7 +923,7 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-ip\" : \"192.0.2.0\", "
         // "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
