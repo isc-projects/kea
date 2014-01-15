@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -175,7 +175,7 @@ IPv4 DHCP server but it is not running.
 A debug message issued during startup, this indicates that the IPv4 DHCP
 server is about to open sockets on the specified port.
 
-% DHCP4_PACKET_NOT_FOR_US received DHCPv4 message dropped because it contains foreign server identifier: transaction id %1, interface: %2
+% DHCP4_PACKET_NOT_FOR_US received DHCPv4 message (transid=%1, iface=%2) dropped because it contains foreign server identifier
 This debug message is issued when received DHCPv4 message is dropped because
 it is addressed to a different server, i.e. a server identifier held by
 this message doesn't match the identifier used by our server. The arguments
