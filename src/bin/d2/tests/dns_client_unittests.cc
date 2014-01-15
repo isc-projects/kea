@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -128,7 +128,7 @@ public:
                           response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
                 D2ZonePtr zone = response_->getZone();
                 ASSERT_TRUE(zone);
-                EXPECT_EQ("response.example.com.", zone->getName().toText());
+                EXPECT_EQ("example.com.", zone->getName().toText());
                 EXPECT_EQ(RRClass::IN().getCode(), zone->getClass().getCode());
 
             } else {
@@ -288,7 +288,7 @@ public:
         // Create a request DNS Update message.
         D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
         ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
-        ASSERT_NO_THROW(message.setZone(Name("response.example.com"), RRClass::IN()));
+        ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
 
         // In order to perform the full test, when the client sends the request
         // and receives a response from the server, we have to emulate the

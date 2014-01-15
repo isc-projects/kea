@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -275,42 +275,12 @@ typedef boost::shared_ptr<NameChangeStub> NameChangeStubPtr;
 ///
 /// Note this class uses NameChangeStub class to exercise non-public
 /// aspects of NameChangeTransaction.
-class NameChangeTransactionTest : public ::testing::Test {
+class NameChangeTransactionTest : public TransactionTest {
 public:
-    IOServicePtr io_service_;
-    DdnsDomainPtr forward_domain_;
-    DdnsDomainPtr reverse_domain_;
-    asiolink::IntervalTimer timer_;
-    int run_time_;
-
-    NameChangeTransactionTest()
-        : io_service_(new isc::asiolink::IOService()), timer_(*io_service_),
-         run_time_(0) {
+    NameChangeTransactionTest() {
     }
 
     virtual ~NameChangeTransactionTest() {
-    }
-
-    /// @brief Run the IO service for no more than a given amount of time.
-    ///
-    /// Uses an IntervalTimer to interrupt the invocation of IOService run(),
-    /// after the given number of milliseconds elapse.  The timer executes
-    /// the timesUp() method if it expires.
-    ///
-    /// @param run_time amount of time in milliseconds to allow run to execute.
-    void runTimedIO(int run_time) {
-        run_time_ = run_time;
-        timer_.setup(boost::bind(&NameChangeTransactionTest::timesUp, this),
-                     run_time_);
-        io_service_->run();
-    }
-
-    /// @brief IO Timer expiration handler
-    ///
-    /// Stops the IOSerivce and fails the current test.
-    void timesUp() {
-        io_service_->stop();
-        FAIL() << "Test Time: " << run_time_ << " expired";
     }
 
     /// @brief  Instantiates a NameChangeStub test transaction
@@ -318,40 +288,52 @@ public:
     /// NameChangeRequest. The request has both forward and reverse DNS
     /// changes requested, and both forward and reverse domains are populated.
     NameChangeStubPtr makeCannedTransaction() {
-        // NCR in JSON form.
-        const char* msg_str =
-            "{"
-            " \"change_type\" : 0 , "
-            " \"forward_change\" : true , "
-            " \"reverse_change\" : true , "
-            " \"fqdn\" : \"my.example.com.\" , "
-            " \"ip_address\" : \"192.168.2.1\" , "
-            " \"dhcid\" : \"0102030405060708\" , "
-            " \"lease_expires_on\" : \"20130121132405\" , "
-            " \"lease_length\" : 1300 "
-            "}";
+        // Creates IPv4 remove request, forward, and reverse domains.
+        setupForIPv4Transaction(dhcp_ddns::CHG_ADD, FWD_AND_REV_CHG);
 
-        // Create the request from JSON.
-        dhcp_ddns::NameChangeRequestPtr ncr = dhcp_ddns::NameChangeRequest::
-                                              fromJSON(msg_str);
-
-        // Make forward DdnsDomain with 2 forward servers.
-        forward_domain_ = makeDomain("example.com.");
-        addDomainServer(forward_domain_, "forward.example.com",
-                        "127.0.0.1", 5301);
-        addDomainServer(forward_domain_, "forward2.example.com",
-                        "127.0.0.1", 5302);
-
-        // Make reverse DdnsDomain with one reverse server.
-        reverse_domain_ = makeDomain("2.168.192.in.addr.arpa.");
-        addDomainServer(reverse_domain_, "reverse.example.com",
-                        "127.0.0.1", 5301);
-
+        // Now create the test transaction as would occur in update manager.
         // Instantiate the transaction as would be done by update manager.
-        return (NameChangeStubPtr(new NameChangeStub(io_service_, ncr,
+        return (NameChangeStubPtr(new NameChangeStub(io_service_, ncr_,
                                   forward_domain_, reverse_domain_)));
     }
 
+    /// @brief Builds and then sends an update request
+    ///
+    /// This method is used to build and send and update request. It is used
+    /// in conjuction with FauxServer to test various message response
+    /// scenarios.
+    /// @param name_change Transaction under test
+    /// @param run_time Maximum time to permit IO processing to run before
+    /// timing out (in milliseconds)
+    void doOneExchange(NameChangeStubPtr name_change,
+                       unsigned int run_time = 500) {
+        // Create a valid request for the transaction.
+        D2UpdateMessagePtr req;
+        ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::
+                                                      OUTBOUND)));
+        ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
+        req->setZone(dns::Name("request.example.com"), dns::RRClass::ANY());
+        req->setRcode(dns::Rcode(dns::Rcode::NOERROR_CODE));
+
+        // Set the flag to use the NameChangeStub's DNSClient callback.
+        name_change->use_stub_callback_ = true;
+
+        // Invoke sendUpdate.
+        ASSERT_NO_THROW(name_change->sendUpdate());
+
+        // Update attempt count should be 1, next event should be NOP_EVT.
+        ASSERT_EQ(1, name_change->getUpdateAttempts());
+        ASSERT_EQ(NameChangeTransaction::NOP_EVT,
+                  name_change->getNextEvent());
+
+        int cnt = 0;
+        while (name_change->getNextEvent() == NameChangeTransaction::NOP_EVT) {
+            ASSERT_NO_THROW(cnt = runTimedIO(run_time));
+            if (cnt == 0) {
+                FAIL() << "IO Service stopped unexpectedly";
+            }
+        }
+    }
 };
 
 /// @brief Tests NameChangeTransaction construction.
@@ -874,27 +856,16 @@ TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
     ASSERT_NO_THROW(name_change->initDictionaries());
     ASSERT_TRUE(name_change->selectFwdServer());
 
-    // Create a valid request.
-    D2UpdateMessagePtr req;
-    ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
-    ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
-    req->setZone(dns::Name("request.example.com"), dns::RRClass::ANY());
-    req->setRcode(dns::Rcode(dns::Rcode::NOERROR_CODE));
-
-    // Set the flag to use the NameChangeStub's DNSClient callback.
-    name_change->use_stub_callback_ = true;
-
-    // Invoke sendUpdate.
-    ASSERT_NO_THROW(name_change->sendUpdate());
-
-    // Update attempt count should be 1, next event should be NOP_EVT.
-    EXPECT_EQ(1, name_change->getUpdateAttempts());
-    ASSERT_EQ(NameChangeTransaction::NOP_EVT,
-              name_change->getNextEvent());
-
-    // Run IO a bit longer than maximum allowed to permit timeout logic to
-    // execute.
-    runTimedIO(NameChangeTransaction::DNS_UPDATE_DEFAULT_TIMEOUT + 100);
+    // Build a valid request, call sendUpdate and process the response.
+    // Note we have to wait for DNSClient timeout plus a bit more to allow
+    // DNSClient to timeout.
+    // The method, doOneExchange, can suffer fatal assertions which invalidate
+    // not only it but the invoking test as well. In other words, if the
+    // doOneExchange blows up the rest of test is pointless. I use
+    // ASSERT_NO_FATAL_FAILURE to abort the test immediately.
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change,
+                                          NameChangeTransaction::
+                                          DNS_UPDATE_DEFAULT_TIMEOUT + 100));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is TIMEOUT.
     ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
@@ -914,26 +885,8 @@ TEST_F(NameChangeTransactionTest, sendUpdateCorruptResponse) {
     FauxServer server(*io_service_, *(name_change->getCurrentServer()));
     server.receive(FauxServer::CORRUPT_RESP);
 
-    // Create a valid request for the transaction.
-    D2UpdateMessagePtr req;
-    ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
-    ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
-    req->setZone(dns::Name("request.example.com"), dns::RRClass::ANY());
-    req->setRcode(dns::Rcode(dns::Rcode::NOERROR_CODE));
-
-    // Set the flag to use the NameChangeStub's DNSClient callback.
-    name_change->use_stub_callback_ = true;
-
-    // Invoke sendUpdate.
-    ASSERT_NO_THROW(name_change->sendUpdate());
-
-    // Update attempt count should be 1, next event should be NOP_EVT.
-    EXPECT_EQ(1, name_change->getUpdateAttempts());
-    ASSERT_EQ(NameChangeTransaction::NOP_EVT,
-              name_change->getNextEvent());
-
-    // Run the IO for 500 ms.  This should be more than enough time.
-    runTimedIO(500);
+    // Build a valid request, call sendUpdate and process the response.
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is INVALID.
     ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
@@ -952,26 +905,8 @@ TEST_F(NameChangeTransactionTest, sendUpdate) {
     FauxServer server(*io_service_, *(name_change->getCurrentServer()));
     server.receive (FauxServer::USE_RCODE, dns::Rcode::NOERROR());
 
-    // Create a valid request for the transaction.
-    D2UpdateMessagePtr req;
-    ASSERT_NO_THROW(req.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
-    ASSERT_NO_THROW(name_change->setDnsUpdateRequest(req));
-    req->setZone(dns::Name("request.example.com"), dns::RRClass::ANY());
-    req->setRcode(dns::Rcode(dns::Rcode::NOERROR_CODE));
-
-    // Set the flag to use the NameChangeStub's DNSClient callback.
-    name_change->use_stub_callback_ = true;
-
-    // Invoke sendUpdate.
-    ASSERT_NO_THROW(name_change->sendUpdate());
-
-    // Update attempt count should be 1, next event should be NOP_EVT.
-    EXPECT_EQ(1, name_change->getUpdateAttempts());
-    ASSERT_EQ(NameChangeTransaction::NOP_EVT,
-              name_change->getNextEvent());
-
-    // Run the IO for 500 ms.  This should be more than enough time.
-    runTimedIO(500);
+    // Build a valid request, call sendUpdate and process the response.
+    ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is SUCCESS.
     ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
