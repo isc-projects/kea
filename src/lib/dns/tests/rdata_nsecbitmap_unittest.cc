@@ -23,6 +23,7 @@
 #include <gtest/gtest.h>
 
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -30,10 +31,11 @@
 #include <vector>
 
 using namespace std;
-using boost::lexical_cast;
-using isc::UnitTestUtil;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
+using boost::lexical_cast;
 
 namespace {
 
@@ -253,16 +255,16 @@ TEST_F(NSEC3BitmapTest, emptyMap) {
     OutputBuffer obuffer(0);
     obuffer.writeUint16(rdlen);
     empty_nsec3.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  obuffer.getData(), obuffer.getLength());
 
     // Same for MessageRenderer.
     obuffer.clear();
     MessageRenderer renderer;
     renderer.writeUint16(rdlen);
     empty_nsec3.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 }
