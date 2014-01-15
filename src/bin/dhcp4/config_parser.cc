@@ -396,6 +396,8 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
         parser = new HooksLibrariesParser(config_id);
     } else if (config_id.compare("echo-client-id") == 0) {
         parser = new BooleanParser(config_id, globalContext()->boolean_values_);
+    } else if (config_id.compare("dhcp-ddns") == 0) {
+        parser = new D2ClientConfigParser(config_id);
     } else {
         isc_throw(NotImplemented,
                 "Parser error: Global configuration parameter not supported: "
@@ -452,7 +454,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
     // Some of the parsers alter the state of the system in a way that can't
     // easily be undone. (Or alter it in a way such that undoing the change has
     // the same risk of failure as doing the change.)
-    ParserPtr hooks_parser_;
+    ParserPtr hooks_parser;
 
     // The subnet parsers implement data inheritance by directly
     // accessing global storage. For this reason the global data
@@ -493,7 +495,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
                 // Executing commit will alter currently-loaded hooks
                 // libraries.  Check if the supplied libraries are valid,
                 // but defer the commit until everything else has committed.
-                hooks_parser_ = parser;
+                hooks_parser = parser;
                 parser->build(config_pair.second);
             } else {
                 // Those parsers should be started before other
@@ -561,8 +563,8 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
             // This occurs last as if it succeeds, there is no easy way
             // revert it.  As a result, the failure to commit a subsequent
             // change causes problems when trying to roll back.
-            if (hooks_parser_) {
-                hooks_parser_->commit();
+            if (hooks_parser) {
+                hooks_parser->commit();
             }
         }
         catch (const isc::Exception& ex) {

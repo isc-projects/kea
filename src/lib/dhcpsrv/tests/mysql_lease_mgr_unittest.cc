@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -549,7 +549,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4Hwaddr) {
     }
 
     // Get the leases matching the hardware address of lease 1
-    // @todo: Simply use HWAddr directly once 2589 is implemented
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
     HWAddr tmp(leases[1]->hwaddr_, HTYPE_ETHER);
     Lease4Collection returned = lmptr_->getLease4(tmp);
 
@@ -568,14 +568,14 @@ TEST_F(MySqlLeaseMgrTest, getLease4Hwaddr) {
     EXPECT_EQ(straddress4_[5], addresses[2]);
 
     // Repeat test with just one expected match
-    // @todo: Simply use HWAddr directly once 2589 is implemented
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
     returned = lmptr_->getLease4(HWAddr(leases[2]->hwaddr_, HTYPE_ETHER));
     ASSERT_EQ(1, returned.size());
     detailCompareLease(leases[2], *returned.begin());
 
     // Check that an empty vector is valid
     EXPECT_TRUE(leases[7]->hwaddr_.empty());
-    // @todo: Simply use HWAddr directly once 2589 is implemented
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
     returned = lmptr_->getLease4(HWAddr(leases[7]->hwaddr_, HTYPE_ETHER));
     ASSERT_EQ(1, returned.size());
     detailCompareLease(leases[7], *returned.begin());
@@ -599,7 +599,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSize) {
     for (uint8_t i = 0; i <= HWAddr::MAX_HWADDR_LEN; ++i) {
         leases[1]->hwaddr_.resize(i, i);
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        // @todo: Simply use HWAddr directly once 2589 is implemented
+        /// @todo: Simply use HWAddr directly once 2589 is implemented
         Lease4Collection returned =
             lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER));
 
@@ -610,7 +610,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSize) {
 
     // Database should not let us add one that is too big
     // (The 42 is a random value put in each byte of the address.)
-    // @todo: 2589 will make this test impossible
+    /// @todo: 2589 will make this test impossible
     leases[1]->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
     EXPECT_THROW(lmptr_->addLease(leases[1]), isc::dhcp::DbOperationError);
 }
@@ -628,7 +628,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
 
     // Get the leases matching the hardware address of lease 1 and
     // subnet ID of lease 1.  Result should be a single lease - lease 1.
-    // @todo: Simply use HWAddr directly once 2589 is implemented
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
     Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
         HTYPE_ETHER), leases[1]->subnet_id_);
 
@@ -637,7 +637,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
 
     // Try for a match to the hardware address of lease 1 and the wrong
     // subnet ID.
-    // @todo: Simply use HWAddr directly once 2589 is implemented
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
     returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER),
                                  leases[1]->subnet_id_ + 1);
     EXPECT_FALSE(returned);
@@ -645,14 +645,14 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     // Try for a match to the subnet ID of lease 1 (and lease 4) but
     // the wrong hardware address.
     vector<uint8_t> invalid_hwaddr(15, 0x77);
-    // @todo: Simply use HWAddr directly once 2589 is implemented
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
     returned = lmptr_->getLease4(HWAddr(invalid_hwaddr, HTYPE_ETHER),
                                  leases[1]->subnet_id_);
     EXPECT_FALSE(returned);
 
     // Try for a match to an unknown hardware address and an unknown
     // subnet ID.
-    // @todo: Simply use HWAddr directly once 2589 is implemented
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
     returned = lmptr_->getLease4(HWAddr(invalid_hwaddr, HTYPE_ETHER),
                                  leases[1]->subnet_id_ + 1);
     EXPECT_FALSE(returned);
@@ -665,7 +665,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     EXPECT_TRUE(lmptr_->deleteLease(leases[2]->addr_));
     leases[1]->addr_ = leases[2]->addr_;
     EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    // @todo: Simply use HWAddr directly once 2589 is implemented
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
     EXPECT_THROW(returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
                                                     HTYPE_ETHER),
                                              leases[1]->subnet_id_),
@@ -687,7 +687,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetIdSize) {
     for (uint8_t i = 0; i <= HWAddr::MAX_HWADDR_LEN; ++i) {
         leases[1]->hwaddr_.resize(i, i);
         EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        // @todo: Simply use HWAddr directly once 2589 is implemented
+        /// @todo: Simply use HWAddr directly once 2589 is implemented
         Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
                                                       HTYPE_ETHER),
                                                leases[1]->subnet_id_);

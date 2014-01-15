@@ -15,8 +15,38 @@
 #include <dhcp_ddns/dhcp_ddns_log.h>
 #include <dhcp_ddns/ncr_io.h>
 
+#include <boost/algorithm/string/predicate.hpp>
+
 namespace isc {
 namespace dhcp_ddns {
+
+NameChangeProtocol stringToNcrProtocol(const std::string& protocol_str) {
+    if (boost::iequals(protocol_str, "UDP")) {
+        return (NCR_UDP);
+    } 
+
+    if (boost::iequals(protocol_str, "TCP")) {
+        return (NCR_TCP);
+    }
+
+    isc_throw(BadValue, "Invalid NameChangeRequest protocol:" << protocol_str);
+}
+
+std::string ncrProtocolToString(NameChangeProtocol protocol) {
+    switch (protocol) {
+    case NCR_UDP:
+        return ("UDP");
+    case NCR_TCP:
+        return ("TCP");
+    default:
+        break;
+    }
+
+    std::ostringstream stream;
+    stream  << "UNKNOWN(" << protocol << ")";
+    return (stream.str());
+}
+
 
 //************************** NameChangeListener ***************************
 
