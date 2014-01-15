@@ -29,32 +29,34 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 
 class Rdata_TSIG_Test : public RdataTest {
 protected:
     Rdata_TSIG_Test() :
-	// no MAC or Other Data
+        // no MAC or Other Data
         valid_text1("hmac-md5.sig-alg.reg.int. 1286779327 300 "
                     "0 16020 BADKEY 0"),
-	// MAC but no Other Data
+        // MAC but no Other Data
         valid_text2("hmac-sha256. 1286779327 300 12 "
                     "FAKEFAKEFAKEFAKE 16020 BADSIG 0"),
-	// MAC and Other Data
+        // MAC and Other Data
         valid_text3("hmac-sha1. 1286779327 300 12 "
                     "FAKEFAKEFAKEFAKE 16020 BADTIME 6 FAKEFAKE"),
-	// MAC and Other Data (with Error that doesn't expect Other Data)
+        // MAC and Other Data (with Error that doesn't expect Other Data)
         valid_text4("hmac-sha1. 1286779327 300 12 "
                     "FAKEFAKEFAKEFAKE 16020 BADSIG 6 FAKEFAKE"),
-	// numeric error code
+        // numeric error code
         valid_text5("hmac-sha256. 1286779327 300 12 "
                     "FAKEFAKEFAKEFAKE 16020 2845 0"),
         rdata_tsig(valid_text1)
@@ -204,9 +206,8 @@ fromWireCommonChecks(const any::TSIG& tsig) {
     EXPECT_EQ(300, tsig.getFudge());
 
     vector<uint8_t> expect_mac(32, 'x');
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        &expect_mac[0], expect_mac.size(),
-                        tsig.getMAC(), tsig.getMACSize());
+    matchWireData(&expect_mac[0], expect_mac.size(),
+                  tsig.getMAC(), tsig.getMACSize());
 
     EXPECT_EQ(2845, tsig.getOriginalID());
 
@@ -234,9 +235,8 @@ TEST_F(Rdata_TSIG_Test, createFromWireWithOtherData) {
     expect_data[3] = ((otherdata >> 16) & 0xff);
     expect_data[4] = ((otherdata >> 8) & 0xff);
     expect_data[5] = (otherdata & 0xff);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        &expect_data[0], expect_data.size(),
-                        tsig.getOtherData(), tsig.getOtherLen());
+    matchWireData(&expect_data[0], expect_data.size(),
+                  tsig.getOtherData(), tsig.getOtherLen());
 }
 
 TEST_F(Rdata_TSIG_Test, createFromWireWithoutMAC) {
@@ -351,27 +351,24 @@ Rdata_TSIG_Test::toWireCommonChecks(Output& output) const {
     // read the expected wire format data and trim the RDLEN part.
     UnitTestUtil::readWireData("rdata_tsig_toWire1.wire", expect_data);
     expect_data.erase(expect_data.begin(), expect_data.begin() + 2);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        &expect_data[0], expect_data.size(),
-                        output.getData(), output.getLength());
+    matchWireData(&expect_data[0], expect_data.size(),
+                  output.getData(), output.getLength());
 
     expect_data.clear();
     output.clear();
     any::TSIG(valid_text2).toWire(output);
     UnitTestUtil::readWireData("rdata_tsig_toWire2.wire", expect_data);
     expect_data.erase(expect_data.begin(), expect_data.begin() + 2);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        &expect_data[0], expect_data.size(),
-                        output.getData(), output.getLength());
+    matchWireData(&expect_data[0], expect_data.size(),
+                  output.getData(), output.getLength());
 
     expect_data.clear();
     output.clear();
     any::TSIG(valid_text3).toWire(output);
     UnitTestUtil::readWireData("rdata_tsig_toWire3.wire", expect_data);
     expect_data.erase(expect_data.begin(), expect_data.begin() + 2);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        &expect_data[0], expect_data.size(),
-                        output.getData(), output.getLength());
+    matchWireData(&expect_data[0], expect_data.size(),
+                  output.getData(), output.getLength());
 }
 
 TEST_F(Rdata_TSIG_Test, toWireBuffer) {
@@ -388,9 +385,8 @@ TEST_F(Rdata_TSIG_Test, toWireRenderer) {
     renderer.writeUint16(42); // RDLEN
     rdata_tsig.toWire(renderer);
     UnitTestUtil::readWireData("rdata_tsig_toWire4.wire", expect_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        &expect_data[0], expect_data.size(),
-                        renderer.getData(), renderer.getLength());
+    matchWireData(&expect_data[0], expect_data.size(),
+                  renderer.getData(), renderer.getLength());
 
     // check algorithm can be used as a compression target.
     expect_data.clear();
@@ -399,9 +395,8 @@ TEST_F(Rdata_TSIG_Test, toWireRenderer) {
     rdata_tsig.toWire(renderer);
     renderer.writeName(Name("hmac-md5.sig-alg.reg.int"));
     UnitTestUtil::readWireData("rdata_tsig_toWire5.wire", expect_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        &expect_data[0], expect_data.size(),
-                        renderer.getData(), renderer.getLength());
+    matchWireData(&expect_data[0], expect_data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_TSIG_Test, toText) {

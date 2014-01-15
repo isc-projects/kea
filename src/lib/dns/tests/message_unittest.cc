@@ -41,13 +41,15 @@
 #include <gtest/gtest.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 //
 // Note: we need more tests, including:
@@ -217,10 +219,9 @@ TEST_F(MessageTest, fromWireWithTSIG) {
     EXPECT_EQ(TSIGKey::HMACMD5_NAME(), tsig_rr->getRdata().getAlgorithm());
     EXPECT_EQ(0x4da8877a, tsig_rr->getRdata().getTimeSigned());
     EXPECT_EQ(TSIGContext::DEFAULT_FUDGE, tsig_rr->getRdata().getFudge());
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        tsig_rr->getRdata().getMAC(),
-                        tsig_rr->getRdata().getMACSize(),
-                        expected_mac, sizeof(expected_mac));
+    matchWireData(expected_mac, sizeof(expected_mac),
+                  tsig_rr->getRdata().getMAC(),
+                  tsig_rr->getRdata().getMACSize());
     EXPECT_EQ(0, tsig_rr->getRdata().getError());
     EXPECT_EQ(0, tsig_rr->getRdata().getOtherLen());
     EXPECT_EQ(static_cast<void*>(NULL), tsig_rr->getRdata().getOtherData());
@@ -729,8 +730,8 @@ TEST_F(MessageTest, toWire) {
     message_render.toWire(renderer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("message_toWire1", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageTest, toWireSigned) {
@@ -766,8 +767,8 @@ TEST_F(MessageTest, toWireSigned) {
     message_render.toWire(renderer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("message_toWire6", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageTest, toWireSignedAndTruncated) {
@@ -810,8 +811,8 @@ TEST_F(MessageTest, toWireSignedAndTruncated) {
     message_render.toWire(renderer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("message_toWire7", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageTest, toWireInParseMode) {
@@ -867,9 +868,8 @@ commonTSIGToWireCheck(Message& message, MessageRenderer& renderer,
     message.toWire(renderer, tsig_ctx);
     vector<unsigned char> expected_data;
     UnitTestUtil::readWireData(expected_file, expected_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(),
-                        &expected_data[0], expected_data.size());
+    matchWireData(&expected_data[0], expected_data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageTest, toWireWithTSIG) {

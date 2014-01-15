@@ -19,6 +19,7 @@
 #include <dns/rrclass.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -27,6 +28,7 @@ using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using boost::scoped_ptr;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class RRClassTest : public ::testing::Test {
@@ -115,9 +117,8 @@ TEST_F(RRClassTest, toWireBuffer) {
     rrclass_0x8000.toWire(obuffer);
     rrclass_max.toWire(obuffer);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        wiredata, sizeof(wiredata));
+    matchWireData(wiredata, sizeof (wiredata),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(RRClassTest, toWireRenderer) {
@@ -127,9 +128,8 @@ TEST_F(RRClassTest, toWireRenderer) {
     rrclass_0x8000.toWire(renderer);
     rrclass_max.toWire(renderer);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata, sizeof(wiredata));
+    matchWireData(wiredata, sizeof (wiredata),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(RRClassTest, wellKnownClasss) {
