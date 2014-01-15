@@ -167,6 +167,21 @@ public:
 
 protected:
 
+    /// @brief Verifies if the server id belongs to our server.
+    ///
+    /// This function checks if the server identifier carried in the specified
+    /// DHCPv4 message belongs to this server. If the server identifier option
+    /// is absent or the value carried by this option is equal to one of the
+    /// server identifiers used by the server, the true is returned. If the
+    /// server identifier option is present, but it doesn't match any server
+    /// identifier used by this server, the false value is returned.
+    ///
+    /// @param pkt DHCPv4 message which server identifier is to be checked.
+    ///
+    /// @return true, if the server identifier is absent or matches one of the
+    /// server identifiers that the server is using; false otherwise.
+    bool acceptServerId(const Pkt4Ptr& pkt) const;
+
     /// @brief verifies if specified packet meets RFC requirements
     ///
     /// Checks if mandatory option is really there, that forbidden option
