@@ -302,6 +302,9 @@ public:
     /// This method is used to build and send and update request. It is used
     /// in conjuction with FauxServer to test various message response
     /// scenarios.
+    /// @param name_change Transaction under test
+    /// @param run_time Maximum time to permit IO processing to run before
+    /// timing out (in milliseconds)
     void doOneExchange(NameChangeStubPtr name_change,
                        unsigned int run_time = 500) {
         // Create a valid request for the transaction.
@@ -856,6 +859,10 @@ TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
     // Build a valid request, call sendUpdate and process the response.
     // Note we have to wait for DNSClient timeout plus a bit more to allow
     // DNSClient to timeout.
+    // The method, doOneExchange, can suffer fatal assertions which invalidate
+    // not only it but the invoking test as well. In other words, if the
+    // doOneExchange blows up the rest of test is pointless. I use
+    // ASSERT_NO_FATAL_FAILURE to abort the test immediately.
     ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change,
                                           NameChangeTransaction::
                                           DNS_UPDATE_DEFAULT_TIMEOUT + 100));
