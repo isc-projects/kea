@@ -70,6 +70,9 @@ specified IPv6 subnet to its database.
 A debug message issued when server is being configured to listen on all
 interfaces.
 
+% DHCPSRV_CFGMGR_CFG_DHCP_DDNS Setting DHCP-DDNS configuration to: %1
+A debug message issued when the server's DHCP-DDNS settings are changed.
+
 % DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES stop listening on all interfaces
 A debug message issued when configuration manager clears the internal list
 of active interfaces. This doesn't prevent the server from listening to

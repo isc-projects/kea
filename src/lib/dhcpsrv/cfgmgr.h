@@ -19,6 +19,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/d2_client.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
@@ -332,6 +333,24 @@ public:
         return (echo_v4_client_id_);
     }
 
+    /// @brief Updates the DHCP-DDNS client configuration to the given value.
+    ///
+    /// @param new_config pointer to the new client configuration.
+    ///
+    /// @throw Underlying method(s) will throw D2ClientError if given an empty
+    /// pointer.
+    void setD2ClientConfig(D2ClientConfigPtr& new_config);
+
+    /// @param Convenience method for checking if DHCP-DDNS updates are enabled.
+    ///
+    /// @return True if the D2 configuration is enabled.
+    bool ddnsEnabled();
+
+    /// @brief Fetches the DHCP-DDNS configuration pointer.
+    ///
+    /// @return a reference to the current configuration pointer.
+    const D2ClientConfigPtr& getD2ClientConfig() const;
+
 protected:
 
     /// @brief Protected constructor.
@@ -411,6 +430,9 @@ private:
 
     /// Indicates whether v4 server should send back client-id
     bool echo_v4_client_id_;
+
+    /// @brief Manages the DHCP-DDNS client and its configuration.
+    D2ClientMgr d2_client_mgr_;
 };
 
 } // namespace isc::dhcp
