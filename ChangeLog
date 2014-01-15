@@ -1,3 +1,11 @@
+731.	[func]		tmark
+	b10-dhcp4 now parses parameters which support DHCP-DDNS updates via
+	the DHCP-DDNS module, b10-dhcp-ddns.  These parameters are part of new
+	configuration element, dhcp-ddns, defined in dhcp4.spec. The parameters
+	parse, store and retrieve but do not yet govern behavior.  That will be
+	provided under separate ticket.
+	(Trac# 3033, git 0ba859834503f2b9b908cd7bc572e0286ca9201f)
+
 730.	[bug]		tomek
 	b10-dhcp4, b10-dhcp6: Both servers used to unnecessarily increase
 	subnet-id values after reconfiguration. The subnet-ids are now reset
