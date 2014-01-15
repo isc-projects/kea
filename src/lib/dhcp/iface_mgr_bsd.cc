@@ -17,6 +17,7 @@
 #if defined(OS_BSD)
 
 #include <dhcp/iface_mgr.h>
+#include <dhcp/iface_mgr_error_handler.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <exceptions/exceptions.h>
 
@@ -147,6 +148,28 @@ IfaceMgr::setMatchingPacketFilter(const bool /* direct_response_desired */) {
     // @todo Currently we ignore the preference to use direct traffic
     // because it hasn't been implemented for BSD systems.
     setPacketFilter(PktFilterPtr(new PktFilterInet()));
+}
+
+bool
+IfaceMgr::openMulticastSocket(Iface& iface,
+                              const isc::asiolink::IOAddress addr,
+                              const uint16_t port,
+                              IfaceMgrErrorMsgCallback error_handler) {
+    try {
+        // This should open a socket, bound it to link-local address
+        // and join multicast group.
+        openSocket(iface.getName(), addr, port,
+                   iface.flag_multicast_);
+
+    } catch (const Exception& ex) {
+        IFACEMGR_ERROR(SocketConfigError, error_handler,
+                       "Failed to open link-local socket on "
+                       " interface " << iface.getName() << ": "
+                       << ex.what());
+        return (false);
+
+    }
+    return (true);
 }
 
 

@@ -19,6 +19,7 @@ libb10_dhcp___la_SOURCES += duid.cc duid.h
 libb10_dhcp___la_SOURCES += hwaddr.cc hwaddr.h
 libb10_dhcp___la_SOURCES += iface_mgr.cc iface_mgr.h
 libb10_dhcp___la_SOURCES += iface_mgr_bsd.cc
+libb10_dhcp___la_SOURCES += iface_mgr_error_handler.h
 libb10_dhcp___la_SOURCES += iface_mgr_linux.cc
 libb10_dhcp___la_SOURCES += iface_mgr_sun.cc
 libb10_dhcp___la_SOURCES += libdhcp++.cc libdhcp++.h
