@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -257,6 +257,15 @@ Dhcpv4Srv::run() {
                           DHCP4_PACKET_PARSE_FAIL).arg(e.what());
                 continue;
             }
+        }
+
+        // Check if the DHCPv4 packet has been sent to us or to someone else.
+        // If it hasn't been sent to us, drop it!
+        if (!acceptServerId(query)) {
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_NOT_FOR_US)
+                .arg(query->getTransid())
+                .arg(query->getIface());
+            continue;
         }
 
         // When receiving a packet without message type option, getType() will
@@ -1523,6 +1532,57 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
     }
 
     return (subnet);
+}
+
+bool
+Dhcpv4Srv::acceptServerId(const Pkt4Ptr& pkt) const {
+    // This function is meant to be called internally by the server class, so
+    // we rely on the caller to sanity check the pointer and we don't check
+    // it here.
+
+    // Check if server identifier option is present. If it is not present
+    // we accept the message because it is targetted to all servers.
+    // Note that we don't check cases that server identifier is mandatory
+    // but not present. This is meant to be sanity checked in other
+    // functions.
+    OptionPtr option = pkt->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+    if (!option) {
+        return (true);
+    }
+    // Server identifier is present. Let's convert it to 4-byte address
+    // and try to match with server identifiers used by the server.
+    OptionCustomPtr option_custom =
+        boost::dynamic_pointer_cast<OptionCustom>(option);
+    // Unable to convert the option to the option type which encapsulates it.
+    // We treat this as non-matching server id.
+    if (!option_custom) {
+        return (false);
+    }
+    // The server identifier option should carry exactly one IPv4 address.
+    // If the option definition for the server identifier doesn't change,
+    // the OptionCustom object should have exactly one IPv4 address and
+    // this check is somewhat redundant. On the other hand, if someone
+    // breaks option it may be better to check that here.
+    if (option_custom->getDataFieldsNum() != 1) {
+        return (false);
+    }
+
+    // The server identifier MUST be an IPv4 address. If given address is
+    // v6, it is wrong.
+    IOAddress server_id = option_custom->readAddress();
+    if (!server_id.isV4()) {
+        return (false);
+    }
+
+    // This function iterates over all interfaces on which the
+    // server is listening to find the one which has a socket bound
+    // to the address carried in the server identifier option.
+    // This has some performance implications. However, given that
+    // typically there will be just a few active interfaces the
+    // performance hit should be acceptable. If it turns out to
+    // be significant, we will have to cache server identifiers
+    // when sockets are opened.
+    return (IfaceMgr::instance().hasOpenSocket(server_id));
 }
 
 void
