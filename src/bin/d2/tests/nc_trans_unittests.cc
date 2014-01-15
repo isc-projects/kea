@@ -297,6 +297,11 @@ public:
                                   forward_domain_, reverse_domain_)));
     }
 
+    /// @brief Builds and then sends an update request
+    ///
+    /// This method is used to build and send and update request. It is used
+    /// in conjuction with FauxServer to test various message response
+    /// scenarios.
     void doOneExchange(NameChangeStubPtr name_change,
                        unsigned int run_time = 500) {
         // Create a valid request for the transaction.
@@ -852,8 +857,8 @@ TEST_F(NameChangeTransactionTest, sendUpdateTimeout) {
     // Note we have to wait for DNSClient timeout plus a bit more to allow
     // DNSClient to timeout.
     ASSERT_NO_FATAL_FAILURE(doOneExchange(name_change,
-                             NameChangeTransaction::DNS_UPDATE_DEFAULT_TIMEOUT
-                             + 100));
+                                          NameChangeTransaction::
+                                          DNS_UPDATE_DEFAULT_TIMEOUT + 100));
 
     // Verify that next event is IO_COMPLETED_EVT and DNS status is TIMEOUT.
     ASSERT_EQ(NameChangeTransaction::IO_COMPLETED_EVT,
