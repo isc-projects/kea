@@ -90,7 +90,7 @@ AllocEngine::IterativeAllocator::increasePrefix(const isc::asiolink::IOAddress& 
                                                 const uint8_t prefix_len) {
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Prefix operations are for IPv6 only (attempted to "
-                  "increase prefix " << prefix.toText() << ")");
+                  "increase prefix " << prefix << ")");
     }
 
     // Get a buffer holding an address.
