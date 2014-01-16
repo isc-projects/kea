@@ -125,7 +125,8 @@ protected:
     /// server identifier being used by the server.
     ///
     /// @param pkt DHCPv6 packet carrying server identifier to be checked.
-    /// @return True or False
+    /// @return true if server id carried in the query matches server id
+    /// used by the server; false otherwise.
     bool testServerID(const Pkt6Ptr& pkt);
 
     /// @brief verifies if specified packet meets RFC requirements
