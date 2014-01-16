@@ -92,6 +92,7 @@ private:
     const RRClass rrclass_;
     const ZoneTree& tree_;
     const ZoneNode* node_;
+    const ZoneNode* origin_node_;
     // Only used when separate_rrs_ is true
     ConstRRsetPtr rrset_;
     RdataIteratorPtr rdata_iterator_;
@@ -120,6 +121,11 @@ public:
             isc_throw(Unexpected,
                       "In-memory zone corrupted, missing origin node");
         }
+
+	// Save the origin node as node_ will be modified during
+	// iteration
+	origin_node_ = node_;
+
         // Initialize the iterator if there's somewhere to point to
         if (node_ != NULL && node_->getData() != NULL) {
             set_node_ = node_->getData();
@@ -231,7 +237,23 @@ public:
     }
 
     virtual ConstRRsetPtr getSOA() const {
-        isc_throw(NotImplemented, "Not implemented");
+        // SOA will be at the origin node
+        if (!origin_node_) {
+            return (ConstRRsetPtr());
+        }
+
+        const RdataSet* origin_set = origin_node_->getData();
+        if (!origin_set) {
+            return (ConstRRsetPtr());
+        }
+
+        const RdataSet* soa = RdataSet::find(origin_set, RRType::SOA());
+        if (!soa) {
+            return (ConstRRsetPtr());
+        }
+
+        return (ConstRRsetPtr
+                (new TreeNodeRRset(rrclass_, origin_node_, soa, true)));
     }
 };
 
