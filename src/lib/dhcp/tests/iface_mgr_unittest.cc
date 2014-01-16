@@ -1752,7 +1752,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
         const Iface::AddressCollection& addrs = i->getAddresses();
         for (Iface::AddressCollection::const_iterator a= addrs.begin();
              a != addrs.end(); ++a) {
-            cout << a->toText() << " ";
+            cout << *a << " ";
         }
         cout << endl;
     }
@@ -1810,7 +1810,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
                          << " address on " << detected->getFullName() << " interface." << endl;
                     FAIL();
                 }
-                cout << "Address " << addr->toText() << " on interface " << detected->getFullName()
+                cout << "Address " << *addr << " on interface " << detected->getFullName()
                      << " matched with 'ifconfig -a' output." << endl;
             }
         }

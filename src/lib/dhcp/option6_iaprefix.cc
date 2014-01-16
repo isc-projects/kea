@@ -98,7 +98,7 @@ std::string Option6IAPrefix::toText(int indent /* =0 */) {
     for (int i=0; i<indent; i++)
         tmp << " ";
 
-    tmp << "type=" << type_ << "(IAPREFIX) prefix=" << addr_.toText() << "/"
+    tmp << "type=" << type_ << "(IAPREFIX) prefix=" << addr_ << "/"
         << prefix_len_ << ", preferred-lft=" << preferred_ << ", valid-lft="
         << valid_ << endl;
 

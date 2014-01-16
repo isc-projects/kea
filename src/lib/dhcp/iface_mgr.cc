@@ -418,7 +418,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             if (sock < 0) {
                 const char* errstr = strerror(errno);
                 isc_throw(SocketConfigError, "failed to open unicast socket on "
-                          << addr->toText() << " on interface " << iface->getName()
+                          << *addr << " on interface " << iface->getName()
                           << ", reason: " << errstr);
             }
 
@@ -449,7 +449,7 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             if (sock < 0) {
                 const char* errstr = strerror(errno);
                 isc_throw(SocketConfigError, "failed to open link-local socket on "
-                          << addr->toText() << " on interface "
+                          << *addr << " on interface "
                           << iface->getName() << ", reason: " << errstr);
             }
 
