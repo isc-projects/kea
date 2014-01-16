@@ -380,6 +380,16 @@ public:
     /// object, a copy of which is to be added to the \c RRset.
     virtual void addRdata(const rdata::Rdata& rdata) = 0;
 
+    /// \brief Add an RDATA to the RRset (string version).
+    ///
+    /// This method constructs an Rdata object from the the given
+    /// \c rdata_str in presentation format and adds it to the \c RRset.
+    ///
+    /// \param rdata_str RDATA string in presentation format.
+    /// \throw InvalidRdataText if the \c rdata_str is invalid for this
+    /// \c RRset.
+    virtual void addRdata(const std::string& rdata_str) = 0;
+
     /// \brief Return an iterator to go through all RDATA stored in the
     /// \c RRset.
     ///
@@ -726,6 +736,13 @@ public:
     /// This method simply uses the default implementation.
     /// See \c AbstractRRset::addRdata(const rdata::Rdata&).
     virtual void addRdata(const rdata::Rdata& rdata);
+
+    /// \brief Add an RDATA to the RRset (string version).
+    ///
+    /// \param rdata_str RDATA string in presentation format.
+    /// \throw InvalidRdataText if the \c rdata_str is invalid for this
+    /// \c RRset.
+    virtual void addRdata(const std::string& rdata_str);
 
     /// \brief Return an iterator to go through all RDATA stored in the
     /// \c BasicRRset.
