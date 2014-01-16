@@ -166,6 +166,18 @@ TEST_F(RRsetTest, addRdataPtr) {
     EXPECT_EQ(3, rrset_a_empty.getRdataCount());
 }
 
+TEST_F(RRsetTest, addRdataString) {
+    rrset_a_empty.addRdata("192.0.2.1");
+    rrset_a_empty.addRdata("192.0.2.2");
+
+    addRdataTestCommon(rrset_a_empty);
+
+    // String version of addRdata() will throw for bad RDATA for
+    // RRType::A().
+    EXPECT_THROW(rrset_a_empty.addRdata("ns.example.com."), InvalidRdataText);
+    addRdataTestCommon(rrset_a_empty);
+}
+
 TEST_F(RRsetTest, iterator) {
     // Iterator for an empty RRset.
     RdataIteratorPtr it = rrset_a_empty.getRdataIterator();
