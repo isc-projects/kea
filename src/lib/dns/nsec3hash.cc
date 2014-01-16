@@ -31,6 +31,7 @@
 #include <dns/name.h>
 #include <dns/nsec3hash.h>
 #include <dns/rdataclass.h>
+#include <dns/name_internal.h>
 
 using namespace std;
 using namespace isc::util;
@@ -120,15 +121,29 @@ NSEC3HashRFC5155::calculate(const Name& name) const {
     // We first need to normalize the name by converting all upper case
     // characters in the labels to lower ones.
     obuf_.clear();
-    Name name_copy(name);
-    name_copy.downcase();
-    name_copy.toWire(obuf_);
+    name.toWire(obuf_);
+
+    uint8_t name_buf[256];
+    assert(obuf_.getLength() < sizeof (name_buf));
+
+    const uint8_t *p1 = static_cast<const uint8_t*>(obuf_.getData());
+    uint8_t *p2 = name_buf;
+    while (*p1 != 0) {
+        char len = *p1;
+
+        *p2++ = *p1++;
+        while (len--) {
+            *p2++ = isc::dns::name::internal::maptolower[*p1++];
+        }
+    }
+
+    *p2 = *p1;
 
     uint8_t* const digest = &digest_[0];
     assert(digest_.size() == SHA1_HASHSIZE);
 
-    iterateSHA1(&sha1_ctx_, static_cast<const uint8_t*>(obuf_.getData()),
-                obuf_.getLength(), salt_data_, salt_length_, digest);
+    iterateSHA1(&sha1_ctx_, name_buf, obuf_.getLength(),
+                salt_data_, salt_length_, digest);
     for (unsigned int n = 0; n < iterations_; ++n) {
         iterateSHA1(&sha1_ctx_, digest, SHA1_HASHSIZE,
                     salt_data_, salt_length_, digest);
