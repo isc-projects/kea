@@ -194,6 +194,11 @@ BasicRRset::addRdata(const Rdata& rdata) {
     AbstractRRset::addRdata(rdata);
 }
 
+void
+BasicRRset::addRdata(const std::string& rdata_str) {
+    addRdata(createRdata(getType(), getClass(), rdata_str));
+}
+
 unsigned int
 BasicRRset::getRdataCount() const {
     return (impl_->rdatalist_.size());
