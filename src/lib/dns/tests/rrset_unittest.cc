@@ -130,7 +130,7 @@ TEST_F(RRsetTest, isSameKind) {
 
 void
 addRdataTestCommon(const RRset& rrset) {
-    EXPECT_EQ(2, rrset.getRdataCount());
+    ASSERT_EQ(2, rrset.getRdataCount());
 
     RdataIteratorPtr it = rrset.getRdataIterator(); // cursor is set to the 1st
     EXPECT_FALSE(it->isLast());
