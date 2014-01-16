@@ -1073,34 +1073,38 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
     EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::MANDATORY),
                  RFCViolation);
 }
-// Check that server is testing if received ServerID is equal to one beenig used by server
-TEST_F(Dhcpv6SrvTest, testServerID){
+// Check that the server is testing if server identifier received in the
+// query, matches server identifier used by the server.
+TEST_F(Dhcpv6SrvTest, testServerID) {
 	NakedDhcpv6Srv srv(0);
 
 	Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
-
-    // server-id is MANDATORY in REQUEST
-    // but add there something else
     std::vector<uint8_t> bin;
 
-    //diud_llt with time = 0, macaddress = 00:00:00:00:00:00
+    // diud_llt constructed with: time = 0, macaddress = 00:00:00:00:00:00
+    // it's necessary to generate server identifier option
     isc::util::encode::decodeHex("0001000100000000000000000000", bin);
-    // Now create server-id option
+    // Now create server identifier option
     OptionPtr serverid = OptionPtr(new Option(Option::V6, D6O_SERVERID, bin));
 
+    // Server identifier option is MANDATORY in Request message.
+    // Add server identifier option with different value from one that
+    // server is using.
     req->addOption(serverid);
 
-    //Shoud be dropped
+    // Message shoud be dropped
     EXPECT_FALSE(srv.testServerID(req));
 
+    // Delete server identifier option and add new one, with same value as
+    // server's server identifier.
     req->delOption(D6O_SERVERID);
     req->addOption(srv.getServerID());
 
-    //with proper ServerID we expect true
+    // With proper server identifier we expect true
     EXPECT_TRUE(srv.testServerID(req));
 
-    // server-id is FORBIDDEN in SOLICIT, so check if server is not
-    // dropping corect message
+    // server-id MUST NOT appear in Solicit, so check if server is
+    // not dropping a message without server id.
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
 
     EXPECT_TRUE(srv.testServerID(req));
