@@ -29,6 +29,7 @@
 #include <util/hash/sha1.h>
 
 #include <dns/name.h>
+#include <dns/labelsequence.h>
 #include <dns/nsec3hash.h>
 #include <dns/rdataclass.h>
 #include <dns/name_internal.h>
@@ -85,6 +86,7 @@ public:
     }
 
     virtual std::string calculate(const Name& name) const;
+    virtual std::string calculate(const LabelSequence& ls) const;
 
     virtual bool match(const generic::NSEC3& nsec3) const;
     virtual bool match(const generic::NSEC3PARAM& nsec3param) const;
@@ -92,6 +94,8 @@ public:
                const vector<uint8_t>& salt) const;
 
 private:
+    std::string calculateForWiredata(const uint8_t* data, size_t length) const;
+
     const uint8_t algorithm_;
     const uint16_t iterations_;
     uint8_t* salt_data_;
@@ -117,16 +121,16 @@ iterateSHA1(SHA1Context* ctx, const uint8_t* input, size_t inlength,
 }
 
 string
-NSEC3HashRFC5155::calculate(const Name& name) const {
+NSEC3HashRFC5155::calculateForWiredata(const uint8_t* data,
+                                       size_t length) const
+{
     // We first need to normalize the name by converting all upper case
     // characters in the labels to lower ones.
-    obuf_.clear();
-    name.toWire(obuf_);
 
     uint8_t name_buf[256];
-    assert(obuf_.getLength() < sizeof (name_buf));
+    assert(length < sizeof (name_buf));
 
-    const uint8_t *p1 = static_cast<const uint8_t*>(obuf_.getData());
+    const uint8_t *p1 = data;
     uint8_t *p2 = name_buf;
     while (*p1 != 0) {
         char len = *p1;
@@ -142,7 +146,7 @@ NSEC3HashRFC5155::calculate(const Name& name) const {
     uint8_t* const digest = &digest_[0];
     assert(digest_.size() == SHA1_HASHSIZE);
 
-    iterateSHA1(&sha1_ctx_, name_buf, obuf_.getLength(),
+    iterateSHA1(&sha1_ctx_, name_buf, length,
                 salt_data_, salt_length_, digest);
     for (unsigned int n = 0; n < iterations_; ++n) {
         iterateSHA1(&sha1_ctx_, digest, SHA1_HASHSIZE,
@@ -150,6 +154,25 @@ NSEC3HashRFC5155::calculate(const Name& name) const {
     }
 
     return (encodeBase32Hex(digest_));
+}
+
+string
+NSEC3HashRFC5155::calculate(const Name& name) const {
+    obuf_.clear();
+    name.toWire(obuf_);
+
+    return (calculateForWiredata(static_cast<const uint8_t*>(obuf_.getData()),
+                                 obuf_.getLength()));
+}
+
+string
+NSEC3HashRFC5155::calculate(const LabelSequence& ls) const {
+    assert(ls.isAbsolute());
+
+    size_t length;
+    const uint8_t* data = ls.getData(&length);
+
+    return (calculateForWiredata(data, length));
 }
 
 bool
