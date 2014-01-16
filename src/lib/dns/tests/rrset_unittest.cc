@@ -157,8 +157,7 @@ TEST_F(RRsetTest, addRdataPtr) {
     rrset_a_empty.addRdata(createRdata(rrset_a_empty.getType(),
                                        rrset_a_empty.getClass(),
                                        "192.0.2.2"));
-
-    addRdataTestCommon(rrset_a);
+    addRdataTestCommon(rrset_a_empty);
 
     // Pointer version of addRdata() doesn't type check and does allow to
     //add a different type of Rdata as a result.
