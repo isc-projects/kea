@@ -207,25 +207,29 @@ void Dhcpv6Srv::sendPacket(const Pkt6Ptr& packet) {
 
 bool
 Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt){
-	OptionCollection server_ids = pkt->getOptions(D6O_SERVERID);
-	// if we find serverid option, lets test it.
-	/// @todo: In case we get message that has ServerID option forbidden
-	/// by the RFC, we will drop this loging DHCP6_PACKET_RECEIVED_MISMATCH_SERVERID
-	/// not RFCViolation. Some things should be double checked here and in sanityCheck
-	if (server_ids.size() == 1){
+	/// @todo Currently we always check server identifier regardless if
+	/// it is allowed in the received message or not (per RFC3315).
+	/// If the server identifier is not allowed in the message, the
+	/// sanityCheck function should deal with it. We may rethink this
+	/// design if we decide that it is appropriate to check at this stage
+	/// of message processing that the server identifier must or must not
+	/// be present. In such case however, the logic checking server id
+	/// will have to be removed from sanityCheck and placed here instead,
+	/// to avoid duplicate checks.
+	OptionPtr server_id = pkt->getOption(D6O_SERVERID);
+	if (server_id){
 		// Let us test received ServerID if it is same as ServerID
 		// which is beeing used by server
-		OptionPtr server_id = pkt->getOption(D6O_SERVERID);
 		if (getServerID()->getData() != server_id->getData()){
-			LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_PACKET_RECEIVED_MISMATCH_SERVERID)
+			LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_PACKET_MISMATCH_SERVERID_DROP)
 				.arg(pkt->getName())
 				.arg(pkt->getTransid())
 				.arg(pkt->getIface());
-			return false;
+			return (false);
 		}
 	}
-	// retunr True if: no serverid received or ServerIDs matching
-	return true;
+	// retun True if: no serverid received or ServerIDs matching
+	return (true);
 }
 
 bool Dhcpv6Srv::run() {
@@ -300,8 +304,8 @@ bool Dhcpv6Srv::run() {
                 continue;
             }
         }
-        // Check received query if it carry ServerID that matches ServerID
-        // that beeing used by the server.
+        // Check if received query carries server identifier matching
+        // server identifier being used by the server.
         if (!testServerID(query)){
         	continue;
         }
