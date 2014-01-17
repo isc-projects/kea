@@ -464,7 +464,7 @@ OptionDataParser::createOption() {
     }
 
     // Get option data from the configuration database ('data' field).
-    const std::string option_data = string_values_->getParam("data");
+    std::string option_data = string_values_->getParam("data");
 
     // Transform string of hexadecimal digits into binary format.
     std::vector<uint8_t> binary;
@@ -480,6 +480,12 @@ OptionDataParser::createOption() {
         // Otherwise, the option data is specified as a string of
         // hexadecimal digits that we have to turn into binary format.
         try {
+            // The decodeHex function expects that the string contains an
+            // even number of digits. If we don't meet this requirement,
+            // we have to insert a leading 0.
+            if (!option_data.empty() && option_data.length() % 2) {
+                option_data = option_data.insert(0, "0");
+            }
             util::encode::decodeHex(option_data, binary);
         } catch (...) {
             isc_throw(DhcpConfigError, "option data is not a valid"
