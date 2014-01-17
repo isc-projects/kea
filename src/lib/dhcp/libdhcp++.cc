@@ -52,6 +52,14 @@ VendorOptionDefContainers LibDHCP::vendor4_defs_;
 
 VendorOptionDefContainers LibDHCP::vendor6_defs_;
 
+// Those two vendor classes are used for cable modems:
+
+/// DOCSIS3.0 compatible cable modem
+const char* isc::dhcp::DOCSIS3_CLASS_MODEM = "docsis3.0";
+
+/// DOCSIS3.0 cable modem that has router built-in
+const char* isc::dhcp::DOCSIS3_CLASS_EROUTER = "eRouter1.0";
+
 // Let's keep it in .cc file. Moving it to .h would require including optionDefParams
 // definitions there
 void initOptionSpace(OptionDefContainer& defs,

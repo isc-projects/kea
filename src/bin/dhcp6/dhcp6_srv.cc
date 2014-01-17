@@ -2424,18 +2424,20 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
     string classes = "";
 
     // DOCSIS specific section
-    if (vclass->readString(2).find("docsis3.0") != std::string::npos) {
-        pkt->addClass("docsis3.0");
-        classes += "docsis3.0 ";
+    if (vclass->readString(VENDOR_CLASS_STRING_INDEX)
+        .find(DOCSIS3_CLASS_MODEM) != std::string::npos) {
+        pkt->addClass(DOCSIS3_CLASS_MODEM);
+        classes += string(DOCSIS3_CLASS_MODEM) + " ";
     } else
-    if (vclass->readString(2).find("eRouter1.0") != std::string::npos) {
-        pkt->addClass("eRouter1.0");
-        classes += "eRouter1.0 ";
+    if (vclass->readString(VENDOR_CLASS_STRING_INDEX)
+        .find(DOCSIS3_CLASS_EROUTER) != std::string::npos) {
+        pkt->addClass(DOCSIS3_CLASS_EROUTER);
+        classes += string(DOCSIS3_CLASS_EROUTER) + " ";
     }else
     {
         // Otherwise use the string as is
-        classes += vclass->readString(2);
-        pkt->addClass(vclass->readString(2));
+        classes += vclass->readString(VENDOR_CLASS_STRING_INDEX);
+        pkt->addClass(vclass->readString(VENDOR_CLASS_STRING_INDEX));
     }
 
     if (!classes.empty()) {
