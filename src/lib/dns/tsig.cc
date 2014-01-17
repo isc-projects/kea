@@ -79,7 +79,7 @@ struct TSIGContext::TSIGContextImpl {
                                 key_.getSecret(), key_.getSecretLength(),
                                 key_.getAlgorithm()),
                             deleteHMAC);
-            } catch (const Exception&) {
+            } catch (const isc::Exception&) {
                 return;
             }
             digest_len_ = hmac_->getOutputLength();
