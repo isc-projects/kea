@@ -165,7 +165,7 @@ void Subnet::setLastAllocated(Lease::Type type,
 std::string
 Subnet::toText() const {
     std::stringstream tmp;
-    tmp << prefix_.toText() << "/" << static_cast<unsigned int>(prefix_len_);
+    tmp << prefix_ << "/" << static_cast<unsigned int>(prefix_len_);
     return (tmp.str());
 }
 
@@ -190,7 +190,7 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
 void Subnet4::setSiaddr(const isc::asiolink::IOAddress& siaddr) {
     if (!siaddr.isV4()) {
         isc_throw(BadValue, "Can't set siaddr to non-IPv4 address "
-                  << siaddr.toText());
+                  << siaddr);
     }
     siaddr_ = siaddr;
 }
@@ -266,9 +266,8 @@ Subnet::addPool(const PoolPtr& pool) {
     IOAddress last_addr = pool->getLastAddress();
 
     if (!inRange(first_addr) || !inRange(last_addr)) {
-        isc_throw(BadValue, "Pool (" << first_addr.toText() << "-"
-                  << last_addr.toText()
-                  << " does not belong in this (" << prefix_.toText() << "/"
+        isc_throw(BadValue, "Pool (" << first_addr << "-" << last_addr
+                  << " does not belong in this (" << prefix_ << "/"
                   << static_cast<int>(prefix_len_) << ") subnet");
     }
 
@@ -335,7 +334,7 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
     :Subnet(prefix, length, t1, t2, valid_lifetime),
      preferred_(preferred_lifetime){
     if (!prefix.isV6()) {
-        isc_throw(BadValue, "Non IPv6 prefix " << prefix.toText()
+        isc_throw(BadValue, "Non IPv6 prefix " << prefix
                   << " specified in subnet6");
     }
 }

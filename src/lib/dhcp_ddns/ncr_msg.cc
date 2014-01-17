@@ -611,7 +611,7 @@ NameChangeRequest::toText() const {
            << "Reverse Change: " << (reverse_change_ ? "yes" : "no")
            << std::endl
            << "FQDN: [" << fqdn_ << "]" << std::endl
-           << "IP Address: [" << ip_io_address_.toText()  << "]" << std::endl
+           << "IP Address: [" << ip_io_address_ << "]" << std::endl
            << "DHCID: [" << dhcid_.toStr() << "]" << std::endl
            << "Lease Expires On: " << getLeaseExpiresOnStr() << std::endl
            << "Lease Length: " << lease_length_ << std::endl;

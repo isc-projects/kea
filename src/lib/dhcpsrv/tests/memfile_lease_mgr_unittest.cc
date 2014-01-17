@@ -95,7 +95,7 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
                              IOAddress("2001:db8:1::456"));
     ASSERT_TRUE(x);
 
-    EXPECT_EQ(x->addr_.toText(), addr.toText());
+    EXPECT_EQ(x->addr_, addr);
     EXPECT_TRUE(*x->duid_ == *duid);
     EXPECT_EQ(x->iaid_, iaid);
     EXPECT_EQ(x->subnet_id_, subnet_id);
@@ -114,7 +114,7 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
     ASSERT_TRUE(y);
     EXPECT_TRUE(*y->duid_ == *duid);
     EXPECT_EQ(y->iaid_, iaid);
-    EXPECT_EQ(y->addr_.toText(), addr.toText());
+    EXPECT_EQ(y->addr_, addr);
 
     // Test getLease6(duid, iaid, subnet_id) - wrong iaid
     uint32_t invalid_iaid = 9; // no such iaid

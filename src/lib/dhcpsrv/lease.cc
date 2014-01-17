@@ -175,7 +175,7 @@ Lease6::toText() const {
 
     stream << "Type:          " << typeToText(type_) << "(" 
            << static_cast<int>(type_) << ") ";
-    stream << "Address:       " << addr_.toText() << "\n"
+    stream << "Address:       " << addr_ << "\n"
            << "Prefix length: " << static_cast<int>(prefixlen_) << "\n"
            << "IAID:          " << iaid_ << "\n"
            << "Pref life:     " << preferred_lft_ << "\n"
@@ -190,7 +190,7 @@ std::string
 Lease4::toText() const {
     ostringstream stream;
 
-    stream << "Address:       " << addr_.toText() << "\n"
+    stream << "Address:       " << addr_ << "\n"
            << "Valid life:    " << valid_lft_ << "\n"
            << "T1:            " << t1_ << "\n"
            << "T2:            " << t2_ << "\n"
