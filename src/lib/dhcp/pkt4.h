@@ -548,6 +548,14 @@ public:
     /// attempts to add to a class the packet already belongs to, will be
     /// ignored silently.
     ///
+    /// @note It is a matter of naming convention. Conceptually, the server
+    /// processes a stream of packets, with some packets belonging to given
+    /// classes. From that perspective, this method adds a packet to specifed
+    /// class. Implementation wise, it looks the opposite - the class name
+    /// is added to the packet. Perhaps the most appropriate name for this
+    /// method would be associateWithClass()? But that seems overly long,
+    /// so I decided to stick with addClass().
+    ///
     /// @param client_class name of the class to be added
     void addClass(const std::string& client_class);
 

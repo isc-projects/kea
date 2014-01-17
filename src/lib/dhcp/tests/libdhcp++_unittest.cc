@@ -1139,7 +1139,7 @@ TEST_F(LibDhcpTest, vendorClass6) {
     // to be OptionBuffer format)
     isc::util::encode::decodeHex(vendor_class_hex, bin);
 
-    EXPECT_NO_THROW ({
+    ASSERT_NO_THROW ({
             LibDHCP::unpackOptions6(bin, "dhcp6", options);
         });
 
@@ -1158,9 +1158,12 @@ TEST_F(LibDhcpTest, vendorClass6) {
     // 3 fields expected: vendor-id, data-len and data
     ASSERT_EQ(3, vclass->getDataFieldsNum());
 
-    EXPECT_EQ(4491, vclass->readInteger<uint32_t>(0)); // vendor-id=4491
-    EXPECT_EQ(10, vclass->readInteger<uint16_t>(1)); // data len = 10
-    EXPECT_EQ("eRouter1.0", vclass->readString(2)); // data="eRouter1.0"
+    EXPECT_EQ(4491, vclass->readInteger<uint32_t>
+              (VENDOR_CLASS_ENTERPRISE_ID_INDEX)); // vendor-id=4491
+    EXPECT_EQ(10, vclass->readInteger<uint16_t>
+              (VENDOR_CLASS_DATA_LEN_INDEX)); // data len = 10
+    EXPECT_EQ("eRouter1.0", vclass->readString
+              (VENDOR_CLASS_STRING_INDEX)); // data="eRouter1.0"
 }
 
 } // end of anonymous space

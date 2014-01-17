@@ -17,6 +17,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option_string.h>
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
@@ -804,25 +805,28 @@ TEST_F(Pkt4Test, clientClasses) {
     Pkt4 pkt(DHCPOFFER, 1234);
 
     // Default values (do not belong to any class)
-    EXPECT_FALSE(pkt.inClass("eRouter1.0"));
-    EXPECT_FALSE(pkt.inClass("docsis3.0"));
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
     EXPECT_TRUE(pkt.classes_.empty());
 
     // Add to the first class
-    pkt.addClass("eRouter1.0");
-    EXPECT_TRUE(pkt.inClass("eRouter1.0"));
-    EXPECT_FALSE(pkt.inClass("docsis3.0"));
+    pkt.addClass(DOCSIS3_CLASS_EROUTER);
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
     ASSERT_FALSE(pkt.classes_.empty());
 
     // Add to a second class
-    pkt.addClass("docsis3.0");
-    EXPECT_TRUE(pkt.inClass("eRouter1.0"));
-    EXPECT_TRUE(pkt.inClass("docsis3.0"));
+    pkt.addClass(DOCSIS3_CLASS_MODEM);
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_MODEM));
 
     // Check that it's ok to add to the same class repeatedly
     EXPECT_NO_THROW(pkt.addClass("foo"));
     EXPECT_NO_THROW(pkt.addClass("foo"));
     EXPECT_NO_THROW(pkt.addClass("foo"));
+
+    // Check that the packet belongs to 'foo'
+    EXPECT_TRUE(pkt.inClass("foo"));
 }
 
 } // end of anonymous namespace
