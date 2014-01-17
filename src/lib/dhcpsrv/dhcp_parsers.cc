@@ -400,15 +400,27 @@ void
 OptionDataParser::createOption() {
     // Option code is held in the uint32_t storage but is supposed to
     // be uint16_t value. We need to check that value in the configuration
-    // does not exceed range of uint8_t and is not zero.
+    // does not exceed range of uint8_t for DHCPv4, uint16_t for DHCPv6 and
+    // is not zero.
     uint32_t option_code = uint32_values_->getParam("code");
     if (option_code == 0) {
         isc_throw(DhcpConfigError, "option code must not be zero."
-                << " Option code '0' is reserved in DHCPv4.");
-    } else if (option_code > std::numeric_limits<uint8_t>::max()) {
+                << " Option code '0' is reserved.");
+
+    } else if (global_context_->universe_ == Option::V4 &&
+               option_code > std::numeric_limits<uint8_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << option_code
                 << "', it must not exceed '"
-                << std::numeric_limits<uint8_t>::max() << "'");
+                  << static_cast<int>(std::numeric_limits<uint8_t>::max())
+                  << "'");
+
+    } else if (global_context_->universe_ == Option::V6 &&
+               option_code > std::numeric_limits<uint16_t>::max()) {
+        isc_throw(DhcpConfigError, "invalid option code '" << option_code
+                << "', it must not exceed '"
+                  << std::numeric_limits<uint16_t>::max()
+                  << "'");
+
     }
 
     // Check that the option name has been specified, is non-empty and does not
