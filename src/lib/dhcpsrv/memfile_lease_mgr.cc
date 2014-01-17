@@ -247,7 +247,7 @@ Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
     Lease4Storage::iterator lease_it = storage4_.find(lease->addr_);
     if (lease_it == storage4_.end()) {
         isc_throw(NoSuchLease, "failed to update the lease with address "
-                  << lease->addr_.toText() << " - no such lease");
+                  << lease->addr_ << " - no such lease");
     }
     **lease_it = *lease;
 }
@@ -260,7 +260,7 @@ Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
     Lease6Storage::iterator lease_it = storage6_.find(lease->addr_);
     if (lease_it == storage6_.end()) {
         isc_throw(NoSuchLease, "failed to update the lease with address "
-                  << lease->addr_.toText() << " - no such lease");
+                  << lease->addr_ << " - no such lease");
     }
     **lease_it = *lease;
 }

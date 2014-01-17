@@ -93,7 +93,7 @@ TEST_F(OptionDataTypesTest, readAddress) {
 
     // Check that the read address matches address that
     // we used as input.
-    EXPECT_EQ(address.toText(), address_out.toText());
+    EXPECT_EQ(address, address_out);
 
     // Check that an attempt to read the buffer as IPv6 address
     // causes an error as the IPv6 address needs at least 16 bytes
@@ -109,7 +109,7 @@ TEST_F(OptionDataTypesTest, readAddress) {
     address = asiolink::IOAddress("2001:db8:1:0::1");
     writeAddress(address, buf);
     EXPECT_NO_THROW(address_out = OptionDataTypeUtil::readAddress(buf, AF_INET6));
-    EXPECT_EQ(address.toText(), address_out.toText());
+    EXPECT_EQ(address, address_out);
 
     // Truncate the buffer and expect an error to be reported when
     // trying to read it.

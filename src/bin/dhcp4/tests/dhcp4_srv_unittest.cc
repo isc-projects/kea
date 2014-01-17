@@ -584,7 +584,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverHint) {
     // lifetime is correct, that T1 and T2 are returned properly
     checkAddressParams(offer, subnet_);
 
-    EXPECT_EQ(offer->getYiaddr().toText(), hint.toText());
+    EXPECT_EQ(offer->getYiaddr(), hint);
 
     // Check identifiers
     checkServerId(offer, srv->getServerID());
@@ -624,7 +624,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverNoClientId) {
     // lifetime is correct, that T1 and T2 are returned properly
     checkAddressParams(offer, subnet_);
 
-    EXPECT_EQ(offer->getYiaddr().toText(), hint.toText());
+    EXPECT_EQ(offer->getYiaddr(), hint);
 
     // Check identifiers
     checkServerId(offer, srv->getServerID());
@@ -664,7 +664,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverInvalidHint) {
     // lifetime is correct, that T1 and T2 are returned properly
     checkAddressParams(offer, subnet_);
 
-    EXPECT_NE(offer->getYiaddr().toText(), hint.toText());
+    EXPECT_NE(offer->getYiaddr(), hint);
 
     // Check identifiers
     checkServerId(offer, srv->getServerID());
@@ -735,12 +735,12 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ManyDiscovers) {
     checkClientId(offer3, clientid3);
 
     // Finally check that the addresses offered are different
-    EXPECT_NE(addr1.toText(), addr2.toText());
-    EXPECT_NE(addr2.toText(), addr3.toText());
-    EXPECT_NE(addr3.toText(), addr1.toText());
-    cout << "Offered address to client1=" << addr1.toText() << endl;
-    cout << "Offered address to client2=" << addr2.toText() << endl;
-    cout << "Offered address to client3=" << addr3.toText() << endl;
+    EXPECT_NE(addr1, addr2);
+    EXPECT_NE(addr2, addr3);
+    EXPECT_NE(addr3, addr1);
+    cout << "Offered address to client1=" << addr1 << endl;
+    cout << "Offered address to client2=" << addr2 << endl;
+    cout << "Offered address to client3=" << addr3 << endl;
 }
 
 // Checks whether echoing back client-id is controllable, i.e.
@@ -802,7 +802,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, RequestBasic) {
 
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
-    EXPECT_EQ(hint.toText(), ack->getYiaddr().toText());
+    EXPECT_EQ(hint, ack->getYiaddr());
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
@@ -886,9 +886,9 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ManyRequests) {
     IOAddress addr3 = ack3->getYiaddr();
 
     // Check that every client received the address it requested
-    EXPECT_EQ(req_addr1.toText(), addr1.toText());
-    EXPECT_EQ(req_addr2.toText(), addr2.toText());
-    EXPECT_EQ(req_addr3.toText(), addr3.toText());
+    EXPECT_EQ(req_addr1, addr1);
+    EXPECT_EQ(req_addr2, addr2);
+    EXPECT_EQ(req_addr3, addr3);
 
     // Check that the assigned address is indeed from the configured pool
     checkAddressParams(ack1, subnet_);
@@ -910,12 +910,12 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ManyRequests) {
     l = checkLease(ack3, clientid3, req3->getHWAddr(), addr3);
 
     // Finally check that the addresses offered are different
-    EXPECT_NE(addr1.toText(), addr2.toText());
-    EXPECT_NE(addr2.toText(), addr3.toText());
-    EXPECT_NE(addr3.toText(), addr1.toText());
-    cout << "Offered address to client1=" << addr1.toText() << endl;
-    cout << "Offered address to client2=" << addr2.toText() << endl;
-    cout << "Offered address to client3=" << addr3.toText() << endl;
+    EXPECT_NE(addr1, addr2);
+    EXPECT_NE(addr2, addr3);
+    EXPECT_NE(addr3, addr1);
+    cout << "Offered address to client1=" << addr1 << endl;
+    cout << "Offered address to client2=" << addr2 << endl;
+    cout << "Offered address to client3=" << addr3 << endl;
 }
 
 // Checks whether echoing back client-id is controllable
@@ -1003,7 +1003,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, RenewBasic) {
 
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
-    EXPECT_EQ(addr.toText(), ack->getYiaddr().toText());
+    EXPECT_EQ(addr, ack->getYiaddr());
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly

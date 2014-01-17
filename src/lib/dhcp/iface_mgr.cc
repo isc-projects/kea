@@ -226,7 +226,7 @@ void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
     for (Iface::AddressCollection::const_iterator i = unicasts_.begin();
          i != unicasts_.end(); ++i) {
         if (*i == addr) {
-            isc_throw(BadValue, "Address " << addr.toText()
+            isc_throw(BadValue, "Address " << addr
                       << " already defined on the " << name_ << " interface.");
         }
     }
@@ -499,7 +499,6 @@ IfaceMgr::openSockets6(const uint16_t port,
 
             try {
                 openSocket(iface->getName(), *addr, port);
-
             } catch (const Exception& ex) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "Failed to open unicast socket on  interface "
@@ -560,7 +559,6 @@ IfaceMgr::openSockets6(const uint16_t port,
                                " interface " << iface->getName() << ": "
                                << ex.what());
                 continue;
-
             }
 
             count++;
@@ -662,7 +660,7 @@ int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
 
     } else {
         isc_throw(BadValue, "Failed to detect family of address: "
-                  << addr.toText());
+                  << addr);
     }
 }
 
@@ -737,7 +735,7 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
     }
     // If we got here it means that we did not find specified address
     // on any available interface.
-    isc_throw(BadValue, "There is no such address " << addr.toText());
+    isc_throw(BadValue, "There is no such address " << addr);
 }
 
 int IfaceMgr::openSocketFromRemoteAddress(const IOAddress& remote_addr,
