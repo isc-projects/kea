@@ -278,8 +278,8 @@ void Pkt4::repack() {
 std::string
 Pkt4::toText() {
     stringstream tmp;
-    tmp << "localAddr=" << local_addr_.toText() << ":" << local_port_
-        << " remoteAddr=" << remote_addr_.toText()
+    tmp << "localAddr=" << local_addr_ << ":" << local_port_
+        << " remoteAddr=" << remote_addr_
         << ":" << remote_port_ << ", msgtype=" << static_cast<int>(getType())
         << ", transid=0x" << hex << transid_ << dec << endl;
 

@@ -64,12 +64,12 @@ IOEndpoint::operator!=(const IOEndpoint& other) const {
 ostream&
 operator<<(ostream& os, const IOEndpoint& endpoint) {
     if (endpoint.getFamily() == AF_INET6) {
-        os << "[" << endpoint.getAddress().toText() << "]";
+        os << "[" << endpoint.getAddress() << "]";
     } else {
         // In practice this should be AF_INET, but it's not guaranteed by
         // the interface.  We'll use the result of textual address
         // representation opaquely.
-        os << endpoint.getAddress().toText();
+        os << endpoint.getAddress();
     }
     os << ":" << boost::lexical_cast<string>(endpoint.getPort());
     return (os);

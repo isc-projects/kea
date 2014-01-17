@@ -428,10 +428,10 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
         cout << "    pkt = new Pkt6(" << pkt->data_len_ << ");" << endl;
         cout << "    pkt->remote_port_ = " << pkt-> remote_port_ << ";" << endl;
         cout << "    pkt->remote_addr_ = IOAddress(\""
-             << pkt->remote_addr_.toText() << "\");" << endl;
+             << pkt->remote_addr_ << "\");" << endl;
         cout << "    pkt->local_port_ = " << pkt-> local_port_ << ";" << endl;
         cout << "    pkt->local_addr_ = IOAddress(\""
-             << pkt->local_addr_.toText() << "\");" << endl;
+             << pkt->local_addr_ << "\");" << endl;
         cout << "    pkt->ifindex_ = " << pkt->ifindex_ << ";" << endl;
         cout << "    pkt->iface_ = \"" << pkt->iface_ << "\";" << endl;
 
@@ -1015,7 +1015,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     EXPECT_EQ(0, memcmp(&sendPkt->data_[0], &rcvPkt->data_[0],
                         rcvPkt->data_.size()));
 
-    EXPECT_EQ(sendPkt->getRemoteAddr().toText(), rcvPkt->getRemoteAddr().toText());
+    EXPECT_EQ(sendPkt->getRemoteAddr(), rcvPkt->getRemoteAddr());
 
     // since we opened 2 sockets on the same interface and none of them is multicast,
     // none is preferred over the other for sending data, so we really should not
@@ -2336,7 +2336,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
         const Iface::AddressCollection& addrs = i->getAddresses();
         for (Iface::AddressCollection::const_iterator a= addrs.begin();
              a != addrs.end(); ++a) {
-            cout << a->toText() << " ";
+            cout << *a << " ";
         }
         cout << endl;
     }
@@ -2394,7 +2394,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
                          << " address on " << detected->getFullName() << " interface." << endl;
                     FAIL();
                 }
-                cout << "Address " << addr->toText() << " on interface " << detected->getFullName()
+                cout << "Address " << *addr << " on interface " << detected->getFullName()
                      << " matched with 'ifconfig -a' output." << endl;
             }
         }

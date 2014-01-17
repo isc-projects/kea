@@ -54,7 +54,7 @@ OptionCustom::addArrayDataField(const asiolink::IOAddress& address) {
     if ((address.isV4() && definition_.getType() != OPT_IPV4_ADDRESS_TYPE) ||
         (address.isV6() && definition_.getType() != OPT_IPV6_ADDRESS_TYPE)) {
         isc_throw(BadDataTypeCast, "invalid address specified "
-                  << address.toText() << ". Expected a valid IPv"
+                  << address << ". Expected a valid IPv"
                   << (definition_.getType() == OPT_IPV4_ADDRESS_TYPE ?
                       "4" : "6") << " address.");
     }
@@ -375,7 +375,7 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
         break;
     case OPT_IPV4_ADDRESS_TYPE:
     case OPT_IPV6_ADDRESS_TYPE:
-        text << readAddress(index).toText();
+        text << readAddress(index);
         break;
     case OPT_FQDN_TYPE:
         text << readFqdn(index);
@@ -443,7 +443,7 @@ OptionCustom::writeAddress(const asiolink::IOAddress& address,
     if ((address.isV4() && buffers_[index].size() != V4ADDRESS_LEN) ||
         (address.isV6() && buffers_[index].size() != V6ADDRESS_LEN)) {
         isc_throw(BadDataTypeCast, "invalid address specified "
-                  << address.toText() << ". Expected a valid IPv"
+                  << address << ". Expected a valid IPv"
                   << (buffers_[index].size() == V4ADDRESS_LEN ? "4" : "6")
                   << " address.");
     }

@@ -1199,7 +1199,7 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
     if (!lease->duid_) {
         isc_throw(isc::Unexpected, "DUID must be set when creating"
                   << " NameChangeRequest for DNS records removal for "
-                  << lease->addr_.toText());
+                  << lease->addr_);
 
     }
     isc::dhcp_ddns::D2Dhcid dhcid(*lease->duid_, hostname_wire);
