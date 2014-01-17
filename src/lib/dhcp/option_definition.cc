@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -411,33 +411,59 @@ OptionDefinition::lexicalCastWithRangeCheck(const std::string& value_str)
                   "unable to do lexical cast to non-integer and"
                   << " non-boolean data type");
     }
+
+    // The lexical cast will not handle conversion of the string holding
+    // "true" or "false". Therefore we will do the conversion on our own.
+    // If the string value doesn't match any of "true" or "false", it
+    // is possible that "0" or "1" has been specified, which we are
+    // ok with. For conversion of "0" or "1" we will try lexical cast
+    // below.
+    if (OptionDataTypeTraits<T>::type == OPT_BOOLEAN_TYPE) {
+        if (value_str == "true") {
+            return (true);
+
+        } else if (value_str == "false") {
+            return (false);
+
+        }
+    }
+
     // We use the 64-bit value here because it has wider range than
     // any other type we use here and it allows to detect out of
     // bounds conditions e.g. negative value specified for uintX_t
     // data type. Obviously if the value exceeds the limits of int64
     // this function will not handle that properly.
+    // Note that with the conversion below we also handle boolean
+    // values specified as "0" or "1".
     int64_t result = 0;
     try {
         result = boost::lexical_cast<int64_t>(value_str);
-    } catch (const boost::bad_lexical_cast& ex) {
+    } catch (const boost::bad_lexical_cast&) {
         // Prepare error message here.
         std::string data_type_str = "boolean";
         if (OptionDataTypeTraits<T>::integer_type) {
             data_type_str = "integer";
         }
-        isc_throw(BadDataTypeCast, "unable to do lexical cast to "
-                  << data_type_str << " data type for value "
-                  << value_str << ": " << ex.what());
+        isc_throw(BadDataTypeCast, "unable to convert the value '"
+                  << value_str << "' to " << data_type_str
+                  << " data type");
     }
     // Perform range checks for integer values only (exclude bool values).
     if (OptionDataTypeTraits<T>::integer_type) {
         if (result > numeric_limits<T>::max() ||
             result < numeric_limits<T>::min()) {
-            isc_throw(BadDataTypeCast, "unable to do lexical cast for value "
-                      << value_str << ". This value is expected to be"
-                      << " in the range of " << numeric_limits<T>::min()
+            isc_throw(BadDataTypeCast, "unable to convert '"
+                      << value_str << "' to numeric type. This value is "
+                      " expected to be in the range of "
+                      << numeric_limits<T>::min()
                       << ".." << numeric_limits<T>::max());
         }
+    // The specified value is of the boolean type and we are checking
+    // that it has successfuly converted to 0 or 1. Any other numeric
+    // value is not accepted to represent boolean value.
+    } else if (result != 1 && result != 0) {
+        isc_throw(BadDataTypeCast, "unable to convert '" << value_str
+                  << "' to boolean data type");
     }
     return (static_cast<T>(result));
 }
