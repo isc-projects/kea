@@ -46,6 +46,15 @@ namespace isc {
 namespace dns {
 namespace rdata {
 
+uint16_t
+Rdata::getWireLength() const {
+    OutputBuffer obuffer(0);
+
+    toWire(obuffer);
+
+    return (obuffer.getLength());
+}
+
 // XXX: we need to specify std:: for string to help doxygen match the
 // function signature with that given in the header file.
 RdataPtr
