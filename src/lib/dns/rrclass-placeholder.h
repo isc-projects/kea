@@ -20,7 +20,7 @@
 #include <string>
 #include <ostream>
 
-#include <exceptions/exceptions.h>
+#include <dns/exceptions.h>
 
 #include <boost/optional.hpp>
 
@@ -39,20 +39,20 @@ class AbstractMessageRenderer;
 /// \brief A standard DNS module exception that is thrown if an RRClass object
 /// is being constructed from an unrecognized string.
 ///
-class InvalidRRClass : public Exception {
+class InvalidRRClass : public isc::dns::Exception {
 public:
     InvalidRRClass(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
 /// \brief A standard DNS module exception that is thrown if an RRClass object
 /// is being constructed from a incomplete (too short) wire-format data.
 ///
-class IncompleteRRClass : public Exception {
+class IncompleteRRClass : public isc::dns::Exception {
 public:
     IncompleteRRClass(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///

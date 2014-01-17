@@ -20,7 +20,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <exceptions/exceptions.h>
+#include <dns/exceptions.h>
 
 #include <dns/rdata.h>
 #include <dns/rrtype.h>
@@ -36,10 +36,10 @@ namespace dns {
 /// \brief A standard DNS module exception that is thrown if an RRset object
 /// does not contain any RDATA where required.
 ///
-class EmptyRRset : public Exception {
+class EmptyRRset : public isc::dns::Exception {
 public:
     EmptyRRset(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 // forward declarations

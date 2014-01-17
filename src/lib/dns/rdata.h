@@ -19,7 +19,7 @@
 #include <dns/master_loader.h>
 #include <dns/master_loader_callbacks.h>
 
-#include <exceptions/exceptions.h>
+#include <dns/exceptions.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -42,20 +42,20 @@ namespace rdata {
 /// \brief A standard DNS module exception that is thrown if RDATA parser
 /// encounters an invalid or inconsistent data length.
 ///
-class InvalidRdataLength : public Exception {
+class InvalidRdataLength : public isc::dns::Exception {
 public:
     InvalidRdataLength(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
 /// \brief A standard DNS module exception that is thrown if RDATA parser
 /// fails to recognize a given textual representation.
 ///
-class InvalidRdataText : public Exception {
+class InvalidRdataText : public isc::dns::Exception {
 public:
     InvalidRdataText(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
@@ -63,10 +63,10 @@ public:
 /// encounters a character-string (as defined in RFC1035) exceeding
 /// the maximum allowable length (\c MAX_CHARSTRING_LEN).
 ///
-class CharStringTooLong : public Exception {
+class CharStringTooLong : public isc::dns::Exception {
 public:
     CharStringTooLong(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 // Forward declaration to define RdataPtr.

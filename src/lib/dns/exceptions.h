@@ -30,10 +30,25 @@ namespace dns {
 ///
 class Rcode;                    // forward declaration
 
-class DNSProtocolError : public isc::Exception {
+class Exception : public isc::Exception {
+public:
+    Exception(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+///
+/// \brief Base class for name parser exceptions.
+///
+class NameParserException : public isc::dns::Exception {
+public:
+    NameParserException(const char* file, size_t line, const char* what) :
+        isc::dns::Exception(file, line, what) {}
+};
+
+class DNSProtocolError : public isc::dns::Exception {
 public:
     DNSProtocolError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
     virtual const Rcode& getRcode() const = 0;
 };
 
@@ -49,15 +64,6 @@ public:
     DNSMessageBADVERS(const char* file, size_t line, const char* what) :
         DNSProtocolError(file, line, what) {}
     virtual const Rcode& getRcode() const;
-};
-
-///
-/// \brief Base class for name parser exceptions.
-///
-class NameParserException : public isc::Exception {
-public:
-    NameParserException(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
 };
 
 }
