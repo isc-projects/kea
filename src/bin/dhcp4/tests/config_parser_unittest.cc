@@ -212,6 +212,21 @@ public:
         return (stream.str());
     }
 
+    /// @brief Returns an option from the subnet.
+    ///
+    /// This function returns an option from a subnet to which the
+    /// specified subnet address belongs. The option is identified
+    /// by its code.
+    ///
+    /// @param subnet_address Address which belongs to the subnet from
+    /// which the option is to be returned.
+    /// @param option_code Code of the option to be returned.
+    /// @param expected_options_count Expected number of options in
+    /// the particular subnet.
+    ///
+    /// @return Descriptor of the option. If the descriptor holds a
+    /// NULL option pointer, it means that there was no such option
+    /// in the subnet.
     Subnet::OptionDescriptor
     getOptionFromSubnet(const IOAddress& subnet_address,
                         const uint16_t option_code,
@@ -359,9 +374,9 @@ public:
                            const size_t expected_data_len) {
         std::string config = createConfigWithOption(params);
         ASSERT_TRUE(executeConfiguration(config, "parse option configuration"));
-        // The subnet should now hold one option with the code 19.
+        // The subnet should now hold one option with the specified option code.
         Subnet::OptionDescriptor desc =
-            getOptionFromSubnet(IOAddress("192.0.2.24"), 19);
+            getOptionFromSubnet(IOAddress("192.0.2.24"), option_code);
         ASSERT_TRUE(desc.option);
         testOption(desc, option_code, expected_data, expected_data_len);
     }
