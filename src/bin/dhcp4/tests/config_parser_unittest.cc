@@ -1883,8 +1883,6 @@ TEST_F(Dhcp4ParserTest, optionDataBoolean) {
     uint8_t expected_option_data[] = {
         0x1
     };
-    testOption(desc, 19, expected_option_data, sizeof(expected_option_data));
-
     testConfiguration(params, 19, expected_option_data,
                       sizeof(expected_option_data));
 
