@@ -254,7 +254,11 @@ std::string
 D2ClientMgr::qualifyName(const std::string& partial_name) const {
     std::ostringstream gen_name;
     gen_name << partial_name << "." << d2_client_config_->getQualifyingSuffix();
-    if (gen_name.str().back() != '.') {
+
+    // Tack on a trailing dot in case suffix doesn't have one.
+    const char* str = gen_name.str().c_str();
+    size_t len = strlen(str);
+    if ((len > 0) && (str[len-1] != '.')) {
         gen_name << ".";
     }
 
