@@ -436,10 +436,8 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAnswer) {
     NakedDhcpv6Srv srv(0);
 
     Pkt6Ptr answer;
-    Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
-                                                 "myhost.example.com",
-                                                 Option6ClientFqdn::FULL);
-    EXPECT_THROW(srv.createNameChangeRequests(answer, fqdn),
+
+    EXPECT_THROW(srv.createNameChangeRequests(answer),
                  isc::Unexpected);
 
 }
@@ -453,22 +451,21 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoDUID) {
     Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
                                                  "myhost.example.com",
                                                  Option6ClientFqdn::FULL);
+    answer->addOption(fqdn);
 
-    EXPECT_THROW(srv.createNameChangeRequests(answer, fqdn),
-                 isc::Unexpected);
+    EXPECT_THROW(srv.createNameChangeRequests(answer), isc::Unexpected);
 
 }
 
-// Test no NameChangeRequests are added if FQDN option is NULL.
+// Test no NameChangeRequests if Client FQDN is not added to the server's
+// response.
 TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoFQDN) {
     NakedDhcpv6Srv srv(0);
 
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY, srv);
 
-    // Pass NULL FQDN option. No NameChangeRequests should be created.
-    Option6ClientFqdnPtr fqdn;
-    ASSERT_NO_THROW(srv.createNameChangeRequests(answer, fqdn));
+    ASSERT_NO_THROW(srv.createNameChangeRequests(answer));
 
     // There should be no new NameChangeRequests.
     EXPECT_TRUE(srv.name_change_reqs_.empty());
@@ -482,11 +479,13 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAddr) {
     // Create Reply message with Client Id and Server id.
     Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY, srv);
 
+    // Add Client FQDN option.
     Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
                                                  "myhost.example.com",
                                                  Option6ClientFqdn::FULL);
+    answer->addOption(fqdn);
 
-    ASSERT_NO_THROW(srv.createNameChangeRequests(answer, fqdn));
+    ASSERT_NO_THROW(srv.createNameChangeRequests(answer));
 
     // We didn't add any IAs, so there should be no NameChangeRequests in th
     // queue.
@@ -513,10 +512,11 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
     Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
                                                  "MYHOST.EXAMPLE.COM",
                                                  Option6ClientFqdn::FULL);
+    answer->addOption(fqdn);
 
     // Create NameChangeRequests. Since we have added 3 IAs, it should
     // result in generation of 3 distinct NameChangeRequests.
-    ASSERT_NO_THROW(srv.createNameChangeRequests(answer, fqdn));
+    ASSERT_NO_THROW(srv.createNameChangeRequests(answer));
     ASSERT_EQ(3, srv.name_change_reqs_.size());
 
     // Verify that NameChangeRequests are correct. Each call to the

@@ -1046,16 +1046,7 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
 }
 
 void
-Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
-                                    const Option6ClientFqdnPtr& opt_fqdn) {
-
-    // It is likely that client haven't included the FQDN option in the message
-    // and server is not configured to always update DNS. In such cases,
-    // FQDN option will be NULL. This is valid state, so we simply return.
-    if (!opt_fqdn) {
-        return;
-    }
-
+Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
     // The response message instance is always required. For instance it
     // holds the Client Identifier. It is a programming error if supplied
     // message is NULL.
@@ -1063,6 +1054,14 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
         isc_throw(isc::Unexpected, "an instance of the object"
                   << " encapsulating server's message must not be"
                   << " NULL when creating DNS NameChangeRequest");
+    }
+
+    // It is likely that client haven't included the FQDN option. In such case,
+    // FQDN option will be NULL. This is valid state, so we simply return.
+    Option6ClientFqdnPtr opt_fqdn = boost::dynamic_pointer_cast<
+        Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
+    if (!opt_fqdn) {
+        return;
     }
 
     // Get the Client Id. It is mandatory and a function creating a response
@@ -2162,7 +2161,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     Option6ClientFqdnPtr fqdn = processClientFqdn(request, reply);
     assignLeases(request, reply);
-    createNameChangeRequests(reply, fqdn);
+    createNameChangeRequests(reply);
 
     return (reply);
 }
@@ -2180,7 +2179,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 
     Option6ClientFqdnPtr fqdn = processClientFqdn(renew, reply);
     renewLeases(renew, reply, fqdn);
-    createNameChangeRequests(reply, fqdn);
+    createNameChangeRequests(reply);
 
     return (reply);
 }
