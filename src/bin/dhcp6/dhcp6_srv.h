@@ -383,22 +383,6 @@ protected:
     Option6ClientFqdnPtr processClientFqdn(const Pkt6Ptr& question,
                                            const Pkt6Ptr& answer);
 
-    /// @brief Adds DHCPv6 Client FQDN %Option to the server response.
-    ///
-    /// This function will add the specified FQDN option into the server's
-    /// response when FQDN is not NULL and server is either configured to
-    /// always include the FQDN in the response or client requested it using
-    /// %Option Request %Option.
-    /// This function is exception safe.
-    ///
-    /// @param question A message received from the client.
-    /// @param [out] answer A server's response where FQDN option will be added.
-    /// @param fqdn A DHCPv6 Client FQDN %Option to be added to the server's
-    /// response to a client.
-    void appendClientFqdn(const Pkt6Ptr& question,
-                          Pkt6Ptr& answer,
-                          const Option6ClientFqdnPtr& fqdn);
-
     /// @brief Creates a number of @c isc::dhcp_ddns::NameChangeRequest objects
     /// based on the DHCPv6 Client FQDN %Option.
     ///

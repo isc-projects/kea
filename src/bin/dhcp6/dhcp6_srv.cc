@@ -1045,44 +1045,6 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
     return (fqdn_resp);
 }
 
-
-void
-Dhcpv6Srv::appendClientFqdn(const Pkt6Ptr& question,
-                            Pkt6Ptr& answer,
-                            const Option6ClientFqdnPtr& fqdn) {
-
-    // If FQDN is NULL, it means that client did not request DNS Update, plus
-    // server doesn't force updates.
-    if (!fqdn) {
-        return;
-    }
-
-    // Server sends back the FQDN option to the client if client has requested
-    // it using Option Request Option. However, server may be configured to
-    // send the FQDN option in its response, regardless whether client requested
-    // it or not.
-    bool include_fqdn = FQDN_ALWAYS_INCLUDE;
-    if (!include_fqdn) {
-        OptionUint16ArrayPtr oro = boost::dynamic_pointer_cast<
-            OptionUint16Array>(question->getOption(D6O_ORO));
-        if (oro) {
-            const std::vector<uint16_t>& values = oro->getValues();
-            for (int i = 0; i < values.size(); ++i) {
-                if (values[i] == D6O_CLIENT_FQDN) {
-                    include_fqdn = true;
-                }
-            }
-        }
-    }
-
-    if (include_fqdn) {
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
-                  DHCP6_DDNS_SEND_FQDN).arg(fqdn->toText());
-        answer->addOption(fqdn);
-    }
-
-}
-
 void
 Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer,
                                     const Option6ClientFqdnPtr& opt_fqdn) {
@@ -2179,7 +2141,6 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
 
     Option6ClientFqdnPtr fqdn = processClientFqdn(solicit, advertise);
     assignLeases(solicit, advertise);
-    appendClientFqdn(solicit, advertise, fqdn);
     // Note, that we don't create NameChangeRequests here because we don't
     // perform DNS Updates for Solicit. Client must send Request to update
     // DNS.
@@ -2201,7 +2162,6 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     Option6ClientFqdnPtr fqdn = processClientFqdn(request, reply);
     assignLeases(request, reply);
-    appendClientFqdn(request, reply, fqdn);
     createNameChangeRequests(reply, fqdn);
 
     return (reply);
@@ -2220,10 +2180,9 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 
     Option6ClientFqdnPtr fqdn = processClientFqdn(renew, reply);
     renewLeases(renew, reply, fqdn);
-    appendClientFqdn(renew, reply, fqdn);
     createNameChangeRequests(reply, fqdn);
 
-    return reply;
+    return (reply);
 }
 
 Pkt6Ptr
