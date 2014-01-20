@@ -1451,8 +1451,8 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
 OptionPtr
 Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                      const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
-                      const Option6ClientFqdnPtr& fqdn) {
+                      const Pkt6Ptr& query, const Pkt6Ptr& answer,
+                      boost::shared_ptr<Option6IA> ia) {
     if (!subnet) {
         // There's no subnet select for this client. There's nothing to renew.
         boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
@@ -1501,6 +1501,8 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // the update.
     bool do_fwd = false;
     bool do_rev = false;
+    Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
+        Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
     if (fqdn) {
         if (fqdn->getFlag(Option6ClientFqdn::FLAG_S)) {
             do_fwd = true;
@@ -1693,8 +1695,7 @@ Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
 }
 
 void
-Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply,
-                       const Option6ClientFqdnPtr& fqdn) {
+Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
 
     // We need to renew addresses for all IA_NA options in the client's
     // RENEW message.
@@ -1738,10 +1739,9 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply,
         switch (opt->second->getType()) {
 
         case D6O_IA_NA: {
-            OptionPtr answer_opt = renewIA_NA(subnet, duid, renew,
+            OptionPtr answer_opt = renewIA_NA(subnet, duid, renew, reply,
                                               boost::dynamic_pointer_cast<
-                                              Option6IA>(opt->second),
-                                              fqdn);
+                                              Option6IA>(opt->second));
             if (answer_opt) {
                 reply->addOption(answer_opt);
             }
@@ -2178,7 +2178,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     appendRequestedOptions(renew, reply);
 
     Option6ClientFqdnPtr fqdn = processClientFqdn(renew, reply);
-    renewLeases(renew, reply, fqdn);
+    renewLeases(renew, reply);
     createNameChangeRequests(reply);
 
     return (reply);
