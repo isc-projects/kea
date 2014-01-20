@@ -1,0 +1,6 @@
+# Test where CAA value field is shorter than the RDATA length
+
+# CAA RDATA, RDLEN=32
+0020
+# FLAGS=0 TAG=c VALUE=ca.example.net
+00 01 63 63612e6578616d706c652e6e6574
