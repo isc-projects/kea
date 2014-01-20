@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -227,9 +227,6 @@ public:
     /// This function verifies that the FQDN option returned is correct.
     ///
     /// @param msg_type A type of the client's message.
-    /// @param use_oro A boolean value which indicates whether the DHCPv6 ORO
-    /// option (requesting return of the FQDN option by the server) should be
-    /// included in the client's message (if true), or not included (if false).
     /// @param in_flags A value of flags field to be set for the FQDN carried
     /// in the client's message.
     /// @param in_domain_name A domain name to be carried in the client's FQDN
@@ -240,7 +237,6 @@ public:
     /// @param exp_domain_name A domain name expected in the FQDN sent by a
     /// server.
     void testFqdn(const uint16_t msg_type,
-                  const bool use_oro,
                   const uint8_t in_flags,
                   const std::string& in_domain_name,
                   const Option6ClientFqdn::DomainNameType in_domain_type,
@@ -251,11 +247,14 @@ public:
                                            in_flags,
                                            in_domain_name,
                                            in_domain_type,
-                                           use_oro);
+                                           true);
         ASSERT_TRUE(getClientFqdnOption(question));
 
-        Option6ClientFqdnPtr answ_fqdn;
-        ASSERT_NO_THROW(answ_fqdn = srv.processClientFqdn(question));
+        Pkt6Ptr answer(new Pkt6(msg_type == DHCPV6_SOLICIT ? DHCPV6_ADVERTISE :
+                                DHCPV6_REPLY, question->getTransid()));
+        ASSERT_NO_THROW(srv.processClientFqdn(question, answer));
+        Option6ClientFqdnPtr answ_fqdn = boost::dynamic_pointer_cast<
+            Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
         ASSERT_TRUE(answ_fqdn);
 
         const bool flag_n = (exp_flags & Option6ClientFqdn::FLAG_N) != 0;
@@ -339,11 +338,9 @@ public:
             ASSERT_TRUE(lease);
         }
 
-        if (include_oro) {
-            ASSERT_TRUE(reply->getOption(D6O_CLIENT_FQDN));
-        } else {
-            ASSERT_FALSE(reply->getOption(D6O_CLIENT_FQDN));
-        }
+        // The Client FQDN option should be always present in the server's
+        // response, regardless if requested using ORO or not.
+        ASSERT_TRUE(reply->getOption(D6O_CLIENT_FQDN));
     }
 
     /// @brief Verify that NameChangeRequest holds valid values.
@@ -394,7 +391,7 @@ public:
 
 // Test server's response when client requests that server performs AAAA update.
 TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdate) {
-    testFqdn(DHCPV6_SOLICIT, true, Option6ClientFqdn::FLAG_S,
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
              "myhost.example.com",
              Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_S,
              "myhost.example.com.");
@@ -403,7 +400,7 @@ TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdate) {
 // Test server's response when client provides partial domain-name and requests
 // that server performs AAAA update.
 TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdatePartialName) {
-    testFqdn(DHCPV6_SOLICIT, true, Option6ClientFqdn::FLAG_S, "myhost",
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S, "myhost",
              Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
              "myhost.example.com.");
 }
@@ -411,14 +408,14 @@ TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdatePartialName) {
 // Test server's response when client provides empty domain-name and requests
 // that server performs AAAA update.
 TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdateNoName) {
-    testFqdn(DHCPV6_SOLICIT, true, Option6ClientFqdn::FLAG_S, "",
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S, "",
              Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
              "myhost.example.com.");
 }
 
 // Test server's response when client requests no DNS update.
 TEST_F(FqdnDhcpv6SrvTest, noUpdate) {
-    testFqdn(DHCPV6_SOLICIT, true, Option6ClientFqdn::FLAG_N,
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_N,
              "myhost.example.com",
              Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_N,
              "myhost.example.com.");
@@ -427,7 +424,7 @@ TEST_F(FqdnDhcpv6SrvTest, noUpdate) {
 // Test server's response when client requests that server delegates the AAAA
 // update to the client and this delegation is not allowed.
 TEST_F(FqdnDhcpv6SrvTest, clientAAAAUpdateNotAllowed) {
-    testFqdn(DHCPV6_SOLICIT, true, 0, "myhost.example.com.",
+    testFqdn(DHCPV6_SOLICIT, 0, "myhost.example.com.",
              Option6ClientFqdn::FULL,
              Option6ClientFqdn::FLAG_S | Option6ClientFqdn::FLAG_O,
              "myhost.example.com.");
@@ -758,8 +755,8 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
 
 }
 
-// Checks that the server does not include DHCPv6 Client FQDN option in its
-// response when client doesn't include ORO option in the Request.
+// Checks that the server include DHCPv6 Client FQDN option in its
+// response even when client doesn't request this option using ORO.
 TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
     NakedDhcpv6Srv srv(0);
 
