@@ -376,9 +376,11 @@ protected:
     /// held in this function.
     ///
     /// @param question Client's message.
+    /// @param answer Server's response to a client.
     ///
     /// @return FQDN option produced in the response to the client's message.
-    Option6ClientFqdnPtr processClientFqdn(const Pkt6Ptr& question);
+    Option6ClientFqdnPtr processClientFqdn(const Pkt6Ptr& question,
+                                           const Pkt6Ptr& answer);
 
     /// @brief Adds DHCPv6 Client FQDN %Option to the server response.
     ///

@@ -965,7 +965,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
 }
 
 Option6ClientFqdnPtr
-Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question) {
+Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
     // Get Client FQDN Option from the client's message. If this option hasn't
     // been included, do nothing.
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
@@ -1039,9 +1039,11 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question) {
 
     }
 
-    // Return the FQDN option which can be included in the server's response.
-    // Note that it doesn't have to be included, if client didn't request
-    // it using ORO and server is not configured to always include it.
+    // The FQDN has been processed successfully. Let's append it to the
+    // response to be sent to a client. Note that the Client FQDN option is
+    // always sent back to the client if Client FQDN was included in the
+    // client's message.
+    answer->addOption(fqdn_resp);
     return (fqdn_resp);
 }
 
@@ -2175,7 +2177,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     appendRequestedOptions(solicit, advertise);
     appendRequestedVendorOptions(solicit, advertise);
 
-    Option6ClientFqdnPtr fqdn = processClientFqdn(solicit);
+    Option6ClientFqdnPtr fqdn = processClientFqdn(solicit, advertise);
     assignLeases(solicit, advertise, fqdn);
     appendClientFqdn(solicit, advertise, fqdn);
     // Note, that we don't create NameChangeRequests here because we don't
@@ -2197,7 +2199,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     appendRequestedOptions(request, reply);
     appendRequestedVendorOptions(request, reply);
 
-    Option6ClientFqdnPtr fqdn = processClientFqdn(request);
+    Option6ClientFqdnPtr fqdn = processClientFqdn(request, reply);
     assignLeases(request, reply, fqdn);
     appendClientFqdn(request, reply, fqdn);
     createNameChangeRequests(reply, fqdn);
@@ -2216,7 +2218,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     appendDefaultOptions(renew, reply);
     appendRequestedOptions(renew, reply);
 
-    Option6ClientFqdnPtr fqdn = processClientFqdn(renew);
+    Option6ClientFqdnPtr fqdn = processClientFqdn(renew, reply);
     renewLeases(renew, reply, fqdn);
     appendClientFqdn(renew, reply, fqdn);
     createNameChangeRequests(reply, fqdn);
