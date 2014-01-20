@@ -252,12 +252,15 @@ protected:
     /// @param subnet subnet the sender belongs to
     /// @param duid client's duid
     /// @param query client's message
+    /// @param answer server's response to the client's message. This
+    /// message should contain Client FQDN option being sent by the server
+    /// to the client (if the client sent this option to the server).
     /// @param ia IA_NA option that is being renewed
     /// @param fqdn DHCPv6 Client FQDN Option included in the server's response
     /// @return IA_NA option (server's response)
     OptionPtr renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                         const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
-                         const Option6ClientFqdnPtr& fqdn);
+                         const Pkt6Ptr& query, const Pkt6Ptr& answer,
+                         boost::shared_ptr<Option6IA> ia);
 
     /// @brief Renews specific IA_PD option
     ///
@@ -436,10 +439,7 @@ protected:
     /// as IA_NA/IAADDR to reply packet.
     /// @param renew client's message asking for renew
     /// @param reply server's response
-    /// @param fqdn A DHCPv6 Client FQDN %Option generated in the response to the
-    /// client's FQDN option.
-    void renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply,
-                     const Option6ClientFqdnPtr& fqdn);
+    void renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply);
 
     /// @brief Attempts to release received addresses
     ///
