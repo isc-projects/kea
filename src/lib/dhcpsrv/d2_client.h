@@ -375,14 +375,8 @@ D2ClientMgr::adjustDomainName(OPT& fqdn, OPT& fqdn_resp) {
     } else {
         // If the supplied name is partial, qualify it by adding the suffix.
         if (fqdn.getDomainNameType() == OPT::PARTIAL) {
-            std::ostringstream name;
-            name << fqdn.getDomainName();
-            name << "." << (d2_client_config_->getQualifyingSuffix());
-            if (d2_client_config_->getQualifyingSuffix().back() != '.') {
-                name << ".";
-            }
-
-            fqdn_resp.setDomainName(name.str(), OPT::FULL);
+            fqdn_resp.setDomainName(qualifyName(fqdn.getDomainName()),
+                                    OPT::FULL);
         }
     }
 }
