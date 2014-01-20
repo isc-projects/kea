@@ -380,11 +380,10 @@ protected:
     /// held in this function.
     ///
     /// @param question Client's message.
-    /// @param answer Server's response to a client.
-    ///
-    /// @return FQDN option produced in the response to the client's message.
-    Option6ClientFqdnPtr processClientFqdn(const Pkt6Ptr& question,
-                                           const Pkt6Ptr& answer);
+    /// @param answer Server's response to a client. If server generated
+    /// Client FQDN option for the client, this option is stored in this
+    /// object.
+    void processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer);
 
     /// @brief Creates a number of @c isc::dhcp_ddns::NameChangeRequest objects
     /// based on the DHCPv6 Client FQDN %Option.
