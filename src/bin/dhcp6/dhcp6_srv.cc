@@ -962,14 +962,14 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     }
 }
 
-Option6ClientFqdnPtr
+void
 Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
     // Get Client FQDN Option from the client's message. If this option hasn't
     // been included, do nothing.
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(question->getOption(D6O_CLIENT_FQDN));
     if (!fqdn) {
-        return (fqdn);
+        return;
     }
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
@@ -1042,7 +1042,6 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
     // always sent back to the client if Client FQDN was included in the
     // client's message.
     answer->addOption(fqdn_resp);
-    return (fqdn_resp);
 }
 
 void
@@ -2138,7 +2137,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     appendRequestedOptions(solicit, advertise);
     appendRequestedVendorOptions(solicit, advertise);
 
-    Option6ClientFqdnPtr fqdn = processClientFqdn(solicit, advertise);
+    processClientFqdn(solicit, advertise);
     assignLeases(solicit, advertise);
     // Note, that we don't create NameChangeRequests here because we don't
     // perform DNS Updates for Solicit. Client must send Request to update
@@ -2159,7 +2158,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     appendRequestedOptions(request, reply);
     appendRequestedVendorOptions(request, reply);
 
-    Option6ClientFqdnPtr fqdn = processClientFqdn(request, reply);
+    processClientFqdn(request, reply);
     assignLeases(request, reply);
     createNameChangeRequests(reply);
 
@@ -2177,7 +2176,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     appendDefaultOptions(renew, reply);
     appendRequestedOptions(renew, reply);
 
-    Option6ClientFqdnPtr fqdn = processClientFqdn(renew, reply);
+    processClientFqdn(renew, reply);
     renewLeases(renew, reply);
     createNameChangeRequests(reply);
 
