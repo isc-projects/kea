@@ -1182,10 +1182,11 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
     }
 
     bool enable_updates = boolean_values_->getParam("enable-updates");
-    if (!enable_updates) {
-        // If it's not enabled, don't bother validating the rest.  This
-        // allows for an abbreviated config entry that only contains
-        // the flag.  The default constructor creates a disabled instance.
+    if (!enable_updates && (client_config->mapValue().size() == 1)) {
+        // If enable-updates is the only parameter and it is false then
+        // we're done.  This allows for an abbreviated configuration entry
+        // that only contains that flag.  Use the default D2ClientConfig
+        // constructor to a create a disabled instance.
         local_client_config_.reset(new D2ClientConfig());
         return;
     }
