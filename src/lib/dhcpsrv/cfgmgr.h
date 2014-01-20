@@ -341,7 +341,7 @@ public:
     /// pointer.
     void setD2ClientConfig(D2ClientConfigPtr& new_config);
 
-    /// @param Convenience method for checking if DHCP-DDNS updates are enabled.
+    /// @brief Convenience method for checking if DHCP-DDNS updates are enabled.
     ///
     /// @return True if the D2 configuration is enabled.
     bool ddnsEnabled();
@@ -350,6 +350,11 @@ public:
     ///
     /// @return a reference to the current configuration pointer.
     const D2ClientConfigPtr& getD2ClientConfig() const;
+
+    /// @brief Fetches the DHCP-DDNS manager.
+    ///
+    /// @return a reference to the DHCP-DDNS manager.
+    D2ClientMgr& getD2ClientMgr();
 
 protected:
 
