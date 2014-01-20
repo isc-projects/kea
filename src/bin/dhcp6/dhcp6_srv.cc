@@ -104,9 +104,6 @@ namespace {
 // DHCPv6 Client FQDN Option sent by a client. They will be removed
 // when DDNS parameters for DHCPv6 are implemented with the ticket #3034.
 
-// Should server always include the FQDN option in its response, regardless
-// if it has been requested in ORO (Disabled).
-const bool FQDN_ALWAYS_INCLUDE = false;
 // Enable AAAA RR update delegation to the client (Disabled).
 const bool FQDN_ALLOW_CLIENT_UPDATE = false;
 // Globally enable updates (Enabled).
