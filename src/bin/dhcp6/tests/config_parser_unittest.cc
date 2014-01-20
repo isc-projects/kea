@@ -2224,8 +2224,6 @@ TEST_F(Dhcp6ParserTest, optionDataBoolean) {
     uint8_t expected_option_data[] = {
         0x1
     };
-    testOption(desc, 1000, expected_option_data, sizeof(expected_option_data));
-
     testConfiguration(params, 1000, expected_option_data,
                       sizeof(expected_option_data));
 
