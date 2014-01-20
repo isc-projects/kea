@@ -400,8 +400,7 @@ protected:
     /// @param answer A message beging sent to the Client.
     /// @param fqdn_answer A DHCPv6 Client FQDN %Option which is included in the
     /// response message sent to a client.
-    void createNameChangeRequests(const Pkt6Ptr& answer,
-                                  const Option6ClientFqdnPtr& fqdn_answer);
+    void createNameChangeRequests(const Pkt6Ptr& answer);
 
     /// @brief Creates a @c isc::dhcp_ddns::NameChangeRequest which requests
     /// removal of DNS entries for a particular lease.
