@@ -214,15 +214,17 @@ protected:
     /// @param subnet subnet the client is connected to
     /// @param duid client's duid
     /// @param query client's message (typically SOLICIT or REQUEST)
+    /// @param answer server's response to the client's message. This
+    /// message should contain Client FQDN option being sent by the server
+    /// to the client (if the client sent this option to the server).
     /// @param ia pointer to client's IA_NA option (client's request)
-    /// @param fqdn A DHCPv6 Client FQDN %Option generated in a response to the
-    /// FQDN option sent by a client.
+    ///
     /// @return IA_NA option (server's response)
     OptionPtr assignIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
                           const isc::dhcp::DuidPtr& duid,
                           const isc::dhcp::Pkt6Ptr& query,
-                          Option6IAPtr ia,
-                          const Option6ClientFqdnPtr& fqdn);
+                          const isc::dhcp::Pkt6Ptr& answer,
+                          Option6IAPtr ia);
 
     /// @brief Processes IA_PD option (and assigns prefixes if necessary).
     ///
@@ -352,11 +354,10 @@ protected:
     /// @todo: Extend this method once TA and PD becomes supported
     ///
     /// @param question client's message (with requested IA_NA)
-    /// @param answer server's message (IA_NA options will be added here)
-    /// @param fqdn an FQDN option generated in a response to the client's
-    /// FQDN option.
-    void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                      const Option6ClientFqdnPtr& fqdn);
+    /// @param answer server's message (IA_NA options will be added here).
+    /// This message should contain Client FQDN option being sent by the server
+    /// to the client (if the client sent this option to the server).
+    void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
     /// @brief Processes Client FQDN Option.
     ///

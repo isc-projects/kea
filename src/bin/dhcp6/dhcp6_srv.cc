@@ -887,8 +887,7 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
 }
 
 void
-Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                        const Option6ClientFqdnPtr& fqdn) {
+Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
 
     // We need to allocate addresses for all IA_NA options in the client's
     // question (i.e. SOLICIT or REQUEST) message.
@@ -941,10 +940,9 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
          opt != question->options_.end(); ++opt) {
         switch (opt->second->getType()) {
         case D6O_IA_NA: {
-            OptionPtr answer_opt = assignIA_NA(subnet, duid, question,
+            OptionPtr answer_opt = assignIA_NA(subnet, duid, question, answer,
                                                boost::dynamic_pointer_cast<
-                                               Option6IA>(opt->second),
-                                               fqdn);
+                                               Option6IA>(opt->second));
             if (answer_opt) {
                 answer->addOption(answer_opt);
             }
@@ -1232,8 +1230,8 @@ Dhcpv6Srv::sendNameChangeRequests() {
 
 OptionPtr
 Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                       const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
-                       const Option6ClientFqdnPtr& fqdn) {
+                       const Pkt6Ptr& query, const Pkt6Ptr& answer,
+                       boost::shared_ptr<Option6IA> ia) {
     // If there is no subnet selected for handling this IA_NA, the only thing to do left is
     // to say that we are sorry, but the user won't get an address. As a convenience, we
     // use a different status text to indicate that (compare to the same status code,
@@ -1287,6 +1285,8 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // the update.
     bool do_fwd = false;
     bool do_rev = false;
+    Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
+        Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
     if (fqdn) {
         // Flag S must not coexist with flag N being set to 1, so if S=1
         // server takes responsibility for both reverse and forward updates.
@@ -2178,7 +2178,7 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     appendRequestedVendorOptions(solicit, advertise);
 
     Option6ClientFqdnPtr fqdn = processClientFqdn(solicit, advertise);
-    assignLeases(solicit, advertise, fqdn);
+    assignLeases(solicit, advertise);
     appendClientFqdn(solicit, advertise, fqdn);
     // Note, that we don't create NameChangeRequests here because we don't
     // perform DNS Updates for Solicit. Client must send Request to update
@@ -2200,7 +2200,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
     appendRequestedVendorOptions(request, reply);
 
     Option6ClientFqdnPtr fqdn = processClientFqdn(request, reply);
-    assignLeases(request, reply, fqdn);
+    assignLeases(request, reply);
     appendClientFqdn(request, reply, fqdn);
     createNameChangeRequests(reply, fqdn);
 
