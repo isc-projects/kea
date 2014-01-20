@@ -363,6 +363,12 @@ CfgMgr::getD2ClientConfig() const {
     return (d2_client_mgr_.getD2ClientConfig());
 }
 
+D2ClientMgr&
+CfgMgr::getD2ClientMgr() {
+    return (d2_client_mgr_);
+}
+
+
 
 CfgMgr::CfgMgr()
     : datadir_(DHCP_DATA_DIR),
