@@ -43,7 +43,7 @@ meta_types = {
     '27': 'gpos', '29': 'loc', '36': 'kx', '37': 'cert', '42': 'apl',
     '45': 'ipseckey', '52': 'tlsa', '55': 'hip', '103': 'unspec',
     '104': 'nid', '105': 'l32', '106': 'l64', '107': 'lp', '249':  'tkey',
-    '253': 'mailb', '256': 'uri', '257': 'caa'
+    '253': 'mailb', '256': 'uri'
     }
 # Classes that don't have any known types.  This is a dict from type code
 # values (as string) to textual mnemonic.
