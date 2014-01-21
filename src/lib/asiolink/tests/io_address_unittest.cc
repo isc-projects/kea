@@ -182,3 +182,37 @@ TEST(IOAddressTest, LeftShiftOperator) {
     oss << addr;
     EXPECT_EQ(addr.toText(), oss.str());
 }
+
+// test v6-specific operations
+TEST(IOAddressTest, v6specific) {
+    IOAddress addr1("192.0.2.5"); // IPv4
+    IOAddress addr2("::");  // IPv6
+    IOAddress addr3("2001:db8::1"); // global IPv6
+    IOAddress addr4("fe80::1234");  // link-local
+    IOAddress addr5("ff02::1:2");   // multicast
+
+    EXPECT_TRUE (addr1.isV4());
+    EXPECT_FALSE(addr1.isV6());
+    EXPECT_FALSE(addr1.isV6LinkLocal());
+    EXPECT_FALSE(addr1.isV6Multicast());
+
+    EXPECT_FALSE(addr2.isV4());
+    EXPECT_TRUE (addr2.isV6());
+    EXPECT_FALSE(addr2.isV6LinkLocal());
+    EXPECT_FALSE(addr2.isV6Multicast());
+
+    EXPECT_FALSE(addr3.isV4());
+    EXPECT_TRUE (addr3.isV6());
+    EXPECT_FALSE(addr3.isV6LinkLocal());
+    EXPECT_FALSE(addr3.isV6Multicast());
+
+    EXPECT_FALSE(addr4.isV4());
+    EXPECT_TRUE (addr4.isV6());
+    EXPECT_TRUE (addr4.isV6LinkLocal());
+    EXPECT_FALSE(addr4.isV6Multicast());
+
+    EXPECT_FALSE(addr5.isV4());
+    EXPECT_TRUE (addr5.isV6());
+    EXPECT_FALSE(addr5.isV6LinkLocal());
+    EXPECT_TRUE (addr5.isV6Multicast());
+}
