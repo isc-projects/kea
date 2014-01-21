@@ -230,7 +230,7 @@ RRSIG::RRSIG(const RRSIG& source) :
 
 RRSIG&
 RRSIG::operator=(const RRSIG& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 

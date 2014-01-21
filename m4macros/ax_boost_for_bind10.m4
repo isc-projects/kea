@@ -28,6 +28,14 @@ dnl                               cause build failure; otherwise set to "no"
 dnl   BOOST_MAPPED_FILE_CXXFLAG set to the compiler flag that would need to
 dnl                             compile managed_mapped_file (can be empty).
 dnl                             It is of no use if "WOULDFAIL" is yes.
+dnl   BOOST_STATIC_ASSERT_WOULDFAIL set to "yes" if BOOST_STATIC_ASSERT would
+dnl                                 cause build error; otherwise set to "no"
+
+dnl   BOOST_OFFSET_PTR_OLD set to "yes" if the version of boost is older than
+dnl                        1.48. Older versions of boost have a bug which
+dnl                        causes segfaults in offset_ptr implementation when
+dnl                        compiled by GCC with optimisations enabled.
+dnl                        See ticket no. 3025 for details.
 
 AC_DEFUN([AX_BOOST_FOR_BIND10], [
 AC_LANG_SAVE
@@ -62,6 +70,10 @@ fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
 
+# clang can cause false positives with -Werror without -Qunused-arguments.
+# it can be triggered if used with ccache.
+AC_CHECK_DECL([__clang__], [CLANG_CXXFLAGS="-Qunused-arguments"], [])
+
 # Detect whether Boost tries to use threads by default, and, if not,
 # make it sure explicitly.  In some systems the automatic detection
 # may depend on preceding header files, and if inconsistency happens
@@ -78,6 +90,8 @@ AC_TRY_COMPILE([
 
 # Boost offset_ptr is known to not compile on some platforms, depending on
 # boost version, its local configuration, and compiler.  Detect it.
+CXXFLAGS_SAVED="$CXXFLAGS"
+CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS -Werror"
 AC_MSG_CHECKING([Boost offset_ptr compiles])
 AC_TRY_COMPILE([
 #include <boost/interprocess/offset_ptr.hpp>
@@ -86,12 +100,13 @@ AC_TRY_COMPILE([
  BOOST_OFFSET_PTR_WOULDFAIL=no],
 [AC_MSG_RESULT(no)
  BOOST_OFFSET_PTR_WOULDFAIL=yes])
+CXXFLAGS="$CXXFLAGS_SAVED"
 
 # Detect build failure case known to happen with Boost installed via
 # FreeBSD ports
 if test "X$GXX" = "Xyes"; then
    CXXFLAGS_SAVED="$CXXFLAGS"
-   CXXFLAGS="$CXXFLAGS -Werror"
+   CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS -Werror"
 
    AC_MSG_CHECKING([Boost numeric_cast compiles with -Werror])
    AC_TRY_COMPILE([
@@ -104,9 +119,21 @@ if test "X$GXX" = "Xyes"; then
     BOOST_NUMERIC_CAST_WOULDFAIL=yes])
 
    CXXFLAGS="$CXXFLAGS_SAVED"
+
+   AC_MSG_CHECKING([Boost rbtree is old])
+   AC_TRY_COMPILE([
+   #include <boost/version.hpp>
+   #if BOOST_VERSION < 104800
+   #error Too old
+   #endif
+   ],,[AC_MSG_RESULT(no)
+       BOOST_OFFSET_PTR_OLD=no
+   ],[AC_MSG_RESULT(yes)
+      BOOST_OFFSET_PTR_OLD=yes])
 else
    # This doesn't matter for non-g++
    BOOST_NUMERIC_CAST_WOULDFAIL=no
+   BOOST_OFFSET_PTR_OLD=no
 fi
 
 # Boost interprocess::managed_mapped_file is highly system dependent and
@@ -117,11 +144,9 @@ BOOST_MAPPED_FILE_CXXFLAG=
 CXXFLAGS_SAVED="$CXXFLAGS"
 try_flags="no"
 if test "X$GXX" = "Xyes"; then
-  CXXFLAGS="$CXXFLAGS -Wall -Wextra -Werror"
+  CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS -Wall -Wextra -Werror"
   try_flags="$try_flags -Wno-error"
 fi
-# clang can cause false positives with -Werror without -Qunused-arguments
-AC_CHECK_DECL([__clang__], [CXXFLAGS="$CXXFLAGS -Qunused-arguments"], [])
 
 AC_MSG_CHECKING([Boost managed_mapped_file compiles])
 CXXFLAGS_SAVED2="$CXXFLAGS"
@@ -129,7 +154,7 @@ for flag in $try_flags; do
   if test "$flag" != no; then
     BOOST_MAPPED_FILE_CXXFLAG="$flag"
   fi
-  CXXFLAGS="$CXXFLAGS $BOOST_MAPPED_FILE_CXXFLAG"
+  CXXFLAGS="$CXXFLAGS $CLANG_CXXFLAGS $BOOST_MAPPED_FILE_CXXFLAG"
   AC_TRY_COMPILE([
   #include <boost/interprocess/managed_mapped_file.hpp>
   ],[
@@ -146,9 +171,35 @@ if test $BOOST_MAPPED_FILE_WOULDFAIL = yes; then
   AC_MSG_RESULT(no)
 fi
 
+# BOOST_STATIC_ASSERT in versions below Boost 1.54.0 is known to result
+# in warnings with GCC 4.8.  Detect it.
+AC_MSG_CHECKING([BOOST_STATIC_ASSERT compiles])
+AC_TRY_COMPILE([
+#include <boost/static_assert.hpp>
+void testfn(void) { BOOST_STATIC_ASSERT(true); }
+],,
+[AC_MSG_RESULT(yes)
+ BOOST_STATIC_ASSERT_WOULDFAIL=no],
+[AC_MSG_RESULT(no)
+ BOOST_STATIC_ASSERT_WOULDFAIL=yes])
+
 CXXFLAGS="$CXXFLAGS_SAVED"
 
 AC_SUBST(BOOST_INCLUDES)
+
+dnl Determine the Boost version, used mainly for config.report.
+AC_MSG_CHECKING([Boost version])
+cat > conftest.cpp << EOF
+#include <boost/version.hpp>
+AUTOCONF_BOOST_LIB_VERSION=BOOST_LIB_VERSION
+EOF
+
+BOOST_VERSION=`$CPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_BOOST_LIB_VERSION=' | $SED -e 's/^AUTOCONF_BOOST_LIB_VERSION=//' -e 's/_/./g' -e 's/"//g' 2> /dev/null`
+if test -z "$BOOST_VERSION"; then
+  BOOST_VERSION="unknown"
+fi
+$RM -f conftest.cpp
+AC_MSG_RESULT([$BOOST_VERSION])
 
 CPPFLAGS="$CPPFLAGS_SAVED"
 AC_LANG_RESTORE

@@ -57,14 +57,15 @@ public:
 
     /// The constructor.
     ///
-    /// \throw none
-    ///
     /// \param mem_sgmt The memory segment used for the zone data.
     /// \param rrclass The RRclass of the zone data.
     /// \param zone_name The Name of the zone under which records will be
     ///                  added.
-    ///  \param zone_data The ZoneData object which is populated with
-    ///                   record data.
+    /// \param zone_data The ZoneData object which is populated with
+    ///                  record data.
+    /// \throw InvalidOperation if there's already a zone data updater
+    ///    on the given memory segment. Currently, at most one zone data
+    ///    updater may exist on the same memory segment.
     ZoneDataUpdater(util::MemorySegment& mem_sgmt,
                     isc::dns::RRClass rrclass,
                     const isc::dns::Name& zone_name,
@@ -72,12 +73,25 @@ public:
        mem_sgmt_(mem_sgmt),
        rrclass_(rrclass),
        zone_name_(zone_name),
-       zone_data_(zone_data),
-       hash_(NULL)
-    {}
+       hash_(NULL),
+       zone_data_(&zone_data)
+    {
+        if (mem_sgmt_.getNamedAddress("updater_zone_data").first) {
+            isc_throw(isc::InvalidOperation, "A ZoneDataUpdater already exists"
+                      " on this memory segment. Destroy it first.");
+        }
+        if (mem_sgmt_.setNamedAddress("updater_zone_data", zone_data_)) {
+            // It might have relocated during the set
+            zone_data_ =
+                static_cast<ZoneData*>(mem_sgmt_.getNamedAddress(
+                                           "updater_zone_data").second);
+        }
+        assert(zone_data_);
+    }
 
     /// The destructor.
     ~ZoneDataUpdater() {
+        mem_sgmt_.clearNamedAddress("updater_zone_data");
         delete hash_;
     }
 
@@ -159,6 +173,11 @@ private:
     // contained in 'name' (e.g., '*.foo.example' in 'bar.*.foo.example').
     void addWildcards(const isc::dns::Name& name);
 
+    void addInternal(const isc::dns::Name& name,
+                     const isc::dns::RRType& rrtype,
+                     const isc::dns::ConstRRsetPtr& rrset,
+                     const isc::dns::ConstRRsetPtr& rrsig);
+
     // Does some checks in context of the data that are already in the
     // zone.  Currently checks for forbidden combinations of RRsets in
     // the same domain (CNAME+anything, DNAME+NS).  If such condition is
@@ -175,19 +194,19 @@ private:
     template <typename T>
     void setupNSEC3(const isc::dns::ConstRRsetPtr rrset);
     void addNSEC3(const isc::dns::Name& name,
-                  const isc::dns::ConstRRsetPtr rrset,
-                  const isc::dns::ConstRRsetPtr rrsig);
+                  const isc::dns::ConstRRsetPtr& rrset,
+                  const isc::dns::ConstRRsetPtr& rrsig);
     void addRdataSet(const isc::dns::Name& name,
                      const isc::dns::RRType& rrtype,
-                     const isc::dns::ConstRRsetPtr rrset,
-                     const isc::dns::ConstRRsetPtr rrsig);
+                     const isc::dns::ConstRRsetPtr& rrset,
+                     const isc::dns::ConstRRsetPtr& rrsig);
 
     util::MemorySegment& mem_sgmt_;
     const isc::dns::RRClass rrclass_;
     const isc::dns::Name& zone_name_;
-    ZoneData& zone_data_;
     RdataEncoder encoder_;
     const isc::dns::NSEC3Hash* hash_;
+    ZoneData* zone_data_;
 };
 
 } // namespace memory

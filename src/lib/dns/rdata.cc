@@ -310,6 +310,9 @@ Generic::Generic(const Generic& source) :
 {}
 
 Generic&
+// Our check is better than the usual if (this == &source),
+// but cppcheck doesn't recognize it.
+// cppcheck-suppress operatorEqToSelf
 Generic::operator=(const Generic& source) {
     if (impl_ == source.impl_) {
         return (*this);

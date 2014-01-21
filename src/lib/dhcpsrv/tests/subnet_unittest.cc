@@ -16,6 +16,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcp/dhcp6.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 
@@ -57,6 +58,24 @@ TEST(Subnet4Test, in_range) {
     EXPECT_FALSE(subnet.inRange(IOAddress("255.255.255.255")));
 }
 
+// Checks whether siaddr field can be set and retrieved correctly.
+TEST(Subnet4Test, siaddr) {
+    Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
+
+    // Check if the default is 0.0.0.0
+    EXPECT_EQ("0.0.0.0", subnet.getSiaddr().toText());
+
+    // Check that we can set it up
+    EXPECT_NO_THROW(subnet.setSiaddr(IOAddress("1.2.3.4")));
+
+    // Check that we can get it back
+    EXPECT_EQ("1.2.3.4", subnet.getSiaddr().toText());
+
+    // Check that only v4 addresses are supported
+    EXPECT_THROW(subnet.setSiaddr(IOAddress("2001:db8::1")),
+        BadValue);
+}
+
 TEST(Subnet4Test, Pool4InSubnet4) {
 
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3));
@@ -65,24 +84,25 @@ TEST(Subnet4Test, Pool4InSubnet4) {
     PoolPtr pool2(new Pool4(IOAddress("192.1.2.128"), 26));
     PoolPtr pool3(new Pool4(IOAddress("192.1.2.192"), 30));
 
-    subnet->addPool(pool1);
+    EXPECT_NO_THROW(subnet->addPool(pool1));
 
     // If there's only one pool, get that pool
-    PoolPtr mypool = subnet->getPool();
+    PoolPtr mypool = subnet->getAnyPool(Lease::TYPE_V4);
     EXPECT_EQ(mypool, pool1);
 
 
-    subnet->addPool(pool2);
-    subnet->addPool(pool3);
+    EXPECT_NO_THROW(subnet->addPool(pool2));
+    EXPECT_NO_THROW(subnet->addPool(pool3));
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
-    mypool = subnet->getPool();
+    EXPECT_NO_THROW(mypool = subnet->getAnyPool(Lease::TYPE_V4));
 
     EXPECT_EQ(mypool, pool1);
 
     // If we provide a hint, we should get a pool that this hint belongs to
-    mypool = subnet->getPool(IOAddress("192.1.2.195"));
+    EXPECT_NO_THROW(mypool = subnet->getPool(Lease::TYPE_V4,
+                                             IOAddress("192.1.2.195")));
 
     EXPECT_EQ(mypool, pool3);
 
@@ -138,27 +158,27 @@ TEST(Subnet4Test, inRangeinPool) {
     EXPECT_TRUE(subnet->inRange(IOAddress("192.1.1.1")));
 
     // ... but it does not belong to any pool within
-    EXPECT_FALSE(subnet->inPool(IOAddress("192.1.1.1")));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.1.1.1")));
 
     // the last address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("192.1.255.255")));
-    EXPECT_FALSE(subnet->inPool(IOAddress("192.1.255.255")));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.1.255.255")));
 
     // the first address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("192.2.0.0")));
-    EXPECT_TRUE (subnet->inPool(IOAddress("192.2.0.0")));
+    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.0.0")));
 
     // let's try something in the middle as well
     EXPECT_TRUE(subnet->inRange(IOAddress("192.2.3.4")));
-    EXPECT_TRUE (subnet->inPool(IOAddress("192.2.3.4")));
+    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.3.4")));
 
     // the last address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("192.2.255.255")));
-    EXPECT_TRUE (subnet->inPool(IOAddress("192.2.255.255")));
+    EXPECT_TRUE (subnet->inPool(Lease::TYPE_V4, IOAddress("192.2.255.255")));
 
     // the first address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("192.3.0.0")));
-    EXPECT_FALSE(subnet->inPool(IOAddress("192.3.0.0")));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_V4, IOAddress("192.3.0.0")));
 }
 
 // This test checks if the toText() method returns text representation
@@ -172,6 +192,74 @@ TEST(Subnet4Test, get) {
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 28, 1, 2, 3));
     EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
     EXPECT_EQ(28, subnet->get().second);
+}
+
+
+// Checks if last allocated address/prefix is stored/retrieved properly
+TEST(Subnet4Test, lastAllocated) {
+    IOAddress addr("192.0.2.17");
+
+    IOAddress last("192.0.2.255");
+
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3));
+
+    // Check initial conditions (all should be set to the last address in range)
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_V4).toText());
+
+    // Now set last allocated for IA
+    EXPECT_NO_THROW(subnet->setLastAllocated(Lease::TYPE_V4, addr));
+    EXPECT_EQ(addr.toText(), subnet->getLastAllocated(Lease::TYPE_V4).toText());
+
+    // No, you can't set the last allocated IPv6 address in IPv4 subnet
+    EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_TA, addr), BadValue);
+    EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_TA, addr), BadValue);
+    EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_PD, addr), BadValue);
+}
+
+// Checks if the V4 is the only allowed type for Pool4 and if getPool()
+// is working properly.
+TEST(Subnet4Test, PoolType) {
+
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.2.0.0"), 16, 1, 2, 3));
+
+    PoolPtr pool1(new Pool4(IOAddress("192.2.1.0"), 24));
+    PoolPtr pool2(new Pool4(IOAddress("192.2.2.0"), 24));
+    PoolPtr pool3(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:3::"), 64));
+    PoolPtr pool4(new Pool6(Lease::TYPE_TA, IOAddress("2001:db8:1:4::"), 64));
+    PoolPtr pool5(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:1::"), 64));
+
+    // There should be no pools of any type by default
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Lease::TYPE_V4));
+
+    // It should not be possible to ask for V6 pools in Subnet4
+    EXPECT_THROW(subnet->getAnyPool(Lease::TYPE_NA), BadValue);
+    EXPECT_THROW(subnet->getAnyPool(Lease::TYPE_TA), BadValue);
+    EXPECT_THROW(subnet->getAnyPool(Lease::TYPE_PD), BadValue);
+
+    // Let's add a single V4 pool and check that it can be retrieved
+    EXPECT_NO_THROW(subnet->addPool(pool1));
+
+    // If there's only one IA pool, get that pool (without and with hint)
+    EXPECT_EQ(pool1, subnet->getAnyPool(Lease::TYPE_V4));
+    EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.1.167")));
+
+    // Let's add additional V4 pool
+    EXPECT_NO_THROW(subnet->addPool(pool2));
+
+    // Try without hints
+    EXPECT_EQ(pool1, subnet->getAnyPool(Lease::TYPE_V4));
+
+    // Try with valid hints
+    EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_V4, IOAddress("192.2.1.5")));
+    EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_V4, IOAddress("192.2.2.254")));
+
+    // Try with bogus hints (hints should be ingored)
+    EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_V4, IOAddress("10.1.1.1")));
+
+    // Trying to add Pool6 to Subnet4 is a big no,no!
+    EXPECT_THROW(subnet->addPool(pool3), BadValue);
+    EXPECT_THROW(subnet->addPool(pool4), BadValue);
+    EXPECT_THROW(subnet->addPool(pool5), BadValue);
 }
 
 // Tests for Subnet6
@@ -207,30 +295,100 @@ TEST(Subnet6Test, Pool6InSubnet6) {
 
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
 
-    PoolPtr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
-    PoolPtr pool2(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:2::"), 64));
-    PoolPtr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:3::"), 64));
+    PoolPtr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
+    PoolPtr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:2::"), 64));
+    PoolPtr pool3(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:3::"), 64));
 
     subnet->addPool(pool1);
 
     // If there's only one pool, get that pool
-    PoolPtr mypool = subnet->getPool();
+    PoolPtr mypool = subnet->getAnyPool(Lease::TYPE_NA);
     EXPECT_EQ(mypool, pool1);
-
 
     subnet->addPool(pool2);
     subnet->addPool(pool3);
 
     // If there are more than one pool and we didn't provide hint, we
     // should get the first pool
-    mypool = subnet->getPool();
+    mypool = subnet->getAnyPool(Lease::TYPE_NA);
 
     EXPECT_EQ(mypool, pool1);
 
     // If we provide a hint, we should get a pool that this hint belongs to
-    mypool = subnet->getPool(IOAddress("2001:db8:1:3::dead:beef"));
+    mypool = subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1:3::dead:beef"));
 
     EXPECT_EQ(mypool, pool3);
+}
+
+// Check if Subnet6 supports different types of pools properly.
+TEST(Subnet6Test, PoolTypes) {
+
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    PoolPtr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
+    PoolPtr pool2(new Pool6(Lease::TYPE_TA, IOAddress("2001:db8:1:2::"), 64));
+    PoolPtr pool3(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:3::"), 64));
+    PoolPtr pool4(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1:4::"), 64));
+
+    PoolPtr pool5(new Pool4(IOAddress("192.0.2.0"), 24));
+
+    // There should be no pools of any type by default
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Lease::TYPE_NA));
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Lease::TYPE_TA));
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Lease::TYPE_PD));
+
+    // Trying to get IPv4 pool from Subnet6 is not allowed
+    EXPECT_THROW(subnet->getAnyPool(Lease::TYPE_V4), BadValue);
+
+    // Let's add a single IA pool and check that it can be retrieved
+    EXPECT_NO_THROW(subnet->addPool(pool1));
+
+    // If there's only one IA pool, get that pool
+    EXPECT_EQ(pool1, subnet->getAnyPool(Lease::TYPE_NA));
+    EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1:1::1")));
+
+    // Check if pools of different type are not returned
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Lease::TYPE_TA));
+    EXPECT_EQ(PoolPtr(), subnet->getAnyPool(Lease::TYPE_PD));
+
+    // We ask with good hints, but wrong types, should return nothing
+    EXPECT_EQ(PoolPtr(), subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:2::1")));
+    EXPECT_EQ(PoolPtr(), subnet->getPool(Lease::TYPE_TA, IOAddress("2001:db8:1:3::1")));
+
+    // Let's add TA and PD pools
+    EXPECT_NO_THROW(subnet->addPool(pool2));
+    EXPECT_NO_THROW(subnet->addPool(pool3));
+
+    // Try without hints
+    EXPECT_EQ(pool1, subnet->getAnyPool(Lease::TYPE_NA));
+    EXPECT_EQ(pool2, subnet->getAnyPool(Lease::TYPE_TA));
+    EXPECT_EQ(pool3, subnet->getAnyPool(Lease::TYPE_PD));
+
+    // Try with valid hints
+    EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1:1::1")));
+    EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_TA, IOAddress("2001:db8:1:2::1")));
+    EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:3::1")));
+
+    // Try with bogus hints (hints should be ingored)
+    EXPECT_EQ(pool1, subnet->getPool(Lease::TYPE_NA, IOAddress("2001:db8:1:7::1")));
+    EXPECT_EQ(pool2, subnet->getPool(Lease::TYPE_TA, IOAddress("2001:db8:1:7::1")));
+    EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:7::1")));
+
+    // Let's add a second PD pool
+    EXPECT_NO_THROW(subnet->addPool(pool4));
+
+    // Without hints, it should return the first pool
+    EXPECT_EQ(pool3, subnet->getAnyPool(Lease::TYPE_PD));
+
+    // With valid hint, it should return that hint
+    EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:3::1")));
+    EXPECT_EQ(pool4, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8:1:4::1")));
+
+    // With invalid hint, it should return the first pool
+    EXPECT_EQ(pool3, subnet->getPool(Lease::TYPE_PD, IOAddress("2001:db8::123")));
+
+    // Adding Pool4 to Subnet6 is a big no, no!
+    EXPECT_THROW(subnet->addPool(pool5), BadValue);
 }
 
 TEST(Subnet6Test, Subnet6_Pool6_checks) {
@@ -238,21 +396,21 @@ TEST(Subnet6Test, Subnet6_Pool6_checks) {
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
 
     // this one is in subnet
-    Pool6Ptr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8:1:1::"), 64));
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1:1::"), 64));
     subnet->addPool(pool1);
 
     // this one is larger than the subnet!
-    Pool6Ptr pool2(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::"), 48));
+    Pool6Ptr pool2(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8::"), 48));
 
     EXPECT_THROW(subnet->addPool(pool2), BadValue);
 
 
     // this one is totally out of blue
-    Pool6Ptr pool3(new Pool6(Pool6::TYPE_IA, IOAddress("3000::"), 16));
+    Pool6Ptr pool3(new Pool6(Lease::TYPE_NA, IOAddress("3000::"), 16));
     EXPECT_THROW(subnet->addPool(pool3), BadValue);
 
 
-    Pool6Ptr pool4(new Pool6(Pool6::TYPE_IA, IOAddress("4001:db8:1::"), 80));
+    Pool6Ptr pool4(new Pool6(Lease::TYPE_NA, IOAddress("4001:db8:1::"), 80));
     EXPECT_THROW(subnet->addPool(pool4), BadValue);
 }
 
@@ -457,39 +615,109 @@ TEST(Subnet6Test, getOptionDescriptor) {
     }
 }
 
+
+TEST(Subnet6Test, addVendorOptions) {
+
+    uint32_t vendor_id1 = 12345678;
+    uint32_t vendor_id2 = 87654321;
+    uint32_t vendor_id_bogus = 1111111;
+
+    // Create as subnet to add options to it.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    // Differentiate options by their codes (100-109)
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(subnet->addVendorOption(option, false, vendor_id1));
+    }
+
+    // Add 7 options to another option space. The option codes partially overlap
+    // with option codes that we have added to dhcp6 option space.
+    for (uint16_t code = 105; code < 112; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(10, 0xFF)));
+        ASSERT_NO_THROW(subnet->addVendorOption(option, false, vendor_id2));
+    }
+
+    // Get options from the Subnet and check if all 10 are there.
+    Subnet::OptionContainerPtr options = subnet->getVendorOptionDescriptors(vendor_id1);
+    ASSERT_TRUE(options);
+    ASSERT_EQ(10, options->size());
+
+    // Validate codes of options added to dhcp6 option space.
+    uint16_t expected_code = 100;
+    for (Subnet::OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option);
+        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ++expected_code;
+    }
+
+    options = subnet->getVendorOptionDescriptors(vendor_id2);
+    ASSERT_TRUE(options);
+    ASSERT_EQ(7, options->size());
+
+    // Validate codes of options added to isc option space.
+    expected_code = 105;
+    for (Subnet::OptionContainer::const_iterator option_desc = options->begin();
+         option_desc != options->end(); ++option_desc) {
+        ASSERT_TRUE(option_desc->option);
+        EXPECT_EQ(expected_code, option_desc->option->getType());
+        ++expected_code;
+    }
+
+    // Try to get options from a non-existing option space.
+    options = subnet->getVendorOptionDescriptors(vendor_id_bogus);
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+
+    // Delete options from all spaces.
+    subnet->delVendorOptions();
+
+    // Make sure that all options have been removed.
+    options = subnet->getVendorOptionDescriptors(vendor_id1);
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+
+    options = subnet->getVendorOptionDescriptors(vendor_id2);
+    ASSERT_TRUE(options);
+    EXPECT_TRUE(options->empty());
+}
+
+
+
 // This test verifies that inRange() and inPool() methods work properly.
 TEST(Subnet6Test, inRangeinPool) {
     Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8::"), 32, 1, 2, 3, 4));
 
     // this one is in subnet
-    Pool6Ptr pool1(new Pool6(Pool6::TYPE_IA, IOAddress("2001:db8::10"),
+    Pool6Ptr pool1(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8::10"),
                              IOAddress("2001:db8::20")));
     subnet->addPool(pool1);
 
     // 192.1.1.1 belongs to the subnet...
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::1")));
     // ... but it does not belong to any pool within
-    EXPECT_FALSE(subnet->inPool(IOAddress("2001:db8::1")));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::1")));
 
     // the last address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::f")));
-    EXPECT_FALSE(subnet->inPool(IOAddress("2001:db8::f")));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::f")));
 
     // the first address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::10")));
-    EXPECT_TRUE (subnet->inPool(IOAddress("2001:db8::10")));
+    EXPECT_TRUE (subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::10")));
 
     // let's try something in the middle as well
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::18")));
-    EXPECT_TRUE (subnet->inPool(IOAddress("2001:db8::18")));
+    EXPECT_TRUE (subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::18")));
 
     // the last address that is in range, in pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::20")));
-    EXPECT_TRUE (subnet->inPool(IOAddress("2001:db8::20")));
+    EXPECT_TRUE (subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::20")));
 
     // the first address that is in range, but out of pool
     EXPECT_TRUE(subnet->inRange(IOAddress("2001:db8::21")));
-    EXPECT_FALSE(subnet->inPool(IOAddress("2001:db8::21")));
+    EXPECT_FALSE(subnet->inPool(Lease::TYPE_NA, IOAddress("2001:db8::21")));
 }
 
 // This test checks if the toText() method returns text representation
@@ -514,6 +742,56 @@ TEST(Subnet6Test, iface) {
 
     subnet.setIface("en1");
     EXPECT_EQ("en1", subnet.getIface());
+}
+
+// This trivial test checks if the interface-id option can be set and
+// later retrieved for a subnet6 object.
+TEST(Subnet6Test, interfaceId) {
+    // Create as subnet to add options to it.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    EXPECT_FALSE(subnet->getInterfaceId());
+
+    OptionPtr option(new Option(Option::V6, D6O_INTERFACE_ID, OptionBuffer(10, 0xFF)));
+    subnet->setInterfaceId(option);
+
+    EXPECT_EQ(option, subnet->getInterfaceId());
+
+}
+
+// Checks if last allocated address/prefix is stored/retrieved properly
+TEST(Subnet6Test, lastAllocated) {
+    IOAddress ia("2001:db8:1::1");
+    IOAddress ta("2001:db8:1::abcd");
+    IOAddress pd("2001:db8:1::1234:5678");
+
+    IOAddress last("2001:db8:1::ffff:ffff:ffff:ffff");
+
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3, 4));
+
+    // Check initial conditions (all should be set to the last address in range)
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_NA).toText());
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_TA).toText());
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_PD).toText());
+
+    // Now set last allocated for IA
+    EXPECT_NO_THROW(subnet->setLastAllocated(Lease::TYPE_NA, ia));
+    EXPECT_EQ(ia.toText(), subnet->getLastAllocated(Lease::TYPE_NA).toText());
+
+    // TA and PD should be unchanged
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_TA).toText());
+    EXPECT_EQ(last.toText(), subnet->getLastAllocated(Lease::TYPE_PD).toText());
+
+    // Now set TA and PD
+    EXPECT_NO_THROW(subnet->setLastAllocated(Lease::TYPE_TA, ta));
+    EXPECT_NO_THROW(subnet->setLastAllocated(Lease::TYPE_PD, pd));
+
+    EXPECT_EQ(ia.toText(), subnet->getLastAllocated(Lease::TYPE_NA).toText());
+    EXPECT_EQ(ta.toText(), subnet->getLastAllocated(Lease::TYPE_TA).toText());
+    EXPECT_EQ(pd.toText(), subnet->getLastAllocated(Lease::TYPE_PD).toText());
+
+    // No, you can't set the last allocated IPv4 address in IPv6 subnet
+    EXPECT_THROW(subnet->setLastAllocated(Lease::TYPE_V4, ia), BadValue);
 }
 
 };

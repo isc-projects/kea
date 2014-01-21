@@ -30,6 +30,7 @@ import isc.log
 isc.log.init("b10-cfgmgr", buffer=True)
 from isc.config.cfgmgr import ConfigManager, ConfigManagerDataReadError, logger
 from isc.log_messages.cfgmgr_messages import *
+import isc.util.traceback_handler
 
 isc.util.process.rename()
 
@@ -128,4 +129,4 @@ def main():
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(isc.util.traceback_handler.traceback_handler(main))

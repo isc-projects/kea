@@ -132,8 +132,8 @@ public:
     /// \brief A helper structure to represent the search result of
     /// \c find().
     ///
-    /// This is a straightforward pair of the result code and a share pointer
-    /// to the found zone to represent the result of \c find().
+    /// This is a straightforward tuple of the result code/flags and a shared
+    /// pointer to the found zone to represent the result of \c find().
     /// We use this in order to avoid overloading the return value for both
     /// the result code ("success" or "not found") and the found object,
     /// i.e., avoid using \c NULL to mean "not found", etc.
@@ -146,10 +146,13 @@ public:
     /// variables.
     struct FindResult {
         FindResult(result::Result param_code,
-                   const ZoneFinderPtr param_zone_finder) :
-            code(param_code), zone_finder(param_zone_finder)
+                   const ZoneFinderPtr param_zone_finder,
+                   result::ResultFlags param_flags = result::FLAGS_DEFAULT) :
+            code(param_code), flags(param_flags),
+            zone_finder(param_zone_finder)
         {}
         const result::Result code;
+        const result::ResultFlags flags;
         const ZoneFinderPtr zone_finder;
     };
 
@@ -184,8 +187,12 @@ public:
     ///   - \c result::PARTIALMATCH: A zone whose origin is a
     ///   super domain of \c name is found (but there is no exact match)
     ///   - \c result::NOTFOUND: For all other cases.
+    /// - \c flags: usually FLAGS_DEFAULT, but if the zone data are not
+    ///   available (possibly because an error was detected at load time)
+    ///   the ZONE_EMPTY flag is set.
     /// - \c zone_finder: Pointer to a \c ZoneFinder object for the found zone
-    /// if one is found; otherwise \c NULL.
+    /// if one is found and is not empty (flags doesn't have ZONE_EMPTY);
+    /// otherwise \c NULL.
     ///
     /// A specific derived version of this method may throw an exception.
     /// This interface does not specify which exceptions can happen (at least
@@ -201,9 +208,6 @@ public:
     /// This allows for traversing the whole zone. The returned object can
     /// provide the RRsets one by one.
     ///
-    /// This throws DataSourceError when the zone does not exist in the
-    /// datasource.
-    ///
     /// The default implementation throws isc::NotImplemented. This allows
     /// for easy and fast deployment of minimal custom data sources, where
     /// the user/implementer doesn't have to care about anything else but
@@ -213,6 +217,14 @@ public:
     ///
     /// It is not fixed if a concrete implementation of this method can throw
     /// anything else.
+    ///
+    /// \throw NoSuchZone the zone does not exist in the datasource.
+    /// \throw Others Possibly implementation specific exceptions (it is
+    /// not fixed if a concrete implementation of this method can throw
+    /// anything else.)
+    /// \throw EmptyZone the zone is supposed to exist in the data source,
+    /// but its content is not available.  This generally means there's an
+    /// error in the content.
     ///
     /// \param name The name of zone apex to be traversed. It doesn't do
     ///     nearest match as findZone.

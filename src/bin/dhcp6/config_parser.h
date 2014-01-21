@@ -20,6 +20,8 @@
 
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
+#include <dhcpsrv/dhcp_parsers.h>
+
 #include <string>
 
 namespace isc {
@@ -29,9 +31,9 @@ class Dhcpv6Srv;
 
 /// @brief Configures DHCPv6 server
 ///
-/// This function is called every time a new configuration is received. The extra
-/// parameter is a reference to DHCPv6 server component. It is currently not used
-/// and CfgMgr::instance() is accessed instead.
+/// This function is called every time a new configuration is received. The
+/// extra parameter is a reference to DHCPv6 server component. It is currently
+/// not used and CfgMgr::instance() is accessed instead.
 ///
 /// This method does not throw. It catches all exceptions and returns them as
 /// reconfiguration statuses. It may return the following response codes:
@@ -46,6 +48,11 @@ class Dhcpv6Srv;
 /// @throw Dhcp6ConfigError if trying to create a parser for NULL config.
 isc::data::ConstElementPtr
 configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set);
+
+/// @brief Returns the global context
+///
+/// @returns a reference to the global context
+ParserContextPtr& globalContext();
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

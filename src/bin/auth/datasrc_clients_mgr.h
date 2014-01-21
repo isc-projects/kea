@@ -29,6 +29,9 @@
 #include <datasrc/client_list.h>
 #include <datasrc/memory/zone_writer.h>
 
+#include <asiolink/io_service.h>
+#include <asiolink/local_socket.h>
+
 #include <auth/auth_log.h>
 #include <auth/datasrc_config.h>
 
@@ -36,11 +39,16 @@
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
+#include <boost/function.hpp>
+#include <boost/foreach.hpp>
 
 #include <exception>
 #include <cassert>
+#include <cerrno>
 #include <list>
 #include <utility>
+#include <sys/types.h>
+#include <sys/socket.h>
 
 namespace isc {
 namespace auth {
@@ -73,17 +81,45 @@ enum CommandID {
     LOADZONE,     ///< Load a new version of zone into a memory,
                   ///  the argument to the command is a map containing 'class'
                   ///  and 'origin' elements, both should have been validated.
+    SEGMENT_INFO_UPDATE, ///< The memory manager sent an update about segments.
     SHUTDOWN,     ///< Shutdown the builder; no argument
     NUM_COMMANDS
 };
 
+/// \brief Callback to be called when the command is completed.
+typedef boost::function<void ()> FinishedCallback;
+
 /// \brief The data type passed from DataSrcClientsMgr to
-/// DataSrcClientsBuilder.
+///     DataSrcClientsBuilder.
 ///
-/// The first element of the pair is the command ID, and the second element
-/// is its argument.  If the command doesn't take an argument it should be
-/// a null pointer.
-typedef std::pair<CommandID, data::ConstElementPtr> Command;
+/// This just holds the data items together, no logic or protection
+/// is present here.
+struct Command {
+    /// \brief Constructor
+    ///
+    /// It just initializes the member variables of the same names
+    /// as the parameters.
+    Command(CommandID id, const data::ConstElementPtr& params,
+            const FinishedCallback& callback) :
+        id(id),
+        params(params),
+        callback(callback)
+    {}
+    /// \brief The command to execute
+    CommandID id;
+    /// \brief Argument of the command.
+    ///
+    /// If the command takes no argument, it should be null pointer.
+    ///
+    /// This may be a null pointer if the command takes no parameters.
+    data::ConstElementPtr params;
+    /// \brief A callback to be called once the command finishes.
+    ///
+    /// This may be an empty boost::function. In such case, no callback
+    /// will be called after completion.
+    FinishedCallback callback;
+};
+
 } // namespace datasrc_clientmgr_internal
 
 /// \brief Frontend to the manager object for data source clients.
@@ -112,6 +148,24 @@ private:
     typedef std::map<dns::RRClass,
                      boost::shared_ptr<datasrc::ConfigurableClientList> >
     ClientListsMap;
+
+    class FDGuard : boost::noncopyable {
+    public:
+        FDGuard(DataSrcClientsMgrBase *mgr) :
+            mgr_(mgr)
+        {}
+        ~FDGuard() {
+            if (mgr_->read_fd_ != -1) {
+                close(mgr_->read_fd_);
+            }
+            if (mgr_->write_fd_ != -1) {
+                close(mgr_->write_fd_);
+            }
+        }
+    private:
+        DataSrcClientsMgrBase* mgr_;
+    };
+    friend class FDGuard;
 
 public:
     /// \brief Thread-safe accessor to the data source client lists.
@@ -159,6 +213,24 @@ public:
                 return (it->second);
             }
         }
+        /// \brief Return list of classes that are present.
+        ///
+        /// Get the list of classes for which there's a client list. It is
+        /// returned in form of a vector, copied from the internals. As the
+        /// number of classes in there is expected to be small, it is not
+        /// a performance issue.
+        ///
+        /// \return The list of classes.
+        /// \throw std::bad_alloc for problems allocating the result.
+        std::vector<dns::RRClass> getClasses() const {
+            std::vector<dns::RRClass> result;
+            for (ClientListsMap::const_iterator it =
+                 mgr_.clients_map_->begin(); it != mgr_.clients_map_->end();
+                 ++it) {
+                result.push_back(it->first);
+            }
+            return (result);
+        }
     private:
         DataSrcClientsMgrBase& mgr_;
         typename MutexType::Locker locker_;
@@ -176,12 +248,20 @@ public:
     ///
     /// \throw std::bad_alloc internal memory allocation failure.
     /// \throw isc::Unexpected general unexpected system errors.
-    DataSrcClientsMgrBase() :
+    DataSrcClientsMgrBase(asiolink::IOService& service) :
         clients_map_(new ClientListsMap),
-        builder_(&command_queue_, &cond_, &queue_mutex_, &clients_map_,
-                 &map_mutex_),
-        builder_thread_(boost::bind(&BuilderType::run, &builder_))
-    {}
+        fd_guard_(new FDGuard(this)),
+        read_fd_(-1), write_fd_(-1),
+        builder_(&command_queue_, &callback_queue_, &cond_, &queue_mutex_,
+                 &clients_map_, &map_mutex_, createFds()),
+        builder_thread_(boost::bind(&BuilderType::run, &builder_)),
+        wakeup_socket_(service, read_fd_)
+    {
+        // Schedule wakeups when callbacks are pushed.
+        wakeup_socket_.asyncRead(
+            boost::bind(&DataSrcClientsMgrBase::processCallbacks, this, _1),
+            buffer, 1);
+    }
 
     /// \brief The destructor.
     ///
@@ -220,6 +300,7 @@ public:
                       AUTH_DATASRC_CLIENTS_SHUTDOWN_UNEXPECTED_ERROR);
         }
 
+        processCallbacks(); // Any leftover callbacks
         cleanup();              // see below
     }
 
@@ -234,11 +315,18 @@ public:
     /// \brief std::bad_alloc
     ///
     /// \param config_arg The new data source configuration.  Must not be NULL.
-    void reconfigure(data::ConstElementPtr config_arg) {
+    /// \param callback Called once the reconfigure command completes. It is
+    ///     called in the main thread (not in the work one). It should be
+    ///     exceptionless.
+    void reconfigure(const data::ConstElementPtr& config_arg,
+                     const datasrc_clientmgr_internal::FinishedCallback&
+                     callback = datasrc_clientmgr_internal::FinishedCallback())
+    {
         if (!config_arg) {
             isc_throw(InvalidParameter, "Invalid null config argument");
         }
-        sendCommand(datasrc_clientmgr_internal::RECONFIGURE, config_arg);
+        sendCommand(datasrc_clientmgr_internal::RECONFIGURE, config_arg,
+                    callback);
         reconfigureHook();      // for test's customization
     }
 
@@ -257,12 +345,18 @@ public:
     /// \param args Element argument that should be a map of the form
     /// { "class": "IN", "origin": "example.com" }
     /// (but class is optional and will default to IN)
+    /// \param callback Called once the loadZone command completes. It
+    ///     is called in the main thread, not in the work thread. It should
+    ///     be exceptionless.
     ///
     /// \exception CommandError if the args value is null, or not in
     ///                                 the expected format, or contains
     ///                                 a bad origin or class string
     void
-    loadZone(data::ConstElementPtr args) {
+    loadZone(const data::ConstElementPtr& args,
+             const datasrc_clientmgr_internal::FinishedCallback& callback =
+             datasrc_clientmgr_internal::FinishedCallback())
+    {
         if (!args) {
             isc_throw(CommandError, "loadZone argument empty");
         }
@@ -303,7 +397,37 @@ public:
         // implement it would be to factor out the code from
         // the start of doLoadZone(), and call it here too
 
-        sendCommand(datasrc_clientmgr_internal::LOADZONE, args);
+        sendCommand(datasrc_clientmgr_internal::LOADZONE, args, callback);
+    }
+
+    void segmentInfoUpdate(const data::ConstElementPtr& args,
+                           const datasrc_clientmgr_internal::FinishedCallback&
+                           callback =
+                           datasrc_clientmgr_internal::FinishedCallback()) {
+        // Some minimal validation
+        if (!args) {
+            isc_throw(CommandError, "segmentInfoUpdate argument empty");
+        }
+        if (args->getType() != isc::data::Element::map) {
+            isc_throw(CommandError, "segmentInfoUpdate argument not a map");
+        }
+        const char* params[] = {
+            "data-source-name",
+            "data-source-class",
+            "segment-params",
+            NULL
+        };
+        for (const char** param = params; *param; ++param) {
+            if (!args->contains(*param)) {
+                isc_throw(CommandError,
+                          "segmentInfoUpdate argument has no '" << param <<
+                          "' value");
+            }
+        }
+
+
+        sendCommand(datasrc_clientmgr_internal::SEGMENT_INFO_UPDATE, args,
+                    callback);
     }
 
 private:
@@ -317,15 +441,54 @@ private:
     void reconfigureHook() {}
 
     void sendCommand(datasrc_clientmgr_internal::CommandID command,
-                     data::ConstElementPtr arg)
+                     const data::ConstElementPtr& arg,
+                     const datasrc_clientmgr_internal::FinishedCallback&
+                     callback = datasrc_clientmgr_internal::FinishedCallback())
     {
         // The lock will be held until the end of this method.  Only
         // push_back has to be protected, but we can avoid having an extra
         // block this way.
         typename MutexType::Locker locker(queue_mutex_);
         command_queue_.push_back(
-            datasrc_clientmgr_internal::Command(command, arg));
+            datasrc_clientmgr_internal::Command(command, arg, callback));
         cond_.signal();
+    }
+
+    int createFds() {
+        int fds[2];
+        int result = socketpair(AF_UNIX, SOCK_STREAM, 0, fds);
+        if (result != 0) {
+            isc_throw(Unexpected, "Can't create socket pair: " <<
+                      strerror(errno));
+        }
+        read_fd_ = fds[0];
+        write_fd_ = fds[1];
+        return write_fd_;
+    }
+
+    void processCallbacks(const std::string& error = std::string()) {
+        // Schedule the next read.
+        wakeup_socket_.asyncRead(
+            boost::bind(&DataSrcClientsMgrBase::processCallbacks, this, _1),
+            buffer, 1);
+        if (!error.empty()) {
+            // Generally, there should be no errors (as we are the other end
+            // as well), but check just in case.
+            isc_throw(Unexpected, error);
+        }
+
+        // Steal the callbacks into local copy.
+        std::list<datasrc_clientmgr_internal::FinishedCallback> queue;
+        {
+            typename MutexType::Locker locker(queue_mutex_);
+            queue.swap(callback_queue_);
+        }
+
+        // Execute the callbacks
+        BOOST_FOREACH(const datasrc_clientmgr_internal::FinishedCallback&
+                      callback, queue) {
+            callback();
+        }
     }
 
     //
@@ -333,14 +496,24 @@ private:
     //
     // The list is used as a one-way queue: back-in, front-out
     std::list<datasrc_clientmgr_internal::Command> command_queue_;
+    // Similar to above, for the callbacks that are ready to be called.
+    // While the command queue is for sending commands from the main thread
+    // to the work thread, this one is for the other direction. Protected
+    // by the same mutex (queue_mutex_).
+    std::list<datasrc_clientmgr_internal::FinishedCallback> callback_queue_;
     CondVarType cond_;          // condition variable for queue operations
     MutexType queue_mutex_;     // mutex to protect the queue
     datasrc::ClientListMapPtr clients_map_;
                                 // map of actual data source client objects
+    boost::scoped_ptr<FDGuard> fd_guard_; // A guard to close the fds.
+    int read_fd_, write_fd_;    // Descriptors for wakeup
     MutexType map_mutex_;       // mutex to protect the clients map
 
     BuilderType builder_;
     ThreadType builder_thread_; // for safety this should be placed last
+    isc::asiolink::LocalSocket wakeup_socket_; // For integration of read_fd_
+                                               // to the asio loop
+    char buffer[1];   // Buffer for the wakeup socket.
 };
 
 namespace datasrc_clientmgr_internal {
@@ -385,12 +558,15 @@ public:
     ///
     /// \throw None
     DataSrcClientsBuilderBase(std::list<Command>* command_queue,
+                              std::list<FinishedCallback>* callback_queue,
                               CondVarType* cond, MutexType* queue_mutex,
                               datasrc::ClientListMapPtr* clients_map,
-                              MutexType* map_mutex
+                              MutexType* map_mutex,
+                              int wake_fd
         ) :
-        command_queue_(command_queue), cond_(cond), queue_mutex_(queue_mutex),
-        clients_map_(clients_map), map_mutex_(map_mutex)
+        command_queue_(command_queue), callback_queue_(callback_queue),
+        cond_(cond), queue_mutex_(queue_mutex),
+        clients_map_(clients_map), map_mutex_(map_mutex), wake_fd_(wake_fd)
     {}
 
     /// \brief The main loop.
@@ -450,6 +626,44 @@ private:
         }
     }
 
+    void doSegmentUpdate(const isc::data::ConstElementPtr& arg) {
+        try {
+            const isc::dns::RRClass
+                rrclass(arg->get("data-source-class")->stringValue());
+            const std::string&
+                name(arg->get("data-source-name")->stringValue());
+            const isc::data::ConstElementPtr& segment_params =
+                arg->get("segment-params");
+            typename MutexType::Locker locker(*map_mutex_);
+            const boost::shared_ptr<isc::datasrc::ConfigurableClientList>&
+                list = (**clients_map_)[rrclass];
+            if (!list) {
+                LOG_FATAL(auth_logger,
+                          AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_UNKNOWN_CLASS)
+                    .arg(rrclass);
+                std::terminate();
+            }
+            if (!list->resetMemorySegment(name,
+                    isc::datasrc::memory::ZoneTableSegment::READ_ONLY,
+                    segment_params)) {
+                LOG_FATAL(auth_logger,
+                          AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_NO_DATASRC)
+                    .arg(rrclass).arg(name);
+                std::terminate();
+            }
+        } catch (const isc::dns::InvalidRRClass& irce) {
+            LOG_FATAL(auth_logger,
+                      AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_BAD_CLASS)
+                .arg(arg->get("data-source-class"));
+            std::terminate();
+        } catch (const isc::Exception& e) {
+            LOG_FATAL(auth_logger,
+                      AUTH_DATASRC_CLIENTS_BUILDER_SEGMENT_ERROR)
+                .arg(e.what());
+            std::terminate();
+        }
+    }
+
     void doLoadZone(const isc::data::ConstElementPtr& arg);
     boost::shared_ptr<datasrc::memory::ZoneWriter> getZoneWriter(
         datasrc::ConfigurableClientList& client_list,
@@ -457,10 +671,12 @@ private:
 
     // The following are shared with the manager
     std::list<Command>* command_queue_;
+    std::list<FinishedCallback> *callback_queue_;
     CondVarType* cond_;
     MutexType* queue_mutex_;
     datasrc::ClientListMapPtr* clients_map_;
     MutexType* map_mutex_;
+    int wake_fd_;
 };
 
 // Shortcut typedef for normal use
@@ -494,6 +710,31 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::run() {
                               AUTH_DATASRC_CLIENTS_BUILDER_COMMAND_ERROR).
                         arg(e.what());
                 }
+                if (current_commands.front().callback) {
+                    // Lock the queue
+                    typename MutexType::Locker locker(*queue_mutex_);
+                    callback_queue_->
+                        push_back(current_commands.front().callback);
+                    // Wake up the other end. If it would block, there are data
+                    // and it'll wake anyway.
+                    int result = send(wake_fd_, "w", 1, MSG_DONTWAIT);
+                    if (result == -1 &&
+                        (errno != EWOULDBLOCK && errno != EAGAIN)) {
+                        // Note: the strerror might not be thread safe, as
+                        // subsequent call to it might change the returned
+                        // string. But that is unlikely and strerror_r is
+                        // not portable and we are going to terminate anyway,
+                        // so that's better than nothing.
+                        //
+                        // Also, this error handler is not tested. It should
+                        // be generally impossible to happen, so it is hard
+                        // to trigger in controlled way.
+                        LOG_FATAL(auth_logger,
+                                  AUTH_DATASRC_CLIENTS_BUILDER_WAKE_ERR).
+                            arg(strerror(errno));
+                        std::terminate();
+                    }
+                }
                 current_commands.pop_front();
             }
         }
@@ -515,23 +756,26 @@ bool
 DataSrcClientsBuilderBase<MutexType, CondVarType>::handleCommand(
     const Command& command)
 {
-    const CommandID cid = command.first;
+    const CommandID cid = command.id;
     if (cid >= NUM_COMMANDS) {
         // This shouldn't happen except for a bug within this file.
         isc_throw(Unexpected, "internal bug: invalid command, ID: " << cid);
     }
 
     const boost::array<const char*, NUM_COMMANDS> command_desc = {
-        {"NOOP", "RECONFIGURE", "LOADZONE", "SHUTDOWN"}
+        {"NOOP", "RECONFIGURE", "LOADZONE", "SEGMENT_INFO_UPDATE", "SHUTDOWN"}
     };
     LOG_DEBUG(auth_logger, DBGLVL_TRACE_BASIC,
               AUTH_DATASRC_CLIENTS_BUILDER_COMMAND).arg(command_desc.at(cid));
-    switch (command.first) {
+    switch (command.id) {
     case RECONFIGURE:
-        doReconfigure(command.second);
+        doReconfigure(command.params);
         break;
     case LOADZONE:
-        doLoadZone(command.second);
+        doLoadZone(command.params);
+        break;
+    case SEGMENT_INFO_UPDATE:
+        doSegmentUpdate(command.params);
         break;
     case SHUTDOWN:
         return (false);
@@ -623,7 +867,7 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
     datasrc::ConfigurableClientList::ZoneWriterPair writerpair;
     {
         typename MutexType::Locker locker(*map_mutex_);
-        writerpair = client_list.getCachedZoneWriter(origin);
+        writerpair = client_list.getCachedZoneWriter(origin, false);
     }
 
     switch (writerpair.first) {
@@ -639,12 +883,21 @@ DataSrcClientsBuilderBase<MutexType, CondVarType>::getZoneWriter(
                   AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE_NOCACHE)
             .arg(origin).arg(rrclass);
         break;                  // return NULL below
+    case datasrc::ConfigurableClientList::CACHE_NOT_WRITABLE:
+        // This is an internal error. Auth server should skip reloading zones
+        // on non writable caches.
+        isc_throw(InternalCommandError, "failed to load zone " << origin
+                  << "/" << rrclass << ": internal failure, in-memory cache "
+                  "is not writable");
     case datasrc::ConfigurableClientList::CACHE_DISABLED:
         // This is an internal error. Auth server must have the cache
         // enabled.
         isc_throw(InternalCommandError, "failed to load zone " << origin
                   << "/" << rrclass << ": internal failure, in-memory cache "
                   "is somehow disabled");
+    default:                    // other cases can really never happen
+        isc_throw(Unexpected, "Impossible result in getting data source "
+                  "ZoneWriter: " << writerpair.first);
     }
 
     return (boost::shared_ptr<datasrc::memory::ZoneWriter>());

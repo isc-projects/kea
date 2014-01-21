@@ -12,9 +12,10 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <exceptions/exceptions.h>
-#include <dhcpsrv/dhcp_config_parser.h>
 #include <cc/data.h>
+#include <exceptions/exceptions.h>
+#include <dhcpsrv/dhcp_parsers.h>
+
 #include <stdint.h>
 #include <string>
 
@@ -29,7 +30,8 @@ namespace dhcp {
 
 class Dhcpv4Srv;
 
-/// @brief Configure DHCPv4 server (@c Dhcpv4Srv) with a set of configuration values.
+/// @brief Configure DHCPv4 server (@c Dhcpv4Srv) with a set of configuration
+/// values.
 ///
 /// This function parses configuration information stored in @c config_set
 /// and configures the @c server by applying the configuration to it.
@@ -42,9 +44,9 @@ class Dhcpv4Srv;
 /// (such as malformed configuration or invalid configuration parameter),
 /// this function returns appropriate error code.
 ///
-/// This function is called every time a new configuration is received. The extra
-/// parameter is a reference to DHCPv4 server component. It is currently not used
-/// and CfgMgr::instance() is accessed instead.
+/// This function is called every time a new configuration is received. The
+/// extra parameter is a reference to DHCPv4 server component. It is currently
+/// not used and CfgMgr::instance() is accessed instead.
 ///
 /// This method does not throw. It catches all exceptions and returns them as
 /// reconfiguration statuses. It may return the following response codes:
@@ -59,15 +61,10 @@ isc::data::ConstElementPtr
 configureDhcp4Server(Dhcpv4Srv&,
                      isc::data::ConstElementPtr config_set);
 
-
-/// @brief Returns the global uint32_t values storage.
+/// @brief Returns the global context
 ///
-/// This function must be only used by unit tests that need
-/// to access uint32_t global storage to verify that the
-/// Uint32Parser works as expected.
-///
-/// @return a reference to a global uint32 values storage.
-const Uint32Storage& getUint32Defaults();
+/// @return a reference to the global context
+ParserContextPtr& globalContext();
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

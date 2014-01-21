@@ -37,9 +37,9 @@ class DNSAnswer;
 
 class DNSServiceImpl {
 public:
-    DNSServiceImpl(IOService& io_service, SimpleCallback* checkin,
+    DNSServiceImpl(IOService& io_service,
                    DNSLookup* lookup, DNSAnswer* answer) :
-            io_service_(io_service), checkin_(checkin), lookup_(lookup),
+            io_service_(io_service), lookup_(lookup),
             answer_(answer), tcp_recv_timeout_(5000)
     {}
 
@@ -50,13 +50,12 @@ public:
     typedef boost::shared_ptr<TCPServer> TCPServerPtr;
     typedef boost::shared_ptr<DNSServer> DNSServerPtr;
     std::vector<DNSServerPtr> servers_;
-    SimpleCallback* checkin_;
     DNSLookup* lookup_;
     DNSAnswer* answer_;
     size_t tcp_recv_timeout_;
 
     template<class Ptr, class Server> void addServerFromFD(int fd, int af) {
-        Ptr server(new Server(io_service_.get_io_service(), fd, af, checkin_,
+        Ptr server(new Server(io_service_.get_io_service(), fd, af,
                               lookup_, answer_));
         startServer(server);
     }
@@ -64,8 +63,9 @@ public:
     // SyncUDPServer has different constructor signature so it cannot be
     // templated.
     void addSyncUDPServerFromFD(int fd, int af) {
-        SyncUDPServerPtr server(new SyncUDPServer(io_service_.get_io_service(),
-                                                  fd, af, lookup_));
+        SyncUDPServerPtr server(SyncUDPServer::create(
+                                    io_service_.get_io_service(), fd, af,
+                                    lookup_));
         startServer(server);
     }
 
@@ -87,9 +87,9 @@ private:
     }
 };
 
-DNSService::DNSService(IOService& io_service, SimpleCallback* checkin,
+DNSService::DNSService(IOService& io_service,
                        DNSLookup* lookup, DNSAnswer *answer) :
-    impl_(new DNSServiceImpl(io_service, checkin, lookup, answer)),
+    impl_(new DNSServiceImpl(io_service, lookup, answer)),
     io_service_(io_service)
 {
 }

@@ -425,6 +425,31 @@ public:
                                            params =
                                            isc::data::ConstElementPtr());
 
+    /// \brief Send a notification to subscribed users
+    ///
+    /// Send a notification message to all users subscribed to the given
+    /// notification group.
+    ///
+    /// This method does not not block.
+    ///
+    /// See docs/design/ipc-high.txt for details about notifications and
+    /// the format of messages sent.
+    ///
+    /// \throw CCSessionError for low-level communication errors.
+    /// \param notification_group This parameter (indirectly) signifies what
+    ///     users should receive the notification. Only the users that
+    ///     subscribed to notifications on the same group receive it.
+    /// \param name The name of the event to notify about (for example
+    ///     `new_group_member`).
+    /// \param params Other parameters that describe the event. This might
+    ///     be, for example, the ID of the new member and the name of the
+    ///     group. This can be any data element, but it is common for it to be
+    ///     map.
+    void notify(const std::string& notification_group,
+                const std::string& name,
+                const isc::data::ConstElementPtr& params =
+                    isc::data::ConstElementPtr());
+
     /// \brief Convenience version of rpcCall
     ///
     /// This is exactly the same as the previous version of rpcCall, except
@@ -550,6 +575,101 @@ public:
     /// \param id The id of request as returned by groupRecvMsgAsync.
     void cancelAsyncRecv(const AsyncRecvRequestID& id);
 
+    /// \brief Called when a notification comes
+    ///
+    /// The callback should be exception-free. If it raises an exception,
+    /// it'll leak through the event loop up and probably terminate the
+    /// application.
+    ///
+    /// \param event_name The identification of event type.
+    /// \param params The parameters of the event. This may be NULL
+    ///     pointer in case no parameters were sent with the event.
+    typedef boost::function<void (const std::string& event_name,
+                                  const data::ConstElementPtr& params)>
+        NotificationCallback;
+
+    /// \brief Multiple notification callbacks for the same notification
+    typedef std::list<NotificationCallback> NotificationCallbacks;
+
+    /// \brief Mapping from groups to callbacks
+    typedef std::map<std::string, NotificationCallbacks>
+        SubscribedNotifications;
+
+    /// \brief Identification of single callback
+    typedef std::pair<SubscribedNotifications::iterator,
+                      NotificationCallbacks::iterator>
+        NotificationID;
+
+    /// \brief Subscribe to a notification group
+    ///
+    /// From now on, every notification that is sent to the given group
+    /// triggers the passed callback.
+    ///
+    /// There may be multiple (independent) callbacks for the same channel.
+    /// This one adds a new one, to the end of the chain (the callbacks
+    /// are called in the same order as they were registered).
+    ///
+    /// \param notification_group The channel of notifications.
+    /// \param callback The callback to be added.
+    /// \return ID of the notification callback. It is an opaque ID and can
+    ///     be used to remove this callback.
+    NotificationID subscribeNotification(const std::string& notification_group,
+                                         const NotificationCallback& callback);
+
+    /// \brief Unsubscribe the callback from its notification group.
+    ///
+    /// Express that the desire for this callback to be executed is no longer
+    /// relevant. All the other callbacks (even for the same notification
+    /// group) are left intact.
+    ///
+    /// \param notification The ID of notification callback returned by
+    ///     subscribeNotification.
+    void unsubscribeNotification(const NotificationID& notification);
+
+    /// \brief Subscribe to a group
+    ///
+    /// Wrapper around the CCSession::subscribe.
+    void subscribe(const std::string& group) {
+        session_.subscribe(group, isc::cc::CC_INSTANCE_WILDCARD);
+    }
+
+    /// \brief Unsubscribe from a group.
+    ///
+    /// Wrapper around the CCSession::unsubscribe.
+    void unsubscribe(const std::string& group) {
+        session_.unsubscribe(group, isc::cc::CC_INSTANCE_WILDCARD);
+    }
+
+    /// \brief Callback type for unhandled commands
+    ///
+    /// The type of functions that are not handled by the ModuleCCSession
+    /// because they are not aimed at the module.
+    ///
+    /// The parameters are:
+    /// - Name of the command.
+    /// - The module it was aimed for (may be empty).
+    /// - The parameters of the command.
+    typedef boost::function<void (const std::string&, const std::string&,
+                                  const isc::data::ConstElementPtr&)>
+        UnhandledCallback;
+
+    /// \brief Register a callback for messages sent to foreign modules.
+    ///
+    /// Usually, a command aimed at foreign module (or sent directly)
+    /// is discarded. By registering a callback here, these can be
+    /// examined.
+    ///
+    /// \note A callback overwrites the previous one set.
+    /// \todo This is a temporary, unclean, solution. A more generic
+    ///     one needs to be designed. Also, a solution that is able
+    ///     to send an answer would be great.
+    ///
+    /// \param callback The new callback to use. It may be an empty
+    ///     function.
+    void setUnhandledCallback(const UnhandledCallback& callback) {
+        unhandled_callback_ = callback;
+    }
+
 private:
     ModuleSpec readModuleSpecification(const std::string& filename);
     void startCheck();
@@ -565,6 +685,8 @@ private:
     ///     otherwise.
     bool checkAsyncRecv(const data::ConstElementPtr& envelope,
                         const data::ConstElementPtr& msg);
+    bool checkNotification(const data::ConstElementPtr& envelope,
+                           const data::ConstElementPtr& msg);
     /// \brief Checks if a message with this envelope matches the request
     bool requestMatch(const AsyncRecvRequest& request,
                       const data::ConstElementPtr& envelope) const;
@@ -574,6 +696,8 @@ private:
     isc::cc::AbstractSession& session_;
     ModuleSpec module_specification_;
     AsyncRecvRequests async_recv_requests_;
+    SubscribedNotifications notifications_;
+
     isc::data::ConstElementPtr handleConfigUpdate(
         isc::data::ConstElementPtr new_config);
 
@@ -599,6 +723,8 @@ private:
                             isc::data::ConstElementPtr new_config);
 
     ModuleSpec fetchRemoteSpec(const std::string& module, bool is_filename);
+
+    UnhandledCallback unhandled_callback_;
 };
 
 /// \brief Default handler for logging config updates

@@ -31,6 +31,7 @@ qrynoauthans	MSG_QRYNOAUTHANS		Number of queries received by the b10-auth server
 qryreferral	MSG_QRYREFERRAL			Number of queries received by the b10-auth server resulted in referral answer.
 qrynxrrset	MSG_QRYNXRRSET			Number of queries received by the b10-auth server resulted in NoError and AA bit is set in the response, but the number of answer RR == 0.
 authqryrej	MSG_QRYREJECT			Number of authoritative queries rejected by the b10-auth server.
+qryrecursion	MSG_QRYRECURSION		Number of queries received by the b10-auth server with "Recursion Desired" (RD) bit was set.
 rcode		msg_counter_rcode	Rcode statistics	=
 	noerror		MSG_RCODE_NOERROR	Number of requests received by the b10-auth server resulted in RCODE = 0 (NoError).
 	formerr		MSG_RCODE_FORMERR	Number of requests received by the b10-auth server resulted in RCODE = 1 (FormErr).

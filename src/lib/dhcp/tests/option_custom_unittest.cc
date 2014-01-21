@@ -32,6 +32,59 @@ public:
     /// @brief Constructor.
     OptionCustomTest() { }
 
+    /// @brief Appends DHCPv4 suboption in the on-wire format to the buffer.
+    ///
+    /// @param buf A buffer to which suboption is appended.
+    void appendV4Suboption(OptionBuffer& buf) {
+        const uint8_t subopt_data[] = {
+            0x01, 0x02, // Option type = 1, length = 2
+            0x01, 0x02  // Two bytes of data
+        };
+        buf.insert(buf.end(), subopt_data, subopt_data + sizeof(subopt_data));
+    }
+
+    /// @brief Check if the parsed option has a suboption.
+    ///
+    /// @param opt An option in which suboption is expected.
+    /// @return Assertion result indicating that the suboption is
+    /// present (success) or missing (failure).
+    ::testing::AssertionResult hasV4Suboption(OptionCustom* opt) {
+        OptionPtr subopt = opt->getOption(1);
+        if (!subopt) {
+            return (::testing::AssertionFailure(::testing::Message()
+                                                << "Suboption of OptionCustom"
+                                                " is missing"));
+        }
+        return (::testing::AssertionSuccess());
+    }
+
+    /// @brief Appends DHCPv6 suboption in the on-wire format to the buffer.
+    ///
+    /// @param buf A buffer to which suboption is appended.
+    void appendV6Suboption(OptionBuffer& buf) {
+        const uint8_t subopt_data[] = {
+            0x00, 0x01, // Option type = 1
+            0x00, 0x04, // Option length = 4
+            0x01, 0x02, 0x03, 0x04 // Four bytes of data
+        };
+        buf.insert(buf.end(), subopt_data, subopt_data + sizeof(subopt_data));
+    }
+
+    /// @brief Check if the parsed option has a suboption.
+    ///
+    /// @param opt An option in which suboption is expected.
+    /// @return Assertion result indicating that the suboption is
+    /// present (success) or missing (failure).
+    ::testing::AssertionResult hasV6Suboption(OptionCustom* opt) {
+        OptionPtr subopt = opt->getOption(1);
+        if (!subopt) {
+            return (::testing::AssertionFailure(::testing::Message()
+                                                << "Suboption of OptionCustom"
+                                                " is missing"));
+        }
+        return (::testing::AssertionSuccess());
+    }
+
     /// @brief Write IP address into a buffer.
     ///
     /// @param address address to be written.
@@ -114,23 +167,30 @@ TEST_F(OptionCustomTest, constructor) {
 // The purpose of this test is to verify that 'empty' option definition can
 // be used to create an instance of custom option.
 TEST_F(OptionCustomTest, emptyData) {
-    OptionDefinition opt_def("OPTION_FOO", 232, "empty");
+    OptionDefinition opt_def("option-foo", 232, "empty", "option-foo-space");
 
+    // Create a buffer holding 1 suboption.
     OptionBuffer buf;
+    appendV4Suboption(buf);
+
     boost::scoped_ptr<OptionCustom> option;
     ASSERT_NO_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V4, buf.begin(), buf.end()));
+        option.reset(new OptionCustom(opt_def, Option::V4, buf.begin(),
+                                      buf.end()));
     );
     ASSERT_TRUE(option);
 
     // Option is 'empty' so no data fields are expected.
     EXPECT_EQ(0, option->getDataFieldsNum());
+
+    // Check that suboption has been parsed.
+    EXPECT_TRUE(hasV4Suboption(option.get()));
 }
 
 // The purpose of this test is to verify that the option definition comprising
 // a binary value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, binaryData) {
-    OptionDefinition opt_def("OPTION_FOO", 231, "binary");
+    OptionDefinition opt_def("option-foo", 231, "binary", "option-foo-space");
 
     // Create a buffer holding some binary data. This data will be
     // used as reference when we read back the data from a created
@@ -139,6 +199,11 @@ TEST_F(OptionCustomTest, binaryData) {
     for (int i = 0; i < 14; ++i) {
         buf_in[i] = i;
     }
+
+    // Append suboption data. This data should NOT be recognized when
+    // option has a binary format.
+    appendV4Suboption(buf_in);
+
     // Use scoped pointer because it allows to declare the option
     // in the function scope and initialize it under ASSERT.
     boost::scoped_ptr<OptionCustom> option;
@@ -169,20 +234,24 @@ TEST_F(OptionCustomTest, binaryData) {
                                       buf_in.end())),
         isc::OutOfRange
     );
+
+    // Suboptions are not recognized for the binary formats because as it is
+    // a variable length format. Therefore, we expect that there are no
+    // suboptions in the parsed option.
+    EXPECT_FALSE(option->getOption(1));
 }
 
 // The purpose of this test is to verify that an option definition comprising
 // a single boolean value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, booleanData) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "boolean");
+    OptionDefinition opt_def("option-foo", 1000, "boolean", "option-foo-space");
 
     OptionBuffer buf;
     // Push back the value that represents 'false'.
     buf.push_back(0);
-    // Push back the 'true' value. Note that this value should
-    // be ignored by custom option because it holds single boolean
-    // value (according to option definition).
-    buf.push_back(1);
+
+    // Append suboption. It should be present in the parsed packet.
+    appendV6Suboption(buf);
 
     boost::scoped_ptr<OptionCustom> option;
     ASSERT_NO_THROW(
@@ -202,10 +271,14 @@ TEST_F(OptionCustomTest, booleanData) {
     ASSERT_NO_THROW(value = option->readBoolean(0));
     EXPECT_FALSE(value);
 
+    // There should be one suboption present.
+    EXPECT_TRUE(hasV6Suboption(option.get()));
+
     // Check that the option with "no data" is rejected.
     buf.clear();
     EXPECT_THROW(
-        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end())),
+        option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(),
+                                      buf.end())),
         isc::OutOfRange
     );
 }
@@ -213,7 +286,7 @@ TEST_F(OptionCustomTest, booleanData) {
 // The purpose of this test is to verify that the data from a buffer
 // can be read as FQDN.
 TEST_F(OptionCustomTest, fqdnData) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "fqdn");
+    OptionDefinition opt_def("option-foo", 1000, "fqdn", "option-foo-space");
 
     const char data[] = {
         8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
@@ -223,6 +296,10 @@ TEST_F(OptionCustomTest, fqdnData) {
     };
 
     std::vector<uint8_t> buf(data, data + sizeof(data));
+
+    // The FQDN has a certain boundary. Right after FQDN it should be
+    // possible to append suboption and parse it correctly.
+    appendV6Suboption(buf);
 
     boost::scoped_ptr<OptionCustom> option;
     ASSERT_NO_THROW(
@@ -235,6 +312,9 @@ TEST_F(OptionCustomTest, fqdnData) {
     std::string domain0 = option->readFqdn(0);
     EXPECT_EQ("mydomain.example.com.", domain0);
 
+    // This option should have one suboption.
+    EXPECT_TRUE(hasV6Suboption(option.get()));
+
     // Check that the option with truncated data can't be created.
     EXPECT_THROW(
         option.reset(new OptionCustom(opt_def, Option::V6,
@@ -246,11 +326,14 @@ TEST_F(OptionCustomTest, fqdnData) {
 // The purpose of this test is to verify that the option definition comprising
 // 16-bit signed integer value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, int16Data) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "int16");
+    OptionDefinition opt_def("option-foo", 1000, "int16", "option-foo-space");
 
     OptionBuffer buf;
     // Store signed integer value in the input buffer.
     writeInt<int16_t>(-234, buf);
+
+    // Append suboption.
+    appendV6Suboption(buf);
 
     // Create custom option.
     boost::scoped_ptr<OptionCustom> option;
@@ -268,6 +351,9 @@ TEST_F(OptionCustomTest, int16Data) {
     ASSERT_NO_THROW(value = option->readInteger<int16_t>(0));
     EXPECT_EQ(-234, value);
 
+    // Parsed option should have one suboption.
+    EXPECT_TRUE(hasV6Suboption(option.get()));
+
     // Check that the option is not created when a buffer is
     // too short (1 byte instead of 2 bytes).
     EXPECT_THROW(
@@ -279,11 +365,13 @@ TEST_F(OptionCustomTest, int16Data) {
 // The purpose of this test is to verify that the option definition comprising
 // 32-bit signed integer value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, int32Data) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "int32");
+    OptionDefinition opt_def("option-foo", 1000, "int32", "option-foo-space");
 
     OptionBuffer buf;
     writeInt<int32_t>(-234, buf);
-    writeInt<int32_t>(100, buf);
+
+    // Append one suboption.
+    appendV6Suboption(buf);
 
     // Create custom option.
     boost::scoped_ptr<OptionCustom> option;
@@ -301,6 +389,9 @@ TEST_F(OptionCustomTest, int32Data) {
     ASSERT_NO_THROW(value = option->readInteger<int32_t>(0));
     EXPECT_EQ(-234, value);
 
+    // The parsed option should have one suboption.
+    EXPECT_TRUE(hasV6Suboption(option.get()));
+
     // Check that the option is not created when a buffer is
     // too short (3 bytes instead of 4 bytes).
     EXPECT_THROW(
@@ -312,11 +403,15 @@ TEST_F(OptionCustomTest, int32Data) {
 // The purpose of this test is to verify that the option definition comprising
 // single IPv4 address can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, ipv4AddressData) {
-    OptionDefinition opt_def("OPTION_FOO", 231, "ipv4-address");
+    OptionDefinition opt_def("OPTION_FOO", 231, "ipv4-address",
+                             "option-foo-space");
 
     // Create input buffer.
     OptionBuffer buf;
     writeAddress(IOAddress("192.168.100.50"), buf);
+
+    // Append one suboption.
+    appendV4Suboption(buf);
 
     // Create custom option.
     boost::scoped_ptr<OptionCustom> option;
@@ -334,6 +429,9 @@ TEST_F(OptionCustomTest, ipv4AddressData) {
 
     EXPECT_EQ("192.168.100.50", address.toText());
 
+    // Parsed option should have one suboption.
+    EXPECT_TRUE(hasV4Suboption(option.get()));
+
     // Check that option is not created if the provided buffer is
     // too short (use 3 bytes instead of 4).
     EXPECT_THROW(
@@ -345,11 +443,15 @@ TEST_F(OptionCustomTest, ipv4AddressData) {
 // The purpose of this test is to verify that the option definition comprising
 // single IPv6 address can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, ipv6AddressData) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address");
+    OptionDefinition opt_def("option-foo", 1000, "ipv6-address",
+                             "option-foo-space");
 
     // Initialize input buffer.
     OptionBuffer buf;
     writeAddress(IOAddress("2001:db8:1::100"), buf);
+
+    // Append suboption.
+    appendV6Suboption(buf);
 
     // Create custom option using input buffer.
     boost::scoped_ptr<OptionCustom> option;
@@ -369,6 +471,9 @@ TEST_F(OptionCustomTest, ipv6AddressData) {
 
     EXPECT_EQ("2001:db8:1::100", address.toText());
 
+    // Parsed option should have one suboption.
+    EXPECT_TRUE(hasV6Suboption(option.get()));
+
     // Check that option is not created if the provided buffer is
     // too short (use 15 bytes instead of 16).
     EXPECT_THROW(
@@ -382,11 +487,18 @@ TEST_F(OptionCustomTest, ipv6AddressData) {
 // The purpose of this test is to verify that the option definition comprising
 // string value can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, stringData) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "string");
+    OptionDefinition opt_def("option-foo", 1000, "string", "option-foo-space");
 
     // Create an input buffer holding some string value.
     OptionBuffer buf;
     writeString("hello world!", buf);
+
+    // Append suboption. It should not be detected because the string field
+    //  has variable length.
+    appendV6Suboption(buf);
+
+    // Append suboption. Since the option has variable length string field,
+    // the suboption should not be recognized.
 
     // Create custom option using input buffer.
     boost::scoped_ptr<OptionCustom> option;
@@ -403,7 +515,14 @@ TEST_F(OptionCustomTest, stringData) {
     std::string value;
     ASSERT_NO_THROW(value = option->readString(0));
 
-    EXPECT_EQ("hello world!", value);
+    // The initial part of the string should contain the actual string.
+    // The rest of it is a garbage from an attempt to decode suboption
+    // as a string.
+    ASSERT_EQ(20, value.size());
+    EXPECT_EQ("hello world!", value.substr(0, 12));
+
+    // No suboption should be present.
+    EXPECT_FALSE(option->getOption(1));
 
     // Check that option will not be created if empty buffer is provided.
     buf.clear();
@@ -416,7 +535,7 @@ TEST_F(OptionCustomTest, stringData) {
 // The purpose of this test is to verify that the option definition comprising
 // an array of boolean values can be used to create an instance of custom option.
 TEST_F(OptionCustomTest, booleanDataArray) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "boolean", true);
+    OptionDefinition opt_def("option-foo", 1000, "boolean", true);
 
     // Create a buffer with 5 values that represent array of
     // booleans.
@@ -472,7 +591,7 @@ TEST_F(OptionCustomTest, booleanDataArray) {
 // an array of 32-bit signed integer values can be used to create an instance
 // of custom option.
 TEST_F(OptionCustomTest, uint32DataArray) {
-    OptionDefinition opt_def("OPTION_FOO", 1000, "uint32", true);
+    OptionDefinition opt_def("option-foo", 1000, "uint32", true);
 
     // Create an input buffer that holds 4 uint32 values that
     // represent an array.
@@ -548,7 +667,7 @@ TEST_F(OptionCustomTest, ipv4AddressDataArray) {
     for (int i = 0; i < 3; ++i) {
         IOAddress address("10.10.10.10");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 
     // Check that it is ok if buffer length is not a multiple of IPv4
@@ -598,7 +717,7 @@ TEST_F(OptionCustomTest, ipv6AddressDataArray) {
     for (int i = 0; i < 3; ++i) {
         IOAddress address("fe80::4");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 
     // Check that it is ok if buffer length is not a multiple of IPv6
@@ -654,6 +773,47 @@ TEST_F(OptionCustomTest, fqdnDataArray) {
 
     std::string domain1 = option->readFqdn(1);
     EXPECT_EQ("example.com.", domain1);
+}
+
+// The purpose of this test is to verify that the opton definition comprising
+// a record of fixed-size fields can be used to create an option with a
+// suboption.
+TEST_F(OptionCustomTest, recordDataWithSuboption) {
+    OptionDefinition opt_def("option-foo", 1000, "record", "option-foo-space");
+    ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
+
+    // Create a buffer with two fields: 4-byte number and IPv4 address.
+    OptionBuffer buf;
+    writeInt<uint32_t>(0x01020304, buf);
+    writeAddress(IOAddress("192.168.0.1"), buf);
+
+    // Append a suboption. It should be correctly parsed because option fields
+    // preceding this option have fixed (known) size.
+    appendV6Suboption(buf);
+
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(),
+                                       buf.end()));
+    );
+    ASSERT_TRUE(option);
+
+    // We should have two data fields parsed.
+    ASSERT_EQ(2, option->getDataFieldsNum());
+
+    // Validate values in fields.
+    uint32_t value0 = 0;
+    ASSERT_NO_THROW(value0 = option->readInteger<uint32_t>(0));
+    EXPECT_EQ(0x01020304, value0);
+
+    IOAddress value1 = 0;
+    ASSERT_NO_THROW(value1 = option->readAddress(1));
+    EXPECT_EQ("192.168.0.1", value1.toText());
+
+    // Parsed option should have one suboption.
+    EXPECT_TRUE(hasV6Suboption(option.get()));
+
 }
 
 // The purpose of this test is to verify that the option definition comprising
@@ -1291,7 +1451,7 @@ TEST_F(OptionCustomTest, unpack) {
     for (int i = 0; i < 3; ++i) {
         IOAddress address("10.10.10.10");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 
     // Remove all addresses we had added. We are going to replace
@@ -1318,13 +1478,13 @@ TEST_F(OptionCustomTest, unpack) {
     for (int i = 0; i < 2; ++i) {
         IOAddress address("10.10.10.10");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 }
 
 // The purpose of this test is to verify that new data can be set for
 // a custom option.
-TEST_F(OptionCustomTest, setData) {
+TEST_F(OptionCustomTest, initialize) {
     OptionDefinition opt_def("OPTION_FOO", 1000, "ipv6-address", true);
 
     // Initialize reference data.
@@ -1353,7 +1513,7 @@ TEST_F(OptionCustomTest, setData) {
     for (int i = 0; i < 3; ++i) {
         IOAddress address("fe80::4");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 
     // Clear addresses we had previously added.
@@ -1370,7 +1530,7 @@ TEST_F(OptionCustomTest, setData) {
     }
 
     // Replace the option data.
-    ASSERT_NO_THROW(option->setData(buf.begin(), buf.end()));
+    ASSERT_NO_THROW(option->initialize(buf.begin(), buf.end()));
 
     // Now we should have only 2 data fields.
     ASSERT_EQ(2, option->getDataFieldsNum());
@@ -1379,7 +1539,7 @@ TEST_F(OptionCustomTest, setData) {
     for (int i = 0; i < 2; ++i) {
         IOAddress address("10.10.10.10");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 }
 

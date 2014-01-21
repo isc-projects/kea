@@ -12,8 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <datasrc/tests/memory/memory_segment_test.h>
-#include <datasrc/tests/memory/zone_table_segment_test.h>
+#include <datasrc/tests/memory/memory_segment_mock.h>
+#include <datasrc/tests/memory/zone_table_segment_mock.h>
 #include <datasrc/tests/memory/zone_loader_util.h>
 
 // NOTE: this faked_nsec3 inclusion (and all related code below)
@@ -44,7 +44,6 @@ using namespace isc::dns;
 using namespace isc::dns::rdata;
 using namespace isc::datasrc;
 using namespace isc::testutils;
-using boost::shared_ptr;
 using namespace isc::datasrc::test;
 using namespace isc::datasrc::memory::test;
 using namespace isc::datasrc::memory;
@@ -98,7 +97,7 @@ protected:
         origin_("example.org"),
         zone_data_(ZoneData::create(mem_sgmt_, origin_)),
         zone_finder_(*zone_data_, class_),
-        updater_(mem_sgmt_, class_, origin_, *zone_data_)
+        updater_(new ZoneDataUpdater(mem_sgmt_, class_, origin_, *zone_data_))
     {
         // Build test RRsets.  Below, we construct an RRset for
         // each textual RR(s) of zone_data, and assign it to the corresponding
@@ -196,7 +195,7 @@ protected:
     }
 
     void addToZoneData(const ConstRRsetPtr rrset) {
-        updater_.add(rrset, rrset->getRRsig());
+        updater_->add(rrset, rrset->getRRsig());
     }
 
     /// \brief expensive rrset converter
@@ -221,10 +220,10 @@ protected:
     const RRClass class_;
     const Name origin_;
     // The zone finder to torture by tests
-    MemorySegmentTest mem_sgmt_;
+    MemorySegmentMock mem_sgmt_;
     memory::ZoneData* zone_data_;
     memory::InMemoryZoneFinder zone_finder_;
-    ZoneDataUpdater updater_;
+    boost::scoped_ptr<ZoneDataUpdater> updater_;
 
     // Placeholder for storing RRsets to be checked with rrsetsCheck()
     vector<ConstRRsetPtr> actual_rrsets_;
@@ -1549,19 +1548,19 @@ TEST_F(InMemoryZoneFinderTest, findOrphanRRSIG) {
     // Add A for ns.example.org, and RRSIG-only covering TXT for the same name.
     // query for the TXT should result in NXRRSET.
     addToZoneData(rr_ns_a_);
-    updater_.add(ConstRRsetPtr(),
-                 textToRRset(
-                     "ns.example.org. 300 IN RRSIG TXT 5 3 300 20120814220826 "
-                     "20120715220826 1234 example.com. FAKE"));
+    updater_->add(ConstRRsetPtr(),
+                  textToRRset(
+                      "ns.example.org. 300 IN RRSIG TXT 5 3 300 20120814220826 "
+                      "20120715220826 1234 example.com. FAKE"));
     findTest(Name("ns.example.org"), RRType::TXT(),
              ZoneFinder::NXRRSET, true, ConstRRsetPtr(), expected_flags);
 
     // Add RRSIG-only covering NSEC.  This shouldn't be returned when NSEC is
     // requested, whether it's for NXRRSET or NXDOMAIN
-    updater_.add(ConstRRsetPtr(),
-                 textToRRset(
-                     "ns.example.org. 300 IN RRSIG NSEC 5 3 300 "
-                     "20120814220826 20120715220826 1234 example.com. FAKE"));
+    updater_->add(ConstRRsetPtr(),
+                  textToRRset(
+                      "ns.example.org. 300 IN RRSIG NSEC 5 3 300 "
+                      "20120814220826 20120715220826 1234 example.com. FAKE"));
     // The added RRSIG for NSEC could be used for NXRRSET but shouldn't
     findTest(Name("ns.example.org"), RRType::TXT(),
              ZoneFinder::NXRRSET, true, ConstRRsetPtr(),
@@ -1572,29 +1571,29 @@ TEST_F(InMemoryZoneFinderTest, findOrphanRRSIG) {
              expected_flags, NULL, ZoneFinder::FIND_DNSSEC);
 
     // RRSIG-only CNAME shouldn't be accidentally confused with real CNAME.
-    updater_.add(ConstRRsetPtr(),
-                 textToRRset(
-                     "nocname.example.org. 300 IN RRSIG CNAME 5 3 300 "
-                     "20120814220826 20120715220826 1234 example.com. FAKE"));
+    updater_->add(ConstRRsetPtr(),
+                  textToRRset(
+                      "nocname.example.org. 300 IN RRSIG CNAME 5 3 300 "
+                      "20120814220826 20120715220826 1234 example.com. FAKE"));
     findTest(Name("nocname.example.org"), RRType::A(),
              ZoneFinder::NXRRSET, true, ConstRRsetPtr(), expected_flags);
 
     // RRSIG-only for NS wouldn't invoke delegation anyway, but we check this
     // case explicitly.
-    updater_.add(ConstRRsetPtr(),
-                 textToRRset(
-                     "nodelegation.example.org. 300 IN RRSIG NS 5 3 300 "
-                     "20120814220826 20120715220826 1234 example.com. FAKE"));
+    updater_->add(ConstRRsetPtr(),
+                  textToRRset(
+                      "nodelegation.example.org. 300 IN RRSIG NS 5 3 300 "
+                      "20120814220826 20120715220826 1234 example.com. FAKE"));
     findTest(Name("nodelegation.example.org"), RRType::A(),
              ZoneFinder::NXRRSET, true, ConstRRsetPtr(), expected_flags);
     findTest(Name("www.nodelegation.example.org"), RRType::A(),
              ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags);
 
     // Same for RRSIG-only for DNAME
-    updater_.add(ConstRRsetPtr(),
-                 textToRRset(
-                     "nodname.example.org. 300 IN RRSIG DNAME 5 3 300 "
-                     "20120814220826 20120715220826 1234 example.com. FAKE"));
+    updater_->add(ConstRRsetPtr(),
+                  textToRRset(
+                      "nodname.example.org. 300 IN RRSIG DNAME 5 3 300 "
+                      "20120814220826 20120715220826 1234 example.com. FAKE"));
     findTest(Name("www.nodname.example.org"), RRType::A(),
              ZoneFinder::NXDOMAIN, true, ConstRRsetPtr(), expected_flags);
     // If we have a delegation NS at this node, it will be a bit trickier,
@@ -1612,8 +1611,9 @@ TEST_F(InMemoryZoneFinderTest, findOrphanRRSIG) {
 // handling)
 TEST_F(InMemoryZoneFinderTest, NSECNonExistentTest) {
     const Name name("example.com.");
-    shared_ptr<ZoneTableSegment> ztable_segment(
-         new ZoneTableSegmentTest(class_, mem_sgmt_));
+    boost::shared_ptr<ZoneTableSegment> ztable_segment(
+         new ZoneTableSegmentMock(class_, mem_sgmt_));
+    updater_.reset();
     loadZoneIntoTable(*ztable_segment, name, class_,
                       TEST_DATA_DIR "/2504-test.zone");
     InMemoryClient client(ztable_segment, class_);
@@ -1758,10 +1758,10 @@ TEST_F(InMemoryZoneFinderNSEC3Test, RRSIGOnly) {
     // add an RRSIG-only NSEC3 to the NSEC3 space, and try to find it; it
     // should result in an exception.
     const string n8_hash = "ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ";
-    updater_.add(ConstRRsetPtr(),
-                 textToRRset(
-                     n8_hash + ".example.org. 300 IN RRSIG NSEC3 5 3 300 "
-                     "20120814220826 20120715220826 1234 example.com. FAKE"));
+    updater_->add(ConstRRsetPtr(),
+                  textToRRset(
+                      n8_hash + ".example.org. 300 IN RRSIG NSEC3 5 3 300 "
+                      "20120814220826 20120715220826 1234 example.com. FAKE"));
     EXPECT_THROW(zone_finder_.findNSEC3(Name("n8.example.org"), false),
                  DataSourceError);
 }
@@ -1774,8 +1774,9 @@ TEST_F(InMemoryZoneFinderNSEC3Test, findNSEC3MissingOrigin) {
      setNSEC3HashCreator(&creator);
 
      const Name name("example.com.");
-     shared_ptr<ZoneTableSegment> ztable_segment(
-          new ZoneTableSegmentTest(class_, mem_sgmt_));
+     boost::shared_ptr<ZoneTableSegment> ztable_segment(
+          new ZoneTableSegmentMock(class_, mem_sgmt_));
+     updater_.reset();
      loadZoneIntoTable(*ztable_segment, name, class_,
                        TEST_DATA_DIR "/2503-test.zone");
      InMemoryClient client(ztable_segment, class_);

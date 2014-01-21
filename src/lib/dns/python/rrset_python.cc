@@ -57,7 +57,6 @@ PyObject* RRset_getName(PyObject* self, PyObject* args);
 PyObject* RRset_getClass(PyObject* self, PyObject* args);
 PyObject* RRset_getType(PyObject* self, PyObject* args);
 PyObject* RRset_getTTL(PyObject* self, PyObject* args);
-PyObject* RRset_setName(PyObject* self, PyObject* args);
 PyObject* RRset_setTTL(PyObject* self, PyObject* args);
 PyObject* RRset_toText(PyObject* self, PyObject* args);
 PyObject* RRset_str(PyObject* self);
@@ -79,8 +78,6 @@ PyMethodDef RRset_methods[] = {
       "Returns the type of the RRset as an RRType object." },
     { "get_ttl", RRset_getTTL, METH_NOARGS,
       "Returns the TTL of the RRset as an RRTTL object." },
-    { "set_name", RRset_setName, METH_VARARGS,
-      "Sets the name of the RRset.\nTakes a Name object as an argument." },
     { "set_ttl", RRset_setTTL, METH_VARARGS,
       "Sets the TTL of the RRset.\nTakes an RRTTL object as an argument." },
     { "to_text", RRset_toText, METH_NOARGS,
@@ -204,16 +201,6 @@ RRset_getTTL(PyObject* self, PyObject*) {
                         "Unexpected failure getting question TTL");
     }
     return (NULL);
-}
-
-PyObject*
-RRset_setName(PyObject* self, PyObject* args) {
-    PyObject* name;
-    if (!PyArg_ParseTuple(args, "O!", &name_type, &name)) {
-        return (NULL);
-    }
-    static_cast<s_RRset*>(self)->cppobj->setName(PyName_ToName(name));
-    Py_RETURN_NONE;
 }
 
 PyObject*

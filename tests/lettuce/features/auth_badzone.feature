@@ -2,7 +2,7 @@ Feature: Authoritative DNS server with a bad zone
     This feature set is for testing the execution of the b10-auth
     component when one zone is broken, whereas others are fine. In this
     case, b10-auth should not reject the data source, but reject the bad
-    zone only and serve the good zones anyway.
+    zone only (with SERVFAIL) and serve the good zones anyway.
 
     Scenario: Bad zone
         Given I have bind10 running with configuration auth/auth_badzone.config
@@ -24,7 +24,7 @@ Feature: Authoritative DNS server with a bad zone
         And bind10 module Resolver should not be running
 
         A query for www.example.org should have rcode NOERROR
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
         The last query response should have ancount 1
         The last query response should have nscount 2
         The last query response should have adcount 2
@@ -44,6 +44,6 @@ Feature: Authoritative DNS server with a bad zone
         ns2.example.org.        3600    IN      A       192.0.2.4
         """
 
-        A query for www.example.com should have rcode REFUSED
-        A query for www.example.net should have rcode REFUSED
-        A query for www.example.info should have rcode REFUSED
+        A query for www.example.com should have rcode SERVFAIL
+        A query for www.example.net should have rcode SERVFAIL
+        A query for www.example.info should have rcode SERVFAIL

@@ -8,7 +8,6 @@
         } ]
     },
     "Auth": {
-        "database_file": "data/xfrin-notify.sqlite3",
         "listen_on": [ {
             "address": "::1",
             "port": 47806
@@ -28,7 +27,8 @@
         "zones": [ {
             "name": "example.org",
             "master_addr": "::1",
-            "master_port": 47807
+            "master_port": 47807,
+            "request_ixfr": "no"
         } ]
     },
     "Zonemgr": {

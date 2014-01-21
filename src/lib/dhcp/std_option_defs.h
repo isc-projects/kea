@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@
 #define STD_OPTION_DEFS_H
 
 #include <dhcp/option_data_types.h>
+#include <dhcp/dhcp4.h>
+#include <dhcp/dhcp6.h>
 
 namespace {
 
@@ -62,12 +64,13 @@ struct OptionDefParams {
 // RFC 1035, section 3.1. The latter could be handled
 // by OPT_FQDN_TYPE but we can't use it here because
 // clients may request ASCII encoding.
-RECORD_DECL(FQDN_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_STRING_TYPE);
+RECORD_DECL(FQDN_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
+            OPT_FQDN_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "subnet-mask", DHO_SUBNET_MASK, OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
-    { "time-offset", DHO_TIME_OFFSET, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "time-offset", DHO_TIME_OFFSET, OPT_INT32_TYPE, false, NO_RECORD_DEF, "" },
     { "routers", DHO_ROUTERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "time-servers", DHO_TIME_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "name-servers", DHO_NAME_SERVERS, OPT_IPV4_ADDRESS_TYPE,
@@ -84,7 +87,7 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "host-name", DHO_HOST_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "boot-size", DHO_BOOT_SIZE, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
     { "merit-dump", DHO_MERIT_DUMP, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
-    { "domain-name", DHO_DOMAIN_NAME, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
+    { "domain-name", DHO_DOMAIN_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "swap-server", DHO_SWAP_SERVER, OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
     { "root-path", DHO_ROOT_PATH, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "extensions-path", DHO_EXTENSIONS_PATH, OPT_STRING_TYPE,
@@ -157,11 +160,15 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "dhcp-rebinding-time", DHO_DHCP_REBINDING_TIME,
       OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
     { "vendor-class-identifier", DHO_VENDOR_CLASS_IDENTIFIER,
-      OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+      OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "dhcp-client-identifier", DHO_DHCP_CLIENT_IDENTIFIER,
       OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "nwip-domain-name", DHO_NWIP_DOMAIN_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "nwip-suboptions", DHO_NWIP_SUBOPTIONS, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "tftp-server-name", DHO_TFTP_SERVER_NAME, OPT_STRING_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "boot-file-name", DHO_BOOT_FILE_NAME, OPT_STRING_TYPE, false,
+      NO_RECORD_DEF, "" },
     { "user-class", DHO_USER_CLASS, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "fqdn", DHO_FQDN, OPT_RECORD_TYPE, false, RECORD_DEF(FQDN_RECORDS), "" },
     { "dhcp-agent-options", DHO_DHCP_AGENT_OPTIONS,
@@ -213,7 +220,7 @@ RECORD_DECL(IA_NA_RECORDS, OPT_UINT32_TYPE, OPT_UINT32_TYPE, OPT_UINT32_TYPE);
 RECORD_DECL(IA_PD_RECORDS, OPT_UINT32_TYPE, OPT_UINT32_TYPE, OPT_UINT32_TYPE);
 // ia-prefix
 RECORD_DECL(IA_PREFIX_RECORDS, OPT_UINT32_TYPE, OPT_UINT32_TYPE,
-            OPT_UINT8_TYPE, OPT_BINARY_TYPE);
+            OPT_UINT8_TYPE, OPT_IPV6_ADDRESS_TYPE);
 // lq-query
 RECORD_DECL(LQ_QUERY_RECORDS, OPT_UINT8_TYPE, OPT_IPV6_ADDRESS_TYPE);
 // lq-relay-data
@@ -223,7 +230,8 @@ RECORD_DECL(REMOTE_ID_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 // status-code
 RECORD_DECL(STATUS_CODE_RECORDS, OPT_UINT16_TYPE, OPT_STRING_TYPE);
 // vendor-class
-RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
+RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_UINT16_TYPE,
+            OPT_STRING_TYPE);
 
 /// Standard DHCPv6 option definitions.
 ///

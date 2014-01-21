@@ -43,7 +43,7 @@
                    "item_name": "port",
                    "item_type": "integer",
                    "item_optional": false,
-                   "item_default": 0
+                   "item_default": 53
                }
              ]
          }
@@ -121,56 +121,66 @@
           "item_type": "named_set",
           "item_optional": false,
           "item_default": {
-            "_SERVER_" : {
-              "notifyoutv4" : 0,
-              "notifyoutv6" : 0,
-              "xfrrej" : 0,
-              "xfrreqdone" : 0
+            "IN" : {
+              "_SERVER_" : {
+                "notifyoutv4" : 0,
+                "notifyoutv6" : 0,
+                "xfrrej" : 0,
+                "xfrreqdone" : 0
+              }
             }
           },
           "item_title": "Zone names",
           "item_description": "A directory name of per-zone statistics",
           "named_set_item_spec": {
-            "item_name": "zonename",
-            "item_type": "map",
+            "item_name": "classname",
+            "item_type": "named_set",
             "item_optional": false,
             "item_default": {},
-            "item_title": "Zone name",
-            "item_description": "A actual zone name or special zone name _SERVER_ representing an entire server",
-            "map_item_spec": [
-              {
-                "item_name": "notifyoutv4",
-                "item_type": "integer",
-                "item_optional": false,
-                "item_default": 0,
-                "item_title": "IPv4 notifies",
-                "item_description": "Number of IPv4 notifies per zone name sent out from Xfrout"
-              },
-              {
-                "item_name": "notifyoutv6",
-                "item_type": "integer",
-                "item_optional": false,
-                "item_default": 0,
-                "item_title": "IPv6 notifies",
-                "item_description": "Number of IPv6 notifies per zone name sent out from Xfrout"
-              },
-              {
-                "item_name": "xfrrej",
-                "item_type": "integer",
-                "item_optional": false,
-                "item_default": 0,
-                "item_title": "XFR rejected requests",
-                "item_description": "Number of XFR requests per zone name rejected by Xfrout"
-              },
-              {
-                "item_name": "xfrreqdone",
-                "item_type": "integer",
-                "item_optional": false,
-                "item_default": 0,
-                "item_title": "Requested zone transfers",
-                "item_description": "Number of requested zone transfers completed per zone name"
-              }
-            ]
+            "item_title": "RR class name",
+            "item_description": "An actual RR class name of the zone, e.g. IN, CH, and HS",
+            "named_set_item_spec": {
+              "item_name": "zonename",
+              "item_type": "map",
+              "item_optional": false,
+              "item_default": {},
+              "item_title": "Zone name",
+              "item_description": "An actual zone name or special zone name _SERVER_ representing an entire server",
+              "map_item_spec": [
+                {
+                  "item_name": "notifyoutv4",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "IPv4 notifies",
+                  "item_description": "Number of IPv4 notifies per zone name sent out from Xfrout"
+                },
+                {
+                  "item_name": "notifyoutv6",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "IPv6 notifies",
+                  "item_description": "Number of IPv6 notifies per zone name sent out from Xfrout"
+                },
+                {
+                  "item_name": "xfrrej",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "XFR rejected requests",
+                  "item_description": "Number of XFR requests per zone name rejected by Xfrout"
+                },
+                {
+                  "item_name": "xfrreqdone",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0,
+                  "item_title": "Requested zone transfers",
+                  "item_description": "Number of requested zone transfers completed per zone name"
+                }
+              ]
+            }
           }
         },
         {

@@ -142,8 +142,13 @@ signalAndWait(CondVar* condvar, Mutex* mutex) {
     condvar->wait(*mutex);
 }
 
-#ifndef HAS_UNDEFINED_PTHREAD_BEHAVIOR
-TEST_F(CondVarTest, destroyWhileWait) {
+TEST_F(CondVarTest,
+#ifdef HAS_UNDEFINED_PTHREAD_BEHAVIOR
+       DISABLED_destroyWhileWait
+#else
+       destroyWhileWait
+#endif
+) {
     // We'll destroy a CondVar object while the thread is still waiting
     // on it.  This will trigger an assertion failure.
     if (!isc::util::unittests::runningOnValgrind()) {
@@ -155,7 +160,6 @@ TEST_F(CondVarTest, destroyWhileWait) {
             }, "");
     }
 }
-#endif // !HAS_UNDEFINED_PTHREAD_BEHAVIOR
 
 #ifdef ENABLE_DEBUG
 

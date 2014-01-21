@@ -32,16 +32,15 @@
 #include <log/logger_manager.h>
 #include <log/message_dictionary.h>
 #include <log/message_types.h>
+#include <log/interprocess/interprocess_sync_file.h>
 
 #include <util/strutil.h>
-#include <util/interprocess_sync_file.h>
 
 // Note: as log4cplus and the BIND 10 logger have many concepts in common, and
 // thus many similar names, to disambiguate types we don't "use" the log4cplus
 // namespace: instead, all log4cplus types are explicitly qualified.
 
 using namespace std;
-using namespace isc::util;
 
 namespace isc {
 namespace log {
@@ -54,7 +53,7 @@ namespace log {
 LoggerImpl::LoggerImpl(const string& name) :
     name_(expandLoggerName(name)),
     logger_(log4cplus::Logger::getInstance(name_)),
-    sync_(new InterprocessSyncFile("logger"))
+    sync_(new interprocess::InterprocessSyncFile("logger"))
 {
 }
 
@@ -112,7 +111,8 @@ LoggerImpl::lookupMessage(const MessageID& ident) {
 // Replace the interprocess synchronization object
 
 void
-LoggerImpl::setInterprocessSync(isc::util::InterprocessSync* sync) {
+LoggerImpl::setInterprocessSync(isc::log::interprocess::InterprocessSync* sync)
+{
     if (sync == NULL) {
         isc_throw(BadInterprocessSync,
                   "NULL was passed to setInterprocessSync()");
@@ -130,7 +130,7 @@ LoggerImpl::outputRaw(const Severity& severity, const string& message) {
 
     // Use an interprocess sync locker for mutual exclusion from other
     // processes to avoid log messages getting interspersed.
-    InterprocessSyncLocker locker(*sync_);
+    interprocess::InterprocessSyncLocker locker(*sync_);
 
     if (!locker.lock()) {
         LOG4CPLUS_ERROR(logger_, "Unable to lock logger lockfile");

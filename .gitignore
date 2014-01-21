@@ -11,6 +11,9 @@ Makefile
 Makefile.in
 TAGS
 
+*.log
+*.trs
+config.h.in~
 /aclocal.m4
 /autom4te.cache/
 /config.guess
@@ -30,6 +33,7 @@ TAGS
 /missing
 /py-compile
 /stamp-h1
+/test-driver
 
 /all.info
 /coverage-cpp-html

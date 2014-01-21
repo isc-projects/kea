@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,9 @@
 #include <config.h>
 
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/dhcp_config_parser.h>
+#include <dhcpsrv/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
+#include <dhcp/dhcp6.h>
 
 #include <gtest/gtest.h>
 
@@ -37,7 +38,7 @@ using boost::scoped_ptr;
 
 namespace {
 
-// This test verifies that BooleanStorage functions properly. 
+// This test verifies that BooleanStorage functions properly.
 TEST(ValueStorageTest, BooleanTesting) {
     BooleanStorage testStore;
 
@@ -48,7 +49,7 @@ TEST(ValueStorageTest, BooleanTesting) {
     EXPECT_FALSE(testStore.getParam("firstBool"));
     EXPECT_TRUE(testStore.getParam("secondBool"));
 
-    // Verify that we can update paramaters. 
+    // Verify that we can update parameters.
     testStore.setParam("firstBool", true);
     testStore.setParam("secondBool", false);
 
@@ -65,7 +66,7 @@ TEST(ValueStorageTest, BooleanTesting) {
     // Verify that looking for a parameter that never existed throws.
     ASSERT_THROW(testStore.getParam("bogusBool"), isc::dhcp::DhcpConfigError);
 
-    // Verify that attempting to delete a parameter that never existed does not throw. 
+    // Verify that attempting to delete a parameter that never existed does not throw.
     EXPECT_NO_THROW(testStore.delParam("bogusBool"));
 
     // Verify that we can empty the list.
@@ -74,21 +75,21 @@ TEST(ValueStorageTest, BooleanTesting) {
 
 }
 
-// This test verifies that Uint32Storage functions properly. 
+// This test verifies that Uint32Storage functions properly.
 TEST(ValueStorageTest, Uint32Testing) {
     Uint32Storage testStore;
 
     uint32_t intOne = 77;
     uint32_t intTwo = 33;
 
-    // Verify that we can add and retrieve parameters. 
+    // Verify that we can add and retrieve parameters.
     testStore.setParam("firstInt", intOne);
     testStore.setParam("secondInt", intTwo);
 
     EXPECT_EQ(testStore.getParam("firstInt"), intOne);
     EXPECT_EQ(testStore.getParam("secondInt"), intTwo);
 
-    // Verify that we can update parameters. 
+    // Verify that we can update parameters.
     testStore.setParam("firstInt", --intOne);
     testStore.setParam("secondInt", ++intTwo);
 
@@ -105,7 +106,7 @@ TEST(ValueStorageTest, Uint32Testing) {
     // Verify that looking for a parameter that never existed throws.
     ASSERT_THROW(testStore.getParam("bogusInt"), isc::dhcp::DhcpConfigError);
 
-    // Verify that attempting to delete a parameter that never existed does not throw. 
+    // Verify that attempting to delete a parameter that never existed does not throw.
     EXPECT_NO_THROW(testStore.delParam("bogusInt"));
 
     // Verify that we can empty the list.
@@ -113,7 +114,7 @@ TEST(ValueStorageTest, Uint32Testing) {
     EXPECT_THROW(testStore.getParam("secondInt"), isc::dhcp::DhcpConfigError);
 }
 
-// This test verifies that StringStorage functions properly. 
+// This test verifies that StringStorage functions properly.
 TEST(ValueStorageTest, StringTesting) {
     StringStorage testStore;
 
@@ -127,7 +128,7 @@ TEST(ValueStorageTest, StringTesting) {
     EXPECT_EQ(testStore.getParam("firstString"), stringOne);
     EXPECT_EQ(testStore.getParam("secondString"), stringTwo);
 
-    // Verify that we can update parameters. 
+    // Verify that we can update parameters.
     stringOne.append("-boo");
     stringTwo.append("-boo");
 
@@ -147,7 +148,7 @@ TEST(ValueStorageTest, StringTesting) {
     // Verify that looking for a parameter that never existed throws.
     ASSERT_THROW(testStore.getParam("bogusString"), isc::dhcp::DhcpConfigError);
 
-    // Verify that attempting to delete a parameter that never existed does not throw. 
+    // Verify that attempting to delete a parameter that never existed does not throw.
     EXPECT_NO_THROW(testStore.delParam("bogusString"));
 
     // Verify that we can empty the list.
@@ -163,6 +164,18 @@ public:
         // make sure we start with a clean configuration
         CfgMgr::instance().deleteSubnets4();
         CfgMgr::instance().deleteSubnets6();
+        CfgMgr::instance().deleteOptionDefs();
+        CfgMgr::instance().deleteActiveIfaces();
+    }
+
+    /// @brief generates interface-id option based on provided text
+    ///
+    /// @param text content of the option to be created
+    ///
+    /// @return pointer to the option object created
+    OptionPtr generateInterfaceId(const string& text) {
+        OptionBuffer buffer(text.begin(), text.end());
+        return OptionPtr(new Option(Option::V6, D6O_INTERFACE_ID, buffer));
     }
 
     ~CfgMgrTest() {
@@ -406,6 +419,95 @@ TEST_F(CfgMgrTest, subnet6) {
     EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("4000::123")));
 }
 
+// This test verifies if the configuration manager is able to hold, select
+// and return valid subnets, based on interface names.
+TEST_F(CfgMgrTest, subnet6Interface) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    subnet1->setIface("foo");
+    subnet2->setIface("bar");
+    subnet3->setIface("foobar");
+
+    // There shouldn't be any subnet configured at this stage
+    EXPECT_FALSE(cfg_mgr.getSubnet6("foo"));
+
+    cfg_mgr.addSubnet6(subnet1);
+
+    // Now we have only one subnet, any request will be served from it
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6("foo"));
+
+    // Check that the interface name is checked even when there is
+    // only one subnet defined.
+    EXPECT_FALSE(cfg_mgr.getSubnet6("bar"));
+
+    // If we have only a single subnet and the request came from a local
+    // address, let's use that subnet
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("fe80::dead:beef")));
+
+    cfg_mgr.addSubnet6(subnet2);
+    cfg_mgr.addSubnet6(subnet3);
+
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet6("foobar"));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet6("bar"));
+    EXPECT_FALSE(cfg_mgr.getSubnet6("xyzzy")); // no such interface
+
+    // Check that deletion of the subnets works.
+    cfg_mgr.deleteSubnets6();
+    EXPECT_FALSE(cfg_mgr.getSubnet6("foo"));
+    EXPECT_FALSE(cfg_mgr.getSubnet6("bar"));
+    EXPECT_FALSE(cfg_mgr.getSubnet6("foobar"));
+}
+
+// This test verifies if the configuration manager is able to hold, select
+// and return valid leases, based on interface-id option values
+TEST_F(CfgMgrTest, subnet6InterfaceId) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+
+    // interface-id options used in subnets 1,2, and 3
+    OptionPtr ifaceid1 = generateInterfaceId("relay1.eth0");
+    OptionPtr ifaceid2 = generateInterfaceId("VL32");
+    // That's a strange interface-id, but this is a real life example
+    OptionPtr ifaceid3 = generateInterfaceId("ISAM144|299|ipv6|nt:vp:1:110");
+
+    // bogus interface-id
+    OptionPtr ifaceid_bogus = generateInterfaceId("non-existent");
+
+    subnet1->setInterfaceId(ifaceid1);
+    subnet2->setInterfaceId(ifaceid2);
+    subnet3->setInterfaceId(ifaceid3);
+
+    // There shouldn't be any subnet configured at this stage
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid1));
+
+    cfg_mgr.addSubnet6(subnet1);
+
+    // If we have only a single subnet and the request came from a local
+    // address, let's use that subnet
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(ifaceid1));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid2));
+
+    cfg_mgr.addSubnet6(subnet2);
+    cfg_mgr.addSubnet6(subnet3);
+
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet6(ifaceid3));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet6(ifaceid2));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid_bogus));
+
+    // Check that deletion of the subnets works.
+    cfg_mgr.deleteSubnets6();
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid1));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid2));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid3));
+}
+
+
 // This test verifies that new DHCPv4 option spaces can be added to
 // the configuration manager and that duplicated option space is
 // rejected.
@@ -436,7 +538,7 @@ TEST_F(CfgMgrTest, optionSpace4) {
         cfg_mgr.addOptionSpace4(space3), isc::dhcp::InvalidOptionSpace
     );
 
-    // @todo decode if a duplicate vendor space is allowed.
+    /// @todo decode if a duplicate vendor space is allowed.
 }
 
 // This test verifies that new DHCPv6 option spaces can be added to
@@ -469,8 +571,165 @@ TEST_F(CfgMgrTest, optionSpace6) {
         cfg_mgr.addOptionSpace6(space3), isc::dhcp::InvalidOptionSpace
     );
 
-    // @todo decide if a duplicate vendor space is allowed.
+    /// @todo decide if a duplicate vendor space is allowed.
 }
+
+// This test verifies that it is possible to specify interfaces that server
+// should listen on.
+TEST_F(CfgMgrTest, addActiveIface) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth0"));
+    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth1"));
+
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth0"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
+
+    EXPECT_NO_THROW(cfg_mgr.deleteActiveIfaces());
+
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth0"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
+}
+
+
+// This test verifies that it is possible to specify interfaces that server
+// should listen on.
+TEST_F(CfgMgrTest, addUnicastAddresses) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth1/2001:db8::1"));
+    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth2/2001:db8::2"));
+    EXPECT_NO_THROW(cfg_mgr.addActiveIface("eth3"));
+
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth2"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth3"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth4"));
+
+    ASSERT_TRUE(cfg_mgr.getUnicast("eth1"));
+    EXPECT_EQ("2001:db8::1", cfg_mgr.getUnicast("eth1")->toText());
+    EXPECT_EQ("2001:db8::2", cfg_mgr.getUnicast("eth2")->toText());
+    EXPECT_FALSE(cfg_mgr.getUnicast("eth3"));
+    EXPECT_FALSE(cfg_mgr.getUnicast("eth4"));
+
+    EXPECT_NO_THROW(cfg_mgr.deleteActiveIfaces());
+
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth3"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth4"));
+
+    ASSERT_FALSE(cfg_mgr.getUnicast("eth1"));
+    ASSERT_FALSE(cfg_mgr.getUnicast("eth2"));
+    EXPECT_FALSE(cfg_mgr.getUnicast("eth3"));
+    EXPECT_FALSE(cfg_mgr.getUnicast("eth4"));
+}
+
+
+// This test verifies that it is possible to set the flag which configures the
+// server to listen on all interfaces.
+TEST_F(CfgMgrTest, activateAllIfaces) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    cfg_mgr.addActiveIface("eth0");
+    cfg_mgr.addActiveIface("eth1");
+
+    ASSERT_TRUE(cfg_mgr.isActiveIface("eth0"));
+    ASSERT_TRUE(cfg_mgr.isActiveIface("eth1"));
+    ASSERT_FALSE(cfg_mgr.isActiveIface("eth2"));
+
+    cfg_mgr.activateAllIfaces();
+
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth0"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_TRUE(cfg_mgr.isActiveIface("eth2"));
+
+    cfg_mgr.deleteActiveIfaces();
+
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth0"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth1"));
+    EXPECT_FALSE(cfg_mgr.isActiveIface("eth2"));
+}
+
+// This test verifies that RFC6842 (echo client-id) compatibility may be
+// configured.
+TEST_F(CfgMgrTest, echoClientId) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    // Check that the default is true
+    EXPECT_TRUE(cfg_mgr.echoClientId());
+
+    // Check that it can be modified to false
+    cfg_mgr.echoClientId(false);
+    EXPECT_FALSE(cfg_mgr.echoClientId());
+
+    // Check that the default value can be restored
+    cfg_mgr.echoClientId(true);
+    EXPECT_TRUE(cfg_mgr.echoClientId());
+}
+
+// This test checks the D2ClientMgr wrapper methods.
+TEST_F(CfgMgrTest, d2ClientConfig) {
+    // After CfgMgr construction, D2 configuration should be disabled.
+    // Fetch it and verify this is the case.
+    D2ClientConfigPtr original_config = CfgMgr::instance().getD2ClientConfig();
+    ASSERT_TRUE(original_config);
+    EXPECT_FALSE(original_config->getEnableUpdates());
+
+    // Make sure convenience method agrees.
+    EXPECT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    // Verify that we cannot set the configuration to an empty pointer.
+    D2ClientConfigPtr new_cfg;
+    ASSERT_THROW(CfgMgr::instance().setD2ClientConfig(new_cfg), D2ClientError);
+
+    // Create a new, enabled configuration.
+    ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  true, true, true, true, true,
+                                  "pre-fix", "suf-fix")));
+
+    // Verify that we can assign a new, non-empty configuration.
+    ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(new_cfg));
+
+    // Verify that we can fetch the newly assigned configuration.
+    D2ClientConfigPtr updated_config = CfgMgr::instance().getD2ClientConfig();
+    ASSERT_TRUE(updated_config);
+    EXPECT_TRUE(updated_config->getEnableUpdates());
+
+    // Make sure convenience method agrees with updated configuration.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Make sure the configuration we fetched is the one we assigned,
+    // and not the original configuration.
+    EXPECT_EQ(*new_cfg, *updated_config);
+    EXPECT_NE(*original_config, *updated_config);
+}
+
+
+/// @todo Add unit-tests for testing:
+/// - addActiveIface() with invalid interface name
+/// - addActiveIface() with the same interface twice
+/// - addActiveIface() with a bogus address
+///
+/// This is somewhat tricky. Care should be taken here, because it is rather
+/// difficult to decide if interface name is valid or not. Some servers, e.g.
+/// dibbler, allow to specify interface names that are not currently present in
+/// the system. The server accepts them, but upon discovering that they are
+/// yet available (for different definitions of not being available), adds
+/// the to to-be-activated list.
+///
+/// Cases covered by dibbler are:
+/// - missing interface (e.g. PPP connection that is not established yet)
+/// - downed interface (no link local address, no way to open sockets)
+/// - up, but not running interface (wifi up, but not associated)
+/// - tentative addresses (interface up and running, but DAD procedure is
+///   still in progress)
+/// - weird interfaces without link-local addresses (don't ask, 6rd tunnels
+///   look weird to me as well)
 
 // No specific tests for getSubnet6. That method (2 overloaded versions) is tested
 // in Dhcpv6SrvTest.selectSubnetAddr and Dhcpv6SrvTest.selectSubnetIface

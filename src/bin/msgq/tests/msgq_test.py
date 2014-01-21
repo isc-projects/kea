@@ -19,6 +19,7 @@ from msgq import SubscriptionManager, MsgQ
 import unittest
 import os
 import socket
+import select # needed only for #3014. can be removed once it's solved
 import signal
 import sys
 import time
@@ -63,8 +64,11 @@ class TestSubscriptionManager(unittest.TestCase):
         socks = [ 's1', 's2', 's3', 's4', 's5' ]
         for s in socks:
             self.sm.subscribe("a", "*", s)
-        self.sm.unsubscribe("a", "*", 's3')
-        self.assertEqual(self.sm.find_sub("a", "*"), [ 's1', 's2', 's4', 's5' ])
+        self.assertTrue(self.sm.unsubscribe("a", "*", 's3'))
+        # Unsubscribe from group it is not in
+        self.assertFalse(self.sm.unsubscribe("a", "*", 's42'))
+        self.assertEqual(self.sm.find_sub("a", "*"),
+                         [ 's1', 's2', 's4', 's5' ])
 
     def test_unsubscribe_all(self):
         self.sm.subscribe('g1', 'i1', 's1')
@@ -75,7 +79,9 @@ class TestSubscriptionManager(unittest.TestCase):
         self.sm.subscribe('g2', 'i1', 's2')
         self.sm.subscribe('g2', 'i2', 's1')
         self.sm.subscribe('g2', 'i2', 's2')
-        self.sm.unsubscribe_all('s1')
+        self.assertEqual(set([('g1', 'i1'), ('g1', 'i2'), ('g2', 'i1'),
+                              ('g2', 'i2')]),
+                         set(self.sm.unsubscribe_all('s1')))
         self.assertEqual(self.sm.find_sub("g1", "i1"), [ 's2' ])
         self.assertEqual(self.sm.find_sub("g1", "i2"), [ 's2' ])
         self.assertEqual(self.sm.find_sub("g2", "i1"), [ 's2' ])
@@ -177,6 +183,157 @@ class MsgQTest(unittest.TestCase):
         header = json.loads(msg[6:6 + header_len].decode('utf-8'))
         data = json.loads(msg[6 + header_len:].decode('utf-8'))
         return (header, data)
+
+    def test_unknown_command(self):
+        """
+        Test the command handler returns error when the command is unknown.
+        """
+        # Fake we are running, to disable test workarounds
+        self.__msgq.running = True
+        self.assertEqual({'result': [1, "unknown command: unknown"]},
+                         self.__msgq.command_handler('unknown', {}))
+
+    def test_get_members(self):
+        """
+        Test getting members of a group or of all connected clients.
+        """
+        # Push two dummy "clients" into msgq (the ugly way, by directly
+        # tweaking relevant data structures).
+        class Sock:
+            def __init__(self, fileno):
+                self.fileno = lambda: fileno
+        self.__msgq.lnames['first'] = Sock(1)
+        self.__msgq.lnames['second'] = Sock(2)
+        self.__msgq.fd_to_lname[1] = 'first'
+        self.__msgq.fd_to_lname[2] = 'second'
+        # Subscribe them to some groups
+        self.__msgq.process_command_subscribe(self.__msgq.lnames['first'],
+                                              {'group': 'G1', 'instance': '*'},
+                                              None)
+        self.__msgq.process_command_subscribe(self.__msgq.lnames['second'],
+                                              {'group': 'G1', 'instance': '*'},
+                                              None)
+        self.__msgq.process_command_subscribe(self.__msgq.lnames['second'],
+                                              {'group': 'G2', 'instance': '*'},
+                                              None)
+        # Now query content of some groups through the command handler.
+        self.__msgq.running = True # Enable the command handler
+        def check_both(result):
+            """
+            Check the result is successful one and it contains both lnames (in
+            any order).
+            """
+            array = result['result'][1]
+            self.assertEqual(set(['first', 'second']), set(array))
+            self.assertEqual({'result': [0, array]}, result)
+            # Make sure the result can be encoded as JSON
+            # (there seems to be types that look like a list but JSON choks
+            # on them)
+            json.dumps(result)
+        # Members of the G1 and G2
+        self.assertEqual({'result': [0, ['second']]},
+                         self.__msgq.command_handler('members',
+                                                     {'group': 'G2'}))
+        check_both(self.__msgq.command_handler('members', {'group': 'G1'}))
+        # We pretend that all the possible groups exist, just that most
+        # of them are empty. So requesting for Empty is request for an empty
+        # group and should not fail.
+        self.assertEqual({'result': [0, []]},
+                         self.__msgq.command_handler('members',
+                                                     {'group': 'Empty'}))
+        # Without the name of the group, we just get all the clients.
+        check_both(self.__msgq.command_handler('members', {}))
+        # Omitting the parameters completely in such case is OK
+        check_both(self.__msgq.command_handler('members', None))
+
+    def notifications_setup(self):
+        """
+        Common setup of some notifications tests. Mock several things.
+        """
+        # Mock the method to send notifications (we don't really want
+        # to send them now, just see they'd be sent).
+        # Mock the poller, as we don't need it at all (and we don't have
+        # real socket to give it now).
+        notifications = []
+        def send_notification(event, params):
+            notifications.append((event, params))
+        class FakePoller:
+            def register(self, socket, mode):
+                pass
+            def unregister(self, sock):
+                pass
+        self.__msgq.members_notify = send_notification
+        self.__msgq.poller = FakePoller()
+
+        # Create a socket
+        class Sock:
+            def __init__(self, fileno):
+                self.fileno = lambda: fileno
+            def close(self):
+                pass
+        sock = Sock(1)
+        return notifications, sock
+
+    def test_notifies(self):
+        """
+        Test the message queue sends notifications about connecting,
+        disconnecting and subscription changes.
+        """
+        notifications, sock = self.notifications_setup()
+
+        # We should notify about new cliend when we register it
+        self.__msgq.register_socket(sock)
+        lname = self.__msgq.fd_to_lname[1] # Steal the lname
+        self.assertEqual([('connected', {'client': lname})], notifications)
+        del notifications[:]
+
+        # A notification should happen for a subscription to a group
+        self.__msgq.process_command_subscribe(sock, {'group': 'G',
+                                                     'instance': '*'},
+                                              None)
+        self.assertEqual([('subscribed', {'client': lname, 'group': 'G'})],
+                         notifications)
+        del notifications[:]
+
+        # As well for unsubscription
+        self.__msgq.process_command_unsubscribe(sock, {'group': 'G',
+                                                       'instance': '*'},
+                                                None)
+        self.assertEqual([('unsubscribed', {'client': lname, 'group': 'G'})],
+                         notifications)
+        del notifications[:]
+
+        # Unsubscription from a group it isn't subscribed to
+        self.__msgq.process_command_unsubscribe(sock, {'group': 'H',
+                                                       'instance': '*'},
+                                                None)
+        self.assertEqual([], notifications)
+
+        # And, finally, for removal of client
+        self.__msgq.kill_socket(sock.fileno(), sock)
+        self.assertEqual([('disconnected', {'client': lname})], notifications)
+
+    def test_notifies_implicit_kill(self):
+        """
+        Test that the unsubscription notifications are sent before the socket
+        is dropped, even in case it does not unsubscribe explicitly.
+        """
+        notifications, sock = self.notifications_setup()
+
+        # Register and subscribe. Notifications for these are in above test.
+        self.__msgq.register_socket(sock)
+        lname = self.__msgq.fd_to_lname[1] # Steal the lname
+        self.__msgq.process_command_subscribe(sock, {'group': 'G',
+                                                     'instance': '*'},
+                                              None)
+        del notifications[:]
+
+        self.__msgq.kill_socket(sock.fileno(), sock)
+        # Now, the notification for unsubscribe should be first, second for
+        # the disconnection.
+        self.assertEqual([('unsubscribed', {'client': lname, 'group': 'G'}),
+                          ('disconnected', {'client': lname})
+                         ], notifications)
 
     def test_undeliverable_errors(self):
         """
@@ -412,12 +569,16 @@ class SendNonblock(unittest.TestCase):
         The write end is put into the message queue, so we can check it.
         It returns (msgq, read_end, write_end). It is expected the sockets
         are closed by the caller afterwards.
+
+        Also check the sockets are registered correctly (eg. internal data
+        structures are there for them).
         '''
         msgq = MsgQ()
         # We do only partial setup, so we don't create the listening socket
-        msgq.setup_poller()
         (read, write) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
         msgq.register_socket(write)
+        self.assertEqual(1, len(msgq.lnames))
+        self.assertEqual(write, msgq.lnames[msgq.fd_to_lname[write.fileno()]])
         return (msgq, read, write)
 
     def infinite_sender(self, sender):
@@ -437,8 +598,15 @@ class SendNonblock(unittest.TestCase):
         # Explicitly close temporary socket pair as the Python
         # interpreter expects it.  It may not be 100% exception safe,
         # but since this is only for tests we prefer brevity.
+        # Actually, the write end is often closed by the sender.
+        if write.fileno() != -1:
+            # Some of the senders passed here kill the socket internally.
+            # So kill it only if not yet done so. If the socket is closed,
+            # it gets -1 as fileno().
+            msgq.kill_socket(write.fileno(), write)
+        self.assertFalse(msgq.lnames)
+        self.assertFalse(msgq.fd_to_lname)
         read.close()
-        write.close()
 
     def test_infinite_sendmsg(self):
         """
@@ -504,7 +672,6 @@ class SendNonblock(unittest.TestCase):
             queue_pid = os.fork()
             if queue_pid == 0:
                 signal.alarm(120)
-                msgq.setup_poller()
                 msgq.setup_signalsock()
                 msgq.register_socket(queue)
                 msgq.run()
@@ -581,7 +748,6 @@ class SendNonblock(unittest.TestCase):
         msgq = MsgQ()
         # Don't need a listen_socket
         msgq.listen_socket = DummySocket
-        msgq.setup_poller()
         msgq.setup_signalsock()
         msgq.register_socket(write)
         msgq.register_socket(control_write)
@@ -640,9 +806,11 @@ class SendNonblock(unittest.TestCase):
                                send_exception is raised by BadSocket.
         """
         (write, read) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
-        (control_write, control_read) = socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        (control_write, control_read) = socket.socketpair(socket.AF_UNIX,
+                                                          socket.SOCK_STREAM)
         badwrite = BadSocket(write, raise_on_send, send_exception)
-        self.do_send(badwrite, read, control_write, control_read, expect_answer, expect_send_exception)
+        self.do_send(badwrite, read, control_write, control_read,
+                     expect_answer, expect_send_exception)
         write.close()
         read.close()
         control_write.close()
@@ -822,9 +990,11 @@ class SocketTests(unittest.TestCase):
         self.__killed_socket = None
         self.__logger = self.LoggerWrapper(msgq.logger)
         msgq.logger = self.__logger
+        self.__orig_select = msgq.select.select
 
     def tearDown(self):
         msgq.logger = self.__logger.orig_logger
+        msgq.select.select = self.__orig_select
 
     def test_send_data(self):
         # Successful case: _send_data() returns the hardcoded value, and
@@ -872,32 +1042,6 @@ class SocketTests(unittest.TestCase):
             self.assertEqual(expected_errors, self.__logger.error_called)
             self.assertEqual(expected_warns, self.__logger.warn_called)
 
-    def test_process_fd_read_after_bad_write(self):
-        '''Check the specific case of write fail followed by read attempt.
-
-        The write failure results in kill_socket, then read shouldn't tried.
-
-        '''
-        self.__sock_error.errno = errno.EPIPE
-        self.__sock.ex_on_send = self.__sock_error
-        self.__msgq.process_socket = None # if called, trigger an exception
-        self.__msgq._process_fd(42, True, True, False) # shouldn't crash
-
-        # check the socket is deleted from the fileno=>sock dictionary
-        self.assertEqual({}, self.__msgq.sockets)
-
-    def test_process_fd_close_after_bad_write(self):
-        '''Similar to the previous, but for checking dup'ed kill attempt'''
-        self.__sock_error.errno = errno.EPIPE
-        self.__sock.ex_on_send = self.__sock_error
-        self.__msgq._process_fd(42, True, False, True) # shouldn't crash
-        self.assertEqual({}, self.__msgq.sockets)
-
-    def test_process_fd_writer_after_close(self):
-        '''Emulate a "writable" socket has been already closed and killed.'''
-        # This just shouldn't crash
-        self.__msgq._process_fd(4200, True, False, False)
-
     def test_process_packet(self):
         '''Check some failure cases in handling an incoming message.'''
         expected_errors = 0
@@ -930,6 +1074,47 @@ class SocketTests(unittest.TestCase):
                 expected_errors += 1
             self.assertEqual(expected_errors, self.__logger.error_called)
             self.assertEqual(expected_debugs, self.__logger.debug_called)
+
+    def test_do_select(self):
+        """
+        Check the behaviour of the run_select method.
+
+        In particular, check that we skip writing to the sockets we read,
+        because a read may have side effects (like closing the socket) and
+        we want to prevent strange behavior.
+        """
+        self.__read_called = []
+        self.__write_called = []
+        self.__reads = None
+        self.__writes = None
+        def do_read(fd, socket):
+            self.__read_called.append(fd)
+            self.__msgq.running = False
+        def do_write(fd):
+            self.__write_called.append(fd)
+            self.__msgq.running = False
+        self.__msgq.process_packet = do_read
+        self.__msgq._process_write = do_write
+        self.__msgq.fd_to_lname = {42: 'lname', 44: 'other', 45: 'unused'}
+        # The do_select does index it, but just passes the value. So reuse
+        # the dict to safe typing in the test.
+        self.__msgq.sockets = self.__msgq.fd_to_lname
+        self.__msgq.sendbuffs = {42: 'data', 43: 'data'}
+        def my_select(reads, writes, errors):
+            self.__reads = reads
+            self.__writes = writes
+            self.assertEqual([], errors)
+            return ([42, 44], [42, 43], [])
+        msgq.select.select = my_select
+        self.__msgq.listen_socket = DummySocket
+
+        self.__msgq.running = True
+        self.__msgq.run_select()
+
+        self.assertEqual([42, 44], self.__read_called)
+        self.assertEqual([43], self.__write_called)
+        self.assertEqual({42, 44, 45}, set(self.__reads))
+        self.assertEqual({42, 43}, set(self.__writes))
 
 if __name__ == '__main__':
     isc.log.resetUnitTestRootLogger()

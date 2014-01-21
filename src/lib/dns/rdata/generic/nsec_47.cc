@@ -155,7 +155,7 @@ NSEC::NSEC(const NSEC& source) :
 
 NSEC&
 NSEC::operator=(const NSEC& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 

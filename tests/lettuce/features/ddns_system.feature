@@ -118,6 +118,42 @@ Feature: DDNS System
         A query for new3.example.org should have rcode NOERROR
         The SOA serial for example.org should be 1236
 
+    Scenario: Zone validation check
+        Given I have bind10 running with configuration ddns/ddns.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+        And wait for bind10 stderr message DDNS_STARTED
+
+        # Sanity check
+        A query for example.org type NS should have rcode NOERROR
+        The answer section of the last query response should be
+        """
+        example.org.                    3600    IN      NS      ns1.example.org.
+        example.org.                    3600    IN      NS      ns2.example.org.
+        example.org.                    3600    IN      NS      ns3.example.org.
+        """
+        The SOA serial for example.org should be 1234
+
+        # Test failed validation. Here, example.org has ns1.example.org
+        # configured as a name server. CNAME records cannot be added for
+        # ns1.example.org.
+        When I use DDNS to add a record ns1.example.org. 3600 IN CNAME ns3.example.org.
+        The DDNS response should be REFUSED
+        A query for ns1.example.org type CNAME should have rcode NXDOMAIN
+        The SOA serial for example.org should be 1234
+
+        # Test passed validation. Here, example.org does not have
+        # ns4.example.org configured as a name server. CNAME records can
+        # be added for ns4.example.org.
+        When I use DDNS to add a record ns4.example.org. 3600 IN CNAME ns3.example.org.
+        The DDNS response should be SUCCESS
+        A query for ns4.example.org type CNAME should have rcode NOERROR
+        The answer section of the last query response should be
+        """
+        ns4.example.org.                3600    IN      CNAME   ns3.example.org.
+        """
+        The SOA serial for example.org should be 1235
+
     #Scenario: DDNS and Xfrout
     ## Unfortunately, Xfrout can only notify to inzone slaves, and hence only
     ## to port 53, which we do not want to use for Lettuce tests (for various

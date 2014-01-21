@@ -5,7 +5,8 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 lib_LTLIBRARIES = libb10-pydnspp.la
-libb10_pydnspp_la_SOURCES = pydnspp_common.cc pydnspp_common.h pydnspp_towire.h
+libb10_pydnspp_la_SOURCES = pydnspp_common.cc pydnspp_common.h
+libb10_pydnspp_la_SOURCES += pydnspp_config.h pydnspp_towire.h
 libb10_pydnspp_la_SOURCES += name_python.cc name_python.h
 libb10_pydnspp_la_SOURCES += nsec3hash_python.cc nsec3hash_python.h
 libb10_pydnspp_la_SOURCES += rrset_python.cc rrset_python.h

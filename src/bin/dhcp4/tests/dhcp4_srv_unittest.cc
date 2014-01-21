@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,23 +16,34 @@
 #include <sstream>
 
 #include <asiolink/io_address.h>
+#include <config/ccsession.h>
+#include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_vendor.h>
+#include <dhcp/pkt_filter.h>
+#include <dhcp/pkt_filter_inet.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
+#include <dhcp4/config_parser.h>
+#include <hooks/server_hooks.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/utils.h>
 #include <gtest/gtest.h>
+#include <hooks/server_hooks.h>
+#include <hooks/hooks_manager.h>
+#include <config/ccsession.h>
 
 #include <boost/scoped_ptr.hpp>
 
-#include <fstream>
 #include <iostream>
 
 #include <arpa/inet.h>
@@ -40,453 +51,336 @@
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::data;
 using namespace isc::asiolink;
+using namespace isc::hooks;
+using namespace isc::dhcp::test;
 
 namespace {
 
-class NakedDhcpv4Srv: public Dhcpv4Srv {
-    // "Naked" DHCPv4 server, exposes internal fields
-public:
-
-    /// @brief Constructor.
-    ///
-    /// It disables configuration of broadcast options on
-    /// sockets that are opened by the Dhcpv4Srv constructor.
-    /// Setting broadcast options requires root privileges
-    /// which is not the case when running unit tests.
-    NakedDhcpv4Srv(uint16_t port = 0)
-        : Dhcpv4Srv(port, "type=memfile", false) {
-    }
-
-    using Dhcpv4Srv::processDiscover;
-    using Dhcpv4Srv::processRequest;
-    using Dhcpv4Srv::processRelease;
-    using Dhcpv4Srv::processDecline;
-    using Dhcpv4Srv::processInform;
-    using Dhcpv4Srv::getServerID;
-    using Dhcpv4Srv::loadServerID;
-    using Dhcpv4Srv::generateServerID;
-    using Dhcpv4Srv::writeServerID;
-    using Dhcpv4Srv::sanityCheck;
-    using Dhcpv4Srv::srvidToString;
-};
-
-static const char* SRVID_FILE = "server-id-test.txt";
-
-class Dhcpv4SrvTest : public ::testing::Test {
-public:
-
-    /// @brief Constructor
-    ///
-    /// Initializes common objects used in many tests.
-    /// Also sets up initial configuration in CfgMgr.
-    Dhcpv4SrvTest() {
-        subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1000,
-                                         2000, 3000));
-        pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"), IOAddress("192.0.2.110")));
-        subnet_->addPool(pool_);
-
-        CfgMgr::instance().deleteSubnets4();
-        CfgMgr::instance().addSubnet4(subnet_);
-
-        // Add Router option.
-        Option4AddrLstPtr opt_routers(new Option4AddrLst(DHO_ROUTERS));
-        opt_routers->setAddress(IOAddress("192.0.2.2"));
-        subnet_->addOption(opt_routers, false, "dhcp4");
-
-        // it's ok if that fails. There should not be such a file anyway
-        unlink(SRVID_FILE);
-    }
-
-    /// @brief Add 'Parameter Request List' option to the packet.
-    ///
-    /// This function PRL option comprising the following option codes:
-    /// - 5 - Name Server
-    /// - 15 - Domain Name
-    /// - 7 - Log Server
-    /// - 8 - Quotes Server
-    /// - 9 - LPR Server
-    ///
-    /// @param pkt packet to add PRL option to.
-    void addPrlOption(Pkt4Ptr& pkt) {
-
-        OptionUint8ArrayPtr option_prl =
-            OptionUint8ArrayPtr(new OptionUint8Array(Option::V4,
-                                                     DHO_DHCP_PARAMETER_REQUEST_LIST));
-
-        // Let's request options that have been configured for the subnet.
-        option_prl->addValue(DHO_DOMAIN_NAME_SERVERS);
-        option_prl->addValue(DHO_DOMAIN_NAME);
-        option_prl->addValue(DHO_LOG_SERVERS);
-        option_prl->addValue(DHO_COOKIE_SERVERS);
-        // Let's also request the option that hasn't been configured. In such
-        // case server should ignore request for this particular option.
-        option_prl->addValue(DHO_LPR_SERVERS);
-        // And add 'Parameter Request List' option into the DISCOVER packet.
-        pkt->addOption(option_prl);
-    }
-
-    /// @brief Configures options being requested in the PRL option.
-    ///
-    /// The lpr-servers option is NOT configured here although it is
-    /// added to the 'Parameter Request List' option in the
-    /// \ref addPrlOption. When requested option is not configured
-    /// the server should not return it in its response. The goal
-    /// of not configuring the requested option is to verify that
-    /// the server will not return it.
-    void configureRequestedOptions() {
-        // dns-servers
-        Option4AddrLstPtr
-            option_dns_servers(new Option4AddrLst(DHO_DOMAIN_NAME_SERVERS));
-        option_dns_servers->addAddress(IOAddress("192.0.2.1"));
-        option_dns_servers->addAddress(IOAddress("192.0.2.100"));
-        ASSERT_NO_THROW(subnet_->addOption(option_dns_servers, false, "dhcp4"));
-
-        // domain-name
-        OptionDefinition def("domain-name", DHO_DOMAIN_NAME, OPT_FQDN_TYPE);
-        OptionCustomPtr option_domain_name(new OptionCustom(def, Option::V4));
-        option_domain_name->writeFqdn("example.com");
-        subnet_->addOption(option_domain_name, false, "dhcp4");
-
-        // log-servers
-        Option4AddrLstPtr option_log_servers(new Option4AddrLst(DHO_LOG_SERVERS));
-        option_log_servers->addAddress(IOAddress("192.0.2.2"));
-        option_log_servers->addAddress(IOAddress("192.0.2.10"));
-        ASSERT_NO_THROW(subnet_->addOption(option_log_servers, false, "dhcp4"));
-
-        // cookie-servers
-        Option4AddrLstPtr option_cookie_servers(new Option4AddrLst(DHO_COOKIE_SERVERS));
-        option_cookie_servers->addAddress(IOAddress("192.0.2.1"));
-        ASSERT_NO_THROW(subnet_->addOption(option_cookie_servers, false, "dhcp4"));
-    }
-
-    /// @brief checks that the response matches request
-    /// @param q query (client's message)
-    /// @param a answer (server's message)
-    void messageCheck(const Pkt4Ptr& q, const Pkt4Ptr& a) {
-        ASSERT_TRUE(q);
-        ASSERT_TRUE(a);
-
-        EXPECT_EQ(q->getHops(),   a->getHops());
-        EXPECT_EQ(q->getIface(),  a->getIface());
-        EXPECT_EQ(q->getIndex(),  a->getIndex());
-        EXPECT_EQ(q->getGiaddr(), a->getGiaddr());
-
-        // Check that bare minimum of required options are there.
-        // We don't check options requested by a client. Those
-        // are checked elsewhere.
-        EXPECT_TRUE(a->getOption(DHO_SUBNET_MASK));
-        EXPECT_TRUE(a->getOption(DHO_ROUTERS));
-        EXPECT_TRUE(a->getOption(DHO_DHCP_SERVER_IDENTIFIER));
-        EXPECT_TRUE(a->getOption(DHO_DHCP_LEASE_TIME));
-        EXPECT_TRUE(a->getOption(DHO_SUBNET_MASK));
-        EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME));
-        EXPECT_TRUE(a->getOption(DHO_DOMAIN_NAME_SERVERS));
-
-        // Check that something is offered
-        EXPECT_TRUE(a->getYiaddr().toText() != "0.0.0.0");
-    }
-
-    /// @brief Check that requested options are present.
-    ///
-    /// @param pkt packet to be checked.
-    void optionsCheck(const Pkt4Ptr& pkt) {
-        // Check that the requested and configured options are returned
-        // in the ACK message.
-        EXPECT_TRUE(pkt->getOption(DHO_DOMAIN_NAME))
-            << "domain-name not present in the response";
-        EXPECT_TRUE(pkt->getOption(DHO_DOMAIN_NAME_SERVERS))
-            << "dns-servers not present in the response";
-        EXPECT_TRUE(pkt->getOption(DHO_LOG_SERVERS))
-            << "log-servers not present in the response";
-        EXPECT_TRUE(pkt->getOption(DHO_COOKIE_SERVERS))
-            << "cookie-servers not present in the response";
-        // Check that the requested but not configured options are not
-        // returned in the ACK message.
-        EXPECT_FALSE(pkt->getOption(DHO_LPR_SERVERS))
-            << "domain-name present in the response but it is"
-            << " expected not to be present";
-    }
-
-    /// @brief generates client-id option
-    ///
-    /// Generate client-id option of specified length
-    /// Ids with different lengths are sufficent to generate
-    /// unique ids. If more fine grained control is required,
-    /// tests generate client-ids on their own.
-    /// Sets client_id_ field.
-    /// @param size size of the client-id to be generated
-    OptionPtr generateClientId(size_t size = 4) {
-
-        OptionBuffer clnt_id(size);
-        for (int i = 0; i < size; i++) {
-            clnt_id[i] = 100 + i;
-        }
-
-        client_id_ = ClientIdPtr(new ClientId(clnt_id));
-
-        return (OptionPtr(new Option(Option::V4, DHO_DHCP_CLIENT_IDENTIFIER,
-                                     clnt_id.begin(),
-                                     clnt_id.begin() + size)));
-    }
-
-    /// @brief generate hardware address
-    ///
-    /// @param size size of the generated MAC address
-    /// @param pointer to Hardware Address object
-    HWAddrPtr generateHWAddr(size_t size = 6) {
-        const uint8_t hw_type = 123; // Just a fake number (typically 6=HTYPE_ETHER, see dhcp4.h)
-        OptionBuffer mac(size);
-        for (int i = 0; i < size; ++i) {
-            mac[i] = 50 + i;
-        }
-        return (HWAddrPtr(new HWAddr(mac, hw_type)));
-    }
-
-    /// Check that address was returned from proper range, that its lease
-    /// lifetime is correct, that T1 and T2 are returned properly
-    /// @param rsp response to be checked
-    /// @param subnet subnet that should be used to verify assigned address
-    ///        and options
-    /// @param t1_mandatory is T1 mandatory?
-    /// @param t2_mandatory is T2 mandatory?
-    void checkAddressParams(const Pkt4Ptr& rsp, const SubnetPtr subnet,
-                            bool t1_mandatory = false,
-                            bool t2_mandatory = false) {
-
-        // Technically inPool implies inRange, but let's be on the safe
-        // side and check both.
-        EXPECT_TRUE(subnet->inRange(rsp->getYiaddr()));
-        EXPECT_TRUE(subnet->inPool(rsp->getYiaddr()));
-
-        // Check lease time
-        OptionPtr opt = rsp->getOption(DHO_DHCP_LEASE_TIME);
-        if (!opt) {
-            ADD_FAILURE() << "Lease time option missing in response";
-        } else {
-            EXPECT_EQ(opt->getUint32(), subnet->getValid());
-        }
-
-        // Check T1 timer
-        opt = rsp->getOption(DHO_DHCP_RENEWAL_TIME);
-        if (opt) {
-            EXPECT_EQ(opt->getUint32(), subnet->getT1());
-        } else {
-            if (t1_mandatory) {
-                ADD_FAILURE() << "Required T1 option missing";
-            }
-        }
-
-        // Check T2 timer
-        opt = rsp->getOption(DHO_DHCP_REBINDING_TIME);
-        if (opt) {
-            EXPECT_EQ(opt->getUint32(), subnet->getT2());
-        } else {
-            if (t2_mandatory) {
-                ADD_FAILURE() << "Required T2 option missing";
-            }
-        }
-    }
-
-    /// @brief Basic checks for generated response (message type and trans-id).
-    ///
-    /// @param rsp response packet to be validated
-    /// @param expected_message_type expected message type
-    /// @param expected_transid expected transaction-id
-    void checkResponse(const Pkt4Ptr& rsp, uint8_t expected_message_type,
-                       uint32_t expected_transid) {
-        ASSERT_TRUE(rsp);
-        EXPECT_EQ(expected_message_type, rsp->getType());
-        EXPECT_EQ(expected_transid, rsp->getTransid());
-    }
-
-    /// @brief Checks if the lease sent to client is present in the database
-    ///
-    /// @param rsp response packet to be validated
-    /// @param client_id expected client-identifier (or NULL)
-    /// @param HWAddr expected hardware address (not used now)
-    /// @param expected_addr expected address
-    Lease4Ptr checkLease(const Pkt4Ptr& rsp, const OptionPtr& client_id,
-                         const HWAddrPtr&, const IOAddress& expected_addr) {
-
-        ClientIdPtr id;
-        if (client_id) {
-            OptionBuffer data = client_id->getData();
-            id.reset(new ClientId(data));
-        }
-
-        Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(expected_addr);
-        if (!lease) {
-            cout << "Lease for " << expected_addr.toText()
-                 << " not found in the database backend.";
-            return (Lease4Ptr());
-        }
-
-        EXPECT_EQ(rsp->getYiaddr().toText(), expected_addr.toText());
-
-        EXPECT_EQ(expected_addr.toText(), lease->addr_.toText());
-        if (client_id) {
-            EXPECT_TRUE(*lease->client_id_ == *id);
-        }
-        EXPECT_EQ(subnet_->getID(), lease->subnet_id_);
-
-        return (lease);
-    }
-
-    /// @brief Checks if server response (OFFER, ACK, NAK) includes proper server-id
-    /// @param rsp response packet to be validated
-    /// @param expected_srvid expected value of server-id
-    void checkServerId(const Pkt4Ptr& rsp, const OptionPtr& expected_srvid) {
-        // Check that server included its server-id
-        OptionPtr opt = rsp->getOption(DHO_DHCP_SERVER_IDENTIFIER);
-        ASSERT_TRUE(opt);
-        EXPECT_EQ(opt->getType(), expected_srvid->getType() );
-        EXPECT_EQ(opt->len(), expected_srvid->len() );
-        EXPECT_TRUE(opt->getData() == expected_srvid->getData());
-    }
-
-    /// @brief Checks if server response (OFFER, ACK, NAK) includes proper client-id
-    /// @param rsp response packet to be validated
-    /// @param expected_clientid expected value of client-id
-    void checkClientId(const Pkt4Ptr& rsp, const OptionPtr& expected_clientid) {
-        // check that server included our own client-id
-        OptionPtr opt = rsp->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
-        ASSERT_TRUE(opt);
-        EXPECT_EQ(expected_clientid->getType(), opt->getType());
-        EXPECT_EQ(expected_clientid->len(), opt->len());
-        EXPECT_TRUE(expected_clientid->getData() == opt->getData());
-    }
-
-    /// @brief Tests if Discover or Request message is processed correctly
-    ///
-    /// @param msg_type DHCPDISCOVER or DHCPREQUEST
-    /// @param client_addr client address
-    /// @param relay_addr relay address
-    void testDiscoverRequest(const uint8_t msg_type,
-                             const IOAddress& client_addr,
-                             const IOAddress& relay_addr) {
-
-        boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
-        vector<uint8_t> mac(6);
-        for (int i = 0; i < 6; i++) {
-            mac[i] = i*10;
-        }
-
-        boost::shared_ptr<Pkt4> req(new Pkt4(msg_type, 1234));
-        boost::shared_ptr<Pkt4> rsp;
-
-        req->setIface("eth0");
-        req->setIndex(17);
-        req->setHWAddr(1, 6, mac);
-        req->setRemoteAddr(IOAddress(client_addr));
-        req->setGiaddr(relay_addr);
-
-        // We are going to test that certain options are returned
-        // in the response message when requested using 'Parameter
-        // Request List' option. Let's configure those options that
-        // are returned when requested.
-        configureRequestedOptions();
-
-        if (msg_type == DHCPDISCOVER) {
-            ASSERT_NO_THROW(
-                rsp = srv->processDiscover(req);
-            );
-
-            // Should return OFFER
-            ASSERT_TRUE(rsp);
-            EXPECT_EQ(DHCPOFFER, rsp->getType());
-
-        } else {
-            ASSERT_NO_THROW(
-                rsp = srv->processRequest(req);
-            );
-
-            // Should return ACK
-            ASSERT_TRUE(rsp);
-            EXPECT_EQ(DHCPACK, rsp->getType());
-
-        }
-
-        if (relay_addr.toText() != "0.0.0.0") {
-            // This is relayed message. It should be sent brsp to relay address.
-            EXPECT_EQ(req->getGiaddr().toText(),
-                      rsp->getRemoteAddr().toText());
-
-        } else if (client_addr.toText() != "0.0.0.0") {
-            // This is a message from a client having an IP address.
-            EXPECT_EQ(req->getRemoteAddr().toText(),
-                      rsp->getRemoteAddr().toText());
-
-        } else {
-            // This is a message from a client having no IP address yet.
-            // If IfaceMgr supports direct traffic the response should
-            // be sent to the new address assigned to the client.
-            if (IfaceMgr::instance().isDirectResponseSupported()) {
-                EXPECT_EQ(rsp->getYiaddr(),
-                          rsp->getRemoteAddr().toText());
-
-            // If direct response to the client having no IP address is
-            // not supported, response should go to broadcast.
-            } else {
-                EXPECT_EQ("255.255.255.255", rsp->getRemoteAddr().toText());
-
-            }
-
-        }
-
-        messageCheck(req, rsp);
-
-        // We did not request any options so these should not be present
-        // in the RSP.
-        EXPECT_FALSE(rsp->getOption(DHO_LOG_SERVERS));
-        EXPECT_FALSE(rsp->getOption(DHO_COOKIE_SERVERS));
-        EXPECT_FALSE(rsp->getOption(DHO_LPR_SERVERS));
-
-        // Repeat the test but request some options.
-        // Add 'Parameter Request List' option.
-        addPrlOption(req);
-
-        if (msg_type == DHCPDISCOVER) {
-            ASSERT_NO_THROW(
-                rsp = srv->processDiscover(req);
-            );
-
-            // Should return non-NULL packet.
-            ASSERT_TRUE(rsp);
-            EXPECT_EQ(DHCPOFFER, rsp->getType());
-
-        } else {
-            ASSERT_NO_THROW(
-                rsp = srv->processRequest(req);
-            );
-
-            // Should return non-NULL packet.
-            ASSERT_TRUE(rsp);
-            EXPECT_EQ(DHCPACK, rsp->getType());
-
-        }
-
-        // Check that the requested options are returned.
-        optionsCheck(rsp);
-
-    }
-
-    ~Dhcpv4SrvTest() {
-        CfgMgr::instance().deleteSubnets4();
-
-        // Let's clean up if there is such a file.
-        unlink(SRVID_FILE);
-    };
-
-    /// @brief A subnet used in most tests
-    Subnet4Ptr subnet_;
-
-    /// @brief A pool used in most tests
-    Pool4Ptr pool_;
-
-    /// @brief A client-id used in most tests
-    ClientIdPtr client_id_;
-};
+// This test verifies that the destination address of the response
+// message is set to giaddr, when giaddr is set to non-zero address
+// in the received message.
+TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRelay) {
+    // Create the instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr to non-zero address and hops to non-zero value
+    // as if it was relayed.
+    req->setGiaddr(IOAddress("192.0.2.1"));
+    req->setHops(2);
+    // Set ciaddr to zero. This simulates the client which applies
+    // for the new lease.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+    // Clear broadcast flag.
+    req->setFlags(0x0000);
+
+    // Set local address, port and interface.
+    req->setLocalAddr(IOAddress("192.0.3.1"));
+    req->setLocalPort(1001);
+    req->setIface("eth0");
+    req->setIndex(1);
+
+    // Create a response packet. Assume that the new lease have
+    // been created and new address allocated. This address is
+    // stored in yiaddr field.
+    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    resp->setYiaddr(IOAddress("192.0.2.100"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Set hops value for the response.
+    resp->setHops(req->getHops());
+
+    // This function never throws.
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+
+    // Now the destination address should be relay's address.
+    EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
+    // The query has been relayed, so the response must be sent to the port 67.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
+    // Local address should be copied from the query message.
+    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+    // The local port is always DHCPv4 server port 67.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+    // We will send response over the same interface which was used to receive
+    // query.
+    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
+
+    // Let's do another test and set other fields: ciaddr and
+    // flags. By doing it, we want to make sure that the relay
+    // address will take precedence.
+    req->setGiaddr(IOAddress("192.0.2.50"));
+    req->setCiaddr(IOAddress("192.0.2.11"));
+    req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
+
+    resp->setYiaddr(IOAddress("192.0.2.100"));
+    // Clear remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+
+    // Response should be sent back to the relay address.
+    EXPECT_EQ("192.0.2.50", resp->getRemoteAddr().toText());
+}
+
+// This test verifies that the destination address of the response message
+// is set to ciaddr when giaddr is set to zero and the ciaddr is set to
+// non-zero address in the received message. This is the case when the
+// client is in Renew or Rebind state.
+TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRenew) {
+    // Create instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Clear giaddr to simulate direct packet.
+    req->setGiaddr(IOAddress("0.0.0.0"));
+    // Set ciaddr to non-zero address. The response should be sent to this
+    // address as the client is in renewing or rebinding state (it is fully
+    // configured).
+    req->setCiaddr(IOAddress("192.0.2.15"));
+    // Let's configure broadcast flag. It should be ignored because
+    // we are responding directly to the client having an address
+    // and trying to extend his lease. Broadcast flag is only used
+    // when new lease is acquired and server must make a decision
+    // whether to unicast the response to the acquired address or
+    // broadcast it.
+    req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
+    // This is a direct message, so the hops should be cleared.
+    req->setHops(0);
+    // Set local unicast address as if we are renewing a lease.
+    req->setLocalAddr(IOAddress("192.0.3.1"));
+    // Request is received on the DHCPv4 server port.
+    req->setLocalPort(DHCP4_SERVER_PORT);
+    // Set the interface. The response should be sent over the same interface.
+    req->setIface("eth0");
+    req->setIndex(1);
+
+    // Create a response.
+    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Let's extend the lease for the client in such a way that
+    // it will actually get different address. The response
+    // should not be sent to this address but rather to ciaddr
+    // as client still have ciaddr configured.
+    resp->setYiaddr(IOAddress("192.0.2.13"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Copy hops value from the query.
+    resp->setHops(req->getHops());
+
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+
+    // Check that server responds to ciaddr
+    EXPECT_EQ("192.0.2.15", resp->getRemoteAddr().toText());
+    // The query was non-relayed, so the response should be sent to a DHCPv4
+    // client port 68.
+    EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getRemotePort());
+    // The response should be sent from the unicast address on which the
+    // query has been received.
+    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+    // The response should be sent from the DHCPv4 server port.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+    // The interface data should match the data in the query.
+    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
+
+}
+
+// This test verifies that the destination address of the response message
+// is set correctly when giaddr and ciaddr is zeroed in the received message
+// and the new lease is acquired. The lease address is carried in the
+// response message in the yiaddr field. In this case destination address
+// of the response should be set to yiaddr if server supports direct responses
+// to the client which doesn't have an address yet or broadcast if the server
+// doesn't support direct responses.
+TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataSelect) {
+    // Create instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Clear giaddr to simulate direct packet.
+    req->setGiaddr(IOAddress("0.0.0.0"));
+    // Clear client address as it hasn't got any address configured yet.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+
+    // Let's clear the broadcast flag.
+    req->setFlags(0);
+
+    // This is a non-relayed message, so let's clear hops count.
+    req->setHops(0);
+    // The query is sent to the broadcast address in the Select state.
+    req->setLocalAddr(IOAddress("255.255.255.255"));
+    // The query has been received on the DHCPv4 server port 67.
+    req->setLocalPort(DHCP4_SERVER_PORT);
+    // Set the interface. The response should be sent via the same interface.
+    req->setIface("eth0");
+    req->setIndex(1);
+
+    // Create a response.
+    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Assign some new address for this client.
+    resp->setYiaddr(IOAddress("192.0.2.13"));
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+    // Copy hops count.
+    resp->setHops(req->getHops());
+
+    // We want to test the case, when the server (packet filter) doesn't support
+    // ddirect responses to the client which doesn't have an address yet. In
+    // case, the server should send its response to the broadcast address.
+    // We can control whether the current packet filter returns that its support
+    // direct responses or not.
+    current_pkt_filter_->direct_resp_supported_ = false;
+
+    // When running unit tests, the IfaceMgr is using the default Packet
+    // Filtering class, PktFilterInet. This class does not support direct
+    // responses to clients without address assigned. When giaddr and ciaddr
+    // are zero and client has just got new lease, the assigned address is
+    // carried in yiaddr. In order to send this address to the client,
+    // server must broadcast its response.
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+
+    // Check that the response is sent to broadcast address as the
+    // server doesn't have capability to respond directly.
+    EXPECT_EQ("255.255.255.255", resp->getRemoteAddr().toText());
+
+    // Although the query has been sent to the broadcast address, the
+    // server should select a unicast address on the particular interface
+    // as a source address for the response.
+    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+
+    // The response should be sent from the DHCPv4 server port.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+
+    // The response should be sent via the same interface through which
+    // query has been received.
+    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
+
+    // We also want to test the case when the server has capability to
+    // respond directly to the client which is not configured. Server
+    // makes decision whether it responds directly or broadcast its
+    // response based on the capability reported by IfaceMgr. We can
+    // control whether the current packet filter returns that it supports
+    // direct responses or not.
+    current_pkt_filter_->direct_resp_supported_ = true;
+
+    // Now we expect that the server will send its response to the
+    // address assigned for the client.
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+
+    EXPECT_EQ("192.0.2.13", resp->getRemoteAddr().toText());
+}
+
+// This test verifies that the destination address of the response message
+// is set to broadcast address when client set broadcast flag in its
+// query. Client sets this flag to indicate that it can't receive direct
+// responses from the server when it doesn't have its interface configured.
+// Server must respect broadcast flag.
+TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataBroadcast) {
+    // Create instance of the incoming packet.
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+
+    // Clear giaddr to simulate direct packet.
+    req->setGiaddr(IOAddress("0.0.0.0"));
+    // Clear client address as it hasn't got any address configured yet.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+    // The query is sent to the broadcast address in the Select state.
+    req->setLocalAddr(IOAddress("255.255.255.255"));
+    // The query has been received on the DHCPv4 server port 67.
+    req->setLocalPort(DHCP4_SERVER_PORT);
+    // Set the interface. The response should be sent via the same interface.
+    req->setIface("eth0");
+    req->setIndex(1);
+
+    // Let's set the broadcast flag.
+    req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
+
+    // Create a response.
+    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Assign some new address for this client.
+    resp->setYiaddr(IOAddress("192.0.2.13"));
+
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+
+    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
+
+    // Server must repond to broadcast address when client desired that
+    // by setting the broadcast flag in its request.
+    EXPECT_EQ("255.255.255.255", resp->getRemoteAddr().toText());
+
+    // Although the query has been sent to the broadcast address, the
+    // server should select a unicast address on the particular interface
+    // as a source address for the response.
+    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+
+    // The response should be sent from the DHCPv4 server port.
+    EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
+
+    // The response should be sent via the same interface through which
+    // query has been received.
+    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ(1, resp->getIndex());
+
+}
+
+// This test verifies that exception is thrown of the invalid combination
+// of giaddr and hops is specified in a client's message.
+TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataInvalid) {
+    boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
+
+    // The hops and giaddr values are used to determine if the client's
+    // message has been relayed or sent directly. The allowed combinations
+    // are (giaddr = 0 and hops = 0) or (giaddr != 0 and hops != 0). Any
+    // other combination is invalid and the adjustIfaceData should throw
+    // an exception. We will test that exception is indeed thrown.
+    req->setGiaddr(IOAddress("0.0.0.0"));
+    req->setHops(1);
+
+    // Clear client address as it hasn't got any address configured yet.
+    req->setCiaddr(IOAddress("0.0.0.0"));
+    // The query is sent to the broadcast address in the Select state.
+    req->setLocalAddr(IOAddress("255.255.255.255"));
+    // The query has been received on the DHCPv4 server port 67.
+    req->setLocalPort(DHCP4_SERVER_PORT);
+    // Set the interface. The response should be sent via the same interface.
+    req->setIface("eth0");
+    req->setIndex(1);
+
+    // Create a response.
+    boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
+    // Assign some new address for this client.
+    resp->setYiaddr(IOAddress("192.0.2.13"));
+
+    // Clear the remote address.
+    resp->setRemoteAddr(IOAddress("0.0.0.0"));
+
+    EXPECT_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp), isc::BadValue);
+}
+
+// This test verifies that the server identifier option is appended to
+// a specified DHCPv4 message and the server identifier is correct.
+TEST_F(Dhcpv4SrvTest, appendServerID) {
+    Pkt4Ptr response(new Pkt4(DHCPDISCOVER, 1234));
+    // Set a local address. It is required by the function under test
+    // to create the Server Identifier option.
+    response->setLocalAddr(IOAddress("192.0.3.1"));
+
+    // Append the Server Identifier.
+    ASSERT_NO_THROW(NakedDhcpv4Srv::appendServerID(response));
+
+    // Make sure that the option has been added.
+    OptionPtr opt = response->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+    ASSERT_TRUE(opt);
+    Option4AddrLstPtr opt_server_id =
+        boost::dynamic_pointer_cast<Option4AddrLst>(opt);
+    ASSERT_TRUE(opt_server_id);
+
+    // The option is represented as a list of IPv4 addresses but with
+    // only one address added.
+    Option4AddrLst::AddressContainer addrs = opt_server_id->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    // This address should match the local address of the packet.
+    EXPECT_EQ("192.0.3.1", addrs[0].toText());
+}
 
 // Sanity check. Verifies that both Dhcpv4Srv and its derived
 // class NakedDhcpv4Srv can be instantiated and destroyed.
@@ -494,20 +388,46 @@ TEST_F(Dhcpv4SrvTest, basic) {
 
     // Check that the base class can be instantiated
     boost::scoped_ptr<Dhcpv4Srv> srv;
-    ASSERT_NO_THROW(srv.reset(new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
+    ASSERT_NO_THROW(srv.reset(new Dhcpv4Srv(DHCP4_SERVER_PORT + 10000, "type=memfile",
+                                            false, false)));
     srv.reset();
+    // We have to close open sockets because further in this test we will
+    // call the Dhcpv4Srv constructor again. This constructor will try to
+    // set the appropriate packet filter class for IfaceMgr. This requires
+    // that all sockets are closed.
+    IfaceMgr::instance().closeSockets();
 
     // Check that the derived class can be instantiated
     boost::scoped_ptr<NakedDhcpv4Srv> naked_srv;
     ASSERT_NO_THROW(
-            naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
-    EXPECT_TRUE(naked_srv->getServerID());
+        naked_srv.reset(new NakedDhcpv4Srv(DHCP4_SERVER_PORT + 10000)));
+    // Close sockets again for the next test.
+    IfaceMgr::instance().closeSockets();
 
     ASSERT_NO_THROW(naked_srv.reset(new NakedDhcpv4Srv(0)));
-    EXPECT_TRUE(naked_srv->getServerID());
 }
 
-// Verifies that DISCOVER received via relay can be processed correctly,
+// This test verifies that exception is not thrown when an error occurs during
+// opening sockets. This test forces an error by adding a fictious interface
+// to the IfaceMgr. An attempt to open socket on this interface must always
+// fail. The DHCPv4 installs the error handler function to prevent exceptions
+// being thrown from the openSockets4 function.
+// @todo The server tests for socket should be extended but currently the
+// ability to unit test the sockets code is somewhat limited.
+TEST_F(Dhcpv4SrvTest, openActiveSockets) {
+    ASSERT_NO_THROW(CfgMgr::instance().activateAllIfaces());
+
+    Iface iface("bogusiface", 255);
+    iface.flag_loopback_ = false;
+    iface.flag_up_ = true;
+    iface.flag_running_ = true;
+    iface.inactive4_ = false;
+    iface.addAddress(IOAddress("192.0.0.0"));
+    IfaceMgr::instance().addInterface(iface);
+    ASSERT_NO_THROW(Dhcpv4Srv::openActiveSockets(DHCP4_SERVER_PORT, false));
+}
+
+// Verifies that DISCOVER message can be processed correctly,
 // that the OFFER message generated in response is valid and
 // contains necessary options.
 //
@@ -515,29 +435,11 @@ TEST_F(Dhcpv4SrvTest, basic) {
 // are other tests that verify correctness of the allocation
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
-TEST_F(Dhcpv4SrvTest, processDiscoverRelay) {
-    testDiscoverRequest(DHCPDISCOVER,
-                        IOAddress("192.0.2.56"),
-                        IOAddress("192.0.2.67"));
+TEST_F(Dhcpv4SrvFakeIfaceTest, processDiscover) {
+    testDiscoverRequest(DHCPDISCOVER);
 }
 
-// Verifies that the non-relayed DISCOVER is processed correctly when
-// client source address is specified.
-TEST_F(Dhcpv4SrvTest, processDiscoverNoRelay) {
-    testDiscoverRequest(DHCPDISCOVER,
-                        IOAddress("0.0.0.0"),
-                        IOAddress("192.0.2.67"));
-}
-
-// Verified that the non-relayed DISCOVER is processed correctly when
-// client source address is not specified.
-TEST_F(Dhcpv4SrvTest, processDiscoverNoClientAddr) {
-    testDiscoverRequest(DHCPDISCOVER,
-                        IOAddress("0.0.0.0"),
-                        IOAddress("0.0.0.0"));
-}
-
-// Verifies that REQUEST received via relay can be processed correctly,
+// Verifies that REQUEST message can be processed correctly,
 // that the OFFER message generated in response is valid and
 // contains necessary options.
 //
@@ -545,29 +447,11 @@ TEST_F(Dhcpv4SrvTest, processDiscoverNoClientAddr) {
 // are other tests that verify correctness of the allocation
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
-TEST_F(Dhcpv4SrvTest, processRequestRelay) {
-    testDiscoverRequest(DHCPREQUEST,
-                        IOAddress("192.0.2.56"),
-                        IOAddress("192.0.2.67"));
+TEST_F(Dhcpv4SrvFakeIfaceTest, processRequest) {
+    testDiscoverRequest(DHCPREQUEST);
 }
 
-// Verifies that the non-relayed REQUEST is processed correctly when
-// client source address is specified.
-TEST_F(Dhcpv4SrvTest, processRequestNoRelay) {
-    testDiscoverRequest(DHCPREQUEST,
-                        IOAddress("0.0.0.0"),
-                        IOAddress("192.0.2.67"));
-}
-
-// Verified that the non-relayed REQUEST is processed correctly when
-// client source address is not specified.
-TEST_F(Dhcpv4SrvTest, processRequestNoClientAddr) {
-    testDiscoverRequest(DHCPREQUEST,
-                        IOAddress("0.0.0.0"),
-                        IOAddress("0.0.0.0"));
-}
-
-TEST_F(Dhcpv4SrvTest, processRelease) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, processRelease) {
     NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPRELEASE, 1234));
 
@@ -575,7 +459,7 @@ TEST_F(Dhcpv4SrvTest, processRelease) {
     EXPECT_NO_THROW(srv.processRelease(pkt));
 }
 
-TEST_F(Dhcpv4SrvTest, processDecline) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, processDecline) {
     NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPDECLINE, 1234));
 
@@ -583,7 +467,7 @@ TEST_F(Dhcpv4SrvTest, processDecline) {
     EXPECT_NO_THROW(srv.processDecline(pkt));
 }
 
-TEST_F(Dhcpv4SrvTest, processInform) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, processInform) {
     NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPINFORM, 1234));
 
@@ -640,7 +524,7 @@ TEST_F(Dhcpv4SrvTest, serverReceivedPacketName) {
 // - copy of client-id
 // - server-id
 // - offered address
-TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverBasic) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -648,6 +532,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
+    dis->setIface("eth0");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -677,7 +562,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
 // - copy of client-id
 // - server-id
 // - offered address
-TEST_F(Dhcpv4SrvTest, DiscoverHint) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverHint) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("192.0.2.107");
@@ -687,6 +572,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverHint) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setYiaddr(hint);
+    dis->setIface("eth0");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -698,7 +584,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverHint) {
     // lifetime is correct, that T1 and T2 are returned properly
     checkAddressParams(offer, subnet_);
 
-    EXPECT_EQ(offer->getYiaddr().toText(), hint.toText());
+    EXPECT_EQ(offer->getYiaddr(), hint);
 
     // Check identifiers
     checkServerId(offer, srv->getServerID());
@@ -717,7 +603,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverHint) {
 // - copy of client-id
 // - server-id
 // - offered address
-TEST_F(Dhcpv4SrvTest, DiscoverNoClientId) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverNoClientId) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("192.0.2.107");
@@ -725,6 +611,8 @@ TEST_F(Dhcpv4SrvTest, DiscoverNoClientId) {
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setYiaddr(hint);
+    dis->setHWAddr(generateHWAddr(6));
+    dis->setIface("eth0");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -736,7 +624,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverNoClientId) {
     // lifetime is correct, that T1 and T2 are returned properly
     checkAddressParams(offer, subnet_);
 
-    EXPECT_EQ(offer->getYiaddr().toText(), hint.toText());
+    EXPECT_EQ(offer->getYiaddr(), hint);
 
     // Check identifiers
     checkServerId(offer, srv->getServerID());
@@ -754,7 +642,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverNoClientId) {
 // - copy of client-id
 // - server-id
 // - offered address (!= hint)
-TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverInvalidHint) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("10.1.2.3");
@@ -764,6 +652,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setYiaddr(hint);
+    dis->setIface("eth0");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -775,7 +664,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
     // lifetime is correct, that T1 and T2 are returned properly
     checkAddressParams(offer, subnet_);
 
-    EXPECT_NE(offer->getYiaddr().toText(), hint.toText());
+    EXPECT_NE(offer->getYiaddr(), hint);
 
     // Check identifiers
     checkServerId(offer, srv->getServerID());
@@ -792,7 +681,7 @@ TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
 // and this is a correct behavior. It is REQUEST that will fail for the third
 // client. OFFER is basically saying "if you send me a request, you will
 // probably get an address like this" (there are no guarantees).
-TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, ManyDiscovers) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -803,6 +692,11 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     dis1->setRemoteAddr(IOAddress("192.0.2.1"));
     dis2->setRemoteAddr(IOAddress("192.0.2.2"));
     dis3->setRemoteAddr(IOAddress("192.0.2.3"));
+
+    // Assign interfaces
+    dis1->setIface("eth0");
+    dis2->setIface("eth0");
+    dis3->setIface("eth0");
 
     // Different client-id sizes
     OptionPtr clientid1 = generateClientId(4); // length 4
@@ -841,12 +735,39 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
     checkClientId(offer3, clientid3);
 
     // Finally check that the addresses offered are different
-    EXPECT_NE(addr1.toText(), addr2.toText());
-    EXPECT_NE(addr2.toText(), addr3.toText());
-    EXPECT_NE(addr3.toText(), addr1.toText());
-    cout << "Offered address to client1=" << addr1.toText() << endl;
-    cout << "Offered address to client2=" << addr2.toText() << endl;
-    cout << "Offered address to client3=" << addr3.toText() << endl;
+    EXPECT_NE(addr1, addr2);
+    EXPECT_NE(addr2, addr3);
+    EXPECT_NE(addr3, addr1);
+    cout << "Offered address to client1=" << addr1 << endl;
+    cout << "Offered address to client2=" << addr2 << endl;
+    cout << "Offered address to client3=" << addr3 << endl;
+}
+
+// Checks whether echoing back client-id is controllable, i.e.
+// whether the server obeys echo-client-id and sends (or not)
+// client-id
+TEST_F(Dhcpv4SrvFakeIfaceTest, discoverEchoClientId) {
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth0");
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    checkClientId(offer, clientid);
+
+    CfgMgr::instance().echoClientId(false);
+    offer = srv.processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+    checkClientId(offer, clientid);
 }
 
 // This test verifies that incoming REQUEST can be handled properly, that an
@@ -864,7 +785,7 @@ TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
 // - assigned address
 //
 // Test verifies that the lease is actually in the database.
-TEST_F(Dhcpv4SrvTest, RequestBasic) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, RequestBasic) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -874,13 +795,14 @@ TEST_F(Dhcpv4SrvTest, RequestBasic) {
     OptionPtr clientid = generateClientId();
     req->addOption(clientid);
     req->setYiaddr(hint);
+    req->setIface("eth0");
 
     // Pass it to the server and get an advertise
     Pkt4Ptr ack = srv->processRequest(req);
 
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
-    EXPECT_EQ(hint.toText(), ack->getYiaddr().toText());
+    EXPECT_EQ(hint, ack->getYiaddr());
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
@@ -909,7 +831,7 @@ TEST_F(Dhcpv4SrvTest, RequestBasic) {
 // - copy of client-id
 // - server-id
 // - assigned address (different for each client)
-TEST_F(Dhcpv4SrvTest, ManyRequests) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, ManyRequests) {
 
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
@@ -926,6 +848,11 @@ TEST_F(Dhcpv4SrvTest, ManyRequests) {
     req1->setRemoteAddr(relay);
     req2->setRemoteAddr(relay);
     req3->setRemoteAddr(relay);
+
+    // Assign interfaces
+    req1->setIface("eth0");
+    req2->setIface("eth0");
+    req3->setIface("eth0");
 
     req1->setYiaddr(req_addr1);
     req2->setYiaddr(req_addr2);
@@ -959,9 +886,9 @@ TEST_F(Dhcpv4SrvTest, ManyRequests) {
     IOAddress addr3 = ack3->getYiaddr();
 
     // Check that every client received the address it requested
-    EXPECT_EQ(req_addr1.toText(), addr1.toText());
-    EXPECT_EQ(req_addr2.toText(), addr2.toText());
-    EXPECT_EQ(req_addr3.toText(), addr3.toText());
+    EXPECT_EQ(req_addr1, addr1);
+    EXPECT_EQ(req_addr2, addr2);
+    EXPECT_EQ(req_addr3, addr3);
 
     // Check that the assigned address is indeed from the configured pool
     checkAddressParams(ack1, subnet_);
@@ -983,12 +910,37 @@ TEST_F(Dhcpv4SrvTest, ManyRequests) {
     l = checkLease(ack3, clientid3, req3->getHWAddr(), addr3);
 
     // Finally check that the addresses offered are different
-    EXPECT_NE(addr1.toText(), addr2.toText());
-    EXPECT_NE(addr2.toText(), addr3.toText());
-    EXPECT_NE(addr3.toText(), addr1.toText());
-    cout << "Offered address to client1=" << addr1.toText() << endl;
-    cout << "Offered address to client2=" << addr2.toText() << endl;
-    cout << "Offered address to client3=" << addr3.toText() << endl;
+    EXPECT_NE(addr1, addr2);
+    EXPECT_NE(addr2, addr3);
+    EXPECT_NE(addr3, addr1);
+    cout << "Offered address to client1=" << addr1 << endl;
+    cout << "Offered address to client2=" << addr2 << endl;
+    cout << "Offered address to client3=" << addr3 << endl;
+}
+
+// Checks whether echoing back client-id is controllable
+TEST_F(Dhcpv4SrvFakeIfaceTest, requestEchoClientId) {
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth0");
+
+    // Pass it to the server and get ACK
+    Pkt4Ptr ack = srv.processRequest(dis);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPACK, 1234);
+    checkClientId(ack, clientid);
+
+    CfgMgr::instance().echoClientId(false);
+    ack = srv.processDiscover(dis);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPOFFER, 1234);
+    checkClientId(ack, clientid);
 }
 
 
@@ -1001,7 +953,7 @@ TEST_F(Dhcpv4SrvTest, ManyRequests) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA that includes IAADDR
 // - lease is actually renewed in LeaseMgr
-TEST_F(Dhcpv4SrvTest, RenewBasic) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, RenewBasic) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -1015,7 +967,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // let's create a lease and put it in the LeaseMgr
     uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -1041,6 +993,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     req->setRemoteAddr(IOAddress(addr));
     req->setYiaddr(addr);
     req->setCiaddr(addr); // client's address
+    req->setIface("eth0");
 
     req->addOption(clientid);
     req->addOption(srv->getServerID());
@@ -1050,7 +1003,7 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
 
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
-    EXPECT_EQ(addr.toText(), ack->getYiaddr().toText());
+    EXPECT_EQ(addr, ack->getYiaddr());
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
@@ -1078,6 +1031,56 @@ TEST_F(Dhcpv4SrvTest, RenewBasic) {
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
 }
 
+// This test verifies that the logic which matches server identifier in the
+// received message with server identifiers used by a server works correctly:
+// - a message with no server identifier is accepted,
+// - a message with a server identifier which matches one of the server
+// identifiers used by a server is accepted,
+// - a message with a server identifier which doesn't match any server
+// identifier used by a server, is not accepted.
+TEST_F(Dhcpv4SrvFakeIfaceTest, acceptServerId) {
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 1234));
+    // If no server identifier option is present, the message is always
+    // accepted.
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+    // Create definition of the server identifier option.
+    OptionDefinition def("server-identifier", DHO_DHCP_SERVER_IDENTIFIER,
+                         "ipv4-address", false);
+
+    // Add a server identifier option which doesn't match server ids being
+    // used by the server. The accepted server ids are the IPv4 addresses
+    // configured on the interfaces. The 10.1.2.3 is not configured on
+    // any interfaces.
+    OptionCustomPtr other_serverid(new OptionCustom(def, Option::V6));
+    other_serverid->writeAddress(IOAddress("10.1.2.3"));
+    pkt->addOption(other_serverid);
+    EXPECT_FALSE(srv.acceptServerId(pkt));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Add a server id being an IPv4 address configured on eth0 interface.
+    // A DHCPv4 message holding this server identifier should be accepted.
+    OptionCustomPtr eth0_serverid(new OptionCustom(def, Option::V6));
+    eth0_serverid->writeAddress(IOAddress("192.0.3.1"));
+    ASSERT_NO_THROW(pkt->addOption(eth0_serverid));
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Add a server id being an IPv4 address configured on eth1 interface.
+    // A DHCPv4 message holding this server identifier should be accepted.
+    OptionCustomPtr eth1_serverid(new OptionCustom(def, Option::V6));
+    eth1_serverid->writeAddress(IOAddress("10.0.0.1"));
+    ASSERT_NO_THROW(pkt->addOption(eth1_serverid));
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+}
+
 // @todo: Implement tests for rejecting renewals
 
 // This test verifies if the sanityCheck() really checks options presence.
@@ -1086,27 +1089,35 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
     Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    pkt->setHWAddr(generateHWAddr(6));
 
-    // Client-id is optional for information-request, so
-    EXPECT_NO_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::OPTIONAL));
+    // Server-id is optional for information-request, so
+    EXPECT_NO_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::OPTIONAL));
 
     // Empty packet, no server-id
-    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::MANDATORY), RFCViolation);
+    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY),
+                 RFCViolation);
 
     pkt->addOption(srv->getServerID());
 
     // Server-id is mandatory and present = no exception
-    EXPECT_NO_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::MANDATORY));
+    EXPECT_NO_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY));
 
     // Server-id is forbidden, but present => exception
-    EXPECT_THROW(srv->sanityCheck(pkt, Dhcpv4Srv::FORBIDDEN),
+    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::FORBIDDEN),
+                 RFCViolation);
+
+    // There's no client-id and no HWADDR. Server needs something to
+    // identify the client
+    pkt->setHWAddr(generateHWAddr(0));
+    EXPECT_THROW(NakedDhcpv4Srv::sanityCheck(pkt, Dhcpv4Srv::MANDATORY),
                  RFCViolation);
 }
 
 // This test verifies that incoming (positive) RELEASE can be handled properly.
 // As there is no REPLY in DHCPv4, the only thing to verify here is that
 // the lease is indeed removed from the database.
-TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, ReleaseBasic) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -1120,7 +1131,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a lease and put it in the LeaseMgr
     uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
@@ -1139,10 +1150,11 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     // Generate client-id also duid_
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setRemoteAddr(addr);
-    rel->setYiaddr(addr);
+    rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv->getServerID());
     rel->setHWAddr(hw);
+    rel->setIface("eth0");
 
     // Pass it to the server and hope for a REPLY
     // Note: this is no response to RELEASE in DHCPv4
@@ -1153,18 +1165,16 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     EXPECT_FALSE(l);
 
     // Try to get the lease by hardware address
-    // @todo: Uncomment this once trac2592 is implemented
-    // Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
-    // EXPECT_EQ(leases.size(), 0);
+    Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
+    EXPECT_EQ(leases.size(), 0);
 
     // Try to get it by hw/subnet_id combination
     l = LeaseMgrFactory::instance().getLease4(hw->hwaddr_, subnet_->getID());
     EXPECT_FALSE(l);
 
     // Try by client-id
-    // @todo: Uncomment this once trac2592 is implemented
-    //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
-    //EXPECT_EQ(leases.size(), 0);
+    leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    EXPECT_EQ(leases.size(), 0);
 
     // Try by client-id/subnet-id
     l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
@@ -1179,7 +1189,7 @@ TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
 // 1. there is no such lease at all
 // 2. there is such a lease, but it is assigned to a different IAID
 // 3. there is such a lease, but it belongs to a different client
-TEST_F(Dhcpv4SrvTest, ReleaseReject) {
+TEST_F(Dhcpv4SrvFakeIfaceTest, ReleaseReject) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -1198,16 +1208,17 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     OptionPtr clientid = generateClientId();
 
     // Check that the address we are about to use is indeed in pool
-    ASSERT_TRUE(subnet_->inPool(addr));
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
 
     // Let's create a RELEASE
     // Generate client-id also duid_
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setRemoteAddr(addr);
-    rel->setYiaddr(addr);
+    rel->setCiaddr(addr);
     rel->addOption(clientid);
     rel->addOption(srv->getServerID());
     rel->setHWAddr(bogus_hw);
+    rel->setIface("eth0");
 
     // Case 1: No lease known to server
     SCOPED_TRACE("CASE 1: Lease is not known to the server");
@@ -1266,34 +1277,1928 @@ TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     EXPECT_FALSE(l);
 }
 
-// This test verifies if the server-id disk operations (read, write) are
-// working properly.
-TEST_F(Dhcpv4SrvTest, ServerID) {
+// Checks if received relay agent info option is echoed back to the client
+TEST_F(Dhcpv4SrvFakeIfaceTest, relayAgentInfoEcho) {
+
     NakedDhcpv4Srv srv(0);
 
-    string srvid_text = "192.0.2.100";
-    IOAddress srvid(srvid_text);
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // added option 82 (relay agent info) with 3 suboptions. The server
+    // is supposed to echo it back in its response.
+    Pkt4Ptr dis;
+    ASSERT_NO_THROW(dis = captureRelayedDiscover());
 
-    fstream file1(SRVID_FILE, ios::out | ios::trunc);
-    file1 << srvid_text;
-    file1.close();
+    // Simulate that we have received that traffic
+    srv.fakeReceive(dis);
 
-    // Test reading from a file
-    EXPECT_TRUE(srv.loadServerID(SRVID_FILE));
-    ASSERT_TRUE(srv.getServerID());
-    EXPECT_EQ(srvid_text, srv.srvidToString(srv.getServerID()));
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv.run();
 
-    // Now test writing to a file
-    EXPECT_EQ(0, unlink(SRVID_FILE));
-    EXPECT_NO_THROW(srv.writeServerID(SRVID_FILE));
+    // Check that the server did send a reposonse
+    ASSERT_EQ(1, srv.fake_sent_.size());
 
-    fstream file2(SRVID_FILE, ios::in);
-    ASSERT_TRUE(file2.good());
-    string text;
-    file2 >> text;
-    file2.close();
+    // Make sure that we received a response
+    Pkt4Ptr offer = srv.fake_sent_.front();
+    ASSERT_TRUE(offer);
 
-    EXPECT_EQ(srvid_text, text);
+    // Get Relay Agent Info from query...
+    OptionPtr rai_query = dis->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_query);
+
+    // Get Relay Agent Info from response...
+    OptionPtr rai_response = offer->getOption(DHO_DHCP_AGENT_OPTIONS);
+    ASSERT_TRUE(rai_response);
+
+    EXPECT_TRUE(rai_response->equal(rai_query));
 }
 
-} // end of anonymous namespace
+/// @todo move vendor options tests to a separate file.
+/// @todo Add more extensive vendor options tests, including multiple
+///       vendor options
+
+// Checks if vendor options are parsed correctly and requested vendor options
+// are echoed back.
+TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsDocsis) {
+
+    NakedDhcpv4Srv srv(0);
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"data\": \"10.253.175.16\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"10.254.226.0/25\" ],"
+        "    \"subnet\": \"10.254.226.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"eth0\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // added option 82 (relay agent info) with 3 suboptions. The server
+    // is supposed to echo it back in its response.
+    Pkt4Ptr dis;
+    ASSERT_NO_THROW(dis = captureRelayedDiscover());
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(dis);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv.run();
+
+    // Check that the server did send a reposonse
+    ASSERT_EQ(1, srv.fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr offer = srv.fake_sent_.front();
+    ASSERT_TRUE(offer);
+
+    // Get Relay Agent Info from query...
+    OptionPtr vendor_opt_response = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(vendor_opt_response);
+
+    // Check if it's of a correct type
+    boost::shared_ptr<OptionVendor> vendor_opt =
+        boost::dynamic_pointer_cast<OptionVendor>(vendor_opt_response);
+    ASSERT_TRUE(vendor_opt);
+
+    // Get Relay Agent Info from response...
+    OptionPtr tftp_servers_generic = vendor_opt->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(tftp_servers_generic);
+
+    Option4AddrLstPtr tftp_servers =
+        boost::dynamic_pointer_cast<Option4AddrLst>(tftp_servers_generic);
+
+    ASSERT_TRUE(tftp_servers);
+
+    Option4AddrLst::AddressContainer addrs = tftp_servers->getAddresses();
+    ASSERT_EQ(1, addrs.size());
+    EXPECT_EQ("10.253.175.16", addrs[0].toText());
+}
+
+
+/// @todo Implement tests for subnetSelect See tests in dhcp6_srv_unittest.cc:
+/// selectSubnetAddr, selectSubnetIface, selectSubnetRelayLinkaddr,
+/// selectSubnetRelayInterfaceId. Note that the concept of interface-id is not
+/// present in the DHCPv4, so not everything is applicable directly.
+/// See ticket #3057
+
+// Checks if hooks are registered properly.
+TEST_F(Dhcpv4SrvTest, Hooks) {
+    NakedDhcpv4Srv srv(0);
+
+    // check if appropriate hooks are registered
+    int hook_index_buffer4_receive = -1;
+    int hook_index_pkt4_receive    = -1;
+    int hook_index_select_subnet   = -1;
+    int hook_index_lease4_release  = -1;
+    int hook_index_pkt4_send       = -1;
+    int hook_index_buffer4_send    = -1;
+
+    // check if appropriate indexes are set
+    EXPECT_NO_THROW(hook_index_buffer4_receive = ServerHooks::getServerHooks()
+                    .getIndex("buffer4_receive"));
+    EXPECT_NO_THROW(hook_index_pkt4_receive = ServerHooks::getServerHooks()
+                    .getIndex("pkt4_receive"));
+    EXPECT_NO_THROW(hook_index_select_subnet = ServerHooks::getServerHooks()
+                    .getIndex("subnet4_select"));
+    EXPECT_NO_THROW(hook_index_lease4_release = ServerHooks::getServerHooks()
+                    .getIndex("lease4_release"));
+    EXPECT_NO_THROW(hook_index_pkt4_send = ServerHooks::getServerHooks()
+                    .getIndex("pkt4_send"));
+    EXPECT_NO_THROW(hook_index_buffer4_send = ServerHooks::getServerHooks()
+                    .getIndex("buffer4_send"));
+
+    EXPECT_TRUE(hook_index_buffer4_receive > 0);
+    EXPECT_TRUE(hook_index_pkt4_receive > 0);
+    EXPECT_TRUE(hook_index_select_subnet > 0);
+    EXPECT_TRUE(hook_index_lease4_release > 0);
+    EXPECT_TRUE(hook_index_pkt4_send > 0);
+    EXPECT_TRUE(hook_index_buffer4_send > 0);
+}
+
+// This test verifies that the following option structure can be parsed:
+// - option (option space 'foobar')
+//   - sub option (option space 'foo')
+//      - sub option (option space 'bar')
+// @todo Add more thorough unit tests for unpackOptions.
+TEST_F(Dhcpv4SrvTest, unpackOptions) {
+    // Create option definition for each level of encapsulation. Each option
+    // definition is for the option code 1. Options may have the same
+    // option code because they belong to different option spaces.
+
+    // Top level option encapsulates options which belong to 'space-foo'.
+    OptionDefinitionPtr opt_def(new OptionDefinition("option-foobar", 1, "uint32",
+                                                      "space-foo"));\
+    // Middle option encapsulates options which belong to 'space-bar'
+    OptionDefinitionPtr opt_def2(new OptionDefinition("option-foo", 1, "uint16",
+                                                      "space-bar"));
+    // Low level option doesn't encapsulate any option space.
+    OptionDefinitionPtr opt_def3(new OptionDefinition("option-bar", 1,
+                                                      "uint8"));
+
+    // Add option definitions to the Configuration Manager. Each goes under
+    // different option space.
+    CfgMgr& cfgmgr = CfgMgr::instance();
+    ASSERT_NO_THROW(cfgmgr.addOptionDef(opt_def, "space-foobar"));
+    ASSERT_NO_THROW(cfgmgr.addOptionDef(opt_def2, "space-foo"));
+    ASSERT_NO_THROW(cfgmgr.addOptionDef(opt_def3, "space-bar"));
+
+    // Create the buffer holding the structure of options.
+    const char raw_data[] = {
+        // First option starts here.
+        0x01,                   // option code = 1
+        0x0B,                   // option length = 11
+        0x00, 0x01, 0x02, 0x03, // This option carries uint32 value
+        // Sub option starts here.
+        0x01,                   // option code = 1
+        0x05,                   // option length = 5
+        0x01, 0x02,             // this option carries uint16 value
+        // Last option starts here.
+        0x01,                   // option code = 1
+        0x01,                   // option length = 1
+        0x00                    // This option carries a single uint8
+                                // value and has no sub options.
+    };
+    OptionBuffer buf(raw_data, raw_data + sizeof(raw_data));
+
+    // Parse options.
+    NakedDhcpv4Srv srv(0);
+    OptionCollection options;
+    ASSERT_NO_THROW(srv.unpackOptions(buf, "space-foobar", options));
+
+    // There should be one top level option.
+    ASSERT_EQ(1, options.size());
+    boost::shared_ptr<OptionInt<uint32_t> > option_foobar =
+        boost::dynamic_pointer_cast<OptionInt<uint32_t> >(options.begin()->
+                                                          second);
+    ASSERT_TRUE(option_foobar);
+    EXPECT_EQ(1, option_foobar->getType());
+    EXPECT_EQ(0x00010203, option_foobar->getValue());
+    // There should be a middle level option held in option_foobar.
+    boost::shared_ptr<OptionInt<uint16_t> > option_foo =
+        boost::dynamic_pointer_cast<OptionInt<uint16_t> >(option_foobar->
+                                                          getOption(1));
+    ASSERT_TRUE(option_foo);
+    EXPECT_EQ(1, option_foo->getType());
+    EXPECT_EQ(0x0102, option_foo->getValue());
+    // Finally, there should be a low level option under option_foo.
+    boost::shared_ptr<OptionInt<uint8_t> > option_bar =
+        boost::dynamic_pointer_cast<OptionInt<uint8_t> >(option_foo->getOption(1));
+    ASSERT_TRUE(option_bar);
+    EXPECT_EQ(1, option_bar->getType());
+    EXPECT_EQ(0x0, option_bar->getValue());
+}
+
+// Checks whether the server uses default (0.0.0.0) siaddr value, unless
+// explicitly specified
+TEST_F(Dhcpv4SrvFakeIfaceTest, siaddrDefault) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+    IOAddress hint("192.0.2.107");
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setYiaddr(hint);
+    dis->setIface("eth0");
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv->processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Verify that it is 0.0.0.0
+    EXPECT_EQ("0.0.0.0", offer->getSiaddr().toText());
+}
+
+// Checks whether the server uses specified siaddr value
+TEST_F(Dhcpv4SrvFakeIfaceTest, siaddr) {
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+    subnet_->setSiaddr(IOAddress("192.0.2.123"));
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv->processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if we get response at all
+    checkResponse(offer, DHCPOFFER, 1234);
+
+    // Verify that its value is proper
+    EXPECT_EQ("192.0.2.123", offer->getSiaddr().toText());
+}
+
+// Checks if the next-server defined as global value is overridden by subnet
+// specific value and returned in server messages. There's also similar test for
+// checking parser only configuration, see Dhcp4ParserTest.nextServerOverride in
+// config_parser_unittest.cc.
+TEST_F(Dhcpv4SrvFakeIfaceTest, nextServerOverride) {
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"next-server\": \"192.0.0.1\", "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"next-server\": \"1.2.3.4\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+
+    // check if returned status is OK
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    EXPECT_EQ(DHCPOFFER, offer->getType());
+
+    EXPECT_EQ("1.2.3.4", offer->getSiaddr().toText());
+}
+
+// Checks if the next-server defined as global value is used in responses
+// when there is no specific value defined in subnet and returned to the client
+// properly. There's also similar test for checking parser only configuration,
+// see Dhcp4ParserTest.nextServerGlobal in config_parser_unittest.cc.
+TEST_F(Dhcpv4SrvFakeIfaceTest, nextServerGlobal) {
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"next-server\": \"192.0.0.1\", "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+
+    // check if returned status is OK
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // Pass it to the server and get an offer
+    Pkt4Ptr offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+    EXPECT_EQ(DHCPOFFER, offer->getType());
+
+    EXPECT_EQ("192.0.0.1", offer->getSiaddr().toText());
+}
+
+
+// a dummy MAC address
+const uint8_t dummyMacAddr[] = {0, 1, 2, 3, 4, 5};
+
+// A dummy MAC address, padded with 0s
+const uint8_t dummyChaddr[16] = {0, 1, 2, 3, 4, 5, 0, 0,
+                                 0, 0, 0, 0, 0, 0, 0, 0 };
+
+// Let's use some creative test content here (128 chars + \0)
+const uint8_t dummyFile[] = "Lorem ipsum dolor sit amet, consectetur "
+    "adipiscing elit. Proin mollis placerat metus, at "
+    "lacinia orci ornare vitae. Mauris amet.";
+
+// Yet another type of test content (64 chars + \0)
+const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
+    "adipiscing elit posuere.";
+
+/// @brief a class dedicated to Hooks testing in DHCPv4 server
+///
+/// This class has a number of static members, because each non-static
+/// method has implicit 'this' parameter, so it does not match callout
+/// signature and couldn't be registered. Furthermore, static methods
+/// can't modify non-static members (for obvious reasons), so many
+/// fields are declared static. It is still better to keep them as
+/// one class rather than unrelated collection of global objects.
+class HooksDhcpv4SrvTest : public Dhcpv4SrvFakeIfaceTest {
+
+public:
+
+    /// @brief creates Dhcpv4Srv and prepares buffers for callouts
+    HooksDhcpv4SrvTest() {
+
+        // Allocate new DHCPv6 Server
+        srv_ = new NakedDhcpv4Srv(0);
+
+        // clear static buffers
+        resetCalloutBuffers();
+    }
+
+    /// @brief destructor (deletes Dhcpv4Srv)
+    virtual ~HooksDhcpv4SrvTest() {
+
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("buffer4_receive");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("buffer4_send");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_receive");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("pkt4_send");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("subnet4_select");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_renew");
+        HooksManager::preCalloutsLibraryHandle().deregisterAllCallouts("lease4_release");
+
+        delete srv_;
+    }
+
+    /// @brief creates an option with specified option code
+    ///
+    /// This method is static, because it is used from callouts
+    /// that do not have a pointer to HooksDhcpv4SSrvTest object
+    ///
+    /// @param option_code code of option to be created
+    ///
+    /// @return pointer to create option object
+    static OptionPtr createOption(uint16_t option_code) {
+
+        char payload[] = {
+            0xa, 0xb, 0xc, 0xe, 0xf, 0x10, 0x11, 0x12, 0x13, 0x14
+        };
+
+        OptionBuffer tmp(payload, payload + sizeof(payload));
+        return OptionPtr(new Option(Option::V4, option_code, tmp));
+    }
+
+    /// @brief Generates test packet.
+    ///
+    /// Allocates and generates on-wire buffer that represents test packet, with all
+    /// fixed fields set to non-zero values.  Content is not always reasonable.
+    ///
+    /// See generateTestPacket1() function that returns exactly the same packet as
+    /// Pkt4 object.
+    ///
+    /// @return pointer to allocated Pkt4 object
+    // Returns a vector containing a DHCPv4 packet header.
+    Pkt4Ptr
+    generateSimpleDiscover() {
+
+        // That is only part of the header. It contains all "short" fields,
+        // larger fields are constructed separately.
+        uint8_t hdr[] = {
+            1, 6, 6, 13,            // op, htype, hlen, hops,
+            0x12, 0x34, 0x56, 0x78, // transaction-id
+            0, 42, 0x80, 0x00,      // 42 secs, BROADCAST flags
+            192, 0, 2, 1,           // ciaddr
+            1, 2, 3, 4,             // yiaddr
+            192, 0, 2, 255,         // siaddr
+            255, 255, 255, 255,     // giaddr
+        };
+
+        // Initialize the vector with the header fields defined above.
+        vector<uint8_t> buf(hdr, hdr + sizeof(hdr));
+
+        // Append the large header fields.
+        copy(dummyChaddr, dummyChaddr + Pkt4::MAX_CHADDR_LEN, back_inserter(buf));
+        copy(dummySname, dummySname + Pkt4::MAX_SNAME_LEN, back_inserter(buf));
+        copy(dummyFile, dummyFile + Pkt4::MAX_FILE_LEN, back_inserter(buf));
+
+        // Should now have all the header, so check.  The "static_cast" is used
+        // to get round an odd bug whereby the linker appears not to find the
+        // definition of DHCPV4_PKT_HDR_LEN if it appears within an EXPECT_EQ().
+        EXPECT_EQ(static_cast<size_t>(Pkt4::DHCPV4_PKT_HDR_LEN), buf.size());
+
+        // Add magic cookie
+        buf.push_back(0x63);
+        buf.push_back(0x82);
+        buf.push_back(0x53);
+        buf.push_back(0x63);
+
+        // Add message type DISCOVER
+        buf.push_back(static_cast<uint8_t>(DHO_DHCP_MESSAGE_TYPE));
+        buf.push_back(1); // length (just one byte)
+        buf.push_back(static_cast<uint8_t>(DHCPDISCOVER));
+
+        return (Pkt4Ptr(new Pkt4(&buf[0], buf.size())));
+    }
+
+    /// Test callback that stores received callout name and pkt4 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_receive_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("buffer4_receive");
+
+        callout_handle.getArgument("query4", callback_pkt4_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// Test callback that changes hwaddr value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_receive_change_hwaddr(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("query4", pkt);
+
+        // If there is at least one option with data
+        if (pkt->data_.size() >= Pkt4::DHCPV4_PKT_HDR_LEN) {
+            // Offset of the first byte of the CHWADDR field. Let's the first
+            // byte to some new value that we could later check
+            pkt->data_[28] = 0xff;
+        }
+
+        // Carry on as usual
+        return buffer4_receive_callout(callout_handle);
+    }
+
+    /// Test callback that deletes MAC address
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_receive_delete_hwaddr(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("query4", pkt);
+
+        pkt->data_[2] = 0; // offset 2 is hlen, let's set it to zero
+        memset(&pkt->data_[28], 0, Pkt4::MAX_CHADDR_LEN); // Clear CHADDR content
+
+        // carry on as usual
+        return buffer4_receive_callout(callout_handle);
+    }
+
+    /// Test callback that sets skip flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_receive_skip(CalloutHandle& callout_handle) {
+
+        callout_handle.setSkip(true);
+
+        // Carry on as usual
+        return buffer4_receive_callout(callout_handle);
+    }
+
+    /// test callback that stores received callout name and pkt4 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_receive_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("pkt4_receive");
+
+        callout_handle.getArgument("query4", callback_pkt4_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// test callback that changes client-id value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_receive_change_clientid(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("query4", pkt);
+
+        // get rid of the old client-id
+        pkt->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+
+        // add a new option
+        pkt->addOption(createOption(DHO_DHCP_CLIENT_IDENTIFIER));
+
+        // carry on as usual
+        return pkt4_receive_callout(callout_handle);
+    }
+
+    /// test callback that deletes client-id
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_receive_delete_clientid(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("query4", pkt);
+
+        // get rid of the old client-id (and no HWADDR)
+        vector<uint8_t> mac;
+        pkt->delOption(DHO_DHCP_CLIENT_IDENTIFIER);
+        pkt->setHWAddr(1, 0, mac); // HWtype 1, hwardware len = 0
+
+        // carry on as usual
+        return pkt4_receive_callout(callout_handle);
+    }
+
+    /// test callback that sets skip flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_receive_skip(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("query4", pkt);
+
+        callout_handle.setSkip(true);
+
+        // carry on as usual
+        return pkt4_receive_callout(callout_handle);
+    }
+
+    /// Test callback that stores received callout name and pkt4 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_send_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("pkt4_send");
+
+        callout_handle.getArgument("response4", callback_pkt4_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    // Test callback that changes server-id
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_send_change_serverid(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("response4", pkt);
+
+        // get rid of the old server-id
+        pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER);
+
+        // add a new option
+        pkt->addOption(createOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+        // carry on as usual
+        return pkt4_send_callout(callout_handle);
+    }
+
+    /// test callback that deletes server-id
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_send_delete_serverid(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("response4", pkt);
+
+        // get rid of the old client-id
+        pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER);
+
+        // carry on as usual
+        return pkt4_send_callout(callout_handle);
+    }
+
+    /// Test callback that sets skip flag
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    pkt4_send_skip(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("response4", pkt);
+
+        callout_handle.setSkip(true);
+
+        // carry on as usual
+        return pkt4_send_callout(callout_handle);
+    }
+
+    /// Test callback that stores received callout name and pkt4 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_send_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("buffer4_send");
+
+        callout_handle.getArgument("response4", callback_pkt4_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// Test callback changes the output buffer to a hardcoded value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    buffer4_send_change_callout(CalloutHandle& callout_handle) {
+
+        Pkt4Ptr pkt;
+        callout_handle.getArgument("response4", pkt);
+
+        // modify buffer to set a diffferent payload
+        pkt->getBuffer().clear();
+        pkt->getBuffer().writeData(dummyFile, sizeof(dummyFile));
+
+        return (0);
+    }
+
+    /// Test callback that stores received callout name and pkt4 value
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    skip_callout(CalloutHandle& callout_handle) {
+
+        callout_handle.setSkip(true);
+
+        return (0);
+    }
+
+    /// Test callback that stores received callout name and subnet4 values
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    subnet4_select_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("subnet4_select");
+
+        callout_handle.getArgument("query4", callback_pkt4_);
+        callout_handle.getArgument("subnet4", callback_subnet4_);
+        callout_handle.getArgument("subnet4collection", callback_subnet4collection_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// Test callback that picks the other subnet if possible.
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    subnet4_select_different_subnet_callout(CalloutHandle& callout_handle) {
+
+        // Call the basic calllout to record all passed values
+        subnet4_select_callout(callout_handle);
+
+        const Subnet4Collection* subnets;
+        Subnet4Ptr subnet;
+        callout_handle.getArgument("subnet4", subnet);
+        callout_handle.getArgument("subnet4collection", subnets);
+
+        // Let's change to a different subnet
+        if (subnets->size() > 1) {
+            subnet = (*subnets)[1]; // Let's pick the other subnet
+            callout_handle.setArgument("subnet4", subnet);
+        }
+
+        return (0);
+    }
+
+    /// Test callback that stores received callout name passed parameters
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease4_release_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_release");
+
+        callout_handle.getArgument("query4", callback_pkt4_);
+        callout_handle.getArgument("lease4", callback_lease4_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+    /// Test callback that stores received callout name and subnet4 values
+    /// @param callout_handle handle passed by the hooks framework
+    /// @return always 0
+    static int
+    lease4_renew_callout(CalloutHandle& callout_handle) {
+        callback_name_ = string("lease4_renew");
+
+        callout_handle.getArgument("subnet4", callback_subnet4_);
+        callout_handle.getArgument("lease4", callback_lease4_);
+        callout_handle.getArgument("hwaddr", callback_hwaddr_);
+        callout_handle.getArgument("clientid", callback_clientid_);
+
+        callback_argument_names_ = callout_handle.getArgumentNames();
+        return (0);
+    }
+
+
+    /// resets buffers used to store data received by callouts
+    void resetCalloutBuffers() {
+        callback_name_ = string("");
+        callback_pkt4_.reset();
+        callback_lease4_.reset();
+        callback_hwaddr_.reset();
+        callback_clientid_.reset();
+        callback_subnet4_.reset();
+        callback_subnet4collection_ = NULL;
+        callback_argument_names_.clear();
+    }
+
+    /// pointer to Dhcpv4Srv that is used in tests
+    NakedDhcpv4Srv* srv_;
+
+    // The following fields are used in testing pkt4_receive_callout
+
+    /// String name of the received callout
+    static string callback_name_;
+
+    /// Pkt4 structure returned in the callout
+    static Pkt4Ptr callback_pkt4_;
+
+    /// Lease4 structure returned in the callout
+    static Lease4Ptr callback_lease4_;
+
+    /// Hardware address returned in the callout
+    static HWAddrPtr callback_hwaddr_;
+
+    /// Client-id returned in the callout
+    static ClientIdPtr callback_clientid_;
+
+    /// Pointer to a subnet received by callout
+    static Subnet4Ptr callback_subnet4_;
+
+    /// A list of all available subnets (received by callout)
+    static const Subnet4Collection* callback_subnet4collection_;
+
+    /// A list of all received arguments
+    static vector<string> callback_argument_names_;
+};
+
+// The following fields are used in testing pkt4_receive_callout.
+// See fields description in the class for details
+string HooksDhcpv4SrvTest::callback_name_;
+Pkt4Ptr HooksDhcpv4SrvTest::callback_pkt4_;
+Subnet4Ptr HooksDhcpv4SrvTest::callback_subnet4_;
+HWAddrPtr HooksDhcpv4SrvTest::callback_hwaddr_;
+ClientIdPtr HooksDhcpv4SrvTest::callback_clientid_;
+Lease4Ptr HooksDhcpv4SrvTest::callback_lease4_;
+const Subnet4Collection* HooksDhcpv4SrvTest::callback_subnet4collection_;
+vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
+
+// Checks if callouts installed on pkt4_receive are indeed called and the
+// all necessary parameters are passed.
+//
+// Note that the test name does not follow test naming convention,
+// but the proper hook name is "buffer4_receive".
+TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_receive", buffer4_receive_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr dis = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(dis);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv_->run();
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("buffer4_receive", callback_name_);
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == dis.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("query4"));
+
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+}
+
+// Checks if callouts installed on buffer4_receive is able to change
+// the values and the parameters are indeed used by the server.
+TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
+
+    // Install callback that modifies MAC addr of incoming packet
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_receive", buffer4_receive_change_hwaddr));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr discover = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(discover);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered buffer4_receive callback.
+    srv_->run();
+
+    // Check that the server did send a reposonse
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr offer = srv_->fake_sent_.front();
+    ASSERT_TRUE(offer);
+
+    // Get client-id...
+    HWAddrPtr hwaddr = offer->getHWAddr();
+
+    ASSERT_TRUE(hwaddr); // basic sanity check. HWAddr is always present
+
+    // ... and check if it is the modified value
+    ASSERT_FALSE(hwaddr->hwaddr_.empty()); // there must be a MAC address
+    EXPECT_EQ(0xff, hwaddr->hwaddr_[0]); // check that its first byte was modified
+}
+
+// Checks if callouts installed on buffer4_receive is able to set skip flag that
+// will cause the server to not parse the packet. Even though the packet is valid,
+// the server should eventually drop it, because there won't be mandatory options
+// (or rather option objects) in it.
+TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_receive", buffer4_receive_skip));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr discover = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(discover);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that the server dropped the packet and did not produce any response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+// Checks if callouts installed on pkt4_receive are indeed called and the
+// all necessary parameters are passed.
+//
+// Note that the test name does not follow test naming convention,
+// but the proper hook name is "pkt4_receive".
+TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSimple) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_receive", pkt4_receive_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // check that the callback called is indeed the one we installed
+    EXPECT_EQ("pkt4_receive", callback_name_);
+
+    // check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == sol.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("query4"));
+
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+}
+
+// Checks if callouts installed on pkt4_received is able to change
+// the values and the parameters are indeed used by the server.
+TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_receive", pkt4_receive_change_clientid));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // check that the server did send a reposonce
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Get client-id...
+    OptionPtr clientid = adv->getOption(DHO_DHCP_CLIENT_IDENTIFIER);
+
+    // ... and check if it is the modified value
+    OptionPtr expected = createOption(DHO_DHCP_CLIENT_IDENTIFIER);
+    EXPECT_TRUE(clientid->equal(expected));
+}
+
+// Checks if callouts installed on pkt4_received is able to delete
+// existing options and that change impacts server processing (mandatory
+// client-id option is deleted, so the packet is expected to be dropped)
+TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDeleteClientId) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_receive", pkt4_receive_delete_clientid));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that the server dropped the packet and did not send a response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+// Checks if callouts installed on pkt4_received is able to set skip flag that
+// will cause the server to not process the packet (drop), even though it is valid.
+TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSkip) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_receive", pkt4_receive_skip));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // check that the server dropped the packet and did not produce any response
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+
+// Checks if callouts installed on pkt4_send are indeed called and the
+// all necessary parameters are passed.
+TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_send", pkt4_send_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("pkt4_send", callback_name_);
+
+    // Check that there is one packet sent
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == adv.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("response4"));
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+}
+
+// Checks if callouts installed on pkt4_send is able to change
+// the values and the packet sent contains those changes
+TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_send", pkt4_send_change_serverid));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // check that the server did send a reposonce
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Make sure that we received a response
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Get client-id...
+    OptionPtr clientid = adv->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+
+    // ... and check if it is the modified value
+    OptionPtr expected = createOption(DHO_DHCP_SERVER_IDENTIFIER);
+    EXPECT_TRUE(clientid->equal(expected));
+}
+
+// Checks if callouts installed on pkt4_send is able to delete
+// existing options and that server applies those changes. In particular,
+// we are trying to send a packet without server-id. The packet should
+// be sent
+TEST_F(HooksDhcpv4SrvTest, pkt4SendDeleteServerId) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_send", pkt4_send_delete_serverid));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr sol = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that the server indeed sent a malformed ADVERTISE
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Get that ADVERTISE
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // Make sure that it does not have server-id
+    EXPECT_FALSE(adv->getOption(DHO_DHCP_SERVER_IDENTIFIER));
+}
+
+// Checks if callouts installed on pkt4_skip is able to set skip flag that
+// will cause the server to not process the packet (drop), even though it is valid.
+TEST_F(HooksDhcpv4SrvTest, skip_pkt4_send) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "pkt4_send", pkt4_send_skip));
+
+    // Let's create a simple REQUEST
+    Pkt4Ptr sol = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_send callback.
+    srv_->run();
+
+    // Check that the server sent the message
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+
+    // Get the first packet and check that it has zero length (i.e. the server
+    // did not do packing on its own)
+    Pkt4Ptr sent = srv_->fake_sent_.front();
+    EXPECT_EQ(0, sent->getBuffer().getLength());
+}
+
+// Checks if callouts installed on buffer4_send are indeed called and the
+// all necessary parameters are passed.
+TEST_F(HooksDhcpv4SrvTest, buffer4SendSimple) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_send", buffer4_send_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr discover = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(discover);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("buffer4_send", callback_name_);
+
+    // Check that there is one packet sent
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == adv.get());
+
+    // Check that all expected parameters are there
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back(string("response4"));
+    EXPECT_TRUE(expected_argument_names == callback_argument_names_);
+}
+
+// Checks if callouts installed on buffer4_send are indeed called and that
+// the output buffer can be changed.
+TEST_F(HooksDhcpv4SrvTest, buffer4Send) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_send", buffer4_send_change_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr discover = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(discover);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that there is one packet sent
+    ASSERT_EQ(1, srv_->fake_sent_.size());
+    Pkt4Ptr adv = srv_->fake_sent_.front();
+
+    // The callout is supposed to fill the output buffer with dummyFile content
+    ASSERT_EQ(sizeof(dummyFile), adv->getBuffer().getLength());
+    EXPECT_EQ(0, memcmp(adv->getBuffer().getData(), dummyFile, sizeof(dummyFile)));
+}
+
+// Checks if callouts installed on buffer4_send can set skip flag and that flag
+// causes the packet to not be sent
+TEST_F(HooksDhcpv4SrvTest, buffer4SendSkip) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "buffer4_send", skip_callout));
+
+    // Let's create a simple DISCOVER
+    Pkt4Ptr discover = generateSimpleDiscover();
+
+    // Simulate that we have received that traffic
+    srv_->fakeReceive(discover);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive4(), it will read all packets from the list set by
+    // fakeReceive()
+    // In particular, it should call registered pkt4_receive callback.
+    srv_->run();
+
+    // Check that there is no packet sent.
+    ASSERT_EQ(0, srv_->fake_sent_.size());
+}
+
+
+// This test checks if subnet4_select callout is triggered and reports
+// valid parameters
+TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
+
+    // Install pkt4_receive_callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "subnet4_select", subnet4_select_callout));
+
+    // Configure 2 subnets, both directly reachable over local interface
+    // (let's not complicate the matter with relays)
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.0/25\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"eth0\" "
+        " }, {"
+        "    \"pool\": [ \"192.0.3.0/25\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Prepare discover packet. Server should select first subnet for it
+    Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    sol->setRemoteAddr(IOAddress("192.0.2.1"));
+    sol->setIface("eth0");
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr adv = srv_->processDiscover(sol);
+
+    // check if we get response at all
+    ASSERT_TRUE(adv);
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("subnet4_select", callback_name_);
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == sol.get());
+
+    const Subnet4Collection* exp_subnets = CfgMgr::instance().getSubnets4();
+
+    // The server is supposed to pick the first subnet, because of matching
+    // interface. Check that the value is reported properly.
+    ASSERT_TRUE(callback_subnet4_);
+    EXPECT_EQ(exp_subnets->front().get(), callback_subnet4_.get());
+
+    // Server is supposed to report two subnets
+    ASSERT_EQ(exp_subnets->size(), callback_subnet4collection_->size());
+
+    // Compare that the available subnets are reported as expected
+    EXPECT_TRUE((*exp_subnets)[0].get() == (*callback_subnet4collection_)[0].get());
+    EXPECT_TRUE((*exp_subnets)[1].get() == (*callback_subnet4collection_)[1].get());
+}
+
+// This test checks if callout installed on subnet4_select hook point can pick
+// a different subnet.
+TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "subnet4_select", subnet4_select_different_subnet_callout));
+
+    // Configure 2 subnets, both directly reachable over local interface
+    // (let's not complicate the matter with relays)
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.0/25\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"interface\": \"eth0\" "
+        " }, {"
+        "    \"pool\": [ \"192.0.3.0/25\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Prepare discover packet. Server should select first subnet for it
+    Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    sol->setRemoteAddr(IOAddress("192.0.2.1"));
+    sol->setIface("eth0");
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr adv = srv_->processDiscover(sol);
+
+    // check if we get response at all
+    ASSERT_TRUE(adv);
+
+    // The response should have an address from second pool, so let's check it
+    IOAddress addr = adv->getYiaddr();
+    EXPECT_NE("0.0.0.0", addr.toText());
+
+    // Get all subnets and use second subnet for verification
+    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    ASSERT_EQ(2, subnets->size());
+
+    // Advertised address must belong to the second pool (in subnet's range,
+    // in dynamic pool)
+    EXPECT_TRUE((*subnets)[1]->inRange(addr));
+    EXPECT_TRUE((*subnets)[1]->inPool(Lease::TYPE_V4, addr));
+}
+
+// This test verifies that incoming (positive) REQUEST/Renewing can be handled
+// properly and that callout installed on lease4_renew is triggered with
+// expected parameters.
+TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_t1 = 50;
+    const uint32_t temp_t2 = 75;
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_renew", lease4_renew_callout));
+
+    // Generate client-id also sets client_id_ member
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+
+    // let's create a lease and put it in the LeaseMgr
+    uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2, sizeof(hwaddr2),
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_t1, temp_t2, temp_timestamp,
+                              subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RENEW
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress(addr));
+    req->setYiaddr(addr);
+    req->setCiaddr(addr); // client's address
+    req->setIface("eth0");
+
+    req->addOption(clientid);
+    req->addOption(srv_->getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt4Ptr ack = srv_->processRequest(req);
+
+    // Check if we get response at all
+    checkResponse(ack, DHCPACK, 1234);
+
+    // Check that the lease is really in the database
+    l = checkLease(ack, clientid, req->getHWAddr(), addr);
+    ASSERT_TRUE(l);
+
+    // Check that T1, T2, preferred, valid and cltt were really updated
+    EXPECT_EQ(l->t1_, subnet_->getT1());
+    EXPECT_EQ(l->t2_, subnet_->getT2());
+    EXPECT_EQ(l->valid_lft_, subnet_->getValid());
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease4_renew", callback_name_);
+
+    // Check that hwaddr parameter is passed properly
+    ASSERT_TRUE(callback_hwaddr_);
+    EXPECT_TRUE(*callback_hwaddr_ == *req->getHWAddr());
+
+    // Check that the subnet is passed properly
+    ASSERT_TRUE(callback_subnet4_);
+    EXPECT_EQ(callback_subnet4_->toText(), subnet_->toText());
+
+    ASSERT_TRUE(callback_clientid_);
+    ASSERT_TRUE(client_id_);
+    EXPECT_TRUE(*client_id_ == *callback_clientid_);
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("subnet4");
+    expected_argument_names.push_back("clientid");
+    expected_argument_names.push_back("hwaddr");
+    expected_argument_names.push_back("lease4");
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+}
+
+// This test verifies that a callout installed on lease4_renew can trigger
+// the server to not renew a lease.
+TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_t1 = 50;
+    const uint32_t temp_t2 = 75;
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_renew", skip_callout));
+
+    // Generate client-id also sets client_id_ member
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+
+    // let's create a lease and put it in the LeaseMgr
+    uint8_t hwaddr2[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    Lease4Ptr used(new Lease4(IOAddress("192.0.2.106"), hwaddr2, sizeof(hwaddr2),
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_t1, temp_t2, temp_timestamp,
+                              subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Check that T1, T2, preferred, valid and cltt really set.
+    // Constructed lease looks as if it was assigned 10 seconds ago
+    // EXPECT_EQ(l->t1_, temp_t1);
+    // EXPECT_EQ(l->t2_, temp_t2);
+    EXPECT_EQ(l->valid_lft_, temp_valid);
+    EXPECT_EQ(l->cltt_, temp_timestamp);
+
+    // Let's create a RENEW
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setRemoteAddr(IOAddress(addr));
+    req->setYiaddr(addr);
+    req->setCiaddr(addr); // client's address
+    req->setIface("eth0");
+
+    req->addOption(clientid);
+    req->addOption(srv_->getServerID());
+
+    // Pass it to the server and hope for a REPLY
+    Pkt4Ptr ack = srv_->processRequest(req);
+    ASSERT_TRUE(ack);
+
+    // Check that the lease is really in the database
+    l = checkLease(ack, clientid, req->getHWAddr(), addr);
+    ASSERT_TRUE(l);
+
+    // Check that T1, T2, valid and cltt were NOT updated
+    EXPECT_EQ(temp_t1, l->t1_);
+    EXPECT_EQ(temp_t2, l->t2_);
+    EXPECT_EQ(temp_valid, l->valid_lft_);
+    EXPECT_EQ(temp_timestamp, l->cltt_);
+
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+}
+
+// This test verifies that valid RELEASE triggers lease4_release callouts
+TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_t1 = 50;
+    const uint32_t temp_t2 = 75;
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_release", lease4_release_callout));
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+
+    // Let's create a lease and put it in the LeaseMgr
+    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(addr, mac_addr, sizeof(mac_addr),
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_t1, temp_t2, temp_timestamp,
+                              subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    // Generate client-id also duid_
+    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
+    rel->setRemoteAddr(addr);
+    rel->setCiaddr(addr);
+    rel->addOption(clientid);
+    rel->addOption(srv_->getServerID());
+    rel->setHWAddr(hw);
+
+    // Pass it to the server and hope for a REPLY
+    // Note: this is no response to RELEASE in DHCPv4
+    EXPECT_NO_THROW(srv_->processRelease(rel));
+
+    // The lease should be gone from LeaseMgr
+    l = LeaseMgrFactory::instance().getLease4(addr);
+    EXPECT_FALSE(l);
+
+    // Try to get the lease by hardware address
+    // @todo: Uncomment this once trac2592 is implemented
+    // Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
+    // EXPECT_EQ(leases.size(), 0);
+
+    // Try to get it by hw/subnet_id combination
+    l = LeaseMgrFactory::instance().getLease4(hw->hwaddr_, subnet_->getID());
+    EXPECT_FALSE(l);
+
+    // Try by client-id
+    // @todo: Uncomment this once trac2592 is implemented
+    //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    //EXPECT_EQ(leases.size(), 0);
+
+    // Try by client-id/subnet-id
+    l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
+    EXPECT_FALSE(l);
+
+    // Ok, the lease is *really* not there.
+
+    // Check that the callback called is indeed the one we installed
+    EXPECT_EQ("lease4_release", callback_name_);
+
+    // Check that pkt4 argument passing was successful and returned proper value
+    EXPECT_TRUE(callback_pkt4_.get() == rel.get());
+
+    // Check if all expected parameters were really received
+    vector<string> expected_argument_names;
+    expected_argument_names.push_back("query4");
+    expected_argument_names.push_back("lease4");
+    sort(callback_argument_names_.begin(), callback_argument_names_.end());
+    sort(expected_argument_names.begin(), expected_argument_names.end());
+    EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
+}
+
+// This test verifies that skip flag returned by a callout installed on the
+// lease4_release hook point will keep the lease
+TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
+
+    const IOAddress addr("192.0.2.106");
+    const uint32_t temp_t1 = 50;
+    const uint32_t temp_t2 = 75;
+    const uint32_t temp_valid = 100;
+    const time_t temp_timestamp = time(NULL) - 10;
+
+    // Install a callout
+    EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
+                        "lease4_release", skip_callout));
+
+    // Generate client-id also duid_
+    OptionPtr clientid = generateClientId();
+
+    // Check that the address we are about to use is indeed in pool
+    ASSERT_TRUE(subnet_->inPool(Lease::TYPE_V4, addr));
+
+    // Let's create a lease and put it in the LeaseMgr
+    uint8_t mac_addr[] = { 0, 0xfe, 0xfe, 0xfe, 0xfe, 0xfe};
+    HWAddrPtr hw(new HWAddr(mac_addr, sizeof(mac_addr), HTYPE_ETHER));
+    Lease4Ptr used(new Lease4(addr, mac_addr, sizeof(mac_addr),
+                              &client_id_->getDuid()[0], client_id_->getDuid().size(),
+                              temp_valid, temp_t1, temp_t2, temp_timestamp,
+                              subnet_->getID()));
+    ASSERT_TRUE(LeaseMgrFactory::instance().addLease(used));
+
+    // Check that the lease is really in the database
+    Lease4Ptr l = LeaseMgrFactory::instance().getLease4(addr);
+    ASSERT_TRUE(l);
+
+    // Let's create a RELEASE
+    // Generate client-id also duid_
+    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
+    rel->setRemoteAddr(addr);
+    rel->setYiaddr(addr);
+    rel->addOption(clientid);
+    rel->addOption(srv_->getServerID());
+    rel->setHWAddr(hw);
+
+    // Pass it to the server and hope for a REPLY
+    // Note: this is no response to RELEASE in DHCPv4
+    EXPECT_NO_THROW(srv_->processRelease(rel));
+
+    // The lease should be still there
+    l = LeaseMgrFactory::instance().getLease4(addr);
+    EXPECT_TRUE(l);
+
+    // Try by client-id/subnet-id
+    l = LeaseMgrFactory::instance().getLease4(*client_id_, subnet_->getID());
+    EXPECT_TRUE(l);
+
+    // Try to get the lease by hardware address
+    // @todo: Uncomment this once trac2592 is implemented
+    // Lease4Collection leases = LeaseMgrFactory::instance().getLease4(hw->hwaddr_);
+    // EXPECT_EQ(leases.size(), 1);
+
+    // Try by client-id
+    // @todo: Uncomment this once trac2592 is implemented
+    //Lease4Collection leases = LeaseMgrFactory::instance().getLease4(*client_id_);
+    //EXPECT_EQ(leases.size(), 1);
+}
+
+// Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
+TEST_F(Dhcpv4SrvFakeIfaceTest, docsisVendorOptionsParse) {
+
+    // Let's get a traffic capture from DOCSIS3.0 modem
+    Pkt4Ptr dis = captureRelayedDiscover();
+    ASSERT_NO_THROW(dis->unpack());
+
+    // Check if the packet contain
+    OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(opt);
+
+    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+
+    // This particular capture that we have included options 1 and 5
+    EXPECT_TRUE(vendor->getOption(1));
+    EXPECT_TRUE(vendor->getOption(5));
+
+    // It did not include options any other options
+    EXPECT_FALSE(vendor->getOption(2));
+    EXPECT_FALSE(vendor->getOption(3));
+    EXPECT_FALSE(vendor->getOption(17));
+}
+
+// Checks if server is able to parse incoming docsis option and extract suboption 1 (docsis ORO)
+TEST_F(Dhcpv4SrvFakeIfaceTest, docsisVendorORO) {
+
+    // Let's get a traffic capture from DOCSIS3.0 modem
+    Pkt4Ptr dis = captureRelayedDiscover();
+    EXPECT_NO_THROW(dis->unpack());
+
+    // Check if the packet contains vendor specific information option
+    OptionPtr opt = dis->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(opt);
+
+    boost::shared_ptr<OptionVendor> vendor = boost::dynamic_pointer_cast<OptionVendor>(opt);
+    ASSERT_TRUE(vendor);
+
+    opt = vendor->getOption(DOCSIS3_V4_ORO);
+    ASSERT_TRUE(opt);
+
+    OptionUint8ArrayPtr oro = boost::dynamic_pointer_cast<OptionUint8Array>(opt);
+    EXPECT_TRUE(oro);
+}
+
+// This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
+// vendor options is parsed correctly and the requested options are actually assigned.
+TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsORO) {
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"all\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": 2,"
+        "          \"data\": \"192.0.2.1, 192.0.2.2\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.0/25\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"eth0\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    boost::shared_ptr<Pkt4> dis(new Pkt4(DHCPDISCOVER, 1234));
+    // Set the giaddr and hops to non-zero address as if it was relayed.
+    dis->setGiaddr(IOAddress("192.0.2.1"));
+    dis->setHops(1);
+
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    // Set interface. It is required by the server to generate server id.
+    dis->setIface("eth0");
+
+    // Pass it to the server and get an advertise
+    Pkt4Ptr offer = srv.processDiscover(dis);
+
+    // check if we get response at all
+    ASSERT_TRUE(offer);
+
+    // We did not include any vendor opts in DISCOVER, so there should be none
+    // in OFFER.
+    ASSERT_FALSE(offer->getOption(DHO_VIVSO_SUBOPTIONS));
+
+    // Let's add a vendor-option (vendor-id=4491) with a single sub-option.
+    // That suboption has code 1 and is a docsis ORO option.
+    boost::shared_ptr<OptionUint8Array> vendor_oro(new OptionUint8Array(Option::V4,
+                                                                        DOCSIS3_V4_ORO));
+    vendor_oro->addValue(DOCSIS3_V4_TFTP_SERVERS); // Request option 33
+    OptionPtr vendor(new OptionVendor(Option::V4, 4491));
+    vendor->addOption(vendor_oro);
+    dis->addOption(vendor);
+
+    // Need to process SOLICIT again after requesting new option.
+    offer = srv.processDiscover(dis);
+    ASSERT_TRUE(offer);
+
+    // Check if thre is vendor option response
+    OptionPtr tmp = offer->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(tmp);
+
+    // The response should be OptionVendor object
+    boost::shared_ptr<OptionVendor> vendor_resp =
+        boost::dynamic_pointer_cast<OptionVendor>(tmp);
+    ASSERT_TRUE(vendor_resp);
+
+    OptionPtr docsis2 = vendor_resp->getOption(DOCSIS3_V4_TFTP_SERVERS);
+    ASSERT_TRUE(docsis2);
+
+    Option4AddrLstPtr tftp_srvs = boost::dynamic_pointer_cast<Option4AddrLst>(docsis2);
+    ASSERT_TRUE(tftp_srvs);
+
+    Option4AddrLst::AddressContainer addrs = tftp_srvs->getAddresses();
+    ASSERT_EQ(2, addrs.size());
+    EXPECT_EQ("192.0.2.1", addrs[0].toText());
+    EXPECT_EQ("192.0.2.2", addrs[1].toText());
+}
+
+// Test checks whether it is possible to use option definitions defined in
+// src/lib/dhcp/docsis3_option_defs.h.
+TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsDocsisDefinitions) {
+    ConstElementPtr x;
+    string config_prefix = "{ \"interfaces\": [ \"all\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "    \"option-data\": [ {"
+        "          \"name\": \"tftp-servers\","
+        "          \"space\": \"vendor-4491\","
+        "          \"code\": ";
+    string config_postfix = ","
+        "          \"data\": \"192.0.2.1\","
+        "          \"csv-format\": True"
+        "        }],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.50\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"renew-timer\": 1000, "
+        "    \"rebind-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // There is docsis3 (vendor-id=4491) vendor option 2, which is a
+    // tftp-server. Its format is list of IPv4 addresses.
+    string config_valid = config_prefix + "2" + config_postfix;
+
+    // There is no option 99 defined in vendor-id=4491. As there is no
+    // definition, the config should fail.
+    string config_bogus = config_prefix + "99" + config_postfix;
+
+    ElementPtr json_bogus = Element::fromJSON(config_bogus);
+    ElementPtr json_valid = Element::fromJSON(config_valid);
+
+    NakedDhcpv4Srv srv(0);
+
+    // This should fail (missing option definition)
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_bogus));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(1, rcode_);
+
+    // This should work (option definition present)
+    EXPECT_NO_THROW(x = configureDhcp4Server(srv, json_valid));
+    ASSERT_TRUE(x);
+    comment_ = isc::config::parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+}
+
+// Checks if client packets are classified properly
+TEST_F(Dhcpv4SrvTest, clientClassification) {
+
+    NakedDhcpv4Srv srv(0);
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // vendor-class set to docsis3.0
+    Pkt4Ptr dis1;
+    ASSERT_NO_THROW(dis1 = captureRelayedDiscover());
+    ASSERT_NO_THROW(dis1->unpack());
+
+    srv.classifyPacket(dis1);
+
+    EXPECT_TRUE(dis1->inClass("docsis3.0"));
+    EXPECT_FALSE(dis1->inClass("eRouter1.0"));
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // vendor-class set to eRouter1.0
+    Pkt4Ptr dis2;
+    ASSERT_NO_THROW(dis2 = captureRelayedDiscover2());
+    ASSERT_NO_THROW(dis2->unpack());
+
+    srv.classifyPacket(dis2);
+
+    EXPECT_TRUE(dis2->inClass("eRouter1.0"));
+    EXPECT_FALSE(dis2->inClass("docsis3.0"));
+}
+
+}; // end of anonymous namespace

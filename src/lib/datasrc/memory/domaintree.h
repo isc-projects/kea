@@ -356,6 +356,31 @@ private:
         }
     }
 
+    /// \brief Returns if the node color is black
+    bool isBlack() const {
+        return (getColor() == BLACK);
+    }
+
+    /// \brief Static variant of isBlack() that also allows NULL nodes.
+    static bool isBlack(const DomainTreeNode<T>* node) {
+        if (!node) {
+            // NULL nodes are black.
+            return (true);
+        }
+
+        return (node->isBlack());
+    }
+
+    /// \brief Returns if the node color is red
+    bool isRed() const {
+        return (!isBlack());
+    }
+
+    /// \brief Static variant of isRed() that also allows NULL nodes.
+    static bool isRed(const DomainTreeNode<T>* node) {
+        return (!isBlack(node));
+    }
+
     /// \brief Sets the color of this node
     void setColor(const DomainTreeNodeColor color) {
         if (color == RED) {
@@ -383,11 +408,20 @@ private:
         return ((flags_ & FLAG_SUBTREE_ROOT) != 0);
     }
 
+    /// \brief Static helper function used by const and non-const
+    /// variants of getSubTreeRoot()
+    template <typename TT>
+    static TT*
+    getSubTreeRootImpl(TT* node);
+
     /// \brief returns the root of its subtree
     ///
     /// This method takes a node and returns the root of its subtree.
     ///
     /// This method never throws an exception.
+    DomainTreeNode<T>* getSubTreeRoot();
+
+    /// \brief returns the root of its subtree (const variant)
     const DomainTreeNode<T>* getSubTreeRoot() const;
 
 public:
@@ -399,6 +433,10 @@ public:
     /// (which should be absolute), it will return \c NULL.
     ///
     /// This method never throws an exception.
+    DomainTreeNode<T>* getUpperNode();
+
+    /// \brief returns the parent of the root of its subtree (const
+    /// variant)
     const DomainTreeNode<T>* getUpperNode() const;
 
     /// \brief return the next node which is bigger than current node
@@ -416,6 +454,10 @@ public:
     /// returns \c NULL.
     ///
     /// This method never throws an exception.
+    DomainTreeNode<T>* successor();
+
+    /// \brief return the next node which is bigger than current node
+    /// in the same subtree (const variant)
     const DomainTreeNode<T>* successor() const;
 
     /// \brief return the next node which is smaller than current node
@@ -433,7 +475,26 @@ public:
     /// returns \c NULL.
     ///
     /// This method never throws an exception.
+    DomainTreeNode<T>* predecessor();
+
+    /// \brief return the next node which is smaller than current node
+    /// in the same subtree (const variant)
     const DomainTreeNode<T>* predecessor() const;
+
+    /// \brief returns the node distance from the root of its subtree
+    size_t getDistance() const {
+        size_t nodes = 1;
+        for (const DomainTreeNode<T>* node = this;
+             node != NULL;
+             node = node->getParent()) {
+            if (node->isSubTreeRoot()) {
+                break;
+            }
+            ++nodes;
+        }
+
+        return (nodes);
+    }
 
 private:
     /// \brief private shared implementation of successor and predecessor
@@ -447,12 +508,13 @@ private:
     /// The overhead of the member pointers should be optimised out, as this
     /// will probably get completely inlined into predecessor and successor
     /// methods.
-    const DomainTreeNode<T>*
-        abstractSuccessor(typename DomainTreeNode<T>::DomainTreeNodePtr
+    template <typename TT>
+    static TT*
+    abstractSuccessor(TT* node,
+                      typename DomainTreeNode<T>::DomainTreeNodePtr
                           DomainTreeNode<T>::*left,
-                          typename DomainTreeNode<T>::DomainTreeNodePtr
-                          DomainTreeNode<T>::*right)
-        const;
+                      typename DomainTreeNode<T>::DomainTreeNodePtr
+                          DomainTreeNode<T>::*right);
 
     /// \name Data to maintain the rbtree structure.
     ///
@@ -489,6 +551,59 @@ private:
     const DomainTreeNode<T>* getRight() const {
         return (right_.get());
     }
+
+    /// \brief Access grandparent node as bare pointer.
+    ///
+    /// The grandparent node is the parent's parent.
+    ///
+    /// \return the grandparent node if one exists, NULL otherwise.
+    DomainTreeNode<T>* getGrandParent() {
+        DomainTreeNode<T>* parent = getParent();
+        if (parent != NULL) {
+            return (parent->getParent());
+        } else {
+            // If there's no parent, there's no grandparent.
+            return (NULL);
+        }
+    }
+
+    /// \brief Access sibling node as bare pointer.
+    ///
+    /// A sibling node is defined as the parent's other child. It exists
+    /// at the same level as child. Note that child can be NULL here,
+    /// which is why this is a static function.
+    ///
+    /// \return the sibling node if one exists, NULL otherwise.
+    static DomainTreeNode<T>* getSibling(DomainTreeNode<T>* parent,
+                                         DomainTreeNode<T>* child)
+    {
+        if (!parent) {
+            return (NULL);
+        }
+
+        return ((parent->getLeft() == child) ?
+                parent->getRight() : parent->getLeft());
+    }
+
+    /// \brief Access uncle node as bare pointer.
+    ///
+    /// An uncle node is defined as the parent node's sibling. It exists
+    /// at the same level as the parent.
+    ///
+    /// \return the uncle node if one exists, NULL otherwise.
+    DomainTreeNode<T>* getUncle() {
+        DomainTreeNode<T>* grandparent = getGrandParent();
+        if (grandparent == NULL) {
+            // If there's no grandparent, there's no uncle.
+            return (NULL);
+        }
+        if (getParent() == grandparent->getLeft()) {
+            return (grandparent->getRight());
+        } else {
+            return (grandparent->getLeft());
+        }
+    }
+
     //@}
 
     /// \brief The subdomain tree.
@@ -508,6 +623,96 @@ private:
     /// \brief Access the down_ as bare pointer, const.
     const DomainTreeNode<T>* getDown() const {
         return (down_.get());
+    }
+
+    /// \brief Helper method used in many places in code to set parent's
+    /// child links.
+    void connectChild(DomainTreeNode<T>* oldnode,
+                      DomainTreeNode<T>* newnode,
+                      DomainTreeNodePtr* root_ptr,
+                      DomainTreeNode<T>* thisnode = NULL)
+    {
+        if (!thisnode) {
+            thisnode = this;
+        }
+
+        if (getParent() != NULL) {
+            if (getParent()->getLeft() == oldnode) {
+                thisnode->getParent()->left_ = newnode;
+            } else if (getParent()->getRight() == oldnode) {
+                thisnode->getParent()->right_ = newnode;
+            } else {
+                thisnode->getParent()->down_ = newnode;
+            }
+        } else {
+            *root_ptr = newnode;
+        }
+    }
+
+    /// \brief Exchanges the location of two nodes (this and
+    /// lower). Their data remain the same, but their location in the
+    /// tree, colors and sub-tree root status may change. Note that this
+    /// is different from std::swap()-like behavior.
+    ///
+    /// IMPORTANT: A necessary pre-condition is that lower node must be
+    /// at a lower level in the tree than this node. This method is
+    /// primarily used in remove() and this pre-condition is followed
+    /// there.
+    ///
+    /// This method doesn't throw any exceptions.
+    void exchange(DomainTreeNode<T>* lower, DomainTreeNodePtr* root_ptr) {
+        // Swap the pointers first. down should not be swapped as it
+        // belongs to the node's data, and not to its position in the
+        // tree.
+
+        // NOTE: The conditions following the swaps below are
+        // asymmetric. We only need to check this for the lower node, as
+        // it can be a direct child of this node. The reverse is not
+        // possible.
+
+        std::swap(left_, lower->left_);
+        if (lower->getLeft() == lower) {
+            lower->left_ = this;
+        }
+
+        std::swap(right_, lower->right_);
+        if (lower->getRight() == lower) {
+            lower->right_ = this;
+        }
+
+        std::swap(parent_, lower->parent_);
+        if (getParent() == this) {
+            parent_ = lower;
+        }
+
+        // Update FLAG_RED and FLAG_SUBTREE_ROOT as these two are
+        // associated with the node's position.
+        const DomainTreeNodeColor this_color = getColor();
+        const bool this_is_subtree_root = isSubTreeRoot();
+        const DomainTreeNodeColor lower_color = lower->getColor();
+        const bool lower_is_subtree_root = lower->isSubTreeRoot();
+
+        lower->setColor(this_color);
+        setColor(lower_color);
+
+        setSubTreeRoot(lower_is_subtree_root);
+        lower->setSubTreeRoot(this_is_subtree_root);
+
+        lower->connectChild(this, lower, root_ptr);
+
+        if (getParent()->getLeft() == lower) {
+            getParent()->left_ = this;
+        } else if (getParent()->getRight() == lower) {
+            getParent()->right_ = this;
+        }
+
+        if (lower->getRight()) {
+            lower->getRight()->parent_ = lower;
+        }
+
+        if (lower->getLeft()) {
+            lower->getLeft()->parent_ = lower;
+        }
     }
 
     /// \brief Data stored here.
@@ -550,17 +755,36 @@ DomainTreeNode<T>::~DomainTreeNode() {
 }
 
 template <typename T>
-const DomainTreeNode<T>*
-DomainTreeNode<T>::getSubTreeRoot() const {
-    const DomainTreeNode<T>* current = this;
-
-    // current would never be equal to NULL here (in a correct tree
+template <typename TT>
+TT*
+DomainTreeNode<T>::getSubTreeRootImpl(TT* node) {
+    // node would never be equal to NULL here (in a correct tree
     // implementation)
-    while (!current->isSubTreeRoot()) {
-        current = current->getParent();
+    assert(node != NULL);
+
+    while (!node->isSubTreeRoot()) {
+        node = node->getParent();
     }
 
-    return (current);
+    return (node);
+}
+
+template <typename T>
+DomainTreeNode<T>*
+DomainTreeNode<T>::getSubTreeRoot() {
+    return (getSubTreeRootImpl<DomainTreeNode<T> >(this));
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTreeNode<T>::getSubTreeRoot() const {
+    return (getSubTreeRootImpl<const DomainTreeNode<T> >(this));
+}
+
+template <typename T>
+DomainTreeNode<T>*
+DomainTreeNode<T>::getUpperNode() {
+    return (getSubTreeRoot()->getParent());
 }
 
 template <typename T>
@@ -595,40 +819,39 @@ DomainTreeNode<T>::getAbsoluteLabels(
 }
 
 template <typename T>
-const DomainTreeNode<T>*
-DomainTreeNode<T>::abstractSuccessor(
+template <typename TT>
+TT*
+DomainTreeNode<T>::abstractSuccessor(TT* node,
     typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*left,
     typename DomainTreeNode<T>::DomainTreeNodePtr DomainTreeNode<T>::*right)
-    const
 {
     // This function is written as a successor. It becomes predecessor if
     // the left and right pointers are swapped. So in case of predecessor,
     // the left pointer points to right and vice versa. Don't get confused
     // by the idea, just imagine the pointers look into a mirror.
 
-    const DomainTreeNode<T>* current = this;
     // If it has right node, the successor is the left-most node of the right
     // subtree.
-    if ((current->*right).get() != NULL) {
-        current = (current->*right).get();
+    if ((node->*right).get() != NULL) {
+        node = (node->*right).get();
         const DomainTreeNode<T>* left_n;
-        while ((left_n = (current->*left).get()) != NULL) {
-            current = left_n;
+        while ((left_n = (node->*left).get()) != NULL) {
+            node = left_n;
         }
-        return (current);
+        return (node);
     }
 
     // Otherwise go up until we find the first left branch on our path to
     // root.  If found, the parent of the branch is the successor.
     // Otherwise, we return the null node
-    const DomainTreeNode<T>* parent = current->getParent();
-    while ((!current->isSubTreeRoot()) &&
-           (current == (parent->*right).get())) {
-        current = parent;
+    const DomainTreeNode<T>* parent = node->getParent();
+    while ((!node->isSubTreeRoot()) &&
+           (node == (parent->*right).get())) {
+        node = parent;
         parent = parent->getParent();
     }
 
-    if (!current->isSubTreeRoot()) {
+    if (!node->isSubTreeRoot()) {
         return (parent);
     } else {
         return (NULL);
@@ -636,18 +859,33 @@ DomainTreeNode<T>::abstractSuccessor(
 }
 
 template <typename T>
+DomainTreeNode<T>*
+DomainTreeNode<T>::successor() {
+    return (abstractSuccessor<DomainTreeNode<T> >
+            (this, &DomainTreeNode<T>::left_, &DomainTreeNode<T>::right_));
+}
+
+template <typename T>
 const DomainTreeNode<T>*
 DomainTreeNode<T>::successor() const {
-    return (abstractSuccessor(&DomainTreeNode<T>::left_,
-                              &DomainTreeNode<T>::right_));
+    return (abstractSuccessor<const DomainTreeNode<T> >
+            (this, &DomainTreeNode<T>::left_, &DomainTreeNode<T>::right_));
+}
+
+template <typename T>
+DomainTreeNode<T>*
+DomainTreeNode<T>::predecessor() {
+    // Swap the left and right pointers for the abstractSuccessor
+    return (abstractSuccessor<DomainTreeNode<T> >
+            (this, &DomainTreeNode<T>::right_, &DomainTreeNode<T>::left_));
 }
 
 template <typename T>
 const DomainTreeNode<T>*
 DomainTreeNode<T>::predecessor() const {
     // Swap the left and right pointers for the abstractSuccessor
-    return (abstractSuccessor(&DomainTreeNode<T>::right_,
-                              &DomainTreeNode<T>::left_));
+    return (abstractSuccessor<const DomainTreeNode<T> >
+            (this, &DomainTreeNode<T>::right_, &DomainTreeNode<T>::left_));
 }
 
 /// \brief DomainTreeNodeChain stores detailed information of \c
@@ -705,7 +943,13 @@ public:
                         // XXX: meaningless initial values:
                         last_comparison_(0, 0,
                                          isc::dns::NameComparisonResult::EQUAL)
-    {}
+    {
+        // To silence cppcheck. We don't really use the values before
+        // initialization, but this is cleaner anyway.
+        for (size_t i = 0; i < RBT_MAX_LEVEL; ++i) {
+            nodes_[i] = NULL;
+        }
+    }
 
     /// \brief Copy constructor.
     ///
@@ -828,6 +1072,7 @@ private:
     /// the top node
     ///
     /// \exception None
+    // cppcheck-suppress unusedPrivateFunction (false positive, it is used)
     void pop() {
         assert(!isEmpty());
         --level_count_;
@@ -840,6 +1085,7 @@ private:
     /// otherwise the node should be the root node of DomainTree.
     ///
     /// \exception None
+    // cppcheck-suppress unusedPrivateFunction (false positive, it is used)
     void push(const DomainTreeNode<T>* node) {
         assert(level_count_ < RBT_MAX_LEVEL);
         nodes_[level_count_++] = node;
@@ -1008,7 +1254,7 @@ public:
                         DomainTree<T>* tree,
                         DataDeleter deleter)
     {
-        tree->deleteAllNodes(mem_sgmt, deleter);
+        tree->removeAllNodes(mem_sgmt, deleter);
         tree->~DomainTree<T>();
         mem_sgmt.deallocate(tree, sizeof(DomainTree<T>));
     }
@@ -1084,45 +1330,19 @@ public:
     ///    of it. In that case, node parameter is left intact.
     //@{
 
-    /// \brief Simple find
-    ///
-    /// Acts as described in the \ref find section.
-    Result find(const isc::dns::Name& name,
-                const DomainTreeNode<T>** node) const {
-        DomainTreeNodeChain<T> node_path;
-        const isc::dns::LabelSequence ls(name);
-        Result ret = (find<void*>(ls, node, node_path, NULL, NULL));
-        return (ret);
-    }
+private:
+    /// \brief Static helper function used by const and non-const
+    /// variants of find() below
+    template <typename TT, typename TTN, typename CBARG>
+    static Result findImpl(TT* tree,
+                           const isc::dns::LabelSequence& target_labels_orig,
+                           TTN** target,
+                           TTN* node,
+                           DomainTreeNodeChain<T>& node_path,
+                           bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                           CBARG callback_arg);
 
-    /// \brief Simple find, with node_path tracking
-    ///
-    /// Acts as described in the \ref find section.
-    Result find(const isc::dns::Name& name, const DomainTreeNode<T>** node,
-                DomainTreeNodeChain<T>& node_path) const
-    {
-        const isc::dns::LabelSequence ls(name);
-        Result ret = (find<void*>(ls, node, node_path, NULL, NULL));
-        return (ret);
-    }
-
-    /// \brief Simple find returning immutable node.
-    ///
-    /// Acts as described in the \ref find section, but returns immutable
-    /// node pointer.
-    template <typename CBARG>
-    Result find(const isc::dns::Name& name,
-                const DomainTreeNode<T>** node,
-                DomainTreeNodeChain<T>& node_path,
-                bool (*callback)(const DomainTreeNode<T>&, CBARG),
-                CBARG callback_arg) const
-    {
-        const isc::dns::LabelSequence ls(name);
-        Result ret = find(ls, node, node_path, callback,
-                          callback_arg);
-        return (ret);
-    }
-
+public:
     /// \brief Find with callback and node chain
     /// \anchor callback
     ///
@@ -1199,10 +1419,79 @@ public:
     ///     \c true, it returns immediately with the current node.
     template <typename CBARG>
     Result find(const isc::dns::LabelSequence& target_labels_orig,
+                DomainTreeNode<T>** node,
+                DomainTreeNodeChain<T>& node_path,
+                bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                CBARG callback_arg);
+
+    /// \brief Find with callback and node chain (const variant)
+    template <typename CBARG>
+    Result find(const isc::dns::LabelSequence& target_labels_orig,
                 const DomainTreeNode<T>** node,
                 DomainTreeNodeChain<T>& node_path,
                 bool (*callback)(const DomainTreeNode<T>&, CBARG),
                 CBARG callback_arg) const;
+
+    /// \brief Simple find
+    ///
+    /// Acts as described in the \ref find section.
+    Result find(const isc::dns::Name& name,
+                DomainTreeNode<T>** node) {
+        const isc::dns::LabelSequence ls(name);
+        DomainTreeNodeChain<T> node_path;
+        return (find<void*>(ls, node, node_path, NULL, NULL));
+    }
+
+    /// \brief Simple find (const variant)
+    Result find(const isc::dns::Name& name,
+                const DomainTreeNode<T>** node) const {
+        const isc::dns::LabelSequence ls(name);
+        DomainTreeNodeChain<T> node_path;
+        return (find<void*>(ls, node, node_path, NULL, NULL));
+    }
+
+    /// \brief Simple find, with node_path tracking
+    ///
+    /// Acts as described in the \ref find section.
+    Result find(const isc::dns::Name& name, DomainTreeNode<T>** node,
+                DomainTreeNodeChain<T>& node_path)
+    {
+        const isc::dns::LabelSequence ls(name);
+        return (find<void*>(ls, node, node_path, NULL, NULL));
+    }
+
+    /// \brief Simple find, with node_path tracking (const variant)
+    Result find(const isc::dns::Name& name, const DomainTreeNode<T>** node,
+                DomainTreeNodeChain<T>& node_path) const
+    {
+        const isc::dns::LabelSequence ls(name);
+        return (find<void*>(ls, node, node_path, NULL, NULL));
+    }
+
+    /// \brief Simple find with callback
+    template <typename CBARG>
+    Result find(const isc::dns::Name& name,
+                DomainTreeNode<T>** node,
+                DomainTreeNodeChain<T>& node_path,
+                bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                CBARG callback_arg)
+    {
+        const isc::dns::LabelSequence ls(name);
+        return (find<CBARG>(ls, node, node_path, callback, callback_arg));
+    }
+
+    /// \brief Simple find with callback (const variant)
+    template <typename CBARG>
+    Result find(const isc::dns::Name& name,
+                const DomainTreeNode<T>** node,
+                DomainTreeNodeChain<T>& node_path,
+                bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                CBARG callback_arg) const
+    {
+        const isc::dns::LabelSequence ls(name);
+        return (find<CBARG>(ls, node, node_path, callback, callback_arg));
+    }
+
     //@}
 
     /// \brief return the next bigger node in DNSSEC order from a given node
@@ -1256,12 +1545,24 @@ public:
     const DomainTreeNode<T>*
     previousNode(DomainTreeNodeChain<T>& node_path) const;
 
+private:
+    /// \brief Static helper function used by const and non-const
+    /// variants of largestNode()
+    template <typename TT, typename TTN>
+    static TTN*
+    largestNodeImpl(TT* node);
+
+public:
     /// \brief return the largest node in the tree of trees.
     ///
     /// \throw none
     ///
     /// \return A \c DomainTreeNode that is the largest node in the
     /// tree. If there are no nodes, then \c NULL is returned.
+    DomainTreeNode<T>* largestNode();
+
+    /// \brief return the largest node in the tree of trees (const
+    /// variant).
     const DomainTreeNode<T>* largestNode() const;
 
     /// \brief Get the total number of nodes in the tree
@@ -1270,6 +1571,39 @@ public:
     /// name that is a subdomain of an existing node of the tree.
     /// This function is mainly intended to be used for debugging.
     uint32_t getNodeCount() const { return (node_count_); }
+
+private:
+    /// \brief Helper method for getHeight()
+    size_t getHeightHelper(const DomainTreeNode<T>* node) const;
+
+public:
+    /// \brief Return the maximum height of sub-root nodes found in the
+    /// DomainTree forest.
+    ///
+    /// The height of a node is defined as the number of nodes in the
+    /// longest path from the node to a leaf. For each subtree in the
+    /// DomainTree forest, this method determines the height of its root
+    /// node. Then it returns the maximum such height in the forest.
+    ///
+    /// Note: This method exists for testing purposes. Non-test code
+    /// must not use it.
+    size_t getHeight() const;
+
+private:
+    /// \brief Helper method for checkProperties()
+    bool checkPropertiesHelper(const DomainTreeNode<T>* node) const;
+
+    /// \brief Helper for checkProperties()
+    bool checkBlackDistanceHelper(const DomainTreeNode<T>* node,
+                                  size_t* distance)
+        const;
+
+public:
+    /// \brief Check red-black properties of the DomainTree.
+    ///
+    /// Note: This method exists for testing purposes. Non-test code
+    /// must not use it.
+    bool checkProperties() const;
 
     /// \name Debug function
     //@{
@@ -1305,15 +1639,24 @@ public:
     /// doesn't exist.
     ///
     /// This method normally involves resource allocation.  If it fails
-    /// the corresponding standard exception will be thrown.
+    /// \c std::bad_alloc will be thrown.  Also, depending on details of the
+    /// specific \c MemorySegment, it can propagate the \c MemorySegmentGrown
+    /// exception.
     ///
     /// This method does not provide the strong exception guarantee in its
-    /// strict sense; if an exception is thrown in the middle of this
-    /// method, the internal structure may change.  However, it should
-    /// still retain the same property as a mapping container before this
-    /// method is called.  For example, the result of \c find() should be
-    /// the same.  This method provides the weak exception guarantee in its
-    /// normal sense.
+    /// strict sense; there can be new empty nodes that are superdomains of
+    /// the domain to be inserted as a side effect.  However, the tree
+    /// retains internal integrity otherwise, and, in particular, the intended
+    /// insert operation is "resumable": if the \c insert() method is called
+    /// again with the same argument after resolving the cause of the
+    /// exception (possibly multiple times), it should now succeed.  Note,
+    /// however, that in case of \c MemorySegmentGrown the address of the
+    /// `DomainTree` object may have been reallocated if it was created with
+    /// the same \c MemorySegment (which will often be the case in practice).
+    /// So the caller may have to re-get the address before calling \c insert
+    /// again.  It can be done using the concept of "named addresses" of
+    /// \c MemorySegment, or the direct caller may not have to worry about it
+    /// if this condition is guaranteed at a higher level.
     ///
     /// \param mem_sgmt A \c MemorySegment object for allocating memory of
     /// a new node to be inserted.  Must be the same segment as that used
@@ -1329,16 +1672,31 @@ public:
     Result insert(util::MemorySegment& mem_sgmt, const isc::dns::Name& name,
                   DomainTreeNode<T>** inserted_node);
 
+    /// \brief Delete a tree node.
+    ///
+    /// \throw none.
+    ///
+    /// \param mem_sgmt The \c MemorySegment object used to insert the nodes
+    /// (which was also used for creating the tree due to the requirement of
+    /// \c insert()).
+    /// \param node The node to delete.
+    /// \param deleter The \c DataDeleter used to destroy data stored in
+    /// the tree nodes.
+    template <typename DataDeleter>
+    void remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
+                DataDeleter deleter);
+
     /// \brief Delete all tree nodes.
     ///
     /// \throw none.
     ///
     /// \param mem_sgmt The \c MemorySegment object used to insert the nodes
     /// (which was also used for creating the tree due to the requirement of
-    /// \c inert()).
-    /// \param deleter A deleter functor or function to delete node data.
+    /// \c insert()).
+    /// \param deleter The \c DataDeleter used to destroy data stored in
+    /// the tree nodes.
     template <typename DataDeleter>
-    void deleteAllNodes(util::MemorySegment& mem_sgmt, DataDeleter deleter);
+    void removeAllNodes(util::MemorySegment& mem_sgmt, DataDeleter deleter);
 
     /// \brief Swaps two tree's contents.
     ///
@@ -1360,6 +1718,10 @@ private:
     void
     insertRebalance(typename DomainTreeNode<T>::DomainTreeNodePtr* root,
                     DomainTreeNode<T>* node);
+
+    void
+    removeRebalance(typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr,
+                    DomainTreeNode<T>* child, DomainTreeNode<T>* parent);
 
     DomainTreeNode<T>*
     rightRotate(typename DomainTreeNode<T>::DomainTreeNodePtr* root,
@@ -1399,6 +1761,7 @@ private:
     void nodeFission(util::MemorySegment& mem_sgmt, DomainTreeNode<T>& node,
                      const isc::dns::LabelSequence& new_prefix,
                      const isc::dns::LabelSequence& new_suffix);
+
     //@}
 
     typename DomainTreeNode<T>::DomainTreeNodePtr root_;
@@ -1463,29 +1826,20 @@ DomainTree<T>::deleteHelper(util::MemorySegment& mem_sgmt,
 }
 
 template <typename T>
-template <typename CBARG>
+template <typename TT, typename TTN, typename CBARG>
 typename DomainTree<T>::Result
-DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
-                    const DomainTreeNode<T>** target,
-                    DomainTreeNodeChain<T>& node_path,
-                    bool (*callback)(const DomainTreeNode<T>&, CBARG),
-                    CBARG callback_arg) const
+DomainTree<T>::findImpl(TT* tree,
+                        const isc::dns::LabelSequence& target_labels_orig,
+                        TTN** target,
+                        TTN* node,
+                        DomainTreeNodeChain<T>& node_path,
+                        bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                        CBARG callback_arg)
 {
     if (node_path.isEmpty() ^ target_labels_orig.isAbsolute()) {
         isc_throw(isc::BadValue,
                   "DomainTree::find() is given mismatched node chain"
                   " and label sequence");
-    }
-
-    const DomainTreeNode<T>* node;
-
-    if (!node_path.isEmpty()) {
-        // Get the top node in the node chain
-        node = node_path.top();
-        // Start searching from its down pointer
-        node = node->getDown();
-    } else {
-        node = root_.get();
     }
 
     Result ret = NOTFOUND;
@@ -1498,7 +1852,7 @@ DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
             node_path.last_comparison_.getRelation();
 
         if (relation == isc::dns::NameComparisonResult::EQUAL) {
-            if (needsReturnEmptyNode_ || !node->isEmpty()) {
+            if (tree->needsReturnEmptyNode_ || !node->isEmpty()) {
                 node_path.push(node);
                 *target = node;
                 ret = EXACTMATCH;
@@ -1511,7 +1865,7 @@ DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
                 node->getLeft() : node->getRight();
         } else {
             if (relation == isc::dns::NameComparisonResult::SUBDOMAIN) {
-                if (needsReturnEmptyNode_ || !node->isEmpty()) {
+                if (tree->needsReturnEmptyNode_ || !node->isEmpty()) {
                     ret = PARTIALMATCH;
                     *target = node;
                     if (callback != NULL &&
@@ -1532,6 +1886,53 @@ DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
     }
 
     return (ret);
+}
+
+template <typename T>
+template <typename CBARG>
+typename DomainTree<T>::Result
+DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
+                    DomainTreeNode<T>** target,
+                    DomainTreeNodeChain<T>& node_path,
+                    bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                    CBARG callback_arg)
+{
+    if (!node_path.isEmpty()) {
+        isc_throw(isc::BadValue,
+                  "DomainTree::find() non-const method is given "
+                  "non-empty node chain");
+    }
+
+    DomainTreeNode<T>* node = root_.get();
+
+    return (findImpl<DomainTree<T>, DomainTreeNode<T>, CBARG >
+            (this, target_labels_orig, target, node, node_path,
+             callback, callback_arg));
+}
+
+template <typename T>
+template <typename CBARG>
+typename DomainTree<T>::Result
+DomainTree<T>::find(const isc::dns::LabelSequence& target_labels_orig,
+                    const DomainTreeNode<T>** target,
+                    DomainTreeNodeChain<T>& node_path,
+                    bool (*callback)(const DomainTreeNode<T>&, CBARG),
+                    CBARG callback_arg) const
+{
+    const DomainTreeNode<T>* node;
+
+    if (!node_path.isEmpty()) {
+        // Get the top node in the node chain
+        node = node_path.top();
+        // Start searching from its down pointer
+        node = node->getDown();
+    } else {
+        node = root_.get();
+    }
+
+    return (findImpl<const DomainTree<T>, const DomainTreeNode<T>, CBARG >
+            (this, target_labels_orig, target, node, node_path,
+             callback, callback_arg));
 }
 
 template <typename T>
@@ -1717,9 +2118,10 @@ DomainTree<T>::previousNode(DomainTreeNodeChain<T>& node_path) const {
 }
 
 template <typename T>
-const DomainTreeNode<T>*
-DomainTree<T>::largestNode() const {
-    const DomainTreeNode<T>* node = root_.get();
+template <typename TT, typename TTN>
+TTN*
+DomainTree<T>::largestNodeImpl(TT* tree) {
+    TTN* node = tree->root_.get();
     while (node != NULL) {
         // We go right first, then down.
         if (node->getRight() != NULL) {
@@ -1732,6 +2134,19 @@ DomainTree<T>::largestNode() const {
     }
 
     return (node);
+}
+
+template <typename T>
+DomainTreeNode<T>*
+DomainTree<T>::largestNode() {
+    return (largestNodeImpl<DomainTree<T>, DomainTreeNode<T> >(this));
+}
+
+template <typename T>
+const DomainTreeNode<T>*
+DomainTree<T>::largestNode() const {
+    return (largestNodeImpl<const DomainTree<T>, const DomainTreeNode<T> >
+            (this));
 }
 
 template <typename T>
@@ -1802,11 +2217,13 @@ DomainTree<T>::insert(util::MemorySegment& mem_sgmt,
     } else if (order < 0) {
         node->setSubTreeRoot(false);
         parent->left_ = node;
+        insertRebalance(current_root, node);
     } else {
         node->setSubTreeRoot(false);
         parent->right_ = node;
+        insertRebalance(current_root, node);
     }
-    insertRebalance(current_root, node);
+
     if (new_node != NULL) {
         *new_node = node;
     }
@@ -1818,7 +2235,127 @@ DomainTree<T>::insert(util::MemorySegment& mem_sgmt,
 template <typename T>
 template <typename DataDeleter>
 void
-DomainTree<T>::deleteAllNodes(util::MemorySegment& mem_sgmt,
+DomainTree<T>::remove(util::MemorySegment& mem_sgmt, DomainTreeNode<T>* node,
+                      DataDeleter deleter)
+{
+    // If node has a down pointer, we cannot remove this node from the
+    // DomainTree forest. We merely clear its data (destroying the data)
+    // and return.
+    if (node->getDown()) {
+        T* data = node->setData(NULL);
+        if (data) {
+            deleter(data);
+        }
+        return;
+    }
+
+    while (true) {
+        // Save subtree root's parent for use later.
+        DomainTreeNode<T>* upper_node = node->getUpperNode();
+
+        // node points to the node to be deleted in the BST. It first
+        // has to be exchanged with the right-most node in the left
+        // sub-tree or the left-most node in the right sub-tree. (Here,
+        // sub-tree is inside this RB tree itself, not in the
+        // tree-of-trees forest.) The node then ends up having a maximum
+        // of 1 child. Note that this is not an in-place value swap of
+        // node data, but the actual node locations are swapped in
+        // exchange(). Unlike normal BSTs, we have to do this as our
+        // label data is at address (this + 1).
+        if (node->getLeft() && node->getRight()) {
+            DomainTreeNode<T>* rightmost = node->getLeft();
+            while (rightmost->getRight() != NULL) {
+                rightmost = rightmost->getRight();
+            }
+
+            node->exchange(rightmost, &root_);
+        }
+
+        // Now, node has 0 or 1 children, as from above, either its
+        // right or left child definitely doesn't exist (and is NULL).
+        // Pick the child node, or if no children exist, just use NULL.
+        DomainTreeNode<T>* child;
+        if (node->getRight()) {
+            child = node->getRight();
+        } else {
+            child = node->getLeft();
+        }
+
+        // Set it as the node's parent's child, effectively removing
+        // node from the tree.
+        node->connectChild(node, child, &root_);
+
+        // Child can be NULL here if node was a leaf.
+        if (child) {
+            child->parent_ = node->getParent();
+            // Even if node is not a leaf node, we don't always do an
+            // exchange() with another node, so we have to set the
+            // child's FLAG_SUBTREE_ROOT explicitly.
+            if ((!child->getParent()) ||
+                (child->getParent()->getDown() == child))
+            {
+                child->setSubTreeRoot(node->isSubTreeRoot());
+            }
+        }
+
+        // If node is RED, it is a valid red-black tree already as
+        // (node's) child must be BLACK or NULL (which is
+        // BLACK). Deleting (the RED) node will not have any effect on
+        // the number of BLACK nodes through this path (involving node's
+        // parent and its new child). In this case, we can skip the
+        // following block.
+        if (node->isBlack()) {
+            if (child && child->isRed()) {
+                // If node is BLACK and child is RED, removing node
+                // would decrease the number of BLACK nodes through this
+                // path (involving node's parent and its new child). So
+                // we color child to be BLACK to restore the old count
+                // of black nodes through this path. It is now a valid
+                // red-black tree.
+                child->setColor(DomainTreeNode<T>::BLACK);
+            } else {
+                // If node is BLACK and child is also BLACK or NULL
+                // (which is BLACK), we need to do re-balancing to make
+                // it a valid red-black tree again.
+                typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr =
+                    upper_node ? &(upper_node->down_) : &root_;
+                removeRebalance(root_ptr, child, node->getParent());
+            }
+        }
+
+        // Finally, destroy the node.
+        if (node->data_.get()) {
+            deleter(node->data_.get());
+        }
+        DomainTreeNode<T>::destroy(mem_sgmt, node);
+        --node_count_;
+
+        // If the node deletion did not cause the subtree to disappear
+        // completely, return early.
+        if (upper_node->getDown()) {
+            break;
+        }
+
+        // If the upper node is not empty, it cannot be deleted.
+        if (!upper_node->isEmpty()) {
+            break;
+        }
+
+        // If upper node is the root node (.), don't attempt to delete
+        // it. The root node must always exist.
+        if (upper_node == root_.get()) {
+            break;
+        }
+
+        // Ascend up the tree and delete the upper node.
+        node = upper_node;
+    }
+}
+
+template <typename T>
+template <typename DataDeleter>
+void
+DomainTree<T>::removeAllNodes(util::MemorySegment& mem_sgmt,
                               DataDeleter deleter)
 {
     deleteHelper(mem_sgmt, root_.get(), deleter);
@@ -1842,17 +2379,8 @@ DomainTree<T>::nodeFission(util::MemorySegment& mem_sgmt,
     node.resetLabels(new_prefix);
 
     up_node->parent_ = node.getParent();
-    if (node.getParent() != NULL) {
-        if (node.getParent()->getLeft() == &node) {
-            node.getParent()->left_ = up_node;
-        } else if (node.getParent()->getRight() == &node) {
-            node.getParent()->right_ = up_node;
-        } else {
-            node.getParent()->down_ = up_node;
-        }
-    } else {
-        root_ = up_node;
-    }
+
+    node.connectChild(&node, up_node, &root_);
 
     up_node->down_ = &node;
     node.parent_ = up_node;
@@ -1882,63 +2410,422 @@ DomainTree<T>::nodeFission(util::MemorySegment& mem_sgmt,
 }
 
 
+/// \brief Fix Red-Black tree properties after an ordinary BST
+/// insertion.
+///
+/// After a normal binary search tree insertion, the Red-Black tree
+/// properties may be violated. This method fixes these properties by
+/// doing tree rotations and recoloring nodes in the tree appropriately.
+///
+/// \param subtree_root The root of the current sub-tree where the node
+/// is being inserted.
+/// \param node The node which was inserted by ordinary BST insertion.
 template <typename T>
 void
 DomainTree<T>::insertRebalance
-    (typename DomainTreeNode<T>::DomainTreeNodePtr* root,
+    (typename DomainTreeNode<T>::DomainTreeNodePtr* subtree_root,
      DomainTreeNode<T>* node)
 {
-    DomainTreeNode<T>* uncle;
-    DomainTreeNode<T>* parent;
-    while (node != (*root).get() &&
-           ((parent = node->getParent())->getColor()) ==
-           DomainTreeNode<T>::RED) {
-        // Here, node->parent_ is not NULL and it is also red, so
-        // node->parent_->parent_ is also not NULL.
-        if (parent == parent->getParent()->getLeft()) {
-            uncle = parent->getParent()->getRight();
+    // The node enters this method colored RED. We assume in our
+    // red-black implementation that NULL values in left and right
+    // children are BLACK.
+    //
+    // Case 1. If node is at the subtree root, we don't need to change
+    // its position in the tree. We re-color it BLACK further below
+    // (right before we return).
+    while (node != (*subtree_root).get()) {
+        // Case 2. If the node is not subtree root, but its parent is
+        // colored BLACK, then we're done. This is because the new node
+        // introduces a RED node in the path through it (from its
+        // subtree root to its children colored BLACK) but doesn't
+        // change the red-black properties.
+        DomainTreeNode<T>* parent = node->getParent();
+        if (parent->isBlack()) {
+            break;
+        }
 
-            if (uncle != NULL && uncle->getColor() ==
-                DomainTreeNode<T>::RED) {
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                uncle->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
-                node = parent->getParent();
-            } else {
-                if (node == parent->getRight()) {
-                    node = parent;
-                    leftRotate(root, node);
-                    parent = node->getParent();
-                }
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
-                rightRotate(root, parent->getParent());
-            }
+        DomainTreeNode<T>* uncle = node->getUncle();
+        DomainTreeNode<T>* grandparent = node->getGrandParent();
+
+        if ((uncle != NULL) && uncle->isRed()) {
+            // Case 3. Here, the node's parent is colored RED and the
+            // uncle node is also RED. In this case, the grandparent
+            // must be BLACK (due to existing red-black state).  We set
+            // both the parent and uncle nodes to BLACK then, change the
+            // grandparent to RED, and iterate the while loop with
+            // node = grandparent. This is the only case that causes
+            // insertion to have a max insertion time of log(n).
+            parent->setColor(DomainTreeNode<T>::BLACK);
+            uncle->setColor(DomainTreeNode<T>::BLACK);
+            grandparent->setColor(DomainTreeNode<T>::RED);
+            node = grandparent;
         } else {
-            uncle = parent->getParent()->getLeft();
+            // Case 4. Here, the node and node's parent are colored RED,
+            // and the uncle node is BLACK. Only in this case, tree
+            // rotations are necessary.
 
-            if (uncle != NULL && uncle->getColor() ==
-                DomainTreeNode<T>::RED) {
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                uncle->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
-                node = parent->getParent();
-            } else {
-                if (node == parent->getLeft()) {
-                    node = parent;
-                    rightRotate(root, node);
-                    parent = node->getParent();
-                }
-                parent->setColor(DomainTreeNode<T>::BLACK);
-                parent->getParent()->setColor(DomainTreeNode<T>::RED);
-                leftRotate(root, parent->getParent());
+            /* First we check if we need to convert to a canonical form:
+             *
+             * (a) If the node is the right-child of its parent, and the
+             * node's parent is the left-child of the node's
+             * grandparent, rotate left about the parent so that the old
+             * 'node' becomes the new parent, and the old parent becomes
+             * the new 'node'.
+             *
+             *       G(B)                   G(B)
+             *      /   \                  /   \
+             *    P(R)  U(B)     =>     P*(R)  U(B)
+             *       \                  /
+             *       N(R)             N*(R)
+             *
+             *                    (P* is old N, N* is old P)
+             *
+             * (b) If the node is the left-child of its parent, and the
+             * node's parent is the right-child of the node's
+             * grandparent, rotate right about the parent so that the
+             * old 'node' becomes the new parent, and the old parent
+             * becomes the new 'node'.
+             *
+             *      G(B)                   G(B)
+             *     /   \                  /   \
+             *   U(B)  P(R)     =>     U(B)  P*(R)
+             *         /                        \
+             *       N(R)                      N*(R)
+             *
+             *                    (P* is old N, N* is old P)
+             */
+            if ((node == parent->getRight()) &&
+                (parent == grandparent->getLeft())) {
+                node = parent;
+                leftRotate(subtree_root, parent);
+            } else if ((node == parent->getLeft()) &&
+                       (parent == grandparent->getRight())) {
+                node = parent;
+                rightRotate(subtree_root, parent);
             }
+
+            // Also adjust the parent variable (node is already adjusted
+            // above). The grandparent variable need not be adjusted.
+            parent = node->getParent();
+
+            /* Here, we're in a canonical form where the uncle node is
+             * BLACK and both the node and its parent are together
+             * either left-children or right-children of their
+             * corresponding parents.
+             *
+             *       G(B)        or       G(B)
+             *      /   \                /   \
+             *    P(R)  U(B)           U(B)  P(R)
+             *   /                              \
+             * N(R)                             N(R)
+             *
+             * We rotate around the grandparent, right or left,
+             * depending on the orientation above, color the old
+             * grandparent RED (it used to be BLACK) and color the
+             * parent BLACK (it used to be RED). This restores the
+             * red-black property that the number of BLACK nodes from
+             * subtree root to the leaves (the NULL children which are
+             * assumed BLACK) are equal, and that every RED node has a
+             * BLACK parent.
+             */
+            parent->setColor(DomainTreeNode<T>::BLACK);
+            grandparent->setColor(DomainTreeNode<T>::RED);
+
+            if (node == parent->getLeft()) {
+                rightRotate(subtree_root, grandparent);
+            } else {
+                leftRotate(subtree_root, grandparent);
+            }
+
+            // In this case, the tree is ready now and we explicitly
+            // break out of the loop here. Even if we continue the loop,
+            // it will exit the loop in case 2 above, but that's not so
+            // obvious.
+            break;
         }
     }
 
-    (*root)->setColor(DomainTreeNode<T>::BLACK);
+    // Color sub-tree roots black.
+    (*subtree_root)->setColor(DomainTreeNode<T>::BLACK);
 }
 
+template <typename T>
+void
+DomainTree<T>::removeRebalance
+    (typename DomainTreeNode<T>::DomainTreeNodePtr* root_ptr,
+     DomainTreeNode<T>* child,  DomainTreeNode<T>* parent)
+{
+    // Case 1. Repeat until we reach the root node of this subtree in
+    // the forest. Note that child can be NULL here, so we can only test
+    // the parent pointer and see if it has escaped to the upper tree.
+    while (&(parent->down_) != root_ptr) {
+        // A sibling node is defined as the parent's other child. It
+        // exists at the same level as child. Note that child can be
+        // NULL here.
+        DomainTreeNode<T>* sibling =
+            DomainTreeNode<T>::getSibling(parent, child);
+
+        // NOTE #1: Understand this clearly. We are here only because in
+        // the path through parent--child, a BLACK node was removed,
+        // i.e., the sibling's side in the path through parent--sibling
+        // is heavier by 1 extra BLACK node in its path. Because this
+        // can be an iterative process up the tree, the key is to
+        // understand this point when entering the block here.
+
+        // NOTE #2: sibling cannot be NULL here as parent--child has
+        // fewer BLACK nodes than parent--sibling.
+        assert(sibling);
+
+        // If sibling is RED, convert the tree to a form where sibling
+        // is BLACK.
+        if (sibling->isRed()) {
+            // Case 2. Here, the sibling is RED. We do a tree rotation
+            // at the parent such that sibling is the new parent, and
+            // the old parent is sibling's child. We also invert the
+            // colors of the two nodes.
+            //
+            // This step is done to convert the tree to a form for
+            // further cases below.
+
+            /* Parent (P) has to be BLACK here as its child sibling (S)
+             * is RED.
+             *
+             *       P(B)                   S(B)
+             *      /   \                  /   \
+             *    C(?)   S(R)     =>     P(R)  y(B)
+             *    /  \   /  \            /  \
+             *          x(B) y(B)     C(?)  x(B)
+             *                       /   \
+             */
+
+            parent->setColor(DomainTreeNode<T>::RED);
+            sibling->setColor(DomainTreeNode<T>::BLACK);
+
+            if (parent->getLeft() == child) {
+                leftRotate(root_ptr, parent);
+            } else {
+                rightRotate(root_ptr, parent);
+            }
+
+            // Re-compute child's sibling due to the tree adjustment
+            // above.
+            sibling = DomainTreeNode<T>::getSibling(parent, child);
+        }
+
+        // NOTE #3: sibling still cannot be NULL here as parent--child
+        // has fewer BLACK nodes than parent--sibling.
+        assert(sibling);
+
+        // NOTE #4: From above, sibling must be BLACK here.
+        assert(sibling->isBlack());
+
+        // NOTE #5: If a tree rotation happened above, the new sibling's
+        // side through parent--sibling [x(B)] above is still heavier
+        // than parent--child by 1 extra BLACK node in its path.
+
+        // Case 3. If both of sibling's children are BLACK, then set the
+        // sibling's color to RED. This reduces the number of BLACK
+        // nodes in parent--sibling path by 1 and balances the BLACK
+        // nodes count on both sides of parent. But this introduces
+        // another issue which is that the path through one child
+        // (=parent) of parent's parent (child's grandparent) has fewer
+        // BLACK nodes now than the other child (parent's sibling).
+        //
+        // To fix this: (a) if parent is colored RED, we can change its
+        // color to BLACK (to increment the number of black nodes in
+        // grandparent--parent-->path) and we're done with the
+        // rebalancing; (b) if parent is colored BLACK, then we set
+        // child=parent and go back to the beginning of the loop to
+        // repeat the original rebalancing problem 1 node higher up the
+        // tree (see NOTE #1 above).
+
+        /* (a):
+         *
+         *         G(?)                   G(?)
+         *         /  \                   /  \
+         *       P(R)        =>         P(B)      (Rebalancing is complete)
+         *      /   \                  /   \
+         *   C(?)    S(B)           C(?)    S(R)
+         *   / \     /   \           / \    /   \
+         *        ss1(B)  ss2(B)         ss1(B)  ss2(B)
+         *
+         *
+         * (b):
+         *
+         *         G(?)                   G(?) <----------(New parent)
+         *         /   \                  /   \
+         *       P(B)        =>         P(B) <------------(New child)
+         *      /   \                  /   \
+         *   C(?)    S(B)           C(?)    S(R)
+         *   / \     /   \           / \    /   \
+         *        ss1(B)  ss2(B)         ss1(B)  ss2(B)
+         */
+
+        if ((DomainTreeNode<T>::isBlack(sibling->getLeft()) &&
+             DomainTreeNode<T>::isBlack(sibling->getRight())))
+        {
+            sibling->setColor(DomainTreeNode<T>::RED);
+
+            if (parent->isBlack()) {
+                child = parent;
+                parent = parent->getParent();
+                continue;
+            } else {
+                parent->setColor(DomainTreeNode<T>::BLACK);
+                break;
+            }
+        }
+
+        // NOTE #3 and NOTE #4 asserted above still hold here.
+        assert(sibling);
+        assert(sibling->isBlack());
+
+        // NOTE #6: The path through parent--sibling is still heavier
+        // than parent--child by 1 extra BLACK node in its path. This is
+        // the key point, and this is why we are still doing the
+        // rebalancing.
+
+        // Case 4. Now, one or both of sibling's children are not
+        // BLACK. (a) We consider the case where child is the left-child
+        // of parent, and the left-child of sibling is RED and the
+        // right-child of sibling is BLACK. (b) We also consider its
+        // mirror, arrangement, i.e., the case where child is the
+        // right-child of parent, and the right-child of sibling is RED
+        // and the left-child of sibling is BLACK.
+        //
+        // In both cases, we change sibling's color to RED, the color of
+        // the RED child of sibling to BLACK (so both children of
+        // sibling are BLACK), and we do a tree rotation around sibling
+        // node in the opposite direction of the old RED child of
+        // sibling.
+        //
+        // This step is done to convert the tree to a form for further
+        // cases below.
+
+        /* (a):
+         *
+         *       P(?)        =>         P(?)
+         *      /   \                  /   \
+         *   C(?)    S(B)           C(?)    ss1(B)
+         *   / \     /   \           / \    /    \
+         *        ss1(R)  ss2(B)          x(B)   S(R)
+         *        /  \                           /  \
+         *      x(B) y(B)                     y(B)   ss2(B)
+         *
+         *
+         * (b):
+         *
+         *           P(?)        =>          P(?)
+         *          /    \                  /    \
+         *       S(B)     C(?)          ss1(B)   C(?)
+         *       /  \      / \           /  \     / \
+         *  ss2(B) ss1(R)             S(R)  x(B)
+         *          /  \              /  \
+         *        y(B) x(B)       ss2(B) y(B)
+         */
+
+        DomainTreeNode<T>* ss1 = sibling->getLeft();
+        DomainTreeNode<T>* ss2 = sibling->getRight();
+        if (parent->getLeft() != child) {
+            // Swap for the mirror arrangement described in case 4 (b)
+            // above.
+            std::swap(ss1, ss2);
+        }
+
+        if (DomainTreeNode<T>::isBlack(ss2)) {
+            // It is implied by ss2 being BLACK that ss1 is RED.
+
+            sibling->setColor(DomainTreeNode<T>::RED);
+            // ss1 cannot be NULL here as it is a RED node.
+            ss1->setColor(DomainTreeNode<T>::BLACK);
+
+            if (parent->getLeft() == child) {
+                rightRotate(root_ptr, sibling);
+            } else {
+                leftRotate(root_ptr, sibling);
+            }
+            // Re-compute child's sibling due to the tree adjustment
+            // above.
+            sibling = DomainTreeNode<T>::getSibling(parent, child);
+        }
+
+        // NOTE #7: sibling cannot be NULL here as even if the sibling
+        // variable was assigned in the node above, it was set to ss1
+        // which was a RED node before (non-NULL).
+        assert(sibling);
+
+        // NOTE #8: sibling is still BLACK, even if the sibling variable
+        // was assigned in the node above, it was set to ss1 which is
+        // now a BLACK node.
+        assert(sibling->isBlack());
+
+        // NOTE #9: The path through parent--sibling is still heavier
+        // than parent--child by 1 extra BLACK node in its path. This is
+        // the key point, and this is why we are still doing the
+        // rebalancing.
+
+        // Case 5. After case 4 above, we are in a canonical form now
+        // where sibling is BLACK, and either (a) if child is the
+        // left-child of parent, the right-child (ss2) of sibling is
+        // definitely RED, or (b) if child is the right-child of parent,
+        // the left-child (ss2) of sibling is definitely RED.
+        //
+        // Here, we set sibling's color to that of the parent, and set
+        // the parent's color to BLACK. We set ss2's color to BLACK (it
+        // was previously RED). Then we do a tree-rotation around parent
+        // in the direction of child to pull in the BLACK parent into
+        // its sub-tree. These steps effectively balances the tree as
+        // you can see from the graph below. Before starting, the graph
+        // on the child's side is lighter by 1 BLACK node than the graph
+        // on the sibling's side. After these steps, both sides of S(x)
+        // have the same number of BLACK nodes in any path through it.
+
+        /* (a):
+         *
+         *          P(x)                            S(x)
+         *         /    \                         /     \
+         *      C(?)     S(B)         =>      P(B)      ss2(B)
+         *       / \    /    \               /   \        /  \
+         *            ss1(?) ss2(R)       C(?) ss1(?)   (B)  (B)
+         *                    /  \        / \
+         *                  (B)  (B)
+         *
+         *     (Here, 'x' is the parent's color. In the resulting tree,
+         *      it is set as S node's color.)
+         *
+         * (b):
+         *      This is just the mirror of above.
+         */
+
+        sibling->setColor(parent->getColor());
+        parent->setColor(DomainTreeNode<T>::BLACK);
+
+        ss1 = sibling->getLeft();
+        ss2 = sibling->getRight();
+        if (parent->getLeft() != child) {
+            // Swap for the mirror arrangement described in case 4 (b)
+            // above.
+            std::swap(ss1, ss2);
+        }
+
+        // ss2 cannot be NULL here as it is a RED node.
+        ss2->setColor(DomainTreeNode<T>::BLACK);
+
+        if (parent->getLeft() == child) {
+            leftRotate(root_ptr, parent);
+        } else {
+            rightRotate(root_ptr, parent);
+        }
+
+        // NOTE #10: Now, sibling is parent's parent. All paths through
+        // sibling have the same number of BLACK nodes.
+
+        // We are completely finished and the tree is now
+        // balanced. Phew. Now let's take a coffee-break.
+
+        break;
+    }
+}
 
 template <typename T>
 DomainTreeNode<T>*
@@ -2008,6 +2895,112 @@ DomainTree<T>::rightRotate
     return (node);
 }
 
+template <typename T>
+size_t
+DomainTree<T>::getHeightHelper(const DomainTreeNode<T>* node) const {
+    if (node == NULL) {
+        return (0);
+    }
+
+    const size_t dl = getHeightHelper(node->getLeft());
+    const size_t dr = getHeightHelper(node->getRight());
+
+    const size_t this_height = std::max(dl + 1, dr + 1);
+    const size_t down_height = getHeightHelper(node->getDown());
+
+    return (std::max(this_height, down_height));
+}
+
+template <typename T>
+size_t
+DomainTree<T>::getHeight() const {
+    return (getHeightHelper(root_.get()));
+}
+
+template <typename T>
+bool
+DomainTree<T>::checkPropertiesHelper(const DomainTreeNode<T>* node) const {
+    if (node == NULL) {
+        return (true);
+    }
+
+    if (node->isRed()) {
+        // Root nodes must be BLACK.
+        if (node->isSubTreeRoot()) {
+            return (false);
+        }
+
+        // Both children of RED nodes must be BLACK.
+        if (DomainTreeNode<T>::isRed(node->getLeft()) ||
+            DomainTreeNode<T>::isRed(node->getRight()))
+        {
+            return (false);
+        }
+    }
+
+    // If node is assigned to the down_ pointer of its parent, it is a
+    // subtree root and must have the flag set.
+    if (((!node->getParent()) ||
+         (node->getParent()->getDown() == node)) &&
+        (!node->isSubTreeRoot()))
+    {
+        return (false);
+    }
+
+    // Repeat tests with this node's children.
+    return (checkPropertiesHelper(node->getLeft()) &&
+            checkPropertiesHelper(node->getRight()) &&
+            checkPropertiesHelper(node->getDown()));
+}
+
+template <typename T>
+bool
+DomainTree<T>::checkBlackDistanceHelper(const DomainTreeNode<T>* node,
+                                        size_t* distance) const
+{
+    if (node == NULL) {
+        *distance = 1;
+        return (true);
+    }
+
+    size_t dl, dr, dd;
+    if (!checkBlackDistanceHelper(node->getLeft(), &dl)) {
+        return (false);
+    }
+    if (!checkBlackDistanceHelper(node->getRight(), &dr)) {
+        return (false);
+    }
+    if (!checkBlackDistanceHelper(node->getDown(), &dd)) {
+        return (false);
+    }
+
+    if (dl != dr) {
+        return (false);
+    }
+
+    if (node->isBlack()) {
+        ++dl;
+    }
+
+    *distance = dl;
+
+    return (true);
+}
+
+template <typename T>
+bool
+DomainTree<T>::checkProperties() const {
+    if (!checkPropertiesHelper(root_.get())) {
+        return (false);
+    }
+
+    // Path from a given node to all its leaves must contain the same
+    // number of BLACK child nodes. This is done separately here instead
+    // of inside checkPropertiesHelper() as it would take (n log n)
+    // complexity otherwise.
+    size_t dd;
+    return (checkBlackDistanceHelper(root_.get(), &dd));
+}
 
 template <typename T>
 void
@@ -2031,7 +3024,7 @@ DomainTree<T>::dumpTreeHelper(std::ostream& os,
 
     indent(os, depth);
     os << node->getLabels() << " ("
-       << ((node->getColor() == DomainTreeNode<T>::BLACK) ? "black" : "red")
+       << (node->isBlack() ? "black" : "red")
        << ")";
     if (node->isEmpty()) {
         os << " [invisible]";
@@ -2095,7 +3088,7 @@ DomainTree<T>::dumpDotHelper(std::ostream& os,
     }
     os << "\"] [";
 
-    if (node->getColor() == DomainTreeNode<T>::RED) {
+    if (node->isRed()) {
         os << "color=red";
     } else {
         os << "color=black";

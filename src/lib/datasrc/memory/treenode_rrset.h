@@ -180,12 +180,7 @@ public:
     /// \brief Specialized version of \c getTTL() for \c TreeNodeRRset.
     virtual const dns::RRTTL& getTTL() const;
 
-    /// \brief Specialized version of \c setName() for \c TreeNodeRRset.
-    ///
-    /// It throws \c isc::Unexpected unconditionally.
-    virtual void setName(const dns::Name& name);
-
-    /// \brief Specialized version of \c setName() for \c TreeNodeRRset.
+    /// \brief Specialized version of \c setTTL() for \c TreeNodeRRset.
     ///
     /// It throws \c isc::Unexpected unconditionally.
     virtual void setTTL(const dns::RRTTL& ttl);

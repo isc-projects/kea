@@ -212,3 +212,13 @@ To make sure DDNS service is not interrupted, this problem is caught instead
 of reraised; The update is aborted, and a SERVFAIL is sent back to the client.
 This is most probably a bug in the DDNS code, but *could* be caused by
 the data source.
+
+% LIBDDNS_ZONE_INVALID_ERROR Newly received zone data %1/%2 fails validation: %3
+The zone data was received successfully, but the zone when updated with
+this zone data fails validation.
+
+% LIBDDNS_ZONE_INVALID_WARN Newly received zone data %1/%2 has a problem: %3
+The zone data was received successfully, but when checking the zone when
+updated with this zone data, it was discovered there's some issue with
+it. It might be correct, but it should be checked and possibly
+fixed. The problem does not stop the zone from being used.

@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,10 +21,12 @@
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rdata/generic/detail/lexer_util.h>
 
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
@@ -36,32 +38,54 @@ using namespace isc::util;
 /// \endcode
 /// where both fields must represent a valid domain name.
 ///
-/// \exception InvalidRdataText The number of RDATA fields (must be 2) is
+/// \throw InvalidRdataText The number of RDATA fields (must be 2) is
 /// incorrect.
-/// \exception Other The constructor of the \c Name class will throw if the
+/// \throw std::bad_alloc Memory allocation for names fails.
+/// \throw Other The constructor of the \c Name class will throw if the
 /// given name is invalid.
-/// \exception std::bad_alloc Memory allocation for names fails.
 RP::RP(const std::string& rp_str) :
     // We cannot construct both names in the initialization list due to the
     // necessary text processing, so we have to initialize them with a dummy
     // name and replace them later.
     mailbox_(Name::ROOT_NAME()), text_(Name::ROOT_NAME())
 {
-    istringstream iss(rp_str);
-    string mailbox_str, text_str;
-    iss >> mailbox_str >> text_str;
+    try {
+        std::istringstream ss(rp_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-    // Validation: A valid RP RR must have exactly two fields.
-    if (iss.bad() || iss.fail()) {
-        isc_throw(InvalidRdataText, "Invalid RP text: " << rp_str);
-    }
-    if (!iss.eof()) {
-        isc_throw(InvalidRdataText, "Invalid RP text (redundant field): "
-                  << rp_str);
-    }
+        mailbox_ = createNameFromLexer(lexer, NULL);
+        text_ = createNameFromLexer(lexer, NULL);
 
-    mailbox_ = Name(mailbox_str);
-    text_ = Name(text_str);
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText, "extra input text for RP: "
+                      << rp_str);
+        }
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText, "Failed to construct RP from '" <<
+                  rp_str << "': " << ex.what());
+    }
+}
+
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual representation
+/// of an RP RDATA.  The MAILBOX and TEXT fields can be non-absolute if \c
+/// origin is non-NULL, in which case \c origin is used to make them absolute.
+///
+/// \throw MasterLexer::LexerError General parsing error such as missing field.
+/// \throw Other Exceptions from the Name and constructors if construction of
+/// textual fields as these objects fail.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+/// \param origin If non NULL, specifies the origin of SERVER when it
+/// is non-absolute.
+RP::RP(MasterLexer& lexer, const Name* origin,
+       MasterLoader::Options, MasterLoaderCallbacks&) :
+    mailbox_(createNameFromLexer(lexer, origin)),
+    text_(createNameFromLexer(lexer, origin))
+{
 }
 
 /// \brief Constructor from wire-format data.
@@ -70,15 +94,15 @@ RP::RP(const std::string& rp_str) :
 /// length) for parsing.
 /// If necessary, the caller will check consistency.
 ///
-/// \exception std::bad_alloc Memory allocation for names fails.
-/// \exception Other The constructor of the \c Name class will throw if the
+/// \throw std::bad_alloc Memory allocation for names fails.
+/// \throw Other The constructor of the \c Name class will throw if the
 /// names in the wire is invalid.
 RP::RP(InputBuffer& buffer, size_t) : mailbox_(buffer), text_(buffer) {
 }
 
 /// \brief Copy constructor.
 ///
-/// \exception std::bad_alloc Memory allocation fails in copying internal
+/// \throw std::bad_alloc Memory allocation fails in copying internal
 /// member variables (this should be very rare).
 RP::RP(const RP& other) :
     Rdata(), mailbox_(other.mailbox_), text_(other.text_)
@@ -89,7 +113,7 @@ RP::RP(const RP& other) :
 /// The output of this method is formatted as described in the "from string"
 /// constructor (\c RP(const std::string&))).
 ///
-/// \exception std::bad_alloc Internal resource allocation fails.
+/// \throw std::bad_alloc Internal resource allocation fails.
 ///
 /// \return A \c string object that represents the \c RP object.
 std::string
@@ -97,20 +121,36 @@ RP::toText() const {
     return (mailbox_.toText() + " " + text_.toText());
 }
 
+/// \brief Render the \c RP in the wire format without name compression.
+///
+/// \throw std::bad_alloc Internal resource allocation fails.
+///
+/// \param buffer An output buffer to store the wire data.
 void
 RP::toWire(OutputBuffer& buffer) const {
     mailbox_.toWire(buffer);
     text_.toWire(buffer);
 }
 
+/// \brief Render the \c RP in the wire format with taking into account
+/// compression.
+///
+// Type RP is not "well-known", and name compression must be disabled
+// per RFC3597.
+///
+/// \throw std::bad_alloc Internal resource allocation fails.
+///
+/// \param renderer DNS message rendering context that encapsulates the
+/// output buffer and name compression information.
 void
 RP::toWire(AbstractMessageRenderer& renderer) const {
-    // Type RP is not "well-known", and name compression must be disabled
-    // per RFC3597.
     renderer.writeName(mailbox_, false);
     renderer.writeName(text_, false);
 }
 
+/// \brief Compare two instances of \c RP RDATA.
+///
+/// See documentation in \c Rdata.
 int
 RP::compare(const Rdata& other) const {
     const RP& other_rp = dynamic_cast<const RP&>(other);

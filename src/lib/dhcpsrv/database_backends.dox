@@ -26,7 +26,7 @@
 
   - The MySQL lease manager uses the freely available MySQL as its backend
   database.  This is not included in BIND 10 DHCP by default:
-  the --with-dhcp-mysql switch must be supplied to "configure" for support
+  the \--with-dhcp-mysql switch must be supplied to "configure" for support
   to be compiled into the software.
   - Memfile is an in-memory lease database, with (currently) nothing being
   written to persistent storage.  The long-term plans for the backend do
@@ -83,9 +83,42 @@
 
   @subsection dhcp-mysql-unittest MySQL
 
-  A database called <i>keatest</i> needs to be set up using the MySQL
-  <b>CREATE DATABASE</b> command.  A database user, also called <i>keatest</i>
-  (with a password <i>keatest</i>) must be given full privileges in that
-  database.  The unit tests create the schema in the database before each test
-  and delete it afterwards.
+  A database called <i>keatest</i> must be created. A database user, also called
+  <i>keatest</i> (and with a password <i>keatest</i>) must also be created and
+  be given full privileges in that database.  The unit tests create the schema
+  in the database before each test and delete it afterwards.
+
+  In detail, the steps to create the database and user are:
+
+  -# Log into MySQL as root:
+  @verbatim
+  % mysql -u root -p
+  Enter password:
+     :
+  mysql>@endverbatim\n
+  -# Create the test database.  This must be called "keatest":
+  @verbatim
+  mysql> CREATE DATABASE keatest;
+  mysql>@endverbatim\n
+  -# Create the user under which the test client will connect to the database
+  (the apostrophes around the words <i>keatest</i> and <i>localhost</i> are
+  required):
+  @verbatim
+  mysql> CREATE USER 'keatest'@'localhost' IDENTIFIED BY 'keatest';
+  mysql>@endverbatim\n
+  -# Grant the created user permissions to access the <i>keatest</i> database
+  (again, the apostrophes around the words <i>keatest</i> and <i>localhost</i>
+  are required):
+  @verbatim
+  mysql> GRANT ALL ON keatest.* TO 'keatest'@'localhost';
+  mysql>@endverbatim\n
+  -# Exit MySQL:
+  @verbatim
+  mysql> quit
+  Bye
+  %@endverbatim
+
+  The unit tests are run automatically when "make check" is executed (providing
+  that BIND 10 has been build with the \--with-dhcp-mysql switch (see the installation
+  section in the <a href="http://bind10.isc.org/docs/bind10-guide.html">BIND 10 Guide</a>).
   */

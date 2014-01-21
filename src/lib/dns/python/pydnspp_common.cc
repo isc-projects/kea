@@ -56,9 +56,8 @@ PyObject* po_DNSMessageBADVERS;
 
 int
 readDataFromSequence(uint8_t *data, size_t len, PyObject* sequence) {
-    PyObject* el = NULL;
     for (size_t i = 0; i < len; i++) {
-        el = PySequence_GetItem(sequence, i);
+        PyObject *el = PySequence_GetItem(sequence, i);
         if (!el) {
             PyErr_SetString(PyExc_TypeError,
                 "sequence too short");

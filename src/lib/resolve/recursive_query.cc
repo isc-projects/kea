@@ -245,11 +245,6 @@ private:
 
     // normal query state
 
-    // Update the question that will be sent to the server
-    void setQuestion(const Question& new_question) {
-        question_ = new_question;
-    }
-
     // TODO: replace by our wrapper
     asio::deadline_timer client_timer;
     asio::deadline_timer lookup_timer;

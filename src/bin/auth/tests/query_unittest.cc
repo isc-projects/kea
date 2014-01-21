@@ -80,6 +80,12 @@ public:
                 return (FindResult());
         }
     }
+    virtual ConstZoneTableAccessorPtr
+    getZoneTableAccessor(const std::string&, bool) const {
+        isc_throw(isc::NotImplemented,
+                  "getZoneTableAccessor not implemented for SingletonList");
+    }
+
 private:
     DataSourceClient& client_;
 };
@@ -132,6 +138,12 @@ const char* const nsec3_uwild_txt =
 const char* const unsigned_delegation_nsec3_txt =
     "q81r598950igr1eqvc60aedlq66425b5.example.com. 3600 IN NSEC3 1 1 12 "
     "aabbccdd 0p9mhaveqvm6t7vbl5lop2u3t2rp3tom NS RRSIG\n";
+
+// Name of an "empty" zone: used to simulate the case of
+// configured-but-available zone (due to load errors, etc).
+// Each tested data source client is expected to have this zone (SQLite3
+// currently doesn't have this concept so it's skipped)
+const char* const EMPTY_ZONE_NAME = "empty.example.org";
 
 // A helper function that generates a textual representation of RRSIG RDATA
 // for the given covered type.  The resulting RRSIG may not necessarily make
@@ -799,11 +811,14 @@ createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
         return (boost::shared_ptr<ClientList>(new SingletonList(client)));
     case INMEMORY:
         list.reset(new ConfigurableClientList(RRClass::IN()));
+        // Configure one normal zone and one "empty" zone.
         list->configure(isc::data::Element::fromJSON(
                             "[{\"type\": \"MasterFiles\","
                             "  \"cache-enable\": true, "
                             "  \"params\": {\"example.com\": \"" +
-                            string(TEST_OWN_DATA_BUILDDIR "/example.zone") +
+                            string(TEST_OWN_DATA_BUILDDIR "/example.zone\",") +
+                            + "\"" + EMPTY_ZONE_NAME + "\": \"" +
+                            string(TEST_OWN_DATA_BUILDDIR "/nosuchfile.zone") +
                             "\"}}]"), true);
         return (list);
     case SQLITE3:
@@ -834,39 +849,38 @@ createDataSrcClientList(DataSrcType type, DataSourceClient& client) {
 class MockClient : public DataSourceClient {
 public:
     virtual FindResult findZone(const isc::dns::Name& origin) const {
-        const Name r_origin(origin.reverse());
-        std::map<Name, ZoneFinderPtr>::const_iterator it =
-            zone_finders_.lower_bound(r_origin);
+        // Identify the next (strictly) larger name than the given 'origin' in
+        // the map.  Its predecessor (if any) is the longest matching name
+        // if it's either an exact match or a super domain; otherwise there's
+        // no match in the map.  See also datasrc/tests/mock_client.cc.
 
-        if (it != zone_finders_.end()) {
-            const NameComparisonResult result =
-                origin.compare((it->first).reverse());
-            if (result.getRelation() == NameComparisonResult::EQUAL) {
-                return (FindResult(result::SUCCESS, it->second));
-            } else if (result.getRelation() == NameComparisonResult::SUBDOMAIN) {
-                return (FindResult(result::PARTIALMATCH, it->second));
-            }
-        }
-
-        // If it is at the beginning of the map, then the name was not
-        // found (we have already handled the element the iterator
-        // points to).
-        if (it == zone_finders_.begin()) {
+        // Eliminate the case of empty map to simply the rest of the code
+        if (zone_finders_.empty()) {
             return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
         }
 
-        // Check if the previous element is a partial match.
-        --it;
-        const NameComparisonResult result =
-            origin.compare((it->first).reverse());
-        if (result.getRelation() == NameComparisonResult::SUBDOMAIN) {
-            return (FindResult(result::PARTIALMATCH, it->second));
+        std::map<Name, ZoneFinderPtr>::const_iterator it =
+            zone_finders_.upper_bound(origin);
+        if (it == zone_finders_.begin()) { // no predecessor
+            return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
         }
 
-        return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+        --it;                   // get the predecessor
+        const result::ResultFlags flags =
+            it->second ? result::FLAGS_DEFAULT : result::ZONE_EMPTY;
+        const NameComparisonResult compar(it->first.compare(origin));
+        switch (compar.getRelation()) {
+        case NameComparisonResult::EQUAL:
+            return (FindResult(result::SUCCESS, it->second, flags));
+        case NameComparisonResult::SUPERDOMAIN:
+            return (FindResult(result::PARTIALMATCH, it->second, flags));
+        default:
+            return (FindResult(result::NOTFOUND, ZoneFinderPtr()));
+        }
     }
 
-    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name&, bool, bool) const {
+    virtual ZoneUpdaterPtr getUpdater(const isc::dns::Name&, bool, bool) const
+    {
         isc_throw(isc::NotImplemented,
                   "Updater isn't supported in the MockClient");
     }
@@ -878,18 +892,21 @@ public:
     }
 
     result::Result addZone(ZoneFinderPtr finder) {
-        // Use the reverse of the name as the key, so we can quickly
-        // find partial matches in the map.
-        zone_finders_[finder->getOrigin().reverse()] = finder;
+        zone_finders_[finder->getOrigin()] = finder;
+        return (result::SUCCESS);
+    }
+
+    // "configure" a zone with no data.  This will cause the ZONE_EMPTY flag
+    // on in finZone().
+    result::Result addEmptyZone(const Name& zone_name) {
+        zone_finders_[zone_name] = ZoneFinderPtr();
         return (result::SUCCESS);
     }
 
 private:
     // Note that because we no longer have the old RBTree, and the new
     // in-memory DomainTree is not useful as it returns const nodes, we
-    // use a std::map instead. In this map, the key is a name stored in
-    // reverse order of labels to aid in finding partial matches
-    // quickly.
+    // use a std::map instead.
     std::map<Name, ZoneFinderPtr> zone_finders_;
 };
 
@@ -916,9 +933,10 @@ protected:
 
         response.setRcode(Rcode::NOERROR());
         response.setOpcode(Opcode::QUERY());
-        // create and add a matching zone.
+        // create and add a matching zone.  One is a "broken, empty" zone.
         mock_finder = new MockZoneFinder();
         mock_client.addZone(ZoneFinderPtr(mock_finder));
+        mock_client.addEmptyZone(Name(EMPTY_ZONE_NAME));
     }
 
     virtual void SetUp() {
@@ -947,6 +965,12 @@ protected:
     virtual ~QueryTest() {
         // Make sure we reset the hash creator to the default
         setNSEC3HashCreator(NULL);
+    }
+
+    bool isEmptyZoneSupported() const {
+        // Not all data sources support the concept of empty zones.
+        // Specifically for this test, SQLite3-based data source doesn't.
+        return (GetParam() != SQLITE3);
     }
 
     void enableNSEC3(const vector<string>& rrsets_to_add) {
@@ -1144,9 +1168,27 @@ TEST_P(QueryTest, noZone) {
     // REFUSED.
     MockClient empty_mock_client;
     SingletonList empty_list(empty_mock_client);
-    EXPECT_NO_THROW(query.process(empty_list, qname, qtype,
-                                  response));
+    EXPECT_NO_THROW(query.process(empty_list, qname, qtype, response));
     EXPECT_EQ(Rcode::REFUSED(), response.getRcode());
+}
+
+TEST_P(QueryTest, emptyZone) {
+    // Query for an "empty (broken)" zone.  If the concept is supported by
+    // the underlying data source, the result should be SERVFAIL; otherwise
+    // it would be handled as a nonexistent zone, resulting in REFUSED.
+    const Rcode expected_rcode =
+        isEmptyZoneSupported() ? Rcode::SERVFAIL() : Rcode::REFUSED();
+
+    query.process(*list_, Name(EMPTY_ZONE_NAME), qtype, response);
+    responseCheck(response, expected_rcode, 0, 0, 0, 0, NULL, NULL, NULL);
+
+    // Same for the partial match case
+    response.clear(isc::dns::Message::RENDER);
+    response.setRcode(Rcode::NOERROR());
+    response.setOpcode(Opcode::QUERY());
+    query.process(*list_, Name(string("www.") + EMPTY_ZONE_NAME), qtype,
+                  response);
+    responseCheck(response, expected_rcode, 0, 0, 0, 0, NULL, NULL, NULL);
 }
 
 TEST_P(QueryTest, exactMatch) {
@@ -1399,7 +1441,6 @@ TEST_F(QueryTestForMockOnly, badSecureDelegation) {
                                   Name("bad-delegation.example.com"),
                                   qtype, response));
 }
-
 
 TEST_P(QueryTest, nxdomain) {
     EXPECT_NO_THROW(query.process(*list_,

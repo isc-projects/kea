@@ -1,4 +1,4 @@
-# Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,16 @@
 % ZONEMGR_CCSESSION_ERROR command channel session error: %1
 An error was encountered on the command channel.  The message indicates
 the nature of the error.
+
+% ZONEMGR_DATASRC_CONFIG_ERROR failed to update data source configuration: %1
+Configuration for the global data sources is updated, but the update
+cannot be applied to zonemgr.  The zonemgr module will still keep running
+with the previous configuration, but the cause of the failure and
+other log messages must be carefully examined because if only zonemgr
+rejects the new configuration then the entire BIND 10 system will have
+inconsistent state among different modules.  If other modules accept
+the update but zonemgr produces this error, the zonemgr module should
+probably be restarted.
 
 % ZONEMGR_JITTER_TOO_BIG refresh_jitter is too big, setting to 0.5
 The value specified in the configuration for the refresh jitter is too large

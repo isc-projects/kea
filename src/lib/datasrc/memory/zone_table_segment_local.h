@@ -18,19 +18,22 @@
 #include <datasrc/memory/zone_table_segment.h>
 #include <util/memory_segment_local.h>
 
+#include <string>
+
 namespace isc {
 namespace datasrc {
 namespace memory {
 
-/// \brief Local implementation of ZoneTableSegment class
+/// \brief Local implementation of \c ZoneTableSegment class
 ///
 /// This class specifies a concrete implementation for a
-/// MemorySegmentLocal based ZoneTableSegment. Please see the
-/// ZoneTableSegment class documentation for usage.
+/// \c MemorySegmentLocal -based \c ZoneTableSegment. Please see the
+/// \c ZoneTableSegment class documentation for usage.
 class ZoneTableSegmentLocal : public ZoneTableSegment {
-    // This is so that ZoneTableSegmentLocal can be instantiated from
-    // ZoneTableSegment::create().
+    // This is so that \c ZoneTableSegmentLocal can be instantiated from
+    // \c ZoneTableSegment::create().
     friend class ZoneTableSegment;
+
 protected:
     /// \brief Protected constructor
     ///
@@ -38,26 +41,60 @@ protected:
     /// (\c ZoneTableSegment::create()), so this constructor is
     /// protected.
     ZoneTableSegmentLocal(const isc::dns::RRClass& rrclass);
+
 public:
     /// \brief Destructor
     virtual ~ZoneTableSegmentLocal();
 
-    /// \brief Return the ZoneTableHeader for the local zone table
-    /// segment implementation.
+    /// \brief Returns "local" as the implementation type.
+    virtual const std::string& getImplType() const;
+
+    /// \brief Return the \c ZoneTableHeader for this local zone table
+    /// segment.
     virtual ZoneTableHeader& getHeader();
 
-    /// \brief const version of \c getHeader().
+    /// \brief \c const version of \c getHeader().
     virtual const ZoneTableHeader& getHeader() const;
 
-    /// \brief Return the MemorySegment for the local zone table segment
-    /// implementation (a MemorySegmentLocal instance).
+    /// \brief Return the \c MemorySegment for the local zone table
+    /// segment implementation (a \c MemorySegmentLocal instance).
     virtual isc::util::MemorySegment& getMemorySegment();
 
-    /// \brief Concrete implementation of ZoneTableSegment::getZoneWriter
-    virtual ZoneWriter* getZoneWriter(const LoadAction& load_action,
-                                      const dns::Name& origin,
-                                      const dns::RRClass& rrclass);
+    /// \brief Return true if the segment is writable.
+    ///
+    /// Local segments are always writable. This implementation always
+    /// returns true.
+    virtual bool isWritable() const {
+        return (true);
+    }
+
+    /// \brief This method is not implemented.
+    ///
+    /// Resetting a local \c ZoneTableSegment is not supported at this
+    /// time.
+    ///
+    /// \throw isc::NotImplemented
+    virtual void reset(MemorySegmentOpenMode mode,
+                       isc::data::ConstElementPtr params);
+
+    /// \brief This method is not implemented.
+    ///
+    /// Clearing a local \c ZoneTableSegment is not supported at this
+    /// time.
+    ///
+    /// \throw isc::NotImplemented
+    virtual void clear();
+
+    /// \brief Return true if the segment is usable.
+    ///
+    /// Local segments are always usable. This implementation always
+    /// returns true.
+    virtual bool isUsable() const {
+        return (true);
+    }
+
 private:
+    std::string impl_type_;
     isc::util::MemorySegmentLocal mem_sgmt_;
     ZoneTableHeader header_;
 };

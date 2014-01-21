@@ -38,6 +38,9 @@ const int DBG_DHCP6_COMMAND = DBGLVL_COMMAND;
 // Trace basic operations within the code.
 const int DBG_DHCP6_BASIC = DBGLVL_TRACE_BASIC;
 
+// Trace hook related operations
+const int DBG_DHCP6_HOOKS = DBGLVL_TRACE_BASIC;
+
 // Trace detailed operations, including errors raised when processing invalid
 // packets.  (These are not logged at severities of WARN or higher for fear
 // that a set of deliberately invalid packets set to the server could overwhelm

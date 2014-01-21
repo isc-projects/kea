@@ -1,0 +1,207 @@
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+/**
+@page libdhcp_user_chk DHCP User Check Hooks Library
+
+@section libdhcp_user_chkIntro Libdhcp_user_chk: An Example Hooks Library
+## Introduction
+libdhcp_user_chk is an example hooks library which customizes the DHCP query
+processing provided by BIND X DHCP server modules (b10-dhcp4 and b10-dhcp6).
+Specifically it allows subnet selection and DHCP response option customization
+based upon a registry of DHCP clients.  Note that the words "client" and "user" are used interchangeably herein.  The intent of the custom behavior is three
+fold:
+
+1. To assign "new" or "unregistered" users to a restricted subnet, while "known"
+or "registered" users are assigned to unrestricted subnets.
+
+2. To allow DHCP response options or vendor option values to be customized
+based upon user identity.
+
+3. To provide a real time record of the user registration activity which can be sampled by an external consumer.
+
+## User Registry Classes
+At the heart of the library is a class hierarchy centered around the class,
+user_chk::UserRegistry.  This class represents a maintainable, searchable
+registry of "known" users and their attributes.  It provides services to load,
+clear, and refresh the registry as well as to add, find, and remove users.
+
+Each entry in the registry is an instance of the class, user_chk::User. Users
+are uniquely identified by their user_chk::UserId. UserIds are comprised of
+data taken from the DHCP request. IPv4 users have a type of "HW_ADDR" and
+their id is the hardware address from the request.  IPv6 users have a type of
+"DUID" and their id is the DUID from the request.
+
+The registry may be manually populated or loaded from a source of data which
+implements the UserDataSource interface. Currently, a single implementation has
+been implemented, user_chk::UserFile. UserFile supports reading the registry
+from a text file in which each line is a user entry in JSON format.  Each entry
+contains the id type and user id along with optional attributes.  Attributes are
+essentially name/value pairs whose significance is left up to the calling layer.
+UserFile does not enforce any specific content beyond id type and id.
+(See user_file.h for more details on file content).
+
+## Callout Processing
+The library implements callouts for packet receive, subnet select, and packet
+send for both IPv4 and IPv6.  Regardless of the protocol type, the process
+flow upon receipt of an inbound request is the same and is as follows:
+
+-# pkt_receive callout is invoked
+    -# Refresh the user registry
+    -# Extract user id from DHCP request and store it to context
+    -#  Look up user id in registry and store resultant user pointer to context
+
+    Note that each time a packet is received, the user registry is refreshed.
+    This ensures that the registry content always has the latest external
+    updates.  The primary goal at this stage is check the registry for the
+    user and push the result to the context making it available to subsequent
+    callouts.
+
+-# subnet_select callout is invoked
+    -# Retrieve the user pointer from context
+    -# If pointer is null (i.e. user is not registered), replace subnet
+    selection with restricted subnet
+
+    By convention, the last subnet in the collection of subnets available is
+    assumed to be the "restricted access" subnet. A more sophisticated mechanism    is likely to be needed.
+
+-# pkt_send callout is invoked:
+    -# Retrieve the user id and user pointer from context
+    -# If user is not null add the options based on user's attributes,
+    otherwise use default user's attributes
+    -# Generate user check outcome
+
+    This final step is what produces the real time record, referred to as the
+    "user check outcome" file.
+
+## Using the library
+Two steps are required in order to use the library:
+-# The user registry file must be created and deployed
+-# The BIND10 DHCP module(s) must be configured to load the library
+
+### Creating the Registry File
+Currently, the library uses a hard coded pathname for the user registry defined
+in load_unload.cc:
+
+    const char* registry_fname = "/tmp/user_chk_registry.txt";
+
+Each line in the file is a self-contained JSON snippet which must have the
+following two entries:
+
+    - "type" whose value is "HW_ADDR" for IPv4 users or "DUID" for IPv6 users
+    - "id" whose value is either the hardware address or the DUID from the
+    request formatted as a string of hex digits, with or without ":" delimiters.
+
+and may have the zero or more of the following entries:
+
+    - "bootfile" whose value is the pathname of the desired file
+    - "tftp_server" whose value is the hostname or IP address of the desired
+    server
+
+Sample user registry file is shown below:
+
+@code
+{ "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:04", "bootfile" : "/tmp/v4bootfile" }
+{ "type" : "HW_ADDR", "id" : "0c:0e:0a:01:ff:06", "tftp_server" : "tftp.v4.example.com" }
+{ "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04", "bootfile" : "/tmp/v6bootfile" }
+{ "type" : "DUID", "id" : "00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:06", "tftp_server" : "tftp.v6.example.com" }
+@endcode
+
+It is possible to specify additional attributes. They will be loaded and stored with the user's entry in the registry. This allows the library to be extended to perform additional actions based on these attributes.
+
+Upon start up the library will attempt to load this file.  If it does not exist
+the library will unload.
+
+### Configuring the DHCP Modules
+it must be configured as a hook library for the
+desired DHCP server modules.  Note that the user_chk library is installed alongside the BIND10 libraries in "<install-dir>/lib" where <install-dir> is determined by the --prefix option of the configure script.  It defaults to "/usr/local". Assuming the default value then, configuring b10-dhcp4 to load the user_chk
+library could be done with the following BIND10 configuration commands:
+
+@code
+config add Dhcp4/hook_libraries
+config set Dhcp4/hook_libraries[0] "/usr/local/lib/libdhcp_user_chk.so"
+config commit
+@endcode
+
+To configure it for b10-dhcp6, the commands are simply as shown below:
+
+@code
+config add Dhcp6/hook_libraries
+config set Dhcp6/hook_libraries[0] "/usr/local/lib/libdhcp_user_chk.so"
+config commit
+@endcode
+
+## User Check Outcome
+Once up and running, the library should begin adding entries to the outcome
+file.  Currently, the library uses a hard coded pathname for the user registry defined in load_unload.cc:
+
+    const char* user_chk_output_fname = "/tmp/user_chk_outcome.txt";
+
+If the file cannot be created (or opened), the library will unload.
+
+For each lease granted, the library will add the following information to the
+end of the file: the id type, the user id, the lease or prefix granted, and
+whether or not the user was found in the registry.  This information is written
+in the form of "name=value" with one value per line.  (See subnet_callout.cc for details.)
+
+A sample outcome file is shown below:
+
+@code
+id_type=HW_ADDR
+client=hwtype=1 0c:0e:0a:01:ff:04
+addr=175.16.1.100
+registered=yes
+
+id_type=HW_ADDR
+client=hwtype=1 0c:0e:0a:01:ff:05
+addr=152.0.2.10
+registered=no
+
+id_type=HW_ADDR
+client=hwtype=1 0c:0e:0a:01:ff:06
+addr=175.16.1.101
+registered=yes
+
+id_type=HW_ADDR
+client=hwtype=1 0c:0e:0a:01:ff:04
+addr=175.16.1.102
+registered=yes
+
+id_type=DUID
+client=00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04
+addr=2001:db8:2::1:0:0/96
+registered=yes
+
+id_type=DUID
+client=00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:04
+addr=2001:db8:2::
+registered=yes
+
+id_type=DUID
+client=00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:05
+addr=5005:778:2::
+registered=no
+
+id_type=DUID
+client=00:01:00:01:19:ef:e6:3b:00:0c:01:02:03:06
+addr=2001:db8:2::1
+registered=yes
+
+@endcode
+
+Note the library always opens this file in append mode and does not limit its size.
+
+
+
+*/

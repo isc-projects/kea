@@ -187,7 +187,7 @@ MockDataSourceClient::getIterator(const Name& name, bool) const {
         if (result.code == isc::datasrc::result::SUCCESS) {
             return (ZoneIteratorPtr(new Iterator(name, have_a_)));
         } else {
-            isc_throw(DataSourceError, "No such zone");
+            isc_throw(NoSuchZone, "No such zone");
         }
     }
 }

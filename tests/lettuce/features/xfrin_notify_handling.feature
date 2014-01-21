@@ -28,8 +28,8 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_max | item_min |
-      | socket.unixdomain.open   |        1 |        0 |
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
     # Note: .Xfrout.socket.unixdomain.open can be either expected to
     # be 0 or 1 here.  The reason is: if b10-xfrout has started up and is
     # ready for a request from b10-stats, then b10-stats does request
@@ -41,7 +41,13 @@ Feature: Xfrin incoming notify handling
     #
     # Test2 for Xfrin statistics
     #
-    check initial statistics not containing example.org for Xfrin
+    check initial statistics not containing example.org for Xfrin except for the following items
+      | item_name       | min_value | max_value |
+      | soa_in_progress |         0 |         1 |
+      | axfr_running    |         0 |         1 |
+    # Note: soa_in_progress and axfr_running cannot be always a fixed value. The
+    # reason is same as the case of .Xfrout.socket.unixdomain.open. as described
+    # above.
 
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
@@ -75,7 +81,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.zones except for the following items
+    The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value |
       | _SERVER_.notifyoutv6     |          1 |
       | _SERVER_.xfrreqdone      |          1 |
@@ -99,17 +105,23 @@ Feature: Xfrin incoming notify handling
     wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
-    When I query statistics zones of bind10 module Xfrin with cmdctl
-    The statistics counters are 0 in category .Xfrin.zones except for the following items
-      | item_name                       | item_value | min_value |
-      | _SERVER_.soaoutv6               |          1 |           |
-      | _SERVER_.axfrreqv6              |          1 |           |
-      | _SERVER_.xfrsuccess             |          1 |           |
-      | _SERVER_.last_axfr_duration     |            |       0.0 |
-      | example.org..soaoutv6           |          1 |           |
-      | example.org..axfrreqv6          |          1 |           |
-      | example.org..xfrsuccess         |          1 |           |
-      | example.org..last_axfr_duration |            |       0.0 |
+    When I query statistics of bind10 module Xfrin with cmdctl
+    The statistics counters are 0 in category .Xfrin except for the following items
+      | item_name                                | item_value | min_value |
+      | zones.IN._SERVER_.soaoutv6               |          1 |           |
+      | zones.IN._SERVER_.axfrreqv6              |          1 |           |
+      | zones.IN._SERVER_.xfrsuccess             |          1 |           |
+      | zones.IN._SERVER_.last_axfr_duration     |            |       0.0 |
+      | zones.IN.example.org..soaoutv6           |          1 |           |
+      | zones.IN.example.org..axfrreqv6          |          1 |           |
+      | zones.IN.example.org..xfrsuccess         |          1 |           |
+      | zones.IN.example.org..last_axfr_duration |            |       0.0 |
+      | soa_in_progress                          |          0 |           |
+      | axfr_running                             |          0 |           |
+      | socket.ipv6.tcp.open                     |            |         1 |
+      | socket.ipv6.tcp.close                    |            |         1 |
+      | socket.ipv6.tcp.conn                     |            |         1 |
+      | socket.ipv6.tcp.connfail                 |          0 |           |
 
     #
     # Test for handling incoming notify only in IPv4
@@ -136,14 +148,18 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_max | item_min |
-      | socket.unixdomain.open   |        1 |        0 |
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
     # Note: See above about .Xfrout.socket.unixdomain.open.
 
     #
     # Test2 for Xfrin statistics
     #
-    check initial statistics not containing example.org for Xfrin
+    check initial statistics not containing example.org for Xfrin except for the following items
+      | item_name       | min_value | max_value |
+      | soa_in_progress |         0 |         1 |
+      | axfr_running    |         0 |         1 |
+    # Note: See above about soa_in_progress and axfr_running of Xfrin
 
     When I send bind10 with cmdctl port 47804 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
@@ -177,7 +193,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.zones except for the following items
+    The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value |
       | _SERVER_.notifyoutv4     |          1 |
       | _SERVER_.xfrreqdone      |          1 |
@@ -201,17 +217,23 @@ Feature: Xfrin incoming notify handling
     wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
-    When I query statistics zones of bind10 module Xfrin with cmdctl
-    The statistics counters are 0 in category .Xfrin.zones except for the following items
-      | item_name                       | item_value | min_value |
-      | _SERVER_.soaoutv4               |          1 |           |
-      | _SERVER_.axfrreqv4              |          1 |           |
-      | _SERVER_.xfrsuccess             |          1 |           |
-      | _SERVER_.last_axfr_duration     |            |       0.0 |
-      | example.org..soaoutv4           |          1 |           |
-      | example.org..axfrreqv4          |          1 |           |
-      | example.org..xfrsuccess         |          1 |           |
-      | example.org..last_axfr_duration |            |       0.0 |
+    When I query statistics of bind10 module Xfrin with cmdctl
+    The statistics counters are 0 in category .Xfrin except for the following items
+      | item_name                                | item_value | min_value |
+      | zones.IN._SERVER_.soaoutv4               |          1 |           |
+      | zones.IN._SERVER_.axfrreqv4              |          1 |           |
+      | zones.IN._SERVER_.xfrsuccess             |          1 |           |
+      | zones.IN._SERVER_.last_axfr_duration     |            |       0.0 |
+      | zones.IN.example.org..soaoutv4           |          1 |           |
+      | zones.IN.example.org..axfrreqv4          |          1 |           |
+      | zones.IN.example.org..xfrsuccess         |          1 |           |
+      | zones.IN.example.org..last_axfr_duration |            |       0.0 |
+      | soa_in_progress                          |          0 |           |
+      | axfr_running                             |          0 |           |
+      | socket.ipv4.tcp.open                     |            |         1 |
+      | socket.ipv4.tcp.close                    |            |         1 |
+      | socket.ipv4.tcp.conn                     |            |         1 |
+      | socket.ipv4.tcp.connfail                 |          0 |           |
 
     #
     # Test for Xfr request rejected
@@ -238,14 +260,18 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_max | item_min |
-      | socket.unixdomain.open   |        1 |        0 |
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
     # Note: See above about .Xfrout.socket.unixdomain.open.
 
     #
     # Test2 for Xfrin statistics
     #
-    check initial statistics not containing example.org for Xfrin
+    check initial statistics not containing example.org for Xfrin except for the following items
+      | item_name       | min_value | max_value |
+      | soa_in_progress |         0 |         1 |
+      | axfr_running    |         0 |         1 |
+    # Note: See above about soa_in_progress and axfr_running of Xfrin
 
     #
     # set transfer_acl rejection
@@ -282,7 +308,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.zones except for the following items
+    The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value | min_value | max_value |
       | _SERVER_.notifyoutv6     |          1 |           |           |
       | _SERVER_.xfrrej          |            |         1 |         3 |
@@ -309,15 +335,21 @@ Feature: Xfrin incoming notify handling
     wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
-    When I query statistics zones of bind10 module Xfrin with cmdctl
-    The statistics counters are 0 in category .Xfrin.zones except for the following items
-      | item_name              | item_value |
-      | _SERVER_.soaoutv6      |          1 |
-      | _SERVER_.axfrreqv6     |          1 |
-      | _SERVER_.xfrfail       |          1 |
-      | example.org..soaoutv6  |          1 |
-      | example.org..axfrreqv6 |          1 |
-      | example.org..xfrfail   |          1 |
+    When I query statistics of bind10 module Xfrin with cmdctl
+    The statistics counters are 0 in category .Xfrin except for the following items
+      | item_name                       | item_value | min_value |
+      | zones.IN._SERVER_.soaoutv6      |            |         1 |
+      | zones.IN._SERVER_.axfrreqv6     |            |         1 |
+      | zones.IN._SERVER_.xfrfail       |            |         1 |
+      | zones.IN.example.org..soaoutv6  |            |         1 |
+      | zones.IN.example.org..axfrreqv6 |            |         1 |
+      | zones.IN.example.org..xfrfail   |            |         1 |
+      | soa_in_progress                 |            |         0 |
+      | axfr_running                    |            |         0 |
+      | socket.ipv6.tcp.open            |            |         1 |
+      | socket.ipv6.tcp.close           |            |         1 |
+      | socket.ipv6.tcp.conn            |            |         1 |
+      | socket.ipv6.tcp.connfail        |          0 |           |
 
     #
     # Test for Xfr request rejected in IPv4
@@ -344,14 +376,18 @@ Feature: Xfrin incoming notify handling
     # Test1 for Xfrout statistics
     #
     check initial statistics not containing example.org for Xfrout with cmdctl port 47804 except for the following items
-      | item_name                | item_max | item_min |
-      | socket.unixdomain.open   |        1 |        0 |
+      | item_name                | min_value | max_value |
+      | socket.unixdomain.open   |         0 |         1 |
     # Note: See above about .Xfrout.socket.unixdomain.open.
 
     #
     # Test2 for Xfrin statistics
     #
-    check initial statistics not containing example.org for Xfrin
+    check initial statistics not containing example.org for Xfrin except for the following items
+      | item_name       | min_value | max_value |
+      | soa_in_progress |         0 |         1 |
+      | axfr_running    |         0 |         1 |
+    # Note: See above about soa_in_progress and axfr_running of Xfrin
 
     #
     # set transfer_acl rejection
@@ -388,7 +424,7 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.zones except for the following items
+    The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | item_value | min_value | max_value |
       | _SERVER_.notifyoutv4     |          1 |           |           |
       | _SERVER_.xfrrej          |            |         1 |         3 |
@@ -415,15 +451,21 @@ Feature: Xfrin incoming notify handling
     wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
     last bindctl output should not contain "error"
 
-    When I query statistics zones of bind10 module Xfrin with cmdctl
-    The statistics counters are 0 in category .Xfrin.zones except for the following items
-      | item_name              | item_value |
-      | _SERVER_.soaoutv4      |          1 |
-      | _SERVER_.axfrreqv4     |          1 |
-      | _SERVER_.xfrfail       |          1 |
-      | example.org..soaoutv4  |          1 |
-      | example.org..axfrreqv4 |          1 |
-      | example.org..xfrfail   |          1 |
+    When I query statistics of bind10 module Xfrin with cmdctl
+    The statistics counters are 0 in category .Xfrin except for the following items
+      | item_name                       | item_value | min_value |
+      | zones.IN._SERVER_.soaoutv4      |            |         1 |
+      | zones.IN._SERVER_.axfrreqv4     |            |         1 |
+      | zones.IN._SERVER_.xfrfail       |            |         1 |
+      | zones.IN.example.org..soaoutv4  |            |         1 |
+      | zones.IN.example.org..axfrreqv4 |            |         1 |
+      | zones.IN.example.org..xfrfail   |            |         1 |
+      | soa_in_progress                 |            |         0 |
+      | axfr_running                    |            |         0 |
+      | socket.ipv4.tcp.open            |            |         1 |
+      | socket.ipv4.tcp.close           |            |         1 |
+      | socket.ipv4.tcp.conn            |            |         1 |
+      | socket.ipv4.tcp.connfail        |          0 |           |
 
     #
     # Test for unreachable slave
@@ -454,10 +496,10 @@ Feature: Xfrin incoming notify handling
     last bindctl output should not contain "error"
 
     When I query statistics zones of bind10 module Xfrout with cmdctl port 47804
-    The statistics counters are 0 in category .Xfrout.zones except for the following items
+    The statistics counters are 0 in category .Xfrout.zones.IN except for the following items
       | item_name                | min_value | max_value |
-      | _SERVER_.notifyoutv6     |         1 |	       5 |
-      | example.org..notifyoutv6 |         1 |	       5 |
+      | _SERVER_.notifyoutv6     |         1 |         5 |
+      | example.org..notifyoutv6 |         1 |         5 |
 
     When I query statistics socket of bind10 module Xfrout with cmdctl port 47804
     The statistics counters are 0 in category .Xfrout.socket.unixdomain except for the following items
@@ -587,3 +629,46 @@ Feature: Xfrin incoming notify handling
     Then wait for master stderr message NOTIFY_OUT_TIMEOUT not NOTIFY_OUT_REPLY_RECEIVED
 
     A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+
+    #
+    # Test for unreachable master
+    #
+    Scenario: Handle incoming notify (unreachable master)
+
+    And I have bind10 running with configuration xfrin/retransfer_slave_notify.conf
+    And wait for bind10 stderr message BIND10_STARTED_CC
+    And wait for bind10 stderr message CMDCTL_STARTED
+    And wait for bind10 stderr message AUTH_SERVER_STARTED
+    And wait for bind10 stderr message XFRIN_STARTED
+    And wait for bind10 stderr message ZONEMGR_STARTED
+
+    A query for www.example.org to [::1]:47806 should have rcode NXDOMAIN
+
+    #
+    # Test1 for Xfrin statistics
+    #
+    check initial statistics not containing example.org for Xfrin
+
+    #
+    # execute reftransfer for Xfrin
+    #
+    When I send bind10 the command Xfrin retransfer example.org IN
+    Then wait for new bind10 stderr message XFRIN_CONNECT_MASTER
+    Then wait for new bind10 stderr message ZONEMGR_RECEIVE_XFRIN_FAILED
+
+    #
+    # Test2 for Xfrin statistics
+    #
+    # check initial statistics
+    #
+
+    # wait until the last stats requesting is finished
+    wait for new bind10 stderr message STATS_SEND_STATISTICS_REQUEST
+    wait for new bind10 stderr message XFRIN_RECEIVED_COMMAND
+
+    When I query statistics socket of bind10 module Xfrin with cmdctl
+    The statistics counters are 0 in category .Xfrin.socket.ipv6.tcp except for the following items
+      | item_name | min_value |
+      | open      |         1 |
+      | close     |         1 |
+      | connfail  |         1 |

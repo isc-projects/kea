@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -47,11 +47,13 @@ public:
     ///
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
+    /// @todo Extend constructor to set encapsulated option space name.
     OptionInt(Option::Universe u, uint16_t type, T value)
         : Option(u, type), value_(value) {
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
+        setEncapsulatedSpace(u == Option::V4 ? "dhcp4" : "dhcp6");
     }
 
     /// @brief Constructor.
@@ -68,12 +70,14 @@ public:
     /// @throw isc::OutOfRange if provided buffer is shorter than data size.
     /// @throw isc::dhcp::InvalidDataType if data field type provided
     /// as template parameter is not a supported integer type.
+    /// @todo Extend constructor to set encapsulated option space name.
     OptionInt(Option::Universe u, uint16_t type, OptionBufferConstIter begin,
                OptionBufferConstIter end)
         : Option(u, type) {
         if (!OptionDataTypeTraits<T>::integer_type) {
             isc_throw(dhcp::InvalidDataType, "non-integer type");
         }
+        setEncapsulatedSpace(u == Option::V4 ? "dhcp4" : "dhcp6");
         unpack(begin, end);
     }
 
@@ -175,7 +179,7 @@ public:
         // The data length is equal to size of T.
         length += sizeof(T);;
         // length of all suboptions
-        for (Option::OptionCollection::iterator it = options_.begin();
+        for (OptionCollection::iterator it = options_.begin();
              it != options_.end();
              ++it) {
             length += (*it).second->len();

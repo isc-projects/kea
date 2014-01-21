@@ -1,0 +1,177 @@
+# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+#
+# Permission to use, copy, modify, and/or distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+# REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+# AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+# LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+# OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+# PERFORMANCE OF THIS SOFTWARE.
+
+$NAMESPACE isc::hooks
+
+% HOOKS_ALL_CALLOUTS_DEREGISTERED hook library at index %1 removed all callouts on hook %2
+A debug message issued when all callouts on the specified hook registered
+by the library with the given index were removed.  This is similar to
+the HOOKS_CALLOUTS_REMOVED message (and the two are likely to be seen
+together), but is issued at a lower-level in the hook framework.
+
+% HOOKS_CALLOUTS_REMOVED callouts removed from hook %1 for library %2
+This is a debug message issued during library unloading.  It notes that
+one of more callouts registered by that library have been removed from
+the specified hook.  This is similar to the HOOKS_DEREGISTER_ALL_CALLOUTS
+message (and the two are likely to be seen together), but is issued at a
+higher-level in the hook framework.
+
+% HOOKS_CALLOUT_CALLED hooks library with index %1 has called a callout on hook %2 that has address %3
+Only output at a high debugging level, this message indicates that
+a callout on the named hook registered by the library with the given
+index (in the list of loaded libraries) has been called and returned a
+success state.  The address of the callout is given in the message
+
+% HOOKS_CALLOUT_DEREGISTERED hook library at index %1 deregistered a callout on hook %2
+A debug message issued when all instances of a particular callouts on
+the hook identified in the message that were registered by the library
+with the given index have been removed.
+
+% HOOKS_CALLOUT_ERROR error returned by callout on hook %1 registered by library with index %2 (callout address %3)
+If a callout returns an error status when called, this error message
+is issued.  It identifies the hook to which the callout is attached, the
+index of the library (in the list of loaded libraries) that registered
+it and the address of the callout.  The error is otherwise ignored.
+
+% HOOKS_CALLOUT_EXCEPTION exception thrown by callout on hook %1 registered by library with index %2 (callout address %3): %4
+If a callout throws an exception when called, this error message is
+issued.  It identifies the hook to which the callout is attached, the
+index of the library (in the list of loaded libraries) that registered
+it and the address of the callout.  The error is otherwise ignored.
+
+% HOOKS_CALLOUT_REGISTRATION hooks library with index %1 registering callout for hook '%2'
+This is a debug message, output when a library (whose index in the list
+of libraries (being) loaded is given) registers a callout.
+
+% HOOKS_CLOSE_ERROR failed to close hook library %1: %2
+BIND 10 has failed to close the named hook library for the stated reason.
+Although this is an error, this should not affect the running system
+other than as a loss of resources.  If this error persists, you should
+restart BIND 10.
+
+% HOOKS_HOOK_LIST_RESET the list of hooks has been reset
+This is a message indicating that the list of hooks has been reset.
+While this is usual when running the BIND 10 test suite, it should not be
+seen when running BIND 10 in a producion environment.  If this appears,
+please report a bug through the usual channels.
+
+% HOOKS_INCORRECT_VERSION hook library %1 is at version %2, require version %3
+BIND 10 has detected that the named hook library has been built against
+a version of BIND 10 that is incompatible with the version of BIND 10
+running on your system.  It has not loaded the library.
+
+This is most likely due to the installation of a new version of BIND 10
+without rebuilding the hook library.  A rebuild and re-install of the
+library should fix the problem in most cases.
+
+% HOOKS_LIBRARY_LOADED hooks library %1 successfully loaded
+This information message is issued when a user-supplied hooks library
+has been successfully loaded.
+
+% HOOKS_LIBRARY_LOADING loading hooks library %1
+This is a debug message output just before the specified library is loaded.
+If the action is successfully, it will be followed by the
+HOOKS_LIBRARY_LOADED informational message.
+
+% HOOKS_LIBRARY_UNLOADED hooks library %1 successfully unloaded
+This information message is issued when a user-supplied hooks library
+has been successfully unloaded.
+
+% HOOKS_LIBRARY_UNLOADING unloading library %1
+This is a debug message called when the specified library is
+being unloaded.  If all is successful, it will be followed by the
+HOOKS_LIBRARY_UNLOADED informational message.
+
+% HOOKS_LIBRARY_VERSION hooks library %1 reports its version as %2
+A debug  message issued when the version check on the hooks library
+has succeeded.
+
+% HOOKS_LOAD_ERROR 'load' function in hook library %1 returned error %2
+A "load" function was found in the library named in the message and
+was called.  The function returned a non-zero status (also given in
+the message) which was interpreted as an error.  The library has been
+unloaded and no callouts from it will be installed.
+
+% HOOKS_LOAD_EXCEPTION 'load' function in hook library %1 threw an exception
+A "load" function was found in the library named in the message and
+was called.  The function threw an exception (an error indication)
+during execution, which is an error condition.  The library has been
+unloaded and no callouts from it will be installed.
+
+% HOOKS_LOAD_FRAMEWORK_EXCEPTION 'load' function in hook library %1 threw an exception: reason %2
+A "load" function was found in the library named in the message and
+was called.  Either the hooks framework or the function threw an
+exception (an error indication) during execution, which is an error
+condition; the cause of the exception is recorded in the message.
+The library has been unloaded and no callouts from it will be
+installed.
+
+% HOOKS_LOAD_SUCCESS 'load' function in hook library %1 returned success
+This is a debug message issued when the "load" function has been found
+in a hook library and has been successfully called.
+
+% HOOKS_NO_LOAD no 'load' function found in hook library %1
+This is a debug message saying that the specified library was loaded
+but no function called "load" was found in it.  Providing the library
+contained some "standard" functions (i.e. functions with the names of
+the hooks for the given server), this is not an issue.
+
+% HOOKS_NO_UNLOAD no 'unload' function found in hook library %1
+This is a debug message issued when the library is being unloaded.
+It merely states that the library did not contain an "unload" function.
+
+% HOOKS_NO_VERSION no 'version' function found in hook library %1
+The shared library named in the message was found and successfully loaded,
+but BIND 10 did not find a function named "version" in it.  This function
+is required and should return the version of BIND 10 against which the
+library was built.  The value is used to check that the library was built
+against a compatible version of BIND 10.  The library has not been loaded.
+
+% HOOKS_OPEN_ERROR failed to open hook library %1: %2
+BIND 10 failed to open the specified hook library for the stated
+reason. The library has not been loaded.  BIND 10 will continue to
+function, but without the services offered by the library.
+
+% HOOKS_STD_CALLOUT_REGISTERED hooks library %1 registered standard callout for hook %2 at address %3
+This is a debug message, output when the library loading function has
+located a standard callout (a callout with the same name as a hook point)
+and registered it.  The address of the callout is indicated.
+
+% HOOKS_UNLOAD_ERROR 'unload' function in hook library %1 returned error %2
+During the unloading of a library, an "unload" function was found.
+It was called, but returned an error (non-zero) status, resulting in
+the issuing of this message.  The unload process continued after this
+message and the library has been unloaded.
+
+% HOOKS_UNLOAD_EXCEPTION 'unload' function in hook library %1 threw an exception
+During the unloading of a library, an "unload" function was found.  It was
+called, but in the process generated an exception (an error indication).
+The unload process continued after this message and the library has
+been unloaded.
+
+% HOOKS_UNLOAD_FRAMEWORK_EXCEPTION 'unload' function in hook library %1 threw an exception, reason %2
+During the unloading of a library, an "unload" function was found.
+It was called, but in the process either it or the hooks framework
+generated an exception (an error indication); the cause of the error
+is recorded in the message.  The unload process continued after
+this message and the library has been unloaded.
+
+% HOOKS_UNLOAD_SUCCESS 'unload' function in hook library %1 returned success
+This is a debug message issued when an "unload" function has been found
+in a hook library during the unload process, called, and returned success.
+
+% HOOKS_VERSION_EXCEPTION 'version' function in hook library %1 threw an exception
+This error message is issued if the version() function in the specified
+hooks library was called and generated an exception.  The library is
+considered unusable and will not be loaded.

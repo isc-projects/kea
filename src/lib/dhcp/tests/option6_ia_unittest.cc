@@ -18,6 +18,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option6_ia.h>
 #include <dhcp/option6_iaaddr.h>
+#include <dhcp/option6_iaprefix.h>
 #include <util/buffer.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -43,71 +44,96 @@ public:
             buf_[i] = 255 - i;
         }
     }
+
+    /// @brief performs basic checks on IA option
+    ///
+    /// Check that an option can be built based on incoming buffer and that
+    /// the option contains expected values.
+    /// @param type specifies option type (IA_NA or IA_PD)
+    void checkIA(uint16_t type) {
+        buf_[0] = 0xa1; // iaid
+        buf_[1] = 0xa2;
+        buf_[2] = 0xa3;
+        buf_[3] = 0xa4;
+
+        buf_[4] = 0x81; // T1
+        buf_[5] = 0x02;
+        buf_[6] = 0x03;
+        buf_[7] = 0x04;
+
+        buf_[8] = 0x84; // T2
+        buf_[9] = 0x03;
+        buf_[10] = 0x02;
+        buf_[11] = 0x01;
+
+        // Create an option
+        // unpack() is called from constructor
+        scoped_ptr<Option6IA> opt;
+        ASSERT_NO_THROW(opt.reset(new Option6IA(type, buf_.begin(),
+                                                buf_.begin() + 12)));
+
+        EXPECT_EQ(Option::V6, opt->getUniverse());
+        EXPECT_EQ(type, opt->getType());
+        EXPECT_EQ(0xa1a2a3a4, opt->getIAID());
+        EXPECT_EQ(0x81020304, opt->getT1());
+        EXPECT_EQ(0x84030201, opt->getT2());
+
+        // Pack this option again in the same buffer, but in
+        // different place
+
+        // Test for pack()
+        ASSERT_NO_THROW(opt->pack(outBuf_));
+
+        // 12 bytes header + 4 bytes content
+        EXPECT_EQ(12, opt->len() - opt->getHeaderLen());
+        EXPECT_EQ(type, opt->getType());
+
+        EXPECT_EQ(16, outBuf_.getLength()); // lenght(IA_NA) = 16
+
+        // Check if pack worked properly:
+        InputBuffer out(outBuf_.getData(), outBuf_.getLength());
+
+        // - if option type is correct
+        EXPECT_EQ(type, out.readUint16());
+
+        // - if option length is correct
+        EXPECT_EQ(12, out.readUint16());
+
+        // - if iaid is correct
+        EXPECT_EQ(0xa1a2a3a4, out.readUint32() );
+
+        // - if T1 is correct
+        EXPECT_EQ(0x81020304, out.readUint32() );
+
+        // - if T1 is correct
+        EXPECT_EQ(0x84030201, out.readUint32() );
+
+        EXPECT_NO_THROW(opt.reset());
+    }
+
     OptionBuffer buf_;
     OutputBuffer outBuf_;
 };
 
 TEST_F(Option6IATest, basic) {
-    buf_[0] = 0xa1; // iaid
-    buf_[1] = 0xa2;
-    buf_[2] = 0xa3;
-    buf_[3] = 0xa4;
-
-    buf_[4] = 0x81; // T1
-    buf_[5] = 0x02;
-    buf_[6] = 0x03;
-    buf_[7] = 0x04;
-
-    buf_[8] = 0x84; // T2
-    buf_[9] = 0x03;
-    buf_[10] = 0x02;
-    buf_[11] = 0x01;
-
-    // Create an option
-    // unpack() is called from constructor
-    scoped_ptr<Option6IA> opt(new Option6IA(D6O_IA_NA,
-                                            buf_.begin(),
-                                            buf_.begin() + 12));
-
-    EXPECT_EQ(Option::V6, opt->getUniverse());
-    EXPECT_EQ(D6O_IA_NA, opt->getType());
-    EXPECT_EQ(0xa1a2a3a4, opt->getIAID());
-    EXPECT_EQ(0x81020304, opt->getT1());
-    EXPECT_EQ(0x84030201, opt->getT2());
-
-    // Pack this option again in the same buffer, but in
-    // different place
-
-    // Test for pack()
-    opt->pack(outBuf_);
-
-    // 12 bytes header + 4 bytes content
-    EXPECT_EQ(12, opt->len() - opt->getHeaderLen());
-    EXPECT_EQ(D6O_IA_NA, opt->getType());
-
-    EXPECT_EQ(16, outBuf_.getLength()); // lenght(IA_NA) = 16
-
-    // Check if pack worked properly:
-    InputBuffer out(outBuf_.getData(), outBuf_.getLength());
-
-    // - if option type is correct
-    EXPECT_EQ(D6O_IA_NA, out.readUint16());
-
-    // - if option length is correct
-    EXPECT_EQ(12, out.readUint16());
-
-    // - if iaid is correct
-    EXPECT_EQ(0xa1a2a3a4, out.readUint32() );
-
-   // - if T1 is correct
-    EXPECT_EQ(0x81020304, out.readUint32() );
-
-    // - if T1 is correct
-    EXPECT_EQ(0x84030201, out.readUint32() );
-
-    EXPECT_NO_THROW(opt.reset());
+    checkIA(D6O_IA_NA);
 }
 
+TEST_F(Option6IATest, pdBasic) {
+    checkIA(D6O_IA_PD);
+}
+
+// Check that this class cannot be used for IA_TA (IA_TA has no T1, T2 fields
+// and people tend to think that if it's good for IA_NA and IA_PD, it can
+// be used for IA_TA as well and that is not true)
+TEST_F(Option6IATest, taForbidden) {
+    EXPECT_THROW(Option6IA(D6O_IA_TA, buf_.begin(), buf_.begin() + 50),
+                 BadValue);
+
+    EXPECT_THROW(Option6IA(D6O_IA_TA, 123), BadValue);
+}
+
+// Check that getters/setters are working as expected.
 TEST_F(Option6IATest, simple) {
     scoped_ptr<Option6IA> ia(new Option6IA(D6O_IA_NA, 1234));
 
@@ -131,12 +157,8 @@ TEST_F(Option6IATest, simple) {
     EXPECT_NO_THROW(ia.reset());
 }
 
-
-// test if option can build suboptions
-TEST_F(Option6IATest, suboptions_pack) {
-    buf_[0] = 0xff;
-    buf_[1] = 0xfe;
-    buf_[2] = 0xfc;
+// test if the option can build suboptions
+TEST_F(Option6IATest, suboptionsPack) {
 
     scoped_ptr<Option6IA> ia(new Option6IA(D6O_IA_NA, 0x13579ace));
     ia->setT1(0x2345);
@@ -154,6 +176,7 @@ TEST_F(Option6IATest, suboptions_pack) {
     ASSERT_EQ(4, sub1->len());
     ASSERT_EQ(48, ia->len());
 
+    // This contains expected on-wire format
     uint8_t expected[] = {
         D6O_IA_NA/256, D6O_IA_NA%256, // type
         0, 44, // length
@@ -175,18 +198,69 @@ TEST_F(Option6IATest, suboptions_pack) {
     };
 
     ia->pack(outBuf_);
-    ASSERT_EQ(48, outBuf_.getLength());
 
+    ASSERT_EQ(48, outBuf_.getLength());
     EXPECT_EQ(0, memcmp(outBuf_.getData(), expected, 48));
+    EXPECT_NO_THROW(ia.reset());
+}
+
+// test if IA_PD option can build IAPREFIX suboptions
+TEST_F(Option6IATest, pdSuboptionsPack) {
+
+    // Let's build IA_PD
+    scoped_ptr<Option6IA> ia;
+    ASSERT_NO_THROW(ia.reset(new Option6IA(D6O_IA_PD, 0x13579ace)));
+    ia->setT1(0x2345);
+    ia->setT2(0x3456);
+
+    // Put some dummy option in it
+    OptionPtr sub1(new Option(Option::V6, 0xcafe));
+
+    // Put a valid IAPREFIX option in it
+    boost::shared_ptr<Option6IAPrefix> addr1(
+        new Option6IAPrefix(D6O_IAPREFIX, IOAddress("2001:db8:1234:5678::abcd"),
+                            91, 0x5000, 0x7000));
+
+    ia->addOption(sub1);
+    ia->addOption(addr1);
+
+    ASSERT_EQ(29, addr1->len());
+    ASSERT_EQ(4, sub1->len());
+    ASSERT_EQ(49, ia->len());
+
+    uint8_t expected[] = {
+        D6O_IA_PD/256, D6O_IA_PD%256, // type
+        0, 45, // length
+        0x13, 0x57, 0x9a, 0xce, // iaid
+        0, 0, 0x23, 0x45,  // T1
+        0, 0, 0x34, 0x56,  // T2
+
+        // iaprefix suboption
+        D6O_IAPREFIX/256, D6O_IAPREFIX%256, // type
+        0, 25, // len
+        0, 0, 0x50, 0, // preferred-lifetime
+        0, 0, 0x70, 0, // valid-lifetime
+        91, // prefix length
+        0x20, 0x01, 0xd, 0xb8, 0x12,0x34, 0x56, 0x78,
+        0, 0, 0, 0, 0, 0, 0xab, 0xcd, // IP address
+
+        // suboption
+        0xca, 0xfe, // type
+        0, 0 // len
+    };
+
+    ia->pack(outBuf_);
+    ASSERT_EQ(49, outBuf_.getLength());
+
+    EXPECT_EQ(0, memcmp(outBuf_.getData(), expected, 49));
 
     EXPECT_NO_THROW(ia.reset());
 }
 
-
 // test if option can parse suboptions
 TEST_F(Option6IATest, suboptions_unpack) {
     // sizeof (expected) = 48 bytes
-    uint8_t expected[] = {
+    const uint8_t expected[] = {
         D6O_IA_NA / 256, D6O_IA_NA % 256, // type
         0, 28, // length
         0x13, 0x57, 0x9a, 0xce, // iaid

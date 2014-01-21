@@ -1,4 +1,4 @@
-# Copyright (C) 2010, 2011, 2012  Internet Systems Consortium.
+# Copyright (C) 2010-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,7 @@ import sys
 import stats
 import isc.log
 from test_utils import MyStats
+from isc.config.ccsession import create_answer
 
 class TestUtilties(unittest.TestCase):
     items = [
@@ -132,6 +133,8 @@ class TestUtilties(unittest.TestCase):
         self.assertEqual(stats._accum("a", None), "a")
         self.assertEqual(stats._accum(1, 2), 3)
         self.assertEqual(stats._accum(0.5, 0.3), 0.8)
+        self.assertEqual(stats._accum(1, 0.3), 1.3)
+        self.assertEqual(stats._accum(0.5, 2), 2.5)
         self.assertEqual(stats._accum('aa','bb'), 'bb')
         self.assertEqual(stats._accum('1970-01-01T09:00:00Z','2012-08-09T09:33:31Z'),
                          '2012-08-09T09:33:31Z')
@@ -296,6 +299,43 @@ class TestStats(unittest.TestCase):
         return isc.config.ccsession.parse_answer(
             stats.command_handler(command_name, params))
 
+    def test_check_command(self):
+        """Test _check_command sets proper timeout values and sets proper values
+        returned from group_recvmsg"""
+        stat = MyStats()
+        set_timeouts = []
+        orig_timeout = 1
+        stat.cc_session.get_timeout = lambda: orig_timeout
+        stat.cc_session.set_timeout = lambda x: set_timeouts.append(x)
+        msg = create_answer(0, 'msg')
+        env = {'from': 'frominit'}
+        stat._answers = [(msg, env)]
+        stat._check_command()
+        self.assertListEqual([500, orig_timeout], set_timeouts)
+        self.assertEqual(msg, stat.mccs._msg)
+        self.assertEqual(env, stat.mccs._env)
+
+    def test_check_command_sessiontimeout(self):
+        """Test _check_command doesn't perform but sets proper timeout values in
+        case that a SesstionTimeout exception is caught while doing
+        group_recvmsg()"""
+        stat = MyStats()
+        set_timeouts = []
+        orig_timeout = 1
+        stat.cc_session.get_timeout = lambda: orig_timeout
+        stat.cc_session.set_timeout = lambda x: set_timeouts.append(x)
+        msg = create_answer(0, 'msg')
+        env = {'from': 'frominit'}
+        stat._answers = [(msg, env)]
+        # SessionTimeout is raised while doing group_recvmsg()
+        ex = isc.cc.session.SessionTimeout
+        def __raise(*x): raise ex(*x)
+        stat.cc_session.group_recvmsg = lambda x: __raise()
+        stat._check_command()
+        self.assertListEqual([500, orig_timeout], set_timeouts)
+        self.assertEqual(None, stat.mccs._msg)
+        self.assertEqual(None, stat.mccs._env)
+
     def test_start(self):
         # Define a separate exception class so we can be sure that's actually
         # the one raised in __check_start() below
@@ -315,6 +355,25 @@ class TestStats(unittest.TestCase):
         self.assertRaises(CheckException, self.stats.start)
         self.assertEqual(self.__send_command(self.stats, "status"),
                          (0, "Stats is up. (PID " + str(os.getpid()) + ")"))
+        self.assertTrue(self.stats.mccs.stopped)
+
+    def test_start_set_next_polltime(self):
+        """Test start() properly sets the time next_polltime to do_poll() next
+        time"""
+        orig_get_timestamp = stats.get_timestamp
+        stats.get_timestamp = lambda : self.const_timestamp
+        stat = MyStats()
+        # manupilate next_polltime to go it through the inner if-condition
+        stat.next_polltime = self.const_timestamp - stat.get_interval() - 1
+        # stop an infinity loop at once
+        def __stop_running(): stat.running = False
+        stat.do_polling = __stop_running
+        # do nothing in _check_command()
+        stat._check_command = lambda: None
+        stat.start()
+        # check stat.next_polltime reassigned
+        self.assertEqual(self.const_timestamp, stat.next_polltime)
+        stats.get_timestamp = orig_get_timestamp
 
     def test_shutdown(self):
         def __check_shutdown(tested_stats):
@@ -697,7 +756,6 @@ class TestStats(unittest.TestCase):
 
         # We use the knowledge of what kind of messages are sent via
         # do_polling, and return the following faked answer directly.
-        create_answer = isc.config.ccsession.create_answer # shortcut
         self.stats._answers = [
             # Answer for "show_processes"
             (create_answer(0, [[1034, 'b10-auth-1', 'Auth'],
@@ -817,7 +875,6 @@ class TestStats(unittest.TestCase):
 
         # see the comment for test_update_statistics_data_withmid.  We abuse
         # do_polling here, too.  With #2781 we should make it more direct.
-        create_answer = isc.config.ccsession.create_answer # shortcut
         stat._answers = [\
             # Answer for "show_processes"
             (create_answer(0, []),  None),
@@ -868,7 +925,6 @@ class TestStats(unittest.TestCase):
         self.stats.update_modules = lambda: None
 
         # Test data borrowed from test_update_statistics_data_withmid
-        create_answer = isc.config.ccsession.create_answer # shortcut
         self.stats._answers = [
             (create_answer(0, [[1034, 'b10-auth-1', 'Auth'],
                                [1035, 'b10-auth-2', 'Auth']]),  None),
@@ -1281,12 +1337,177 @@ class TestStats(unittest.TestCase):
                          isc.config.create_answer(
                 1, "module name is not specified"))
 
+    def test_get_multi_module_list(self):
+        """Test _get_multi_module_list() returns a module list which is running
+        as multiple modules."""
+        stat = MyStats()
+        # no answer
+        self.assertListEqual([], stat._get_multi_module_list())
+        # proc list returned
+        proc_list = [
+            [29317, 'b10-xfrout', 'Xfrout'],
+            [29318, 'b10-xfrin', 'Xfrin'],
+            [20061, 'b10-auth','Auth'],
+            [20103, 'b10-auth-2', 'Auth']]
+        mod_list = [ a[2] for a in proc_list ]
+        stat._answers = [
+            # Answer for "show_processes"
+            (create_answer(0, proc_list), {'from': 'init'})
+            ]
+        self.assertListEqual(mod_list, stat._get_multi_module_list())
+        # invalid proc list
+        stat._answers = [
+            # Answer for "show_processes"
+            (create_answer(0, [[999, 'invalid', 'Invalid'], 'invalid']),
+             {'from': 'init'})
+            ]
+        self.assertListEqual(['Invalid', None], stat._get_multi_module_list())
+
+    def test_get_multi_module_list_rpcrecipientmissing(self):
+        """Test _get_multi_module_list() raises an RPCRecipientMissing exception
+        if rcp_call() raise the exception"""
+        # RPCRecipientMissing case
+        stat = MyStats()
+        ex = isc.config.RPCRecipientMissing
+        def __raise(*x): raise ex(*x)
+        stat.mccs.rpc_call = lambda x,y: __raise('Error')
+        self.assertRaises(ex, stat._get_multi_module_list)
+
+    def test_get_multi_module_list_rpcerror(self):
+        """Test _get_multi_module_list() returns an empty list if rcp_call()
+        raise an RPCError exception"""
+        # RPCError case
+        stat = MyStats()
+        ex = isc.config.RPCError
+        def __raise(*x): raise ex(*x)
+        stat.mccs.rpc_call = lambda x,y: __raise(99, 'Error')
+        self.assertListEqual([], stat._get_multi_module_list())
+
+    def test_get_multi_module_list_initsessiontimeout(self):
+        """Test _get_multi_module_list() raises an InitSeeionTimeout exception
+        if a CC session times out in rcp_call()"""
+        # InitSeeionTimeout case
+        stat = MyStats()
+        ex = isc.cc.session.SessionTimeout
+        def __raise(*x): raise ex(*x)
+        stat.mccs.rpc_call = lambda x,y: __raise()
+        self.assertRaises(stats.InitSessionTimeout, stat._get_multi_module_list)
+
+    def test_query_statistics(self):
+        """Test _query_statistics returns a list of pairs of module and
+        sequences from group_sendmsg()"""
+        stat = MyStats()
+        # imitate stat.get_statistics_data().items. The order of the array
+        # returned by items() should be preserved.
+        class DummyDict:
+            def items(self):
+                return [('Init', 'dummy'), ('Stats', 'dummy'), ('Auth', 'dummy')]
+        stat.get_statistics_data = lambda: DummyDict()
+        mod = ('Init', 'Auth', 'Auth')
+        seq = [('Init', stat._seq + 1),
+               ('Auth', stat._seq + 2),
+               ('Auth', stat._seq + 2) ]
+        self.assertListEqual(seq, stat._query_statistics(mod))
+
+    def test_collect_statistics(self):
+        """Test _collect_statistics() collects statistics data from each module
+        based on the sequences which is a list of values returned from
+        group_sendmsg()"""
+        stat = MyStats()
+        seq = [ ('Init', stat._seq + 1),
+                ('Auth', stat._seq + 2),
+                ('Auth', stat._seq + 2) ]
+        ret = [('Init', 'frominit', {'boot_time': '2013-01-01T00:00:00Z'}),
+               ('Auth', 'fromauth1', {'queries.tcp': 100}),
+               ('Auth', 'fromauth2', {'queries.udp': 200})]
+        stat._answers = [
+            (create_answer(0, r[2]), {'from': r[1]}) for r in ret
+            ]
+        self.assertListEqual(ret, stat._collect_statistics(seq))
+
+    def test_collect_statistics_nodata(self):
+        """Test _collect_statistics() returns empty statistics data if
+        a module returns an empty list"""
+        stat = MyStats()
+        seq = []
+        stat._answers = []
+        ret = []
+        self.assertListEqual(ret, stat._collect_statistics(seq))
+
+    def test_collect_statistics_nonzero_rcode(self):
+        """Test _collect_statistics() returns empty statistics data if
+        a module returns non-zero rcode"""
+        stat = MyStats()
+        seq = [('Init', stat._seq + 1)]
+        stat._answers = [
+            (create_answer(1, 'error'), {'from': 'frominit'})
+            ]
+        ret = []
+        self.assertListEqual(ret, stat._collect_statistics(seq))
+
+    def test_collect_statistics_sessiontimeout(self):
+        """Test _collect_statistics() collects statistics data from each module
+        based on the sequences which is a list of values returned from
+        group_sendmsg(). In this test case, SessionTimeout exceptions are raised
+        while collecting from Auth. This tests _collect_statistics skips
+        collecting from Auth."""
+        # SessionTimeout case
+        stat = MyStats()
+        ex = isc.cc.session.SessionTimeout
+        def __raise(*x): raise ex(*x)
+        # SessionTimeout is raised when asking to Auth
+        stat.cc_session.group_recvmsg = lambda x,seq: \
+            __raise() if seq == stat._seq + 2 else stat._answers.pop(0)
+        seq = [ ('Init', stat._seq + 1),
+                ('Auth', stat._seq + 2),
+                ('Auth', stat._seq + 2) ]
+        ret = [('Init', 'frominit', {'boot_time': '2013-01-01T00:00:00Z'})]
+        stat._answers = [
+            (create_answer(0, r[2]), {'from': r[1]}) for r in ret
+            ]
+        self.assertListEqual(ret, stat._collect_statistics(seq))
+
+    def test_refresh_statistics(self):
+        """Test _refresh_statistics() refreshes statistics data from given data
+        """
+        stat = MyStats()
+        self.assertEqual(self.const_default_datetime,
+                         stat.statistics_data['Init']['boot_time'])
+        self.assertEqual(0,
+                         stat.statistics_data['Auth']['queries.tcp'])
+        self.assertEqual(0,
+                         stat.statistics_data['Auth']['queries.udp'])
+        # change stats.get_datetime() for testing 'last_update_time'
+        orig_get_datetime = stats.get_datetime
+        stats.get_datetime = lambda : self.const_datetime
+        arg = [('Init', 'frominit', {'boot_time': '2013-01-01T00:00:00Z'}),
+               ('Auth', 'fromauth1', {'queries.tcp': 100}),
+               ('Auth', 'fromauth2', {'queries.udp': 200})]
+        stat._refresh_statistics(arg)
+        self.assertEqual('2013-01-01T00:00:00Z',
+                         stat.statistics_data['Init']['boot_time'])
+        self.assertEqual(100,
+                         stat.statistics_data['Auth']['queries.tcp'])
+        self.assertEqual(200,
+                         stat.statistics_data['Auth']['queries.udp'])
+        self.assertEqual(self.const_datetime,
+                         stat.statistics_data['Stats']['last_update_time'])
+        stats.get_datetime = orig_get_datetime
+
     def test_polling_init(self):
         """check statistics data of 'Init'."""
 
         stat = MyStats()
+        # At this point 'stat' is initialized with statistics for Stats,
+        # Init and Auth modules.  In this test, we only need to check for Init
+        # statistics, while do_polling() can ask for module statistics in an
+        # unpredictable order (if hash randomization is enabled, which is
+        # the case by default for Python 3.3).  To make it predictable and
+        # ensure the prepared answer doesn't cause disruption, we remove the
+        # information for the Auth module for this test.
+        del stat.statistics_data['Auth']
+
         stat.update_modules = lambda: None
-        create_answer = isc.config.ccsession.create_answer # shortcut
 
         stat._answers = [
             # Answer for "show_processes"
@@ -1305,7 +1526,6 @@ class TestStats(unittest.TestCase):
         """check statistics data of multiple instances of same module."""
         stat = MyStats()
         stat.update_modules = lambda: None
-        create_answer = isc.config.ccsession.create_answer # shortcut
 
         # Test data borrowed from test_update_statistics_data_withmid
         stat._answers = [
@@ -1371,40 +1591,57 @@ class TestStats(unittest.TestCase):
         self.assertEqual(stat.statistics_data['Stats']['lname'],
                          stat.mccs._session.lname)
 
-    def test_polling2(self):
-        """Test do_polling() doesn't incorporate broken statistics data.
-
-        Actually, this is not a test for do_polling() itself.  It's bad, but
-        fixing that is a subject of different ticket.
-
+    def test_refresh_statistics_broken_statistics_data(self):
+        """Test _refresh_statistics() doesn't incorporate broken statistics data
         """
         stat = MyStats()
         # check default statistics data of 'Init'
         self.assertEqual(
-             stat.statistics_data['Init'],
-             {'boot_time': self.const_default_datetime})
-
-        # set invalid statistics
-        create_answer = isc.config.ccsession.create_answer # shortcut
-        stat._answers = [
-            # Answer for "show_processes"
-            (create_answer(0, []),  None),
-            # Answers for "getstats" for Init (type of boot_time is invalid)
-            (create_answer(0, {'boot_time': 1}), {'from': 'init'}),
-            ]
-        stat.update_modules = lambda: None
-
-        # do_polling() should ignore the invalid answer;
-        # default data shouldn't be replaced.
-        stat.do_polling()
+            {'boot_time': self.const_default_datetime},
+            stat.statistics_data['Init'])
+        last_update_time = stat.statistics_data['Stats']['last_update_time']
+        # _refresh_statistics() should ignore the invalid statistics_data(type
+        # of boot_time is invalid); default data shouldn't be replaced.
+        arg = [('Init', 'lname', {'boot_time': 1})]
+        stat._refresh_statistics(arg)
         self.assertEqual(
-             stat.statistics_data['Init'],
-             {'boot_time': self.const_default_datetime})
+            {'boot_time': self.const_default_datetime},
+            stat.statistics_data['Init'])
+        # 'last_update_time' doesn't change
+        self.assertEqual(
+            last_update_time,
+            stat.statistics_data['Stats']['last_update_time'])
+
+    def test_polling_update_lasttime_poll(self):
+        """Test _lasttime_poll is updated after do_polling()
+        """
+        orig_get_timestamp = stats.get_timestamp
+        stats.get_timestamp = lambda : self.const_timestamp
+        stat = MyStats()
+        self.assertEqual(0.0, stat._lasttime_poll)
+        stat.do_polling()
+        self.assertEqual(self.const_timestamp, stat._lasttime_poll)
+        stats.get_timestamp = orig_get_timestamp
+
+    def test_polling_initsessiontimeout(self):
+        """Test _lasttime_poll is updated after do_polling() in case that it catches
+        InitSesionTimeout at _get_multi_module_list()
+        """
+        orig_get_timestamp = stats.get_timestamp
+        stats.get_timestamp = lambda : self.const_timestamp
+        ex = stats.InitSessionTimeout
+        def __raise(*x): raise ex(*x)
+        stat = MyStats()
+        self.assertEqual(0.0, stat._lasttime_poll)
+        stat._get_multi_module_list = lambda: __raise()
+        stat.do_polling()
+        self.assertEqual(self.const_timestamp, stat._lasttime_poll)
+        stats.get_timestamp = orig_get_timestamp
 
 class Z_TestOSEnv(unittest.TestCase):
     # Running this test would break logging setting.  To prevent it from
-    # affecting other tests we use the same workaround as
-    # Z_TestStatsHttpdError.
+    # affecting other tests we use the same workaround as Z_TestOSEnv in
+    # stats-httpd_test.py.
     def test_osenv(self):
         """
         test for the environ variable "B10_FROM_SOURCE"

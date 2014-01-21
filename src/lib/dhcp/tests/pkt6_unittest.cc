@@ -22,7 +22,10 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/docsis3_option_defs.h>
+#include <util/range_utilities.h>
 
+#include <boost/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <util/encode/hex.h>
@@ -40,10 +43,116 @@ using namespace isc::dhcp;
 using boost::scoped_ptr;
 
 namespace {
-// empty class for now, but may be extended once Addr6 becomes bigger
+
+/// @brief A class which contains a custom callback function to unpack options.
+///
+/// This is a class used by the tests which verify that the custom callback
+/// functions can be installed to unpack options from a message. When the
+/// callback function is called, the executed_ member is set to true to allow
+/// verification that the callback was really called. Internally, this class
+/// uses libdhcp++ to unpack options so the options parsing algorithm remains
+/// unchanged after installation of the callback.
+class CustomUnpackCallback {
+public:
+
+    /// @brief Constructor
+    ///
+    /// Marks that callback hasn't been called.
+    CustomUnpackCallback()
+        : executed_(false) {
+    }
+
+    /// @brief A callback
+    ///
+    /// Contains custom implementation of the callback.
+    ///
+    /// @param buf a A buffer holding options in on-wire format.
+    /// @param option_space A name of the option space encapsulated by the
+    /// option being parsed.
+    /// @param [out] options A reference to the collection where parsed options
+    /// will be stored.
+    /// @param relay_msg_offset Reference to a size_t structure. If specified,
+    /// offset to beginning of relay_msg option will be stored in it.
+    /// @param relay_msg_len reference to a size_t structure. If specified,
+    /// length of the relay_msg option will be stored in it.
+    /// @return An offset to the first byte after last parsed option.
+    size_t execute(const OptionBuffer& buf,
+                   const std::string& option_space,
+                   isc::dhcp::OptionCollection& options,
+                   size_t* relay_msg_offset,
+                   size_t* relay_msg_len) {
+        // Set the executed_ member to true to allow verification that the
+        // callback has been actually called.
+        executed_ = true;
+        // Use default implementation of the unpack algorithm to parse options.
+        return (LibDHCP::unpackOptions6(buf, option_space, options, relay_msg_offset,
+                                        relay_msg_len));
+    }
+
+    /// A flag which indicates if callback function has been called.
+    bool executed_;
+};
+
 class Pkt6Test : public ::testing::Test {
 public:
     Pkt6Test() {
+    }
+
+    /// @brief generates an option with given code (and length) and random content
+    ///
+    /// @param code option code
+    /// @param len data length (data will be randomized)
+    ///
+    /// @return pointer to the new option
+    OptionPtr generateRandomOption(uint16_t code, size_t len = 10) {
+        OptionBuffer data(len);
+        util::fillRandom(data.begin(), data.end());
+        return OptionPtr(new Option(Option::V6, code, data));
+    }
+
+    /// @brief Create a wire representation of the test packet and clone it.
+    ///
+    /// The purpose of this function is to create a packet to be used to
+    /// check that packet parsing works correctly. The unpack() function
+    /// requires that the data_ field of the object holds the data to be
+    /// parsed. This function creates an on-wire representation of the
+    /// packet by calling pack(). But, the pack() function stores the
+    /// on-wire representation into the output buffer (not the data_ field).
+    /// For this reason, it is not enough to return the packet on which
+    /// pack() is called. This function returns a clone of this packet
+    /// which is created using a constructor taking a buffer and buffer
+    /// length as an input. This constructor is normally used to parse
+    /// received packets. It stores the packet in a data_ field and
+    /// therefore unpack() can be called to parse it.
+    Pkt6Ptr packAndClone() {
+        Pkt6Ptr parent(new Pkt6(DHCPV6_SOLICIT, 0x020304));
+
+        OptionPtr opt1(new Option(Option::V6, 1));
+        OptionPtr opt2(new Option(Option::V6, 2));
+        OptionPtr opt3(new Option(Option::V6, 100));
+        // Let's not use zero-length option type 3 as it is IA_NA
+
+        parent->addOption(opt1);
+        parent->addOption(opt2);
+        parent->addOption(opt3);
+
+        EXPECT_EQ(DHCPV6_SOLICIT, parent->getType());
+
+        // Calculated length should be 16
+        EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
+                  parent->len());
+
+        EXPECT_NO_THROW(parent->pack());
+
+        EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
+                  parent->len());
+
+        // Create second packet,based on assembled data from the first one
+        Pkt6Ptr clone(new Pkt6(static_cast<const uint8_t*>
+                               (parent->getBuffer().getData()),
+                               parent->getBuffer().getLength()));
+        return (clone);
+
     }
 };
 
@@ -51,8 +160,8 @@ TEST_F(Pkt6Test, constructor) {
     uint8_t data[] = { 0, 1, 2, 3, 4, 5 };
     scoped_ptr<Pkt6> pkt1(new Pkt6(data, sizeof(data)));
 
-    EXPECT_EQ(6, pkt1->getData().size());
-    EXPECT_EQ(0, memcmp( &pkt1->getData()[0], data, sizeof(data)));
+    EXPECT_EQ(6, pkt1->data_.size());
+    EXPECT_EQ(0, memcmp( &pkt1->data_[0], data, sizeof(data)));
 }
 
 /// @brief returns captured actual SOLICIT packet
@@ -191,44 +300,62 @@ TEST_F(Pkt6Test, unpack_solicit1) {
 }
 
 TEST_F(Pkt6Test, packUnpack) {
-    scoped_ptr<Pkt6> parent(new Pkt6(DHCPV6_SOLICIT, 0x020304));
-
-    OptionPtr opt1(new Option(Option::V6, 1));
-    OptionPtr opt2(new Option(Option::V6, 2));
-    OptionPtr opt3(new Option(Option::V6, 100));
-    // Let's not use zero-length option type 3 as it is IA_NA
-
-    parent->addOption(opt1);
-    parent->addOption(opt2);
-    parent->addOption(opt3);
-
-    EXPECT_EQ(DHCPV6_SOLICIT, parent->getType());
-
-    // Calculated length should be 16
-    EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
-              parent->len());
-
-    EXPECT_TRUE(parent->pack());
-
-    EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN,
-              parent->len());
-
-    // Create second packet,based on assembled data from the first one
-    scoped_ptr<Pkt6> clone(new Pkt6(
-        static_cast<const uint8_t*>(parent->getBuffer().getData()),
-                                    parent->getBuffer().getLength()));
+    // Create an on-wire representation of the test packet and clone it.
+    Pkt6Ptr clone = packAndClone();
 
     // Now recreate options list
-    EXPECT_TRUE( clone->unpack() );
+    EXPECT_TRUE(clone->unpack());
 
     // transid, message-type should be the same as before
-    EXPECT_EQ(parent->getTransid(), parent->getTransid());
+    EXPECT_EQ(0x020304, clone->getTransid());
     EXPECT_EQ(DHCPV6_SOLICIT, clone->getType());
 
     EXPECT_TRUE(clone->getOption(1));
     EXPECT_TRUE(clone->getOption(2));
     EXPECT_TRUE(clone->getOption(100));
     EXPECT_FALSE(clone->getOption(4));
+}
+
+// This test verifies that it is possible to specify custom implementation of
+// the option parsing algorithm by installing a callback function.
+TEST_F(Pkt6Test, packUnpackWithCallback) {
+    // Create an on-wire representation of the test packet and clone it.
+    Pkt6Ptr clone = packAndClone();
+
+    // Install the custom callback function. We expect that this function
+    // will be called to parse options in the packet instead of
+    // LibDHCP::unpackOptions6.
+    CustomUnpackCallback cb;
+    clone->setCallback(boost::bind(&CustomUnpackCallback::execute, &cb,
+                                   _1, _2, _3, _4, _5));
+    // Make sure that the flag which indicates if the callback function has
+    // been called is not set. Otherwise, our test doesn't make sense.
+    ASSERT_FALSE(cb.executed_);
+
+    // Now recreate options list
+    EXPECT_TRUE(clone->unpack());
+
+    // An object which holds a callback should now have a flag set which
+    // indicates that callback has been called.
+    EXPECT_TRUE(cb.executed_);
+
+    // transid, message-type should be the same as before
+    EXPECT_EQ(0x020304, clone->getTransid());
+    EXPECT_EQ(DHCPV6_SOLICIT, clone->getType());
+
+    EXPECT_TRUE(clone->getOption(1));
+    EXPECT_TRUE(clone->getOption(2));
+    EXPECT_TRUE(clone->getOption(100));
+    EXPECT_FALSE(clone->getOption(4));
+
+    // Reset the indicator to perform another check: uninstall the callback.
+    cb.executed_ = false;
+    // By setting the callback to NULL we effectively uninstall the callback.
+    clone->setCallback(NULL);
+    // Do another unpack.
+    EXPECT_TRUE(clone->unpack());
+    // Callback should not be executed.
+    EXPECT_FALSE(cb.executed_);
 }
 
 // This test verifies that options can be added (addOption()), retrieved
@@ -253,12 +380,12 @@ TEST_F(Pkt6Test, addGetDelOptions) {
     // Now there are 2 options of type 2
     parent->addOption(opt3);
 
-    Option::OptionCollection options = parent->getOptions(2);
+    OptionCollection options = parent->getOptions(2);
     EXPECT_EQ(2, options.size()); // there should be 2 instances
 
     // Both options must be of type 2 and there must not be
     // any other type returned
-    for (Option::OptionCollection::const_iterator x= options.begin();
+    for (OptionCollection::const_iterator x= options.begin();
          x != options.end(); ++x) {
         EXPECT_EQ(2, x->second->getType());
     }
@@ -487,8 +614,7 @@ TEST_F(Pkt6Test, relayPack) {
 
     OptionPtr optRelay1(new Option(Option::V6, 200, relay_data));
 
-    relay1.options_.insert(pair<int, boost::shared_ptr<Option> >(
-                           optRelay1->getType(), optRelay1));
+    relay1.options_.insert(make_pair(optRelay1->getType(), optRelay1));
 
     OptionPtr opt1(new Option(Option::V6, 100));
     OptionPtr opt2(new Option(Option::V6, 101));
@@ -503,7 +629,7 @@ TEST_F(Pkt6Test, relayPack) {
 
     EXPECT_EQ(DHCPV6_ADVERTISE, parent->getType());
 
-    EXPECT_TRUE(parent->pack());
+    EXPECT_NO_THROW(parent->pack());
 
     EXPECT_EQ(Pkt6::DHCPV6_PKT_HDR_LEN + 3 * Option::OPTION6_HDR_LEN // ADVERTISE
               + Pkt6::DHCPV6_RELAY_HDR_LEN // Relay header
@@ -544,6 +670,144 @@ TEST_F(Pkt6Test, relayPack) {
     OptionBuffer data = opt->getData();
     ASSERT_EQ(data.size(), sizeof(relay_opt_data));
     EXPECT_EQ(0, memcmp(relay_opt_data, relay_opt_data, sizeof(relay_opt_data)));
+}
+
+
+// This test verified that options added by relays to the message can be
+// accessed and retrieved properly
+TEST_F(Pkt6Test, getAnyRelayOption) {
+
+    boost::scoped_ptr<Pkt6> msg(new Pkt6(DHCPV6_ADVERTISE, 0x020304));
+    msg->addOption(generateRandomOption(300));
+
+    // generate options for relay1
+    Pkt6::RelayInfo relay1;
+
+    // generate 3 options with code 200,201,202 and random content
+    OptionPtr relay1_opt1(generateRandomOption(200));
+    OptionPtr relay1_opt2(generateRandomOption(201));
+    OptionPtr relay1_opt3(generateRandomOption(202));
+
+    relay1.options_.insert(make_pair(200, relay1_opt1));
+    relay1.options_.insert(make_pair(201, relay1_opt2));
+    relay1.options_.insert(make_pair(202, relay1_opt3));
+    msg->addRelayInfo(relay1);
+
+    // generate options for relay2
+    Pkt6::RelayInfo relay2;
+    OptionPtr relay2_opt1(new Option(Option::V6, 100));
+    OptionPtr relay2_opt2(new Option(Option::V6, 101));
+    OptionPtr relay2_opt3(new Option(Option::V6, 102));
+    OptionPtr relay2_opt4(new Option(Option::V6, 200)); // the same code as relay1_opt3
+    relay2.options_.insert(make_pair(100, relay2_opt1));
+    relay2.options_.insert(make_pair(101, relay2_opt2));
+    relay2.options_.insert(make_pair(102, relay2_opt3));
+    relay2.options_.insert(make_pair(200, relay2_opt4));
+    msg->addRelayInfo(relay2);
+
+    // generate options for relay3
+    Pkt6::RelayInfo relay3;
+    OptionPtr relay3_opt1(generateRandomOption(200, 7));
+    relay3.options_.insert(make_pair(200, relay3_opt1));
+    msg->addRelayInfo(relay3);
+
+    // Ok, so we now have a packet that traversed the following network:
+    // client---relay3---relay2---relay1---server
+
+    // First check that the getAnyRelayOption does not confuse client options
+    // and relay options
+    // 300 is a client option, present in the message itself.
+    OptionPtr opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_FALSE(opt);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_FALSE(opt);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_FIRST);
+    EXPECT_FALSE(opt);
+    opt = msg->getAnyRelayOption(300, Pkt6::RELAY_GET_LAST);
+    EXPECT_FALSE(opt);
+
+    // Option 200 is added in every relay.
+
+    // We want to get that one inserted by relay3 (first match, starting from
+    // closest to the client.
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay3_opt1));
+
+    // We want to ge that one inserted by relay1 (first match, starting from
+    // closest to the server.
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay1_opt1));
+
+    // We just want option from the first relay (closest to the client)
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_FIRST);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay3_opt1));
+
+    // We just want option from the last relay (closest to the server)
+    opt = msg->getAnyRelayOption(200, Pkt6::RELAY_GET_LAST);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay1_opt1));
+
+    // Let's try to ask for something that is inserted by the middle relay
+    // only.
+    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay2_opt1));
+
+    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    ASSERT_TRUE(opt);
+    EXPECT_TRUE(opt->equal(relay2_opt1));
+
+    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_GET_FIRST);
+    EXPECT_FALSE(opt);
+
+    opt = msg->getAnyRelayOption(100, Pkt6::RELAY_GET_LAST);
+    EXPECT_FALSE(opt);
+
+    // Finally, try to get an option that does not exist
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_GET_FIRST);
+    EXPECT_FALSE(opt);
+
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_GET_LAST);
+    EXPECT_FALSE(opt);
+
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_SEARCH_FROM_SERVER);
+    EXPECT_FALSE(opt);
+
+    opt = msg->getAnyRelayOption(500, Pkt6::RELAY_SEARCH_FROM_CLIENT);
+    EXPECT_FALSE(opt);
+}
+
+// Tests whether a packet can be assigned to a class and later
+// checked if it belongs to a given class
+TEST_F(Pkt6Test, clientClasses) {
+    Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
+
+    // Default values (do not belong to any class)
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
+    EXPECT_TRUE(pkt.classes_.empty());
+
+    // Add to the first class
+    pkt.addClass(DOCSIS3_CLASS_EROUTER);
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
+    ASSERT_FALSE(pkt.classes_.empty());
+
+    // Add to a second class
+    pkt.addClass(DOCSIS3_CLASS_MODEM);
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_MODEM));
+
+    // Check that it's ok to add to the same class repeatedly
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+
+    // Check that the packet belongs to 'foo'
+    EXPECT_TRUE(pkt.inClass("foo"));
 }
 
 }

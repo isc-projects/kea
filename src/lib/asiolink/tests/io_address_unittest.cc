@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <cstring>
 #include <vector>
+#include <sstream>
 
 using namespace isc::asiolink;
 
@@ -83,7 +84,7 @@ TEST(IOAddressTest, fromBytes) {
     EXPECT_NO_THROW({
         addr = IOAddress::fromBytes(AF_INET, v4);
     });
-    EXPECT_EQ(addr.toText(), IOAddress("192.0.2.3").toText());
+    EXPECT_EQ(addr, IOAddress("192.0.2.3"));
 }
 
 TEST(IOAddressTest, toBytesV4) {
@@ -171,4 +172,13 @@ TEST(IOAddressTest, lessThanEqual) {
     EXPECT_TRUE(addr2 < addr5);
 
     EXPECT_TRUE(addr6 <= addr7);
+}
+
+// test operator<<.  We simply confirm it appends the result of toText().
+TEST(IOAddressTest, LeftShiftOperator) {
+    const IOAddress addr("192.0.2.5");
+
+    std::ostringstream oss;
+    oss << addr;
+    EXPECT_EQ(addr.toText(), oss.str());
 }

@@ -2,15 +2,21 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10, 20130503, bind10-dev@isc.org)
+AC_INIT(bind10, 20130529, bind10-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
-# serial-tests is not available in automake version before 1.13. In
-# automake 1.13 and higher, AM_PROG_INSTALL is undefined, so we'll check
-# that and conditionally use serial-tests.
-AM_INIT_AUTOMAKE(
-	[foreign]
-	m4_ifndef([AM_PROG_INSTALL], [serial-tests])
-)
+
+# serial-tests is not available in automake version before 1.13, so
+# we'll check that and conditionally use serial-tests. This check is
+# adopted from code by Richard W.M. Jones:
+# https://www.redhat.com/archives/libguestfs/2013-February/msg00102.html
+m4_define([serial_tests], [
+    m4_esyscmd([automake --version |
+                head -1 |
+                awk '{split ($NF,a,"."); if (a[1] == 1 && a[2] >= 12) { print "serial-tests" }}'
+    ])
+])
+AM_INIT_AUTOMAKE(foreign serial_tests)
+
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])dnl be backward compatible
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
@@ -68,6 +74,13 @@ AC_CHECK_DECL([__SUNPRO_CC], [SUNCXX="yes"], [SUNCXX="no"])
 AC_CHECK_DECL([__clang__], [CLANGPP="yes"], [CLANGPP="no"])
 AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
+dnl Determine if weare using GNU sed
+GNU_SED=no
+$SED --version 2> /dev/null | grep GNU > /dev/null 2>&1
+if test $? -eq 0; then
+  GNU_SED=yes
+fi
+
 # Linker options
 
 # check -R, "-Wl,-R" or -rpath (we share the AX function defined in
@@ -105,9 +118,12 @@ AC_DEFUN([BIND10_CXX_TRY_FLAG], [
   AC_MSG_RESULT([$bind10_cxx_flag])
 ])
 
+CXX_VERSION="unknown"
+
 # SunStudio compiler requires special compiler options for boost
 # (http://blogs.sun.com/sga/entry/boost_mini_howto)
 if test "$SUNCXX" = "yes"; then
+CXX_VERSION=`$CXX -V 2> /dev/null | head -1`
 CXXFLAGS="$CXXFLAGS -library=stlport4 -features=tmplife -features=tmplrefstatic"
 MULTITHREADING_FLAG="-mt"
 fi
@@ -120,7 +136,8 @@ fi
 # we suppress this particular warning.  Note that it doesn't weaken checks
 # on the source code.
 if test "$CLANGPP" = "yes"; then
-	B10_CXXFLAGS="$B10_CXXFLAGS -Qunused-arguments"
+CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
+B10_CXXFLAGS="$B10_CXXFLAGS -Qunused-arguments"
 fi
 
 BIND10_CXX_TRY_FLAG([-Wno-missing-field-initializers],
@@ -129,7 +146,8 @@ AC_SUBST(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # gcc specific settings:
 if test "X$GXX" = "Xyes"; then
-B10_CXXFLAGS="$B10_CXXFLAGS -Wall -Wextra -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
+CXX_VERSION=`$CXX --version 2> /dev/null | head -1`
+B10_CXXFLAGS="$B10_CXXFLAGS -Wall -Wextra -Wnon-virtual-dtor -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare"
 case "$host" in
 *-solaris*)
 	MULTITHREADING_FLAG=-pthreads
@@ -181,6 +199,7 @@ AC_HELP_STRING([--enable-static-link],
   [build programs with static link [[default=no]]]),
   [enable_static_link=yes], [enable_static_link=no])
 AM_CONDITIONAL(USE_STATIC_LINK, test $enable_static_link = yes)
+AM_COND_IF([USE_STATIC_LINK], [AC_DEFINE([USE_STATIC_LINK], [1], [BIND 10 was statically linked?])])
 
 # Check validity about some libtool options
 if test $enable_static_link = yes -a $enable_static = no; then
@@ -199,6 +218,7 @@ AC_HELP_STRING([--disable-setproctitle-check],
 # OS dependent configuration
 SET_ENV_LIBRARY_PATH=no
 ENV_LIBRARY_PATH=LD_LIBRARY_PATH
+bind10_undefined_pthread_behavior=no
 
 case "$host" in
 *-solaris*)
@@ -210,12 +230,24 @@ case "$host" in
 	# Destroying locked mutexes, condition variables being waited
 	# on, etc. are undefined behavior on Solaris, so we set it as
 	# such here.
-	AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
+	bind10_undefined_pthread_behavior=yes
 	;;
 *-apple-darwin*)
 	# Starting with OSX 10.7 (Lion) we must choose which IPv6 API to use
 	# (RFC2292 or RFC3542).
 	CPPFLAGS="$CPPFLAGS -D__APPLE_USE_RFC_3542"
+
+	# In OS X 10.9 (and possibly any future versions?) pthread_cond_destroy
+	# doesn't work as documented, which makes some of unit tests fail.
+	# Testing a specific system and version is not a good practice, but
+	# identifying this behavior would be too heavy (running a program
+	# with multiple threads), so this is a compromise.  In general,
+	# it should be avoided to rely on 'osx_version' unless there's no
+	# viable alternative.
+	osx_version=`/usr/bin/sw_vers -productVersion`
+	if [ test $osx_version = "10.9" ]; then
+		bind10_undefined_pthread_behavior=yes
+	fi
 
 	# libtool doesn't work perfectly with Darwin: libtool embeds the
 	# final install path in dynamic libraries and our loadable python
@@ -239,6 +271,9 @@ esac
 AM_CONDITIONAL(SET_ENV_LIBRARY_PATH, test $SET_ENV_LIBRARY_PATH = yes)
 AC_SUBST(SET_ENV_LIBRARY_PATH)
 AC_SUBST(ENV_LIBRARY_PATH)
+if [ test $bind10_undefined_pthread_behavior = "yes" ]; then
+   AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
+fi
 
 # Our experiments have shown Solaris 10 has broken support for the
 # IPV6_USE_MIN_MTU socket option for getsockopt(); it doesn't return the value
@@ -375,6 +410,24 @@ fi
 AC_SUBST(PYTHON_LIB)
 LDFLAGS=$LDFLAGS_SAVED
 
+# Python 3.2 changed the return type of internal hash function to
+# Py_hash_t and some platforms (such as Solaris) strictly check for long
+# vs Py_hash_t. So we detect and use the appropriate return type.
+# Remove this test (and associated changes in pydnspp_config.h.in) when
+# we require Python 3.2.
+have_py_hash_t=0
+CPPFLAGS_SAVED="$CPPFLAGS"
+CPPFLAGS=${PYTHON_INCLUDES}
+AC_MSG_CHECKING(for Py_hash_t)
+AC_TRY_COMPILE([#include <Python.h>
+                Py_hash_t h;],,
+    [AC_MSG_RESULT(yes)
+     have_py_hash_t=1],
+    [AC_MSG_RESULT(no)])
+CPPFLAGS="$CPPFLAGS_SAVED"
+HAVE_PY_HASH_T=$have_py_hash_t
+AC_SUBST(HAVE_PY_HASH_T)
+
 # Check for the setproctitle module
 if test "$setproctitle_check" = "yes" ; then
     AC_MSG_CHECKING(for setproctitle module)
@@ -392,7 +445,7 @@ fi
 # Python 3.2 has an unused parameter in one of its headers. This
 # has been reported, but not fixed as of yet, so we check if we need
 # to set -Wno-unused-parameter.
-if test "X$GXX" = "Xyes" -a $werror_ok = 1; then
+if test "X$GXX" = "Xyes" -a "$werror_ok" = 1; then
 	CPPFLAGS_SAVED="$CPPFLAGS"
 	CPPFLAGS=${PYTHON_INCLUDES}
 	CXXFLAGS_SAVED="$CXXFLAGS"
@@ -430,6 +483,7 @@ AC_SUBST(B10_CXXFLAGS)
 AC_SEARCH_LIBS(inet_pton, [nsl])
 AC_SEARCH_LIBS(recvfrom, [socket])
 AC_SEARCH_LIBS(nanosleep, [rt])
+AC_SEARCH_LIBS(dlsym, [dl])
 
 # Checks for header files.
 
@@ -468,6 +522,17 @@ AM_CONDITIONAL(OS_BSD, test $OS_TYPE = BSD)
 AM_COND_IF([OS_BSD], [AC_DEFINE([OS_BSD], [1], [Running on BSD?])])
 AM_CONDITIONAL(OS_SOLARIS, test $OS_TYPE = Solaris)
 AM_COND_IF([OS_SOLARIS], [AC_DEFINE([OS_SOLARIS], [1], [Running on Solaris?])])
+
+# Deal with variants
+AM_CONDITIONAL(OS_FREEBSD, test $system = FreeBSD)
+AM_COND_IF([OS_FREEBSD], [AC_DEFINE([OS_FREEBSD], [1], [Running on FreeBSD?])])
+AM_CONDITIONAL(OS_NETBSD, test $system = NetBSD)
+AM_COND_IF([OS_NETBSD], [AC_DEFINE([OS_NETBSD], [1], [Running on NetBSD?])])
+AM_CONDITIONAL(OS_OPENBSD, test $system = OpenBSD)
+AM_COND_IF([OS_OPENBSD], [AC_DEFINE([OS_OPENBSD], [1], [Running on OpenBSD?])])
+AM_CONDITIONAL(OS_OSX, test $system = Darwin)
+AM_COND_IF([OS_OSX], [AC_DEFINE([OS_OSX], [1], [Running on OSX?])])
+
 
 AC_MSG_CHECKING(for sa_len in struct sockaddr)
 AC_TRY_COMPILE([
@@ -705,6 +770,21 @@ then
             BOTAN_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${BOTAN_INCLUDES}"
     fi
 fi
+
+dnl Determine the Botan version
+AC_MSG_CHECKING([Botan version])
+cat > conftest.cpp << EOF
+#include <botan/version.h>
+AUTOCONF_BOTAN_VERSION=BOTAN_VERSION_MAJOR . BOTAN_VERSION_MINOR . BOTAN_VERSION_PATCH
+EOF
+
+BOTAN_VERSION=`$CPP $CPPFLAGS $BOTAN_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+if test -z "$BOTAN_VERSION"; then
+  BOTAN_VERSION="unknown"
+fi
+$RM -f conftest.cpp
+AC_MSG_RESULT([$BOTAN_VERSION])
+
 # botan-config script (and the way we call pkg-config) returns -L and -l
 # as one string, but we need them in separate values
 BOTAN_LDFLAGS=
@@ -742,7 +822,24 @@ CPPFLAGS_SAVED=$CPPFLAGS
 CPPFLAGS="$BOTAN_INCLUDES $CPPFLAGS"
 LIBS_SAVED="$LIBS"
 LIBS="$LIBS $BOTAN_LIBS"
-AC_CHECK_HEADERS([botan/botan.h],,AC_MSG_ERROR([Missing required header files.]))
+
+# ac_header_preproc is an autoconf symbol (undocumented but stable) that
+# is set if the pre-processor phase passes. Thus by adding a custom
+# failure handler we can detect the difference between a header not existing
+# (or not even passing the pre-processor phase) and a header file resulting
+# in compilation failures.
+AC_CHECK_HEADERS([botan/botan.h],,[
+	if test "x$ac_header_preproc" = "xyes"; then
+		AC_MSG_ERROR([
+botan/botan.h was found but is unusable. The most common cause of this problem
+is attempting to use an updated C++ compiler with older C++ libraries, such as
+the version of Botan that comes with your distribution. If you have updated
+your C++ compiler we highly recommend that you use support libraries such as
+Boost and Botan that were compiled with the same compiler version.])
+	else
+		AC_MSG_ERROR([Missing required header files.])
+	fi]
+)
 AC_LINK_IFELSE(
         [AC_LANG_PROGRAM([#include <botan/botan.h>
                           #include <botan/hash.h>
@@ -784,6 +881,7 @@ if test "$MYSQL_CONFIG" != "" ; then
 
     MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
     MYSQL_LIBS=`$MYSQL_CONFIG --libs`
+    MYSQL_VERSION=`$MYSQL_CONFIG --version`
 
     AC_SUBST(MYSQL_CPPFLAGS)
     AC_SUBST(MYSQL_LIBS)
@@ -862,6 +960,20 @@ AC_LINK_IFELSE(
          AC_MSG_ERROR([Needs log4cplus library])]
 )
 
+dnl Determine the log4cplus version, used mainly for config.report.
+AC_MSG_CHECKING([log4cplus version])
+cat > conftest.cpp << EOF
+#include <log4cplus/version.h>
+AUTOCONF_LOG4CPLUS_VERSION=LOG4CPLUS_VERSION_STR
+EOF
+
+LOG4CPLUS_VERSION=`$CPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
+if test -z "$LOG4CPLUS_VERSION"; then
+  LOG4CPLUS_VERSION="unknown"
+fi
+$RM -f conftest.cpp
+AC_MSG_RESULT([$LOG4CPLUS_VERSION])
+
 CPPFLAGS=$CPPFLAGS_SAVED
 LIBS=$LIBS_SAVED
 
@@ -871,8 +983,12 @@ LIBS=$LIBS_SAVED
 AX_BOOST_FOR_BIND10
 # Boost offset_ptr is required in one library and not optional right now, so
 # we unconditionally fail here if it doesn't work.
-if test "$BOOST_OFFSET_PTR_FAILURE" = "yes"; then
+if test "$BOOST_OFFSET_PTR_WOULDFAIL" = "yes" -a "$werror_ok" = 1; then
     AC_MSG_ERROR([Failed to compile a required header file.  Try upgrading Boost to 1.44 or higher (when using clang++) or specifying --without-werror.  See the ChangeLog entry for Trac no. 2147 for more details.])
+fi
+
+if test "$BOOST_STATIC_ASSERT_WOULDFAIL" = "yes" -a X"$werror_ok" = X1; then
+    AC_MSG_ERROR([Failed to use Boost static assertions. Try upgrading Boost to 1.54 or higher (when using GCC 4.8) or specifying --without-werror.  See trac ticket no. 3039 for more details.])
 fi
 
 # There's a known bug in FreeBSD ports for Boost that would trigger a false
@@ -881,6 +997,19 @@ fi
 if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$werror_ok" = X1 -a $CLANGPP = "no"; then
     AC_MSG_ERROR([Failed to compile a required header file.  If you are using FreeBSD and Boost installed via ports, retry with specifying --without-werror.  See the ChangeLog entry for Trac no. 1991 for more details.])
 fi
+
+build_experimental_resolver=no
+AC_ARG_ENABLE(experimental-resolver,
+  [AC_HELP_STRING([--enable-experimental-resolver],
+  [enable building of the experimental resolver [default=no]])],
+  [build_experimental_resolver=$enableval])
+AM_CONDITIONAL([BUILD_EXPERIMENTAL_RESOLVER], [test "$build_experimental_resolver" = "yes"])
+if test "$build_experimental_resolver" = "yes"; then
+   BUILD_EXPERIMENTAL_RESOLVER=yes
+else
+   BUILD_EXPERIMENTAL_RESOLVER=no
+fi
+AC_SUBST(BUILD_EXPERIMENTAL_RESOLVER)
 
 use_shared_memory=yes
 AC_ARG_WITH(shared-memory,
@@ -891,7 +1020,21 @@ if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes"; th
     AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it by rerunning this script with --without-shared-memory; using a different compiler or a different version of Boost may also help.])
 fi
 AM_CONDITIONAL([USE_SHARED_MEMORY], [test x$use_shared_memory = xyes])
+if test "x$use_shared_memory" = "xyes"; then
+    AC_DEFINE(USE_SHARED_MEMORY, 1, [Define to 1 if shared memory support is enabled])
+fi
 AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
+
+if test "$BOOST_OFFSET_PTR_OLD" = "yes" -a "$use_shared_memory" = "yes" ; then
+    AC_MSG_ERROR([You're trying to compile against boost older than 1.48 with
+shared memory. Older versions of boost have a bug which causes segfaults in
+offset_ptr implementation when compiled by GCC with optimisations enabled.
+See ticket no. 3025 for details.
+
+Either update boost to newer version or use --without-shared-memory.
+Note that most users likely don't need shared memory support.
+])
+fi
 
 # Add some default CPP flags needed for Boost, identified by the AX macro.
 CPPFLAGS="$CPPFLAGS $CPPFLAGS_BOOST_THREADCONF"
@@ -910,6 +1053,7 @@ AC_SUBST(MULTITHREADING_FLAG)
 GTEST_LDFLAGS=
 GTEST_LDADD=
 DISTCHECK_GTEST_CONFIGURE_FLAG=
+GTEST_VERSION="unknown"
 
 if test "x$enable_gtest" = "xyes" ; then
 
@@ -965,6 +1109,7 @@ if test "$gtest_path" != "no" ; then
         GTEST_INCLUDES=`${GTEST_CONFIG} --cppflags`
         GTEST_LDFLAGS=`${GTEST_CONFIG} --ldflags`
         GTEST_LDADD=`${GTEST_CONFIG} --libs`
+        GTEST_VERSION=`${GTEST_CONFIG} --version`
         GTEST_FOUND="true"
     else
         AC_MSG_WARN([Unable to locate Google Test gtest-config.])
@@ -1050,6 +1195,8 @@ fi
 AX_SQLITE3_FOR_BIND10
 if test "x$have_sqlite" = "xyes" ; then
   enable_features="$enable_features SQLite3"
+
+  AX_PYTHON_SQLITE3
 fi
 
 #
@@ -1113,6 +1260,11 @@ if test "x$enable_generate_docs" != xno ; then
     fi
     AC_MSG_RESULT(yes)
   fi
+
+  AC_PATH_PROG([ELINKS], [elinks])
+  if test -z "$ELINKS"; then
+    AC_MSG_ERROR("elinks not found; it is required for --enable-generate-docs")
+  fi
 fi
 
 
@@ -1128,6 +1280,14 @@ AC_ARG_ENABLE(logger-checks, [AC_HELP_STRING([--enable-logger-checks],
   [check logger messages [default=no]])], enable_logger_checks=$enableval, enable_logger_checks=no)
 AM_CONDITIONAL(ENABLE_LOGGER_CHECKS, test x$enable_logger_checks != xno)
 AM_COND_IF([ENABLE_LOGGER_CHECKS], [AC_DEFINE([ENABLE_LOGGER_CHECKS], [1], [Check logger messages?])])
+
+# Check for asciidoc
+AC_PATH_PROG(ASCIIDOC, asciidoc, no)
+AM_CONDITIONAL(HAVE_ASCIIDOC, test "x$ASCIIDOC" != "xno")
+
+# Check for plantuml
+AC_PATH_PROG(PLANTUML, plantuml, no)
+AM_CONDITIONAL(HAVE_PLANTUML, test "x$PLANTUML" != "xno")
 
 # Check for valgrind
 AC_PATH_PROG(VALGRIND, valgrind, no)
@@ -1165,264 +1325,305 @@ AC_TRY_LINK(
 AM_CONDITIONAL(HAVE_OPTRESET, test "x$var_optreset_exists" != "xno")
 AM_COND_IF([HAVE_OPTRESET], [AC_DEFINE([HAVE_OPTRESET], [1], [Check for optreset?])])
 
-AC_CONFIG_FILES([Makefile
-                 doc/Makefile
+AC_CONFIG_FILES([compatcheck/Makefile
+                 dns++.pc
+                 doc/design/datasrc/Makefile
+                 doc/design/Makefile
                  doc/guide/Makefile
-                 compatcheck/Makefile
-                 src/Makefile
-                 src/bin/Makefile
+                 doc/Makefile
+                 doc/version.ent
+                 ext/asio/asio/Makefile
+                 ext/asio/Makefile
+                 ext/Makefile
+                 m4macros/Makefile
+                 Makefile
+                 src/bin/auth/auth.spec.pre
+                 src/bin/auth/benchmarks/Makefile
+                 src/bin/auth/gen-statisticsitems.py.pre
+                 src/bin/auth/Makefile
+                 src/bin/auth/spec_config.h.pre
+                 src/bin/auth/tests/Makefile
+                 src/bin/auth/tests/testdata/example-base.zone
+                 src/bin/auth/tests/testdata/example-nsec3.zone
+                 src/bin/auth/tests/testdata/example.zone
+                 src/bin/auth/tests/testdata/Makefile
                  src/bin/bind10/bind10
+                 src/bin/bind10/init.py
                  src/bin/bind10/Makefile
+                 src/bin/bind10/run_bind10.sh
+                 src/bin/bind10/tests/init_test.py
                  src/bin/bind10/tests/Makefile
-                 src/bin/cmdctl/Makefile
-                 src/bin/cmdctl/tests/Makefile
+                 src/bin/bindctl/bindctl_main.py
                  src/bin/bindctl/Makefile
+                 src/bin/bindctl/run_bindctl.sh
+                 src/bin/bindctl/tests/bindctl_test
                  src/bin/bindctl/tests/Makefile
-                 src/bin/cfgmgr/Makefile
+                 src/bin/cfgmgr/b10-cfgmgr.py
                  src/bin/cfgmgr/local_plugins/Makefile
+                 src/bin/cfgmgr/Makefile
+                 src/bin/cfgmgr/plugins/datasrc.spec.pre
                  src/bin/cfgmgr/plugins/Makefile
                  src/bin/cfgmgr/plugins/tests/Makefile
+                 src/bin/cfgmgr/tests/b10-cfgmgr_test.py
                  src/bin/cfgmgr/tests/Makefile
+                 src/bin/cmdctl/cmdctl.py
+                 src/bin/cmdctl/cmdctl.spec.pre
+                 src/bin/cmdctl/Makefile
+                 src/bin/cmdctl/run_b10-cmdctl.sh
+                 src/bin/cmdctl/tests/cmdctl_test
+                 src/bin/cmdctl/tests/Makefile
+                 src/bin/d2/Makefile
+                 src/bin/d2/spec_config.h.pre
+                 src/bin/d2/tests/Makefile
+                 src/bin/d2/tests/test_data_files_config.h
+                 src/bin/dbutil/dbutil.py
                  src/bin/dbutil/Makefile
+                 src/bin/dbutil/run_dbutil.sh
+                 src/bin/dbutil/tests/dbutil_test.sh
                  src/bin/dbutil/tests/Makefile
                  src/bin/dbutil/tests/testdata/Makefile
-                 src/bin/loadzone/Makefile
-                 src/bin/loadzone/tests/Makefile
-                 src/bin/loadzone/tests/correct/Makefile
-                 src/bin/msgq/Makefile
-                 src/bin/msgq/tests/Makefile
-                 src/bin/auth/Makefile
-                 src/bin/auth/tests/Makefile
-                 src/bin/auth/tests/testdata/Makefile
-                 src/bin/auth/benchmarks/Makefile
+                 src/bin/ddns/ddns.py
                  src/bin/ddns/Makefile
                  src/bin/ddns/tests/Makefile
-                 src/bin/dhcp6/Makefile
-                 src/bin/dhcp6/tests/Makefile
                  src/bin/dhcp4/Makefile
+                 src/bin/dhcp4/spec_config.h.pre
                  src/bin/dhcp4/tests/Makefile
-                 src/bin/resolver/Makefile
-                 src/bin/resolver/tests/Makefile
+                 src/bin/dhcp4/tests/marker_file.h
+                 src/bin/dhcp4/tests/test_data_files_config.h
+                 src/bin/dhcp4/tests/test_libraries.h
+                 src/bin/dhcp6/Makefile
+                 src/bin/dhcp6/spec_config.h.pre
+                 src/bin/dhcp6/tests/Makefile
+                 src/bin/dhcp6/tests/marker_file.h
+                 src/bin/dhcp6/tests/test_data_files_config.h
+                 src/bin/dhcp6/tests/test_libraries.h
+                 src/bin/loadzone/loadzone.py
+                 src/bin/loadzone/Makefile
+                 src/bin/loadzone/run_loadzone.sh
+                 src/bin/loadzone/tests/correct/correct_test.sh
+                 src/bin/loadzone/tests/correct/Makefile
+                 src/bin/loadzone/tests/Makefile
+                 src/bin/Makefile
+                 src/bin/memmgr/Makefile
+                 src/bin/memmgr/memmgr.py
+                 src/bin/memmgr/memmgr.spec.pre
+                 src/bin/memmgr/tests/Makefile
+                 src/bin/msgq/Makefile
+                 src/bin/msgq/msgq.py
+                 src/bin/msgq/run_msgq.sh
+                 src/bin/msgq/tests/Makefile
                  src/bin/resolver/bench/Makefile
-                 src/bin/sysinfo/Makefile
+                 src/bin/resolver/Makefile
+                 src/bin/resolver/resolver.spec.pre
+                 src/bin/resolver/spec_config.h.pre
+                 src/bin/resolver/tests/Makefile
                  src/bin/sockcreator/Makefile
                  src/bin/sockcreator/tests/Makefile
-                 src/bin/xfrin/Makefile
-                 src/bin/xfrin/tests/Makefile
-                 src/bin/xfrin/tests/testdata/Makefile
-                 src/bin/xfrout/Makefile
-                 src/bin/xfrout/tests/Makefile
-                 src/bin/zonemgr/Makefile
-                 src/bin/zonemgr/tests/Makefile
                  src/bin/stats/Makefile
+                 src/bin/stats/stats_httpd.py
+                 src/bin/stats/stats.py
                  src/bin/stats/tests/Makefile
                  src/bin/stats/tests/testdata/Makefile
-                 src/bin/usermgr/Makefile
-                 src/bin/usermgr/tests/Makefile
+                 src/bin/sysinfo/Makefile
+                 src/bin/sysinfo/run_sysinfo.sh
+                 src/bin/sysinfo/sysinfo.py
                  src/bin/tests/Makefile
-                 src/lib/Makefile
-                 src/lib/asiolink/Makefile
-                 src/lib/asiolink/tests/Makefile
+                 src/bin/tests/process_rename_test.py
+                 src/bin/usermgr/b10-cmdctl-usermgr.py
+                 src/bin/usermgr/Makefile
+                 src/bin/usermgr/run_b10-cmdctl-usermgr.sh
+                 src/bin/usermgr/tests/Makefile
+                 src/bin/xfrin/Makefile
+                 src/bin/xfrin/run_b10-xfrin.sh
+                 src/bin/xfrin/tests/Makefile
+                 src/bin/xfrin/tests/testdata/Makefile
+                 src/bin/xfrin/tests/xfrin_test
+                 src/bin/xfrin/xfrin.py
+                 src/bin/xfrout/Makefile
+                 src/bin/xfrout/run_b10-xfrout.sh
+                 src/bin/xfrout/tests/Makefile
+                 src/bin/xfrout/tests/xfrout_test
+                 src/bin/xfrout/tests/xfrout_test.py
+                 src/bin/xfrout/xfrout.py
+                 src/bin/xfrout/xfrout.spec.pre
+                 src/bin/zonemgr/Makefile
+                 src/bin/zonemgr/run_b10-zonemgr.sh
+                 src/bin/zonemgr/tests/Makefile
+                 src/bin/zonemgr/tests/zonemgr_test
+                 src/bin/zonemgr/zonemgr.py
+                 src/bin/zonemgr/zonemgr.spec.pre
+                 src/hooks/dhcp/Makefile
+                 src/hooks/dhcp/user_chk/Makefile
+                 src/hooks/dhcp/user_chk/tests/Makefile
+                 src/hooks/dhcp/user_chk/tests/test_data_files_config.h
+                 src/hooks/Makefile
+                 src/lib/acl/Makefile
+                 src/lib/acl/tests/Makefile
                  src/lib/asiodns/Makefile
                  src/lib/asiodns/tests/Makefile
-                 src/lib/bench/Makefile
+                 src/lib/asiolink/Makefile
+                 src/lib/asiolink/tests/Makefile
                  src/lib/bench/example/Makefile
+                 src/lib/bench/Makefile
                  src/lib/bench/tests/Makefile
+                 src/lib/cache/Makefile
+                 src/lib/cache/tests/Makefile
                  src/lib/cc/Makefile
+                 src/lib/cc/session_config.h.pre
                  src/lib/cc/tests/Makefile
-                 src/lib/python/Makefile
-                 src/lib/python/isc/Makefile
-                 src/lib/python/isc/acl/Makefile
-                 src/lib/python/isc/acl/tests/Makefile
-                 src/lib/python/isc/util/Makefile
-                 src/lib/python/isc/util/tests/Makefile
-                 src/lib/python/isc/util/cio/Makefile
-                 src/lib/python/isc/util/cio/tests/Makefile
-                 src/lib/python/isc/datasrc/Makefile
-                 src/lib/python/isc/datasrc/tests/Makefile
-                 src/lib/python/isc/dns/Makefile
-                 src/lib/python/isc/cc/Makefile
-                 src/lib/python/isc/cc/cc_generated/Makefile
-                 src/lib/python/isc/cc/tests/Makefile
-                 src/lib/python/isc/config/Makefile
-                 src/lib/python/isc/config/tests/Makefile
-                 src/lib/python/isc/log/Makefile
-                 src/lib/python/isc/log/tests/Makefile
-                 src/lib/python/isc/log_messages/Makefile
-                 src/lib/python/isc/log_messages/work/Makefile
-                 src/lib/python/isc/net/Makefile
-                 src/lib/python/isc/net/tests/Makefile
-                 src/lib/python/isc/notify/Makefile
-                 src/lib/python/isc/notify/tests/Makefile
-                 src/lib/python/isc/testutils/Makefile
-                 src/lib/python/isc/bind10/Makefile
-                 src/lib/python/isc/bind10/tests/Makefile
-                 src/lib/python/isc/ddns/Makefile
-                 src/lib/python/isc/ddns/tests/Makefile
-                 src/lib/python/isc/xfrin/Makefile
-                 src/lib/python/isc/xfrin/tests/Makefile
-                 src/lib/python/isc/server_common/Makefile
-                 src/lib/python/isc/server_common/tests/Makefile
-                 src/lib/python/isc/sysinfo/Makefile
-                 src/lib/python/isc/sysinfo/tests/Makefile
-                 src/lib/python/isc/statistics/Makefile
-                 src/lib/python/isc/statistics/tests/Makefile
+                 src/lib/cc/tests/session_unittests_config.h
                  src/lib/config/Makefile
+                 src/lib/config/tests/data_def_unittests_config.h
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/testdata/Makefile
                  src/lib/cryptolink/Makefile
                  src/lib/cryptolink/tests/Makefile
-                 src/lib/dns/Makefile
-                 src/lib/dns/tests/Makefile
-                 src/lib/dns/tests/testdata/Makefile
-                 src/lib/dns/python/Makefile
-                 src/lib/dns/python/tests/Makefile
-                 src/lib/dns/benchmarks/Makefile
-                 src/lib/dhcp/Makefile
-                 src/lib/dhcp/tests/Makefile
-                 src/lib/dhcpsrv/Makefile
-                 src/lib/dhcpsrv/tests/Makefile
-                 src/lib/exceptions/Makefile
-                 src/lib/exceptions/tests/Makefile
+                 src/lib/datasrc/datasrc_config.h.pre
                  src/lib/datasrc/Makefile
-                 src/lib/datasrc/memory/Makefile
                  src/lib/datasrc/memory/benchmarks/Makefile
+                 src/lib/datasrc/memory/Makefile
                  src/lib/datasrc/tests/Makefile
-                 src/lib/datasrc/tests/testdata/Makefile
                  src/lib/datasrc/tests/memory/Makefile
                  src/lib/datasrc/tests/memory/testdata/Makefile
-                 src/lib/xfr/Makefile
-                 src/lib/xfr/tests/Makefile
-                 src/lib/log/Makefile
+                 src/lib/datasrc/tests/testdata/Makefile
+                 src/lib/dhcp_ddns/Makefile
+                 src/lib/dhcp_ddns/tests/Makefile
+                 src/lib/dhcp/Makefile
+                 src/lib/dhcpsrv/Makefile
+                 src/lib/dhcpsrv/tests/Makefile
+                 src/lib/dhcpsrv/tests/test_libraries.h
+                 src/lib/dhcp/tests/Makefile
+                 src/lib/dns/benchmarks/Makefile
+                 src/lib/dns/gen-rdatacode.py
+                 src/lib/dns/Makefile
+                 src/lib/dns/python/Makefile
+                 src/lib/dns/python/pydnspp_config.h
+                 src/lib/dns/python/tests/Makefile
+                 src/lib/dns/tests/Makefile
+                 src/lib/dns/tests/testdata/Makefile
+                 src/lib/exceptions/Makefile
+                 src/lib/exceptions/tests/Makefile
+                 src/lib/hooks/Makefile
+                 src/lib/hooks/tests/Makefile
+                 src/lib/hooks/tests/marker_file.h
+                 src/lib/hooks/tests/test_libraries.h
                  src/lib/log/compiler/Makefile
+                 src/lib/log/interprocess/Makefile
+                 src/lib/log/interprocess/tests/Makefile
+                 src/lib/log/Makefile
+                 src/lib/log/tests/buffer_logger_test.sh
+                 src/lib/log/tests/console_test.sh
+                 src/lib/log/tests/destination_test.sh
+                 src/lib/log/tests/init_logger_test.sh
+                 src/lib/log/tests/local_file_test.sh
+                 src/lib/log/tests/logger_lock_test.sh
                  src/lib/log/tests/Makefile
-                 src/lib/resolve/Makefile
-                 src/lib/resolve/tests/Makefile
-                 src/lib/testutils/Makefile
-                 src/lib/testutils/testdata/Makefile
+                 src/lib/log/tests/severity_test.sh
+                 src/lib/log/tests/tempdir.h
+                 src/lib/Makefile
                  src/lib/nsas/Makefile
                  src/lib/nsas/tests/Makefile
-                 src/lib/cache/Makefile
-                 src/lib/cache/tests/Makefile
+                 src/lib/python/bind10_config.py
+                 src/lib/python/isc/acl/Makefile
+                 src/lib/python/isc/acl/tests/Makefile
+                 src/lib/python/isc/bind10/Makefile
+                 src/lib/python/isc/bind10/tests/Makefile
+                 src/lib/python/isc/cc/cc_generated/Makefile
+                 src/lib/python/isc/cc/Makefile
+                 src/lib/python/isc/cc/tests/cc_test
+                 src/lib/python/isc/cc/tests/Makefile
+                 src/lib/python/isc/config/Makefile
+                 src/lib/python/isc/config/tests/config_test
+                 src/lib/python/isc/config/tests/Makefile
+                 src/lib/python/isc/datasrc/Makefile
+                 src/lib/python/isc/datasrc/tests/Makefile
+                 src/lib/python/isc/datasrc/tests/testdata/Makefile
+                 src/lib/python/isc/ddns/Makefile
+                 src/lib/python/isc/ddns/tests/Makefile
+                 src/lib/python/isc/dns/Makefile
+                 src/lib/python/isc/log/Makefile
+                 src/lib/python/isc/log_messages/Makefile
+                 src/lib/python/isc/log_messages/work/__init__.py
+                 src/lib/python/isc/log_messages/work/Makefile
+                 src/lib/python/isc/log/tests/log_console.py
+                 src/lib/python/isc/log/tests/Makefile
+                 src/lib/python/isc/Makefile
+                 src/lib/python/isc/memmgr/Makefile
+                 src/lib/python/isc/memmgr/tests/Makefile
+                 src/lib/python/isc/memmgr/tests/testdata/Makefile
+                 src/lib/python/isc/net/Makefile
+                 src/lib/python/isc/net/tests/Makefile
+                 src/lib/python/isc/notify/Makefile
+                 src/lib/python/isc/notify/tests/Makefile
+                 src/lib/python/isc/notify/tests/notify_out_test
+                 src/lib/python/isc/server_common/Makefile
+                 src/lib/python/isc/server_common/tests/Makefile
+                 src/lib/python/isc/statistics/Makefile
+                 src/lib/python/isc/statistics/tests/Makefile
+                 src/lib/python/isc/sysinfo/Makefile
+                 src/lib/python/isc/sysinfo/tests/Makefile
+                 src/lib/python/isc/testutils/Makefile
+                 src/lib/python/isc/util/cio/Makefile
+                 src/lib/python/isc/util/cio/tests/Makefile
+                 src/lib/python/isc/util/Makefile
+                 src/lib/python/isc/util/tests/Makefile
+                 src/lib/python/isc/xfrin/Makefile
+                 src/lib/python/isc/xfrin/tests/Makefile
+                 src/lib/python/Makefile
+                 src/lib/resolve/Makefile
+                 src/lib/resolve/tests/Makefile
                  src/lib/server_common/Makefile
+                 src/lib/server_common/tests/data_path.h
                  src/lib/server_common/tests/Makefile
-                 src/lib/util/Makefile
+                 src/lib/statistics/Makefile
+                 src/lib/statistics/tests/Makefile
+                 src/lib/testutils/Makefile
+                 src/lib/testutils/testdata/Makefile
                  src/lib/util/io/Makefile
+                 src/lib/util/Makefile
+                 src/lib/util/python/doxygen2pydoc.py
+                 src/lib/util/python/gen_wiredata.py
+                 src/lib/util/python/Makefile
+                 src/lib/util/python/mkpywrapper.py
+                 src/lib/util/pyunittests/Makefile
+                 src/lib/util/tests/Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
-                 src/lib/util/python/Makefile
-                 src/lib/util/pyunittests/Makefile
-                 src/lib/util/tests/Makefile
-                 src/lib/acl/Makefile
-                 src/lib/acl/tests/Makefile
-                 src/lib/statistics/Makefile
-                 src/lib/statistics/tests/Makefile
+                 src/lib/xfr/Makefile
+                 src/lib/xfr/tests/Makefile
+                 src/Makefile
+                 tests/lettuce/Makefile
+                 tests/lettuce/setup_intree_bind10.sh
                  tests/Makefile
-                 tests/tools/Makefile
                  tests/tools/badpacket/Makefile
                  tests/tools/badpacket/tests/Makefile
+                 tests/tools/Makefile
                  tests/tools/perfdhcp/Makefile
                  tests/tools/perfdhcp/tests/Makefile
                  tests/tools/perfdhcp/tests/testdata/Makefile
-                 m4macros/Makefile
-                 dns++.pc
-               ])
-AC_OUTPUT([doc/version.ent
-           src/bin/cfgmgr/b10-cfgmgr.py
-           src/bin/cfgmgr/tests/b10-cfgmgr_test.py
-           src/bin/cfgmgr/plugins/datasrc.spec.pre
-           src/bin/cmdctl/cmdctl.py
-           src/bin/cmdctl/run_b10-cmdctl.sh
-           src/bin/cmdctl/tests/cmdctl_test
-           src/bin/cmdctl/cmdctl.spec.pre
-           src/bin/dbutil/dbutil.py
-           src/bin/dbutil/run_dbutil.sh
-           src/bin/dbutil/tests/dbutil_test.sh
-           src/bin/ddns/ddns.py
-           src/bin/xfrin/tests/xfrin_test
-           src/bin/xfrin/xfrin.py
-           src/bin/xfrin/run_b10-xfrin.sh
-           src/bin/xfrout/xfrout.py
-           src/bin/xfrout/xfrout.spec.pre
-           src/bin/xfrout/tests/xfrout_test
-           src/bin/xfrout/tests/xfrout_test.py
-           src/bin/xfrout/run_b10-xfrout.sh
-           src/bin/resolver/resolver.spec.pre
-           src/bin/resolver/spec_config.h.pre
-           src/bin/zonemgr/zonemgr.py
-           src/bin/zonemgr/zonemgr.spec.pre
-           src/bin/zonemgr/tests/zonemgr_test
-           src/bin/zonemgr/run_b10-zonemgr.sh
-           src/bin/sysinfo/sysinfo.py
-           src/bin/sysinfo/run_sysinfo.sh
-           src/bin/stats/stats.py
-           src/bin/stats/stats_httpd.py
-           src/bin/bind10/init.py
-           src/bin/bind10/run_bind10.sh
-           src/bin/bind10/tests/init_test.py
-           src/bin/bindctl/run_bindctl.sh
-           src/bin/bindctl/bindctl_main.py
-           src/bin/bindctl/tests/bindctl_test
-           src/bin/loadzone/run_loadzone.sh
-           src/bin/loadzone/tests/correct/correct_test.sh
-           src/bin/loadzone/loadzone.py
-           src/bin/usermgr/run_b10-cmdctl-usermgr.sh
-           src/bin/usermgr/b10-cmdctl-usermgr.py
-           src/bin/msgq/msgq.py
-           src/bin/msgq/run_msgq.sh
-           src/bin/auth/auth.spec.pre
-           src/bin/auth/spec_config.h.pre
-           src/bin/auth/tests/testdata/example.zone
-           src/bin/auth/tests/testdata/example-base.zone
-           src/bin/auth/tests/testdata/example-nsec3.zone
-           src/bin/auth/gen-statisticsitems.py.pre
-           src/bin/dhcp4/spec_config.h.pre
-           src/bin/dhcp6/spec_config.h.pre
-           src/bin/tests/process_rename_test.py
-           src/lib/config/tests/data_def_unittests_config.h
-           src/lib/python/isc/config/tests/config_test
-           src/lib/python/isc/cc/tests/cc_test
-           src/lib/python/isc/notify/tests/notify_out_test
-           src/lib/python/isc/log/tests/log_console.py
-           src/lib/python/isc/log_messages/work/__init__.py
-           src/lib/dns/gen-rdatacode.py
-           src/lib/python/bind10_config.py
-           src/lib/cc/session_config.h.pre
-           src/lib/cc/tests/session_unittests_config.h
-           src/lib/datasrc/datasrc_config.h.pre
-           src/lib/log/tests/console_test.sh
-           src/lib/log/tests/destination_test.sh
-           src/lib/log/tests/init_logger_test.sh
-           src/lib/log/tests/buffer_logger_test.sh
-           src/lib/log/tests/local_file_test.sh
-           src/lib/log/tests/logger_lock_test.sh
-           src/lib/log/tests/severity_test.sh
-           src/lib/log/tests/tempdir.h
-           src/lib/util/python/mkpywrapper.py
-           src/lib/util/python/gen_wiredata.py
-           src/lib/server_common/tests/data_path.h
-           tests/lettuce/setup_intree_bind10.sh
-          ], [
-           chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
-           chmod +x src/bin/xfrin/run_b10-xfrin.sh
-           chmod +x src/bin/xfrout/run_b10-xfrout.sh
-           chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
+])
+
+ AC_CONFIG_COMMANDS([permissions], [
            chmod +x src/bin/bind10/bind10
            chmod +x src/bin/bind10/run_bind10.sh
+           chmod +x src/bin/bindctl/run_bindctl.sh
+           chmod +x src/bin/bindctl/tests/bindctl_test
+           chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
            chmod +x src/bin/dbutil/run_dbutil.sh
            chmod +x src/bin/dbutil/tests/dbutil_test.sh
-           chmod +x src/bin/xfrin/tests/xfrin_test
-           chmod +x src/bin/xfrout/tests/xfrout_test
-           chmod +x src/bin/zonemgr/tests/zonemgr_test
-           chmod +x src/bin/bindctl/tests/bindctl_test
-           chmod +x src/bin/bindctl/run_bindctl.sh
            chmod +x src/bin/loadzone/run_loadzone.sh
            chmod +x src/bin/loadzone/tests/correct/correct_test.sh
+           chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/sysinfo/run_sysinfo.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
-           chmod +x src/bin/msgq/run_msgq.sh
+           chmod +x src/bin/xfrin/run_b10-xfrin.sh
+           chmod +x src/bin/xfrin/tests/xfrin_test
+           chmod +x src/bin/xfrout/run_b10-xfrout.sh
+           chmod +x src/bin/xfrout/tests/xfrout_test
+           chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
+           chmod +x src/bin/zonemgr/tests/zonemgr_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
@@ -1430,10 +1631,12 @@ AC_OUTPUT([doc/version.ent
            chmod +x src/lib/log/tests/local_file_test.sh
            chmod +x src/lib/log/tests/logger_lock_test.sh
            chmod +x src/lib/log/tests/severity_test.sh
-           chmod +x src/lib/util/python/mkpywrapper.py
-           chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/python/isc/log/tests/log_console.py
-          ])
+           chmod +x src/lib/util/python/doxygen2pydoc.py
+           chmod +x src/lib/util/python/gen_wiredata.py
+           chmod +x src/lib/util/python/mkpywrapper.py
+])
+
 AC_OUTPUT
 
 dnl Print the results
@@ -1445,39 +1648,69 @@ cat > config.report << END
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 Package:
-  Name:          $PACKAGE_NAME
-  Version:       $PACKAGE_VERSION
+  Name:            ${PACKAGE_NAME}
+  Version:         ${PACKAGE_VERSION}
+  OS Family:       ${OS_TYPE}
+  Using GNU sed:   ${GNU_SED}
 
-C++ Compiler:    $CXX
+C++ Compiler:
+  CXX:             ${CXX}
+  CXX_VERSION:     ${CXX_VERSION}
+  DEFS:            ${DEFS}
+  CPPFLAGS:        ${CPPFLAGS}
+  CXXFLAGS:        ${CXXFLAGS}
+  LDFLAGS:         ${LDFLAGS}
+  B10_CXXFLAGS:    ${B10_CXXFLAGS}
 
-Flags:
-  DEFS:          $DEFS
-  CPPFLAGS:      $CPPFLAGS
-  CXXFLAGS:      $CXXFLAGS
-  LDFLAGS:       $LDFLAGS
-  B10_CXXFLAGS:  $B10_CXXFLAGS
-  OS Family:     $OS_TYPE
-dnl includes too
-  Python:        ${PYTHON_INCLUDES}
-                 ${PYTHON_CXXFLAGS}
-                 ${PYTHON_LDFLAGS}
-                 ${PYTHON_LIB}
-  Boost:         ${BOOST_INCLUDES}
-  Botan:         ${BOTAN_INCLUDES}
-                 ${BOTAN_LDFLAGS}
-                 ${BOTAN_LIBS}
-  Log4cplus:     ${LOG4CPLUS_INCLUDES}
-                 ${LOG4CPLUS_LIBS}
-  SQLite:        $SQLITE_CFLAGS
-                 $SQLITE_LIBS
+Python:
+  PYTHON_VERSION:  ${PYTHON_VERSION}
+  PYTHON_INCLUDES: ${PYTHON_INCLUDES}
+  PYTHON_CXXFLAGS: ${PYTHON_CXXFLAGS}
+  PYTHON_LDFLAGS:  ${PYTHON_LDFLAGS}
+  PYTHON_LIB:      ${PYTHON_LIB}
+
+Boost:
+  BOOST_VERSION:   ${BOOST_VERSION}
+  BOOST_INCLUDES:  ${BOOST_INCLUDES}
+
+Botan:
+  BOTAN_VERSION:   ${BOTAN_VERSION}
+  BOTAN_INCLUDES:  ${BOTAN_INCLUDES}
+  BOTAN_LDFLAGS:   ${BOTAN_LDFLAGS}
+  BOTAN_LIBS:      ${BOTAN_LIBS}
+
+Log4cplus:
+  LOG4CPLUS_VERSION: ${LOG4CPLUS_VERSION}
+  LOG4CPLUS_INCLUDES: ${LOG4CPLUS_INCLUDES}
+  LOG4CPLUS_LIBS:  ${LOG4CPLUS_LIBS}
+
+SQLite:
+  SQLITE_VERSION:  ${SQLITE_VERSION}
+  SQLITE_CFLAGS:   ${SQLITE_CFLAGS}
+  SQLITE_LIBS:     ${SQLITE_LIBS}
 END
 
 # Avoid confusion on DNS/DHCP and only mention MySQL if it
 # were specified on the command line.
 if test "$MYSQL_CPPFLAGS" != "" ; then
 cat >> config.report << END
-  MySQL:         $MYSQL_CPPFLAGS
-                 $MYSQL_LIBS
+
+MySQL:
+  MYSQL_VERSION:   ${MYSQL_VERSION}
+  MYSQL_CPPFLAGS:  ${MYSQL_CPPFLAGS}
+  MYSQL_LIBS:      ${MYSQL_LIBS}
+END
+fi
+
+if test "$enable_gtest" != "no"; then
+cat >> config.report << END
+
+GTest:
+  GTEST_VERSION:   ${GTEST_VERSION}
+  GTEST_INCLUDES:  ${GTEST_INCLUDES}
+  GTEST_LDFLAGS:   ${GTEST_LDFLAGS}
+  GTEST_LDADD:     ${GTEST_LDADD}
+  GTEST_SOURCE:    ${GTEST_SOURCE}
 END
 fi
 
@@ -1500,6 +1733,12 @@ END
 cat config.report
 cat <<EOF
 
-  Now you can type "make" to build BIND 10
+  Now you can type "make" to build BIND 10. Note that if you intend to
+  run "make check", you must run "make" first as some files need to be
+  generated by "make" before "make check" can be run.
+
+  When running "make install" do not use any form of parallel or job
+  server options (such as GNU make's -j option). Doing so may cause
+  errors.
 
 EOF

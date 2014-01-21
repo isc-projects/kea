@@ -1,4 +1,4 @@
-# Copyright (C) 2012  Internet Systems Consortium.
+# Copyright (C) 2012-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -17,52 +17,34 @@
 
 This module handles the statistics counters for BIND 10 modules.  For
 using the module `counter.py`, first a counters object should be created
-in each module (like b10-xfrin or b10-xfrout) after importing this
-module. A spec file can be specified as an argument when creating the
-counters object:
+in each module like b10-foo after importing this module. A spec file can
+be specified as an argument when creating the counters object:
 
   from isc.statistics import Counters
   self.counters = Counters("/path/to/foo.spec")
 
 The first argument of Counters() can be specified, which is the location
-of the specification file (like src/bin/xfrout/xfrout.spec). If Counters
-is constructed this way, statistics counters can be accessed from each
-module. For example, in case that the item `xfrreqdone` is defined in
-statistics_spec in xfrout.spec, the following methods are
-callable. Since these methods require the string of the zone name in the
-first argument, if we have the following code in b10-xfrout:
+of the specification file. If Counters is constructed this way,
+statistics counters can be accessed from each module. For example, in
+case that the item `counter1` is defined in statistics_spec in foo.spec,
+the following methods are callable.
 
-  self.counters.inc('zones', zone_name, 'xfrreqdone')
+  self.counters.inc('counter1')
 
-then the counter for xfrreqdone corresponding to zone_name is
-incremented. For getting the current number of this counter, we can use
-the following code:
+Then the counter for `counter1` is incremented. For getting the current
+number of this counter, we can use the following code:
 
-  number = self.counters.get('zones', zone_name, 'xfrreqdone')
+  number = self.counters.get('counter1')
 
-then the current count is obtained and set in the variable
+Then the current count is obtained and set in the variable
 `number`. Such a getter method would be mainly used for unit-testing.
-As other example, for the item `axfr_running`, the decrementer method is
-also callable.  This method is used for decrementing a counter.  For the
-item `axfr_running`, an argument like zone name is not required:
+The decrementer method is also callable.  This method is used for
+decrementing a counter as well as inc().
 
-  self.counters.dec('axfr_running')
+  self.counters.dec('counter2')
 
-These methods are effective in other modules. For example, in case that
-this module `counter.py` is once imported in a main module such as
-b10-xfrout, then for the item `notifyoutv4`, the `inc()` method can be
-invoked in another module such as notify_out.py, which is firstly
-imported in the main module.
-
-  self.counters.inc('zones', zone_name, 'notifyoutv4')
-
-In this example this is for incrementing the counter of the item
-`notifyoutv4`. Thus, such statement can be also written in another
-library like isc.notify.notify_out. If this module `counter.py` isn't
-imported in the main module but imported in such a library module as
-isc.notify.notify_out, in this example, empty methods would be invoked,
-which is directly defined in `counter.py`.
-"""
+Some other methods accessible to a counter are provided by this
+module."""
 
 import threading
 import isc.config
@@ -81,19 +63,47 @@ def _add_counter(element, spec, identifier):
         return isc.cc.data.find(element, identifier)
     except isc.cc.data.DataNotFoundError:
         pass
-    # check whether spec and identifier are correct
-    isc.config.find_spec_part(spec, identifier)
-    # examine spec of the top-level item first
-    spec_ = isc.config.find_spec_part(spec, identifier.split('/')[0])
-    if spec_['item_type'] == 'named_set' and \
-            spec_['named_set_item_spec']['item_type'] ==  'map':
-        map_spec = spec_['named_set_item_spec']['map_item_spec']
-        for name in isc.config.spec_name_list(map_spec):
-            spec_ = isc.config.find_spec_part(map_spec, name)
-            id_str = '%s/%s/%s' % \
-                tuple(identifier.split('/')[0:2] + [name])
-            isc.cc.data.set(element, id_str, spec_['item_default'])
-    else:
+
+    # Note: If there is a named_set type item in the statistics spec
+    # and if there are map type items under it, all of items under the
+    # map type item need to be added. For example, we're assuming that
+    # this method is now adding a counter whose identifier is like
+    # dir1/dir2/dir3/counter1. If both of dir1 and dir2 are named_set
+    # types, and if dir3 is a map type, and if counter1, counter2, and
+    # counter3 are defined as items under dir3 by the statistics spec,
+    # this method would add other two counters:
+    #
+    #   dir1/dir2/dir3/counter2
+    #   dir1/dir2/dir3/counter3
+    #
+    # Otherwise this method just adds the only counter
+    # dir1/dir2/dir3/counter1.
+
+    # examine spec from the top-level item and know whether
+    # has_named_set, and check whether spec and identifier are correct
+    pidr = ''
+    has_named_set = False
+    for idr in identifier.split('/'):
+        if len(pidr) > 0:
+            idr = pidr + '/' + idr
+        spec_ = isc.config.find_spec_part(spec, idr)
+        if isc.config.spec_part_is_named_set(spec_):
+            has_named_set = True
+            break
+        pidr = idr
+    # add all elements in map type if has_named_set
+    has_map = False
+    if has_named_set:
+        p_idr = identifier.rsplit('/', 1)[0]
+        p_spec = isc.config.find_spec_part(spec, p_idr)
+        if isc.config.spec_part_is_map(p_spec):
+            has_map = True
+            for name in isc.config.spec_name_list(p_spec['map_item_spec']):
+                idr_ = p_idr + '/' + name
+                spc_ = isc.config.find_spec_part(spec, idr_)
+                isc.cc.data.set(element, idr_, spc_['item_default'])
+    # otherwise add a specific element
+    if not has_map:
         spec_ = isc.config.find_spec_part(spec, identifier)
         isc.cc.data.set(element, identifier, spec_['item_default'])
     return isc.cc.data.find(element, identifier)
@@ -141,54 +151,6 @@ def _concat(*args, sep='/'):
     """
     return sep.join(args)
 
-class _Statistics():
-    """Statistics data set"""
-    # default statistics data
-    _data = {}
-    # default statistics spec used in case the specfile is omitted when
-    # constructing a Counters() object
-    _spec = [
-      {
-        "item_name": "zones",
-        "item_type": "named_set",
-        "item_optional": False,
-        "item_default": {
-          "_SERVER_" : {
-            "notifyoutv4" : 0,
-            "notifyoutv6" : 0
-          }
-        },
-        "item_title": "Zone names",
-        "item_description": "Zone names",
-        "named_set_item_spec": {
-          "item_name": "zonename",
-          "item_type": "map",
-          "item_optional": False,
-          "item_default": {},
-          "item_title": "Zone name",
-          "item_description": "Zone name",
-          "map_item_spec": [
-            {
-              "item_name": "notifyoutv4",
-              "item_type": "integer",
-              "item_optional": False,
-              "item_default": 0,
-              "item_title": "IPv4 notifies",
-              "item_description": "Number of IPv4 notifies per zone name sent out"
-            },
-            {
-              "item_name": "notifyoutv6",
-              "item_type": "integer",
-              "item_optional": False,
-              "item_default": 0,
-              "item_title": "IPv6 notifies",
-              "item_description": "Number of IPv6 notifies per zone name sent out"
-            }
-          ]
-        }
-      }
-    ]
-
 class Counters():
     """A class for holding and manipulating all statistics counters
     for a module.  A Counters object may be created by specifying a spec
@@ -201,87 +163,27 @@ class Counters():
     stop_timer() and get() are useful for this. Saved counters can be
     cleared by the method clear_all(). Manipulating counters and
     timers can be temporarily disabled.  If disabled, counter values are
-    not changed even if methods to update them are invoked.  Including
-    per-zone counters, a list of counters which can be handled in the
-    class are like the following:
+    not changed even if methods to update them are invoked."""
 
-        zones/example.com./notifyoutv4
-        zones/example.com./notifyoutv6
-        zones/example.com./xfrrej
-        zones/example.com./xfrreqdone
-        zones/example.com./soaoutv4
-        zones/example.com./soaoutv6
-        zones/example.com./axfrreqv4
-        zones/example.com./axfrreqv6
-        zones/example.com./ixfrreqv4
-        zones/example.com./ixfrreqv6
-        zones/example.com./xfrsuccess
-        zones/example.com./xfrfail
-        zones/example.com./last_ixfr_duration
-        zones/example.com./last_axfr_duration
-        ixfr_running
-        axfr_running
-        socket/unixdomain/open
-        socket/unixdomain/openfail
-        socket/unixdomain/close
-        socket/unixdomain/bindfail
-        socket/unixdomain/acceptfail
-        socket/unixdomain/accept
-        socket/unixdomain/senderr
-        socket/unixdomain/recverr
-        socket/ipv4/tcp/open
-        socket/ipv4/tcp/openfail
-        socket/ipv4/tcp/close
-        socket/ipv4/tcp/connfail
-        socket/ipv4/tcp/conn
-        socket/ipv4/tcp/senderr
-        socket/ipv4/tcp/recverr
-        socket/ipv6/tcp/open
-        socket/ipv6/tcp/openfail
-        socket/ipv6/tcp/close
-        socket/ipv6/tcp/connfail
-        socket/ipv6/tcp/conn
-        socket/ipv6/tcp/senderr
-        socket/ipv6/tcp/recverr
-    """
-
-    # '_SERVER_' is a special zone name representing an entire
-    # count. It doesn't mean a specific zone, but it means an
-    # entire count in the server.
-    _entire_server = '_SERVER_'
-    # zone names are contained under this dirname in the spec file.
-    _perzone_prefix = 'zones'
-    # default statistics data set
-    _statistics = _Statistics()
-
-    def __init__(self, spec_file_name=None):
+    def __init__(self, spec_file_name):
         """A constructor for the Counters class. A path to the spec file
-        can be specified in spec_file_name. Statistics data based on
-        statistics spec can be accumulated if spec_file_name is
-        specified. If omitted, a default statistics spec is used. The
-        default statistics spec is defined in a hidden class named
-        _Statistics().
+        can be specified in spec_file_name, which is required. Statistics data
+        based on statistics spec can be accumulated. If an invalid argument
+        including None is specified, ModuleSpecError might be raised.
         """
         self._zones_item_list = []
         self._start_time = {}
         self._disabled = False
         self._rlock = threading.RLock()
-        if not spec_file_name: return
-        # change the default statistics spec
-        self._statistics._spec = \
+        self._statistics_data = {}
+        self._statistics_spec = \
             isc.config.module_spec_from_file(spec_file_name).\
             get_statistics_spec()
-        if self._perzone_prefix in \
-                isc.config.spec_name_list(self._statistics._spec):
-            self._zones_item_list = isc.config.spec_name_list(
-                isc.config.find_spec_part(
-                    self._statistics._spec, self._perzone_prefix)\
-                    ['named_set_item_spec']['map_item_spec'])
 
     def clear_all(self):
         """clears all statistics data"""
         with self._rlock:
-            self._statistics._data = {}
+            self._statistics_data = {}
 
     def disable(self):
         """disables incrementing/decrementing counters"""
@@ -301,8 +203,8 @@ class Counters():
         identifier = _concat(*args)
         with self._rlock:
             if self._disabled: return
-            _inc_counter(self._statistics._data,
-                         self._statistics._spec,
+            _inc_counter(self._statistics_data,
+                         self._statistics_spec,
                          identifier, step)
 
     def inc(self, *args):
@@ -322,7 +224,7 @@ class Counters():
         of the specified counter.  isc.cc.data.DataNotFoundError is
         raised when the counter doesn't have a number yet."""
         identifier = _concat(*args)
-        return _get_counter(self._statistics._data, identifier)
+        return _get_counter(self._statistics_data, identifier)
 
     def start_timer(self, *args):
         """Starts a timer which is identified by args and keeps it
@@ -353,8 +255,8 @@ class Counters():
             # set the end time
             _stop_timer(
                 start_time,
-                self._statistics._data,
-                self._statistics._spec,
+                self._statistics_data,
+                self._statistics_spec,
                 identifier)
             # A datetime value of once used timer should be deleted
             # for a future use.
@@ -371,33 +273,9 @@ class Counters():
             del branch_map[leaf]
 
     def get_statistics(self):
-        """Calculates an entire server's counts, and returns statistics
-        data in a format to send out to the stats module, including each
-        counter. If nothing is counted yet, then it returns an empty
-        dictionary."""
+        """Returns statistics data in a format to send out to the
+        stats module, including each counter. If nothing is counted
+        yet, then it returns an empty dictionary."""
         # entire copy
-        statistics_data = self._statistics._data.copy()
-        # If there is no 'zones' found in statistics_data,
-        # i.e. statistics_data contains no per-zone counter, it just
-        # returns statistics_data because calculating total counts
-        # across the zone names isn't necessary.
-        if self._perzone_prefix not in statistics_data:
-            return statistics_data
-        zones = statistics_data[self._perzone_prefix]
-        # Start calculation for '_SERVER_' counts
-        zones_spec = isc.config.find_spec_part(self._statistics._spec,
-                                               self._perzone_prefix)
-        zones_attrs = zones_spec['item_default'][self._entire_server]
-        zones_data = {}
-        for attr in zones_attrs:
-            id_str = '%s/%s' % (self._entire_server, attr)
-            sum_ = 0
-            for name in zones:
-                if attr in zones[name]:
-                    sum_ += zones[name][attr]
-            _set_counter(zones_data, zones_spec, id_str, sum_)
-        # insert entire-server counts
-        statistics_data[self._perzone_prefix] = dict(
-            statistics_data[self._perzone_prefix],
-            **zones_data)
+        statistics_data = self._statistics_data.copy()
         return statistics_data

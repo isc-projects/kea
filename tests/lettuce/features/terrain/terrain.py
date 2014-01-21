@@ -83,7 +83,9 @@ copylist = [
     ["data/xfrin-notify.sqlite3.orig",
      "data/xfrin-notify.sqlite3"],
     ["data/ddns/example.org.sqlite3.orig",
-     "data/ddns/example.org.sqlite3"]
+     "data/ddns/example.org.sqlite3"],
+    ["data/empty_db.sqlite3",
+     "data/xfrout.sqlite3"]
 ]
 
 # This is a list of files that, if present, will be removed before a scenario
@@ -133,7 +135,7 @@ class RunningProcess:
         """
         stderr_write = open(self.stderr_filename, "w")
         stdout_write = open(self.stdout_filename, "w")
-        self.process = subprocess.Popen(args, 1, None, subprocess.PIPE,
+        self.process = subprocess.Popen(args, 0, None, subprocess.PIPE,
                                         stdout_write, stderr_write)
         # open them again, this time for reading
         self.stderr = open(self.stderr_filename, "r")

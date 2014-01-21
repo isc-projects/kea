@@ -129,20 +129,17 @@ class XfrinTestException(Exception):
 class XfrinTestTimeoutException(Exception):
     pass
 
-class MockCC(MockModuleCCSession):
-    def get_default_value(self, identifier):
-        # The returned values should be identical to the spec file
-        # XXX: these should be retrieved from the spec file
-        # (see MyCCSession of xfrout_test.py.in)
-        if identifier == "zones/master_port":
-            return TEST_MASTER_PORT
-        if identifier == "zones/class":
-            return TEST_RRCLASS_STR
-        if identifier == "zones/use_ixfr":
-            return False
+class MockCC(MockModuleCCSession, ConfigData):
+    def __init__(self):
+        super().__init__()
+        module_spec = isc.config.module_spec_from_file(
+            xfrin.SPECFILE_LOCATION)
+        ConfigData.__init__(self, module_spec)
+        # For inspection
+        self.added_remote_modules = []
 
     def add_remote_config_by_name(self, name, callback):
-        pass
+        self.added_remote_modules.append((name, callback))
 
     def get_remote_config_value(self, module, identifier):
         if module == 'tsig_keys' and identifier == 'keys':
@@ -242,6 +239,37 @@ class MockDataSourceClient():
         self.committed_diffs.append(self.diffs)
         self.diffs = []
 
+    def create_zone(self, zone_name):
+        # pretend it just succeeds
+        pass
+
+class MockDataSrcClientsMgr():
+    def __init__(self):
+        # Default faked result of get_client_list, customizable by tests
+        self.found_datasrc_client_list = self
+
+        # Default faked result of find(), customizable by tests
+        self.found_datasrc_client = MockDataSourceClient()
+
+        self.reconfigure_param = [] # for inspection
+
+    def get_client_list(self, rrclass):
+        return self.found_datasrc_client_list
+
+    def reconfigure(self, arg1, arg2):
+        # the only current test simply needs to know this is called with
+        # the expected arguments and exceptions are handled.  if we need more
+        # variations in tests, this mock method should be extended.
+        self.reconfigure_param.append((arg1, arg2))
+        raise isc.server_common.datasrc_clients_mgr.ConfigError(
+            'reconfigure failure')
+
+    def find(self, zone_name, want_exact_match, want_finder):
+        """Pretending find method on the object returned by get_clinet_list"""
+        if issubclass(type(self.found_datasrc_client), Exception):
+            raise self.found_datasrc_client
+        return self.found_datasrc_client, None, None
+
 class MockXfrin(Xfrin):
     # This is a class attribute of a callable object that specifies a non
     # default behavior triggered in _cc_check_command().  Specific test methods
@@ -251,35 +279,29 @@ class MockXfrin(Xfrin):
     check_command_hook = None
 
     def _cc_setup(self):
-        self._tsig_key = None
         self._module_cc = MockCC()
-        init_keyring(self._module_cc)
-        pass
-
-    def _get_db_file(self):
-        pass
 
     def _cc_check_command(self):
         self._shutdown_event.set()
         if MockXfrin.check_command_hook:
             MockXfrin.check_command_hook()
 
-    def xfrin_start(self, zone_name, rrclass, db_file, master_addrinfo,
-                    tsig_key, request_type, check_soa=True):
+    def xfrin_start(self, zone_name, rrclass, master_addrinfo,
+                    tsig_key, request_ixfr, check_soa=True):
         # store some of the arguments for verification, then call this
         # method in the superclass
         self.xfrin_started_master_addr = master_addrinfo[2][0]
         self.xfrin_started_master_port = master_addrinfo[2][1]
-        self.xfrin_started_request_type = request_type
-        return Xfrin.xfrin_start(self, zone_name, rrclass, None,
-                                 master_addrinfo, tsig_key,
-                                 request_type, check_soa)
+        self.xfrin_started_request_ixfr = request_ixfr
+        return Xfrin.xfrin_start(self, zone_name, rrclass, master_addrinfo,
+                                 tsig_key, request_ixfr, check_soa)
 
 class MockXfrinConnection(XfrinConnection):
     def __init__(self, sock_map, zone_name, rrclass, datasrc_client,
                  shutdown_event, master_addr, tsig_key=None):
         super().__init__(sock_map, zone_name, rrclass, MockDataSourceClient(),
-                         shutdown_event, master_addr, TEST_DB_FILE)
+                         shutdown_event, master_addr, begin_soa_rrset,
+                         xfrin.Counters(xfrin.SPECFILE_LOCATION))
         self.query_data = b''
         self.reply_data = b''
         self.force_time_out = False
@@ -846,7 +868,11 @@ class TestXfrinConnection(unittest.TestCase):
 
         '''
         self.conn._zone_name = zone_name
-        self.conn._zone_soa = self.conn._get_zone_soa()
+        try:
+            self.conn._zone_soa = xfrin._get_zone_soa(
+                self.conn._datasrc_client, zone_name, self.conn._rrclass)
+        except XfrinException:  # zone doesn't exist
+            self.conn._zone_soa = None
 
 class TestAXFR(TestXfrinConnection):
     def setUp(self):
@@ -970,7 +996,9 @@ class TestAXFR(TestXfrinConnection):
                           RRType.IXFR)
 
         self._set_test_zone(Name('dup-soa.example'))
-        self.conn._zone_soa = self.conn._get_zone_soa()
+        self.conn._zone_soa = xfrin._get_zone_soa(self.conn._datasrc_client,
+                                                  self.conn._zone_name,
+                                                  self.conn._rrclass)
         self.assertRaises(XfrinException, self.conn._create_query,
                           RRType.IXFR)
 
@@ -978,7 +1006,7 @@ class TestAXFR(TestXfrinConnection):
         def message_has_tsig(data):
             # a simple check if the actual data contains a TSIG RR.
             # At our level this simple check should suffice; other detailed
-            # tests regarding the TSIG protocol are done in pydnspp.
+            # tests regarding the TSIG protocol are done in the isc.dns module.
             msg = Message(Message.PARSE)
             msg.from_wire(data)
             return msg.get_tsig_record() is not None
@@ -1077,12 +1105,10 @@ class TestAXFR(TestXfrinConnection):
         for (info, ver) in addrs:
             c = MockXfrinConnection({}, TEST_ZONE_NAME, RRClass.CH, None,
                                     threading.Event(), info)
-            c.init_socket()
             if ver is not None:
                 self.assertEqual(ver, c._get_ipver_str())
             else:
                 self.assertRaises(ValueError, c._get_ipver_str)
-            c.close()
 
     def test_soacheck(self):
         # we need to defer the creation until we know the QID, which is
@@ -2097,39 +2123,11 @@ class TestXFRSessionWithSQLite3(TestXfrinConnection):
         '''
         self.axfr_failure_check(RRType.AXFR)
 
-    def test_do_axfrin_nozone_sqlite3(self):
-        '''AXFR test with an empty SQLite3 DB file, thus no target zone there.
-
-        For now, we provide backward compatible behavior: xfrin will create
-        the zone (after even setting up the entire schema) in the zone.
-        Note: a future version of this test will make it fail.
-
-        '''
-        self.conn._db_file = self.empty_sqlite3db_obj
-        self.conn._datasrc_client = DataSourceClient(
-            "sqlite3",
-            "{ \"database_file\": \"" + self.empty_sqlite3db_obj + "\"}")
-        def create_response():
-            self.conn.reply_data = self.conn.create_response_data(
-                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
-                                    RRType.AXFR)],
-                answers=[soa_rrset, self._create_ns(), soa_rrset])
-        self.conn.response_generator = create_response
-        self._set_test_zone(Name('example.com'))
-        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.AXFR))
-        self.assertEqual(type(XfrinAXFREnd()),
-                         type(self.conn.get_xfrstate()))
-        self.assertEqual(1234, self.get_zone_serial().get_value())
-        self.assertFalse(self.record_exist(Name('dns01.example.com'),
-                                           RRType.A))
-
 class TestStatisticsXfrinConn(TestXfrinConnection):
     '''Test class based on TestXfrinConnection and including paramters
     and methods related to statistics tests'''
     def setUp(self):
         super().setUp()
-        # clear all statistics counters before each test
-        self.conn._counters.clear_all()
         # fake datetime
         self.__orig_datetime = isc.statistics.counters.datetime
         self.__orig_start_timer = isc.statistics.counters._start_timer
@@ -2144,16 +2142,19 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
         self._const_sec = round(delta.days * 86400 + delta.seconds +
                                 delta.microseconds * 1E-6, 6)
         # List of statistics counter names and expected initial values
-        self.__name_to_counter = (('axfrreqv4', 0),
-                                 ('axfrreqv6', 0),
-                                 ('ixfrreqv4', 0),
-                                 ('ixfrreqv6', 0),
-                                 ('last_axfr_duration', 0.0),
-                                 ('last_ixfr_duration', 0.0),
-                                 ('soaoutv4', 0),
-                                 ('soaoutv6', 0),
-                                 ('xfrfail', 0),
-                                 ('xfrsuccess', 0))
+        self.__name_to_perzone_counter = (('axfrreqv4', 0),
+                                          ('axfrreqv6', 0),
+                                          ('ixfrreqv4', 0),
+                                          ('ixfrreqv6', 0),
+                                          ('last_axfr_duration', 0.0),
+                                          ('last_ixfr_duration', 0.0),
+                                          ('soaoutv4', 0),
+                                          ('soaoutv6', 0),
+                                          ('xfrfail', 0),
+                                          ('xfrsuccess', 0))
+        self.__name_to_counter = ('soa_in_progress',
+                                  'ixfr_running',
+                                  'axfr_running')
         self.__zones = 'zones'
 
     def tearDown(self):
@@ -2168,23 +2169,40 @@ class TestStatisticsXfrinConn(TestXfrinConnection):
     def _check_init_statistics(self):
         '''checks exception being raised if not incremented statistics
         counter gotten'''
-        for (name, exp) in self.__name_to_counter:
+        for (name, exp) in self.__name_to_perzone_counter:
             self.assertRaises(isc.cc.data.DataNotFoundError,
                               self.conn._counters.get, self.__zones,
                               TEST_ZONE_NAME_STR, name)
+        for name in self.__name_to_counter:
+            self.assertRaises(isc.cc.data.DataNotFoundError,
+                              self.conn._counters.get, name)
 
-    def _check_updated_statistics(self, overwrite):
+    def _check_updated_perzone_statistics(self, overwrite):
         '''checks getting expect values after updating the pairs of
-        statistics counter name and value on to the "overwrite"
+        per-zone statistics counter name and value on to the "overwrite"
         dictionary'''
-        name2count = dict(self.__name_to_counter)
+        name2count = dict(self.__name_to_perzone_counter)
         name2count.update(overwrite)
         for (name, exp) in name2count.items():
             act = self.conn._counters.get(self.__zones,
+                                          TEST_RRCLASS_STR,
                                           TEST_ZONE_NAME_STR,
                                           name)
-            msg = '%s is expected %s but actually %s' % (name, exp, act)
+            msg = '%s: expected %s but actually got %s' % (name, exp, act)
             self.assertEqual(exp, act, msg=msg)
+
+    def _check_updated_statistics(self, expects):
+        '''checks counters in expects are incremented. also checks other
+        counters which are not in expects are not incremented.'''
+        for name in self.__name_to_counter:
+            if name in expects:
+                exp = expects[name]
+                act = self.conn._counters.get(name)
+                msg = '%s: expected %s but actually got %s' % (name, exp, act)
+                self.assertEqual(exp, act, msg=msg)
+            else:
+                self.assertRaises(isc.cc.data.DataNotFoundError,
+                                  self.conn._counters.get, name)
 
 class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
     '''Xfrin AXFR tests for IPv4 to check statistics counters'''
@@ -2194,7 +2212,7 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
         self.conn.response_generator = self._create_soa_response_data
         self._check_init_statistics()
         self.assertEqual(self.conn._check_soa_serial(), XFRIN_OK)
-        self._check_updated_statistics({'soaout' + self._ipver: 1})
+        self._check_updated_perzone_statistics({'soaout' + self._ipver: 1})
 
     def test_axfrreq_xfrsuccess_last_axfr_duration(self):
         '''tests that axfrreqv4 or axfrreqv6 and xfrsuccess counters
@@ -2202,9 +2220,10 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
         self.conn.response_generator = self._create_normal_response_data
         self._check_init_statistics()
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
-        self._check_updated_statistics({'axfrreq' + self._ipver: 1,
-                                        'xfrsuccess': 1,
-                                        'last_axfr_duration': self._const_sec})
+        self._check_updated_perzone_statistics({'axfrreq' + self._ipver: 1,
+                                                'xfrsuccess': 1,
+                                                'last_axfr_duration':
+                                                    self._const_sec})
 
     def test_axfrreq_xfrsuccess_last_axfr_duration2(self):
         '''tests that axfrreqv4 or axfrreqv6 and xfrsuccess counters
@@ -2215,10 +2234,10 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
         self.conn._handle_xfrin_responses = exception_raiser
         self._check_init_statistics()
         self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
-        self._check_updated_statistics({'axfrreq' + self._ipver: 1,
-                                        'xfrsuccess': 1,
-                                        'last_axfr_duration':
-                                            self._const_sec})
+        self._check_updated_perzone_statistics({'axfrreq' + self._ipver: 1,
+                                                'xfrsuccess': 1,
+                                                'last_axfr_duration':
+                                                    self._const_sec})
 
     def test_axfrreq_xfrfail(self):
         '''tests that axfrreqv4 or axfrreqv6 and xfrfail counters are
@@ -2234,8 +2253,47 @@ class TestStatisticsXfrinAXFRv4(TestStatisticsXfrinConn):
             self.conn._handle_xfrin_responses = exception_raiser
             self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
             count += 1
-            self._check_updated_statistics({'axfrreq' + self._ipver: count,
-                                            'xfrfail': count})
+            self._check_updated_perzone_statistics({'axfrreq' + self._ipver:
+                                                        count,
+                                                    'xfrfail': count})
+
+    def test_soa_in_progress1(self):
+        '''tests that an soa_in_progress counter is incremented and decremented
+        when an soa query succeeds'''
+        self.conn.response_generator = self._create_soa_response_data
+        self._check_init_statistics()
+        self.assertEqual(self.conn._check_soa_serial(), XFRIN_OK)
+        self._check_updated_statistics({'soa_in_progress': 0})
+
+    def test_soa_in_progress2(self):
+        '''tests that an soa_in_progress counter is incremented and decremented
+        even if socket.error is raised from XfrinConnection._send_query()'''
+        def exception_raiser(x):
+            raise socket.error()
+        self.conn._send_query = exception_raiser
+        self._check_init_statistics()
+        self.assertRaises(socket.error, self.conn._check_soa_serial)
+        self._check_updated_statistics({'soa_in_progress': 0})
+
+    def test_axfr_running1(self):
+        '''tests that axfr_running counter is incremented and decremented'''
+        self.conn.response_generator = self._create_normal_response_data
+        self._check_init_statistics()
+        self.assertEqual(self.conn.do_xfrin(False), XFRIN_OK)
+        self._check_updated_statistics({'axfr_running': 0})
+
+    def test_axfr_running2(self):
+        '''tests that axfr_running counter is incremented and decremented even
+        if some failure exceptions are expected to be raised inside do_xfrin():
+        XfrinZoneError, XfrinProtocolError, XfrinException, and Exception'''
+        self._check_init_statistics()
+        for ex in [XfrinZoneError, XfrinProtocolError, XfrinException,
+                   Exception]:
+            def exception_raiser():
+                raise ex()
+            self.conn._handle_xfrin_responses = exception_raiser
+            self.assertEqual(self.conn.do_xfrin(False), XFRIN_FAIL)
+            self._check_updated_statistics({'axfr_running': 0})
 
 class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
     '''Xfrin IXFR tests for IPv4 to check statistics counters'''
@@ -2250,10 +2308,10 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
         self.conn.response_generator = create_ixfr_response
         self._check_init_statistics()
         self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR))
-        self._check_updated_statistics({'ixfrreq' + self._ipver: 1,
-                                        'xfrsuccess': 1,
-                                        'last_ixfr_duration':
-                                            self._const_sec})
+        self._check_updated_perzone_statistics({'ixfrreq' + self._ipver: 1,
+                                                'xfrsuccess': 1,
+                                                'last_ixfr_duration':
+                                                    self._const_sec})
 
     def test_ixfrreq_xfrsuccess_last_ixfr_duration2(self):
         '''tests that ixfrreqv4 or ixfrreqv6 and xfrsuccess counters
@@ -2264,10 +2322,10 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
         self.conn._handle_xfrin_responses = exception_raiser
         self._check_init_statistics()
         self.assertEqual(self.conn.do_xfrin(False, RRType.IXFR), XFRIN_OK)
-        self._check_updated_statistics({'ixfrreq' + self._ipver: 1,
-                                        'xfrsuccess': 1,
-                                        'last_ixfr_duration':
-                                            self._const_sec})
+        self._check_updated_perzone_statistics({'ixfrreq' + self._ipver: 1,
+                                                'xfrsuccess': 1,
+                                                'last_ixfr_duration':
+                                                    self._const_sec})
 
     def test_ixfrreq_xfrfail(self):
         '''tests that ixfrreqv4 or ixfrreqv6 and xfrfail counters are
@@ -2283,8 +2341,36 @@ class TestStatisticsXfrinIXFRv4(TestStatisticsXfrinConn):
             self.conn._handle_xfrin_responses = exception_raiser
             self.assertEqual(self.conn.do_xfrin(False, RRType.IXFR), XFRIN_FAIL)
             count += 1
-            self._check_updated_statistics({'ixfrreq' + self._ipver: count,
-                                            'xfrfail': count})
+            self._check_updated_perzone_statistics({'ixfrreq' + self._ipver:
+                                                        count,
+                                                    'xfrfail': count})
+
+    def test_ixfr_running1(self):
+        '''tests that ixfr_running counter is incremented and decremented'''
+        def create_ixfr_response():
+            self.conn.reply_data = self.conn.create_response_data(
+                questions=[Question(TEST_ZONE_NAME, TEST_RRCLASS,
+                                    RRType.IXFR)],
+                answers=[soa_rrset, begin_soa_rrset, soa_rrset, soa_rrset])
+        self.conn.response_generator = create_ixfr_response
+        self._check_init_statistics()
+        self.assertEqual(XFRIN_OK, self.conn.do_xfrin(False, RRType.IXFR))
+        self._check_updated_statistics({'ixfr_running': 0})
+
+    def test_ixfr_running2(self):
+        '''tests that ixfr_running counter is incremented and decremented even
+        if some failure exceptions are expected to be raised inside do_xfrin():
+        XfrinZoneError, XfrinProtocolError, XfrinException, and Exception'''
+        self._check_init_statistics()
+        count = 0
+        for ex in [XfrinZoneError, XfrinProtocolError, XfrinException,
+                   Exception]:
+            def exception_raiser():
+                raise ex()
+            self.conn._handle_xfrin_responses = exception_raiser
+            self.assertEqual(self.conn.do_xfrin(False, RRType.IXFR), XFRIN_FAIL)
+            count += 1
+            self._check_updated_statistics({'ixfr_running': 0})
 
 class TestStatisticsXfrinAXFRv6(TestStatisticsXfrinAXFRv4):
     '''Same tests as TestStatisticsXfrinAXFRv4 for IPv6'''
@@ -2411,16 +2497,16 @@ class TestXfrinProcess(unittest.TestCase):
         # Normal, successful case.  We only check that things are cleaned up
         # at the tearDown time.
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, RRType.AXFR,
-                      self.create_xfrinconn)
+                      None, self.master,  False, None,
+                      ZoneInfo.REQUEST_IXFR_DISABLED, self.create_xfrinconn)
 
     def test_process_xfrin_exception_on_connect(self):
         # connect_to_master() will raise an exception.  Things must still be
         # cleaned up.
         self.do_raise_on_connect = True
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, RRType.AXFR,
-                      self.create_xfrinconn)
+                      None, self.master,  False, None,
+                      ZoneInfo.REQUEST_IXFR_DISABLED, self.create_xfrinconn)
 
     def test_process_xfrin_exception_on_close(self):
         # connect() will result in exception, and even the cleanup close()
@@ -2429,37 +2515,47 @@ class TestXfrinProcess(unittest.TestCase):
         self.do_raise_on_connect = True
         self.do_raise_on_close = True
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, RRType.AXFR,
-                      self.create_xfrinconn)
+                      None, self.master,  False, None,
+                      ZoneInfo.REQUEST_IXFR_DISABLED, self.create_xfrinconn)
 
     def test_process_xfrin_exception_on_publish(self):
         # xfr succeeds but notifying the zonemgr fails with exception.
         # everything must still be cleaned up.
         self.do_raise_on_publish = True
         process_xfrin(self, self, TEST_ZONE_NAME, TEST_RRCLASS, None, None,
-                      self.master,  False, None, RRType.AXFR,
-                      self.create_xfrinconn)
+                      None, self.master,  False, None,
+                      ZoneInfo.REQUEST_IXFR_DISABLED, self.create_xfrinconn)
 
 class TestXfrin(unittest.TestCase):
     def setUp(self):
         # redirect output
         self.stderr_backup = sys.stderr
         sys.stderr = open(os.devnull, 'w')
+        self.__orig_DataSrcClientsMgr = xfrin.DataSrcClientsMgr
+        xfrin.DataSrcClientsMgr = MockDataSrcClientsMgr
+
         self.xfr = MockXfrin()
         self.args = {}
         self.args['zone_name'] = TEST_ZONE_NAME_STR
         self.args['class'] = TEST_RRCLASS_STR
         self.args['port'] = TEST_MASTER_PORT
         self.args['master'] = TEST_MASTER_IPV4_ADDRESS
-        self.args['db_file'] = TEST_DB_FILE
         self.args['tsig_key'] = ''
 
     def tearDown(self):
+        xfrin.DataSrcClientsMgr = self.__orig_DataSrcClientsMgr
         self.assertFalse(self.xfr._module_cc.stopped);
         self.xfr.shutdown()
         self.assertTrue(self.xfr._module_cc.stopped);
         sys.stderr.close()
         sys.stderr = self.stderr_backup
+
+    def test_init(self):
+        """Check some initial configuration after construction"""
+        # data source "module" should have been registrered as a necessary
+        # remote config
+        self.assertEqual([('data_sources', self.xfr._datasrc_config_handler)],
+                         self.xfr._module_cc.added_remote_modules)
 
     def _do_parse_zone_name_class(self):
         return self.xfr._parse_zone_name_and_class(self.args)
@@ -2471,12 +2567,10 @@ class TestXfrin(unittest.TestCase):
     def test_parse_cmd_params(self):
         name, rrclass = self._do_parse_zone_name_class()
         master_addrinfo = self._do_parse_master_port()
-        db_file = self.args.get('db_file')
         self.assertEqual(master_addrinfo[2][1], int(TEST_MASTER_PORT))
         self.assertEqual(name, TEST_ZONE_NAME)
         self.assertEqual(rrclass, TEST_RRCLASS)
         self.assertEqual(master_addrinfo[2][0], TEST_MASTER_IPV4_ADDRESS)
-        self.assertEqual(db_file, TEST_DB_FILE)
 
     def test_parse_cmd_params_default_port(self):
         del self.args['port']
@@ -2534,10 +2628,13 @@ class TestXfrin(unittest.TestCase):
     def test_command_handler_retransfer(self):
         self.assertEqual(self.xfr.command_handler("retransfer",
                                                   self.args)['result'][0], 0)
-        self.assertEqual(self.args['master'], self.xfr.xfrin_started_master_addr)
-        self.assertEqual(int(self.args['port']), self.xfr.xfrin_started_master_port)
-        # By default we use AXFR (for now)
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        self.assertEqual(self.args['master'],
+                         self.xfr.xfrin_started_master_addr)
+        self.assertEqual(int(self.args['port']),
+                         self.xfr.xfrin_started_master_port)
+        # retransfer always uses AXFR
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_retransfer_short_command1(self):
         # try it when only specifying the zone name (of unknown zone)
@@ -2632,13 +2729,36 @@ class TestXfrin(unittest.TestCase):
         self.assertEqual(self.xfr.command_handler("retransfer",
                                                   self.args)['result'][0], 1)
 
-    def test_command_handler_retransfer_nomodule(self):
-        dns_module = sys.modules['pydnspp'] # this must exist
-        del sys.modules['pydnspp']
-        self.assertEqual(self.xfr.command_handler("retransfer",
-                                                  self.args)['result'][0], 1)
-        # sys.modules is global, so we must recover it
-        sys.modules['pydnspp'] = dns_module
+    def test_command_handler_retransfer_datasrc_error(self):
+        # Failure cases due to various errors at the data source (config/data)
+        # level
+
+        # No data source client list for the RR class
+        self.xfr._datasrc_clients_mgr.found_datasrc_client_list = None
+        self.assertEqual(1, self.xfr.command_handler("retransfer",
+                                                     self.args)['result'][0])
+
+        # No  data source client for the zone name
+        self.xfr._datasrc_clients_mgr.found_datasrc_client_list = \
+            self.xfr._datasrc_clients_mgr # restore the original
+        self.xfr._datasrc_clients_mgr.found_datasrc_client = None
+        self.assertEqual(1, self.xfr.command_handler("retransfer",
+                                                     self.args)['result'][0])
+
+        # list.find() raises an exception
+        self.xfr._datasrc_clients_mgr.found_datasrc_client = \
+            isc.datasrc.Error('test exception')
+        self.assertEqual(1, self.xfr.command_handler("retransfer",
+                                                     self.args)['result'][0])
+
+        # datasrc.find() raises an exception
+        class RaisingkDataSourceClient(MockDataSourceClient):
+            def find_zone(self, zone_name):
+                raise isc.datasrc.Error('test exception')
+        self.xfr._datasrc_clients_mgr.found_datasrc_client = \
+            RaisingkDataSourceClient()
+        self.assertEqual(1, self.xfr.command_handler("retransfer",
+                                                     self.args)['result'][0])
 
     def test_command_handler_refresh(self):
         # at this level, refresh is no different than retransfer.
@@ -2650,8 +2770,9 @@ class TestXfrin(unittest.TestCase):
                          self.xfr.xfrin_started_master_addr)
         self.assertEqual(int(TEST_MASTER_PORT),
                          self.xfr.xfrin_started_master_port)
-        # By default we use AXFR (for now)
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        # By default we use IXFR (with AXFR fallback)
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_notify(self):
         # at this level, refresh is no different than retransfer.
@@ -2734,12 +2855,19 @@ class TestXfrin(unittest.TestCase):
                                  Name(zone_config['tsig_key']).to_text())
             else:
                 self.assertIsNone(zone_info.tsig_key_name)
-            if 'use_ixfr' in zone_config and\
-               zone_config.get('use_ixfr'):
-                self.assertTrue(zone_info.use_ixfr)
-            else:
-                # if not set, should default to False
-                self.assertFalse(zone_info.use_ixfr)
+            if ('request_ixfr' in zone_config and
+                zone_config.get('request_ixfr')):
+                cfg_val = zone_config.get('request_ixfr')
+                val = zone_info.request_ixfr
+                if cfg_val == 'yes':
+                    self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST, val)
+                elif cfg_val == 'no':
+                    self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED, val)
+                elif cfg_val == 'only':
+                    self.assertEqual(ZoneInfo.REQUEST_IXFR_ONLY, val)
+            else:               # check the default
+                self.assertEqual(ZoneInfo.REQUEST_IXFR_FIRST,
+                                 zone_info.request_ixfr)
 
     def test_config_handler_zones(self):
         # This test passes a number of good and bad configs, and checks whether
@@ -2751,7 +2879,7 @@ class TestXfrin(unittest.TestCase):
                    { 'name': 'test.example.',
                     'master_addr': '192.0.2.1',
                     'master_port': 53,
-                    'use_ixfr': False
+                    'request_ixfr': 'yes'
                    }
                  ]}
         self.assertEqual(self.xfr.config_handler(config1)['result'][0], 0)
@@ -2763,11 +2891,23 @@ class TestXfrin(unittest.TestCase):
                     'master_addr': '192.0.2.2',
                     'master_port': 53,
                     'tsig_key': "example.com:SFuWd/q99SzF8Yzd1QbB9g==",
-                    'use_ixfr': True
+                    'request_ixfr': 'no'
                    }
                  ]}
         self.assertEqual(self.xfr.config_handler(config2)['result'][0], 0)
         self._check_zones_config(config2)
+
+        config3 = {'transfers_in': 4,
+                   'zones': [
+                   { 'name': 'test.example.',
+                    'master_addr': '192.0.2.2',
+                    'master_port': 53,
+                    'tsig_key': "example.com:SFuWd/q99SzF8Yzd1QbB9g==",
+                    'request_ixfr': 'only'
+                   }
+                 ]}
+        self.assertEqual(self.xfr.config_handler(config3)['result'][0], 0)
+        self._check_zones_config(config3)
 
         # test that configuring the zone multiple times fails
         zones = { 'transfers_in': 5,
@@ -2783,7 +2923,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': 'test.example.',
@@ -2793,7 +2933,7 @@ class TestXfrin(unittest.TestCase):
                   }
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'master_addr': '192.0.2.4',
@@ -2802,7 +2942,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': 'bad..zone.',
@@ -2812,7 +2952,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': '',
@@ -2822,7 +2962,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': 'test.example',
@@ -2832,7 +2972,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': 'test.example',
@@ -2842,7 +2982,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         zones = { 'zones': [
                   { 'name': 'test.example',
@@ -2854,7 +2994,7 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
 
         # let's also add a zone that is correct too, and make sure
         # that the new config is not partially taken
@@ -2871,209 +3011,120 @@ class TestXfrin(unittest.TestCase):
                 ]}
         self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
         # since this has failed, we should still have the previous config
-        self._check_zones_config(config2)
+        self._check_zones_config(config3)
+
+        # invalid request_ixfr value
+        zones = { 'zones': [
+                  { 'name': 'test.example',
+                    'master_addr': '192.0.2.7',
+                    'request_ixfr': 'bad value'
+                  }
+                ]}
+        self.assertEqual(self.xfr.config_handler(zones)['result'][0], 1)
+        # since this has failed, we should still have the previous config
+        self._check_zones_config(config3)
 
     def test_config_handler_zones_default(self):
         # Checking it some default config values apply.  Using a separate
         # test case for a fresh xfr object.
         config = { 'zones': [
                    { 'name': 'test.example.',
-                    'master_addr': '192.0.2.1',
-                    'master_port': 53,
+                     'master_addr': '192.0.2.1',
+                     'master_port': 53,
                    }
                  ]}
         self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
         self._check_zones_config(config)
 
-    def common_ixfr_setup(self, xfr_mode, use_ixfr, tsig_key_str = None):
+    def test_config_handler_use_ixfr(self):
+        # use_ixfr was deprecated and explicitly rejected for now.
+        config = { 'zones': [
+                   { 'name': 'test.example.',
+                     'master_addr': '192.0.2.1',
+                     'master_port': 53,
+                     'use_ixfr': True
+                   }
+                 ]}
+        self.assertEqual(self.xfr.config_handler(config)['result'][0], 1)
+
+    def common_ixfr_setup(self, xfr_mode, request_ixfr, tsig_key_str=None):
         # This helper method explicitly sets up a zone configuration with
-        # use_ixfr, and invokes either retransfer or refresh.
+        # request_ixfr, and invokes either retransfer or refresh.
         # Shared by some of the following test cases.
         config = {'zones': [
                 {'name': 'example.com.',
                  'master_addr': '192.0.2.1',
                  'tsig_key': tsig_key_str,
-                 'use_ixfr': use_ixfr}]}
+                 'request_ixfr': request_ixfr}]}
         self.assertEqual(self.xfr.config_handler(config)['result'][0], 0)
         self.assertEqual(self.xfr.command_handler(xfr_mode,
                                                   self.args)['result'][0], 0)
 
     def test_command_handler_retransfer_ixfr_enabled(self):
-        # If IXFR is explicitly enabled in config, IXFR will be used
-        self.common_ixfr_setup('retransfer', True)
-        self.assertEqual(RRType.IXFR, self.xfr.xfrin_started_request_type)
+        # retransfer always uses AXFR (disabling IXFR), regardless of
+        # request_ixfr value
+        self.common_ixfr_setup('retransfer', 'yes')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_refresh_ixfr_enabled(self):
-        # Same for refresh
-        self.common_ixfr_setup('refresh', True)
-        self.assertEqual(RRType.IXFR, self.xfr.xfrin_started_request_type)
+        # for refresh, it honors zone configuration if defined (the default
+        # case is covered in test_command_handler_refresh
+        self.common_ixfr_setup('refresh', 'no')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_retransfer_with_tsig(self):
-        self.common_ixfr_setup('retransfer', False, 'example.com.key')
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        self.common_ixfr_setup('retransfer', 'no', 'example.com.key')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_retransfer_with_tsig_bad_key(self):
         # bad keys should not reach xfrin, but should they somehow,
         # they are ignored (and result in 'key not found' + error log).
         self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
-                          'retransfer', False, 'bad.key')
+                          'retransfer', 'no', 'bad.key')
 
     def test_command_handler_retransfer_with_tsig_unknown_key(self):
         self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
-                          'retransfer', False, 'no.such.key')
+                          'retransfer', 'no', 'no.such.key')
 
     def test_command_handler_refresh_with_tsig(self):
-        self.common_ixfr_setup('refresh', False, 'example.com.key')
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        self.common_ixfr_setup('refresh', 'no', 'example.com.key')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_refresh_with_tsig_bad_key(self):
         # bad keys should not reach xfrin, but should they somehow,
         # they are ignored (and result in 'key not found' + error log).
         self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
-                          'refresh', False, 'bad.key')
+                          'refresh', 'no', 'bad.key')
 
     def test_command_handler_refresh_with_tsig_unknown_key(self):
         self.assertRaises(XfrinZoneInfoException, self.common_ixfr_setup,
-                          'refresh', False, 'no.such.key')
+                          'refresh', 'no', 'no.such.key')
 
     def test_command_handler_retransfer_ixfr_disabled(self):
         # Similar to the previous case, but explicitly disabled.  AXFR should
         # be used.
-        self.common_ixfr_setup('retransfer', False)
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        self.common_ixfr_setup('retransfer', 'no')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
     def test_command_handler_refresh_ixfr_disabled(self):
         # Same for refresh
-        self.common_ixfr_setup('refresh', False)
-        self.assertEqual(RRType.AXFR, self.xfr.xfrin_started_request_type)
+        self.common_ixfr_setup('refresh', 'no')
+        self.assertEqual(ZoneInfo.REQUEST_IXFR_DISABLED,
+                         self.xfr.xfrin_started_request_ixfr)
 
-class TestXfrinMemoryZones(unittest.TestCase):
-    def setUp(self):
-        self.xfr = MockXfrin()
-        # Configuration snippet containing 2 memory datasources,
-        # one for IN and one for CH. Both contain a zone 'example.com'
-        # the IN ds also contains a zone example2.com, and a zone example3.com,
-        # which is of file type 'text' (and hence, should be ignored)
-        self.config = { 'datasources': [
-                          { 'type': 'memory',
-                            'class': 'IN',
-                            'zones': [
-                              { 'origin': 'example.com',
-                                'filetype': 'sqlite3' },
-                              { 'origin': 'EXAMPLE2.com.',
-                                'filetype': 'sqlite3' },
-                              { 'origin': 'example3.com',
-                                'filetype': 'text' }
-                            ]
-                          },
-                          { 'type': 'memory',
-                            'class': 'ch',
-                            'zones': [
-                              { 'origin': 'example.com',
-                                'filetype': 'sqlite3' }
-                            ]
-                          }
-                      ] }
-
-    def test_updates(self):
-        self.assertFalse(self.xfr._is_memory_zone("example.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
-
-        # add them all
-        self.xfr._set_memory_zones(self.config, None)
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "CH"))
-
-        # Remove the CH data source from the self.config snippet, and update
-        del self.config['datasources'][1]
-        self.xfr._set_memory_zones(self.config, None)
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
-
-        # Remove example2.com from the datasource, and update
-        del self.config['datasources'][0]['zones'][1]
-        self.xfr._set_memory_zones(self.config, None)
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
-
-        # If 'datasources' is not in the self.config update list (i.e. its
-        # self.config has not changed), no difference should be found
-        self.xfr._set_memory_zones({}, None)
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
-
-        # If datasources list becomes empty, everything should be removed
-        self.config['datasources'][0]['zones'] = []
-        self.xfr._set_memory_zones(self.config, None)
-        self.assertFalse(self.xfr._is_memory_zone("example.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example2.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
-
-    def test_normalization(self):
-        self.xfr._set_memory_zones(self.config, None)
-        # make sure it is case insensitive, root-dot-insensitive,
-        # and supports CLASSXXX notation
-        self.assertTrue(self.xfr._is_memory_zone("EXAMPLE.com", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "in"))
-        self.assertTrue(self.xfr._is_memory_zone("example2.com.", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "CLASS3"))
-
-    def test_bad_name(self):
-        # First set it to some config
-        self.xfr._set_memory_zones(self.config, None)
-
-        # Error checking; bad owner name should result in no changes
-        self.config['datasources'][1]['zones'][0]['origin'] = ".."
-        self.xfr._set_memory_zones(self.config, None)
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "CH"))
-
-    def test_bad_class(self):
-        # First set it to some config
-        self.xfr._set_memory_zones(self.config, None)
-
-        # Error checking; bad owner name should result in no changes
-        self.config['datasources'][1]['class'] = "Foo"
-        self.xfr._set_memory_zones(self.config, None)
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "CH"))
-
-    def test_no_filetype(self):
-        # omitting the filetype should leave that zone out, but not
-        # the rest
-        del self.config['datasources'][1]['zones'][0]['filetype']
-        self.xfr._set_memory_zones(self.config, None)
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example.com", "CH"))
-
-    def test_class_filetype(self):
-        # omitting the class should have it default to what is in the
-        # specfile for Auth.
-        AuthConfigData = isc.config.config_data.ConfigData(
-            isc.config.module_spec_from_file(xfrin.AUTH_SPECFILE_LOCATION))
-        del self.config['datasources'][0]['class']
-        self.xfr._set_memory_zones(self.config, AuthConfigData)
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example2.com", "IN"))
-        self.assertFalse(self.xfr._is_memory_zone("example3.com", "IN"))
-        self.assertTrue(self.xfr._is_memory_zone("example.com", "CH"))
+    def test_datasrc_config_handler(self):
+        """Check datasrc config handler works expectedly."""
+        # This is a simple wrapper of DataSrcClientsMgr.reconfigure(), so
+        # we just check it's called as expected, and the only possible
+        # exception doesn't cause disruption.
+        self.xfr._datasrc_config_handler(True, False)
+        self.assertEqual([(True, False)],
+                         self.xfr._datasrc_clients_mgr.reconfigure_param)
 
 def raise_interrupt():
     raise KeyboardInterrupt()
@@ -3157,6 +3208,13 @@ class TestXfrinProcess(unittest.TestCase):
         self.__published = []
         # How many connections were created.
         self.__created_connections = 0
+        # prepare for possible replacement
+        self.__orig_get_zone_soa = xfrin._get_zone_soa
+        xfrin._get_zone_soa = lambda x, y, z: begin_soa_rdata
+
+    def tearDown(self):
+        # restore original value
+        xfrin._get_zone_soa = self.__orig_get_zone_soa
 
     def __get_connection(self, *args):
         """
@@ -3212,7 +3270,8 @@ class TestXfrinProcess(unittest.TestCase):
         """
         pass
 
-    def __do_test(self, rets, transfers, request_type):
+    def __do_test(self, rets, transfers, request_ixfr,
+                  zone_soa=begin_soa_rrset):
         """
         Do the actual test. The request type, prepared sucesses/failures
         and expected sequence of transfers is passed to specify what test
@@ -3221,8 +3280,11 @@ class TestXfrinProcess(unittest.TestCase):
         self.__rets = rets
         published = rets[-1]
         xfrin.process_xfrin(self, XfrinRecorder(), Name("example.org."),
-                            RRClass.IN, None, None, None, True, None,
-                            request_type, self.__get_connection)
+                            RRClass.IN, None, zone_soa, None,
+                            TEST_MASTER_IPV4_ADDRINFO, True, None,
+                            request_ixfr,
+                            xfrin.Counters(xfrin.SPECFILE_LOCATION),
+                            self.__get_connection)
         self.assertEqual([], self.__rets)
         self.assertEqual(transfers, self.__transfers)
         # Create a connection for each attempt
@@ -3233,7 +3295,7 @@ class TestXfrinProcess(unittest.TestCase):
         """
         Everything OK the first time, over IXFR.
         """
-        self.__do_test([XFRIN_OK], [RRType.IXFR], RRType.IXFR)
+        self.__do_test([XFRIN_OK], [RRType.IXFR], ZoneInfo.REQUEST_IXFR_FIRST)
         # Check there was loadzone command
         self.assertTrue(self._send_cc_session.send_called)
         self.assertTrue(self._send_cc_session.send_called_correctly)
@@ -3244,23 +3306,27 @@ class TestXfrinProcess(unittest.TestCase):
         """
         Everything OK the first time, over AXFR.
         """
-        self.__do_test([XFRIN_OK], [RRType.AXFR], RRType.AXFR)
+        self.__do_test([XFRIN_OK], [RRType.AXFR],
+                       ZoneInfo.REQUEST_IXFR_DISABLED)
 
     def test_axfr_fail(self):
         """
         The transfer failed over AXFR. Should not be retried (we don't expect
-        to fail on AXFR, but succeed on IXFR and we didn't use IXFR in the first
-        place for some reason.
+        to fail on AXFR, but succeed on IXFR and we didn't use IXFR in the
+        first place for some reason.
+
         """
-        self.__do_test([XFRIN_FAIL], [RRType.AXFR], RRType.AXFR)
+        self.__do_test([XFRIN_FAIL], [RRType.AXFR],
+                       ZoneInfo.REQUEST_IXFR_DISABLED)
 
     def test_ixfr_fallback(self):
         """
-        The transfer fails over IXFR, but suceeds over AXFR. It should fall back
-        to it and say everything is OK.
+        The transfer fails over IXFR, but suceeds over AXFR. It should fall
+        back to it and say everything is OK.
+
         """
         self.__do_test([XFRIN_FAIL, XFRIN_OK], [RRType.IXFR, RRType.AXFR],
-                       RRType.IXFR)
+                       ZoneInfo.REQUEST_IXFR_FIRST)
 
     def test_ixfr_fail(self):
         """
@@ -3268,17 +3334,51 @@ class TestXfrinProcess(unittest.TestCase):
         (only once) and should try both before giving up.
         """
         self.__do_test([XFRIN_FAIL, XFRIN_FAIL],
-                       [RRType.IXFR, RRType.AXFR], RRType.IXFR)
+                       [RRType.IXFR, RRType.AXFR], ZoneInfo.REQUEST_IXFR_FIRST)
+
+    def test_ixfr_only(self):
+        """
+        The transfer fails and IXFR_ONLY is specified.  It shouldn't fall
+        back to AXFR and should report failure.
+        """
+        self.__do_test([XFRIN_FAIL], [RRType.IXFR], ZoneInfo.REQUEST_IXFR_ONLY)
 
     def test_send_loadzone(self):
         """
         Check the loadzone command is sent after successful transfer.
         """
-        self.__do_test([XFRIN_OK], [RRType.IXFR], RRType.IXFR)
+        self.__do_test([XFRIN_OK], [RRType.IXFR],
+                       ZoneInfo.REQUEST_IXFR_FIRST)
         self.assertTrue(self._send_cc_session.send_called)
         self.assertTrue(self._send_cc_session.send_called_correctly)
         self.assertTrue(self._send_cc_session.recv_called)
         self.assertTrue(self._send_cc_session.recv_called_correctly)
+
+    def test_initial_request_type(self):
+        """Check initial xfr reuqest type (AXFR or IXFR).
+
+        Varying the policy of use of IXFR and availability of current
+        zone SOA.  We are only interested in the initial request type,
+        so won't check the xfr results.
+
+        """
+        for soa in [begin_soa_rdata, None]:
+            for request_ixfr in [ZoneInfo.REQUEST_IXFR_FIRST,
+                                 ZoneInfo.REQUEST_IXFR_ONLY,
+                                 ZoneInfo.REQUEST_IXFR_DISABLED]:
+                # Clear all counters
+                self.__transfers = []
+                self.__published = []
+                self.__created_connections = 0
+
+                # Determine the expected type
+                expected_type = RRType.IXFR
+                if (soa is None or
+                    request_ixfr == ZoneInfo.REQUEST_IXFR_DISABLED):
+                    expected_type = RRType.AXFR
+
+                # perform the test
+                self.__do_test([XFRIN_OK], [expected_type], request_ixfr, soa)
 
 class TestFormatting(unittest.TestCase):
     # If the formatting functions are moved to a more general library
@@ -3394,6 +3494,125 @@ class TestXfrinTransferStats(unittest.TestCase):
         self.stats.byte_count = 0
         zbps = self.stats.get_bytes_per_second()
         self.assertEqual(0, zbps)
+
+class TestXfrinConnectionSocketCounter(unittest.TestCase):
+
+    @property
+    def _master_addrinfo(self):
+        return TEST_MASTER_IPV4_ADDRINFO
+    @property
+    def _ipver(self):
+        return 'ipv4'
+
+    def setUp(self):
+        self.conn = XfrinConnection(
+            None, TEST_ZONE_NAME, None, MockDataSourceClient(), None,
+            self._master_addrinfo, None,
+            xfrin.Counters(xfrin.SPECFILE_LOCATION))
+        self.expception = socket.error
+
+    def raise_expception(self, *args):
+        raise self.expception
+
+    def test_open(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'open')
+        self.conn.create_socket(self._master_addrinfo[0],
+                                self._master_addrinfo[1])
+        self.assertEqual(1, self.conn._counters.get(
+                'socket', self._ipver, 'tcp', 'open'))
+
+    def test_openfail(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'openfail')
+        orig_create_socket = xfrin.asyncore.dispatcher.create_socket
+        xfrin.asyncore.dispatcher.create_socket = self.raise_expception
+        try:
+            self.assertRaises(self.expception, self.conn.create_socket,
+                              self._master_addrinfo[0],
+                              self._master_addrinfo[1])
+            self.assertEqual(1, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'openfail'))
+        finally:
+            xfrin.asyncore.dispatcher.create_socket = orig_create_socket
+
+    def test_close(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'close')
+        orig_socket_close = xfrin.asyncore.dispatcher.close
+        xfrin.asyncore.dispatcher.close = lambda x: None
+        try:
+            self.conn.close()
+            self.assertEqual(1, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'close'))
+        finally:
+            xfrin.asyncore.dispatcher.close = orig_socket_close
+
+    def test_conn(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'conn')
+        orig_socket_connect = xfrin.asyncore.dispatcher.connect
+        xfrin.asyncore.dispatcher.connect = lambda *a: None
+        try:
+            self.conn.connect(self._master_addrinfo[2])
+            self.assertEqual(1, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'conn'))
+        finally:
+            xfrin.asyncore.dispatcher.connect = orig_socket_connect
+
+    def test_connfail(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'connfail')
+        orig_socket_connect = xfrin.asyncore.dispatcher.connect
+        xfrin.asyncore.dispatcher.connect = self.raise_expception
+        try:
+            self.assertRaises(self.expception, self.conn.connect,
+                              self._master_addrinfo[2])
+            self.assertFalse(self.conn.connect_to_master())
+            self.assertEqual(2, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'connfail'))
+        finally:
+            xfrin.asyncore.dispatcher.connect = orig_socket_connect
+
+    def test_senderr(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'senderr')
+        orig_socket_send = xfrin.asyncore.dispatcher.send
+        xfrin.asyncore.dispatcher.send = self.raise_expception
+        try:
+            self.assertRaises(self.expception, self.conn.send, None)
+            self.assertEqual(1, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'senderr'))
+        finally:
+            xfrin.asyncore.dispatcher.send = orig_socket_send
+
+    def test_recverr(self):
+        self.assertRaises(isc.cc.data.DataNotFoundError,
+                          self.conn._counters.get,
+                          'socket', self._ipver, 'tcp', 'recverr')
+        orig_socket_recv = xfrin.asyncore.dispatcher.recv
+        xfrin.asyncore.dispatcher.recv = self.raise_expception
+        try:
+            self.assertRaises(self.expception, self.conn.recv, None)
+            self.assertEqual(1, self.conn._counters.get(
+                    'socket', self._ipver, 'tcp', 'recverr'))
+        finally:
+            xfrin.asyncore.dispatcher.recv = orig_socket_recv
+
+class TestXfrinConnectionSocketCounterV6(TestXfrinConnectionSocketCounter):
+
+    @property
+    def _master_addrinfo(self):
+        return TEST_MASTER_IPV6_ADDRINFO
+    @property
+    def _ipver(self):
+        return 'ipv6'
 
 if __name__== "__main__":
     try:

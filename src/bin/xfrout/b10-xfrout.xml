@@ -171,44 +171,56 @@
           <variablelist>
 
             <varlistentry>
-              <term><replaceable>zonename</replaceable></term>
+              <term><replaceable>classname</replaceable></term>
               <listitem><simpara>
-                A actual zone name or special zone name <quote>_SERVER_</quote>
-                representing an entire server
+                An actual RR class name of the zone, e.g. IN, CH, and HS
                 </simpara>
                 <variablelist>
 
                   <varlistentry>
-                    <term>notifyoutv4</term>
+                    <term><replaceable>zonename</replaceable></term>
                     <listitem><simpara>
-                      Number of IPv4 notifies per zone name sent out from Xfrout
-                    </simpara></listitem>
-                  </varlistentry>
+                      An actual zone name or special zone
+                      name <quote>_SERVER_</quote> representing an entire
+                      server
+                      </simpara>
+                      <variablelist>
 
-                  <varlistentry>
-                    <term>notifyoutv6</term>
-                    <listitem><simpara>
-                      Number of IPv6 notifies per zone name sent out from Xfrout
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>notifyoutv4</term>
+                          <listitem><simpara>
+                            Number of IPv4 notifies per zone name sent out from Xfrout
+                          </simpara></listitem>
+                        </varlistentry>
 
-                  <varlistentry>
-                    <term>xfrrej</term>
-                    <listitem><simpara>
-                      Number of XFR requests per zone name rejected by Xfrout
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>notifyoutv6</term>
+                          <listitem><simpara>
+                            Number of IPv6 notifies per zone name sent out from Xfrout
+                          </simpara></listitem>
+                        </varlistentry>
 
-                  <varlistentry>
-                    <term>xfrreqdone</term>
-                    <listitem><simpara>
-                      Number of requested zone transfers per zone name completed
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>xfrrej</term>
+                          <listitem><simpara>
+                            Number of XFR requests per zone name rejected by Xfrout
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>xfrreqdone</term>
+                          <listitem><simpara>
+                            Number of requested zone transfers per zone name completed
+                          </simpara></listitem>
+                        </varlistentry>
+
+                      </variablelist>
+                    </listitem>
+                  </varlistentry><!-- end of zonename -->
 
                 </variablelist>
               </listitem>
-            </varlistentry><!-- end of zonename -->
+            </varlistentry><!-- end of classname -->
 
           </variablelist>
         </listitem>

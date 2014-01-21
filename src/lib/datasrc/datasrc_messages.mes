@@ -70,6 +70,15 @@ The maximum allowed number of items of the hotspot cache is set to the given
 number. If there are too many, some of them will be dropped. The size of 0
 means no limit.
 
+% DATASRC_CACHE_ZONE_NOTFOUND Zone %1/%2 not found on data source '%3' to cache
+During data source configuration, a zone is to be loaded (cached) in
+to memory from the underlying data source, but the zone is not found
+in the data source.  This particular zone was not loaded, but data
+source configuration continues, possibly loading other zones into
+memory. This is basically some kind of configuration or operation
+error: either the name is incorrect in the configuration, or the zone
+has been removed from the data source without updating the configuration.
+
 % DATASRC_CHECK_ERROR post-load check of zone %1/%2 failed: %3
 The zone was loaded into the data source successfully, but the content fails
 basic sanity checks. See the message if you want to know what exactly is wrong
@@ -347,6 +356,13 @@ not contain RRs the requested type.  AN NXRRSET indication is returned.
 A debug message indicating that a query for the given name and RR type is being
 processed.
 
+% DATASRC_LIST_CACHE_PENDING in-memory cache for data source '%1' is not yet writable, pending load
+While (re)configuring data source clients, zone data of the shown data
+source cannot be loaded to in-memory cache at that point because the
+cache is not yet ready for writing.  This can happen for shared-memory
+type of cache, in which case the cache will be reset later, either
+by a higher level application or by a command from other module.
+
 % DATASRC_LIST_NOT_CACHED zones in data source %1 for class %2 not cached, cache disabled globally. Will not be available.
 The process disabled caching of RR data completely. However, this data source
 is provided from a master file and it can be served from memory cache only.
@@ -354,12 +370,18 @@ Therefore, the entire data source will not be available for this process. If
 this is a problem, you should configure the zones of that data source to some
 database backend (sqlite3, for example) and use it from there.
 
-% DATASRC_LOAD_ZONE_ERROR Error loading zone %1/%2 on data source %3: %4
+% DATASRC_LIBRARY_ERROR failure loading %1 datasource library for class %2: %3
+There was a problem loading the dynamic library for a data source. This
+backend is hence not available, and any data sources that use this
+backend will not be available.
+
+% DATASRC_LOAD_ZONE_ERROR Error loading zone %1/%2 on data source '%3': %4
 During data source configuration, an error was found in the zone data
 when it was being loaded in to memory on the shown data source.  This
 particular zone was not loaded, but data source configuration
-continues, possibly loading other zones into memory. The specific
-error is shown in the message, and should be addressed.
+continues, possibly loading other zones into memory.  Subsequent lookups
+will treat this zone as broken.  The specific error is shown in the
+message, and should be addressed.
 
 % DATASRC_MASTER_LOAD_ERROR %1:%2: Zone '%3/%4' contains error: %5
 There's an error in the given master file. The zone won't be loaded for

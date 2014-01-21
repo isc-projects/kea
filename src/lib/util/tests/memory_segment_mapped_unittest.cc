@@ -14,7 +14,7 @@
 
 #include <util/tests/memory_segment_common_unittest.h>
 #include <util/unittests/check_valgrind.h>
-#include <util/tests/interprocess_util.h>
+#include <util/unittests/interprocess_util.h>
 
 #include <util/memory_segment_mapped.h>
 #include <exceptions/exceptions.h>
@@ -42,7 +42,7 @@
 
 using namespace isc::util;
 using boost::scoped_ptr;
-using isc::util::test::parentReadState;
+using isc::util::unittests::parentReadState;
 
 namespace {
 // Shortcut to keep code shorter
@@ -237,12 +237,24 @@ TEST_F(MemorySegmentMappedTest, allocate) {
 }
 
 TEST_F(MemorySegmentMappedTest, badAllocate) {
+    // If the test is run as the root user, the following allocate()
+    // call will result in a successful MemorySegmentGrown exception,
+    // instead of an abort (due to insufficient permissions during
+    // reopen).
+    if (getuid() == 0) {
+        std::cerr << "Skipping test as it's run as the root user" << std::endl;
+        return;
+    }
+
     // Make the mapped file non-writable; managed_mapped_file::grow() will
-    // fail, resulting in std::bad_alloc
+    // fail, resulting in abort.
     const int ret = chmod(mapped_file, 0444);
     ASSERT_EQ(0, ret);
 
-    EXPECT_THROW(segment_->allocate(DEFAULT_INITIAL_SIZE * 2), std::bad_alloc);
+    if (!isc::util::unittests::runningOnValgrind()) {
+        EXPECT_DEATH_IF_SUPPORTED(
+            {segment_->allocate(DEFAULT_INITIAL_SIZE * 2);}, "");
+    }
 }
 
 // XXX: this test can cause too strong side effect (creating a very large
@@ -287,12 +299,14 @@ void
 checkNamedData(const std::string& name, const std::vector<uint8_t>& data,
                MemorySegment& sgmt, bool delete_after_check = false)
 {
-    void* dp = sgmt.getNamedAddress(name.c_str());
-    ASSERT_TRUE(dp);
-    EXPECT_EQ(0, std::memcmp(dp, &data[0], data.size()));
+    const MemorySegment::NamedAddressResult result =
+        sgmt.getNamedAddress(name.c_str());
+    ASSERT_TRUE(result.first);
+    ASSERT_TRUE(result.second);
+    EXPECT_EQ(0, std::memcmp(result.second, &data[0], data.size()));
 
     if (delete_after_check) {
-        sgmt.deallocate(dp, data.size());
+        sgmt.deallocate(result.second, data.size());
         sgmt.clearNamedAddress(name.c_str());
     }
 }
@@ -309,10 +323,10 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     segment_.reset();           // close it before opening another one
 
     segment_.reset(new MemorySegmentMapped(mapped_file));
-    EXPECT_NE(static_cast<void*>(NULL),
-              segment_->getNamedAddress("test address"));
-    EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(
-                  segment_->getNamedAddress("test address")));
+    MemorySegment::NamedAddressResult result =
+        segment_->getNamedAddress("test address");
+    ASSERT_TRUE(result.first);
+    EXPECT_EQ(test_val16, *static_cast<const uint16_t*>(result.second));
 
     // try to set an unusually long name.  We re-create the file so
     // creating the name would cause allocation failure and trigger internal
@@ -323,8 +337,9 @@ TEST_F(MemorySegmentMappedTest, namedAddress) {
     const std::string long_name(1025, 'x'); // definitely larger than segment
     // setNamedAddress should return true, indicating segment has grown.
     EXPECT_TRUE(segment_->setNamedAddress(long_name.c_str(), NULL));
-    EXPECT_EQ(static_cast<void*>(NULL),
-              segment_->getNamedAddress(long_name.c_str()));
+    result = segment_->getNamedAddress(long_name.c_str());
+    EXPECT_TRUE(result.first);
+    EXPECT_FALSE(result.second);
 
     // Check contents pointed by named addresses survive growing and
     // shrinking segment.
@@ -410,10 +425,12 @@ TEST_F(MemorySegmentMappedTest, multiProcess) {
         EXPECT_EQ(0, from_parent);
 
         MemorySegmentMapped sgmt(mapped_file);
-        void* ptr_child = sgmt.getNamedAddress("test address");
-        EXPECT_TRUE(ptr_child);
-        if (ptr_child) {
-            const uint32_t val = *static_cast<const uint32_t*>(ptr_child);
+        const MemorySegment::NamedAddressResult result =
+            sgmt.getNamedAddress("test address");
+        ASSERT_TRUE(result.first);
+        EXPECT_TRUE(result.second);
+        if (result.second) {
+            const uint32_t val = *static_cast<const uint32_t*>(result.second);
             EXPECT_EQ(424242, val);
             // tell the parent whether it succeeded. 0 means it did,
             // 0xff means it failed.
@@ -425,9 +442,11 @@ TEST_F(MemorySegmentMappedTest, multiProcess) {
     // parent: open another read-only segment, then tell the child to open
     // its own segment.
     segment_.reset(new MemorySegmentMapped(mapped_file));
-    ptr = segment_->getNamedAddress("test address");
-    ASSERT_TRUE(ptr);
-    EXPECT_EQ(424242, *static_cast<const uint32_t*>(ptr));
+    const MemorySegment::NamedAddressResult result =
+        segment_->getNamedAddress("test address");
+    ASSERT_TRUE(result.first);
+    ASSERT_TRUE(result.second);
+    EXPECT_EQ(424242, *static_cast<const uint32_t*>(result.second));
     const char some_data = 0;
     EXPECT_EQ(1, write(pipe_to_child.getWriteFD(), &some_data,
                        sizeof(some_data)));
@@ -460,7 +479,14 @@ TEST_F(MemorySegmentMappedTest, shrink) {
     EXPECT_EQ(shrinked_size, segment_->getSize());
 
     // Check that the segment is still usable after shrink.
-    void* p = segment_->allocate(sizeof(uint32_t));
+    void *p = NULL;
+    while (!p) {
+        try {
+            p = segment_->allocate(sizeof(uint32_t));
+        } catch (const MemorySegmentGrown&) {
+            // Do nothing. Just try again.
+        }
+    }
     segment_->deallocate(p, sizeof(uint32_t));
 }
 
@@ -477,9 +503,11 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
     if (!isc::util::unittests::runningOnValgrind()) {
         EXPECT_DEATH_IF_SUPPORTED({
                 MemorySegmentMapped segment_ro(mapped_file);
-                EXPECT_TRUE(segment_ro.getNamedAddress("test address"));
-                *static_cast<uint32_t*>(
-                    segment_ro.getNamedAddress("test address")) = 0;
+                const MemorySegment::NamedAddressResult result =
+                    segment_ro.getNamedAddress("test address");
+                ASSERT_TRUE(result.first);
+                ASSERT_TRUE(result.second);
+                *static_cast<uint32_t*>(result.second) = 0;
             }, "");
     }
 
@@ -487,10 +515,12 @@ TEST_F(MemorySegmentMappedTest, violateReadOnly) {
     // attempts are prohibited. When detectable it must result in an
     // exception.
     MemorySegmentMapped segment_ro(mapped_file);
-    ptr = segment_ro.getNamedAddress("test address");
-    EXPECT_NE(static_cast<void*>(NULL), ptr);
+    const MemorySegment::NamedAddressResult result =
+        segment_ro.getNamedAddress("test address");
+    ASSERT_TRUE(result.first);
+    EXPECT_NE(static_cast<void*>(NULL), result.second);
 
-    EXPECT_THROW(segment_ro.deallocate(ptr, 4), MemorySegmentError);
+    EXPECT_THROW(segment_ro.deallocate(result.second, 4), MemorySegmentError);
 
     EXPECT_THROW(segment_ro.allocate(16), MemorySegmentError);
     // allocation that would otherwise require growing the segment; permission

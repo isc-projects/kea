@@ -133,6 +133,8 @@ class TestUserMgr(unittest.TestCase):
                          May be None, in which case the check is skipped.
         expected_stderr, (multiline) string that is checked against stderr.
                          May be None, in which case the check is skipped.
+
+        Returns the standard output and error captured to a string.
         """
         (returncode, stdout, stderr) = run(command)
         if expected_stderr is not None:
@@ -140,6 +142,7 @@ class TestUserMgr(unittest.TestCase):
         if expected_stdout is not None:
             self.assertEqual(expected_stdout, stdout.decode())
         self.assertEqual(expected_returncode, returncode, " ".join(command))
+        return (stdout.decode(), stderr.decode())
 
     def test_help(self):
         self.run_check(0,
@@ -396,6 +399,19 @@ Options:
                          'add', 'user1', 'pass1'
                        ])
 
+    @unittest.skipIf(os.getuid() == 0,
+                     'test cannot be run as root user')
+    def test_bad_file_permissions(self):
+        """
+        Check for graceful handling of bad file argument
+        """
+        # Create the test file
+        self.run_check(0, None, None,
+                       [ self.TOOL,
+                         '-f', self.OUTPUT_FILE,
+                         'add', 'user1', 'pass1'
+                       ])
+
         # Make it non-writable (don't worry about cleanup, the
         # file should be deleted after each test anyway
         os.chmod(self.OUTPUT_FILE, stat.S_IRUSR)
@@ -468,14 +484,26 @@ Options:
         # I can only think of one invalid format, an unclosed string
         with open(self.OUTPUT_FILE, 'w', newline='') as f:
             f.write('a,"\n')
-        self.run_check(2,
-                       'Using accounts file: test_users.csv\n'
-                       'Error parsing csv file: newline inside string\n',
+        # Different versions of the csv library return different errors.
+        # So we need to check the output in a little more complex way.
+        # We ask the run_check not to check the output and check it
+        # ourselves.
+        (stdout, stderr) = self.run_check(2, None,
                        '',
                        [ self.TOOL,
                          '-f', self.OUTPUT_FILE,
                          'add', 'user1', 'pass1'
                        ])
+        # This looks little bit awkward, but is probably easiest with
+        # just 2 known possibilities. If there are more, we'll have to
+        # think of something else.
+        self.assertTrue(stdout ==
+                        'Using accounts file: test_users.csv\n'
+                        'Error parsing csv file: newline inside string\n' or
+                        stdout ==
+                        'Using accounts file: test_users.csv\n'
+                        'Error parsing csv file: unexpected end of data\n')
+
 
 
 if __name__== '__main__':

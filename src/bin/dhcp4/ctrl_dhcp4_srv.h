@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -130,6 +130,7 @@ protected:
     /// This static callback method is called from IfaceMgr::receive4() method,
     /// when there is a new command or configuration sent over msgq.
     static void sessionReader(void);
+
 
     /// @brief IOService object, used for all ASIO operations.
     isc::asiolink::IOService io_service_;

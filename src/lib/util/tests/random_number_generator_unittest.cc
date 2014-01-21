@@ -14,14 +14,13 @@
 
 #include <config.h>
 
+#include <util/random/random_number_generator.h>
+
 #include <gtest/gtest.h>
 #include <boost/shared_ptr.hpp>
 
-#include <algorithm>
 #include <iostream>
-#include <vector>
 
-#include <util/random/random_number_generator.h>
 
 namespace isc {
 namespace util {
@@ -42,9 +41,9 @@ public:
     }
     virtual ~UniformRandomIntegerGeneratorTest(){}
 
-    int gen() { return gen_(); }
-    int max() const { return max_; }
-    int min() const { return min_; }
+    int gen() { return (gen_()); }
+    int max() const { return (max_); }
+    int min() const { return (min_); }
 
 private:
     UniformRandomIntegerGenerator gen_;
@@ -82,7 +81,7 @@ TEST_F(UniformRandomIntegerGeneratorTest, IntegerRange) {
     vector<int>::iterator it = unique(numbers.begin(), numbers.end());
 
     // make sure the numbers are in range [min, max]
-    ASSERT_EQ(it - numbers.begin(), max() - min() + 1); 
+    ASSERT_EQ(it - numbers.begin(), max() - min() + 1);
 }
 
 /// \brief Test Fixture Class for weighted random number generator
@@ -99,7 +98,8 @@ public:
 TEST_F(WeightedRandomIntegerGeneratorTest, Constructor) {
     vector<double> probabilities;
 
-    // If no probabilities is provided, the smallest integer will always be generated
+    // If no probabilities is provided, the smallest integer will always
+    // be generated
     WeightedRandomIntegerGenerator gen(probabilities, 123);
     for (int i = 0; i < 100; ++i) {
         ASSERT_EQ(gen(), 123);

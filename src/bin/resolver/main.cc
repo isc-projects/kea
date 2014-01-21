@@ -168,7 +168,6 @@ main(int argc, char* argv[]) {
         resolver = boost::shared_ptr<Resolver>(new Resolver());
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_CREATED);
 
-        SimpleCallback* checkin = resolver->getCheckinProvider();
         DNSLookup* lookup = resolver->getDNSLookupProvider();
         DNSAnswer* answer = resolver->getDNSAnswerProvider();
 
@@ -217,7 +216,7 @@ main(int argc, char* argv[]) {
         cache.update(root_a_rrset);
         cache.update(root_aaaa_rrset);
 
-        DNSService dns_service(io_service, checkin, lookup, answer);
+        DNSService dns_service(io_service, lookup, answer);
         resolver->setDNSService(dns_service);
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_INIT, RESOLVER_SERVICE_CREATED);
 

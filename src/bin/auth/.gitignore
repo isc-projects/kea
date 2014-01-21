@@ -11,3 +11,5 @@
 /gen-statisticsitems.py.pre
 /statistics.cc
 /statistics_items.h
+/s-genstats
+/s-messages
