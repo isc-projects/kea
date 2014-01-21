@@ -256,7 +256,6 @@ protected:
     /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
     /// @param ia IA_NA option that is being renewed
-    /// @param fqdn DHCPv6 Client FQDN Option included in the server's response
     /// @return IA_NA option (server's response)
     OptionPtr renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                          const Pkt6Ptr& query, const Pkt6Ptr& answer,
@@ -369,7 +368,7 @@ protected:
     /// Received option comprises flags field which controls what DNS updates
     /// server should do. Server may override client's preference based on
     /// the current configuration. Server indicates that it has overridden
-    /// the preference by storing DHCPv6 Client Fqdn %Option with the
+    /// the preference by storing DHCPv6 Client FQDN option with the
     /// appropriate flags in the response to a client. This option is also
     /// used to communicate the client's domain-name which should be sent
     /// to the DNS in the update. Again, server may act upon the received
@@ -399,9 +398,8 @@ protected:
     ///
     /// @todo Add support for multiple IAADDR options in the IA_NA.
     ///
-    /// @param answer A message beging sent to the Client.
-    /// @param fqdn_answer A DHCPv6 Client FQDN %Option which is included in the
-    /// response message sent to a client.
+    /// @param answer A message beging sent to the Client. If it holds the
+    /// Client FQDN option, this option is used to create NameChangeRequests.
     void createNameChangeRequests(const Pkt6Ptr& answer);
 
     /// @brief Creates a @c isc::dhcp_ddns::NameChangeRequest which requests
