@@ -16,6 +16,8 @@
 #include <dns/opcode.h>
 #include <dns/messagerenderer.h>
 #include <nc_test_utils.h>
+#include <asio.hpp>
+#include <asiolink/udp_endpoint.h>
 
 #include <gtest/gtest.h>
 
@@ -42,7 +44,9 @@ FauxServer::FauxServer(asiolink::IOService& io_service,
     server_socket_.reset(new asio::ip::udp::socket(io_service_.get_io_service(),
                                                    asio::ip::udp::v4()));
     server_socket_->set_option(asio::socket_base::reuse_address(true));
-    server_socket_->bind(asio::ip::udp::endpoint(address_.getAddress(), port_));
+
+    isc::asiolink::UDPEndpoint endpoint(address_, port_);
+    server_socket_->bind(endpoint.getASIOEndpoint());
 }
 
 FauxServer::FauxServer(asiolink::IOService& io_service,
@@ -53,7 +57,8 @@ FauxServer::FauxServer(asiolink::IOService& io_service,
     server_socket_.reset(new asio::ip::udp::socket(io_service_.get_io_service(),
                                                    asio::ip::udp::v4()));
     server_socket_->set_option(asio::socket_base::reuse_address(true));
-    server_socket_->bind(asio::ip::udp::endpoint(address_.getAddress(), port_));
+    isc::asiolink::UDPEndpoint endpoint(address_, port_);
+    server_socket_->bind(endpoint.getASIOEndpoint());
 }
 
 
