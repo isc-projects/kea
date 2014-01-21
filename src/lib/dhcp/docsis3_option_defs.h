@@ -18,8 +18,8 @@
 #include <dhcp/std_option_defs.h>
 #include <dhcp/option_data_types.h>
 
-
-namespace {
+namespace isc {
+namespace dhcp {
 
 #define VENDOR_ID_CABLE_LABS 4491
 
@@ -61,6 +61,11 @@ const OptionDefParams DOCSIS3_V6_DEFS[] = {
 /// Number of option definitions defined.
 const int DOCSIS3_V6_DEFS_SIZE  = sizeof(DOCSIS3_V6_DEFS) / sizeof(OptionDefParams);
 
-}; // anonymous namespace
+/// The class as specified in vendor-class option by the devices
+extern const char* DOCSIS3_CLASS_EROUTER;
+extern const char* DOCSIS3_CLASS_MODEM;
+
+}; // isc::dhcp namespace
+}; // isc namespace
 
 #endif // DOCSIS3_OPTION_DEFS_H

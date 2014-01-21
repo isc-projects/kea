@@ -60,6 +60,7 @@
  *   - @subpage dhcpv4ConfigInherit
  *   - @subpage dhcpv4OptionsParse
  *   - @subpage dhcpv4DDNSIntegration
+ *   - @subpage dhcpv4Classifier
  *   - @subpage dhcpv4Other
  * - @subpage dhcp6
  *   - @subpage dhcpv6Session
@@ -67,6 +68,7 @@
  *   - @subpage dhcpv6ConfigInherit
  *   - @subpage dhcpv6DDNSIntegration
  *   - @subpage dhcpv6OptionsParse
+ *   - @subpage dhcpv6Classifier
  *   - @subpage dhcpv6Other
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro

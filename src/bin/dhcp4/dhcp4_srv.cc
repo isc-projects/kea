@@ -21,6 +21,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_string.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp4/dhcp4_log.h>
@@ -312,6 +313,9 @@ Dhcpv4Srv::run() {
             callout_handle->getArgument("query4", query);
         }
 
+        // Assign this packet to one or more classes if needed
+        classifyPacket(query);
+
         try {
             switch (query->getType()) {
             case DHCPDISCOVER:
@@ -365,6 +369,18 @@ Dhcpv4Srv::run() {
         }
 
         if (!rsp) {
+            continue;
+        }
+
+        // Let's do class specific processing. This is done before
+        // pkt4_send.
+        //
+        /// @todo: decide whether we want to add a new hook point for
+        /// doing class specific processing.
+        if (!classSpecificProcessing(query, rsp)) {
+            /// @todo add more verbosity here
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_PROCESSING_FAILED);
+
             continue;
         }
 
@@ -1764,6 +1780,87 @@ void
 Dhcpv4Srv::ifaceMgrSocket4ErrorHandler(const std::string& errmsg) {
     // Log the reason for socket opening failure and return.
     LOG_WARN(dhcp4_logger, DHCP4_OPEN_SOCKET_FAIL).arg(errmsg);
+}
+
+void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
+    boost::shared_ptr<OptionString> vendor_class =
+        boost::dynamic_pointer_cast<OptionString>(pkt->getOption(DHO_VENDOR_CLASS_IDENTIFIER));
+
+    string classes = "";
+
+    if (!vendor_class) {
+        return;
+    }
+
+    // DOCSIS specific section
+
+    // Let's keep this as a series of checks. So far we're supporting only
+    // docsis3.0, but there are also docsis2.0, docsis1.1 and docsis1.0. We
+    // may come up with adding several classes, e.g. for docsis2.0 we would
+    // add classes docsis2.0, docsis1.1 and docsis1.0.
+
+    // Also we are using find, because we have at least one traffic capture
+    // where the user class was followed by a space ("docsis3.0 ").
+
+    // For now, the code is very simple, but it is expected to get much more
+    // complex soon. One specific case is that the vendor class is an option
+    // sent by the client, so we should not trust it. To confirm that the device
+    // is indeed a modem, John B. suggested to check whether chaddr field
+    // quals subscriber-id option that was inserted by the relay (CMTS).
+    // This kind of logic will appear here soon.
+    if (vendor_class->getValue().find(DOCSIS3_CLASS_MODEM) != std::string::npos) {
+        pkt->addClass(DOCSIS3_CLASS_MODEM);
+        classes += string(DOCSIS3_CLASS_MODEM) + " ";
+    } else
+    if (vendor_class->getValue().find(DOCSIS3_CLASS_EROUTER) != std::string::npos) {
+        pkt->addClass(DOCSIS3_CLASS_EROUTER);
+        classes += string(DOCSIS3_CLASS_EROUTER) + " ";
+    } else {
+        classes += vendor_class->getValue();
+        pkt->addClass(vendor_class->getValue());
+    }
+
+    if (!classes.empty()) {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(classes);
+    }
+}
+
+bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp) {
+
+    Subnet4Ptr subnet = selectSubnet(query);
+    if (!subnet) {
+        return (true);
+    }
+
+    if (query->inClass(DOCSIS3_CLASS_MODEM)) {
+
+        // Set next-server. This is TFTP server address. Cable modems will
+        // download their configuration from that server.
+        rsp->setSiaddr(subnet->getSiaddr());
+
+        // Now try to set up file field in DHCPv4 packet. We will just copy
+        // content of the boot-file option, which contains the same information.
+        Subnet::OptionDescriptor desc =
+            subnet->getOptionDescriptor("dhcp4", DHO_BOOT_FILE_NAME);
+
+        if (desc.option) {
+            boost::shared_ptr<OptionString> boot =
+                boost::dynamic_pointer_cast<OptionString>(desc.option);
+            if (boot) {
+                std::string filename = boot->getValue();
+                rsp->setFile((const uint8_t*)filename.c_str(), filename.size());
+            }
+        }
+    }
+
+    if (query->inClass(DOCSIS3_CLASS_EROUTER)) {
+
+        // Do not set TFTP server address for eRouter devices.
+        rsp->setSiaddr(IOAddress("0.0.0.0"));
+    }
+
+    return (true);
 }
 
 }   // namespace dhcp

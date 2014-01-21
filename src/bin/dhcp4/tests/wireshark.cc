@@ -71,7 +71,10 @@ void Dhcpv4SrvTest::captureSetDefaultFields(const Pkt4Ptr& pkt) {
 
 Pkt4Ptr Dhcpv4SrvTest::captureRelayedDiscover() {
 
-/* string exported from Wireshark:
+/* This is packet 1 from capture
+   dhcp-val/pcap/docsis-*-CG3000DCR-Registration-Filtered.cap
+
+string exported from Wireshark:
 
 User Datagram Protocol, Src Port: bootps (67), Dst Port: bootps (67)
     Source port: bootps (67)
@@ -98,7 +101,7 @@ Bootstrap Protocol
     Magic cookie: DHCP
     Option: (53) DHCP Message Type
     Option: (55) Parameter Request List
-    Option: (60) Vendor class identifier
+    Option: (60) Vendor class identifier (docsis3.0)
     Option: (125) V-I Vendor-specific Information
       - suboption 1 (Option Request): requesting option 2
       - suboption 5 (Modem Caps): 117 bytes
@@ -125,6 +128,59 @@ Bootstrap Protocol
         "30303039354209094347333030304443520a074e657467656172fe01083d0fff2ab815"
         "140003000120e52ab81514390205dc5219010420000002020620e52ab8151409090000"
         "118b0401020300ff";
+
+    return (packetFromCapture(hex_string));
+}
+
+Pkt4Ptr Dhcpv4SrvTest::captureRelayedDiscover2() {
+
+/* This is packet 5 from capture
+   dhcp-val/pcap/docsis-*-CG3000DCR-Registration-Filtered.cap
+
+string exported from Wireshark:
+
+User Datagram Protocol, Src Port: bootps (67), Dst Port: bootps (67)
+Bootstrap Protocol
+    Message type: Boot Request (1)
+    Hardware type: Ethernet (0x01)
+    Hardware address length: 6
+    Hops: 1
+    Transaction ID: 0x5d05478f
+    Seconds elapsed: 5
+    Bootp flags: 0x0000 (Unicast)
+    Client IP address: 0.0.0.0 (0.0.0.0)
+    Your (client) IP address: 0.0.0.0 (0.0.0.0)
+    Next server IP address: 0.0.0.0 (0.0.0.0)
+    Relay agent IP address: 10.254.226.1 (10.254.226.1)
+    Client MAC address: Netgear_b8:15:15 (20:e5:2a:b8:15:15)
+    Client hardware address padding: 00000000000000000000
+    Server host name not given
+    Boot file name not given
+    Magic cookie: DHCP
+    Option: (53) DHCP Message Type
+    Option: (55) Parameter Request List
+    Option: (43) Vendor-Specific Information
+    Option: (60) Vendor class identifier (eRouter1.0)
+    Option: (15) Domain Name
+    Option: (61) Client identifier
+    Option: (57) Maximum DHCP Message Size
+    Option: (82) Agent Information Option
+    Option: (255) End */
+
+    string hex_string =
+        "010106015d05478f000500000000000000000000000000000afee20120e52ab8151500"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "0000000000000000000000000000000000000000000000000000000000000000000000"
+        "000000000000000000000000000000000000000000000000000063825363350101370e"
+        "480102030406070c0f171a36337a2b63020745524f55544552030b45434d3a45524f55"
+        "544552040d324252323239553430303434430504312e3034060856312e33332e303307"
+        "07322e332e305232080630303039354209094347333030304443520a074e6574676561"
+        "720f0745524f555445523c0a65526f75746572312e300f14687364312e70612e636f6d"
+        "636173742e6e65742e3d0fff2ab815150003000120e52ab81515390205dc5219010420"
+        "000002020620e52ab8151409090000118b0401020300ff";
 
     return (packetFromCapture(hex_string));
 }
