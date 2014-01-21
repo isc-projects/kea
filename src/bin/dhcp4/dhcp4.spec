@@ -3,16 +3,30 @@
     "module_name": "Dhcp4",
     "module_description": "DHCPv4 server daemon",
     "config_data": [
-      { "item_name": "interface",
+      {
+        "item_name": "hooks-libraries",
+        "item_type": "list",
+        "item_optional": true,
+        "item_default": [],
+        "list_item_spec":
+        {
+          "item_name": "hooks-library",
+          "item_type": "string",
+          "item_optional": false,
+          "item_default": ""
+        }
+      },
+
+      { "item_name": "interfaces",
         "item_type": "list",
         "item_optional": false,
-        "item_default": [ "all" ],
+        "item_default": [ "*" ],
         "list_item_spec":
         {
           "item_name": "interface_name",
           "item_type": "string",
           "item_optional": false,
-          "item_default": "all"
+          "item_default": "*"
         }
       } ,
 
@@ -32,6 +46,18 @@
         "item_type": "integer",
         "item_optional": false,
         "item_default": 4000
+      },
+
+      { "item_name": "next-server",
+        "item_type": "string",
+        "item_optional": true,
+        "item_default": ""
+      },
+
+      { "item_name": "echo-client-id",
+        "item_type": "boolean",
+        "item_optional": true,
+        "item_default": true
       },
 
       { "item_name": "option-def",
@@ -204,6 +230,13 @@
                   "item_optional": false,
                   "item_default": 7200
                 },
+
+                { "item_name": "next-server",
+                  "item_type": "string",
+                  "item_optional": true,
+                  "item_default": "0.0.0.0"
+                },
+
                 { "item_name": "pool",
                   "item_type": "list",
                   "item_optional": false,
@@ -259,7 +292,103 @@
                   }
                 } ]
          }
-      }
+      },
+
+      { "item_name": "dhcp-ddns",
+        "item_type": "map",
+        "item_optional": false,
+        "item_default": {"enable-updates": false},
+        "item_description" : "Contains parameters pertaining DHCP-driven DDNS updates",
+        "map_item_spec": [
+            {
+                "item_name": "enable-updates",
+                "item_type": "boolean",
+                "item_optional": false,
+                "item_default": false,
+                "item_description" : "Enables DDNS update processing"
+            },
+            {
+                "item_name": "server-ip",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "127.0.0.1",
+                "item_description" : "IP address of b10-dhcp-ddns (IPv4 or IPv6)"
+            },
+            {
+                "item_name": "server-port",
+                "item_type": "integer",
+                "item_optional": true,
+                "item_default": 53001,
+                "item_description" : "port number of b10-dhcp-ddns"
+            },
+            {
+                "item_name": "ncr-protocol",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "UDP",
+                "item_description" : "Socket protocol to use with b10-dhcp-ddns"
+            },
+            {
+                "item_name": "ncr-format",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "JSON",
+                "item_description" : "Format of the update request packet"
+            },
+            {
+                "item_name": "remove-on-renew",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": false,
+                "item_description": "Enable requesting a DNS Remove, before a DNS Update on renewals"
+            },
+            {
+
+                "item_name": "always-include-fqdn",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": false,
+                "item_description": "Enable always including the FQDN option in its response"
+            },
+            {
+                "item_name": "override-no-update",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": false,
+                "item_description": "Do update, even if client requested no updates with N flag"
+            },
+            {
+                "item_name": "override-client-update",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": false,
+                "item_description": "Server performs an update even if client requested delegation"
+            },
+            {
+                "item_name": "replace-client-name",
+                "item_type": "boolean",
+                "item_optional": true,
+                "item_default": false,
+                "item_description": "Should server replace the domain-name supplied by the client"
+            },
+            {
+                "item_name": "generated-prefix",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "myhost",
+                "item_description": "Prefix to use when generating the client's name"
+            },
+
+            {
+                "item_name": "qualifying-suffix",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "example.com",
+                "item_description": "Fully qualified domain-name suffix if partial name provided by client"
+            },
+        ]
+      },
+
     ],
     "commands": [
         {
@@ -272,7 +401,14 @@
                     "item_optional": true
                 }
             ]
+        },
+
+        {
+            "command_name": "libreload",
+            "command_description": "Reloads the current hooks libraries.",
+            "command_args": []
         }
+
     ]
   }
 }

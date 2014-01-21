@@ -15,30 +15,58 @@
 #ifndef MEM_ZONE_WRITER_H
 #define MEM_ZONE_WRITER_H
 
-#include "load_action.h"
+#include <datasrc/memory/load_action.h>
+
+#include <boost/noncopyable.hpp>
+
+#include <dns/dns_fwd.h>
 
 namespace isc {
 namespace datasrc {
 namespace memory {
+class ZoneTableSegment;
 
 /// \brief Does an update to a zone.
 ///
-/// This abstract base class represents the work of a reload of a zone.
-/// The work is divided into three stages -- load(), install() and cleanup().
-/// They should be called in this order for the effect to take place.
+/// This represents the work of a (re)load of a zone.  The work is divided
+/// into three stages -- load(), install() and cleanup().  They should
+/// be called in this order for the effect to take place.
 ///
 /// We divide them so the update of zone data can be done asynchronously,
 /// in a different thread. The install() operation is the only one that needs
 /// to be done in a critical section.
 ///
-/// Each derived class implementation must provide the strong exception
-/// guarantee for each public method. That is, when any of the methods
-/// throws, the entire state should stay the same as before the call
-/// (how to achieve that may be implementation dependant).
-class ZoneWriter {
+/// This class provides strong exception guarantee for each public
+/// method. That is, when any of the methods throws, the entire state
+/// stays the same as before the call.
+class ZoneWriter : boost::noncopyable {
 public:
-    /// \brief Virtual destructor.
-    virtual ~ZoneWriter() {};
+    /// \brief Constructor
+    ///
+    /// If \c catch_load_error is set to true, the \c load() method will
+    /// internally catch load related errors reported as a DataSourceError
+    /// exception, and subsequent \c install() method will add a special
+    /// empty zone to the zone table segment.  If it's set to false, \c load()
+    /// will simply propagate the exception.  This parameter would normally
+    /// be set to false as it's not desirable to install a broken zone;
+    /// however, it would be better to be set to true at the initial loading
+    /// so the zone table recognizes the existence of the zone (and being
+    /// aware that it's broken).
+    ///
+    /// \throw isc::InvalidOperation if \c segment is read-only.
+    ///
+    /// \param segment The zone table segment to store the zone into.
+    /// \param load_action The callback used to load data.
+    /// \param name The name of the zone.
+    /// \param rrclass The class of the zone.
+    /// \param catch_load_error true if loading errors are to be caught
+    /// internally; false otherwise.
+    ZoneWriter(ZoneTableSegment& segment,
+               const LoadAction& load_action, const dns::Name& name,
+               const dns::RRClass& rrclass, bool catch_load_error);
+
+    /// \brief Destructor.
+    ~ZoneWriter();
 
     /// \brief Get the zone data into memory.
     ///
@@ -49,6 +77,12 @@ public:
     /// This is the first method you should call on the object. Never call it
     /// multiple times.
     ///
+    /// If the optional parameter \c error_msg is given and non NULL, and
+    /// if the writer object was constructed with \c catch_load_error being
+    /// true, then error_msg will be filled with text indicating the reason
+    /// for the error in case a load error happens.  In other cases any
+    /// passed non NULL error_msg will be intact.
+    ///
     /// \note As this contains reading of files or other data sources, or with
     ///     some other source of the data to load, it may throw quite anything.
     ///     If it throws, do not call any other methods on the object and
@@ -56,24 +90,33 @@ public:
     /// \note After successful load(), you have to call cleanup() some time
     ///     later.
     /// \throw isc::InvalidOperation if called second time.
-    virtual void load() = 0;
+    /// \throw DataSourceError load related error (not thrown if constructed
+    /// with catch_load_error being \c true).
+    ///
+    /// \param error_msg If non NULL, used as a placeholder to store load error
+    /// messages.
+    void load(std::string* error_msg = NULL);
 
     /// \brief Put the changes to effect.
     ///
     /// This replaces the old version of zone with the one previously prepared
     /// by load(). It takes ownership of the old zone data, if any.
     ///
-    /// You may call it only after successful load() and at most once.
+    /// You may call it only after successful load() and at most once.  It
+    /// includes the case the writer is constructed with catch_load_error
+    /// being true and load() encountered and caught a DataSourceError
+    /// exception.  In this case this method installs a special empty zone
+    /// to the table.
     ///
     /// The operation is expected to be fast and is meant to be used inside
     /// a critical section.
     ///
-    /// This may throw in rare cases, depending on the concrete implementation.
-    /// If it throws, you still need to call cleanup().
+    /// This may throw in rare cases.  If it throws, you still need to
+    /// call cleanup().
     ///
     /// \throw isc::InvalidOperation if called without previous load() or for
     ///     the second time or cleanup() was called already.
-    virtual void install() = 0;
+    void install();
 
     /// \brief Clean up resources.
     ///
@@ -81,12 +124,22 @@ public:
     /// one loaded by load() in case install() was not called or was not
     /// successful, or the one replaced in install().
     ///
-    /// Generally, this should never throw.
-    virtual void cleanup() = 0;
+    /// \throw none
+    void cleanup();
+
+private:
+    // We hide details as this class will be used by various applications
+    // and we use some internal data structures in the implementation.
+    struct Impl;
+    Impl* impl_;
 };
 
 }
 }
 }
 
-#endif
+#endif  // MEM_ZONE_WRITER_H
+
+// Local Variables:
+// mode: c++
+// End:

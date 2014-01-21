@@ -25,6 +25,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/option_string.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/pointer_cast.hpp>
@@ -438,7 +439,7 @@ TEST_F(OptionDefinitionTest, ipv4AddressArrayTokenized) {
     EXPECT_TRUE(std::equal(addrs.begin(), addrs.end(), addrs_returned.begin()));
 }
 
-// The purpose of thie test is to verify that option definition for
+// The purpose of this test is to verify that option definition for
 // 'empty' option can be created and that it returns 'empty' option.
 TEST_F(OptionDefinitionTest, empty) {
     OptionDefinition opt_def("OPTION_RAPID_COMMIT", D6O_RAPID_COMMIT, "empty");
@@ -461,6 +462,49 @@ TEST_F(OptionDefinitionTest, empty) {
     EXPECT_EQ(Option::V4, option_v4->getUniverse());
     EXPECT_EQ(2, option_v4->getHeaderLen());
     EXPECT_EQ(0, option_v4->getData().size());
+}
+
+// The purpose of this test is to verify that when the empty option encapsulates
+// some option space, an instance of the OptionCustom is returned and its
+// suboptions are decoded.
+TEST_F(OptionDefinitionTest, emptyWithSuboptions) {
+    // Create an instance of the 'empty' option definition. This option
+    // encapsulates 'option-foo-space' so when we create a new option
+    // with this definition the OptionCustom should be returned. The
+    // Option Custom is generic option which support variety of formats
+    // and supports decoding suboptions.
+    OptionDefinition opt_def("option-foo", 1024, "empty", "option-foo-space");
+
+    // Define a suboption.
+    const uint8_t subopt_data[] = {
+        0x04, 0x01,  // Option code 1025
+        0x00, 0x04,  // Option len = 4
+        0x01, 0x02, 0x03, 0x04 // Option data
+    };
+
+    // Create an option, having option code 1024 from the definition. Pass
+    // the option buffer containing suboption.
+    OptionPtr option_v6;
+    ASSERT_NO_THROW(
+        option_v6 = opt_def.optionFactory(Option::V6, 1024,
+                                          OptionBuffer(subopt_data,
+                                                       subopt_data +
+                                                       sizeof(subopt_data)))
+    );
+    // Returned option should be of the OptionCustom type.
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionCustom));
+    // Sanity-check length, universe etc.
+    EXPECT_EQ(Option::V6, option_v6->getUniverse());
+    EXPECT_EQ(4, option_v6->getHeaderLen());
+    // This option should have one suboption with the code of 1025.
+    OptionPtr subopt_v6 = option_v6->getOption(1025);
+    EXPECT_TRUE(subopt_v6);
+    // Check that this suboption holds valid data.
+    EXPECT_EQ(1025, subopt_v6->getType());
+    EXPECT_EQ(Option::V6, subopt_v6->getUniverse());
+    EXPECT_EQ(0, memcmp(&subopt_v6->getData()[0], subopt_data + 4, 4));
+
+    // @todo consider having a similar test for V4.
 }
 
 // The purpose of this test is to verify that definition can be
@@ -927,7 +971,7 @@ TEST_F(OptionDefinitionTest, utf8StringTokenized) {
     // Let's create some dummy option.
     const uint16_t opt_code = 80;
     OptionDefinition opt_def("OPTION_WITH_STRING", opt_code, "string");
-    
+
     std::vector<std::string> values;
     values.push_back("Hello World");
     values.push_back("this string should not be included in the option");
@@ -936,11 +980,10 @@ TEST_F(OptionDefinitionTest, utf8StringTokenized) {
         option_v6 = opt_def.optionFactory(Option::V6, opt_code, values);
     );
     ASSERT_TRUE(option_v6);
-    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionCustom));
-    std::vector<uint8_t> data = option_v6->getData();
-    std::vector<uint8_t> ref_data(values[0].c_str(), values[0].c_str()
-                                  + values[0].length());
-    EXPECT_TRUE(std::equal(ref_data.begin(), ref_data.end(), data.begin()));
+    ASSERT_TRUE(typeid(*option_v6) == typeid(OptionString));
+    OptionStringPtr option_v6_string =
+        boost::static_pointer_cast<OptionString>(option_v6);
+    EXPECT_TRUE(values[0] == option_v6_string->getValue());
 }
 
 // The purpose of this test is to check that non-integer data type can't
@@ -951,8 +994,8 @@ TEST_F(OptionDefinitionTest, integerInvalidType) {
     // see if it rejects it.
     OptionBuffer buf(1);
     EXPECT_THROW(
-        OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE,
-                                               buf.begin(), buf.end()),
+        OptionDefinition::factoryInteger<bool>(Option::V6, D6O_PREFERENCE, "dhcp6",
+                                               buf.begin(), buf.end(), NULL),
         isc::dhcp::InvalidDataType
     );
 }
@@ -960,7 +1003,7 @@ TEST_F(OptionDefinitionTest, integerInvalidType) {
 // The purpose of this test is to verify that helper methods
 // haveIA6Format and haveIAAddr6Format can be used to determine
 // IA_NA  and IAADDR option formats.
-TEST_F(OptionDefinitionTest, recognizeFormat) {
+TEST_F(OptionDefinitionTest, haveIAFormat) {
     // IA_NA option format.
     OptionDefinition opt_def1("OPTION_IA_NA", D6O_IA_NA, "record");
     for (int i = 0; i < 3; ++i) {
@@ -982,6 +1025,21 @@ TEST_F(OptionDefinitionTest, recognizeFormat) {
     // return 'true' all the time.
     OptionDefinition opt_def4("OPTION_IAADDR", D6O_IAADDR, "uint32", true);
     EXPECT_FALSE(opt_def4.haveIAAddr6Format());
+}
+
+// This test verifies that haveClientFqdnFormat function recognizes that option
+// definition describes the format of DHCPv6 Client Fqdn Option Format.
+TEST_F(OptionDefinitionTest, haveClientFqdnFormat) {
+    OptionDefinition opt_def("OPTION_CLIENT_FQDN", D6O_CLIENT_FQDN, "record");
+    opt_def.addRecordField("uint8");
+    opt_def.addRecordField("fqdn");
+    EXPECT_TRUE(opt_def.haveClientFqdnFormat());
+
+    // Create option format which is not matching the Client FQDN option format
+    // to verify that tested function does dont always return true.
+    OptionDefinition opt_def_invalid("OPTION_CLIENT_FQDN", D6O_CLIENT_FQDN,
+                                     "uint8");
+    EXPECT_FALSE(opt_def_invalid.haveClientFqdnFormat());
 }
 
 } // anonymous namespace

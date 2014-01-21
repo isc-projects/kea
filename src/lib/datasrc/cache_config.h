@@ -17,6 +17,7 @@
 
 #include <exceptions/exceptions.h>
 
+#include <dns/name.h>
 #include <dns/dns_fwd.h>
 #include <cc/data.h>
 #include <datasrc/memory/load_action.h>
@@ -157,12 +158,13 @@ public:
     /// It doesn't throw an exception in this case because the expected caller
     /// of this method would handle such a case internally.
     ///
-    /// \throw DataSourceError error happens in the underlying data source
-    /// storing the cache data.  Most commonly it's because the specified zone
-    /// doesn't exist there.
+    /// \throw NoSuchZone The specified zone doesn't exist in the
+    /// underlying data source storing the original data to be cached.
+    /// \throw DataSourceError Other, unexpected but possible error happens
+    /// in the underlying data source.
     /// \throw Unexpected Unexpected error happens in the underlying data
-    /// source storing the cache data.  This shouldn't happen as long as the
-    /// data source implementation meets the public API requirement.
+    /// source.  This shouldn't happen as long as the data source
+    /// implementation meets the public API requirement.
     ///
     /// \param rrclass The RR class of the zone
     /// \param zone_name The origin name of the zone

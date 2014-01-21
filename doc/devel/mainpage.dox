@@ -1,44 +1,91 @@
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
 /**
- *
  * @mainpage BIND10 Developer's Guide
  *
  * Welcome to BIND10 Developer's Guide. This documentation is addressed
- * at existing and prospecting developers and programmers, who would like
- * to gain insight into internal workings of BIND 10. It could also be useful
- * for existing and prospective contributors.
+ * at existing and prospecting developers and programmers and provides
+ * information needed to both extend and maintain BIND 10.
+ *
+ * If you wish to write "hook" code - code that is loaded by BIND 10 at
+ * run-time and modifies its behavior you should read the section
+ * @ref hooksdgDevelopersGuide.
+ *
+ * BIND 10 maintenance information is divided into a number of sections
+ * depending on focus.  DNS-specific issues are covered in the
+ * @ref dnsMaintenanceGuide while information on DHCP-specific topics can
+ * be found in the @ref dhcpMaintenanceGuide.  General BIND 10 topics, not
+ * specific to any protocol, are discussed in @ref miscellaneousTopics.
  *
  * If you are a user or system administrator, rather than software engineer,
- * you should read <a href="http://bind10.isc.org/docs/bind10-guide.html">BIND10
+ * you should read the
+ * <a href="http://bind10.isc.org/docs/bind10-guide.html">BIND10
  * Guide (Administrator Reference for BIND10)</a> instead.
  *
- * Regardless of your field of expertise, you are encouraged to visit
+ * Regardless of your field of expertise, you are encouraged to visit the
  * <a href="http://bind10.isc.org/">BIND10 webpage (http://bind10.isc.org)</a>
  *
- * @section DNS
+ * @section contrib Contributor's Guide
+ * - @subpage contributorGuide
+ *
+ * @section hooksFramework Hooks Framework
+ * - @subpage hooksdgDevelopersGuide
+ * - @subpage dhcpv4Hooks
+ * - @subpage dhcpv6Hooks
+ * - @subpage hooksComponentDeveloperGuide
+ * - @subpage hooksmgMaintenanceGuide
+ * - @subpage libdhcp_user_chk
+ *
+ * @section dnsMaintenanceGuide DNS Maintenance Guide
  * - Authoritative DNS (todo)
  * - Recursive resolver (todo)
  * - @subpage DataScrubbing
  *
- * @section DHCP
+ * @section dhcpMaintenanceGuide DHCP Maintenance Guide
  * - @subpage dhcp4
  *   - @subpage dhcpv4Session
  *   - @subpage dhcpv4ConfigParser
  *   - @subpage dhcpv4ConfigInherit
+ *   - @subpage dhcpv4OptionsParse
+ *   - @subpage dhcpv4DDNSIntegration
+ *   - @subpage dhcpv4Classifier
+ *   - @subpage dhcpv4Other
  * - @subpage dhcp6
  *   - @subpage dhcpv6Session
  *   - @subpage dhcpv6ConfigParser
  *   - @subpage dhcpv6ConfigInherit
+ *   - @subpage dhcpv6DDNSIntegration
+ *   - @subpage dhcpv6OptionsParse
+ *   - @subpage dhcpv6Classifier
+ *   - @subpage dhcpv6Other
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
+ *   - @subpage libdhcpRelay
  *   - @subpage libdhcpIfaceMgr
+ *   - @subpage libdhcpPktFilter
+ *   - @subpage libdhcpPktFilter6
+ *   - @subpage libdhcpErrorLogging
  * - @subpage libdhcpsrv
  *   - @subpage leasemgr
  *   - @subpage cfgmgr
  *   - @subpage allocengine
  * - @subpage dhcpDatabaseBackends
  * - @subpage perfdhcpInternals
+ * - @subpage libdhcp_ddns
  *
- * @section misc Miscellaneous topics
+ * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage LoggingApi
  *   - @subpage LoggingApiOverview
  *   - @subpage LoggingApiLoggerNames
@@ -46,7 +93,10 @@
  * - @subpage SocketSessionUtility
  * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
  *
- * @todo: Move this logo to the right (and possibly up). Not sure what
- * is the best way to do it in Doxygen, without using CSS hacks.
  * @image html isc-logo.png
  */
+/*
+ * @todo: Move the logo to the right (and possibly up). Not sure what
+ * is the best way to do it in Doxygen, without using CSS hacks.
+ */
+

@@ -36,11 +36,11 @@ import re
 import ssl, socket
 import isc
 import pprint
-import select
 import csv
 import random
 import time
 import signal
+import errno
 from isc.config import ccsession
 import isc.cc.proto_defs
 import isc.util.process
@@ -49,6 +49,7 @@ from optparse import OptionParser, OptionValueError
 from hashlib import sha1
 from isc.util import socketserver_mixin
 from isc.log_messages.cmdctl_messages import *
+import isc.util.traceback_handler
 
 isc.log.init("b10-cmdctl", buffer=True)
 logger = isc.log.Logger("cmdctl")
@@ -371,8 +372,6 @@ class CommandControl():
             self._httpserver.shutdown()
             self._serving = False
 
-        elif command == 'print_settings':
-            answer = ccsession.create_answer(0, self._cmdctl_config_data)
         else:
             answer = ccsession.create_answer(1, 'unknown command: ' + command)
 
@@ -525,7 +524,17 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
             logger.debug(DBG_CMDCTL_MESSAGING, CMDCTL_STARTED,
                          server_address[0], server_address[1])
         except socket.error as err:
-            raise CmdctlException("Error creating server, because: %s \n" % str(err))
+            if err.errno == errno.EADDRINUSE:
+                raise CmdctlException(("Error creating server, because " +\
+                                       "port %d on address %s is " +\
+                                       "already in use. Please stop " +\
+                                       "the application that uses it or " +\
+                                       "see the guide about using a " +\
+                                       "different port for b10-cmdctl.") % \
+                                      (server_address[1], \
+                                       server_address[0]))
+            else:
+                raise CmdctlException("Error creating server, because: %s" % str(err))
 
         self.user_sessions = {}
         self.idle_timeout = idle_timeout
@@ -602,12 +611,13 @@ class SecureHTTPServer(socketserver_mixin.NoPollMixIn,
             # error)
             return ssl_sock
         except ssl.SSLError as err:
+            self.close_request(sock)
             logger.error(CMDCTL_SSL_SETUP_FAILURE_USER_DENIED, err)
-        except (CmdctlException, IOError) as cce:
+            raise
+        except (CmdctlException, IOError, socket.error) as cce:
+            self.close_request(sock)
             logger.error(CMDCTL_SSL_SETUP_FAILURE_READING_CERT, cce)
-        self.close_request(sock)
-        # raise socket error to finish the request
-        raise socket.error
+            raise
 
     def get_request(self):
         '''Get client request socket and wrap it in SSL context. '''
@@ -677,7 +687,7 @@ def set_cmd_options(parser):
     parser.add_option("-v", "--verbose", dest="verbose", action="store_true", default=False,
             help="display more about what is going on")
 
-if __name__ == '__main__':
+def main():
     set_signal_handler()
     parser = OptionParser(version = __version__)
     set_cmd_options(parser)
@@ -703,3 +713,6 @@ if __name__ == '__main__':
     logger.info(CMDCTL_EXITING)
 
     sys.exit(result)
+
+if __name__ == '__main__':
+    isc.util.traceback_handler.traceback_handler(main)

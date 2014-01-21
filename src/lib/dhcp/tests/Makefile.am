@@ -31,9 +31,12 @@ libdhcp___unittests_SOURCES += hwaddr_unittest.cc
 libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
+libdhcp___unittests_SOURCES += option4_client_fqdn_unittest.cc
 libdhcp___unittests_SOURCES += option6_addrlst_unittest.cc
+libdhcp___unittests_SOURCES += option6_client_fqdn_unittest.cc
 libdhcp___unittests_SOURCES += option6_ia_unittest.cc
 libdhcp___unittests_SOURCES += option6_iaaddr_unittest.cc
+libdhcp___unittests_SOURCES += option6_iaprefix_unittest.cc
 libdhcp___unittests_SOURCES += option_int_unittest.cc
 libdhcp___unittests_SOURCES += option_int_array_unittest.cc
 libdhcp___unittests_SOURCES += option_data_types_unittest.cc
@@ -41,8 +44,21 @@ libdhcp___unittests_SOURCES += option_definition_unittest.cc
 libdhcp___unittests_SOURCES += option_custom_unittest.cc
 libdhcp___unittests_SOURCES += option_unittest.cc
 libdhcp___unittests_SOURCES += option_space_unittest.cc
+libdhcp___unittests_SOURCES += option_string_unittest.cc
+libdhcp___unittests_SOURCES += option_vendor_unittest.cc
 libdhcp___unittests_SOURCES += pkt4_unittest.cc
 libdhcp___unittests_SOURCES += pkt6_unittest.cc
+libdhcp___unittests_SOURCES += pkt_filter_unittest.cc
+libdhcp___unittests_SOURCES += pkt_filter_inet_unittest.cc
+libdhcp___unittests_SOURCES += pkt_filter_inet6_unittest.cc
+libdhcp___unittests_SOURCES += pkt_filter_test_utils.h pkt_filter_test_utils.cc
+libdhcp___unittests_SOURCES += pkt_filter6_test_utils.h pkt_filter6_test_utils.cc
+
+if OS_LINUX
+libdhcp___unittests_SOURCES += pkt_filter_lpf_unittest.cc
+endif
+
+libdhcp___unittests_SOURCES += protocol_util_unittest.cc
 libdhcp___unittests_SOURCES += duid_unittest.cc
 
 libdhcp___unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)

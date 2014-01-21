@@ -111,7 +111,7 @@ in separate zonemgr process.
       <varname>class</varname> (defaults to <quote>IN</quote>),
       <varname>master_addr</varname> (the zone master to transfer from),
       <varname>master_port</varname> (defaults to 53),
-      <varname>use_ixfr</varname> (defaults to false), and
+      <varname>request_ixfr</varname> (defaults to yes), and
       <varname>tsig_key</varname> (optional TSIG key name to use).
       The <varname>tsig_key</varname> is specified using a name that
       corresponds to one of the TSIG keys configured in the global
@@ -231,102 +231,214 @@ operation
           <variablelist>
 
             <varlistentry>
-              <term><replaceable>zonename</replaceable></term>
+              <term><replaceable>classname</replaceable></term>
               <listitem><simpara>
-                An actual zone name or special zone name
-                <quote>_SERVER_</quote> representing the entire server.
-                Zone classes (e.g. IN, CH, and HS) are mixed and counted so
-                far. But these will be distinguished in future release.
+                An actual RR class name of the zone, e.g. IN, CH, and HS
                 </simpara>
                 <variablelist>
 
                   <varlistentry>
-                    <term>soaoutv4</term>
+                    <term><replaceable>zonename</replaceable></term>
                     <listitem><simpara>
-                      Number of IPv4 SOA queries sent from Xfrin
-                    </simpara></listitem>
-                  </varlistentry>
+                      An actual zone name or special zone name
+                      <quote>_SERVER_</quote> representing the entire server
+                      </simpara>
+                      <variablelist>
 
-                  <varlistentry>
-                    <term>soaoutv6</term>
-                    <listitem><simpara>
-                      Number of IPv6 SOA queries sent from Xfrin
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>soaoutv4</term>
+                          <listitem><simpara>
+                            Number of IPv4 SOA queries sent from Xfrin
+                          </simpara></listitem>
+                        </varlistentry>
 
-                  <varlistentry>
-                    <term>axfrreqv4</term>
-                    <listitem><simpara>
-                      Number of IPv4 AXFR requests sent from Xfrin
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>soaoutv6</term>
+                          <listitem><simpara>
+                            Number of IPv6 SOA queries sent from Xfrin
+                          </simpara></listitem>
+                        </varlistentry>
 
-                  <varlistentry>
-                    <term>axfrreqv6</term>
-                    <listitem><simpara>
-                      Number of IPv6 AXFR requests sent from Xfrin
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>axfrreqv4</term>
+                          <listitem><simpara>
+                            Number of IPv4 AXFR requests sent from Xfrin
+                          </simpara></listitem>
+                        </varlistentry>
 
-                  <varlistentry>
-                    <term>ixfrreqv4</term>
-                    <listitem><simpara>
-                      Number of IPv4 IXFR requests sent from Xfrin
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>axfrreqv6</term>
+                          <listitem><simpara>
+                            Number of IPv6 AXFR requests sent from Xfrin
+                          </simpara></listitem>
+                        </varlistentry>
 
-                  <varlistentry>
-                    <term>ixfrreqv6</term>
-                    <listitem><simpara>
-                      Number of IPv6 IXFR requests sent from Xfrin
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>ixfrreqv4</term>
+                          <listitem><simpara>
+                            Number of IPv4 IXFR requests sent from Xfrin
+                          </simpara></listitem>
+                        </varlistentry>
 
-                  <varlistentry>
-                    <term>xfrsuccess</term>
-                    <listitem><simpara>
-                      Number of zone transfer requests succeeded.
-                      These include the case where the zone turns
-                      out to be the latest as a result of an
-                      initial SOA query (and there is actually no
-                      AXFR or IXFR transaction).
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>ixfrreqv6</term>
+                          <listitem><simpara>
+                            Number of IPv6 IXFR requests sent from Xfrin
+                          </simpara></listitem>
+                        </varlistentry>
 
-                  <varlistentry>
-                    <term>xfrfail</term>
-                    <listitem><simpara>
-                      Number of zone transfer requests failed
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>xfrsuccess</term>
+                          <listitem><simpara>
+                            Number of zone transfer requests succeeded.
+                            These include the case where the zone turns
+                            out to be the latest as a result of an
+                            initial SOA query (and there is actually no
+                            AXFR or IXFR transaction).
+                          </simpara></listitem>
+                        </varlistentry>
 
-                  <varlistentry>
-                    <term>last_axfr_duration</term>
-                    <listitem><simpara>
-                      Duration in seconds of the last successful AXFR.  0.0
-                      means no successful AXFR done or means a successful AXFR
-                      done in less than a microsecond.  If an AXFR is aborted
-                      due to some failure, this duration won't be updated.
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>xfrfail</term>
+                          <listitem><simpara>
+                            Number of zone transfer requests failed
+                          </simpara></listitem>
+                        </varlistentry>
 
-                  <varlistentry>
-                    <term>last_ixfr_duration</term>
-                    <listitem><simpara>
-                      Duration in seconds of the last successful IXFR.  0.0
-                      means no successful IXFR done or means a successful IXFR
-                      done in less than a microsecond.  If an IXFR is aborted
-                      due to some failure, this duration won't be updated.
-                    </simpara></listitem>
-                  </varlistentry>
+                        <varlistentry>
+                          <term>last_axfr_duration</term>
+                          <listitem><simpara>
+                            Duration in seconds of the last successful AXFR.  0.0
+                            means no successful AXFR done or means a successful AXFR
+                            done in less than a microsecond.  If an AXFR is aborted
+                            due to some failure, this duration won't be updated.
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>last_ixfr_duration</term>
+                          <listitem><simpara>
+                            Duration in seconds of the last successful IXFR.  0.0
+                            means no successful IXFR done or means a successful IXFR
+                            done in less than a microsecond.  If an IXFR is aborted
+                            due to some failure, this duration won't be updated.
+                          </simpara></listitem>
+                        </varlistentry>
+
+                      </variablelist>
+                    </listitem>
+                  </varlistentry><!-- end of zonename -->
 
                 </variablelist>
               </listitem>
-            </varlistentry><!-- end of zonename -->
+            </varlistentry><!-- end of classname -->
 
           </variablelist>
         </listitem>
       </varlistentry><!-- end of zones -->
+
+      <varlistentry>
+        <term>ixfr_running</term>
+        <listitem><simpara>
+          Number of IXFRs in progress
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>axfr_running</term>
+        <listitem><simpara>
+          Number of AXFRs in progress
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>soa_in_progress</term>
+        <listitem><simpara>
+          Number of SOA queries in progress
+        </simpara></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>socket</term>
+        <listitem><simpara>
+          A directory name of socket statistics
+          </simpara>
+          <variablelist>
+
+            <varlistentry>
+              <term><replaceable>ipversion</replaceable></term>
+              <listitem><simpara>
+                A directory name of an IP version as ipv4 or ipv6
+                </simpara>
+                <variablelist>
+
+                  <varlistentry>
+                    <term>tcp</term>
+                    <listitem><simpara>
+                      A directory name of TCP statistics
+                      </simpara>
+                      <variablelist>
+
+                        <varlistentry>
+                          <term>open</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets opened successfully
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>openfail</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets open failures
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>close</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets closed
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>connfail</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets connection failures
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>conn</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP connections established successfully
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>senderr</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets send errors
+                          </simpara></listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                          <term>recverr</term>
+                          <listitem><simpara>
+                           IPv4 or IPv6 TCP sockets receive errors
+                          </simpara></listitem>
+                        </varlistentry>
+
+                      </variablelist>
+                    </listitem>
+                  </varlistentry><!-- end of tcp -->
+
+                </variablelist>
+              </listitem>
+            </varlistentry><!-- end of ipv4 | ipv6 -->
+
+          </variablelist>
+        </listitem>
+      </varlistentry><!-- end of socket -->
 
     </variablelist>
 

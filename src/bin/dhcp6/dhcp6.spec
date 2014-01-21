@@ -3,16 +3,30 @@
     "module_name": "Dhcp6",
     "module_description": "DHCPv6 server daemon",
     "config_data": [
-      { "item_name": "interface",
+      {
+        "item_name": "hooks-libraries",
+        "item_type": "list",
+        "item_optional": true,
+        "item_default": [],
+        "list_item_spec":
+        {
+          "item_name": "hooks-library",
+          "item_type": "string",
+          "item_optional": false,
+          "item_default": ""
+        }
+      },
+
+      { "item_name": "interfaces",
         "item_type": "list",
         "item_optional": false,
-        "item_default": [ "all" ],
+        "item_default": [ "*" ],
         "list_item_spec":
         {
           "item_name": "interface_name",
           "item_type": "string",
           "item_optional": false,
-          "item_default": "all"
+          "item_default": "*"
         }
       } ,
 
@@ -199,6 +213,12 @@
                   "item_default": ""
                 },
 
+                { "item_name": "interface-id",
+                  "item_type": "string",
+                  "item_optional": false,
+                  "item_default": ""
+                },
+
                 { "item_name": "renew-timer",
                   "item_type": "integer",
                   "item_optional": false,
@@ -232,6 +252,38 @@
                         "item_type": "string",
                         "item_optional": false,
                         "item_default": ""
+                    }
+                },
+                {
+                  "item_name": "pd-pools",
+                  "item_type": "list",
+                  "item_optional": true,
+                  "item_default": [],
+                  "list_item_spec":
+                  {
+                      "item_name": "pd-pool",
+                      "item_type": "map",
+                      "item_optional": false,
+                      "item_default": {},
+                      "map_item_spec": [
+                      {
+                          "item_name": "prefix",
+                          "item_type": "string",
+                          "item_optional": false,
+                          "item_default": ""
+                       },
+                       {
+                           "item_name": "prefix-len",
+                           "item_type": "integer",
+                           "item_optional": false,
+                           "item_default": 128
+                       },
+                       {
+                           "item_name": "delegated-len",
+                           "item_type": "integer",
+                           "item_optional": false,
+                           "item_default": 128
+                       }]
                     }
                 },
                 { "item_name": "option-data",
@@ -289,6 +341,12 @@
                     "item_optional": true
                 }
             ]
+        },
+
+        {
+            "command_name": "libreload",
+            "command_description": "Reloads the current hooks libraries.",
+            "command_args": []
         }
     ]
   }

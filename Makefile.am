@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I m4macros -I examples/m4 ${ACLOCAL_FLAGS}
 # ^^^^^^^^ This has to be the first line and cannot come later in this
 # Makefile.am due to some bork in some versions of autotools.
 
-SUBDIRS = compatcheck doc . src tests m4macros
+SUBDIRS = compatcheck doc . src tests m4macros ext
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
 GENHTML=@GENHTML@
@@ -21,11 +21,11 @@ dist_doc_DATA = AUTHORS COPYING ChangeLog README
 .PHONY: check-valgrind check-valgrind-suppress
 
 install-exec-hook:
-	-@echo -e "\033[1;33m" # switch to yellow color text
+	-@tput smso  # Start standout mode
 	@echo "NOTE: BIND 10 does not automatically start DNS services when it is run"
 	@echo "      in its default configuration. Please see the Guide for information"
 	@echo "      on how to configure these services to be started automatically."
-	-@echo -e "\033[m" # switch back to normal
+	-@tput rmso  # End standout mode
 
 check-valgrind:
 if HAVE_VALGRIND
@@ -110,7 +110,8 @@ report-coverage: report-cpp-coverage report-python-coverage
 
 # for static C++ check using cppcheck (when available)
 cppcheck:
-	cppcheck --enable=all --suppressions src/cppcheck-suppress.lst --inline-suppr \
+	cppcheck -I./src/lib -I./src/bin --enable=all --suppressions \
+		src/cppcheck-suppress.lst --inline-suppr \
 		--quiet --error-exitcode=1 \
 		--template '{file}:{line}: check_fail: {message} ({severity},{id})' \
 		src
@@ -433,6 +434,10 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dns++.pc
 
 CLEANFILES = $(abs_top_builddir)/logger_lockfile
+
+# config.h may be included by headers supplied for building user-written
+# hooks libraries, so we need to include it in the distribution.
+pkginclude_HEADERS = config.h
 
 if HAVE_GTEST_SOURCE
 noinst_LIBRARIES = libgtest.a

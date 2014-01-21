@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -40,35 +40,6 @@ using namespace isc::dns::rdata;
 
 namespace isc {
 namespace dns {
-
-namespace rdata {
-
-RdataPtr
-AbstractRdataFactory::create(MasterLexer& lexer, const Name*,
-                             MasterLoader::Options,
-                             MasterLoaderCallbacks&) const
-{
-    std::string s;
-
-    while (true) {
-        const MasterToken& token = lexer.getNextToken();
-        if ((token.getType() == MasterToken::END_OF_FILE) ||
-            (token.getType() == MasterToken::END_OF_LINE)) {
-            lexer.ungetToken(); // let the upper layer handle the end-of token
-            break;
-        }
-
-        if (!s.empty()) {
-            s += " ";
-        }
-
-        s += token.getString();
-    }
-
-    return (create(s));
-}
-
-} // end of namespace isc::dns::rdata
 
 namespace {
 ///
@@ -190,10 +161,8 @@ typedef map<RRTypeClass, RdataFactoryPtr> RdataFactoryMap;
 typedef map<RRType, RdataFactoryPtr> GenericRdataFactoryMap;
 
 template <typename T>
-class OldRdataFactory : public AbstractRdataFactory {
+class RdataFactory : public AbstractRdataFactory {
 public:
-    using AbstractRdataFactory::create;
-
     virtual RdataPtr create(const string& rdata_str) const
     {
         return (RdataPtr(new T(rdata_str)));
@@ -208,16 +177,11 @@ public:
     {
         return (RdataPtr(new T(dynamic_cast<const T&>(source))));
     }
-};
-
-template <typename T>
-class RdataFactory : public OldRdataFactory<T> {
-public:
-    using OldRdataFactory<T>::create;
 
     virtual RdataPtr create(MasterLexer& lexer, const Name* origin,
                             MasterLoader::Options options,
-                            MasterLoaderCallbacks& callbacks) const {
+                            MasterLoaderCallbacks& callbacks) const
+    {
         return (RdataPtr(new T(lexer, origin, options, callbacks)));
     }
 };

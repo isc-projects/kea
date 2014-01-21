@@ -8,11 +8,14 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
-CLEANFILES = *.gcno *.gcda asiodns_messages.h asiodns_messages.cc
+CLEANFILES = *.gcno *.gcda asiodns_messages.h asiodns_messages.cc s-messages
 
 # Define rule to build logging source files from message file
-asiodns_messages.h asiodns_messages.cc: asiodns_messages.mes
+asiodns_messages.h asiodns_messages.cc: s-messages
+
+s-messages: asiodns_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/asiodns/asiodns_messages.mes
+	touch $@
 
 BUILT_SOURCES = asiodns_messages.h asiodns_messages.cc
 
@@ -35,9 +38,6 @@ EXTRA_DIST = asiodns_messages.mes
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 libb10_asiodns_la_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# Same for clang++, but we need to turn off -Werror completely.
-libb10_asiodns_la_CXXFLAGS += -Wno-error
-endif
 libb10_asiodns_la_CPPFLAGS = $(AM_CPPFLAGS)
-libb10_asiodns_la_LIBADD = $(top_builddir)/src/lib/log/libb10-log.la
+libb10_asiodns_la_LIBADD  = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+libb10_asiodns_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la

@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,8 @@
 #include <dns/rrclass.h>
 #include <cc/data.h>
 #include <exceptions/exceptions.h>
-#include "memory/zone_table_segment.h"
+#include <datasrc/memory/zone_table_segment.h>
+#include <datasrc/zone_table_accessor.h>
 
 #include <vector>
 #include <boost/shared_ptr.hpp>
@@ -80,13 +81,26 @@ class DataSourceStatus {
 public:
     /// \brief Constructor
     ///
-    /// Sets initial values. It doesn't matter what is provided for the type
-    /// if state is SEGMENT_UNUSED, the value is effectively ignored.
+    /// Sets initial values. If you want to use \c SEGMENT_UNUSED as the
+    /// state, please use the other constructor.
     DataSourceStatus(const std::string& name, MemorySegmentState state,
                      const std::string& type) :
         name_(name),
         type_(type),
         state_(state)
+    {
+        assert (state != SEGMENT_UNUSED);
+        assert (!type.empty());
+    }
+
+    /// \brief Constructor
+    ///
+    /// Sets initial values. The state is set as \c SEGMENT_UNUSED and
+    /// the type is effectively unspecified.
+    DataSourceStatus(const std::string& name) :
+        name_(name),
+        type_(""),
+        state_(SEGMENT_UNUSED)
     {}
 
     /// \brief Get the segment state
@@ -231,12 +245,22 @@ public:
     /// of the searched name is needed. Therefore, the call would look like:
     ///
     /// \code FindResult result(list->find(queried_name));
-    ///   FindResult result(list->find(queried_name));
-    ///   if (result.datasrc_) {
-    ///       createTheAnswer(result.finder_);
+    ///   if (result.dsrc_client_) {
+    ///       if (result.finder_) {
+    ///           createTheAnswer(result.finder_);
+    ///       } else { // broken zone, return SERVFAIL
+    ///           createErrorMessage(Rcode.SERVFAIL());
+    ///       }
     ///   } else {
     ///       createNotAuthAnswer();
     /// } \endcode
+    ///
+    /// Note that it is possible that \c finder_ is NULL while \c datasrc_
+    /// is not.  This happens if the zone is configured to be served from
+    /// the data source but it is broken in some sense and doesn't hold any
+    /// zone data, e.g., when the zone file has an error or the secondary
+    /// zone hasn't been transferred yet.  The caller needs to expect the case
+    /// and handle it accordingly.
     ///
     /// The other scenario is manipulating zone data (XfrOut, XfrIn, DDNS,
     /// ...). In this case, the finder itself is not so important. However,
@@ -244,7 +268,6 @@ public:
     /// know exactly, which zone we are about to manipulate). Then the call
     ///
     /// \code FindResult result(list->find(zone_name, true, false));
-    ///   FindResult result(list->find(zone_name, true, false));
     ///   if (result.datasrc_) {
     ///       ZoneUpdaterPtr updater(result.datasrc_->getUpdater(zone_name);
     ///       ...
@@ -272,6 +295,19 @@ public:
     virtual FindResult find(const dns::Name& zone,
                             bool want_exact_match = false,
                             bool want_finder = true) const = 0;
+
+    /// \brief Creates a ZoneTableAccessor object for the specified data
+    /// source.
+    ///
+    /// \param datasrc_name If not empty, the name of the data source.
+    /// \param use_cache If true, create a zone table for in-memory cache.
+    /// \throw NotImplemented if this method is not implemented.
+    /// \return A pointer to the accessor, or NULL if the requested data
+    /// source is not found.
+    virtual ConstZoneTableAccessorPtr
+    getZoneTableAccessor(const std::string& datasrc_name,
+                         bool use_cache) const = 0;
+
 };
 
 /// \brief Shared pointer to the list.
@@ -339,60 +375,78 @@ public:
         return (configuration_);
     }
 
-    /// \brief Result of the reload() method.
-    enum ReloadResult {
-        CACHE_DISABLED,     ///< The cache is not enabled in this list.
-        ZONE_NOT_CACHED,    ///< Zone is served directly, not from cache
-                            ///  (including the case cache is disabled for
-                            ///  the specific data source).
-        ZONE_NOT_FOUND,     ///< Zone does not exist in this list.
-        ZONE_SUCCESS        ///< The zone was successfully reloaded or
-                            ///  the writer provided.
-    };
-
-    /// \brief Reloads a cached zone.
+    /// \brief Resets the zone table segment for a datasource with a new
+    /// memory segment.
     ///
-    /// This method finds a zone which is loaded into a cache and reloads it.
-    /// This may be used to renew the cache when the underlying data source
-    /// changes.
+    /// See documentation of \c ZoneTableSegment interface
+    /// implementations (such as \c ZoneTableSegmentMapped) for the
+    /// syntax of \c config_params.
     ///
-    /// \param zone The origin of the zone to reload.
-    /// \return A status if the command worked.
-    /// \throw DataSourceError or anything else that the data source
-    ///      containing the zone might throw is propagated.
-    /// \throw DataSourceError if something unexpected happens, like when
-    ///      the original data source no longer contains the cached zone.
-    ReloadResult reload(const dns::Name& zone);
+    /// \param datasrc_name The name of the data source whose segment to reset
+    /// \param mode The open mode for the new memory segment
+    /// \param config_params The configuration for the new memory segment.
+    /// \return If the data source was found and reset.
+    bool resetMemorySegment
+        (const std::string& datasrc_name,
+         memory::ZoneTableSegment::MemorySegmentOpenMode mode,
+         isc::data::ConstElementPtr config_params);
 
-private:
     /// \brief Convenience type shortcut
     typedef boost::shared_ptr<memory::ZoneWriter> ZoneWriterPtr;
-public:
+
+    /// \brief Codes indicating in-memory cache status for a given zone name.
+    ///
+    /// This is used as a result of the getCachedZoneWriter() method.
+    enum CacheStatus {
+        CACHE_DISABLED,     ///< The cache is not enabled in this list.
+        ZONE_NOT_CACHED,    ///< Zone is not to be cached (including the case
+                            ///  where caching is disabled for the specific
+                            ///  data source).
+        ZONE_NOT_FOUND,     ///< Zone does not exist in this list.
+        CACHE_NOT_WRITABLE, ///< The cache is not writable (and zones can't
+                            ///  be loaded)
+        DATASRC_NOT_FOUND,  ///< Specific data source for load is specified
+                            ///  but it's not in the list
+        ZONE_SUCCESS        ///< Zone to be cached is successfully found and
+                            ///  is ready to be loaded
+    };
 
     /// \brief Return value of getCachedZoneWriter()
     ///
     /// A pair containing status and the zone writer, for the
     /// getCachedZoneWriter() method.
-    typedef std::pair<ReloadResult, ZoneWriterPtr> ZoneWriterPair;
+    typedef std::pair<CacheStatus, ZoneWriterPtr> ZoneWriterPair;
 
-    /// \brief Return a zone writer that can be used to reload a zone.
+    /// \brief Return a zone writer that can be used to (re)load a zone.
     ///
-    /// This looks up a cached copy of zone and returns the ZoneWriter
-    /// that can be used to reload the content of the zone. This can
-    /// be used instead of reload() -- reload() works synchronously, which
-    /// is not what is needed every time.
+    /// By default this method identifies the first data source in the list
+    /// that should serve the zone of the given name, and returns a ZoneWriter
+    /// object that can be used to load the content of the zone, in a specific
+    /// way for that data source.
     ///
-    /// \param zone The origin of the zone to reload.
-    /// \return The result has two parts. The first one is a status describing
+    /// If the optional \c datasrc_name parameter is provided with a non empty
+    /// string, this method only tries to load the specified zone into or with
+    /// the data source which has the given name, regardless where in the list
+    /// that data source is placed.  Even if the given name of zone doesn't
+    /// exist in the data source, other data sources are not searched and
+    /// this method simply returns ZONE_NOT_FOUND in the first element
+    /// of the pair.
+    ///
+    /// \param zone The origin of the zone to load.
+    /// \param catch_load_errors Whether to make the zone writer catch
+    /// load errors (see \c ZoneWriter constructor documentation).
+    /// \param datasrc_name If not empty, the name of the data source
+    /// to be used for loading the zone (see above).
+    /// \return The result has two parts. The first one is a status indicating
     ///     if it worked or not (and in case it didn't, also why). If the
     ///     status is ZONE_SUCCESS, the second part contains a shared pointer
     ///     to the writer. If the status is anything else, the second part is
     ///     NULL.
     /// \throw DataSourceError or anything else that the data source
     ///      containing the zone might throw is propagated.
-    /// \throw DataSourceError if something unexpected happens, like when
-    ///      the original data source no longer contains the cached zone.
-    ZoneWriterPair getCachedZoneWriter(const dns::Name& zone);
+    ZoneWriterPair getCachedZoneWriter(const dns::Name& zone,
+                                       bool catch_load_error,
+                                       const std::string& datasrc_name = "");
 
     /// \brief Implementation of the ClientList::find.
     virtual FindResult find(const dns::Name& zone,
@@ -400,8 +454,6 @@ public:
                             bool want_finder = true) const;
 
     /// \brief This holds one data source client and corresponding information.
-    ///
-    /// \todo The content yet to be defined.
     struct DataSourceInfo {
         DataSourceInfo(DataSourceClient* data_src_client,
                        const DataSourceClientContainerPtr& container,
@@ -421,12 +473,12 @@ public:
         boost::shared_ptr<memory::ZoneTableSegment> ztable_segment_;
         std::string name_;
 
+        // cache_conf_ can be accessed only from this read-only getter,
+        // to protect its integrity as much as possible.
         const internal::CacheConfig* getCacheConfig() const {
             return (cache_conf_.get());
         }
     private:
-        // this is kept private for now.  When it needs to be accessed,
-        // we'll add a read-only getter method.
         boost::shared_ptr<internal::CacheConfig> cache_conf_;
     };
 
@@ -473,7 +525,7 @@ public:
     /// This may throw standard exceptions, such as std::bad_alloc. Otherwise,
     /// it is exception free.
     std::vector<DataSourceStatus> getStatus() const;
-public:
+
     /// \brief Access to the data source clients.
     ///
     /// It can be used to examine the loaded list of data sources clients
@@ -481,6 +533,22 @@ public:
     /// it might be, so it is just made public (there's no real reason to
     /// hide it).
     const DataSources& getDataSources() const { return (data_sources_); }
+
+    /// \brief Creates a ZoneTableAccessor object for the specified data
+    /// source.
+    ///
+    /// \param datasrc_name If not empty, the name of the data source
+    /// \param use_cache If true, create a zone table for in-memory cache.
+    /// \note At present, the only concrete implementation of
+    /// ZoneTableAccessor is ZoneTableAccessorCache, so \c use_cache must be
+    /// true.
+    /// \throw NotImplemented if \c use_cache is false.
+    /// \return A pointer to the accessor, or NULL if the requested data
+    /// source is not found.
+    ConstZoneTableAccessorPtr
+    getZoneTableAccessor(const std::string& datasrc_name,
+                         bool use_cache) const;
+
 private:
     struct MutableResult;
     /// \brief Internal implementation of find.

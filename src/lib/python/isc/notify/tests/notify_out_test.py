@@ -22,8 +22,10 @@ import socket
 from isc.notify import notify_out, SOCK_DATA
 import isc.log
 from isc.dns import *
+from isc.statistics.dns import Counters
 
 TESTDATA_SRCDIR = os.getenv("TESTDATASRCDIR")
+SPECFILE_LOCATION = TESTDATA_SRCDIR + os.sep + 'test_spec1.spec'
 
 def get_notify_msgdata(zone_name, qid=0):
     """A helper function to generate a notify response in wire format.
@@ -128,7 +130,7 @@ class TestZoneNotifyInfo(unittest.TestCase):
 class TestNotifyOut(unittest.TestCase):
     def setUp(self):
         self._db_file = TESTDATA_SRCDIR + '/test.sqlite3'
-        self._notify = notify_out.NotifyOut(self._db_file)
+        self._notify = notify_out.NotifyOut(self._db_file, counters=Counters(SPECFILE_LOCATION))
         self._notify._notify_infos[('example.com.', 'IN')] = MockZoneNotifyInfo('example.com.', 'IN')
         self._notify._notify_infos[('example.com.', 'CH')] = MockZoneNotifyInfo('example.com.', 'CH')
         self._notify._notify_infos[('example.net.', 'IN')] = MockZoneNotifyInfo('example.net.', 'IN')
@@ -304,10 +306,10 @@ class TestNotifyOut(unittest.TestCase):
 
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self._notify._counters.get,
-                          'zones', 'example.net.', 'notifyoutv4')
+                          'zones', 'IN', 'example.net.', 'notifyoutv4')
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self._notify._counters.get,
-                          'zones', 'example.net.', 'notifyoutv6')
+                          'zones', 'IN', 'example.net.', 'notifyoutv6')
 
         example_com_info.prepare_notify_out()
         ret = self._notify._send_notify_message_udp(example_com_info,
@@ -315,38 +317,38 @@ class TestNotifyOut(unittest.TestCase):
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET, example_com_info.sock_family)
         self.assertEqual(self._notify._counters.get(
-                'zones', 'example.net.', 'notifyoutv4'), 1)
+                'zones', 'IN', 'example.net.', 'notifyoutv4'), 1)
         self.assertEqual(self._notify._counters.get(
-                'zones', 'example.net.', 'notifyoutv6'), 0)
+                'zones', 'IN', 'example.net.', 'notifyoutv6'), 0)
 
     def test_send_notify_message_udp_ipv6(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
 
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self._notify._counters.get,
-                          'zones', 'example.net.', 'notifyoutv4')
+                          'zones', 'IN', 'example.net.', 'notifyoutv4')
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self._notify._counters.get,
-                          'zones', 'example.net.', 'notifyoutv6')
+                          'zones', 'IN', 'example.net.', 'notifyoutv6')
 
         ret = self._notify._send_notify_message_udp(example_com_info,
                                                     ('2001:db8::53', 53))
         self.assertTrue(ret)
         self.assertEqual(socket.AF_INET6, example_com_info.sock_family)
         self.assertEqual(self._notify._counters.get(
-                'zones', 'example.net.', 'notifyoutv4'), 0)
+                'zones', 'IN', 'example.net.', 'notifyoutv4'), 0)
         self.assertEqual(self._notify._counters.get(
-                'zones', 'example.net.', 'notifyoutv6'), 1)
+                'zones', 'IN', 'example.net.', 'notifyoutv6'), 1)
 
     def test_send_notify_message_with_bogus_address(self):
         example_com_info = self._notify._notify_infos[('example.net.', 'IN')]
 
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self._notify._counters.get,
-                          'zones', 'example.net.', 'notifyoutv4')
+                          'zones', 'IN', 'example.net.', 'notifyoutv4')
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self._notify._counters.get,
-                          'zones', 'example.net.', 'notifyoutv6')
+                          'zones', 'IN', 'example.net.', 'notifyoutv6')
 
         # As long as the underlying data source validates RDATA this shouldn't
         # happen, but right now it's not actually the case.  Even if the
@@ -358,10 +360,10 @@ class TestNotifyOut(unittest.TestCase):
 
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self._notify._counters.get,
-                          'zones', 'example.net.', 'notifyoutv4')
+                          'zones', 'IN', 'example.net.', 'notifyoutv4')
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self._notify._counters.get,
-                          'zones', 'example.net.', 'notifyoutv4')
+                          'zones', 'IN', 'example.net.', 'notifyoutv4')
 
     def test_zone_notify_handler(self):
         sent_addrs = []

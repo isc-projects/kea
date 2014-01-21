@@ -70,7 +70,7 @@ public:
     ///
     /// There's a small chance this method could throw std::bad_alloc.
     /// It should be considered a fatal error.
-    virtual void* getNamedAddressImpl(const char* name);
+    virtual NamedAddressResult getNamedAddressImpl(const char* name) const;
 
     /// \brief Local segment version of setNamedAddress.
     ///

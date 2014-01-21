@@ -22,26 +22,49 @@
 #include <dhcp/option_int.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/dhcp6_srv.h>
+#include <dhcpsrv/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/subnet.h>
+#include <hooks/hooks_manager.h>
+
+#include "test_data_files_config.h"
+#include "test_libraries.h"
+#include "marker_file.h"
 
 #include <boost/foreach.hpp>
 #include <gtest/gtest.h>
 
 #include <fstream>
 #include <iostream>
+#include <fstream>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include <arpa/inet.h>
+#include <unistd.h>
 
-using namespace std;
 using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::asiolink;
-using namespace isc::data;
 using namespace isc::config;
+using namespace isc::data;
+using namespace isc::dhcp;
+using namespace isc::dhcp::test;
+using namespace isc::hooks;
+using namespace std;
 
 namespace {
+
+std::string specfile(const std::string& name) {
+    return (std::string(DHCP6_SRC_DIR) + "/" + name);
+}
+
+/// @brief Tests that the spec file is valid.
+/// Verifies that the DHCP6 configuration specification file is valid.
+TEST(Dhcp6SpecTest, basicSpec) {
+    ASSERT_NO_THROW(isc::config::
+                    moduleSpecFromFile(specfile("dhcp6.spec")));
+}
 
 class Dhcp6ParserTest : public ::testing::Test {
 public:
@@ -66,11 +89,27 @@ public:
                           << " while the test assumes that it doesn't, to execute"
                           << " some negative scenarios. Can't continue this test.";
         }
+
+        // Reset configuration for each test.
+        resetConfiguration();
+    }
+
+    // Check that no hooks libraries are loaded.  This is a pre-condition for
+    // a number of tests, so is checked in one place.  As this uses an
+    // ASSERT call - and it is not clear from the documentation that Gtest
+    // predicates can be used in a constructor - the check is placed in SetUp.
+    void SetUp() {
+        std::vector<std::string> libraries = HooksManager::getLibraryNames();
+        ASSERT_TRUE(libraries.empty());
     }
 
     ~Dhcp6ParserTest() {
         // Reset configuration database after each test.
         resetConfiguration();
+
+        // ... and delete the hooks library marker files if present
+        unlink(LOAD_MARKER_FILE);
+        unlink(UNLOAD_MARKER_FILE);
     };
 
     // Checks if config_result (result of DHCP server configuration) has
@@ -133,7 +172,7 @@ public:
                                        std::string>& params)
     {
         std::ostringstream stream;
-        stream << "{ \"interface\": [ \"all\" ],"
+        stream << "{ \"interfaces\": [ \"*\" ],"
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
@@ -169,17 +208,66 @@ public:
         return (stream.str());
     }
 
+    /// @brief Parse and Execute configuration
+    ///
+    /// Parses a configuration and executes a configuration of the server.
+    /// If the operation fails, the current test will register a failure.
+    ///
+    /// @param config Configuration to parse
+    /// @param operation Operation being performed.  In the case of an error,
+    ///        the error text will include the string "unable to <operation>.".
+    ///
+    /// @return true if the configuration succeeded, false if not.  In the
+    ///         latter case, a failure will have been added to the current test.
+    bool
+    executeConfiguration(const std::string& config, const char* operation) {
+        ConstElementPtr status;
+        try {
+            ElementPtr json = Element::fromJSON(config);
+            status = configureDhcp6Server(srv_, json);
+        } catch (const std::exception& ex) {
+            ADD_FAILURE() << "Unable to " << operation << ". "
+                   << "The following configuration was used: " << std::endl
+                   << config << std::endl
+                   << " and the following error message was returned:"
+                   << ex.what() << std::endl;
+            return (false);
+        }
+
+        // The status object must not be NULL
+        if (!status) {
+            ADD_FAILURE() << "Unable to " << operation << ". "
+                   << "The configuration function returned a null pointer.";
+            return (false);
+        }
+
+        // Store the answer if we need it.
+
+        // Returned value should be 0 (configuration success)
+        comment_ = parseAnswer(rcode_, status);
+        if (rcode_ != 0) {
+            string reason = "";
+            if (comment_) {
+                reason = string(" (") + comment_->stringValue() + string(")");
+            }
+            ADD_FAILURE() << "Unable to " << operation << ". "
+                   << "The configuration function returned error code "
+                   << rcode_ << reason;
+            return (false);
+        }
+
+        return (true);
+    }
+
     /// @brief Reset configuration database.
     ///
-    /// This function resets configuration data base by
-    /// removing all subnets and option-data. Reset must
-    /// be performed after each test to make sure that
-    /// contents of the database do not affect result of
-    /// subsequent tests.
+    /// This function resets configuration data base by removing all subnets
+    /// option-data, and hooks libraries. The reset must be performed after each
+    /// test to make sure that contents of the database do not affect the
+    /// results of subsequent tests.
     void resetConfiguration() {
-        ConstElementPtr status;
-
-        string config = "{ \"interface\": [ \"all\" ],"
+        string config = "{ \"interfaces\": [ \"all\" ],"
+            "\"hooks-libraries\": [ ],"
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
@@ -187,32 +275,13 @@ public:
             "\"subnet6\": [ ], "
             "\"option-def\": [ ], "
             "\"option-data\": [ ] }";
-
-        try {
-            ElementPtr json = Element::fromJSON(config);
-            status = configureDhcp6Server(srv_, json);
-        } catch (const std::exception& ex) {
-            FAIL() << "Fatal error: unable to reset configuration database"
-                   << " after the test. The following configuration was used"
-                   << " to reset database: " << std::endl
-                   << config << std::endl
-                   << " and the following error message was returned:"
-                   << ex.what() << std::endl;
-        }
-
-        // status object must not be NULL
-        if (!status) {
-            FAIL() << "Fatal error: unable to reset configuration database"
-                   << " after the test. Configuration function returned"
-                   << " NULL pointer" << std::endl;
-        }
-        comment_ = parseAnswer(rcode_, status);
-        // returned value should be 0 (configuration success)
-        if (rcode_ != 0) {
-            FAIL() << "Fatal error: unable to reset configuration database"
-                   << " after the test. Configuration function returned"
-                   << " error code " << rcode_ << std::endl;
-        }
+        static_cast<void>(executeConfiguration(config,
+                                               "reset configuration database"));
+        // The default setting is to listen on all interfaces. In order to
+        // properly test interface configuration we disable listening on
+        // all interfaces before each test and later check that this setting
+        // has been overriden by the configuration used in the test.
+        CfgMgr::instance().deleteActiveIfaces();
     }
 
     /// @brief Test invalid option parameter value.
@@ -277,13 +346,11 @@ public:
                             expected_data_len));
     }
 
-    int rcode_;
-    Dhcpv6Srv srv_;
-
-    ConstElementPtr comment_;
-
-    string valid_iface_;
-    string bogus_iface_;
+    int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
+    Dhcpv6Srv srv_;      ///< Instance of the Dhcp6Srv used during tests
+    ConstElementPtr comment_; ///< Comment (see @ref isc::config::parseAnswer)
+    string valid_iface_; ///< Valid network interface name (present in system)
+    string bogus_iface_; ///< invalid network interface name (not in system)
 };
 
 // Goal of this test is a verification if a very simple config update
@@ -324,7 +391,7 @@ TEST_F(Dhcp6ParserTest, emptySubnet) {
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_,
-                    Element::fromJSON("{ \"interface\": [ \"all\" ],"
+                    Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
                                       "\"preferred-lifetime\": 3000,"
                                       "\"rebind-timer\": 2000, "
                                       "\"renew-timer\": 1000, "
@@ -343,7 +410,7 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -369,7 +436,189 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(3000, subnet->getPreferred());
     EXPECT_EQ(4000, subnet->getValid());
+
+    // Check that subnet-id is 1
+    EXPECT_EQ(1, subnet->getID());
 }
+
+// Goal of this test is to verify that multiple subnets get unique
+// subnet-ids. Also, test checks that it's possible to do reconfiguration
+// multiple times.
+TEST_F(Dhcp6ParserTest, multipleSubnets) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:4::/80\" ],"
+        "    \"subnet\": \"2001:db8:4::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    int cnt = 0; // Number of reconfigurations
+
+    do {
+        ElementPtr json = Element::fromJSON(config);
+
+        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(0, rcode_);
+
+        const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+        ASSERT_TRUE(subnets);
+        ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+        // Check subnet-ids of each subnet (it should be monotonously increasing)
+        EXPECT_EQ(1, subnets->at(0)->getID());
+        EXPECT_EQ(2, subnets->at(1)->getID());
+        EXPECT_EQ(3, subnets->at(2)->getID());
+        EXPECT_EQ(4, subnets->at(3)->getID());
+
+        // Repeat reconfiguration process 10 times and check that the subnet-id
+        // is set to the same value. Technically, just two iterations would be
+        // sufficient, but it's nice to have a test that exercises reconfiguration
+        // a bit.
+    } while (++cnt < 10);
+}
+
+// Goal of this test is to verify that a previously configured subnet can be
+// deleted in subsequent reconfiguration.
+TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
+    ConstElementPtr x;
+
+    // All four subnets
+    string config4 = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:4::/80\" ],"
+        "    \"subnet\": \"2001:db8:4::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Three subnets (the last one removed)
+    string config_first3 = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Second subnet removed
+    string config_second_removed = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:4::/80\" ],"
+        "    \"subnet\": \"2001:db8:4::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // CASE 1: Configure 4 subnets, then reconfigure and remove the
+    // last one.
+
+    ElementPtr json = Element::fromJSON(config4);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+    // Do the reconfiguration (the last subnet is removed)
+    json = Element::fromJSON(config_first3);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size()); // We expect 3 subnets now (4th is removed)
+
+    EXPECT_EQ(1, subnets->at(0)->getID());
+    EXPECT_EQ(2, subnets->at(1)->getID());
+    EXPECT_EQ(3, subnets->at(2)->getID());
+
+    /// CASE 2: Configure 4 subnets, then reconfigure and remove one
+    /// from in between (not first, not last)
+
+#if 0
+    /// @todo: Uncomment subnet removal test as part of #3281.
+    json = Element::fromJSON(config4);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    // Do reconfiguration
+    json = Element::fromJSON(config_second_removed);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size()); // We expect 4 subnets
+
+    EXPECT_EQ(1, subnets->at(0)->getID());
+    // The second subnet (with subnet-id = 2) is no longer there
+    EXPECT_EQ(3, subnets->at(1)->getID());
+    EXPECT_EQ(4, subnets->at(2)->getID());
+#endif
+}
+
+
 
 // This test checks if it is possible to override global values
 // on a per subnet basis.
@@ -377,7 +626,7 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -415,7 +664,7 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
 
     // There should be at least one interface
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -448,7 +697,7 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
 
     // There should be at least one interface
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -479,7 +728,7 @@ TEST_F(Dhcp6ParserTest, interfaceGlobal) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -500,13 +749,111 @@ TEST_F(Dhcp6ParserTest, interfaceGlobal) {
     EXPECT_EQ(1, rcode_);
 }
 
+
+// This test checks if it is possible to define a subnet with an
+// interface-id option defined.
+TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
+
+    const string valid_interface_id = "foobar";
+    const string bogus_interface_id = "blah";
+
+    // There should be at least one interface
+
+    const string config = "{ "
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"interface-id\": \"" + valid_interface_id + "\","
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // Returned value should be 0 (configuration success)
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_EQ(0, rcode_);
+
+    // Try to get a subnet based on bogus interface-id option
+    OptionBuffer tmp(bogus_interface_id.begin(), bogus_interface_id.end());
+    OptionPtr ifaceid(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(ifaceid);
+    EXPECT_FALSE(subnet);
+
+    // Now try to get subnet for valid interface-id value
+    tmp = OptionBuffer(valid_interface_id.begin(), valid_interface_id.end());
+    ifaceid.reset(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
+    subnet = CfgMgr::instance().getSubnet6(ifaceid);
+    ASSERT_TRUE(subnet);
+    EXPECT_TRUE(ifaceid->equal(subnet->getInterfaceId()));
+}
+
+
+// This test checks if it is not allowed to define global interface
+// parameter.
+TEST_F(Dhcp6ParserTest, interfaceIdGlobal) {
+
+    const string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"interface-id\": \"foobar\"," // Not valid. Can be defined in subnet only
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // Returned value should be 1 (parse error)
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_EQ(1, rcode_);
+}
+
+// This test checks if it is not possible to define a subnet with an
+// interface (i.e. local subnet) and interface-id (remote subnet) defined.
+TEST_F(Dhcp6ParserTest, subnetInterfaceAndInterfaceId) {
+
+    const string config = "{ \"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"interface\": \"" + valid_iface_ + "\","
+        "    \"interface-id\": \"foobar\","
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // Returned value should be 1 (configuration error)
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_EQ(1, rcode_);
+
+}
+
+
+
 // Test verifies that a subnet with pool values that do not belong to that
 // pool are rejected.
 TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -530,11 +877,13 @@ TEST_F(Dhcp6ParserTest, poolOutOfSubnet) {
 // Goal of this test is to verify if pools can be defined
 // using prefix/length notation. There is no separate test for min-max
 // notation as it was tested in several previous tests.
+// Note this test also verifies that subnets can be configured without
+// prefix delegation pools.
 TEST_F(Dhcp6ParserTest, poolPrefixLen) {
 
     ConstElementPtr x;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -558,6 +907,294 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(3000, subnet->getPreferred());
     EXPECT_EQ(4000, subnet->getValid());
+}
+
+// Goal of this test is to verify the basic parsing of a prefix delegation
+// pool. It uses a single, valid pd pool.
+TEST_F(Dhcp6ParserTest, pdPoolBasics) {
+
+    ConstElementPtr x;
+
+    // Define a single valid pd pool.
+    string config =
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1::\", "
+        "          \"prefix-len\": 64, "
+        "          \"delegated-len\": 128"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }";
+
+    // Convert the JSON string into Elements.
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+
+    // Verify that DHCP6 configuration processing succeeds.
+    // Returned value must be non-empty ConstElementPtr to config result.
+    // rcode should be 0 which indicates successful configuration processing.
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    EXPECT_EQ(0, rcode_);
+
+    // Test that we can retrieve the subnet.
+    Subnet6Ptr subnet = CfgMgr::
+                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
+
+    ASSERT_TRUE(subnet);
+
+    // Fetch the collection of PD pools.  It should have 1 entry.
+    PoolCollection pc;
+    ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
+    EXPECT_EQ(1, pc.size());
+
+    // Get a pointer to the pd pool instance, and verify its contents.
+    Pool6Ptr p6;
+    ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[0]));
+    ASSERT_TRUE(p6);
+    EXPECT_EQ("2001:db8:1::", p6->getFirstAddress().toText());
+    EXPECT_EQ(128, p6->getLength());
+
+    // prefix-len is not directly accessible after pool construction, so
+    // verify that it was interpreted correctly by checking the last address
+    // value.
+    isc::asiolink::IOAddress prefixAddress("2001:db8:1::");
+    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64), p6->getLastAddress());
+}
+
+// Goal of this test is verify that a list of PD pools can be configured.
+// It also verifies that a subnet may be configured with both regular pools
+// and pd pools.
+TEST_F(Dhcp6ParserTest, pdPoolList) {
+
+    ConstElementPtr x;
+
+    const char* prefixes[] = {
+        "2001:db8:1:1::",
+        "2001:db8:1:2::",
+        "2001:db8:1:3::"
+    };
+
+    string config =
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1:04::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/40\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1:01::\", "
+        "          \"prefix-len\": 72, "
+        "          \"delegated-len\": 80"
+        "        },"
+        "        { \"prefix\": \"2001:db8:1:02::\", "
+        "          \"prefix-len\": 72, "
+        "          \"delegated-len\": 88"
+        "        },"
+        "        { \"prefix\": \"2001:db8:1:03::\", "
+        "          \"prefix-len\": 72, "
+        "          \"delegated-len\": 96"
+        "        }"
+        "],"
+        "\"valid-lifetime\": 4000 }"
+        "] }";
+
+    // Convert the JSON string into Elements.
+    ElementPtr json = Element::fromJSON(config);
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+
+    // Verify that DHCP6 configuration processing succeeds.
+    // Returned value must be non-empty ConstElementPtr to config result.
+    // rcode should be 0 which indicates successful configuration processing.
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    EXPECT_EQ(0, rcode_);
+
+    // Test that we can retrieve the subnet.
+    Subnet6Ptr subnet = CfgMgr::
+                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+
+    // Fetch the collection of NA pools.  It should have 1 entry.
+    PoolCollection pc;
+    ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_NA));
+    EXPECT_EQ(1, pc.size());
+
+    // Fetch the collection of PD pools.  It should have 3 entries.
+    ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
+    EXPECT_EQ(3, pc.size());
+
+    // Loop through the pools and verify their contents.
+    for (int i = 0; i < 3; i++) {
+        Pool6Ptr p6;
+        ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[i]));
+        ASSERT_TRUE(p6);
+        EXPECT_EQ(prefixes[i], p6->getFirstAddress().toText());
+        EXPECT_EQ((80 + (i * 8)), p6->getLength());
+    }
+}
+
+// Goal of this test is to verify the a whole prefix can be delegated and that
+// a whole subnet can be delegated.
+TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
+
+    ConstElementPtr x;
+
+    // Define a single valid pd pool.
+    string config =
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1::\", "
+        "          \"prefix-len\": 64, "
+        "          \"delegated-len\": 64"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }";
+
+    // Convert the JSON string into Elements.
+    ElementPtr json;
+    ASSERT_NO_THROW(json = Element::fromJSON(config));
+
+    // Verify that DHCP6 configuration processing succeeds.
+    // Returned value must be non-empty ConstElementPtr to config result.
+    // rcode should be 0 which indicates successful configuration processing.
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    EXPECT_EQ(0, rcode_);
+
+    // Test that we can retrieve the subnet.
+    Subnet6Ptr subnet = CfgMgr::
+                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
+
+    ASSERT_TRUE(subnet);
+
+    // Fetch the collection of PD pools.  It should have 1 entry.
+    PoolCollection pc;
+    ASSERT_NO_THROW(pc = subnet->getPools(Lease::TYPE_PD));
+    EXPECT_EQ(1, pc.size());
+
+    // Get a pointer to the pd pool instance, and verify its contents.
+    Pool6Ptr p6;
+    ASSERT_NO_THROW(p6 = boost::dynamic_pointer_cast<Pool6>(pc[0]));
+    ASSERT_TRUE(p6);
+    EXPECT_EQ("2001:db8:1::", p6->getFirstAddress().toText());
+    EXPECT_EQ(64, p6->getLength());
+
+    // prefix-len is not directly accessible after pool construction, so
+    // verify that it was interpreted correctly by checking the last address
+    // value.
+    isc::asiolink::IOAddress prefixAddress("2001:db8:1::");
+    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64), p6->getLastAddress());
+}
+
+
+// Goal of this test is check for proper handling of invalid prefix delegation
+// pool configuration.  It uses an array of invalid configurations to check
+// a variety of configuration errors.
+TEST_F(Dhcp6ParserTest, invalidPdPools) {
+
+    ConstElementPtr x;
+
+    const char *config[] =  {
+        // No prefix.
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { "
+        "          \"prefix-len\": 64, "
+        "          \"delegated-len\": 128"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }",
+        // No prefix-len.
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1::\", "
+        "          \"delegated-len\": 128"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }",
+        // No delegated-len.
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1::\", "
+        "          \"prefix-len\": 64 "
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }",
+        // Delegated length is too short.
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:1::\", "
+        "          \"prefix-len\": 128, "
+        "          \"delegated-len\": 64"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }",
+        // Pool is not within the subnet.
+        "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"subnet\": \"2001:db8:1::/64\","
+        "    \"pd-pools\": ["
+        "        { \"prefix\": \"2001:db8:77::\", "
+        "          \"prefix-len\": 64, "
+        "          \"delegated-len\": 128"
+        "        } ],"
+        "\"valid-lifetime\": 4000 }"
+        "] }"
+        };
+
+    ElementPtr json;
+    int num_msgs = sizeof(config)/sizeof(char*);
+    for (int i = 0; i < num_msgs; i++) {
+        // Convert JSON string to Elements.
+        ASSERT_NO_THROW(json = Element::fromJSON(config[i]));
+
+        // Configuration processing should fail without a throw.
+        ASSERT_NO_THROW(x = configureDhcp6Server(srv_, json));
+
+        // Returned value must be non-empty ConstElementPtr to config result.
+        // rcode should be 1 which indicates configuration error.
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        EXPECT_EQ(1, rcode_);
+    }
 }
 
 // The goal of this test is to check whether an option definition
@@ -1054,7 +1691,7 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
 // configuration does not include options configuration.
 TEST_F(Dhcp6ParserTest, optionDataDefaults) {
     ConstElementPtr x;
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
@@ -1136,7 +1773,7 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     // The definition is not required for the option that
     // belongs to the 'dhcp6' option space as it is the
     // standard option.
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1214,7 +1851,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     // at the very end (when all other parameters are configured).
 
     // Starting stage 1. Configure sub-options and their definitions.
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1263,7 +1900,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     // the configuration from the stage 2 is repeated because BIND
     // configuration manager sends whole configuration for the lists
     // where at least one element is being modified or added.
-    config = "{ \"interface\": [ \"all\" ],"
+    config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1357,7 +1994,7 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
 // for multiple subnets.
 TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     ConstElementPtr x;
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -1592,6 +2229,121 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     EXPECT_EQ(1516, optionIA->getT2());
 }
 
+// This test checks if vendor options can be specified in the config file
+// (in hex format), and later retrieved from configured subnet
+TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
+
+    // This configuration string is to configure two options
+    // sharing the code 1 and belonging to the different vendor spaces.
+    // (different vendor-id values).
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"option-one\","
+        "    \"space\": \"vendor-4491\","
+        "    \"code\": 100,"
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
+        " },"
+        " {"
+        "    \"name\": \"option-two\","
+        "    \"space\": \"vendor-1234\","
+        "    \"code\": 100,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": False"
+        " } ],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Options should be now available for the subnet.
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+
+    // Try to get the option from the vendor space 4491
+    Subnet::OptionDescriptor desc1 = subnet->getVendorOptionDescriptor(4491, 100);
+    ASSERT_TRUE(desc1.option);
+    EXPECT_EQ(100, desc1.option->getType());
+    // Try to get the option from the vendor space 1234
+    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(1234, 100);
+    ASSERT_TRUE(desc2.option);
+    EXPECT_EQ(100, desc1.option->getType());
+
+    // Try to get the non-existing option from the non-existing
+    // option space and  expect that option is not returned.
+    Subnet::OptionDescriptor desc3 = subnet->getVendorOptionDescriptor(5678, 38);
+    ASSERT_FALSE(desc3.option);
+}
+
+// This test checks if vendor options can be specified in the config file,
+// (in csv format), and later retrieved from configured subnet
+TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
+
+    // This configuration string is to configure two options
+    // sharing the code 1 and belonging to the different vendor spaces.
+    // (different vendor-id values).
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-4491\","
+        "    \"code\": 100,"
+        "    \"data\": \"this is a string vendor-opt\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 100,"
+        "    \"type\": \"string\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-4491\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Options should be now available for the subnet.
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    ASSERT_TRUE(subnet);
+
+    // Try to get the option from the vendor space 4491
+    Subnet::OptionDescriptor desc1 = subnet->getVendorOptionDescriptor(4491, 100);
+    ASSERT_TRUE(desc1.option);
+    EXPECT_EQ(100, desc1.option->getType());
+
+    // Try to get the non-existing option from the non-existing
+    // option space and  expect that option is not returned.
+    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(5678, 100);
+    ASSERT_FALSE(desc2.option);
+}
+
+/// @todo add tests similar to vendorOptionsCsv and vendorOptionsHex, but for
+///       vendor options defined in a subnet.
+
 // The goal of this test is to verify that the standard option can
 // be configured to encapsulate multiple other options.
 TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
@@ -1600,7 +2352,7 @@ TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
     // In the first stahe we create definitions of suboptions
     // that we will add to the base option.
     // Let's create some dummy options: foo and foo2.
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1653,7 +2405,7 @@ TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
     // We add our dummy options to this option space and thus
     // they should be included as sub-options in the 'vendor-opts'
     // option.
-    config = "{ \"interface\": [ \"all\" ],"
+    config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1751,5 +2503,226 @@ TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
     // Option with the code 112 should not be added.
     EXPECT_FALSE(desc.option->getOption(112));
 }
+
+// Tests of the hooks libraries configuration.  All tests have the pre-
+// condition (checked in the test fixture's SetUp() method) that no hooks
+// libraries are loaded at the start of the tests.
+
+
+// Helper function to return a configuration containing an arbitrary number
+// of hooks libraries.
+std::string
+buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
+    const string quote("\"");
+
+    // Create the first part of the configuration string.
+    string config =
+        "{ \"interfaces\": [ \"all\" ],"
+            "\"hooks-libraries\": [";
+
+    // Append the libraries (separated by commas if needed)
+    for (int i = 0; i < libraries.size(); ++i) {
+        if (i > 0) {
+            config += string(", ");
+        }
+        config += (quote + libraries[i] + quote);
+    }
+
+    // Append the remainder of the configuration.
+    config += string(
+        "],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 110,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"code\": 111,"
+        "    \"data\": \"192.168.2.1\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 110,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " },"
+        " {"
+        "    \"name\": \"foo2\","
+        "    \"code\": 111,"
+        "    \"type\": \"ipv4-address\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-opts-space\","
+        "    \"encapsulate\": \"\""
+        " } ]"
+        "}");
+
+    return (config);
+}
+
+// Convenience function for creating hooks library configuration with one or
+// two character string constants.
+std::string
+buildHooksLibrariesConfig(const char* library1 = NULL,
+                          const char* library2 = NULL) {
+    std::vector<std::string> libraries;
+    if (library1 != NULL) {
+        libraries.push_back(string(library1));
+        if (library2 != NULL) {
+            libraries.push_back(string(library2));
+        }
+    }
+    return (buildHooksLibrariesConfig(libraries));
+}
+
+
+// The goal of this test is to verify the configuration of hooks libraries if
+// none are specified.
+TEST_F(Dhcp6ParserTest, NoHooksLibraries) {
+    // Parse a configuration containing no names.
+    string config = buildHooksLibrariesConfig();
+    if (!executeConfiguration(config,
+                              "set configuration with no hooks libraries")) {
+        FAIL() << "Unable to execute configuration";
+
+    } else {
+        // No libraries should be loaded at the end of the test.
+        std::vector<std::string> libraries = HooksManager::getLibraryNames();
+        EXPECT_TRUE(libraries.empty());
+    }
+}
+
+// Verify parsing fails with one library that will fail validation.
+TEST_F(Dhcp6ParserTest, InvalidLibrary) {
+    // Parse a configuration containing a failing library.
+    string config = buildHooksLibrariesConfig(NOT_PRESENT_LIBRARY);
+
+    ConstElementPtr status;
+    ElementPtr json = Element::fromJSON(config);
+    ASSERT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // The status object must not be NULL
+    ASSERT_TRUE(status);
+
+    // Returned value should not be 0
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_NE(0, rcode_);
+}
+
+// Verify the configuration of hooks libraries with two being specified.
+TEST_F(Dhcp6ParserTest, LibrariesSpecified) {
+    // Marker files should not be present.
+    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Set up the configuration with two libraries and load them.
+    string config = buildHooksLibrariesConfig(CALLOUT_LIBRARY_1,
+                                              CALLOUT_LIBRARY_2);
+    ASSERT_TRUE(executeConfiguration(config,
+                                     "load two valid libraries"));
+
+    // Expect two libraries to be loaded in the correct order (load marker file
+    // is present, no unload marker file).
+    std::vector<std::string> libraries = HooksManager::getLibraryNames();
+    ASSERT_EQ(2, libraries.size());
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Unload the libraries.  The load file should not have changed, but
+    // the unload one should indicate the unload() functions have been run.
+    config = buildHooksLibrariesConfig();
+    ASSERT_TRUE(executeConfiguration(config, "unloading libraries"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
+
+    // Expect the hooks system to say that none are loaded.
+    libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(libraries.empty());
+
+}
+
+
+// This test verifies that it is possible to select subset of interfaces on
+// which server should listen.
+TEST_F(Dhcp6ParserTest, selectedInterfaces) {
+
+    // Make sure there is no garbage interface configuration in the CfgMgr.
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"eth0\", \"eth1\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000 }";
+
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value must be 1 (values error)
+    // as the pool does not belong to that subnet
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_EQ(0, rcode_);
+
+    // eth0 and eth1 were explicitly selected. eth2 was not.
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth1"));
+    EXPECT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+}
+
+// This test verifies that it is possible to configure the server to listen on
+// all interfaces.
+TEST_F(Dhcp6ParserTest, allInterfaces) {
+
+    // Make sure there is no garbage interface configuration in the CfgMgr.
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+
+    ConstElementPtr status;
+
+    // This configuration specifies two interfaces on which server should listen
+    // bu also includes keyword 'all'. This keyword switches server into the
+    // mode when it listens on all interfaces regardless of what interface names
+    // were specified in the "interfaces" parameter.
+    string config = "{ \"interfaces\": [ \"eth0\", \"eth1\", \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000 }";
+
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value must be 1 (values error)
+    // as the pool does not belong to that subnet
+    ASSERT_TRUE(status);
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_EQ(0, rcode_);
+
+    // All interfaces should be now active.
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth1"));
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth2"));
+}
+
 
 };

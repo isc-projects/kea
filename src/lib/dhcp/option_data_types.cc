@@ -170,7 +170,7 @@ OptionDataTypeUtil::writeBinary(const std::string& hex_str,
 
 bool
 OptionDataTypeUtil::readBool(const std::vector<uint8_t>& buf) {
-    if (buf.size() < 1) {
+    if (buf.empty()) {
         isc_throw(BadDataTypeCast, "unable to read the buffer as boolean"
                   << " value. Invalid buffer size " << buf.size());
     }
@@ -212,15 +212,34 @@ OptionDataTypeUtil::readFqdn(const std::vector<uint8_t>& buf) {
 
 void
 OptionDataTypeUtil::writeFqdn(const std::string& fqdn,
-                              std::vector<uint8_t>& buf) {
+                              std::vector<uint8_t>& buf,
+                              bool downcase) {
     try {
-        isc::dns::Name name(fqdn);
+        isc::dns::Name name(fqdn, downcase);
         isc::dns::LabelSequence labels(name);
         if (labels.getDataLength() > 0) {
             size_t read_len = 0;
             const uint8_t* data = labels.getData(&read_len);
             buf.insert(buf.end(), data, data + read_len);
         }
+    } catch (const isc::Exception& ex) {
+        isc_throw(BadDataTypeCast, ex.what());
+    }
+}
+
+unsigned int
+OptionDataTypeUtil::getLabelCount(const std::string& text_name) {
+    // The isc::dns::Name class doesn't accept empty names. However, in some
+    // cases we may be dealing with empty names (e.g. sent by the DHCP clients).
+    // Empty names should not be sent as hostnames but if they are, for some
+    // reason, we don't want to throw an exception from this function. We
+    // rather want to signal empty name by returning 0 number of labels.
+    if (text_name.empty()) {
+        return (0);
+    }
+    try {
+        isc::dns::Name name(text_name);
+        return (name.getLabelCount());
     } catch (const isc::Exception& ex) {
         isc_throw(BadDataTypeCast, ex.what());
     }

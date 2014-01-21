@@ -37,8 +37,8 @@
 
 #include <testutils/dnsmessage_test.h>
 
-#include "memory_segment_test.h"
-#include "zone_table_segment_test.h"
+#include <datasrc/tests/memory/memory_segment_mock.h>
+#include <datasrc/tests/memory/zone_table_segment_mock.h>
 
 #include <gtest/gtest.h>
 
@@ -169,7 +169,7 @@ public:
 class MemoryClientTest : public ::testing::Test {
 protected:
     MemoryClientTest() : zclass_(RRClass::IN()),
-                         ztable_segment_(new test::ZoneTableSegmentTest(
+                         ztable_segment_(new test::ZoneTableSegmentMock(
                              zclass_, mem_sgmt_)),
                          client_(new InMemoryClient(ztable_segment_, zclass_))
     {}
@@ -179,7 +179,7 @@ protected:
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated()); // catch any leak here.
     }
     const RRClass zclass_;
-    test::MemorySegmentTest mem_sgmt_;
+    test::MemorySegmentMock mem_sgmt_;
     shared_ptr<ZoneTableSegment> ztable_segment_;
     boost::scoped_ptr<InMemoryClient> client_;
 };
@@ -305,12 +305,12 @@ TEST_F(MemoryClientTest, loadMemoryAllocationFailures) {
         mem_sgmt_.setThrowCount(i);
         EXPECT_THROW({
             shared_ptr<ZoneTableSegment> ztable_segment(
-                new test::ZoneTableSegmentTest(
+                new test::ZoneTableSegmentMock(
                     zclass_, mem_sgmt_));
 
             // Include the InMemoryClient construction too here. Now,
             // even allocations done from InMemoryClient constructor
-            // fail (due to MemorySegmentTest throwing) and we check for
+            // fail (due to MemorySegmentMock throwing) and we check for
             // leaks when this happens.
             InMemoryClient client2(ztable_segment, zclass_);
             loadZoneIntoTable(*ztable_segment, Name("example.org"), zclass_,
@@ -669,7 +669,7 @@ TEST_F(MemoryClientTest, getZoneCount) {
 
 TEST_F(MemoryClientTest, getIteratorForNonExistentZone) {
     // Zone "." doesn't exist
-    EXPECT_THROW(client_->getIterator(Name(".")), DataSourceError);
+    EXPECT_THROW(client_->getIterator(Name(".")), NoSuchZone);
 }
 
 TEST_F(MemoryClientTest, getIterator) {
@@ -692,6 +692,15 @@ TEST_F(MemoryClientTest, getIterator) {
 
     // Iterating past the end should result in an exception
     EXPECT_THROW(iterator->getNextRRset(), isc::Unexpected);
+}
+
+TEST_F(MemoryClientTest, getIteratorForEmptyZone) {
+    // trying to load a broken zone (zone file not existent).  It's internally
+    // stored an empty zone.
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/no-such-file.zone", true);
+    // Then getIterator will result in an exception.
+    EXPECT_THROW(client_->getIterator(Name("example.org")), EmptyZone);
 }
 
 TEST_F(MemoryClientTest, getIteratorSeparateRRs) {
@@ -789,6 +798,35 @@ TEST_F(MemoryClientTest, addEmptyRRsetThrows) {
                                        rrsets_vec)),
                  ZoneDataUpdater::AddError);
     // Teardown checks for memory segment leaks
+}
+
+TEST_F(MemoryClientTest, findEmptyZone) {
+    // trying to load a broken zone (zone file not existent).  It's internally
+    // stored an empty zone.
+    loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
+                      TEST_DATA_DIR "/no-such-file.zone", true);
+
+    using namespace isc::datasrc::result;
+
+    // findZone() returns the match, with NULL zone finder and the result
+    // flag indicating it's empty.
+    const DataSourceClient::FindResult result =
+        client_->findZone(Name("example.org"));
+    EXPECT_EQ(SUCCESS, result.code);
+    EXPECT_EQ(ZONE_EMPTY, result.flags);
+    EXPECT_FALSE(result.zone_finder);
+
+    // Same for the case of subdomain match
+    const DataSourceClient::FindResult result_sub =
+        client_->findZone(Name("www.example.org"));
+    EXPECT_EQ(PARTIALMATCH, result_sub.code);
+    EXPECT_EQ(ZONE_EMPTY, result_sub.flags);
+    EXPECT_FALSE(result_sub.zone_finder);
+
+    // findZoneData() will simply NULL (this is for testing only anyway,
+    // so any result would be okay as long as it doesn't cause disruption).
+    EXPECT_EQ(static_cast<const ZoneData*>(NULL),
+              client_->findZoneData(Name("example.org")));
 }
 
 TEST_F(MemoryClientTest, findZoneData) {

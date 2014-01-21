@@ -110,6 +110,8 @@ class QueryResult(object):
             self.line_handler = self.parse_answer
         elif line == ";; OPT PSEUDOSECTION:\n":
             self.line_handler = self.parse_opt
+        elif line == ";; QUESTION SECTION:\n":
+            self.line_handler = self.parse_question
         elif line == ";; AUTHORITY SECTION:\n":
             self.line_handler = self.parse_authority
         elif line == ";; ADDITIONAL SECTION:\n":
@@ -200,14 +202,19 @@ class QueryResult(object):
         """
         pass
 
-@step('A (dnssec )?query for ([\S]+) (?:type ([A-Z0-9]+) )?' +
+@step('A (dnssec )?(recursive )?query for ([\S]+) (?:type ([A-Z0-9]+) )?' +
       '(?:class ([A-Z]+) )?(?:to ([^:]+|\[[0-9a-fA-F:]+\])(?::([0-9]+))? )?' +
       'should have rcode ([\w.]+)')
-def query(step, dnssec, query_name, qtype, qclass, addr, port, rcode):
+def query(step, dnssec, recursive, query_name, qtype, qclass, addr, port,
+          rcode):
     """
     Run a query, check the rcode of the response, and store the query
     result in world.last_query_result.
     Parameters:
+    dnssec ('dnssec'): DO bit is set in the query.
+                       Defaults to unset (no DNSSEC).
+    recursive ('recursive'): RD bit is set in the query.
+                             Defaults to unset (no recursion).
     query_name ('query for <name>'): The domain name to query.
     qtype ('type <type>', optional): The RR type to query. Defaults to A.
     qclass ('class <class>', optional): The RR class to query. Defaults to IN.
@@ -234,6 +241,9 @@ def query(step, dnssec, query_name, qtype, qclass, addr, port, rcode):
         # additional counts, so unless we need dnssec, explicitly
         # disable edns0
         additional_arguments.append("+noedns")
+    # dig sets RD bit by default.
+    if recursive is None:
+        additional_arguments.append("+norecurse")
     query_result = QueryResult(query_name, qtype, qclass, addr, port,
                                additional_arguments)
     assert query_result.rcode == rcode,\
@@ -282,8 +292,8 @@ def check_last_query(step, item, value):
     assert str(value) == str(lq_val),\
            "Got: " + str(lq_val) + ", expected: " + str(value)
 
-@step('([a-zA-Z]+) section of the last query response should be')
-def check_last_query_section(step, section):
+@step('([a-zA-Z]+) section of the last query response should (exactly )?be')
+def check_last_query_section(step, section, exact):
     """
     Check the entire contents of the given section of the response of the last
     query.
@@ -322,9 +332,10 @@ def check_last_query_section(step, section):
     # replace whitespace of any length by one space
     response_string = re.sub("[ \t]+", " ", response_string)
     expect = re.sub("[ \t]+", " ", step.multiline)
-    # lowercase them
-    response_string = response_string.lower()
-    expect = expect.lower()
+    # lowercase them unless we need to do an exact match
+    if exact is None:
+        response_string = response_string.lower()
+        expect = expect.lower()
     # sort them
     response_string_parts = response_string.split("\n")
     response_string_parts.sort()

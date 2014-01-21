@@ -33,23 +33,43 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <stdint.h>
 
 namespace isc {
 namespace asiodns {
 
+class SyncUDPServer;
+typedef boost::shared_ptr<SyncUDPServer> SyncUDPServerPtr;
+
 /// \brief An UDP server that doesn't asynchronous lookup handlers.
 ///
 /// That means, the lookup handler must provide the answer right away.
 /// This allows for implementation with less overhead, compared with
 /// the \c UDPServer class.
-class SyncUDPServer : public DNSServer, public boost::noncopyable {
+///
+/// This class inherits from boost::enable_shared_from_this so a shared
+/// pointer of this object can be passed in an ASIO callback and won't be
+/// accidentally destroyed while waiting for events.  To enforce this style
+/// of creation, a static factory method is provided, and the constructor is
+/// hidden as a private.
+class SyncUDPServer : public DNSServer,
+                      public boost::enable_shared_from_this<SyncUDPServer>,
+                      boost::noncopyable
+{
+private:
+    /// \brief Constructor.
+    ///
+    /// This is hidden as private (see the class description).
+    SyncUDPServer(asio::io_service& io_service, const int fd, const int af,
+                  DNSLookup* lookup);
+
 public:
-    /// \brief Constructor
+    /// \brief Factory of SyncUDPServer object in the form of shared_ptr.
     ///
     /// Due to the nature of this server, it's meaningless if the lookup
-    /// callback is NULL.  So the constructor explicitly rejects that case
+    /// callback is NULL.  So this method explicitly rejects that case
     /// with an exception.  Likewise, it doesn't take "checkin" or "answer"
     /// callbacks.  In fact, calling "checkin" from receive callback does not
     /// make sense for any of the DNSServer variants (see Trac #2935);
@@ -67,8 +87,8 @@ public:
     /// \throw isc::InvalidParameter lookup is NULL
     /// \throw isc::asiolink::IOError when a low-level error happens, like the
     ///     fd is not a valid descriptor.
-    SyncUDPServer(asio::io_service& io_service, const int fd, const int af,
-                  DNSLookup* lookup);
+    static SyncUDPServerPtr create(asio::io_service& io_service, const int fd,
+                                   const int af, DNSLookup* lookup);
 
     /// \brief Start the SyncUDPServer.
     ///
@@ -133,7 +153,7 @@ private:
     // requires it.
     isc::dns::MessagePtr query_, answer_;
     // The socket used for the communication
-    std::auto_ptr<asio::ip::udp::socket> socket_;
+    boost::scoped_ptr<asio::ip::udp::socket> socket_;
     // Wrapper of socket_ in the form of asiolink::IOSocket.
     // "DummyIOCallback" is not necessary for this class, but using the
     // template is the easiest way to create a UDP instance of IOSocket.
@@ -156,24 +176,6 @@ private:
     // Placeholder for error code object.  It will be passed to ASIO library
     // to have it set in case of error.
     asio::error_code ec_;
-    // The callback functor for internal asynchronous read event.  This is
-    // stateless (and it will be copied in the ASIO library anyway), so
-    // can be const.
-    // SunStudio doesn't like a boost::function object to be passed, so
-    // we use the wrapper class as a workaround.
-    class CallbackWrapper {
-    public:
-        CallbackWrapper(boost::function<void(const asio::error_code&, size_t)>
-                        callback) :
-            callback_(callback)
-        {}
-        void operator()(const asio::error_code& error, size_t len) {
-            callback_(error, len);
-        }
-    private:
-        boost::function<void(const asio::error_code&, size_t)> callback_;
-    };
-    const CallbackWrapper recv_callback_;
 
     // Auxiliary functions
 

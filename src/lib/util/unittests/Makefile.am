@@ -11,6 +11,7 @@ libutil_unittests_la_SOURCES += check_valgrind.h check_valgrind.cc
 libutil_unittests_la_SOURCES += run_all.h run_all.cc
 libutil_unittests_la_SOURCES += textdata.h
 libutil_unittests_la_SOURCES += wiredata.h wiredata.cc
+libutil_unittests_la_SOURCES += interprocess_util.h interprocess_util.cc
 endif
 
 # For now, this isn't needed for libutil_unittests

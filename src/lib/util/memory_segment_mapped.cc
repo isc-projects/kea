@@ -28,6 +28,8 @@
 #include <string>
 #include <new>
 
+#include <stdint.h>
+
 // boost::interprocess namespace is big and can cause unexpected import
 // (e.g., it has "read_only"), so it's safer to be specific for shortcuts.
 using boost::interprocess::basic_managed_mapped_file;
@@ -44,6 +46,15 @@ using boost::interprocess::offset_ptr;
 
 namespace isc {
 namespace util {
+
+namespace { // unnamed namespace
+
+const char* const RESERVED_NAMED_ADDRESS_STORAGE_NAME =
+    "_RESERVED_NAMED_ADDRESS_STORAGE";
+
+} // end of unnamed namespace
+
+
 // Definition of class static constant so it can be referenced by address
 // or reference.
 const size_t MemorySegmentMapped::INITIAL_SIZE;
@@ -98,6 +109,7 @@ struct MemorySegmentMapped::Impl {
         // confirm there's no other user and there won't either.
         lock_.reset(new boost::interprocess::file_lock(filename.c_str()));
         checkWriter();
+        reserveMemory();
     }
 
     // Constructor for open-or-write (and read-write) mode
@@ -108,6 +120,7 @@ struct MemorySegmentMapped::Impl {
         lock_(new boost::interprocess::file_lock(filename.c_str()))
     {
         checkWriter();
+        reserveMemory();
     }
 
     // Constructor for existing segment, either read-only or read-write
@@ -123,12 +136,45 @@ struct MemorySegmentMapped::Impl {
         } else {
             checkWriter();
         }
+        reserveMemory();
+    }
+
+    void reserveMemory(bool no_grow = false) {
+        if (!read_only_) {
+            // Reserve a named address for use during
+            // setNamedAddress(). Though this will almost always succeed
+            // on the first try during construction, it may require
+            // multiple attempts later during a call from
+            // allMemoryDeallocated() when the segment has been in use
+            // for a while.
+            while (true) {
+                const offset_ptr<void>* reserved_storage =
+                    base_sgmt_->find_or_construct<offset_ptr<void> >(
+                        RESERVED_NAMED_ADDRESS_STORAGE_NAME, std::nothrow)();
+
+                if (reserved_storage) {
+                    break;
+                }
+                assert(!no_grow);
+
+                growSegment();
+            }
+        }
+    }
+
+    void freeReservedMemory() {
+        if (!read_only_) {
+            const bool deleted = base_sgmt_->destroy<offset_ptr<void> >
+                (RESERVED_NAMED_ADDRESS_STORAGE_NAME);
+            assert(deleted);
+        }
     }
 
     // Internal helper to grow the underlying mapped segment.
     void growSegment() {
         // We first need to unmap it before calling grow().
         const size_t prev_size = base_sgmt_->get_size();
+        base_sgmt_->flush();
         base_sgmt_.reset();
 
         // Double the segment size.  In theory, this process could repeat
@@ -139,16 +185,21 @@ struct MemorySegmentMapped::Impl {
         const size_t new_size = prev_size * 2;
         assert(new_size > prev_size);
 
-        if (!BaseSegment::grow(filename_.c_str(), new_size - prev_size)) {
-            throw std::bad_alloc();
-        }
+        const bool grown = BaseSegment::grow(filename_.c_str(),
+                                             new_size - prev_size);
 
+        // Remap the file, whether or not grow() succeeded.  this should
+        // normally succeed(*), but it's not 100% guaranteed.  We abort
+        // if it fails (see the method description in the header file).
+        // (*) Although it's not formally documented, the implementation
+        // of grow() seems to provide strong guarantee, i.e, if it fails
+        // the underlying file can be used with the previous size.
         try {
-            // Remap the grown file; this should succeed, but it's not 100%
-            // guaranteed.  If it fails we treat it as if we fail to create
-            // the new segment.
             base_sgmt_.reset(new BaseSegment(open_only, filename_.c_str()));
-        } catch (const boost::interprocess::interprocess_exception& ex) {
+        } catch (...) {
+            abort();
+        }
+        if (!grown) {
             throw std::bad_alloc();
         }
     }
@@ -227,6 +278,7 @@ MemorySegmentMapped::MemorySegmentMapped(const std::string& filename,
 
 MemorySegmentMapped::~MemorySegmentMapped() {
     if (impl_->base_sgmt_ && !impl_->read_only_) {
+        impl_->freeReservedMemory();
         impl_->base_sgmt_->flush(); // note: this is exception free
     }
     delete impl_;
@@ -276,17 +328,29 @@ MemorySegmentMapped::deallocate(void* ptr, size_t) {
 
 bool
 MemorySegmentMapped::allMemoryDeallocated() const {
-    return (impl_->base_sgmt_->all_memory_deallocated());
+    // This method is not technically const, but it reserves the
+    // const-ness property. In case of exceptions, we abort here. (See
+    // ticket #2850 for additional commentary.)
+    try {
+        impl_->freeReservedMemory();
+        const bool result = impl_->base_sgmt_->all_memory_deallocated();
+        // reserveMemory() should succeed now as the memory was already
+        // allocated, so we set no_grow to true.
+        impl_->reserveMemory(true);
+        return (result);
+    } catch (...) {
+        abort();
+    }
 }
 
-void*
-MemorySegmentMapped::getNamedAddressImpl(const char* name) {
+MemorySegment::NamedAddressResult
+MemorySegmentMapped::getNamedAddressImpl(const char* name) const {
     offset_ptr<void>* storage =
         impl_->base_sgmt_->find<offset_ptr<void> >(name).first;
     if (storage) {
-        return (storage->get());
+        return (NamedAddressResult(true, storage->get()));
     }
-    return (NULL);
+    return (NamedAddressResult(false, NULL));
 }
 
 bool
@@ -299,13 +363,27 @@ MemorySegmentMapped::setNamedAddressImpl(const char* name, void* addr) {
         isc_throw(MemorySegmentError, "address is out of segment: " << addr);
     }
 
+    // Temporarily save the passed addr into pre-allocated offset_ptr in
+    // case there are any relocations caused by allocations.
+    offset_ptr<void>* reserved_storage =
+        impl_->base_sgmt_->find<offset_ptr<void> >(
+            RESERVED_NAMED_ADDRESS_STORAGE_NAME).first;
+    assert(reserved_storage);
+    *reserved_storage = addr;
+
     bool grown = false;
     while (true) {
         offset_ptr<void>* storage =
             impl_->base_sgmt_->find_or_construct<offset_ptr<void> >(
                 name, std::nothrow)();
         if (storage) {
-            *storage = addr;
+            // Move the address from saved offset_ptr into the
+            // newly-allocated storage.
+            reserved_storage =
+                impl_->base_sgmt_->find<offset_ptr<void> >(
+                    RESERVED_NAMED_ADDRESS_STORAGE_NAME).first;
+            assert(reserved_storage);
+            *storage = *reserved_storage;
             return (grown);
         }
 
@@ -341,14 +419,20 @@ MemorySegmentMapped::shrinkToFit() {
         return;
     }
 
-    // First, (unmap and) close the underlying file.
+    // First, unmap the underlying file.
+    impl_->base_sgmt_->flush();
     impl_->base_sgmt_.reset();
 
     BaseSegment::shrink_to_fit(impl_->filename_.c_str());
     try {
         // Remap the shrunk file; this should succeed, but it's not 100%
         // guaranteed.  If it fails we treat it as if we fail to create
-        // the new segment.
+        // the new segment.  Note that this is different from the case where
+        // reset() after grow() fails.  While the same argument can apply
+        // in theory, it should be less likely that other methods will be
+        // called after shrinkToFit() (and the destructor can still be called
+        // safely), so we give the application an opportunity to handle the
+        // case as gracefully as possible.
         impl_->base_sgmt_.reset(
             new BaseSegment(open_only, impl_->filename_.c_str()));
     } catch (const boost::interprocess::interprocess_exception& ex) {

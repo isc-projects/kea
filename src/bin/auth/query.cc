@@ -255,7 +255,7 @@ Query::addWildcardNXRRSETProof(ZoneFinder& finder, ConstRRsetPtr nsec) {
     if (nsec->getRdataCount() == 0) {
         isc_throw(BadNSEC, "NSEC for WILDCARD_NXRRSET is empty");
     }
-    
+
     ConstZoneFinderContextPtr fcontext =
         finder.find(*qname_, RRType::NSEC(),
                     dnssec_opt_ | ZoneFinder::NO_WILDCARD);
@@ -385,6 +385,12 @@ Query::process(datasrc::ClientList& client_list,
         }
         response_->setHeaderFlag(Message::HEADERFLAG_AA, false);
         response_->setRcode(Rcode::REFUSED());
+        return;
+    } else if (!result.finder_) {
+        // We found a matching zone in a data source but its data are not
+        // available.
+        response_->setHeaderFlag(Message::HEADERFLAG_AA, false);
+        response_->setRcode(Rcode::SERVFAIL());
         return;
     }
     ZoneFinder& zfinder = *result.finder_;

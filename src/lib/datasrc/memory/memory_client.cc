@@ -69,11 +69,11 @@ InMemoryClient::findZone(const isc::dns::Name& zone_name) const {
     const ZoneTable::FindResult result(zone_table->findZone(zone_name));
 
     ZoneFinderPtr finder;
-    if (result.code != result::NOTFOUND) {
+    if (result.code != result::NOTFOUND && result.zone_data) {
         finder.reset(new InMemoryZoneFinder(*result.zone_data, getClass()));
     }
 
-    return (DataSourceClient::FindResult(result.code, finder));
+    return (DataSourceClient::FindResult(result.code, finder, result.flags));
 }
 
 const ZoneData*
@@ -242,7 +242,12 @@ InMemoryClient::getIterator(const Name& name, bool separate_rrs) const {
     const ZoneTable* zone_table = ztable_segment_->getHeader().getTable();
     const ZoneTable::FindResult result(zone_table->findZone(name));
     if (result.code != result::SUCCESS) {
-        isc_throw(DataSourceError, "No such zone: " + name.toText());
+        isc_throw(NoSuchZone, "no such zone for in-memory iterator: "
+                  << name.toText());
+    }
+    if (!result.zone_data) {
+        isc_throw(EmptyZone, "empty zone for in-memory iterator: "
+                  << name.toText());
     }
 
     return (ZoneIteratorPtr(new MemoryIterator(

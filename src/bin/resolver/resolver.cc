@@ -338,25 +338,9 @@ public:
     }
 };
 
-// This is a derived class of \c SimpleCallback, to serve
-// as a callback in the asiolink module.  It checks for queued
-// configuration messages, and executes them if found.
-class ConfigCheck : public SimpleCallback {
-public:
-    ConfigCheck(Resolver* srv) : server_(srv) {}
-    virtual void operator()(const IOMessage&) const {
-        if (server_->getConfigSession()->hasQueuedMsgs()) {
-            server_->getConfigSession()->checkCommand();
-        }
-    }
-private:
-    Resolver* server_;
-};
-
 Resolver::Resolver() :
     impl_(new ResolverImpl()),
     dnss_(NULL),
-    checkin_(NULL),
     dns_lookup_(NULL),
     dns_answer_(new MessageAnswer),
     nsas_(NULL),
@@ -365,13 +349,11 @@ Resolver::Resolver() :
     // Operations referring to "this" must be done in the constructor body
     // (some compilers will issue warnings if "this" is referred to in the
     // initialization list).
-    checkin_ = new ConfigCheck(this);
     dns_lookup_ = new MessageLookup(this);
 }
 
 Resolver::~Resolver() {
     delete impl_;
-    delete checkin_;
     delete dns_lookup_;
     delete dns_answer_;
 }
@@ -524,7 +506,8 @@ ResolverImpl::processNormalQuery(const IOMessage& io_message,
 {
     const ConstQuestionPtr question = *query_message->beginQuestion();
     const RRType qtype = question->getType();
-    const RRClass qclass = question->getClass();
+    // Make cppcheck happy with the reference.
+    const RRClass& qclass = question->getClass();
 
     // Apply query ACL
     const Client client(io_message);

@@ -22,6 +22,8 @@
 
 #include <stdint.h>
 
+#include <boost/noncopyable.hpp>
+
 namespace isc {
 namespace dns {
 namespace master_lexer_internal {
@@ -303,7 +305,7 @@ private:
 /// implementation of the exception handling).  For these reasons, some of
 /// this class does not throw for an error that would be reported as an
 /// exception in other classes.
-class MasterLexer {
+class MasterLexer : public boost::noncopyable {
     friend class master_lexer_internal::State;
 public:
     /// \brief Exception thrown when we fail to read from the input

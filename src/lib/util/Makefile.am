@@ -4,7 +4,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/exceptions -I$(top_builddir)/src/lib/exceptions
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-AM_CPPFLAGS += -DLOCKFILE_DIR=\"${localstatedir}/${PACKAGE_NAME}\"
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 # If we use the shared-memory support, corresponding Boost library may
 # cause build failures especially if it's strict about warnings.  We've
@@ -25,9 +24,6 @@ libb10_util_la_SOURCES += locks.h lru_list.h
 libb10_util_la_SOURCES += strutil.h strutil.cc
 libb10_util_la_SOURCES += buffer.h io_utilities.h
 libb10_util_la_SOURCES += time_utilities.h time_utilities.cc
-libb10_util_la_SOURCES += interprocess_sync.h
-libb10_util_la_SOURCES += interprocess_sync_file.h interprocess_sync_file.cc
-libb10_util_la_SOURCES += interprocess_sync_null.h interprocess_sync_null.cc
 libb10_util_la_SOURCES += memory_segment.h
 libb10_util_la_SOURCES += memory_segment_local.h memory_segment_local.cc
 if USE_SHARED_MEMORY
@@ -49,4 +45,4 @@ libb10_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 CLEANFILES = *.gcno *.gcda
 
 libb10_util_includedir = $(includedir)/$(PACKAGE_NAME)/util
-libb10_util_include_HEADERS = buffer.h
+libb10_util_include_HEADERS = buffer.h io_utilities.h

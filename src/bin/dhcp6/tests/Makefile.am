@@ -27,7 +27,8 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
-CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
+CLEANFILES  = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
+CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_CLANGPP
@@ -35,27 +36,53 @@ if USE_CLANGPP
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
 
-if USE_STATIC_LINK
-AM_LDFLAGS = -static
-endif
-
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
 TESTS =
 if HAVE_GTEST
+# Build shared libraries for testing. The libtool way to create a shared library
+# is to specify "-avoid-version -export-dynamic -module" in the library LDFLAGS
+# (see http://www.gnu.org/software/libtool/manual/html_node/Link-mode.html).
+# Use of these switches will guarantee that the .so files are created in the
+# .libs folder and they can be dlopened.
+# Note that the shared libraries with callouts should not be used together with
+# the --enable-static-link option. With this option, the bind10 libraries are
+# statically linked with the program and if the callout invokes the methods
+# which belong to these libraries, the library with the callout will get its
+# own copy of the static objects (e.g. logger, ServerHooks) and that will lead
+# to unexpected errors. For this reason, the --enable-static-link option is
+# ignored for unit tests built here.
+
+lib_LTLIBRARIES = libco1.la libco2.la
+
+libco1_la_SOURCES  = callout_library_1.cc callout_library_common.h
+libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco1_la_CPPFLAGS = $(AM_CPPFLAGS)
+libco1_la_LDFLAGS = -avoid-version -export-dynamic -module
+
+libco2_la_SOURCES  = callout_library_2.cc callout_library_common.h
+libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco2_la_CPPFLAGS = $(AM_CPPFLAGS)
+libco2_la_LDFLAGS = -avoid-version -export-dynamic -module
 
 TESTS += dhcp6_unittests
-
 dhcp6_unittests_SOURCES  = dhcp6_unittests.cc
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
+dhcp6_unittests_SOURCES += fqdn_unittest.cc
+dhcp6_unittests_SOURCES += hooks_unittest.cc
+dhcp6_unittests_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
 dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
+dhcp6_unittests_SOURCES += marker_file.cc
 dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../dhcp6_log.h ../dhcp6_log.cc
 dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../config_parser.cc ../config_parser.h
-nodist_dhcp6_unittests_SOURCES = ../dhcp6_messages.h ../dhcp6_messages.cc
+dhcp6_unittests_SOURCES += wireshark.cc
+
+nodist_dhcp6_unittests_SOURCES  = ../dhcp6_messages.h ../dhcp6_messages.cc
+nodist_dhcp6_unittests_SOURCES += marker_file.h test_libraries.h
 
 dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
@@ -64,7 +91,9 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la

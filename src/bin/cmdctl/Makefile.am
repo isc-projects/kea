@@ -57,11 +57,18 @@ b10_certgen_CXXFLAGS = $(BOTAN_INCLUDES)
 b10_certgen_LDFLAGS = $(BOTAN_LIBS)
 
 # Generate the initial certificates immediately
-cmdctl-certfile.pem: b10-certgen
-	./b10-certgen -q -w
-
 cmdctl-keyfile.pem: b10-certgen
 	./b10-certgen -q -w
+
+# This is a hack, as b10-certgen creates both cmdctl-keyfile.pem and
+# cmdctl-certfile.pem, and in a parallel make, making these targets
+# simultaneously may result in corrupted files. With GNU make, there is
+# a non-portable way of working around this with pattern rules, but we
+# adopt this hack instead. The downside is that cmdctl-certfile.pem will
+# not be re-generated if cmdctl-keyfile.pem exists and is older. See
+# Trac ticket #2962.
+cmdctl-certfile.pem: cmdctl-keyfile.pem
+	touch $(builddir)/cmdctl-keyfile.pem
 
 if INSTALL_CONFIGURATIONS
 
@@ -71,7 +78,7 @@ install-data-local:
 	$(mkinstalldirs) $(DESTDIR)/@sysconfdir@/@PACKAGE@
 	for f in $(CERTFILES) ; do	\
 	  if test ! -f $(DESTDIR)$(sysconfdir)/@PACKAGE@/$$f; then	\
-	    ${INSTALL} -m 640 $(srcdir)/$$f $(DESTDIR)$(sysconfdir)/@PACKAGE@/ ;	\
+	    ${INSTALL} -m 640 $$f $(DESTDIR)$(sysconfdir)/@PACKAGE@/ ;	\
 	  fi ;	\
 	done
 

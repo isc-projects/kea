@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,8 +19,9 @@
 
 libdhcp++ is an all-purpose DHCP-manipulation library, written in
 C++. It offers packet parsing and assembly, DHCPv4 and DHCPv6
-options parsing and ssembly, interface detection (currently on
-Linux systems only) and socket operations. It is a generic purpose library that
+options parsing and assembly, interface detection (currently on
+Linux, FreeBSD, NetBSD, OpenBSD, Max OS X, and Solaris 11) and socket operations.
+It is a generic purpose library that
 can be used by server, client, relay, performance tools and other DHCP-related
 tools. For server specific library, see \ref libdhcpsrv. Please do not
 add any server-specific code to libdhcp++ and use \ref libdhcpsrv instead.
@@ -57,6 +58,53 @@ DHCPv6, but is rarely used in DHCPv4. isc::dhcp::Option::addOption(),
 isc::dhcp::Option::delOption(), isc::dhcp::Option::getOption() can be used
 for that purpose.
 
+@section libdhcpRelay Relay v6 support in Pkt6
+
+DHCPv6 clients that are not connected to the same link as DHCPv6
+servers need relays to reach the server. Each relay receives a message
+on a client facing interface, encapsulates it into RELAY_MSG option
+and sends as RELAY_FORW message towards the server (or the next relay,
+which is closer to the server). This procedure can be repeated up to
+32 times. Kea is able to support up to 32 relays. Each traversed relay
+may add certain options.  The most obvious example is interface-id
+option, but there may be other options as well. Each relay may add such
+an option, regardless of whether other relays added it before. Thanks
+to encapsulation, those options are separated and it is possible to
+differentiate which relay inserted specific instance of an option.
+
+Interface-id is used to identify a subnet (or interface) the original message
+came from and is used for that purpose on two occasions. First, the server
+uses the interface-id included by the first relay (the one closest to
+the client) to select appropriate subnet for a given request. Server includes
+that interface-id in its copy, when sending data back to the client.
+This will be used by the relay to choose proper interface when forwarding
+response towards the client.
+
+Pkt6 class has a public Pkt6::relay_info_ field, which is of type Pkt6::RelayInfo.
+This is a simple structure that represents the information in each RELAY_FORW
+or RELAY_REPL message. It is important to understand the order in which
+the data appear here. Consider the following network:
+
+\verbatim
+client-------relay1-----relay2-----relay3----server
+\endverbatim
+
+Client will transmit SOLICIT message. Relay1 will forward it as
+RELAY_FORW with SOLICIT in it. Relay2 forward it as RELAY_FORW with
+RELAY_FORW with SOLICIT in it. Finally the third relay will add yet
+another RELAY_FORW around it. The server will parse the packet and
+create Pkt6 object for it. Its relay_info_ will have 3
+elements. Packet parsing is done in reverse order, compare to the
+order the packet traversed in the network.  The first element
+(relay_info_[0]) will represent relay3 information (the "last" relay or
+in other words the one closest to the server). The second element
+will represent relay2. The third element (relay_info_[2]) will represent
+the first relay (relay1) or in other words the one closest to the client.
+
+Packets sent by the server must maintain the same encapsulation order.
+This is easy to do - just copy data from client's message object into
+server's response object. See Pkt6::coyRelayInfo for details.
+
 @section libdhcpIfaceMgr Interface Manager
 
 Interface Manager (or IfaceMgr) is an abstraction layer about low-level
@@ -89,5 +137,127 @@ Another useful methods are dedicated to transmission
 (isc::dhcp::IfaceMgr::receive4() and isc::dhcp::IfaceMgr::receive6()).
 Note that receive4() and receive6() methods may return NULL, e.g.
 when timeout is reached or if dhcp daemon receives a signal.
+
+@section libdhcpPktFilter Switchable Packet Filter objects used by Interface Manager
+
+The well known problem of DHCPv4 implementation is that it must be able to
+provision devices which don't have an IPv4 address yet (the IPv4 address is
+one of the configuration parameters provided by DHCP server to a client).
+One way to communicate with such a device is to send server's response to
+a broadcast address. An obvious drawback of this approach is that the server's
+response will be received and processed by all clients in the particular
+network. Therefore, the preferred approach is that the server unicasts its
+response to a new address being assigned for the client. This client will
+identify itself as a target of this message by checking chaddr and/or
+Client Identifier value. At the same time, the other clients in the network
+will not receive the unicast message. The major problem that arises with this
+approach is that the client without an IP address doesn't respond to ARP
+messages. As a result, server's response will not be sent over IP/UDP
+socket because the system kernel will fail to resolve client's link-layer
+address.
+
+Kea supports the use of raw sockets to create a complete Data-link/IP/UDP/DHCPv4
+stack. By creating each layer of the outgoing packet, the Kea logic has full
+control over the frame contents and it may bypass the use of ARP to inject the
+link layer address into the frame. The raw socket is bound to a specific interface,
+not to the IP address/UDP port. Therefore, the system kernel doesn't have
+means to verify that Kea is listening to the DHCP traffic on the specific address
+and port. This has two major implications:
+- It is possible to run another DHCPv4 sever instance which will bind socket to the
+same address and port.
+- An attempt to send a unicast message to the DHCPv4 server will result in ICMP
+"Port Unreachable" message being sent by the kernel (which is unaware that the
+DHCPv4 service is actually running).
+In order to overcome these issues, the isc::dhcp::PktFilterLPF opens a
+regular IP/UDP socket which coexists with the raw socket. The socket is referred
+to as "fallback socket" in the Kea code. All packets received through this socket
+are discarded.
+
+In general, the use of datagram sockets is preferred over raw sockets.
+For convenience, the switchable Packet Filter objects are used to manage
+sockets for different purposes. These objects implement the socket opening
+operation and sending/receiving messages over this socket. For example:
+the isc::dhcp::PktFilterLPF object opens a raw socket.
+The isc::dhcp::PktFilterLPF::send and isc::dhcp::PktFilterLPF::receive
+methods encode/decode full data-link/IP/UDP/DHCPv4 stack. The
+isc::dhcp::PktFilterInet supports sending and receiving messages over
+the regular IP/UDP socket. The isc::dhcp::PktFilterInet should be used in all
+cases when an application using the libdhcp++ doesn't require sending
+DHCP messages to a device which doesn't have an address yet.
+
+@section libdhcpPktFilter6 Switchable Packet Filters for DHCPv6
+
+The DHCPv6 implementation doesn't suffer from the problems described in \ref
+libdhcpPktFilter. Therefore, the socket creation and methods used to send
+and receive DHCPv6 messages are common for all OSes. However, there is
+still a need to customize the operations on the sockets to reliably unit test
+the \ref isc::dhcp::IfaceMgr logic.
+
+The \ref isc::dhcp::IfaceMgr::openSockets6 function examines configuration
+of detected interfaces for their availability to listen DHCPv6 traffic. For
+all running interfaces (except local loopback) it will try to open a socket
+and bind it to the link local or global unicast address. The socket will
+not be opened on the interface which is down or for which it was explicitly
+specified that it should not be used to listen to DHCPv6 messages. There is
+a substantial amount of logic in this function that has to be unit tested for
+various interface configurations, e.g.:
+- multiple interfaces with link-local addresses only
+- multiple interfaces, some of them having global unicast addresses,
+- multiple interfaces, some of them disabled
+- no interfaces
+
+The \ref isc::dhcp::IfaceMgr::openSockets6 function attempts to open
+sockets on detected interfaces. At the same time, the number of interfaces,
+and their configuration is specific to OS where the tests are being run.
+So the test doesn't have any means to configure interfaces for the test case
+being run. Moreover, a unit test should not change the configuration of the
+system. For example, a change to the configuration of the interface which
+is used to access the machine running a test, may effectively break the
+access to this machine.
+
+In order to overcome the problem described above, the unit tests use
+fake interfaces which can be freely added, configured and removed from the
+\ref isc::dhcp::IfaceMgr. Obviously, it is not possible to open a socket
+on a fake interface, nor use it to send or receive IP packets. To mimic
+socket operations on fake interfaces it is required that the functions
+which open sockets, send messages and receive messages have to be
+customizable. This is achieved by implementation of replaceable packet
+filter objects which derive from the \ref isc::dhcp::PktFilter6 class.
+The default implementation of this class is \ref isc::dhcp::PktFilterInet6
+which creates a regular datagram IPv6/UDPv6 socket. The unit tests use a
+stub implementation isc::dhcp::test::PktFilter6Stub which contains no-op
+functions.
+
+Use \ref isc::dhcp::IfaceMgr::setPacketFilter function to set the custom packet
+filter object to be used by Interface Manager.
+
+@section libdhcpErrorLogging Logging non-fatal errors in IfaceMgr
+
+The libdhcp++ is a common library, meant to be used by various components,
+such as DHCP servers, relays and clients. It is also used by a perfdhcp
+benchmarking application. It provides a basic capabilities for these
+applications to perform operations on DHCP messages such as encoding
+or decoding them. It also provides capabilities to perform low level
+operations on sockets. Since libdhcp++ is a common library, its dependency
+on other BINDX modules should be minimal. In particular, errors occurring
+in the libdhcp++ are reported using exceptions, not a BINDX logger. This
+works well in most cases, but there are some cases in which it is
+undesired for a function to throw an exception in case of non-fatal error.
+
+The typical case, when exception should not be thrown, is when the \ref
+isc::dhcp::IfaceMgr::openSockets4 or \ref isc::dhcp::IfaceMgr::openSockets6
+fails to open a socket on one of the interfaces. This should not preclude
+the function from attempting to open sockets on other interfaces, which
+would be the case if exception was thrown.
+
+In such cases the IfaceMgr makes use of error handler callback function
+which may be installed by a caller. This function must implement the
+isc::dhcp::IfaceMgrErrorMsgCallback. Note that it is allowed to pass a NULL
+value instead, which would result falling back to a default behavior and
+exception will be thrown. If non-NULL value is provided, the
+\ref isc::dhcp::IfaceMgr will call error handler function and pass an
+error string as an argument. The handler function may use its logging
+mechanism to log this error message. In particular, the DHCP server
+will use BINDX logger to log the error message.
 
 */

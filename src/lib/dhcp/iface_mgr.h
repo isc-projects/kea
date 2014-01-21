@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -21,7 +21,9 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
+#include <dhcp/pkt_filter6.h>
 
+#include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
@@ -39,10 +41,10 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-/// @brief IfaceMgr exception thrown when invalid packet filter object specified.
-class InvalidPacketFilter : public Exception {
+/// @brief Exception thrown when it is not allowed to set new Packet Filter.
+class PacketFilterChangeDenied : public Exception {
 public:
-    InvalidPacketFilter(const char* file, size_t line, const char* what) :
+    PacketFilterChangeDenied(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
 
@@ -72,23 +74,53 @@ public:
 
 /// Holds information about socket.
 struct SocketInfo {
-    uint16_t sockfd_; /// socket descriptor
+
     isc::asiolink::IOAddress addr_; /// bound address
     uint16_t port_;   /// socket port
     uint16_t family_; /// IPv4 or IPv6
 
+    /// @brief Socket descriptor (a.k.a. primary socket).
+    int sockfd_;
+
+    /// @brief Fallback socket descriptor.
+    ///
+    /// This socket descriptor holds the handle to the fallback socket.
+    /// The fallback socket is created when there is a need for the regular
+    /// datagram socket to be bound to an IP address and port, besides
+    /// primary socket (sockfd_) which is actually used to receive and process
+    /// the DHCP messages. The fallback socket (if exists) is always associated
+    /// with the primary socket. In particular, the need for the fallback socket
+    /// arises when raw socket is a primary one. When primary socket is open,
+    /// it is bound to an interface not the address and port. The implications
+    /// include the possibility that the other process (e.g. the other instance
+    /// of DHCP server) will bind to the same address and port through which the
+    /// raw socket receives the DHCP messages.Another implication is that the
+    /// kernel, being unaware of the DHCP server operating through the raw
+    /// socket, will respond with the ICMP "Destination port unreachable"
+    /// messages when DHCP messages are only received through the raw socket.
+    /// In order to workaround the issues mentioned here, the fallback socket
+    /// should be opened so as/ the kernel is aware that the certain address
+    /// and port is in use.
+    ///
+    /// The fallback description is supposed to be set to a negative value if
+    /// the fallback socket is closed (not open).
+    int fallbackfd_;
+
     /// @brief SocketInfo constructor.
     ///
-    /// @param sockfd socket descriptor
-    /// @param addr an address the socket is bound to
-    /// @param port a port the socket is bound to
-    SocketInfo(uint16_t sockfd, const isc::asiolink::IOAddress& addr,
-               uint16_t port)
-        :sockfd_(sockfd), addr_(addr), port_(port), family_(addr.getFamily()) { }
+    /// @param addr An address the socket is bound to.
+    /// @param port A port the socket is bound to.
+    /// @param sockfd Socket descriptor.
+    /// @param fallbackfd A descriptor of the fallback socket.
+    SocketInfo(const isc::asiolink::IOAddress& addr, const uint16_t port,
+               const int sockfd, const int fallbackfd = -1)
+        : addr_(addr), port_(port), family_(addr.getFamily()),
+          sockfd_(sockfd), fallbackfd_(fallbackfd) { }
+
 };
 
 
-/// @brief represents a single network interface
+/// @brief Represents a single network interface
 ///
 /// Iface structure represents network interface with all useful
 /// information, like name, interface index, MAC address and
@@ -96,13 +128,20 @@ struct SocketInfo {
 class Iface {
 public:
 
-    /// maximum MAC address length (Infiniband uses 20 bytes)
+    /// Maximum MAC address length (Infiniband uses 20 bytes)
     static const unsigned int MAX_MAC_LEN = 20;
 
-    /// type that defines list of addresses
+    /// Type that defines list of addresses
     typedef std::vector<isc::asiolink::IOAddress> AddressCollection;
 
-    /// type that holds a list of socket informations
+    /// @brief Type that holds a list of socket information.
+    ///
+    /// @warning The type of the container used here must guarantee
+    /// that the iterators do not invalidate when erase() is called.
+    /// This is because, the \ref closeSockets function removes
+    /// elements selectively by calling erase on the element to be
+    /// removed and further iterates through remaining elements.
+    ///
     /// @todo: Add SocketCollectionConstIter type
     typedef std::list<SocketInfo> SocketCollection;
 
@@ -116,6 +155,27 @@ public:
 
     /// @brief Closes all open sockets on interface.
     void closeSockets();
+
+    /// @brief Closes all IPv4 or IPv6 sockets.
+    ///
+    /// This function closes sockets of the specific 'type' and closes them.
+    /// The 'type' of the socket indicates whether it is used to send IPv4
+    /// or IPv6 packets. The allowed values of the parameter are AF_INET and
+    /// AF_INET6 for IPv4 and IPv6 packets respectively. It is important
+    /// to realize that the actual types of sockets may be different than
+    /// AF_INET for IPv4 packets. This is because, historically the IfaceMgr
+    /// always used AF_INET sockets for IPv4 traffic. This is no longer the
+    /// case when the Direct IPv4 traffic must be supported. In order to support
+    /// direct traffic, the IfaceMgr operates on raw sockets, e.g. AF_PACKET
+    /// family sockets on Linux.
+    ///
+    /// @todo Replace the AF_INET and AF_INET6 values with an enum
+    /// which will not be confused with the actual socket type.
+    ///
+    /// @param family type of the sockets to be closed (AF_INET or AF_INET6)
+    ///
+    /// @throw BadValue if family value is different than AF_INET or AF_INET6.
+    void closeSockets(const uint16_t family);
 
     /// @brief Returns full interface name as "ifname/ifindex" string.
     ///
@@ -146,11 +206,12 @@ public:
 
     /// @brief Sets flag_*_ fields based on bitmask value returned by OS
     ///
-    /// Note: Implementation of this method is OS-dependent as bits have
+    /// @note Implementation of this method is OS-dependent as bits have
     /// different meaning on each OS.
+    /// We need to make it 64 bits, because Solaris uses 64, not 32 bits.
     ///
     /// @param flags bitmask value returned by OS in interface detection
-    void setFlags(uint32_t flags);
+    void setFlags(uint64_t flags);
 
     /// @brief Returns interface index.
     ///
@@ -236,54 +297,95 @@ public:
     /// @return collection of sockets added to interface
     const SocketCollection& getSockets() const { return sockets_; }
 
+    /// @brief Removes any unicast addresses
+    ///
+    /// Removes any unicast addresses that the server was configured to
+    /// listen on
+    void clearUnicasts() {
+        unicasts_.clear();
+    }
+
+    /// @brief Adds unicast the server should listen on
+    ///
+    /// @throw BadValue if specified address is already defined on interface
+    /// @param addr unicast address to listen on
+    void addUnicast(const isc::asiolink::IOAddress& addr);
+
+    /// @brief Returns a container of addresses the server should listen on
+    ///
+    /// @return address collection (may be empty)
+    const AddressCollection& getUnicasts() const {
+        return unicasts_;
+    }
+
 protected:
-    /// socket used to sending data
+    /// Socket used to send data.
     SocketCollection sockets_;
 
-    /// network interface name
+    /// Network interface name.
     std::string name_;
 
-    /// interface index (a value that uniquely indentifies an interface)
+    /// Interface index (a value that uniquely indentifies an interface).
     int ifindex_;
 
-    /// list of assigned addresses
+    /// List of assigned addresses.
     AddressCollection addrs_;
 
-    /// link-layer address
+    /// List of unicast addresses the server should listen on
+    AddressCollection unicasts_;
+
+    /// Link-layer address.
     uint8_t mac_[MAX_MAC_LEN];
 
-    /// length of link-layer address (usually 6)
+    /// Length of link-layer address (usually 6).
     size_t mac_len_;
 
-    /// hardware type
+    /// Hardware type.
     uint16_t hardware_type_;
 
 public:
     /// @todo: Make those fields protected once we start supporting more
     /// than just Linux
 
-    /// specifies if selected interface is loopback
+    /// Specifies if selected interface is loopback.
     bool flag_loopback_;
 
-    /// specifies if selected interface is up
+    /// Specifies if selected interface is up.
     bool flag_up_;
 
-    /// flag specifies if selected interface is running
-    /// (e.g. cable plugged in, wifi associated)
+    /// Flag specifies if selected interface is running
+    /// (e.g. cable plugged in, wifi associated).
     bool flag_running_;
 
-    /// flag specifies if selected interface is multicast capable
+    /// Flag specifies if selected interface is multicast capable.
     bool flag_multicast_;
 
-    /// flag specifies if selected interface is broadcast capable
+    /// Flag specifies if selected interface is broadcast capable.
     bool flag_broadcast_;
 
-    /// interface flags (this value is as is returned by OS,
-    /// it may mean different things on different OSes)
-    uint32_t flags_;
+    /// Interface flags (this value is as is returned by OS,
+    /// it may mean different things on different OSes).
+    /// Solaris based os have unsigned long flags field (64 bits).
+    /// It is usually 32 bits, though.
+    uint64_t flags_;
+
+    /// Indicates that IPv4 sockets should (true) or should not (false)
+    /// be opened on this interface.
+    bool inactive4_;
+
+    /// Indicates that IPv6 sockets should (true) or should not (false)
+    /// be opened on this interface.
+    bool inactive6_;
 };
 
-/// @brief handles network interfaces, transmission and reception
+/// @brief This type describes the callback function invoked when error occurs
+/// in the IfaceMgr.
+///
+/// @param errmsg An error message.
+typedef
+boost::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
+
+/// @brief Handles network interfaces, transmission and reception.
 ///
 /// IfaceMgr is an interface manager class that detects available network
 /// interfaces, configured addresses, link-local addresses, and provides
@@ -291,7 +393,7 @@ public:
 ///
 class IfaceMgr : public boost::noncopyable {
 public:
-    /// defines callback used when commands are received over control session
+    /// Defines callback used when commands are received over control session.
     typedef void (*SessionCallback) (void);
 
     /// @brief Packet reception buffer size
@@ -307,7 +409,7 @@ public:
     //      2 maps (ifindex-indexed and name-indexed) and
     //      also hide it (make it public make tests easier for now)
 
-    /// type that holds a list of interfaces
+    /// Type that holds a list of interfaces.
     typedef std::list<Iface> IfaceCollection;
 
     /// IfaceMgr is a singleton class. This method returns reference
@@ -324,9 +426,9 @@ public:
     /// the client.
     ///
     /// @return true if direct response is supported.
-    bool isDirectResponseSupported();
+    bool isDirectResponseSupported() const;
 
-    /// @brief Returns interface with specified interface index
+    /// @brief Returns interfac specified interface index
     ///
     /// @param ifindex index of searched interface
     ///
@@ -342,8 +444,7 @@ public:
     /// @return interface with requested name (or NULL if no such
     ///         interface is present)
     ///
-    Iface*
-    getIface(const std::string& ifname);
+    Iface* getIface(const std::string& ifname);
 
     /// @brief Returns container with all interfaces.
     ///
@@ -352,7 +453,22 @@ public:
     /// main() function completes, you should not worry much about this.
     ///
     /// @return container with all interfaces.
-    const IfaceCollection& getIfaces() { return ifaces_; }
+    const IfaceCollection& getIfaces() { return (ifaces_); }
+
+    /// @brief Removes detected interfaces.
+    ///
+    /// This method removes all detected interfaces. This method should be
+    /// used by unit tests to supply a custom set of interfaces. For example:
+    /// a unit test may create a pool of fake interfaces and use the custom
+    /// @c PktFilter class to mimic socket operation on these interfaces.
+    void clearIfaces();
+
+    /// @brief Detects network interfaces.
+    ///
+    /// This method will eventually detect available interfaces. For now
+    /// it offers stub implementation. First interface name and link-local
+    /// IPv6 address is read from interfaces.txt file.
+    void detectIfaces();
 
     /// @brief Return most suitable socket for transmitting specified IPv6 packet.
     ///
@@ -367,7 +483,7 @@ public:
     /// @return a socket descriptor
     uint16_t getSocket(const isc::dhcp::Pkt6& pkt);
 
-    /// @brief Return most suitable socket for transmitting specified IPv6 packet.
+    /// @brief Return most suitable socket for transmitting specified IPv4 packet.
     ///
     /// This method takes Pkt4 (see overloaded implementation that takes
     /// Pkt6) and chooses appropriate socket to send it. This method
@@ -377,14 +493,13 @@ public:
     ///
     /// @param pkt a packet to be transmitted
     ///
-    /// @return a socket descriptor
-    uint16_t getSocket(const isc::dhcp::Pkt4& pkt);
+    /// @return A structure describing a socket.
+    SocketInfo getSocket(const isc::dhcp::Pkt4& pkt);
 
-    /// debugging method that prints out all available interfaces
+    /// Debugging method that prints out all available interfaces.
     ///
     /// @param out specifies stream to print list of interfaces to
-    void
-    printIfaces(std::ostream& out = std::cout);
+    void printIfaces(std::ostream& out = std::cout);
 
     /// @brief Sends an IPv6 packet.
     ///
@@ -454,8 +569,8 @@ public:
     /// @param ifname name of the interface
     /// @param addr address to be bound.
     /// @param port UDP port.
-    /// @param receive_bcast configure IPv4 socket to receive broadcast messages.
-    /// This parameter is ignored for IPv6 sockets.
+    /// @param receive_bcast configure IPv4 socket to receive broadcast
+    /// messages or IPv6 socket to join multicast group.
     /// @param send_bcast configure IPv4 socket to send broadcast messages.
     /// This parameter is ignored for IPv6 sockets.
     ///
@@ -477,11 +592,13 @@ public:
     /// Instead, the method searches through the addresses on the specified
     /// interface and selects one that matches the address family.
     ///
+    /// @note This method does not join the socket to the multicast group.
+    ///
     /// @param ifname name of the interface
     /// @param port UDP port
     /// @param family address family (AF_INET or AF_INET6)
-    /// @return socket descriptor, if socket creation, binding and multicast
-    /// group join were all successful.
+    /// @return socket descriptor, if socket creation and binding was
+    /// successful.
     /// @throw isc::Unexpected if failed to create and bind socket.
     /// @throw isc::BadValue if there is no address on specified interface
     /// that belongs to given family.
@@ -494,10 +611,12 @@ public:
     /// This methods differs from \ref openSocket in that it does not require
     /// the specification of the interface to which the socket will be bound.
     ///
+    /// @note This method does not join the socket to the multicast group.
+    ///
     /// @param addr address to be bound
     /// @param port UDP port
-    /// @return socket descriptor, if socket creation, binding and multicast
-    /// group join were all successful.
+    /// @return socket descriptor, if socket creation and binding was
+    /// successful.
     /// @throw isc::Unexpected if failed to create and bind socket
     /// @throw isc::BadValue if specified address is not available on
     /// any interface
@@ -511,41 +630,156 @@ public:
     /// identified, \ref openSocket is called to open a socket and bind it to
     /// the interface, address and port.
     ///
+    /// @note This method does not join the socket to a multicast group.
+    ///
     /// @param remote_addr remote address to connect to
     /// @param port UDP port
-    /// @return socket descriptor, if socket creation, binding and multicast
-    /// group join were all successful.
+    /// @return socket descriptor, if socket creation and binding was
+    /// successful.
     /// @throw isc::Unexpected if failed to create and bind socket
     int openSocketFromRemoteAddress(const isc::asiolink::IOAddress& remote_addr,
                                     const uint16_t port);
 
 
-    /// Opens IPv6 sockets on detected interfaces.
+    /// @brief Opens IPv6 sockets on detected interfaces.
     ///
-    /// Will throw exception if socket creation fails.
+    /// On the systems with multiple interfaces, it is often desired that the
+    /// failure to open a socket on a particular interface doesn't cause a
+    /// fatal error and sockets should be opened on remaining interfaces.
+    /// However, the warning about the failure for the particular socket should
+    /// be communicated to the caller. The libdhcp++ is a common library with
+    /// no logger associated with it. Most of the functions in this library
+    /// communicate errors via exceptions. In case of openSockets6 function
+    /// exception must not be thrown if the function is supposed to continue
+    /// opening sockets, despite an error. Therefore, if such a behavior is
+    /// desired, the error handler function can be passed as a parameter.
+    /// This error handler is called (if present) with an error string.
+    /// Typically, error handler will simply log an error using an application
+    /// logger, but it can do more sophisticated error handling too.
+    ///
+    /// @todo It is possible that additional parameters will have to be added
+    /// to the error handler, e.g. Iface if it was really supposed to do
+    /// some more sophisticated error handling.
+    ///
+    /// If the error handler is not installed (is NULL), the exception is thrown
+    /// for each failure (default behavior).
+    ///
+    /// @warning This function does not check if there has been any sockets
+    /// already open by the @c IfaceMgr. Therefore a caller should call
+    /// @c IfaceMgr::closeSockets(AF_INET6) before calling this function.
+    /// If there are any sockets open, the function may either throw an
+    /// exception or invoke an error handler on attempt to bind the new socket
+    /// to the same address and port.
     ///
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
+    /// @param error_handler A pointer to an error handler function which is
+    /// called by the openSockets6 when it fails to open a socket. This
+    /// parameter can be NULL to indicate that the callback should not be used.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
-    bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT);
+    bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT,
+                      IfaceMgrErrorMsgCallback error_handler = NULL);
 
-    /// Opens IPv4 sockets on detected interfaces.
-    /// Will throw exception if socket creation fails.
+    /// @brief Opens IPv4 sockets on detected interfaces.
+    ///
+    /// This function attempts to open sockets on all interfaces which have been
+    /// detected by @c IfaceMgr and meet the following conditions:
+    /// - interface is not a local loopback,
+    /// - interface is running (connected),
+    /// - interface is up,
+    /// - interface is active, e.g. selected from the configuration to be used
+    /// to listen DHCPv4 messages,
+    /// - interface has an IPv4 address assigned.
+    ///
+    /// The type of the socket being open depends on the selected Packet Filter
+    /// represented by a class derived from @c isc::dhcp::PktFilter abstract
+    /// class.
+    ///
+    /// It is possible to specify whether sockets should be broadcast capable.
+    /// In most of the cases, the sockets should support broadcast traffic, e.g.
+    /// DHCPv4 server and relay need to listen to broadcast messages sent by
+    /// clients. If the socket has to be open on the particular interface, this
+    /// interface must have broadcast flag set. If this condition is not met,
+    /// the socket will be created in the unicast-only mode. If there are
+    /// multiple broadcast-capable interfaces present, they may be all open
+    /// in a broadcast mode only if the OS supports SO_BINDTODEVICE (bind socket
+    /// to a device) socket option. If this option is not supported, only the
+    /// first broadcast-capable socket will be opened in the broadcast mode.
+    /// The error will be reported for sockets being opened on other interfaces.
+    /// If the socket is bound to a device (interface), the broadcast traffic
+    /// sent to this interface will be received on this interface only.
+    /// This allows the DHCPv4 server or relay to detect the interface on which
+    /// the broadcast message has been received. This interface is later used
+    /// to send a response.
+    ///
+    /// On the systems with multiple interfaces, it is often desired that the
+    /// failure to open a socket on a particular interface doesn't cause a
+    /// fatal error and sockets should be opened on remaining interfaces.
+    /// However, the warning about the failure for the particular socket should
+    /// be communicated to the caller. The libdhcp++ is a common library with
+    /// no logger associated with it. Most of the functions in this library
+    /// communicate errors via exceptions. In case of openSockets4 function
+    /// exception must not be thrown if the function is supposed to continue
+    /// opening sockets, despite an error. Therefore, if such a behavior is
+    /// desired, the error handler function can be passed as a parameter.
+    /// This error handler is called (if present) with an error string.
+    /// Typically, error handler will simply log an error using an application
+    /// logger, but it can do more sophisticated error handling too.
+    ///
+    /// @todo It is possible that additional parameters will have to be added
+    /// to the error handler, e.g. Iface if it was really supposed to do
+    /// some more sophisticated error handling.
+    ///
+    /// If the error handler is not installed (is NULL), the exception is thrown
+    /// for each failure (default behavior).
+    ///
+    /// @warning This function does not check if there has been any sockets
+    /// already open by the @c IfaceMgr. Therefore a caller should call
+    /// @c IfaceMgr::closeSockets(AF_INET) before calling this function.
+    /// If there are any sockets open, the function may either throw an
+    /// exception or invoke an error handler on attempt to bind the new socket
+    /// to the same address and port.
     ///
     /// @param port specifies port number (usually DHCP4_SERVER_PORT)
     /// @param use_bcast configure sockets to support broadcast messages.
+    /// @param error_handler A pointer to an error handler function which is
+    /// called by the openSockets4 when it fails to open a socket. This
+    /// parameter can be NULL to indicate that the callback should not be used.
     ///
-    /// @throw SocketOpenFailure if tried and failed to open socket.
+    /// @throw SocketOpenFailure if tried and failed to open socket and callback
+    /// function hasn't been specified.
     /// @return true if any sockets were open
     bool openSockets4(const uint16_t port = DHCP4_SERVER_PORT,
-                      const bool use_bcast = true);
+                      const bool use_bcast = true,
+                      IfaceMgrErrorMsgCallback error_handler = NULL);
 
     /// @brief Closes all open sockets.
-    /// Is used in destructor, but also from Dhcpv4_srv and Dhcpv6_srv classes.
+    /// Is used in destructor, but also from Dhcpv4Srv and Dhcpv6Srv classes.
     void closeSockets();
 
-    /// @brief returns number of detected interfaces
+    /// @brief Closes all IPv4 or IPv6 sockets.
+    ///
+    /// This function closes sockets of the specific 'type' and closes them.
+    /// The 'type' of the socket indicates whether it is used to send IPv4
+    /// or IPv6 packets. The allowed values of the parameter are AF_INET and
+    /// AF_INET6 for IPv4 and IPv6 packets respectively. It is important
+    /// to realize that the actual types of sockets may be different than
+    /// AF_INET for IPv4 packets. This is because, historically the IfaceMgr
+    /// always used AF_INET sockets for IPv4 traffic. This is no longer the
+    /// case when the Direct IPv4 traffic must be supported. In order to support
+    /// direct traffic, the IfaceMgr operates on raw sockets, e.g. AF_PACKET
+    /// family sockets on Linux.
+    ///
+    /// @todo Replace the AF_INET and AF_INET6 values with an enum
+    /// which will not be confused with the actual socket type.
+    ///
+    /// @param family type of the sockets to be closed (AF_INET or AF_INET6)
+    ///
+    /// @throw BadValue if family value is different than AF_INET or AF_INET6.
+    void closeSockets(const uint16_t family);
+
+    /// @brief Returns number of detected interfaces.
     ///
     /// @return number of detected interfaces
     uint16_t countIfaces() { return ifaces_.size(); }
@@ -562,23 +796,89 @@ public:
         session_callback_ = callback;
     }
 
-    /// @brief Set Packet Filter object to handle send/receive packets.
+    /// @brief Set packet filter object to handle sending and receiving DHCPv4
+    /// messages.
     ///
-    /// Packet Filters expose low-level functions handling sockets opening
-    /// and sending/receiving packets through those sockets. This function
-    /// sets custom Packet Filter (represented by a class derived from PktFilter)
-    /// to be used by IfaceMgr.
+    /// Packet filter objects provide means for the @c IfaceMgr to open sockets
+    /// for IPv4 packets reception and sending. This function sets custom packet
+    /// filter (represented by a class derived from PktFilter) to be used by
+    /// @c IfaceMgr. Note that there must be no IPv4 sockets open when this
+    /// function is called. Call closeSockets(AF_INET) to close all hanging IPv4
+    /// sockets opened by the current packet filter object.
     ///
-    /// @param packet_filter new packet filter to be used by IfaceMgr to send/receive
-    /// packets and open sockets.
+    /// @param packet_filter A pointer to the new packet filter object to be
+    /// used by @c IfaceMgr.
     ///
     /// @throw InvalidPacketFilter if provided packet filter object is NULL.
-    void setPacketFilter(const boost::shared_ptr<PktFilter>& packet_filter) {
-        if (!packet_filter) {
-            isc_throw(InvalidPacketFilter, "NULL packet filter object specified");
-        }
-        packet_filter_ = packet_filter;
+    /// @throw PacketFilterChangeDenied if there are open IPv4 sockets.
+    void setPacketFilter(const PktFilterPtr& packet_filter);
+
+    /// @brief Set packet filter object to handle sending and receving DHCPv6
+    /// messages.
+    ///
+    /// Packet filter objects provide means for the @c IfaceMgr to open sockets
+    /// for IPv6 packets reception and sending. This function sets the new
+    /// instance of the packet filter which will be used by @c IfaceMgr to send
+    /// and receive DHCPv6 messages, until replaced by another packet filter.
+    ///
+    /// It is required that DHCPv6 messages are send and received using methods
+    /// of the same object that was used to open socket. Therefore, it is
+    /// required that all IPv6 sockets are closed prior to calling this
+    /// function. Call closeSockets(AF_INET6) to close all hanging IPv6 sockets
+    /// opened by the current packet filter object.
+    ///
+    /// @param packet_filter A pointer to the new packet filter object to be
+    /// used by @c IfaceMgr.
+    ///
+    /// @throw isc::dhcp::InvalidPacketFilter if specified object is NULL.
+    /// @throw isc::dhcp::PacketFilterChangeDenied if there are open IPv6
+    /// sockets.
+    void setPacketFilter(const PktFilter6Ptr& packet_filter);
+
+    /// @brief Set Packet Filter object to handle send/receive packets.
+    ///
+    /// This function sets Packet Filter object to be used by IfaceMgr,
+    /// appropriate for the current OS. Setting the argument to 'true'
+    /// indicates that function should set a packet filter class
+    /// which supports direct responses to clients having no address
+    /// assigned yet. Filters picked by this function will vary, depending
+    /// on the OS being used. There is no guarantee that there is an
+    /// implementation that supports this feature on a particular OS.
+    /// If there isn't, the PktFilterInet object will be set. If the
+    /// argument is set to 'false', PktFilterInet object instance will
+    /// be set as the Packet Filter regrdaless of the OS type.
+    ///
+    /// @param direct_response_desired specifies whether the Packet Filter
+    /// object being set should support direct traffic to the host
+    /// not having address assigned.
+    void setMatchingPacketFilter(const bool direct_response_desired = false);
+
+    /// @brief Adds an interface to list of known interfaces.
+    ///
+    /// @param iface reference to Iface object.
+    /// @note This function must be public because it has to be callable
+    /// from unit tests.
+    void addInterface(const Iface& iface) {
+        ifaces_.push_back(iface);
     }
+
+    /// @brief Checks if there is at least one socket of the specified family
+    /// open.
+    ///
+    /// @param family A socket family.
+    ///
+    /// @return true if there is at least one socket open, false otherwise.
+    bool hasOpenSocket(const uint16_t family) const;
+
+    /// @brief Checks if there is a socket open and bound to an address.
+    ///
+    /// This function checks if one of the sockets opened by the IfaceMgr is
+    /// bound to the IP address specified as the method parameter.
+    ///
+    /// @param addr Address of the socket being searched.
+    ///
+    /// @return true if there is a socket bound to the specified address.
+    bool hasOpenSocket(const isc::asiolink::IOAddress& addr) const;
 
     /// A value of socket descriptor representing "not specified" state.
     static const int INVALID_SOCKET = -1;
@@ -620,24 +920,13 @@ protected:
     /// @param iface reference to interface structure.
     /// @param addr an address the created socket should be bound to
     /// @param port a port that created socket should be bound to
+    /// @param join_multicast A boolean parameter which indicates whether
+    /// socket should join All_DHCP_Relay_Agents_and_servers multicast
+    /// group.
     ///
     /// @return socket descriptor
-    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr, uint16_t port);
-
-    /// @brief Adds an interface to list of known interfaces.
-    ///
-    /// @param iface reference to Iface object.
-    void addInterface(const Iface& iface) {
-        ifaces_.push_back(iface);
-    }
-
-    /// @brief Detects network interfaces.
-    ///
-    /// This method will eventually detect available interfaces. For now
-    /// it offers stub implementation. First interface name and link-local
-    /// IPv6 address is read from interfaces.txt file.
-    void
-    detectIfaces();
+    int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr,
+                    uint16_t port, const bool join_multicast);
 
     /// @brief Stub implementation of network interface detection.
     ///
@@ -660,14 +949,14 @@ protected:
     //int recvsock_; // TODO: should be fd_set eventually, but we have only
     //int sendsock_; // 2 sockets for now. Will do for until next release
 
-    // we can't use the same socket, as receiving socket
+    // We can't use the same socket, as receiving socket
     // is bound to multicast address. And we all know what happens
     // to people who try to use multicast as source address.
 
-    /// length of the control_buf_ array
+    /// Length of the control_buf_ array
     size_t control_buf_len_;
 
-    /// control-buffer, used in transmission and reception
+    /// Control-buffer, used in transmission and reception.
     boost::scoped_array<char> control_buf_;
 
     /// @brief A wrapper for OS-specific operations before sending IPv4 packet
@@ -687,29 +976,12 @@ protected:
     /// @return true if successful, false otherwise
     bool os_receive4(struct msghdr& m, Pkt4Ptr& pkt);
 
-    /// socket descriptor of the session socket
+    /// Socket descriptor of the session socket.
     int session_socket_;
 
-    /// a callback that will be called when data arrives over session_socket_
+    /// A callback that will be called when data arrives over session_socket_.
     SessionCallback session_callback_;
 private:
-
-    /// @brief Joins IPv6 multicast group on a socket.
-    ///
-    /// Socket must be created and bound to an address. Note that this
-    /// address is different than the multicast address. For example DHCPv6
-    /// server should bind its socket to link-local address (fe80::1234...)
-    /// and later join ff02::1:2 multicast group.
-    ///
-    /// @param sock socket fd (socket must be bound)
-    /// @param ifname interface name (for link-scoped multicast groups)
-    /// @param mcast multicast address to join (e.g. "ff02::1:2")
-    ///
-    /// @return true if multicast join was successful
-    ///
-    bool
-    joinMulticast(int sock, const std::string& ifname,
-                  const std::string& mcast);
 
     /// @brief Identifies local network address to be used to
     /// connect to remote address.
@@ -729,15 +1001,22 @@ private:
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
 
+
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
     /// sockets. It is possible to supply custom object using
-    /// setPacketFilter class. Various Packet Filters differ mainly by using
+    /// setPacketFilter method. Various Packet Filters differ mainly by using
     /// different types of sockets, e.g. SOCK_DGRAM,  SOCK_RAW and different
     /// families, e.g. AF_INET, AF_PACKET etc. Another possible type of
     /// Packet Filter is the one used for unit testing, which doesn't
     /// open sockets but rather mimics their behavior (mock object).
-    boost::shared_ptr<PktFilter> packet_filter_;
+    PktFilterPtr packet_filter_;
+
+    /// Holds instance of a class derived from PktFilter6, used by the
+    /// IfaceMgr to manage sockets used to send and receive DHCPv6
+    /// messages. It is possible to supply a custom object using
+    /// setPacketFilter method.
+    PktFilter6Ptr packet_filter6_;
 };
 
 }; // namespace isc::dhcp

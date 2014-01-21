@@ -17,6 +17,10 @@
 #include <config/ccsession.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
+#include <hooks/hooks_manager.h>
+
+#include "marker_file.h"
+#include "test_libraries.h"
 
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
@@ -26,13 +30,16 @@
 #include <sstream>
 
 #include <arpa/inet.h>
+#include <unistd.h>
 
 using namespace std;
 using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::asiolink;
-using namespace isc::data;
 using namespace isc::config;
+using namespace isc::data;
+using namespace isc::dhcp;
+using namespace isc::dhcp::test;
+using namespace isc::hooks;
 
 namespace {
 
@@ -45,10 +52,25 @@ public:
 class CtrlDhcpv4SrvTest : public ::testing::Test {
 public:
     CtrlDhcpv4SrvTest() {
+        reset();
     }
 
     ~CtrlDhcpv4SrvTest() {
+        reset();
     };
+
+    /// @brief Reset hooks data
+    ///
+    /// Resets the data for the hooks-related portion of the test by ensuring
+    /// that no libraries are loaded and that any marker files are deleted.
+    void reset() {
+        // Unload any previously-loaded libraries.
+        HooksManager::unloadLibraries();
+
+        // Get rid of any marker files.
+        static_cast<void>(unlink(LOAD_MARKER_FILE));
+        static_cast<void>(unlink(UNLOAD_MARKER_FILE));
+    }
 };
 
 TEST_F(CtrlDhcpv4SrvTest, commands) {
@@ -80,6 +102,50 @@ TEST_F(CtrlDhcpv4SrvTest, commands) {
     result = ControlledDhcpv4Srv::execDhcpv4ServerCommand("shutdown", params);
     comment = parseAnswer(rcode, result);
     EXPECT_EQ(0, rcode); // expect success
+}
+
+// Check that the "libreload" command will reload libraries
+
+TEST_F(CtrlDhcpv4SrvTest, libreload) {
+    // Ensure no marker files to start with.
+    ASSERT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    ASSERT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Load two libraries
+    std::vector<std::string> libraries;
+    libraries.push_back(CALLOUT_LIBRARY_1);
+    libraries.push_back(CALLOUT_LIBRARY_2);
+    HooksManager::loadLibraries(libraries);
+
+    // Check they are loaded.
+    std::vector<std::string> loaded_libraries =
+        HooksManager::getLibraryNames();
+    ASSERT_TRUE(libraries == loaded_libraries);
+
+    // ... which also included checking that the marker file created by the
+    // load functions exists and holds the correct value (of "12" - the
+    // first library appends "1" to the file, the second appends "2"). Also
+    // check that the unload marker file does not yet exist.
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Now execute the "libreload" command.  This should cause the libraries
+    // to unload and to reload.
+
+    // Use empty parameters list
+    ElementPtr params(new isc::data::MapElement());
+    int rcode = -1;
+
+    ConstElementPtr result =
+        ControlledDhcpv4Srv::execDhcpv4ServerCommand("libreload", params);
+    ConstElementPtr comment = parseAnswer(rcode, result);
+    EXPECT_EQ(0, rcode); // Expect success
+
+    // Check that the libraries have unloaded and reloaded.  The libraries are
+    // unloaded in the reverse order to which they are loaded.  When they load,
+    // they should append information to the loading marker file.
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "1212"));
 }
 
 } // End of anonymous namespace

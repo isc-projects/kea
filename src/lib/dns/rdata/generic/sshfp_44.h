@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -28,12 +28,17 @@
 
 // BEGIN_RDATA_NAMESPACE
 
+struct SSHFPImpl;
+
 class SSHFP : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
 
-    SSHFP(uint8_t algorithm, uint8_t fingerprint_type, const std::string& fingerprint);
+    SSHFP(uint8_t algorithm, uint8_t fingerprint_type,
+          const std::string& fingerprint);
+    SSHFP& operator=(const SSHFP& source);
+    ~SSHFP();
 
     ///
     /// Specialized methods
@@ -43,11 +48,9 @@ public:
     size_t getFingerprintLen() const;
 
 private:
-    /// Note: this is a prototype version; we may reconsider
-    /// this representation later.
-    uint8_t algorithm_;
-    uint8_t fingerprint_type_;
-    std::vector<uint8_t> fingerprint_;
+    SSHFPImpl* constructFromLexer(MasterLexer& lexer);
+
+    SSHFPImpl* impl_;
 };
 
 // END_RDATA_NAMESPACE

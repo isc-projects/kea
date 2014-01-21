@@ -68,7 +68,7 @@
     </para>
 
     <para>
-      <command>b10-dbutil</command> operates in one of two modesr: check mode
+      <command>b10-dbutil</command> operates in one of two modes: check mode
       or upgrade mode.
     </para>
 

@@ -114,5 +114,11 @@ IOAddress::operator uint32_t() const {
     }
 }
 
+std::ostream&
+operator<<(std::ostream& os, const IOAddress& address) {
+    os << address.toText();
+    return (os);
+}
+
 } // namespace asiolink
 } // namespace isc

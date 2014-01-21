@@ -120,7 +120,7 @@ Feature: Example feature
         The last query response should have adcount 0
         # When checking flags, we must pass them exactly as they appear in
         # the output of dig.
-        The last query response should have flags qr aa rd
+        The last query response should have flags qr aa
 
         A query for www.example.org type TXT should have rcode NOERROR
         The last query response should have ancount 0
@@ -131,6 +131,36 @@ Feature: Example feature
         A query for www.example.org to 127.0.0.1 should have rcode NOERROR
         A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
         A query for www.example.org type A class IN to 127.0.0.1:47806 should have rcode NOERROR
+
+    Scenario: example.org mixed-case query
+        # This scenario performs a mixed-case query and checks that the
+        # response has the name copied from the question exactly
+        # (without any change in case). For why this is necessary, see
+        # section 5.2 of:
+        # http://tools.ietf.org/html/draft-vixie-dnsext-dns0x20-00
+
+        Given I have bind10 running with configuration example.org.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+        And bind10 module Xfrout should not be running
+        And bind10 module Zonemgr should not be running
+        And bind10 module Xfrin should not be running
+        And bind10 module Stats should not be running
+        And bind10 module StatsHttpd should not be running
+
+        A query for wWw.eXaMpLe.Org should have rcode NOERROR
+        The last query response should have qdcount 1
+        The last query response should have ancount 1
+        The last query response should have nscount 3
+        The last query response should have adcount 0
+        The question section of the last query response should exactly be
+        """
+        ;wWw.eXaMpLe.Org. IN A
+        """
 
     Scenario: changing database
         # This scenario contains a lot of 'wait for' steps

@@ -5,7 +5,7 @@ EXTRA_DIST += testdata/test.sqlite3 testdata/brokentest.sqlite3
 # The rest of the files are actually not necessary, but added for reference
 EXTRA_DIST += testdata/example.com testdata/example.net
 EXTRA_DIST += testdata/nons.example testdata/nosoa.example
-EXTRA_DIST += testdata/multisoa.example
+EXTRA_DIST += testdata/multisoa.example testdata/test_spec1.spec
 
 # If necessary (rare cases), explicitly specify paths to dynamic libraries
 # required by loadable python modules.

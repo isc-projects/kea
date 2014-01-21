@@ -131,9 +131,6 @@ public:
     /// \brief Return pointer to the DNS Answer callback function
     isc::asiodns::DNSAnswer* getDNSAnswerProvider() { return (dns_answer_); }
 
-    /// \brief Return pointer to the Checkin callback function
-    isc::asiolink::SimpleCallback* getCheckinProvider() { return (checkin_); }
-
     /**
      * \brief Specify the list of upstream servers.
      *
@@ -259,7 +256,6 @@ public:
 private:
     ResolverImpl* impl_;
     isc::asiodns::DNSServiceBase* dnss_;
-    isc::asiolink::SimpleCallback* checkin_;
     isc::asiodns::DNSLookup* dns_lookup_;
     isc::asiodns::DNSAnswer* dns_answer_;
     isc::nsas::NameserverAddressStore* nsas_;

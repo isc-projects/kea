@@ -81,6 +81,10 @@ public:
     ///
     /// Method simulates sending or receiving  multiple DHCPv6 packets.
     ///
+    /// \note The xchg_type parameter is passed as non-const value to avoid
+    /// false cppcheck errors which expect enum value being passed by reference.
+    /// This error is not reported when non-const enum is passed by value.
+    ///
     /// \param stats_mgr Statistics Manager instance to be used.
     /// \param xchg_type packet exchange types.
     /// \param packet_type DHCPv6 packet type.
@@ -88,7 +92,7 @@ public:
     /// \param receive simulated packets are received (if true)
     /// or sent (if false)
     void passMultiplePackets6(const boost::shared_ptr<StatsMgr6> stats_mgr,
-                              const StatsMgr6::ExchangeType xchg_type,
+                              StatsMgr6::ExchangeType xchg_type,
                               const uint8_t packet_type,
                               const int num_packets,
                               const bool receive = false) {
@@ -183,6 +187,8 @@ TEST_F(StatsMgrTest, Exchange) {
                                                       common_transid));
     // This is expected to throw because XCHG_DO was not yet
     // added to Stats Manager for tracking.
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_DO));
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_RA));
     EXPECT_THROW(
         stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet),
         BadValue
@@ -192,8 +198,11 @@ TEST_F(StatsMgrTest, Exchange) {
         BadValue
     );
 
+
     // Adding DISCOVER-OFFER exchanges to be tracked by Stats Manager.
     stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+    ASSERT_TRUE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_DO));
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_RA));
     // The following two attempts are expected to throw because
     // invalid exchange types are passed (XCHG_RA instead of XCHG_DO)
     EXPECT_THROW(
@@ -253,6 +262,21 @@ TEST_F(StatsMgrTest, MultipleExchanges) {
               stats_mgr->getRcvdPacketsNum(StatsMgr6::XCHG_SA));
     EXPECT_EQ(request_packets_num,
               stats_mgr->getRcvdPacketsNum(StatsMgr6::XCHG_RR));
+}
+
+TEST_F(StatsMgrTest, ExchangeToString) {
+    // Test DHCPv4 specific exchange names.
+    EXPECT_EQ("DISCOVER-OFFER",
+              StatsMgr4::exchangeToString(StatsMgr4::XCHG_DO));
+    EXPECT_EQ("REQUEST-ACK", StatsMgr4::exchangeToString(StatsMgr4::XCHG_RA));
+
+    // Test DHCPv6 specific exchange names.
+    EXPECT_EQ("SOLICIT-ADVERTISE",
+              StatsMgr6::exchangeToString(StatsMgr6::XCHG_SA));
+    EXPECT_EQ("REQUEST-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RR));
+    EXPECT_EQ("RENEW-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RN));
+    EXPECT_EQ("RELEASE-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RL));
+
 }
 
 TEST_F(StatsMgrTest, SendReceiveSimple) {
@@ -347,7 +371,6 @@ TEST_F(StatsMgrTest, Delays) {
 
     // Send DISCOVER, wait 2s and receive OFFER. This will affect
     // counters in Stats Manager.
-    const unsigned int delay1 = 2;
     passDOPacketsWithDelay(stats_mgr, 2, common_transid);
 
     // Initially min delay is equal to MAX_DOUBLE. After first packets

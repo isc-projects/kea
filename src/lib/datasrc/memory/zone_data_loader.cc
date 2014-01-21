@@ -131,7 +131,7 @@ ZoneDataLoader::flushNodeRRsets() {
     }
 
     // Normally rrsigsets map should be empty at this point, but it's still
-    // possible that an RRSIG that don't has covered RRset is added; they
+    // possible that an RRSIG that doesn't have covered RRset is added; they
     // still remain in the map.  We add them to the zone separately.
     BOOST_FOREACH(NodeRRsetsVal val, node_rrsigsets_) {
         updater_.add(ConstRRsetPtr(), val.second);
@@ -182,35 +182,47 @@ loadZoneDataInternal(util::MemorySegment& mem_sgmt,
                      const Name& zone_name,
                      boost::function<void(LoadCallback)> rrset_installer)
 {
-    SegmentObjectHolder<ZoneData, RRClass> holder(
-        mem_sgmt, ZoneData::create(mem_sgmt, zone_name), rrclass);
+    while (true) { // Try as long as it takes to load and grow the segment
+        bool created = false;
+        try {
+            SegmentObjectHolder<ZoneData, RRClass> holder(mem_sgmt, rrclass);
+            holder.set(ZoneData::create(mem_sgmt, zone_name));
 
-    ZoneDataLoader loader(mem_sgmt, rrclass, zone_name, *holder.get());
-    rrset_installer(boost::bind(&ZoneDataLoader::addFromLoad, &loader, _1));
-    // Add any last RRsets that were left
-    loader.flushNodeRRsets();
+            // Nothing from this point on should throw MemorySegmentGrown.
+            // It is handled inside here.
+            created = true;
 
-    const ZoneNode* origin_node = holder.get()->getOriginNode();
-    const RdataSet* rdataset = origin_node->getData();
-    // If the zone is NSEC3-signed, check if it has NSEC3PARAM
-    if (holder.get()->isNSEC3Signed()) {
-        if (RdataSet::find(rdataset, RRType::NSEC3PARAM()) == NULL) {
-            LOG_WARN(logger, DATASRC_MEMORY_MEM_NO_NSEC3PARAM).
-                arg(zone_name).arg(rrclass);
+            ZoneDataLoader loader(mem_sgmt, rrclass, zone_name, *holder.get());
+            rrset_installer(boost::bind(&ZoneDataLoader::addFromLoad, &loader,
+                                        _1));
+            // Add any last RRsets that were left
+            loader.flushNodeRRsets();
+
+            const ZoneNode* origin_node = holder.get()->getOriginNode();
+            const RdataSet* rdataset = origin_node->getData();
+            // If the zone is NSEC3-signed, check if it has NSEC3PARAM
+            if (holder.get()->isNSEC3Signed()) {
+                if (RdataSet::find(rdataset, RRType::NSEC3PARAM()) == NULL) {
+                    LOG_WARN(logger, DATASRC_MEMORY_MEM_NO_NSEC3PARAM).
+                        arg(zone_name).arg(rrclass);
+                }
+            }
+
+            RRsetCollection collection(*(holder.get()), rrclass);
+            const dns::ZoneCheckerCallbacks
+                callbacks(boost::bind(&logError, &zone_name, &rrclass, _1),
+                          boost::bind(&logWarning, &zone_name, &rrclass, _1));
+            if (!dns::checkZone(zone_name, rrclass, collection, callbacks)) {
+                isc_throw(ZoneValidationError,
+                          "Errors found when validating zone: "
+                          << zone_name << "/" << rrclass);
+            }
+
+            return (holder.release());
+        } catch (const util::MemorySegmentGrown&) {
+            assert(!created);
         }
     }
-
-    RRsetCollection collection(*(holder.get()), rrclass);
-    const dns::ZoneCheckerCallbacks
-        callbacks(boost::bind(&logError, &zone_name, &rrclass, _1),
-                  boost::bind(&logWarning, &zone_name, &rrclass, _1));
-    if (!dns::checkZone(zone_name, rrclass, collection, callbacks)) {
-        isc_throw(ZoneValidationError,
-                  "Errors found when validating zone: "
-                  << zone_name << "/" << rrclass);
-    }
-
-    return (holder.release());
 }
 
 // A wrapper for dns::MasterLoader used by loadZoneData() below.  Essentially
@@ -256,7 +268,7 @@ loadZoneData(util::MemorySegment& mem_sgmt,
     LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_MEM_LOAD_FROM_FILE).
         arg(zone_name).arg(rrclass).arg(zone_file);
 
-     return (loadZoneDataInternal(mem_sgmt, rrclass, zone_name,
+    return (loadZoneDataInternal(mem_sgmt, rrclass, zone_name,
                                  boost::bind(masterLoaderWrapper,
                                              zone_file.c_str(),
                                              zone_name, rrclass,

@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 #include <boost/foreach.hpp>
 #include <boost/assign/std/vector.hpp>
+#include <climits>
 
 #include <cc/data.h>
 
@@ -97,16 +98,24 @@ TEST(Element, from_and_to_json) {
     sv.push_back("\"\xFF\"");
 
     BOOST_FOREACH(const std::string& s, sv) {
-        // test << operator, which uses Element::str()
-        std::ostringstream stream;
-        el = Element::fromJSON(s);
-        stream << *el;
-        EXPECT_EQ(s, stream.str());
+        // Test two types of fromJSON(): with string and istream.
+        for (int i = 0; i < 2; ++i) {
+            // test << operator, which uses Element::str()
+            if (i == 0) {
+                el = Element::fromJSON(s);
+            } else {
+                std::istringstream iss(s);
+                el = Element::fromJSON(iss);
+            }
+            std::ostringstream stream;
+            stream << *el;
+            EXPECT_EQ(s, stream.str());
 
-        // test toWire(ostream), which should also be the same now
-        std::ostringstream wire_stream;
-        el->toWire(wire_stream);
-        EXPECT_EQ(s, wire_stream.str());
+            // test toWire(ostream), which should also be the same now
+            std::ostringstream wire_stream;
+            el->toWire(wire_stream);
+            EXPECT_EQ(s, wire_stream.str());
+        }
     }
 
     // some parse errors
@@ -146,6 +155,17 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("100", Element::fromJSON("1e2")->str());
     EXPECT_EQ("100", Element::fromJSON("+1e2")->str());
     EXPECT_EQ("-100", Element::fromJSON("-1e2")->str());
+
+    EXPECT_NO_THROW({
+       EXPECT_EQ("9223372036854775807", Element::fromJSON("9223372036854775807")->str());
+    });
+    EXPECT_NO_THROW({
+       EXPECT_EQ("-9223372036854775808", Element::fromJSON("-9223372036854775808")->str());
+    });
+    EXPECT_THROW({
+       EXPECT_NE("9223372036854775808", Element::fromJSON("9223372036854775808")->str());
+    }, JSONError);
+
     EXPECT_EQ("0.01", Element::fromJSON("1e-2")->str());
     EXPECT_EQ("0.01", Element::fromJSON(".01")->str());
     EXPECT_EQ("-0.01", Element::fromJSON("-1e-2")->str());
@@ -173,6 +193,8 @@ TEST(Element, from_and_to_json) {
     EXPECT_THROW(Element::fromJSON("-1.1e12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1e12345678901234567890")->str(), JSONError);
     EXPECT_THROW(Element::fromJSON("1e50000")->str(), JSONError);
+    // number underflow
+    // EXPECT_THROW(Element::fromJSON("1.1e-12345678901234567890")->str(), JSONError);
 
 }
 
@@ -180,7 +202,10 @@ template <typename T>
 void
 testGetValueInt() {
     T el;
-    long int i;
+    int64_t i;
+    int32_t i32;
+    long l;
+    long long ll;
     double d;
     bool b;
     std::string s;
@@ -188,7 +213,9 @@ testGetValueInt() {
     std::map<std::string, ConstElementPtr> m;
 
     el = Element::create(1);
-    EXPECT_NO_THROW(el->intValue());
+    EXPECT_NO_THROW({
+       EXPECT_EQ(1, el->intValue());
+    });
     EXPECT_THROW(el->doubleValue(), TypeError);
     EXPECT_THROW(el->boolValue(), TypeError);
     EXPECT_THROW(el->stringValue(), TypeError);
@@ -201,13 +228,44 @@ testGetValueInt() {
     EXPECT_FALSE(el->getValue(v));
     EXPECT_FALSE(el->getValue(m));
     EXPECT_EQ(1, i);
+
+    el = Element::create(9223372036854775807LL);
+    EXPECT_NO_THROW({
+       EXPECT_EQ(9223372036854775807LL, el->intValue());
+    });
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(9223372036854775807LL, i);
+
+    ll = 9223372036854775807LL;
+    el = Element::create(ll);
+    EXPECT_NO_THROW({
+       EXPECT_EQ(ll, el->intValue());
+    });
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(ll, i);
+
+    i32 = 2147483647L;
+    el = Element::create(i32);
+    EXPECT_NO_THROW({
+       EXPECT_EQ(i32, el->intValue());
+    });
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(i32, i);
+
+    l = 2147483647L;
+    el = Element::create(l);
+    EXPECT_NO_THROW({
+       EXPECT_EQ(l, el->intValue());
+    });
+    EXPECT_TRUE(el->getValue(i));
+    EXPECT_EQ(l, i);
 }
 
 template <typename T>
 void
 testGetValueDouble() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -234,7 +292,7 @@ template <typename T>
 void
 testGetValueBool() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -261,7 +319,7 @@ template <typename T>
 void
 testGetValueString() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -288,7 +346,7 @@ template <typename T>
 void
 testGetValueList() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -315,7 +373,7 @@ template <typename T>
 void
 testGetValueMap() {
     T el;
-    long int i;
+    int64_t i;
     double d;
     bool b;
     std::string s;
@@ -343,7 +401,7 @@ TEST(Element, create_and_value_throws) {
     // incorrect type is requested
     ElementPtr el;
     ConstElementPtr cel;
-    long int i = 0;
+    int64_t i = 0;
     double d = 0.0;
     bool b = false;
     std::string s("asdf");
@@ -368,6 +426,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->add(el), TypeError);
     EXPECT_THROW(el->remove(1), TypeError);
     EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->empty(), TypeError);
     EXPECT_THROW(el->get("foo"), TypeError);
     EXPECT_THROW(el->set("foo", el), TypeError);
     EXPECT_THROW(el->remove("foo"), TypeError);
@@ -391,6 +450,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->add(el), TypeError);
     EXPECT_THROW(el->remove(1), TypeError);
     EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->empty(), TypeError);
     EXPECT_THROW(el->get("foo"), TypeError);
     EXPECT_THROW(el->set("foo", el), TypeError);
     EXPECT_THROW(el->remove("foo"), TypeError);
@@ -414,6 +474,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->add(el), TypeError);
     EXPECT_THROW(el->remove(1), TypeError);
     EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->empty(), TypeError);
     EXPECT_THROW(el->get("foo"), TypeError);
     EXPECT_THROW(el->set("foo", el), TypeError);
     EXPECT_THROW(el->remove("foo"), TypeError);
@@ -437,6 +498,7 @@ TEST(Element, create_and_value_throws) {
     EXPECT_THROW(el->add(el), TypeError);
     EXPECT_THROW(el->remove(1), TypeError);
     EXPECT_THROW(el->size(), TypeError);
+    EXPECT_THROW(el->empty(), TypeError);
     EXPECT_THROW(el->get("foo"), TypeError);
     EXPECT_THROW(el->set("foo", el), TypeError);
     EXPECT_THROW(el->remove("foo"), TypeError);
@@ -447,8 +509,10 @@ TEST(Element, create_and_value_throws) {
     testGetValueList<ConstElementPtr>();
 
     el = Element::createList();
+    EXPECT_TRUE(el->empty());
     v.push_back(Element::create(1));
     EXPECT_TRUE(el->setValue(v));
+    EXPECT_FALSE(el->empty());
     EXPECT_EQ("[ 1 ]", el->str());
 
     testGetValueMap<ElementPtr>();

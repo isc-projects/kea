@@ -87,6 +87,65 @@ protected:
     const std::string root_name;
 };
 
+void
+notificationCallback(std::vector<std::string>* called,
+                     const std::string& id, const std::string& notification,
+                     const ConstElementPtr& params)
+{
+    called->push_back(id);
+    EXPECT_EQ("event", notification);
+    EXPECT_TRUE(el("{\"param\": true}")->equals(*params));
+}
+
+TEST_F(CCSessionTest, receiveNotification) {
+    // Not subscribed to the group yet
+    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL,
+                         false, false);
+    EXPECT_FALSE(session.haveSubscription("notifications/group", "*"));
+    std::vector<std::string> called;
+    // Subscribe to the notification. Twice.
+    const ModuleCCSession::NotificationID& first =
+        mccs.subscribeNotification("group", boost::bind(&notificationCallback,
+                                                        &called, "first",
+                                                        _1, _2));
+    const ModuleCCSession::NotificationID& second =
+        mccs.subscribeNotification("group", boost::bind(&notificationCallback,
+                                                        &called, "second",
+                                                        _1, _2));
+    EXPECT_TRUE(session.haveSubscription("notifications/group", "*"));
+    EXPECT_TRUE(called.empty());
+    // Send the notification
+    const isc::data::ConstElementPtr msg = el("{"
+        "       \"notification\": ["
+        "           \"event\", {"
+        "               \"param\": true"
+        "           }"
+        "       ]"
+        "   }");
+    session.addMessage(msg, "notifications/group", "*");
+    mccs.checkCommand();
+    ASSERT_EQ(2, called.size());
+    EXPECT_EQ("first", called[0]);
+    EXPECT_EQ("second", called[1]);
+    called.clear();
+    // Unsubscribe one of them
+    mccs.unsubscribeNotification(first);
+    // We are still subscribed to the group and handle the requests
+    EXPECT_TRUE(session.haveSubscription("notifications/group", "*"));
+    // Send the notification
+    session.addMessage(msg, "notifications/group", "*");
+    mccs.checkCommand();
+    ASSERT_EQ(1, called.size());
+    EXPECT_EQ("second", called[0]);
+    // Unsubscribe the other one too. That should cancel the upstream
+    // subscription
+    mccs.unsubscribeNotification(second);
+    EXPECT_FALSE(session.haveSubscription("notifications/group", "*"));
+    // Nothing crashes if out of sync notification comes unexpected
+    session.addMessage(msg, "notifications/group", "*");
+    EXPECT_NO_THROW(mccs.checkCommand());
+}
+
 // Test we can send an RPC (command) and get an answer. The answer is success
 // in this case.
 TEST_F(CCSessionTest, rpcCallSuccess) {
@@ -115,6 +174,57 @@ TEST_F(CCSessionTest, rpcCallError) {
 TEST_F(CCSessionTest, rpcNoRecpt) {
     EXPECT_THROW(rpcCheck("{\"result\": [-1, \"Error\"]}"),
                  RPCRecipientMissing);
+}
+
+// Test sending a notification
+TEST_F(CCSessionTest, notify) {
+    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL, false,
+                         false);
+    mccs.notify("group", "event", el("{\"param\": true}"));
+    const ConstElementPtr notification(el(
+        "["
+        "   \"notifications/group\","
+        "   \"*\","
+        "   {"
+        "       \"notification\": ["
+        "           \"event\", {"
+        "               \"param\": true"
+        "           }"
+        "       ]"
+        "   },"
+        "   -1"
+        "]"));
+    EXPECT_TRUE(notification->equals(*session.getMsgQueue()->get(1))) <<
+            session.getMsgQueue()->get(1)->toWire();
+}
+
+// Test sending a notification
+TEST_F(CCSessionTest, notifyNoParams) {
+    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL, false,
+                         false);
+    mccs.notify("group", "event");
+    const ConstElementPtr notification(el(
+        "["
+        "   \"notifications/group\","
+        "   \"*\","
+        "   {"
+        "       \"notification\": [\"event\"]"
+        "   },"
+        "   -1"
+        "]"));
+    EXPECT_TRUE(notification->equals(*session.getMsgQueue()->get(1))) <<
+            session.getMsgQueue()->get(1)->toWire();
+}
+
+// Try to subscribe and unsubscribe once again
+TEST_F(CCSessionTest, subscribe) {
+    ModuleCCSession mccs(ccspecfile("spec1.spec"), session, NULL, NULL, false,
+                         false);
+    EXPECT_FALSE(session.haveSubscription("A group", "*"));
+    mccs.subscribe("A group");
+    EXPECT_TRUE(session.haveSubscription("A group", "*"));
+    mccs.unsubscribe("A group");
+    EXPECT_FALSE(session.haveSubscription("A group", "*"));
 }
 
 TEST_F(CCSessionTest, createAnswer) {
@@ -646,6 +756,16 @@ TEST_F(CCSessionTest, remoteConfig) {
     }
 }
 
+void
+callback(std::string* command, std::string* target, ConstElementPtr *params,
+         const std::string& command_real, const std::string& target_real,
+         const ConstElementPtr& params_real)
+{
+    *command = command_real;
+    *target = target_real;
+    *params = params_real;
+}
+
 TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
     // client will ask for config
     session.getMessages()->add(createAnswer(0, el("{  }")));
@@ -681,6 +801,22 @@ TEST_F(CCSessionTest, ignoreRemoteConfigCommands) {
     result = mccs.checkCommand();
     EXPECT_EQ(0, session.getMsgQueue()->size());
     EXPECT_EQ(0, result);
+
+    // Check that we can get the ignored commands by registering a callback
+    std::string command, target;
+    ConstElementPtr params;
+    mccs.setUnhandledCallback(boost::bind(&callback, &command, &target,
+                                          &params, _1, _2, _3));
+    session.addMessage(el("{ \"command\": [ \"good_command\","
+                          "{\"param\": true} ] }"), "Spec1", "*");
+    EXPECT_EQ(1, session.getMsgQueue()->size());
+    result = mccs.checkCommand();
+    EXPECT_EQ(0, session.getMsgQueue()->size());
+    EXPECT_EQ(0, result);
+
+    EXPECT_EQ("good_command", command);
+    EXPECT_EQ("Spec1", target);
+    EXPECT_TRUE(params && el("{\"param\": true}")->equals(*params));
 }
 
 TEST_F(CCSessionTest, initializationFail) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -42,14 +42,22 @@ const char* destroy_statement[] = {
 // Creation of the new tables.
 
 const char* create_statement[] = {
+    "START TRANSACTION",
     "CREATE TABLE lease4 ("
         "address INT UNSIGNED PRIMARY KEY NOT NULL,"
         "hwaddr VARBINARY(20),"
         "client_id VARBINARY(128),"
         "valid_lifetime INT UNSIGNED,"
         "expire TIMESTAMP,"
-        "subnet_id INT UNSIGNED"
+        "subnet_id INT UNSIGNED,"
+        "fqdn_fwd BOOL,"
+        "fqdn_rev BOOL,"
+        "hostname VARCHAR(255)"
         ") ENGINE = INNODB",
+
+    "CREATE INDEX lease4_by_hwaddr_subnet_id ON lease4 (hwaddr, subnet_id)",
+
+    "CREATE INDEX lease4_by_client_id_subnet_id ON lease4 (client_id, subnet_id)",
 
     "CREATE TABLE lease6 ("
         "address VARCHAR(39) PRIMARY KEY NOT NULL,"
@@ -60,8 +68,13 @@ const char* create_statement[] = {
         "pref_lifetime INT UNSIGNED,"
         "lease_type TINYINT,"
         "iaid INT UNSIGNED,"
-        "prefix_len TINYINT UNSIGNED"
+        "prefix_len TINYINT UNSIGNED,"
+        "fqdn_fwd BOOL,"
+        "fqdn_rev BOOL,"
+        "hostname VARCHAR(255)"
         ") ENGINE = INNODB",
+
+    "CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid)",
 
     "CREATE TABLE lease6_types ("
         "lease_type TINYINT PRIMARY KEY NOT NULL,"
@@ -78,6 +91,7 @@ const char* create_statement[] = {
         ")",
 
     "INSERT INTO schema_version VALUES (1, 0)",
+    "COMMIT",
 
     NULL
 };

@@ -26,6 +26,8 @@
 
 #include <boost/optional.hpp>
 
+#include <stdint.h>
+
 using namespace isc::dns;
 using namespace isc::auth;
 using namespace isc::statistics;
@@ -53,8 +55,8 @@ fillNodes(const Counter& counter,
             fillNodes(counter, type_tree[i].sub_counters, sub_counters);
         } else {
             trees->set(type_tree[i].name,
-                       Element::create(static_cast<long int>(
-                           counter.get(type_tree[i].counter_id)))
+                       Element::create(static_cast<int64_t>(
+                           counter.get(type_tree[i].counter_id) & 0x7fffffffffffffffLL))
                        );
         }
     }
@@ -138,7 +140,14 @@ Counters::incRequest(const MessageAttributes& msgattrs) {
     // if a short message which does not contain DNS header is received, or
     // a response message (i.e. QR bit is set) is received.
     if (opcode) {
-        server_msg_counter_.inc(opcode_to_msgcounter[opcode.get().getCode()]);
+        server_msg_counter_.inc(opcode_to_msgcounter[opcode->getCode()]);
+
+        if (opcode.get() == Opcode::QUERY()) {
+            // Recursion Desired bit
+            if (msgattrs.requestHasRD()) {
+                server_msg_counter_.inc(MSG_QRYRECURSION);
+            }
+        }
     }
 
     // TSIG

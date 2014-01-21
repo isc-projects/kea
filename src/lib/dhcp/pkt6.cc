@@ -14,6 +14,7 @@
 
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/option.h>
 #include <dhcp/pkt6.h>
 #include <exceptions/exceptions.h>
 
@@ -42,7 +43,7 @@ Pkt6::Pkt6(const uint8_t* buf, uint32_t buf_len, DHCPv6Proto proto /* = UDP */) 
     remote_addr_("::"),
     local_port_(0),
     remote_port_(0),
-    bufferOut_(0) {
+    buffer_out_(0) {
     data_.resize(buf_len);
     memcpy(&data_[0], buf, buf_len);
 }
@@ -57,7 +58,7 @@ Pkt6::Pkt6(uint8_t msg_type, uint32_t transid, DHCPv6Proto proto /*= UDP*/) :
     remote_addr_("::"),
     local_port_(0),
     remote_port_(0),
-    bufferOut_(0) {
+    buffer_out_(0) {
 }
 
 uint16_t Pkt6::len() {
@@ -72,13 +73,69 @@ uint16_t Pkt6::len() {
     }
 }
 
+OptionPtr Pkt6::getAnyRelayOption(uint16_t opt_type, RelaySearchOrder order) {
+
+    if (relay_info_.empty()) {
+        // There's no relay info, this is a direct message
+        return (OptionPtr());
+    }
+
+    int start = 0; // First relay to check
+    int end = 0;   // Last relay to check
+    int direction = 0; // How we going to iterate: forward or backward?
+
+    switch (order) {
+    case RELAY_SEARCH_FROM_CLIENT:
+        // Search backwards
+        start = relay_info_.size() - 1;
+        end = 0;
+        direction = -1;
+        break;
+    case RELAY_SEARCH_FROM_SERVER:
+        // Search forward
+        start = 0;
+        end = relay_info_.size() - 1;
+        direction = 1;
+        break;
+    case RELAY_GET_FIRST:
+        // Look at the innermost relay only
+        start = relay_info_.size() - 1;
+        end = start;
+        direction = 1;
+        break;
+    case RELAY_GET_LAST:
+        // Look at the outermost relay only
+        start = 0;
+        end = 0;
+        direction = 1;
+    }
+
+    // This is a tricky loop. It must go from start to end, but it must work in
+    // both directions (start > end; or start < end). We can't use regular
+    // exit condition, because we don't know whether to use i <= end or i >= end.
+    // That's why we check if in the next iteration we would go past the
+    // list (end + direction). It is similar to STL concept of end pointing
+    // to a place after the last element
+    for (int i = start; i != end + direction; i += direction) {
+        OptionPtr opt = getRelayOption(opt_type, i);
+        if (opt) {
+            return (opt);
+        }
+    }
+
+    // We iterated over specified relays and haven't found what we were
+    // looking for
+    return (OptionPtr());
+}
+
+
 OptionPtr Pkt6::getRelayOption(uint16_t opt_type, uint8_t relay_level) {
     if (relay_level >= relay_info_.size()) {
         isc_throw(OutOfRange, "This message was relayed " << relay_info_.size() << " time(s)."
                   << " There is no info about " << relay_level + 1 << " relay.");
     }
 
-    for (Option::OptionCollection::iterator it = relay_info_[relay_level].options_.begin();
+    for (OptionCollection::iterator it = relay_info_[relay_level].options_.begin();
          it != relay_info_[relay_level].options_.end(); ++it) {
         if ((*it).second->getType() == opt_type) {
             return (it->second);
@@ -92,7 +149,7 @@ uint16_t Pkt6::getRelayOverhead(const RelayInfo& relay) const {
     uint16_t len = DHCPV6_RELAY_HDR_LEN // fixed header
         + Option::OPTION6_HDR_LEN; // header of the relay-msg option
 
-    for (Option::OptionCollection::const_iterator opt = relay.options_.begin();
+    for (OptionCollection::const_iterator opt = relay.options_.begin();
          opt != relay.options_.end(); ++opt) {
         len += (opt->second)->len();
     }
@@ -115,7 +172,7 @@ uint16_t Pkt6::calculateRelaySizes() {
 uint16_t Pkt6::directLen() const {
     uint16_t length = DHCPV6_PKT_HDR_LEN; // DHCPv6 header
 
-    for (Option::OptionCollection::const_iterator it = options_.begin();
+    for (OptionCollection::const_iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -125,22 +182,25 @@ uint16_t Pkt6::directLen() const {
 }
 
 
-bool
+void
 Pkt6::pack() {
     switch (proto_) {
     case UDP:
-        return packUDP();
+        packUDP();
+        break;
     case TCP:
-        return packTCP();
+        packTCP();
+        break;
     default:
         isc_throw(BadValue, "Invalid protocol specified (non-TCP, non-UDP)");
     }
-    return (false); // never happens
 }
 
-bool
+void
 Pkt6::packUDP() {
     try {
+        // Make sure that the buffer is empty before we start writting to it.
+        buffer_out_.clear();
 
         // is this a relayed packet?
         if (!relay_info_.empty()) {
@@ -157,11 +217,11 @@ Pkt6::packUDP() {
                  relay != relay_info_.end(); ++relay) {
 
                 // build relay-forw/relay-repl header (see RFC3315, section 7)
-                bufferOut_.writeUint8(relay->msg_type_);
-                bufferOut_.writeUint8(relay->hop_count_);
-                bufferOut_.writeData(&(relay->linkaddr_.toBytes()[0]),
+                buffer_out_.writeUint8(relay->msg_type_);
+                buffer_out_.writeUint8(relay->hop_count_);
+                buffer_out_.writeData(&(relay->linkaddr_.toBytes()[0]),
                                      isc::asiolink::V6ADDRESS_LEN);
-                bufferOut_.writeData(&relay->peeraddr_.toBytes()[0],
+                buffer_out_.writeData(&relay->peeraddr_.toBytes()[0],
                                      isc::asiolink::V6ADDRESS_LEN);
 
                 // store every option in this relay scope. Usually that will be
@@ -169,43 +229,42 @@ Pkt6::packUDP() {
                 // present here as well (vendor-opts for Cable modems,
                 // subscriber-id, remote-id, options echoed back from Echo
                 // Request Option, etc.)
-                for (Option::OptionCollection::const_iterator opt =
+                for (OptionCollection::const_iterator opt =
                          relay->options_.begin();
                      opt != relay->options_.end(); ++opt) {
-                    (opt->second)->pack(bufferOut_);
+                    (opt->second)->pack(buffer_out_);
                 }
 
                 // and include header relay-msg option. Its payload will be
                 // generated in the next iteration (if there are more relays)
                 // or outside the loop (if there are no more relays and the
                 // payload is a direct message)
-                bufferOut_.writeUint16(D6O_RELAY_MSG);
-                bufferOut_.writeUint16(relay->relay_msg_len_);
+                buffer_out_.writeUint16(D6O_RELAY_MSG);
+                buffer_out_.writeUint16(relay->relay_msg_len_);
             }
 
         }
 
         // DHCPv6 header: message-type (1 octect) + transaction id (3 octets)
-        bufferOut_.writeUint8(msg_type_);
+        buffer_out_.writeUint8(msg_type_);
         // store 3-octet transaction-id
-        bufferOut_.writeUint8( (transid_ >> 16) & 0xff );
-        bufferOut_.writeUint8( (transid_ >> 8) & 0xff );
-        bufferOut_.writeUint8( (transid_) & 0xff );
+        buffer_out_.writeUint8( (transid_ >> 16) & 0xff );
+        buffer_out_.writeUint8( (transid_ >> 8) & 0xff );
+        buffer_out_.writeUint8( (transid_) & 0xff );
 
         // the rest are options
-        LibDHCP::packOptions(bufferOut_, options_);
+        LibDHCP::packOptions(buffer_out_, options_);
     }
     catch (const Exception& e) {
-        /// @todo: throw exception here once we turn this function to void.
-        return (false);
+       // An exception is thrown and message will be written to Logger
+       isc_throw(InvalidOperation, e.what());
     }
-    return (true);
 }
 
-bool
+void
 Pkt6::packTCP() {
     /// TODO Implement this function.
-    isc_throw(Unexpected, "DHCPv6 over TCP (bulk leasequery and failover)"
+    isc_throw(NotImplemented, "DHCPv6 over TCP (bulk leasequery and failover)"
               "not implemented yet.");
 }
 
@@ -268,7 +327,16 @@ Pkt6::unpackMsg(OptionBuffer::const_iterator begin,
     try {
         OptionBuffer opt_buffer(begin, end);
 
-        LibDHCP::unpackOptions6(opt_buffer, options_);
+        // If custom option parsing function has been set, use this function
+        // to parse options. Otherwise, use standard function from libdhcp.
+        if (callback_.empty()) {
+            LibDHCP::unpackOptions6(opt_buffer, "dhcp6", options_);
+        } else {
+            // The last two arguments hold the DHCPv6 Relay message offset and
+            // length. Setting them to NULL because we are dealing with the
+            // not-relayed message.
+            callback_(opt_buffer, "dhcp6", options_, NULL, NULL);
+        }
     } catch (const Exception& e) {
         // @todo: throw exception here once we turn this function to void.
         return (false);
@@ -305,8 +373,16 @@ Pkt6::unpackRelayMsg() {
         try {
             // parse the rest as options
             OptionBuffer opt_buffer(&data_[offset], &data_[offset+bufsize]);
-            LibDHCP::unpackOptions6(opt_buffer, relay.options_, &relay_msg_offset,
-                                    &relay_msg_len);
+
+            // If custom option parsing function has been set, use this function
+            // to parse options. Otherwise, use standard function from libdhcp.
+            if (callback_.empty()) {
+                LibDHCP::unpackOptions6(opt_buffer, "dhcp6", relay.options_,
+                                        &relay_msg_offset, &relay_msg_len);
+            } else {
+                callback_(opt_buffer, "dhcp6", relay.options_,
+                          &relay_msg_offset, &relay_msg_len);
+            }
 
             /// @todo: check that each option appears at most once
             //relay.interface_id_ = options->getOption(D6O_INTERFACE_ID);
@@ -377,12 +453,12 @@ Pkt6::unpackTCP() {
 std::string
 Pkt6::toText() {
     stringstream tmp;
-    tmp << "localAddr=[" << local_addr_.toText() << "]:" << local_port_
-        << " remoteAddr=[" << remote_addr_.toText()
+    tmp << "localAddr=[" << local_addr_ << "]:" << local_port_
+        << " remoteAddr=[" << remote_addr_
         << "]:" << remote_port_ << endl;
     tmp << "msgtype=" << static_cast<int>(msg_type_) << ", transid=0x" <<
         hex << transid_ << dec << endl;
-    for (isc::dhcp::Option::OptionCollection::iterator opt=options_.begin();
+    for (isc::dhcp::OptionCollection::iterator opt=options_.begin();
          opt != options_.end();
          ++opt) {
         tmp << opt->second->toText() << std::endl;
@@ -392,18 +468,18 @@ Pkt6::toText() {
 
 OptionPtr
 Pkt6::getOption(uint16_t opt_type) {
-    isc::dhcp::Option::OptionCollection::const_iterator x = options_.find(opt_type);
+    isc::dhcp::OptionCollection::const_iterator x = options_.find(opt_type);
     if (x!=options_.end()) {
         return (*x).second;
     }
     return OptionPtr(); // NULL
 }
 
-isc::dhcp::Option::OptionCollection
+isc::dhcp::OptionCollection
 Pkt6::getOptions(uint16_t opt_type) {
-    isc::dhcp::Option::OptionCollection found;
+    isc::dhcp::OptionCollection found;
 
-    for (Option::OptionCollection::const_iterator x = options_.begin();
+    for (OptionCollection::const_iterator x = options_.begin();
          x != options_.end(); ++x) {
         if (x->first == opt_type) {
             found.insert(make_pair(opt_type, x->second));
@@ -419,7 +495,7 @@ Pkt6::addOption(const OptionPtr& opt) {
 
 bool
 Pkt6::delOption(uint16_t type) {
-    isc::dhcp::Option::OptionCollection::iterator x = options_.find(type);
+    isc::dhcp::OptionCollection::iterator x = options_.find(type);
     if (x!=options_.end()) {
         options_.erase(x);
         return (true); // delete successful
@@ -428,7 +504,7 @@ Pkt6::delOption(uint16_t type) {
 }
 
 void Pkt6::repack() {
-    bufferOut_.writeData(&data_[0], data_.size());
+    buffer_out_.writeData(&data_[0], data_.size());
 }
 
 void
@@ -481,6 +557,45 @@ Pkt6::getName(uint8_t type) {
 
 const char* Pkt6::getName() const {
     return (getName(getType()));
+}
+
+void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
+
+    // We use index rather than iterator, because we need that as a parameter
+    // passed to getRelayOption()
+    for (int i = 0; i < question->relay_info_.size(); ++i) {
+        RelayInfo info;
+        info.msg_type_ = DHCPV6_RELAY_REPL;
+        info.hop_count_ = question->relay_info_[i].hop_count_;
+        info.linkaddr_ = question->relay_info_[i].linkaddr_;
+        info.peeraddr_ = question->relay_info_[i].peeraddr_;
+
+        // Is there an interface-id option in this nesting level?
+        // If there is, we need to echo it back
+        OptionPtr opt = question->getRelayOption(D6O_INTERFACE_ID, i);
+        // taken from question->RelayInfo_[i].options_
+        if (opt) {
+            info.options_.insert(make_pair(opt->getType(), opt));
+        }
+
+        /// @todo: Implement support for ERO (Echo Request Option, RFC4994)
+
+        // Add this relay-forw info (client's message) to our relay-repl
+        // message (server's response)
+        relay_info_.push_back(info);
+    }
+}
+
+bool
+Pkt6::inClass(const std::string& client_class) {
+    return (classes_.find(client_class) != classes_.end());
+}
+
+void
+Pkt6::addClass(const std::string& client_class) {
+    if (classes_.find(client_class) == classes_.end()) {
+        classes_.insert(client_class);
+    }
 }
 
 } // end of isc::dhcp namespace

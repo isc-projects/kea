@@ -31,8 +31,6 @@ run_unittests_SOURCES += filename_unittest.cc
 run_unittests_SOURCES += hex_unittest.cc
 run_unittests_SOURCES += io_utilities_unittest.cc
 run_unittests_SOURCES += lru_list_unittest.cc
-run_unittests_SOURCES += interprocess_sync_file_unittest.cc
-run_unittests_SOURCES += interprocess_sync_null_unittest.cc
 run_unittests_SOURCES += memory_segment_local_unittest.cc
 if USE_SHARED_MEMORY
 run_unittests_SOURCES += memory_segment_mapped_unittest.cc
@@ -46,15 +44,13 @@ run_unittests_SOURCES += socketsession_unittest.cc
 run_unittests_SOURCES += strutil_unittest.cc
 run_unittests_SOURCES += time_utilities_unittest.cc
 run_unittests_SOURCES += range_utilities_unittest.cc
-run_unittests_SOURCES += interprocess_util.h interprocess_util.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
 run_unittests_LDADD = $(top_builddir)/src/lib/util/libb10-util.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/io/libb10-util-io.la
-run_unittests_LDADD += \
-	$(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 run_unittests_LDADD += $(GTEST_LDADD)
 endif

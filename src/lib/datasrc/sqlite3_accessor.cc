@@ -566,7 +566,8 @@ SQLite3Accessor::open(const std::string& name) {
 }
 
 SQLite3Accessor::~SQLite3Accessor() {
-    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_DROPCONN);
+    LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_SQLITE_DROPCONN)
+        .arg(database_name_);
     if (dbparameters_->db_ != NULL) {
         close();
     }

@@ -28,6 +28,7 @@
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/triplet.h>
+#include <dhcpsrv/lease.h>
 
 namespace isc {
 namespace dhcp {
@@ -45,7 +46,6 @@ namespace dhcp {
 /// to the particular subnet.
 ///
 /// @todo: Implement support for options here
-
 
 /// @brief Unique identifier for a subnet (both v4 and v6)
 typedef uint32_t SubnetID;
@@ -180,8 +180,21 @@ public:
     void addOption(const OptionPtr& option, bool persistent,
                    const std::string& option_space);
 
+
+    /// @brief Adds new vendor option instance to the collection.
+    ///
+    /// @param option option instance.
+    /// @param persistent if true, send an option regardless if client
+    /// requested it or not.
+    /// @param vendor_id enterprise id of the vendor space to add an option to.
+    void addVendorOption(const OptionPtr& option, bool persistent,
+                         uint32_t vendor_id);
+
     /// @brief Delete all options configured for the subnet.
     void delOptions();
+
+    /// @brief Deletes all vendor options configured for the subnet.
+    void delVendorOptions();
 
     /// @brief checks if the specified address is in pools
     ///
@@ -192,22 +205,23 @@ public:
     /// is not always true. For the given example, 2001::1234:abcd would return
     /// true for inSubnet(), but false for inPool() check.
     ///
+    /// @param type type of pools to iterate over
     /// @param addr this address will be checked if it belongs to any pools in
     ///        that subnet
     /// @return true if the address is in any of the pools
-    bool inPool(const isc::asiolink::IOAddress& addr) const;
+    bool inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief return valid-lifetime for addresses in that prefix
+    /// @brief Return valid-lifetime for addresses in that prefix
     Triplet<uint32_t> getValid() const {
         return (valid_);
     }
 
-    /// @brief returns T1 (renew timer), expressed in seconds
+    /// @brief Returns T1 (renew timer), expressed in seconds
     Triplet<uint32_t> getT1() const {
         return (t1_);
     }
 
-    /// @brief returns T2 (rebind timer), expressed in seconds
+    /// @brief Returns T2 (rebind timer), expressed in seconds
     Triplet<uint32_t> getT2() const {
         return (t2_);
     }
@@ -220,6 +234,14 @@ public:
     OptionContainerPtr
     getOptionDescriptors(const std::string& option_space) const;
 
+    /// @brief Return a collection of vendor option descriptors.
+    ///
+    /// @param vendor_id enterprise id of the option space.
+    ///
+    /// @return pointer to collection of options configured for a subnet.
+    OptionContainerPtr
+    getVendorOptionDescriptors(uint32_t vendor_id) const;
+
     /// @brief Return single option descriptor.
     ///
     /// @param option_space name of the option space.
@@ -231,6 +253,16 @@ public:
     getOptionDescriptor(const std::string& option_space,
                         const uint16_t option_code);
 
+    /// @brief Return single vendor option descriptor.
+    ///
+    /// @param vendor_id enterprise id of the option space.
+    /// @param option_code code of the option to be returned.
+    ///
+    /// @return option descriptor found for the specified option space
+    /// and option code.
+    OptionDescriptor
+    getVendorOptionDescriptor(uint32_t vendor_id, uint16_t option_code);
+
     /// @brief returns the last address that was tried from this pool
     ///
     /// This method returns the last address that was attempted to be allocated
@@ -240,10 +272,9 @@ public:
     /// @todo: Define map<SubnetID, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
     ///
-    /// @return address that was last tried from this pool
-    isc::asiolink::IOAddress getLastAllocated() const {
-        return (last_allocated_);
-    }
+    /// @param type lease type to be returned
+    /// @return address/prefix that was last tried from this pool
+    isc::asiolink::IOAddress getLastAllocated(Lease::Type type) const;
 
     /// @brief sets the last address that was tried from this pool
     ///
@@ -253,15 +284,16 @@ public:
     ///
     /// @todo: Define map<SubnetID, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
-    void setLastAllocated(const isc::asiolink::IOAddress& addr) {
-        last_allocated_ = addr;
-    }
+    /// @param addr address/prefix to that was tried last
+    /// @param type lease type to be set
+    void setLastAllocated(Lease::Type type,
+                          const isc::asiolink::IOAddress& addr);
 
-    /// @brief returns unique ID for that subnet
+    /// @brief Returns unique ID for that subnet
     /// @return unique ID for that subnet
     SubnetID getID() const { return (id_); }
 
-    /// @brief returns subnet parameters (prefix and prefix length)
+    /// @brief Returns subnet parameters (prefix and prefix length)
     ///
     /// @return (prefix, prefix length) pair
     std::pair<isc::asiolink::IOAddress, uint8_t> get() const {
@@ -272,16 +304,36 @@ public:
     /// @param pool pool to be added
     void addPool(const PoolPtr& pool);
 
+
+    /// @brief Deletes all pools of specified type
+    ///
+    /// This method is used for testing purposes only
+    /// @param type type of pools to be deleted
+    void delPools(Lease::Type type);
+
     /// @brief Returns a pool that specified address belongs to
     ///
+    /// If there is no pool that the address belongs to (hint is invalid), other
+    /// pool of specified type will be returned.
+    ///
+    /// With anypool set to true, this is means give me a pool, preferably
+    /// the one that addr belongs to. With anypool set to false, it means
+    /// give me a pool that addr belongs to (or NULL if here is no such pool)
+    ///
+    /// @param type pool type that the pool is looked for
     /// @param addr address that the returned pool should cover (optional)
-    /// @return Pointer to found Pool4 or Pool6 (or NULL)
-    PoolPtr getPool(isc::asiolink::IOAddress addr);
+    /// @param anypool other pool may be returned as well, not only the one
+    ///        that addr belongs to
+    /// @return found pool (or NULL)
+    const PoolPtr getPool(Lease::Type type, const isc::asiolink::IOAddress& addr,
+                          bool anypool = true) const;
 
     /// @brief Returns a pool without any address specified
+    ///
+    /// @param type pool type that the pool is looked for
     /// @return returns one of the pools defined
-    PoolPtr getPool() {
-        return (getPool(default_pool()));
+    PoolPtr getAnyPool(Lease::Type type) {
+        return (getPool(type, default_pool()));
     }
 
     /// @brief Returns the default address that will be used for pool selection
@@ -290,25 +342,57 @@ public:
     /// and 0.0.0.0 for Subnet4)
     virtual isc::asiolink::IOAddress default_pool() const = 0;
 
-    /// @brief returns all pools
+    /// @brief Returns all pools (const variant)
     ///
     /// The reference is only valid as long as the object that returned it.
     ///
+    /// @param type lease type to be set
     /// @return a collection of all pools
-    const PoolCollection& getPools() const {
-        return pools_;
-    }
+    const PoolCollection& getPools(Lease::Type type) const;
 
-    /// @brief returns textual representation of the subnet (e.g. "2001:db8::/64")
+    /// @brief Sets name of the network interface for directly attached networks
+    ///
+    /// @param iface_name name of the interface
+    void setIface(const std::string& iface_name);
+
+    /// @brief Network interface name used to reach subnet (or "" for remote
+    /// subnets)
+    /// @return network interface name for directly attached subnets or ""
+    std::string getIface() const;
+
+    /// @brief Returns textual representation of the subnet (e.g.
+    /// "2001:db8::/64")
     ///
     /// @return textual representation
     virtual std::string toText() const;
 
+    /// @brief Resets subnet-id counter to its initial value (1)
+    ///
+    /// This should be called during reconfiguration, before any new
+    /// subnet objects are created. It will ensure that the subnet_id will
+    /// be consistent between reconfigures.
+    static void resetSubnetID() {
+        static_id_ = 1;
+    }
+
 protected:
-    /// @brief protected constructor
+    /// @brief Returns all pools (non-const variant)
+    ///
+    /// The reference is only valid as long as the object that returned it.
+    ///
+    /// @param type lease type to be set
+    /// @return a collection of all pools
+    PoolCollection& getPoolsWritable(Lease::Type type);
+
+    /// @brief Protected constructor
     //
     /// By making the constructor protected, we make sure that noone will
-    /// ever instantiate that class. Pool4 and Pool6 should be used instead.
+    /// ever instantiate that class. Subnet4 and Subnet6 should be used instead.
+    ///
+    /// This constructor assigns a new subnet-id (see @ref generateNextID).
+    /// This subnet-id has unique value that is strictly monotonously increasing
+    /// for each subnet, until it is explicitly reset back to 1 during
+    /// reconfiguration process.
     Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
            const Triplet<uint32_t>& t1,
            const Triplet<uint32_t>& t2,
@@ -320,13 +404,35 @@ protected:
     /// derive from this class.
     virtual ~Subnet() { };
 
+    /// @brief keeps the subnet-id value
+    ///
+    /// It is inreased every time a new Subnet object is created.
+    /// It is reset (@ref resetSubnetId) every time reconfiguration occurs.
+    ///
+    /// Static value initialized in subnet.cc.
+    static SubnetID static_id_;
+
     /// @brief returns the next unique Subnet-ID
     ///
+    /// This method generates and returns the next unique subnet-id.
+    /// It is a strictly monotonously increasing value (1,2,3,...) for
+    /// each new Subnet object created. It can be explicitly reset
+    /// back to 1 during reconfiguration (@ref resetSubnetID).
+    ///
     /// @return the next unique Subnet-ID
-    static SubnetID getNextID() {
-        static SubnetID id = 0;
-        return (id++);
+    static SubnetID generateNextID() {
+        return (static_id_++);
     }
+
+    /// @brief Checks if used pool type is valid
+    ///
+    /// Allowed type for Subnet4 is Pool::TYPE_V4.
+    /// Allowed types for Subnet6 are Pool::TYPE_{IA,TA,PD}.
+    /// This method is implemented in derived classes.
+    ///
+    /// @param type type to be checked
+    /// @throw BadValue if invalid value is used
+    virtual void checkType(Lease::Type type) const = 0;
 
     /// @brief Check if option is valid and can be added to a subnet.
     ///
@@ -339,8 +445,14 @@ protected:
     /// a Subnet4 or Subnet6.
     SubnetID id_;
 
-    /// @brief collection of pools in that list
+    /// @brief collection of IPv4 or non-temporary IPv6 pools in that subnet
     PoolCollection pools_;
+
+    /// @brief collection of IPv6 temporary address pools in that subnet
+    PoolCollection pools_ta_;
+
+    /// @brief collection of IPv6 prefix pools in that subnet
+    PoolCollection pools_pd_;
 
     /// @brief a prefix of the subnet
     isc::asiolink::IOAddress prefix_;
@@ -366,7 +478,17 @@ protected:
     /// removing a pool, restarting or changing allocation algorithms. For
     /// that purpose it should be only considered a help that should not be
     /// fully trusted.
-    isc::asiolink::IOAddress last_allocated_;
+    isc::asiolink::IOAddress last_allocated_ia_;
+
+    /// @brief last allocated temporary address
+    ///
+    /// See @ref last_allocated_ia_ for details.
+    isc::asiolink::IOAddress last_allocated_ta_;
+
+    /// @brief last allocated IPv6 prefix
+    ///
+    /// See @ref last_allocated_ia_ for details.
+    isc::asiolink::IOAddress last_allocated_pd_;
 
     /// @brief Name of the network interface (if connected directly)
     std::string iface_;
@@ -375,9 +497,17 @@ private:
 
     /// A collection of option spaces grouping option descriptors.
     typedef OptionSpaceContainer<OptionContainer,
-                                 OptionDescriptor> OptionSpaceCollection;
+        OptionDescriptor, std::string> OptionSpaceCollection;
+
+    /// A collection of vendor space option descriptors.
+    typedef OptionSpaceContainer<OptionContainer,
+        OptionDescriptor, uint32_t> VendorOptionSpaceCollection;
+
+    /// Regular options are kept here
     OptionSpaceCollection option_spaces_;
 
+    /// Vendor options are kept here
+    VendorOptionSpaceCollection vendor_option_spaces_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
@@ -391,6 +521,8 @@ public:
 
     /// @brief Constructor with all parameters
     ///
+    /// This constructor calls Subnet::Subnet, where subnet-id is generated.
+    ///
     /// @param prefix Subnet4 prefix
     /// @param length prefix length
     /// @param t1 renewal timer (in seconds)
@@ -400,6 +532,18 @@ public:
             const Triplet<uint32_t>& t1,
             const Triplet<uint32_t>& t2,
             const Triplet<uint32_t>& valid_lifetime);
+
+    /// @brief Sets siaddr for the Subnet4
+    ///
+    /// Will be used for siaddr field (the next server) that typically is used
+    /// as TFTP server. If not specified, the default value of 0.0.0.0 is
+    /// used.
+    void setSiaddr(const isc::asiolink::IOAddress& siaddr);
+
+    /// @brief Returns siaddr for this subnet
+    ///
+    /// @return siaddr value
+    isc::asiolink::IOAddress getSiaddr() const;
 
 protected:
 
@@ -415,6 +559,17 @@ protected:
     virtual isc::asiolink::IOAddress default_pool() const {
         return (isc::asiolink::IOAddress("0.0.0.0"));
     }
+
+    /// @brief Checks if used pool type is valid
+    ///
+    /// Allowed type for Subnet4 is Pool::TYPE_V4.
+    ///
+    /// @param type type to be checked
+    /// @throw BadValue if invalid value is used
+    virtual void checkType(Lease::Type type) const;
+
+    /// @brief siaddr value for this subnet
+    isc::asiolink::IOAddress siaddr_;
 };
 
 /// @brief A pointer to a Subnet4 object
@@ -431,6 +586,8 @@ class Subnet6 : public Subnet {
 public:
 
     /// @brief Constructor with all parameters
+    ///
+    /// This constructor calls Subnet::Subnet, where subnet-id is generated.
     ///
     /// @param prefix Subnet6 prefix
     /// @param length prefix length
@@ -451,17 +608,18 @@ public:
         return (preferred_);
     }
 
-    /// @brief sets name of the network interface for directly attached networks
+    /// @brief sets interface-id option (if defined)
     ///
-    /// A subnet may be reachable directly (not via relays). In DHCPv6 it is not
-    /// possible to decide that based on addresses assigned to network interfaces,
-    /// as DHCPv6 operates on link-local (and site local) addresses.
-    /// @param iface_name name of the interface
-    void setIface(const std::string& iface_name);
+    /// @param ifaceid pointer to interface-id option
+    void setInterfaceId(const OptionPtr& ifaceid) {
+        interface_id_ = ifaceid;
+    }
 
-    /// @brief network interface name used to reach subnet (or "" for remote subnets)
-    /// @return network interface name for directly attached subnets or ""
-    std::string getIface() const;
+    /// @brief returns interface-id value (if specified)
+    /// @return interface-id option (if defined)
+    OptionPtr getInterfaceId() const {
+        return interface_id_;
+    }
 
 protected:
 
@@ -478,8 +636,16 @@ protected:
         return (isc::asiolink::IOAddress("::"));
     }
 
-    /// @brief collection of pools in that list
-    Pool6Collection pools_;
+    /// @brief Checks if used pool type is valid
+    ///
+    /// allowed types for Subnet6 are Pool::TYPE_{IA,TA,PD}.
+    ///
+    /// @param type type to be checked
+    /// @throw BadValue if invalid value is used
+    virtual void checkType(Lease::Type type) const;
+
+    /// @brief specifies optional interface-id
+    OptionPtr interface_id_;
 
     /// @brief a triplet with preferred lifetime (in seconds)
     Triplet<uint32_t> preferred_;

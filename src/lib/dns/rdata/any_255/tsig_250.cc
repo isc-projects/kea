@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,26 +19,29 @@
 #include <boost/lexical_cast.hpp>
 
 #include <util/buffer.h>
-#include <util/strutil.h>
 #include <util/encode/base64.h>
 
 #include <dns/messagerenderer.h>
 #include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rcode.h>
+#include <dns/tsigkey.h>
 #include <dns/tsigerror.h>
+#include <dns/rdata/generic/detail/lexer_util.h>
 
 using namespace std;
 using boost::lexical_cast;
 using namespace isc::util;
 using namespace isc::util::encode;
-using namespace isc::util::str;
+using namespace isc::dns;
+using isc::dns::rdata::generic::detail::createNameFromLexer;
 
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
-/// This is a straightforward representation of TSIG RDATA fields.
-struct TSIG::TSIGImpl {
+// straightforward representation of TSIG RDATA fields
+struct TSIGImpl {
     TSIGImpl(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
              vector<uint8_t>& mac, uint16_t original_id, uint16_t error,
              vector<uint8_t>& other_data) :
@@ -68,99 +71,187 @@ struct TSIG::TSIGImpl {
     const vector<uint8_t> other_data_;
 };
 
+// helper function for string and lexer constructors
+TSIGImpl*
+TSIG::constructFromLexer(MasterLexer& lexer, const Name* origin) {
+    const Name& algorithm =
+        createNameFromLexer(lexer, origin ? origin : &Name::ROOT_NAME());
+    const Name& canonical_algorithm_name =
+        (algorithm == TSIGKey::HMACMD5_SHORT_NAME()) ?
+            TSIGKey::HMACMD5_NAME() : algorithm;
+
+    const string& time_txt =
+        lexer.getNextToken(MasterToken::STRING).getString();
+    uint64_t time_signed;
+    try {
+        time_signed = boost::lexical_cast<uint64_t>(time_txt);
+    } catch (const boost::bad_lexical_cast&) {
+        isc_throw(InvalidRdataText, "Invalid TSIG Time");
+    }
+    if ((time_signed >> 48) != 0) {
+        isc_throw(InvalidRdataText, "TSIG Time out of range");
+    }
+
+    const uint32_t fudge = lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (fudge > 0xffff) {
+        isc_throw(InvalidRdataText, "TSIG Fudge out of range");
+    }
+    const uint32_t macsize =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (macsize > 0xffff) {
+        isc_throw(InvalidRdataText, "TSIG MAC Size out of range");
+    }
+
+    const string& mac_txt = (macsize > 0) ?
+            lexer.getNextToken(MasterToken::STRING).getString() : "";
+    vector<uint8_t> mac;
+    decodeBase64(mac_txt, mac);
+    if (mac.size() != macsize) {
+        isc_throw(InvalidRdataText, "TSIG MAC Size and data are inconsistent");
+    }
+
+    const uint32_t orig_id =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (orig_id > 0xffff) {
+        isc_throw(InvalidRdataText, "TSIG Original ID out of range");
+    }
+
+    const string& error_txt =
+        lexer.getNextToken(MasterToken::STRING).getString();
+    uint32_t error = 0;
+    // XXX: In the initial implementation we hardcode the mnemonics.
+    // We'll soon generalize this.
+    if (error_txt == "NOERROR") {
+        error = Rcode::NOERROR_CODE;
+    } else if (error_txt == "BADSIG") {
+        error = TSIGError::BAD_SIG_CODE;
+    } else if (error_txt == "BADKEY") {
+        error = TSIGError::BAD_KEY_CODE;
+    } else if (error_txt == "BADTIME") {
+        error = TSIGError::BAD_TIME_CODE;
+    } else {
+	/// we cast to uint32_t and range-check, because casting directly to
+	/// uint16_t will convert negative numbers to large positive numbers
+        try {
+            error = boost::lexical_cast<uint32_t>(error_txt);
+        } catch (const boost::bad_lexical_cast&) {
+            isc_throw(InvalidRdataText, "Invalid TSIG Error");
+        }
+        if (error > 0xffff) {
+            isc_throw(InvalidRdataText, "TSIG Error out of range");
+        }
+    }
+
+    const uint32_t otherlen =
+        lexer.getNextToken(MasterToken::NUMBER).getNumber();
+    if (otherlen > 0xffff) {
+        isc_throw(InvalidRdataText, "TSIG Other Len out of range");
+    }
+    const string otherdata_txt = (otherlen > 0) ?
+            lexer.getNextToken(MasterToken::STRING).getString() : "";
+    vector<uint8_t> other_data;
+    decodeBase64(otherdata_txt, other_data);
+    if (other_data.size() != otherlen) {
+        isc_throw(InvalidRdataText,
+                  "TSIG Other Data length does not match Other Len");
+    }
+    // RFC2845 says Other Data is "empty unless Error == BADTIME".
+    // However, we don't enforce that.
+
+    return (new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
+                         orig_id, error, other_data));
+}
+
 /// \brief Constructor from string.
 ///
+/// The given string must represent a valid TSIG RDATA.  There can be extra
+/// space characters at the beginning or end of the text (which are simply
+/// ignored), but other extra text, including a new line, will make the
+/// construction fail with an exception.
+///
 /// \c tsig_str must be formatted as follows:
-/// \code <Alg> <Time> <Fudge> <MACsize> [<MAC>] <OrigID> <Error> <OtherLen> [<OtherData>]
+/// \code <Algorithm Name> <Time Signed> <Fudge> <MAC Size> [<MAC>]
+/// <Original ID> <Error> <Other Len> [<Other Data>]
 /// \endcode
-/// where
-/// - &lt;Alg&gt; is a valid textual representation of domain name.
-/// - &lt;Time&gt; is an unsigned 48-bit decimal integer.
-/// - &lt;MACSize&gt;, &lt;OrigID&gt;, and &lt;OtherLen&gt; are an unsigned
-///   16-bit decimal
-///   integer.
-/// - &lt;Error&gt; is an unsigned 16-bit decimal integer or a valid mnemonic
-///   for the Error field specified in RFC2845.  Currently, "BADSIG", "BADKEY",
-///   and "BADTIME" are supported (case sensitive).  In future versions
-///   other representations that are compatible with the DNS RCODE will be
-///   supported.
-/// - &lt;MAC&gt; and &lt;OtherData&gt; is a BASE-64 encoded string that does
-///   not contain space characters.
-///   When &lt;MACSize&gt; and &lt;OtherLen&gt; is 0, &lt;MAC&gt; and
-///   &lt;OtherData&gt; must not appear in \c tsig_str, respectively.
-/// - The decoded data of &lt;MAC&gt; is &lt;MACSize&gt; bytes of binary
-///   stream.
-/// - The decoded data of &lt;OtherData&gt; is &lt;OtherLen&gt; bytes of
-///   binary stream.
+///
+/// Note that, since the Algorithm Name field is defined to be "in domain name
+/// syntax", but it is not actually a domain name, it does not have to be
+/// fully qualified.
+///
+/// The Error field is an unsigned 16-bit decimal integer or a valid mnemonic
+/// as specified in RFC2845.  Currently, "NOERROR", "BADSIG", "BADKEY", and
+/// "BADTIME" are supported (case sensitive).  In future versions other
+/// representations that are compatible with the DNS RCODE may be supported.
+///
+/// The MAC and Other Data fields are base-64 encoded strings that do not
+/// contain space characters.
+/// If the MAC Size field is 0, the MAC field must not appear in \c tsig_str.
+/// If the Other Len field is 0, the Other Data field must not appear in
+/// \c tsig_str.
+/// The decoded data of the MAC field is MAC Size bytes of binary stream.
+/// The decoded data of the Other Data field is Other Len bytes of binary
+/// stream.
 ///
 /// An example of valid string is:
 /// \code "hmac-sha256. 853804800 300 3 AAAA 2845 0 0" \endcode
-/// In this example &lt;OtherData&gt; is missing because &lt;OtherLen&gt; is 0.
+/// In this example Other Data is missing because Other Len is 0.
 ///
 /// Note that RFC2845 does not define the standard presentation format
 /// of %TSIG RR, so the above syntax is implementation specific.
 /// This is, however, compatible with the format acceptable to BIND 9's
 /// RDATA parser.
 ///
-/// <b>Exceptions</b>
+/// \throw Others Exception from the Name constructors.
+/// \throw InvalidRdataText if any fields are out of their valid range,
+/// or are incorrect.
+/// \throw BadValue if MAC or Other Data is not validly encoded in base-64.
 ///
-/// If &lt;Alg&gt; is not a valid domain name, a corresponding exception from
-/// the \c Name class will be thrown;
-/// if &lt;MAC&gt; or &lt;OtherData&gt; is not validly encoded in BASE-64, an
-/// exception of class \c isc::BadValue will be thrown;
-/// if %any of the other bullet points above is not met, an exception of
-/// class \c InvalidRdataText will be thrown.
-/// This constructor internally involves resource allocation, and if it fails
-/// a corresponding standard exception will be thrown.
+/// \param tsig_str A string containing the RDATA to be created
 TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
-    istringstream iss(tsig_str);
+    // We use auto_ptr here because if there is an exception in this
+    // constructor, the destructor is not called and there could be a
+    // leak of the TSIGImpl that constructFromLexer() returns.
+    std::auto_ptr<TSIGImpl> impl_ptr(NULL);
 
     try {
-        const Name algorithm(getToken(iss));
-        const int64_t time_signed = tokenToNum<int64_t, 48>(getToken(iss));
-        const int32_t fudge = tokenToNum<int32_t, 16>(getToken(iss));
-        const int32_t macsize = tokenToNum<int32_t, 16>(getToken(iss));
+        std::istringstream ss(tsig_str);
+        MasterLexer lexer;
+        lexer.pushSource(ss);
 
-        const string mac_txt = (macsize > 0) ? getToken(iss) : "";
-        vector<uint8_t> mac;
-        decodeBase64(mac_txt, mac);
-        if (mac.size() != macsize) {
-            isc_throw(InvalidRdataText, "TSIG MAC size and data are inconsistent");
+        impl_ptr.reset(constructFromLexer(lexer, NULL));
+
+        if (lexer.getNextToken().getType() != MasterToken::END_OF_FILE) {
+            isc_throw(InvalidRdataText,
+                      "Extra input text for TSIG: " << tsig_str);
         }
-
-        const int32_t orig_id = tokenToNum<int32_t, 16>(getToken(iss));
-
-        const string error_txt = getToken(iss);
-        int32_t error = 0;
-        // XXX: In the initial implementation we hardcode the mnemonics.
-        // We'll soon generalize this.
-        if (error_txt == "BADSIG") {
-            error = 16;
-        } else if (error_txt == "BADKEY") {
-            error = 17;
-        } else if (error_txt == "BADTIME") {
-            error = 18;
-        } else {
-            error = tokenToNum<int32_t, 16>(error_txt);
-        }
-
-        const int32_t otherlen = tokenToNum<int32_t, 16>(getToken(iss));
-        const string otherdata_txt = (otherlen > 0) ? getToken(iss) : "";
-        vector<uint8_t> other_data;
-        decodeBase64(otherdata_txt, other_data);
-
-        if (!iss.eof()) {
-            isc_throw(InvalidRdataText, "Unexpected input for TSIG RDATA: " <<
-                    tsig_str);
-        }
-
-        impl_ = new TSIGImpl(algorithm, time_signed, fudge, mac, orig_id,
-                            error, other_data);
-
-    } catch (const StringTokenError& ste) {
-        isc_throw(InvalidRdataText, "Invalid TSIG text: " << ste.what() <<
-                  ": " << tsig_str);
+    } catch (const MasterLexer::LexerError& ex) {
+        isc_throw(InvalidRdataText,
+                  "Failed to construct TSIG from '" << tsig_str << "': "
+                  << ex.what());
     }
+
+    impl_ = impl_ptr.release();
+}
+
+/// \brief Constructor with a context of MasterLexer.
+///
+/// The \c lexer should point to the beginning of valid textual
+/// representation of an TSIG RDATA.
+///
+/// See \c TSIG::TSIG(const std::string&) for description of the
+/// expected RDATA fields.
+///
+/// \throw MasterLexer::LexerError General parsing error such as
+/// missing field.
+/// \throw InvalidRdataText if any fields are out of their valid range,
+/// or are incorrect.
+///
+/// \param lexer A \c MasterLexer object parsing a master file for the
+/// RDATA to be created
+TSIG::TSIG(MasterLexer& lexer, const Name* origin,
+           MasterLoader::Options, MasterLoaderCallbacks&) :
+    impl_(constructFromLexer(lexer, origin))
+{
 }
 
 /// \brief Constructor from wire-format data.
@@ -183,7 +274,9 @@ TSIG::TSIG(const std::string& tsig_str) : impl_(NULL) {
 /// But this constructor does not use this parameter; if necessary, the caller
 /// must check consistency between the length parameter and the actual
 /// RDATA length.
-TSIG::TSIG(InputBuffer& buffer, size_t) : impl_(NULL) {
+TSIG::TSIG(InputBuffer& buffer, size_t) :
+    impl_(NULL)
+{
     Name algorithm(buffer);
 
     uint8_t time_signed_buf[6];
@@ -213,8 +306,11 @@ TSIG::TSIG(InputBuffer& buffer, size_t) : impl_(NULL) {
         buffer.readData(&other_data[0], other_len);
     }
 
-    impl_ = new TSIGImpl(algorithm, time_signed, fudge, mac, original_id,
-                         error, other_data);
+    const Name& canonical_algorithm_name =
+        (algorithm == TSIGKey::HMACMD5_SHORT_NAME()) ?
+            TSIGKey::HMACMD5_NAME() : algorithm;
+    impl_ = new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac,
+                         original_id, error, other_data);
 }
 
 TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
@@ -235,8 +331,11 @@ TSIG::TSIG(const Name& algorithm, uint64_t time_signed, uint16_t fudge,
         isc_throw(InvalidParameter,
                   "TSIG Other data length and data inconsistent");
     }
-    impl_ = new TSIGImpl(algorithm, time_signed, fudge, mac_size, mac,
-                         original_id, error, other_len, other_data);
+    const Name& canonical_algorithm_name =
+        (algorithm == TSIGKey::HMACMD5_SHORT_NAME()) ?
+            TSIGKey::HMACMD5_NAME() : algorithm;
+    impl_ = new TSIGImpl(canonical_algorithm_name, time_signed, fudge, mac_size,
+                         mac, original_id, error, other_len, other_data);
 }
 
 /// \brief The copy constructor.
@@ -249,7 +348,7 @@ TSIG::TSIG(const TSIG& source) : Rdata(), impl_(new TSIGImpl(*source.impl_))
 
 TSIG&
 TSIG::operator=(const TSIG& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 
@@ -281,13 +380,13 @@ TSIG::toText() const {
         lexical_cast<string>(impl_->time_signed_) + " " +
         lexical_cast<string>(impl_->fudge_) + " " +
         lexical_cast<string>(impl_->mac_.size()) + " ";
-    if (impl_->mac_.size() > 0) {
+    if (!impl_->mac_.empty()) {
         result += encodeBase64(impl_->mac_) + " ";
     }
     result += lexical_cast<string>(impl_->original_id_) + " ";
     result += TSIGError(impl_->error_).toText() + " ";
     result += lexical_cast<string>(impl_->other_data_.size());
-    if (impl_->other_data_.size() > 0) {
+    if (!impl_->other_data_.empty()) {
         result += " " + encodeBase64(impl_->other_data_);
     }
 
@@ -298,7 +397,7 @@ TSIG::toText() const {
 // toWire().
 template <typename Output>
 void
-TSIG::TSIGImpl::toWireCommon(Output& output) const {
+TSIGImpl::toWireCommon(Output& output) const {
     output.writeUint16(time_signed_ >> 32);
     output.writeUint32(time_signed_ & 0xffffffff);
     output.writeUint16(fudge_);
@@ -431,7 +530,7 @@ TSIG::getMACSize() const {
 
 const void*
 TSIG::getMAC() const {
-    if (impl_->mac_.size() > 0) {
+    if (!impl_->mac_.empty()) {
         return (&impl_->mac_[0]);
     } else {
         return (NULL);
@@ -455,7 +554,7 @@ TSIG::getOtherLen() const {
 
 const void*
 TSIG::getOtherData() const {
-    if (impl_->other_data_.size() > 0) {
+    if (!impl_->other_data_.empty()) {
         return (&impl_->other_data_[0]);
     } else {
         return (NULL);

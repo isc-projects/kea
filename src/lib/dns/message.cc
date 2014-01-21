@@ -495,7 +495,7 @@ Message::getTSIGRecord() const {
 
 unsigned int
 Message::getRRCount(const Section section) const {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
     return (impl_->counts_[section]);
@@ -511,7 +511,7 @@ Message::addRRset(const Section section, RRsetPtr rrset) {
         isc_throw(InvalidMessageOperation,
                   "addRRset performed in non-render mode");
     }
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
 
@@ -522,9 +522,9 @@ Message::addRRset(const Section section, RRsetPtr rrset) {
 
 bool
 Message::hasRRset(const Section section, const Name& name,
-                  const RRClass& rrclass, const RRType& rrtype)
+                  const RRClass& rrclass, const RRType& rrtype) const
 {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
 
@@ -540,13 +540,14 @@ Message::hasRRset(const Section section, const Name& name,
 }
 
 bool
-Message::hasRRset(const Section section, const RRsetPtr& rrset) {
-    return (hasRRset(section, rrset->getName(), rrset->getClass(), rrset->getType()));
+Message::hasRRset(const Section section, const RRsetPtr& rrset) const {
+    return (hasRRset(section, rrset->getName(),
+                     rrset->getClass(), rrset->getType()));
 }
 
 bool
 Message::removeRRset(const Section section, RRsetIterator& iterator) {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
 
@@ -575,7 +576,7 @@ Message::clearSection(const Section section) {
         isc_throw(InvalidMessageOperation,
                   "clearSection performed in non-render mode");
     }
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
     if (section == Message::SECTION_QUESTION) {
@@ -732,7 +733,7 @@ int
 MessageImpl::parseSection(const Message::Section section,
                           InputBuffer& buffer, Message::ParseOptions options)
 {
-    assert(section < MessageImpl::NUM_SECTIONS);
+    assert(static_cast<int>(section) < MessageImpl::NUM_SECTIONS);
 
     unsigned int added = 0;
 
@@ -869,8 +870,11 @@ struct SectionFormatter {
     void operator()(const T& entry) {
         if (section_ == Message::SECTION_QUESTION) {
             output_ += ";";
+            output_ += entry->toText();
+            output_ += "\n";
+        } else {
+            output_ += entry->toText();
         }
-        output_ += entry->toText();
     }
     const Message::Section section_;
     string& output_;
@@ -984,7 +988,7 @@ Message::clear(Mode mode) {
 
 void
 Message::appendSection(const Section section, const Message& source) {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
 
@@ -1130,7 +1134,7 @@ Message::endQuestion() const {
 ///
 const SectionIterator<RRsetPtr>
 Message::beginSection(const Section section) const {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
     if (section == SECTION_QUESTION) {
@@ -1143,7 +1147,7 @@ Message::beginSection(const Section section) const {
 
 const SectionIterator<RRsetPtr>
 Message::endSection(const Section section) const {
-    if (section >= MessageImpl::NUM_SECTIONS) {
+    if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
     }
     if (section == SECTION_QUESTION) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,8 +23,14 @@
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <hooks/hooks_manager.h>
+
+#include "marker_file.h"
+#include "test_libraries.h"
+#include "test_data_files_config.h"
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -34,14 +40,33 @@
 #include <sstream>
 #include <limits.h>
 
-using namespace std;
 using namespace isc;
-using namespace isc::dhcp;
 using namespace isc::asiolink;
-using namespace isc::data;
 using namespace isc::config;
+using namespace isc::data;
+using namespace isc::dhcp;
+using namespace isc::dhcp::test;
+using namespace isc::hooks;
+using namespace std;
 
 namespace {
+
+/// @brief Prepends the given name with the DHCP4 source directory
+///
+/// @param name file name of the desired file
+/// @return string containing the absolute path of the file in the DHCP source
+/// directory.
+std::string specfile(const std::string& name) {
+    return (std::string(DHCP4_SRC_DIR) + "/" + name);
+}
+
+/// @brief Tests that the spec file is valid.
+/// Verifies that the BIND10 DHCP-DDNS configuration specification file
+//  is valid.
+TEST(Dhcp4SpecTest, basicSpec) {
+    (isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));
+    ASSERT_NO_THROW(isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));
+}
 
 class Dhcp4ParserTest : public ::testing::Test {
 public:
@@ -51,13 +76,24 @@ public:
         // deal with sockets here, just check if configuration handling
         // is sane.
         srv_.reset(new Dhcpv4Srv(0));
+        CfgMgr::instance().deleteActiveIfaces();
+    }
+
+    // Check that no hooks libraries are loaded.  This is a pre-condition for
+    // a number of tests, so is checked in one place.  As this uses an
+    // ASSERT call - and it is not clear from the documentation that Gtest
+    // predicates can be used in a constructor - the check is placed in SetUp.
+    void SetUp() {
+        std::vector<std::string> libraries = HooksManager::getLibraryNames();
+        ASSERT_TRUE(libraries.empty());
     }
 
     // Checks if global parameter of name have expected_value
     void checkGlobalUint32(string name, uint32_t expected_value) {
-        const Uint32Storage& uint32_defaults = getUint32Defaults();
+        const Uint32StoragePtr uint32_defaults =
+                                        globalContext()->uint32_values_;
         try {
-            uint32_t actual_value = uint32_defaults.getParam(name);
+            uint32_t actual_value = uint32_defaults->getParam(name);
             EXPECT_EQ(expected_value, actual_value);
         } catch (DhcpConfigError) {
             ADD_FAILURE() << "Expected uint32 with name " << name
@@ -76,6 +112,10 @@ public:
 
     ~Dhcp4ParserTest() {
         resetConfiguration();
+
+        // ... and delete the hooks library marker files if present
+        unlink(LOAD_MARKER_FILE);
+        unlink(UNLOAD_MARKER_FILE);
     };
 
     /// @brief Create the simple configuration with single option.
@@ -137,7 +177,7 @@ public:
     /// describing an option.
     std::string createConfigWithOption(const std::map<std::string, std::string>& params) {
         std::ostringstream stream;
-        stream << "{ \"interface\": [ \"all\" ],"
+        stream << "{ \"interfaces\": [ \"*\" ],"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
             "\"subnet4\": [ { "
@@ -234,6 +274,57 @@ public:
                             expected_data_len));
     }
 
+    /// @brief Parse and Execute configuration
+    ///
+    /// Parses a configuration and executes a configuration of the server.
+    /// If the operation fails, the current test will register a failure.
+    ///
+    /// @param config Configuration to parse
+    /// @param operation Operation being performed.  In the case of an error,
+    ///        the error text will include the string "unable to <operation>.".
+    ///
+    /// @return true if the configuration succeeded, false if not.  In the
+    ///         latter case, a failure will have been added to the current test.
+    bool
+    executeConfiguration(const std::string& config, const char* operation) {
+        ConstElementPtr status;
+        try {
+            ElementPtr json = Element::fromJSON(config);
+            status = configureDhcp4Server(*srv_, json);
+        } catch (const std::exception& ex) {
+            ADD_FAILURE() << "Unable to " << operation << ". "
+                   << "The following configuration was used: " << std::endl
+                   << config << std::endl
+                   << " and the following error message was returned:"
+                   << ex.what() << std::endl;
+            return (false);
+        }
+
+        // The status object must not be NULL
+        if (!status) {
+            ADD_FAILURE() << "Unable to " << operation << ". "
+                   << "The configuration function returned a null pointer.";
+            return (false);
+        }
+
+        // Store the answer if we need it.
+
+        // Returned value should be 0 (configuration success)
+        comment_ = parseAnswer(rcode_, status);
+        if (rcode_ != 0) {
+            string reason = "";
+            if (comment_) {
+                reason = string(" (") + comment_->stringValue() + string(")");
+            }
+            ADD_FAILURE() << "Unable to " << operation << ". "
+                   << "The configuration function returned error code "
+                   << rcode_ << reason;
+            return (false);
+        }
+
+        return (true);
+    }
+
     /// @brief Reset configuration database.
     ///
     /// This function resets configuration data base by
@@ -242,48 +333,23 @@ public:
     /// contents of the database do not affect result of
     /// subsequent tests.
     void resetConfiguration() {
-        ConstElementPtr status;
-
-        string config = "{ \"interface\": [ \"all\" ],"
+        string config = "{ \"interfaces\": [ \"*\" ],"
+            "\"hooks-libraries\": [ ], "
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
             "\"valid-lifetime\": 4000, "
             "\"subnet4\": [ ], "
+            "\"dhcp-ddns\": { \"enable-updates\" : false }, "
             "\"option-def\": [ ], "
             "\"option-data\": [ ] }";
-
-        try {
-            ElementPtr json = Element::fromJSON(config);
-            status = configureDhcp4Server(*srv_, json);
-        } catch (const std::exception& ex) {
-            FAIL() << "Fatal error: unable to reset configuration database"
-                   << " after the test. The following configuration was used"
-                   << " to reset database: " << std::endl
-                   << config << std::endl
-                   << " and the following error message was returned:"
-                   << ex.what() << std::endl;
-        }
-
-        // status object must not be NULL
-        if (!status) {
-            FAIL() << "Fatal error: unable to reset configuration database"
-                   << " after the test. Configuration function returned"
-                   << " NULL pointer" << std::endl;
-        }
-
-        comment_ = parseAnswer(rcode_, status);
-        // returned value should be 0 (configuration success)
-        if (rcode_ != 0) {
-            FAIL() << "Fatal error: unable to reset configuration database"
-                   << " after the test. Configuration function returned"
-                   << " error code " << rcode_ << std::endl;
-        }
+        static_cast<void>(executeConfiguration(config,
+                                               "reset configuration database"));
     }
 
-    boost::scoped_ptr<Dhcpv4Srv> srv_;
 
-    int rcode_;
-    ConstElementPtr comment_;
+    boost::scoped_ptr<Dhcpv4Srv> srv_;      // DHCP4 server under test
+    int rcode_;                             // Return code from element parsing
+    ConstElementPtr comment_;               // Reason for parse fail
 };
 
 // Goal of this test is a verification if a very simple config update
@@ -321,7 +387,7 @@ TEST_F(Dhcp4ParserTest, emptySubnet) {
     ConstElementPtr status;
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_,
-                    Element::fromJSON("{ \"interface\": [ \"all\" ],"
+                    Element::fromJSON("{ \"interfaces\": [ \"*\" ],"
                                       "\"rebind-timer\": 2000, "
                                       "\"renew-timer\": 1000, "
                                       "\"subnet4\": [  ], "
@@ -341,7 +407,7 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -363,6 +429,379 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(4000, subnet->getValid());
+
+    // Check that subnet-id is 1
+    EXPECT_EQ(1, subnet->getID());
+}
+
+// Goal of this test is to verify that multiple subnets get unique
+// subnet-ids. Also, test checks that it's possible to do reconfiguration
+// multiple times.
+TEST_F(Dhcp4ParserTest, multipleSubnets) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"subnet\": \"192.0.4.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"subnet\": \"192.0.5.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    int cnt = 0; // Number of reconfigurations
+
+    do {
+        ElementPtr json = Element::fromJSON(config);
+
+        EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(0, rcode_);
+
+        const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+        ASSERT_TRUE(subnets);
+        ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+        // Check subnet-ids of each subnet (it should be monotonously increasing)
+        EXPECT_EQ(1, subnets->at(0)->getID());
+        EXPECT_EQ(2, subnets->at(1)->getID());
+        EXPECT_EQ(3, subnets->at(2)->getID());
+        EXPECT_EQ(4, subnets->at(3)->getID());
+
+        // Repeat reconfiguration process 10 times and check that the subnet-id
+        // is set to the same value. Technically, just two iterations would be
+        // sufficient, but it's nice to have a test that exercises reconfiguration
+        // a bit.
+    } while (++cnt < 10);
+}
+
+// Goal of this test is to verify that a previously configured subnet can be
+// deleted in subsequent reconfiguration.
+TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
+    ConstElementPtr x;
+
+    // All four subnets
+    string config4 = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"subnet\": \"192.0.4.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"subnet\": \"192.0.5.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Three subnets (the last one removed)
+    string config_first3 = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"subnet\": \"192.0.4.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Second subnet removed
+    string config_second_removed = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"subnet\": \"192.0.4.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"subnet\": \"192.0.5.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // CASE 1: Configure 4 subnets, then reconfigure and remove the
+    // last one.
+
+    ElementPtr json = Element::fromJSON(config4);
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+    // Do the reconfiguration (the last subnet is removed)
+    json = Element::fromJSON(config_first3);
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    subnets = CfgMgr::instance().getSubnets4();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size()); // We expect 3 subnets now (4th is removed)
+
+    // Check subnet-ids of each subnet (it should be monotonously increasing)
+    EXPECT_EQ(1, subnets->at(0)->getID());
+    EXPECT_EQ(2, subnets->at(1)->getID());
+    EXPECT_EQ(3, subnets->at(2)->getID());
+
+    /// CASE 2: Configure 4 subnets, then reconfigure and remove one
+    /// from in between (not first, not last)
+
+#if 0
+    /// @todo: Uncomment subnet removal test as part of #3281.
+    json = Element::fromJSON(config4);
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    // Do reconfiguration
+    json = Element::fromJSON(config_second_removed);
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    subnets = CfgMgr::instance().getSubnets4();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size()); // We expect 4 subnets
+
+    EXPECT_EQ(1, subnets->at(0)->getID());
+    // The second subnet (with subnet-id = 2) is no longer there
+    EXPECT_EQ(3, subnets->at(1)->getID());
+    EXPECT_EQ(4, subnets->at(2)->getID());
+#endif
+
+}
+
+/// @todo: implement subnet removal test as part of #3281.
+
+// Checks if the next-server defined as global parameter is taken into
+// consideration.
+TEST_F(Dhcp4ParserTest, nextServerGlobal) {
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"next-server\": \"1.2.3.4\", "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+}
+
+// Checks if the next-server defined as subnet parameter is taken into
+// consideration.
+TEST_F(Dhcp4ParserTest, nextServerSubnet) {
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"next-server\": \"1.2.3.4\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+}
+
+// Test checks several negative scenarios for next-server configuration: bogus
+// address, IPv6 adddress and empty string.
+TEST_F(Dhcp4ParserTest, nextServerNegative) {
+
+    ConstElementPtr status;
+
+    // Config with junk instead of next-server address
+    string config_bogus1 = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"next-server\": \"a.b.c.d\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Config with IPv6 next server address
+    string config_bogus2 = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"next-server\": \"2001:db8::1\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Config with empty next server address
+    string config_bogus3 = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"next-server\": \"\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json1 = Element::fromJSON(config_bogus1);
+    ElementPtr json2 = Element::fromJSON(config_bogus2);
+    ElementPtr json3 = Element::fromJSON(config_bogus3);
+
+    // check if returned status is always a failure
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json1));
+    checkResult(status, 1);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json2));
+    checkResult(status, 1);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json3));
+    checkResult(status, 0);
+}
+
+// Checks if the next-server defined as global value is overridden by subnet
+// specific value.
+TEST_F(Dhcp4ParserTest, nextServerOverride) {
+
+    ConstElementPtr status;
+
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"next-server\": \"192.0.0.1\", "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"next-server\": \"1.2.3.4\", "
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Now check if the configuration was indeed handled and we have
+    // expected pool configured.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
+}
+
+// Check whether it is possible to configure echo-client-id
+TEST_F(Dhcp4ParserTest, echoClientId) {
+
+    ConstElementPtr status;
+
+    string config_false = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"echo-client-id\": false,"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    string config_true = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"echo-client-id\": true,"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json_false = Element::fromJSON(config_false);
+    ElementPtr json_true = Element::fromJSON(config_true);
+
+    // Let's check the default. It should be true
+    ASSERT_TRUE(CfgMgr::instance().echoClientId());
+
+    // Now check that "false" configuration is really applied.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json_false));
+    ASSERT_FALSE(CfgMgr::instance().echoClientId());
+
+    // Now check that "true" configuration is really applied.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json_true));
+    ASSERT_TRUE(CfgMgr::instance().echoClientId());
+
+    // In any case revert back to the default value (true)
+    CfgMgr::instance().echoClientId(true);
 }
 
 // This test checks if it is possible to override global values
@@ -371,7 +810,7 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -402,7 +841,7 @@ TEST_F(Dhcp4ParserTest, poolOutOfSubnet) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -426,7 +865,7 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
 
     ConstElementPtr status;
 
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -948,7 +1387,7 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
 // configuration does not include options configuration.
 TEST_F(Dhcp4ParserTest, optionDataDefaults) {
     ConstElementPtr x;
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1021,7 +1460,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     // The definition is not required for the option that
     // belongs to the 'dhcp4' option space as it is the
     // standard option.
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1099,7 +1538,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     // at the very end (when all other parameters are configured).
 
     // Starting stage 1. Configure sub-options and their definitions.
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1148,7 +1587,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     // the configuration from the stage 2 is repeated because BIND
     // configuration manager sends whole configuration for the lists
     // where at least one element is being modified or added.
-    config = "{ \"interface\": [ \"all\" ],"
+    config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1244,7 +1683,7 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
 // option setting.
 TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
     ConstElementPtr x;
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"option-data\": [ {"
@@ -1316,7 +1755,7 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
 // for multiple subnets.
 TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     ConstElementPtr x;
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
@@ -1596,7 +2035,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     // In the first stahe we create definitions of suboptions
     // that we will add to the base option.
     // Let's create some dummy options: foo and foo2.
-    string config = "{ \"interface\": [ \"all\" ],"
+    string config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1649,7 +2088,7 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     // We add our dummy options to this option space and thus
     // they should be included as sub-options in the 'vendor-opts'
     // option.
-    config = "{ \"interface\": [ \"all\" ],"
+    config = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000,"
         "\"renew-timer\": 1000,"
         "\"option-data\": [ {"
@@ -1748,5 +2187,434 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     EXPECT_FALSE(desc.option->getOption(3));
 }
 
+// This test checks if vendor options can be specified in the config file
+// (in hex format), and later retrieved from configured subnet
+TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
 
-};
+    // This configuration string is to configure two options
+    // sharing the code 1 and belonging to the different vendor spaces.
+    // (different vendor-id values).
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"option-one\","
+        "    \"space\": \"vendor-4491\"," // VENDOR_ID_CABLE_LABS = 4491
+        "    \"code\": 100," // just a random code
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
+        " },"
+        " {"
+        "    \"name\": \"option-two\","
+        "    \"space\": \"vendor-1234\","
+        "    \"code\": 100,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": False"
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1-192.0.2.10\" ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Options should be now available for the subnet.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    ASSERT_TRUE(subnet);
+
+    // Try to get the option from the vendor space 4491
+    Subnet::OptionDescriptor desc1 = subnet->getVendorOptionDescriptor(VENDOR_ID_CABLE_LABS, 100);
+    ASSERT_TRUE(desc1.option);
+    EXPECT_EQ(100, desc1.option->getType());
+    // Try to get the option from the vendor space 1234
+    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(1234, 100);
+    ASSERT_TRUE(desc2.option);
+    EXPECT_EQ(100, desc1.option->getType());
+
+    // Try to get the non-existing option from the non-existing
+    // option space and  expect that option is not returned.
+    Subnet::OptionDescriptor desc3 = subnet->getVendorOptionDescriptor(5678, 100);
+    ASSERT_FALSE(desc3.option);
+}
+
+// This test checks if vendor options can be specified in the config file,
+// (in csv format), and later retrieved from configured subnet
+TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
+
+    // This configuration string is to configure two options
+    // sharing the code 1 and belonging to the different vendor spaces.
+    // (different vendor-id values).
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"vendor-4491\","
+        "    \"code\": 100,"
+        "    \"data\": \"this is a string vendor-opt\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 100,"
+        "    \"type\": \"string\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"vendor-4491\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " } ]"
+        "}";
+
+    ConstElementPtr status;
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // Options should be now available for the subnet.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    ASSERT_TRUE(subnet);
+
+    // Try to get the option from the vendor space 4491
+    Subnet::OptionDescriptor desc1 = subnet->getVendorOptionDescriptor(VENDOR_ID_CABLE_LABS, 100);
+    ASSERT_TRUE(desc1.option);
+    EXPECT_EQ(100, desc1.option->getType());
+
+    // Try to get the non-existing option from the non-existing
+    // option space and  expect that option is not returned.
+    Subnet::OptionDescriptor desc2 = subnet->getVendorOptionDescriptor(5678, 100);
+    ASSERT_FALSE(desc2.option);
+}
+
+
+
+// Tests of the hooks libraries configuration.  All tests have the pre-
+// condition (checked in the test fixture's SetUp() method) that no hooks
+// libraries are loaded at the start of the tests.
+
+// Helper function to return a configuration containing an arbitrary number
+// of hooks libraries.
+std::string
+buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
+    const string quote("\"");
+
+    // Create the first part of the configuration string.
+    string config =
+        "{ \"interfaces\": [ \"*\" ],"
+            "\"hooks-libraries\": [";
+
+    // Append the libraries (separated by commas if needed)
+    for (int i = 0; i < libraries.size(); ++i) {
+        if (i > 0) {
+            config += string(", ");
+        }
+        config += (quote + libraries[i] + quote);
+    }
+
+    // Append the remainder of the configuration.
+    config += string(
+        "],"
+        "\"rebind-timer\": 2000,"
+        "\"renew-timer\": 1000,"
+        "\"option-data\": [ {"
+        "    \"name\": \"dhcp-message\","
+        "    \"space\": \"dhcp4\","
+        "    \"code\": 56,"
+        "    \"data\": \"AB CDEF0105\","
+        "    \"csv-format\": False"
+        " },"
+        " {"
+        "    \"name\": \"foo\","
+        "    \"space\": \"isc\","
+        "    \"code\": 56,"
+        "    \"data\": \"1234\","
+        "    \"csv-format\": True"
+        " } ],"
+        "\"option-def\": [ {"
+        "    \"name\": \"foo\","
+        "    \"code\": 56,"
+        "    \"type\": \"uint32\","
+        "    \"array\": False,"
+        "    \"record-types\": \"\","
+        "    \"space\": \"isc\","
+        "    \"encapsulate\": \"\""
+        " } ],"
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        " } ]"
+        "}");
+
+    return (config);
+}
+
+// Convenience function for creating hooks library configuration with one or
+// two character string constants.
+std::string
+buildHooksLibrariesConfig(const char* library1 = NULL,
+                          const char* library2 = NULL) {
+    std::vector<std::string> libraries;
+    if (library1 != NULL) {
+        libraries.push_back(string(library1));
+        if (library2 != NULL) {
+            libraries.push_back(string(library2));
+        }
+    }
+    return (buildHooksLibrariesConfig(libraries));
+}
+
+
+// The goal of this test is to verify the configuration of hooks libraries if
+// none are specified.
+TEST_F(Dhcp4ParserTest, NoHooksLibraries) {
+    // Parse a configuration containing no names.
+    string config = buildHooksLibrariesConfig();
+    if (!executeConfiguration(config,
+                              "set configuration with no hooks libraries")) {
+        FAIL() << "Unable to execute configuration";
+
+    } else {
+        // No libraries should be loaded at the end of the test.
+        std::vector<std::string> libraries = HooksManager::getLibraryNames();
+        EXPECT_TRUE(libraries.empty());
+    }
+}
+
+// Verify parsing fails with one library that will fail validation.
+TEST_F(Dhcp4ParserTest, InvalidLibrary) {
+    // Parse a configuration containing a failing library.
+    string config = buildHooksLibrariesConfig(NOT_PRESENT_LIBRARY);
+
+    ConstElementPtr status;
+    ElementPtr json = Element::fromJSON(config);
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // The status object must not be NULL
+    ASSERT_TRUE(status);
+
+    // Returned value should not be 0
+    comment_ = parseAnswer(rcode_, status);
+    EXPECT_NE(0, rcode_);
+}
+
+// Verify the configuration of hooks libraries with two being specified.
+TEST_F(Dhcp4ParserTest, LibrariesSpecified) {
+    // Marker files should not be present.
+    EXPECT_FALSE(checkMarkerFileExists(LOAD_MARKER_FILE));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Set up the configuration with two libraries and load them.
+    string config = buildHooksLibrariesConfig(CALLOUT_LIBRARY_1,
+                                              CALLOUT_LIBRARY_2);
+    ASSERT_TRUE(executeConfiguration(config,
+                                     "load two valid libraries"));
+
+    // Expect two libraries to be loaded in the correct order (load marker file
+    // is present, no unload marker file).
+    std::vector<std::string> libraries = HooksManager::getLibraryNames();
+    ASSERT_EQ(2, libraries.size());
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_FALSE(checkMarkerFileExists(UNLOAD_MARKER_FILE));
+
+    // Unload the libraries.  The load file should not have changed, but
+    // the unload one should indicate the unload() functions have been run.
+    config = buildHooksLibrariesConfig();
+    ASSERT_TRUE(executeConfiguration(config, "unloading libraries"));
+    EXPECT_TRUE(checkMarkerFile(LOAD_MARKER_FILE, "12"));
+    EXPECT_TRUE(checkMarkerFile(UNLOAD_MARKER_FILE, "21"));
+
+    // Expect the hooks system to say that none are loaded.
+    libraries = HooksManager::getLibraryNames();
+    EXPECT_TRUE(libraries.empty());
+
+}
+
+// This test verifies that it is possible to select subset of interfaces
+// on which server should listen.
+TEST_F(Dhcp4ParserTest, selectedInterfaces) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"eth0\", \"eth1\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+
+    // Make sure the config manager is clean and there is no hanging
+    // interface configuration.
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+
+    // Apply configuration.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // eth0 and eth1 were explicitly selected. eth2 was not.
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth1"));
+    EXPECT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+}
+
+// This test verifies that it is possible to configure the server in such a way
+// that it listens on all interfaces.
+TEST_F(Dhcp4ParserTest, allInterfaces) {
+    ConstElementPtr x;
+    // This configuration specifies two interfaces on which server should listen
+    // but it also includes asterisk. The asterisk switches server into the
+    // mode when it listens on all interfaces regardless of what interface names
+    // were specified in the "interfaces" parameter.
+    string config = "{ \"interfaces\": [ \"eth0\", \"*\", \"eth1\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    ConstElementPtr status;
+
+    // Make sure there is no old configuration.
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth0"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth1"));
+    ASSERT_FALSE(CfgMgr::instance().isActiveIface("eth2"));
+
+    // Apply configuration.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    checkResult(status, 0);
+
+    // All interfaces should be now active.
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth1"));
+    EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth2"));
+}
+
+// This test checks the ability of the server to parse a configuration
+// containing a full, valid dhcp-ddns (D2ClientConfig) entry.
+TEST_F(Dhcp4ParserTest, d2ClientConfig) {
+    ConstElementPtr status;
+
+    // Verify that the D2 configuraiton can be fetched and is set to disabled.
+    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify that the convenience method agrees.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    string config_str = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-port\" : 777, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"remove-on-renew\" : true, "
+        "     \"always-include-fqdn\" : true, "
+        "     \"allow-client-update\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "\"valid-lifetime\": 4000 }";
+
+    // Convert the JSON string to configuration elements.
+    ElementPtr config;
+    ASSERT_NO_THROW(config = Element::fromJSON(config_str));
+
+    // Pass the configuration in for parsing.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Verify that DHCP-DDNS updating is enabled.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Verify that the D2 configuration can be retrieved.
+    d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are correct.
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(777, d2_client_config->getServerPort());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_TRUE(d2_client_config->getRemoveOnRenew());
+    EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
+    EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_TRUE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+}
+
+// This test checks the ability of the server to handle a configuration
+// containing an invalid dhcp-ddns (D2ClientConfig) entry.
+TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
+    ConstElementPtr status;
+
+    // Configuration string with an invalid D2 client config,
+    // "server-ip" is missing.
+    string config_str = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-port\" : 5301, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"remove-on-renew\" : true, "
+        "     \"always-include-fqdn\" : true, "
+        "     \"allow-client-update\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "\"valid-lifetime\": 4000 }";
+
+    // Convert the JSON string to configuration elements.
+    ElementPtr config;
+    ASSERT_NO_THROW(config = Element::fromJSON(config_str));
+
+    // Configuration should not throw, but should fail.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
+
+    // check if returned status is failed.
+    checkResult(status, 1);
+
+    // Verify that the D2 configuraiton can be fetched and is set to disabled.
+    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify that the convenience method agrees.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+}
+
+}

@@ -18,7 +18,8 @@
 # and inspect the results.
 #
 # Like querying.py, it uses dig to do the transfers, and
-# places its output in a result structure
+# places its output in a result structure.  It also uses a custom client
+# implementation for less normal operations.
 #
 # This is done in a different file with different steps than
 # querying, because the format of dig's output is
@@ -58,7 +59,16 @@ class TransferResult(object):
             if len(line) > 0 and line[0] != ';':
                 self.records.append(line)
 
-@step('An AXFR transfer of ([\w.]+)(?: from ([^:]+|\[[0-9a-fA-F:]+\])(?::([0-9]+))?)?')
+def parse_addr_port(address, port):
+    if address is None:
+        address = "::1"         # default address
+    # convert [IPv6_addr] to IPv6_addr:
+    address = re.sub(r"\[(.+)\]", r"\1", address)
+    if port is None:
+        port = 47806            # default port
+    return (address, port)
+
+@step('An AXFR transfer of ([\w.]+)(?: from ([\d.]+|\[[0-9a-fA-F:]+\])(?::([0-9]+))?)?')
 def perform_axfr(step, zone_name, address, port):
     """
     Perform an AXFR transfer, and store the result as an instance of
@@ -70,14 +80,59 @@ def perform_axfr(step, zone_name, address, port):
     Address defaults to ::1
     Port defaults to 47806
     """
-    if address is None:
-        address = "::1"
-    # convert [IPv6_addr] to IPv6_addr:
-    address = re.sub(r"\[(.+)\]", r"\1", address)
-    if port is None:
-        port = 47806
+    (address, port) = parse_addr_port(address, port)
     args = [ 'dig', 'AXFR', '@' + str(address), '-p', str(port), zone_name ]
     world.transfer_result = TransferResult(args)
+
+@step('A customized AXFR transfer of ([\w.]+)(?: from ([\d.]+|\[[0-9a-fA-F:]+\])(?::([0-9]+))?)?(?: with pose of (\d+) seconds?)?')
+def perform_custom_axfr(step, zone_name, address, port, delay):
+    """Checks AXFR transfer, and store the result in the form of internal
+    CustomTransferResult class, which is compatible with TransferResult.
+
+    Step definition:
+    A customized AXFR transfer of <zone_name> [from <address>:<port>] [with pose of <delay> second]
+
+    If optional delay is specified (not None), it waits for the specified
+    seconds after sending the AXFR query before starting receiving
+    responses.  This emulates a slower AXFR client.
+
+    """
+
+    class CustomTransferResult:
+        """Store transfer result only on the number of received answer RRs.
+
+        To be compatible with TransferResult it stores the result in the
+        'records' attribute, which is a list.  But its content is
+        meaningless; its only use is to be used with
+        check_transfer_result_count where its length is of concern.
+
+        """
+        def __init__(self):
+            self.records = []
+
+    # Build arguments and run xfr-client.py.  On success, it simply dumps
+    # the number of received answer RRs to stdout.
+    (address, port) = parse_addr_port(address, port)
+    args = ['/bin/sh', 'run_python-tool.sh', 'tools/xfr-client.py',
+            '-s', address, '-p', str(port)]
+    if delay is not None:
+        args.extend(['-d', delay])
+    args.append(zone_name)
+    client = subprocess.Popen(args, 1, None, None, subprocess.PIPE,
+                              subprocess.PIPE)
+    (stdout, stderr) = client.communicate()
+    result = client.returncode
+    world.last_client_stdout = stdout
+    world.last_client_stderr = stderr
+    assert result == 0, "xfr-client exit code: " + str(result) +\
+                        "\nstdout:\n" + str(stdout) +\
+                        "stderr:\n" + str(stderr)
+    num_rrs = int(stdout.strip())
+
+    # Make the result object, storing dummy value (None) for the number of
+    # answer RRs in the records list.
+    world.transfer_result = CustomTransferResult()
+    world.transfer_result.records = [None for _ in range(0, num_rrs)]
 
 @step('An IXFR transfer of ([\w.]+) (\d+)(?: from ([^:]+)(?::([0-9]+))?)?(?: over (tcp|udp))?')
 def perform_ixfr(step, zone_name, serial, address, port, protocol):

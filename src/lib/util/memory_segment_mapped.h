@@ -150,7 +150,14 @@ public:
 
     /// \brief Allocate/acquire a segment of memory.
     ///
-    /// This version can throw \c MemorySegmentGrown.
+    /// This version can throw \c MemorySegmentGrown.  Furthermore, there is
+    /// a very small chance that the object loses its integrity and can't be
+    /// usable in the case where \c MemorySegmentGrown would be thrown.
+    /// In this case, throwing a different exception wouldn't help, because
+    /// an application trying to provide exception safety might then call
+    /// deallocate() or named address APIs on this object, which would simply
+    /// cause a crash.  So, while suboptimal, this method just aborts the
+    /// program in this case, indicating there's no hope to shutdown cleanly.
     ///
     /// This method cannot be called if the segment object is created in the
     /// read-only mode; in that case MemorySegmentError will be thrown.
@@ -195,7 +202,7 @@ public:
     /// \brief Mapped segment version of getNamedAddress.
     ///
     /// This version never throws.
-    virtual void* getNamedAddressImpl(const char* name);
+    virtual NamedAddressResult getNamedAddressImpl(const char* name) const;
 
     /// \brief Mapped segment version of clearNamedAddress.
     ///

@@ -6,9 +6,6 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 if USE_GXX			#XXX: see ../Makefile.am
 AM_CXXFLAGS += -Wno-unused-parameter
 endif
-if USE_CLANGPP
-AM_CXXFLAGS += -Wno-error
-endif
 
 if USE_STATIC_LINK
 AM_LDFLAGS = -static
