@@ -526,7 +526,7 @@ IfaceMgr::openSockets6(const uint16_t port,
             // with interface with 2 global addresses, we would bind 3 sockets
             // (one for link-local and two for global). That would result in
             // getting each message 3 times.
-            if (!addr->getAddress().to_v6().is_link_local()){
+            if (!addr->isV6LinkLocal()){
                 continue;
             }
 
@@ -742,7 +742,7 @@ int IfaceMgr::openSocketFromRemoteAddress(const IOAddress& remote_addr,
                                           const uint16_t port) {
     try {
         // Get local address to be used to connect to remote location.
-        IOAddress local_address(getLocalAddress(remote_addr, port).getAddress());
+        IOAddress local_address(getLocalAddress(remote_addr, port));
         return openSocketFromAddress(local_address, port);
     } catch (const Exception& e) {
         isc_throw(SocketConfigError, e.what());
@@ -1073,7 +1073,7 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
         }
 
         // Sockets bound to multicast address are useless for sending anything.
-        if (s->addr_.getAddress().to_v6().is_multicast()) {
+        if (s->addr_.isV6Multicast()) {
             continue;
         }
 
@@ -1090,10 +1090,10 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
             // If we want to send something to link-local and the socket is
             // bound to link-local or we want to send to global and the socket
             // is bound to global, then use it as candidate
-            if ( (pkt.getRemoteAddr().getAddress().to_v6().is_link_local() &&
-                s->addr_.getAddress().to_v6().is_link_local()) ||
-                 (!pkt.getRemoteAddr().getAddress().to_v6().is_link_local() &&
-                  !s->addr_.getAddress().to_v6().is_link_local()) ) {
+            if ( (pkt.getRemoteAddr().isV6LinkLocal() &&
+                s->addr_.isV6LinkLocal()) ||
+                 (!pkt.getRemoteAddr().isV6LinkLocal() &&
+                  !s->addr_.isV6LinkLocal()) ) {
                 candidate = s;
             }
         }
