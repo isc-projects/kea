@@ -316,6 +316,9 @@ bool Dhcpv6Srv::run() {
             callout_handle->getArgument("query6", query);
         }
 
+        // Assign this packet to a class, if possible
+        classifyPacket(query);
+
         try {
                 NameChangeRequestPtr ncr;
             switch (query->getType()) {
@@ -2421,6 +2424,40 @@ void
 Dhcpv6Srv::ifaceMgrSocket6ErrorHandler(const std::string& errmsg) {
     // Log the reason for socket opening failure and return.
     LOG_WARN(dhcp6_logger, DHCP6_OPEN_SOCKET_FAIL).arg(errmsg);
+}
+
+void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
+
+    boost::shared_ptr<OptionCustom> vclass =
+        boost::dynamic_pointer_cast<OptionCustom>(pkt->getOption(D6O_VENDOR_CLASS));
+
+    if (!vclass) {
+        return;
+    }
+
+    string classes = "";
+
+    // DOCSIS specific section
+    if (vclass->readString(VENDOR_CLASS_STRING_INDEX)
+        .find(DOCSIS3_CLASS_MODEM) != std::string::npos) {
+        pkt->addClass(DOCSIS3_CLASS_MODEM);
+        classes += string(DOCSIS3_CLASS_MODEM) + " ";
+    } else
+    if (vclass->readString(VENDOR_CLASS_STRING_INDEX)
+        .find(DOCSIS3_CLASS_EROUTER) != std::string::npos) {
+        pkt->addClass(DOCSIS3_CLASS_EROUTER);
+        classes += string(DOCSIS3_CLASS_EROUTER) + " ";
+    }else
+    {
+        // Otherwise use the string as is
+        classes += vclass->readString(VENDOR_CLASS_STRING_INDEX);
+        pkt->addClass(vclass->readString(VENDOR_CLASS_STRING_INDEX));
+    }
+
+    if (!classes.empty()) {
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
+            .arg(classes);
+    }
 }
 
 };

@@ -480,7 +480,17 @@ Pkt4::isRelayed() const {
               << static_cast<int>(getHops()) << ". Valid values"
               " are: (giaddr = 0 and hops = 0) or (giaddr != 0 and"
               "hops != 0)");
+}
 
+bool Pkt4::inClass(const std::string& client_class) {
+    return (classes_.find(client_class) != classes_.end());
+}
+
+void
+Pkt4::addClass(const std::string& client_class) {
+    if (classes_.find(client_class) == classes_.end()) {
+        classes_.insert(client_class);
+    }
 }
 
 } // end of namespace isc::dhcp

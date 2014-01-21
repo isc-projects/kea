@@ -1,3 +1,13 @@
+732.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: Support for simplified client classification
+        added. Incoming packets are now assigned to a client class based on
+	the content of the packet's user class option (DHCPv4) or vendor class
+	option (DHCPv6). Two classes (docsis3.0 and eRouter1.0) have class
+	specific behavior in b10-dhcp4. See DHCPv4 Client Classification and
+	DHCPv6 Client Classification in BIND10 Developer's Guide for details.
+	This is a first ticket in a series of planned at least three tickets.
+	(Trac #3203, git afea612c23143f81a4201e39ba793bc837c5c9f1)
+
 731.	[func]		tmark
 	b10-dhcp4 now parses parameters which support DHCP-DDNS updates via
 	the DHCP-DDNS module, b10-dhcp-ddns.  These parameters are part of new
