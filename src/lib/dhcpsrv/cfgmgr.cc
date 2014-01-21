@@ -152,7 +152,7 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     // configuration. Such requirement makes sense in IPv4, but not in IPv6.
     // The server does not need to have a global address (using just link-local
     // is ok for DHCPv6 server) from the pool it serves.
-    if ((subnets6_.size() == 1) && hint.getAddress().to_v6().is_link_local()) {
+    if ((subnets6_.size() == 1) && hint.isV6LinkLocal()) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                   DHCPSRV_CFGMGR_ONLY_SUBNET6)
                   .arg(subnets6_[0]->toText()).arg(hint.toText());
