@@ -693,8 +693,7 @@ TEST_F(OptionDefinitionTest, boolValue) {
 
     // Try to provide zero-length buffer. Expect exception.
     EXPECT_THROW(
-        option_v4 = opt_def.optionFactory(Option::V6, DHO_IP_FORWARDING,
-                                          OptionBuffer()),
+        opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING, OptionBuffer()),
         InvalidOptionValue
     );
 
@@ -711,10 +710,8 @@ TEST_F(OptionDefinitionTest, boolTokenized) {
 
     OptionPtr option_v4;
     std::vector<std::string> values;
-    // Provide two boolean values. It is expected that only the first
-    // one will be used.
+    // Specify a value for the option instance being created.
     values.push_back("true");
-    values.push_back("false");
     ASSERT_NO_THROW(
         option_v4 = opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING,
                                           values);
@@ -727,7 +724,6 @@ TEST_F(OptionDefinitionTest, boolTokenized) {
 
     // Repeat the test but for "false" value this time.
     values[0] = "false";
-    values[1] = "true";
     ASSERT_NO_THROW(
         option_v4 = opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING,
                                           values);
@@ -739,7 +735,6 @@ TEST_F(OptionDefinitionTest, boolTokenized) {
 
     // Check if that will work for numeric values.
     values[0] = "0";
-    values[1] = "1";
     ASSERT_NO_THROW(
         option_v4 = opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING,
                                           values);
@@ -751,7 +746,6 @@ TEST_F(OptionDefinitionTest, boolTokenized) {
 
     // Swap numeric values and test if it works for "true" case.
     values[0] = "1";
-    values[1] = "0";
     ASSERT_NO_THROW(
         option_v4 = opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING,
                                           values);
@@ -764,14 +758,12 @@ TEST_F(OptionDefinitionTest, boolTokenized) {
     // A conversion of non-numeric value to boolean should fail if
     // this value is neither "true" nor "false".
     values[0] = "garbage";
-    values[1] = "false";
     EXPECT_THROW(opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING, values),
       isc::dhcp::BadDataTypeCast);
 
     // A conversion of numeric value to boolean should fail if this value
     // is neither "0" nor "1".
     values[0] = "2";
-    values[1] = "0";
     EXPECT_THROW(opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING, values),
       isc::dhcp::BadDataTypeCast);
 

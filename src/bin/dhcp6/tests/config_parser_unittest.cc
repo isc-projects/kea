@@ -2198,7 +2198,7 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
                sizeof(user_class_expected));
 }
 
-// The goal of this test is to check that the option carrying a bolean
+// The goal of this test is to check that the option carrying a boolean
 // value can be configured using one of the values: "true", "false", "0"
 // or "1".
 TEST_F(Dhcp6ParserTest, optionDataBoolean) {
