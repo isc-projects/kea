@@ -17,6 +17,31 @@
 # variables to python scripts and libraries.
 import os
 
+def get_specfile_location(module_name):
+    """Return the path to the module spec file following common convetion.
+
+    This method generates the path commonly used by most BIND 10
+    modules, determined by a well known prefix and the module name.
+
+    A specific module can override this method if it uses a different
+    path for the spec file.
+
+    """
+    # First check if it's running under an 'in-source' environment,
+    # then try commonly used paths and file names.  If found, use it.
+    for ev in ['B10_FROM_SOURCE', 'B10_FROM_BUILD']:
+        if ev in os.environ:
+            specfile = os.environ[ev] + '/src/bin/' + module_name + \
+                       '/' + module_name + '.spec'
+            if os.path.exists(specfile):
+                return specfile
+    # Otherwise, just use the installed path, whether or not it really
+    # exists; leave error handling to the caller.
+    specfile_path = '@datadir@/@PACKAGE@'\
+        .replace('${datarootdir}', '@datarootdir@')\
+        .replace('${prefix}', '@prefix@')
+    return specfile_path + '/' + module_name + '.spec'
+
 def reload():
     # In a function, for testing purposes
     global BIND10_MSGQ_SOCKET_FILE

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -30,10 +30,28 @@ namespace dhcp {
 
 Option6IA::Option6IA(uint16_t type, uint32_t iaid)
     :Option(Option::V6, type), iaid_(iaid), t1_(0), t2_(0) {
+
+    // IA_TA has different layout than IA_NA and IA_PD. We can't sue this class
+    if (type == D6O_IA_TA) {
+        isc_throw(BadValue, "Can't use Option6IA for IA_TA as it has "
+                  "a different layout");
+    }
+
+    setEncapsulatedSpace("dhcp6");
 }
 
-Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin, OptionBufferConstIter end)
+Option6IA::Option6IA(uint16_t type, OptionBufferConstIter begin,
+                     OptionBufferConstIter end)
     :Option(Option::V6, type) {
+
+    // IA_TA has different layout than IA_NA and IA_PD. We can't use this class
+    if (type == D6O_IA_TA) {
+        isc_throw(BadValue, "Can't use Option6IA for IA_TA as it has "
+                  "a different layout");
+    }
+
+    setEncapsulatedSpace("dhcp6");
+
     unpack(begin, end);
 }
 
@@ -99,7 +117,7 @@ uint16_t Option6IA::len() {
         OPTION6_IA_LEN  /* option content (12) */;
 
     // length of all suboptions
-    for (Option::OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();

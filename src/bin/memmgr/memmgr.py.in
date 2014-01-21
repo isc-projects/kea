@@ -1,0 +1,261 @@
+#!@PYTHON@
+
+# Copyright (C) 2013  Internet Systems Consortium.
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SYSTEMS CONSORTIUM
+# DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL
+# INTERNET SYSTEMS CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT,
+# INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+# FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+# NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+# WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+import copy
+import os
+import sys
+import signal
+import socket
+import threading
+
+sys.path.append('@@PYTHONPATH@@')
+import isc.log
+from isc.config import ModuleSpecError, ModuleCCSessionError
+from isc.log_messages.memmgr_messages import *
+from isc.server_common.bind10_server import BIND10Server, BIND10ServerFatal
+from isc.server_common.datasrc_clients_mgr \
+    import DataSrcClientsMgr, ConfigError
+from isc.memmgr.datasrc_info import DataSrcInfo, SegmentInfo
+from isc.memmgr.builder import MemorySegmentBuilder
+import isc.util.process
+import isc.util.traceback_handler
+
+MODULE_NAME = 'memmgr'
+
+isc.log.init('b10-memmgr', buffer=True)
+logger = isc.log.Logger(MODULE_NAME)
+
+isc.util.process.rename()
+
+class ConfigError(Exception):
+    """An exception class raised for configuration errors of Memmgr."""
+    pass
+
+class Memmgr(BIND10Server):
+    def __init__(self):
+        BIND10Server.__init__(self)
+        # Running configurable parameters: on initial configuration this will
+        # be a dict: str=>config_value.
+        # This is defined as "protected" so tests can inspect it; others
+        # shouldn't use it directly.
+        self._config_params = None
+
+        # The manager to keep track of data source configuration.  Allow
+        # tests to inspect/tweak it.
+        self._datasrc_clients_mgr = DataSrcClientsMgr(use_cache=True)
+
+        # List of DataSrcInfo.  Used as a queue to maintain info for all
+        # active configuration generations.  Allow tests to inspec it.
+        self._datasrc_info_list = []
+
+        self._builder_setup = False
+        self._builder_command_queue = []
+        self._builder_response_queue = []
+
+    def _config_handler(self, new_config):
+        """Configuration handler, called via BIND10Server.
+
+        This method must be exception free.  We assume minimum validity
+        about the parameter, though: it should be a valid dict, and conform
+        to the type specification of the spec file.
+
+        """
+        logger.debug(logger.DBGLVL_TRACE_BASIC, MEMMGR_CONFIG_UPDATE)
+
+        # Default answer:
+        answer = isc.config.create_answer(0)
+
+        # If this is the first time, initialize the local attributes with the
+        # latest full config data, which consist of the defaults with
+        # possibly overridden by user config.  Otherwise, just apply the latest
+        # diff.
+        if self._config_params is None:
+            new_config = self.mod_ccsession.get_full_config()
+        try:
+            self.__update_config(new_config)
+        except Exception as ex:
+            logger.error(MEMMGR_CONFIG_FAIL, ex)
+            answer = isc.config.create_answer(
+                1, 'Memmgr failed to apply configuration updates: ' + str(ex))
+
+        return answer
+
+    def __update_config(self, new_config):
+        """Apply config changes to local attributes.
+
+        This is a subroutine of _config_handler.  It's supposed to provide
+        strong exception guarantee: either all changes successfully apply
+        or, if any error is found, none applies.  In the latter case the
+        entire original configuration should be kept.
+
+        Errors are to be reported as an exception.
+
+        """
+        # If this is the first time, build everything from the scratch.
+        # Otherwise, make a full local copy and update it.
+        if self._config_params is None:
+            new_config_params = {}
+        else:
+            new_config_params = copy.deepcopy(self._config_params)
+
+        new_mapped_file_dir = new_config.get('mapped_file_dir')
+        if new_mapped_file_dir is not None:
+            if not os.path.isdir(new_mapped_file_dir):
+                raise ConfigError('mapped_file_dir is not a directory: ' +
+                                  new_mapped_file_dir)
+            if not os.access(new_mapped_file_dir, os.W_OK):
+                raise ConfigError('mapped_file_dir is not writable: ' +
+                                  new_mapped_file_dir)
+            new_config_params['mapped_file_dir'] = new_mapped_file_dir
+
+        # All copy, switch to the new configuration.
+        self._config_params = new_config_params
+
+    def _cmd_to_builder(self, cmd):
+        """
+        Send a command to the builder, with proper synchronization.
+        """
+        assert isinstance(cmd, tuple)
+        with self._builder_cv:
+            self._builder_command_queue.append(cmd)
+            self._builder_cv.notify_all()
+
+    def _notify_from_builder(self):
+        """
+        Read the notifications from the builder thread.
+        """
+        self._master_sock.recv(1) # Clear the wake-up data
+        notifications = None
+        with self._builder_lock:
+            # Copy the notifications out and clear them from the
+            # original list. We may not assign [] to
+            # self._builder_response_queue to clear it, because there's
+            # another reference to it from the other thread and it would
+            # not keep the original list.
+            notifications = self._builder_response_queue[:]
+            del self._builder_response_queue[:]
+        for notification in notifications:
+            notif_name = notification[0]
+            if notif_name == 'load-completed':
+                (_, dsrc_info, rrclass, dsrc_name) = notification
+                sgmt_info = dsrc_info.segment_info_map[(rrclass, dsrc_name)]
+                cmd = sgmt_info.complete_update()
+                # It may return another load command on the same data source.
+                # If it is so, we execute it too, before we start
+                # synchronizing with the readers.
+                if cmd is not None:
+                    self._cmd_to_builder(cmd)
+                else:
+                    pass
+                    # TODO: Send to the readers, #2858
+            else:
+                raise ValueError('Unknown notification name: ' + notif_name)
+
+    def __create_builder_thread(self):
+        # We get responses from the builder thread on this socket pair.
+        (self._master_sock, self._builder_sock) = \
+            socket.socketpair(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.watch_fileno(self._master_sock, rcallback=self._notify_from_builder)
+
+        # See the documentation for MemorySegmentBuilder on how the
+        # following are used.
+        self._builder_lock = threading.Lock()
+        self._builder_cv = threading.Condition(lock=self._builder_lock)
+
+        self._builder = MemorySegmentBuilder(self._builder_sock,
+                                             self._builder_cv,
+                                             self._builder_command_queue,
+                                             self._builder_response_queue)
+        self._builder_thread = threading.Thread(target=self._builder.run)
+        self._builder_thread.start()
+
+        self._builder_setup = True
+
+    def __shutdown_builder_thread(self):
+        # Some unittests do not create the builder thread, so we check
+        # that.
+        if not self._builder_setup:
+            return
+
+        self._builder_setup = False
+
+        # This makes the MemorySegmentBuilder exit its main loop. It
+        # should make the builder thread joinable.
+        self._cmd_to_builder(('shutdown',))
+
+        self._builder_thread.join()
+
+        self._master_sock.close()
+        self._builder_sock.close()
+
+    def _setup_module(self):
+        """Module specific initialization for BIND10Server."""
+        try:
+            # memmgr isn't usable if data source is not configured, and
+            # as long as cfgmgr is ready there's no timing issue.  So we
+            # immediately shut it down if it's missing.  See ddns.py.in
+            # about exceptions to catch.
+            self.mod_ccsession.add_remote_config_by_name(
+                'data_sources', self._datasrc_config_handler)
+        except (ModuleSpecError, ModuleCCSessionError) as ex:
+            logger.error(MEMMGR_NO_DATASRC_CONF, ex)
+            raise BIND10ServerFatal('failed to setup memmgr module')
+
+        self.__create_builder_thread()
+
+    def _shutdown_module(self):
+        """Module specific finalization."""
+        self.__shutdown_builder_thread()
+
+    def _datasrc_config_handler(self, new_config, config_data):
+        """Callback of data_sources configuration update.
+
+        This method must be exception free, so we catch all expected
+        exceptions internally; unexpected ones should mean a programming
+        error and will terminate the program.
+
+        """
+        try:
+            self._datasrc_clients_mgr.reconfigure(new_config, config_data)
+            genid, clients_map = self._datasrc_clients_mgr.get_clients_map()
+            datasrc_info = DataSrcInfo(genid, clients_map, self._config_params)
+            self._datasrc_info_list.append(datasrc_info)
+            self._init_segments(datasrc_info)
+
+            # Full datasrc reconfig will be rare, so would be worth logging
+            # at the info level.
+            logger.info(MEMMGR_DATASRC_RECONFIGURED, genid)
+
+        except isc.server_common.datasrc_clients_mgr.ConfigError as ex:
+            logger.error(MEMMGR_DATASRC_CONFIG_ERROR, ex)
+
+    def _init_segments(self, datasrc_info):
+        for key, sgmt_info in datasrc_info.segment_info_map.items():
+            rrclass, dsrc_name = key
+            cmd = ('load', None, datasrc_info, rrclass, dsrc_name)
+            sgmt_info.add_event(cmd)
+            send_cmd = sgmt_info.start_update()
+            assert cmd == send_cmd and sgmt_info.get_state() == \
+                SegmentInfo.UPDATING
+            self._cmd_to_builder(cmd)
+
+def main():
+    mgr = Memmgr()
+    sys.exit(mgr.run(MODULE_NAME))
+
+if '__main__' == __name__:
+    isc.util.traceback_handler.traceback_handler(main)

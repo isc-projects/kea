@@ -220,6 +220,9 @@ class ModuleCCSession(ConfigData):
         self._remote_module_configs = {}
         self._remote_module_callbacks = {}
 
+        self._notification_callbacks = {}
+        self._last_notif_id = 0
+
         if handle_logging_config:
             self.add_remote_config(path_search('logging.spec', bind10_config.PLUGIN_PATHS),
                                    default_logconfig_handler)
@@ -294,8 +297,27 @@ class ModuleCCSession(ConfigData):
            configuration update. Calls the corresponding handler
            functions if present. Responds on the channel if the
            handler returns a message."""
-        # should we default to an answer? success-by-default? unhandled error?
-        if msg is not None and not CC_PAYLOAD_RESULT in msg:
+        if msg is None:
+            return
+        if CC_PAYLOAD_NOTIFICATION in msg:
+            group_s = env[CC_HEADER_GROUP].split('/', 1)
+            # What to do with these bogus inputs? We just ignore them for now.
+            if len(group_s) != 2:
+                return
+            [prefix, group] = group_s
+            if prefix + '/' != CC_GROUP_NOTIFICATION_PREFIX:
+                return
+            # Now, get the callbacks and call one by one
+            callbacks = self._notification_callbacks.get(group, {})
+            event = msg[CC_PAYLOAD_NOTIFICATION][0]
+            params = None
+            if len(msg[CC_PAYLOAD_NOTIFICATION]) > 1:
+                params = msg[CC_PAYLOAD_NOTIFICATION][1]
+            for key in sorted(callbacks.keys()):
+                callbacks[key](event, params)
+        elif not CC_PAYLOAD_RESULT in msg:
+            # should we default to an answer? success-by-default? unhandled
+            # error?
             answer = None
             try:
                 module_name = env[CC_HEADER_GROUP]
@@ -538,6 +560,100 @@ class ModuleCCSession(ConfigData):
         elif code != CC_REPLY_SUCCESS:
             raise RPCError(code, value)
         return value
+
+    def notify(self, notification_group, event_name, params=None):
+        """
+        Send a notification to subscribed users.
+
+        Send a notification message to all users subscribed to the given
+        notification group.
+
+        This method does not block.
+
+        See docs/design/ipc-high.txt for details about notifications
+        and the format of messages sent.
+
+        Throws:
+        - CCSessionError: for low-level communication errors.
+        Params:
+        - notification_group (string): This parameter (indirectly) signifies
+          what users should receive the notification. Only users that
+          subscribed to notifications on the same group receive it.
+        - event_name (string): The name of the event to notify about (for
+          example `new_group_member`).
+        - params: Other parameters that describe the event. This might be, for
+          example, the ID of the new member and the name of the group. This can
+          be any data that can be sent over the isc.cc.Session, but it is
+          common for it to be dict.
+        Returns: Nothing
+        """
+        notification = [event_name]
+        if params is not None:
+            notification.append(params)
+        self._session.group_sendmsg({CC_PAYLOAD_NOTIFICATION: notification},
+                                    CC_GROUP_NOTIFICATION_PREFIX +
+                                    notification_group,
+                                    instance=CC_INSTANCE_WILDCARD,
+                                    to=CC_TO_WILDCARD,
+                                    want_answer=False)
+
+    def subscribe_notification(self, notification_group, callback):
+        """
+        Subscribe to receive notifications in given notification group. When a
+        notification comes to the group, the callback is called with two
+        parameters, the name of the event (the value of `event_name` parameter
+        passed to `notify`) and the parameters of the event (the value
+        of `params` passed to `notify`).
+
+        This is a fast operation (there may be communication with the message
+        queue daemon, but it does not wait for any remote process).
+
+        The callback may get called multiple times (once for each notification).
+        It is possible to subscribe multiple callbacks for the same notification,
+        by multiple calls of this method, and they will be called in the order
+        of registration when the notification comes.
+
+        Throws:
+        - CCSessionError: for low-level communication errors.
+        Params:
+        - notification_group (string): Notification group to subscribe to.
+          Notification with the same value of the same parameter of `notify`
+          will be received.
+        - callback (callable): The callback to be called whenever the
+          notification comes.
+
+          The callback should not raise exceptions, such exceptions are
+          likely to propagate through the loop and terminate program.
+        Returns: Opaque id of the subscription. It can be used to cancel
+          the subscription by unsubscribe_notification.
+        """
+        self._last_notif_id += 1
+        my_id = self._last_notif_id
+        if notification_group in self._notification_callbacks:
+            self._notification_callbacks[notification_group][my_id] = callback
+        else:
+            self._session.group_subscribe(CC_GROUP_NOTIFICATION_PREFIX +
+                                          notification_group)
+            self._notification_callbacks[notification_group] = \
+                { my_id: callback }
+        return (notification_group, my_id)
+
+    def unsubscribe_notification(self, nid):
+        """
+        Remove previous subscription for notifications. Pass the id returned
+        from subscribe_notification.
+
+        Throws:
+        - CCSessionError: for low-level communication errors.
+        - KeyError: The id does not correspond to valid subscription.
+        """
+        (group, cid) = nid
+        del self._notification_callbacks[group][cid]
+        if not self._notification_callbacks[group]:
+            # Removed the last one
+            self._session.group_unsubscribe(CC_GROUP_NOTIFICATION_PREFIX +
+                                            group)
+            del self._notification_callbacks[group]
 
 class UIModuleCCSession(MultiConfigData):
     """This class is used in a configuration user interface. It contains

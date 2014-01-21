@@ -103,8 +103,10 @@ checkData(const void* data, size_t size, const RRType* rrtype,
     ASSERT_TRUE(*it != it_end); // shouldn't reach the end yet
 
     isc::util::InputBuffer b(data, size);
-    EXPECT_EQ(0, createRdata(*rrtype, RRClass::IN(), b, size)->compare(
-                  *createRdata(*rrtype, RRClass::IN(), **it)));
+    const RdataPtr& actual(createRdata(*rrtype, RRClass::IN(), b, size));
+    const RdataPtr& expected(createRdata(*rrtype, RRClass::IN(), **it));
+    EXPECT_EQ(0, actual->compare(*expected)) << actual->toText() <<
+        " vs. " << expected->toText();
     ++(*it);                    // move to the next expected data
 }
 
@@ -191,20 +193,16 @@ TEST_F(RdataSetTest, mergeCreate) {
             SCOPED_TRACE("creating merge case " + lexical_cast<string>(i) +
                          ", " + lexical_cast<string>(j));
             // Create old rdataset
-            SegmentObjectHolder<RdataSet, RRClass> holder1(
-                mem_sgmt_,
-                RdataSet::create(mem_sgmt_, encoder_,
+            SegmentObjectHolder<RdataSet, RRClass> holder1(mem_sgmt_, rrclass);
+            holder1.set(RdataSet::create(mem_sgmt_, encoder_,
                                  (i & 1) != 0 ? a_rrsets[0] : null_rrset,
-                                 (i & 2) != 0 ? rrsig_rrsets[0] : null_rrset),
-                rrclass);
+                                 (i & 2) != 0 ? rrsig_rrsets[0] : null_rrset));
             // Create merged rdataset, based on the old one and RRsets
-            SegmentObjectHolder<RdataSet, RRClass> holder2(
-                mem_sgmt_,
-                RdataSet::create(mem_sgmt_, encoder_,
+            SegmentObjectHolder<RdataSet, RRClass> holder2(mem_sgmt_, rrclass);
+            holder2.set(RdataSet::create(mem_sgmt_, encoder_,
                                  (j & 1) != 0 ? a_rrsets[1] : null_rrset,
                                  (j & 2) != 0 ? rrsig_rrsets[1] : null_rrset,
-                                 holder1.get()),
-                rrclass);
+                                 holder1.get()));
 
             // Set up the expected data for the case.
             vector<string> expected_rdata;
@@ -228,6 +226,91 @@ TEST_F(RdataSetTest, mergeCreate) {
     }
 }
 
+TEST_F(RdataSetTest, subtract) {
+    // Prepare test data
+    const char* const a_rdatas[] = { "192.0.2.1", "192.0.2.2" };
+    const char* const sig_rdatas[] = {
+        "A 5 2 3600 20120814220826 20120715220826 1234 example.com. FAKE",
+        "A 5 2 3600 20120814220826 20120715220826 4321 example.com. FAKE" };
+    ConstRRsetPtr a_rrsets = textToRRset("www.example.com. 1076895760 IN A "
+                                         + string(a_rdatas[0]) + "\n"
+                                         + "www.example.com. 1076895760 IN A "
+                                         + string(a_rdatas[1]));
+    ConstRRsetPtr rrsig_rrsets =
+        textToRRset("www.example.com. 1076895760 IN RRSIG "
+                    + string(sig_rdatas[0]) + "\n"
+                    + "www.example.com. 1076895760 IN RRSIG "
+                    + string(sig_rdatas[1]));
+    ConstRRsetPtr null_rrset;   // convenience shortcut
+    // Prepare the data to subtract (they have one common and one differing
+    // element each).
+    const char* const a_rdatas_rm[] = { "192.0.2.1", "192.0.2.3" };
+    const char* const sig_rdatas_rm[] = {
+        "A 5 2 3600 20120814220826 20120715220826 1234 example.com. FAKE",
+        "A 5 2 3600 20120814220826 20120715220826 5678 example.com. FAKE" };
+    ConstRRsetPtr a_rrsets_rm =
+        textToRRset("www.example.com. 1076895760 IN A "
+                    + string(a_rdatas_rm[0]) + "\n"
+                    + "www.example.com. 1076895760 IN A "
+                    + string(a_rdatas_rm[1]));
+    ConstRRsetPtr rrsig_rrsets_rm =
+        textToRRset("www.example.com. 1076895760 IN RRSIG "
+                    + string(sig_rdatas_rm[0]) + "\n"
+                    + "www.example.com. 1076895760 IN RRSIG "
+                    + string(sig_rdatas_rm[1]));
+
+    // A similar cycle as in the mergeCreate test.
+    for (int i = 1; i < 4; ++i) {
+        for (int j = 1; j < 4; ++j) {
+            SCOPED_TRACE("creating subtract case " + lexical_cast<string>(i) +
+                         ", " + lexical_cast<string>(j));
+            // Create old rdataset
+            SegmentObjectHolder<RdataSet, RRClass> holder1(mem_sgmt_, rrclass);
+            holder1.set(RdataSet::create(mem_sgmt_, encoder_,
+                                 (i & 1) ? a_rrsets : null_rrset,
+                                 (i & 2) ? rrsig_rrsets : null_rrset));
+            // Create subtracted rdataset, from the old one and RRsets
+            SegmentObjectHolder<RdataSet, RRClass> holder2(mem_sgmt_, rrclass);
+            holder2.set(RdataSet::subtract(mem_sgmt_, encoder_,
+                                 (j & 1) ? a_rrsets_rm : null_rrset,
+                                 (j & 2) ? rrsig_rrsets_rm : null_rrset,
+                                 *holder1.get()));
+
+            // Set up the expected data for the case.
+            vector<string> expected_rdata;
+            if (i & 1) {
+                if (!(j & 1)) { // Not removed the other
+                    expected_rdata.push_back(a_rdatas[0]);
+                }
+                expected_rdata.push_back(a_rdatas[1]);
+            }
+            vector<string> expected_sigs;
+            if (i & 2) {
+                if (!(j & 2)) { // Not removed the other
+                    expected_sigs.push_back(sig_rdatas[0]);
+                }
+                expected_sigs.push_back(sig_rdatas[1]);
+            }
+
+            // Then perform the check
+            checkRdataSet(*holder2.get(), expected_rdata, expected_sigs);
+        }
+    }
+    // Reusing the data we have, test some corner cases.
+    SegmentObjectHolder<RdataSet, RRClass> holder_old(mem_sgmt_, rrclass);
+    holder_old.set(RdataSet::create(mem_sgmt_, encoder_, a_rrsets,
+                                    rrsig_rrsets));
+
+    // It throws if no Rdata passed.
+    EXPECT_THROW(RdataSet::subtract(mem_sgmt_, encoder_, null_rrset,
+                                    null_rrset, *holder_old.get()),
+                 isc::BadValue);
+
+    // If we remove everything, it returns NULL
+    EXPECT_EQ(NULL, RdataSet::subtract(mem_sgmt_, encoder_, a_rrsets,
+                                       rrsig_rrsets, *holder_old.get()));
+}
+
 TEST_F(RdataSetTest, duplicate) {
     // Create RRset and RRSIG containing duplicate RDATA.
     ConstRRsetPtr dup_rrset =
@@ -241,16 +324,14 @@ TEST_F(RdataSetTest, duplicate) {
 
     // After suppressing duplicates, it should be the same as the default
     // RdataSet.  Check that.
-    SegmentObjectHolder<RdataSet, RRClass> holder1(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, dup_rrset, dup_rrsig), rrclass);
+    SegmentObjectHolder<RdataSet, RRClass> holder1(mem_sgmt_, rrclass);
+    holder1.set(RdataSet::create(mem_sgmt_, encoder_, dup_rrset, dup_rrsig));
     checkRdataSet(*holder1.get(), def_rdata_txt_, def_rrsig_txt_);
 
     // Confirm the same thing for the merge mode.
-    SegmentObjectHolder<RdataSet, RRClass> holder2(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, a_rrset_, rrsig_rrset_,
-                         holder1.get()), rrclass);
+    SegmentObjectHolder<RdataSet, RRClass> holder2(mem_sgmt_, rrclass);
+    holder2.set(RdataSet::create(mem_sgmt_, encoder_, a_rrset_, rrsig_rrset_,
+                                 holder1.get()));
     checkRdataSet(*holder2.get(), def_rdata_txt_, def_rrsig_txt_);
 }
 
@@ -275,24 +356,21 @@ TEST_F(RdataSetTest, getNext) {
 
 TEST_F(RdataSetTest, find) {
     // Create some RdataSets and make a chain of them.
-    SegmentObjectHolder<RdataSet, RRClass> holder1(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, a_rrset_, ConstRRsetPtr()),
-        RRClass::IN());
+    SegmentObjectHolder<RdataSet, RRClass> holder1(mem_sgmt_, RRClass::IN());
+    holder1.set(RdataSet::create(mem_sgmt_, encoder_, a_rrset_,
+                                 ConstRRsetPtr()));
     ConstRRsetPtr aaaa_rrset =
         textToRRset("www.example.com. 1076895760 IN AAAA 2001:db8::1");
-    SegmentObjectHolder<RdataSet, RRClass> holder2(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, aaaa_rrset, ConstRRsetPtr()),
-        RRClass::IN());
+    SegmentObjectHolder<RdataSet, RRClass> holder2(mem_sgmt_, RRClass::IN());
+    holder2.set(RdataSet::create(mem_sgmt_, encoder_, aaaa_rrset,
+                                 ConstRRsetPtr()));
     ConstRRsetPtr sigonly_rrset =
         textToRRset("www.example.com. 1076895760 IN RRSIG "
                     "TXT 5 2 3600 20120814220826 20120715220826 "
                     "1234 example.com. FAKE");
-    SegmentObjectHolder<RdataSet, RRClass> holder3(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(), sigonly_rrset),
-        RRClass::IN());
+    SegmentObjectHolder<RdataSet, RRClass> holder3(mem_sgmt_, RRClass::IN());
+    holder3.set(RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(),
+                                 sigonly_rrset));
 
     RdataSet* rdataset_a = holder1.get();
     RdataSet* rdataset_aaaa = holder2.get();
@@ -376,10 +454,8 @@ TEST_F(RdataSetTest, createManyRRs) {
 
 TEST_F(RdataSetTest, mergeCreateManyRRs) {
     ConstRRsetPtr rrset = textToRRset("example.com. 3600 IN TXT some-text");
-    SegmentObjectHolder<RdataSet, RRClass> holder(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, rrset, ConstRRsetPtr()),
-        RRClass::IN());
+    SegmentObjectHolder<RdataSet, RRClass> holder(mem_sgmt_, RRClass::IN());
+    holder.set(RdataSet::create(mem_sgmt_, encoder_, rrset, ConstRRsetPtr()));
 
     checkCreateManyRRs(boost::bind(&RdataSet::create, _1, _2, _3, _4,
                                    holder.get()), rrset->getRdataCount());
@@ -474,10 +550,8 @@ TEST_F(RdataSetTest, mergeCreateManyRRSIGs) {
     ConstRRsetPtr rrsig = textToRRset(
         "example.com. 3600 IN RRSIG A 5 2 3600 20120814220826 20120715220826 "
         "1234 example.com. FAKEFAKE");
-    SegmentObjectHolder<RdataSet, RRClass> holder(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(), rrsig),
-        rrclass);
+    SegmentObjectHolder<RdataSet, RRClass> holder(mem_sgmt_, rrclass);
+    holder.set(RdataSet::create(mem_sgmt_, encoder_, ConstRRsetPtr(), rrsig));
 
     checkCreateManyRRSIGs(boost::bind(&RdataSet::create, _1, _2, _3, _4,
                                       holder.get()), rrsig->getRdataCount());
@@ -543,12 +617,10 @@ TEST_F(RdataSetTest, badCreate) {
 TEST_F(RdataSetTest, badMergeCreate) {
     // The 'old RdataSet' for merge.  Its content doesn't matter much; the test
     // should trigger exception before examining it except for the last checks.
-    SegmentObjectHolder<RdataSet, RRClass> holder(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_,
+    SegmentObjectHolder<RdataSet, RRClass> holder(mem_sgmt_, RRClass::IN());
+    holder.set(RdataSet::create(mem_sgmt_, encoder_,
                          textToRRset("www.example.com. 0 IN AAAA 2001:db8::1"),
-                         ConstRRsetPtr()),
-        RRClass::IN());
+                         ConstRRsetPtr()));
 
     checkBadCreate(boost::bind(&RdataSet::create, _1, _2, _3, _4,
                                holder.get()));
@@ -585,9 +657,8 @@ TEST_F(RdataSetTest, varyingTTL) {
     RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
 
     // RRSIG's TTL is smaller
-    SegmentObjectHolder<RdataSet, RRClass> holder1(
-        mem_sgmt_,
-        RdataSet::create(mem_sgmt_, encoder_, aaaa_large, sig_small), rrclass);
+    SegmentObjectHolder<RdataSet, RRClass> holder1(mem_sgmt_, rrclass);
+    holder1.set(RdataSet::create(mem_sgmt_, encoder_, aaaa_large, sig_small));
     EXPECT_EQ(RRTTL(10), restoreTTL(holder1.get()->getTTLData()));
 
     // Merging another RRset (w/o sig) that has larger TTL
@@ -625,5 +696,59 @@ TEST_F(RdataSetTest, varyingTTL) {
                                 holder1.get());
     EXPECT_EQ(RRTTL(5), restoreTTL(rdataset->getTTLData()));
     RdataSet::destroy(mem_sgmt_, rdataset, rrclass);
+}
+
+// Creation of rdataset with bad params, with create and subtract
+TEST_F(RdataSetTest, badParams) {
+    const ConstRRsetPtr empty_rrset(new RRset(Name("www.example.com"),
+                                             RRClass::IN(), RRType::A(),
+                                             RRTTL(3600)));
+    const ConstRRsetPtr empty_rrsig(new RRset(Name("www.example.com"),
+                                             RRClass::IN(), RRType::RRSIG(),
+                                             RRTTL(3600)));
+    const ConstRRsetPtr a_rrset = textToRRset("www.example.com. 3600 IN A "
+                                              "192.0.2.1");
+    const ConstRRsetPtr aaaa_rrset = textToRRset("www.example.com. 3600 IN AAAA "
+                                                 "2001:db8::1");
+    const ConstRRsetPtr sig_rrset = textToRRset("www.example.com. 3600 IN RRSIG "
+                                                "A 5 2 3600 20120814220826 "
+                                                "20120715220826 1234 "
+                                                "example.com. FAKE");
+    const ConstRRsetPtr sig_rrset_ch = textToRRset("www.example.com. 3600 CH RRSIG "
+                                                   "A 5 2 3600 20120814220826 "
+                                                   "20120715220826 1234 "
+                                                   "example.com. FAKE",
+                                                   RRClass::CH());
+    SegmentObjectHolder<RdataSet, RRClass> holder(mem_sgmt_, rrclass);
+    holder.set(RdataSet::create(mem_sgmt_, encoder_, a_rrset, sig_rrset));
+    // Empty RRset as rdata
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, empty_rrset, sig_rrset),
+                 isc::BadValue);
+    // The same for rrsig
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset, empty_rrsig),
+                 isc::BadValue);
+    // Mismatched type
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, empty_rrset, a_rrset),
+                 isc::BadValue);
+    // Similar for subtract
+    EXPECT_THROW(RdataSet::subtract(mem_sgmt_, encoder_, empty_rrset,
+                                    sig_rrset, *holder.get()),
+                 isc::BadValue);
+    EXPECT_THROW(RdataSet::subtract(mem_sgmt_, encoder_, a_rrset, empty_rrset,
+                                    *holder.get()),
+                 isc::BadValue);
+    // Class mismatch
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, a_rrset, sig_rrset_ch),
+                 isc::BadValue);
+    EXPECT_THROW(RdataSet::subtract(mem_sgmt_, encoder_, a_rrset,
+                                    sig_rrset_ch, *holder.get()),
+                 isc::BadValue);
+    // Bad rrtype
+    EXPECT_THROW(RdataSet::create(mem_sgmt_, encoder_, aaaa_rrset,
+                                  ConstRRsetPtr(), holder.get()),
+                 isc::BadValue);
+    EXPECT_THROW(RdataSet::subtract(mem_sgmt_, encoder_, aaaa_rrset,
+                                    ConstRRsetPtr(), *holder.get()),
+                 isc::BadValue);
 }
 }

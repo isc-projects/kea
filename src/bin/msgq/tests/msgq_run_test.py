@@ -272,6 +272,78 @@ class MsgqRunTest(unittest.TestCase):
             conn.close()
             conn = new
 
+    def test_notifications(self):
+        """
+        Check that the MsgQ is actually sending notifications about events.
+        We create a socket, subscribe the socket itself and see it receives
+        it's own notification.
+
+        Testing all the places where notifications happen is task for the
+        common unit tests in msgq_test.py.
+
+        The test is here, because there might be some trouble with multiple
+        threads in msgq (see the note about locking on the module CC session
+        when sending message from one thread and listening for commands in the
+        other) which would be hard to test using pure unit tests. Testing
+        runnig whole msgq tests that implicitly.
+        """
+        conn = self.__get_connection()
+        # Activate the session, pretend to be the config manager.
+        conn.group_subscribe('ConfigManager')
+        # Answer request for logging config
+        (msg, env) = conn.group_recvmsg(nonblock=False)
+        self.assertEqual({'command': ['get_config',
+                                      {'module_name': 'Logging'}]},
+                         msg)
+        conn.group_reply(env, {'result': [0, {}]})
+        # It sends its spec.
+        (msg, env) = conn.group_recvmsg(nonblock=False)
+        self.assertEqual('module_spec', msg['command'][0])
+        conn.group_reply(env, {'result': [0]})
+        # It asks for its own config
+        (msg, env) = conn.group_recvmsg(nonblock=False)
+        self.assertEqual({'command': ['get_config',
+                                      {'module_name': 'Msgq'}]},
+                         msg)
+        conn.group_reply(env, {'result': [0, {}]})
+        # Synchronization - make sure the session is running before
+        # we continue, so we get the notification. Similar synchronisation
+        # as in b10-init, but we don't have full ccsession here, so we
+        # do so manually.
+        synchronised = False
+        attempts = 100
+        while not synchronised and attempts > 0:
+            time.sleep(0.1)
+            seq = conn.group_sendmsg({'command': ['Are you running?']},
+                                     'Msgq', want_answer=True)
+            msg = conn.group_recvmsg(nonblock=False, seq=seq)
+            synchronised = msg[0] != -1
+            attempts -= 1
+        self.assertTrue(synchronised)
+        # The actual test
+        conn.group_subscribe('notifications/cc_members')
+        (msg, env) = conn.group_recvmsg(nonblock=False)
+        self.assertEqual({'notification': ['subscribed', {
+            'client': conn.lname,
+            'group': 'notifications/cc_members'
+        }]}, msg)
+
+    def test_multiple_invocations(self):
+        """
+        Check to make sure that an attempt to start a second copy of the MsgQ
+        daemon fails.
+        """
+
+        self.assertTrue (os.path.exists(SOCKET_PATH))
+        self.__retcode = subprocess.call([MSGQ_PATH, '-s', SOCKET_PATH])
+        self.assertNotEqual(self.__retcode, 0)
+
+        # Verify that the socket still exists and works. We re-call
+        # test_send_direct as a means of testing that the existing
+        # daemon is still behaving correctly.
+        self.assertTrue (os.path.exists(SOCKET_PATH))
+        self.test_send_direct()
+
 if __name__ == '__main__':
     isc.log.init("msgq-tests")
     isc.log.resetUnitTestRootLogger()

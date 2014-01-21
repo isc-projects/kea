@@ -361,6 +361,64 @@ TEST_F(CountersTest, incrementTSIG) {
     }
 }
 
+TEST_F(CountersTest, incrementRD) {
+    Message response(Message::RENDER);
+    MessageAttributes msgattrs;
+    std::map<std::string, int> expect;
+
+    // Test these patterns:
+    //     OpCode         Recursion Desired
+    //    ---------------------------
+    //     0 (Query)      false
+    //     0 (Query)      true
+    //     2 (Status)     false
+    //     2 (Status)     true
+    //  Make sure the counter will be incremented only for the requests with
+    //  OpCode=Query and Recursion Desired (RD) bit=1.
+    int count_opcode_query = 0;
+    int count_opcode_status = 0;
+    for (int i = 0; i < 4; ++i) {
+        const bool is_recursion_desired = i & 1;
+        const uint8_t opcode_code = i & 0x2;
+        const Opcode opcode(opcode_code);
+        buildSkeletonMessage(msgattrs);
+        msgattrs.setRequestRD(is_recursion_desired);
+        msgattrs.setRequestOpCode(opcode);
+
+        response.setRcode(Rcode::REFUSED());
+        response.addQuestion(Question(Name("example.com"),
+                                      RRClass::IN(), RRType::AAAA()));
+        response.setHeaderFlag(Message::HEADERFLAG_QR);
+
+        counters.inc(msgattrs, response, true);
+
+        if (opcode == Opcode::QUERY()) {
+            ++count_opcode_query;
+        } else {
+            ++count_opcode_status;
+        }
+
+        expect.clear();
+        expect["opcode.query"] = count_opcode_query;
+        expect["opcode.status"] = count_opcode_status;
+        expect["request.v4"] = i+1;
+        expect["request.udp"] = i+1;
+        expect["request.edns0"] = i+1;
+        expect["request.dnssec_ok"] = i+1;
+        expect["responses"] = i+1;
+        // qryrecursion will (only) be incremented if i == 1: OpCode=Query and
+        // RD bit=1
+        expect["qryrecursion"] = (i == 0) ? 0 : 1;
+        expect["rcode.refused"] = i+1;
+        // these counters are for queries; the value will be equal to the
+        // number of requests with OpCode=Query
+        expect["qrynoauthans"] = count_opcode_query;
+        expect["authqryrej"] = count_opcode_query;
+        checkStatisticsCounters(counters.get()->get("zones")->get("_SERVER_"),
+                                expect);
+    }
+}
+
 TEST_F(CountersTest, incrementOpcode) {
     Message response(Message::RENDER);
     MessageAttributes msgattrs;

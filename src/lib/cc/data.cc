@@ -24,8 +24,11 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <cerrno>
+#include <climits>
 
 #include <boost/algorithm/string.hpp> // for iequals
+#include <boost/lexical_cast.hpp>
 
 #include <cmath>
 
@@ -58,7 +61,7 @@ Element::toWire(std::ostream& ss) const {
 }
 
 bool
-Element::getValue(long int&) const {
+Element::getValue(int64_t&) const {
     return (false);
 }
 
@@ -88,7 +91,7 @@ Element::getValue(std::map<std::string, ConstElementPtr>&) const {
 }
 
 bool
-Element::setValue(const long int) {
+Element::setValue(const long long int) {
     return (false);
 }
 
@@ -140,6 +143,11 @@ Element::remove(const int) {
 size_t
 Element::size() const {
     isc_throw(TypeError, "size() called on a non-list Element");
+}
+
+bool
+Element::empty() const {
+    isc_throw(TypeError, "empty() called on a non-list Element");
 }
 
 ConstElementPtr
@@ -206,8 +214,8 @@ Element::create() {
 }
 
 ElementPtr
-Element::create(const long int i) {
-    return (ElementPtr(new IntElement(i)));
+Element::create(const long long int i) {
+    return (ElementPtr(new IntElement(static_cast<int64_t>(i))));
 }
 
 ElementPtr
@@ -267,11 +275,11 @@ skipChars(std::istream& in, const char* chars, int& line, int& pos) {
 }
 
 // skip on the input stream to one of the characters in chars
-// if another character is found this function returns false
+// if another character is found this function throws JSONError
 // unless that character is specified in the optional may_skip
 //
-// the character found is left on the stream
-void
+// It returns the found character (as an int value).
+int
 skipTo(std::istream& in, const std::string& file, int& line,
        int& pos, const char* chars, const char* may_skip="")
 {
@@ -290,18 +298,18 @@ skipTo(std::istream& in, const std::string& file, int& line,
                 if (in.peek() == '\n') {
                     pos = 1;
                     ++line;
+                } else {
+                    ++pos;
                 }
                 in.ignore();
-                ++pos;
             }
-            in.putback(c);
-            --pos;
-            return;
+            return (c);
         } else {
             throwJSONError(std::string("'") + std::string(1, c) + "' read, one of \"" + chars + "\" expected", file, line, pos);
         }
     }
     throwJSONError(std::string("EOF read, one of \"") + chars + "\" expected", file, line, pos);
+    return (c); // shouldn't reach here, but some compilers require it
 }
 
 // TODO: Should we check for all other official escapes here (and
@@ -389,36 +397,23 @@ numberFromStringstream(std::istream& in, int& pos) {
 // Should we change from IntElement and DoubleElement to NumberElement
 // that can also hold an e value? (and have specific getters if the
 // value is larger than an int can handle)
+//
 ElementPtr
 fromStringstreamNumber(std::istream& in, int& pos) {
-    long int i;
-    double d = 0.0;
-    bool is_double = false;
-    char* endptr;
-
     std::string number = numberFromStringstream(in, pos);
 
-    i = strtol(number.c_str(), &endptr, 10);
-    if (*endptr != '\0') {
-        d = strtod(number.c_str(), &endptr);
-        is_double = true;
-        if (*endptr != '\0') {
-            isc_throw(JSONError, std::string("Bad number: ") + number);
-        } else {
-            if (d == HUGE_VAL || d == -HUGE_VAL) {
-                isc_throw(JSONError, std::string("Number overflow: ") + number);
-            }
-        }
-    } else {
-        if (i == LONG_MAX || i == LONG_MIN) {
+    if (number.find_first_of(".eE") < number.size()) {
+        try {
+            return (Element::create(boost::lexical_cast<double>(number)));
+        } catch (const boost::bad_lexical_cast&) {
             isc_throw(JSONError, std::string("Number overflow: ") + number);
         }
-    }
-
-    if (is_double) {
-        return (Element::create(d));
     } else {
-        return (Element::create(i));
+        try {
+            return (Element::create(boost::lexical_cast<int64_t>(number)));
+        } catch (const boost::bad_lexical_cast&) {
+            isc_throw(JSONError, std::string("Number overflow: ") + number);
+        }
     }
 }
 
@@ -471,10 +466,11 @@ fromStringstreamList(std::istream& in, const std::string& file, int& line,
         if (in.peek() != ']') {
             cur_list_element = Element::fromJSON(in, file, line, pos);
             list->add(cur_list_element);
-            skipTo(in, file, line, pos, ",]", WHITESPACE);
+            c = skipTo(in, file, line, pos, ",]", WHITESPACE);
+        } else {
+            c = in.get();
+            ++pos;
         }
-        c = in.get();
-        pos++;
     }
     return (list);
 }
@@ -497,15 +493,11 @@ fromStringstreamMap(std::istream& in, const std::string& file, int& line,
 
             skipTo(in, file, line, pos, ":", WHITESPACE);
             // skip the :
-            in.ignore();
-            pos++;
 
             ConstElementPtr value = Element::fromJSON(in, file, line, pos);
             map->set(key, value);
 
-            skipTo(in, file, line, pos, ",}", WHITESPACE);
-            c = in.get();
-            pos++;
+            c = skipTo(in, file, line, pos, ",}", WHITESPACE);
         }
     }
     return (map);
@@ -601,6 +593,7 @@ Element::fromJSON(std::istream& in, const std::string& file, int& line,
             case '+':
             case '.':
                 in.putback(c);
+                --pos;
                 element = fromStringstreamNumber(in, pos);
                 el_read = true;
                 break;
@@ -609,17 +602,20 @@ Element::fromJSON(std::istream& in, const std::string& file, int& line,
             case 'f':
             case 'F':
                 in.putback(c);
+                --pos;
                 element = fromStringstreamBool(in, file, line, pos);
                 el_read = true;
                 break;
             case 'n':
             case 'N':
                 in.putback(c);
+                --pos;
                 element = fromStringstreamNull(in, file, line, pos);
                 el_read = true;
                 break;
             case '"':
                 in.putback('"');
+                --pos;
                 element = fromStringstreamString(in, file, line, pos);
                 el_read = true;
                 break;
@@ -688,10 +684,9 @@ NullElement::toJSON(std::ostream& ss) const {
 void
 StringElement::toJSON(std::ostream& ss) const {
     ss << "\"";
-    char c;
     const std::string& str = stringValue();
     for (size_t i = 0; i < str.size(); ++i) {
-        c = str[i];
+        const char c = str[i];
         // Escape characters as defined in JSON spec
         // Note that we do not escape forward slash; this
         // is allowed, but not mandatory.

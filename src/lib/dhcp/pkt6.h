@@ -23,12 +23,16 @@
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
+#include <set>
 
 #include <time.h>
 
 namespace isc {
 
 namespace dhcp {
+
+class Pkt6;
+typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
 
 class Pkt6 {
 public:
@@ -44,6 +48,31 @@ public:
         TCP = 1  // there are TCP DHCPv6 packets (bulk leasequery, failover)
     };
 
+    /// Container for storing client classes
+    typedef std::set<std::string> Classes;
+
+    /// @brief defines relay search pattern
+    ///
+    /// Defines order in which options are searched in a message that
+    /// passed through mulitple relays. RELAY_SEACH_FROM_CLIENT will
+    /// start search from the relay that was the closest to the client
+    /// (i.e. innermost in the encapsulated message, which also means
+    /// this was the first relay that forwarded packet received by the
+    /// server and this will be the last relay that will handle the
+    /// response that server sent towards the client.).
+    /// RELAY_SEARCH_FROM_SERVER is the opposite. This will be the
+    /// relay closest to the server (i.e. outermost in the encapsulated
+    /// message, which also means it was the last relay that relayed
+    /// the received message and will be the first one to process
+    /// server's response). RELAY_GET_FIRST will try to get option from
+    /// the first relay only (closest to the client), RELAY_GET_LAST will
+    /// try to get option form the the last relay (closest to the server).
+    enum RelaySearchOrder {
+        RELAY_SEARCH_FROM_CLIENT = 1,
+        RELAY_SEARCH_FROM_SERVER = 2,
+        RELAY_GET_FIRST = 3,
+        RELAY_GET_LAST = 4
+    };
 
     /// @brief structure that describes a single relay information
     ///
@@ -63,7 +92,7 @@ public:
         uint16_t  relay_msg_len_;
 
         /// options received from a specified relay, except relay-msg option
-        isc::dhcp::Option::OptionCollection options_;
+        isc::dhcp::OptionCollection options_;
     };
 
     /// Constructor, used in replying to a message
@@ -90,9 +119,12 @@ public:
     /// Options must be stored in options_ field.
     /// Output buffer will be stored in data_. Length
     /// will be set in data_len_.
+    /// The output buffer is cleared before new data is written to it.
     ///
-    /// @return true if packing procedure was successful
-    bool pack();
+    /// @throw BadValue if packet protocol is invalid, InvalidOperation
+    /// if packing fails, or NotImplemented if protocol is TCP (IPv6 over TCP is
+    /// not yet supported).
+    void pack();
 
     /// @brief Dispatch method that handles binary packet parsing.
     ///
@@ -112,12 +144,7 @@ public:
     /// zero length
     ///
     /// @return reference to output buffer
-    const isc::util::OutputBuffer& getBuffer() const { return (bufferOut_); };
-
-    /// @brief Returns reference to input buffer.
-    ///
-    /// @return reference to input buffer
-    const OptionBuffer& getData() const { return(data_); }
+    const isc::util::OutputBuffer& getBuffer() const { return (buffer_out_); };
 
     /// @brief Returns protocol of this packet (UDP or TCP).
     ///
@@ -201,6 +228,18 @@ public:
     /// @return pointer to the option (or NULL if there is no such option)
     OptionPtr getRelayOption(uint16_t option_code, uint8_t nesting_level);
 
+    /// @brief Return first instance of a specified option
+    ///
+    /// When a client's packet traverses multiple relays, each passing relay may
+    /// insert extra options. This method allows the specific instance of a given
+    /// option to be obtained (e.g. closest to the client, closest to the server,
+    /// etc.) See @ref RelaySearchOrder for a detailed description.
+    ///
+    /// @param option_code searched option
+    /// @param order option search order (see @ref RelaySearchOrder)
+    /// @return option pointer (or NULL if no option matches specified criteria)
+    OptionPtr getAnyRelayOption(uint16_t option_code, RelaySearchOrder order);
+
     /// @brief Returns all instances of specified type.
     ///
     /// Returns all instances of options of the specified type. DHCPv6 protocol
@@ -208,7 +247,7 @@ public:
     ///
     /// @param type option type we are looking for
     /// @return instance of option collection with requested options
-    isc::dhcp::Option::OptionCollection getOptions(uint16_t type);
+    isc::dhcp::OptionCollection getOptions(uint16_t type);
 
     /// Attempts to delete first suboption of requested type
     ///
@@ -310,15 +349,13 @@ public:
 
     /// collection of options present in this message
     ///
-    /// @todo: Text mentions protected, but this is really public
-    ///
-    /// @warning This protected member is accessed by derived
+    /// @warning This public member is accessed by derived
     /// classes directly. One of such derived classes is
     /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
-    isc::dhcp::Option::OptionCollection options_;
+    isc::dhcp::OptionCollection options_;
 
     /// @brief Update packet timestamp.
     ///
@@ -356,6 +393,22 @@ public:
     ///         be freed by the caller.
     const char* getName() const;
 
+    /// @brief Set callback function to be used to parse options.
+    ///
+    /// @param callback An instance of the callback function or NULL to
+    /// uninstall callback.
+    void setCallback(UnpackOptionsCallback callback) {
+        callback_ = callback;
+    }
+
+    /// @brief copies relay information from client's packet to server's response
+    ///
+    /// This information is not simply copied over. Some parameter are
+    /// removed, msg_type_is updated (RELAY-FORW => RELAY-REPL), etc.
+    ///
+    /// @param question client's packet
+    void copyRelayInfo(const Pkt6Ptr& question);
+
     /// relay information
     ///
     /// this is a public field. Otherwise we hit one of the two problems:
@@ -365,18 +418,59 @@ public:
     /// to be impossible). Therefore public field is considered the best
     /// (or least bad) solution.
     std::vector<RelayInfo> relay_info_;
+
+
+    /// unparsed data (in received packets)
+    ///
+    /// @warning This public member is accessed by derived
+    /// classes directly. One of such derived classes is
+    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
+    /// behavior must be taken into consideration before making
+    /// changes to this member such as access scope restriction or
+    /// data format change etc.
+    OptionBuffer data_;
+
+    /// @brief Checks whether a client belongs to a given class
+    ///
+    /// @param client_class name of the class
+    /// @return true if belongs
+    bool inClass(const std::string& client_class);
+
+    /// @brief Adds packet to a specified class
+    ///
+    /// A packet can be added to the same class repeatedly. Any additional
+    /// attempts to add to a class the packet already belongs to, will be
+    /// ignored silently.
+    ///
+    /// @note It is a matter of naming convention. Conceptually, the server
+    /// processes a stream of packets, with some packets belonging to given
+    /// classes. From that perspective, this method adds a packet to specifed
+    /// class. Implementation wise, it looks the opposite - the class name
+    /// is added to the packet. Perhaps the most appropriate name for this
+    /// method would be associateWithClass()? But that seems overly long,
+    /// so I decided to stick with addClass().
+    ///
+    /// @param client_class name of the class to be added
+    void addClass(const std::string& client_class);
+
+    /// @brief Classes this packet belongs to.
+    ///
+    /// This field is public, so code can iterate over existing classes.
+    /// Having it public also solves the problem of returned reference lifetime.
+    Classes classes_;
+
 protected:
     /// Builds on wire packet for TCP transmission.
     ///
     /// TODO This function is not implemented yet.
     ///
-    /// @return true, if build was successful
-    bool packTCP();
+    /// @throw NotImplemented, IPv6 over TCP is not yet supported.
+    void packTCP();
 
     /// Builds on wire packet for UDP transmission.
     ///
-    /// @return true, if build was successful
-    bool packUDP();
+    /// @throw InvalidOperation if packing fails
+    void packUDP();
 
     /// @brief Parses on-wire form of TCP DHCPv6 packet.
     ///
@@ -447,16 +541,6 @@ protected:
     /// DHCPv6 transaction-id
     uint32_t transid_;
 
-    /// unparsed data (in received packets)
-    ///
-    /// @warning This protected member is accessed by derived
-    /// classes directly. One of such derived classes is
-    /// @ref perfdhcp::PerfPkt6. The impact on derived clasess'
-    /// behavior must be taken into consideration before making
-    /// changes to this member such as access scope restriction or
-    /// data format change etc.
-    OptionBuffer data_;
-
     /// name of the network interface the packet was received/to be sent over
     std::string iface_;
 
@@ -480,7 +564,7 @@ protected:
     /// remote TCP or UDP port
     uint16_t remote_port_;
 
-    /// output buffer (used during message transmission)
+    /// Output buffer (used during message transmission)
     ///
     /// @warning This protected member is accessed by derived
     /// classes directly. One of such derived classes is
@@ -488,13 +572,15 @@ protected:
     /// behavior must be taken into consideration before making
     /// changes to this member such as access scope restriction or
     /// data format change etc.
-    isc::util::OutputBuffer bufferOut_;
+    isc::util::OutputBuffer buffer_out_;
 
     /// packet timestamp
     boost::posix_time::ptime timestamp_;
-}; // Pkt6 class
 
-typedef boost::shared_ptr<Pkt6> Pkt6Ptr;
+    /// A callback to be called to unpack options from the packet.
+    UnpackOptionsCallback callback_;
+
+}; // Pkt6 class
 
 } // isc::dhcp namespace
 

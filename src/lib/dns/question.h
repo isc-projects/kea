@@ -173,9 +173,9 @@ public:
     //@{
     /// \brief Convert the Question to a string.
     ///
-    /// Unlike other similar methods of this library, this method terminates
-    /// the resulting string with a trailing newline character
-    /// (following the BIND9 convention).
+    /// When \c newline argument is \c true, this method terminates the
+    /// resulting string with a trailing newline character (following
+    /// the BIND9 convention).
     ///
     /// This method simply calls the \c %toText() methods of the corresponding
     /// \c Name, \c RRType and \c RRClass classes for this \c Question, and
@@ -183,8 +183,12 @@ public:
     /// In particular, if resource allocation fails, a corresponding standard
     /// exception will be thrown.
     ///
+    /// \param newline Whether to add a trailing newline. If true, a
+    /// trailing newline is added. If false, no trailing newline is
+    /// added.
+    ///
     /// \return A string representation of the \c Question.
-    std::string toText() const;
+    std::string toText(bool newline = false) const;
 
     /// \brief Render the Question in the wire format with name compression.
     ///

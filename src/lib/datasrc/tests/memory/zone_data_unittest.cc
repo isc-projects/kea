@@ -16,8 +16,6 @@
 #include <datasrc/memory/rdata_serialization.h>
 #include <datasrc/memory/rdataset.h>
 
-#include "memory_segment_test.h"
-
 #include <dns/rdataclass.h>
 
 #include <exceptions/exceptions.h>
@@ -30,6 +28,7 @@
 #include <dns/rrttl.h>
 
 #include <testutils/dnsmessage_test.h>
+#include <datasrc/tests/memory/memory_segment_mock.h>
 
 #include <gtest/gtest.h>
 
@@ -73,7 +72,7 @@ protected:
         EXPECT_TRUE(mem_sgmt_.allMemoryDeallocated());
     }
 
-    MemorySegmentTest mem_sgmt_;
+    MemorySegmentMock mem_sgmt_;
     NSEC3Data* nsec3_data_;
     const generic::NSEC3PARAM param_rdata_, param_rdata_nosalt_,
         param_rdata_largesalt_;
@@ -88,7 +87,7 @@ protected:
 // Shared by both test cases using NSEC3 and NSEC3PARAM Rdata
 template <typename RdataType>
 void
-checkNSEC3Data(MemorySegmentTest& mem_sgmt,
+checkNSEC3Data(MemorySegmentMock& mem_sgmt,
                const Name& zone_name,
                const RdataType& expect_rdata)
 {
@@ -277,5 +276,15 @@ TEST_F(ZoneDataTest, minTTL) {
     // Explicitly set, then retrieve it.
     zone_data_->setMinTTL(1200);
     EXPECT_EQ(RRTTL(1200), createRRTTL(zone_data_->getMinTTLData()));
+}
+
+TEST_F(ZoneDataTest, emptyData) {
+    // normally create zone data are never "empty"
+    EXPECT_FALSE(zone_data_->isEmpty());
+
+    // zone data instance created by the special create() is made "empty".
+    ZoneData* empty_data = ZoneData::create(mem_sgmt_);
+    EXPECT_TRUE(empty_data->isEmpty());
+    ZoneData::destroy(mem_sgmt_, empty_data, RRClass::IN());
 }
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -33,7 +33,8 @@ namespace dhcp {
 const IOAddress DEFAULT_ADDRESS("0.0.0.0");
 
 Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
-     :local_addr_(DEFAULT_ADDRESS),
+     :buffer_out_(DHCPV4_PKT_HDR_LEN),
+      local_addr_(DEFAULT_ADDRESS),
       remote_addr_(DEFAULT_ADDRESS),
       iface_(""),
       ifindex_(0),
@@ -48,8 +49,7 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
       ciaddr_(DEFAULT_ADDRESS),
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
-      giaddr_(DEFAULT_ADDRESS),
-      bufferOut_(DHCPV4_PKT_HDR_LEN)
+      giaddr_(DEFAULT_ADDRESS)
 {
     memset(sname_, 0, MAX_SNAME_LEN);
     memset(file_, 0, MAX_FILE_LEN);
@@ -58,7 +58,8 @@ Pkt4::Pkt4(uint8_t msg_type, uint32_t transid)
 }
 
 Pkt4::Pkt4(const uint8_t* data, size_t len)
-     :local_addr_(DEFAULT_ADDRESS),
+     :buffer_out_(0), // not used, this is RX packet
+      local_addr_(DEFAULT_ADDRESS),
       remote_addr_(DEFAULT_ADDRESS),
       iface_(""),
       ifindex_(0),
@@ -72,8 +73,7 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       ciaddr_(DEFAULT_ADDRESS),
       yiaddr_(DEFAULT_ADDRESS),
       siaddr_(DEFAULT_ADDRESS),
-      giaddr_(DEFAULT_ADDRESS),
-      bufferOut_(0) // not used, this is RX packet
+      giaddr_(DEFAULT_ADDRESS)
 {
     if (len < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Truncated DHCPv4 packet (len=" << len
@@ -93,7 +93,7 @@ Pkt4::len() {
     size_t length = DHCPV4_PKT_HDR_LEN; // DHCPv4 header
 
     // ... and sum of lengths of all options
-    for (Option::OptionCollection::const_iterator it = options_.begin();
+    for (OptionCollection::const_iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -102,113 +102,131 @@ Pkt4::len() {
     return (length);
 }
 
-bool
+void
 Pkt4::pack() {
     if (!hwaddr_) {
         isc_throw(InvalidOperation, "Can't build Pkt4 packet. HWAddr not set.");
     }
 
-    size_t hw_len = hwaddr_->hwaddr_.size();
+    // Clear the output buffer to make sure that consecutive calls to pack()
+    // will not result in concatenation of multiple packet copies.
+    buffer_out_.clear();
 
-    bufferOut_.writeUint8(op_);
-    bufferOut_.writeUint8(hwaddr_->htype_);
-    bufferOut_.writeUint8(hw_len < MAX_CHADDR_LEN ? hw_len : MAX_CHADDR_LEN);
-    bufferOut_.writeUint8(hops_);
-    bufferOut_.writeUint32(transid_);
-    bufferOut_.writeUint16(secs_);
-    bufferOut_.writeUint16(flags_);
-    bufferOut_.writeUint32(ciaddr_);
-    bufferOut_.writeUint32(yiaddr_);
-    bufferOut_.writeUint32(siaddr_);
-    bufferOut_.writeUint32(giaddr_);
+    try {
+        size_t hw_len = hwaddr_->hwaddr_.size();
+
+        buffer_out_.writeUint8(op_);
+        buffer_out_.writeUint8(hwaddr_->htype_);
+        buffer_out_.writeUint8(hw_len < MAX_CHADDR_LEN ?
+                              hw_len : MAX_CHADDR_LEN);
+        buffer_out_.writeUint8(hops_);
+        buffer_out_.writeUint32(transid_);
+        buffer_out_.writeUint16(secs_);
+        buffer_out_.writeUint16(flags_);
+        buffer_out_.writeUint32(ciaddr_);
+        buffer_out_.writeUint32(yiaddr_);
+        buffer_out_.writeUint32(siaddr_);
+        buffer_out_.writeUint32(giaddr_);
 
 
-    if (hw_len <= MAX_CHADDR_LEN) {
-        // write up to 16 bytes of the hardware address (CHADDR field is 16
-        // bytes long in DHCPv4 message).
-        bufferOut_.writeData(&hwaddr_->hwaddr_[0],
-                             (hw_len < MAX_CHADDR_LEN ? hw_len : MAX_CHADDR_LEN) );
-        hw_len = MAX_CHADDR_LEN - hw_len;
-    } else {
-        hw_len = MAX_CHADDR_LEN;
+        if (hw_len <= MAX_CHADDR_LEN) {
+            // write up to 16 bytes of the hardware address (CHADDR field is 16
+            // bytes long in DHCPv4 message).
+            buffer_out_.writeData(&hwaddr_->hwaddr_[0],
+                                 (hw_len < MAX_CHADDR_LEN ?
+                                  hw_len : MAX_CHADDR_LEN) );
+            hw_len = MAX_CHADDR_LEN - hw_len;
+        } else {
+            hw_len = MAX_CHADDR_LEN;
+        }
+
+        // write (len) bytes of padding
+        vector<uint8_t> zeros(hw_len, 0);
+        buffer_out_.writeData(&zeros[0], hw_len);
+        // buffer_out_.writeData(chaddr_, MAX_CHADDR_LEN);
+
+        buffer_out_.writeData(sname_, MAX_SNAME_LEN);
+        buffer_out_.writeData(file_, MAX_FILE_LEN);
+
+        // write DHCP magic cookie
+        buffer_out_.writeUint32(DHCP_OPTIONS_COOKIE);
+
+        LibDHCP::packOptions(buffer_out_, options_);
+
+        // add END option that indicates end of options
+        // (End option is very simple, just a 255 octet)
+         buffer_out_.writeUint8(DHO_END);
+     } catch(const Exception& e) {
+        // An exception is thrown and message will be written to Logger
+         isc_throw(InvalidOperation, e.what());
     }
-
-    // write (len) bytes of padding
-    vector<uint8_t> zeros(hw_len, 0);
-    bufferOut_.writeData(&zeros[0], hw_len);
-    // bufferOut_.writeData(chaddr_, MAX_CHADDR_LEN);
-
-    bufferOut_.writeData(sname_, MAX_SNAME_LEN);
-    bufferOut_.writeData(file_, MAX_FILE_LEN);
-
-    // write DHCP magic cookie
-    bufferOut_.writeUint32(DHCP_OPTIONS_COOKIE);
-
-    LibDHCP::packOptions(bufferOut_, options_);
-
-    // add END option that indicates end of options
-    // (End option is very simple, just a 255 octet)
-    bufferOut_.writeUint8(DHO_END);
-
-    return (true);
 }
 
 void
 Pkt4::unpack() {
 
     // input buffer (used during message reception)
-    isc::util::InputBuffer bufferIn(&data_[0], data_.size());
+    isc::util::InputBuffer buffer_in(&data_[0], data_.size());
 
-    if (bufferIn.getLength() < DHCPV4_PKT_HDR_LEN) {
+    if (buffer_in.getLength() < DHCPV4_PKT_HDR_LEN) {
         isc_throw(OutOfRange, "Received truncated DHCPv4 packet (len="
-                  << bufferIn.getLength() << " received, at least "
+                  << buffer_in.getLength() << " received, at least "
                   << DHCPV4_PKT_HDR_LEN << "is expected");
     }
 
-    op_ = bufferIn.readUint8();
-    uint8_t htype = bufferIn.readUint8();
-    uint8_t hlen = bufferIn.readUint8();
-    hops_ = bufferIn.readUint8();
-    transid_ = bufferIn.readUint32();
-    secs_ = bufferIn.readUint16();
-    flags_ = bufferIn.readUint16();
-    ciaddr_ = IOAddress(bufferIn.readUint32());
-    yiaddr_ = IOAddress(bufferIn.readUint32());
-    siaddr_ = IOAddress(bufferIn.readUint32());
-    giaddr_ = IOAddress(bufferIn.readUint32());
+    op_ = buffer_in.readUint8();
+    uint8_t htype = buffer_in.readUint8();
+    uint8_t hlen = buffer_in.readUint8();
+    hops_ = buffer_in.readUint8();
+    transid_ = buffer_in.readUint32();
+    secs_ = buffer_in.readUint16();
+    flags_ = buffer_in.readUint16();
+    ciaddr_ = IOAddress(buffer_in.readUint32());
+    yiaddr_ = IOAddress(buffer_in.readUint32());
+    siaddr_ = IOAddress(buffer_in.readUint32());
+    giaddr_ = IOAddress(buffer_in.readUint32());
 
     vector<uint8_t> hw_addr(MAX_CHADDR_LEN, 0);
-    bufferIn.readVector(hw_addr, MAX_CHADDR_LEN);
-    bufferIn.readData(sname_, MAX_SNAME_LEN);
-    bufferIn.readData(file_, MAX_FILE_LEN);
+    buffer_in.readVector(hw_addr, MAX_CHADDR_LEN);
+    buffer_in.readData(sname_, MAX_SNAME_LEN);
+    buffer_in.readData(file_, MAX_FILE_LEN);
 
     hw_addr.resize(hlen);
 
     hwaddr_ = HWAddrPtr(new HWAddr(hw_addr, htype));
 
-    if (bufferIn.getLength() == bufferIn.getPosition()) {
+    if (buffer_in.getLength() == buffer_in.getPosition()) {
         // this is *NOT* DHCP packet. It does not have any DHCPv4 options. In
         // particular, it does not have magic cookie, a 4 byte sequence that
         // differentiates between DHCP and BOOTP packets.
         isc_throw(InvalidOperation, "Received BOOTP packet. BOOTP is not supported.");
     }
 
-    if (bufferIn.getLength() - bufferIn.getPosition() < 4) {
+    if (buffer_in.getLength() - buffer_in.getPosition() < 4) {
       // there is not enough data to hold magic DHCP cookie
       isc_throw(Unexpected, "Truncated or no DHCP packet.");
     }
 
-    uint32_t magic = bufferIn.readUint32();
+    uint32_t magic = buffer_in.readUint32();
     if (magic != DHCP_OPTIONS_COOKIE) {
       isc_throw(Unexpected, "Invalid or missing DHCP magic cookie");
     }
 
-    size_t opts_len = bufferIn.getLength() - bufferIn.getPosition();
-    vector<uint8_t> optsBuffer;
+    size_t opts_len = buffer_in.getLength() - buffer_in.getPosition();
+    vector<uint8_t> opts_buffer;
 
-    // First use of readVector.
-    bufferIn.readVector(optsBuffer, opts_len);
-    LibDHCP::unpackOptions4(optsBuffer, options_);
+    // Use readVector because a function which parses option requires
+    // a vector as an input.
+    buffer_in.readVector(opts_buffer, opts_len);
+    if (callback_.empty()) {
+        LibDHCP::unpackOptions4(opts_buffer, "dhcp4", options_);
+    } else {
+        // The last two arguments are set to NULL because they are
+        // specific to DHCPv6 options parsing. They are unused for
+        // DHCPv4 case. In DHCPv6 case they hold are the relay message
+        // offset and length.
+        callback_(opts_buffer, "dhcp4", options_, NULL, NULL);
+    }
 
     // @todo check will need to be called separately, so hooks can be called
     // after the packet is parsed, but before its content is verified
@@ -254,18 +272,18 @@ void Pkt4::setType(uint8_t dhcp_type) {
 }
 
 void Pkt4::repack() {
-    bufferOut_.writeData(&data_[0], data_.size());
+    buffer_out_.writeData(&data_[0], data_.size());
 }
 
 std::string
 Pkt4::toText() {
     stringstream tmp;
-    tmp << "localAddr=" << local_addr_.toText() << ":" << local_port_
-        << " remoteAddr=" << remote_addr_.toText()
+    tmp << "localAddr=" << local_addr_ << ":" << local_port_
+        << " remoteAddr=" << remote_addr_
         << ":" << remote_port_ << ", msgtype=" << static_cast<int>(getType())
         << ", transid=0x" << hex << transid_ << dec << endl;
 
-    for (isc::dhcp::Option::OptionCollection::iterator opt=options_.begin();
+    for (isc::dhcp::OptionCollection::iterator opt=options_.begin();
          opt != options_.end();
          ++opt) {
         tmp << "  " << opt->second->toText() << std::endl;
@@ -276,8 +294,24 @@ Pkt4::toText() {
 }
 
 void
-Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
+Pkt4::setHWAddr(uint8_t htype, uint8_t hlen,
                 const std::vector<uint8_t>& mac_addr) {
+    setHWAddrMember(htype, hlen, mac_addr, hwaddr_);
+}
+
+void
+Pkt4::setHWAddr(const HWAddrPtr& addr) {
+    if (!addr) {
+        isc_throw(BadValue, "Setting DHCPv4 chaddr field to NULL"
+                  << " is forbidden");
+    }
+    hwaddr_ = addr;
+}
+
+void
+Pkt4::setHWAddrMember(const uint8_t htype, const uint8_t hlen,
+                      const std::vector<uint8_t>& mac_addr,
+                      HWAddrPtr& hw_addr) {
     /// @todo Rewrite this once support for client-identifier option
     /// is implemented (ticket 1228?)
     if (hlen > MAX_CHADDR_LEN) {
@@ -288,15 +322,37 @@ Pkt4::setHWAddr(uint8_t hType, uint8_t hlen,
         isc_throw(OutOfRange, "Invalid HW Address specified");
     }
 
-    hwaddr_.reset(new HWAddr(mac_addr, hType));
+    hw_addr.reset(new HWAddr(mac_addr, htype));
 }
 
 void
-Pkt4::setHWAddr(const HWAddrPtr& addr) {
+Pkt4::setLocalHWAddr(const uint8_t htype, const uint8_t hlen,
+                      const std::vector<uint8_t>& mac_addr) {
+    setHWAddrMember(htype, hlen, mac_addr, local_hwaddr_);
+}
+
+void
+Pkt4::setLocalHWAddr(const HWAddrPtr& addr) {
     if (!addr) {
-        isc_throw(BadValue, "Setting hw address to NULL is forbidden");
+        isc_throw(BadValue, "Setting local HW address to NULL is"
+                  << " forbidden.");
     }
-    hwaddr_ = addr;
+    local_hwaddr_ = addr;
+}
+
+void
+Pkt4::setRemoteHWAddr(const uint8_t htype, const uint8_t hlen,
+                      const std::vector<uint8_t>& mac_addr) {
+    setHWAddrMember(htype, hlen, mac_addr, remote_hwaddr_);
+}
+
+void
+Pkt4::setRemoteHWAddr(const HWAddrPtr& addr) {
+    if (!addr) {
+        isc_throw(BadValue, "Setting remote HW address to NULL is"
+                  << " forbidden.");
+    }
+    remote_hwaddr_ = addr;
 }
 
 void
@@ -385,7 +441,7 @@ Pkt4::addOption(boost::shared_ptr<Option> opt) {
 
 boost::shared_ptr<isc::dhcp::Option>
 Pkt4::getOption(uint8_t type) const {
-    Option::OptionCollection::const_iterator x = options_.find(type);
+    OptionCollection::const_iterator x = options_.find(type);
     if (x != options_.end()) {
         return (*x).second;
     }
@@ -394,7 +450,7 @@ Pkt4::getOption(uint8_t type) const {
 
 bool
 Pkt4::delOption(uint8_t type) {
-    isc::dhcp::Option::OptionCollection::iterator x = options_.find(type);
+    isc::dhcp::OptionCollection::iterator x = options_.find(type);
     if (x != options_.end()) {
         options_.erase(x);
         return (true); // delete successful
@@ -405,6 +461,36 @@ Pkt4::delOption(uint8_t type) {
 void
 Pkt4::updateTimestamp() {
     timestamp_ = boost::posix_time::microsec_clock::universal_time();
+}
+
+bool
+Pkt4::isRelayed() const {
+    static const IOAddress zero_addr("0.0.0.0");
+    // For non-relayed message both Giaddr and Hops are zero.
+    if (getGiaddr() == zero_addr && getHops() == 0) {
+        return (false);
+
+    // For relayed message, both Giaddr and Hops are non-zero.
+    } else if (getGiaddr() != zero_addr && getHops() > 0) {
+        return (true);
+    }
+    // In any other case, the packet is considered malformed.
+    isc_throw(isc::BadValue, "invalid combination of giaddr = "
+              << getGiaddr().toText() << " and hops = "
+              << static_cast<int>(getHops()) << ". Valid values"
+              " are: (giaddr = 0 and hops = 0) or (giaddr != 0 and"
+              "hops != 0)");
+}
+
+bool Pkt4::inClass(const std::string& client_class) {
+    return (classes_.find(client_class) != classes_.end());
+}
+
+void
+Pkt4::addClass(const std::string& client_class) {
+    if (classes_.find(client_class) == classes_.end()) {
+        classes_.insert(client_class);
+    }
 }
 
 } // end of namespace isc::dhcp

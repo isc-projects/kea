@@ -212,7 +212,7 @@ DNSKEY::DNSKEY(const DNSKEY& source) :
 
 DNSKEY&
 DNSKEY::operator=(const DNSKEY& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 

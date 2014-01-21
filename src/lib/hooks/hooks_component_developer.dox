@@ -1,0 +1,483 @@
+// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+/**
+@page hooksComponentDeveloperGuide Guide to Hooks for the BIND 10 Component Developer
+
+@section hooksComponentIntroduction Introduction
+
+The hooks framework is a BIND 10 system that simplifies the way that
+users can write code to modify the behavior of BIND 10.  Instead of
+altering the BIND 10 source code, they write functions that are compiled
+and linked into a shared library.  The library is specified in the BIND 10
+configuration database and run time, BIND 10 dynamically loads the library
+into its address space.  At various points in the processing, the component
+"calls out" to functions in the library, passing to them the data is it
+currently working on.  They can examine and modify the data as required.
+
+This guide is aimed at BIND 10 developers who want to write or modify a
+BIND 10 component to use hooks.  It shows how the component should be written
+to load a shared library at run-time and how to call functions in it.
+
+For information about writing a hooks library containing functions called by BIND 10
+during its execution, see the document @ref hooksdgDevelopersGuide.
+
+@subsection hooksComponentTerminology Terminology
+
+In the remainder of this guide, the following terminology is used:
+
+- Component - a BIND 10 process, e.g. the authoritative DNS server or the
+DHCPv4 server.
+
+- Hook/Hook Point - used interchageably, this is a point in the code at
+which a call to user-written functions is made. Each hook has a name and
+each hook can have any number (including 0) of user-written functions
+attached to it.
+
+- Callout - a user-written function called by the component at a hook
+point. This is so-named because the component "calls out" to the library
+to execute a user-written function.
+
+- User code/user library - non-BIND 10 code that is compiled into a
+shared library and loaded by BIND 10 into its address space.  Multiple
+user libraries can be loaded at the same time, each containing callouts for
+the same hooks.  The hooks framework calls these libraries one after the
+other. (See the document @ref hooksdgDevelopersGuide for more details.)
+
+@subsection hooksComponentLanguages Languages
+
+The core of BIND 10 is written in C++ with some parts in Python.  While it is
+the intention to provide the hooks framework for all languages, the initial
+version is for C++.  All examples in this guide are in that language.
+
+@section hooksComponentBasicIdeas Basic Ideas
+
+From the point of view of the component author, the basic ideas of the hooks
+framework are quite simple:
+
+- The location of hook points in the code need to be determined.
+
+- Name the hook points and register them.
+
+- At each hook point, the component needs to complete the following steps to
+  execute callouts registered by the user-library:
+  -# copy data into the object used to pass information to the callout.
+  -# call the callout.
+  -# copy data back from the object used to exchange information.
+  -# take action based on information returned.
+
+Of course, to set up the system the libraries need to be loaded in the first
+place.  The component also needs to:
+
+- Define the configuration item that specifies the user libraries for this
+component.
+
+- Handle configuration changes and load/unload the user libraries.
+
+The following sections will describe these tasks in more detail.
+
+@section hooksComponentDefinition Determing the Hook Points
+
+Before any other action takes place, the location of the hook points
+in the code need to be determined.  This of course depends on the
+component but as a general guideline, hook locations should be chosen
+where a callout is able to obtain useful information from BIND 10 and/or
+affect processing.  Typically this means at the start or end of a major
+step in the processing of a request, at a point where either useful
+information can be passed to a callout and/or the callout can affect
+the processing of the component. The latter is achieved in either or both
+of the following eays:
+
+- Setting the "skip" flag.  This is a boolean flag that the callout can set
+  and is a quick way of passing information back to the component.  It is used
+  to indicate that the component should skip the processing step associated with
+  the hook.  The exact action is up to the component, but is likely to be one
+  of skipping the processing step (probably because the callout has
+  done its own processing for the action) or dropping the current packet
+  and starting on a new request.
+
+- Modifying data passed to it.  The component should be prepared to continue
+  processing with the data returned by the callout.  It is up to the component
+  author whether the data is validated before being used, but doing so will
+  have performance implications.
+
+@section hooksComponentRegistration Naming and Registering the Hooks Points
+
+Once the location of the hook point has been determined, it should be
+given a name.  This name should be unique amongst all hook points and is
+subject to certain restrictions (see below).
+
+Before the callouts at any hook point are called and any user libraries
+loaded - so typically during component initialization - the component must
+register the names of all the hooks.  The registration is done using
+the static method isc::hooks::HooksManager::registerHook():
+
+@code
+
+#include <hooks/hooks_manager.h>
+    :
+    int example_index = HooksManager::registerHook("lease_allocate");
+@endcode
+
+The name of the hook is passed as the sole argument to the registerHook()
+method.  The value returned is the index of that hook point and should
+be retained - it is needed to call the callouts attached to that hook.
+
+Note that a hook only needs to be registered once.  There is no mechanism for
+unregistering a hook and there is no need to do so.
+
+@subsection hooksComponentAutomaticRegistration Automatic Registration of Hooks
+
+In some components, it may be convenient to set up a single initialization
+function that registers all hooks.  For others, it may be more convenient
+for each module within the component to perform its own initialization.
+Since the isc::hooks::HooksManager object is a singleton and is created when first
+accessed, a useful trick is to automatically register the hooks when
+the module is loaded.
+
+This technique involves declaring an object outside of any execution
+unit in the module.  When the module is loaded, the object's constructor
+is run.  By placing the hook registration calls in the constructor,
+the hooks in the module are defined at load time, before any function in
+the module is run.  The code for such an initialization sequence would
+be similar to:
+
+@code
+#include <hooks/hooks_manager.h>
+
+namespace {
+
+// Declare structure to perform initialization and store the hook indexes.
+//
+struct MyHooks {
+    int pkt_rcvd;   // Index of "packet received" hook
+    int pkt_sent;   // Index of "packet sent" hook
+
+    // Constructor
+    MyHooks() {
+        pkt_rcvd = HooksManager::registerHook("pkt_rcvd");
+        pkt_sent = HooksManager::registerHook("pkt_sent");
+    }
+};
+
+// Declare a "MyHooks" object.  As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+MyHooks my_hooks;
+
+} // Anonymous namespace
+
+void Someclass::someFunction() {
+    :
+    // Check if any callouts are defined on the pkt_rcvd hook.
+    if (HooksManager::calloutPresent(my_hooks.pkt_rcvd)) {
+          :
+    }
+    :
+}
+@endcode
+
+@subsection hooksComponentHookNames Hook Names
+
+Hook names are strings and in principle, any string can be used as the
+name of a hook, even one containing spaces and non-printable characters.
+However, the following guidelines should be observed:
+
+- The names <b>context_create</b> and <b>context_destroy</b> are reserved to
+the hooks system and are automatically registered: an attempt to register
+one of these will lead to a isc::hooks::DuplicateHook exception being thrown.
+
+- The hook name should be a valid "C" function name.  If a user gives a
+callout the same name as one of the hooks, the hooks framework will
+automatically load that callout and attach it to the hook: the user does not
+have to explicitly register it.
+
+- The hook name should not conflict with the name of a function in any of
+the system libraries (e.g. naming a hook "sqrt" could lead to the
+square-root function in the system's maths library being attached to the hook
+as a callout).
+
+- Although hook names can be in any case (including mixed case), the BIND 10
+convention is that they are lower-case.
+
+@section hooksComponentCallingCallouts Calling Callouts on a Hook
+
+@subsection hooksComponentArgument The Callout Handle
+
+Before describing how to call user code at a hook point, we must first consider
+how to pass data to it.
+
+Each user callout has the signature:
+@code
+int callout_name(isc::hooks::CalloutHandle& handle);
+@endcode
+
+The isc::hooks::CalloutHandle object is the object used to pass data to
+and from the callout.  This holds the data as a set of name/value pairs,
+each pair being considered an argument to the callout.  If there are
+multiple callouts attached to a hook, the CalloutHandle is passed to
+each in turn. Should a callout modify an argument, the updated data is
+passed subsequent callouts (each of which could also modify it) before
+being returned to the component.
+
+Two methods are provided to get and set the arguments passed to
+the callout called (naturally enough) getArgument and SetArgument.
+Their usage is illustrated by the following code snippets.
+
+@code
+    int count = 10;
+    boost::shared_ptr<Pkt4> pktptr = ... // Set to appropriate value
+
+    // Assume that "handle_ptr" has been created and is a pointer to a
+    // CalloutHandle.
+    handle_ptr->setArgument("data_count", count);
+    handle_ptr->setArgument("inpacket", pktptr);
+
+    // Call the hook code.  lease_assigned_index is the value returned from
+    // HooksManager::registerHook() when the hook was registered.
+    HooksManager::callCallouts(lease_assigned_index, *handle_ptr);
+
+    // Retrieve the modified values
+    handle_ptr->getArgument("data_count", count);
+    handle_ptr->getArgument("inpacket", pktptr);
+@endcode
+
+As can be seen "getArgument" is used to retrieve data from the
+CalloutHandle, and "setArgument" used to put data into it.  If a callout
+wishes to alter data and pass it back to the component, it should retrieve
+the data with getArgument, modify it, and call setArgument to send
+it back.
+
+There are a couple points to be aware of:
+
+- The data type of the variable in the call to getArgument must
+match the data type of the variable passed to the corresponding
+setArgument <B>exactly</B>: using what would normally be considered
+to be a "compatible" type is not enough.  For example, if the callout
+passed an argument back to the component as an "int" and the component
+attempted to retrieve it as a "long", an exception would be thrown even
+though any value that can be stored in an "int" will fit into a "long".
+This restriction also applies the "const" attribute but only as applied to
+data pointed to by pointers, e.g. if an argument is defined as a "char*",
+an exception will be thrown if an attempt is made to retrieve it into
+a variable of type "const char*".  (However, if an argument is set as a
+"const int", it can be retrieved into an "int".)  The documentation of
+a hook point should detail the exact data type of each argument.
+
+- If a pointer to an object is passed to a callout (either a "raw"
+pointer, or a boost smart pointer (as in the example above), and the
+underlying object is altered through that pointer, the change will be
+reflected in the component even if the callout makes no call to setArgument.
+This can be avoided by passing a pointer to a "const" object.
+
+@subsection hooksComponentSkipFlag The Skip Flag
+
+Although information is passed back to the component from callouts through
+CalloutHandle arguments, a common action for callouts is to inform the component
+that its flow of control should be altered.  For example:
+
+- In the DHCP servers, there is a hook at the point at which a lease is
+  about to be assigned.  Callouts attached to this hooks may handle the
+  lease assignment in special cases, in which case they set the skip flag
+  to indicate that the server should not perform lease assignment in this
+  case.
+- A server may define a hook just after a packet is received.  A callout
+  attached to the hook might inspect the source address and compare it
+  against a blacklist.  If the address is on the list, the callout could set
+  the skip flag to indicate to the server that the packet should be dropped.
+
+For ease of processing, the CalloutHandle contains
+two methods, isc::hooks::CalloutHandle::getSkip() and
+isc::hooks::CalloutHandle::setSkip().  It is only meaningful for the
+component to use the "get" method.  The skip flag is cleared by the hooks
+framework when the component requests that callouts be executed, so any
+value set by the component is lost.  Callouts can both inspect the flag (it
+might have been set by callouts earlier in the callout list for the hook)
+and set it.  Note that the setting of the flag by a callout does not
+prevent callouts later in the list from being called: the skip flag is
+just a boolean flag - the only significance comes from its interpretation
+by the component.
+
+An example of use could be:
+@code
+// Set up arguments for DHCP lease assignment.
+handle->setArgument("query", query);
+handle->setArgument("response", response);
+HooksManager::callCallouts(lease_hook_index, *handle_ptr);
+if (! handle_ptr->getSkip()) {
+    // Skip flag not set, do the address allocation
+    :
+}
+@endcode
+
+
+@subsection hooksComponentGettingHandle Getting the Callout Handle
+
+The CalloutHandle object is linked to the loaded libraries
+for lifetime reasons (described below).  Components
+should retrieve a isc::hooks::CalloutHandle using
+isc::hooks::HooksManager::createCalloutHandle():
+@code
+    CalloutHandlePtr handle_ptr = HooksManager::createCalloutHandle();
+@endcode
+(isc::hooks::CalloutHandlePtr is a typedef for a Boost shared pointer to a
+CalloutHandle.)  The CalloutHandle so retrieved may be used for as
+long as the libraries are loaded.
+
+The handle is deleted by resetting the pointer:
+@code
+    handle_ptr.reset();
+@endcode
+... or by letting the handle pointer go out of scope.  The actual deletion
+occurs when the CallHandle's reference count goes to zero. (The
+current version of the hooks framework does not maintain any other
+pointer to the returned CalloutHandle, so it gets destroyed when the
+shared pointer to it is cleared or destroyed.  However, this may change
+in a future version.)
+
+@subsection hooksComponentCallingCallout Calling the Callout
+
+Calling the callout is a simple matter of executing the
+isc::hooks::HooksManager::callCallouts() method for the hook index in
+question.  For example, with the hook index pkt_sent defined as above,
+the hook can be executed by:
+@code
+    HooksManager::callCallouts(pkt_sent, *handle_ptr);
+@endcode
+... where "*handle_ptr" is a reference (note: not a pointer) to the
+isc::hooks::CalloutHandle object holding the arguments.  No status code
+is returned.  If a component needs to get data returned (other than that
+provided by the "skip" flag), it should define an argument through which
+the callout can do so.
+
+@subsubsection hooksComponentConditionalCallout Conditionally Calling Hook Callouts
+
+Most hooks in a component will not have callouts attached to them. To
+avoid the overhead of setting up arguments in the CalloutHandle, a
+component can check for callouts before doing that processing using
+isc::hooks::HooksManager::calloutsPresent().  Taking the index of a
+hook as its sole argument, the function returns true if there are any
+callouts attached to the hook and false otherwise.
+
+With this check, the code in the component for calling a hook would look
+something like:
+@code
+if (HooksManager::calloutsPresent(lease_hook_index)) {
+    // Set up arguments for lease assignment
+    handle->setArgument("query", query);
+    handle->setArgument("response", response);
+    HooksManager::callCallouts(lease_hook_index, *handle);
+    if (! handle->getSkip()) {
+        // Skip flag not set, do the address allocation
+        :
+    }
+}
+@endcode
+
+@section hooksComponentLoadLibraries Loading the User Libraries
+
+Once hooks are defined, all the hooks code described above will
+work, even if no libraries are loaded (and even if the library
+loading method is not called).  The CalloutHandle returned by
+isc::hooks::HooksManager::createCalloutHandle() will be valid,
+isc::hooks::HooksManager::calloutsPresent() will return false for every
+index, and isc::hooks::HooksManager::callCallouts() will be a no-op.
+
+However, if user libraries are specified in the BIND 10 configuration,
+the component should load them.  (Note the term "libraries": the hooks
+framework allows multiple user libraries to be loaded.) This should take
+place after the component's configuration has been read, and is achieved
+by the isc::hooks::HooksManager::loadLibraries() method.  The method is
+passed a vector of strings, each giving the full file specification of
+a user library:
+@code
+    std::vector<std::string> libraries = ... // Get array of libraries
+    bool success = HooksManager::loadLibraries(libraries);
+@endcode
+loadLibraries() returns a boolean status which is true if all libraries
+loaded successfully or false if one or more failed to load.  Appropriate
+error messages will have been logged in the latter case, the status
+being more to allow the developer to decide whether the execution
+should proceed in such circumstances.
+
+If loadLibraries() is called a second or subsequent time (as a result
+of a reconfiguration), all existing libraries are unloaded and a new
+set loaded.  Libraries can be explicitly unloaded either by calling
+isc::hooks::HooksManager::unloadLibraries() or by calling
+loadLibraries() with an empty vector as an argument.
+
+@subsection hooksComponentUnloadIssues Unload and Reload Issues
+
+Unloading a shared library works by unmapping the part of the process's
+virtual address space in which the library lies.  This may lead to
+problems if there are still references to that address space elsewhere
+in the process.
+
+In many operating systems, heap storage allowed by a shared library will
+lie in the virtual address allocated to the library.  This has implications
+in the hooks framework because:
+
+- Argument information stored in a CalloutHandle by a callout in a library
+may lie in the library's address space.
+- Data modified in objects passed as arguments may lie in the address
+space.  For example, it is common for a DHCP callout to add "options"
+to a packet: the memory allocated for those options will most likely
+lie in library address space.
+
+The problem really arises because of the extensive use by BIND 10 of boost
+smart pointers.  When the pointer is destroyed, the pointed-to memory is
+deallocated.  If the pointer points to address space that is unmapped because
+a library has been unloaded, the deletion causes a segmentation fault.
+
+The hooks framework addresses the issue for CalloutHandles by keeping in
+that object a shared pointer to the object controlling library unloading.
+Although a library can be unloaded at any time, it is only when all
+CalloutHandles that could possibly reference address space in the library
+have been deleted that the library will actually be unloaded and the
+address space unmapped.
+
+The hooks framework cannot solve the second issue as the objects in
+question are under control of the component.  It is up to the component
+developer to ensure that all such objects have been destroyed before
+libraries are reloaded.  In extreme cases this may mean the component
+suspending all processing of incoming requests until all currently
+executing requests have completed and data object destroyed, reloading
+the libraries, then resuming processing.
+
+@section hooksComponentCallouts Component-Defined Callouts
+
+Previous sections have discussed callout registration by user libraries.
+It is possible for a component to register its own functions (i.e. within
+its own address space) as hook callouts.  These functions are called
+in eactly the same way as user callouts, being passed their arguments
+though a CalloutHandle object.  (Guidelines for writing callouts can be
+found in @ref hooksdgDevelopersGuide.)
+
+A component can associate with a hook callouts that run either before
+user-registered callouts or after them.  Registration is done via a
+isc::hooks::LibraryHandle object, a reference to one being obtained
+through the methods isc::hooks::HooksManager::preCalloutLibraryHandle()
+(for a handle to register callouts to run before the user library
+callouts) or isc::hooks::HooksManager::postCalloutLibraryHandle() (for
+a handle to register callouts to run after the user callouts).  Use of
+the LibraryHandle to register and deregister callouts is described in
+@ref hooksdgLibraryHandle.
+
+Finally, it should be noted that callouts registered in this way only
+remain registered until the next call to isc::hooks::loadLibraries().
+It is up to the component to re-register the callouts after this
+method has been called.
+
+*/

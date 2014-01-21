@@ -140,7 +140,24 @@ get_schema() {
     db1=@abs_builddir@/dbutil_test_schema_$$
     copy_file $1 $db1
 
+    # The purpose of the following sed command is to join multi-line SQL
+    # statements to form single-line SQL statements.
+    #
+    # The sed command is explained as follows:
+    # ':a' creates a new label "a"
+    # 'N' appends the next line to the pattern space
+    # '$!ba' if it's not the last line, branch to "a"
+    #
+    # The above makes sed loop over the entire sqlite3 output. At this
+    # point, the pattern space contain all lines in the sqlite3 output.
+    #
+    # 's/,[\ ]*\n/, /g' then substitutes lines trailing with comma
+    # followed by zero or more spaces and the newline character, with
+    # just a comma and a single space.
+
     db_schema=`sqlite3 $db1 '.schema' | \
+               sed -e ':a' -e 'N' -e '$!ba' -e 's/,[\ ]*\n/, /g' | \
+               sort | \
                awk '{line = line $0} END {print line}' | \
                sed -e 's/ //g' | \
                tr [:upper:] [:lower:]`

@@ -61,7 +61,7 @@ typedef CPPPyObjectContainer<s_ZoneIterator, ZoneIterator>
 
 // General creation and destruction
 int
-ZoneIterator_init(s_ZoneIterator* self, PyObject* args) {
+ZoneIterator_init(s_ZoneIterator*, PyObject*) {
     // can't be called directly
     PyErr_SetString(PyExc_TypeError,
                     "ZoneIterator cannot be constructed directly");

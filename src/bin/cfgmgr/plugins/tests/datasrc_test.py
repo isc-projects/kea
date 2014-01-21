@@ -96,15 +96,6 @@ class DatasrcTest(unittest.TestCase):
             "params": {}
         }]})
 
-    def test_dstype_bad(self):
-        """
-        The configuration is correct by the spec, but it would be rejected
-        by the client list. Check we reject it.
-        """
-        self.reject({"IN": [{
-            "type": "No such type"
-        }]})
-
     def test_invalid_mem_params(self):
         """
         The client list skips in-memory sources. So we check it locally that

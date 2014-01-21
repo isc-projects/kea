@@ -1137,6 +1137,9 @@ const char* TEST_NSEC3_RECORDS[][5] = {
 };
 
 DatabaseClientTest::DatabaseClientTest() :
+    // We need to initialize to something, and not being mock is safer
+    // until we know for sure.
+    is_mock_(false),
     zname_("example.org"), qname_("www.example.org"),
     qclass_(dns::RRClass::IN()),
     qtype_(dns::RRType::A()),
@@ -1417,7 +1420,7 @@ TEST(GenericDatabaseClientTest, noAccessorException) {
 
 // If the zone doesn't exist, exception is thrown
 TEST_P(DatabaseClientTest, noZoneIterator) {
-    EXPECT_THROW(client_->getIterator(Name("example.com")), DataSourceError);
+    EXPECT_THROW(client_->getIterator(Name("example.com")), NoSuchZone);
 }
 
 // If the zone doesn't exist and iteration is not implemented, it still throws
@@ -1427,7 +1430,7 @@ TEST(GenericDatabaseClientTest, noZoneNotImplementedIterator) {
                                 boost::shared_ptr<DatabaseAccessor>(
                                     new NopAccessor())).getIterator(
                                         Name("example.com")),
-                 DataSourceError);
+                 NoSuchZone);
 }
 
 TEST(GenericDatabaseClientTest, notImplementedIterator) {

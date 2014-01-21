@@ -367,7 +367,6 @@ public:
     using AbstractMessageRenderer::CASE_INSENSITIVE;
     using AbstractMessageRenderer::CASE_SENSITIVE;
 
-    /// \brief Constructor from an output buffer.
     MessageRenderer();
 
     virtual ~MessageRenderer();

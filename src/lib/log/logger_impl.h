@@ -23,6 +23,7 @@
 #include <string>
 #include <map>
 #include <utility>
+#include <boost/noncopyable.hpp>
 
 
 // log4cplus logger header file
@@ -31,8 +32,7 @@
 // BIND-10 logger files
 #include <log/logger_level_impl.h>
 #include <log/message_types.h>
-
-#include <util/interprocess_sync.h>
+#include <log/interprocess/interprocess_sync.h>
 
 namespace isc {
 namespace log {
@@ -62,7 +62,7 @@ namespace log {
 /// b) The idea of debug levels is implemented.  See logger_level.h and
 /// logger_level_impl.h for more details on this.
 
-class LoggerImpl {
+class LoggerImpl : public boost::noncopyable {
 public:
 
     /// \brief Constructor
@@ -178,7 +178,7 @@ public:
     /// synchronizing output of log messages. It should be deletable and
     /// the ownership is transferred to the logger implementation.
     /// If NULL is passed, a BadInterprocessSync exception is thrown.
-    void setInterprocessSync(isc::util::InterprocessSync* sync);
+    void setInterprocessSync(isc::log::interprocess::InterprocessSync* sync);
 
     /// \brief Equality
     ///
@@ -193,7 +193,7 @@ public:
 private:
     std::string                  name_;   ///< Full name of this logger
     log4cplus::Logger            logger_; ///< Underlying log4cplus logger
-    isc::util::InterprocessSync* sync_;
+    isc::log::interprocess::InterprocessSync* sync_;
 };
 
 } // namespace log

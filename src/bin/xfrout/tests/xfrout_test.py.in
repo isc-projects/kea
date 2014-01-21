@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2012  Internet Systems Consortium.
+# Copyright (C) 2010-2013  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,8 @@
 
 import unittest
 import os
+import socket
+import fcntl
 from isc.testutils.tsigctx_mock import MockTSIGContext
 from isc.testutils.ccsession_mock import MockModuleCCSession
 from isc.cc.session import *
@@ -39,6 +41,7 @@ TSIG_KEY = TSIGKey("example.com:SFuWd/q99SzF8Yzd1QbB9g==")
 TEST_ZONE_NAME_STR = "example.com."
 TEST_ZONE_NAME = Name(TEST_ZONE_NAME_STR)
 TEST_RRCLASS = RRClass.IN
+TEST_RRCLASS_STR = TEST_RRCLASS.to_text()
 IXFR_OK_VERSION = 2011111802
 IXFR_NG_VERSION = 2011111803
 SOA_CURRENT_VERSION = 2011112001
@@ -190,6 +193,29 @@ class Dbserver:
     def decrease_transfers_counter(self):
         self.transfer_counter -= 1
 
+class TestUtility(unittest.TestCase):
+    """Test some utility functions."""
+
+    def test_make_blockign(self):
+        def is_blocking(fd):
+            return (fcntl.fcntl(fd, fcntl.F_GETFL) & os.O_NONBLOCK) == 0
+
+        # socket.socket doesn't support the 'with' statement before Python
+        # 3.2, so we'll close it ourselves (while it's not completely exception
+        # safe, it should be acceptable for a test case)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM,
+                             socket.IPPROTO_TCP)
+        # By default socket is made blocking
+        self.assertTrue(is_blocking(sock.fileno()))
+        # make_blocking(False) makes it non blocking
+        xfrout.make_blocking(sock.fileno(), False)
+        self.assertFalse(is_blocking(sock.fileno()))
+        # make_blocking(True) makes it blocking again
+        xfrout.make_blocking(sock.fileno(), True)
+        self.assertTrue(is_blocking(sock.fileno()))
+
+        sock.close()
+
 class TestXfroutSessionBase(unittest.TestCase):
     '''Base class for tests related to xfrout sessions
 
@@ -269,6 +295,12 @@ class TestXfroutSessionBase(unittest.TestCase):
             self.xfrsess._request_typestr = 'IXFR'
 
     def setUp(self):
+        # xfrout.make_blocking won't work with faked socket, and we'd like to
+        # examine how it's called, so we replace it with our mock.
+        self.__orig_make_blocking = xfrout.make_blocking
+        self._make_blocking_history = []
+        xfrout.make_blocking = lambda x, y: self.__make_blocking(x, y)
+
         self.sock = MySocket(socket.AF_INET,socket.SOCK_STREAM)
         self.xfrsess = MyXfroutSession(self.sock, None, Dbserver(),
                                        TSIGKeyRing(),
@@ -277,7 +309,8 @@ class TestXfroutSessionBase(unittest.TestCase):
                                        # When not testing ACLs, simply accept
                                        isc.acl.dns.REQUEST_LOADER.load(
                                            [{"action": "ACCEPT"}]),
-                                       {})
+                                       {},
+                                       xfrout.Counters(xfrout.SPECFILE_LOCATION))
         self.set_request_type(RRType.AXFR) # test AXFR by default
         self.mdata = self.create_request_data()
         self.soa_rrset = create_soa(SOA_CURRENT_VERSION)
@@ -285,7 +318,11 @@ class TestXfroutSessionBase(unittest.TestCase):
         # original is used elsewhere.
         self.orig_get_rrset_len = xfrout.get_rrset_len
 
+    def __make_blocking(self, fd, on):
+        self._make_blocking_history.append((fd, on))
+
     def tearDown(self):
+        xfrout.make_blocking = self.__orig_make_blocking
         xfrout.get_rrset_len = self.orig_get_rrset_len
         # transfer_counter must be always be reset no matter happens within
         # the XfroutSession object.  We check the condition here.
@@ -306,7 +343,12 @@ class TestXfroutSession(TestXfroutSessionBase):
     def test_quota_ok(self):
         '''The default case in terms of the xfrout quota.
 
+        It also confirms that the socket is made blocking.
+
         '''
+        # make_blocking shouldn't be called yet.
+        self.assertEqual([], self._make_blocking_history)
+
         # set up a bogus request, which should result in FORMERR. (it only
         # has to be something that is different from the previous case)
         self.xfrsess._request_data = \
@@ -315,6 +357,26 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.xfrsess.ClientClass = MockDataSrcClient
         XfroutSession._handle(self.xfrsess)
         self.assertEqual(self.sock.read_msg().get_rcode(), Rcode.FORMERR)
+
+        # make_blocking should have been called in _handle().  Note that
+        # in the test fixture we handle fileno as a faked socket object, not
+        # as integer.
+        self.assertEqual([(self.sock, True)], self._make_blocking_history)
+
+    def test_make_blocking_fail(self):
+        """Check what if make_blocking() raises an exception."""
+
+        # make_blocking() can fail due to OSError.  It shouldn't cause
+        # disruption, and xfrout_start shouldn't be called.
+
+        def raise_exception():
+            raise OSError('faked error')
+        xfrout.make_blocking = lambda x, y: raise_exception()
+        self.start_arg = []
+        self.xfrsess.dns_xfrout_start = \
+            lambda s, x, y: self.start_arg.append((x, y))
+        XfroutSession._handle(self.xfrsess)
+        self.assertEqual([], self.start_arg)
 
     def test_exception_from_session(self):
         '''Test the case where the main processing raises an exception.
@@ -381,7 +443,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         # check the 'xfrrej' counter initially
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.xfrsess._counters.get, 'zones',
-                          TEST_ZONE_NAME_STR, 'xfrrej')
+                          TEST_RRCLASS_STR, TEST_ZONE_NAME_STR,
+                          'xfrrej')
         # Localhost (the default in this test) is accepted
         rcode, msg = self.xfrsess._parse_query_message(self.mdata)
         self.assertEqual(rcode.to_text(), "NOERROR")
@@ -397,7 +460,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 1)
+                'zones', TEST_RRCLASS_STR, TEST_ZONE_NAME_STR,
+                'xfrrej'), 1)
 
         # TSIG signed request
         request_data = self.create_request_data(with_tsig=True)
@@ -428,7 +492,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 2)
+                'zones', TEST_RRCLASS_STR, TEST_ZONE_NAME_STR,
+                'xfrrej'), 2)
 
         # ACL using TSIG: no TSIG; should be rejected
         acl_setter(isc.acl.dns.REQUEST_LOADER.load([
@@ -438,7 +503,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 3)
+                'zones', TEST_RRCLASS_STR, TEST_ZONE_NAME_STR,
+                'xfrrej'), 3)
 
         #
         # ACL using IP + TSIG: both should match
@@ -460,7 +526,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 4)
+                'zones', TEST_RRCLASS_STR, TEST_ZONE_NAME_STR,
+                'xfrrej'), 4)
         # Address matches, but TSIG doesn't (not included)
         self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
                                 ('192.0.2.1', 12345))
@@ -468,7 +535,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 5)
+                'zones', TEST_RRCLASS_STR, TEST_ZONE_NAME_STR,
+                'xfrrej'), 5)
         # Neither address nor TSIG matches
         self.xfrsess._remote = (socket.AF_INET, socket.SOCK_STREAM,
                                 ('192.0.2.2', 12345))
@@ -476,7 +544,8 @@ class TestXfroutSession(TestXfroutSessionBase):
         self.assertEqual(rcode.to_text(), "REFUSED")
         # check the 'xfrrej' counter after incrementing
         self.assertEqual(self.xfrsess._counters.get(
-                'zones', TEST_ZONE_NAME_STR, 'xfrrej'), 6)
+                'zones', TEST_RRCLASS_STR, TEST_ZONE_NAME_STR,
+                'xfrrej'), 6)
 
     def test_transfer_acl(self):
         # ACL checks only with the default ACL
@@ -876,12 +945,14 @@ class TestXfroutSession(TestXfroutSessionBase):
 
         self.assertRaises(isc.cc.data.DataNotFoundError,
                           self.xfrsess._counters.get,
-                          'zones', TEST_ZONE_NAME_STR, 'xfrreqdone')
+                          'zones', TEST_RRCLASS_STR,
+                          TEST_ZONE_NAME_STR, 'xfrreqdone')
         self.xfrsess._reply_xfrout_query = myreply
         self.xfrsess.dns_xfrout_start(self.sock, self.mdata)
         self.assertEqual(self.sock.readsent(), b"success")
         self.assertGreater(self.xfrsess._counters.get(
-            'zones', TEST_ZONE_NAME_STR, 'xfrreqdone'), 0)
+            'zones', TEST_RRCLASS_STR, TEST_ZONE_NAME_STR,
+            'xfrreqdone'), 0)
 
     def test_reply_xfrout_query_axfr(self):
         self.xfrsess._soa = self.soa_rrset
@@ -1253,7 +1324,8 @@ class TestUnixSockServer(unittest.TestCase):
             # This would be the handler class, but we just check it is passed
             # the right parametes, so function is enough for that.
             keys = isc.server_common.tsig_keyring.get_keyring()
-            def handler(sock, data, server, keyring, address, acl, config):
+            def handler(sock, data, server, keyring, address, acl, config,
+                        counters):
                 self.assertEqual("sock", sock)
                 self.assertEqual("data", data)
                 self.assertEqual(self.unix, server)
@@ -1261,6 +1333,7 @@ class TestUnixSockServer(unittest.TestCase):
                 self.assertEqual("Address", address)
                 self.assertEqual("acl", acl)
                 self.assertEqual("Zone config", config)
+                self.assertIs(self.unix._counters, counters)
             self.unix.RequestHandlerClass = handler
             self.unix.finish_request("sock", "data")
         finally:
@@ -1559,7 +1632,9 @@ class TestUnixSockServerForCounter(unittest.TestCase):
         xfrout.ThreadingUnixStreamServer = DummySocketserver
         xfrout.super = lambda : DummySocketserver()
         xfrout.select.select = lambda x,y,z: ([None],[None],[None])
-        self.unix = UnixSockServer(None, None, threading.Event(), None, None)
+        self._counters = xfrout.Counters(xfrout.SPECFILE_LOCATION)
+        self.unix = UnixSockServer(None, None, threading.Event(), None, None,
+                                   self._counters)
 
     def tearDown(self):
         ( UnixSockServer._remove_unused_sock_file,
@@ -1589,7 +1664,8 @@ class TestUnixSockServerForCounter(unittest.TestCase):
                           'socket', 'unixdomain', 'openfail')
         xfrout.ThreadingUnixStreamServer = DummySocketserverException
         try:
-            self.unix = UnixSockServer(None, None, None, None, None)
+            self.unix = UnixSockServer(None, None, None, None, None,
+                                       self._counters)
         except Exception:
             pass
         else:
@@ -1630,7 +1706,7 @@ class TestUnixSockServerForCounter(unittest.TestCase):
                           self.unix._counters.get,
                           'socket', 'unixdomain', 'acceptfail')
         xfrout.super = lambda : DummyClassException()
-        self.unix = UnixSockServer(None, None, None, None, None)
+        self.unix = UnixSockServer(None, None, None, None, None, self._counters)
         self.assertRaises(Exception, self.unix.get_request)
         self.assertEqual(
             self.unix._counters.get('socket', 'unixdomain', 'acceptfail'), 1)

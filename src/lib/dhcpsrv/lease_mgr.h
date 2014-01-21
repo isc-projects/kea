@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 #include <exceptions/exceptions.h>
 
@@ -108,266 +109,6 @@ public:
         isc::Exception(file, line, what) {}
 };
 
-/// @brief a common structure for IPv4 and IPv6 leases
-///
-/// This structure holds all information that is common between IPv4 and IPv6
-/// leases.
-struct Lease {
-
-    /// @brief Constructor
-    ///
-    /// @param addr IP address
-    /// @param t1 renewal time
-    /// @param t2 rebinding time
-    /// @param valid_lft Lifetime of the lease
-    /// @param subnet_id Subnet identification
-    /// @param cltt Client last transmission time
-    Lease(const isc::asiolink::IOAddress& addr, uint32_t t1, uint32_t t2,
-          uint32_t valid_lft, SubnetID subnet_id, time_t cltt);
-
-    /// @brief Destructor
-    virtual ~Lease() {}
-
-    /// @brief IPv4 ot IPv6 address
-    ///
-    /// IPv4, IPv6 address or, in the case of a prefix delegation, the prefix.
-    isc::asiolink::IOAddress addr_;
-
-    /// @brief Renewal timer
-    ///
-    /// Specifies renewal time. Although technically it is a property of the
-    /// IA container and not the address itself, since our data model does not
-    /// define a separate IA entity, we are keeping it in the lease. In the
-    /// case of multiple addresses/prefixes for the same IA, each must have
-    /// consistent T1 and T2 values. This is specified in seconds since cltt.
-    uint32_t t1_;
-
-    /// @brief Rebinding timer
-    ///
-    /// Specifies rebinding time. Although technically it is a property of the
-    /// IA container and not the address itself, since our data model does not
-    /// define a separate IA entity, we are keeping it in the lease. In the
-    /// case of multiple addresses/prefixes for the same IA, each must have
-    /// consistent T1 and T2 values. This is specified in seconds since cltt.
-    uint32_t t2_;
-
-    /// @brief Valid lifetime
-    ///
-    /// Expressed as number of seconds since cltt.
-    uint32_t valid_lft_;
-
-    /// @brief Client last transmission time
-    ///
-    /// Specifies a timestamp giving the time when the last transmission from a
-    /// client was received.
-    time_t cltt_;
-
-    /// @brief Subnet identifier
-    ///
-    /// Specifies the identification of the subnet to which the lease belongs.
-    SubnetID subnet_id_;
-
-    /// @brief Fixed lease?
-    ///
-    /// Fixed leases are kept after they are released/expired.
-    bool fixed_;
-
-    /// @brief Client hostname
-    ///
-    /// This field may be empty
-    std::string hostname_;
-
-    /// @brief Forward zone updated?
-    ///
-    /// Set true if the DNS AAAA record for this lease has been updated.
-    bool fqdn_fwd_;
-
-    /// @brief Reverse zone updated?
-    ///
-    /// Set true if the DNS PTR record for this lease has been updated.
-    bool fqdn_rev_;
-
-    /// @brief Lease comments
-    ///
-    /// Currently not used. It may be used for keeping comments made by the
-    /// system administrator.
-    std::string comments_;
-
-    /// @brief Convert Lease to Printable Form
-    ///
-    /// @return String form of the lease
-    virtual std::string toText() const = 0;
-
-    /// @brief returns true if the lease is expired
-    /// @return true if the lease is expired
-    bool expired() const;
-
-};
-
-/// @brief Structure that holds a lease for IPv4 address
-///
-/// For performance reasons it is a simple structure, not a class. If we chose
-/// make it a class, all fields would have to made private and getters/setters
-/// would be required. As this is a critical part of the code that will be used
-/// extensively, direct access is warranted.
-struct Lease4 : public Lease {
-
-    /// @brief Address extension
-    ///
-    /// It is envisaged that in some cases IPv4 address will be accompanied
-    /// with some additional data. One example of such use are Address + Port
-    /// solutions (or Port-restricted Addresses), where several clients may get
-    /// the same address, but different port ranges. This feature is not
-    /// expected to be widely used.  Under normal circumstances, the value
-    /// should be 0.
-    uint32_t ext_;
-
-    /// @brief Hardware address
-    std::vector<uint8_t> hwaddr_;
-
-    /// @brief Client identifier
-    ///
-    /// @todo Should this be a pointer to a client ID or the ID itself?
-    ///       Compare with the DUID in the Lease6 structure.
-    ClientIdPtr client_id_;
-
-    /// @brief Constructor
-    ///
-    /// @param addr IPv4 address.
-    /// @param hwaddr Hardware address buffer
-    /// @param hwaddr_len Length of hardware address buffer
-    /// @param clientid Client identification buffer
-    /// @param clientid_len Length of client identification buffer
-    /// @param valid_lft Lifetime of the lease
-    /// @param t1 renewal time
-    /// @param t2 rebinding time
-    /// @param cltt Client last transmission time
-    /// @param subnet_id Subnet identification
-    Lease4(const isc::asiolink::IOAddress& addr, const uint8_t* hwaddr, size_t hwaddr_len,
-           const uint8_t* clientid, size_t clientid_len, uint32_t valid_lft,
-           uint32_t t1, uint32_t t2, time_t cltt, uint32_t subnet_id)
-        : Lease(addr, t1, t2, valid_lft, subnet_id, cltt),
-        ext_(0), hwaddr_(hwaddr, hwaddr + hwaddr_len) {
-        if (clientid_len) {
-            client_id_.reset(new ClientId(clientid, clientid_len));
-        }
-    }
-
-    /// @brief Default constructor
-    ///
-    /// Initialize fields that don't have a default constructor.
-    Lease4() : Lease(0, 0, 0, 0, 0, 0) {
-    }
-
-    /// @brief Compare two leases for equality
-    ///
-    /// @param other lease6 object with which to compare
-    bool operator==(const Lease4& other) const;
-
-    /// @brief Compare two leases for inequality
-    ///
-    /// @param other lease6 object with which to compare
-    bool operator!=(const Lease4& other) const {
-        return (!operator==(other));
-    }
-
-    /// @brief Convert lease to printable form
-    ///
-    /// @return Textual represenation of lease data
-    virtual std::string toText() const;
-
-    /// @todo: Add DHCPv4 failover related fields here
-};
-
-/// @brief Pointer to a Lease4 structure.
-typedef boost::shared_ptr<Lease4> Lease4Ptr;
-
-/// @brief A collection of IPv4 leases.
-typedef std::vector<Lease4Ptr> Lease4Collection;
-
-
-
-/// @brief Structure that holds a lease for IPv6 address and/or prefix
-///
-/// For performance reasons it is a simple structure, not a class. If we chose
-/// make it a class, all fields would have to made private and getters/setters
-/// would be required. As this is a critical part of the code that will be used
-/// extensively, direct access is warranted.
-struct Lease6 : public Lease {
-
-    /// @brief Type of lease contents
-    typedef enum {
-        LEASE_IA_NA, /// the lease contains non-temporary IPv6 address
-        LEASE_IA_TA, /// the lease contains temporary IPv6 address
-        LEASE_IA_PD  /// the lease contains IPv6 prefix (for prefix delegation)
-    } LeaseType;
-
-    /// @brief Lease type
-    ///
-    /// One of normal address, temporary address, or prefix.
-    LeaseType type_;
-
-    /// @brief IPv6 prefix length
-    ///
-    /// This is used only for prefix delegations and is ignored otherwise.
-    uint8_t prefixlen_;
-
-    /// @brief Identity Association Identifier (IAID)
-    ///
-    /// DHCPv6 stores all addresses and prefixes in IA containers (IA_NA,
-    /// IA_TA, IA_PD). All containers may appear more than once in a message.
-    /// To differentiate between them, the IAID field is present
-    uint32_t iaid_;
-
-    /// @brief Client identifier
-    DuidPtr duid_;
-
-    /// @brief preferred lifetime
-    ///
-    /// This parameter specifies the preferred lifetime since the lease was
-    /// assigned or renewed (cltt), expressed in seconds.
-    uint32_t preferred_lft_;
-
-    /// @todo: Add DHCPv6 failover related fields here
-
-    /// @brief Constructor
-    Lease6(LeaseType type, const isc::asiolink::IOAddress& addr, DuidPtr duid,
-           uint32_t iaid, uint32_t preferred, uint32_t valid, uint32_t t1,
-           uint32_t t2, SubnetID subnet_id, uint8_t prefixlen_ = 0);
-
-    /// @brief Constructor
-    ///
-    /// Initialize fields that don't have a default constructor.
-    Lease6() : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, 0, 0),
-        type_(LEASE_IA_NA) {
-    }
-
-    /// @brief Compare two leases for equality
-    ///
-    /// @param other lease6 object with which to compare
-    bool operator==(const Lease6& other) const;
-
-    /// @brief Compare two leases for inequality
-    ///
-    /// @param other lease6 object with which to compare
-    bool operator!=(const Lease6& other) const {
-        return (!operator==(other));
-    }
-
-    /// @brief Convert Lease to Printable Form
-    ///
-    /// @return String form of the lease
-    virtual std::string toText() const;
-};
-
-/// @brief Pointer to a Lease6 structure.
-typedef boost::shared_ptr<Lease6> Lease6Ptr;
-
-/// @brief Pointer to a const Lease6 structure.
-typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
-
-/// @brief A collection of IPv6 leases.
-typedef std::vector<Lease6Ptr> Lease6Collection;
 
 /// @brief Abstract Lease Manager
 ///
@@ -401,7 +142,7 @@ public:
     ///
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
-    virtual bool addLease(const Lease4Ptr& lease) = 0;
+    virtual bool addLease(const isc::dhcp::Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
     ///
@@ -462,6 +203,20 @@ public:
     /// @return lease collection
     virtual Lease4Collection getLease4(const ClientId& clientid) const = 0;
 
+    /// @brief Returns existing IPv4 lease for a given client identifier,
+    /// HW address and subnet identifier.
+    ///
+    /// @todo Consider whether this function is needed or not. In the basic
+    /// DHCPv4 server implementation it is not used by the allocation engine.
+    ///
+    /// @param client_id A client identifier.
+    /// @param hwaddr Hardware address.
+    /// @param subnet_id A subnet identifier.
+    ///
+    /// @return A pointer to the lease or NULL if the lease is not found.
+    virtual Lease4Ptr getLease4(const ClientId& client_id, const HWAddr& hwaddr,
+                                SubnetID subnet_id) const = 0;
+
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
     /// There can be at most one lease for a given HW address in a single
@@ -480,10 +235,12 @@ public:
     /// The assumption here is that there will not be site or link-local
     /// addresses used, so there is no way of having address duplication.
     ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const = 0;
+    virtual Lease6Ptr getLease6(Lease::Type type,
+                                const isc::asiolink::IOAddress& addr) const = 0;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
     ///
@@ -492,22 +249,54 @@ public:
     /// can be more than one. Thus return type is a container, not a single
     /// pointer.
     ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param duid client DUID
     /// @param iaid IA identifier
     ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Collection getLease6(const DUID& duid,
-                                       uint32_t iaid) const = 0;
+    /// @return Lease collection (may be empty if no lease is found)
+    virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
+                                        uint32_t iaid) const = 0;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
+    /// There may be more than one address, temp. address or prefix
+    /// for specified duid/iaid/subnet-id tuple.
+    ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param duid client DUID
     /// @param iaid IA identifier
     /// @param subnet_id subnet id of the subnet the lease belongs to
     ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
-    virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid,
-                                SubnetID subnet_id) const = 0;
+    /// @return Lease collection (may be empty if no lease is found)
+    virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
+                                        uint32_t iaid, SubnetID subnet_id) const = 0;
+
+
+    /// @brief returns zero or one IPv6 lease for a given duid+iaid+subnet_id
+    ///
+    /// This function is mostly intended to be used in unit-tests during the
+    /// transition from single to multi address per IA. It may also be used
+    /// in other cases where at most one lease is expected in the database.
+    ///
+    /// It is a wrapper around getLease6(), which returns a collection of
+    /// leases. That collection can be converted into a single pointer if
+    /// there are no leases (NULL pointer) or one lease (use that single lease).
+    /// If there are more leases in the collection, the function will
+    /// throw MultipleRecords exception.
+    ///
+    /// Note: This method is not virtual on purpose. It is common for all
+    /// backends.
+    ///
+    /// @param type specifies lease type: (NA, TA or PD)
+    /// @param duid client DUID
+    /// @param iaid IA identifier
+    /// @param subnet_id subnet id of the subnet the lease belongs to
+    ///
+    /// @throw MultipleRecords if there is more than one lease matching
+    ///
+    /// @return Lease pointer (or NULL if none is found)
+    Lease6Ptr getLease6(Lease::Type type, const DUID& duid,
+                        uint32_t iaid, SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///

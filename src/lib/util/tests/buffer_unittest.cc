@@ -248,6 +248,11 @@ TEST_F(BufferTest, outputBufferAssign) {
     });
 }
 
+// Check assign to self doesn't break stuff
+TEST_F(BufferTest, outputBufferAssignSelf) {
+    EXPECT_NO_THROW(obuffer = obuffer);
+}
+
 TEST_F(BufferTest, outputBufferZeroSize) {
     // Some OSes might return NULL on malloc for 0 size, so check it works
     EXPECT_NO_THROW({

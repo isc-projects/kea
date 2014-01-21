@@ -311,6 +311,8 @@ class MyModuleCCSession(isc.config.ConfigData):
         self.stopped = False
         self.closed = False
         self.lname = 'mock_mod_ccs'
+        self._msg = None
+        self._env = None
 
     def start(self):
         pass
@@ -320,6 +322,10 @@ class MyModuleCCSession(isc.config.ConfigData):
 
     def close(self):
         self.closed = True
+
+    def check_command_without_recvmsg(self, msg, env):
+        self._msg = msg
+        self._env = env
 
 class MyStats(stats.Stats):
     """A faked Stats class for unit tests.
@@ -338,7 +344,7 @@ class MyStats(stats.Stats):
         # may want to inspect or tweak them.
 
         # initial seq num for faked group_sendmsg, arbitrary choice.
-        self.__seq = 4200
+        self._seq = 4200
         # if set, use them as faked response to group_recvmsg (see below).
         # it's a list of tuples, each of which is of (answer, envelope).
         self._answers = []
@@ -408,10 +414,10 @@ class MyStats(stats.Stats):
         generated sequence number.
 
         """
-        self.__seq += 1
-        return self.__seq
+        self._seq += 1
+        return self._seq
 
-    def __group_recvmsg(self, nonblocking, seq):
+    def __group_recvmsg(self, nonblocking = True, seq = None):
         """Faked ModuleCCSession.group_recvmsg for tests.
 
         Skipping actual network communication, and returning an internally
@@ -514,6 +520,14 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
         self.cc_session = self.mccs._session
         self.mccs.start = self.load_config # force reload
 
+        # check_command could be called from the main select() loop due to
+        # Linux's bug of spurious wakeup.  We don't need the actual behavior
+        # of check_command in our tests, so we can basically replace it with a
+        # no-op mock function.
+        def mock_check_command(nonblock):
+            pass
+        self.mccs.check_command = mock_check_command
+
     def close_mccs(self):
         super().close_mccs()
         if self.__dummy_sock is not None:
@@ -562,3 +576,6 @@ class MyStatsHttpd(stats_httpd.StatsHttpd):
     def run(self):
         self._started.set()
         self.start()
+
+    def shutdown(self):
+        self.command_handler('shutdown', None)

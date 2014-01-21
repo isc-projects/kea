@@ -64,6 +64,17 @@ will respond with an error and the command will be ignored.
 This debug message is printed when a request is sent to the module
 to send its data to the stats module.
 
+% STATS_SKIP_COLLECTING skipped collecting statistics from %1
+The stats module temporarily encountered an internal messaging bus error while
+collecting statistics from the module, then it skipped collecting statistics
+from it and will try to collect from the next module. The lack of statistics
+will be recovered at the next polling round.
+
+% STATS_SKIP_POLLING skipped polling statistics to modules
+The stats module temporarily encountered an internal messaging bus error while
+collecting initial information to collect statistics from the init module, then
+it skipped polling statistics and will try to do next time.
+
 % STATS_STARTING starting
 The stats module will be now starting.
 

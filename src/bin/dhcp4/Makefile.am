@@ -16,7 +16,7 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-CLEANFILES  = *.gcno *.gcda spec_config.h dhcp4_messages.h dhcp4_messages.cc
+CLEANFILES  = *.gcno *.gcda spec_config.h dhcp4_messages.h dhcp4_messages.cc s-messages
 
 man_MANS = b10-dhcp4.8
 DISTCLEANFILES = $(man_MANS)
@@ -39,8 +39,11 @@ endif
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
-dhcp4_messages.h dhcp4_messages.cc: dhcp4_messages.mes
+dhcp4_messages.h dhcp4_messages.cc: s-messages
+
+s-messages: dhcp4_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/dhcp4/dhcp4_messages.mes
+	touch $@
 
 BUILT_SOURCES = spec_config.h dhcp4_messages.h dhcp4_messages.cc
 
@@ -56,6 +59,7 @@ nodist_b10_dhcp4_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 EXTRA_DIST += dhcp4_messages.mes
 
 b10_dhcp4_LDADD  = $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+b10_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
@@ -63,6 +67,7 @@ b10_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 b10_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+b10_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 
 b10_dhcp4dir = $(pkgdatadir)
 b10_dhcp4_DATA = dhcp4.spec

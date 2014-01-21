@@ -19,6 +19,8 @@
 #include <util/threads/sync.h>
 #include <log/logger_specification.h>
 
+#include <boost/noncopyable.hpp>
+
 // Generated if, when updating the logging specification, an unknown
 // destination is encountered.
 class UnknownLoggingDestination : public isc::Exception {
@@ -41,7 +43,7 @@ class LoggerManagerImpl;
 /// To isolate the underlying implementation from basic processing, the
 /// LoggerManager is implemented using the "pimpl" idiom.
 
-class LoggerManager {
+class LoggerManager : public boost::noncopyable {
 public:
     /// \brief Constructor
     LoggerManager();

@@ -8,5 +8,7 @@ pythondir = $(pyexecdir)/isc/log_messages/
 CLEANFILES = __init__.pyc __init__.pyo
 CLEANDIRS = __pycache__
 
+EXTRA_DIST = README
+
 clean-local:
 	rm -rf $(CLEANDIRS)

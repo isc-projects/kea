@@ -15,14 +15,16 @@
 
 #include <datasrc/memory/rrset_collection.h>
 
-#include "memory_segment_test.h"
-
 #include <datasrc/memory/zone_data_loader.h>
 #include <datasrc/memory/segment_object_holder.h>
 #include <dns/rrttl.h>
 #include <dns/rdataclass.h>
 
+#include <datasrc/tests/memory/memory_segment_mock.h>
+
 #include <gtest/gtest.h>
+
+#include <boost/scoped_ptr.hpp>
 
 using namespace isc::dns;
 using namespace isc::dns::rdata;
@@ -43,22 +45,24 @@ public:
         rrclass("IN"),
         origin("example.org"),
         zone_file(TEST_DATA_DIR "/rrset-collection.zone"),
-        zone_data_holder(mem_sgmt,
-                         loadZoneData(mem_sgmt, rrclass, origin, zone_file),
-                         rrclass),
-        collection(*zone_data_holder.get(), rrclass)
-    {}
+        zone_data_holder(mem_sgmt, rrclass)
+    {
+        zone_data_holder.set(loadZoneData(mem_sgmt, rrclass, origin,
+                                          zone_file));
+        collection.reset(new RRsetCollection(*zone_data_holder.get(),
+                                             rrclass));
+    }
 
     const RRClass rrclass;
     const Name origin;
     std::string zone_file;
-    test::MemorySegmentTest mem_sgmt;
+    test::MemorySegmentMock mem_sgmt;
     SegmentObjectHolder<ZoneData, RRClass> zone_data_holder;
-    RRsetCollection collection;
+    boost::scoped_ptr<RRsetCollection> collection;
 };
 
 TEST_F(RRsetCollectionTest, find) {
-    const RRsetCollection& ccln = collection;
+    const RRsetCollection& ccln = *collection;
     ConstRRsetPtr rrset = ccln.find(Name("www.example.org"), rrclass,
                                     RRType::A());
     EXPECT_TRUE(rrset);

@@ -33,6 +33,7 @@ import threading
 import isc.config.ccsession
 from optparse import OptionParser, OptionValueError
 import isc.util.process
+import isc.util.traceback_handler
 from isc.cc.proto_defs import *
 import isc.log
 from isc.log_messages.msgq_messages import *
@@ -61,15 +62,19 @@ VERSION = "b10-msgq 20110127 (BIND 10 @PACKAGE_VERSION@)"
 # If B10_FROM_BUILD is set in the environment, we use data files
 # from a directory relative to that, otherwise we use the ones
 # installed on the system
-if "B10_FROM_BUILD" in os.environ:
-    SPECFILE_PATH = os.environ["B10_FROM_BUILD"] + "/src/bin/msgq"
+if "B10_FROM_SOURCE" in os.environ:
+    SPECFILE_PATH = os.environ["B10_FROM_SOURCE"] + "/src/bin/msgq"
 else:
     PREFIX = "@prefix@"
     DATAROOTDIR = "@datarootdir@"
-    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}", DATAROOTDIR).replace("${prefix}", PREFIX)
+    SPECFILE_PATH = "@datadir@/@PACKAGE@".replace("${datarootdir}",
+                                                  DATAROOTDIR). \
+                                                  replace("${prefix}", PREFIX)
 SPECFILE_LOCATION = SPECFILE_PATH + "/msgq.spec"
 
 class MsgQReceiveError(Exception): pass
+
+class MsgQRunningError(Exception): pass
 
 class MsgQCloseOnReceive(Exception):
     """Exception raised when reading data from a socket results in 'shutdown'.
@@ -122,12 +127,17 @@ class SubscriptionManager:
         if target in self.subscriptions:
             if socket in self.subscriptions[target]:
                 self.subscriptions[target].remove(socket)
+                return True
+        return False
 
     def unsubscribe_all(self, socket):
         """Remove the socket from all subscriptions."""
-        for socklist in self.subscriptions.values():
+        removed_from = []
+        for subs, socklist in self.subscriptions.items():
             if socket in socklist:
                 socklist.remove(socket)
+                removed_from.append(subs)
+        return removed_from
 
     def find_sub(self, group, instance):
         """Return an array of sockets which want this specific group,
@@ -175,8 +185,6 @@ class MsgQ:
             self.socket_file = socket_file
 
         self.verbose = verbose
-        self.poller = None
-        self.kqueue = None
         self.runnable = False
         self.listen_socket = False
         self.sockets = {}
@@ -184,6 +192,7 @@ class MsgQ:
         self.hostname = socket.gethostname()
         self.subs = SubscriptionManager(self.cfgmgr_ready)
         self.lnames = {}
+        self.fd_to_lname = {}
         self.sendbuffs = {}
         self.running = False
         self.__cfgmgr_ready = None
@@ -195,6 +204,34 @@ class MsgQ:
         # not for performance, so we use wide lock scopes to be on the safe
         # side.
         self.__lock = threading.Lock()
+        self._session = None
+        self.__poller_sock = None
+
+    def members_notify(self, event, params):
+        """
+        Thin wrapper around ccs's notify. Send a notification about change
+        of some list that can be requested by the members command.
+
+        The event is one of:
+        - connected (client connected to MsgQ)
+        - disconected (client disconnected from MsgQ)
+        - subscribed (client subscribed to a group)
+        - unsubscribed (client unsubscribed from a group)
+
+        The params is dict containing:
+        - client: The lname of the client in question.
+        - group (for 'subscribed' and 'unsubscribed' events):
+          The group the client subscribed or unsubscribed from.
+
+        The notification occurs after the event, so client a subscribing for
+        notifications will get a notification about its own subscription, but
+        will not get a notification when it unsubscribes.
+        """
+        # Due to the interaction between threads (and fear it might influence
+        # sending stuff), we test this method in msgq_run_test, instead of
+        # mocking the ccs.
+        if self._session: # Don't send before we have started up
+            self._session.notify('cc_members', event, params)
 
     def cfgmgr_ready(self, ready=True):
         """Notify that the config manager is either subscribed, or
@@ -229,46 +266,30 @@ class MsgQ:
                 self.__cfgmgr_ready_cond.wait()
             return self.__cfgmgr_ready
 
-    def setup_poller(self):
-        """Set up the poll thing.  Internal function."""
-        try:
-            self.kqueue = select.kqueue()
-        except AttributeError:
-            self.poller = select.poll()
-
-    def add_kqueue_socket(self, socket, write_filter=False):
-        """Add a kqueue filter for a socket.  By default the read
-        filter is used; if write_filter is set to True, the write
-        filter is used.  We use a boolean value instead of a specific
-        filter constant, because kqueue filter values do not seem to
-        be defined on some systems.  The use of boolean makes the
-        interface restrictive because there are other filters, but this
-        method is mostly only for our internal use, so it should be
-        acceptable at least for now."""
-        filter_type = select.KQ_FILTER_WRITE if write_filter else \
-            select.KQ_FILTER_READ
-        event = select.kevent(socket.fileno(), filter_type,
-                              select.KQ_EV_ADD | select.KQ_EV_ENABLE)
-        self.kqueue.control([event], 0)
-
-    def delete_kqueue_socket(self, socket, write_filter=False):
-        """Delete a kqueue filter for socket.  See add_kqueue_socket()
-        for the semantics and notes about write_filter."""
-        filter_type = select.KQ_FILTER_WRITE if write_filter else \
-            select.KQ_FILTER_READ
-        event = select.kevent(socket.fileno(), filter_type,
-                              select.KQ_EV_DELETE)
-        self.kqueue.control([event], 0)
-
     def setup_listener(self):
         """Set up the listener socket.  Internal function."""
         logger.debug(TRACE_BASIC, MSGQ_LISTENER_SETUP, self.socket_file)
 
-        self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-
         if os.path.exists(self.socket_file):
+            # Rather than just blindly removing the socket file, attempt to
+            # connect to the existing socket to see if there is an existing
+            # msgq running. Only if that fails do we remove the file and
+            # attempt to create a new socket.
+            existing_msgq = None
+            try:
+                existing_msgq = isc.cc.Session(self.socket_file)
+            except isc.cc.session.SessionError:
+                existing_msgq = None
+
+            if existing_msgq:
+                existing_msgq.close()
+                logger.fatal(MSGQ_ALREADY_RUNNING)
+                raise MsgQRunningError("b10-msgq already running")
+
             os.remove(self.socket_file)
+
         try:
+            self.listen_socket = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.listen_socket.bind(self.socket_file)
             self.listen_socket.listen(1024)
         except Exception as e:
@@ -280,11 +301,6 @@ class MsgQ:
             logger.fatal(MSGQ_LISTENER_FAILED, self.socket_file, e)
             raise e
 
-        if self.poller:
-            self.poller.register(self.listen_socket, select.POLLIN)
-        else:
-            self.add_kqueue_socket(self.listen_socket)
-
     def setup_signalsock(self):
         """Create a socket pair used to signal when we want to finish.
            Using a socket is easy and thread/signal safe way to signal
@@ -294,18 +310,12 @@ class MsgQ:
         # closed, we should shut down.
         (self.__poller_sock, self.__control_sock) = socket.socketpair()
 
-        if self.poller:
-            self.poller.register(self.__poller_sock, select.POLLIN)
-        else:
-            self.add_kqueue_socket(self.__poller_sock)
-
     def setup(self):
         """Configure listener socket, polling, etc.
            Raises a socket.error if the socket_file cannot be
            created.
         """
 
-        self.setup_poller()
         self.setup_signalsock()
         self.setup_listener()
 
@@ -323,36 +333,39 @@ class MsgQ:
 
     def register_socket(self, newsocket):
         """
-        Internal function to insert a socket. Used by process_accept and some tests.
+        Internal function to insert a socket. Used by process_accept and some
+        tests.
         """
         self.sockets[newsocket.fileno()] = newsocket
         lname = self.newlname()
         self.lnames[lname] = newsocket
+        self.fd_to_lname[newsocket.fileno()] = lname
 
         logger.debug(TRACE_BASIC, MSGQ_SOCKET_REGISTERED, newsocket.fileno(),
                      lname)
 
-        if self.poller:
-            self.poller.register(newsocket, select.POLLIN)
-        else:
-            self.add_kqueue_socket(newsocket)
+        self.members_notify('connected', {'client': lname})
 
     def kill_socket(self, fd, sock):
         """Fully close down the socket."""
-        # Unregister events on the socket.  Note that we don't have to do
-        # this for kqueue because the registered events are automatically
-        # deleted when the corresponding socket is closed.
-        if self.poller:
-            self.poller.unregister(sock)
 
-        self.subs.unsubscribe_all(sock)
-        lname = [ k for k, v in self.lnames.items() if v == sock ][0]
+        unsubscribed_from = self.subs.unsubscribe_all(sock)
+        lname = self.fd_to_lname[fd]
+        del self.fd_to_lname[fd]
         del self.lnames[lname]
         sock.close()
         del self.sockets[fd]
         if fd in self.sendbuffs:
             del self.sendbuffs[fd]
         logger.debug(TRACE_BASIC, MSGQ_SOCK_CLOSE, fd)
+        # Filter out just the groups.
+        unsubscribed_from_groups = set(map(lambda x: x[0], unsubscribed_from))
+        for group in unsubscribed_from_groups:
+            self.members_notify('unsubscribed', {
+                                    'client': lname,
+                                    'group': group
+                                })
+        self.members_notify('disconnected', {'client': lname})
 
     def __getbytes(self, fd, sock, length, continued):
         """Get exactly the requested bytes, or raise an exception if
@@ -529,22 +542,19 @@ class MsgQ:
             # Append it to buffer (but check the data go away)
             if fileno in self.sendbuffs:
                 (last_sent, buff) = self.sendbuffs[fileno]
-                if now - last_sent > 0.1:
+                tdelta = now - last_sent
+                if tdelta > 0.1:
+                    logger.error(MSGQ_SOCKET_TIMEOUT_ERROR, fileno, tdelta)
                     self.kill_socket(fileno, sock)
                     return False
                 buff += msg
             else:
                 buff = msg[amount_sent:]
                 last_sent = now
-                if self.poller:
-                    self.poller.register(fileno, select.POLLIN |
-                                         select.POLLOUT)
-                else:
-                    self.add_kqueue_socket(sock, True)
             self.sendbuffs[fileno] = (last_sent, buff)
         return True
 
-    def __process_write(self, fileno):
+    def _process_write(self, fileno):
         # Try to send some data from the buffer
         (_, msg) = self.sendbuffs[fileno]
         sock = self.sockets[fileno]
@@ -554,10 +564,6 @@ class MsgQ:
             msg = msg[amount_sent:]
             if len(msg) == 0:
                 # If there's no more, stop requesting for write availability
-                if self.poller:
-                    self.poller.register(fileno, select.POLLIN)
-                else:
-                    self.delete_kqueue_socket(sock, True)
                 del self.sendbuffs[fileno]
             else:
                 self.sendbuffs[fileno] = (time.clock(), msg)
@@ -567,7 +573,8 @@ class MsgQ:
         This is done by using an increasing counter and the current
         time."""
         self.connection_counter += 1
-        return "%x_%x@%s" % (time.time(), self.connection_counter, self.hostname)
+        return "%x_%x@%s" % (time.time(), self.connection_counter,
+                             self.hostname)
 
     def process_command_ping(self, sock, routing, data):
         self.sendmsg(sock, { CC_HEADER_TYPE : CC_COMMAND_PONG }, data)
@@ -644,102 +651,70 @@ class MsgQ:
         if group == None or instance == None:
             return  # ignore invalid packets entirely
         self.subs.subscribe(group, instance, sock)
+        lname = self.fd_to_lname[sock.fileno()]
+        self.members_notify('subscribed',
+                            {
+                                'client': lname,
+                                'group': group
+                            })
 
     def process_command_unsubscribe(self, sock, routing, data):
         group = routing[CC_HEADER_GROUP]
         instance = routing[CC_HEADER_INSTANCE]
         if group == None or instance == None:
             return  # ignore invalid packets entirely
-        self.subs.unsubscribe(group, instance, sock)
+        if self.subs.unsubscribe(group, instance, sock):
+            lname = self.fd_to_lname[sock.fileno()]
+            self.members_notify('unsubscribed',
+                                {
+                                    'client': lname,
+                                    'group': group
+                                })
 
     def run(self):
         """Process messages.  Forever.  Mostly."""
         self.running = True
 
-        if self.poller:
-            self.run_poller()
-        else:
-            self.run_kqueue()
+        self.run_select()
 
-    def run_poller(self):
+    def run_select(self):
         while self.running:
+            reads = list(self.fd_to_lname.keys())
+            if self.listen_socket.fileno() != -1: # Skip in tests
+                reads.append(self.listen_socket.fileno())
+            if self.__poller_sock and self.__poller_sock.fileno() != -1:
+                reads.append(self.__poller_sock.fileno())
+            writes = list(self.sendbuffs.keys())
+            (read_ready, write_ready) = ([], [])
             try:
-                # Poll with a timeout so that every once in a while,
-                # the loop checks for self.running.
-                events = self.poller.poll()
+                (read_ready, write_ready, _) = select.select(reads, writes,
+                                                             []);
             except select.error as err:
                 if err.args[0] == errno.EINTR:
-                    events = []
+                    continue # Just try it again if interrupted.
                 else:
-                    logger.fatal(MSGQ_POLL_ERROR, err)
+                    logger.fatal(MSGQ_SELECT_ERROR, err)
                     break
             with self.__lock:
-                for (fd, event) in events:
+                write_ready = set(write_ready)
+                for fd in read_ready:
+                    # Do only one operation per loop iteration on the given fd.
+                    # It could be possible to perform both, but it may have
+                    # undesired side effects in special situations (like, if the
+                    # read closes the socket).
+                    if fd in write_ready:
+                        write_ready.remove(fd)
                     if fd == self.listen_socket.fileno():
                         self.process_accept()
-                    elif fd == self.__poller_sock.fileno():
-                        # If it's the signal socket, we should terminate now.
+                    elif self.__poller_sock and fd == \
+                        self.__poller_sock.fileno():
+                        # The signal socket. We should terminate now.
                         self.running = False
                         break
                     else:
-                        writable = event & select.POLLOUT
-                        # Note: it may be okay to read data if available
-                        # immediately after write some, but due to unexpected
-                        # regression (see comments on the kqueue version below)
-                        # we restrict one operation per iteration for now.
-                        # In future we may clarify the point and enable the
-                        # "read/write" mode.
-                        readable = not writable and (event & select.POLLIN)
-                        if not writable and not readable:
-                            logger.error(MSGQ_POLL_UNKNOWN_EVENT, fd, event)
-                        self._process_fd(fd, writable, readable, False)
-
-    def run_kqueue(self):
-        while self.running:
-            # Check with a timeout so that every once in a while,
-            # the loop checks for self.running.
-            events = self.kqueue.control(None, 10)
-            if not events:
-                raise RuntimeError('serve: kqueue returned no events')
-
-            with self.__lock:
-                for event in events:
-                    if event.ident == self.listen_socket.fileno():
-                        self.process_accept()
-                    elif event.ident == self.__poller_sock.fileno():
-                        # If it's the signal socket, we should terminate now.
-                        self.running = False
-                        break;
-                    else:
-                        fd = event.ident
-                        writable = event.filter == select.KQ_FILTER_WRITE
-                        readable = (event.filter == select.KQ_FILTER_READ and
-                                    event.data > 0)
-                        # It seems to break some of our test cases if we
-                        # immediately close the socket on EOF after reading
-                        # some data.  It may be possible to avoid by tweaking
-                        # the test, but unless we can be sure we'll hold off.
-                        closed = (not readable and
-                                  (event.flags & select.KQ_EV_EOF))
-                        self._process_fd(fd, writable, readable, closed)
-
-    def _process_fd(self, fd, writable, readable, closed):
-        '''Process a single FD: unified subroutine of run_kqueue/poller.
-
-        closed can be True only in the case of kqueue.  This is essentially
-        private but is defined as if it were "protected" so it's callable
-        from tests.
-
-        '''
-        # We need to check if FD is still in the sockets dict, because
-        # it's possible that the socket has been "killed" while processing
-        # other FDs; it's even possible it's killed within this method.
-        if writable and fd in self.sockets:
-            self.__process_write(fd)
-        if readable and fd in self.sockets:
-            self.process_packet(fd, self.sockets[fd])
-        if closed and fd in self.sockets:
-            self.kill_socket(fd, self.sockets[fd])
+                        self.process_packet(fd, self.sockets[fd])
+                for fd in write_ready:
+                    self._process_write(fd)
 
     def stop(self):
         # Signal it should terminate.
@@ -795,16 +770,27 @@ class MsgQ:
             return isc.config.create_answer(0)
 
     def command_handler(self, command, args):
-        """The command handler (run in a separate thread).
-           Not tested, currently effectively empty.
-        """
+        """The command handler (run in a separate thread)."""
         config_logger.debug(TRACE_DETAIL, MSGQ_COMMAND, command, args)
 
         with self.__lock:
             if not self.running:
                 return
 
-            # TODO: Any commands go here
+            # TODO: Who does validation? The ModuleCCSession or must we?
+
+            if command == 'members':
+                # List all members of MsgQ or of a group.
+                if args is None:
+                    args = {}
+                group = args.get('group')
+                if group:
+                    return isc.config.create_answer(0,
+                        list(map(lambda sock: self.fd_to_lname[sock.fileno()],
+                                 self.subs.find(group, ''))))
+                else:
+                    return isc.config.create_answer(0,
+                                                    list(self.lnames.keys()))
 
             config_logger.error(MSGQ_COMMAND_UNKNOWN, command)
             return isc.config.create_answer(1, 'unknown command: ' + command)
@@ -813,13 +799,14 @@ def signal_handler(msgq, signal, frame):
     if msgq:
         msgq.stop()
 
-if __name__ == "__main__":
+def main():
     def check_port(option, opt_str, value, parser):
         """Function to insure that the port we are passed is actually
         a valid port number. Used by OptionParser() on startup."""
         intval = int(value)
         if (intval < 0) or (intval > 65535):
-            raise OptionValueError("%s requires a port number (0-65535)" % opt_str)
+            raise OptionValueError("%s requires a port number (0-65535)" %
+                                   opt_str)
         parser.values.msgq_port = intval
 
     # Parse any command-line options.
@@ -839,6 +826,12 @@ if __name__ == "__main__":
 
     signal.signal(signal.SIGTERM,
                   lambda signal, frame: signal_handler(msgq, signal, frame))
+
+    # Ignore SIGPIPE. We handle errors writing to children using try in the
+    # appropriate places and the delivery of a signal is very heavy handed.
+    # Windows doesn't support SIGPIPE so don't try it there.
+    if not sys.platform.startswith('win'):
+        signal.signal(signal.SIGPIPE, signal.SIG_IGN)
 
     try:
         msgq.setup()
@@ -861,13 +854,23 @@ if __name__ == "__main__":
                                                  msgq.command_handler,
                                                  None, True,
                                                  msgq.socket_file)
+            msgq._session = session
             session.start()
             # And we create a thread that'll just wait for commands and
             # handle them. We don't terminate the thread, we set it to
             # daemon. Once the main thread terminates, it'll just die.
             def run_session():
                 while True:
-                    session.check_command(False)
+                    # As the check_command has internal mutex that is shared
+                    # with sending part (which includes notify). So we don't
+                    # want to hold it long-term and block using select.
+                    fileno = session.get_socket().fileno()
+                    try:
+                        (reads, _, _) = select.select([fileno], [], [])
+                    except select.error as se:
+                        if se.args[0] != errno.EINTR:
+                            raise
+                    session.check_command(True)
             background_thread = threading.Thread(target=run_session)
             background_thread.daemon = True
             background_thread.start()
@@ -878,3 +881,6 @@ if __name__ == "__main__":
     msgq.shutdown()
 
     logger.info(MSGQ_EXITING)
+
+if __name__ == "__main__":
+    isc.util.traceback_handler.traceback_handler(main)

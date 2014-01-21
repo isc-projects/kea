@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 #include <datasrc/memory/zone_data_loader.h>
 #include <datasrc/memory/zone_data_updater.h>
 #include <datasrc/logger.h>
+#include <datasrc/zone_table_accessor_cache.h>
 #include <dns/masterload.h>
 #include <util/memory_segment_local.h>
 
@@ -82,6 +83,7 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
     if (!config) {
         isc_throw(isc::BadValue, "NULL configuration passed");
     }
+
     // TODO: Implement recycling from the old configuration.
     size_t i(0); // Outside of the try to be able to access it in the catch
     try {
@@ -90,33 +92,42 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
         for (; i < config->size(); ++i) {
             // Extract the parameters
             const ConstElementPtr dconf(config->get(i));
-            const ConstElementPtr typeElem(dconf->get("type"));
-            if (typeElem == ConstElementPtr()) {
+            const ConstElementPtr type_elem(dconf->get("type"));
+            if (type_elem == ConstElementPtr()) {
                 isc_throw(ConfigurationError, "Missing the type option in "
                           "data source no " << i);
             }
-            const string type(typeElem->stringValue());
-            ConstElementPtr paramConf(dconf->get("params"));
-            if (paramConf == ConstElementPtr()) {
-                paramConf.reset(new NullElement());
+            const string type(type_elem->stringValue());
+            ConstElementPtr param_conf(dconf->get("params"));
+            if (param_conf == ConstElementPtr()) {
+                param_conf.reset(new NullElement());
             }
             // Get the name (either explicit, or guess)
             const ConstElementPtr name_elem(dconf->get("name"));
-            const string name(name_elem ? name_elem->stringValue() : type);
-            if (!used_names.insert(name).second) {
+            const string datasrc_name =
+                name_elem ? name_elem->stringValue() : type;
+            if (!used_names.insert(datasrc_name).second) {
                 isc_throw(ConfigurationError, "Duplicate name in client list: "
-                          << name);
+                          << datasrc_name);
             }
 
-            // Create a client for the underling data source via factory.
-            // If it's our internal type of data source, this is essentially
-            // no-op.  In the latter case, it's of no use unless cache is
-            // allowed; we simply skip building it in that case.
-            const DataSourcePair dsrc_pair = getDataSourceClient(type,
-                                                                 paramConf);
+            DataSourcePair dsrc_pair;
+            try {
+                // Create a client for the underling data source via
+                // factory.  If it's our internal type of data source,
+                // this is essentially no-op.  In the latter case, it's
+                // of no use unless cache is allowed; we simply skip
+                // building it in that case.
+                dsrc_pair = getDataSourceClient(type, param_conf);
+            } catch (const DataSourceLibraryError& ex) {
+                LOG_ERROR(logger, DATASRC_LIBRARY_ERROR).
+                    arg(datasrc_name).arg(rrclass_).arg(ex.what());
+                continue;
+            }
+
             if (!allow_cache && !dsrc_pair.first) {
                 LOG_WARN(logger, DATASRC_LIST_NOT_CACHED).
-                    arg(name).arg(rrclass_);
+                    arg(datasrc_name).arg(rrclass_);
                 continue;
             }
 
@@ -129,13 +140,22 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
             new_data_sources.push_back(DataSourceInfo(dsrc_pair.first,
                                                       dsrc_pair.second,
                                                       cache_conf, rrclass_,
-                                                      name));
+                                                      datasrc_name));
 
-            // If cache is disabled we are done for this data source.
+            // If cache is disabled, or the zone table segment is not (yet)
+            // writable,  we are done for this data source.
             // Otherwise load zones into the in-memory cache.
             if (!cache_conf->isEnabled()) {
                 continue;
             }
+            memory::ZoneTableSegment& zt_segment =
+                *new_data_sources.back().ztable_segment_;
+            if (!zt_segment.isWritable()) {
+                LOG_DEBUG(logger, DBGLVL_TRACE_BASIC,
+                          DATASRC_LIST_CACHE_PENDING).arg(datasrc_name);
+                continue;
+            }
+
             internal::CacheConfig::ConstZoneIterator end_of_zones =
                 cache_conf->end();
             for (internal::CacheConfig::ConstZoneIterator zone_it =
@@ -144,25 +164,27 @@ ConfigurableClientList::configure(const ConstElementPtr& config,
                  ++zone_it)
             {
                 const Name& zname = zone_it->first;
-                memory::LoadAction load_action;
                 try {
-                    load_action = cache_conf->getLoadAction(rrclass_, zname);
-                } catch (const DataSourceError&) {
-                    isc_throw(ConfigurationError, "Data source error for "
-                              "loading a zone (possibly non-existent) "
-                              << zname << "/" << rrclass_);
-                }
-                assert(load_action); // in this loop this should be always true
-                boost::scoped_ptr<memory::ZoneWriter> writer;
-                try {
-                    writer.reset(new_data_sources.back().ztable_segment_->
-                                 getZoneWriter(load_action, zname, rrclass_));
-                    writer->load();
-                    writer->install();
-                    writer->cleanup();
-                } catch (const ZoneLoaderException& e) {
-                    LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR)
-                        .arg(zname).arg(rrclass_).arg(name).arg(e.what());
+                    const memory::LoadAction load_action =
+                        cache_conf->getLoadAction(rrclass_, zname);
+                    // in this loop this should be always true
+                    assert(load_action);
+                    // For the initial load, we'll let the writer handle
+                    // loading error and install an empty zone in the table.
+                    memory::ZoneWriter writer(zt_segment, load_action, zname,
+                                              rrclass_, true);
+
+                    std::string error_msg;
+                    writer.load(&error_msg);
+                    if (!error_msg.empty()) {
+                        LOG_ERROR(logger, DATASRC_LOAD_ZONE_ERROR).arg(zname).
+                            arg(rrclass_).arg(datasrc_name).arg(error_msg);
+                    }
+                    writer.install();
+                    writer.cleanup();
+                } catch (const NoSuchZone&) {
+                    LOG_ERROR(logger, DATASRC_CACHE_ZONE_NOTFOUND).
+                        arg(zname).arg(rrclass_).arg(datasrc_name);
                 }
             }
         }
@@ -309,47 +331,74 @@ ConfigurableClientList::findInternal(MutableResult& candidate,
     // and the need_updater parameter is true, get the zone there.
 }
 
-// We still provide this method for backward compatibility. But to not have
-// duplicate code, it is a thin wrapper around getCachedZoneWriter only.
-ConfigurableClientList::ReloadResult
-ConfigurableClientList::reload(const Name& name) {
-    const ZoneWriterPair result(getCachedZoneWriter(name));
-    if (result.first != ZONE_SUCCESS) {
-        return (result.first);
+bool
+ConfigurableClientList::resetMemorySegment
+    (const std::string& datasrc_name,
+     ZoneTableSegment::MemorySegmentOpenMode mode,
+     ConstElementPtr config_params)
+{
+    BOOST_FOREACH(DataSourceInfo& info, data_sources_) {
+        if (info.name_ == datasrc_name) {
+            ZoneTableSegment& segment = *info.ztable_segment_;
+            segment.reset(mode, config_params);
+            return true;
+        }
     }
-
-    assert(result.second);
-    result.second->load();
-    result.second->install();
-    result.second->cleanup();
-
-    return (ZONE_SUCCESS);
+    return false;
 }
 
 ConfigurableClientList::ZoneWriterPair
-ConfigurableClientList::getCachedZoneWriter(const Name& name) {
+ConfigurableClientList::getCachedZoneWriter(const Name& name,
+                                            bool catch_load_error,
+                                            const std::string& datasrc_name)
+{
     if (!allow_cache_) {
         return (ZoneWriterPair(CACHE_DISABLED, ZoneWriterPtr()));
     }
-    // Try to find the correct zone.
-    MutableResult result;
-    findInternal(result, name, true, true);
-    if (!result.finder) {
-        return (ZoneWriterPair(ZONE_NOT_FOUND, ZoneWriterPtr()));
+
+    // Find the data source from which the zone to be loaded into memory.
+    // Then get the appropriate load action and create a zone writer.
+    BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
+        if (!datasrc_name.empty() && datasrc_name != info.name_) {
+            continue;
+        }
+        // If there's an underlying "real" data source and it doesn't contain
+        // the given name, obviously we cannot load it.  If a specific data
+        // source is given by the name, search should stop here.
+        if (info.data_src_client_ &&
+            info.data_src_client_->findZone(name).code != result::SUCCESS) {
+            if (!datasrc_name.empty()) {
+                return (ZoneWriterPair(ZONE_NOT_FOUND, ZoneWriterPtr()));
+            }
+            continue;
+        }
+        // If the corresponding zone table segment is not (yet) writable,
+        // we cannot load at this time.
+        if (info.ztable_segment_ && !info.ztable_segment_->isWritable()) {
+            return (ZoneWriterPair(CACHE_NOT_WRITABLE, ZoneWriterPtr()));
+        }
+        // Note that getCacheConfig() must return non NULL in this module
+        // (only tests could set it to a bogus value).
+        const memory::LoadAction load_action =
+            info.getCacheConfig()->getLoadAction(rrclass_, name);
+        if (!load_action) {
+            return (ZoneWriterPair(ZONE_NOT_CACHED, ZoneWriterPtr()));
+        }
+        return (ZoneWriterPair(ZONE_SUCCESS,
+                               ZoneWriterPtr(
+                                   new memory::ZoneWriter(
+                                       *info.ztable_segment_,
+                                       load_action, name, rrclass_,
+                                       catch_load_error))));
     }
 
-    // Then get the appropriate load action and create a zone writer.
-    // Note that getCacheConfig() must return non NULL in this module (only
-    // tests could set it to a bogus value).
-    const memory::LoadAction load_action =
-        result.info->getCacheConfig()->getLoadAction(rrclass_, name);
-    if (!load_action) {
-        return (ZoneWriterPair(ZONE_NOT_CACHED, ZoneWriterPtr()));
+    // We can't find the specified zone.  If a specific data source was
+    // given, this means the given name of data source doesn't exist, so
+    // we report it so.
+    if (!datasrc_name.empty()) {
+        return (ZoneWriterPair(DATASRC_NOT_FOUND, ZoneWriterPtr()));
     }
-    return (ZoneWriterPair(ZONE_SUCCESS,
-                           ZoneWriterPtr(
-                               result.info->ztable_segment_->
-                               getZoneWriter(load_action, name, rrclass_))));
+    return (ZoneWriterPair(ZONE_NOT_FOUND, ZoneWriterPtr()));
 }
 
 // NOTE: This function is not tested, it would be complicated. However, the
@@ -373,13 +422,42 @@ vector<DataSourceStatus>
 ConfigurableClientList::getStatus() const {
     vector<DataSourceStatus> result;
     BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
-        // TODO: Once we support mapped cache, decide when we need the
-        // SEGMENT_WAITING.
-        result.push_back(DataSourceStatus(info.name_, info.cache_ ?
-                                          SEGMENT_INUSE : SEGMENT_UNUSED,
-                                          "local"));
+        if (info.ztable_segment_) {
+            result.push_back(DataSourceStatus(
+                info.name_,
+                (info.ztable_segment_->isUsable() ?
+                 SEGMENT_INUSE : SEGMENT_WAITING),
+                info.ztable_segment_->getImplType()));
+        } else {
+            result.push_back(DataSourceStatus(info.name_));
+        }
     }
     return (result);
+}
+
+ConstZoneTableAccessorPtr
+ConfigurableClientList::getZoneTableAccessor(const std::string& datasrc_name,
+                                             bool use_cache) const
+{
+    if (!use_cache) {
+        isc_throw(isc::NotImplemented,
+              "getZoneTableAccessor only implemented for cache");
+    }
+
+    // Find the matching data source
+    BOOST_FOREACH(const DataSourceInfo& info, data_sources_) {
+        if (!datasrc_name.empty() && datasrc_name != info.name_) {
+            continue;
+        }
+
+        const internal::CacheConfig* config(info.getCacheConfig());
+        // If caching is disabled for the named data source, this will
+        // return an accessor to an effectivley empty table.
+        return (ConstZoneTableAccessorPtr
+                (new internal::ZoneTableAccessorCache(*config)));
+    }
+
+    return (ConstZoneTableAccessorPtr());
 }
 
 }

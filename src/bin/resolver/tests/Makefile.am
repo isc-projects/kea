@@ -45,7 +45,6 @@ run_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 run_unittests_LDADD += $(top_builddir)/src/lib/acl/libb10-dnsacl.la
 run_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-run_unittests_LDADD += $(top_builddir)/src/lib/xfr/libb10-xfr.la
 run_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 run_unittests_LDADD += $(top_builddir)/src/lib/server_common/libb10-server-common.la
 run_unittests_LDADD += $(top_builddir)/src/lib/resolve/libb10-resolve.la

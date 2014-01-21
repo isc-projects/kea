@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -62,6 +62,20 @@ public:
     }
 };
 
+// The goal of this test is to verify that the getLabelCount returns the
+// correct number of labels in the domain name specified as a string
+// parameter.
+TEST_F(OptionDataTypesTest, getLabelCount) {
+    EXPECT_EQ(0, OptionDataTypeUtil::getLabelCount(""));
+    EXPECT_EQ(1, OptionDataTypeUtil::getLabelCount("."));
+    EXPECT_EQ(2, OptionDataTypeUtil::getLabelCount("example"));
+    EXPECT_EQ(3, OptionDataTypeUtil::getLabelCount("example.com"));
+    EXPECT_EQ(3, OptionDataTypeUtil::getLabelCount("example.com."));
+    EXPECT_EQ(4, OptionDataTypeUtil::getLabelCount("myhost.example.com"));
+    EXPECT_THROW(OptionDataTypeUtil::getLabelCount(".abc."),
+                 isc::dhcp::BadDataTypeCast);
+}
+
 // The goal of this test is to verify that an IPv4 address being
 // stored in a buffer (wire format) can be read into IOAddress
 // object.
@@ -79,7 +93,7 @@ TEST_F(OptionDataTypesTest, readAddress) {
 
     // Check that the read address matches address that
     // we used as input.
-    EXPECT_EQ(address.toText(), address_out.toText());
+    EXPECT_EQ(address, address_out);
 
     // Check that an attempt to read the buffer as IPv6 address
     // causes an error as the IPv6 address needs at least 16 bytes
@@ -95,7 +109,7 @@ TEST_F(OptionDataTypesTest, readAddress) {
     address = asiolink::IOAddress("2001:db8:1:0::1");
     writeAddress(address, buf);
     EXPECT_NO_THROW(address_out = OptionDataTypeUtil::readAddress(buf, AF_INET6));
-    EXPECT_EQ(address.toText(), address_out.toText());
+    EXPECT_EQ(address, address_out);
 
     // Truncate the buffer and expect an error to be reported when
     // trying to read it.

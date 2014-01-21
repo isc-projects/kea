@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <vector>
 
 #include <exceptions/exceptions.h>
 

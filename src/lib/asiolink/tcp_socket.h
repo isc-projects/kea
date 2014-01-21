@@ -19,7 +19,6 @@
 #error "asio.hpp must be included before including this, see asiolink.h as to why"
 #endif
 
-#include <log/dummylog.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <unistd.h>             // for some IPC/network system calls

@@ -24,34 +24,27 @@ OptionCustom::OptionCustom(const OptionDefinition& def,
                            Universe u)
     : Option(u, def.getCode(), OptionBuffer()),
       definition_(def) {
+    setEncapsulatedSpace(def.getEncapsulatedSpace());
     createBuffers();
 }
 
 OptionCustom::OptionCustom(const OptionDefinition& def,
-                             Universe u,
-                             const OptionBuffer& data)
+                           Universe u,
+                           const OptionBuffer& data)
     : Option(u, def.getCode(), data.begin(), data.end()),
       definition_(def) {
-    // It is possible that no data is provided if an option
-    // is being created on a server side. In such case a bunch
-    // of buffers with default values is first created and then
-    // the values are replaced using writeXXX functions. Thus
-    // we need to detect that no data has been specified and
-    // take a different code path.
-    if (!data_.empty()) {
-        createBuffers(data_);
-    } else {
-        createBuffers();
-    }
+    setEncapsulatedSpace(def.getEncapsulatedSpace());
+    createBuffers(getData());
 }
 
 OptionCustom::OptionCustom(const OptionDefinition& def,
-                             Universe u,
-                             OptionBufferConstIter first,
-                             OptionBufferConstIter last)
+                           Universe u,
+                           OptionBufferConstIter first,
+                           OptionBufferConstIter last)
     : Option(u, def.getCode(), first, last),
       definition_(def) {
-    createBuffers(data_);
+    setEncapsulatedSpace(def.getEncapsulatedSpace());
+    createBuffers(getData());
 }
 
 void
@@ -61,7 +54,7 @@ OptionCustom::addArrayDataField(const asiolink::IOAddress& address) {
     if ((address.isV4() && definition_.getType() != OPT_IPV4_ADDRESS_TYPE) ||
         (address.isV6() && definition_.getType() != OPT_IPV6_ADDRESS_TYPE)) {
         isc_throw(BadDataTypeCast, "invalid address specified "
-                  << address.toText() << ". Expected a valid IPv"
+                  << address << ". Expected a valid IPv"
                   << (definition_.getType() == OPT_IPV4_ADDRESS_TYPE ?
                       "4" : "6") << " address.");
     }
@@ -256,6 +249,12 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
             // Proceed to the next data field.
             data += data_size;
         }
+
+        // Unpack suboptions if any.
+        if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
+            unpackOptions(OptionBuffer(data, data_buf.end()));
+        }
+
     } else if (data_type != OPT_EMPTY_TYPE) {
         // If data_type value is other than OPT_RECORD_TYPE, our option is
         // empty (have no data at all) or it comprises one or more
@@ -323,9 +322,20 @@ OptionCustom::createBuffers(const OptionBuffer& data_buf) {
             }
             if (data_size > 0) {
                 buffers.push_back(OptionBuffer(data, data + data_size));
+                data += data_size;
             } else {
                 isc_throw(OutOfRange, "option buffer truncated");
             }
+
+            // Unpack suboptions if any.
+            if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
+                unpackOptions(OptionBuffer(data, data_buf.end()));
+            }
+        }
+    } else if (data_type == OPT_EMPTY_TYPE) {
+        // Unpack suboptions if any.
+        if (data != data_buf.end() && !getEncapsulatedSpace().empty()) {
+            unpackOptions(OptionBuffer(data, data_buf.end()));
         }
     }
     // If everything went ok we can replace old buffer set with new ones.
@@ -365,7 +375,7 @@ OptionCustom::dataFieldToText(const OptionDataType data_type,
         break;
     case OPT_IPV4_ADDRESS_TYPE:
     case OPT_IPV6_ADDRESS_TYPE:
-        text << readAddress(index).toText();
+        text << readAddress(index);
         break;
     case OPT_FQDN_TYPE:
         text << readFqdn(index);
@@ -433,7 +443,7 @@ OptionCustom::writeAddress(const asiolink::IOAddress& address,
     if ((address.isV4() && buffers_[index].size() != V4ADDRESS_LEN) ||
         (address.isV6() && buffers_[index].size() != V6ADDRESS_LEN)) {
         isc_throw(BadDataTypeCast, "invalid address specified "
-                  << address.toText() << ". Expected a valid IPv"
+                  << address << ". Expected a valid IPv"
                   << (buffers_[index].size() == V4ADDRESS_LEN ? "4" : "6")
                   << " address.");
     }
@@ -517,9 +527,7 @@ OptionCustom::writeString(const std::string& text, const uint32_t index) {
 void
 OptionCustom::unpack(OptionBufferConstIter begin,
                      OptionBufferConstIter end) {
-    data_ = OptionBuffer(begin, end);
-    // Chop the buffer stored in data_ into set of sub buffers.
-    createBuffers(data_);
+    initialize(begin, end);
 }
 
 uint16_t
@@ -534,7 +542,7 @@ OptionCustom::len() {
     }
 
     // ... and lengths of all suboptions
-    for (OptionCustom::OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -543,15 +551,13 @@ OptionCustom::len() {
     return (length);
 }
 
-void OptionCustom::setData(const OptionBufferConstIter first,
-                     const OptionBufferConstIter last) {
-    // We will copy entire option buffer, so we have to resize data_.
-    data_.resize(std::distance(first, last));
-    std::copy(first, last, data_.begin());
+void OptionCustom::initialize(const OptionBufferConstIter first,
+                              const OptionBufferConstIter last) {
+    setData(first, last);
 
     // Chop the data_ buffer into set of buffers that represent
     // option fields data.
-    createBuffers(data_);
+    createBuffers(getData());
 }
 
 std::string OptionCustom::toText(int indent) {

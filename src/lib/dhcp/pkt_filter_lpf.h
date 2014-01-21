@@ -17,34 +17,43 @@
 
 #include <dhcp/pkt_filter.h>
 
+#include <util/buffer.h>
+
 namespace isc {
 namespace dhcp {
 
 /// @brief Packet handling class using Linux Packet Filtering
 ///
-/// This class provides methods to send and recive packet using raw sockets
-/// and Linux Packet Filtering.
-///
-/// @warning This class is not implemented yet. Therefore all functions
-/// currently throw isc::NotImplemented exception.
+/// This class provides methods to send and recive DHCPv4 messages using raw
+/// sockets and Linux Packet Filtering. It is used by @c isc::dhcp::IfaceMgr
+/// to send DHCPv4 messages to the hosts which don't have an IPv4 address
+/// assigned yet.
 class PktFilterLPF : public PktFilter {
 public:
 
-    /// @brief Open socket.
+    /// @brief Check if packet can be sent to the host without address directly.
     ///
-    /// @param iface interface descriptor
-    /// @param addr address on the interface to be used to send packets.
-    /// @param port port number.
-    /// @param receive_bcast configure socket to receive broadcast messages
-    /// @param send_bcast configure socket to send broadcast messages.
+    /// This class supports direct responses to the host without address.
     ///
-    /// @throw isc::NotImplemented always
-    /// @return created socket's descriptor
-    virtual int openSocket(const Iface& iface,
-                           const isc::asiolink::IOAddress& addr,
-                           const uint16_t port,
-                           const bool receive_bcast,
-                           const bool send_bcast);
+    /// @return true always.
+    virtual bool isDirectResponseSupported() const {
+        return (true);
+    }
+
+    /// @brief Open primary and fallback socket.
+    ///
+    /// @param iface Interface descriptor.
+    /// @param addr Address on the interface to be used to send packets.
+    /// @param port Port number.
+    /// @param receive_bcast Configure socket to receive broadcast messages
+    /// @param send_bcast Configure socket to send broadcast messages.
+    ///
+    /// @return A structure describing a primary and fallback socket.
+    virtual SocketInfo openSocket(const Iface& iface,
+                                  const isc::asiolink::IOAddress& addr,
+                                  const uint16_t port,
+                                  const bool receive_bcast,
+                                  const bool send_bcast);
 
     /// @brief Receive packet over specified socket.
     ///
@@ -57,12 +66,14 @@ public:
 
     /// @brief Send packet over specified socket.
     ///
+    /// @param iface interface to be used to send packet
     /// @param sockfd socket descriptor
     /// @param pkt packet to be sent
     ///
     /// @throw isc::NotImplemented always
     /// @return result of sending a packet. It is 0 if successful.
-    virtual int send(uint16_t sockfd, const Pkt4Ptr& pkt);
+    virtual int send(const Iface& iface, uint16_t sockfd,
+                     const Pkt4Ptr& pkt);
 
 };
 

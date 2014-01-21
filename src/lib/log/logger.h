@@ -25,10 +25,13 @@
 #include <log/message_types.h>
 #include <log/log_formatter.h>
 
-#include <util/interprocess_sync.h>
-
 namespace isc {
 namespace log {
+namespace interprocess {
+// Forward declaration to hide implementation details from normal
+// applications.
+class InterprocessSync;
+}
 
 /// \page LoggingApi Logging API
 /// \section LoggingApiOverview Overview
@@ -254,11 +257,16 @@ public:
     /// If this method is called with NULL as the argument, it throws a
     /// BadInterprocessSync exception.
     ///
+    /// \note This method is intended to be used only within this log library
+    /// and its tests.  Normal application shouldn't use it (in fact,
+    /// normal application shouldn't even be able to instantiate
+    /// InterprocessSync objects).
+    ///
     /// \param sync The logger uses this synchronization object for
     /// synchronizing output of log messages. It should be deletable and
     /// the ownership is transferred to the logger. If NULL is passed,
     /// a BadInterprocessSync exception is thrown.
-    void setInterprocessSync(isc::util::InterprocessSync* sync);
+    void setInterprocessSync(isc::log::interprocess::InterprocessSync* sync);
 
     /// \brief Equality
     ///

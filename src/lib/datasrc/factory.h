@@ -27,7 +27,7 @@ namespace isc {
 namespace datasrc {
 
 
-/// \brief Raised if there is an error loading the datasource implementation
+/// \brief Raised if there is an error in the datasource implementation
 ///        library
 class DataSourceLibraryError : public DataSourceError {
 public:
@@ -35,13 +35,22 @@ public:
         DataSourceError(file, line, what) {}
 };
 
+/// \brief Raised if there is an error opening the the datasource
+///        implementation library
+class DataSourceLibraryOpenError : public DataSourceLibraryError {
+public:
+    DataSourceLibraryOpenError(const char* file, size_t line,
+                               const char* what) :
+        DataSourceLibraryError(file, line, what) {}
+};
+
 /// \brief Raised if there is an error reading a symbol from the datasource
 ///        implementation library
-class DataSourceLibrarySymbolError : public DataSourceError {
+class DataSourceLibrarySymbolError : public DataSourceLibraryError {
 public:
     DataSourceLibrarySymbolError(const char* file, size_t line,
                                  const char* what) :
-        DataSourceError(file, line, what) {}
+        DataSourceLibraryError(file, line, what) {}
 };
 
 typedef DataSourceClient* ds_creator(isc::data::ConstElementPtr config,

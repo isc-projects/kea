@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -46,7 +46,7 @@ DUID::DUID(const uint8_t* data, size_t len) {
     duid_ = std::vector<uint8_t>(data, data + len);
 }
 
-std::vector<uint8_t> DUID::getDuid() const {
+const std::vector<uint8_t>& DUID::getDuid() const {
     return (duid_);
 }
 
@@ -104,7 +104,7 @@ ClientId::ClientId(const uint8_t *clientid, size_t len)
 }
 
 // Returns a copy of client-id data
-std::vector<uint8_t> ClientId::getClientId() const {
+const std::vector<uint8_t>& ClientId::getClientId() const {
     return (duid_);
 }
 

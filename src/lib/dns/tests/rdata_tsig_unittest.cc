@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <dns/rdataclass.h>
 #include <dns/rrclass.h>
 #include <dns/rrtype.h>
+#include <dns/tsigerror.h>
 
 #include <gtest/gtest.h>
 
@@ -31,34 +32,84 @@
 
 using isc::UnitTestUtil;
 using namespace std;
+using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 
 namespace {
+
 class Rdata_TSIG_Test : public RdataTest {
 protected:
+    Rdata_TSIG_Test() :
+	// no MAC or Other Data
+        valid_text1("hmac-md5.sig-alg.reg.int. 1286779327 300 "
+                    "0 16020 BADKEY 0"),
+	// MAC but no Other Data
+        valid_text2("hmac-sha256. 1286779327 300 12 "
+                    "FAKEFAKEFAKEFAKE 16020 BADSIG 0"),
+	// MAC and Other Data
+        valid_text3("hmac-sha1. 1286779327 300 12 "
+                    "FAKEFAKEFAKEFAKE 16020 BADTIME 6 FAKEFAKE"),
+	// MAC and Other Data (with Error that doesn't expect Other Data)
+        valid_text4("hmac-sha1. 1286779327 300 12 "
+                    "FAKEFAKEFAKEFAKE 16020 BADSIG 6 FAKEFAKE"),
+	// numeric error code
+        valid_text5("hmac-sha256. 1286779327 300 12 "
+                    "FAKEFAKEFAKEFAKE 16020 2845 0"),
+        rdata_tsig(valid_text1)
+    {}
+
+    void checkFromText_None(const string& rdata_str) {
+        checkFromText<any::TSIG, isc::Exception, isc::Exception>(
+            rdata_str, rdata_tsig, false, false);
+    }
+
+    void checkFromText_InvalidText(const string& rdata_str) {
+        checkFromText<any::TSIG, InvalidRdataText, InvalidRdataText>(
+            rdata_str, rdata_tsig, true, true);
+    }
+
+    void checkFromText_BadValue(const string& rdata_str) {
+        checkFromText<any::TSIG, BadValue, BadValue>(
+            rdata_str, rdata_tsig, true, true);
+    }
+
+    void checkFromText_LexerError(const string& rdata_str) {
+        checkFromText
+            <any::TSIG, InvalidRdataText, MasterLexer::LexerError>(
+                rdata_str, rdata_tsig, true, true);
+    }
+
+    void checkFromText_TooLongLabel(const string& rdata_str) {
+        checkFromText<any::TSIG, TooLongLabel, TooLongLabel>(
+            rdata_str, rdata_tsig, true, true);
+    }
+
+    void checkFromText_EmptyLabel(const string& rdata_str) {
+        checkFromText<any::TSIG, EmptyLabel, EmptyLabel>(
+            rdata_str, rdata_tsig, true, true);
+    }
+
+    void checkFromText_BadString(const string& rdata_str) {
+        checkFromText
+            <any::TSIG, InvalidRdataText, isc::Exception>(
+                rdata_str, rdata_tsig, true, false);
+    }
+
+    template <typename Output>
+    void toWireCommonChecks(Output& output) const;
+
+    const string valid_text1;
+    const string valid_text2;
+    const string valid_text3;
+    const string valid_text4;
+    const string valid_text5;
     vector<uint8_t> expect_data;
+    const any::TSIG rdata_tsig; // commonly used test RDATA
 };
 
-const char* const valid_text1 = "hmac-md5.sig-alg.reg.int. 1286779327 300 "
-    "0 16020 BADKEY 0";
-const char* const valid_text2 = "hmac-sha256. 1286779327 300 12 "
-    "FAKEFAKEFAKEFAKE 16020 BADSIG 0";
-
-const char* const valid_text3 = "hmac-sha1. 1286779327 300 12 "
-    "FAKEFAKEFAKEFAKE 16020 BADTIME 6 FAKEFAKE";
-const char* const valid_text4 = "hmac-sha1. 1286779327 300 12 "
-    "FAKEFAKEFAKEFAKE 16020 BADSIG 6 FAKEFAKE";
-const char* const valid_text5 = "hmac-sha256. 1286779327 300 12 "
-    "FAKEFAKEFAKEFAKE 16020 2845 0"; // using numeric error code
-const char* const too_long_label = "012345678901234567890123456789"
-    "0123456789012345678901234567890123";
-
-// commonly used test RDATA
-const any::TSIG rdata_tsig((string(valid_text1)));
-
-TEST_F(Rdata_TSIG_Test, createFromText) {
+TEST_F(Rdata_TSIG_Test, fromText) {
     // normal case.  it also tests getter methods.
     EXPECT_EQ(Name("hmac-md5.sig-alg.reg.int"), rdata_tsig.getAlgorithm());
     EXPECT_EQ(1286779327, rdata_tsig.getTimeSigned());
@@ -66,59 +117,84 @@ TEST_F(Rdata_TSIG_Test, createFromText) {
     EXPECT_EQ(0, rdata_tsig.getMACSize());
     EXPECT_EQ(static_cast<void*>(NULL), rdata_tsig.getMAC());
     EXPECT_EQ(16020, rdata_tsig.getOriginalID());
-    EXPECT_EQ(17, rdata_tsig.getError()); // TODO: use constant
+    EXPECT_EQ(TSIGError::BAD_KEY_CODE, rdata_tsig.getError());
     EXPECT_EQ(0, rdata_tsig.getOtherLen());
     EXPECT_EQ(static_cast<void*>(NULL), rdata_tsig.getOtherData());
 
-    any::TSIG tsig2((string(valid_text2)));
+    any::TSIG tsig2(valid_text2);
     EXPECT_EQ(12, tsig2.getMACSize());
-    EXPECT_EQ(16, tsig2.getError()); // TODO: use constant
+    EXPECT_EQ(TSIGError::BAD_SIG_CODE, tsig2.getError());
 
-    any::TSIG tsig3((string(valid_text3)));
+    any::TSIG tsig3(valid_text3);
     EXPECT_EQ(6, tsig3.getOtherLen());
 
     // The other data is unusual, but we don't reject it.
-    EXPECT_NO_THROW(any::TSIG(string(valid_text4)));
+    EXPECT_NO_THROW(any::TSIG tsig4(valid_text4));
 
     // numeric representation of TSIG error
-    any::TSIG tsig5((string(valid_text5)));
+    any::TSIG tsig5(valid_text5);
     EXPECT_EQ(2845, tsig5.getError());
 
-    //
-    // invalid cases
-    //
-    // there's a garbage parameter at the end
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 BADKEY 0 0"), InvalidRdataText);
-    // input is too short
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 BADKEY"), InvalidRdataText);
+    // not fully qualified algorithm name
+    any::TSIG tsig1("hmac-md5.sig-alg.reg.int 1286779327 300 "
+                    "0 16020 BADKEY 0");
+    EXPECT_EQ(0, tsig1.compare(rdata_tsig));
+
+    // multi-line rdata
+    checkFromText_None("hmac-md5.sig-alg.reg.int. ( 1286779327 300 \n"
+                       "0 16020 BADKEY 0 )");
+
+    // short-form HMAC-MD5 name
+    const any::TSIG tsig6("hmac-md5. 1286779327 300 0 16020 BADKEY 0");
+    EXPECT_EQ(0, tsig6.compare(rdata_tsig));
+};
+
+TEST_F(Rdata_TSIG_Test, badText) {
+    // too many fields
+    checkFromText_BadString(valid_text1 + " 0 0");
+    // not enough fields
+    checkFromText_LexerError("foo 0 0 0 0 BADKEY");
     // bad domain name
-    EXPECT_THROW(any::TSIG(string(too_long_label) + "0 0 0 0 BADKEY 0"),
-                 TooLongLabel);
+    checkFromText_TooLongLabel(
+        "0123456789012345678901234567890123456789012345678901234567890123"
+        " 0 0 0 0 BADKEY 0");
+    checkFromText_EmptyLabel("foo..bar 0 0 0 0 BADKEY");
     // time is too large (2814...6 is 2^48)
-    EXPECT_THROW(any::TSIG("foo 281474976710656 0 0 0 BADKEY 0"),
-                 InvalidRdataText);
+    checkFromText_InvalidText("foo 281474976710656 0 0 0 BADKEY 0");
     // invalid time (negative)
-    EXPECT_THROW(any::TSIG("foo -1 0 0 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo -1 0 0 0 BADKEY 0");
+    // invalid time (not a number)
+    checkFromText_InvalidText("foo TIME 0 0 0 BADKEY 0");
     // fudge is too large
-    EXPECT_THROW(any::TSIG("foo 0 65536 0 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 65536 0 0 BADKEY 0");
     // invalid fudge (negative)
-    EXPECT_THROW(any::TSIG("foo 0 -1 0 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_LexerError("foo 0 -1 0 0 BADKEY 0");
+    // invalid fudge (not a number)
+    checkFromText_LexerError("foo 0 FUDGE 0 0 BADKEY 0");
     // MAC size is too large
-    EXPECT_THROW(any::TSIG("foo 0 0 65536 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 65536 0 BADKEY 0");
+    // invalide MAC size (negative)
+    checkFromText_LexerError("foo 0 0 -1 0 BADKEY 0");
+    // invalid MAC size (not a number)
+    checkFromText_LexerError("foo 0 0 MACSIZE 0 BADKEY 0");
     // MAC size and MAC mismatch
-    EXPECT_THROW(any::TSIG("foo 0 0 9 FAKE 0 BADKEY 0"), InvalidRdataText);
-    EXPECT_THROW(any::TSIG("foo 0 0 0 FAKE 0 BADKEY 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 9 FAKE 0 BADKEY 0");
     // MAC is bad base64
-    EXPECT_THROW(any::TSIG("foo 0 0 3 FAK= 0 BADKEY 0"), isc::BadValue);
+    checkFromText_BadValue("foo 0 0 3 FAK= 0 BADKEY 0");
     // Unknown error code
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 TEST 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 0 0 TEST 0");
     // Numeric error code is too large
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 65536 0"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 0 0 65536 0");
+    // Numeric error code is negative
+    checkFromText_InvalidText("foo 0 0 0 0 -1 0");
     // Other len is too large
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 NOERROR 65536 FAKE"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 0 0 NOERROR 65536 FAKE");
+    // Other len is negative
+    checkFromText_LexerError("foo 0 0 0 0 NOERROR -1 FAKE");
+    // invalid Other len
+    checkFromText_LexerError("foo 0 0 0 0 NOERROR LEN FAKE");
     // Other len and data mismatch
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 NOERROR 9 FAKE"), InvalidRdataText);
-    EXPECT_THROW(any::TSIG("foo 0 0 0 0 NOERROR 0 FAKE"), InvalidRdataText);
+    checkFromText_InvalidText("foo 0 0 0 0 NOERROR 9 FAKE");
 }
 
 void
@@ -221,12 +297,12 @@ TEST_F(Rdata_TSIG_Test, createFromParams) {
 
     const uint8_t fake_data[] = { 0x14, 0x02, 0x84, 0x14, 0x02, 0x84,
                                   0x14, 0x02, 0x84, 0x14, 0x02, 0x84 }; 
-    EXPECT_EQ(0, any::TSIG((string(valid_text2))).compare(
+    EXPECT_EQ(0, any::TSIG(valid_text2).compare(
                   any::TSIG(Name("hmac-sha256"), 1286779327, 300, 12,
                             fake_data, 16020, 16, 0, NULL)));
 
     const uint8_t fake_data2[] = { 0x14, 0x02, 0x84, 0x14, 0x02, 0x84 };
-    EXPECT_EQ(0, any::TSIG((string(valid_text3))).compare(
+    EXPECT_EQ(0, any::TSIG(valid_text3).compare(
                   any::TSIG(Name("hmac-sha1"), 1286779327, 300, 12,
                             fake_data, 16020, 18, 6, fake_data2)));
 
@@ -247,24 +323,14 @@ TEST_F(Rdata_TSIG_Test, createFromParams) {
                  isc::InvalidParameter);
 }
 
-TEST_F(Rdata_TSIG_Test, createFromLexer) {
-    EXPECT_EQ(0, rdata_tsig.compare(
-        *test::createRdataUsingLexer(RRType::TSIG(), RRClass::ANY(),
-                                     valid_text1)));
-
-    // Exceptions cause NULL to be returned.
-    EXPECT_FALSE(test::createRdataUsingLexer(RRType::TSIG(), RRClass::ANY(),
-                                             "foo 0 0 0 0 BADKEY 0 0"));
-}
-
 TEST_F(Rdata_TSIG_Test, assignment) {
-    any::TSIG copy((string(valid_text2)));
+    any::TSIG copy(valid_text2);
     copy = rdata_tsig;
     EXPECT_EQ(0, copy.compare(rdata_tsig));
 
     // Check if the copied data is valid even after the original is deleted
     any::TSIG* copy2 = new any::TSIG(rdata_tsig);
-    any::TSIG copy3((string(valid_text2)));
+    any::TSIG copy3(valid_text2);
     copy3 = *copy2;
     delete copy2;
     EXPECT_EQ(0, copy3.compare(rdata_tsig));
@@ -276,7 +342,7 @@ TEST_F(Rdata_TSIG_Test, assignment) {
 
 template <typename Output>
 void
-toWireCommonChecks(Output& output) {
+Rdata_TSIG_Test::toWireCommonChecks(Output& output) const {
     vector<uint8_t> expect_data;
 
     output.clear();
@@ -291,7 +357,7 @@ toWireCommonChecks(Output& output) {
 
     expect_data.clear();
     output.clear();
-    any::TSIG(string(valid_text2)).toWire(output);
+    any::TSIG(valid_text2).toWire(output);
     UnitTestUtil::readWireData("rdata_tsig_toWire2.wire", expect_data);
     expect_data.erase(expect_data.begin(), expect_data.begin() + 2);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
@@ -300,7 +366,7 @@ toWireCommonChecks(Output& output) {
 
     expect_data.clear();
     output.clear();
-    any::TSIG(string(valid_text3)).toWire(output);
+    any::TSIG(valid_text3).toWire(output);
     UnitTestUtil::readWireData("rdata_tsig_toWire3.wire", expect_data);
     expect_data.erase(expect_data.begin(), expect_data.begin() + 2);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
@@ -339,10 +405,10 @@ TEST_F(Rdata_TSIG_Test, toWireRenderer) {
 }
 
 TEST_F(Rdata_TSIG_Test, toText) {
-    EXPECT_EQ(string(valid_text1), rdata_tsig.toText());
-    EXPECT_EQ(string(valid_text2), any::TSIG(string(valid_text2)).toText());
-    EXPECT_EQ(string(valid_text3), any::TSIG(string(valid_text3)).toText());
-    EXPECT_EQ(string(valid_text5), any::TSIG(string(valid_text5)).toText());
+    EXPECT_EQ(valid_text1, rdata_tsig.toText());
+    EXPECT_EQ(valid_text2, any::TSIG(valid_text2).toText());
+    EXPECT_EQ(valid_text3, any::TSIG(valid_text3).toText());
+    EXPECT_EQ(valid_text5, any::TSIG(valid_text5).toText());
 }
 
 TEST_F(Rdata_TSIG_Test, compare) {

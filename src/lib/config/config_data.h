@@ -29,7 +29,7 @@ namespace config {
 /// point to anything defined in the .spec file)
 class DataNotFoundError : public isc::Exception {
 public:
-    DataNotFoundError(const char* file, size_t line, const std::string& what) :
+    DataNotFoundError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 

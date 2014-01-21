@@ -1,0 +1,2 @@
+{ "type" : "DUID", "id" : "777777777777", "opt1" : "true" }
+{ "type" : "BOGUS", "id" : "01AC00F03344", "opt1" : "true" }

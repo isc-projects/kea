@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -55,7 +55,7 @@ Option::Option(Universe u, uint16_t type, const OptionBuffer& data)
 
 Option::Option(Universe u, uint16_t type, OptionBufferConstIter first,
                OptionBufferConstIter last)
-    :universe_(u), type_(type), data_(OptionBuffer(first,last)) {
+    :universe_(u), type_(type), data_(first, last) {
     check();
 }
 
@@ -121,17 +121,24 @@ Option::packOptions(isc::util::OutputBuffer& buf) {
 
 void Option::unpack(OptionBufferConstIter begin,
                     OptionBufferConstIter end) {
-    data_ = OptionBuffer(begin, end);
+    setData(begin, end);
 }
 
 void
 Option::unpackOptions(const OptionBuffer& buf) {
+    // If custom option parsing function has been set, use this function
+    // to parse options. Otherwise, use standard function from libdhcp++.
+    if (!callback_.empty()) {
+        callback_(buf, getEncapsulatedSpace(), options_, 0, 0);
+        return;
+    }
+
     switch (universe_) {
     case V4:
-        LibDHCP::unpackOptions4(buf, options_);
+        LibDHCP::unpackOptions4(buf, getEncapsulatedSpace(), options_);
         return;
     case V6:
-        LibDHCP::unpackOptions6(buf, options_);
+        LibDHCP::unpackOptions6(buf, getEncapsulatedSpace(), options_);
         return;
     default:
         isc_throw(isc::BadValue, "Invalid universe type " << universe_);
@@ -146,7 +153,7 @@ uint16_t Option::len() {
     int length = getHeaderLen() + data_.size();
 
     // ... and sum of lengths of all suboptions
-    for (Option::OptionCollection::iterator it = options_.begin();
+    for (OptionCollection::iterator it = options_.begin();
          it != options_.end();
          ++it) {
         length += (*it).second->len();
@@ -169,7 +176,7 @@ Option::valid() {
 }
 
 OptionPtr Option::getOption(uint16_t opt_type) {
-    isc::dhcp::Option::OptionCollection::const_iterator x =
+    isc::dhcp::OptionCollection::const_iterator x =
         options_.find(opt_type);
     if ( x != options_.end() ) {
         return (*x).second;
@@ -178,7 +185,7 @@ OptionPtr Option::getOption(uint16_t opt_type) {
 }
 
 bool Option::delOption(uint16_t opt_type) {
-    isc::dhcp::Option::OptionCollection::iterator x = options_.find(opt_type);
+    isc::dhcp::OptionCollection::iterator x = options_.find(opt_type);
     if ( x != options_.end() ) {
         options_.erase(x);
         return true; // delete successful
@@ -272,13 +279,6 @@ void Option::setUint16(uint16_t value) {
 void Option::setUint32(uint32_t value) {
   data_.resize(4);
   writeUint32(value, &data_[0]);
-}
-
-void Option::setData(const OptionBufferConstIter first,
-                     const OptionBufferConstIter last) {
-    // We will copy entire option buffer, so we have to resize data_.
-    data_.resize(std::distance(first, last));
-    std::copy(first, last, data_.begin());
 }
 
 bool Option::equal(const OptionPtr& other) const {

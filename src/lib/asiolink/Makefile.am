@@ -32,13 +32,14 @@ libb10_asiolink_la_SOURCES += tcp_endpoint.h
 libb10_asiolink_la_SOURCES += tcp_socket.h
 libb10_asiolink_la_SOURCES += udp_endpoint.h
 libb10_asiolink_la_SOURCES += udp_socket.h
+libb10_asiolink_la_SOURCES += local_socket.h local_socket.cc
 
 # Note: the ordering matters: -Wno-... must follow -Wextra (defined in
 # B10_CXXFLAGS)
 libb10_asiolink_la_CXXFLAGS = $(AM_CXXFLAGS)
-if USE_CLANGPP
-# Same for clang++, but we need to turn off -Werror completely.
-libb10_asiolink_la_CXXFLAGS += -Wno-error
-endif
 libb10_asiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
-libb10_asiolink_la_LIBADD = $(top_builddir)/src/lib/log/libb10-log.la
+libb10_asiolink_la_LIBADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+
+# IOAddress is sometimes used in user-library code
+libb10_asiolink_includedir = $(pkgincludedir)/asiolink
+libb10_asiolink_include_HEADERS = io_address.h

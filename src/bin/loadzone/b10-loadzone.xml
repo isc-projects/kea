@@ -52,6 +52,12 @@
       <arg choice="req">zone name</arg>
       <arg choice="req">zone file</arg>
     </cmdsynopsis>
+    <cmdsynopsis>
+      <command>b10-loadzone</command>
+      <arg><option>-e</option></arg>
+      <arg><option>other options</option></arg>
+      <arg choice="req">zone name</arg>
+    </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsect1>
@@ -61,6 +67,9 @@
       in a BIND 10 ready data source format.
       Master files are text files that contain DNS Resource Records
       in text form.
+      This utility can also be used to create an empty zone on the
+      specified data source so the existence of the zone is recognized
+      in the data source without any content (resource records).
     </para>
     <note><simpara>Currently only the SQLITE3 data source is supported.
     </simpara></note>
@@ -104,6 +113,18 @@
       old version will still remain accessible for other applications.
     </para>
 
+    <para>
+      If the <command>-e</command> command line option is specified,
+      <command>b10-loadzone</command> does not take the zone name
+      argument.
+      In this case it creates an empty zone without any content
+      while the data source still recognizes the existence of the
+      zone.
+      If the specified zone already has some content, this mode of
+      operation will remove it (but the existence of the zone in the
+      data source will be still recognized).
+    </para>
+
   </refsect1>
 
   <refsect1>
@@ -138,6 +159,18 @@
 	    Enable dumping debug level logging with the specified
 	    level.  By default, only log messages at the severity of
 	    informational or higher levels will be produced.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-e</term>
+        <listitem><para>
+	    Create an empty zone, or empty existing zone content
+	    instead of loading new one.
+	    When this option is specified, the zone file command line
+	    argument must not be provided.
+	    The <command>-i</command> option has no effect, but it
+	    does not cause a failure; it will be simply ignored.
         </para></listitem>
       </varlistentry>
 

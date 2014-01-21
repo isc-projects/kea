@@ -6,7 +6,8 @@ these tests are specific for BIND10, but we are keeping in mind that RFC-related
 tests could be separated, so that we can test other systems as well.
 
 Prerequisites:
-- BIND 10 must be compiled or installed
+- BIND 10 must be compiled or installed (even when testing in-tree build;
+  see below)
 - dig
 - lettuce (http://lettuce.it)
 
@@ -32,7 +33,9 @@ By default it will use the build tree, but you can use an installed version
 of bind10 by passing -I as the first argument of run_lettuce.sh
 
 The tool 'dig' must be in the default search path of your environment. If
-you specified -I, so must the main bind10 program, as well as bindctl.
+you specified -I, so must the main BIND 10 programs.  And, with or without
+-I, some BIND 10 programs still have to be installed as they are invoked
+from test tools.  Those include bindctl and b10-loadzone.
 
 Due to the default way lettuce prints its output, it is advisable to run it
 in a terminal that is wide than the default. If you see a lot of lines twice

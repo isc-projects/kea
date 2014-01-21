@@ -24,11 +24,6 @@
     ],
     "commands": [
       {
-        "command_name": "print_settings",
-        "command_description": "Print some_string and some_int to stdout",
-        "command_args": []
-      },
-      {
         "command_name": "shutdown",
         "command_description": "shutdown cmdctl",
         "command_args": [

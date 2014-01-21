@@ -36,6 +36,9 @@ namespace {
         if (name == TSIGKey::HMACMD5_NAME()) {
             return (isc::cryptolink::MD5);
         }
+        if (name == TSIGKey::HMACMD5_SHORT_NAME()) {
+            return (isc::cryptolink::MD5);
+        }
         if (name == TSIGKey::HMACSHA1_NAME()) {
             return (isc::cryptolink::SHA1);
         }
@@ -68,6 +71,9 @@ TSIGKey::TSIGKeyImpl {
     {
         // Convert the key and algorithm names to the canonical form.
         key_name_.downcase();
+        if (algorithm == isc::cryptolink::MD5) {
+            algorithm_name_ = TSIGKey::HMACMD5_NAME();
+        }
         algorithm_name_.downcase();
     }
     Name key_name_;
@@ -148,7 +154,7 @@ TSIGKey::TSIGKey(const TSIGKey& source) : impl_(new TSIGKeyImpl(*source.impl_))
 
 TSIGKey&
 TSIGKey::operator=(const TSIGKey& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 
@@ -202,6 +208,12 @@ TSIGKey::toText() const {
 const
 Name& TSIGKey::HMACMD5_NAME() {
     static Name alg_name("hmac-md5.sig-alg.reg.int");
+    return (alg_name);
+}
+
+const
+Name& TSIGKey::HMACMD5_SHORT_NAME() {
+    static Name alg_name("hmac-md5");
     return (alg_name);
 }
 

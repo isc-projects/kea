@@ -1,4 +1,4 @@
-// Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 
 #include <dns/python/rrclass_python.h>
 #include <dns/python/name_python.h>
+#include <dns/python/pydnspp_common.h>
 
 #include <datasrc/client_list.h>
 
@@ -34,11 +35,18 @@
 #include "datasrc.h"
 #include "finder_python.h"
 #include "client_python.h"
+#include "zonetable_accessor_python.h"
+#include "zonewriter_python.h"
+
+#include "configurableclientlist_inc.cc"
 
 using namespace std;
 using namespace isc::util::python;
 using namespace isc::datasrc;
+using namespace isc::datasrc::memory;
 using namespace isc::datasrc::python;
+using namespace isc::datasrc::memory::python;
+using namespace isc::dns::python;
 
 //
 // ConfigurableClientList
@@ -64,7 +72,8 @@ ConfigurableClientList_init(PyObject* po_self, PyObject* args, PyObject*) {
             return (0);
         }
     } catch (const exception& ex) {
-        const string ex_what = "Failed to construct ConfigurableClientList object: " +
+        const string ex_what =
+            "Failed to construct ConfigurableClientList object: " +
             string(ex.what());
         PyErr_SetString(getDataSourceException("Error"), ex_what.c_str());
         return (-1);
@@ -116,6 +125,129 @@ ConfigurableClientList_configure(PyObject* po_self, PyObject* args) {
 }
 
 PyObject*
+ConfigurableClientList_resetMemorySegment(PyObject* po_self, PyObject* args) {
+    s_ConfigurableClientList* self =
+        static_cast<s_ConfigurableClientList*>(po_self);
+    try {
+        const char* datasrc_name_p;
+        int mode_int;
+        const char* config_p;
+        if (PyArg_ParseTuple(args, "sis", &datasrc_name_p, &mode_int,
+                             &config_p)) {
+            const std::string datasrc_name(datasrc_name_p);
+            const isc::data::ConstElementPtr
+                config(isc::data::Element::fromJSON(std::string(config_p)));
+            ZoneTableSegment::MemorySegmentOpenMode mode =
+                static_cast<ZoneTableSegment::MemorySegmentOpenMode>
+                    (mode_int);
+            self->cppobj->resetMemorySegment(datasrc_name, mode, config);
+            Py_RETURN_NONE;
+        }
+    } catch (const isc::data::JSONError& jse) {
+        const string ex_what(std::string("JSON parse error in memory segment"
+                               " configuration: ") + jse.what());
+        PyErr_SetString(getDataSourceException("Error"), ex_what.c_str());
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+    }
+
+    return (NULL);
+}
+
+PyObject*
+ConfigurableClientList_getCachedZoneWriter(PyObject* po_self, PyObject* args) {
+    s_ConfigurableClientList* self =
+        static_cast<s_ConfigurableClientList*>(po_self);
+    try {
+        PyObject* name_obj;
+        int catch_load_error;
+        const char* datasrc_name_p = "";
+#if (PY_VERSION_HEX >= 0x030300f0)
+        // The 'p' specifier for predicate (boolean) is available from
+        // Python 3.3 (final) only.
+        if (PyArg_ParseTuple(args, "O!p|s", &isc::dns::python::name_type,
+                             &name_obj, &catch_load_error, &datasrc_name_p)) {
+#else
+        if (PyArg_ParseTuple(args, "O!i|s", &isc::dns::python::name_type,
+                             &name_obj, &catch_load_error, &datasrc_name_p)) {
+#endif
+            const isc::dns::Name&
+                name(isc::dns::python::PyName_ToName(name_obj));
+            const std::string datasrc_name(datasrc_name_p);
+
+            const ConfigurableClientList::ZoneWriterPair result =
+                self->cppobj->getCachedZoneWriter(name, catch_load_error,
+                                                  datasrc_name);
+
+            PyObjectContainer writer;
+            if (!result.second) {
+                // Use the Py_BuildValue, as it takes care of the
+                // reference counts correctly.
+                writer.reset(Py_BuildValue(""));
+            } else {
+                // Make sure it keeps the writer alive.
+                writer.reset(createZoneWriterObject(result.second,
+                                                    po_self));
+            }
+
+            return (Py_BuildValue("IO", result.first, writer.get()));
+        } else {
+            return (NULL);
+        }
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
+PyObject*
+ConfigurableClientList_getStatus(PyObject* po_self, PyObject*) {
+    s_ConfigurableClientList* self =
+        static_cast<s_ConfigurableClientList*>(po_self);
+    try {
+        const std::vector<DataSourceStatus> status = self->cppobj->getStatus();
+
+        PyObjectContainer slist(PyList_New(status.size()));
+
+        for (size_t i = 0; i < status.size(); ++i) {
+            PyObjectContainer segment_type;
+
+            if (status[i].getSegmentState() != SEGMENT_UNUSED) {
+                segment_type.reset(Py_BuildValue(
+                    "s", status[i].getSegmentType().c_str()));
+            } else {
+                Py_INCREF(Py_None);
+                segment_type.reset(Py_None);
+            }
+
+            PyObjectContainer tup(Py_BuildValue("(sOI)",
+                                                status[i].getName().c_str(),
+                                                segment_type.get(),
+                                                status[i].getSegmentState()));
+            // The following "steals" our reference on tup, so we must
+            // not decref.
+            PyList_SET_ITEM(slist.get(), i, tup.release());
+        }
+
+        return (slist.release());
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
+PyObject*
 ConfigurableClientList_find(PyObject* po_self, PyObject* args) {
     s_ConfigurableClientList* self =
         static_cast<s_ConfigurableClientList*>(po_self);
@@ -125,7 +257,7 @@ ConfigurableClientList_find(PyObject* po_self, PyObject* args) {
         int want_finder = 1;
         if (PyArg_ParseTuple(args, "O!|ii", &isc::dns::python::name_type,
                              &name_obj, &want_exact_match, &want_finder)) {
-            const isc::dns::Name
+            const isc::dns::Name&
                 name(isc::dns::python::PyName_ToName(name_obj));
             const ClientList::FindResult
                 result(self->cppobj->find(name, want_exact_match,
@@ -170,6 +302,37 @@ ConfigurableClientList_find(PyObject* po_self, PyObject* args) {
     }
 }
 
+PyObject*
+ConfigurableClientList_getZoneTableAccessor(PyObject* po_self, PyObject* args) {
+    s_ConfigurableClientList* self =
+        static_cast<s_ConfigurableClientList*>(po_self);
+    try {
+        const char* datasrc_name;
+        int use_cache;
+        if (PyArg_ParseTuple(args, "zi", &datasrc_name, &use_cache)) {
+            // python 'None' will be read as NULL, which we convert to an
+            // empty string, meaning "any data source"
+            const std::string name(datasrc_name ? datasrc_name : "");
+            const ConstZoneTableAccessorPtr
+                z(self->cppobj->getZoneTableAccessor(name, use_cache));
+            if (z == NULL) {
+                Py_RETURN_NONE;
+            } else {
+                return (createZoneTableAccessorObject(z, po_self));
+            }
+        } else {
+            return (NULL);
+        }
+    } catch (const std::exception& exc) {
+        PyErr_SetString(getDataSourceException("Error"), exc.what());
+        return (NULL);
+    } catch (...) {
+        PyErr_SetString(getDataSourceException("Error"),
+                        "Unknown C++ exception");
+        return (NULL);
+    }
+}
+
 // This list contains the actual set of functions we have in
 // python. Each entry has
 // 1. Python method name
@@ -177,54 +340,20 @@ ConfigurableClientList_find(PyObject* po_self, PyObject* args) {
 // 3. Argument type
 // 4. Documentation
 PyMethodDef ConfigurableClientList_methods[] = {
-    { "configure", ConfigurableClientList_configure, METH_VARARGS,
-        "configure(configuration, allow_cache) -> None\n\
-\n\
-Wrapper around C++ ConfigurableClientList::configure\n\
-\n\
-This sets the active configuration. It fills the ConfigurableClientList with\
-corresponding data source clients.\n\
-\n\
-If any error is detected, an exception is raised and the previous\
-configuration preserved.\n\
-\n\
-Parameters:\n\
-  configuration     The configuration, as a JSON encoded string.\
-  allow_cache       If caching is allowed." },
-    { "find", ConfigurableClientList_find, METH_VARARGS,
-"find(zone, want_exact_match=False, want_finder=True) -> datasrc_client,\
-zone_finder, exact_match\n\
-\n\
-Look for a data source containing the given zone.\n\
-\n\
-It searches through the contained data sources and returns a data source\
-containing the zone, the zone finder of the zone and a boolean if the answer\
-is an exact match.\n\
-\n\
-The first parameter is isc.dns.Name object of a name in the zone. If the\
-want_exact_match is True, only zone with this exact origin is returned.\
-If it is False, the best matching zone is returned.\n\
-\n\
-If the want_finder is False, the returned zone_finder might be None even\
-if the data source is identified (in such case, the datasrc_client is not\
-None). Setting it to false allows the client list some optimisations, if\
-you don't need it, but if you do need it, it is better to set it to True\
-instead of getting it from the datasrc_client later.\n\
-\n\
-If no answer is found, the datasrc_client and zone_finder are None." },
+    { "configure", ConfigurableClientList_configure,
+      METH_VARARGS, ConfigurableClientList_configure_doc },
+    { "reset_memory_segment", ConfigurableClientList_resetMemorySegment,
+      METH_VARARGS, ConfigurableClientList_reset_memory_segment_doc },
+    { "get_zone_table_accessor", ConfigurableClientList_getZoneTableAccessor,
+      METH_VARARGS, ConfigurableClientList_get_zone_table_accessor_doc },
+    { "get_cached_zone_writer", ConfigurableClientList_getCachedZoneWriter,
+      METH_VARARGS, ConfigurableClientList_get_cached_zone_writer_doc },
+    { "get_status", ConfigurableClientList_getStatus,
+      METH_NOARGS, ConfigurableClientList_get_status_doc },
+    { "find", ConfigurableClientList_find,
+      METH_VARARGS, ConfigurableClientList_find_doc },
     { NULL, NULL, 0, NULL }
 };
-
-const char* const ConfigurableClientList_doc = "\
-The list of data source clients\n\
-\n\
-The purpose is to have several data source clients of the same class\
-and then be able to search through them to identify the one containing\
-a given zone.\n\
-\n\
-Unlike the C++ version, we don't have the abstract base class. Abstract\
-classes are not needed due to the duck typing nature of python.\
-";
 
 } // end of unnamed namespace
 
@@ -237,9 +366,9 @@ namespace python {
 PyTypeObject configurableclientlist_type = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "datasrc.ConfigurableClientList",
-    sizeof(s_ConfigurableClientList),                 // tp_basicsize
+    sizeof(s_ConfigurableClientList),   // tp_basicsize
     0,                                  // tp_itemsize
-    ConfigurableClientList_destroy,                 // tp_dealloc
+    ConfigurableClientList_destroy,     // tp_dealloc
     NULL,                               // tp_print
     NULL,                               // tp_getattr
     NULL,                               // tp_setattr
@@ -262,7 +391,7 @@ PyTypeObject configurableclientlist_type = {
     0,                                  // tp_weaklistoffset
     NULL,                               // tp_iter
     NULL,                               // tp_iternext
-    ConfigurableClientList_methods,                   // tp_methods
+    ConfigurableClientList_methods,     // tp_methods
     NULL,                               // tp_members
     NULL,                               // tp_getset
     NULL,                               // tp_base
@@ -270,7 +399,7 @@ PyTypeObject configurableclientlist_type = {
     NULL,                               // tp_descr_get
     NULL,                               // tp_descr_set
     0,                                  // tp_dictoffset
-    ConfigurableClientList_init,                    // tp_init
+    ConfigurableClientList_init,        // tp_init
     NULL,                               // tp_alloc
     PyType_GenericNew,                  // tp_new
     NULL,                               // tp_free
@@ -299,6 +428,66 @@ initModulePart_ConfigurableClientList(PyObject* mod) {
         return (false);
     }
     Py_INCREF(&configurableclientlist_type);
+
+    try {
+        // ConfigurableClientList::CacheStatus enum
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_CACHE_DISABLED",
+             Py_BuildValue("I", ConfigurableClientList::CACHE_DISABLED));
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_ZONE_NOT_CACHED",
+             Py_BuildValue("I", ConfigurableClientList::ZONE_NOT_CACHED));
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_ZONE_NOT_FOUND",
+             Py_BuildValue("I", ConfigurableClientList::ZONE_NOT_FOUND));
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_CACHE_NOT_WRITABLE",
+             Py_BuildValue("I", ConfigurableClientList::CACHE_NOT_WRITABLE));
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_DATASRC_NOT_FOUND",
+             Py_BuildValue("I", ConfigurableClientList::DATASRC_NOT_FOUND));
+        installClassVariable
+            (configurableclientlist_type,
+             "CACHE_STATUS_ZONE_SUCCESS",
+             Py_BuildValue("I", ConfigurableClientList::ZONE_SUCCESS));
+
+        // MemorySegmentState enum
+        installClassVariable(configurableclientlist_type,
+                             "SEGMENT_UNUSED",
+                             Py_BuildValue("I", SEGMENT_UNUSED));
+        installClassVariable(configurableclientlist_type,
+                             "SEGMENT_WAITING",
+                             Py_BuildValue("I", SEGMENT_WAITING));
+        installClassVariable(configurableclientlist_type,
+                             "SEGMENT_INUSE",
+                             Py_BuildValue("I", SEGMENT_INUSE));
+
+        // FIXME: These should eventually be moved to the
+        // ZoneTableSegment class when we add Python bindings for the
+        // memory data source specific bits. But for now, we add these
+        // enums here to support reloading a zone table segment.
+        installClassVariable(configurableclientlist_type, "CREATE",
+                             Py_BuildValue("I", ZoneTableSegment::CREATE));
+        installClassVariable(configurableclientlist_type, "READ_WRITE",
+                             Py_BuildValue("I", ZoneTableSegment::READ_WRITE));
+        installClassVariable(configurableclientlist_type, "READ_ONLY",
+                             Py_BuildValue("I", ZoneTableSegment::READ_ONLY));
+    } catch (const std::exception& ex) {
+        const std::string ex_what =
+            "Unexpected failure in ConfigurableClientList initialization: " +
+            std::string(ex.what());
+        PyErr_SetString(po_IscException, ex_what.c_str());
+        return (false);
+    } catch (...) {
+        PyErr_SetString(PyExc_SystemError,
+            "Unexpected failure in ConfigurableClientList initialization");
+        return (false);
+    }
 
     return (true);
 }

@@ -139,7 +139,7 @@ NSEC3PARAM::NSEC3PARAM(const NSEC3PARAM& source) :
 
 NSEC3PARAM&
 NSEC3PARAM::operator=(const NSEC3PARAM& source) {
-    if (impl_ == source.impl_) {
+    if (this == &source) {
         return (*this);
     }
 

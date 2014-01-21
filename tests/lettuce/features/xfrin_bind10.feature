@@ -20,10 +20,13 @@ Feature: Xfrin
     And wait for bind10 stderr message XFRIN_STARTED
     And wait for bind10 stderr message ZONEMGR_STARTED
 
-    # Now we use the first step again to see if the file has been created
+    # Now we use the first step again to see if the file has been created.
+    # The DB currently doesn't know anything about the zone, so we install
+    # an empty zone for xfrin.
     The file data/test_nonexistent_db.sqlite3 should exist
-
     A query for www.example.org to [::1]:47806 should have rcode REFUSED
+    Then make empty zone example.org in DB file data/test_nonexistent_db.sqlite3
+
     When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
     # The data we receive contain a NS RRset that refers to three names in the
     # example.org. zone. All these three are nonexistent in the data, producing
@@ -80,6 +83,9 @@ Feature: Xfrin
     And wait for bind10 stderr message CMDCTL_STARTED
     And wait for bind10 stderr message XFRIN_STARTED
 
+    # For xfrin make the data source aware of the zone (with empty data)
+    Then make empty zone example.org in DB file data/test_nonexistent_db.sqlite3
+
     # Set slave config for 'automatic' xfrin
     When I set bind10 configuration Xfrin/zones to [{"master_port": 47806, "name": "example.org", "master_addr": "::1"}]
 
@@ -135,10 +141,12 @@ Feature: Xfrin
     And wait for bind10 stderr message XFRIN_STARTED
     And wait for bind10 stderr message ZONEMGR_STARTED
 
-    # Now we use the first step again to see if the file has been created
+    # Now we use the first step again to see if the file has been created,
+    # then install empty zone data
     The file data/test_nonexistent_db.sqlite3 should exist
-
     A query for www.example.org to [::1]:47806 should have rcode REFUSED
+    Then make empty zone example.org in DB file data/test_nonexistent_db.sqlite3
+
     When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
     # It should complain once about invalid data, then again that the whole
     # zone is invalid and then reject it.
@@ -182,7 +190,8 @@ Feature: Xfrin
     example.    3600    IN      SOA     ns1.example. hostmaster.example. 94 3600 900 7200 300
     """
 
-    When I send bind10 the command Xfrin retransfer example. IN ::1 47807
+    # To invoke IXFR we need to use refresh command
+    When I send bind10 the command Xfrin refresh example. IN ::1 47807
     Then wait for new bind10 stderr message XFRIN_GOT_INCREMENTAL_RESP
     Then wait for new bind10 stderr message XFRIN_IXFR_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
     # This can't be 'wait for new'

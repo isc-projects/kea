@@ -366,11 +366,25 @@ public:
     ///
     /// @param fqdn fully qualified domain name to be written.
     /// @param [out] buf output buffer.
+    /// @param downcase indicates if the FQDN should be converted to lower
+    /// case (if true). By default it is not converted.
     ///
     /// @throw isc::dhcp::BadDataTypeCast if provided FQDN
     /// is invalid.
     static void writeFqdn(const std::string& fqdn,
-                          std::vector<uint8_t>& buf);
+                          std::vector<uint8_t>& buf,
+                          const bool downcase = false);
+
+    /// @brief Return the number of labels in the Name.
+    ///
+    /// If the specified name is empty the 0 is returned.
+    ///
+    /// @param text_name A text representation of the name.
+    ///
+    /// @return A number of labels in the provided name or 0 if the
+    /// name string is empty.
+    /// @throw isc::dhcp::BadDataTypeCast if provided name is malformed.
+    static unsigned int getLabelCount(const std::string& text_name);
 
     /// @brief Read string value from a buffer.
     ///

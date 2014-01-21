@@ -98,10 +98,10 @@ struct SectionIteratorImpl;
 template <typename T>
 class SectionIterator : public std::iterator<std::input_iterator_tag, T> {
 public:
-    SectionIterator<T>() : impl_(NULL) {}
-    SectionIterator<T>(const SectionIteratorImpl<T>& impl);
-    ~SectionIterator<T>();
-    SectionIterator<T>(const SectionIterator<T>& source);
+    SectionIterator() : impl_(NULL) {}
+    SectionIterator(const SectionIteratorImpl<T>& impl);
+    ~SectionIterator();
+    SectionIterator(const SectionIterator<T>& source);
     void operator=(const SectionIterator<T>& source);
     SectionIterator<T>& operator++();
     SectionIterator<T> operator++(int);
@@ -481,14 +481,14 @@ public:
     /// This should probably be extended to be a "find" method that returns
     /// a matching RRset if found.
     bool hasRRset(const Section section, const Name& name,
-                  const RRClass& rrclass, const RRType& rrtype);
+                  const RRClass& rrclass, const RRType& rrtype) const;
 
     /// \brief Determine whether the given section already has an RRset
     /// matching the one pointed to by the argumet
     ///
     /// \c section must be a valid constant of the \c Section type;
     /// otherwise, an exception of class \c OutOfRange will be thrown.
-    bool hasRRset(const Section section, const RRsetPtr& rrset);
+    bool hasRRset(const Section section, const RRsetPtr& rrset) const;
 
     /// \brief Remove RRSet from Message
     ///

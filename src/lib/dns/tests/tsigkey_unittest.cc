@@ -38,6 +38,7 @@ protected:
 
 TEST_F(TSIGKeyTest, algorithmNames) {
     EXPECT_EQ(Name("hmac-md5.sig-alg.reg.int"), TSIGKey::HMACMD5_NAME());
+    EXPECT_EQ(Name("hmac-md5"), TSIGKey::HMACMD5_SHORT_NAME());
     EXPECT_EQ(Name("hmac-sha1"), TSIGKey::HMACSHA1_NAME());
     EXPECT_EQ(Name("hmac-sha256"), TSIGKey::HMACSHA256_NAME());
     EXPECT_EQ(Name("hmac-sha224"), TSIGKey::HMACSHA224_NAME());
@@ -47,6 +48,9 @@ TEST_F(TSIGKeyTest, algorithmNames) {
     // Also check conversion to cryptolink definitions
     EXPECT_EQ(isc::cryptolink::MD5, TSIGKey(key_name, TSIGKey::HMACMD5_NAME(),
                                             NULL, 0).getAlgorithm());
+    EXPECT_EQ(isc::cryptolink::MD5,
+              TSIGKey(key_name, TSIGKey::HMACMD5_SHORT_NAME(),
+                      NULL, 0).getAlgorithm());
     EXPECT_EQ(isc::cryptolink::SHA1, TSIGKey(key_name, TSIGKey::HMACSHA1_NAME(),
                                              NULL, 0).getAlgorithm());
     EXPECT_EQ(isc::cryptolink::SHA256, TSIGKey(key_name,
@@ -66,6 +70,13 @@ TEST_F(TSIGKeyTest, algorithmNames) {
 TEST_F(TSIGKeyTest, construct) {
     TSIGKey key(key_name, TSIGKey::HMACMD5_NAME(),
                 secret.c_str(), secret.size());
+    EXPECT_EQ(key_name, key.getKeyName());
+    EXPECT_EQ(Name("hmac-md5.sig-alg.reg.int"), key.getAlgorithmName());
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, secret.c_str(),
+                        secret.size(), key.getSecret(), key.getSecretLength());
+
+    TSIGKey key_short_md5(key_name, TSIGKey::HMACMD5_SHORT_NAME(),
+                          secret.c_str(), secret.size());
     EXPECT_EQ(key_name, key.getKeyName());
     EXPECT_EQ(Name("hmac-md5.sig-alg.reg.int"), key.getAlgorithmName());
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, secret.c_str(),

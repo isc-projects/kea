@@ -125,6 +125,8 @@ enum DHCPOptionType {
     DHO_DHCP_CLIENT_IDENTIFIER       = 61,
     DHO_NWIP_DOMAIN_NAME             = 62,
     DHO_NWIP_SUBOPTIONS              = 63,
+    DHO_TFTP_SERVER_NAME             = 66,
+    DHO_BOOT_FILE_NAME               = 67,
     DHO_USER_CLASS                   = 77,
     DHO_FQDN                         = 81,
     DHO_DHCP_AGENT_OPTIONS           = 82,
@@ -162,16 +164,27 @@ static const uint16_t DHCP4_SERVER_PORT = 67;
 /// extensions field).
 static const uint32_t DHCP_OPTIONS_COOKIE = 0x63825363;
 
+/* Relay Agent Information option subtypes: */
+
+static const uint16_t RAI_OPTION_AGENT_CIRCUIT_ID = 1; // RFC3046
+static const uint16_t RAI_OPTION_REMOTE_ID = 2; // RFC3046
+/* option 3 is reserved and will never be assigned */
+static const uint16_t RAI_OPTION_DOCSIS_DEVICE_CLASS = 4; // RFC3256
+static const uint16_t RAI_OPTION_LINK_SELECTION = 5; // RFC3527
+static const uint16_t RAI_OPTION_SUBSCRIBER_ID = 6; //RFC3993
+static const uint16_t RAI_OPTION_RADIUS = 7; //RFC4014
+static const uint16_t RAI_OPTION_AUTH = 8; //RFC4030
+static const uint16_t RAI_OPTION_VSI = 9; // RFC4243
+static const uint16_t RAI_OPTION_RELAY_FLAGS = 10; // RFC5010
+static const uint16_t RAI_OPTION_SERVER_ID_OVERRIDE = 11; // RFC5107
+static const uint16_t RAI_OPTION_RELAY_ID = 12; //RFC6925
+static const uint16_t RAI_OPTION_VIRTUAL_SUBNET_SELECT = 151; //RFC6607
+static const uint16_t RAI_OPTION_VIRTUAL_SUBNET_SELECT_CTRL = 152; //RFC6607
+
 // TODO: Following are leftovers from dhcp.h import from ISC DHCP
 // They will be converted to C++-style defines once they will start
 // to be used.
 #if 0
-/* Relay Agent Information option subtypes: */
-#define RAI_CIRCUIT_ID  1
-#define RAI_REMOTE_ID   2
-#define RAI_AGENT_ID    3
-#define RAI_LINK_SELECT 5
-
 /* FQDN suboptions: */
 #define FQDN_NO_CLIENT_UPDATE           1
 #define FQDN_SERVER_UPDATE              2

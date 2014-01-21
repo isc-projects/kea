@@ -1,4 +1,4 @@
-// Copyright (C) 2011  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -45,7 +45,7 @@ public:
 
     /// \brief Return the value of the rmailbox field.
     ///
-    /// \exception std::bad_alloc If resource allocation for the returned
+    /// \throw std::bad_alloc If resource allocation for the returned
     /// \c Name fails.
     ///
     /// \note
@@ -64,7 +64,7 @@ public:
 
     /// \brief Return the value of the emailbox field.
     ///
-    /// \exception std::bad_alloc If resource allocation for the returned
+    /// \throw std::bad_alloc If resource allocation for the returned
     /// \c Name fails.
     Name getEmailbox() const { return (emailbox_); }
 

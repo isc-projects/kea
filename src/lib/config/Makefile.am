@@ -6,8 +6,11 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/log -I$(top_builddir)/src/lib/log
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 # Define rule to build logging source files from message file
-config_messages.h config_messages.cc: config_messages.mes
+config_messages.h config_messages.cc: s-messages
+
+s-messages: config_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/config/config_messages.mes
+	touch $@
 
 BUILT_SOURCES = config_messages.h config_messages.cc
 
@@ -27,4 +30,4 @@ nodist_libb10_cfgclient_la_SOURCES  = config_messages.h config_messages.cc
 # The message file should be in the distribution.
 EXTRA_DIST = config_messages.mes
 
-CLEANFILES = *.gcno *.gcda config_messages.h config_messages.cc
+CLEANFILES = *.gcno *.gcda config_messages.h config_messages.cc s-messages

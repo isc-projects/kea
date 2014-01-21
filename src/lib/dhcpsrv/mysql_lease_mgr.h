@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -220,6 +220,19 @@ public:
     ///        failed.
     virtual Lease4Collection getLease4(const ClientId& clientid) const;
 
+    /// @brief Returns IPv4 lease for the specified client identifier, HW
+    /// address and subnet identifier.
+    ///
+    /// @param client_id A client identifier.
+    /// @param hwaddr Hardware address.
+    /// @param subnet_id A subnet identifier.
+    ///
+    /// @return A pointer to the lease or NULL if the lease is not found.
+    /// @throw isc::NotImplemented On every call as this function is currently
+    /// not implemented for the MySQL backend.
+    virtual Lease4Ptr getLease4(const ClientId& client_id, const HWAddr& hwaddr,
+                                SubnetID subnet_id) const;
+
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
     /// There can be at most one lease for a given HW address in a single
@@ -244,6 +257,7 @@ public:
     /// The assumption here is that there will not be site or link-local
     /// addresses used, so there is no way of having address duplication.
     ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param addr address of the searched lease
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
@@ -255,7 +269,8 @@ public:
     ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease6Ptr getLease6(const isc::asiolink::IOAddress& addr) const;
+    virtual Lease6Ptr getLease6(Lease::Type type,
+                                const isc::asiolink::IOAddress& addr) const;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
     ///
@@ -264,6 +279,7 @@ public:
     /// can be more than one. Thus return type is a container, not a single
     /// pointer.
     ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param duid client DUID
     /// @param iaid IA identifier
     ///
@@ -276,16 +292,17 @@ public:
     ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease6Collection getLease6(const DUID& duid,
-                                       uint32_t iaid) const;
+    virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
+                                        uint32_t iaid) const;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
+    /// @param type specifies lease type: (NA, TA or PD)
     /// @param duid client DUID
     /// @param iaid IA identifier
     /// @param subnet_id subnet id of the subnet the lease belongs to
     ///
-    /// @return smart pointer to the lease (or NULL if a lease is not found)
+    /// @return lease collection (may be empty if no lease is found)
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
@@ -294,8 +311,8 @@ public:
     ///        programming error.
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease6Ptr getLease6(const DUID& duid, uint32_t iaid,
-                                SubnetID subnet_id) const;
+    virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
+                                        uint32_t iaid, SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///

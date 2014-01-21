@@ -17,7 +17,7 @@ endif
 
 pkglibexecdir = $(libexecdir)/@PACKAGE@
 
-CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
+CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
 
 man_MANS = b10-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
@@ -41,8 +41,11 @@ endif
 spec_config.h: spec_config.h.pre
 	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
 
-dhcp6_messages.h dhcp6_messages.cc: dhcp6_messages.mes
+dhcp6_messages.h dhcp6_messages.cc: s-messages
+
+s-messages: dhcp6_messages.mes
 	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
+	touch $@
 
 BUILT_SOURCES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
 
@@ -61,10 +64,12 @@ b10_dhcp6_LDADD  = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 b10_dhcp6_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 
 b10_dhcp6dir = $(pkgdatadir)
 b10_dhcp6_DATA = dhcp6.spec

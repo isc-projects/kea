@@ -16,7 +16,8 @@
 # Most of the time, we omit the "init" for brevity. Sometimes,
 # we want to be explicit about what we do, like when hijacking a library
 # call used by the b10-init.
-from init import Init, ProcessInfo, parse_args, dump_pid, unlink_pid_file, _BASETIME
+from init import Init, ProcessInfo, parse_args, dump_pid, unlink_pid_file, \
+    _BASETIME
 import init
 
 # XXX: environment tests are currently disabled, due to the preprocessor
@@ -941,6 +942,7 @@ class TestStartStopProcessesInit(unittest.TestCase):
         init.start_ccsession = lambda _: start_ccsession()
         # We need to return the original _read_bind10_config
         init._read_bind10_config = lambda: Init._read_bind10_config(init)
+        init.wait_msgq = lambda: None
         init.start_all_components()
         self.check_started(init, True, start_auth, start_resolver)
         self.check_environment_unchanged()
@@ -967,6 +969,7 @@ class TestStartStopProcessesInit(unittest.TestCase):
         init = MockInit()
         self.check_preconditions(init)
 
+        init.wait_msgq = lambda: None
         init.start_all_components()
         init.runnable = True
         init.config_handler(self.construct_config(False, False))
@@ -1028,6 +1031,7 @@ class TestStartStopProcessesInit(unittest.TestCase):
         init = MockInit()
         self.check_preconditions(init)
 
+        init.wait_msgq = lambda: None
         init.start_all_components()
 
         init.runnable = True
@@ -1066,6 +1070,7 @@ class TestStartStopProcessesInit(unittest.TestCase):
         init = MockInit()
         self.check_preconditions(init)
 
+        init.wait_msgq = lambda: None
         init.start_all_components()
         init.config_handler(self.construct_config(False, False))
         self.check_started_dhcp(init, False, False)
@@ -1075,6 +1080,7 @@ class TestStartStopProcessesInit(unittest.TestCase):
         init = MockInit()
         self.check_preconditions(init)
         # v6 only enabled
+        init.wait_msgq = lambda: None
         init.start_all_components()
         init.runnable = True
         init._Init_started = True
@@ -1347,6 +1353,7 @@ class TestInitComponents(unittest.TestCase):
         # Start it
         orig = init._component_configurator.startup
         init._component_configurator.startup = self.__unary_hook
+        init.wait_msgq = lambda: None
         init.start_all_components()
         init._component_configurator.startup = orig
         self.__check_core(self.__param)
@@ -1499,6 +1506,7 @@ class TestInitComponents(unittest.TestCase):
             pass
         init.ccs = CC()
         init.ccs.get_full_config = lambda: {'components': self.__compconfig}
+        init.wait_msgq = lambda: None
         init.start_all_components()
         self.__check_extended(self.__param)
 
@@ -1643,7 +1651,7 @@ class TestInitComponents(unittest.TestCase):
         pi = init.start_msgq()
         self.assertEqual('b10-msgq', pi.name)
         self.assertEqual(['b10-msgq'], pi.args)
-        self.assertTrue(pi.dev_null_stdout)
+        self.assertEqual(pi.dev_null_stdout, not verbose)
         self.assertEqual(pi.dev_null_stderr, not verbose)
         self.assertEqual({'FOO': 'an env string'}, pi.env)
 
@@ -1767,6 +1775,51 @@ class TestInitComponents(unittest.TestCase):
 
         # this is set by ProcessInfo.spawn()
         self.assertEqual(42147, pi.pid)
+
+    def test_wait_msgq(self):
+        """
+        Test we can wait for msgq to provide its own alias.
+
+        It is not available the first time, the second it is.
+        """
+        class RpcSession:
+            def __init__(self):
+                # Not yet called
+                self.called = 0
+
+            def rpc_call(self, command, recipient):
+                self.called += 1
+                if self.called == 1:
+                    raise isc.config.RPCRecipientMissing("Not yet")
+                elif self.called == 2:
+                    raise isc.config.RPCError(1, "What?")
+                else:
+                    raise Exception("Called too many times")
+
+        init = MockInitSimple()
+        init.wait_time = 1
+        init.ccs = RpcSession()
+        init.wait_msgq()
+        self.assertEqual(2, init.ccs.called)
+
+    def test_wait_msgq_fail(self):
+        """
+        Test the wait_msgq fails in case the msgq does not appear
+        after so many attempts.
+        """
+        class RpcSession:
+            def __init__(self):
+                self.called = 0
+
+            def rpc_call(self, command, recipient):
+                self.called += 1
+                raise isc.config.RPCRecipientMissing("Not yet")
+
+        b10init = MockInitSimple()
+        b10init.wait_time = 1
+        b10init.ccs = RpcSession()
+        self.assertRaises(init.ProcessStartError, b10init.wait_msgq)
+        self.assertEqual(10, b10init.ccs.called)
 
     def test_start_cfgmgr(self):
         '''Test that b10-cfgmgr is started.'''

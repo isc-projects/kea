@@ -16,15 +16,17 @@
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
 #include <log/log_messages.h>
-#include "util/interprocess_sync.h"
+#include <log/interprocess/interprocess_sync.h>
 #include "log_test_messages.h"
+
+#include <util/threads/sync.h>
 #include <iostream>
 
 using namespace std;
 using namespace isc::log;
 using isc::util::thread::Mutex;
 
-class MockLoggingSync : public isc::util::InterprocessSync {
+class MockLoggingSync : public isc::log::interprocess::InterprocessSync {
 public:
     /// \brief Constructor
     MockLoggingSync(const std::string& component_name) :

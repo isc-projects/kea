@@ -14,8 +14,6 @@
 
 #include <config.h>
 
-#include <log/dummylog.h>
-
 #include <util/buffer.h>
 
 #include <asio.hpp>
@@ -33,8 +31,11 @@
 #include <sys/socket.h>
 #include <errno.h>
 
-using namespace asio;
-using asio::ip::udp;
+// Note: we intentionally avoid 'using namespace asio' to avoid conflicts with
+// std:: definitions in C++11.
+using asio::io_service;
+using asio::buffer;
+using asio::const_buffer;
 using asio::ip::tcp;
 
 using namespace std;
@@ -49,11 +50,10 @@ namespace asiodns {
 ///
 /// The constructor
 TCPServer::TCPServer(io_service& io_service, int fd, int af,
-                     const SimpleCallback* checkin,
                      const DNSLookup* lookup,
                      const DNSAnswer* answer) :
     io_(io_service), done_(false),
-    checkin_callback_(checkin), lookup_callback_(lookup),
+    lookup_callback_(lookup),
     answer_callback_(answer)
 {
     if (af != AF_INET && af != AF_INET6) {
@@ -77,17 +77,17 @@ TCPServer::TCPServer(io_service& io_service, int fd, int af,
 }
 
 namespace {
-    // Called by the timeout_ deadline timer if the client takes too long.
-    // If not aborted, cancels the given socket
-    // (in which case TCPServer::operator() will be called to continue,
-    // with an 'aborted' error code
-    void do_timeout(asio::ip::tcp::socket& socket,
-                    const asio::error_code& error)
-    {
-        if (error != asio::error::operation_aborted) {
-            socket.cancel();
-        }
+// Called by the timeout_ deadline timer if the client takes too long.
+// If not aborted, cancels the given socket
+// (in which case TCPServer::operator() will be called to continue,
+// with an 'aborted' error code.)
+void doTimeOut(boost::shared_ptr<asio::ip::tcp::socket> socket,
+               const asio::error_code& error)
+{
+    if (error != asio::error::operation_aborted) {
+        socket->cancel();
     }
+}
 }
 
 void
@@ -110,7 +110,7 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
                 CORO_YIELD acceptor_->async_accept(*socket_, *this);
                 if (ec) {
                     using namespace asio::error;
-                    const error_code::value_type err_val = ec.value();
+                    const asio::error_code::value_type err_val = ec.value();
                     // The following two cases can happen when this server is
                     // stopped: operation_aborted in case it's stopped after
                     // starting accept().  bad_descriptor in case it's stopped
@@ -149,13 +149,16 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         /// asynchronous read call.
         data_.reset(new char[MAX_LENGTH]);
 
-        /// Start a timer to drop the connection if it is idle
+        /// Start a timer to drop the connection if it is idle.  note that
+        // we pass a shared_ptr of the socket object so that it won't be
+        // destroyed at least until the timeout callback (including abort)
+        // is called.
         if (*tcp_recv_timeout_ > 0) {
             timeout_.reset(new asio::deadline_timer(io_)); // shouldn't throw
             timeout_->expires_from_now( // consider any exception fatal.
                 boost::posix_time::milliseconds(*tcp_recv_timeout_));
-            timeout_->async_wait(boost::bind(&do_timeout, boost::ref(*socket_),
-                                 asio::placeholders::error));
+            timeout_->async_wait(boost::bind(&doTimeOut, socket_,
+                                             asio::placeholders::error));
         }
 
         /// Read the message, in two parts.  First, the message length:
@@ -202,16 +205,6 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         io_message_.reset(new IOMessage(data_.get(), length, *iosock_,
                                         *peer_));
 
-        // Perform any necessary operations prior to processing the incoming
-        // packet (e.g., checking for queued configuration messages).
-        //
-        // (XXX: it may be a performance issue to have this called for
-        // every single incoming packet; we may wish to throttle it somehow
-        // in the future.)
-        if (checkin_callback_ != NULL) {
-            (*checkin_callback_)(*io_message_);
-        }
-
         // If we don't have a DNS Lookup provider, there's no point in
         // continuing; we exit the coroutine permanently.
         if (lookup_callback_ == NULL) {
@@ -235,8 +228,15 @@ TCPServer::operator()(asio::error_code ec, size_t length) {
         // The 'done_' flag indicates whether we have an answer
         // to send back.  If not, exit the coroutine permanently.
         if (!done_) {
+            // Explicitly close() isn't necessary for most cases. But for the
+            // very connection, socket_ is shared with the original owner of
+            // the server object and would stay open.
             // TODO: should we keep the connection open for a short time
             // to see if new requests come in?
+            socket_->close(ec);
+            if (ec) {
+                LOG_DEBUG(logger, 0, ASIODNS_TCP_CLOSE_FAIL).arg(ec.message());
+            }
             return;
         }
 

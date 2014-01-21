@@ -18,15 +18,27 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
+#include <dhcp/option4_client_fqdn.h>
+#include <dhcp/option_custom.h>
+#include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <hooks/callout_handle.h>
 
 #include <boost/noncopyable.hpp>
 
 #include <iostream>
+#include <queue>
 
 namespace isc {
 namespace dhcp {
+
+/// @brief Exception thrown when DHCID computation failed.
+class DhcidComputeError : public isc::Exception {
+public:
+    DhcidComputeError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// @brief DHCPv4 server service.
 ///
@@ -45,7 +57,7 @@ namespace dhcp {
 /// Dhcpv4Srv and other classes, see \ref dhcpv4Session.
 class Dhcpv4Srv : public boost::noncopyable {
 
-    public:
+public:
 
     /// @brief defines if certain option may, must or must not appear
     typedef enum {
@@ -61,18 +73,25 @@ class Dhcpv4Srv : public boost::noncopyable {
     /// network interaction. Will instantiate lease manager, and load
     /// old or create new DUID. It is possible to specify alternate
     /// port on which DHCPv4 server will listen on. That is mostly useful
-    /// for testing purposes.
+    /// for testing purposes. The Last two arguments of the constructor
+    /// should be left at default values for normal server operation.
+    /// They should be set to 'false' when creating an instance of this
+    /// class for unit testing because features they enable require
+    /// root privileges.
     ///
     /// @param port specifies port number to listen on
     /// @param dbconfig Lease manager configuration string.  The default
     ///        of the "memfile" manager is used for testing.
     /// @param use_bcast configure sockets to support broadcast messages.
+    /// @param direct_response_desired specifies if it is desired to
+    /// use direct V4 traffic.
     Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
               const char* dbconfig = "type=memfile",
-              const bool use_bcast = true);
+              const bool use_bcast = true,
+              const bool direct_response_desired = true);
 
     /// @brief Destructor. Used during DHCPv4 service shutdown.
-    ~Dhcpv4Srv();
+    virtual ~Dhcpv4Srv();
 
     /// @brief Main server processing loop.
     ///
@@ -106,7 +125,62 @@ class Dhcpv4Srv : public boost::noncopyable {
     ///         be freed by the caller.
     static const char* serverReceivedPacketName(uint8_t type);
 
+    ///
+    /// @name Public accessors returning values required to (re)open sockets.
+    ///
+    /// These accessors must be public because sockets are reopened from the
+    /// static configuration callback handler. This callback handler invokes
+    /// @c ControlledDhcpv4Srv::openActiveSockets which requires parameters
+    /// which has to be retrieved from the @c ControlledDhcpv4Srv object.
+    /// They are retrieved using these public functions
+    //@{
+    ///
+    /// @brief Get UDP port on which server should listen.
+    ///
+    /// Typically, server listens on UDP port number 67. Other ports are used
+    /// for testing purposes only.
+    ///
+    /// @return UDP port on which server should listen.
+    uint16_t getPort() const {
+        return (port_);
+    }
+
+    /// @brief Return bool value indicating that broadcast flags should be set
+    /// on sockets.
+    ///
+    /// @return A bool value indicating that broadcast should be used (if true).
+    bool useBroadcast() const {
+        return (use_bcast_);
+    }
+    //@}
+
+    /// @brief Open sockets which are marked as active in @c CfgMgr.
+    ///
+    /// This function reopens sockets according to the current settings in the
+    /// Configuration Manager. It holds the list of the interfaces which server
+    /// should listen on. This function will open sockets on these interfaces
+    /// only. This function is not exception safe.
+    ///
+    /// @param port UDP port on which server should listen.
+    /// @param use_bcast should broadcast flags be set on the sockets.
+    static void openActiveSockets(const uint16_t port, const bool use_bcast);
+
 protected:
+
+    /// @brief Verifies if the server id belongs to our server.
+    ///
+    /// This function checks if the server identifier carried in the specified
+    /// DHCPv4 message belongs to this server. If the server identifier option
+    /// is absent or the value carried by this option is equal to one of the
+    /// server identifiers used by the server, the true is returned. If the
+    /// server identifier option is present, but it doesn't match any server
+    /// identifier used by this server, the false value is returned.
+    ///
+    /// @param pkt DHCPv4 message which server identifier is to be checked.
+    ///
+    /// @return true, if the server identifier is absent or matches one of the
+    /// server identifiers that the server is using; false otherwise.
+    bool acceptServerId(const Pkt4Ptr& pkt) const;
 
     /// @brief verifies if specified packet meets RFC requirements
     ///
@@ -116,7 +190,7 @@ protected:
     /// @param pkt packet to be checked
     /// @param serverid expectation regarding server-id option
     /// @throw RFCViolation if any issues are detected
-    void sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid);
+    static void sanityCheck(const Pkt4Ptr& pkt, RequirementLevel serverid);
 
     /// @brief Processes incoming DISCOVER and returns response.
     ///
@@ -179,6 +253,18 @@ protected:
     /// @param msg outgoing message (options will be added here)
     void appendRequestedOptions(const Pkt4Ptr& question, Pkt4Ptr& msg);
 
+    /// @brief Appends requested vendor options as requested by client.
+    ///
+    /// This method is similar to \ref appendRequestedOptions(), but uses
+    /// vendor options. The major difference is that vendor-options use
+    /// its own option spaces (there may be more than one distinct set of vendor
+    /// options, each with unique vendor-id). Vendor options are requested
+    /// using separate options within their respective vendor-option spaces.
+    ///
+    /// @param question DISCOVER or REQUEST message from a client.
+    /// @param answer outgoing message (options will be added here)
+    void appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer);
+
     /// @brief Assigns a lease and appends corresponding options
     ///
     /// This method chooses the most appropriate lease for reqesting
@@ -202,6 +288,117 @@ protected:
     /// @param msg the message to add options to.
     void appendBasicOptions(const Pkt4Ptr& question, Pkt4Ptr& msg);
 
+    /// @brief Processes Client FQDN and Hostname Options sent by a client.
+    ///
+    /// Client may send Client FQDN or Hostname option to communicate its name
+    /// to the server. Server may use this name to perform DNS update for the
+    /// lease being assigned to a client. If server takes responsibility for
+    /// updating DNS for a client it may communicate it by sending the Client
+    /// FQDN or Hostname %Option back to the client. Server select a different
+    /// name than requested by a client to update DNS. In such case, the server
+    /// stores this different name in its response.
+    ///
+    /// Client should not send both Client FQDN and Hostname options. However,
+    /// if client sends both options, server should prefer Client FQDN option
+    /// and ignore the Hostname option. If Client FQDN option is not present,
+    /// the Hostname option is processed.
+    ///
+    /// The Client FQDN %Option is processed by this function as described in
+    /// RFC4702.
+    ///
+    /// In response to a Hostname %Option sent by a client, the server may send
+    /// Hostname option with the same or different hostname. If different
+    /// hostname is sent, it is an indication to the client that server has
+    /// overridden the client's preferred name and will rather use this
+    /// different name to update DNS. However, since Hostname option doesn't
+    /// carry an information whether DNS update will be carried by the server
+    /// or not, the client is responsible for checking whether DNS update
+    /// has been performed.
+    ///
+    /// After successful processing options stored in the first parameter,
+    /// this function may add Client FQDN or Hostname option to the response
+    /// message. In some cases, server may cease to add any options to the
+    /// response, i.e. when server doesn't support DNS updates.
+    ///
+    /// This function does not throw. It simply logs the debug message if the
+    /// processing of the FQDN or Hostname failed.
+    ///
+    /// @param query A DISCOVER or REQUEST message from a cient.
+    /// @param [out] answer A response message to be sent to a client.
+    void processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer);
+
+private:
+    /// @brief Process Client FQDN %Option sent by a client.
+    ///
+    /// This function is called by the @c Dhcpv4Srv::processClientName when
+    /// the client has sent the FQDN option in its message to the server.
+    /// It comprises the actual logic to parse the FQDN option and prepare
+    /// the FQDN option to be sent back to the client in the server's
+    /// response.
+    ///
+    /// @param fqdn An DHCPv4 Client FQDN %Option sent by a client.
+    /// @param [out] answer A response message to be sent to a client.
+    void processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
+                                 Pkt4Ptr& answer);
+
+    /// @brief Process Hostname %Option sent by a client.
+    ///
+    /// This function is called by the @c DHcpv4Srv::processClientName when
+    /// the client has sent the Hostname option in its message to the server.
+    /// It comprises the actual logic to parse the Hostname option and
+    /// prepare the Hostname option to be sent back to the client in the
+    /// server's response.
+    ///
+    /// @param opt_hostname An @c OptionCustom object encapsulating the Hostname
+    /// %Option.
+    /// @param [out] answer A response message to be sent to a client.
+    void processHostnameOption(const OptionCustomPtr& opt_hostname,
+                               Pkt4Ptr& answer);
+
+protected:
+
+    /// @brief Creates NameChangeRequests which correspond to the lease
+    /// which has been acquired.
+    ///
+    /// If this function is called whe an existing lease is renewed, it
+    /// may generate NameChangeRequest to remove existing DNS entries which
+    /// correspond to the old lease instance. This function may cease to
+    /// generate NameChangeRequests if the notion of the client's FQDN hasn't
+    /// changed between an old and new lease.
+    ///
+    /// @param lease A pointer to the new lease which has been acquired.
+    /// @param old_lease A pointer to the instance of the old lease which has
+    /// been replaced by the new lease passed in the first argument. The NULL
+    /// value indicates that the new lease has been allocated, rather than
+    /// lease being renewed.
+    void createNameChangeRequests(const Lease4Ptr& lease,
+                                  const Lease4Ptr& old_lease);
+
+    /// @brief Creates the NameChangeRequest and adds to the queue for
+    /// processing.
+    ///
+    /// This function adds the @c isc::dhcp_ddns::NameChangeRequest to the
+    /// queue and emits the debug message which indicates whether the request
+    /// being added is to remove DNS entry or add a new entry. This function
+    /// is exception free.
+    ///
+    /// @param chg_type A type of the NameChangeRequest (ADD or REMOVE).
+    /// @param lease A lease for which the NameChangeRequest is created and
+    /// queued.
+    void queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
+                                const Lease4Ptr& lease);
+
+    /// @brief Sends all outstanding NameChangeRequests to b10-dhcp-ddns module.
+    ///
+    /// The purpose of this function is to pick all outstanding
+    /// NameChangeRequests from the FIFO queue and send them to b10-dhcp-ddns
+    /// module.
+    ///
+    /// @todo Currently this function simply removes all requests from the
+    /// queue but doesn't send them anywhere. In the future, the
+    /// NameChangeSender will be used to deliver requests to the other module.
+    void sendNameChangeRequests();
+
     /// @brief Attempts to renew received addresses
     ///
     /// Attempts to renew existing lease. This typically includes finding a lease that
@@ -214,42 +411,89 @@ protected:
 
     /// @brief Appends default options to a message
     ///
+    /// Currently it is only a Message Type option. This function does not add
+    /// the Server Identifier option as this option must be added using
+    /// @c Dhcpv4Srv::appendServerID.
+    ///
+    ///
     /// @param msg message object (options will be added to it)
     /// @param msg_type specifies message type
     void appendDefaultOptions(Pkt4Ptr& msg, uint8_t msg_type);
 
-    /// @brief Returns server-identifier option
+    /// @brief Adds server identifier option to the server's response.
     ///
-    /// @return server-id option
-    OptionPtr getServerID() { return serverid_; }
+    /// This method adds a server identifier to the DHCPv4 message. It epxects
+    /// that the local (source) address is set for this message. If address is
+    /// not set, it will throw an exception. This method also expects that the
+    /// server identifier option is not present in the specified message.
+    /// Otherwise, it will throw an exception on attempt to add a duplicate
+    /// server identifier option.
+    ///
+    /// @note This method doesn't throw exceptions by itself but the underlying
+    /// classes being used my throw. The reason for this method to not sanity
+    /// check the specified message is that it is meant to be called internally
+    /// by the @c Dhcpv4Srv class.
+    ///
+    /// @note This method is static because it is not dependent on the class
+    /// state.
+    ///
+    /// @param [out] response DHCPv4 message to which the server identifier
+    /// option should be added.
+    static void appendServerID(const Pkt4Ptr& response);
 
-    /// @brief Sets server-identifier.
+    /// @brief Set IP/UDP and interface parameters for the DHCPv4 response.
     ///
-    /// This method attempts to set server-identifier DUID. It tries to
-    /// load previously stored IP from configuration. If there is no previously
-    /// stored server identifier, it will pick up one address from configured
-    /// and supported network interfaces.
+    /// This method sets the following parameters for the DHCPv4 message being
+    /// sent to a client:
+    /// - client unicast or a broadcast address,
+    /// - client or relay port,
+    /// - server address,
+    /// - server port,
+    /// - name and index of the interface which is to be used to send the
+    /// message.
     ///
-    /// @throws isc::Unexpected Failed to obtain server identifier (i.e. no
-    //          previously stored configuration and no network interfaces available)
-    void generateServerID();
+    /// Internally it calls the @c Dhcpv4Srv::adjustRemoteAddr to figure
+    /// out the destination address (client unicast address or broadcast
+    /// address).
+    ///
+    /// The destination port is always DHCPv4 client (68) or relay (67) port,
+    /// depending if the response will be sent directly to a client.
+    ///
+    /// The source port is always set to DHCPv4 server port (67).
+    ///
+    /// The interface selected for the response is always the same as the
+    /// one through which the query has been received.
+    ///
+    /// The source address for the response is the IPv4 address assigned to
+    /// the interface being used to send the response. This function uses
+    /// @c IfaceMgr to get the socket bound to the IPv4 address on the
+    /// particular interface.
+    ///
+    /// @note This method is static because it is not dependent on the class
+    /// state.
+    static void adjustIfaceData(const Pkt4Ptr& query, const Pkt4Ptr& response);
 
-    /// @brief attempts to load server-id from a file
+    /// @brief Sets remote addresses for outgoing packet.
     ///
-    /// Tries to load duid from a text file. If the load is successful,
-    /// it creates server-id option and stores it in serverid_ (to be used
-    /// later by getServerID()).
+    /// This method sets the local and remote addresses on outgoing packet.
+    /// The addresses being set depend on the following conditions:
+    /// - has incoming packet been relayed,
+    /// - is direct response to a client without address supported,
+    /// - type of the outgoing packet,
+    /// - broadcast flag set in the incoming packet.
     ///
-    /// @param file_name name of the server-id file to load
-    /// @return true if load was successful, false otherwise
-    bool loadServerID(const std::string& file_name);
-
-    /// @brief attempts to write server-id to a file
-    /// Tries to write server-id content (stored in serverid_) to a text file.
+    /// @warning This method does not check whether provided packet pointers
+    /// are valid. Make sure that pointers are correct before calling this
+    /// function.
     ///
-    /// @param file_name name of the server-id file to write
-    /// @return true if write was successful, false otherwise
-    bool writeServerID(const std::string& file_name);
+    /// @note This method is static because it is not dependent on the class
+    /// state.
+    ///
+    /// @param question instance of a packet received by a server.
+    /// @param [out] response response packet which addresses are to be
+    /// adjusted.
+    static void adjustRemoteAddr(const Pkt4Ptr& question,
+                                 const Pkt4Ptr& response);
 
     /// @brief converts server-id to text
     /// Converts content of server-id option to a text representation, e.g.
@@ -259,20 +503,82 @@ protected:
     /// @return string representation
     static std::string srvidToString(const OptionPtr& opt);
 
+    /// @brief Computes DHCID from a lease.
+    ///
+    /// This method creates an object which represents DHCID. The DHCID value
+    /// is computed as described in RFC4701. The section 3.3. of RFC4701
+    /// specifies the DHCID RR Identifier Type codes:
+    /// - 0x0000 The 1 octet htype followed by glen octets of chaddr
+    /// - 0x0001 The data octets from the DHCPv4 client's Client Identifier
+    /// option.
+    /// - 0x0002 The client's DUID.
+    ///
+    /// Currently this function supports first two of these identifiers.
+    /// The 0x0001 is preferred over the 0x0000 - if the client identifier
+    /// option is present, the former is used. If the client identifier
+    /// is absent, the latter is used.
+    ///
+    /// @todo Implement support for 0x0002 DHCID identifier type.
+    ///
+    /// @param lease A pointer to the structure describing a lease.
+    /// @return An object encapsulating DHCID to be used for DNS updates.
+    /// @throw DhcidComputeError If the computation of the DHCID failed.
+    static isc::dhcp_ddns::D2Dhcid computeDhcid(const Lease4Ptr& lease);
+
     /// @brief Selects a subnet for a given client's packet.
     ///
     /// @param question client's message
     /// @return selected subnet (or NULL if no suitable subnet was found)
     isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& question);
 
-    /// server DUID (to be sent in server-identifier option)
-    OptionPtr serverid_;
-
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
     volatile bool shutdown_;
 
-    private:
+    /// @brief dummy wrapper around IfaceMgr::receive4
+    ///
+    /// This method is useful for testing purposes, where its replacement
+    /// simulates reception of a packet. For that purpose it is protected.
+    virtual Pkt4Ptr receivePacket(int timeout);
+
+    /// @brief dummy wrapper around IfaceMgr::send()
+    ///
+    /// This method is useful for testing purposes, where its replacement
+    /// simulates transmission of a packet. For that purpose it is protected.
+    virtual void sendPacket(const Pkt4Ptr& pkt);
+
+    /// @brief Implements a callback function to parse options in the message.
+    ///
+    /// @param buf a A buffer holding options in on-wire format.
+    /// @param option_space A name of the option space which holds definitions
+    /// of to be used to parse options in the packets.
+    /// @param [out] options A reference to the collection where parsed options
+    /// will be stored.
+    /// @return An offset to the first byte after last parsed option.
+    size_t unpackOptions(const OptionBuffer& buf,
+                         const std::string& option_space,
+                         isc::dhcp::OptionCollection& options);
+
+    /// @brief Assigns incoming packet to zero or more classes.
+    ///
+    /// @note For now, the client classification is very simple. It just uses
+    /// content of the vendor-class-identifier option as a class. The resulting
+    /// class will be stored in packet (see @ref isc::dhcp::Pkt4::classes_ and
+    /// @ref isc::dhcp::Pkt4::inClass).
+    ///
+    /// @param pkt packet to be classified
+    void classifyPacket(const Pkt4Ptr& pkt);
+
+    /// @brief Performs packet processing specific to a class
+    ///
+    /// This processing is a likely candidate to be pushed into hooks.
+    ///
+    /// @param query incoming client's packet
+    /// @param rsp server's response
+    /// @return true if successful, false otherwise (will prevent sending response)
+    bool classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp);
+
+private:
 
     /// @brief Constructs netmask option based on subnet4
     /// @param subnet subnet for which the netmask will be calculated
@@ -280,12 +586,34 @@ protected:
     /// @return Option that contains netmask information
     static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
 
+    /// @brief Implements the error handler for socket open failure.
+    ///
+    /// This callback function is installed on the @c isc::dhcp::IfaceMgr
+    /// when IPv4 sockets are being open. When socket fails to open for
+    /// any reason, this function is called. It simply logs the error message.
+    ///
+    /// @param errmsg An error message containing a cause of the failure.
+    static void ifaceMgrSocket4ErrorHandler(const std::string& errmsg);
+
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
     /// It must be a pointer, because we will support changing engines
     /// during normal operation (e.g. to use different allocators)
     boost::shared_ptr<AllocEngine> alloc_engine_;
 
+    uint16_t port_;  ///< UDP port number on which server listens.
+    bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
+
+    /// Indexes for registered hook points
+    int hook_index_pkt4_receive_;
+    int hook_index_subnet4_select_;
+    int hook_index_pkt4_send_;
+
+protected:
+
+    /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects which
+    /// are waiting for sending  to b10-dhcp-ddns module.
+    std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
 };
 
 }; // namespace isc::dhcp

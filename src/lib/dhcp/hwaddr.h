@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,10 @@ namespace dhcp {
 /// @brief Hardware type that represents information from DHCPv4 packet
 struct HWAddr {
 public:
+
+    /// @brief Size of an ethernet hardware address.
+    static const size_t ETHERNET_HWADDR_LEN = 6;
+
     /// @brief Maximum size of a hardware address.
     static const size_t MAX_HWADDR_LEN = 20;
 

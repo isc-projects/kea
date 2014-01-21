@@ -177,7 +177,7 @@ CacheConfig::getLoadAction(const dns::RRClass& rrclass,
     assert(datasrc_client_);
 
     // If the specified zone name does not exist in our client of the source,
-    // DataSourceError is thrown, which is exactly the result what we
+    // NoSuchZone is thrown, which is exactly the result what we
     // want, so no need to handle it.
     ZoneIteratorPtr iterator(datasrc_client_->getIterator(zone_name));
     if (!iterator) {

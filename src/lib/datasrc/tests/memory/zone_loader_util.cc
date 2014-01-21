@@ -24,9 +24,6 @@
 
 #include <cc/data.h>
 
-#include <boost/bind.hpp>
-#include <boost/scoped_ptr.hpp>
-
 #include <string>
 
 namespace isc {
@@ -36,19 +33,19 @@ namespace test {
 
 void
 loadZoneIntoTable(ZoneTableSegment& zt_sgmt, const dns::Name& zname,
-                  const dns::RRClass& zclass, const std::string& zone_file)
+                  const dns::RRClass& zclass, const std::string& zone_file,
+                  bool load_error_ok)
 {
     const isc::datasrc::internal::CacheConfig cache_conf(
         "MasterFiles", NULL, *data::Element::fromJSON(
             "{\"cache-enable\": true,"
             " \"params\": {\"" + zname.toText() + "\": \"" + zone_file +
             "\"}}"), true);
-    boost::scoped_ptr<memory::ZoneWriter> writer(
-        zt_sgmt.getZoneWriter(cache_conf.getLoadAction(zclass, zname),
-                              zname, zclass));
-    writer->load();
-    writer->install();
-    writer->cleanup();
+    memory::ZoneWriter writer(zt_sgmt, cache_conf.getLoadAction(zclass, zname),
+                              zname, zclass, load_error_ok);
+    writer.load();
+    writer.install();
+    writer.cleanup();
 }
 
 namespace {
@@ -75,12 +72,11 @@ void
 loadZoneIntoTable(ZoneTableSegment& zt_sgmt, const dns::Name& zname,
                   const dns::RRClass& zclass, ZoneIterator& iterator)
 {
-    boost::scoped_ptr<memory::ZoneWriter> writer(
-        zt_sgmt.getZoneWriter(IteratorLoader(zclass, zname, iterator),
-                              zname, zclass));
-    writer->load();
-    writer->install();
-    writer->cleanup();
+    memory::ZoneWriter writer(zt_sgmt, IteratorLoader(zclass, zname, iterator),
+                              zname, zclass, false);
+    writer.load();
+    writer.install();
+    writer.cleanup();
 }
 
 } // namespace test

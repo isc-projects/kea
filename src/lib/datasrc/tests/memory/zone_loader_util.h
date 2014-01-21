@@ -33,9 +33,14 @@ namespace test {
 /// This function does nothing special, simply provides a shortcut for commonly
 /// used pattern that would be used in tests with a ZoneTableSegment loading
 /// a zone from file into it.
+///
+/// If the optional load_error_ok parameter is set to true, it will create
+/// an internal empty zone in the table when it encounters a loading error.
+/// Otherwise ZoneLoaderException will be thrown in such cases.
 void
 loadZoneIntoTable(ZoneTableSegment& zt_sgmt, const dns::Name& zname,
-                  const dns::RRClass& zclass, const std::string& zone_file);
+                  const dns::RRClass& zclass, const std::string& zone_file,
+                  bool load_error_ok = false);
 
 /// \brief A shortcut utility to load a specified zone into ZoneTableSegment
 /// from a zone iterator.

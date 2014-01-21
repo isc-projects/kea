@@ -20,7 +20,7 @@
 <refentry>
 
   <refentryinfo>
-    <date>February 5, 2013</date>
+    <date>July 16, 2013</date>
   </refentryinfo>
 
   <refmeta>
@@ -81,8 +81,8 @@
       <varlistentry>
         <term><option>-v</option></term>
         <listitem><para>
-	  Enable verbose logging mode. This enables logging of
-	  diagnostic messages at the maximum debug level.
+          Enable verbose logging mode. This enables logging of
+          diagnostic messages at the maximum debug level.
         </para></listitem>
       </varlistentry>
 
@@ -247,6 +247,27 @@
         We always count opcode mainly for compatibility with BIND 9,
         but remember that if there's any error related to TSIG, some
         of the counted opcode may not be trustworthy.
+      </para>
+
+      <para>
+        The <quote>qryrecursion</quote> counter is limited to queries
+        (requests of opcode 0) even though the RD bit is not specific
+        to queries.  In practice, this bit is generally just ignored for
+        other types of requests, while DNS servers behave differently
+        for queries depending on this bit.  It is also known that
+        some authoritative-only servers receive a non negligible
+        number of queries with the RD bit being set, so it would be
+        of particular interest to have a specific counters for such
+        requests.
+      </para>
+
+      <para>
+        There are two request counters related to EDNS:
+        <quote>request.edns0</quote> and <quote>request.badednsver</quote>.
+        The latter is a counter of requests with unsupported EDNS version:
+        other than version 0 in the current implementation. Therefore, total
+        number of requests with EDNS is a sum of <quote>request.edns0</quote>
+        and <quote>request.badednsver</quote>.
       </para>
     </note>
 
