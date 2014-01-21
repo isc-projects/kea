@@ -780,8 +780,7 @@ TestControl::openSocket() const {
     } else if (options.getIpVersion() == 6) {
         // If remote address is multicast we need to enable it on
         // the socket that has been created.
-        asio::ip::address_v6 remote_v6 = remoteaddr.getAddress().to_v6();
-        if (remote_v6.is_multicast()) {
+        if (remoteaddr.isV6Multicast()) {
             int hops = 1;
             int ret = setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
                                  &hops, sizeof(hops));
@@ -1643,7 +1642,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
 
     /// Set client address.
     asiolink::IOAddress yiaddr = offer_pkt4->getYiaddr();
-    if (!yiaddr.getAddress().is_v4()) {
+    if (yiaddr.isV6()) {
         isc_throw(BadValue, "the YIADDR returned in OFFER packet is not "
                   " IPv4 address");
     }
@@ -1751,7 +1750,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
 
     /// Set client address.
     asiolink::IOAddress yiaddr = offer_pkt4->getYiaddr();
-    if (!yiaddr.getAddress().is_v4()) {
+    if (!yiaddr.isV4()) {
         isc_throw(BadValue, "the YIADDR returned in OFFER packet is not "
                   " IPv4 address");
     }
