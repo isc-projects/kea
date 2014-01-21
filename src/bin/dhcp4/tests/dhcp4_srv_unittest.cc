@@ -3173,8 +3173,32 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsDocsisDefinitions) {
     ASSERT_EQ(0, rcode_);
 }
 
+// Checks if client packets are classified properly
+TEST_F(Dhcpv4SrvTest, clientClassification) {
+
+    NakedDhcpv4Srv srv(0);
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // vendor-class set to docsis3.0
+    Pkt4Ptr dis1;
+    ASSERT_NO_THROW(dis1 = captureRelayedDiscover());
+    ASSERT_NO_THROW(dis1->unpack());
+
+    srv.classifyPacket(dis1);
+
+    EXPECT_TRUE(dis1->inClass("docsis3.0"));
+    EXPECT_FALSE(dis1->inClass("eRouter1.0"));
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // vendor-class set to eRouter1.0
+    Pkt4Ptr dis2;
+    ASSERT_NO_THROW(dis2 = captureRelayedDiscover2());
+    ASSERT_NO_THROW(dis2->unpack());
+
+    srv.classifyPacket(dis2);
+
+    EXPECT_TRUE(dis2->inClass("eRouter1.0"));
+    EXPECT_FALSE(dis2->inClass("docsis3.0"));
 }
 
-    /*I}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace */
+}; // end of anonymous namespace

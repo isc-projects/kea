@@ -190,6 +190,33 @@ implemented within the context of the server and it has access to all objects
 which define its configuration (including dynamically created option
 definitions).
 
+@section dhcpv6Classifier DHCPv6 Client Classification
+
+Kea DHCPv6 server currently supports simplified client classification. It is called
+"simplified", because the incoming packets are classified based on the content
+of the vendor class (16) option. More flexible classification is planned, but there
+are no specific development dates agreed.
+
+For each incoming packet, @ref isc::dhcp::Dhcpv6Srv::classifyPacket() method is
+called.  It attempts to extract content of the vendor class option and interprets
+as a name of the class. Although the RFC3315 says that the vendor class may
+contain more than one chunk of data, the existing code handles only one data
+block, because that is what actual devices use. For now, the code has been
+tested with two classes used in cable modem networks: eRouter1.0 and docsis3.0,
+but any other content of the vendor class option will be interpreted as a class
+name.
+
+In principle any given packet can belong to zero or more classes. As the current
+classifier is very modest, there's only one way to assign a class (based on vendor class
+option), the ability to assign more than one class to a packet is not yet exercised.
+Neverthless, there is such a possibility and it will be used in a near future. To
+check whether a packet belongs to given class, isc::dhcp::Pkt6::inClass method should
+be used.
+
+Currently there is no class behaviour coded in DHCPv6, hence no v6 equivalent of
+@ref isc::dhcp::Dhcpv4Srv::classSpecificProcessing. Should any need for such a code arise,
+it will be conducted in an external hooks library.
+
  @section dhcpv6Other Other DHCPv6 topics
 
  For hooks API support in DHCPv6, see @ref dhcpv6Hooks.
