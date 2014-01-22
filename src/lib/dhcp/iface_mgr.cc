@@ -22,6 +22,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/iface_mgr_error_handler.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/pkt_filter_inet6.h>
 #include <exceptions/exceptions.h>
@@ -36,40 +37,6 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <sys/select.h>
-
-/// @brief A macro which handles an error in IfaceMgr.
-///
-/// There are certain cases when IfaceMgr may hit an error which shouldn't
-/// result in interruption of the function processing. A typical case is
-/// the function which opens sockets on available interfaces for a DHCP
-/// server. If this function fails to open a socket on a specific interface
-/// (for example, there is another socket already open on this interface
-/// and bound to the same address and port), it is desired that the server
-/// logs a warning but will try to open sockets on other interfaces. In order
-/// to log an error, the IfaceMgr will use the error handler function provided
-/// by the server and pass an error string to it. When the handler function
-/// returns, the IfaceMgr will proceed to open other sockets. It is allowed
-/// that the error handler function is not installed (is NULL). In these
-/// cases it is expected that the exception is thrown instead. A possible
-/// solution would be to enclose this conditional behavior in a function.
-/// However, despite the hate for macros, the macro seems to be a bit
-/// better solution in this case as it allows to convenietly pass an
-/// error string in a stream (not as a string).
-///
-/// @param ex_type Exception to be thrown if error_handler is NULL.
-/// @param handler Error handler function to be called or NULL to indicate
-/// that exception should be thrown instead.
-/// @param stream stream object holding an error string.
-#define IFACEMGR_ERROR(ex_type, handler, stream) \
-{ \
-    std::ostringstream oss__; \
-    oss__ << stream; \
-    if (handler) { \
-        handler(oss__.str()); \
-    } else { \
-        isc_throw(ex_type, oss__); \
-    } \
-} \
 
 using namespace std;
 using namespace isc::asiolink;
@@ -183,7 +150,7 @@ bool Iface::delAddress(const isc::asiolink::IOAddress& addr) {
     return (false);
 }
 
-bool Iface::delSocket(uint16_t sockfd) {
+bool Iface::delSocket(const uint16_t sockfd) {
     list<SocketInfo>::iterator sock = sockets_.begin();
     while (sock!=sockets_.end()) {
         if (sock->sockfd_ == sockfd) {
@@ -530,59 +497,13 @@ IfaceMgr::openSockets6(const uint16_t port,
                 continue;
             }
 
-            // Open socket and join multicast group only if the interface
-            // is multicast-capable.
-            // @todo The DHCPv6 requires multicast so we may want to think
-            // whether we want to open the socket on a multicast-incapable
-            // interface or not. For now, we prefer to be liberal and allow
-            // it for some odd use cases which may utilize non-multicast
-            // interfaces. Perhaps a warning should be emitted if the
-            // interface is not a multicast one.
-
-            // The sock variable will hold a socket descriptor. It may be
-            // used to close a socket if the function fails to bind to
-            // multicast address on Linux systems. Because we only bind
-            // a socket to multicast address on Linux, on other systems
-            // the sock variable will be initialized but unused. We have
-            // to suppress the cppcheck warning which shows up on non-Linux
-            // systems.
-            // cppcheck-suppress variableScope
-            int sock;
-            try {
-                // cppcheck-suppress unreadVariable
-                sock = openSocket(iface->getName(), *addr, port,
-                                  iface->flag_multicast_);
-
-            } catch (const Exception& ex) {
-                IFACEMGR_ERROR(SocketConfigError, error_handler,
-                               "Failed to open link-local socket on "
-                               " interface " << iface->getName() << ": "
-                               << ex.what());
-                continue;
+            // Run OS-specific function to open a socket on link-local address
+            // and join multicast group (non-Linux OSes), or open two sockets and
+            // bind one to link-local, another one to multicast address.
+            if (openMulticastSocket(*iface, *addr, port, error_handler)) {
+                ++count;
             }
 
-            count++;
-
-            /// @todo: Remove this ifdef once we start supporting BSD systems.
-#if defined(OS_LINUX)
-            // To receive multicast traffic, Linux requires binding socket to
-            // a multicast group. That in turn doesn't work on NetBSD.
-            if (iface->flag_multicast_) {
-                try {
-                    openSocket(iface->getName(),
-                               IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
-                               port);
-                } catch (const Exception& ex) {
-                    // Delete previously opened socket.
-                    iface->delSocket(sock);
-                    IFACEMGR_ERROR(SocketConfigError, error_handler,
-                                   "Failed to open multicast socket on"
-                                   " interface " << iface->getName()
-                                   << ", reason: " << ex.what());
-                    continue;
-                }
-            }
-#endif
         }
     }
     return (count > 0);
@@ -806,7 +727,6 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     // Return address of local endpoint.
     return IOAddress(local_address);
 }
-
 
 int
 IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
@@ -1128,7 +1048,6 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     isc_throw(Unexpected, "Interface " << iface->getFullName()
               << " does not have any suitable IPv4 sockets open.");
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
