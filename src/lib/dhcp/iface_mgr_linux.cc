@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +33,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/iface_mgr_error_handler.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/pkt_filter_lpf.h>
 #include <exceptions/exceptions.h>
@@ -530,6 +531,60 @@ void IfaceMgr::os_send4(struct msghdr&, boost::scoped_array<char>&,
 }
 
 bool IfaceMgr::os_receive4(struct msghdr&, Pkt4Ptr&) {
+    return (true);
+}
+
+bool
+IfaceMgr::openMulticastSocket(Iface& iface,
+                              const isc::asiolink::IOAddress addr,
+                              const uint16_t port,
+                              IfaceMgrErrorMsgCallback error_handler) {
+    // This variable will hold a descriptor of the socket bound to
+    // link-local address. It may be required for us to close this
+    // socket if an attempt to open and bind a socket to multicast
+    // address fails.
+    int sock;
+    try {
+        sock = openSocket(iface.getName(), addr, port,
+                          iface.flag_multicast_);
+
+    } catch (const Exception& ex) {
+        IFACEMGR_ERROR(SocketConfigError, error_handler,
+                       "Failed to open link-local socket on "
+                       " interface " << iface.getName() << ": "
+                       << ex.what());
+        return (false);
+
+    }
+
+    // To receive multicast traffic, Linux requires binding socket to
+    // the multicast address.
+
+    /// @todo The DHCPv6 requires multicast so we may want to think
+    /// whether we want to open the socket on a multicast-incapable
+    /// interface or not. For now, we prefer to be liberal and allow
+    /// it for some odd use cases which may utilize non-multicast
+    /// interfaces. Perhaps a warning should be emitted if the
+    /// interface is not a multicast one.
+    if (iface.flag_multicast_) {
+        try {
+            openSocket(iface.getName(),
+                       IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
+                       port);
+        } catch (const Exception& ex) {
+            // An attempt to open and bind a socket to multicast addres
+            // has failed. We have to close the socket we previously
+            // bound to link-local address - this is everything or
+            // nothing strategy.
+            iface.delSocket(sock);
+            IFACEMGR_ERROR(SocketConfigError, error_handler,
+                           "Failed to open multicast socket on"
+                           " interface " << iface.getName()
+                           << ", reason: " << ex.what());
+            return (false);
+        }
+    }
+    // Both sockets have opened successfully.
     return (true);
 }
 

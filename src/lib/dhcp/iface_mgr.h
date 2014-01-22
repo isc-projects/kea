@@ -34,6 +34,7 @@ namespace isc {
 
 namespace dhcp {
 
+
 /// @brief IfaceMgr exception thrown thrown when interface detection fails.
 class IfaceDetectError : public Exception {
 public:
@@ -1001,6 +1002,29 @@ private:
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
 
+
+    /// @brief Open an IPv6 socket with multicast support.
+    ///
+    /// This function opens socket(s) to allow reception of the DHCPv6 sent
+    /// to multicast address. It opens an IPv6 socket, binds it to link-local
+    /// address and joins multicast group (on non-Linux systems) or opens two
+    /// IPv6 sockets and binds one of them to link-local address and another
+    /// one to multicast address (on Linux systems).
+    ///
+    /// @note This function is intended to be called internally by the
+    /// @c IfaceMgr::openSockets6. It is not intended to be called from any
+    /// other function.
+    ///
+    /// @param iface Interface on which socket should be open.
+    /// @param addr Link-local address to bind the socket to.
+    /// @param port Port number to bind socket to.
+    /// @param error_handler Error handler function to be called when an
+    /// error occurs during opening a socket, or NULL if exception should
+    /// be thrown upon error.
+    bool openMulticastSocket(Iface& iface,
+                             const isc::asiolink::IOAddress addr,
+                             const uint16_t port,
+                             IfaceMgrErrorMsgCallback error_handler = NULL);
 
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
