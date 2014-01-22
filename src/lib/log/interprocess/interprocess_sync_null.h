@@ -32,7 +32,7 @@ public:
     ///
     /// Creates a null interprocess synchronization object
     ///
-    /// \param name Name of the synchronization task. This has to be
+    /// \param task_name Name of the synchronization task. This has to be
     /// identical among the various processes that need to be
     /// synchronized for the same task.
     InterprocessSyncNull(const std::string& task_name) :
