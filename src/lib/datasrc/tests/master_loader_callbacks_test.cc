@@ -52,7 +52,7 @@ public:
                                                          rrset.getTTL()));
         EXPECT_FALSE(rrset.getRRsig()) << "Unexpected RRSIG on rrset, not "
             "copying. Following check will likely fail as a result.";
-        for (isc::dns::RdataIteratorPtr it(rrset.getRdataIterator());
+        for (isc::dns::RdataIteratorPtr it = rrset.getRdataIterator();
              !it->isLast(); it->next()) {
             copy->addRdata(it->getCurrent());
         }

@@ -1253,7 +1253,7 @@ previousWalk(TestDomainTree& dtree, const TestDomainTreeNode* node,
         EXPECT_EQ(static_cast<void*>(NULL), node);
         node = dtree.previousNode(node_path);
     }
-    for (size_t i(chain_length); i > 0; --i) {
+    for (size_t i = chain_length; i > 0; --i) {
         EXPECT_NE(static_cast<void*>(NULL), node);
         EXPECT_EQ(Name(ordered_names[i - 1]), node_path.getAbsoluteName());
         // Find the node at the path and check the value is the same

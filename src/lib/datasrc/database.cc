@@ -103,7 +103,7 @@ DatabaseClient::findZone(const Name& name) const {
     }
     // Then super domains
     // Start from 1, as 0 is covered above
-    for (size_t i(1); i < name.getLabelCount(); ++i) {
+    for (size_t i = 1; i < name.getLabelCount(); ++i) {
         isc::dns::Name superdomain(name.split(i));
         zone = accessor_->getZone(superdomain.toText());
         if (zone.first) {
@@ -344,7 +344,7 @@ DatabaseClient::Finder::getRRsets(const string& name, const WantedTypes& types,
     }
     if (!sig_store.empty()) {
         // Add signatures to all found RRsets
-        for (std::map<RRType, RRsetPtr>::iterator i(result.begin());
+        for (std::map<RRType, RRsetPtr>::iterator i = result.begin();
              i != result.end(); ++ i) {
             sig_store.appendSignatures(i->second);
         }
@@ -760,7 +760,7 @@ DatabaseClient::Finder::FindDNSSECContext::probe() {
             const string origin = finder_.getOrigin().toText();
             const FoundRRsets nsec3_found =
                 finder_.getRRsets(origin, NSEC3PARAM_TYPES(), true);
-            const FoundIterator nfi=
+            const FoundIterator nfi =
                 nsec3_found.second.find(RRType::NSEC3PARAM());
             is_nsec3_ = (nfi != nsec3_found.second.end());
 
@@ -908,7 +908,7 @@ DatabaseClient::Finder::findOnNameResult(const Name& name,
         if (any) {
             // An ANY query, copy everything to the target instead of returning
             // directly.
-            for (FoundIterator it(found.second.begin());
+            for (FoundIterator it = found.second.begin();
                  it != found.second.end(); ++it) {
                 if (it->second) {
                     // Skip over the empty ANY
@@ -1110,7 +1110,7 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
 
     // We keep stripping the leftmost label until we find something.
     // In case it is recursive, we'll exit the loop at the first iteration.
-    for (unsigned labels(qlabels); labels >= olabels; -- labels) {
+    for (unsigned labels = qlabels; labels >= olabels; --labels) {
         const string hash(calculator->calculate(labels == qlabels ? name :
                                                 name.split(qlabels - labels,
                                                            labels)));
