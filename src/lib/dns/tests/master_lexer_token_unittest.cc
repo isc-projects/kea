@@ -143,15 +143,20 @@ TEST_F(MasterLexerTokenTest, errors) {
               getErrorText());
     EXPECT_EQ("not a valid number",
               MasterToken(MasterToken::BAD_NUMBER).getErrorText());
+    EXPECT_EQ("unexpected quotes",
+              MasterToken(MasterToken::UNEXPECTED_QUOTES).getErrorText());
 
     // getErrorCode/Text() isn't allowed for non number types
     EXPECT_THROW(token_num.getErrorCode(), isc::InvalidOperation);
     EXPECT_THROW(token_num.getErrorText(), isc::InvalidOperation);
 
-    // Only the pre-defined error code is accepted.  Hardcoding '7' (max code
+    // Only the pre-defined error code is accepted.  Hardcoding '8' (max code
     // + 1) is intentional; it'd be actually better if we notice it when we
     // update the enum list (which shouldn't happen too often).
-    EXPECT_THROW(MasterToken(MasterToken::ErrorCode(7)),
+    //
+    // Note: if you fix this testcase, you probably want to update the
+    // getErrorText() tests above too.
+    EXPECT_THROW(MasterToken(MasterToken::ErrorCode(8)),
                  isc::InvalidParameter);
 
     // Check the coexistence of "from number" and "from error-code"
