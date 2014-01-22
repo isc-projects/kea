@@ -853,6 +853,10 @@ TEST_F(LabelSequenceTest, serialize) {
                  isc::BadValue);
 }
 
+#ifdef ENABLE_DEBUG
+
+// These checks are enabled only in debug mode in the LabelSequence
+// class.
 TEST_F(LabelSequenceTest, badDeserialize) {
     EXPECT_THROW(LabelSequence(NULL), isc::BadValue);
     const uint8_t zero_offsets[] = { 0 };
@@ -878,6 +882,8 @@ TEST_F(LabelSequenceTest, badDeserialize) {
     const uint8_t offsets_noincrease[] = { 2, 0, 0, 0, 0 };
     EXPECT_THROW(LabelSequence ls(offsets_noincrease), isc::BadValue);
 }
+
+#endif
 
 namespace {
 

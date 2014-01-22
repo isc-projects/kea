@@ -12,6 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include "config.h"
+
 #include <dns/labelsequence.h>
 #include <dns/name_internal.h>
 #include <exceptions/exceptions.h>
@@ -24,24 +26,34 @@ namespace isc {
 namespace dns {
 
 LabelSequence::LabelSequence(const void* buf) {
+#ifdef ENABLE_DEBUG
+    // In non-debug mode, derefencing the NULL pointer further below
+    // will lead to a crash, so disabling this check is not
+    // unsafe. Except for a programming mistake, this case should not
+    // happen.
     if (buf == NULL) {
         isc_throw(BadValue,
                   "Null pointer passed to LabelSequence constructor");
     }
+#endif
 
     const uint8_t* bp = reinterpret_cast<const uint8_t*>(buf);
-
     first_label_ = 0;
     const uint8_t offsets_len = *bp++;
+
+#ifdef ENABLE_DEBUG
     if (offsets_len == 0 || offsets_len > Name::MAX_LABELS) {
         isc_throw(BadValue,
                   "Bad offsets len in serialized LabelSequence data: "
                   << static_cast<unsigned int>(offsets_len));
     }
+#endif
+
     last_label_ = offsets_len - 1;
     offsets_ = bp;
     data_ = bp + offsets_len;
 
+#ifdef ENABLE_DEBUG
     // Check the integrity on the offsets and the name data
     const uint8_t* dp = data_;
     for (size_t cur_offset = 0; cur_offset < offsets_len; ++cur_offset) {
@@ -52,6 +64,7 @@ LabelSequence::LabelSequence(const void* buf) {
         }
         dp += (1 + *dp);
     }
+#endif
 }
 
 LabelSequence::LabelSequence(const LabelSequence& src,
