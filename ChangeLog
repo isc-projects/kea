@@ -1,3 +1,9 @@
+734.	[bug]		marcin
+	libdhcp++: fixed a bug which caused an error when setting boolean
+	values for an option. Also, bind10-guide has been updated with the
+	examples how to set the boolean values for an option.
+	(Trac# 3292, git 7c4c0514ede3cffc52d8c2874cdbdb74ced5f4ac)
+
 733.	[bug]		marcin
 	libdhcp++: a function which opens IPv6/UDPv6 sockets for the
 	DHCPv6 server, gracefully handles errors to bind socket to
