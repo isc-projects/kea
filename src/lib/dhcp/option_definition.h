@@ -573,19 +573,38 @@ private:
         return (type == type_);
     }
 
+    /// @brief Converts a string value to a boolean value.
+    ///
+    /// This function converts the value represented as string to a boolean
+    /// value. The following conversions are acceptable:
+    /// - "true" => true
+    /// - "false" => false
+    /// - "1" => true
+    /// - "0" => false
+    /// The first two conversions are case insensitive, so as conversions from
+    /// strings such as "TRUE", "trUE" etc. will be accepted. Note that the
+    /// only acceptable integer values, carried as strings are: "0" and "1".
+    /// For other values, e.g. "2", "3" etc. an exception will be thrown
+    /// during conversion.
+    ///
+    /// @param value_str Input value.
+    ///
+    /// @return boolean representation of the string specified as the parameter.
+    /// @throw isc::dhcp::BadDataTypeCast if failed to perform the conversion.
+    bool convertToBool(const std::string& value_str) const;
+
     /// @brief Perform lexical cast of the value and validate its range.
     ///
     /// This function performs lexical cast of a string value to integer
-    /// or boolean value and checks if the resulting value is within a
-    /// range of a target type. Note that range checks are not performed
-    /// on boolean values. The target type should be one of the supported
-    /// integer types or bool.
+    /// value and checks if the resulting value is within a range of a
+    /// target type. The target type should be one of the supported
+    /// integer types.
     ///
     /// @param value_str input value given as string.
-    /// @tparam T target type for lexical cast.
+    /// @tparam T target integer type for lexical cast.
     ///
-    /// @return cast value.
-    /// @throw BadDataTypeCast if cast was not successful.
+    /// @return Integer value after conversion from the string.
+    /// @throw isc::dhcp::BadDataTypeCast if conversion was not successful.
     template<typename T>
     T lexicalCastWithRangeCheck(const std::string& value_str) const;
 

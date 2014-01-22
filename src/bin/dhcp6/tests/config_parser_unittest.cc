@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -138,19 +138,19 @@ public:
             params["name"] = param_value;
             params["space"] = "dhcp6";
             params["code"] = "38";
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "space") {
             params["name"] = "subscriber-id";
             params["space"] = param_value;
             params["code"] = "38";
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "code") {
             params["name"] = "subscriber-id";
             params["space"] = "dhcp6";
             params["code"] = param_value;
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "data") {
             params["name"] = "subscriber-id";
@@ -162,12 +162,20 @@ public:
             params["name"] = "subscriber-id";
             params["space"] = "dhcp6";
             params["code"] = "38";
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = param_value;
         }
         return (createConfigWithOption(params));
     }
 
+    /// @brief Create simple configuration with single option.
+    ///
+    /// This function creates a configuration for a single option with
+    /// custom values for all parameters that describe the option.
+    ///
+    /// @params params map holding parameters and their values.
+    /// @return configuration string containing custom values of parameters
+    /// describing an option.
     std::string createConfigWithOption(const std::map<std::string,
                                        std::string>& params)
     {
@@ -176,6 +184,15 @@ public:
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
+            "\"option-def\": [ {"
+            "  \"name\": \"bool-option\","
+            "  \"code\": 1000,"
+            "  \"type\": \"boolean\","
+            "  \"array\": False,"
+            "  \"record-types\": \"\","
+            "  \"space\": \"dhcp6\","
+            "  \"encapsulate\": \"\""
+            "} ],"
             "\"subnet6\": [ { "
             "    \"pool\": [ \"2001:db8:1::/80\" ],"
             "    \"subnet\": \"2001:db8:1::/64\", "
@@ -206,6 +223,62 @@ public:
             " } ],"
             "\"valid-lifetime\": 4000 }";
         return (stream.str());
+    }
+
+    /// @brief Returns an option from the subnet.
+    ///
+    /// This function returns an option from a subnet to which the
+    /// specified subnet address belongs. The option is identified
+    /// by its code.
+    ///
+    /// @param subnet_address Address which belongs to the subnet from
+    /// which the option is to be returned.
+    /// @param option_code Code of the option to be returned.
+    /// @param expected_options_count Expected number of options in
+    /// the particular subnet.
+    ///
+    /// @return Descriptor of the option. If the descriptor holds a
+    /// NULL option pointer, it means that there was no such option
+    /// in the subnet.
+    Subnet::OptionDescriptor
+    getOptionFromSubnet(const IOAddress& subnet_address,
+                        const uint16_t option_code,
+                        const uint16_t expected_options_count = 1) {
+        Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(subnet_address);
+        if (!subnet) {
+            /// @todo replace toText() with the use of operator <<.
+            ADD_FAILURE() << "A subnet for the specified address "
+                          << subnet_address.toText()
+                          << "does not exist in Config Manager";
+        }
+        Subnet::OptionContainerPtr options =
+            subnet->getOptionDescriptors("dhcp6");
+        if (expected_options_count != options->size()) {
+            ADD_FAILURE() << "The number of options in the subnet '"
+                          << subnet_address.toText() << "' is different "
+                " than expected number of options '"
+                          << expected_options_count << "'";
+        }
+
+        // Get the search index. Index #1 is to search using option code.
+        const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
+
+        // Get the options for specified index. Expecting one option to be
+        // returned but in theory we may have multiple options with the same
+        // code so we get the range.
+        std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+                  Subnet::OptionContainerTypeIndex::const_iterator> range =
+            idx.equal_range(option_code);
+        if (std::distance(range.first, range.second) > 1) {
+            ADD_FAILURE() << "There is more than one option having the"
+                " option code '" << option_code << "' in a subnet '"
+                          << subnet_address.toText() << "'. Expected "
+                " at most one option";
+        } else if (std::distance(range.first, range.second) == 0) {
+            return (Subnet::OptionDescriptor(OptionPtr(), false));
+        }
+
+        return (*range.first);
     }
 
     /// @brief Parse and Execute configuration
@@ -305,6 +378,24 @@ public:
         ASSERT_EQ(1, rcode_);
     }
 
+    /// @brief Test invalid option paramater value.
+    ///
+    /// This test function constructs the simple configuration
+    /// string and injects invalid option configuration into it.
+    /// It expects that parser will fail with provided option code.
+    ///
+    /// @param params Map of parameters defining an option.
+    void
+    testInvalidOptionParam(const std::map<std::string, std::string>& params) {
+        ConstElementPtr x;
+        std::string config = createConfigWithOption(params);
+        ElementPtr json = Element::fromJSON(config);
+        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(1, rcode_);
+    }
+
     /// @brief Test option against given code and data.
     ///
     /// @param option_desc option descriptor that carries the option to
@@ -344,6 +435,39 @@ public:
         const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
         EXPECT_EQ(0, memcmp(expected_data, data + option_desc.option->getHeaderLen(),
                             expected_data_len));
+    }
+
+    /// @brief Test option configuration.
+    ///
+    /// This function creates a configuration for a specified option using
+    /// a map of parameters specified as the argument. The map holds
+    /// name/value pairs which identifies option's configuration parameters:
+    /// - name
+    /// - space
+    /// - code
+    /// - data
+    /// - csv-format.
+    /// This function applies a new server configuration and checks that the
+    /// option being configured is inserted into CfgMgr. The raw contents of
+    /// this option are compared with the binary data specified as expected
+    /// data passed to this function.
+    ///
+    /// @param params Map of parameters defining an option.
+    /// @param option_code Option code.
+    /// @param expected_data Array containing binary data expected to be stored
+    /// in the configured option.
+    /// @param expected_data_len Length of the array holding reference data.
+    void testConfiguration(const std::map<std::string, std::string>& params,
+                           const uint16_t option_code,
+                           const uint8_t* expected_data,
+                           const size_t expected_data_len) {
+        std::string config = createConfigWithOption(params);
+        ASSERT_TRUE(executeConfiguration(config, "parse option configuration"));
+        // The subnet should now hold one option with the specified code.
+        Subnet::OptionDescriptor desc =
+            getOptionFromSubnet(IOAddress("2001:db8:1::5"), option_code);
+        ASSERT_TRUE(desc.option);
+        testOption(desc, option_code, expected_data, expected_data_len);
     }
 
     int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
@@ -1699,7 +1823,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
         "    \"name\": \"subscriber-id\","
         "    \"space\": \"dhcp6\","
         "    \"code\": 38,"
-        "    \"data\": \"AB CDEF0105\","
+        "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
@@ -1780,7 +1904,7 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
         "    \"name\": \"subscriber-id\","
         "    \"space\": \"dhcp6\","
         "    \"code\": 38,"
-        "    \"data\": \"AB CDEF0105\","
+        "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
@@ -2072,6 +2196,89 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
                sizeof(user_class_expected));
 }
 
+// The goal of this test is to check that the option carrying a boolean
+// value can be configured using one of the values: "true", "false", "0"
+// or "1".
+TEST_F(Dhcp6ParserTest, optionDataBoolean) {
+    // Create configuration. Use standard option 1000.
+    std::map<std::string, std::string> params;
+    params["name"] = "bool-option";
+    params["space"] = "dhcp6";
+    params["code"] = "1000";
+    params["data"] = "true";
+    params["csv-format"] = "true";
+
+    std::string config = createConfigWithOption(params);
+    ASSERT_TRUE(executeConfiguration(config, "parse configuration with a"
+                                     " boolean value"));
+
+    // The subnet should now hold one option with the code 1000.
+    Subnet::OptionDescriptor desc =
+        getOptionFromSubnet(IOAddress("2001:db8:1::5"), 1000);
+    ASSERT_TRUE(desc.option);
+
+    // This option should be set to "true", represented as 0x1 in the option
+    // buffer.
+    uint8_t expected_option_data[] = {
+        0x1
+    };
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Configure the option with the "1" value. This should have the same
+    // effect as if "true" was specified.
+    params["data"] = "1";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // The value of "1" with a few leading zeros should work too.
+    params["data"] = "00001";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Configure the option with the "false" value.
+    params["data"] = "false";
+    // The option buffer should now hold the value of 0.
+    expected_option_data[0] = 0;
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Specifying "0" should have the same effect as "false".
+    params["data"] = "0";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // The same effect should be for multiple 0 chars.
+    params["data"] = "00000";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Bogus values should not be accepted.
+    params["data"] = "bugus";
+    testInvalidOptionParam(params);
+
+    params["data"] = "2";
+    testInvalidOptionParam(params);
+
+    // Now let's test that it is possible to use binary format.
+    params["data"] = "0";
+    params["csv-format"] = "false";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // The binary 1 should work as well.
+    params["data"] = "1";
+    expected_option_data[0] = 1;
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // As well as an even number of digits.
+    params["data"] = "01";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+}
+
 // Verify that empty option name is rejected in the configuration.
 TEST_F(Dhcp6ParserTest, optionNameEmpty) {
     // Empty option names not allowed.
@@ -2127,14 +2334,6 @@ TEST_F(Dhcp6ParserTest, optionDataUnexpectedPrefix) {
     // Option code 0 is reserved and should not be accepted
     // by configuration parser.
     testInvalidOptionParam("0x0102", "data");
-}
-
-// Verify that option data consisting od an odd number of
-// hexadecimal digits is rejected in the configuration.
-TEST_F(Dhcp6ParserTest, optionDataOddLength) {
-    // Option code 0 is reserved and should not be accepted
-    // by configuration parser.
-    testInvalidOptionParam("123", "data");
 }
 
 // Verify that either lower or upper case characters are allowed
@@ -2243,7 +2442,7 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
         "    \"name\": \"option-one\","
         "    \"space\": \"vendor-4491\","
         "    \"code\": 100,"
-        "    \"data\": \"AB CDEF0105\","
+        "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
