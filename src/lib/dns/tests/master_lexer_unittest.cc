@@ -246,7 +246,7 @@ TEST_F(MasterLexerTest, eof) {
 // Check we properly return error when there's an opened parentheses and no
 // closing one
 TEST_F(MasterLexerTest, getUnbalancedParen) {
-    ss << "(\"string\"";
+    ss << "(string";
     lexer.pushSource(ss);
 
     // The string gets out first

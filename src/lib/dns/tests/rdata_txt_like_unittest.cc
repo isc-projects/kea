@@ -184,8 +184,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createMultiStringsFromText) {
     texts.push_back("\"Test-String\" Test-String");  // no '"' for one
     texts.push_back("\"Test-String\"Test-String"); // and no space either
     texts.push_back("Test-String \"Test-String\""); // no '"' for the other
-    // This one currently doesn't work
-    //texts.push_back("Test-String\"Test-String\""); // and no space either
+    texts.push_back("Test-String\"Test-String\""); // and no space either
 
     std::stringstream ss;
     for (std::vector<std::string >::const_iterator it = texts.begin();
@@ -337,7 +336,7 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, toText) {
 
     // Check escape behavior
     const TypeParam double_quotes("Test-String\"Test-String\"");
-    EXPECT_EQ("\"Test-String\\\"Test-String\\\"\"", double_quotes.toText());
+    EXPECT_EQ("\"Test-String\" \"Test-String\"", double_quotes.toText());
     const TypeParam semicolon("Test-String\\;Test-String");
     EXPECT_EQ("\"Test-String\\;Test-String\"", semicolon.toText());
     const TypeParam backslash("Test-String\\\\Test-String");

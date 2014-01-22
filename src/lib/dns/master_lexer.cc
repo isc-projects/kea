@@ -60,6 +60,7 @@ struct MasterLexer::MasterLexerImpl {
         separators_.set('\t');
         separators_.set('(');
         separators_.set(')');
+        separators_.set('"');
         esc_separators_.set('\r');
         esc_separators_.set('\n');
     }
@@ -325,7 +326,8 @@ const char* const error_text[] = {
     "unbalanced quotes",        // UNBALANCED_QUOTES
     "no token produced",        // NO_TOKEN_PRODUCED
     "number out of range",      // NUMBER_OUT_OF_RANGE
-    "not a valid number"        // BAD_NUMBER
+    "not a valid number",       // BAD_NUMBER
+    "unexpected quotes"         // UNEXPECTED_QUOTES
 };
 const size_t error_text_max_count = sizeof(error_text) / sizeof(error_text[0]);
 } // end unnamed namespace
@@ -477,9 +479,14 @@ State::start(MasterLexer& lexer, MasterLexer::Options options) {
             if (paren_count == 0) { // check if we are in () (see above)
                 return (&CRLF_STATE);
             }
-        } else if (c == '"' && (options & MasterLexer::QSTRING) != 0) {
-            lexerimpl.last_was_eol_ = false;
-            return (&QSTRING_STATE);
+        } else if (c == '"') {
+            if ((options & MasterLexer::QSTRING) != 0) {
+                lexerimpl.last_was_eol_ = false;
+                return (&QSTRING_STATE);
+            } else {
+                lexerimpl.token_ = MasterToken(MasterToken::UNEXPECTED_QUOTES);
+                return (NULL);
+            }
         } else if (c == '(') {
             lexerimpl.last_was_eol_ = false;
             ++paren_count;
