@@ -128,7 +128,7 @@ private:
 MockDataSourceClient::MockDataSourceClient(const char* zone_names[]) :
     have_a_(true), use_baditerator_(true)
 {
-    for (const char** zone(zone_names); *zone; ++zone) {
+    for (const char** zone = zone_names; *zone; ++zone) {
         zones.insert(Name(*zone));
     }
 }
@@ -145,7 +145,7 @@ MockDataSourceClient::MockDataSourceClient(
     EXPECT_NE("MasterFiles", type) << "MasterFiles is a special case "
         "and it never should be created as a data source client";
     if (configuration_->getType() == data::Element::list) {
-        for (size_t i(0); i < configuration_->size(); ++i) {
+        for (size_t i = 0; i < configuration_->size(); ++i) {
             zones.insert(Name(configuration_->get(i)->stringValue()));
         }
     }
