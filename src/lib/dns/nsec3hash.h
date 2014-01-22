@@ -122,7 +122,7 @@ public:
     ///                  (SHA-1) is supported
     /// \param iterations the number of iterations
     /// \param salt_data the salt data as a byte array
-    /// \param salt_data_length the length of the salt data
+    /// \param salt_length the length of the salt data
     static NSEC3Hash* create(uint8_t algorithm, uint16_t iterations,
                              const uint8_t* salt_data, size_t salt_length);
 
@@ -233,7 +233,7 @@ public:
     ///                  (SHA-1) is supported
     /// \param iterations the number of iterations
     /// \param salt_data the salt data as a byte array
-    /// \param salt_data_length the length of the salt data
+    /// \param salt_length the length of the salt data
     virtual NSEC3Hash* create(uint8_t algorithm, uint16_t iterations,
                               const uint8_t* salt_data, size_t salt_length)
         const = 0;
