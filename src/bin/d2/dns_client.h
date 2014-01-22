@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -143,8 +143,8 @@ public:
     /// @param ns_addr DNS server address.
     /// @param ns_port DNS server port.
     /// @param update A DNS Update message to be sent to the server.
-    /// @param wait A timeout (in seconds) for the response. If a response is
-    /// not received within the timeout, exchange is interrupted. This value
+    /// @param wait A timeout (in milliseconds) for the response. If a response
+    /// is not received within the timeout, exchange is interrupted. This value
     /// must not exceed maximal value for 'int' data type.
     /// @param tsig_key An @c isc::dns::TSIGKey object representing TSIG
     /// context which will be used to render the DNS Update message.
@@ -173,8 +173,8 @@ public:
     /// @param ns_addr DNS server address.
     /// @param ns_port DNS server port.
     /// @param update A DNS Update message to be sent to the server.
-    /// @param wait A timeout (in seconds) for the response. If a response is
-    /// not received within the timeout, exchange is interrupted. This value
+    /// @param wait A timeout (in milliseconds) for the response. If a response
+    /// is not received within the timeout, exchange is interrupted. This value
     /// must not exceed maximal value for 'int' data type.
     void doUpdate(asiolink::IOService& io_service,
                   const asiolink::IOAddress& ns_addr,
