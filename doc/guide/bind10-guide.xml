@@ -7,7 +7,7 @@
 ]>
 
 <!--
- - Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2010-2014  Internet Systems Consortium, Inc. ("ISC")
  -
  - Permission to use, copy, modify, and/or distribute this software for any
  - purpose with or without fee is hereby granted, provided that the above
@@ -3928,7 +3928,7 @@ Dhcp4/subnet4	[]	list	(default)
       <para>
         The following commands override the global
         DNS servers option for a particular subnet, setting a single DNS
-        server with address 2001:db8:1::3.
+        server with address 192.0.2.3.
         <screen>
 &gt; <userinput>config add Dhcp4/subnet4[0]/option-data</userinput>
 &gt; <userinput>config set Dhcp4/subnet4[0]/option-data[0]/name "domain-name-servers"</userinput>
@@ -4172,10 +4172,10 @@ Dhcp4/subnet4	[]	list	(default)
       primitives (uint8, string, ipv4-address etc): it is possible to
       define an option comprising a number of existing primitives.
       </para>
-      <para>Assume we
-      want to define a new option that will consist of an IPv4
-      address, followed by unsigned 16 bit integer, followed by a text
-      string. Such an option could be defined in the following way:
+      <para>Assume we want to define a new option that will consist of
+      an IPv4 address, followed by unsigned 16 bit integer, followed by
+      a boolean value, followed by a text string. Such an option could
+      be defined in the following way:
 <screen>
 &gt; <userinput>config add Dhcp4/option-def</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/name "bar"</userinput>
@@ -4183,7 +4183,7 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-def[0]/space "dhcp4"</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/type "record"</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/array false</userinput>
-&gt; <userinput>config set Dhcp4/option-def[0]/record-types "ipv4-address, uint16, string"</userinput>
+&gt; <userinput>config set Dhcp4/option-def[0]/record-types "ipv4-address, uint16, boolean, string"</userinput>
 &gt; <userinput>config set Dhcp4/option-def[0]/encapsulate ""</userinput>
 </screen>
       The "type" is set to "record" to indicate that the option contains
@@ -4198,12 +4198,23 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config set Dhcp4/option-data[0]/space "dhcp4"</userinput>
 &gt; <userinput>config set Dhcp4/option-data[0]/code 223</userinput>
 &gt; <userinput>config set Dhcp4/option-data[0]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.100, 123, Hello World"</userinput>
+&gt; <userinput>config set Dhcp4/option-data[0]/data "192.0.2.100, 123, true, Hello World"</userinput>
 &gt; <userinput>config commit</userinput></screen>
-      </para>
       "csv-format" is set "true" to indicate that the "data" field comprises a command-separated
       list of values.  The values in the "data" must correspond to the types set in
       the "record-types" field of the option definition.
+     </para>
+     <note>
+       <para>
+         It is recommended that boolean values are specified using "true" and "false"
+         strings. This helps to prevent errors when typing multiple comma separated
+         values, as it make it easier to identify the type of the value being typed,
+         and compare it with the order of data fields. Nevetheless, it is possible
+         to use integer values: "1" and "0", instead of "true" and "false"
+         accordingly. If other integer value is specified, the configuration is
+         rejected.
+       </para>
+     </note>
     </section>
 
     <section id="dhcp4-vendor-opts">
@@ -5067,10 +5078,10 @@ Dhcp6/subnet6/	list
       define an option comprising a number of existing primitives.
       </para>
       <para>
-      Assume we
-      want to define a new option that will consist of an IPv6
-      address, followed by unsigned 16 bit integer, followed by a text
-      string. Such an option could be defined in the following way:
+      Assume we want to define a new option that will consist of an IPv6
+      address, followed by an unsigned 16 bit integer, followed by a
+      boolean value, followed by a text string. Such an option could
+      be defined in the following way:
 <screen>
 &gt; <userinput>config add Dhcp6/option-def</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/name "bar"</userinput>
@@ -5078,7 +5089,7 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config set Dhcp6/option-def[0]/space "dhcp6"</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/type "record"</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/array false</userinput>
-&gt; <userinput>config set Dhcp6/option-def[0]/record-types "ipv6-address, uint16, string"</userinput>
+&gt; <userinput>config set Dhcp6/option-def[0]/record-types "ipv6-address, uint16, boolean, string"</userinput>
 &gt; <userinput>config set Dhcp6/option-def[0]/encapsulate ""</userinput>
 </screen>
       The "type" is set to "record" to indicate that the option contains
@@ -5093,12 +5104,23 @@ Dhcp6/subnet6/	list
 &gt; <userinput>config set Dhcp6/option-data[0]/space "dhcp6"</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/code 101</userinput>
 &gt; <userinput>config set Dhcp6/option-data[0]/csv-format true</userinput>
-&gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8:1::10, 123, Hello World"</userinput>
+&gt; <userinput>config set Dhcp6/option-data[0]/data "2001:db8:1::10, 123, false, Hello World"</userinput>
 &gt; <userinput>config commit</userinput></screen>
-      </para>
       "csv-format" is set "true" to indicate that the "data" field comprises a command-separated
       list of values.  The values in the "data" must correspond to the types set in
       the "record-types" field of the option definition.
+      </para>
+      <note>
+        <para>
+          It is recommended that boolean values are specified using "true" and "false"
+          strings. This helps to prevent errors when typing multiple comma separated
+          values, as it make it easier to identify the type of the value being typed,
+          and compare it with the order of data fields. Nevetheless, it is possible
+          to use integer values: "1" and "0", instead of "true" and "false"
+          accordingly. If other integer value is specified, the configuration is
+          rejected.
+        </para>
+      </note>
     </section>
 
     <section id="dhcp6-vendor-opts">
