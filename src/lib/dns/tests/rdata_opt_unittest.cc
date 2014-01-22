@@ -49,11 +49,10 @@ TEST_F(Rdata_OPT_Test, createFromWire) {
                                          "rdata_opt_fromWire"));
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),
                                          "rdata_opt_fromWire", 2));
-
     // short buffer case.
     EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
                                       "rdata_opt_fromWire", 11),
-                 InvalidRdataLength);
+                 InvalidBufferPosition);
 }
 
 TEST_F(Rdata_OPT_Test, createFromLexer) {
@@ -74,16 +73,42 @@ TEST_F(Rdata_OPT_Test, toWireRenderer) {
 }
 
 TEST_F(Rdata_OPT_Test, toText) {
-    EXPECT_EQ("", rdata_opt.toText());
+    EXPECT_THROW(rdata_opt.toText(),
+                 isc::InvalidOperation);
 }
 
 TEST_F(Rdata_OPT_Test, compare) {
-    // This simple implementation always returns "true"
-    EXPECT_EQ(0, rdata_opt.compare(
+    EXPECT_THROW(rdata_opt.compare(
                   *rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),
-                                        "rdata_opt_fromWire", 2)));
+                                        "rdata_opt_fromWire", 2)),
+                 isc::InvalidOperation);
 
-    // comparison attempt between incompatible RR types should be rejected
-    EXPECT_THROW(rdata_opt.compare(*RdataTest::rdata_nomatch), bad_cast);
+    // comparison attempt between incompatible RR types also results in
+    // isc::InvalidOperation.
+    EXPECT_THROW(rdata_opt.compare(*RdataTest::rdata_nomatch),
+                 isc::InvalidOperation);
+}
+
+TEST_F(Rdata_OPT_Test, append) {
+    EXPECT_THROW(rdata_opt.toText(),
+                 isc::InvalidOperation);
+}
+
+TEST_F(Rdata_OPT_Test, getPseudoRRs) {
+    const generic::OPT rdf =
+        dynamic_cast<const generic::OPT&>
+        (*rdataFactoryFromFile(RRType("OPT"), RRClass("IN"),
+                               "rdata_opt_fromWire", 2));
+
+    const std::vector<generic::OPT::PseudoRR>& rrs = rdf.getPseudoRRs();
+    ASSERT_FALSE(rrs.empty());
+    EXPECT_EQ(1, rrs.size());
+    EXPECT_EQ(3, rrs.at(0).getCode());
+    EXPECT_EQ(3, rrs.at(0).getLength());
+
+    const uint8_t expected_data[] = {0x00, 0x01, 0x02};
+    const uint8_t* actual_data = rrs.at(0).getData();
+    EXPECT_EQ(0, std::memcmp(expected_data, actual_data,
+                             sizeof(expected_data)));
 }
 }

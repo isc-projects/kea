@@ -18,6 +18,10 @@
 
 #include <dns/rdata.h>
 
+#include <boost/shared_ptr.hpp>
+
+#include <vector>
+
 // BEGIN_ISC_NAMESPACE
 
 // BEGIN_COMMON_DECLARATIONS
@@ -25,15 +29,37 @@
 
 // BEGIN_RDATA_NAMESPACE
 
+struct OPTImpl;
+
 class OPT : public Rdata {
 public:
     // BEGIN_COMMON_MEMBERS
     // END_COMMON_MEMBERS
 
     // The default constructor makes sense for OPT as it can be empty.
-    OPT() {}
+    OPT();
+    OPT& operator=(const OPT& source);
+    ~OPT();
+
+    class PseudoRR {
+    public:
+        PseudoRR(uint16_t code,
+                 boost::shared_ptr<std::vector<uint8_t> >& data);
+
+        uint16_t getCode() const;
+        const uint8_t* getData() const;
+        uint16_t getLength() const;
+
+    private:
+        uint16_t code_;
+        boost::shared_ptr<std::vector<uint8_t> > data_;
+    };
+
+    void appendPseudoRR(uint16_t code, const uint8_t* data, uint16_t length);
+    const std::vector<PseudoRR>& getPseudoRRs() const;
+
 private:
-    // RR-type specific members are here.
+    OPTImpl* impl_;
 };
 
 // END_RDATA_NAMESPACE
