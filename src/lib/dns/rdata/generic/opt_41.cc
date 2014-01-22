@@ -14,12 +14,15 @@
 
 #include <config.h>
 
-#include <string>
-
 #include <util/buffer.h>
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+
+#include <boost/foreach.hpp>
+
+#include <string>
+#include <string.h>
 
 using namespace std;
 using namespace isc::util;
@@ -27,12 +30,52 @@ using namespace isc::util;
 // BEGIN_ISC_NAMESPACE
 // BEGIN_RDATA_NAMESPACE
 
+/// \brief Constructor.
+OPT::PseudoRR::PseudoRR(uint16_t code,
+                        boost::shared_ptr<std::vector<uint8_t> >& data) :
+    code_(code),
+    data_(data)
+{
+}
+
+uint16_t
+OPT::PseudoRR::getCode() const {
+    return (code_);
+}
+
+const uint8_t*
+OPT::PseudoRR::getData() const {
+    return (&(*data_)[0]);
+}
+
+uint16_t
+OPT::PseudoRR::getLength() const {
+    return (data_->size());
+}
+
+struct OPTImpl {
+    OPTImpl() :
+        rdlength_(0)
+    {}
+
+    uint16_t rdlength_;
+    std::vector<OPT::PseudoRR> pseudo_rrs_;
+};
+
+/// \brief Default constructor.
+OPT::OPT() :
+    impl_(new OPTImpl)
+{
+}
+
 /// \brief Constructor from string.
 ///
 /// This constructor cannot be used, and always throws an exception.
 ///
 /// \throw InvalidRdataText OPT RR cannot be constructed from text.
-OPT::OPT(const std::string&) {
+OPT::OPT(const std::string&) :
+    impl_(NULL)
+{
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
@@ -42,30 +85,80 @@ OPT::OPT(const std::string&) {
 ///
 /// \throw InvalidRdataText OPT RR cannot be constructed from text.
 OPT::OPT(MasterLexer&, const Name*,
-       MasterLoader::Options, MasterLoaderCallbacks&)
+         MasterLoader::Options, MasterLoaderCallbacks&) :
+    impl_(NULL)
 {
     isc_throw(InvalidRdataText, "OPT RR cannot be constructed from text");
 }
 
-OPT::OPT(InputBuffer& buffer, size_t rdata_len) {
-    // setPosition() will throw against a short buffer anyway, but it's safer
-    // to check it explicitly here.
-    if (buffer.getLength() - buffer.getPosition() < rdata_len) {
-        isc_throw(InvalidRdataLength, "RDLEN of OPT is too large");
+OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
+    impl_(NULL)
+{
+    std::auto_ptr<OPTImpl> impl_ptr(new OPTImpl);
+
+    while (true) {
+        if (rdata_len == 0) {
+            break;
+        }
+
+        if (rdata_len < 4) {
+            isc_throw(InvalidRdataLength,
+                      "Pseudo OPT RR record too short: "
+                      << rdata_len << " bytes");
+        }
+
+        const uint16_t option_code = buffer.readUint16();
+        const uint16_t option_length = buffer.readUint16();
+        rdata_len -= 4;
+
+        if ((impl_ptr->rdlength_ + option_length) < impl_ptr->rdlength_) {
+            isc_throw(InvalidRdataText,
+                      "Option length " << option_length
+                      << " would overflow OPT RR RDLEN (currently "
+                      << impl_ptr->rdlength_ << ").");
+        }
+
+        if (rdata_len < option_length) {
+            isc_throw(InvalidRdataLength, "Corrupt Pseudo OPT RR record");
+        }
+
+        boost::shared_ptr<std::vector<uint8_t> >
+            option_data(new std::vector<uint8_t>(option_length));
+        buffer.readData(&(*option_data)[0], option_length);
+        impl_ptr->pseudo_rrs_.push_back(PseudoRR(option_code, option_data));
+        impl_ptr->rdlength_ += option_length;
+        rdata_len -= option_length;
     }
 
-    // This simple implementation ignores any options
-    buffer.setPosition(buffer.getPosition() + rdata_len);
+    impl_ = impl_ptr.release();
 }
 
-OPT::OPT(const OPT&) : Rdata() {
-    // there's nothing to copy in this simple implementation.
+OPT::OPT(const OPT& other) :
+    Rdata(), impl_(new OPTImpl(*other.impl_))
+{
+}
+
+OPT&
+OPT::operator=(const OPT& source) {
+    if (this == &source) {
+        return (*this);
+    }
+
+    OPTImpl* newimpl = new OPTImpl(*source.impl_);
+    delete impl_;
+    impl_ = newimpl;
+
+    return (*this);
+}
+
+OPT::~OPT() {
+    delete impl_;
 }
 
 std::string
 OPT::toText() const {
-    // OPT records do not have a text format.
-    return ("");
+    isc_throw(isc::InvalidOperation,
+              "OPT RRs do not have a presentation format");
 }
 
 void
@@ -79,12 +172,35 @@ OPT::toWire(AbstractMessageRenderer&) const {
 }
 
 int
-OPT::compare(const Rdata& other) const {
-    //const OPT& other_opt = dynamic_cast<const OPT&>(other);
-    // right now we don't need other_opt:
-    static_cast<void>(dynamic_cast<const OPT&>(other));
-
+OPT::compare(const Rdata&) const {
+    isc_throw(isc::InvalidOperation,
+              "It is meaningless to compare a set of OPT pseudo RRs; "
+              "they have unspecified order");
     return (0);
+}
+
+void
+OPT::appendPseudoRR(uint16_t code, const uint8_t* data, uint16_t length) {
+    // See if it overflows 16-bit length field. We only worry about the
+    // pseudo-RR length here, not the whole message length (which should
+    // be checked and enforced elsewhere).
+    if ((impl_->rdlength_ + length) < impl_->rdlength_) {
+        isc_throw(isc::InvalidParameter,
+                  "Option length " << length
+                  << " would overflow OPT RR RDLEN (currently "
+                  << impl_->rdlength_ << ").");
+    }
+
+    boost::shared_ptr<std::vector<uint8_t> >
+        option_data(new std::vector<uint8_t>(length));
+    std::memcpy(&(*option_data)[0], data, length);
+    impl_->pseudo_rrs_.push_back(PseudoRR(code, option_data));
+    impl_->rdlength_ += length;
+}
+
+const std::vector<OPT::PseudoRR>&
+OPT::getPseudoRRs() const {
+    return (impl_->pseudo_rrs_);
 }
 
 // END_RDATA_NAMESPACE
