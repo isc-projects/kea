@@ -294,11 +294,12 @@ AllocEngine::AllocEngine(AllocType engine_type, unsigned int attempts,
 
 Lease6Collection
 AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                             uint32_t iaid, const IOAddress& hint,
+                             const uint32_t iaid, const IOAddress& hint,
                              Lease::Type type, const bool fwd_dns_update,
                              const bool rev_dns_update,
                              const std::string& hostname, bool fake_allocation,
-                             const isc::hooks::CalloutHandlePtr& callout_handle) {
+                             const isc::hooks::CalloutHandlePtr& callout_handle,
+                             Lease6Collection& old_leases) {
 
     try {
         AllocatorPtr allocator = getAllocator(type);
@@ -316,37 +317,49 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
             isc_throw(InvalidOperation, "DUID is mandatory for allocation");
         }
 
-        // check if there's existing lease for that subnet/duid/iaid combination.
+        // Check if there's existing lease for that subnet/duid/iaid
+        // combination.
         /// @todo: Make this generic (cover temp. addrs and prefixes)
         Lease6Collection existing = LeaseMgrFactory::instance().getLeases6(type,
                                     *duid, iaid, subnet->getID());
 
+        // There is at least one lease for this client. We will return these
+        // leases for the client, but we may need to update FQDN information.
         if (!existing.empty()) {
-            // we have at least one lease already. This is a returning client,
-            // probably after his reboot.
-            return (existing);
+            // Return old leases so the server can see what has changed.
+            old_leases = existing;
+            return (updateFqdnData(existing, fwd_dns_update, rev_dns_update,
+                                   hostname));
         }
 
         // check if the hint is in pool and is available
         // This is equivalent of subnet->inPool(hint), but returns the pool
-        Pool6Ptr pool = boost::dynamic_pointer_cast<Pool6>(subnet->getPool(type, hint, false));
+        Pool6Ptr pool = boost::dynamic_pointer_cast<
+            Pool6>(subnet->getPool(type, hint, false));
 
         if (pool) {
             /// @todo: We support only one hint for now
             Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(type, hint);
             if (!lease) {
-                /// @todo: check if the hint is reserved once we have host support
-                /// implemented
+                /// @todo: check if the hint is reserved once we have host
+                /// support implemented
 
-                // the hint is valid and not currently used, let's create a lease for it
-                lease = createLease6(subnet, duid, iaid, hint, pool->getLength(),
-                                     type, fwd_dns_update, rev_dns_update,
+                // The hint is valid and not currently used, let's create a
+                // lease for it
+                lease = createLease6(subnet, duid, iaid, hint,
+                                     pool->getLength(), type,
+                                     fwd_dns_update, rev_dns_update,
                                      hostname, callout_handle, fake_allocation);
 
-                // It can happen that the lease allocation failed (we could have lost
-                // the race condition. That means that the hint is lo longer usable and
-                // we need to continue the regular allocation path.
+                // It can happen that the lease allocation failed (we could
+                // have lost the race condition. That means that the hint is
+                // lo longer usable and we need to continue the regular
+                // allocation path.
                 if (lease) {
+                    // We are allocating a new lease (not renewing). So, the
+                    // old lease should be NULL.
+                    old_leases.push_back(Lease6Ptr());
+
                     /// @todo: We support only one lease per ia for now
                     Lease6Collection collection;
                     collection.push_back(lease);
@@ -354,6 +367,11 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                 }
             } else {
                 if (lease->expired()) {
+                    // Copy an existing, expired lease so as it can be returned
+                    // to the caller.
+                    Lease6Ptr old_lease(new Lease6(*lease));
+                    old_leases.push_back(old_lease);
+
                     /// We found a lease and it is expired, so we can reuse it
                     lease = reuseExpiredLease(lease, subnet, duid, iaid,
                                               pool->getLength(),
@@ -1035,6 +1053,28 @@ Lease4Ptr AllocEngine::createLease4(const SubnetPtr& subnet,
             return (Lease4Ptr());
         }
     }
+}
+
+Lease6Collection
+AllocEngine::updateFqdnData(const Lease6Collection& leases,
+                            const bool fwd_dns_update,
+                            const bool rev_dns_update,
+                            const std::string& hostname) {
+    Lease6Collection updated_leases;
+    for (Lease6Collection::const_iterator lease_it = leases.begin();
+         lease_it != leases.end(); ++lease_it) {
+        Lease6Ptr lease(new Lease6(**lease_it));
+        lease->fqdn_fwd_ = fwd_dns_update;
+        lease->fqdn_rev_ = rev_dns_update;
+        lease->hostname_ = hostname;
+        if ((lease->fqdn_fwd_ != (*lease_it)->fqdn_fwd_) ||
+            (lease->fqdn_rev_ != (*lease_it)->fqdn_rev_) ||
+            (lease->hostname_ != (*lease_it)->hostname_)) {
+            LeaseMgrFactory::instance().updateLease6(lease);
+        }
+        updated_leases.push_back(lease);
+    }
+    return (updated_leases);
 }
 
 AllocEngine::AllocatorPtr AllocEngine::getAllocator(Lease::Type type) {
