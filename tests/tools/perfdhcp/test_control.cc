@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -564,11 +564,8 @@ TestControl::getElapsedTime(const T& pkt1, const T& pkt2) {
         isc_throw(InvalidOperation, "packet timestamp not set");;
     }
     time_period elapsed_period(pkt1_time, pkt2_time);
-    if (elapsed_period.is_null()) {
-        isc_throw(InvalidOperation, "unable to calculate time elapsed"
-                  " between packets");
-    }
-    return(elapsed_period.length().total_milliseconds());
+    return (elapsed_period.is_null() ? 0 :
+            elapsed_period.length().total_milliseconds());
 }
 
 int
