@@ -1194,7 +1194,7 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // use a different status text to indicate that (compare to the same status code,
     // but different wording below)
     if (!subnet) {
-        // Create empty IA_NA option with IAID matching the request.
+        // Creatasse empty IA_NA option with IAID matching the request.
         // Note that we don't use OptionDefinition class to create this option.
         // This is because we prefer using a constructor of Option6IA that
         // initializes IAID. Otherwise we would have to use setIAID() after
@@ -1265,13 +1265,15 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // will try to honour the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
+    Lease6Collection old_leases;
     Lease6Collection leases = alloc_engine_->allocateLeases6(subnet, duid,
                                                              ia->getIAID(),
                                                              hint, Lease::TYPE_NA,
                                                              do_fwd, do_rev,
                                                              hostname,
                                                              fake_allocation,
-                                                             callout_handle);
+                                                             callout_handle,
+                                                             old_leases);
     /// @todo: Handle more than one lease
     Lease6Ptr lease;
     if (!leases.empty()) {
@@ -1306,26 +1308,27 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // but this is considered waste of bandwidth as absence of status
         // code is considered a success.
 
+        Lease6Ptr old_lease;
+        if (!old_leases.empty()) {
+            old_lease = *old_leases.begin();
+        }
         // Allocation engine may have returned an existing lease. If so, we
         // have to check that the FQDN settings we provided are the same
         // that were set. If they aren't, we will have to remove existing
         // DNS records and update the lease with the new settings.
-        if ((lease->hostname_ != hostname) || (lease->fqdn_fwd_ != do_fwd) ||
-            (lease->fqdn_rev_ != do_rev)) {
+        if (old_lease &&
+            ((lease->hostname_ != old_lease->hostname_) ||
+             (lease->fqdn_fwd_ != old_lease->fqdn_fwd_) ||
+             (lease->fqdn_rev_ != old_lease->fqdn_rev_))) {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
                       DHCP6_DDNS_LEASE_ASSIGN_FQDN_CHANGE)
-                .arg(lease->toText())
+                .arg(old_lease->toText())
                 .arg(hostname)
                 .arg(do_rev ? "true" : "false")
                 .arg(do_fwd ? "true" : "false");
 
             // Schedule removal of the existing lease.
-            createRemovalNameChangeRequest(lease);
-            // Set the new lease properties and update.
-            lease->hostname_ = hostname;
-            lease->fqdn_fwd_ = do_fwd;
-            lease->fqdn_rev_ = do_rev;
-            LeaseMgrFactory::instance().updateLease6(lease);
+            createRemovalNameChangeRequest(old_lease);
         }
 
     } else {
@@ -1393,13 +1396,15 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // will try to honour the hint, but it is just a hint - some other address
     // may be used instead. If fake_allocation is set to false, the lease will
     // be inserted into the LeaseMgr as well.
+    Lease6Collection old_leases;
     Lease6Collection leases = alloc_engine_->allocateLeases6(subnet, duid,
-                                                            ia->getIAID(),
-                                                            hint, Lease::TYPE_PD,
-                                                            false, false,
-                                                            string(),
-                                                            fake_allocation,
-                                                            callout_handle);
+                                                             ia->getIAID(),
+                                                             hint, Lease::TYPE_PD,
+                                                             false, false,
+                                                             string(),
+                                                             fake_allocation,
+                                                             callout_handle,
+                                                             old_leases);
 
     if (!leases.empty()) {
 
