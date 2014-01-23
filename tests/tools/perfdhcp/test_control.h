@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -942,6 +942,11 @@ protected:
     std::string byte2Hex(const uint8_t b) const;
 
     /// \brief Calculate elapsed time between two packets.
+    ///
+    /// This function calculates the time elapsed between two packets. If
+    /// the timestamp of the pkt2 is greater than timestamp of the pkt1,
+    /// the positive value is returned. If the pkt2 timestamp is equal or
+    /// less than pkt1 timestamp, 0 is returned.
     ///
     /// \tparam T Pkt4Ptr or Pkt6Ptr class.
     /// \param pkt1 first packet.
