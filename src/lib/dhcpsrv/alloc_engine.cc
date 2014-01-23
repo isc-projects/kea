@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -329,7 +329,7 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
             // Return old leases so the server can see what has changed.
             old_leases = existing;
             return (updateFqdnData(existing, fwd_dns_update, rev_dns_update,
-                                   hostname));
+                                   hostname, fake_allocation));
         }
 
         // check if the hint is in pool and is available
@@ -1059,7 +1059,8 @@ Lease6Collection
 AllocEngine::updateFqdnData(const Lease6Collection& leases,
                             const bool fwd_dns_update,
                             const bool rev_dns_update,
-                            const std::string& hostname) {
+                            const std::string& hostname,
+                            const bool fake_allocation) {
     Lease6Collection updated_leases;
     for (Lease6Collection::const_iterator lease_it = leases.begin();
          lease_it != leases.end(); ++lease_it) {
@@ -1067,9 +1068,10 @@ AllocEngine::updateFqdnData(const Lease6Collection& leases,
         lease->fqdn_fwd_ = fwd_dns_update;
         lease->fqdn_rev_ = rev_dns_update;
         lease->hostname_ = hostname;
-        if ((lease->fqdn_fwd_ != (*lease_it)->fqdn_fwd_) ||
-            (lease->fqdn_rev_ != (*lease_it)->fqdn_rev_) ||
-            (lease->hostname_ != (*lease_it)->hostname_)) {
+        if (!fake_allocation &&
+            ((lease->fqdn_fwd_ != (*lease_it)->fqdn_fwd_) ||
+             (lease->fqdn_rev_ != (*lease_it)->fqdn_rev_) ||
+             (lease->hostname_ != (*lease_it)->hostname_))) {
             LeaseMgrFactory::instance().updateLease6(lease);
         }
         updated_leases.push_back(lease);
