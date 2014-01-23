@@ -499,7 +499,8 @@ private:
     Lease6Collection updateFqdnData(const Lease6Collection& leases,
                                     const bool fwd_dns_update,
                                     const bool rev_dns_update,
-                                    const std::string& hostname);
+                                    const std::string& hostname,
+                                    const bool fake_allocation);
 
     /// @brief a pointer to currently used allocator
     ///
