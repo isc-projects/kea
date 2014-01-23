@@ -94,22 +94,56 @@ public:
         duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x42)));
         iaid_ = 42;
 
-        // instantiate cfg_mgr
-        CfgMgr& cfg_mgr = CfgMgr::instance();
+        // Initialize a subnet and short address pool.
+        initSubnet(IOAddress("2001:db8:1::"),
+                   IOAddress("2001:db8:1::10"),
+                   IOAddress("2001:db8:1::20"));
 
-        // Configure normal address pool
-        subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
-        pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, IOAddress("2001:db8:1::10"),
-                                   IOAddress("2001:db8:1::20")));
+        initFqdn("", false, false);
+
+        factory_.create("type=memfile");
+    }
+
+    /// @brief Configures a subnet and adds one pool to it.
+    ///
+    /// This function removes existing v6 subnets before configuring
+    /// a new one.
+    ///
+    /// @param subnet Address of a subnet to be configured.
+    /// @param pool_start First address in the address pool.
+    /// @param pool_end Last address in the address pool.
+    void initSubnet(const IOAddress& subnet, const IOAddress& pool_start,
+                    const IOAddress& pool_end) {
+        CfgMgr& cfg_mgr = CfgMgr::instance();
+        cfg_mgr.deleteSubnets6();
+
+        subnet_ = Subnet6Ptr(new Subnet6(subnet, 56, 1, 2, 3, 4));
+        pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, pool_start, pool_end));
+
         subnet_->addPool(pool_);
 
-        // Configure PD pool
-        pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, IOAddress("2001:db8:1::"), 56, 64));
+        pd_pool_ = Pool6Ptr(new Pool6(Lease::TYPE_PD, subnet, 56, 64));
         subnet_->addPool(pd_pool_);
 
         cfg_mgr.addSubnet6(subnet_);
 
-        factory_.create("type=memfile");
+    }
+
+    /// @brief Initializes FQDN data for a test.
+    ///
+    /// The initialized values are used by the test fixture class members to
+    /// verify the correctness of a lease.
+    ///
+    /// @param hostname Hostname to be assigned to a lease.
+    /// @param fqdn_fwd Indicates whether or not to perform forward DNS update
+    /// for a lease.
+    /// @param fqdn_fwd Indicates whether or not to perform reverse DNS update
+    /// for a lease.
+    void initFqdn(const std::string& hostname, const bool fqdn_fwd,
+                  const bool fqdn_rev) {
+        hostname_ = hostname;
+        fqdn_fwd_ = fqdn_fwd;
+        fqdn_rev_ = fqdn_rev;
     }
 
     /// @brief attempts to convert leases collection to a single lease
@@ -151,8 +185,9 @@ public:
         EXPECT_EQ(subnet_->getT1(), lease->t1_);
         EXPECT_EQ(subnet_->getT2(), lease->t2_);
         EXPECT_EQ(exp_pd_len, lease->prefixlen_);
-        EXPECT_TRUE(false == lease->fqdn_fwd_);
-        EXPECT_TRUE(false == lease->fqdn_rev_);
+        EXPECT_EQ(fqdn_fwd_, lease->fqdn_fwd_);
+        EXPECT_EQ(fqdn_rev_, lease->fqdn_rev_);
+        EXPECT_EQ(hostname_, lease->hostname_);
         EXPECT_TRUE(*lease->duid_ == *duid_);
         /// @todo: check cltt
     }
@@ -211,7 +246,7 @@ public:
         Lease6Ptr lease;
         EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                         duid_, iaid_, hint, type, false, false,
-                        "", fake, CalloutHandlePtr())));
+                        "", fake, CalloutHandlePtr(), old_leases_)));
 
         // Check that we got a lease
         EXPECT_TRUE(lease);
@@ -275,7 +310,7 @@ public:
         Lease6Ptr lease;
         EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                         duid_, iaid_, requested, type, false, false, "", false,
-                        CalloutHandlePtr())));
+                        CalloutHandlePtr(), old_leases_)));
 
         // Check that we got a lease
         ASSERT_TRUE(lease);
@@ -319,7 +354,7 @@ public:
         Lease6Ptr lease;
         EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                         duid_, iaid_, hint, type, false,
-                        false, "", false, CalloutHandlePtr())));
+                        false, "", false, CalloutHandlePtr(), old_leases_)));
 
         // Check that we got a lease
         ASSERT_TRUE(lease);
@@ -353,7 +388,14 @@ public:
     Subnet6Ptr subnet_;       ///< subnet6 (used in tests)
     Pool6Ptr pool_;           ///< NA pool belonging to subnet_
     Pool6Ptr pd_pool_;        ///< PD pool belonging to subnet_
+    std::string hostname_;    ///< Hostname
+    bool fqdn_fwd_;           ///< Perform forward update for a lease.
+    bool fqdn_rev_;           ///< Perform reverse update for a lease.
     LeaseMgrFactory factory_; ///< pointer to LeaseMgr factory
+
+    /// @brief Collection of leases being replaced by newly allocated or renewed
+    /// leases.
+    Lease6Collection old_leases_;
 };
 
 /// @brief Used in Allocation Engine tests for IPv4
@@ -521,13 +563,13 @@ TEST_F(AllocEngine6Test, allocateAddress6Nulls) {
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(
                     Subnet6Ptr(), duid_, iaid_, IOAddress("::"), Lease::TYPE_NA,
-                    false, false, "", false, CalloutHandlePtr())));
+                    false, false, "", false, CalloutHandlePtr(), old_leases_)));
     ASSERT_FALSE(lease);
 
     // Allocations without DUID are not allowed either
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     DuidPtr(), iaid_, IOAddress("::"), Lease::TYPE_NA, false,
-                    false, "", false, CalloutHandlePtr())));
+                    false, "", false, CalloutHandlePtr(), old_leases_)));
     ASSERT_FALSE(lease);
 }
 
@@ -765,19 +807,18 @@ TEST_F(AllocEngine6Test, smallPool6) {
     ASSERT_TRUE(engine);
 
     IOAddress addr("2001:db8:1::ad");
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-    cfg_mgr.deleteSubnets6(); // Get rid of the default test configuration
 
-    // Create configuration similar to other tests, but with a single address pool
-    subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
-    pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
-    subnet_->addPool(pool_);
-    cfg_mgr.addSubnet6(subnet_);
+    // Create a subnet with a pool that has one address.
+    initSubnet(IOAddress("2001:db8:1::"), addr, addr);
+
+    // Initialize FQDN for a lease.
+    initFqdn("myhost.example.com", true, true);
 
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
-                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
-                    "", false, CalloutHandlePtr())));
+                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, fqdn_fwd_,
+                    fqdn_rev_, hostname_, false, CalloutHandlePtr(),
+                    old_leases_)));
 
     // Check that we got that single lease
     ASSERT_TRUE(lease);
@@ -794,6 +835,10 @@ TEST_F(AllocEngine6Test, smallPool6) {
 
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
+
+    // This is a new lease allocation. The collection of old leases should be
+    // empty.
+    EXPECT_TRUE(old_leases_.empty());
 }
 
 // This test checks if all addresses in a pool are currently used, the attempt
@@ -826,8 +871,9 @@ TEST_F(AllocEngine6Test, outOfAddresses6) {
     Lease6Ptr lease2;
     EXPECT_NO_THROW(lease2 = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
-                    "", false, CalloutHandlePtr())));
+                    "", false, CalloutHandlePtr(), old_leases_)));
     EXPECT_FALSE(lease2);
+
 }
 
 // This test checks if an expired lease can be reused in SOLICIT (fake allocation)
@@ -837,14 +883,12 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     ASSERT_TRUE(engine);
 
     IOAddress addr("2001:db8:1::ad");
-    CfgMgr& cfg_mgr = CfgMgr::instance();
-    cfg_mgr.deleteSubnets6(); // Get rid of the default test configuration
 
-    // Create configuration similar to other tests, but with a single address pool
-    subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
-    pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr)); // just a single address
-    subnet_->addPool(pool_);
-    cfg_mgr.addSubnet6(subnet_);
+    // Create one subnet with a pool holding one address.
+    initSubnet(IOAddress("2001:db8:1::"), addr, addr);
+
+    // Initialize FQDN data for the lease.
+    initFqdn("myhost.example.com", true, true);
 
     // Just a different duid
     DuidPtr other_duid = DuidPtr(new DUID(vector<uint8_t>(12, 0xff)));
@@ -860,8 +904,9 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
 
     // CASE 1: Asking for any address
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
-                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false, "", true,
-                    CalloutHandlePtr())));
+                    duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, fqdn_fwd_,
+                    fqdn_rev_, hostname_, true, CalloutHandlePtr(),
+                    old_leases_)));
     // Check that we got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
@@ -872,7 +917,7 @@ TEST_F(AllocEngine6Test, solicitReuseExpiredLease6) {
     // CASE 2: Asking specifically for this address
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, addr, Lease::TYPE_NA, false, false, "",
-                    true, CalloutHandlePtr())));
+                    true, CalloutHandlePtr(), old_leases_)));
 
     // Check that we got that single lease
     ASSERT_TRUE(lease);
@@ -903,16 +948,32 @@ TEST_F(AllocEngine6Test, requestReuseExpiredLease6) {
                                501, 502, 503, 504, other_subnetid, 0));
     lease->cltt_ = time(NULL) - 500; // Allocated 500 seconds ago
     lease->valid_lft_ = 495; // Lease was valid for 495 seconds
+    lease->fqdn_fwd_ = true;
+    lease->fqdn_rev_ = true;
+    lease->hostname_ = "myhost.example.com.";
     ASSERT_TRUE(LeaseMgrFactory::instance().addLease(lease));
 
     // A client comes along, asking specifically for this address
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, addr, Lease::TYPE_NA, false, false, "",
-                    false, CalloutHandlePtr())));
+                    false, CalloutHandlePtr(), old_leases_)));
 
     // Check that he got that single lease
     ASSERT_TRUE(lease);
     EXPECT_EQ(addr, lease->addr_);
+    // This reactivated lease should have updated FQDN data.
+    EXPECT_TRUE(lease->hostname_.empty());
+    EXPECT_FALSE(lease->fqdn_fwd_);
+    EXPECT_FALSE(lease->fqdn_rev_);
+
+    // Check that the old lease has been returned.
+    Lease6Ptr old_lease = expectOneLease(old_leases_);
+    // It should at least have the same IPv6 address.
+    EXPECT_EQ(lease->addr_, old_lease->addr_);
+    // Check that it carries not updated FQDN data.
+    EXPECT_EQ("myhost.example.com.", old_lease->hostname_);
+    EXPECT_TRUE(old_lease->fqdn_fwd_);
+    EXPECT_TRUE(old_lease->fqdn_rev_);
 
     // Check that the lease is indeed updated in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
@@ -1623,7 +1684,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
-                    "", false, callout_handle)));
+                    "", false, callout_handle, old_leases_)));
     // Check that we got a lease
     ASSERT_TRUE(lease);
 
@@ -1694,7 +1755,7 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     Lease6Ptr lease;
     EXPECT_NO_THROW(lease = expectOneLease(engine->allocateLeases6(subnet_,
                     duid_, iaid_, IOAddress("::"), Lease::TYPE_NA, false, false,
-                    "", false, callout_handle)));
+                    "", false, callout_handle, old_leases_)));
     // Check that we got a lease
     ASSERT_TRUE(lease);
 

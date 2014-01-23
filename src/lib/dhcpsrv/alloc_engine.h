@@ -338,14 +338,21 @@ protected:
     ///        an address for SOLICIT that is not really allocated (true)
     /// @param callout_handle a callout handle (used in hooks). A lease callouts
     ///        will be executed if this parameter is passed.
+    /// @param [out] old_leases Collection to which this function will append
+    ///        old leases. Leases are stored in the same order as in the
+    ///        collection of new leases, being returned. For newly allocated
+    ///        leases (not renewed) the NULL pointers are stored in this
+    ///        collection as old leases.
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
-    allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid, uint32_t iaid,
+    allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                    const uint32_t iaid,
                     const isc::asiolink::IOAddress& hint, Lease::Type type,
                     const bool fwd_dns_update, const bool rev_dns_update,
                     const std::string& hostname, bool fake_allocation,
-                    const isc::hooks::CalloutHandlePtr& callout_handle);
+                    const isc::hooks::CalloutHandlePtr& callout_handle,
+                    Lease6Collection& old_leases);
 
     /// @brief returns allocator for a given pool type
     /// @param type type of pool (V4, IA, TA or PD)
@@ -488,6 +495,11 @@ private:
                                 const std::string& hostname,
                                 const isc::hooks::CalloutHandlePtr& callout_handle,
                                 bool fake_allocation = false);
+
+    Lease6Collection updateFqdnData(const Lease6Collection& leases,
+                                    const bool fwd_dns_update,
+                                    const bool rev_dns_update,
+                                    const std::string& hostname);
 
     /// @brief a pointer to currently used allocator
     ///
