@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -33,32 +33,39 @@ from FATAL - the most severe - to DEBUG - messages output as the code
 executes to facilitate debugging.  In order of decreasing severity,
 the levels are:
 
-- <b>FATAL</b> The program has encountered an error that is so severe that
-it cannot continue (or there is no point in continuing).  For example, an
+<dl>
+<dt>FATAL</dt>
+<dd>The program has encountered an error that is so severe that it
+cannot continue (or there is no point in continuing).  For example, an
 unhandled exception generated deep within the code has been caught by the
 top-level program. When a fatal error has been logged, the program will
 exit immediately (or shortly afterwards) after dumping some diagnostic
-information.
+information.</dd>
 
-- <b>ERROR</b> Something has happened such that the program can continue
-but the results for the current (or future) operations cannot be
-guaranteed to be correct, or the results will be correct but the service
-is impaired.  For example, the program started but attempts to open one
-or more network interfaces failed.
+<dt>ERROR</dt>
+<dd>Something has happened such that the program can continue but the
+results for the current (or future) operations cannot be guaranteed to
+be correct, or the results will be correct but the service is impaired.
+For example, the program started but attempts to open one or more network
+interfaces failed.</dd>
 
-- <b>WARN</b> (Warning) An unusual event  happened.  Although the program
-will continue working normally, the event was sufficiently out of the
-ordinary to warrant drawing attention to it.  For example, the
-authoritative server loaded a zone that contained no resource records.
+<dt>WARN</dt>
+<dd>(Warning) An unusual event  happened.  Although the program will
+continue working normally, the event was sufficiently out of the ordinary
+to warrant drawing attention to it.  For example, the authoritative
+server loaded a zone that contained no resource records.</dd>
 
-- <b>INFO</b> (Information) A normal but significant event has occurred
-that should be recorded, e.g. the program has started or is just about
-to terminate, a new zone has been created, etc.
+<dt>INFO</dt>
+<dd>(Information) A normal but significant event has occurred that should
+be recorded, e.g. the program has started or is just about to terminate,
+a new zone has been created, etc.</dd>
 
-- <b>DEBUG</b> Debug messages are output at this severity.  Each message
-also has a debug level associated with it, ranging from 0 (the default)
+<dt>DEBUG</dt>
+<dd>Debug messages are output at this severity.  Each message also
+has a debug level associated with it, ranging from 0 (the default)
 for high-level messages and level 99 (the maximum) for the the lowest
-level.
+level.</dd>
+</dl>
 
 When logging is enabled for a component, it is enabled for a particular
 severity level and all higher severities.  So if logging is enabled
@@ -87,7 +94,7 @@ INFO
 DEBUG level 0
 DEBUG level 1
    :
-DEBUG level 99   Lease severe
+DEBUG level 99   Least severe
 @endcode
 When a particular debug level is set, it - and all debug levels and
 severities above it - will be logged.
@@ -112,18 +119,18 @@ errors to the syslog file.
 The loggers are hierarchical in that each logger is the child of another
 logger.  The top of the hierarchy is the root logger; this does not
 have a parent.  The reason for this hierarchy is that unless a logger
-is explicitly assigned an attribute (such as severity of messages it
-should log), it picks it up from the parent.  In BIND 10, each component
-(b10-auth, b10-resolver etc.)  has a root logger (named after the program)
-and every other logger in the component is a child of that.  So in the
-example above, the error/syslog attributes could be associated with the
-b10-resolver logger while the debug/file attributes are associated with
-the logger associated with the cache.
+explicitly assigns a value to an attribute (such as severity of messages
+it should log), it picks it up the value from the parent.  In BIND 10,
+each component (b10-auth, b10-resolver etc.)  has a root logger (named
+after the program) and every other logger in the component is a child
+of that.  So in the example above, the error/syslog attributes could be
+associated with the b10-resolver logger while the logger associated with
+the cache sets its own values for the debug/file attributes.
 
-More information about the logging hierarchy can be
-found in the section on Logging configuration in the
-<a href="http://bind10.isc.org/docs/bind10-guide.html#logging">
-BIND 10 Guide</a>.
+More information about the logging hierarchy can be found in the section
+on Logging configuration in the <a
+href="http://bind10.isc.org/docs/bind10-guide.html#logging">BIND 10
+Guide</a>.
 
 @subsection logSeparationUseText Separation of Messages Use from Message Text
 
@@ -208,22 +215,22 @@ the named output file.
 Points to note are:
 
 <ul>
-<li>Leading and trailing space are trimmed from each line before it
+<li>Leading and trailing spaces are trimmed from each line before it
 is processed.  Although the above example has every line starting at
 column 1, the lines could be indented if desired.</li>
 
-<li>Lines starting with "#" are comments are are ignored.  Comments must be on
-a line by themselves; inline comments will be interpreted as part of the
-text of the line.</li>
+<li>Lines starting with "#" are comments are are ignored.  Comments must
+be on a line by themselves; inline comments will be interpreted as part
+of the text of that line.</li>
 
-<li>Lines starting with "$" are directives.  At present, just one directive is
-recognised:
-    <ul>
-    <li><b>$NAMESPACE &lt;namespace-name&gt;</b> The sole argument
-    is the name of the namespace in which the symbols are created.
-    In the absence of a $NAMESPACE directive, symbols will be put
-    in the anonymous namespace.</li>
-    </ul>
+<li>Lines starting with "$" are directives.  At present, just one
+directive is recognised:
+    <dl>
+        <dt>$NAMESPACE &lt;namespace-name&gt;</dt>
+        <dd>The sole argument is the name of the namespace in which the
+        symbols are created.  In the absence of a $NAMESPACE directive,
+        symbols will be put in the anonymous namespace.</dd>
+    </dl>
 </li>
 
 <li>Lines starting with "%" are message definitions and comprise the message
@@ -300,13 +307,13 @@ with that error number (retrieved via a call to "strerror()").
 </li>
 
 <li>The message should not have a comma after the message identification.
-Neither should the message text start with a capital letter (unless
+The message text should neither start with a capital letter (unless
 the first word is a proper noun or is normally written in capitals)
 nor end with a period. The message reporting system takes care of such
 punctuation.</li>
 
 <li>The parameters substituted into the message text should not include
-line breaks.  Messages are normally output to the syslog file, which
+line breaks.  Messages are normally output to the syslog file which
 has the inbuilt assumption of one line per message. Splitting a message
 across multiple lines makes it awkward to search the file for messages
 and associated information.</li>
@@ -336,6 +343,9 @@ explanation should also include suggested remedial action.</li>
 </ul>
 
 @subsection logSourceFiles Produce Source Files
+The message file created in the previous step is then run through the
+message compiler to produce source files that are included in the BIND
+10 programs.
 
 @subsubsection logMessageCompiler Message Compiler
 The message compiler is a program built in the src/log/compiler directory.
@@ -378,10 +388,10 @@ extern const isc::log::MessageID LOG_BAD_DESTINATION = "LOG_BAD_DESTINATION";
 extern const isc::log::MessageID LOG_BAD_SEVERITY = "LOG_BAD_SEVERITY";
    :
 @endcode
-(The implementation allows symbols to be compared.  However, use of strings
-should not be assumed - a future implementation may change this.)
-In addition, the file declares an array of identifiers/messages and an object
-to add them to the global dictionary, e.g.:
+(The current implementation allows symbols to be compared.  However,
+use of strings should not be assumed - a future implementation may change
+this.)  In addition, the file declares an array of identifiers/messages
+and an object to add them to the global dictionary, e.g.:
 @code
 namespace {
     const char* values[] = {
@@ -407,7 +417,7 @@ The appearance of such a message indicates a programming error.
 
 <b>Python Files</b><br/>
 If the "-p" option is given, the compiler produces a Python module defining
-the messages.  The content of this is:
+the messages.  The content of this is of the form:
 @code
 import isc.log
     :
@@ -515,13 +525,17 @@ through which the message will be logged.
 isc::log::Logger logger("name");
 @endcode
 This declaration can be per-function, or it can be declared statically
-in file scope.  The string passed to the constructor is the name of the
-logger (it can be any string) and is used when configuring it.  Loggers
-with the same name share the same configuration.  For this reason if,
-as is usual, messages logged in different files in the same component
-(e.g.  hooks module, nameserver address store, etc.) originate from
-loggers with the same name, the logger declaration can be placed into
-a header file.</li>
+in file scope.  The string passed to the constructor is the name of
+the logger (it can be any string) and is used when configuring it.
+(Remember though that the name of root logger for the program will be
+prepended to the name chosen.  So if, for example, the name "cache"
+is chosen and the model is included in the "b10-resolver" program, the
+full name of the logger will be "b10-resolver.cache".)  Loggers with
+the same name share the same configuration.  For this reason if, as is
+usual, messages logged in different files in the same component (e.g.
+hooks module, nameserver address store, etc.) originate from loggers
+with the same name, the logger declaration can be placed into a header
+file.</li>
 
 <li>Issue logging calls using supplied macros in "log/macros.h", e.g.
 @code
@@ -554,7 +568,7 @@ level, and external message file.
 @subsubsection logPythonUsage Use in a Python Module
 To use logging in a Python module:
 <ol>
-<li>Build message module as describe above.</li>
+<li>Build message module as described above.</li>
 
 <li>Declare a logger through which the message will be logged.
 @code
@@ -571,12 +585,11 @@ logger.error(LOG_WRITE_ERROR, "output.txt")
 The message parameters are included as trailing arguments in the
 logger call.</li>
 
-<li>The main program unit must include a call to isc.log.init()
-(described in more detail below) to set the to set the logging
-severity, debug log level, and external message file:
-</li>
-The settings remain in effect until the logging configuration is read,
-and so provide the default logging during program initialization.
+<li>The main program unit must include a call to isc.log.init() (described
+in more detail below) to set the to set the logging severity, debug log
+level, and external message file.  The settings remain in effect until
+the logging configuration is read, so are the ones used during program
+initialization.</li>
 </ol>
 
 
@@ -599,15 +612,17 @@ void isc::log::initLogger(const std::string& root,
                           bool buffer = false);
 @endcode
 Arguments are:
+<dl>
+<dt>root</dt>
+<dd>Name of the root logger.  This should be the name of the program
+(e.g. "b10-auth") and is used when configuring logging.</dd>
 
-<b>root</b> Name of the root logger.  This should be the name of the
-program (e.g. "b10-auth") and is used when configuring logging.
+<dt>severity</dt>
+<dd>Default severity that the program will start logging with.  Although
+this may be overridden when the program obtains its configuration from
+the configuration database, this is the severity that it used until then.
+The logging severity is one of the enum defined in @ref logger.h, i.e.
 
-<b>severity</b> Default severity that the program will start logging with.
-Although this may be overridden when the program obtains its configuration
-from the configuration database, this is the severity that it used
-until then.  The logging severity is one of the enum defined in @ref
-logger.h, i.e.
 @code
 isc::log::DEBUG
 isc::log::INFO
@@ -617,52 +632,64 @@ isc::log::FATAL
 isc::log::NONE
 @endcode
 
-<b>dbglevel</b> The debug log level is only interpreted when the
-severity is isc::log::DEBUG and is an integer ranging from 0 to 99.
-0 should be used for the highest-level debug messages and 99 for the
-lowest-level (and typically more verbose) messages.
+(The level NONE may be used to disable logging.)
+</dd>
 
-<b>file</b> The name of a local message file.  This will be read and
-its definitions used to replace the compiled-in text of the messages.
+<dt>dbglevel</dt>
+<dd>The debug log level is only interpreted when the severity is
+isc::log::DEBUG and is an integer ranging from 0 to 99.  0 should be
+used for the highest-level debug messages and 99 for the lowest-level
+(and typically more verbose) messages.</dd>
+
+<dt>file</dt>
+<dd>The name of a local message file.  This will be read and its
+definitions used to replace the compiled-in text of the messages.
 The default value of NULL indicates that no local message file is
-supplied.
+supplied.</dd>
 
-<b>buffer</b> If set to true, initial log messages will be internally
-buffered, until the first time a logger specification is processed. This
+<dt>buffer</dt>
+<dd>If set to true, initial log messages will be internally buffered,
+until the first time a logger specification is processed. This
 way the program can use logging before even processing its logging
 configuration. As soon as any specification is processed (even an
 empty one), the buffered log messages will be flushed according to
 the specification. Note that if this option is used, the program
-SHOULD call one of the @ref isc::log::LoggerManager::process() calls (if
-you are using the built-in logging configuration handling in @ref
-isc::config::ModuleCCSession, this is automatically handled). If the
+SHOULD call one of the @ref isc::log::LoggerManager::process() calls.
+(If you are using the built-in logging configuration handling in @ref
+isc::config::ModuleCCSession, this is automatically handled.) If the
 program exits before this is done, all log messages are dumped in a raw
-format to stdout (so that no messages get lost).
+format to stdout (so that no messages get lost).</dd> </dl>
 
 @subsubsection logInitializationCppVariant2 Variant #2, Used by Unit Tests
 @code
 void isc::log::initLogger()
 @endcode
-This is the call that should be used by unit tests.  In this variant, all the
-options are supplied by environment variables. (It should not be used for
-production programs to avoid the chance that the program operation is affected
-by inadvertently-defined environment variables.) The environment variables are:
+This is the call that should be used by unit tests.  In this variant,
+all the options are supplied by environment variables: it should not
+be used for production programs to avoid the chance that the program
+operation is affected by inadvertently-defined environment variables. The
+environment variables are:
 
-<b>B10_LOGGER_ROOT</b> Sets the "root" for the unit test.  If not defined,
-the name "bind10" is used.
+<dl>
+<dt>B10_LOGGER_ROOT</dt>
+<dd>Sets the "root" for the unit test.  If not defined, the name "bind10"
+is used.</dd>
 
-<b>B10_LOGGER_SEVERITY</b> The severity to set for the root logger
-in the unit test.  Valid values are "DEBUG", "INFO", "WARN", "ERROR",
-"FATAL" and "NONE".  If not defined, "INFO" is used.
+<dt>B10_LOGGER_SEVERITY</dt>
+<dd>The severity to set for the root logger in the unit test.
+Valid values are "DEBUG", "INFO", "WARN", "ERROR", "FATAL" and "NONE".
+If not defined, "INFO" is used.</dd>
 
-<b>B10_LOGGER_DBGLEVEL</b> If B10_LOGGER_SEVERITY is set to "DEBUG", the
-debug level.  This can be a number between 0 and 99, and defaults to 0.
+<dt>B10_LOGGER_DBGLEVEL</dt>
+<dd>If B10_LOGGER_SEVERITY is set to "DEBUG", the debug level.  This can
+be a number between 0 and 99, and defaults to 0.</dd>
 
-<b>B10_LOGGER_LOCALMSG</b> If defined, points to a local message file.
-The default is not to use a local message file.
+<dt>B10_LOGGER_LOCALMSG</dt>
+<dd>If defined, points to a local message file.  The default is not to
+use a local message file.</dd>
 
-<b>B10_LOGGER_DESTINATION</b> The location to which log message are
-written.  This can be one of:
+<dt>B10_LOGGER_DESTINATION</dt>
+<dd>The location to which log message are written.  This can be one of:
 <ul>
 <li><b>stdout</b> Message are written to stdout.</li>
 <li><b>stderr</b> Messages are written to stderr.</li>
@@ -673,7 +700,8 @@ optional "facility" is used, the messages are written using that facility.
 output is appended.  If the file does not exist, a new one is opened.</li>
 </ul>
 In the case of "stdout", "stderr" and "syslog", they must be written exactly
-as is - no leading or trailing spaces, and in lower-case.
+as is - no leading or trailing spaces, and in lower-case.</dd>
+</dl>
 
 @subsection logInitializationPython Python Initialization
 To initialize the logger in a Python program, the "init" method must be
@@ -681,51 +709,53 @@ called:
 @code
 isc.log.init(name, severity, debuglevel, file, buffer)
 @endcode
-<b>name</b> is string giving the name of the root logger.  This is
-the only mandatory argument, the rest are optional.
 
-<b>severity</b> is the deverity, and is one of the strings "DEBUG", INFO" etc.
-The deafult is "INFO".
+<dl>
+<dt>name</dt>
+<dd>String giving the name of the root logger.  This is the only mandatory
+argument, the rest are optional.</dd>
 
-<b>debuglevel</b> is the debug level, an integer between 0 and 99. A
-default value of 0 will be used if this is not specified.
+<dt>severity</dt>
+<dd>The severity, and is one of the strings "DEBUG", INFO" etc.
+The default is "INFO".</dd>
 
-<b>file</b> is the name of the external message file (if present).
-By default, no external message file is used.
+<dt>debuglevel</dt>
+<dd>Debug level, an integer between 0 and 99. A default value of 0 will
+be used if this is not specified.</dd>
 
-<b>buffer</b> If set to true, initial log messages will be internally
-buffered, until the first time a logger specification is processed. This
+<dt>file</dt>
+<dd>Name of the external message file (if present).  By default, no
+external message file is used.</dd>
+
+<dt>buffer</dt>
+<dd>If set to true, initial log messages will be internally buffered,
+until the first time a logger specification is processed. This
 way the program can use logging before even processing its logging
-configuration. By default, no buffer is used.
+configuration. By default, no buffer is used.</dd>
+</dl>
 
 
 @section logNotes Notes on the Use of Logging
-One thing that should always be borne in mind is whether the logging
-could be used as a vector for a DOS attack.  For example, if a warning
+One thing that should always be kept in mind is whether the logging
+could be used as a means for a DOS attack.  For example, if a warning
 message is logged every time an invalid packet is received, an attacker
-could simply send large numbers of invalid packets.  (Of course, warnings
+could simply send large numbers of invalid packets.  Of course, warnings
 could be disabled (or just warnings for that that particular logger),
-but nevertheless the message is an attack vector.)
-
-@subsection logSourcesSeverities Logging Sources v Logging Severities
-When logging events, make a distinction between events related to the
-server and events related to messages received.  Caution needs to
-be exercised with the latter as, if the logging is enabled in the normal
-course of events, such logging could be a denial of service vector. For
-example, suppose that the main authoritative DNS server logger were to
-log both zone loading and unloading as INFO and a warning message if
-it received an invalid packet. An attacker could make the INFO messages
-unusable by flooding the server with malformed packets.
+but nevertheless the message is an attack vector.  As a general rule,
+if the message can be triggered by a user action, it can be used as an
+attack vector.
 
 There are two approaches to get round this:
-- DEBUG is not enabled by default, so these events will not be recorded
-unless DEBUG is specifically chosen.
+<ol>
+<li>Log messages generated by such user actions as DEBUG messages. DEBUG
+is not enabled by default, so these events will not be recorded unless
+DEBUG is specifically enabled.  Choosing a suitable debug level for
+such messages will select only those messages and not the more general
+debug messages.</li>
 
-- Record system-related and packet-related messages via different loggers
-(e.g.  in the example given, server events could be logged using the
-logger "auth" and packet-related events at that level logged using the
-logger "pkt-auth".)  As the loggers are independent and the severity
-levels independent, fine-tuning of what and what is not recorded can
-be achieved.
+<li>Record system-related and packet-related messages via different
+loggers.  As the loggers are independent and the severity levels
+independent, fine-tuning of what and what is not recorded can be achieved.</li>
 
+</ol>
 */
