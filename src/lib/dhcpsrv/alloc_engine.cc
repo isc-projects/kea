@@ -442,6 +442,11 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                 // allocation attempts.
             } else {
                 if (existing->expired()) {
+                    // Copy an existing, expired lease so as it can be returned
+                    // to the caller.
+                    Lease6Ptr old_lease(new Lease6(*lease));
+                    old_leases.push_back(old_lease);
+
                     existing = reuseExpiredLease(existing, subnet, duid, iaid,
                                                  prefix_len, fwd_dns_update,
                                                  rev_dns_update, hostname,

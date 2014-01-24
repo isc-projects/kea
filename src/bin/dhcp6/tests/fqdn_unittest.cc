@@ -772,4 +772,73 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
                             0, 4000);
 }
 
+// Checks that when the server reuses expired lease, the NameChangeRequest
+// is generated to remove the DNS mapping for the expired lease and second
+// NameChangeRequest to add a DNS mapping for a new lease.
+TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
+    // This address will be used throughout the test.
+    IOAddress addr("2001:db8:1:1::dead:beef");
+    // We are going to configure a subnet with a pool that consists of
+    // exactly one address. This address will be handed out to the
+    // client, will get expired and then be reused.
+    CfgMgr::instance().deleteSubnets6();
+    subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1:1::"), 56, 1, 2,
+                                     3, 4));
+    pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr));
+    subnet_->addPool(pool_);
+    CfgMgr::instance().addSubnet6(subnet_);
+
+    // Allocate a lease.
+    NakedDhcpv6Srv srv(0);
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com", srv);
+    // Test that the appropriate NameChangeRequest has been generated.
+    ASSERT_EQ(1, srv.name_change_reqs_.size());
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 4);
+    // Get the lease acquired and modify it. In particular, expire it.
+    Lease6Ptr lease =
+        LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+    ASSERT_TRUE(lease);
+    // One of the following: IAID, DUID or subnet identifier has to be changed
+    // because otherwise the allocation engine will treat the lease as
+    // being renewed by the same client. If we at least change subnet identifier
+    // the lease will be treated as expired lease to be reused.
+    ++lease->subnet_id_;
+
+    // Move the cllt back in time and make sure that the lease got expired.
+    lease->cltt_ = time(NULL) - 10;
+    lease->valid_lft_ = 5;
+    ASSERT_TRUE(lease->expired());
+    // Change the hostname so as the name change request for removing existing
+    // DNS mapping is generated.
+    lease->hostname_ = "otherhost.example.com.";
+    // Update the lease in the lease database.
+    LeaseMgrFactory::instance().updateLease6(lease);
+
+    // Simulate another lease acquisition. Since, our pool consists of
+    // exactly one address and this address is used by the lease in the
+    // lease database, it is guaranteed that the allocation engine will
+    // reuse this lease.
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com.", srv);
+    ASSERT_EQ(2, srv.name_change_reqs_.size());
+    // The first name change request generated, should remove a DNS
+    // mapping for an expired lease.
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201D422AA463306223D269B6CB7AFE7AAD2"
+                            "65FCEA97F93623019B2E0D14E5323D5A",
+                            0, 5);
+    // The second name change request should add a DNS mapping for
+    // a new lease.
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 4);
+
+}
+
 }   // end of anonymous namespace
