@@ -293,7 +293,7 @@ private:
             if (position_ == domain_.end()) {
                 return (false);
             } else {
-                for (size_t i(0); i < COLUMN_COUNT; ++ i) {
+                for (size_t i = 0; i < COLUMN_COUNT; ++i) {
                     columns[i] = (*position_)[i];
                 }
                 ++ position_;
@@ -1814,7 +1814,7 @@ doFindAllTestResult(ZoneFinder& finder, const isc::dns::Name& name,
     std::sort(rdata.begin(), rdata.end());
     std::sort(expected_rdata.begin(), expected_rdata.end());
     ASSERT_EQ(expected_rdata.size(), rdata.size());
-    for (size_t i(0); i < expected_rdata.size(); ++ i) {
+    for (size_t i = 0; i < expected_rdata.size(); ++i) {
         EXPECT_EQ(expected_rdata[i], rdata[i]);
     }
     EXPECT_TRUE(expected_rdata == rdata);
@@ -3023,7 +3023,7 @@ TEST_P(DatabaseClientTest, findRRSIGsWithoutDNSSEC) {
     std::sort(rdata.begin(), rdata.end());
     std::sort(expected_rdata.begin(), expected_rdata.end());
     ASSERT_EQ(expected_rdata.size(), rdata.size());
-    for (size_t i(0); i < expected_rdata.size(); ++ i) {
+    for (size_t i = 0; i < expected_rdata.size(); ++i) {
         EXPECT_EQ(expected_rdata[i], rdata[i]);
     }
 }
@@ -3065,7 +3065,7 @@ TEST_P(DatabaseClientTest, getAll) {
     EXPECT_EQ(RRType::A(), target[a_idx]->getType());
     std::string previous;
     size_t count(0);
-    for (RdataIteratorPtr it(target[a_idx]->getRdataIterator());
+    for (RdataIteratorPtr it = target[a_idx]->getRdataIterator();
          !it->isLast(); it->next()) {
         ++count;
         EXPECT_NE(previous, it->getCurrent().toText());
