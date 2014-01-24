@@ -1087,8 +1087,8 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
     OptionCollection answer_ias = answer->getOptions(D6O_IA_NA);
     for (OptionCollection::const_iterator answer_ia =
              answer_ias.begin(); answer_ia != answer_ias.end(); ++answer_ia) {
-        // @todo IA_NA may contain multiple addresses. We should process
-        // each address individually. Currently we get only one.
+        /// @todo IA_NA may contain multiple addresses. We should process
+        /// each address individually. Currently we get only one.
         Option6IAAddrPtr iaaddr = boost::static_pointer_cast<
             Option6IAAddr>(answer_ia->second->getOption(D6O_IAADDR));
         // We need an address to create a name-to-address mapping.
@@ -1114,6 +1114,12 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
 
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
                   DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST).arg(ncr.toText());
+
+        /// @todo Currently we create NCR with the first IPv6 address that
+        /// is carried in one of the IA_NAs. In the future, the NCR API should
+        /// be extended to map multiple IPv6 addresses to a single FQDN.
+        /// In such case, this return statement will be removed.
+        return;
     }
 }
 
