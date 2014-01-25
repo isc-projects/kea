@@ -29,11 +29,11 @@
         "database_file": "data/ixfr-out/zones.sqlite3",
         "listen_on": [
             {
-                "port": 47806,
+                "port": 56176,
                 "address": "::"
             },
             {
-                "port": 47806,
+                "port": 56176,
                 "address": "0.0.0.0"
             }
         ]
