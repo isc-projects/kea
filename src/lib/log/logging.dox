@@ -613,11 +613,11 @@ void isc::log::initLogger(const std::string& root,
 @endcode
 Arguments are:
 <dl>
-<dt>root</dt>
+<dt><code>root</code></dt>
 <dd>Name of the root logger.  This should be the name of the program
 (e.g. "b10-auth") and is used when configuring logging.</dd>
 
-<dt>severity</dt>
+<dt><code>severity</code></dt>
 <dd>Default severity that the program will start logging with.  Although
 this may be overridden when the program obtains its configuration from
 the configuration database, this is the severity that it used until then.
@@ -635,19 +635,19 @@ isc::log::NONE
 (The level NONE may be used to disable logging.)
 </dd>
 
-<dt>dbglevel</dt>
+<dt><code>dbglevel</code></dt>
 <dd>The debug log level is only interpreted when the severity is
 isc::log::DEBUG and is an integer ranging from 0 to 99.  0 should be
 used for the highest-level debug messages and 99 for the lowest-level
 (and typically more verbose) messages.</dd>
 
-<dt>file</dt>
+<dt><code>file</code></dt>
 <dd>The name of a local message file.  This will be read and its
 definitions used to replace the compiled-in text of the messages.
 The default value of NULL indicates that no local message file is
 supplied.</dd>
 
-<dt>buffer</dt>
+<dt><code>buffer</code></dt>
 <dd>If set to true, initial log messages will be internally buffered,
 until the first time a logger specification is processed. This
 way the program can use logging before even processing its logging
@@ -658,7 +658,8 @@ SHOULD call one of the @ref isc::log::LoggerManager::process() calls.
 (If you are using the built-in logging configuration handling in @ref
 isc::config::ModuleCCSession, this is automatically handled.) If the
 program exits before this is done, all log messages are dumped in a raw
-format to stdout (so that no messages get lost).</dd> </dl>
+format to stdout (so that no messages get lost).</dd>
+</dl>
 
 @subsubsection logInitializationCppVariant2 Variant #2, Used by Unit Tests
 @code
@@ -711,23 +712,23 @@ isc.log.init(name, severity, debuglevel, file, buffer)
 @endcode
 
 <dl>
-<dt>name</dt>
+<dt><code>name</code></dt>
 <dd>String giving the name of the root logger.  This is the only mandatory
 argument, the rest are optional.</dd>
 
-<dt>severity</dt>
+<dt><code>severity</code></dt>
 <dd>The severity, and is one of the strings "DEBUG", INFO" etc.
 The default is "INFO".</dd>
 
-<dt>debuglevel</dt>
+<dt><code>debuglevel</code></dt>
 <dd>Debug level, an integer between 0 and 99. A default value of 0 will
 be used if this is not specified.</dd>
 
-<dt>file</dt>
+<dt><code>file</code></dt>
 <dd>Name of the external message file (if present).  By default, no
 external message file is used.</dd>
 
-<dt>buffer</dt>
+<dt><code>buffer</code></dt>
 <dd>If set to true, initial log messages will be internally buffered,
 until the first time a logger specification is processed. This
 way the program can use logging before even processing its logging
