@@ -40,7 +40,7 @@ def start_bind10(step, config_file, cmdctl_port, msgq_sockfile, process_name):
                 will be used. The path is relative to the base lettuce
                 directory.
     cmdctl_port ('with cmdctl port <portnr>', optional): The port on which
-                b10-cmdctl listens for bindctl commands. Defaults to 47805.
+                b10-cmdctl listens for bindctl commands. Defaults to 56175.
     msgq_sockfile ('with msgq socket file', optional): The msgq socket file
                 that will be used for internal communication
     process_name ('as <name>', optional). This is the name that can be used
@@ -59,7 +59,7 @@ def start_bind10(step, config_file, cmdctl_port, msgq_sockfile, process_name):
         args.append('-c')
         args.append(config_file)
     if cmdctl_port is None:
-        args.append('--cmdctl-port=47805')
+        args.append('--cmdctl-port=56175')
     else:
         args.append('--cmdctl-port=' + cmdctl_port)
     if process_name is None:
@@ -126,7 +126,7 @@ def run_bindctl(commands, cmdctl_port=None, ignore_failure=False):
        commands: a sequence of strings which will be sent.
        cmdctl_port: a port number on which cmdctl is listening, is converted
                     to string if necessary. If not provided, or None, defaults
-                    to 47805
+                    to 56175
        ignore_failure(bool): if set to True, don't examin the result code
                     of bindctl and assert it succeeds.
 
@@ -135,7 +135,7 @@ def run_bindctl(commands, cmdctl_port=None, ignore_failure=False):
        Fails if the return code is not 0
     """
     if cmdctl_port is None:
-        cmdctl_port = 47805
+        cmdctl_port = 56175
     args = ['bindctl', '-p', str(cmdctl_port)]
     bindctl = subprocess.Popen(args, 1, None, subprocess.PIPE,
                                subprocess.PIPE, None)
@@ -268,7 +268,7 @@ def config_set_command(step, name, value, cmdctl_port):
     name ('configuration <name>'): Identifier of the configuration to set
     value ('to <value>'): value to set it to.
     cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
-                the command to. Defaults to 47805.
+                the command to. Defaults to 56175.
     Fails if cmdctl does not exit with status code 0.
     """
     commands = ["config set " + name + " " + value,
@@ -282,7 +282,7 @@ def send_multiple_commands(step, cmdctl_port):
     Run bindctl, and send it the given multiline set of commands.
     A quit command is always appended.
     cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
-                the command to. Defaults to 47805.
+                the command to. Defaults to 56175.
     Fails if cmdctl does not exit with status code 0.
     """
     commands = step.multiline.split("\n")
@@ -299,7 +299,7 @@ def config_remove_command(step, name, value, cmdctl_port):
     value ('value <value>'): if name is a named set, use value to identify
                              item to remove
     cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
-                the command to. Defaults to 47805.
+                the command to. Defaults to 56175.
     Fails if cmdctl does not exit with status code 0.
     """
     cmd = "config remove " + name
@@ -317,7 +317,7 @@ def send_command(step, cmdctl_port, ignore_failure, command):
     Parameters:
     command ('the command <command>'): The command to send.
     cmdctl_port ('with cmdctl port <portnr>', optional): cmdctl port to send
-                the command to. Defaults to 47805.
+                the command to. Defaults to 56175.
     ignore_failure ('ignoring failure', optional): set to None if bindctl
     is expected to succeed (normal case, which is the default); if it is
     not None, it means bindctl is expected to fail (and it's acceptable).

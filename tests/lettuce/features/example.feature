@@ -129,8 +129,8 @@ Feature: Example feature
         # where
         A query for www.example.org class CH should have rcode REFUSED
         A query for www.example.org to 127.0.0.1 should have rcode NOERROR
-        A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
-        A query for www.example.org type A class IN to 127.0.0.1:47806 should have rcode NOERROR
+        A query for www.example.org to 127.0.0.1:56176 should have rcode NOERROR
+        A query for www.example.org type A class IN to 127.0.0.1:56176 should have rcode NOERROR
 
     Scenario: example.org mixed-case query
         # This scenario performs a mixed-case query and checks that the
@@ -207,19 +207,19 @@ Feature: Example feature
         And wait for bind10_one stderr message CMDCTL_STARTED
         And wait for bind10_one stderr message AUTH_SERVER_STARTED
 
-        And I start bind10 with configuration example2.org.config with cmdctl port 47804 as bind10_two
+        And I start bind10 with configuration example2.org.config with cmdctl port 56174 as bind10_two
         And wait for bind10_two stderr message BIND10_STARTED_CC
         And wait for bind10_two stderr message CMDCTL_STARTED
         And wait for bind10_two stderr message AUTH_SERVER_STARTED
 
-        A query for www.example.org to 127.0.0.1:47806 should have rcode NOERROR
-        A query for www.example.org to [::1]:47807 should have rcode NOERROR
+        A query for www.example.org to 127.0.0.1:56176 should have rcode NOERROR
+        A query for www.example.org to [::1]:56177 should have rcode NOERROR
         The SOA serial for example.org should be 1234
-        The SOA serial for example.org at 127.0.0.1:47806 should be 1234
-        The SOA serial for example.org at ::1:47807 should be 1234
+        The SOA serial for example.org at 127.0.0.1:56176 should be 1234
+        The SOA serial for example.org at ::1:56177 should be 1234
 
         Then set bind10 configuration data_sources/classes/IN[0]/params to {"database_file": "data/empty_db.sqlite3"}
         And wait for bind10_one stderr message DATASRC_SQLITE_CONNOPEN
 
-        A query for www.example.org to 127.0.0.1:47806 should have rcode REFUSED
-        A query for www.example.org to [::1]:47807 should have rcode NOERROR
+        A query for www.example.org to 127.0.0.1:56176 should have rcode REFUSED
+        A query for www.example.org to [::1]:56177 should have rcode NOERROR

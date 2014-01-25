@@ -667,7 +667,7 @@ class TestMultiConfigData(unittest.TestCase):
                      'modified': False,
                      'name': 'Spec22/value9/v92/v92b',
                      'type': 'integer',
-                     'value': 47806
+                     'value': 56176
                     }
                    ]
         maps = self.mcd.get_value_maps("/Spec22/value9")
