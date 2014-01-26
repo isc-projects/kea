@@ -90,9 +90,9 @@ private:
     ZoneChain chain_;
     const RdataSet* set_node_;
     const RRClass rrclass_;
+    ConstRRsetPtr soa_;
     const ZoneTree& tree_;
     const ZoneNode* node_;
-    const ZoneNode* origin_node_;
     // Only used when separate_rrs_ is true
     ConstRRsetPtr rrset_;
     RdataIteratorPtr rdata_iterator_;
@@ -122,9 +122,22 @@ public:
                       "In-memory zone corrupted, missing origin node");
         }
 
-	// Save the origin node as node_ will be modified during
-	// iteration
-	origin_node_ = node_;
+        if (!node_) {
+            soa_ = ConstRRsetPtr();
+        } else {
+            const RdataSet* origin_set = node_->getData();
+            if (!origin_set) {
+                soa_ = ConstRRsetPtr();
+            } else {
+                const RdataSet* soa = RdataSet::find(origin_set, RRType::SOA());
+                if (!soa) {
+                    soa_ = ConstRRsetPtr();
+                } else {
+                    soa_ = ConstRRsetPtr (new TreeNodeRRset(rrclass_, node_,
+                                                            soa, true));
+                }
+            }
+        }
 
         // Initialize the iterator if there's somewhere to point to
         if (node_ != NULL && node_->getData() != NULL) {
@@ -237,23 +250,7 @@ public:
     }
 
     virtual ConstRRsetPtr getSOA() const {
-        // SOA will be at the origin node
-        if (!origin_node_) {
-            return (ConstRRsetPtr());
-        }
-
-        const RdataSet* origin_set = origin_node_->getData();
-        if (!origin_set) {
-            return (ConstRRsetPtr());
-        }
-
-        const RdataSet* soa = RdataSet::find(origin_set, RRType::SOA());
-        if (!soa) {
-            return (ConstRRsetPtr());
-        }
-
-        return (ConstRRsetPtr
-                (new TreeNodeRRset(rrclass_, origin_node_, soa, true)));
+        return (soa_);
     }
 };
 
