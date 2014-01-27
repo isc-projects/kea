@@ -154,6 +154,38 @@ TEST_F(Rdata_OPT_Test, appendPseudoRR) {
     const std::vector<uint8_t> buffer((1 << 16) - 1);
     EXPECT_THROW(rdata_opt.appendPseudoRR(0x0044, &buffer[0], buffer.size()),
                  isc::InvalidParameter);
+
+    const uint8_t rdata_opt_wiredata2[] = {
+        // OPTION #1
+        // ` Option code
+        0x00, 0x42,
+        // ` Option length
+        0x00, 0x00,
+
+        // OPTION #2
+        // ` Option code
+        0x00, 0x43,
+        // ` Option length
+        0x00, 0x05,
+        // ` Option data
+        'H', 'e', 'l', 'l', 'o',
+
+        // OPTION #3
+        // ` Option code
+        0x00, 0x42,
+        // ` Option length
+        0x00, 0x05,
+        // ` Option data
+        'H', 'e', 'l', 'l', 'o'
+    };
+
+    obuffer.clear();
+    rdata_opt.toWire(obuffer);
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(),
+                        obuffer.getLength(),
+                        rdata_opt_wiredata2, sizeof(rdata_opt_wiredata2));
 }
 
 TEST_F(Rdata_OPT_Test, getPseudoRRs) {
