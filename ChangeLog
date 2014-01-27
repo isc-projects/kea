@@ -1,3 +1,7 @@
+735.	[doc]		stephen
+	Expanded Developer's Guide to include chapter on logging.
+	(Trac #2566, git a08d702839d9df6cddefeccab1e7e657377145de(
+
 734.	[bug]		marcin
 	libdhcp++: fixed a bug which caused an error when setting boolean
 	values for an option. Also, bind10-guide has been updated with the
