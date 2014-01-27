@@ -111,7 +111,9 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
         const uint16_t option_length = buffer.readUint16();
         rdata_len -= 4;
 
-        if ((impl_ptr->rdlength_ + option_length) < impl_ptr->rdlength_) {
+        if (static_cast<uint16_t>(impl_ptr->rdlength_ + option_length) <
+            impl_ptr->rdlength_)
+        {
             isc_throw(InvalidRdataText,
                       "Option length " << option_length
                       << " would overflow OPT RR RDLEN (currently "
@@ -119,7 +121,7 @@ OPT::OPT(InputBuffer& buffer, size_t rdata_len) :
         }
 
         if (rdata_len < option_length) {
-            isc_throw(InvalidRdataLength, "Corrupt Pseudo OPT RR record");
+            isc_throw(InvalidRdataLength, "Corrupt pseudo OPT RR record");
         }
 
         boost::shared_ptr<std::vector<uint8_t> >
@@ -184,7 +186,9 @@ OPT::appendPseudoRR(uint16_t code, const uint8_t* data, uint16_t length) {
     // See if it overflows 16-bit length field. We only worry about the
     // pseudo-RR length here, not the whole message length (which should
     // be checked and enforced elsewhere).
-    if ((impl_->rdlength_ + length) < impl_->rdlength_) {
+    if (static_cast<uint16_t>(impl_->rdlength_ + length) <
+        impl_->rdlength_)
+    {
         isc_throw(isc::InvalidParameter,
                   "Option length " << length
                   << " would overflow OPT RR RDLEN (currently "
