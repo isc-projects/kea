@@ -1324,9 +1324,7 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // that were set. If they aren't, we will have to remove existing
         // DNS records and update the lease with the new settings.
         if (!fake_allocation && old_lease &&
-            ((lease->hostname_ != old_lease->hostname_) ||
-             (lease->fqdn_fwd_ != old_lease->fqdn_fwd_) ||
-             (lease->fqdn_rev_ != old_lease->fqdn_rev_))) {
+            !lease->hasIdenticalFqdn(*old_lease)) {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
                       DHCP6_DDNS_LEASE_ASSIGN_FQDN_CHANGE)
                 .arg(old_lease->toText())
