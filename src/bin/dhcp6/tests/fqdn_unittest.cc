@@ -266,7 +266,19 @@ public:
         EXPECT_EQ(flag_o, answ_fqdn->getFlag(Option6ClientFqdn::FLAG_O));
 
         EXPECT_EQ(exp_domain_name, answ_fqdn->getDomainName());
-        EXPECT_EQ(Option6ClientFqdn::FULL, answ_fqdn->getDomainNameType());
+        // If server is configured to generate full FQDN for a client, and/or
+        // client sent empty FQDN the expected result of the processing by
+        // processClientFqdn is an empty, partial FQDN. This is an indication
+        // for the code which performs lease allocation that the FQDN has to
+        // be generated from the lease address.
+        if (exp_domain_name.empty()) {
+            EXPECT_EQ(Option6ClientFqdn::PARTIAL,
+                      answ_fqdn->getDomainNameType());
+
+        } else {
+            EXPECT_EQ(Option6ClientFqdn::FULL, answ_fqdn->getDomainNameType());
+
+        }
     }
 
     /// @brief Tests that the client's message holding an FQDN is processed
@@ -409,8 +421,7 @@ TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdatePartialName) {
 // that server performs AAAA update.
 TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdateNoName) {
     testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S, "",
-             Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
-             "myhost.example.com.");
+             Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S, "");
 }
 
 // Test server's response when client requests no DNS update.

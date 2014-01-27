@@ -1017,13 +1017,14 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
     // generate one.
     if (fqdn->getDomainNameType() == Option6ClientFqdn::PARTIAL) {
         std::ostringstream name;
-        if (fqdn->getDomainName().empty()) {
-            name << FQDN_GENERATED_PARTIAL_NAME;
+        if (fqdn->getDomainName().empty() || FQDN_REPLACE_CLIENT_NAME) {
+            fqdn->setDomainName("", Option6ClientFqdn::PARTIAL);
+
         } else {
             name << fqdn->getDomainName();
+            name << "." << FQDN_PARTIAL_SUFFIX;
+            fqdn_resp->setDomainName(name.str(), Option6ClientFqdn::FULL);
         }
-        name << "." << FQDN_PARTIAL_SUFFIX;
-        fqdn_resp->setDomainName(name.str(), Option6ClientFqdn::FULL);
 
     // Server may be configured to replace a name supplied by a client,
     // even if client supplied fully qualified domain-name.
