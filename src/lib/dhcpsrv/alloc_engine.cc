@@ -432,6 +432,10 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                                                rev_dns_update, hostname,
                                                callout_handle, fake_allocation);
                 if (lease) {
+                    // We are allocating a new lease (not renewing). So, the
+                    // old lease should be NULL.
+                    old_leases.push_back(Lease6Ptr());
+
                     Lease6Collection collection;
                     collection.push_back(lease);
                     return (collection);
@@ -444,7 +448,7 @@ AllocEngine::allocateLeases6(const Subnet6Ptr& subnet, const DuidPtr& duid,
                 if (existing->expired()) {
                     // Copy an existing, expired lease so as it can be returned
                     // to the caller.
-                    Lease6Ptr old_lease(new Lease6(*lease));
+                    Lease6Ptr old_lease(new Lease6(*existing));
                     old_leases.push_back(old_lease);
 
                     existing = reuseExpiredLease(existing, subnet, duid, iaid,
