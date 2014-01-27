@@ -104,9 +104,23 @@ TEST_F(Rdata_OPT_Test, compare) {
                  isc::InvalidOperation);
 }
 
-TEST_F(Rdata_OPT_Test, append) {
-    EXPECT_THROW(rdata_opt.toText(),
-                 isc::InvalidOperation);
+TEST_F(Rdata_OPT_Test, appendPseudoRR) {
+    generic::OPT rdata_opt;
+
+    // Append empty option data
+    rdata_opt.appendPseudoRR(0x0042, NULL, 0);
+
+    // Append simple option data
+    const uint8_t option_data[] = {'H', 'e', 'l', 'l', 'o'};
+    rdata_opt.appendPseudoRR(0x0043, option_data, sizeof(option_data));
+
+    // Duplicate option codes are okay.
+    rdata_opt.appendPseudoRR(0x0042, option_data, sizeof(option_data));
+
+    // When option length may overflow RDLEN, append should throw.
+    const std::vector<uint8_t> buffer((1 << 16) - 1);
+    EXPECT_THROW(rdata_opt.appendPseudoRR(0x0044, &buffer[0], buffer.size()),
+                 isc::InvalidParameter);
 }
 
 TEST_F(Rdata_OPT_Test, getPseudoRRs) {
