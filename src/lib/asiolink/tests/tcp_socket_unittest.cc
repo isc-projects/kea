@@ -408,7 +408,7 @@ TEST(TCPSocket, SequenceTest) {
     server_cb.length() = 0;
     server_cb.cumulative() = 0;
 
-    writeUint16(sizeof(INBOUND_DATA), server_cb.data(), 2);
+    writeUint16(sizeof(INBOUND_DATA), server_cb.data(), TCPCallback::MIN_SIZE);
     copy(INBOUND_DATA, (INBOUND_DATA + sizeof(INBOUND_DATA) - 1),
         (server_cb.data() + 2));
     server_socket.async_send(asio::buffer(server_cb.data(),
