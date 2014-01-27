@@ -280,7 +280,8 @@ public:
         cumulative_ += length;
         bool complete = false;
         if (cumulative_ > 2) {
-            uint16_t dns_length = readUint16(receive_buffer_, sizeof (receive_buffer_));
+            uint16_t dns_length = readUint16(receive_buffer_,
+                                             sizeof(receive_buffer_));
             complete = ((dns_length + 2) == cumulative_);
         }
 
