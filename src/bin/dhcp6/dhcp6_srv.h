@@ -119,6 +119,16 @@ public:
 
 protected:
 
+    /// @brief Compare received server id with our server id
+    ///
+    /// Checks if the server id carried in a query from a client matches
+    /// server identifier being used by the server.
+    ///
+    /// @param pkt DHCPv6 packet carrying server identifier to be checked.
+    /// @return true if server id carried in the query matches server id
+    /// used by the server; false otherwise.
+    bool testServerID(const Pkt6Ptr& pkt);
+
     /// @brief verifies if specified packet meets RFC requirements
     ///
     /// Checks if mandatory option is really there, that forbidden option
