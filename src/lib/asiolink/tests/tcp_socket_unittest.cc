@@ -261,7 +261,7 @@ TEST(TCPSocket, processReceivedData) {
     }
 
     // Check that the method will handle various receive sizes.
-    writeUint16(PACKET_SIZE, inbuff, sizeof (inbuff));
+    writeUint16(PACKET_SIZE, inbuff, sizeof(inbuff));
 
     cumulative = 0;
     offset = 0;
