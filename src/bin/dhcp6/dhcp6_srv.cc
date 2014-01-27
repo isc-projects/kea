@@ -2152,6 +2152,8 @@ Dhcpv6Srv::processSolicit(const Pkt6Ptr& solicit) {
     // perform DNS Updates for Solicit. Client must send Request to update
     // DNS.
 
+    generateFqdn(advertise);
+
     return (advertise);
 }
 
@@ -2169,6 +2171,7 @@ Dhcpv6Srv::processRequest(const Pkt6Ptr& request) {
 
     processClientFqdn(request, reply);
     assignLeases(request, reply);
+    generateFqdn(reply);
     createNameChangeRequests(reply);
 
     return (reply);
@@ -2187,6 +2190,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 
     processClientFqdn(renew, reply);
     renewLeases(renew, reply);
+    generateFqdn(reply);
     createNameChangeRequests(reply);
 
     return (reply);
@@ -2389,6 +2393,72 @@ void
 Dhcpv6Srv::ifaceMgrSocket6ErrorHandler(const std::string& errmsg) {
     // Log the reason for socket opening failure and return.
     LOG_WARN(dhcp6_logger, DHCP6_OPEN_SOCKET_FAIL).arg(errmsg);
+}
+
+void
+Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
+    if (!answer) {
+        isc_throw(isc::Unexpected, "an instance of the object encapsulating"
+                  " a message must not be NULL when generating FQDN");
+    }
+
+    // It is likely that client haven't included the FQDN option. In such case,
+    // FQDN option will be NULL. Also, there is nothing to do if the option
+    // is present and conveys the non-empty FQDN.
+    Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
+        Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
+    if (!fqdn || !fqdn->getDomainName().empty()) {
+        return;
+    }
+
+    // Get the first IA_NA acquired for the client.
+    OptionPtr ia = answer->getOption(D6O_IA_NA);
+    if (!ia) {
+        return;
+    }
+
+    // If it has any IAAddr, use the first one to generate unique FQDN.
+    Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<
+        Option6IAAddr>(ia->getOption(D6O_IAADDR));
+    if (!iaaddr) {
+        return;
+    }
+    // Get the IPv6 address acquired by the client.
+    IOAddress addr = iaaddr->getAddress();
+    std::string hostname = addr.toText();
+    // Colons may not be ok for FQDNs so let's replace them with hyphens.
+    std::replace(hostname.begin(), hostname.end(), ':', '-');
+    std::ostringstream stream;
+    // The final FQDN consists of the partial domain name and the suffix.
+    // For example, if the acquired address is 2001:db8:1::2, the generated
+    // FQDN may be:
+    //     host-2001-db8:1--2.example.com.
+    // where prefix 'host' should be configurable. The domain name suffix
+    // should also be configurable.
+    stream << "host-" << hostname << "." << FQDN_PARTIAL_SUFFIX << ".";
+    try {
+        // The lease has been acquired but the FQDN for this lease hasn't
+        // been updated in the lease database. We now have new FQDN
+        // generated, so the lease database has to be updated here.
+        // However, never update lease database for Advertise, just send
+        // our notion of client's FQDN in the Client FQDN option.
+        if (answer->getType() != DHCPV6_ADVERTISE) {
+            Lease6Ptr lease =
+                LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
+            if (lease) {
+                lease->hostname_ = stream.str();
+            }
+            LeaseMgrFactory::instance().updateLease6(lease);
+        }
+
+        // Set the generated FQDN in the Client FQDN option.
+        fqdn->setDomainName(stream.str(), Option6ClientFqdn::FULL);
+
+    } catch (const Exception& ex) {
+        LOG_ERROR(dhcp6_logger, DHCP6_NAME_GEN_UPDATE_FAIL)
+            .arg(hostname)
+            .arg(ex.what());
+    }
 }
 
 };
