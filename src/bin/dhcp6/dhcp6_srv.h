@@ -527,6 +527,48 @@ private:
     /// @param errmsg An error message containing a cause of the failure.
     static void ifaceMgrSocket6ErrorHandler(const std::string& errmsg);
 
+    /// @brief Generate FQDN to be sent to a client if none exists.
+    ///
+    /// This function is meant to be called by the functions which process
+    /// client's messages. The function should be called after a function
+    /// which creates FQDN option for the client. This option must exist
+    /// in the answer message specified as an argument. It must also be
+    /// called after functions which assign leases for a client. The
+    /// IA options being a result of lease acquisition must be appended
+    /// to the message specified as a parameter.
+    ///
+    /// If the Client FQDN option being present in the message carries empty
+    /// hostname, this function will attempt to generate hostname from the
+    /// IPv6 address being acquired by the client. The IPv6 address is retrieved
+    /// from the IA_NA option carried in the specified message. If multiple
+    /// addresses are present in the particular IA_NA option or multiple IA_NA
+    /// options exist, the first address found is selected.
+    ///
+    /// The IPv6 address is converted to the hostname using the following
+    /// pattern:
+    /// @code
+    ///     prefix-converted-ip-address.domain-name-suffix.
+    /// @endcode
+    /// where:
+    /// - prefix is a configurable prefix string appended to all auto-generated
+    /// hostnames.
+    /// - converted-ip-address is created by replacing all colons from the IPv6
+    /// address with hyphens.
+    /// - domain-name-suffix is a suffix for a domain name that, together with
+    /// the other parts, constitute the fully qualified domain name.
+    ///
+    /// When hostname is successfully generated, it is either used to update
+    /// FQDN-related fields in a lease database or to update the Client FQDN
+    /// option being sent back to the client. The lease database update is
+    /// NOT performed if Advertise message is being processed.
+    ///
+    /// @param answer Message being sent to a client, which may hold IA_NA
+    /// and Client FQDN options to be used to generate name for a client.
+    ///
+    /// @throw isc::Unexpected if specified message is NULL. This is treated
+    /// as a programmatic error.
+    void generateFqdn(const Pkt6Ptr& answer);
+
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
     /// It must be a pointer, because we will support changing engines
