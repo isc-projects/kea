@@ -604,8 +604,7 @@ Dhcpv6Srv::generateServerID() {
         seconds -= DUID_TIME_EPOCH;
 
         OptionBuffer srvid(8 + iface->getMacLen());
-        // We know that the buffer is at least 8 bytes long at this
-        // point.
+        // We know that the buffer is more than 8 bytes long at this point.
         writeUint16(DUID::DUID_LLT, &srvid[0], 2);
         writeUint16(HWTYPE_ETHERNET, &srvid[2], 2);
         writeUint32(static_cast<uint32_t>(seconds), &srvid[4], 4);
