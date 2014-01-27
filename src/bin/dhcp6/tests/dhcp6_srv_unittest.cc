@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1072,6 +1072,42 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
                  RFCViolation);
     EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::MANDATORY),
                  RFCViolation);
+}
+// Check that the server is testing if server identifier received in the
+// query, matches server identifier used by the server.
+TEST_F(Dhcpv6SrvTest, testServerID) {
+	NakedDhcpv6Srv srv(0);
+
+	Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    std::vector<uint8_t> bin;
+
+    // diud_llt constructed with: time = 0, macaddress = 00:00:00:00:00:00
+    // it's necessary to generate server identifier option
+    isc::util::encode::decodeHex("0001000100000000000000000000", bin);
+    // Now create server identifier option
+    OptionPtr serverid = OptionPtr(new Option(Option::V6, D6O_SERVERID, bin));
+
+    // Server identifier option is MANDATORY in Request message.
+    // Add server identifier option with different value from one that
+    // server is using.
+    req->addOption(serverid);
+
+    // Message shoud be dropped
+    EXPECT_FALSE(srv.testServerID(req));
+
+    // Delete server identifier option and add new one, with same value as
+    // server's server identifier.
+    req->delOption(D6O_SERVERID);
+    req->addOption(srv.getServerID());
+
+    // With proper server identifier we expect true
+    EXPECT_TRUE(srv.testServerID(req));
+
+    // server-id MUST NOT appear in Solicit, so check if server is
+    // not dropping a message without server id.
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+
+    EXPECT_TRUE(srv.testServerID(req));
 }
 
 // This test verifies if selectSubnet() selects proper subnet for a given
