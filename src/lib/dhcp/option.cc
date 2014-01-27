@@ -260,18 +260,18 @@ uint32_t Option::getUint32() {
 }
 
 void Option::setUint8(uint8_t value) {
-  data_.resize(1);
-  data_[0] = value;
+    data_.resize(sizeof(value));
+    data_[0] = value;
 }
 
 void Option::setUint16(uint16_t value) {
-  data_.resize(2);
-  writeUint16(value, &data_[0], data_.size());
+    data_.resize(sizeof(value));
+    writeUint16(value, &data_[0], data_.size());
 }
 
 void Option::setUint32(uint32_t value) {
-  data_.resize(4);
-  writeUint32(value, &data_[0], data_.size());
+    data_.resize(sizeof(value));
+    writeUint32(value, &data_[0], data_.size());
 }
 
 bool Option::equal(const OptionPtr& other) const {
