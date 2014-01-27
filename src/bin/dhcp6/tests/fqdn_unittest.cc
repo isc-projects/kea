@@ -684,6 +684,36 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequests) {
 
 }
 
+// Test that NameChangeRequest is not generated when Solicit message is sent.
+// The Solicit is here sent after a lease has been allocated for a client.
+// The Solicit conveys a different hostname which would trigger updates to
+// DNS if the Request was sent instead of Soicit. The code should differentiate
+// behavior depending whether Solicit or Request is sent.
+TEST_F(FqdnDhcpv6SrvTest, processRequestSolicit) {
+    NakedDhcpv6Srv srv(0);
+
+    // Create a Request message with FQDN option and generate server's
+    // response using processRequest function. This will result in the
+    // creation of a new lease and the appropriate NameChangeRequest
+    // to add both reverse and forward mapping to DNS.
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com", srv);
+    ASSERT_EQ(1, srv.name_change_reqs_.size());
+    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 4000);
+
+    // When the returning client sends Solicit the code should never generate
+    // NameChangeRequest and preserve existing DNS entries for the client.
+    // The NameChangeRequest should only be generated when a client sends
+    // Request or Renew.
+    testProcessMessage(DHCPV6_SOLICIT, "otherhost.example.com", srv);
+    ASSERT_TRUE(srv.name_change_reqs_.empty());
+
+}
+
+
 // Test that client may send Request followed by the Renew, both holding
 // FQDN options, but each option holding different domain-name. The Renew
 // should result in generation of the two NameChangeRequests, one to remove
