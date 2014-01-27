@@ -317,7 +317,7 @@ TEST(TCPSocket, processReceivedData) {
 // Tests the operation of a TCPSocket by opening it, sending an asynchronous
 // message to a server, receiving an asynchronous message from the server and
 // closing.
-TEST(TCPSocket, SequenceTest) {
+TEST(TCPSocket, sequenceTest) {
 
     // Common objects.
     IOService   service;                    // Service object for async control
