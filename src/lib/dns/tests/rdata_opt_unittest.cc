@@ -46,12 +46,27 @@ TEST_F(Rdata_OPT_Test, createFromWire) {
     // Valid cases: in the simple implementation with no supported options,
     // we can only check these don't throw.
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass("CLASS4096"),
-                                         "rdata_opt_fromWire"));
+                                         "rdata_opt_fromWire1"));
     EXPECT_NO_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),
-                                         "rdata_opt_fromWire", 2));
+                                         "rdata_opt_fromWire1", 2));
+
+    // Short RDLEN. This throws InvalidRdataLength even if subsequent
+    // pseudo RRs cause RDLEN size to be exhausted.
+    EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
+                                      "rdata_opt_fromWire2"),
+                 InvalidRdataLength);
+    EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
+                                      "rdata_opt_fromWire3"),
+                 InvalidRdataLength);
+    // Option lengths can add up and overflow RDLEN. Unlikely when
+    // parsed from wire data, but we'll check for it anyway.
+    EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
+                                      "rdata_opt_fromWire4"),
+                 InvalidRdataText);
+
     // short buffer case.
     EXPECT_THROW(rdataFactoryFromFile(RRType::OPT(), RRClass::IN(),
-                                      "rdata_opt_fromWire", 11),
+                                      "rdata_opt_fromWire1", 11),
                  InvalidBufferPosition);
 }
 
@@ -80,7 +95,7 @@ TEST_F(Rdata_OPT_Test, toText) {
 TEST_F(Rdata_OPT_Test, compare) {
     EXPECT_THROW(rdata_opt.compare(
                   *rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),
-                                        "rdata_opt_fromWire", 2)),
+                                        "rdata_opt_fromWire1", 2)),
                  isc::InvalidOperation);
 
     // comparison attempt between incompatible RR types also results in
@@ -98,7 +113,7 @@ TEST_F(Rdata_OPT_Test, getPseudoRRs) {
     const generic::OPT rdf =
         dynamic_cast<const generic::OPT&>
         (*rdataFactoryFromFile(RRType("OPT"), RRClass("IN"),
-                               "rdata_opt_fromWire", 2));
+                               "rdata_opt_fromWire1", 2));
 
     const std::vector<generic::OPT::PseudoRR>& rrs = rdf.getPseudoRRs();
     ASSERT_FALSE(rrs.empty());
