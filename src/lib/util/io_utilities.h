@@ -34,7 +34,7 @@ namespace util {
 /// \return Value of 16-bit integer
 inline uint16_t
 readUint16(const void* buffer, size_t length) {
-    if (length < sizeof (uint16_t)) {
+    if (length < sizeof(uint16_t)) {
         isc_throw(isc::OutOfRange,
                   "Length (" << length << ") of buffer is insufficient " <<
                   "to read a uint16_t");
@@ -61,7 +61,7 @@ readUint16(const void* buffer, size_t length) {
 /// \return pointer to the next byte after stored value
 inline uint8_t*
 writeUint16(uint16_t value, void* buffer, size_t length) {
-    if (length < sizeof (uint16_t)) {
+    if (length < sizeof(uint16_t)) {
         isc_throw(isc::OutOfRange,
                   "Length (" << length << ") of buffer is insufficient " <<
                   "to write a uint16_t");
@@ -85,7 +85,7 @@ writeUint16(uint16_t value, void* buffer, size_t length) {
 /// \return Value of 32-bit unsigned integer
 inline uint32_t
 readUint32(const uint8_t* buffer, size_t length) {
-    if (length < sizeof (uint32_t)) {
+    if (length < sizeof(uint32_t)) {
         isc_throw(isc::OutOfRange,
                   "Length (" << length << ") of buffer is insufficient " <<
                   "to read a uint32_t");
@@ -111,7 +111,7 @@ readUint32(const uint8_t* buffer, size_t length) {
 /// \return pointer to the next byte after stored value
 inline uint8_t*
 writeUint32(uint32_t value, uint8_t* buffer, size_t length) {
-    if (length < sizeof (uint32_t)) {
+    if (length < sizeof(uint32_t)) {
         isc_throw(isc::OutOfRange,
                   "Length (" << length << ") of buffer is insufficient " <<
                   "to write a uint32_t");
