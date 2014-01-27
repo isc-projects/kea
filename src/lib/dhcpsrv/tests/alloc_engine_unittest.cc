@@ -836,9 +836,10 @@ TEST_F(AllocEngine6Test, smallPool6) {
     // Now check that the lease in LeaseMgr has the same parameters
     detailCompareLease(lease, from_mgr);
 
-    // This is a new lease allocation. The collection of old leases should be
-    // empty.
-    EXPECT_TRUE(old_leases_.empty());
+    // This is a new lease allocation. The old lease corresponding to a newly
+    // allocated lease should be NULL.
+    ASSERT_EQ(1, old_leases_.size());
+    EXPECT_FALSE(old_leases_[0]);
 }
 
 // This test checks if all addresses in a pool are currently used, the attempt
