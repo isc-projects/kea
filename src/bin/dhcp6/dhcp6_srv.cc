@@ -2345,6 +2345,9 @@ Dhcpv6Srv::unpackOptions(const OptionBuffer& buf,
     // The buffer being read comprises a set of options, each starting with
     // a two-byte type code and a two-byte length field.
     while (offset + 4 <= length) {
+        // At this point, from the while condition, we know that there
+        // are at least 4 bytes available following offset in the
+        // buffer.
         uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
