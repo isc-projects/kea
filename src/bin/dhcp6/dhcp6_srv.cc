@@ -604,11 +604,12 @@ Dhcpv6Srv::generateServerID() {
         seconds -= DUID_TIME_EPOCH;
 
         OptionBuffer srvid(8 + iface->getMacLen());
-        writeUint16(DUID::DUID_LLT, &srvid[0], srvid.size());
-        writeUint16(HWTYPE_ETHERNET, &srvid[2], srvid.size() - 2);
-        writeUint32(static_cast<uint32_t>(seconds), &srvid[4],
-                    srvid.size() - 4);
-        memcpy(&srvid[0] + 8, iface->getMac(), iface->getMacLen());
+        // We know that the buffer is at least 8 bytes long at this
+        // point.
+        writeUint16(DUID::DUID_LLT, &srvid[0], 2);
+        writeUint16(HWTYPE_ETHERNET, &srvid[2], 2);
+        writeUint32(static_cast<uint32_t>(seconds), &srvid[4], 4);
+        memcpy(&srvid[8], iface->getMac(), iface->getMacLen());
 
         serverid_ = OptionPtr(new Option(Option::V6, D6O_SERVERID,
                                          srvid.begin(), srvid.end()));
