@@ -164,13 +164,27 @@ OPT::toText() const {
 }
 
 void
-OPT::toWire(OutputBuffer&) const {
-    // nothing to do, as this simple version doesn't support any options.
+OPT::toWire(OutputBuffer& buffer) const {
+    BOOST_FOREACH(const PseudoRR& pseudo_rr, impl_->pseudo_rrs_) {
+        buffer.writeUint16(pseudo_rr.getCode());
+        const uint16_t length = pseudo_rr.getLength();
+        buffer.writeUint16(length);
+        if (length > 0) {
+            buffer.writeData(pseudo_rr.getData(), length);
+        }
+    }
 }
 
 void
-OPT::toWire(AbstractMessageRenderer&) const {
-    // nothing to do, as this simple version doesn't support any options.
+OPT::toWire(AbstractMessageRenderer& renderer) const {
+    BOOST_FOREACH(const PseudoRR& pseudo_rr, impl_->pseudo_rrs_) {
+        renderer.writeUint16(pseudo_rr.getCode());
+        const uint16_t length = pseudo_rr.getLength();
+        renderer.writeUint16(length);
+        if (length > 0) {
+            renderer.writeData(pseudo_rr.getData(), length);
+        }
+    }
 }
 
 int
