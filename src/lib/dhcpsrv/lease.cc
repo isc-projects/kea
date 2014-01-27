@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -54,6 +54,13 @@ bool Lease::expired() const {
     // Let's use int64 to avoid problems with negative/large uint32 values
     int64_t expire_time = cltt_ + valid_lft_;
     return (expire_time < time(NULL));
+}
+
+bool
+Lease::hasIdenticalFqdn(const Lease& other) const {
+    return (hostname_ == other.hostname_ &&
+            fqdn_fwd_ == other.fqdn_fwd_ &&
+            fqdn_rev_ == other.fqdn_rev_);
 }
 
 Lease4::Lease4(const Lease4& other)

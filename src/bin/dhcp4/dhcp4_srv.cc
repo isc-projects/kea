@@ -911,17 +911,14 @@ Dhcpv4Srv::createNameChangeRequests(const Lease4Ptr& lease,
             //   removal request for non-existent hostname.
             // - A server has performed reverse, forward or both updates.
             // - FQDN data between the new and old lease do not match.
-            if  ((lease->hostname_ != old_lease->hostname_) ||
-                 (lease->fqdn_fwd_ != old_lease->fqdn_fwd_) ||
-                 (lease->fqdn_rev_ != old_lease->fqdn_rev_)) {
+            if (!lease->hasIdenticalFqdn(*old_lease)) {
                 queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
                                        old_lease);
 
             // If FQDN data from both leases match, there is no need to update.
-            } else if ((lease->hostname_ == old_lease->hostname_) &&
-                       (lease->fqdn_fwd_ == old_lease->fqdn_fwd_) &&
-                       (lease->fqdn_rev_ == old_lease->fqdn_rev_)) {
+            } else if (lease->hasIdenticalFqdn(*old_lease)) {
                 return;
+
             }
 
         }
