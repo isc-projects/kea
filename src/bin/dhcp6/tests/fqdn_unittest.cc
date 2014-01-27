@@ -492,9 +492,8 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAddr) {
     ASSERT_TRUE(srv.name_change_reqs_.empty());
 }
 
-// Test that a number of NameChangeRequests is created as a result of
-// processing the answer message which holds 3 IAs and when FQDN is
-// specified.
+// Test that exactly one NameChangeRequest is created as a result of processing
+// the answer message which holds 3 IAs and when FQDN is specified.
 TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
     NakedDhcpv6Srv srv(0);
 
@@ -514,28 +513,13 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    // Create NameChangeRequests. Since we have added 3 IAs, it should
-    // result in generation of 3 distinct NameChangeRequests.
+    // Create NameChangeRequest for the first allocated address.
     ASSERT_NO_THROW(srv.createNameChangeRequests(answer));
-    ASSERT_EQ(3, srv.name_change_reqs_.size());
+    ASSERT_EQ(1, srv.name_change_reqs_.size());
 
-    // Verify that NameChangeRequests are correct. Each call to the
-    // verifyNameChangeRequest will pop verified request from the queue.
-
+    // Verify that NameChangeRequest is correct.
     verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1::1",
-                            "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 500);
-
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
-                            "2001:db8:1::2",
-                            "000201415AA33D1187D148275136FA30300478"
-                            "FAAAA3EBD29826B5C907B2C9268A6F52",
-                            0, 500);
-
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
-                            "2001:db8:1::3",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 500);
