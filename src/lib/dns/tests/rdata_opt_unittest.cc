@@ -35,7 +35,14 @@ class Rdata_OPT_Test : public RdataTest {
     // there's nothing to specialize
 };
 
-const generic::OPT rdata_opt;
+const uint8_t rdata_opt_wiredata[] = {
+    // Option code
+    0x00, 0x03,
+    // Option length
+    0x00, 0x03,
+    // Option data
+    0x00, 0x01, 0x02
+};
 
 TEST_F(Rdata_OPT_Test, createFromText) {
     // OPT RR cannot be created from text.
@@ -78,21 +85,47 @@ TEST_F(Rdata_OPT_Test, createFromLexer) {
 }
 
 TEST_F(Rdata_OPT_Test, toWireBuffer) {
+    const generic::OPT rdata_opt =
+        dynamic_cast<const generic::OPT&>
+        (*rdataFactoryFromFile(RRType("OPT"), RRClass("IN"),
+                               "rdata_opt_fromWire1", 2));
+
+    obuffer.clear();
     rdata_opt.toWire(obuffer);
-    EXPECT_EQ(0, obuffer.getLength());
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        obuffer.getData(),
+                        obuffer.getLength(),
+                        rdata_opt_wiredata, sizeof(rdata_opt_wiredata));
 }
 
 TEST_F(Rdata_OPT_Test, toWireRenderer) {
+    const generic::OPT rdata_opt =
+        dynamic_cast<const generic::OPT&>
+        (*rdataFactoryFromFile(RRType("OPT"), RRClass("IN"),
+                               "rdata_opt_fromWire1", 2));
+
+    renderer.clear();
     rdata_opt.toWire(renderer);
-    EXPECT_EQ(0, obuffer.getLength());
+
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        renderer.getData(),
+                        renderer.getLength(),
+                        rdata_opt_wiredata, sizeof(rdata_opt_wiredata));
 }
 
 TEST_F(Rdata_OPT_Test, toText) {
+    // empty OPT
+    const generic::OPT rdata_opt;
+
     EXPECT_THROW(rdata_opt.toText(),
                  isc::InvalidOperation);
 }
 
 TEST_F(Rdata_OPT_Test, compare) {
+    // empty OPT
+    const generic::OPT rdata_opt;
+
     EXPECT_THROW(rdata_opt.compare(
                   *rdataFactoryFromFile(RRType::OPT(), RRClass::CH(),
                                         "rdata_opt_fromWire1", 2)),
