@@ -283,6 +283,7 @@ Feature: Xfrin incoming notify handling
     config commit
     """
     last bindctl output should not contain Error
+    Then wait for new master stderr message XFROUT_NEW_CONFIG_DONE
 
     When I send bind10 with cmdctl port 56174 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
@@ -399,6 +400,7 @@ Feature: Xfrin incoming notify handling
     config commit
     """
     last bindctl output should not contain Error
+    Then wait for new master stderr message XFROUT_NEW_CONFIG_DONE
 
     When I send bind10 with cmdctl port 56174 the command Xfrout notify example.org IN
     Then wait for new master stderr message XFROUT_NOTIFY_COMMAND
