@@ -166,6 +166,23 @@ public:
     /// Type of the index #2 - option persistency flag.
     typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
 
+    /// @brief Holds optional information about relay.
+    ///
+    /// In some cases it is beneficial to have additional information about
+    /// a relay configured in the subnet. For now, the structure holds only
+    /// IP address, but there may potentially be additional parameters added
+    /// later, e.g. relay interface-id or relay-id.
+    struct RelayInfo {
+
+        /// @brief default and the only constructor
+        ///
+        /// @param addr an IP address of the relay (may be :: or 0.0.0.0)
+        RelayInfo(const isc::asiolink::IOAddress& addr);
+
+        /// @brief IP address of the relay
+        isc::asiolink::IOAddress addr_;
+    };
+
     /// @brief checks if specified address is in range
     bool inRange(const isc::asiolink::IOAddress& addr) const;
 
@@ -375,6 +392,33 @@ public:
         static_id_ = 1;
     }
 
+    /// @brief Sets address of the relay
+    ///
+    /// In some situations where there are shared subnets (i.e. two different
+    /// subnets are available on the same physical link), there is only one
+    /// relay that handles incoming requests from clients. In such a case,
+    /// the usual subnet selection criteria based on relay belonging to the
+    /// subnet being selected are no longer sufficient and we need to explicitly
+    /// specify a relay. One notable example of such uncommon, but valid
+    /// scenario is a cable network, where there is only one CMTS (one relay),
+    /// but there are 2 distinct subnets behind it: one for cable modems
+    /// and another one for CPEs and other user equipment behind modems.
+    /// From manageability perspective, it is essential that modems get addresses
+    /// from different subnet, so users won't tinker with their modems.
+    ///
+    /// Setting this parameter is not needed in most deployments.
+    ///
+    /// @params relay IP address of the relay
+    void setRelay(const isc::dhcp::Subnet::RelayInfo& relay);
+
+    /// @brief Relay information
+    ///
+    /// See @ref RelayInfo for detailed description. This structure is public,
+    /// so its fields are easily accessible. Making it protected would bring in
+    /// the issue of returning references that may become stale after its parent
+    /// subnet object disappears.
+    RelayInfo relay_;
+
 protected:
     /// @brief Returns all pools (non-const variant)
     ///
@@ -393,10 +437,18 @@ protected:
     /// This subnet-id has unique value that is strictly monotonously increasing
     /// for each subnet, until it is explicitly reset back to 1 during
     /// reconfiguration process.
+    ///
+    /// @param prefix subnet prefix
+    /// @param len prefix length for the subnet
+    /// @param t1 T1 (renewal-time) timer, expressed in seconds
+    /// @param t2 T2 (rebind-time) timer, expressed in seconds
+    /// @param valid_lifetime valid lifetime of leases in this subnet (in seconds)
+    /// @param relay optional relay information (currently with address only)
     Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
            const Triplet<uint32_t>& t1,
            const Triplet<uint32_t>& t2,
-           const Triplet<uint32_t>& valid_lifetime);
+           const Triplet<uint32_t>& valid_lifetime,
+           const isc::dhcp::Subnet::RelayInfo& relay);
 
     /// @brief virtual destructor
     ///

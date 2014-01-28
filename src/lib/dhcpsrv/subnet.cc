@@ -30,17 +30,23 @@ SubnetID Subnet::static_id_ = 1;
 Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const Triplet<uint32_t>& t1,
                const Triplet<uint32_t>& t2,
-               const Triplet<uint32_t>& valid_lifetime)
-    :id_(generateNextID()), prefix_(prefix), prefix_len_(len), t1_(t1),
-     t2_(t2), valid_(valid_lifetime),
+               const Triplet<uint32_t>& valid_lifetime,
+               const isc::dhcp::Subnet::RelayInfo& relay)
+    :relay_(relay), id_(generateNextID()), prefix_(prefix), prefix_len_(len),
+     t1_(t1), t2_(t2), valid_(valid_lifetime),
      last_allocated_ia_(lastAddrInPrefix(prefix, len)),
      last_allocated_ta_(lastAddrInPrefix(prefix, len)),
-     last_allocated_pd_(lastAddrInPrefix(prefix, len)) {
+     last_allocated_pd_(lastAddrInPrefix(prefix, len))
+      {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
         isc_throw(BadValue,
                   "Invalid prefix length specified for subnet: " << len);
     }
+}
+
+Subnet::RelayInfo::RelayInfo(const isc::asiolink::IOAddress& addr)
+    :addr_(addr) {
 }
 
 bool
@@ -63,6 +69,11 @@ Subnet::addOption(const OptionPtr& option, bool persistent,
 
     // Actually add new option descriptor.
     option_spaces_.addItem(OptionDescriptor(option, persistent), option_space);
+}
+
+void
+Subnet::setRelay(const isc::dhcp::Subnet::RelayInfo& relay) {
+    relay_ = relay;
 }
 
 void
@@ -179,8 +190,8 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t1,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& valid_lifetime)
-    :Subnet(prefix, length, t1, t2, valid_lifetime),
-    siaddr_(IOAddress("0.0.0.0")) {
+:Subnet(prefix, length, t1, t2, valid_lifetime,
+        RelayInfo(IOAddress("0.0.0.0"))), siaddr_(IOAddress("0.0.0.0")) {
     if (!prefix.isV4()) {
         isc_throw(BadValue, "Non IPv4 prefix " << prefix.toText()
                   << " specified in subnet4");
@@ -331,7 +342,7 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
                  const Triplet<uint32_t>& t2,
                  const Triplet<uint32_t>& preferred_lifetime,
                  const Triplet<uint32_t>& valid_lifetime)
-    :Subnet(prefix, length, t1, t2, valid_lifetime),
+:Subnet(prefix, length, t1, t2, valid_lifetime, RelayInfo(IOAddress("::"))),
      preferred_(preferred_lifetime){
     if (!prefix.isV6()) {
         isc_throw(BadValue, "Non IPv6 prefix " << prefix
