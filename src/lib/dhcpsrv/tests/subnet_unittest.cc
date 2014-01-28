@@ -49,6 +49,8 @@ TEST(Subnet4Test, in_range) {
     EXPECT_EQ(2000, subnet.getT2());
     EXPECT_EQ(3000, subnet.getValid());
 
+    EXPECT_EQ("0.0.0.0", subnet.relay_.addr_.toText());
+
     EXPECT_FALSE(subnet.inRange(IOAddress("192.0.0.0")));
     EXPECT_TRUE(subnet.inRange(IOAddress("192.0.2.0")));
     EXPECT_TRUE(subnet.inRange(IOAddress("192.0.2.1")));
@@ -56,6 +58,17 @@ TEST(Subnet4Test, in_range) {
     EXPECT_FALSE(subnet.inRange(IOAddress("192.0.3.0")));
     EXPECT_FALSE(subnet.inRange(IOAddress("0.0.0.0")));
     EXPECT_FALSE(subnet.inRange(IOAddress("255.255.255.255")));
+}
+
+// Checks whether the relay field has sane default and if it can
+// be changed, stored and retrieved
+TEST(Subnet4Test, relay) {
+    Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
+
+    EXPECT_EQ("0.0.0.0", subnet.relay_.addr_.toText());
+
+    subnet.setRelay(IOAddress("192.0.123.45"));
+    EXPECT_EQ("192.0.123.45", subnet.relay_.addr_.toText());
 }
 
 // Checks whether siaddr field can be set and retrieved correctly.
@@ -289,6 +302,18 @@ TEST(Subnet6Test, in_range) {
     EXPECT_TRUE(subnet.inRange(IOAddress("2001:db8:1::ffff:ffff:ffff:ffff")));
     EXPECT_FALSE(subnet.inRange(IOAddress("2001:db8:1:1::")));
     EXPECT_FALSE(subnet.inRange(IOAddress("::")));
+}
+
+// Checks whether the relay field has sane default and if it can
+// be changed, stored and retrieved
+TEST(Subnet6Test, relay) {
+    Subnet6 subnet(IOAddress("2001:db8:1::"), 64, 1000, 2000, 3000, 4000);
+
+    EXPECT_EQ("::", subnet.relay_.addr_.toText());
+
+    subnet.setRelay(IOAddress("2001:ffff::1"));
+
+    EXPECT_EQ("2001:ffff::1", subnet.relay_.addr_.toText());
 }
 
 TEST(Subnet6Test, Pool6InSubnet6) {
