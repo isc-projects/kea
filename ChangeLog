@@ -1,3 +1,10 @@
+739.	[bug]		muks
+	Various minor updates were made to the SSHFP RDATA parser. Mainly,
+	the SSHFP constructor no longer throws an isc::BadValue exception.
+	generic::SSHFP::getFingerprintLen() was also renamed to
+	getFingerprintLength().
+	(Trac #3287, git 2f26d781704618c6007ba896ad3d9e0c107d04b0)
+
 738.	[bug]		muks
 	b10-auth now correctly processes NXDOMAIN results in the root zone
 	when using a SQLite3 data source.
