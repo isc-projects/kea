@@ -1,3 +1,8 @@
+737.	[func]		muks
+	b10-auth now additionally logs the source address and port when
+	DNS messages with unsupported opcodes are received.
+	(Trac #1516, git 71611831f6d1aaaea09143d4837eddbd1d67fbf4)
+
 736.    [bug]           wlodek
 	b10-dhcp6 is now capable to determine if a received
 	message is addressed to it, using server identifier option.
