@@ -143,11 +143,11 @@ def format_addrinfo(addrinfo):
         raise TypeError("addrinfo argument to format_addrinfo() does not "
                         "appear to be consisting of (family, socktype, (addr, port))")
 
+# This function is not inlined as it is replaced with a mock function
+# during testing.
 def get_rrset_len(rrset):
     """Returns the wire length of the given RRset"""
-    bytes = bytearray()
-    rrset.to_wire(bytes)
-    return len(bytes)
+    return rrset.get_length()
 
 def get_soa_serial(soa_rdata):
     '''Extract the serial field of an SOA RDATA and returns it as an Serial object.
