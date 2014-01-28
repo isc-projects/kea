@@ -211,12 +211,12 @@ TEST_F(RdataTest, createRdataWithLexer) {
                    "file does not end with newline");
 }
 
-TEST_F(RdataTest, getWireLength) {
+TEST_F(RdataTest, getLength) {
     const in::AAAA aaaa_rdata("2001:db8::1");
-    EXPECT_EQ(16, aaaa_rdata.getWireLength());
+    EXPECT_EQ(16, aaaa_rdata.getLength());
 
     const generic::TXT txt_rdata("Hello World");
-    EXPECT_EQ(12, txt_rdata.getWireLength());
+    EXPECT_EQ(12, txt_rdata.getLength());
 }
 
 }
