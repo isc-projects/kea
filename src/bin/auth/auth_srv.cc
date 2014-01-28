@@ -584,8 +584,9 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                                  Rcode::NOTIMP(), stats_attrs, tsig_context);
             }
         } else if (opcode != Opcode::QUERY()) {
+            const IOEndpoint& remote_ep = io_message.getRemoteEndpoint();
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
-                      .arg(message.getOpcode().toText());
+                .arg(message.getOpcode().toText()).arg(remote_ep);
             makeErrorMessage(impl_->renderer_, message, buffer,
                              Rcode::NOTIMP(), stats_attrs, tsig_context);
         } else if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
