@@ -289,6 +289,50 @@ BasicRRset::toText() const {
     return (AbstractRRset::toText());
 }
 
+uint16_t
+BasicRRset::getLength() const {
+    uint16_t length = 0;
+    RdataIteratorPtr it = getRdataIterator();
+
+    if (it->isLast()) {
+        // empty rrsets are only allowed for classes ANY and NONE
+        if (getClass() != RRClass::ANY() &&
+            getClass() != RRClass::NONE()) {
+            isc_throw(EmptyRRset, "getLength() is attempted for an empty RRset");
+        }
+
+        // For an empty RRset, write the name, type, class and TTL once,
+        // followed by empty rdata.
+        length += getName().getLength();
+        length += 2; // TYPE field
+        length += 2; // CLASS field
+        length += 2; // TTL field
+        length += 2; // RDLENGTH field (=0 in wire format)
+
+        return (length);
+    }
+
+    do {
+        // This is a size_t as some of the following additions may
+        // overflow due to a programming mistake somewhere.
+        size_t rrlen = 0;
+
+        rrlen += getName().getLength();
+        rrlen += 2; // TYPE field
+        rrlen += 2; // CLASS field
+        rrlen += 2; // TTL field
+        rrlen += 2; // RDLENGTH field
+        rrlen += it->getCurrent().getLength();
+
+        assert(length + rrlen < 65536);
+        length += rrlen;
+
+        it->next();
+    } while (!it->isLast());
+
+    return (length);
+}
+
 unsigned int
 BasicRRset::toWire(OutputBuffer& buffer) const {
     return (AbstractRRset::toWire(buffer));
@@ -320,6 +364,21 @@ RRset::getRRsigDataCount() const {
     } else {
         return (0);
     }
+}
+
+uint16_t
+RRset::getLength() const {
+    uint16_t length = BasicRRset::getLength();
+
+    if (rrsig_) {
+        const uint16_t rrsigs_length = rrsig_->getLength();
+        // the uint16_ts are promoted to ints during addition below, so
+        // it won't overflow a 16-bit register.
+        assert(length + rrsigs_length < 65536);
+        length += rrsigs_length;
+    }
+
+    return (length);
 }
 
 unsigned int
