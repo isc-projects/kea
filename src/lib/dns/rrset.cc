@@ -306,7 +306,7 @@ BasicRRset::getLength() const {
         length += getName().getLength();
         length += 2; // TYPE field
         length += 2; // CLASS field
-        length += 2; // TTL field
+        length += 4; // TTL field
         length += 2; // RDLENGTH field (=0 in wire format)
 
         return (length);
@@ -320,7 +320,7 @@ BasicRRset::getLength() const {
         rrlen += getName().getLength();
         rrlen += 2; // TYPE field
         rrlen += 2; // CLASS field
-        rrlen += 2; // TTL field
+        rrlen += 4; // TTL field
         rrlen += 2; // RDLENGTH field
         rrlen += it->getCurrent().getLength();
 
