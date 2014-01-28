@@ -1,3 +1,8 @@
+738.	[bug]		muks
+	b10-auth now correctly processes NXDOMAIN results in the root zone
+	when using a SQLite3 data source.
+	(Trac #2951, git 13685cc4580660eaf5b041b683a2d2f31fd24de3)
+
 737.	[func]		muks
 	b10-auth now additionally logs the source address and port when
 	DNS messages with unsupported opcodes are received.
