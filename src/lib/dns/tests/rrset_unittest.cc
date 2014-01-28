@@ -204,6 +204,30 @@ TEST_F(RRsetTest, toText) {
               rrset_none_a_empty.toText());
 }
 
+TEST_F(RRsetTest, getLength) {
+    // Empty RRset should throw
+    EXPECT_THROW(rrset_a_empty.getLength(), EmptyRRset);
+
+    // Unless it is type ANY or NONE:
+    // test.example.com = 1 + 4 + 1 + 7 + 1 + 3 + 1 = 18 octets
+    // TYPE field = 2 octets
+    // CLASS field = 2 octets
+    // TTL field = 2 octets
+    // RDLENGTH field = 2 octets
+    // Total = 18 + 2 + 2 + 2 + 2 = 26 octets
+    EXPECT_EQ(26, rrset_any_a_empty.getLength());
+    EXPECT_EQ(26, rrset_none_a_empty.getLength());
+
+    // RRset with single RDATA
+    // 26 (above) + 4 octets (A RDATA) = 30 octets
+    rrset_a_empty.addRdata(in::A("192.0.2.1"));
+    EXPECT_EQ(30, rrset_a_empty.getLength());
+
+    // 2 A RRs
+    rrset_a_empty.addRdata(in::A("192.0.2.2"));
+    EXPECT_EQ(60, rrset_a_empty.getLength());
+}
+
 TEST_F(RRsetTest, toWireBuffer) {
     rrset_a.toWire(buffer);
 
@@ -364,5 +388,39 @@ TEST_F(RRsetRRSIGTest, toText) {
               "test.example.com. 3600 IN RRSIG AAAA 5 3 7200 "
               "20100322084538 20100220084538 1 example.com. FAKEFAKEFAKEFAKE\n",
               rrset_aaaa->toText());
+}
+
+TEST_F(RRsetRRSIGTest, getLength) {
+    // A RR
+    // test.example.com = 1 + 4 + 1 + 7 + 1 + 3 + 1 = 18 octets
+    // TYPE field = 2 octets
+    // CLASS field = 2 octets
+    // TTL field = 2 octets
+    // RDLENGTH field = 2 octets
+    // A RDATA = 4 octets
+    // Total = 18 + 2 + 2 + 2 + 2 + 4 = 30 octets
+
+    // 2 A RRs
+    EXPECT_EQ(60, rrset_a->getLength());
+
+    // RRSIG
+    // test.example.com = 1 + 4 + 1 + 7 + 1 + 3 + 1 = 18 octets
+    // TYPE field = 2 octets
+    // CLASS field = 2 octets
+    // TTL field = 2 octets
+    // RDLENGTH field = 2 octets
+    // RRSIG RDATA = 40 octets
+    // Total = 18 + 2 + 2 + 2 + 2 + 40 = 66 octets
+    RRsetPtr my_rrsig(new RRset(test_name, RRClass::IN(),
+                                RRType::RRSIG(), RRTTL(3600)));
+    my_rrsig->addRdata(generic::RRSIG("A 4 3 3600 "
+                                      "20000101000000 20000201000000 "
+                                      "12345 example.com. FAKEFAKEFAKE"));
+    EXPECT_EQ(66, my_rrsig->getLength());
+
+    // RRset with attached RRSIG
+    rrset_a->addRRsig(my_rrsig);
+
+    EXPECT_EQ(60 + 66, rrset_a->getLength());
 }
 }
