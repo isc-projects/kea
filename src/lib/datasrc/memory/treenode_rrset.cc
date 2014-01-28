@@ -141,7 +141,7 @@ getLengthHelper(size_t* rlength, size_t rr_count, uint16_t name_labels_size,
         rrlen += name_labels_size;
         rrlen += 2; // TYPE field
         rrlen += 2; // CLASS field
-        rrlen += 2; // TTL field
+        rrlen += 4; // TTL field
         rrlen += 2; // RDLENGTH field
 
         *rlength = 0;

@@ -53,15 +53,15 @@ class TestModuleSpec(unittest.TestCase):
         # test.example.com = 1 + 4 + 1 + 7 + 1 + 3 + 1 = 18 octets
         # TYPE field = 2 octets
         # CLASS field = 2 octets
-        # TTL field = 2 octets
+        # TTL field = 4 octets
         # RDLENGTH field = 2 octets
-        # Total = 18 + 2 + 2 + 2 + 2 = 26 octets
-        self.assertEqual(26, self.rrset_any_a_empty.get_length())
+        # Total = 18 + 2 + 2 + 4 + 2 = 28 octets
+        self.assertEqual(28, self.rrset_any_a_empty.get_length())
 
         # Single A RR:
-        # 26 octets (above) + 4 octets (A RDATA) = 30 octets
+        # 28 octets (above) + 4 octets (A RDATA) = 32 octets
         # With 2 A RRs:
-        self.assertEqual(30 + 30, self.rrset_a.get_length())
+        self.assertEqual(32 + 32, self.rrset_a.get_length())
 
     def test_get_name(self):
         self.assertEqual(self.test_name, self.rrset_a.get_name())
