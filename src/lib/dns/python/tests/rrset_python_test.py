@@ -45,6 +45,24 @@ class TestModuleSpec(unittest.TestCase):
             self.assertEqual(i, self.rrset_a_empty.get_rdata_count())
             self.rrset_a_empty.add_rdata(Rdata(RRType("A"), RRClass("IN"), "192.0.2.1"))
 
+    def test_get_length(self):
+        # Empty RRset should throw
+        self.assertRaises(EmptyRRset, self.rrset_a_empty.get_length);
+
+        # Unless it is type ANY or NONE:
+        # test.example.com = 1 + 4 + 1 + 7 + 1 + 3 + 1 = 18 octets
+        # TYPE field = 2 octets
+        # CLASS field = 2 octets
+        # TTL field = 2 octets
+        # RDLENGTH field = 2 octets
+        # Total = 18 + 2 + 2 + 2 + 2 = 26 octets
+        self.assertEqual(26, self.rrset_any_a_empty.get_length())
+
+        # Single A RR:
+        # 26 octets (above) + 4 octets (A RDATA) = 30 octets
+        # With 2 A RRs:
+        self.assertEqual(30 + 30, self.rrset_a.get_length())
+
     def test_get_name(self):
         self.assertEqual(self.test_name, self.rrset_a.get_name())
         self.assertEqual(self.test_domain, self.rrset_ns.get_name())
