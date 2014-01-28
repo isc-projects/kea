@@ -59,11 +59,6 @@ protected:
                 rdata_str, rdata_sshfp, true, true);
     }
 
-    void checkFromText_BadValue(const string& rdata_str) {
-        checkFromText<generic::SSHFP, InvalidRdataText, BadValue>(
-            rdata_str, rdata_sshfp, true, true);
-    }
-
     void checkFromText_BadString(const string& rdata_str) {
         checkFromText
             <generic::SSHFP, InvalidRdataText, isc::Exception>(
@@ -138,8 +133,8 @@ TEST_F(Rdata_SSHFP_Test, badText) {
     checkFromText_LexerError("1");
     checkFromText_LexerError("ONE 2 123456789abcdef67890123456789abcdef67890");
     checkFromText_LexerError("1 TWO 123456789abcdef67890123456789abcdef67890");
-    checkFromText_BadValue("1 2 BUCKLEMYSHOE");
-    checkFromText_BadValue(sshfp_txt + " extra text");
+    checkFromText_InvalidText("1 2 BUCKLEMYSHOE");
+    checkFromText_InvalidText(sshfp_txt + " extra text");
 
     // yes, these are redundant to the last test cases in algorithmTypes
     checkFromText_InvalidText(
@@ -232,7 +227,8 @@ TEST_F(Rdata_SSHFP_Test, toWire) {
     this->obuffer.clear();
     rdata_sshfp.toWire(this->obuffer);
 
-    EXPECT_EQ(22, this->obuffer.getLength());
+    EXPECT_EQ(sizeof (rdata_sshfp_wiredata),
+              this->obuffer.getLength());
 
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
                         this->obuffer.getData(),
@@ -254,8 +250,20 @@ TEST_F(Rdata_SSHFP_Test, getFingerprintType) {
     EXPECT_EQ(1, rdata_sshfp.getFingerprintType());
 }
 
-TEST_F(Rdata_SSHFP_Test, getFingerprintLen) {
-    EXPECT_EQ(20, rdata_sshfp.getFingerprintLen());
+TEST_F(Rdata_SSHFP_Test, getFingerprint) {
+    const std::vector<uint8_t>& fingerprint =
+        rdata_sshfp.getFingerprint();
+
+    EXPECT_EQ(rdata_sshfp.getFingerprintLength(),
+              fingerprint.size());
+    for (int i = 0; i < fingerprint.size(); ++i) {
+        EXPECT_EQ(rdata_sshfp_wiredata[i + 2],
+                  fingerprint.at(i));
+    }
+}
+
+TEST_F(Rdata_SSHFP_Test, getFingerprintLength) {
+    EXPECT_EQ(20, rdata_sshfp.getFingerprintLength());
 }
 
 TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromWire) {
@@ -273,7 +281,7 @@ TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromWire) {
 
     EXPECT_EQ(4, rdf.getAlgorithmNumber());
     EXPECT_EQ(9, rdf.getFingerprintType());
-    EXPECT_EQ(0, rdf.getFingerprintLen());
+    EXPECT_EQ(0, rdf.getFingerprintLength());
 
     this->obuffer.clear();
     rdf.toWire(this->obuffer);
@@ -297,7 +305,7 @@ TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromString) {
 
     EXPECT_EQ(5, rdata_sshfp2.getAlgorithmNumber());
     EXPECT_EQ(6, rdata_sshfp2.getFingerprintType());
-    EXPECT_EQ(0, rdata_sshfp2.getFingerprintLen());
+    EXPECT_EQ(0, rdata_sshfp2.getFingerprintLength());
 
     this->obuffer.clear();
     rdata_sshfp2.toWire(this->obuffer);
