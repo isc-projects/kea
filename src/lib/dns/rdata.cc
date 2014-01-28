@@ -47,7 +47,7 @@ namespace dns {
 namespace rdata {
 
 uint16_t
-Rdata::getWireLength() const {
+Rdata::getLength() const {
     OutputBuffer obuffer(0);
 
     toWire(obuffer);

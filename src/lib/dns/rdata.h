@@ -227,15 +227,15 @@ public:
     /// IMPLEMENTATION NOTE: Currently this base class implementation is
     /// non-optimal as it renders the wire data to a buffer and returns
     /// the buffer's length. What would perform better is to add
-    /// implementations of \c getWireLength() method to every RDATA
+    /// implementations of \c getLength() method to every RDATA
     /// type. This is why this method is virtual. Once all Rdata types
-    /// have \c getWireLength() implementations, this base class
+    /// have \c getLength() implementations, this base class
     /// implementation must be removed and the method should become a
     /// pure interface.
     ///
     /// \return The length of the wire format representation of the
     /// RDATA.
-    virtual uint16_t getWireLength() const;
+    virtual uint16_t getLength() const;
 };
 
 namespace generic {
