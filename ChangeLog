@@ -1,9 +1,8 @@
 736.    [bug]           wlodek
-	b10-dhcp6 is now capable to determine if a received 
-	message is addressed to it, using server identifier option. 
+	b10-dhcp6 is now capable to determine if a received
+	message is addressed to it, using server identifier option.
 	The messages with non-matching server identifier are dropped.
 	(Trac #2892, git 3bd69e9b4ab9be231f7c966fd62b95a4e1595901)
-
 
 735.	[doc]		stephen
 	Expanded Developer's Guide to include chapter on logging.
