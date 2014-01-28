@@ -162,7 +162,7 @@ struct IOFetchData {
     // we sent.
     bool responseOK() {
         return (*remote_snd == *remote_rcv && cumulative >= 2 &&
-                readUint16(received->getData()) == qid);
+                readUint16(received->getData(), received->getLength()) == qid);
     }
 };
 
