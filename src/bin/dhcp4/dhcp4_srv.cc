@@ -1335,8 +1335,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
                     .arg(client_id ? client_id->toText() : "(no client-id)")
                     .arg(release->getHWAddr()->toText());
 
-                if (CfgMgr::instance().ddnsEnabled() &&
-                    CfgMgr::instance().getD2ClientConfig()->getRemoveOnRenew()) {
+                if (CfgMgr::instance().ddnsEnabled()) {
                     // Remove existing DNS entries for the lease, if any.
                     queueNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, lease);
                 }

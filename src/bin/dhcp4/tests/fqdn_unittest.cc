@@ -35,11 +35,10 @@ class NameDhcpv4SrvTest : public Dhcpv4SrvFakeIfaceTest {
 public:
 
     // Bit Constants for turning on and off DDNS configuration options.
-    static const uint16_t REMOVE_ON_RENEW = 1;
-    static const uint16_t ALWAYS_INCLUDE_FQDN = 2;
-    static const uint16_t OVERRIDE_NO_UPDATE = 4;
-    static const uint16_t OVERRIDE_CLIENT_UPDATE = 8;
-    static const uint16_t REPLACE_CLIENT_NAME = 16;
+    static const uint16_t ALWAYS_INCLUDE_FQDN = 1;
+    static const uint16_t OVERRIDE_NO_UPDATE = 2;
+    static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
+    static const uint16_t REPLACE_CLIENT_NAME = 8;
 
     NameDhcpv4SrvTest() : Dhcpv4SrvFakeIfaceTest() {
         srv_ = new NakedDhcpv4Srv(0);
@@ -72,7 +71,6 @@ public:
         ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
                                   isc::asiolink::IOAddress("192.0.2.1"), 477,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  (mask & REMOVE_ON_RENEW),
                                   (mask & ALWAYS_INCLUDE_FQDN),
                                   (mask & OVERRIDE_NO_UPDATE),
                                   (mask & OVERRIDE_CLIENT_UPDATE),
@@ -922,14 +920,11 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
 }
 
 // Test that when a release message is sent for a previously acquired lease,
-// DDNS updates are enabled and remove-on-renew is true that the server
-// genenerates a NameChangeRequest to remove entries corresponding to the
-// released lease.
-TEST_F(NameDhcpv4SrvTest, processRequestReleaseRemoveOn) {
-    // Enable ddns updates and remove-on-renew .
-    enableD2(REMOVE_ON_RENEW);
+// DDNS updates are enabled that the server genenerates a NameChangeRequest
+// to remove entries corresponding to the released lease.
+TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
+    // Verify the updates are enabled.
     ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
-    ASSERT_TRUE(CfgMgr::instance().getD2ClientConfig()->getRemoveOnRenew());
 
     // Create and process a lease request so we have a lease to release.
     Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
@@ -964,45 +959,6 @@ TEST_F(NameDhcpv4SrvTest, processRequestReleaseRemoveOn) {
                             "00010132E91AA355CFBB753C0F0497A5A940436"
                             "965B68B6D438D98E680BF10B09F3BCF",
                             time(NULL), subnet_->getValid(), true);
-}
-
-// Test that when a Release message is sent for a previously acquired
-// lease and DDNS updates are enabled but remove-on-renew is off that server
-// does NOT generate NameChangeRequest to remove entries corresponding to
-// the released lease.
-TEST_F(NameDhcpv4SrvTest, processRequestReleaseRemoveOff) {
-    // Verify the config is as expected.
-    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
-    ASSERT_FALSE(CfgMgr::instance().getD2ClientConfig()->getRemoveOnRenew());
-
-    // Create and process a lease request so we have a lease to release.
-    Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
-                                      Option4ClientFqdn::FLAG_E,
-                                      "myhost.example.com.",
-                                      Option4ClientFqdn::FULL, true);
-    Pkt4Ptr reply;
-    ASSERT_NO_THROW(reply = srv_->processRequest(req));
-    checkResponse(reply, DHCPACK, 1234);
-
-    // Verify that there is one NameChangeRequest generated for the new lease.
-    ASSERT_EQ(1, srv_->name_change_reqs_.size());
-    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            reply->getYiaddr().toText(), "myhost.example.com.",
-                            "00010132E91AA355CFBB753C0F0497A5A940436"
-                            "965B68B6D438D98E680BF10B09F3BCF",
-                            time(NULL), subnet_->getValid(), true);
-
-    // Create and process the Release message.
-    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
-    rel->setCiaddr(reply->getYiaddr());
-    rel->setRemoteAddr(IOAddress("192.0.2.3"));
-    rel->addOption(generateClientId());
-    rel->addOption(srv_->getServerID());
-    ASSERT_NO_THROW(srv_->processRelease(rel));
-
-    // With remove-on-renew off, there should be not be a NameChangeRequest
-    // for the remove.
-    ASSERT_EQ(0, srv_->name_change_reqs_.size());
 }
 
 // Test that when the Release message is sent for a previously acquired lease
