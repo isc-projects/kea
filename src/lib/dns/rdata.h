@@ -221,6 +221,21 @@ public:
     /// \return > 0 if \c this would be sorted after \c other.
     virtual int compare(const Rdata& other) const = 0;
     //@}
+
+    /// \brief Get the wire format length of an Rdata.
+    ///
+    /// IMPLEMENTATION NOTE: Currently this base class implementation is
+    /// non-optimal as it renders the wire data to a buffer and returns
+    /// the buffer's length. What would perform better is to add
+    /// implementations of \c getLength() method to every RDATA
+    /// type. This is why this method is virtual. Once all Rdata types
+    /// have \c getLength() implementations, this base class
+    /// implementation must be removed and the method should become a
+    /// pure interface.
+    ///
+    /// \return The length of the wire format representation of the
+    /// RDATA.
+    virtual uint16_t getLength() const;
 };
 
 namespace generic {
