@@ -45,7 +45,7 @@ if HAVE_GTEST
 # to unexpected errors. For this reason, the --enable-static-link option is
 # ignored for unit tests built here.
 
-nodistdir=$(abs_top_builddir)/src/lib/hooks
+nodistdir=$(abs_top_builddir)/src/lib/hooks/tests
 nodist_LTLIBRARIES = libnvl.la  libivl.la libfxl.la libbcl.la liblcl.la \
                      liblecl.la libucl.la libfcl.la
 
