@@ -736,17 +736,17 @@ TEST(Lease6, getDuidVector) {
 // Verify the behavior of the function which checks FQDN data for equality.
 TEST(Lease6, hasIdenticalFqdn) {
     Lease6 lease = createLease6("myhost.example.com.", true, true);
-    EXPECT_TRUE(lease.hasIdenticalFqdn(createLease4("myhost.example.com.",
+    EXPECT_TRUE(lease.hasIdenticalFqdn(createLease6("myhost.example.com.",
                                                     true, true)));
-    EXPECT_FALSE(lease.hasIdenticalFqdn(createLease4("other.example.com.",
+    EXPECT_FALSE(lease.hasIdenticalFqdn(createLease6("other.example.com.",
                                                      true, true)));
-    EXPECT_FALSE(lease.hasIdenticalFqdn(createLease4("myhost.example.com.",
+    EXPECT_FALSE(lease.hasIdenticalFqdn(createLease6("myhost.example.com.",
                                                      false, true)));
-    EXPECT_FALSE(lease.hasIdenticalFqdn(createLease4("myhost.example.com.",
+    EXPECT_FALSE(lease.hasIdenticalFqdn(createLease6("myhost.example.com.",
                                                      true, false)));
-    EXPECT_FALSE(lease.hasIdenticalFqdn(createLease4("myhost.example.com.",
+    EXPECT_FALSE(lease.hasIdenticalFqdn(createLease6("myhost.example.com.",
                                                      false, false)));
-    EXPECT_FALSE(lease.hasIdenticalFqdn(createLease4("other.example.com.",
+    EXPECT_FALSE(lease.hasIdenticalFqdn(createLease6("other.example.com.",
                                                      false, false)));
 }
 
