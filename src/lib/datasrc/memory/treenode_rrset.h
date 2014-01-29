@@ -155,7 +155,7 @@ public:
         node_(node), rdataset_(rdataset),
         rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
         dnssec_ok_(dnssec_ok), name_(NULL), realname_(new dns::Name(realname)),
-	ttl_data_(rdataset->getTTLData()), ttl_(NULL)
+        ttl_data_(rdataset->getTTLData()), ttl_(NULL)
     {}
 
     virtual ~TreeNodeRRset() {
@@ -167,6 +167,8 @@ public:
     virtual unsigned int getRdataCount() const {
         return (rdataset_->getRdataCount());
     }
+
+    virtual uint16_t getLength() const;
 
     virtual const dns::Name& getName() const;
     virtual const dns::RRClass& getClass() const {
