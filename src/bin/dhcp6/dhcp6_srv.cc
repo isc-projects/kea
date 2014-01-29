@@ -1132,20 +1132,11 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
         return;
     }
 
-    // When lease was added into a database the host name should have
-    // been added. The hostname can be empty if someone messed up in the
-    // lease data base and removed the hostname.
-    if (lease->hostname_.empty()) {
-        LOG_ERROR(dhcp6_logger, DHCP6_DDNS_REMOVE_EMPTY_HOSTNAME)
-            .arg(lease->addr_.toText());
-        return;
-    }
-
     // If hostname is non-empty, try to convert it to wire format so as
     // DHCID can be computed from it. This may throw an exception if hostname
-    // has invalid format. Again, this should be only possible in case of
-    // manual intervention in the database. Note that the last parameter
-    // passed to the writeFqdn function forces conversion of the FQDN
+    // has invalid format or is empty. Again, this should be only possible
+    // in case of manual intervention in the database. Note that the last
+    // parameter passed to the writeFqdn function forces conversion of the FQDN
     // to lower case. This is required by the RFC4701, section 3.5.
     // The DHCID computation is further in this function.
     std::vector<uint8_t> hostname_wire;
@@ -1153,7 +1144,8 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
         OptionDataTypeUtil::writeFqdn(lease->hostname_, hostname_wire, true);
     } catch (const Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_DDNS_REMOVE_INVALID_HOSTNAME)
-            .arg(lease->hostname_);
+            .arg(lease->hostname_.empty() ? "(empty)" : lease->hostname_)
+            .arg(lease->addr_.toText());
         return;
     }
 
@@ -2445,8 +2437,15 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
                 LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
             if (lease) {
                 lease->hostname_ = stream.str();
+                LeaseMgrFactory::instance().updateLease6(lease);
+
+            } else {
+                isc_throw(isc::Unexpected, "there is no lease in the database "
+                          " for address " << addr << ", so as it is impossible"
+                          " to update FQDN data. This is a programmatic error"
+                          " as the given address is now being handed to the"
+                          " client");
             }
-            LeaseMgrFactory::instance().updateLease6(lease);
         }
 
         // Set the generated FQDN in the Client FQDN option.

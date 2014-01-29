@@ -302,8 +302,9 @@ public:
         OptionPtr srvid = srv.getServerID();
         // Set the appropriate FQDN type. It must be partial if hostname is
         // empty.
-        Option6ClientFqdn::DomainNameType fqdn_type = hostname.empty() ?
-            Option6ClientFqdn::PARTIAL : Option6ClientFqdn::FULL;
+        Option6ClientFqdn::DomainNameType fqdn_type = (hostname.empty() ?
+            Option6ClientFqdn::PARTIAL : Option6ClientFqdn::FULL);
+
         Pkt6Ptr req = generateMessage(msg_type, Option6ClientFqdn::FLAG_S,
                                       hostname, fqdn_type, include_oro, srvid);
 
