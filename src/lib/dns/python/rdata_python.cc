@@ -104,9 +104,9 @@ Rdata_init(PyObject* self_p, PyObject* args, PyObject*) {
     const char* s;
     const char* data;
     Py_ssize_t len;
-    s_Rdata* self(static_cast<s_Rdata*>(self_p));
-
     try {
+        s_Rdata* self = static_cast<s_Rdata*>(self_p);
+
         // Create from string
         if (PyArg_ParseTuple(args, "O!O!s", &rrtype_type, &rrtype,
                              &rrclass_type, &rrclass,
