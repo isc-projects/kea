@@ -115,7 +115,7 @@ namespace {
 const uint8_t*
 getSockAddrData(const struct sockaddr& sa) {
     const void* sa_ptr = &sa;
-    const void* data_ptr;
+    const void* data_ptr = NULL;
     if (sa.sa_family == AF_INET) {
         const struct sockaddr_in* sin =
             static_cast<const struct sockaddr_in*>(sa_ptr);
