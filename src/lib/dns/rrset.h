@@ -206,6 +206,20 @@ public:
     /// \return The number of \c Rdata objects contained.
     virtual unsigned int getRdataCount() const = 0;
 
+    /// \brief Get the wire format length of the \c AbstractRRset.
+    ///
+    /// This method returns the wire format length of the
+    /// \c AbstractRRset, which is calculated by summing the individual
+    /// lengths of the various fields that make up each RR.
+    ///
+    /// NOTE: When including name lengths, the allocation for
+    /// uncompressed name wire format representation is used.
+    ///
+    /// \return The length of the wire format representation of the
+    /// \c AbstractRRset.
+    /// \throw \c EmptyRRset if the \c AbstractRRset is empty.
+    virtual uint16_t getLength() const = 0;
+
     /// \brief Returns the owner name of the \c RRset.
     ///
     /// \return A reference to a \c Name class object corresponding to the
@@ -649,6 +663,13 @@ public:
     /// \return The number of \c Rdata objects contained.
     virtual unsigned int getRdataCount() const;
 
+    /// \brief Get the wire format length of the \c BasicRRset.
+    ///
+    /// \return The length of the wire format representation of the
+    /// \c BasicRRset.
+    /// \throw \c EmptyRRset if the \c BasicRRset is empty.
+    virtual uint16_t getLength() const;
+
     /// \brief Returns the owner name of the \c RRset.
     ///
     /// This method never throws an exception.
@@ -819,6 +840,13 @@ public:
           const RRType& rrtype, const RRTTL& ttl);
 
     virtual ~RRset();
+
+    /// \brief Get the wire format length of the \c RRset.
+    ///
+    /// \return The length of the wire format representation of the
+    /// \c RRset.
+    /// \throw \c EmptyRRset if the \c RRset is empty.
+    virtual uint16_t getLength() const;
 
     /// \brief Render the RRset in the wire format with name compression and
     /// truncation handling.
