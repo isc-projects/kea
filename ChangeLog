@@ -1,3 +1,11 @@
+740.	[func]		muks
+	When displaying messages about mismatched configuration data types
+	in entered values (between the supplied value type and expected
+	schema type), bindctl now includes both the supplied and expected
+	configuration data types in the returned error. The user has more
+	information on what caused the error now.
+	(Trac #3239, git 84d5eda2a6ae0d737aef68d56023fc33fef623e6)
+
 739.	[bug]		muks
 	Various minor updates were made to the SSHFP RDATA parser. Mainly,
 	the SSHFP constructor no longer throws an isc::BadValue exception.
