@@ -2529,7 +2529,6 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
         "     \"server-port\" : 777, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
         "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
@@ -2562,7 +2561,6 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
     EXPECT_EQ(777, d2_client_config->getServerPort());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
-    EXPECT_TRUE(d2_client_config->getRemoveOnRenew());
     EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
@@ -2589,7 +2587,6 @@ TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
         "     \"server-port\" : 5301, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
         "     \"allow-client-update\" : true, "
         "     \"override-no-update\" : true, "
