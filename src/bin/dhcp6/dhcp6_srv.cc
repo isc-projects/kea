@@ -1044,6 +1044,11 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
 
 void
 Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
+    // Don't create NameChangeRequests if DNS updates are disabled.
+    if (!FQDN_ENABLE_UPDATE) {
+        return;
+    }
+
     // The response message instance is always required. For instance it
     // holds the Client Identifier. It is a programming error if supplied
     // message is NULL.
@@ -1126,6 +1131,11 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
 
 void
 Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
+    // Don't create NameChangeRequests if DNS updates are disabled.
+    if (!FQDN_ENABLE_UPDATE) {
+        return;
+    }
+
     // If we haven't performed a DNS Update when lease was acquired,
     // there is nothing to do here.
     if (!lease->fqdn_fwd_ && !lease->fqdn_rev_) {
