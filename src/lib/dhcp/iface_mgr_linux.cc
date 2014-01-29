@@ -536,7 +536,7 @@ bool IfaceMgr::os_receive4(struct msghdr&, Pkt4Ptr&) {
 
 bool
 IfaceMgr::openMulticastSocket(Iface& iface,
-                              const isc::asiolink::IOAddress addr,
+                              const isc::asiolink::IOAddress& addr,
                               const uint16_t port,
                               IfaceMgrErrorMsgCallback error_handler) {
     // This variable will hold a descriptor of the socket bound to
