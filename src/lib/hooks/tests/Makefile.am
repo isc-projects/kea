@@ -36,6 +36,7 @@ if HAVE_GTEST
 # (see http://www.gnu.org/software/libtool/manual/html_node/Link-mode.html).
 # Use of these switches will guarantee that the .so files are created in the
 # .libs folder and they can be dlopened.
+#
 # Note that the shared libraries with callouts should not be used together with
 # the --enable-static-link option. With this option, the bind10 libraries are
 # statically linked with the program and if the callout invokes the methods
@@ -44,8 +45,9 @@ if HAVE_GTEST
 # to unexpected errors. For this reason, the --enable-static-link option is
 # ignored for unit tests built here.
 
-lib_LTLIBRARIES = libnvl.la libivl.la libfxl.la libbcl.la liblcl.la liblecl.la \
-                  libucl.la libfcl.la
+nodistdir=$(abs_top_builddir)/src/lib/hooks
+nodist_LTLIBRARIES = libnvl.la  libivl.la libfxl.la libbcl.la liblcl.la \
+                     liblecl.la libucl.la libfcl.la
 
 # No version function
 libnvl_la_SOURCES  = no_version_library.cc
@@ -124,14 +126,16 @@ run_unittests_LDADD    = $(AM_LDADD) $(GTEST_LDADD)
 run_unittests_LDADD   += $(ALL_LIBS)
 run_unittests_LDADD   += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 
-# As noted in configure.ac, libtool doesn't work perfectly with Darwin: it embeds the
-# final install path in dynamic libraries and loadable modules refer to that path even
-# if its loaded within the source tree, so preventing tests from working - but only
-# when linking statically.  The solution used in other Makefiles (setting the path
-# to the dynamic libraries via an environment variable) don't seem to work.  What does
-# work is to run the unit test using libtool and specifying paths via -dlopen switches.
-# So... If running in an environment where we have to set the library path AND if
-# linking statically, override the "check" target and run the unit tests ourselves.
+# As noted in configure.ac, libtool doesn't work perfectly with Darwin: it
+# embeds the final install path in dynamic libraries and loadable modules refer
+# to that path even if its loaded within the source tree, so preventing tests
+# from working - but only when linking statically.  The solution used in other
+# Makefiles (setting the path to the dynamic libraries via an environment
+# variable) don't seem to work.  What does work is to run the unit test using
+# libtool and specifying paths via -dlopen switches.  So... If running in an
+# environment where we have to set the library path AND if linking statically,
+# override the "check" target and run the unit tests ourselves.
+
 if USE_STATIC_LINK
 if SET_ENV_LIBRARY_PATH
 check-TESTS:
