@@ -1,3 +1,11 @@
+743.	[func]		tmark
+	b10-dhcp4 now responds with changes in DDNS behavior based upon 
+	configuration parameters specified through its dhcp-ddns configuration
+	element. The parameters now supported are override-no-update, 
+	override-client-update, replace-client-name, generated-prefix, and 
+	qualifying-suffix.
+	(Trac# 3282, git 42b1f1e4c4f5aa48b7588233402876f5012c043c)
+
 742.	[func]		muks
 	The authoritative server now includes the datasource configuration
 	when logging some errors with the
