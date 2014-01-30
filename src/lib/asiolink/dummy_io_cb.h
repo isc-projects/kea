@@ -15,6 +15,7 @@
 #ifndef DUMMY_IO_CB_H
 #define DUMMY_IO_CB_H
 
+#include <cassert>
 #include <iostream>
 
 #include <asio/error.hpp>
@@ -39,20 +40,30 @@ public:
 
     /// \brief Asynchronous I/O callback method
     ///
-    /// TODO: explain why this method should never be called.
-    /// This should be unused.
+    /// Should never be called, as this class is a convenience class provided
+    /// for instances where a socket is required but it is known that no
+    /// asynchronous operations will be carried out.
     void operator()(asio::error_code)
     {
-        // TODO: log an error if this method ever gets called.
+        // If the function is called, there is a serious logic error in the
+        // program (this class should not be used as the callback class).  As
+        // the asiolink module is too low-level for logging errors, use assert()
+        // to bug-check the program.
+        assert(false);
     }
 
     /// \brief Asynchronous I/O callback method
     ///
-    /// TODO: explain why this method should never be called.
-    /// This should be unused.
+    /// Should never be called, as this class is a convenience class provided
+    /// for instances where a socket is required but it is known that no
+    /// asynchronous operations will be carried out.
     void operator()(asio::error_code, size_t)
     {
-        // TODO: log an error if this method ever gets called.
+        // If the function is called, there is a serious logic error in the
+        // program (this class should not be used as the callback class).  As
+        // the asiolink module is too low-level for logging errors, use assert()
+        // to bug-check the program.
+        assert(false);
     }
 };
 
