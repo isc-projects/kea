@@ -623,6 +623,18 @@ TEST_F(MessageTest, fromWireMultiple) {
     factoryFromFile(message_parse, "message_fromWire1");
     factoryFromFile(message_parse, "message_fromWire1");
     checkMessageFromWire(message_parse, test_name);
+
+    // Calling parseHeader() directly before fromWire() should not cause
+    // any problems.
+    received_data.clear();
+    UnitTestUtil::readWireData("message_fromWire1", received_data);
+
+    InputBuffer buffer(&received_data[0], received_data.size());
+    message_parse.parseHeader(buffer);
+    message_parse.fromWire(buffer);
+    message_parse.parseHeader(buffer);
+    message_parse.fromWire(buffer);
+    checkMessageFromWire(message_parse, test_name);
 }
 
 TEST_F(MessageTest, fromWireShortBuffer) {
