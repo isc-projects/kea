@@ -645,6 +645,9 @@ Message::fromWire(InputBuffer& buffer, ParseOptions options) {
                   "Message parse attempted in non parse mode");
     }
 
+    // Clear any old parsed data
+    clear(Message::PARSE);
+
     if (!impl_->header_parsed_) {
         parseHeader(buffer);
     }
