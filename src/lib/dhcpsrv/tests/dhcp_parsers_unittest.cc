@@ -720,7 +720,6 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"server-port\" : 3432, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
@@ -746,7 +745,6 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ(3432, d2_client_config->getServerPort());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
-    EXPECT_TRUE(d2_client_config->getRemoveOnRenew());
     EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
@@ -755,17 +753,16 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
 
     // Another valid Configuration string.
-    // This one has IPV6 server ip, control flags false,
+    // This one is disabled, has IPV6 server ip, control flags false,
     // empty prefix/suffix
     std::string config_str2 =
         "{ \"dhcp-ddns\" :"
         "    {"
-        "     \"enable-updates\" : true, "
+        "     \"enable-updates\" : false, "
         "     \"server-ip\" : \"2001:db8::\", "
         "     \"server-port\" : 43567, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"remove-on-renew\" : false, "
         "     \"always-include-fqdn\" : false, "
         "     \"override-no-update\" : false, "
         "     \"override-client-update\" : false, "
@@ -779,18 +776,17 @@ TEST_F(ParseConfigTest, validD2Config) {
     rcode = parseConfiguration(config_str2);
     ASSERT_TRUE(rcode == 0) << error_text_;
 
-    // Verify that DHCP-DDNS is enabled and we can fetch the configuration.
-    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+    // Verify that DHCP-DDNS is disabled and we can fetch the configuration.
+    EXPECT_FALSE(CfgMgr::instance().ddnsEnabled());
     ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
     ASSERT_TRUE(d2_client_config);
 
     // Verify that the configuration values are as expected.
-    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
     EXPECT_EQ("2001:db8::", d2_client_config->getServerIp().toText());
     EXPECT_EQ(43567, d2_client_config->getServerPort());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
-    EXPECT_FALSE(d2_client_config->getRemoveOnRenew());
     EXPECT_FALSE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_FALSE(d2_client_config->getOverrideNoUpdate());
     EXPECT_FALSE(d2_client_config->getOverrideClientUpdate());
@@ -842,7 +838,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
@@ -859,7 +854,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
@@ -876,7 +870,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"Bogus\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
@@ -893,7 +886,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"TCP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
@@ -910,7 +902,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"Bogus\", "
-        "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
@@ -927,7 +918,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         // "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"remove-on-renew\" : true, "
         "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "

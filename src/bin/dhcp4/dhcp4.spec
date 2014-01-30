@@ -336,13 +336,6 @@
                 "item_description" : "Format of the update request packet"
             },
             {
-                "item_name": "remove-on-renew",
-                "item_type": "boolean",
-                "item_optional": true,
-                "item_default": false,
-                "item_description": "Enable requesting a DNS Remove, before a DNS Update on renewals"
-            },
-            {
 
                 "item_name": "always-include-fqdn",
                 "item_type": "boolean",

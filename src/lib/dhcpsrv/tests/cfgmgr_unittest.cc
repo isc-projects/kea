@@ -672,14 +672,16 @@ TEST_F(CfgMgrTest, echoClientId) {
 
 // This test checks the D2ClientMgr wrapper methods.
 TEST_F(CfgMgrTest, d2ClientConfig) {
-    // After CfgMgr construction, D2 configuration should be disabled.
-    // Fetch it and verify this is the case.
+    // After CfgMgr construction, D2ClientMgr member should be initialized
+    // with a D2 configuration that is disabled.
+    // Verify we can Fetch the mgr.
+    D2ClientMgr d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    EXPECT_FALSE(d2_mgr.ddnsEnabled());
+
+    // Make sure the convenience method fetches the config correctly.
     D2ClientConfigPtr original_config = CfgMgr::instance().getD2ClientConfig();
     ASSERT_TRUE(original_config);
     EXPECT_FALSE(original_config->getEnableUpdates());
-
-    // Make sure convenience method agrees.
-    EXPECT_FALSE(CfgMgr::instance().ddnsEnabled());
 
     // Verify that we cannot set the configuration to an empty pointer.
     D2ClientConfigPtr new_cfg;
@@ -689,7 +691,7 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
     ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig(true,
                                   isc::asiolink::IOAddress("127.0.0.1"), 477,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  true, true, true, true, true,
+                                  true, true, true, true,
                                   "pre-fix", "suf-fix")));
 
     // Verify that we can assign a new, non-empty configuration.

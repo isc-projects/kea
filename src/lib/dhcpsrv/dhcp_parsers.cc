@@ -1200,10 +1200,11 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
     }
 
     bool enable_updates = boolean_values_->getParam("enable-updates");
-    if (!enable_updates) {
-        // If it's not enabled, don't bother validating the rest.  This
-        // allows for an abbreviated config entry that only contains
-        // the flag.  The default constructor creates a disabled instance.
+    if (!enable_updates && (client_config->mapValue().size() == 1)) {
+        // If enable-updates is the only parameter and it is false then
+        // we're done.  This allows for an abbreviated configuration entry
+        // that only contains that flag.  Use the default D2ClientConfig
+        // constructor to a create a disabled instance.
         local_client_config_.reset(new D2ClientConfig());
         return;
     }
@@ -1225,7 +1226,6 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
     std::string qualifying_suffix = string_values_->
                                     getParam("qualifying-suffix");
 
-    bool remove_on_renew = boolean_values_->getParam("remove-on-renew");
     bool always_include_fqdn = boolean_values_->getParam("always-include-fqdn");
     bool override_no_update = boolean_values_->getParam("override-no-update");
     bool override_client_update = boolean_values_->
@@ -1235,7 +1235,7 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
     // Attempt to create the new client config.
     local_client_config_.reset(new D2ClientConfig(enable_updates, server_ip,
                                                   server_port, ncr_protocol,
-                                                  ncr_format, remove_on_renew,
+                                                  ncr_format,
                                                   always_include_fqdn,
                                                   override_no_update,
                                                   override_client_update,
@@ -1256,7 +1256,6 @@ D2ClientConfigParser::createConfigParser(const std::string& config_id) {
         (config_id.compare("qualifying-suffix") == 0)) {
         parser = new StringParser(config_id, string_values_);
     } else if ((config_id.compare("enable-updates") == 0) ||
-        (config_id.compare("remove-on-renew") == 0) ||
         (config_id.compare("always-include-fqdn") == 0) ||
         (config_id.compare("allow-client-update") == 0) ||
         (config_id.compare("override-no-update") == 0) ||

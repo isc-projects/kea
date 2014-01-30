@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -363,6 +363,10 @@ CfgMgr::getD2ClientConfig() const {
     return (d2_client_mgr_.getD2ClientConfig());
 }
 
+D2ClientMgr&
+CfgMgr::getD2ClientMgr() {
+    return (d2_client_mgr_);
+}
 
 CfgMgr::CfgMgr()
     : datadir_(DHCP_DATA_DIR),
