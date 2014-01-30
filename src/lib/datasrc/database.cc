@@ -646,7 +646,7 @@ DatabaseClient::Finder::findWildcardMatch(
 
         // Strip off the left-more label(s) in the name and replace with a "*".
         const Name superdomain(name.split(i));
-        const string wildcard(Name("*").concatenate(superdomain).toText());
+        const string wildcard(Name("*", 1, &superdomain).toText());
         const string construct_name(name.toText());
 
         // TODO Add a check for DNAME, as DNAME wildcards are discouraged (see
