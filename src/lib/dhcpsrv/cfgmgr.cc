@@ -248,14 +248,12 @@ CfgMgr::belongsToSubnet4(const std::string& iface_name) const {
     if (iface == NULL) {
         isc_throw(isc::BadValue, "interface " << iface_name << " doesn't exist");
     }
-    for (Iface::AddressCollection::const_iterator addr = iface->getAddresses().begin();
-         addr != iface->getAddresses().end(); ++addr) {
-        if (addr->isV4()) {
-            for (Subnet4Collection::const_iterator subnet = subnets4_.begin();
-                 subnet != subnets4_.end(); ++subnet) {
-                if ((*subnet)->inRange(*addr)) {
-                    return (true);
-                }
+    IOAddress addr("::1");
+    if (iface->getAddress4(addr)) {
+        for (Subnet4Collection::const_iterator subnet = subnets4_.begin();
+             subnet != subnets4_.end(); ++subnet) {
+            if ((*subnet)->inRange(addr)) {
+                return (true);
             }
         }
     }
