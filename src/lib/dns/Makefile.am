@@ -158,7 +158,7 @@ rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h
 rrparamregistry.cc: rrparamregistry-placeholder.cc
 
-s-rdatacode: Makefile
+s-rdatacode: Makefile $(EXTRA_DIST)
 	$(PYTHON) ./gen-rdatacode.py
 	touch $@
 
