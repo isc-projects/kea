@@ -1,3 +1,9 @@
+742.	[func]		muks
+	The authoritative server now includes the datasource configuration
+	when logging some errors with the
+	AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR message ID.
+	(Trac #2756, git 31872754f36c840b4ec0b412a86afe9f38be86e0)
+
 741.	[bug]		shane
 	Remove hard-coded (and unnecessary) TSIG key from error message.
 	This also prevents a crash if the TSIG name is missing.
