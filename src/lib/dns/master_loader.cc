@@ -576,15 +576,19 @@ MasterLoader::MasterLoaderImpl::loadIncremental(size_t count_limit) {
                     isc_throw(MasterLoaderError, "Invalid RR data");
                 }
             }
-        } catch (const MasterLoaderError&) {
-            // This is a hack. We exclude the MasterLoaderError from the
-            // below case. Once we restrict the below to some smaller
-            // exception, we should remove this.
-            throw;
-        } catch (const isc::Exception& e) {
-            // TODO: Once we do #2518, catch only the DNSTextError here,
-            // not isc::Exception. The rest should be just simply
-            // propagated.
+        } catch (const isc::dns::DNSTextError& e) {
+            reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                        e.what());
+            eatUntilEOL(false);
+        } catch (const MasterLexer::ReadError& e) {
+            reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                        e.what());
+            eatUntilEOL(false);
+        } catch (const MasterLexer::LexerError& e) {
+            reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                        e.what());
+            eatUntilEOL(false);
+        } catch (const InternalException& e) {
             reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
                         e.what());
             eatUntilEOL(false);
