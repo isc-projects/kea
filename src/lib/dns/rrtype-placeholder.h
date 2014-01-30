@@ -42,10 +42,10 @@ class AbstractMessageRenderer;
 /// \brief A standard DNS module exception that is thrown if an RRType object
 /// is being constructed from an unrecognized string.
 ///
-class InvalidRRType : public isc::dns::Exception {
+class InvalidRRType : public DNSTextError {
 public:
     InvalidRRType(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        DNSTextError(file, line, what) {}
 };
 
 ///

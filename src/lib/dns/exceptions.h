@@ -37,12 +37,21 @@ public:
 };
 
 ///
+/// \brief Base class for all sorts of text parse errors.
+///
+class DNSTextError : public isc::dns::Exception {
+public:
+    DNSTextError(const char* file, size_t line, const char* what) :
+        isc::dns::Exception(file, line, what) {}
+};
+
+///
 /// \brief Base class for name parser exceptions.
 ///
-class NameParserException : public isc::dns::Exception {
+class NameParserException : public DNSTextError {
 public:
     NameParserException(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        DNSTextError(file, line, what) {}
 };
 
 class DNSProtocolError : public isc::dns::Exception {
