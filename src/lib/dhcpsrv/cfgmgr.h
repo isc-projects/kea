@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -245,6 +245,18 @@ public:
     ///
     /// @return a subnet object
     Subnet4Ptr getSubnet4(const isc::asiolink::IOAddress& hint);
+
+    /// @brief Checks that the IP address assigned to an interface belongs to
+    /// any subnet.
+    ///
+    /// This function checks that the IP address assigned to the specified
+    /// interface belongs to any IPv4 subnet configured.
+    ///
+    /// @param iface Short name of the interface which is being checked.
+    ///
+    /// @return Boolean value which indicates that the IP address belons to any
+    /// subnet (if true), false otherwise.
+    bool belongsToSubnet4(const std::string& iface) const;
 
     /// @brief adds a subnet4
     void addSubnet4(const Subnet4Ptr& subnet);

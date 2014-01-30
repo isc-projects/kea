@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <asiolink/io_address.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -239,6 +240,26 @@ CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_NO_SUBNET4)
               .arg(hint.toText());
     return (Subnet4Ptr());
+}
+
+bool
+CfgMgr::belongsToSubnet4(const std::string& iface_name) const {
+    Iface* iface = IfaceMgr::instance().getIface(iface_name);
+    if (iface == NULL) {
+        isc_throw(isc::BadValue, "interface " << iface_name << " doesn't exist");
+    }
+    for (Iface::AddressCollection::const_iterator addr = iface->getAddresses().begin();
+         addr != iface->getAddresses().end(); ++addr) {
+        if (addr->isV4()) {
+            for (Subnet4Collection::const_iterator subnet = subnets4_.begin();
+                 subnet != subnets4_.end(); ++subnet) {
+                if ((*subnet)->inRange(*addr)) {
+                    return (true);
+                }
+            }
+        }
+    }
+    return (false);
 }
 
 void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {

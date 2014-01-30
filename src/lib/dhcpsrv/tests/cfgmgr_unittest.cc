@@ -18,6 +18,7 @@
 #include <dhcpsrv/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 
 #include <gtest/gtest.h>
 
@@ -29,6 +30,7 @@
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::util;
 using namespace isc;
 
@@ -707,6 +709,28 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
     // and not the original configuration.
     EXPECT_EQ(*new_cfg, *updated_config);
     EXPECT_NE(*original_config, *updated_config);
+}
+
+// This test verfies that CfgMgr correctly determines that the address of the
+// interface belongs to existing IPv4 subnet.
+TEST_F(CfgMgrTest, belongsToSubnet4) {
+    IfaceMgrTestConfig config(true);
+
+    ASSERT_FALSE(CfgMgr::instance().belongsToSubnet4("eth0"));
+    ASSERT_FALSE(CfgMgr::instance().belongsToSubnet4("eth1"));
+
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.1"), 24, 1, 2, 3));
+    CfgMgr::instance().addSubnet4(subnet1);
+
+    EXPECT_TRUE(CfgMgr::instance().belongsToSubnet4("eth0"));
+    EXPECT_FALSE(CfgMgr::instance().belongsToSubnet4("eth1"));
+
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.1"), 24, 1, 2, 3));
+    CfgMgr::instance().addSubnet4(subnet2);
+
+    EXPECT_TRUE(CfgMgr::instance().belongsToSubnet4("eth0"));
+    EXPECT_TRUE(CfgMgr::instance().belongsToSubnet4("eth1"));
+
 }
 
 
