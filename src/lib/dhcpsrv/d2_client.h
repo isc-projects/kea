@@ -64,11 +64,6 @@ public:
     /// Currently only UDP is supported.
     /// @param ncr_format Format of the b10-dhcp-ddns requests.
     /// Currently only JSON format is supported.
-    /// @param remove_on_renew Enables DNS Removes when renewing a lease
-    /// If true, Kea should request an explicit DNS remove prior to requesting
-    /// a DNS update when renewing a lease.
-    /// (Note: b10-dhcp-ddns is implemented per RFC 4703 and such a remove
-    /// is unnecessary).
     /// @param always_include_fqdn Enables always including the FQDN option in
     /// DHCP responses.
     /// @param override_no_update Enables updates, even if clients request no
@@ -86,7 +81,6 @@ public:
                    const size_t server_port,
                    const dhcp_ddns::NameChangeProtocol& ncr_protocol,
                    const dhcp_ddns::NameChangeFormat& ncr_format,
-                   const bool remove_on_renew,
                    const bool always_include_fqdn,
                    const bool override_no_update,
                    const bool override_client_update,
@@ -124,11 +118,6 @@ public:
     /// @brief Return the b10-dhcp-ddns request format.
     const dhcp_ddns::NameChangeFormat& getNcrFormat() const {
         return(ncr_format_);
-    }
-
-    /// @brief Return whether or not removes should be sent for lease renewals.
-    bool getRemoveOnRenew() const {
-        return(remove_on_renew_);
     }
 
     /// @brief Return whether or not FQDN is always included in DHCP responses.
@@ -189,19 +178,12 @@ private:
     size_t server_port_;
 
     /// @brief The socket protocol to use with b10-dhcp-ddns.
-    /// Currently only UPD is supported.
+    /// Currently only UDP is supported.
     dhcp_ddns::NameChangeProtocol ncr_protocol_;
 
     /// @brief Format of the b10-dhcp-ddns requests.
     /// Currently only JSON format is supported.
     dhcp_ddns::NameChangeFormat ncr_format_;
-
-    /// @brief Should Kea request a DNS Remove when renewing a lease.
-    /// If true, Kea should request an explicit DNS remove prior to requesting
-    /// a DNS update when renewing a lease.
-    /// (Note: b10-dhcp-ddns is implemented per RFC 4703 and such a remove
-    /// is unnecessary).
-    bool remove_on_renew_;
 
     /// @brief Should Kea always include the FQDN option in its response.
     bool always_include_fqdn_;
@@ -263,10 +245,132 @@ public:
     /// @return a reference to the current configuration pointer.
     const D2ClientConfigPtr& getD2ClientConfig() const;
 
+    /// @brief Determines server flags based on configuration and  client flags.
+    ///
+    /// This method uses input values for the client's FQDN S and N flags, in
+    /// conjunction with the configuration parameters updates-enabled, override-
+    /// no-updates, and override-client-updates to determine the values that
+    /// should be used for the server's FQDN S and N flags.
+    /// The logic in this method is based upon RFCs 4702 and 4704.
+    ///
+    /// @param client_s  S Flag from the client's FQDN
+    /// @param client_n  N Flag from the client's FQDN
+    /// @param server_s [out] S Flag for the server's FQDN
+    /// @param server_n [out] N Flag for the server's FQDN
+    ///
+    /// @throw isc::BadValue if client_s and client_n are both 1 as this is
+    /// an invalid combination per RFCs.
+    void analyzeFqdn(const bool client_s, const bool client_n, bool& server_s,
+                     bool& server_n) const;
+
+    /// @brief Builds a FQDN based on the configuration and given IP address.
+    ///
+    /// Using the current values for generated-prefix, qualifying-suffix and
+    /// an IP address, this method constructs a fully qualified domain name.
+    /// It supports both IPv4 and IPv6 addresses.  The format of the name
+    /// is as follows:
+    ///
+    ///     <generated-prefix>-<ip address>.<qualifying-suffix>.
+    ///
+    /// <ip-address> is the result of IOAddress.toText() with the delimiters
+    /// ('.' for IPv4 or ':' for IPv6) replaced with a hyphen, '-'.
+    ///
+    /// @param address IP address from which to derive the name (IPv4 or IPv6)
+    ///
+    /// @return std::string containing the generated name.
+    std::string generateFqdn(const asiolink::IOAddress& address) const;
+
+    /// @brief Adds a qualifying suffix to a given domain name
+    ///
+    /// Constructs a FQDN based on the configured qualifying-suffix and
+    /// a partial domain name as follows:
+    ///
+    ///     <partial_name>.<qualifying-suffix>.
+    /// Note it will add a trailing '.' should qualifying-suffix not end with
+    /// one.
+    ///
+    /// @param partial_name domain name to qualify
+    ///
+    /// @return std::string containing the qualified name.
+    std::string qualifyName(const std::string& partial_name) const;
+
+    /// @brief Set server FQDN flags based on configuration and a given FQDN
+    ///
+    /// Templated wrapper around the analyzeFqdn() allowing that method to
+    /// be used for either IPv4 or IPv6 processing.  This methods resets all
+    /// of the flags in the response to zero and then sets the S,N, and O
+    /// flags.  Any other flags are the responsiblity of the invoking layer.
+    ///
+    /// @param fqdn FQDN option from which to read client (inbound) flags
+    /// @param fqdn_resp FQDN option to update with the server (outbound) flags
+    /// @tparam T FQDN Option class containing the FQDN data such as
+    /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
+    template <class T>
+    void adjustFqdnFlags(const T& fqdn, T& fqdn_resp);
+
+    /// @brief Set server FQDN name based on configuration and a given FQDN
+    ///
+    /// Templated method which adjusts the domain name value and type in
+    /// a server FQDN from a client (inbound) FQDN and the current
+    /// configuration.  The logic is as follows:
+    ///
+    /// If replace-client-name is true or the supplied name is empty, the
+    /// server FQDN is set to ""/PARTIAL.
+    ///
+    /// If replace-client-name is false and the supplied name is a partial
+    /// name the server FQDN is set to the supplied name qualified by
+    /// appending the qualifying-suffix.
+    ///
+    /// If replace-client-name is false and the supplied name is a fully
+    /// qualified name, set the server FQDN to the supplied name.
+    ///
+    /// @param fqdn FQDN option from which to get client (inbound) name
+    /// @param fqdn_resp FQDN option to update with the adjusted name
+    /// @tparam T  FQDN Option class containing the FQDN data such as
+    /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
+    template <class T>
+    void adjustDomainName(const T& fqdn, T& fqdn_resp);
+
 private:
     /// @brief Container class for DHCP-DDNS configuration parameters.
     D2ClientConfigPtr d2_client_config_;
 };
+
+template <class T>
+void
+D2ClientMgr::adjustFqdnFlags(const T& fqdn, T& fqdn_resp) {
+    bool server_s = false;
+    bool server_n = false;
+    analyzeFqdn(fqdn.getFlag(T::FLAG_S), fqdn.getFlag(T::FLAG_N),
+                server_s, server_n);
+
+    // Reset the flags to zero to avoid triggering N and S both 1 check.
+    fqdn_resp.resetFlags();
+
+    // Set S and N flags.
+    fqdn_resp.setFlag(T::FLAG_S, server_s);
+    fqdn_resp.setFlag(T::FLAG_N, server_n);
+
+    // Set O flag true if server S overrides client S.
+    fqdn_resp.setFlag(T::FLAG_O, (fqdn.getFlag(T::FLAG_S) != server_s));
+}
+
+
+template <class T>
+void
+D2ClientMgr::adjustDomainName(const T& fqdn, T& fqdn_resp) {
+    // If we're configured to replace it or the supplied name is blank
+    // set the response name to blank.
+    if (d2_client_config_->getReplaceClientName() ||
+        fqdn.getDomainName().empty()) {
+        fqdn_resp.setDomainName("", T::PARTIAL);
+    } else {
+        // If the supplied name is partial, qualify it by adding the suffix.
+        if (fqdn.getDomainNameType() == T::PARTIAL) {
+            fqdn_resp.setDomainName(qualifyName(fqdn.getDomainName()), T::FULL);
+        }
+    }
+}
 
 /// @brief Defines a pointer for D2ClientMgr instances.
 typedef boost::shared_ptr<D2ClientMgr> D2ClientMgrPtr;
