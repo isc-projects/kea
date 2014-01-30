@@ -226,7 +226,7 @@ void ControlledDhcpv4Srv::establishSession() {
     int ctrl_socket = cc_session_->getSocketDesc();
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_CCSESSION_STARTED)
               .arg(ctrl_socket);
-    IfaceMgr::instance().set_session_socket(ctrl_socket, sessionReader);
+    IfaceMgr::instance().addExternalSocket(ctrl_socket, sessionReader);
 }
 
 void ControlledDhcpv4Srv::disconnectSession() {
@@ -235,13 +235,14 @@ void ControlledDhcpv4Srv::disconnectSession() {
         config_session_ = NULL;
     }
     if (cc_session_) {
+
+        int ctrl_socket = cc_session_->getSocketDesc();
         cc_session_->disconnect();
+
+        IfaceMgr::instance().deleteExternalSocket(ctrl_socket);
         delete cc_session_;
         cc_session_ = NULL;
     }
-
-    // deregister session socket
-    IfaceMgr::instance().set_session_socket(IfaceMgr::INVALID_SOCKET, NULL);
 }
 
 ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
