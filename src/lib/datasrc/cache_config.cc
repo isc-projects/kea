@@ -75,7 +75,8 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
 
         if (!enabled_) {
             isc_throw(CacheConfigError,
-                      "The cache must be enabled for the MasterFiles type");
+                      "The cache must be enabled for the MasterFiles type: "
+                      << datasrc_conf);
         }
 
         typedef std::map<std::string, ConstElementPtr> ZoneToFile;
@@ -100,7 +101,8 @@ CacheConfig::CacheConfig(const std::string& datasrc_type,
         if (!datasrc_conf.contains("cache-zones")) {
             isc_throw(NotImplemented, "Auto-detection of zones "
                       "to cache is not yet implemented, supply "
-                      "cache-zones parameter");
+                      "cache-zones parameter: "
+                      << datasrc_conf);
             // TODO: Auto-detect list of all zones in the
             // data source.
         }
