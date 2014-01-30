@@ -88,6 +88,7 @@ libdhcpsrv_unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 
 libdhcpsrv_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
