@@ -1,5 +1,5 @@
-741.    [bug]       shane
-	Remove hard-coded (and unnecessary) TSIG key from error message. 
+741.	[bug]		shane
+	Remove hard-coded (and unnecessary) TSIG key from error message.
 	This also prevents a crash if the TSIG name is missing.
 	(Trac #3099, git 0ba8bbabe09756a4627e80aacdbb5050407faaac)
 
