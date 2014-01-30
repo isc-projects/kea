@@ -36,10 +36,10 @@ class AbstractMessageRenderer;
 /// \brief A standard DNS module exception that is thrown if an RRTTL object
 /// is being constructed from an unrecognized string.
 ///
-class InvalidRRTTL : public isc::dns::Exception {
+class InvalidRRTTL : public DNSTextError {
 public:
     InvalidRRTTL(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        DNSTextError(file, line, what) {}
 };
 
 ///

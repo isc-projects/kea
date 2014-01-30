@@ -42,20 +42,20 @@ namespace rdata {
 /// \brief A standard DNS module exception that is thrown if RDATA parser
 /// encounters an invalid or inconsistent data length.
 ///
-class InvalidRdataLength : public isc::dns::Exception {
+class InvalidRdataLength : public DNSTextError {
 public:
     InvalidRdataLength(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        DNSTextError(file, line, what) {}
 };
 
 ///
 /// \brief A standard DNS module exception that is thrown if RDATA parser
 /// fails to recognize a given textual representation.
 ///
-class InvalidRdataText : public isc::dns::Exception {
+class InvalidRdataText : public DNSTextError {
 public:
     InvalidRdataText(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        DNSTextError(file, line, what) {}
 };
 
 ///
@@ -63,10 +63,10 @@ public:
 /// encounters a character-string (as defined in RFC1035) exceeding
 /// the maximum allowable length (\c MAX_CHARSTRING_LEN).
 ///
-class CharStringTooLong : public isc::dns::Exception {
+class CharStringTooLong : public DNSTextError {
 public:
     CharStringTooLong(const char* file, size_t line, const char* what) :
-        isc::dns::Exception(file, line, what) {}
+        DNSTextError(file, line, what) {}
 };
 
 // Forward declaration to define RdataPtr.
