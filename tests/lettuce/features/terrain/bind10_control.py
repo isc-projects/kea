@@ -136,7 +136,8 @@ def run_bindctl(commands, cmdctl_port=None, ignore_failure=False):
     """
     if cmdctl_port is None:
         cmdctl_port = 56175
-    args = ['bindctl', '-p', str(cmdctl_port)]
+
+    args = ['bindctl', '-p', str(cmdctl_port), '--csv-file-dir=configurations/' ]
     bindctl = subprocess.Popen(args, 1, None, subprocess.PIPE,
                                subprocess.PIPE, None)
     for line in commands:
