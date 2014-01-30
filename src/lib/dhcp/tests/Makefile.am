@@ -24,6 +24,16 @@ TESTS_ENVIRONMENT = \
 
 TESTS =
 if HAVE_GTEST
+
+lib_LTLIBRARIES = libdhcptest.la
+
+libdhcptest_la_SOURCES  = iface_mgr_test_config.cc iface_mgr_test_config.h
+libdhcptest_la_SOURCES  += pkt_filter_test_stub.cc pkt_filter_test_stub.h
+libdhcptest_la_CXXFLAGS  = $(AM_CXXFLAGS)
+libdhcptest_la_CPPFLAGS  = $(AM_CPPFLAGS)
+libdhcptest_la_LDFLAGS   = $(AM_LDFLAGS)
+libdhcptest_la_LIBADD    = $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+
 TESTS += libdhcp++_unittests
 
 libdhcp___unittests_SOURCES  = run_unittests.cc
@@ -74,6 +84,7 @@ libdhcp___unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 
 libdhcp___unittests_LDADD  = $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
