@@ -29,7 +29,6 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                      NameChangeProtocol& ncr_protocol,
                                const dhcp_ddns::
                                      NameChangeFormat& ncr_format,
-                               const bool remove_on_renew,
                                const bool always_include_fqdn,
                                const bool override_no_update,
                                const bool override_client_update,
@@ -41,7 +40,6 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
     server_port_(server_port),
     ncr_protocol_(ncr_protocol),
     ncr_format_(ncr_format),
-    remove_on_renew_(remove_on_renew),
     always_include_fqdn_(always_include_fqdn),
     override_no_update_(override_no_update),
     override_client_update_(override_client_update),
@@ -57,13 +55,12 @@ D2ClientConfig::D2ClientConfig()
       server_port_(0),
       ncr_protocol_(dhcp_ddns::NCR_UDP),
       ncr_format_(dhcp_ddns::FMT_JSON),
-      remove_on_renew_(false),
       always_include_fqdn_(false),
       override_no_update_(false),
       override_client_update_(false),
       replace_client_name_(false),
-      generated_prefix_(""),
-      qualifying_suffix_("") {
+      generated_prefix_("myhost"),
+      qualifying_suffix_("example.com") {
     validateContents();
 }
 
@@ -83,9 +80,8 @@ D2ClientConfig::validateContents() {
                     << " is not yet supported");
     }
 
-    // @todo perhaps more validation we should do yet?
-    // Are there any invalid combinations of options we need to test against?
-    // Also do we care about validating contents if it's disabled?
+    /// @todo perhaps more validation we should do yet?
+    /// Are there any invalid combinations of options we need to test against?
 }
 
 bool
@@ -95,7 +91,6 @@ D2ClientConfig::operator == (const D2ClientConfig& other) const {
             (server_port_ == other.server_port_) &&
             (ncr_protocol_ == other.ncr_protocol_) &&
             (ncr_format_ == other.ncr_format_) &&
-            (remove_on_renew_ == other.remove_on_renew_) &&
             (always_include_fqdn_ == other.always_include_fqdn_) &&
             (override_no_update_ == other.override_no_update_) &&
             (override_client_update_ == other.override_client_update_) &&
@@ -119,7 +114,6 @@ D2ClientConfig::toText() const {
                << ", server_port: " << server_port_
                << ", ncr_protocol: " << ncr_protocol_
                << ", ncr_format: " << ncr_format_
-               << ", remove_on_renew: " << (remove_on_renew_ ? "yes" : "no")
                << ", always_include_fqdn: " << (always_include_fqdn_ ?
                                                 "yes" : "no")
                << ", override_no_update: " << (override_no_update_ ?
@@ -142,7 +136,7 @@ operator<<(std::ostream& os, const D2ClientConfig& config) {
 }
 
 D2ClientMgr::D2ClientMgr() : d2_client_config_(new D2ClientConfig()) {
-    // Default contstructor initializes with a disabled config.
+    // Default constructor initializes with a disabled configuration.
 }
 
 D2ClientMgr::~D2ClientMgr(){
@@ -159,8 +153,8 @@ D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
     // scenarios:
     // 1. D2 was enabled but now it is disabled
     //     - destroy the sender, flush any queued
-    // 2. D2 is still enabled but server params have changed
-    //     - preserve any queued,  reconnect based on sender params
+    // 2. D2 is still enabled but server parameters have changed
+    //     - preserve any queued,  reconnect based on sender parameters
     // 3. D2 was was disabled now it is enabled.
     //     - create sender
     //
@@ -180,6 +174,90 @@ const D2ClientConfigPtr&
 D2ClientMgr::getD2ClientConfig() const {
     return (d2_client_config_);
 }
+
+void
+D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
+                         bool& server_s, bool& server_n) const {
+    // Per RFC 4702 & 4704, the client N and S flags allow the client to
+    // request one of three options:
+    //
+    //  N flag  S flag   Option
+    // ------------------------------------------------------------------
+    //    0       0      client wants to do forward updates (section 3.2)
+    //    0       1      client wants server to do forward updates (section 3.3)
+    //    1       0      client wants no one to do updates (section 3.4)
+    //    1       1      invalid combination
+    // (Note section numbers cited are for 4702, for 4704 see 5.1, 5.2, and 5.3)
+    //
+    // Make a bit mask from the client's flags and use it to set the response
+    // flags accordingly.
+    const uint8_t mask = ((client_n ? 2 : 0) + (client_s ? 1 : 0));
+
+    switch (mask) {
+    case 0:
+        // If updates are enabled and we are overriding client delegation
+        // then S flag should be true.
+        server_s = (d2_client_config_->getEnableUpdates() &&
+                    d2_client_config_->getOverrideClientUpdate());
+        break;
+
+    case 1:
+        server_s = d2_client_config_->getEnableUpdates();
+        break;
+
+    case 2:
+        // If updates are enabled and we are overriding "no updates" then
+        // S flag should be true.
+        server_s = (d2_client_config_->getEnableUpdates() &&
+                    d2_client_config_->getOverrideNoUpdate());
+        break;
+
+    default:
+        // RFCs declare this an invalid combination.
+        isc_throw(isc::BadValue,
+                  "Invalid client FQDN - N and S cannot both be 1");
+        break;
+    }
+
+    /// @todo Currently we are operating under the premise that N should be 1
+    /// if the server is not doing updates nor do we have configuration
+    /// controls to govern forward and reverse updates independently.
+    /// In addition, the client FQDN flags cannot explicitly suggest what to
+    /// do with reverse updates. They request either forward updates or no
+    /// updates.  In other words, the client cannot request the server do or
+    /// not do reverse updates.  For now, we are either going to do updates in
+    /// both directions or none at all.  If and when additional configuration
+    /// parameters are added this logic will have to be reassessed.
+    server_n = !server_s;
+}
+
+std::string
+D2ClientMgr::generateFqdn(const asiolink::IOAddress& address) const {
+    std::string hostname = address.toText();
+    std::replace(hostname.begin(), hostname.end(),
+                 (address.isV4() ? '.' : ':'), '-');
+
+    std::ostringstream gen_name;
+    gen_name << d2_client_config_->getGeneratedPrefix() << "-" << hostname;
+    return (qualifyName(gen_name.str()));
+}
+
+std::string
+D2ClientMgr::qualifyName(const std::string& partial_name) const {
+    std::ostringstream gen_name;
+    gen_name << partial_name << "." << d2_client_config_->getQualifyingSuffix();
+
+    // Tack on a trailing dot in case suffix doesn't have one.
+    std::string str = gen_name.str();
+    size_t len = str.length();
+    if ((len > 0) && (str[len - 1] != '.')) {
+        gen_name << ".";
+    }
+
+    return (gen_name.str());
+}
+
+
 
 };  // namespace dhcp
 };  // namespace isc
