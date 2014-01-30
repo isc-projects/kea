@@ -163,8 +163,12 @@ public:
     /// This is the place where output happens if the formatter is active.
     ~ Formatter() {
         if (logger_) {
-            checkExcessPlaceholders(message_, ++nextPlaceholder_);
-            logger_->output(severity_, *message_);
+            try {
+                checkExcessPlaceholders(message_, ++nextPlaceholder_);
+                logger_->output(severity_, *message_);
+            } catch (...) {
+                // Catch and ignore all exceptions here.
+            }
             delete message_;
         }
     }
