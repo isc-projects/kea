@@ -19,6 +19,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt6.h>
 #include <dhcp/pkt_filter.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_filter6_test_utils.h>
 
 #include <boost/bind.hpp>
@@ -527,6 +528,32 @@ TEST_F(IfaceMgrTest, ifaceClass) {
 
     Iface iface("eth5", 7);
     EXPECT_STREQ("eth5/7", iface.getFullName().c_str());
+}
+
+// Test that the IPv4 address can be retrieved for the interface.
+TEST_F(IfaceMgrTest, ifaceGetAddress) {
+    Iface iface("eth0", 0);
+
+    IOAddress addr("::1");
+    // Initially, the Iface has no addresses assigned.
+    EXPECT_FALSE(iface.getAddress4(addr));
+    // Add some addresses with IPv4 address in the middle.
+    iface.addAddress(IOAddress("fe80::3a60:77ff:fed5:cdef"));
+    iface.addAddress(IOAddress("10.1.2.3"));
+    iface.addAddress(IOAddress("2001:db8:1::2"));
+    // The v4 address should be returned.
+    EXPECT_TRUE(iface.getAddress4(addr));
+    EXPECT_EQ("10.1.2.3", addr.toText());
+    // Delete the IPv4 address and leave only two IPv6 addresses.
+    ASSERT_NO_THROW(iface.delAddress(IOAddress("10.1.2.3")));
+    // The IPv4 address should not be returned.
+    EXPECT_FALSE(iface.getAddress4(addr));
+    // Add a different IPv4 address at the end of the list.
+    iface.addAddress(IOAddress("192.0.2.3"));
+    // This new address should now be returned.
+    EXPECT_TRUE(iface.getAddress4(addr));
+    EXPECT_EQ("192.0.2.3", addr.toText());
+
 }
 
 // TODO: Implement getPlainMac() test as soon as interface detection
@@ -1381,31 +1408,29 @@ TEST_F(IfaceMgrTest, openSockets4) {
 // This test verifies that the socket is not open on the interface which is
 // down, but sockets are open on all other non-loopback interfaces.
 TEST_F(IfaceMgrTest, openSockets4IfaceDown) {
-    NakedIfaceMgr ifacemgr;
-
-    // Remove all real interfaces and create a set of dummy interfaces.
-    ifacemgr.createIfaces();
-
-    boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
-    ASSERT_TRUE(custom_packet_filter);
-    ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
+    IfaceMgrTestConfig config(true);
 
     // Boolean parameters specify that eth0 is:
     // - not a loopback
     // - is "down" (not up)
     // - is not running
     // - is active (is not inactive)
-    ifacemgr.setIfaceFlags("eth0", false, false, true, false, false);
-    ASSERT_FALSE(ifacemgr.getIface("eth0")->flag_up_);
-    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL));
+    config.setIfaceFlags("eth0", FlagLoopback(false), FlagUp(false),
+                         FlagRunning(false), FlagInactive4(false),
+                         FlagInactive6(false));
+    ASSERT_FALSE(IfaceMgr::instance().getIface("eth0")->flag_up_);
+    ASSERT_NO_THROW(IfaceMgr::instance().openSockets4(DHCP4_SERVER_PORT, true,
+                                                      NULL));
 
     // There should be no socket on eth0 open, because interface was down.
-    EXPECT_TRUE(ifacemgr.getIface("eth0")->getSockets().empty());
+    EXPECT_TRUE(IfaceMgr::instance().getIface("eth0")->getSockets().empty());
+
     // Expecting that the socket is open on eth1 because it was up, running
     // and active.
-    EXPECT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
+    EXPECT_EQ(1, IfaceMgr::instance().getIface("eth1")->getSockets().size());
     // Never open socket on loopback interface.
-    EXPECT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
+    EXPECT_TRUE(IfaceMgr::instance().getIface("lo")->getSockets().empty());
+
 }
 
 // This test verifies that the socket is not open on the interface which is
