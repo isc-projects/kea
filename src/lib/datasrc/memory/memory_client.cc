@@ -122,19 +122,13 @@ public:
                       "In-memory zone corrupted, missing origin node");
         }
 
-        if (!node_) {
-            soa_ = ConstRRsetPtr();
-        } else {
+        if (node_) {
             const RdataSet* origin_set = node_->getData();
-            if (!origin_set) {
-                soa_ = ConstRRsetPtr();
-            } else {
-                const RdataSet* soa = RdataSet::find(origin_set, RRType::SOA());
-                if (!soa) {
-                    soa_ = ConstRRsetPtr();
-                } else {
+            if (origin_set) {
+                const RdataSet* soa_set = RdataSet::find(origin_set, RRType::SOA());
+                if (soa_set) {
                     soa_ = ConstRRsetPtr (new TreeNodeRRset(rrclass_, node_,
-                                                            soa, true));
+                                                            soa_set, true));
                 }
             }
         }
