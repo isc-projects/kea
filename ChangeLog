@@ -1,8 +1,17 @@
+744.	[func]		marcin
+	b10-dhcp6: Refactored the code which is processing Client FQDN option.
+	The major user-visible change is that server generates DDNS
+	NameChangeRequest for the first IPv6 address (instead of all)
+	acquired by a client. Also, the server generates fully qualified domain
+	name from acquired IPv6 address, if the client sends an empty name in
+	Client FQDN option.
+	(Trac# 3295, git aa1c94a54114e848c64771fde308fc9ac0c00fd0)
+
 743.	[func]		tmark
-	b10-dhcp4 now responds with changes in DDNS behavior based upon 
+	b10-dhcp4 now responds with changes in DDNS behavior based upon
 	configuration parameters specified through its dhcp-ddns configuration
-	element. The parameters now supported are override-no-update, 
-	override-client-update, replace-client-name, generated-prefix, and 
+	element. The parameters now supported are override-no-update,
+	override-client-update, replace-client-name, generated-prefix, and
 	qualifying-suffix.
 	(Trac# 3282, git 42b1f1e4c4f5aa48b7588233402876f5012c043c)
 
