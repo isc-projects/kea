@@ -416,7 +416,6 @@ public:
     ///
     /// See fake_received_ field for description
     void fakeReceive(const Pkt4Ptr& pkt) {
-        pkt->setIface("eth0");
         fake_received_.push_back(pkt);
     }
 
