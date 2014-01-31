@@ -941,10 +941,12 @@ PoolParser::commit() {
 //****************************** SubnetConfigParser *************************
 
 SubnetConfigParser::SubnetConfigParser(const std::string&,
-                                       ParserContextPtr global_context)
+                                       ParserContextPtr global_context,
+                                       const isc::asiolink::IOAddress& default_addr)
     : uint32_values_(new Uint32Storage()), string_values_(new StringStorage()),
     pools_(new PoolStorage()), options_(new OptionStorage()),
-    global_context_(global_context) {
+    global_context_(global_context),
+    relay_info_(new isc::dhcp::Subnet::RelayInfo(default_addr)) {
     // The first parameter should always be "subnet", but we don't check
     // against that here in case some wants to reuse this parser somewhere.
     if (!global_context_) {

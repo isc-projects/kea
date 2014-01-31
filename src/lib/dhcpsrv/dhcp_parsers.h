@@ -802,7 +802,12 @@ class SubnetConfigParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor
-    SubnetConfigParser(const std::string&, ParserContextPtr global_context);
+    ///
+    /// @param unusued
+    /// @param global_context
+    /// @param default_addr default IP address (0.0.0.0 for IPv4, :: for IPv6)
+    SubnetConfigParser(const std::string&, ParserContextPtr global_context,
+                       const isc::asiolink::IOAddress& default_addr);
 
     /// @brief parses parameter value
     ///
@@ -915,6 +920,9 @@ protected:
     /// Parsing context which contains global values, options and option
     /// definitions.
     ParserContextPtr global_context_;
+
+    /// Pointer to relay information
+    isc::dhcp::Subnet::RelayInfoPtr relay_info_;
 };
 
 /// @brief Parser for  D2ClientConfig
