@@ -66,7 +66,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRelay) {
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
     // Set the giaddr to non-zero address and hops to non-zero value
     // as if it was relayed.
-    req->setGiaddr(IOAddress("192.0.2.1"));
+    req->setGiaddr(IOAddress("192.0.1.1"));
     req->setHops(2);
     // Set ciaddr to zero. This simulates the client which applies
     // for the new lease.
@@ -75,7 +75,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRelay) {
     req->setFlags(0x0000);
 
     // Set local address, port and interface.
-    req->setLocalAddr(IOAddress("192.0.3.1"));
+    req->setLocalAddr(IOAddress("192.0.2.1"));
     req->setLocalPort(1001);
     req->setIface("eth0");
     req->setIndex(1);
@@ -84,7 +84,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRelay) {
     // been created and new address allocated. This address is
     // stored in yiaddr field.
     boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
-    resp->setYiaddr(IOAddress("192.0.2.100"));
+    resp->setYiaddr(IOAddress("192.0.1.100"));
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
     // Set hops value for the response.
@@ -94,11 +94,11 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRelay) {
     ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
 
     // Now the destination address should be relay's address.
-    EXPECT_EQ("192.0.2.1", resp->getRemoteAddr().toText());
+    EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
     // The query has been relayed, so the response must be sent to the port 67.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
     // Local address should be copied from the query message.
-    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+    EXPECT_EQ("192.0.2.1", resp->getLocalAddr().toText());
     // The local port is always DHCPv4 server port 67.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
     // We will send response over the same interface which was used to receive
@@ -109,18 +109,18 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRelay) {
     // Let's do another test and set other fields: ciaddr and
     // flags. By doing it, we want to make sure that the relay
     // address will take precedence.
-    req->setGiaddr(IOAddress("192.0.2.50"));
-    req->setCiaddr(IOAddress("192.0.2.11"));
+    req->setGiaddr(IOAddress("192.0.1.50"));
+    req->setCiaddr(IOAddress("192.0.1.11"));
     req->setFlags(Pkt4::FLAG_BROADCAST_MASK);
 
-    resp->setYiaddr(IOAddress("192.0.2.100"));
+    resp->setYiaddr(IOAddress("192.0.1.100"));
     // Clear remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
     ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
 
     // Response should be sent back to the relay address.
-    EXPECT_EQ("192.0.2.50", resp->getRemoteAddr().toText());
+    EXPECT_EQ("192.0.1.50", resp->getRemoteAddr().toText());
 }
 
 // This test verifies that the destination address of the response message
@@ -136,7 +136,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRenew) {
     // Set ciaddr to non-zero address. The response should be sent to this
     // address as the client is in renewing or rebinding state (it is fully
     // configured).
-    req->setCiaddr(IOAddress("192.0.2.15"));
+    req->setCiaddr(IOAddress("192.0.1.15"));
     // Let's configure broadcast flag. It should be ignored because
     // we are responding directly to the client having an address
     // and trying to extend his lease. Broadcast flag is only used
@@ -147,7 +147,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRenew) {
     // This is a direct message, so the hops should be cleared.
     req->setHops(0);
     // Set local unicast address as if we are renewing a lease.
-    req->setLocalAddr(IOAddress("192.0.3.1"));
+    req->setLocalAddr(IOAddress("192.0.2.1"));
     // Request is received on the DHCPv4 server port.
     req->setLocalPort(DHCP4_SERVER_PORT);
     // Set the interface. The response should be sent over the same interface.
@@ -160,7 +160,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRenew) {
     // it will actually get different address. The response
     // should not be sent to this address but rather to ciaddr
     // as client still have ciaddr configured.
-    resp->setYiaddr(IOAddress("192.0.2.13"));
+    resp->setYiaddr(IOAddress("192.0.1.13"));
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
     // Copy hops value from the query.
@@ -169,13 +169,13 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRenew) {
     ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
 
     // Check that server responds to ciaddr
-    EXPECT_EQ("192.0.2.15", resp->getRemoteAddr().toText());
+    EXPECT_EQ("192.0.1.15", resp->getRemoteAddr().toText());
     // The query was non-relayed, so the response should be sent to a DHCPv4
     // client port 68.
     EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getRemotePort());
     // The response should be sent from the unicast address on which the
     // query has been received.
-    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+    EXPECT_EQ("192.0.2.1", resp->getLocalAddr().toText());
     // The response should be sent from the DHCPv4 server port.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
     // The interface data should match the data in the query.
@@ -216,7 +216,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataSelect) {
     // Create a response.
     boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
     // Assign some new address for this client.
-    resp->setYiaddr(IOAddress("192.0.2.13"));
+    resp->setYiaddr(IOAddress("192.0.1.13"));
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
     // Copy hops count.
@@ -244,7 +244,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataSelect) {
     // Although the query has been sent to the broadcast address, the
     // server should select a unicast address on the particular interface
     // as a source address for the response.
-    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+    EXPECT_EQ("192.0.2.1", resp->getLocalAddr().toText());
 
     // The response should be sent from the DHCPv4 server port.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
@@ -266,7 +266,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataSelect) {
     // address assigned for the client.
     ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(req, resp));
 
-    EXPECT_EQ("192.0.2.13", resp->getRemoteAddr().toText());
+    EXPECT_EQ("192.0.1.13", resp->getRemoteAddr().toText());
 }
 
 // This test verifies that the destination address of the response message
@@ -296,7 +296,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataBroadcast) {
     // Create a response.
     boost::shared_ptr<Pkt4> resp(new Pkt4(DHCPOFFER, 1234));
     // Assign some new address for this client.
-    resp->setYiaddr(IOAddress("192.0.2.13"));
+    resp->setYiaddr(IOAddress("192.0.1.13"));
 
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
@@ -310,7 +310,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataBroadcast) {
     // Although the query has been sent to the broadcast address, the
     // server should select a unicast address on the particular interface
     // as a source address for the response.
-    EXPECT_EQ("192.0.3.1", resp->getLocalAddr().toText());
+    EXPECT_EQ("192.0.2.1", resp->getLocalAddr().toText());
 
     // The response should be sent from the DHCPv4 server port.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
@@ -1065,7 +1065,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, acceptServerId) {
     // Add a server id being an IPv4 address configured on eth0 interface.
     // A DHCPv4 message holding this server identifier should be accepted.
     OptionCustomPtr eth0_serverid(new OptionCustom(def, Option::V6));
-    eth0_serverid->writeAddress(IOAddress("192.0.3.1"));
+    eth0_serverid->writeAddress(IOAddress("192.0.2.1"));
     ASSERT_NO_THROW(pkt->addOption(eth0_serverid));
     EXPECT_TRUE(srv.acceptServerId(pkt));
 
@@ -1766,7 +1766,13 @@ public:
         buf.push_back(1); // length (just one byte)
         buf.push_back(static_cast<uint8_t>(DHCPDISCOVER));
 
-        return (Pkt4Ptr(new Pkt4(&buf[0], buf.size())));
+        Pkt4Ptr dis(new Pkt4(&buf[0], buf.size()));
+        // Interface must be selected for a Discover. Server will use the interface
+        // name to select a subnet for a client. This test is using fake interfaces
+        // and the fake eth0 interface has IPv4 address matching the subnet
+        // currently configured for this test.
+        dis->setIface("eth0");
+        return (dis);
     }
 
     /// Test callback that stores received callout name and pkt4 value

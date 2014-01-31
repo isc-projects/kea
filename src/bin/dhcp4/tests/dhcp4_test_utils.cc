@@ -414,7 +414,7 @@ Dhcpv4SrvFakeIfaceTest::Dhcpv4SrvFakeIfaceTest()
 
     // Add fake interfaces.
     ifacemgr.addInterface(createIface("lo", 0, "127.0.0.1"));
-    ifacemgr.addInterface(createIface("eth0", 1, "192.0.3.1"));
+    ifacemgr.addInterface(createIface("eth0", 1, "192.0.2.1"));
     ifacemgr.addInterface(createIface("eth1", 2, "10.0.0.1"));
 
     // In order to use fake interfaces we have to supply the custom
