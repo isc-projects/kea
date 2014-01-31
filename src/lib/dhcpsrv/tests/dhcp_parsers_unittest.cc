@@ -1267,3 +1267,50 @@ TEST_F(ParserContextTest, copyConstruct) {
 TEST_F(ParserContextTest, copyConstructNull) {
     testCopyAssignmentNull(true);
 }
+
+/// @brief Checks that a valid relay info structure for IPv4 can be handled
+TEST_F(ParseConfigTest, validRelayInfo4) {
+
+    // Relay information structure. Very simple for now.
+    std::string config_str =
+        "    {"
+        "     \"ip-address\" : \"192.0.2.1\""
+        "    }";
+    ElementPtr json = Element::fromJSON(config_str);
+
+    // We need to set the default ip-address to something.
+    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("0.0.0.0")));
+
+    boost::shared_ptr<RelayInfoParser> parser;
+
+    // Subnet4 parser will pass 0.0.0.0 to the RelayInfoParser
+    EXPECT_NO_THROW(parser.reset(new RelayInfoParser("ignored", result,
+                                      asiolink::IOAddress("0.0.0.0"))));
+    EXPECT_NO_THROW(parser->build(json));
+    EXPECT_NO_THROW(parser->commit());
+
+    EXPECT_EQ("192.0.2.1", result->addr_.toText());
+}
+
+/// @brief Checks that a valid relay info structure for IPv6 can be handled
+TEST_F(ParseConfigTest, validRelayInfo6) {
+
+    // Relay information structure. Very simple for now.
+    std::string config_str =
+        "    {"
+        "     \"ip-address\" : \"2001:db8::1\""
+        "    }";
+    ElementPtr json = Element::fromJSON(config_str);
+
+    // We need to set the default ip-address to something.
+    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("::")));
+
+    boost::shared_ptr<RelayInfoParser> parser;
+    // Subnet4 parser will pass :: to the RelayInfoParser
+    EXPECT_NO_THROW(parser.reset(new RelayInfoParser("ignored", result,
+                                      asiolink::IOAddress("::"))));
+    EXPECT_NO_THROW(parser->build(json));
+    EXPECT_NO_THROW(parser->commit());
+
+    EXPECT_EQ("2001:db8::1", result->addr_.toText());
+}
