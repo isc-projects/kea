@@ -1511,11 +1511,12 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
         subnet = CfgMgr::instance().getSubnet4(relay);
     } else {
 
-        // No: Use client's address to select subnet
-        subnet = CfgMgr::instance().getSubnet4(question->getRemoteAddr());
+        // No: the message has been received from a directly connected client.
+        // The IPv4 address assigned to the interface on which this message
+        // has been received, will be used to determine the subnet suitable for
+        // a client.
+        subnet = CfgMgr::instance().getSubnet4(question->getIface());
     }
-
-    /// @todo Implement getSubnet4(interface-name)
 
     // Let's execute all callouts registered for subnet4_select
     if (HooksManager::calloutsPresent(hook_index_subnet4_select_)) {
