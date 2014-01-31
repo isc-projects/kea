@@ -224,15 +224,17 @@ protected:
     /// @param subnet subnet the client is connected to
     /// @param duid client's duid
     /// @param query client's message (typically SOLICIT or REQUEST)
+    /// @param answer server's response to the client's message. This
+    /// message should contain Client FQDN option being sent by the server
+    /// to the client (if the client sent this option to the server).
     /// @param ia pointer to client's IA_NA option (client's request)
-    /// @param fqdn A DHCPv6 Client FQDN %Option generated in a response to the
-    /// FQDN option sent by a client.
+    ///
     /// @return IA_NA option (server's response)
     OptionPtr assignIA_NA(const isc::dhcp::Subnet6Ptr& subnet,
                           const isc::dhcp::DuidPtr& duid,
                           const isc::dhcp::Pkt6Ptr& query,
-                          Option6IAPtr ia,
-                          const Option6ClientFqdnPtr& fqdn);
+                          const isc::dhcp::Pkt6Ptr& answer,
+                          Option6IAPtr ia);
 
     /// @brief Processes IA_PD option (and assigns prefixes if necessary).
     ///
@@ -260,12 +262,14 @@ protected:
     /// @param subnet subnet the sender belongs to
     /// @param duid client's duid
     /// @param query client's message
+    /// @param answer server's response to the client's message. This
+    /// message should contain Client FQDN option being sent by the server
+    /// to the client (if the client sent this option to the server).
     /// @param ia IA_NA option that is being renewed
-    /// @param fqdn DHCPv6 Client FQDN Option included in the server's response
     /// @return IA_NA option (server's response)
     OptionPtr renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                         const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia,
-                         const Option6ClientFqdnPtr& fqdn);
+                         const Pkt6Ptr& query, const Pkt6Ptr& answer,
+                         boost::shared_ptr<Option6IA> ia);
 
     /// @brief Renews specific IA_PD option
     ///
@@ -362,11 +366,10 @@ protected:
     /// @todo: Extend this method once TA and PD becomes supported
     ///
     /// @param question client's message (with requested IA_NA)
-    /// @param answer server's message (IA_NA options will be added here)
-    /// @param fqdn an FQDN option generated in a response to the client's
-    /// FQDN option.
-    void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer,
-                      const Option6ClientFqdnPtr& fqdn);
+    /// @param answer server's message (IA_NA options will be added here).
+    /// This message should contain Client FQDN option being sent by the server
+    /// to the client (if the client sent this option to the server).
+    void assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer);
 
     /// @brief Processes Client FQDN Option.
     ///
@@ -375,7 +378,7 @@ protected:
     /// Received option comprises flags field which controls what DNS updates
     /// server should do. Server may override client's preference based on
     /// the current configuration. Server indicates that it has overridden
-    /// the preference by storing DHCPv6 Client Fqdn %Option with the
+    /// the preference by storing DHCPv6 Client FQDN option with the
     /// appropriate flags in the response to a client. This option is also
     /// used to communicate the client's domain-name which should be sent
     /// to the DNS in the update. Again, server may act upon the received
@@ -386,25 +389,10 @@ protected:
     /// held in this function.
     ///
     /// @param question Client's message.
-    ///
-    /// @return FQDN option produced in the response to the client's message.
-    Option6ClientFqdnPtr processClientFqdn(const Pkt6Ptr& question);
-
-    /// @brief Adds DHCPv6 Client FQDN %Option to the server response.
-    ///
-    /// This function will add the specified FQDN option into the server's
-    /// response when FQDN is not NULL and server is either configured to
-    /// always include the FQDN in the response or client requested it using
-    /// %Option Request %Option.
-    /// This function is exception safe.
-    ///
-    /// @param question A message received from the client.
-    /// @param [out] answer A server's response where FQDN option will be added.
-    /// @param fqdn A DHCPv6 Client FQDN %Option to be added to the server's
-    /// response to a client.
-    void appendClientFqdn(const Pkt6Ptr& question,
-                          Pkt6Ptr& answer,
-                          const Option6ClientFqdnPtr& fqdn);
+    /// @param answer Server's response to a client. If server generated
+    /// Client FQDN option for the client, this option is stored in this
+    /// object.
+    void processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer);
 
     /// @brief Creates a number of @c isc::dhcp_ddns::NameChangeRequest objects
     /// based on the DHCPv6 Client FQDN %Option.
@@ -420,11 +408,9 @@ protected:
     ///
     /// @todo Add support for multiple IAADDR options in the IA_NA.
     ///
-    /// @param answer A message beging sent to the Client.
-    /// @param fqdn_answer A DHCPv6 Client FQDN %Option which is included in the
-    /// response message sent to a client.
-    void createNameChangeRequests(const Pkt6Ptr& answer,
-                                  const Option6ClientFqdnPtr& fqdn_answer);
+    /// @param answer A message beging sent to the Client. If it holds the
+    /// Client FQDN option, this option is used to create NameChangeRequests.
+    void createNameChangeRequests(const Pkt6Ptr& answer);
 
     /// @brief Creates a @c isc::dhcp_ddns::NameChangeRequest which requests
     /// removal of DNS entries for a particular lease.
@@ -460,10 +446,7 @@ protected:
     /// as IA_NA/IAADDR to reply packet.
     /// @param renew client's message asking for renew
     /// @param reply server's response
-    /// @param fqdn A DHCPv6 Client FQDN %Option generated in the response to the
-    /// client's FQDN option.
-    void renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply,
-                     const Option6ClientFqdnPtr& fqdn);
+    void renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply);
 
     /// @brief Attempts to release received addresses
     ///
@@ -563,6 +546,48 @@ private:
     ///
     /// @param errmsg An error message containing a cause of the failure.
     static void ifaceMgrSocket6ErrorHandler(const std::string& errmsg);
+
+    /// @brief Generate FQDN to be sent to a client if none exists.
+    ///
+    /// This function is meant to be called by the functions which process
+    /// client's messages. The function should be called after a function
+    /// which creates FQDN option for the client. This option must exist
+    /// in the answer message specified as an argument. It must also be
+    /// called after functions which assign leases for a client. The
+    /// IA options being a result of lease acquisition must be appended
+    /// to the message specified as a parameter.
+    ///
+    /// If the Client FQDN option being present in the message carries empty
+    /// hostname, this function will attempt to generate hostname from the
+    /// IPv6 address being acquired by the client. The IPv6 address is retrieved
+    /// from the IA_NA option carried in the specified message. If multiple
+    /// addresses are present in the particular IA_NA option or multiple IA_NA
+    /// options exist, the first address found is selected.
+    ///
+    /// The IPv6 address is converted to the hostname using the following
+    /// pattern:
+    /// @code
+    ///     prefix-converted-ip-address.domain-name-suffix.
+    /// @endcode
+    /// where:
+    /// - prefix is a configurable prefix string appended to all auto-generated
+    /// hostnames.
+    /// - converted-ip-address is created by replacing all colons from the IPv6
+    /// address with hyphens.
+    /// - domain-name-suffix is a suffix for a domain name that, together with
+    /// the other parts, constitute the fully qualified domain name.
+    ///
+    /// When hostname is successfully generated, it is either used to update
+    /// FQDN-related fields in a lease database or to update the Client FQDN
+    /// option being sent back to the client. The lease database update is
+    /// NOT performed if Advertise message is being processed.
+    ///
+    /// @param answer Message being sent to a client, which may hold IA_NA
+    /// and Client FQDN options to be used to generate name for a client.
+    ///
+    /// @throw isc::Unexpected if specified message is NULL. This is treated
+    /// as a programmatic error.
+    void generateFqdn(const Pkt6Ptr& answer);
 
     /// @brief Allocation Engine.
     /// Pointer to the allocation engine that we are currently using
