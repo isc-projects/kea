@@ -34,9 +34,6 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-/// dummy server-id file location
-static const char* SRVID_FILE = "server-id-test.txt";
-
 Dhcpv4SrvTest::Dhcpv4SrvTest()
 :rcode_(-1) {
     subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1000,
@@ -52,9 +49,6 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     Option4AddrLstPtr opt_routers(new Option4AddrLst(DHO_ROUTERS));
     opt_routers->setAddress(IOAddress("192.0.2.2"));
     subnet_->addOption(opt_routers, false, "dhcp4");
-
-    // it's ok if that fails. There should not be such a file anyway
-    unlink(SRVID_FILE);
 }
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
@@ -386,9 +380,6 @@ Dhcpv4SrvTest::createPacketFromBuffer(const Pkt4Ptr& src_pkt,
 void Dhcpv4SrvTest::TearDown() {
 
     CfgMgr::instance().deleteSubnets4();
-
-    // Let's clean up if there is such a file.
-    unlink(SRVID_FILE);
 
     // Close all open sockets.
     IfaceMgr::instance().closeSockets();
