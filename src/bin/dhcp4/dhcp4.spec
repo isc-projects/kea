@@ -249,7 +249,19 @@
                         "item_default": ""
                     }
                 },
-
+                { "item_name": "relay",
+                  "item_type": "map",
+                  "item_optional": false,
+                  "item_default": {},
+                  "map_item_spec": [
+                      {
+                          "item_name": "ip-address",
+                          "item_type": "string",
+                          "item_optional": false,
+                          "item_default": "0.0.0.0"
+                      }
+                   ]
+                },
                 { "item_name": "option-data",
                   "item_type": "list",
                   "item_optional": false,
