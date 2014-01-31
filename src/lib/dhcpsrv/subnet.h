@@ -154,7 +154,7 @@ public:
         >
     > OptionContainer;
 
-    // Pointer to the OptionContainer object.
+    /// Pointer to the OptionContainer object.
     typedef boost::shared_ptr<OptionContainer> OptionContainerPtr;
     /// Type of the index #1 - option type.
     typedef OptionContainer::nth_index<1>::type OptionContainerTypeIndex;
@@ -182,6 +182,9 @@ public:
         /// @brief IP address of the relay
         isc::asiolink::IOAddress addr_;
     };
+
+    /// Pointer to the RelayInfo structure
+    typedef boost::shared_ptr<Subnet::RelayInfo> RelayInfoPtr;
 
     /// @brief checks if specified address is in range
     bool inRange(const isc::asiolink::IOAddress& addr) const;

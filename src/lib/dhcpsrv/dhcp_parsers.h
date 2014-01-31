@@ -754,6 +754,46 @@ protected:
     PoolStorage local_pools_;
 };
 
+/// @brief parser for additional relay information
+///
+/// This concrete parser handles RelayInfo structure defintions.
+/// So far that structure holds only relay IP (v4 or v6) address, but it
+/// is expected that the number of parameters will increase over time.
+///
+/// It is useful for parsing Dhcp<4/6>/subnet<4/6>[x]/relay parameters.
+class RelayInfoParser : public DhcpConfigParser {
+public:
+
+    /// @brief constructor
+    /// @param dummy first argument is ignored, all Parser constructors
+    /// accept string as first argument.
+    /// @param relay_info is the storage in which to store the parsed
+    /// relay information upon "commit".
+    RelayInfoParser(const std::string& dummy,
+                    const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
+                    const asiolink::IOAddress& default_addr);
+
+    /// @brief parses the actual relay parameters
+    /// @param relay_info JSON strcture holding relay parameters to parse
+    virtual void build(isc::data::ConstElementPtr relay_info);
+
+    /// @brief stores parsed info in relay_info
+    virtual void commit();
+
+protected:
+    isc::dhcp::ParserPtr
+    createConfigParser(const std::string& parser);
+
+    /// Parsed data will be stored there on commit()
+    isc::dhcp::Subnet::RelayInfoPtr storage_;
+
+    /// Local storage information (for temporary values)
+    isc::dhcp::Subnet::RelayInfo local_;
+
+    /// Storage for subnet-specific string values.
+    StringStoragePtr string_values_;
+};
+
 /// @brief this class parses a single subnet
 ///
 /// This class parses the whole subnet definition. It creates parsers
