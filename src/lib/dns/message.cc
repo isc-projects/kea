@@ -620,6 +620,10 @@ Message::parseHeader(InputBuffer& buffer) {
                   "Message parse attempted in non parse mode");
     }
 
+    if (impl_->header_parsed_) {
+        return;
+    }
+
     if ((buffer.getLength() - buffer.getPosition()) < HEADERLEN) {
         isc_throw(MessageTooShort, "Malformed DNS message (short length): "
                   << buffer.getLength() - buffer.getPosition());
@@ -645,9 +649,11 @@ Message::fromWire(InputBuffer& buffer, ParseOptions options) {
                   "Message parse attempted in non parse mode");
     }
 
-    if (!impl_->header_parsed_) {
-        parseHeader(buffer);
-    }
+    // Clear any old parsed data
+    clear(Message::PARSE);
+
+    buffer.setPosition(0);
+    parseHeader(buffer);
 
     impl_->counts_[SECTION_QUESTION] = impl_->parseQuestion(buffer);
     impl_->counts_[SECTION_ANSWER] =

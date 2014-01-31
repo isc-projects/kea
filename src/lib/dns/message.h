@@ -607,6 +607,10 @@ public:
     };
 
     /// \brief Parse the header section of the \c Message.
+    ///
+    /// NOTE: If the header has already been parsed by a previous call
+    /// to this method, this method simply returns (i.e., it does not
+    /// read from the \c buffer).
     void parseHeader(isc::util::InputBuffer& buffer);
 
     /// \brief (Re)build a \c Message object from wire-format data.
@@ -642,7 +646,8 @@ public:
     /// \exception std::bad_alloc Memory allocation failure
     /// \exception Others \c Name, \c Rdata, and \c EDNS classes can also throw
     ///
-    /// \param buffer A input buffer object that stores the wire data
+    /// \param buffer A input buffer object that stores the wire
+    /// data. This method reads from position 0 in the passed buffer.
     /// \param options Parse options
     void fromWire(isc::util::InputBuffer& buffer, ParseOptions options
         = PARSE_DEFAULT);
