@@ -812,6 +812,53 @@ OptionDefListParser::commit() {
 }
 
 //****************************** PoolParser ********************************
+RelayInfoParser::RelayInfoParser(const std::string&,
+                                 const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
+                                 const asiolink::IOAddress& default_addr)
+    :storage_(relay_info), local_(default_addr),
+     string_values_(new StringStorage()) {
+    if (!relay_info) {
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+                  << "relay-info storage may not be NULL");
+    }
+
+};
+
+void
+RelayInfoParser::build(ConstElementPtr relay_info) {
+
+    BOOST_FOREACH(ConfigPair param, relay_info->mapValue()) {
+        ParserPtr parser(createConfigParser(param.first));
+        parser->build(param.second);
+        parser->commit();
+    }
+
+    // Get the IP address
+    asiolink::IOAddress ip(string_values_->getParam("ip-address"));
+
+    local_.addr_ = ip;
+}
+
+isc::dhcp::ParserPtr
+RelayInfoParser::createConfigParser(const std::string& parameter) {
+    DhcpConfigParser* parser = NULL;
+    if (parameter.compare("ip-address") == 0) {
+        parser = new StringParser(parameter, string_values_);
+    } else {
+        isc_throw(NotImplemented,
+                  "parser error: RelayInfoParser parameter not supported: "
+                  << parameter);
+    }
+
+    return (isc::dhcp::ParserPtr(parser));
+}
+
+void
+RelayInfoParser::commit() {
+    *storage_ = local_;
+}
+
+//****************************** PoolParser ********************************
 PoolParser::PoolParser(const std::string&,  PoolStoragePtr pools)
         :pools_(pools) {
 
