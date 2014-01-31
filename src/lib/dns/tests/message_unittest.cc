@@ -572,12 +572,10 @@ TEST_F(MessageTest, parseHeader) {
                 message_parse.endSection(Message::SECTION_ADDITIONAL));
 }
 
-TEST_F(MessageTest, fromWire) {
-    // fromWire() isn't allowed in the render mode.
-    EXPECT_THROW(factoryFromFile(message_render, "message_fromWire1"),
-                 InvalidMessageOperation);
-
-    factoryFromFile(message_parse, "message_fromWire1");
+void
+checkMessageFromWire(const Message& message_parse,
+                     const Name& test_name)
+{
     EXPECT_EQ(0x1035, message_parse.getQid());
     EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
     EXPECT_EQ(Rcode::NOERROR(), message_parse.getRcode());
@@ -606,6 +604,37 @@ TEST_F(MessageTest, fromWire) {
     EXPECT_EQ("192.0.2.2", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
+}
+
+
+TEST_F(MessageTest, fromWire) {
+    // fromWire() isn't allowed in the render mode.
+    EXPECT_THROW(factoryFromFile(message_render, "message_fromWire1"),
+                 InvalidMessageOperation);
+
+    factoryFromFile(message_parse, "message_fromWire1");
+    checkMessageFromWire(message_parse, test_name);
+}
+
+TEST_F(MessageTest, fromWireMultiple) {
+    // Parse from wire multiple times.
+    factoryFromFile(message_parse, "message_fromWire1");
+    factoryFromFile(message_parse, "message_fromWire1");
+    factoryFromFile(message_parse, "message_fromWire1");
+    factoryFromFile(message_parse, "message_fromWire1");
+    checkMessageFromWire(message_parse, test_name);
+
+    // Calling parseHeader() directly before fromWire() should not cause
+    // any problems.
+    received_data.clear();
+    UnitTestUtil::readWireData("message_fromWire1", received_data);
+
+    InputBuffer buffer(&received_data[0], received_data.size());
+    message_parse.parseHeader(buffer);
+    message_parse.fromWire(buffer);
+    message_parse.parseHeader(buffer);
+    message_parse.fromWire(buffer);
+    checkMessageFromWire(message_parse, test_name);
 }
 
 TEST_F(MessageTest, fromWireShortBuffer) {
