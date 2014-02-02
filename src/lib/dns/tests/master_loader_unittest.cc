@@ -307,6 +307,338 @@ TEST_F(MasterLoaderTest, origin) {
     }
 }
 
+TEST_F(MasterLoaderTest, generate) {
+    // Various forms of the directive
+    const char* generates[] = {
+        "$generate",
+        "$GENERATE",
+        "$Generate",
+        "$GeneratE",
+        "\"$GENERATE\"",
+        NULL
+    };
+    for (const char** generate = generates; *generate != NULL; ++generate) {
+        SCOPED_TRACE(*generate);
+
+        clear();
+        const string directive = *generate;
+        const string input =
+          "$ORIGIN example.org.\n"
+          "before.example.org. 3600 IN A 192.0.2.0\n" +
+          directive + " 3-5 host$ A 192.0.2.$\n" +
+          "after.example.org. 3600 IN A 192.0.2.255\n";
+        stringstream ss(input);
+        setLoader(ss, Name("example.org."), RRClass::IN(),
+                  MasterLoader::MANY_ERRORS);
+
+        loader_->load();
+        EXPECT_TRUE(loader_->loadedSucessfully());
+        EXPECT_TRUE(errors_.empty());
+
+        checkRR("before.example.org", RRType::A(), "192.0.2.0");
+        checkRR("host3.example.org", RRType::A(), "192.0.2.3");
+        checkRR("host4.example.org", RRType::A(), "192.0.2.4");
+        checkRR("host5.example.org", RRType::A(), "192.0.2.5");
+        checkRR("after.example.org", RRType::A(), "192.0.2.255");
+    }
+}
+
+TEST_F(MasterLoaderTest, generateRelativeLHS) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 1-2 @ 3600 NS ns$.example.org.\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+
+    checkRR("example.org", RRType::NS(), "ns1.example.org.");
+    checkRR("example.org", RRType::NS(), "ns2.example.org.");
+}
+
+TEST_F(MasterLoaderTest, generateInFront) {
+    // $ is in the front
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 9-10 $host 3600 TXT \"$ pomegranate\"\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+
+    checkRR("9host.example.org", RRType::TXT(), "9 pomegranate");
+    checkRR("10host.example.org", RRType::TXT(), "10 pomegranate");
+}
+
+TEST_F(MasterLoaderTest, generateInMiddle) {
+    // $ is in the middle
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 9-10 num$-host 3600 TXT \"This is $ pomegranate\"\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+
+    checkRR("num9-host.example.org", RRType::TXT(), "This is 9 pomegranate");
+    checkRR("num10-host.example.org", RRType::TXT(), "This is 10 pomegranate");
+}
+
+TEST_F(MasterLoaderTest, generateStripsQuotes) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 1-2 @ 3600 MX \"$ mx$.example.org.\"\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+
+    checkRR("example.org", RRType::MX(), "1 mx1.example.org.");
+    checkRR("example.org", RRType::MX(), "2 mx2.example.org.");
+}
+
+TEST_F(MasterLoaderTest, generateWithDoublePlaceholder) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 9-10 host$ 3600 TXT \"This is $$ pomegranate\"\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+
+    checkRR("host9.example.org", RRType::TXT(), "This is $ pomegranate");
+    checkRR("host10.example.org", RRType::TXT(), "This is $ pomegranate");
+}
+
+TEST_F(MasterLoaderTest, generateWithEscape) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 9-10 host$ 3600 TXT \"This is \\$\\pomegranate\"\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+
+    checkRR("host9.example.org", RRType::TXT(), "This is \\$\\pomegranate");
+    checkRR("host10.example.org", RRType::TXT(), "This is \\$\\pomegranate");
+}
+
+TEST_F(MasterLoaderTest, generateWithParams) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$TTL 3600\n"
+        "$GENERATE 2-3 host$ A 192.0.2.$\n"
+        "$GENERATE 5-6 host$ 3600 A 192.0.2.$\n"
+        "$GENERATE 8-9 host$ IN A 192.0.2.$\n"
+        "$GENERATE 11-12 host$ IN 3600 A 192.0.2.$\n"
+        "$GENERATE 14-15 host$ 3600 IN A 192.0.2.$\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+
+    checkRR("host2.example.org", RRType::A(), "192.0.2.2");
+    checkRR("host3.example.org", RRType::A(), "192.0.2.3");
+
+    checkRR("host5.example.org", RRType::A(), "192.0.2.5");
+    checkRR("host6.example.org", RRType::A(), "192.0.2.6");
+
+    checkRR("host8.example.org", RRType::A(), "192.0.2.8");
+    checkRR("host9.example.org", RRType::A(), "192.0.2.9");
+
+    checkRR("host11.example.org", RRType::A(), "192.0.2.11");
+    checkRR("host12.example.org", RRType::A(), "192.0.2.12");
+
+    checkRR("host14.example.org", RRType::A(), "192.0.2.14");
+    checkRR("host15.example.org", RRType::A(), "192.0.2.15");
+}
+
+TEST_F(MasterLoaderTest, generateWithStep) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 2-9/2 host$ 3600 A 192.0.2.$\n"
+        "$GENERATE 12-21/3 host$ 3600 A 192.0.2.$\n"
+        "$GENERATE 30-31/1 host$ 3600 A 192.0.2.$\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+
+    checkRR("host2.example.org", RRType::A(), "192.0.2.2");
+    checkRR("host4.example.org", RRType::A(), "192.0.2.4");
+    checkRR("host6.example.org", RRType::A(), "192.0.2.6");
+    checkRR("host8.example.org", RRType::A(), "192.0.2.8");
+
+    checkRR("host12.example.org", RRType::A(), "192.0.2.12");
+    checkRR("host15.example.org", RRType::A(), "192.0.2.15");
+    checkRR("host18.example.org", RRType::A(), "192.0.2.18");
+    checkRR("host21.example.org", RRType::A(), "192.0.2.21");
+
+    checkRR("host30.example.org", RRType::A(), "192.0.2.30");
+    checkRR("host31.example.org", RRType::A(), "192.0.2.31");
+}
+
+TEST_F(MasterLoaderTest, generateMissingRange) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
+    EXPECT_TRUE(warnings_.empty());
+
+    checkCallbackMessage(errors_.at(0),
+                         "unexpected end of input", 2);
+}
+
+TEST_F(MasterLoaderTest, generateMissingLHS) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 2-4\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
+    EXPECT_TRUE(warnings_.empty());
+
+    checkCallbackMessage(errors_.at(0),
+                         "unexpected end of input", 2);
+}
+
+TEST_F(MasterLoaderTest, generateMissingType) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 2-4 host$\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
+    EXPECT_TRUE(warnings_.empty());
+
+    checkCallbackMessage(errors_.at(0),
+                         "unexpected end of input", 2);
+}
+
+TEST_F(MasterLoaderTest, generateMissingRHS) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 2-4 host$ A\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
+    EXPECT_TRUE(warnings_.empty());
+
+    checkCallbackMessage(errors_.at(0),
+                         "unexpected end of input", 2);
+}
+
+TEST_F(MasterLoaderTest, generateWithBadRangeSyntax) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE ABCD host$ 3600 A 192.0.2.$\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
+    EXPECT_TRUE(warnings_.empty());
+
+    checkCallbackMessage(errors_.at(0),
+                         "$GENERATE: invalid range: ABCD", 2);
+}
+
+TEST_F(MasterLoaderTest, generateWithInvalidRange) {
+    // start > stop
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 2-1 host$ 3600 A 192.0.2.$\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
+    EXPECT_TRUE(warnings_.empty());
+
+    checkCallbackMessage(errors_.at(0),
+                         "$GENERATE: invalid range: 2-1", 2);
+}
+
+TEST_F(MasterLoaderTest, generateWithInvalidClass) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 1-2 host$ 3600 CH A 192.0.2.$\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
+    EXPECT_TRUE(warnings_.empty());
+
+    checkCallbackMessage(errors_.at(0),
+                         "Class mismatch: CH vs. IN", 2);
+}
+
+TEST_F(MasterLoaderTest, generateWithNoAvailableTTL) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 1-2 host$ A 192.0.2.$\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    EXPECT_EQ(1, errors_.size()); // For the broken GENERATE
+    EXPECT_TRUE(warnings_.empty());
+
+    checkCallbackMessage(errors_.at(0),
+                         "no TTL specified; load rejected", 2);
+}
+
 // Test the source is correctly popped even after error
 TEST_F(MasterLoaderTest, popAfterError) {
     const string include_str = "$include " TEST_DATA_SRCDIR

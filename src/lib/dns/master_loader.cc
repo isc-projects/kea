@@ -21,14 +21,16 @@
 #include <dns/rrtype.h>
 #include <dns/rdata.h>
 
-#include <boost/scoped_ptr.hpp>
+#include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp> // for iequals
+#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <string>
 #include <memory>
 #include <vector>
-#include <boost/algorithm/string/predicate.hpp> // for iequals
-#include <boost/shared_ptr.hpp>
+
+#include <stdio.h> // for sscanf()
 
 using std::string;
 using std::auto_ptr;
@@ -148,6 +150,8 @@ private:
     }
 
     MasterToken handleInitialToken();
+    std::string generateForIter(const std::string& str, const int it);
+    void doGenerate();
 
     void doOrigin(bool is_optional) {
         // Parse and create the new origin. It is relative to the previous
@@ -348,6 +352,9 @@ private:
         } else if (iequals(directive, "ORIGIN")) {
             doOrigin(false);
             eatUntilEOL(true);
+        } else if (iequals(directive, "GENERATE")) {
+            doGenerate();
+            eatUntilEOL(true);
         } else if (iequals(directive, "TTL")) {
             setDefaultTTL(RRTTL(getString()), false);
             eatUntilEOL(true);
@@ -436,6 +443,130 @@ public:
                                 // from the previous RR is used.
     size_t rr_count_;    // number of RRs successfully loaded
 };
+
+std::string
+MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
+                                                const int i)
+{
+  std::string rstr;
+
+  for (std::string::const_iterator it = str.begin(); it != str.end();) {
+      switch (*it) {
+      case '$':
+          ++it;
+          if ((it != str.end()) && (*it == '$')) {
+              rstr.push_back('$');
+              ++it;
+              continue;
+          }
+
+          // TODO: This doesn't handle format specifiers in {} yet.
+          rstr += boost::str(boost::format("%d") % i);
+          break;
+
+      case '\\':
+          rstr.push_back(*it);
+          ++it;
+          if (it == str.end()) {
+              continue;
+          }
+          rstr.push_back(*it);
+          ++it;
+          break;
+
+      default:
+          rstr.push_back(*it);
+          ++it;
+          break;
+      }
+  }
+
+  return (rstr);
+}
+
+void
+MasterLoader::MasterLoaderImpl::doGenerate() {
+    const MasterToken& range_token = lexer_.getNextToken(MasterToken::STRING);
+    if (range_token.getType() != MasterToken::STRING) {
+        reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                    "Invalid $GENERATE syntax");
+        return;
+    }
+    const std::string range = range_token.getString();
+
+    const MasterToken& lhs_token = lexer_.getNextToken(MasterToken::STRING);
+    if (lhs_token.getType() != MasterToken::STRING) {
+        reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                    "Invalid $GENERATE syntax");
+        return;
+    }
+    const std::string lhs = lhs_token.getString();
+
+    const MasterToken& param_token = lexer_.getNextToken(MasterToken::STRING);
+    if (param_token.getType() != MasterToken::STRING) {
+        reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                    "Invalid $GENERATE syntax");
+        return;
+    }
+    bool explicit_ttl = false;
+    const RRType rrtype = parseRRParams(explicit_ttl, param_token);
+
+    const MasterToken& rhs_token = lexer_.getNextToken(MasterToken::QSTRING);
+    if ((rhs_token.getType() != MasterToken::QSTRING) &&
+        (rhs_token.getType() != MasterToken::STRING))
+    {
+        reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                    "Invalid $GENERATE syntax");
+        return;
+    }
+    const std::string rhs = rhs_token.getString();
+
+    unsigned int start;
+    unsigned int stop;
+    unsigned int step;
+
+    const int n = sscanf(range.c_str(), "%u-%u/%u", &start, &stop, &step);
+    if ((n < 2) || (stop < start)) {
+        reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                    "$GENERATE: invalid range: " + range);
+        return;
+    }
+
+    if (n == 2) {
+        step = 1;
+    }
+
+    for (int i = start; i <= stop; i += step) {
+        const std::string generated_name = generateForIter(lhs, i);
+        const std::string generated_rdata = generateForIter(rhs, i);
+        const size_t name_length = generated_name.size();
+        last_name_.reset(new Name(generated_name.c_str(), name_length,
+                                  &active_origin_));
+        previous_name_ = true;
+
+        const rdata::RdataPtr rdata =
+            rdata::createRdata(rrtype, zone_class_, generated_rdata);
+        // In case we get NULL, it means there was error creating the
+        // Rdata. The errors should have been reported by callbacks_
+        // already. We need to decide if we want to continue or not.
+        if (rdata) {
+            add_callback_(*last_name_, zone_class_, rrtype,
+                          getCurrentTTL(explicit_ttl, rrtype, rdata),
+                          rdata);
+            // Good, we added another one
+            ++rr_count_;
+        } else {
+            seen_error_ = true;
+            if (!many_errors_) {
+                ok_ = false;
+                complete_ = true;
+                // We don't have the exact error here, but it was
+                // reported by the error callback.
+                isc_throw(MasterLoaderError, "Invalid RR data");
+            }
+        }
+    }
+}
 
 // A helper method of loadIncremental, parsing the first token of a new line.
 // If it looks like an RR, detect its owner name and return a string token for
