@@ -206,6 +206,11 @@ public:
     /// It throws \c isc::Unexpected unconditionally.
     virtual void addRdata(const dns::rdata::Rdata& rdata);
 
+    /// \brief Specialized version of \c addRdata() for \c TreeNodeRRset.
+    ///
+    /// It throws \c isc::Unexpected unconditionally.
+    virtual void addRdata(const std::string& rdata_str);
+
     virtual dns::RdataIteratorPtr getRdataIterator() const;
 
     /// \brief Specialized version of \c getRRsig() for \c TreeNodeRRset.

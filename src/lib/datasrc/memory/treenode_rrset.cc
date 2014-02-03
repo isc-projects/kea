@@ -270,6 +270,11 @@ TreeNodeRRset::addRdata(const rdata::Rdata&) {
     isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
 }
 
+void
+TreeNodeRRset::addRdata(const std::string&) {
+    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
+}
+
 namespace {
 // In this namespace we define a set of helper stuff to implement the
 // RdataIterator for the TreeNodeRRset.  We should eventually optimize
