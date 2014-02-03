@@ -244,7 +244,8 @@ public:
     getOptionFromSubnet(const IOAddress& subnet_address,
                         const uint16_t option_code,
                         const uint16_t expected_options_count = 1) {
-        Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(subnet_address);
+        Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(subnet_address,
+                                                          classify_);
         if (!subnet) {
             /// @todo replace toText() with the use of operator <<.
             ADD_FAILURE() << "A subnet for the specified address "
@@ -475,6 +476,7 @@ public:
     ConstElementPtr comment_; ///< Comment (see @ref isc::config::parseAnswer)
     string valid_iface_; ///< Valid network interface name (present in system)
     string bogus_iface_; ///< invalid network interface name (not in system)
+    isc::dhcp::Classes classify_; ///< used in client classification
 };
 
 // Goal of this test is a verification if a very simple config update
@@ -554,7 +556,8 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+        classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
@@ -772,7 +775,8 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
     comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1, subnet->getT1());
     EXPECT_EQ(2, subnet->getT2());
@@ -808,7 +812,8 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
     comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(valid_iface_, subnet->getIface());
 }
@@ -841,7 +846,8 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
     comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(1, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     EXPECT_FALSE(subnet);
 }
 
@@ -906,13 +912,13 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
     // Try to get a subnet based on bogus interface-id option
     OptionBuffer tmp(bogus_interface_id.begin(), bogus_interface_id.end());
     OptionPtr ifaceid(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(ifaceid);
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(ifaceid, classify_);
     EXPECT_FALSE(subnet);
 
     // Now try to get subnet for valid interface-id value
     tmp = OptionBuffer(valid_interface_id.begin(), valid_interface_id.end());
     ifaceid.reset(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
-    subnet = CfgMgr::instance().getSubnet6(ifaceid);
+    subnet = CfgMgr::instance().getSubnet6(ifaceid, classify_);
     ASSERT_TRUE(subnet);
     EXPECT_TRUE(ifaceid->equal(subnet->getInterfaceId()));
 }
@@ -1025,7 +1031,8 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     comment_ = parseAnswer(rcode_, x);
     EXPECT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
@@ -1068,9 +1075,8 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     EXPECT_EQ(0, rcode_);
 
     // Test that we can retrieve the subnet.
-    Subnet6Ptr subnet = CfgMgr::
-                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
-
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Fetch the collection of PD pools.  It should have 1 entry.
@@ -1143,8 +1149,8 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
     EXPECT_EQ(0, rcode_);
 
     // Test that we can retrieve the subnet.
-    Subnet6Ptr subnet = CfgMgr::
-                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Fetch the collection of NA pools.  It should have 1 entry.
@@ -1201,8 +1207,8 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
     EXPECT_EQ(0, rcode_);
 
     // Test that we can retrieve the subnet.
-    Subnet6Ptr subnet = CfgMgr::
-                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
 
     ASSERT_TRUE(subnet);
 
@@ -1846,7 +1852,8 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
     ASSERT_EQ(2, options->size());
@@ -1938,7 +1945,8 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     // Try to get the option from the space dhcp6.
     Subnet::OptionDescriptor desc1 = subnet->getOptionDescriptor("dhcp6", 38);
@@ -2089,7 +2097,8 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     checkResult(status, 0);
 
     // Get the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
@@ -2153,7 +2162,8 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet1 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet1 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                       classify_);
     ASSERT_TRUE(subnet1);
     Subnet::OptionContainerPtr options1 = subnet1->getOptionDescriptors("dhcp6");
     ASSERT_EQ(1, options1->size());
@@ -2178,7 +2188,8 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
                sizeof(subid_expected));
 
     // Test another subnet in the same way.
-    Subnet6Ptr subnet2 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:2::4"));
+    Subnet6Ptr subnet2 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:2::4"),
+                                                       classify_);
     ASSERT_TRUE(subnet2);
     Subnet::OptionContainerPtr options2 = subnet2->getOptionDescriptors("dhcp6");
     ASSERT_EQ(1, options2->size());
@@ -2348,7 +2359,8 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
     ASSERT_EQ(1, options->size());
@@ -2392,7 +2404,8 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
     ASSERT_EQ(1, options->size());
@@ -2467,7 +2480,8 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Try to get the option from the vendor space 4491
@@ -2526,7 +2540,8 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Try to get the option from the vendor space 4491
@@ -2660,7 +2675,8 @@ TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
     checkResult(status, 0);
 
     // Get the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
@@ -2949,7 +2965,8 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::1"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::1"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ("2001:db8:1::abcd", subnet->relay_.addr_.toText());
 }

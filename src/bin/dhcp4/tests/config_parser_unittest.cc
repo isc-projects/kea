@@ -24,6 +24,7 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp/classify.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks_manager.h>
@@ -231,7 +232,8 @@ public:
     getOptionFromSubnet(const IOAddress& subnet_address,
                         const uint16_t option_code,
                         const uint16_t expected_options_count = 1) {
-        Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(subnet_address);
+        Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(subnet_address,
+                                                          classify_);
         if (!subnet) {
             /// @todo replace toText() with the use of operator <<.
             ADD_FAILURE() << "A subnet for the specified address "
@@ -457,6 +459,7 @@ public:
     boost::scoped_ptr<Dhcpv4Srv> srv_;      // DHCP4 server under test
     int rcode_;                             // Return code from element parsing
     ConstElementPtr comment_;               // Reason for parse fail
+    isc::dhcp::Classes classify_;           // used in client classification
 };
 
 // Goal of this test is a verification if a very simple config update
@@ -531,7 +534,8 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
@@ -749,7 +753,8 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
 }
@@ -778,7 +783,8 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
 }
@@ -865,7 +871,8 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
 }
@@ -935,7 +942,8 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1, subnet->getT1());
     EXPECT_EQ(2, subnet->getT2());
@@ -987,7 +995,8 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
     // returned value must be 0 (configuration accepted)
     checkResult(status, 0);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
@@ -1524,7 +1533,8 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
     ASSERT_EQ(2, options->size());
@@ -1608,7 +1618,8 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     // Try to get the option from the space dhcp4.
     Subnet::OptionDescriptor desc1 = subnet->getOptionDescriptor("dhcp4", 56);
@@ -1758,7 +1769,8 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     checkResult(status, 0);
 
     // Get the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
@@ -1826,7 +1838,8 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.24"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.24"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
     ASSERT_EQ(2, options->size());
@@ -1978,7 +1991,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet4Ptr subnet1 = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.100"));
+    Subnet4Ptr subnet1 = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.100"),
+                                                       classify_);
     ASSERT_TRUE(subnet1);
     Subnet::OptionContainerPtr options1 = subnet1->getOptionDescriptors("dhcp4");
     ASSERT_EQ(1, options1->size());
@@ -2002,7 +2016,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     testOption(*range1.first, 56, foo_expected, sizeof(foo_expected));
 
     // Test another subnet in the same way.
-    Subnet4Ptr subnet2 = CfgMgr::instance().getSubnet4(IOAddress("192.0.3.102"));
+    Subnet4Ptr subnet2 = CfgMgr::instance().getSubnet4(IOAddress("192.0.3.102"),
+                                                       classify_);
     ASSERT_TRUE(subnet2);
     Subnet::OptionContainerPtr options2 = subnet2->getOptionDescriptors("dhcp4");
     ASSERT_EQ(1, options2->size());
@@ -2081,7 +2096,8 @@ TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
     ASSERT_EQ(1, options->size());
@@ -2125,7 +2141,8 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options =
         subnet->getOptionDescriptors("dhcp4");
@@ -2327,7 +2344,8 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     checkResult(status, 0);
 
     // Get the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
@@ -2409,7 +2427,8 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Try to get the option from the vendor space 4491
@@ -2468,7 +2487,8 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Try to get the option from the vendor space 4491
@@ -2827,7 +2847,8 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ("192.0.2.123", subnet->relay_.addr_.toText());
 }
