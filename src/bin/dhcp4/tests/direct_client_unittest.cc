@@ -17,6 +17,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcp4/config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
@@ -68,11 +69,11 @@ public:
     /// @brief Creates simple message from a client.
     ///
     /// This function creates a DHCPv4 message having a specified type
-    /// (e.g. Discover, Request) and sets the interface property of this
-    /// message. The interface property indicates on which interface
-    /// interface a message has been received. The interface is used by
-    /// the DHCPv4 server to determine the subnet from which the address
-    /// should be allocated for the client.
+    /// (e.g. Discover, Request) and sets some properties of this
+    /// message: client identifier, address and interface. The copy of
+    /// this message is then created by parsing wire data of the original
+    /// message. This simulates the case when the message is received and
+    /// parsed by the server.
     ///
     /// @param msg_type Type of the message to be created.
     /// @param iface Name of the interface on which the message has been
@@ -81,6 +82,21 @@ public:
     /// @return Generated message.
     Pkt4Ptr createClientMessage(const uint16_t msg_type,
                                 const std::string& iface);
+
+    /// @brief Creates simple message from a client.
+    ///
+    /// This function configures a client's message by adding client identifier,
+    /// setting interface and addresses. The copy of this message is then
+    /// created by parsing wire data of the original message. This simulates the
+    /// case when the message is received and parsed by the server.
+    ///
+    /// @param msg Caller supplied message to be configured. This object must
+    /// not be NULL.
+    /// @param iface Name of the interface on which the message has been
+    /// "received" by the server.
+    ///
+    /// @return Configured and parsed message.
+    Pkt4Ptr createClientMessage(const Pkt4Ptr &msg, const std::string& iface);
 
     /// @brief Runs DHCPv4 configuration from the JSON string.
     ///
@@ -148,11 +164,16 @@ DirectClientTest:: createClientMessage(const uint16_t msg_type,
                                        const std::string& iface) {
     // Create a source packet.
     Pkt4Ptr msg = Pkt4Ptr(new Pkt4(msg_type, 1234));
+    return (createClientMessage(msg, iface));
+
+}
+
+Pkt4Ptr
+DirectClientTest::createClientMessage(const Pkt4Ptr& msg,
+                                      const std::string& iface) {
     msg->setRemoteAddr(IOAddress("255.255.255.255"));
     msg->addOption(generateClientId());
     msg->setIface(iface);
-    // Create on-wire format of this packet as it has been sent by the client.
-    msg->pack();
 
     // Create copy of this packet by parsing its wire data. Make sure that the
     // local and remote address are set like it was a message sent from the
@@ -238,9 +259,9 @@ TEST_F(DirectClientTest,  twoSubnets) {
 // through an interface for which the subnet has been configured. This
 // interface has IPv4 address assigned which belongs to this subnet.
 // This test also verifies that when the message is received through
-// the interface for which there is no suitable subnet, the NAK
-// is sent back to a client.
-TEST_F(DirectClientTest,  oneSubnet) {
+// the interface for which there is no suitable subnet, the message
+// is discarded.
+TEST_F(DirectClientTest, oneSubnet) {
     // Configure IfaceMgr with fake interfaces lo, eth0 and eth1.
     IfaceMgrTestConfig iface_config(true);
     // After creating interfaces we have to open sockets as it is required
@@ -259,11 +280,12 @@ TEST_F(DirectClientTest,  oneSubnet) {
     // Process clients' messages.
     srv_.run();
 
-    // Check that the server did send reposonses.
-    ASSERT_EQ(2, srv_.fake_sent_.size());
+    // Check that the server sent one response for the message received
+    // through eth0. The other client's message should be dicarded.
+    ASSERT_EQ(1, srv_.fake_sent_.size());
 
-    // Check the first response. The first Discover was sent via eth0
-    // for which the subnet has been configured.
+    // Check the response. The first Discover was sent via eth0 for which
+    // the subnet has been configured.
     Pkt4Ptr response = srv_.fake_sent_.front();
     ASSERT_TRUE(response);
     srv_.fake_sent_.pop_front();
@@ -277,16 +299,124 @@ TEST_F(DirectClientTest,  oneSubnet) {
     ASSERT_TRUE(subnet);
     EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
-    // The second Discover was sent through eth1 for which no suitable
-    // subnet exists.
-    response = srv_.fake_sent_.front();
+}
+
+// This test verifies that the server uses ciaddr to select a subnet for a
+// client which renews its lease.
+TEST_F(DirectClientTest, renew) {
+    // Configure IfaceMgr with fake interfaces lo, eth0 and eth1.
+    IfaceMgrTestConfig iface_config(true);
+    // After creating interfaces we have to open sockets as it is required
+    // by the message processing code.
+    ASSERT_NO_THROW(IfaceMgr::instance().openSockets4());
+    // Add a subnet.
+    ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
+    // Make sure that the subnet has been really added. Also, the subnet
+    // will be needed to create a lease for a client.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("10.0.0.10"));
+    // Create a lease for a client that we will later renewed. By explicitly
+    // creating a lease we will get to know the lease parameters, such as
+    // leased address etc.
+    const uint8_t hwaddr[] = { 1, 2, 3, 4, 5, 6 };
+    Lease4Ptr lease(new Lease4(IOAddress("10.0.0.10"), hwaddr, sizeof(hwaddr),
+                               &generateClientId()->getData()[0],
+                               generateClientId()->getData().size(),
+                               100, 50, 75, time(NULL),
+                               subnet->getID()));
+    LeaseMgrFactory::instance().addLease(lease);
+
+    // Create a Request to renew client's lease. The renew request is unicast
+    // through eth1. Note, that in case of renewal the client unicasts its
+    // Request and sets the ciaddr. The server is supposed to use ciaddr to
+    // pick the subnet for the client. In order to make sure that the server
+    // uses ciaddr, we simulate reception of the packet through eth1, for which
+    // there is no subnet for directly connected clients.
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setCiaddr(IOAddress("10.0.0.10"));
+    req = createClientMessage(req, "eth1");
+    req->setLocalAddr(IOAddress("10.0.0.1"));
+    req->setRemoteAddr(req->getCiaddr());
+
+    srv_.fakeReceive(req);
+
+    // Process clients' messages.
+    srv_.run();
+
+    // Check that the server did send reposonse.
+    ASSERT_EQ(1, srv_.fake_sent_.size());
+    Pkt4Ptr response = srv_.fake_sent_.front();
     ASSERT_TRUE(response);
 
-    // The client should receive NAK as there is no subnet configured
-    // for this network.
-    EXPECT_EQ(DHCPNAK, response->getType());
+    ASSERT_EQ(DHCPACK, response->getType());
+    // Check that the offered address belongs to the suitable subnet.
+    subnet = CfgMgr::instance().getSubnet4(response->getYiaddr());
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
 
 }
 
+// This test verifies that when a client in the Rebinding state broadcasts
+// a Request message through an interface for which a subnet is configured,
+// the server responds to this Request. It also verifies that when such a
+// Request is sent through the interface for which there is no subnet configured
+// the client's message is discarded.
+TEST_F(DirectClientTest, rebind) {
+    // Configure IfaceMgr with fake interfaces lo, eth0 and eth1.
+    IfaceMgrTestConfig iface_config(true);
+    // After creating interfaces we have to open sockets as it is required
+    // by the message processing code.
+    ASSERT_NO_THROW(IfaceMgr::instance().openSockets4());
+    // Add a subnet.
+    ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
+    // Make sure that the subnet has been really added. Also, the subnet
+    // will be needed to create a lease for a client.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("10.0.0.10"));
+    // Create a lease, which will be later renewed. By explicitly creating a
+    // lease we will know the lease parameters, such as leased address etc.
+    const uint8_t hwaddr[] = { 1, 2, 3, 4, 5, 6 };
+    Lease4Ptr lease(new Lease4(IOAddress("10.0.0.10"), hwaddr, sizeof(hwaddr),
+                               &generateClientId()->getData()[0],
+                               generateClientId()->getData().size(),
+                               100, 50, 75, time(NULL),
+                               subnet->getID()));
+    LeaseMgrFactory::instance().addLease(lease);
+
+    // Broadcast Request through an interface for which there is no subnet
+    // configured. This messag should be discarded by the server.
+    Pkt4Ptr req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
+    req->setCiaddr(IOAddress("10.0.0.10"));
+    req = createClientMessage(req, "eth1");
+    req->setRemoteAddr(req->getCiaddr());
+
+    srv_.fakeReceive(req);
+
+    // Broadcast another Request through an interface for which there is
+    // a subnet configured. The server should generate a response.
+    req = Pkt4Ptr(new Pkt4(DHCPREQUEST, 5678));
+    req->setCiaddr(IOAddress("10.0.0.10"));
+    req = createClientMessage(req, "eth0");
+    req->setRemoteAddr(req->getCiaddr());
+
+    srv_.fakeReceive(req);
+
+    // Process clients' messages.
+    srv_.run();
+
+    // Check that the server did send exactly one reposonse.
+    ASSERT_EQ(1, srv_.fake_sent_.size());
+    Pkt4Ptr response = srv_.fake_sent_.front();
+    ASSERT_TRUE(response);
+
+    // Make sure that the server responsed with ACK, not NAK.
+    ASSERT_EQ(DHCPACK, response->getType());
+    // Make sure that the response is generated for the second Request
+    // (transmitted over eth0).
+    EXPECT_EQ(5678, response->getTransid());
+    // Check that the offered address belongs to the suitable subnet.
+    subnet = CfgMgr::instance().getSubnet4(response->getYiaddr());
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
+
+}
 
 }

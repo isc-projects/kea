@@ -175,6 +175,13 @@ This warning message is issued when current server configuration specifies
 no interfaces that server should listen on, or specified interfaces are not
 configured to receive the traffic.
 
+% DHCP4_NO_SUBNET_FOR_DIRECT_CLIENT no suitable subnet configured for a direct client sending packet with transaction id %1, on interface %2, received message is dropped
+This info messsage is logged when received a message from a directly connected
+client but there is no suitable subnet configured for the interface on
+which this message has been received. The IPv4 address assigned on this
+interface must belong to one of the configured subnets. Otherwise
+received message is dropped.
+
 % DHCP4_NOT_RUNNING IPv4 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
 IPv4 DHCP server but it is not running.
