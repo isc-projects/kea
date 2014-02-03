@@ -33,6 +33,9 @@ namespace test {
 class PktFilterTestStub : public PktFilter {
 public:
 
+    /// @brief Constructor.
+    PktFilterTestStub();
+
     /// @brief Checks if the direct DHCPv4 response is supported.
     ///
     /// This function checks if the direct response capability is supported,
@@ -89,6 +92,8 @@ public:
 
     // Change the scope of the protected function so as they can be unit tested.
     using PktFilter::openFallbackSocket;
+
+    bool direct_response_supported_;
 };
 
 } // namespace isc::dhcp::test

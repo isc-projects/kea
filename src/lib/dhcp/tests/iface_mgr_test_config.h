@@ -144,6 +144,23 @@ public:
     /// @brief Creates a default (example) set of fake interfaces.
     void createIfaces();
 
+    /// @brief Returns currently used packet filter for DHCPv4.
+    PktFilterPtr getPacketFilter4() const {
+        return (packet_filter4_);
+    }
+
+    /// @brief Sets the direct response capability for current packet filter.
+    ///
+    /// The test uses stub implementation of packet filter object. It is
+    /// possible to configure that object to report having a capability
+    /// to directly repond to clients which don't have an address yet.
+    /// This function sets this property for packet filter object.
+    ///
+    /// @param direct_resp Value to be set.
+    ///
+    /// @throw isc::Unexpected if unable to set the property.
+    void setDirectResponse(const bool direct_resp);
+
     /// @brief Sets various flags on the specified interface.
     ///
     /// This function configures interface with new values for flags.
@@ -161,6 +178,10 @@ public:
                        const FlagRunning& running,
                        const FlagInactive4& inactive4,
                        const FlagInactive6& inactive6);
+
+private:
+    /// @brief Currently used packet filter for DHCPv4.
+    PktFilterPtr packet_filter4_;
 
 };
 
