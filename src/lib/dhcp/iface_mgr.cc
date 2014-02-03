@@ -973,14 +973,17 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // Let's find out which socket has the data
     for (SocketCallbackContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
-        if (FD_ISSET(s->socket_, &sockets)) {
-            // something received over external socket
-            if (s->callback_) {
-                // Calling the external socket's callback provides its service
-                // layer access without integrating any specific features
-                // in IfaceMgr
-                s->callback_();
-            }
+        if (!FD_ISSET(s->socket_, &sockets)) {
+            continue;
+        }
+
+        // something received over external socket
+
+        // Calling the external socket's callback provides its service
+        // layer access without integrating any specific features
+        // in IfaceMgr
+        if (s->callback_) {
+            s->callback_();
         }
 
         return (Pkt6Ptr());
