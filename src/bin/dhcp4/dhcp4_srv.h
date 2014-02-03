@@ -167,6 +167,56 @@ public:
 
 protected:
 
+    /// @brief Checks whether received message should be processed or discarded.
+    ///
+    /// This function checks whether received message should be processed or
+    /// discarded. It should be called on the beginning of message processing
+    /// (just after the message has been decoded). This message calls a number
+    /// of other functions which check whether message should be processed,
+    /// using different criteria.
+    ///
+    /// This function should be extended when new criteria for accepting
+    /// received message have to be implemented. This function is meant to
+    /// aggregate all early filtering checks on the received message. By having
+    /// a single function like this, we are avoiding bloat of the server's main
+    /// loop.
+    ///
+    /// @warning This function should remain exception safe.
+    ///
+    /// @param query Received message.
+    ///
+    /// @return true if the message should be further processed, or false if
+    /// the message should be discarded.
+    bool accept(const Pkt4Ptr& query) const;
+
+    /// @brief Check if a message sent by directly connected client should be
+    /// accepted or discared.
+    ///
+    /// This function checks if the received message is from directly connected
+    /// client. If it is, it checks that it should be processed or discarded.
+    ///
+    /// Note that this function doesn't validate all addresses being carried in
+    /// the message. The primary purpose of this function is to filter out
+    /// direct messages in the local network for which there is no suitable
+    /// subnet configured. For example, this function accepts unicast messages
+    /// because unicasts may be used by clients located in remote networks to
+    /// to renew existing leases. If their notion of address is wrong, the
+    /// server will have to sent a NAK, instead of dropping the message.
+    /// Detailed validation of such messages is performed at later stage of
+    /// processing.
+    ///
+    /// This function accepts the following messages:
+    /// - all valid relayed messages,
+    /// - all unicast messages,
+    /// - all broadcast messages received on the interface for which the
+    /// suitable subnet exists (is configured).
+    ///
+    /// @param pkt Message sent by a client.
+    ///
+    /// @return true if message is accepted for further processing, false
+    /// otherwise.
+    bool acceptDirectRequest(const Pkt4Ptr& pkt) const;
+
     /// @brief Verifies if the server id belongs to our server.
     ///
     /// This function checks if the server identifier carried in the specified
@@ -529,7 +579,7 @@ protected:
     ///
     /// @param question client's message
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& question);
+    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& question) const;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
