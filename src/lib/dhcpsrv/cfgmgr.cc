@@ -123,7 +123,7 @@ CfgMgr::getOptionDef(const std::string& option_space,
 
 Subnet6Ptr
 CfgMgr::getSubnet6(const std::string& iface,
-                   const isc::dhcp::ClientClasses& /*classes*/) {
+                   const isc::dhcp::ClientClasses& classes) {
 
     if (!iface.length()) {
         return (Subnet6Ptr());
@@ -132,6 +132,12 @@ CfgMgr::getSubnet6(const std::string& iface,
     // If there is more than one, we need to choose the proper one
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
+
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
+
         if (iface == (*subnet)->getIface()) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET6_IFACE)
@@ -144,7 +150,7 @@ CfgMgr::getSubnet6(const std::string& iface,
 
 Subnet6Ptr
 CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint,
-                   const isc::dhcp::ClientClasses& /*classes*/) {
+                   const isc::dhcp::ClientClasses& classes) {
 
     // If there's only one subnet configured, let's just use it
     // The idea is to keep small deployments easy. In a small network - one
@@ -165,6 +171,11 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint,
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
 
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
+
         if ((*subnet)->inRange(hint)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET6)
@@ -180,7 +191,7 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint,
 }
 
 Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option,
-                              const isc::dhcp::ClientClasses& /*classes*/) {
+                              const isc::dhcp::ClientClasses& classes) {
     if (!iface_id_option) {
         return (Subnet6Ptr());
     }
@@ -189,6 +200,12 @@ Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option,
     // defined, check if the interface-id is equal to what we are looking for
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
+
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
+
         if ( (*subnet)->getInterfaceId() &&
              ((*subnet)->getInterfaceId()->equal(iface_id_option))) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,

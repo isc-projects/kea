@@ -427,6 +427,156 @@ TEST_F(CfgMgrTest, classifySubnet4) {
     EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.5"), classify_));
     EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("192.0.2.70"), classify_));
     EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
+
+    // Now let's check that client with wrong class is not supported
+    classify_.clear();
+    classify_.insert("some_other_class");
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.5"), classify_));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.70"), classify_));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
+
+    // Finally, let's check that client without any classes is not supported
+    classify_.clear();
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.5"), classify_));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.70"), classify_));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
+}
+
+// This test verifies if the configuration manager is able to hold and return
+// valid leases
+TEST_F(CfgMgrTest, classifySubnet6) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    // Let's configure 3 subnets
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+
+    cfg_mgr.addSubnet6(subnet1);
+    cfg_mgr.addSubnet6(subnet2);
+    cfg_mgr.addSubnet6(subnet3);
+
+    // Let's sanity check that we can use that configuration.
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("2000::123"), classify_));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet6(IOAddress("3000::345"), classify_));
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet6(IOAddress("4000::567"), classify_));
+
+    // Client now belongs to bar class.
+    classify_.insert("bar");
+
+    // There are no class restrictions defined, so everything should work
+    // as before
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("2000::123"), classify_));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet6(IOAddress("3000::345"), classify_));
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet6(IOAddress("4000::567"), classify_));
+
+    // Now let's add client class restrictions.
+    subnet1->allowClientClass("foo"); // Serve here only clients from foo class
+    subnet2->allowClientClass("bar"); // Serve here only clients from bar class
+    subnet3->allowClientClass("baz"); // Serve here only clients from baz class
+
+    // The same check as above should result in client being served only in
+    // bar class, i.e. subnet2
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("2000::123"), classify_));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet6(IOAddress("3000::345"), classify_));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("4000::567"), classify_));
+
+    // Now let's check that client with wrong class is not supported
+    classify_.clear();
+    classify_.insert("some_other_class");
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("2000::123"), classify_));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("3000::345"), classify_));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("4000::567"), classify_));
+
+    // Finally, let's check that client without any classes is not supported
+    classify_.clear();
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("2000::123"), classify_));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("3000::345"), classify_));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("4000::567"), classify_));
+}
+
+// This test verifies if the configuration manager is able to hold, select
+// and return valid subnets, based on interface names along with client
+// classification.
+TEST_F(CfgMgrTest, classifySubnet6Interface) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    // Let's have an odd configuration: 3 shared subnets available on the
+    // same direct link.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    subnet1->setIface("foo");
+    subnet2->setIface("foo");
+    subnet3->setIface("foo");
+    cfg_mgr.addSubnet6(subnet1);
+    cfg_mgr.addSubnet6(subnet2);
+    cfg_mgr.addSubnet6(subnet3);
+
+
+    // Regular client should get the first subnet, because it meets all
+    // criteria (matching interface name, no class restrictions.
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6("foo", classify_));
+
+    // Now let's add class requirements for subnet1
+    subnet1->allowClientClass("alpha");
+
+    // Client should now get the subnet2, because he no longer meets
+    // requirements for subnet1 (belongs to wrong class)
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet6("foo", classify_));
+
+    // Now let's add (not matching) classes to the other two subnets
+    subnet2->allowClientClass("beta");
+    subnet3->allowClientClass("gamma");
+
+    // No subnets are suitable, so nothing will be selected
+    EXPECT_FALSE(cfg_mgr.getSubnet6("foo", classify_));
+
+    // Ok, let's add the client to gamme class, so he'll get a subnet
+    classify_.insert("gamma");
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet6("foo", classify_));
+}
+
+// This test verifies if the configuration manager is able to hold, select
+// and return valid subnets, based on interface-id option inserted by relay,
+// along with client classification.
+TEST_F(CfgMgrTest, classifySubnet6InterfaceId) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    // Let's have an odd configuration: 3 shared subnets available via the
+    // same remote relay with the same interface-id.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("3000::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("4000::"), 48, 1, 2, 3, 4));
+    OptionPtr ifaceid = generateInterfaceId("relay1.eth0");
+    subnet1->setInterfaceId(ifaceid);
+    subnet2->setInterfaceId(ifaceid);
+    subnet3->setInterfaceId(ifaceid);
+    cfg_mgr.addSubnet6(subnet1);
+    cfg_mgr.addSubnet6(subnet2);
+    cfg_mgr.addSubnet6(subnet3);
+
+    // Regular client should get the first subnet, because it meets all
+    // criteria (matching interface name, no class restrictions.
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(ifaceid, classify_));
+
+    // Now let's add class requirements for subnet1
+    subnet1->allowClientClass("alpha");
+
+    // Client should now get the subnet2, because he no longer meets
+    // requirements for subnet1 (belongs to wrong class)
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet6(ifaceid, classify_));
+
+    // Now let's add (not matching) classes to the other two subnets
+    subnet2->allowClientClass("beta");
+    subnet3->allowClientClass("gamma");
+
+    // No subnets are suitable, so nothing will be selected
+    EXPECT_FALSE(cfg_mgr.getSubnet6(ifaceid, classify_));
+
+    // Ok, let's add the client to gamme class, so he'll get a subnet
+    classify_.insert("gamma");
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet6(ifaceid, classify_));
 }
 
 // This test verifies if the configuration manager is able to hold and return
@@ -461,7 +611,7 @@ TEST_F(CfgMgrTest, subnet6) {
 
     // Check that deletion of the subnets works.
     cfg_mgr.deleteSubnets6();
-    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("200::123"), classify_));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("2000::123"), classify_));
     EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("3000::123"), classify_));
     EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("4000::123"), classify_));
 }
