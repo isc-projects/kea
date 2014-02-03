@@ -14,6 +14,9 @@
 
 #include <config.h>
 
+#ifndef CLASSIFY_H
+#define CLASSIFY_H
+
 #include <set>
 #include <string>
 
@@ -38,8 +41,27 @@ namespace dhcp {
     typedef std::string ClientClass;
 
     /// Container for storing client classes
-    typedef std::set<ClientClass> ClientClasses;
+    ///
+    /// Depending on how you look at it, this is either a little more than just
+    /// a set of strings or a client classifier that performs access control.
+    /// For now, it is a simple access list that may contain zero or more
+    /// class names. It is expected to grow in complexity once support for
+    /// client classes becomes more feature rich.
+    class ClientClasses : public std::set<ClientClass> {
+    public:
+        /// @brief returns if class X belongs to the defined classes
+        ///
+        /// @param x client class to be checked
+        /// @return true if X belongs to the classes
+        bool
+        contains(const ClientClass& x) const {
+            const_iterator it = find(x);
+            return (it != end());
+        }
+    };
 
 };
 
 };
+
+#endif /* CLASSIFY_H */
