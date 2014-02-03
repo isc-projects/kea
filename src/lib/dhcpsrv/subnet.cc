@@ -76,6 +76,21 @@ Subnet::setRelay(const isc::dhcp::Subnet::RelayInfo& relay) {
     relay_ = relay;
 }
 
+bool
+Subnet::clientSupported(const isc::dhcp::ClientClasses& classes) const {
+    if (white_list_.empty()) {
+        return (true); // There is no class defined for this subnet, so we do
+                       // support everyone.
+    }
+
+    return (classes.contains(white_list_));
+}
+
+void
+Subnet::allowClientClass(const isc::dhcp::ClientClass& class_name) {
+    white_list_ = class_name;
+}
+
 void
 Subnet::delOptions() {
     option_spaces_.clearItems();
