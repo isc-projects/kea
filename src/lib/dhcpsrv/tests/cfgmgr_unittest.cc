@@ -186,7 +186,7 @@ public:
     }
 
     /// used in client classification (or just empty container for other tests)
-    isc::dhcp::Classes classify_;
+    isc::dhcp::ClientClasses classify_;
 };
 
 // This test verifies that multiple option definitions can be added
@@ -352,7 +352,7 @@ TEST_F(CfgMgrTest, addOptionDefNegative) {
 }
 
 // This test verifies if the configuration manager is able to hold and return
-// valid leases
+// valid subnets.
 TEST_F(CfgMgrTest, subnet4) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
 
