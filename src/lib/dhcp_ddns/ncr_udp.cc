@@ -256,6 +256,8 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
                                        server_port_));
 
     send_callback_->setDataSource(server_endpoint_);
+
+    watch_socket_.reset(new WatchSocket());
 }
 
 void
@@ -282,6 +284,8 @@ NameChangeUDPSender::close() {
     }
 
     socket_.reset();
+
+    watch_socket_.reset();
 }
 
 void
@@ -298,11 +302,17 @@ NameChangeUDPSender::doSend(NameChangeRequestPtr& ncr) {
     // Call the socket's asychronous send, passing our callback
     socket_->asyncSend(send_callback_->getData(), send_callback_->getPutLen(),
                        send_callback_->getDataSource().get(), *send_callback_);
+
+    // Set IO ready marker so sender activity is visible to select() or poll().
+    watch_socket_->markReady();
 }
 
 void
 NameChangeUDPSender::sendCompletionHandler(const bool successful,
                                            const UDPCallback *send_callback) {
+    // Clear the IO ready marker.
+    watch_socket_->clearReady();
+
     Result result;
     if (successful) {
         result = SUCCESS;
@@ -324,5 +334,17 @@ NameChangeUDPSender::sendCompletionHandler(const bool successful,
     // Call the application's registered request send handler.
     invokeSendHandler(result);
 }
+
+int
+NameChangeUDPSender::getSelectFd() {
+    if (!amSending()) {
+        isc_throw(NotImplemented, "NameChangeUDPSender::getSelectFd"
+                                  " not in send mode");
+    }
+
+    return(watch_socket_->getSelectFd());
+}
+
+
 }; // end of isc::dhcp_ddns namespace
 }; // end of isc namespace
