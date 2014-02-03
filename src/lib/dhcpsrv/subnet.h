@@ -24,6 +24,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcp/classify.h>
 #include <dhcpsrv/key_from_key.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
@@ -422,6 +423,26 @@ public:
     /// subnet object disappears.
     RelayInfo relay_;
 
+    /// @brief checks whether this subnet supports client that belongs to
+    ///        specified classes.
+    ///
+    /// This method checks whether a client that belongs to given classes can
+    /// use this subnet. For example, if this class is reserved for client
+    /// class "foo" and the client belongs to classes "foo", "bar" and "baz",
+    /// it is supported. On the other hand, client belonging to classes
+    /// "foobar" and "zyxxy" is not supported.
+    ///
+    /// @param client_classes list of all classes the client belongs to
+    /// @return true if client can be supported, false otherwise
+    bool
+    clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
+
+    /// @brief adds class class_name to the list of supported classes
+    ///
+    /// @param class_name client class to be supported by this subnet
+    void
+    allowClientClass(const isc::dhcp::ClientClass& class_name);
+
 protected:
     /// @brief Returns all pools (non-const variant)
     ///
@@ -547,6 +568,13 @@ protected:
 
     /// @brief Name of the network interface (if connected directly)
     std::string iface_;
+
+    /// @brief optional definition of a client class
+    ///
+    /// If defined, only clients belonging to that class will be allowed to use
+    /// this particular subnet. The default value for this is "", which means
+    /// that any client is allowed, regardless of its class.
+    ClientClass white_list_;
 
 private:
 

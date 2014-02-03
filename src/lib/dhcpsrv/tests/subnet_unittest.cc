@@ -139,6 +139,44 @@ TEST(Subnet4Test, Subnet4_Pool4_checks) {
     EXPECT_THROW(subnet->addPool(pool3), BadValue);
 }
 
+// Tests whether Subnet4 object is able to store and process properly
+// information about allowed client classes.
+TEST(Subnet4Test, clientClasses) {
+    // Create the V4 subnet.
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 8, 1, 2, 3));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+
+    // No class restrictions defined, any client should be supported
+    EXPECT_TRUE(subnet->clientSupported(no_class));
+    EXPECT_TRUE(subnet->clientSupported(foo_class));
+    EXPECT_TRUE(subnet->clientSupported(bar_class));
+    EXPECT_TRUE(subnet->clientSupported(three_classes));
+
+    // Let's allow only clients belongning to "bar" class.
+    subnet->allowClientClass("bar");
+
+    EXPECT_FALSE(subnet->clientSupported(no_class));
+    EXPECT_FALSE(subnet->clientSupported(foo_class));
+    EXPECT_TRUE(subnet->clientSupported(bar_class));
+    EXPECT_TRUE(subnet->clientSupported(three_classes));
+}
+
 TEST(Subnet4Test, addInvalidOption) {
     // Create the V4 subnet.
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 8, 1, 2, 3));
@@ -414,6 +452,44 @@ TEST(Subnet6Test, PoolTypes) {
 
     // Adding Pool4 to Subnet6 is a big no, no!
     EXPECT_THROW(subnet->addPool(pool5), BadValue);
+}
+
+// Tests whether Subnet6 object is able to store and process properly
+// information about allowed client classes.
+TEST(Subnet6Test, clientClasses) {
+    // Create the V6 subnet.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:1::"), 56, 1, 2, 3, 4));
+
+    // This client does not belong to any class.
+    isc::dhcp::ClientClasses no_class;
+
+    // This client belongs to foo only.
+    isc::dhcp::ClientClasses foo_class;
+    foo_class.insert("foo");
+
+    // This client belongs to bar only. I like that client.
+    isc::dhcp::ClientClasses bar_class;
+    bar_class.insert("bar");
+
+    // This client belongs to foo, bar and baz classes.
+    isc::dhcp::ClientClasses three_classes;
+    three_classes.insert("foo");
+    three_classes.insert("bar");
+    three_classes.insert("baz");
+
+    // No class restrictions defined, any client should be supported
+    EXPECT_TRUE(subnet->clientSupported(no_class));
+    EXPECT_TRUE(subnet->clientSupported(foo_class));
+    EXPECT_TRUE(subnet->clientSupported(bar_class));
+    EXPECT_TRUE(subnet->clientSupported(three_classes));
+
+    // Let's allow only clients belongning to "bar" class.
+    subnet->allowClientClass("bar");
+
+    EXPECT_FALSE(subnet->clientSupported(no_class));
+    EXPECT_FALSE(subnet->clientSupported(foo_class));
+    EXPECT_TRUE(subnet->clientSupported(bar_class));
+    EXPECT_TRUE(subnet->clientSupported(three_classes));
 }
 
 TEST(Subnet6Test, Subnet6_Pool6_checks) {
