@@ -444,6 +444,39 @@ public:
     size_t rr_count_;    // number of RRs successfully loaded
 };
 
+namespace { // begin unnamed namespace
+
+std::string
+genNibbles(int i, unsigned int width, bool uppercase) {
+    static const char *hex = "0123456789abcdef0123456789ABCDEF";
+    std::string rstr;
+
+    do {
+        char ch = hex[(i & 0x0f) + (uppercase ? 16 : 0)];
+        i >>= 4;
+        rstr.push_back(ch);
+
+        if (width > 0) {
+            --width;
+        }
+
+        // If width is non zero then we need to add a label seperator.
+        // If value is non zero then we need to add another label and
+        // that requires a label seperator.
+        if (width > 0 || i != 0) {
+            rstr.push_back('.');
+
+            if (width > 0) {
+                --width;
+            }
+        }
+    } while ((i != 0) || (width > 0));
+
+    return (rstr);
+}
+
+} // end unnamed namespace
+
 std::string
 MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
                                                 const int i)
@@ -484,8 +517,7 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
 
               case 3:
                   if ((mode[0] == 'n') || (mode[0] == 'N')) {
-                      // TODO: Handle nibble mode
-                      assert(true);
+                      rstr += genNibbles(i + delta, width, (mode[0] == 'N'));
                   } else {
                       const std::string fmt =
                           boost::str(boost::format("%%0%u%c") % width % mode[0]);
@@ -592,9 +624,11 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
             return;
         }
 
-        const size_t name_length = generated_name.size();
-        last_name_.reset(new Name(generated_name.c_str(), name_length,
-                                  &active_origin_));
+        // generateForIter() can return a string with a trailing '.' in
+        // case of a nibble representation. So we cannot use the
+        // relative Name constructor.
+        last_name_.reset
+            (new Name(Name(generated_name).concatenate(active_origin_)));
         previous_name_ = true;
 
         const rdata::RdataPtr rdata =

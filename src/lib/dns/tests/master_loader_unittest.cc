@@ -514,6 +514,15 @@ TEST_F(MasterLoaderTest, generateWithModifiers) {
         // case.
         "$GENERATE 42-43 host$ TXT \"Value ${0,4,X}\"\n"
         "$GENERATE 45-46 host${0,4,o} A 192.0.2.$\n"
+        // Here, the LHS has a trailing dot (which would result in an
+        // out-of-zone name), but that should be handled as a relative
+        // name.
+        "$GENERATE 90-92 ${0,8,n} A 192.0.2.$\n"
+        // Here, the LHS has no trailing dot, and results in the same
+        // number of labels as width=8 above.
+        "$GENERATE 94-96 ${0,7,n} A 192.0.2.$\n"
+        // Uppercase nibble
+        "$GENERATE 98-98 ${0,10,n} A 192.0.2.$\n"
         // Junk type will not parse and 'd' is assumed.
         "$GENERATE 100-101 host${0,4,j} A 192.0.2.$\n";
     stringstream ss(input);
@@ -544,6 +553,16 @@ TEST_F(MasterLoaderTest, generateWithModifiers) {
 
     checkRR("host0055.example.org", RRType::A(), "192.0.2.45");
     checkRR("host0056.example.org", RRType::A(), "192.0.2.46");
+
+    checkRR("a.5.0.0.example.org", RRType::A(), "192.0.2.90");
+    checkRR("b.5.0.0.example.org", RRType::A(), "192.0.2.91");
+    checkRR("c.5.0.0.example.org", RRType::A(), "192.0.2.92");
+
+    checkRR("e.5.0.0.example.org", RRType::A(), "192.0.2.94");
+    checkRR("f.5.0.0.example.org", RRType::A(), "192.0.2.95");
+    checkRR("0.6.0.0.example.org", RRType::A(), "192.0.2.96");
+
+    checkRR("2.6.0.0.0.example.org", RRType::A(), "192.0.2.98");
 
     checkRR("host0100.example.org", RRType::A(), "192.0.2.100");
     checkRR("host0101.example.org", RRType::A(), "192.0.2.101");
