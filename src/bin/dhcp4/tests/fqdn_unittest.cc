@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp_ddns/ncr_msg.h>
 
@@ -30,9 +31,9 @@ using namespace isc::dhcp_ddns;
 
 namespace {
 
-class NameDhcpv4SrvTest : public Dhcpv4SrvFakeIfaceTest {
+class NameDhcpv4SrvTest : public Dhcpv4SrvTest {
 public:
-    NameDhcpv4SrvTest() : Dhcpv4SrvFakeIfaceTest() {
+    NameDhcpv4SrvTest() : Dhcpv4SrvTest() {
         srv_ = new NakedDhcpv4Srv(0);
     }
     virtual ~NameDhcpv4SrvTest() {
@@ -110,7 +111,7 @@ public:
                                 const bool include_clientid = true) {
         Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
         pkt->setRemoteAddr(IOAddress("192.0.2.3"));
-        pkt->setIface("eth0");
+        pkt->setIface("eth1");
         // For DISCOVER we don't include server id, because client broadcasts
         // the message to all servers.
         if (msg_type != DHCPDISCOVER) {
@@ -574,6 +575,9 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsLeaseMismatch) {
 // Test that the OFFER message generated as a result of the DISCOVER message
 // processing will not result in generation of the NameChangeRequests.
 TEST_F(NameDhcpv4SrvTest, processDiscover) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     Pkt4Ptr req = generatePktWithFqdn(DHCPDISCOVER, Option4ClientFqdn::FLAG_S |
                                       Option4ClientFqdn::FLAG_E,
                                       "myhost.example.com.",
@@ -589,6 +593,9 @@ TEST_F(NameDhcpv4SrvTest, processDiscover) {
 // Test that server generates client's hostname from the IP address assigned
 // to it when DHCPv4 Client FQDN option specifies an empty domain-name.
 TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                       Option4ClientFqdn::FLAG_E,
                                       "", Option4ClientFqdn::PARTIAL, true);
@@ -614,10 +621,13 @@ TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
 // Test that server generates client's hostname from the IP address assigned
 // to it when Hostname option carries the top level domain-name.
 TEST_F(NameDhcpv4SrvTest, processRequestEmptyHostname) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     Pkt4Ptr req = generatePktWithHostname(DHCPREQUEST, ".");
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
-    req->setIface("eth0");
+    req->setIface("eth1");
 
     Pkt4Ptr reply;
     ASSERT_NO_THROW(reply = srv_->processRequest(req));
@@ -640,6 +650,9 @@ TEST_F(NameDhcpv4SrvTest, processRequestEmptyHostname) {
 // request but modify the DNS entries for the lease according to the contents
 // of the FQDN sent in the second request.
 TEST_F(NameDhcpv4SrvTest, processTwoRequestsFqdn) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     Pkt4Ptr req1 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                        Option4ClientFqdn::FLAG_E,
                                        "myhost.example.com.",
@@ -692,11 +705,14 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsFqdn) {
 // but modify the DNS entries for the lease according to the contents of the
 // Hostname sent in the second request.
 TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     Pkt4Ptr req1 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
 
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
-    req1->setIface("eth0");
+    req1->setIface("eth1");
 
 
     Pkt4Ptr reply;
@@ -719,7 +735,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
 
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
-    req2->setIface("eth0");
+    req2->setIface("eth1");
 
     ASSERT_NO_THROW(reply = srv_->processRequest(req2));
 
@@ -746,6 +762,9 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
 // lease, then server genenerates a NameChangeRequest to remove the entries
 // corresponding to the lease being released.
 TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                       Option4ClientFqdn::FLAG_E,
                                       "myhost.example.com.",

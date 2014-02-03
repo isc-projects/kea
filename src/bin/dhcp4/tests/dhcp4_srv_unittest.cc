@@ -29,6 +29,7 @@
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/config_parser.h>
@@ -61,7 +62,10 @@ namespace {
 // This test verifies that the destination address of the response
 // message is set to giaddr, when giaddr is set to non-zero address
 // in the received message.
-TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRelay) {
+TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     // Create the instance of the incoming packet.
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
     // Set the giaddr to non-zero address and hops to non-zero value
@@ -77,7 +81,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRelay) {
     // Set local address, port and interface.
     req->setLocalAddr(IOAddress("192.0.2.1"));
     req->setLocalPort(1001);
-    req->setIface("eth0");
+    req->setIface("eth1");
     req->setIndex(1);
 
     // Create a response packet. Assume that the new lease have
@@ -97,13 +101,13 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRelay) {
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
     // The query has been relayed, so the response must be sent to the port 67.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getRemotePort());
-    // Local address should be copied from the query message.
-    EXPECT_EQ("192.0.2.1", resp->getLocalAddr().toText());
+    // Local address should be the address assigned to interface eth1.
+    EXPECT_EQ("192.0.2.3", resp->getLocalAddr().toText());
     // The local port is always DHCPv4 server port 67.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
     // We will send response over the same interface which was used to receive
     // query.
-    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ("eth1", resp->getIface());
     EXPECT_EQ(1, resp->getIndex());
 
     // Let's do another test and set other fields: ciaddr and
@@ -127,7 +131,10 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRelay) {
 // is set to ciaddr when giaddr is set to zero and the ciaddr is set to
 // non-zero address in the received message. This is the case when the
 // client is in Renew or Rebind state.
-TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRenew) {
+TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     // Create instance of the incoming packet.
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
 
@@ -151,7 +158,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRenew) {
     // Request is received on the DHCPv4 server port.
     req->setLocalPort(DHCP4_SERVER_PORT);
     // Set the interface. The response should be sent over the same interface.
-    req->setIface("eth0");
+    req->setIface("eth1");
     req->setIndex(1);
 
     // Create a response.
@@ -175,11 +182,11 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRenew) {
     EXPECT_EQ(DHCP4_CLIENT_PORT, resp->getRemotePort());
     // The response should be sent from the unicast address on which the
     // query has been received.
-    EXPECT_EQ("192.0.2.1", resp->getLocalAddr().toText());
+    EXPECT_EQ("192.0.2.3", resp->getLocalAddr().toText());
     // The response should be sent from the DHCPv4 server port.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
     // The interface data should match the data in the query.
-    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ("eth1", resp->getIface());
     EXPECT_EQ(1, resp->getIndex());
 
 }
@@ -191,7 +198,10 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataRenew) {
 // of the response should be set to yiaddr if server supports direct responses
 // to the client which doesn't have an address yet or broadcast if the server
 // doesn't support direct responses.
-TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataSelect) {
+TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     // Create instance of the incoming packet.
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
 
@@ -210,7 +220,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataSelect) {
     // The query has been received on the DHCPv4 server port 67.
     req->setLocalPort(DHCP4_SERVER_PORT);
     // Set the interface. The response should be sent via the same interface.
-    req->setIface("eth0");
+    req->setIface("eth1");
     req->setIndex(1);
 
     // Create a response.
@@ -227,7 +237,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataSelect) {
     // case, the server should send its response to the broadcast address.
     // We can control whether the current packet filter returns that its support
     // direct responses or not.
-    current_pkt_filter_->direct_resp_supported_ = false;
+    test_config.setDirectResponse(false);
 
     // When running unit tests, the IfaceMgr is using the default Packet
     // Filtering class, PktFilterInet. This class does not support direct
@@ -244,14 +254,14 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataSelect) {
     // Although the query has been sent to the broadcast address, the
     // server should select a unicast address on the particular interface
     // as a source address for the response.
-    EXPECT_EQ("192.0.2.1", resp->getLocalAddr().toText());
+    EXPECT_EQ("192.0.2.3", resp->getLocalAddr().toText());
 
     // The response should be sent from the DHCPv4 server port.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
 
     // The response should be sent via the same interface through which
     // query has been received.
-    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ("eth1", resp->getIface());
     EXPECT_EQ(1, resp->getIndex());
 
     // We also want to test the case when the server has capability to
@@ -260,7 +270,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataSelect) {
     // response based on the capability reported by IfaceMgr. We can
     // control whether the current packet filter returns that it supports
     // direct responses or not.
-    current_pkt_filter_->direct_resp_supported_ = true;
+    test_config.setDirectResponse(true);
 
     // Now we expect that the server will send its response to the
     // address assigned for the client.
@@ -274,7 +284,10 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataSelect) {
 // query. Client sets this flag to indicate that it can't receive direct
 // responses from the server when it doesn't have its interface configured.
 // Server must respect broadcast flag.
-TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataBroadcast) {
+TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     // Create instance of the incoming packet.
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
 
@@ -287,7 +300,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataBroadcast) {
     // The query has been received on the DHCPv4 server port 67.
     req->setLocalPort(DHCP4_SERVER_PORT);
     // Set the interface. The response should be sent via the same interface.
-    req->setIface("eth0");
+    req->setIface("eth1");
     req->setIndex(1);
 
     // Let's set the broadcast flag.
@@ -310,21 +323,21 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataBroadcast) {
     // Although the query has been sent to the broadcast address, the
     // server should select a unicast address on the particular interface
     // as a source address for the response.
-    EXPECT_EQ("192.0.2.1", resp->getLocalAddr().toText());
+    EXPECT_EQ("192.0.2.3", resp->getLocalAddr().toText());
 
     // The response should be sent from the DHCPv4 server port.
     EXPECT_EQ(DHCP4_SERVER_PORT, resp->getLocalPort());
 
     // The response should be sent via the same interface through which
     // query has been received.
-    EXPECT_EQ("eth0", resp->getIface());
+    EXPECT_EQ("eth1", resp->getIface());
     EXPECT_EQ(1, resp->getIndex());
 
 }
 
 // This test verifies that exception is thrown of the invalid combination
 // of giaddr and hops is specified in a client's message.
-TEST_F(Dhcpv4SrvFakeIfaceTest, adjustIfaceDataInvalid) {
+TEST_F(Dhcpv4SrvTest, adjustIfaceDataInvalid) {
     boost::shared_ptr<Pkt4> req(new Pkt4(DHCPDISCOVER, 1234));
 
     // The hops and giaddr values are used to determine if the client's
@@ -435,7 +448,7 @@ TEST_F(Dhcpv4SrvTest, openActiveSockets) {
 // are other tests that verify correctness of the allocation
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
-TEST_F(Dhcpv4SrvFakeIfaceTest, processDiscover) {
+TEST_F(Dhcpv4SrvTest, processDiscover) {
     testDiscoverRequest(DHCPDISCOVER);
 }
 
@@ -447,11 +460,11 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, processDiscover) {
 // are other tests that verify correctness of the allocation
 // engine. See DiscoverBasic, DiscoverHint, DiscoverNoClientId
 // and DiscoverInvalidHint.
-TEST_F(Dhcpv4SrvFakeIfaceTest, processRequest) {
+TEST_F(Dhcpv4SrvTest, processRequest) {
     testDiscoverRequest(DHCPREQUEST);
 }
 
-TEST_F(Dhcpv4SrvFakeIfaceTest, processRelease) {
+TEST_F(Dhcpv4SrvTest, processRelease) {
     NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPRELEASE, 1234));
 
@@ -459,7 +472,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, processRelease) {
     EXPECT_NO_THROW(srv.processRelease(pkt));
 }
 
-TEST_F(Dhcpv4SrvFakeIfaceTest, processDecline) {
+TEST_F(Dhcpv4SrvTest, processDecline) {
     NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPDECLINE, 1234));
 
@@ -467,7 +480,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, processDecline) {
     EXPECT_NO_THROW(srv.processDecline(pkt));
 }
 
-TEST_F(Dhcpv4SrvFakeIfaceTest, processInform) {
+TEST_F(Dhcpv4SrvTest, processInform) {
     NakedDhcpv4Srv srv;
     Pkt4Ptr pkt(new Pkt4(DHCPINFORM, 1234));
 
@@ -524,7 +537,10 @@ TEST_F(Dhcpv4SrvTest, serverReceivedPacketName) {
 // - copy of client-id
 // - server-id
 // - offered address
-TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverBasic) {
+TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -532,7 +548,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverBasic) {
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
-    dis->setIface("eth0");
+    dis->setIface("eth1");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -562,7 +578,10 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverBasic) {
 // - copy of client-id
 // - server-id
 // - offered address
-TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverHint) {
+TEST_F(Dhcpv4SrvTest, DiscoverHint) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("192.0.2.107");
@@ -572,7 +591,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverHint) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setYiaddr(hint);
-    dis->setIface("eth0");
+    dis->setIface("eth1");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -603,7 +622,10 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverHint) {
 // - copy of client-id
 // - server-id
 // - offered address
-TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverNoClientId) {
+TEST_F(Dhcpv4SrvTest, DiscoverNoClientId) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("192.0.2.107");
@@ -612,7 +634,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverNoClientId) {
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setYiaddr(hint);
     dis->setHWAddr(generateHWAddr(6));
-    dis->setIface("eth0");
+    dis->setIface("eth1");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -642,7 +664,10 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverNoClientId) {
 // - copy of client-id
 // - server-id
 // - offered address (!= hint)
-TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverInvalidHint) {
+TEST_F(Dhcpv4SrvTest, DiscoverInvalidHint) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("10.1.2.3");
@@ -652,7 +677,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverInvalidHint) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setYiaddr(hint);
-    dis->setIface("eth0");
+    dis->setIface("eth1");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -681,7 +706,10 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverInvalidHint) {
 // and this is a correct behavior. It is REQUEST that will fail for the third
 // client. OFFER is basically saying "if you send me a request, you will
 // probably get an address like this" (there are no guarantees).
-TEST_F(Dhcpv4SrvFakeIfaceTest, ManyDiscovers) {
+TEST_F(Dhcpv4SrvTest, ManyDiscovers) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -694,9 +722,9 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ManyDiscovers) {
     dis3->setRemoteAddr(IOAddress("192.0.2.3"));
 
     // Assign interfaces
-    dis1->setIface("eth0");
-    dis2->setIface("eth0");
-    dis3->setIface("eth0");
+    dis1->setIface("eth1");
+    dis2->setIface("eth1");
+    dis3->setIface("eth1");
 
     // Different client-id sizes
     OptionPtr clientid1 = generateClientId(4); // length 4
@@ -746,14 +774,17 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ManyDiscovers) {
 // Checks whether echoing back client-id is controllable, i.e.
 // whether the server obeys echo-client-id and sends (or not)
 // client-id
-TEST_F(Dhcpv4SrvFakeIfaceTest, discoverEchoClientId) {
+TEST_F(Dhcpv4SrvTest, discoverEchoClientId) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     NakedDhcpv4Srv srv(0);
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
-    dis->setIface("eth0");
+    dis->setIface("eth1");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv.processDiscover(dis);
@@ -785,7 +816,10 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, discoverEchoClientId) {
 // - assigned address
 //
 // Test verifies that the lease is actually in the database.
-TEST_F(Dhcpv4SrvFakeIfaceTest, RequestBasic) {
+TEST_F(Dhcpv4SrvTest, RequestBasic) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -795,7 +829,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, RequestBasic) {
     OptionPtr clientid = generateClientId();
     req->addOption(clientid);
     req->setYiaddr(hint);
-    req->setIface("eth0");
+    req->setIface("eth1");
 
     // Pass it to the server and get an advertise
     Pkt4Ptr ack = srv->processRequest(req);
@@ -831,7 +865,9 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, RequestBasic) {
 // - copy of client-id
 // - server-id
 // - assigned address (different for each client)
-TEST_F(Dhcpv4SrvFakeIfaceTest, ManyRequests) {
+TEST_F(Dhcpv4SrvTest, ManyRequests) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
@@ -850,9 +886,9 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ManyRequests) {
     req3->setRemoteAddr(relay);
 
     // Assign interfaces
-    req1->setIface("eth0");
-    req2->setIface("eth0");
-    req3->setIface("eth0");
+    req1->setIface("eth1");
+    req2->setIface("eth1");
+    req3->setIface("eth1");
 
     req1->setYiaddr(req_addr1);
     req2->setYiaddr(req_addr2);
@@ -919,14 +955,17 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ManyRequests) {
 }
 
 // Checks whether echoing back client-id is controllable
-TEST_F(Dhcpv4SrvFakeIfaceTest, requestEchoClientId) {
+TEST_F(Dhcpv4SrvTest, requestEchoClientId) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     NakedDhcpv4Srv srv(0);
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPREQUEST, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
-    dis->setIface("eth0");
+    dis->setIface("eth1");
 
     // Pass it to the server and get ACK
     Pkt4Ptr ack = srv.processRequest(dis);
@@ -953,7 +992,10 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, requestEchoClientId) {
 // - returned REPLY message has server-id
 // - returned REPLY message has IA that includes IAADDR
 // - lease is actually renewed in LeaseMgr
-TEST_F(Dhcpv4SrvFakeIfaceTest, RenewBasic) {
+TEST_F(Dhcpv4SrvTest, RenewBasic) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -1038,7 +1080,10 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, RenewBasic) {
 // identifiers used by a server is accepted,
 // - a message with a server identifier which doesn't match any server
 // identifier used by a server, is not accepted.
-TEST_F(Dhcpv4SrvFakeIfaceTest, acceptServerId) {
+TEST_F(Dhcpv4SrvTest, acceptServerId) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     NakedDhcpv4Srv srv(0);
 
     Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 1234));
@@ -1065,7 +1110,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, acceptServerId) {
     // Add a server id being an IPv4 address configured on eth0 interface.
     // A DHCPv4 message holding this server identifier should be accepted.
     OptionCustomPtr eth0_serverid(new OptionCustom(def, Option::V6));
-    eth0_serverid->writeAddress(IOAddress("192.0.2.1"));
+    eth0_serverid->writeAddress(IOAddress("192.0.2.3"));
     ASSERT_NO_THROW(pkt->addOption(eth0_serverid));
     EXPECT_TRUE(srv.acceptServerId(pkt));
 
@@ -1117,7 +1162,7 @@ TEST_F(Dhcpv4SrvTest, sanityCheck) {
 // This test verifies that incoming (positive) RELEASE can be handled properly.
 // As there is no REPLY in DHCPv4, the only thing to verify here is that
 // the lease is indeed removed from the database.
-TEST_F(Dhcpv4SrvFakeIfaceTest, ReleaseBasic) {
+TEST_F(Dhcpv4SrvTest, ReleaseBasic) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -1189,7 +1234,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ReleaseBasic) {
 // 1. there is no such lease at all
 // 2. there is such a lease, but it is assigned to a different IAID
 // 3. there is such a lease, but it belongs to a different client
-TEST_F(Dhcpv4SrvFakeIfaceTest, ReleaseReject) {
+TEST_F(Dhcpv4SrvTest, ReleaseReject) {
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
 
@@ -1278,7 +1323,9 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ReleaseReject) {
 }
 
 // Checks if received relay agent info option is echoed back to the client
-TEST_F(Dhcpv4SrvFakeIfaceTest, relayAgentInfoEcho) {
+TEST_F(Dhcpv4SrvTest, relayAgentInfoEcho) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     NakedDhcpv4Srv srv(0);
 
@@ -1321,7 +1368,9 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, relayAgentInfoEcho) {
 
 // Checks if vendor options are parsed correctly and requested vendor options
 // are echoed back.
-TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsDocsis) {
+TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     NakedDhcpv4Srv srv(0);
 
@@ -1515,7 +1564,10 @@ TEST_F(Dhcpv4SrvTest, unpackOptions) {
 
 // Checks whether the server uses default (0.0.0.0) siaddr value, unless
 // explicitly specified
-TEST_F(Dhcpv4SrvFakeIfaceTest, siaddrDefault) {
+TEST_F(Dhcpv4SrvTest, siaddrDefault) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     IOAddress hint("192.0.2.107");
@@ -1525,7 +1577,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, siaddrDefault) {
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
     dis->setYiaddr(hint);
-    dis->setIface("eth0");
+    dis->setIface("eth1");
 
     // Pass it to the server and get an offer
     Pkt4Ptr offer = srv->processDiscover(dis);
@@ -1539,14 +1591,17 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, siaddrDefault) {
 }
 
 // Checks whether the server uses specified siaddr value
-TEST_F(Dhcpv4SrvFakeIfaceTest, siaddr) {
+TEST_F(Dhcpv4SrvTest, siaddr) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     boost::scoped_ptr<NakedDhcpv4Srv> srv;
     ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
     subnet_->setSiaddr(IOAddress("192.0.2.123"));
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
-    dis->setIface("eth0");
+    dis->setIface("eth1");
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -1565,7 +1620,9 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, siaddr) {
 // specific value and returned in server messages. There's also similar test for
 // checking parser only configuration, see Dhcp4ParserTest.nextServerOverride in
 // config_parser_unittest.cc.
-TEST_F(Dhcpv4SrvFakeIfaceTest, nextServerOverride) {
+TEST_F(Dhcpv4SrvTest, nextServerOverride) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     NakedDhcpv4Srv srv(0);
 
@@ -1592,7 +1649,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, nextServerOverride) {
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
-    dis->setIface("eth0");
+    dis->setIface("eth1");
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -1608,7 +1665,9 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, nextServerOverride) {
 // when there is no specific value defined in subnet and returned to the client
 // properly. There's also similar test for checking parser only configuration,
 // see Dhcp4ParserTest.nextServerGlobal in config_parser_unittest.cc.
-TEST_F(Dhcpv4SrvFakeIfaceTest, nextServerGlobal) {
+TEST_F(Dhcpv4SrvTest, nextServerGlobal) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     NakedDhcpv4Srv srv(0);
 
@@ -1634,7 +1693,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, nextServerGlobal) {
 
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
-    dis->setIface("eth0");
+    dis->setIface("eth1");
     OptionPtr clientid = generateClientId();
     dis->addOption(clientid);
 
@@ -1671,7 +1730,7 @@ const uint8_t dummySname[] = "Lorem ipsum dolor sit amet, consectetur "
 /// can't modify non-static members (for obvious reasons), so many
 /// fields are declared static. It is still better to keep them as
 /// one class rather than unrelated collection of global objects.
-class HooksDhcpv4SrvTest : public Dhcpv4SrvFakeIfaceTest {
+class HooksDhcpv4SrvTest : public Dhcpv4SrvTest {
 
 public:
 
@@ -1771,7 +1830,7 @@ public:
         // name to select a subnet for a client. This test is using fake interfaces
         // and the fake eth0 interface has IPv4 address matching the subnet
         // currently configured for this test.
-        dis->setIface("eth0");
+        dis->setIface("eth1");
         return (dis);
     }
 
@@ -2132,6 +2191,8 @@ vector<string> HooksDhcpv4SrvTest::callback_argument_names_;
 // Note that the test name does not follow test naming convention,
 // but the proper hook name is "buffer4_receive".
 TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2165,6 +2226,9 @@ TEST_F(HooksDhcpv4SrvTest, Buffer4ReceiveSimple) {
 // Checks if callouts installed on buffer4_receive is able to change
 // the values and the parameters are indeed used by the server.
 TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
 
     // Install callback that modifies MAC addr of incoming packet
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2204,6 +2268,8 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveValueChange) {
 // the server should eventually drop it, because there won't be mandatory options
 // (or rather option objects) in it.
 TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2231,6 +2297,8 @@ TEST_F(HooksDhcpv4SrvTest, buffer4ReceiveSkip) {
 // Note that the test name does not follow test naming convention,
 // but the proper hook name is "pkt4_receive".
 TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSimple) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2264,6 +2332,8 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSimple) {
 // Checks if callouts installed on pkt4_received is able to change
 // the values and the parameters are indeed used by the server.
 TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2300,6 +2370,8 @@ TEST_F(HooksDhcpv4SrvTest, valueChange_pkt4_receive) {
 // existing options and that change impacts server processing (mandatory
 // client-id option is deleted, so the packet is expected to be dropped)
 TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDeleteClientId) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2324,6 +2396,8 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveDeleteClientId) {
 // Checks if callouts installed on pkt4_received is able to set skip flag that
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSkip) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2349,6 +2423,8 @@ TEST_F(HooksDhcpv4SrvTest, pkt4ReceiveSkip) {
 // Checks if callouts installed on pkt4_send are indeed called and the
 // all necessary parameters are passed.
 TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2385,6 +2461,8 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendSimple) {
 // Checks if callouts installed on pkt4_send is able to change
 // the values and the packet sent contains those changes
 TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2422,6 +2500,8 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendValueChange) {
 // we are trying to send a packet without server-id. The packet should
 // be sent
 TEST_F(HooksDhcpv4SrvTest, pkt4SendDeleteServerId) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2453,6 +2533,8 @@ TEST_F(HooksDhcpv4SrvTest, pkt4SendDeleteServerId) {
 // Checks if callouts installed on pkt4_skip is able to set skip flag that
 // will cause the server to not process the packet (drop), even though it is valid.
 TEST_F(HooksDhcpv4SrvTest, skip_pkt4_send) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2482,6 +2564,8 @@ TEST_F(HooksDhcpv4SrvTest, skip_pkt4_send) {
 // Checks if callouts installed on buffer4_send are indeed called and the
 // all necessary parameters are passed.
 TEST_F(HooksDhcpv4SrvTest, buffer4SendSimple) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2518,6 +2602,8 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSimple) {
 // Checks if callouts installed on buffer4_send are indeed called and that
 // the output buffer can be changed.
 TEST_F(HooksDhcpv4SrvTest, buffer4Send) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2547,6 +2633,8 @@ TEST_F(HooksDhcpv4SrvTest, buffer4Send) {
 // Checks if callouts installed on buffer4_send can set skip flag and that flag
 // causes the packet to not be sent
 TEST_F(HooksDhcpv4SrvTest, buffer4SendSkip) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2572,6 +2660,8 @@ TEST_F(HooksDhcpv4SrvTest, buffer4SendSkip) {
 // This test checks if subnet4_select callout is triggered and reports
 // valid parameters
 TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install pkt4_receive_callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2604,7 +2694,7 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
     // Prepare discover packet. Server should select first subnet for it
     Pkt4Ptr sol = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     sol->setRemoteAddr(IOAddress("192.0.2.1"));
-    sol->setIface("eth0");
+    sol->setIface("eth1");
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
@@ -2638,6 +2728,8 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectSimple) {
 // This test checks if callout installed on subnet4_select hook point can pick
 // a different subnet.
 TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     // Install a callout
     EXPECT_NO_THROW(HooksManager::preCalloutsLibraryHandle().registerCallout(
@@ -2698,6 +2790,8 @@ TEST_F(HooksDhcpv4SrvTest, subnet4SelectChange) {
 // properly and that callout installed on lease4_renew is triggered with
 // expected parameters.
 TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     const IOAddress addr("192.0.2.106");
     const uint32_t temp_t1 = 50;
@@ -2783,6 +2877,8 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSimple) {
 // This test verifies that a callout installed on lease4_renew can trigger
 // the server to not renew a lease.
 TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     const IOAddress addr("192.0.2.106");
     const uint32_t temp_t1 = 50;
@@ -2848,6 +2944,8 @@ TEST_F(HooksDhcpv4SrvTest, lease4RenewSkip) {
 
 // This test verifies that valid RELEASE triggers lease4_release callouts
 TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     const IOAddress addr("192.0.2.106");
     const uint32_t temp_t1 = 50;
@@ -2933,6 +3031,8 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSimple) {
 // This test verifies that skip flag returned by a callout installed on the
 // lease4_release hook point will keep the lease
 TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     const IOAddress addr("192.0.2.106");
     const uint32_t temp_t1 = 50;
@@ -2996,7 +3096,7 @@ TEST_F(HooksDhcpv4SrvTest, lease4ReleaseSkip) {
 }
 
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
-TEST_F(Dhcpv4SrvFakeIfaceTest, docsisVendorOptionsParse) {
+TEST_F(Dhcpv4SrvTest, docsisVendorOptionsParse) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
     Pkt4Ptr dis = captureRelayedDiscover();
@@ -3020,7 +3120,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, docsisVendorOptionsParse) {
 }
 
 // Checks if server is able to parse incoming docsis option and extract suboption 1 (docsis ORO)
-TEST_F(Dhcpv4SrvFakeIfaceTest, docsisVendorORO) {
+TEST_F(Dhcpv4SrvTest, docsisVendorORO) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
     Pkt4Ptr dis = captureRelayedDiscover();
@@ -3042,7 +3142,9 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, docsisVendorORO) {
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
-TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsORO) {
+TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
     NakedDhcpv4Srv srv(0);
 
@@ -3130,7 +3232,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsORO) {
 
 // Test checks whether it is possible to use option definitions defined in
 // src/lib/dhcp/docsis3_option_defs.h.
-TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsDocsisDefinitions) {
+TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr x;
     string config_prefix = "{ \"interfaces\": [ \"all\" ],"
         "\"rebind-timer\": 2000, "

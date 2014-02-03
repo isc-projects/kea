@@ -21,6 +21,7 @@
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -404,58 +405,11 @@ void Dhcpv4SrvTest::TearDown() {
 
 }
 
-Dhcpv4SrvFakeIfaceTest::Dhcpv4SrvFakeIfaceTest()
-: Dhcpv4SrvTest(), current_pkt_filter_() {
-    // Remove current interface configuration. Instead we want to add
-    // a couple of fake interfaces.
-    IfaceMgr& ifacemgr = IfaceMgr::instance();
-    ifacemgr.closeSockets();
-    ifacemgr.clearIfaces();
-
-    // Add fake interfaces.
-    ifacemgr.addInterface(createIface("lo", 0, "127.0.0.1"));
-    ifacemgr.addInterface(createIface("eth0", 1, "192.0.2.1"));
-    ifacemgr.addInterface(createIface("eth1", 2, "10.0.0.1"));
-
-    // In order to use fake interfaces we have to supply the custom
-    // packet filtering class, which can mimic opening sockets on
-    // fake interafaces.
-    current_pkt_filter_.reset(new PktFilterTest());
-    ifacemgr.setPacketFilter(current_pkt_filter_);
-    ifacemgr.openSockets4();
-}
-
 void
-Dhcpv4SrvFakeIfaceTest::TearDown() {
-    // The base class function restores the original packet filtering class.
-    Dhcpv4SrvTest::TearDown();
-    // The base class however, doesn't re-detect real interfaces.
-    try {
-        IfaceMgr::instance().clearIfaces();
-        IfaceMgr::instance().detectIfaces();
+Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
-    } catch (const Exception& ex) {
-        FAIL() << "Failed to restore interface configuration after using"
-            " fake interfaces";
-    }
-}
-
-Iface
-Dhcpv4SrvFakeIfaceTest::createIface(const std::string& name, const int ifindex,
-                                    const std::string& addr) {
-    Iface iface(name, ifindex);
-    iface.addAddress(IOAddress(addr));
-    if (name == "lo") {
-        iface.flag_loopback_ = true;
-    }
-    iface.flag_up_ = true;
-    iface.flag_running_ = true;
-    iface.inactive4_ = false;
-    return (iface);
-}
-
-void
-Dhcpv4SrvFakeIfaceTest::testDiscoverRequest(const uint8_t msg_type) {
     // Create an instance of the tested class.
     boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
 
