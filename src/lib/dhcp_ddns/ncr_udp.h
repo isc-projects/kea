@@ -112,9 +112,11 @@
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
 #include <dhcp_ddns/ncr_io.h>
+#include <dhcp_ddns/watch_socket.h>
 #include <util/buffer.h>
 
 #include <boost/shared_array.hpp>
+
 
 /// responsibility of the completion handler to perform the steps necessary
 /// to interpret the raw data provided by the service outcome.   The
@@ -524,6 +526,21 @@ public:
     void sendCompletionHandler(const bool successful,
                                const UDPCallback* send_callback);
 
+    /// @brief Returns a file description suitable for use with select
+    ///
+    /// The value returned is an open file descriptor which can be used with
+    /// select() system call to monitor the sender for IO events.  This allows
+    /// NameChangeUDPSenders to be used in applications which use select,
+    /// rather than IOService to wait for IO events to occur.
+    ///
+    /// @note Attempting other use of this value may lead to unpredictable
+    /// behavior in the sender.
+    ///
+    /// @return Returns an "open" file descriptor
+    ///
+    /// @throw NcrSenderError if the sender is not in send mode,
+    virtual int getSelectFd();
+
 private:
     /// @brief IP address from which to send.
     isc::asiolink::IOAddress ip_address_;
@@ -554,6 +571,8 @@ private:
 
     /// @brief Flag which enables the reuse address socket option if true.
     bool reuse_address_;
+
+    WatchSocketPtr watch_socket_;
 };
 
 } // namespace isc::dhcp_ddns

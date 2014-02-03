@@ -16,12 +16,15 @@
 #include <dhcp_ddns/ncr_io.h>
 #include <dhcp_ddns/ncr_udp.h>
 #include <util/time_utilities.h>
+#include <test_utils.h>
 
 #include <asio/ip/udp.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <gtest/gtest.h>
 #include <algorithm>
+
+#include <sys/select.h>
 
 using namespace std;
 using namespace isc;
@@ -68,6 +71,7 @@ const char *valid_msgs[] =
 };
 
 const char* TEST_ADDRESS = "127.0.0.1";
+//const char* TEST_ADDRESS = "192.0.2.10";
 const uint32_t LISTENER_PORT = 5301;
 const uint32_t SENDER_PORT = LISTENER_PORT+1;
 const long TEST_TIMEOUT = 5 * 1000;
@@ -113,6 +117,7 @@ TEST(NameChangeUDPListenerBasicTest, basicListenTests) {
 
     // Verify that we can start listening.
     EXPECT_NO_THROW(listener->startListening(io_service));
+
     // Verify that we are in listening mode.
     EXPECT_TRUE(listener->amListening());
     // Verify that a read is in progress.
@@ -310,8 +315,8 @@ TEST(NameChangeUDPSenderBasicTest, constructionTests) {
 /// @brief Tests NameChangeUDPSender basic send functionality
 /// This test verifies that:
 TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
-    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    uint32_t port = SENDER_PORT;
+    isc::asiolink::IOAddress ip_address("127.0.0.1");
+    uint32_t port = 5301;
     isc::asiolink::IOService io_service;
     SimpleSendHandler ncr_handler;
 
@@ -320,7 +325,8 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
-    NameChangeUDPSender sender(ip_address, port, ip_address, port,
+    isc::asiolink::IOAddress any("0.0.0.0");
+    NameChangeUDPSender sender(any, 0, ip_address, port,
                                FMT_JSON, ncr_handler, num_msgs);
 
     // Verify that we can start sending.
@@ -341,29 +347,54 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     EXPECT_NO_THROW(sender.startSending(io_service));
     EXPECT_TRUE(sender.amSending());
 
+    // Fetch the sender's select-fd.
+    int select_fd = sender.getSelectFd();
+
+    // Verify select_fd is valid and currently shows no ready to read.
+    ASSERT_NE(dhcp_ddns::WatchSocket::INVALID_SOCKET, select_fd);
+    ASSERT_EQ(0, selectCheck(select_fd));
+
     // Iterate over a series of messages, sending each one. Since we
     // do not invoke IOService::run, then the messages should accumulate
     // in the queue.
     NameChangeRequestPtr ncr;
+    NameChangeRequestPtr ncr2;
     for (int i = 0; i < num_msgs; i++) {
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         EXPECT_NO_THROW(sender.sendRequest(ncr));
         // Verify that the queue count increments in step with each send.
         EXPECT_EQ(i+1, sender.getQueueSize());
+
+        // Verify that peekAt(i) returns the NCR we just added.
+        ASSERT_NO_THROW(ncr2 = sender.peekAt(i));
+        ASSERT_TRUE(ncr2);
+        EXPECT_TRUE(*ncr == *ncr2);
     }
+
+    // Verify that attempting to peek beyond the end of the queue, throws.
+    ASSERT_THROW(sender.peekAt(sender.getQueueSize()+1), NcrSenderError);
 
     // Verify that attempting to send an additional message results in a
     // queue full exception.
     EXPECT_THROW(sender.sendRequest(ncr), NcrSenderQueueFull);
 
-    // Loop for the number of valid messages and invoke IOService::run_one.
-    // This should send exactly one message and the queue count should
-    // decrement accordingly.
+    // Loop for the number of valid messages. So long as there is at least
+    // on NCR in the queue, select-fd indicate ready to read. Invoke
+    // IOService::run_one. This should complete the send of exactly one
+    // message and the queue count should decrement accordingly.
     for (int i = num_msgs; i > 0; i--) {
+        // Verify that sender shows IO ready.
+        ASSERT_TRUE(selectCheck(select_fd) > 0);
+
+        // Execute at one ready handler.
         io_service.run_one();
+
         // Verify that the queue count decrements in step with each run.
         EXPECT_EQ(i-1, sender.getQueueSize());
     }
+
+    // Verify that sender shows no IO ready.
+    EXPECT_EQ(0, selectCheck(select_fd));
 
     // Verify that the queue is empty.
     EXPECT_EQ(0, sender.getQueueSize());
@@ -393,6 +424,72 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     // Verify that flushing the queue works when not sending.
     EXPECT_NO_THROW(sender.clearSendQueue());
     EXPECT_EQ(0, sender.getQueueSize());
+}
+
+/// @brief Test the NameChangeSender::assumeQueue method.
+TEST(NameChangeSender, assumeQueue) {
+    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    uint32_t port = SENDER_PORT;
+    isc::asiolink::IOService io_service;
+    SimpleSendHandler ncr_handler;
+    NameChangeRequestPtr ncr;
+
+    // Tests are based on a list of messages, get the count now.
+    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+
+    // Create two senders with queue max equal to the number of
+    // messages we will have in the list.
+    NameChangeUDPSender sender1(ip_address, port, ip_address, port,
+                               FMT_JSON, ncr_handler, num_msgs);
+
+    NameChangeUDPSender sender2(ip_address, port+1, ip_address, port,
+                                FMT_JSON, ncr_handler, num_msgs);
+
+    // Place sender1 into send mode and queue up messages.
+    ASSERT_NO_THROW(sender1.startSending(io_service));
+    for (int i = 0; i < num_msgs; i++) {
+        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
+        ASSERT_NO_THROW(sender1.sendRequest(ncr));
+    }
+
+    // Make sure sender1's queue count is as expected.
+    ASSERT_EQ(num_msgs, sender1.getQueueSize());
+
+    // Verify sender1 is sending, sender2 is not.
+    ASSERT_TRUE(sender1.amSending());
+    ASSERT_FALSE(sender2.amSending());
+
+    // Transfer from sender1 to sender2 should fail because
+    // sender1 is in send mode.
+    ASSERT_THROW(sender2.assumeQueue(sender1), NcrSenderError);
+
+    // Take sender1 out of send mode.
+    ASSERT_NO_THROW(sender1.stopSending());
+    ASSERT_FALSE(sender1.amSending());
+
+    // Transfer should succeed. Verify sender1 has none,
+    // and sender2 has num_msgs queued.
+    EXPECT_NO_THROW(sender2.assumeQueue(sender1));
+    EXPECT_EQ(0, sender1.getQueueSize());
+    EXPECT_EQ(num_msgs, sender2.getQueueSize());
+
+    // Reduce sender1's max queue size.
+    ASSERT_NO_THROW(sender1.setQueueMaxSize(num_msgs - 1));
+
+    // Transfer should fail as sender1's queue is not large enough.
+    ASSERT_THROW(sender1.assumeQueue(sender2), NcrSenderError);
+
+    // Place sender1 into send mode and queue up a message.
+    ASSERT_NO_THROW(sender1.startSending(io_service));
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[0]));
+    ASSERT_NO_THROW(sender1.sendRequest(ncr));
+
+    // Take sender1 out of send mode.
+    ASSERT_NO_THROW(sender1.stopSending());
+
+    // Try to transfer from sender1 to sender2. This should fail
+    // as sender2's queue is not empty.
+    ASSERT_THROW(sender2.assumeQueue(sender1), NcrSenderError);
 }
 
 /// @brief Text fixture that allows testing a listener and sender together
