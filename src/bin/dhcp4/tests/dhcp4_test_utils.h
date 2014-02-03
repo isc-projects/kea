@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -267,6 +267,19 @@ public:
     /// @return created packet
     Pkt4Ptr packetFromCapture(const std::string& hex_string);
 
+    /// @brief Tests if Discover or Request message is processed correctly
+    ///
+    /// This test verifies that the Parameter Request List option is handled
+    /// correctly, i.e. it checks that certain options are present in the
+    /// server's response when they are requested and that they are not present
+    /// when they are not requested or NAK occurs.
+    ///
+    /// @todo We need an additional test for PRL option using real traffic
+    /// capture.
+    ///
+    /// @param msg_type DHCPDISCOVER or DHCPREQUEST
+    void testDiscoverRequest(const uint8_t msg_type);
+
     /// @brief This function cleans up after the test.
     virtual void TearDown();
 
@@ -282,62 +295,6 @@ public:
     int rcode_;
 
     isc::data::ConstElementPtr comment_;
-
-};
-
-/// @brief Test fixture class to be used for tests which require fake
-/// interfaces.
-///
-/// The DHCPv4 server must always append the server identifier to its response.
-/// The server identifier is typically an IP address assigned to the interface
-/// on which the query has been received. The DHCPv4 server uses IfaceMgr to
-/// check this address. In order to test this functionality, a set of interfaces
-/// must be known to the test. This test fixture class creates a set of well
-/// known (fake) interfaces which can be assigned to the test DHCPv4 messages
-/// so as the response (including server identifier) can be validated.
-/// The real interfaces are removed from the IfaceMgr in the constructor and
-/// they are re-assigned in the destructor.
-class Dhcpv4SrvFakeIfaceTest : public Dhcpv4SrvTest {
-public:
-    /// @brief Constructor.
-    ///
-    /// Creates a set of fake interfaces:
-    /// - lo, index: 0, address: 127.0.0.1
-    /// - eth0, index: 1, address: 192.0.3.1
-    /// - eth1, index: 2, address: 10.0.0.1
-    ///
-    /// These interfaces replace the real interfaces detected by the IfaceMgr.
-    Dhcpv4SrvFakeIfaceTest();
-
-    /// @brief Restores the original interface configuration.
-    virtual void TearDown();
-
-    /// @brief Creates an instance of the interface.
-    ///
-    /// @param name Name of the interface.
-    /// @param ifindex Index of the interface.
-    /// @param addr IP address assigned to the interface, represented as string.
-    ///
-    /// @return Iface Instance of the interface.
-    static Iface createIface(const std::string& name, const int ifindex,
-                             const std::string& addr);
-
-    /// @brief Tests if Discover or Request message is processed correctly
-    ///
-    /// This test verifies that the Parameter Request List option is handled
-    /// correctly, i.e. it checks that certain options are present in the
-    /// server's response when they are requested and that they are not present
-    /// when they are not requested or NAK occurs.
-    ///
-    /// @todo We need an additional test for PRL option using real traffic
-    /// capture.
-    ///
-    /// @param msg_type DHCPDISCOVER or DHCPREQUEST
-    void testDiscoverRequest(const uint8_t msg_type);
-
-    /// @brief Holds a pointer to the packet filter object currently used
-    /// by the IfaceMgr.
-    PktFilterTestPtr current_pkt_filter_;
 
 };
 

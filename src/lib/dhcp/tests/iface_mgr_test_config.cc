@@ -26,7 +26,8 @@ namespace test {
 IfaceMgrTestConfig::IfaceMgrTestConfig(const bool default_config) {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().clearIfaces();
-    IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterTestStub()));
+    packet_filter4_ = PktFilterPtr(new PktFilterTestStub());
+    IfaceMgr::instance().setPacketFilter(packet_filter4_);
 
     // Create default set of fake interfaces: lo, eth0 and eth1.
     if (default_config) {
@@ -99,6 +100,18 @@ IfaceMgrTestConfig::createIfaces() {
     addAddress("eth1", IOAddress("192.0.2.3"));
     addAddress("eth1", IOAddress("fe80::3a60:77ff:fed5:cdef"));
 
+}
+
+void
+IfaceMgrTestConfig::setDirectResponse(const bool direct_resp) {
+    boost::shared_ptr<PktFilterTestStub> stub =
+        boost::dynamic_pointer_cast<PktFilterTestStub>(getPacketFilter4());
+    if (!stub) {
+        isc_throw(isc::Unexpected, "unable to set direct response capability for"
+                  " test packet filter - current packet filter is not"
+                  " of a PktFilterTestStub");
+    }
+    stub->direct_response_supported_ = direct_resp;
 }
 
 void

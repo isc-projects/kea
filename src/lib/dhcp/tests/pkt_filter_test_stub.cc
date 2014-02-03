@@ -18,9 +18,13 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+PktFilterTestStub::PktFilterTestStub()
+    : direct_response_supported_(true) {
+}
+
 bool
 PktFilterTestStub::isDirectResponseSupported() const {
-    return (true);
+    return (direct_response_supported_);
 }
 
 SocketInfo
