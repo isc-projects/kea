@@ -209,7 +209,7 @@ TEST_F(DirectClientTest,  twoSubnets) {
     // Check that the server did send reposonses.
     ASSERT_EQ(2, srv_.fake_sent_.size());
 
-    // Make sure that we received a responses.
+    // Make sure that we received a response.
     Pkt4Ptr response = srv_.fake_sent_.front();
     ASSERT_TRUE(response);
     srv_.fake_sent_.pop_front();
@@ -233,5 +233,60 @@ TEST_F(DirectClientTest,  twoSubnets) {
     EXPECT_EQ("192.0.2.0", subnet->get().first.toText());
 
 }
+
+// This test checks that server selects a subnet when receives a message
+// through an interface for which the subnet has been configured. This
+// interface has IPv4 address assigned which belongs to this subnet.
+// This test also verifies that when the message is received through
+// the interface for which there is no suitable subnet, the NAK
+// is sent back to a client.
+TEST_F(DirectClientTest,  oneSubnet) {
+    // Configure IfaceMgr with fake interfaces lo, eth0 and eth1.
+    IfaceMgrTestConfig iface_config(true);
+    // After creating interfaces we have to open sockets as it is required
+    // by the message processing code.
+    ASSERT_NO_THROW(IfaceMgr::instance().openSockets4());
+    // Add a subnet which will be selected when a message from directly
+    // connected client is received through interface eth0.
+    ASSERT_NO_FATAL_FAILURE(configureSubnet("10.0.0.0"));
+    // Create Discover and simulate reception of this message through eth0.
+    Pkt4Ptr dis = createClientMessage(DHCPDISCOVER, "eth0");
+    srv_.fakeReceive(dis);
+    // Create Request and simulate reception of this message through eth1.
+    Pkt4Ptr req = createClientMessage(DHCPDISCOVER, "eth1");
+    srv_.fakeReceive(req);
+
+    // Process clients' messages.
+    srv_.run();
+
+    // Check that the server did send reposonses.
+    ASSERT_EQ(2, srv_.fake_sent_.size());
+
+    // Check the first response. The first Discover was sent via eth0
+    // for which the subnet has been configured.
+    Pkt4Ptr response = srv_.fake_sent_.front();
+    ASSERT_TRUE(response);
+    srv_.fake_sent_.pop_front();
+
+    // Since Discover has been received through the interface for which
+    // the subnet has been configured, the server should respond with
+    // an Offer message.
+    ASSERT_EQ(DHCPOFFER, response->getType());
+    // Check that the offered address belongs to the suitable subnet.
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(response->getYiaddr());
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("10.0.0.0", subnet->get().first.toText());
+
+    // The second Discover was sent through eth1 for which no suitable
+    // subnet exists.
+    response = srv_.fake_sent_.front();
+    ASSERT_TRUE(response);
+
+    // The client should receive NAK as there is no subnet configured
+    // for this network.
+    EXPECT_EQ(DHCPNAK, response->getType());
+
+}
+
 
 }
