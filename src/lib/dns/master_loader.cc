@@ -452,7 +452,7 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
 
   for (std::string::const_iterator it = str.begin(); it != str.end();) {
       switch (*it) {
-      case '$': {
+      case '$':
           ++it;
           if ((it != str.end()) && (*it == '$')) {
               rstr.push_back('$');
@@ -460,32 +460,37 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
               continue;
           }
 
-          bool nibble_mode = false;
-          bool nibble_uppercase = false;
-          std::string fmt("%d");
-          int delta = 0;
-
-          if (*it == '{') {
+          if (*it != '{') {
+              rstr += boost::str(boost::format("%d") % i);
+          } else {
               const char* scan_str =
                   str.c_str() + std::distance(str.begin(), it);
+              int delta = 0;
               unsigned int width;
               char mode[2] = {'d', 0}; // char plus null byte
               const int n = sscanf(scan_str, "{%d,%u,%1[doxXnN]}",
                                    &delta, &width, mode);
               switch (n) {
               case 1:
+                  rstr += boost::str(boost::format("%d") % (i + delta));
                   break;
 
-              case 2:
-                  fmt = boost::str(boost::format("%%0%ud") % width);
+              case 2: {
+                  const std::string fmt =
+                      boost::str(boost::format("%%0%ud") % width);
+                  rstr += boost::str(boost::format(fmt) % (i + delta));
                   break;
+              }
 
               case 3:
                   if ((mode[0] == 'n') || (mode[0] == 'N')) {
-                      nibble_mode = true;
-                      nibble_uppercase = (mode[0] == 'N');
+                      // TODO: Handle nibble mode
+                      assert(true);
+                  } else {
+                      const std::string fmt =
+                          boost::str(boost::format("%%0%u%c") % width % mode[0]);
+                      rstr += boost::str(boost::format(fmt) % (i + delta));
                   }
-                  fmt = boost::str(boost::format("%%0%u%c") % width % mode[0]);
                   break;
 
               default:
@@ -502,14 +507,7 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
                   ++it;
               }
           }
-
-          // TODO: Handle nibble mode
-          assert(!nibble_mode);
-          nibble_uppercase = nibble_uppercase;
-
-          rstr += boost::str(boost::format(fmt) % (i + delta));
           break;
-      }
 
       case '\\':
           rstr.push_back(*it);
