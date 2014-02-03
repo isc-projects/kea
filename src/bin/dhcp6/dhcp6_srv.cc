@@ -863,10 +863,12 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         // This is a direct (non-relayed) message
 
         // Try to find a subnet if received packet from a directly connected client
-        subnet = CfgMgr::instance().getSubnet6(question->getIface());
+        subnet = CfgMgr::instance().getSubnet6(question->getIface(),
+                                               question->classes_);
         if (!subnet) {
             // If no subnet was found, try to find it based on remote address
-            subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr());
+            subnet = CfgMgr::instance().getSubnet6(question->getRemoteAddr(),
+                                                   question->classes_);
         }
     } else {
 
@@ -874,17 +876,19 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
         OptionPtr interface_id = question->getAnyRelayOption(D6O_INTERFACE_ID,
                                                              Pkt6::RELAY_GET_FIRST);
         if (interface_id) {
-            subnet = CfgMgr::instance().getSubnet6(interface_id);
+            subnet = CfgMgr::instance().getSubnet6(interface_id,
+                                                   question->classes_);
         }
 
         if (!subnet) {
-            // If no interface-id was specified (or not configured on server), let's
-            // try address matching
+            // If no interface-id was specified (or not configured on server),
+            // let's try address matching
             IOAddress link_addr = question->relay_info_.back().linkaddr_;
 
             // if relay filled in link_addr field, then let's use it
             if (link_addr != IOAddress("::")) {
-                subnet = CfgMgr::instance().getSubnet6(link_addr);
+                subnet = CfgMgr::instance().getSubnet6(link_addr,
+                                                       question->classes_);
             }
         }
     }
