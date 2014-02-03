@@ -260,26 +260,15 @@ Dhcpv4Srv::run() {
             }
         }
 
-        // Check if the DHCPv4 packet has been sent to us or to someone else.
-        // If it hasn't been sent to us, drop it!
-        if (!acceptServerId(query)) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_NOT_FOR_US)
-                .arg(query->getTransid())
-                .arg(query->getIface());
+        // Check whether the message should be further processed or discarded.
+        // There is no need to log anything here. This function logs by itself.
+        if (!accept(query)) {
             continue;
         }
 
-        // When receiving a packet without message type option, getType() will
-        // throw. Let's set type to -1 as default error indicator.
-        int type = -1;
-        try {
-            type = query->getType();
-        } catch (...) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_NO_TYPE)
-                .arg(query->getIface());
-            continue;
-        }
-
+        // We have sanity checked (in accept()) that the Message Type option
+        // exists, so we can safely get it here.
+        int type = query->getType();
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_RECEIVED)
             .arg(serverReceivedPacketName(type))
             .arg(type)
@@ -1499,22 +1488,35 @@ Dhcpv4Srv::serverReceivedPacketName(uint8_t type) {
 }
 
 Subnet4Ptr
-Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
+Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
 
     Subnet4Ptr subnet;
-    // Is this relayed message?
-    IOAddress relay = question->getGiaddr();
     static const IOAddress notset("0.0.0.0");
+    static const IOAddress bcast("255.255.255.255");
 
-    if (relay != notset) {
-        // Yes: Use relay address to select subnet
-        subnet = CfgMgr::instance().getSubnet4(relay);
+    // If a message is relayed, use the relay (giaddr) address to select subnet
+    // for the client. Note that this may result in exception if the value
+    // of hops does not correspond with the Giaddr. Such message is considered
+    // to be malformed anyway and the message will be dropped by the higher
+    // level functions.
+    if (question->isRelayed()) {
+        subnet = CfgMgr::instance().getSubnet4(question->getGiaddr());
+
+    // The message is not relayed so it is sent directly by a client. But
+    // the client may be renewing its lease and in such case it unicasts
+    // its message to the server. Note that the unicast Request bypasses
+    // relays and the client may be in a different network, so we can't
+    // use IP address on the local interface to get the subnet. Instead,
+    // we rely on the client's address to get the subnet.
+    } else if ((question->getLocalAddr() != bcast) &&
+               (question->getCiaddr() != notset)) {
+        subnet = CfgMgr::instance().getSubnet4(question->getCiaddr());
+
+    // The message has been received from a directly connected client
+    // and this client appears to have no address. The IPv4 address
+    // assigned to the interface on which this message has been received,
+    // will be used to determine the subnet suitable for the client.
     } else {
-
-        // No: the message has been received from a directly connected client.
-        // The IPv4 address assigned to the interface on which this message
-        // has been received, will be used to determine the subnet suitable for
-        // a client.
         subnet = CfgMgr::instance().getSubnet4(question->getIface());
     }
 
@@ -1549,6 +1551,51 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
     }
 
     return (subnet);
+}
+
+bool
+Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
+    // Check if the message from directly connected client (if directly
+    // connected) should be dropped or processed.
+    if (!acceptDirectRequest(query)) {
+        LOG_INFO(dhcp4_logger, DHCP4_NO_SUBNET_FOR_DIRECT_CLIENT)
+            .arg(query->getTransid())
+            .arg(query->getIface());
+        return (false);
+    }
+
+    // Check if the DHCPv4 packet has been sent to us or to someone else.
+    // If it hasn't been sent to us, drop it!
+    if (!acceptServerId(query)) {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_NOT_FOR_US)
+            .arg(query->getTransid())
+            .arg(query->getIface());
+        return (false);
+    }
+
+    // When receiving a packet without message type option, getType() will
+    // throw.
+    try {
+        query->getType();
+    } catch (...) {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_NO_TYPE)
+            .arg(query->getIface());
+        return (false);
+    }
+    return (true);
+}
+
+bool
+Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
+    try {
+        if (pkt->isRelayed()) {
+            return (true);
+        }
+    } catch (const Exception& ex) {
+        return (false);
+    }
+    static const IOAddress bcast("255.255.255.255");
+    return ((pkt->getLocalAddr() == bcast && !selectSubnet(pkt)) ? false : true);
 }
 
 bool
@@ -1690,8 +1737,8 @@ Dhcpv4Srv::openActiveSockets(const uint16_t port,
 
 size_t
 Dhcpv4Srv::unpackOptions(const OptionBuffer& buf,
-                          const std::string& option_space,
-                          isc::dhcp::OptionCollection& options) {
+                         const std::string& option_space,
+                         isc::dhcp::OptionCollection& options) {
     size_t offset = 0;
 
     OptionDefContainer option_defs;
