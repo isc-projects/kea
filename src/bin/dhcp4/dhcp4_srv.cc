@@ -1508,11 +1508,12 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) {
 
     if (relay != notset) {
         // Yes: Use relay address to select subnet
-        subnet = CfgMgr::instance().getSubnet4(relay);
+        subnet = CfgMgr::instance().getSubnet4(relay, question->classes_);
     } else {
 
         // No: Use client's address to select subnet
-        subnet = CfgMgr::instance().getSubnet4(question->getRemoteAddr());
+        subnet = CfgMgr::instance().getSubnet4(question->getRemoteAddr(),
+                                               question->classes_);
     }
 
     /// @todo Implement getSubnet4(interface-name)
