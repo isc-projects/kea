@@ -368,7 +368,7 @@ public:
     /// @param ignored first parameter
     /// stores global scope parameters, options, option defintions.
     Subnet6ConfigParser(const std::string&)
-        :SubnetConfigParser("", globalContext()) {
+        :SubnetConfigParser("", globalContext(), IOAddress("::")) {
     }
 
     /// @brief Adds the created subnet to a server's configuration.
@@ -381,6 +381,12 @@ public:
                 isc_throw(Unexpected,
                           "Invalid cast in Subnet4ConfigParser::commit");
             }
+
+            // Set relay infomation if it was provided
+            if (relay_info_) {
+                sub6ptr->setRelay(*relay_info_);
+            }
+
             isc::dhcp::CfgMgr::instance().addSubnet6(sub6ptr);
         }
     }
@@ -408,6 +414,8 @@ protected:
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pool") == 0) {
             parser = new Pool6Parser(config_id, pools_);
+        } else if (config_id.compare("relay") == 0) {
+            parser = new RelayInfoParser(config_id, relay_info_, IOAddress("::"));
         } else if (config_id.compare("pd-pools") == 0) {
             parser = new PdPoolListParser(config_id, pools_);
         } else if (config_id.compare("option-data") == 0) {

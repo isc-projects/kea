@@ -2924,4 +2924,34 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
 }
 
 
+// This test checks if it is possible to specify relay information
+TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
+
+    ConstElementPtr status;
+
+    // A config with relay information.
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"relay\": { "
+        "        \"ip-address\": \"2001:db8:1::abcd\""
+        "    },"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"preferred-lifetime\": 3000, "
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (configuration success)
+    checkResult(status, 0);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("2001:db8:1::abcd", subnet->relay_.addr_.toText());
+}
+
 };
