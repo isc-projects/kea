@@ -227,7 +227,7 @@ IfaceMgr::isDirectResponseSupported() const {
 }
 
 void
-IfaceMgr::addExternalSocket(int socketfd, SessionCallback callback) {
+IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
     for (SocketCallbackContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
 
@@ -240,7 +240,7 @@ IfaceMgr::addExternalSocket(int socketfd, SessionCallback callback) {
     }
 
     // Add a new entry to the callbacks vector
-    SocketCallback x;
+    SocketCallbackInfo x;
     x.socket_ = socketfd;
     x.callback_ = callback;
     callbacks_.push_back(x);
@@ -819,7 +819,6 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     IfaceCollection::const_iterator iface;
     fd_set sockets;
     int maxfd = 0;
-    stringstream names;
 
     FD_ZERO(&sockets);
 
@@ -834,7 +833,6 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
 
             // Only deal with IPv4 addresses.
             if (s->addr_.isV4()) {
-                names << s->sockfd_ << "(" << iface->getName() << ") ";
 
                 // Add this socket to listening set
                 FD_SET(s->sockfd_, &sockets);
@@ -845,7 +843,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
         }
     }
 
-    // if there are any session sockets registered...
+    // if there are any callbacks for external sockets registered...
     if (!callbacks_.empty()) {
         for (SocketCallbackContainer::const_iterator s = callbacks_.begin();
              s != callbacks_.end(); ++s) {
@@ -853,7 +851,6 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
             if (maxfd < s->socket_) {
                 maxfd = s->socket_;
             }
-            names << s->socket_ << "(session)";
         }
     }
 
@@ -877,13 +874,11 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
             continue;
         }
 
-        // something received over session socket
+        // something received over external socket
 
-        // in theory we could call io_service.run_one() here, instead of
-        // implementing callback mechanism, but that would introduce
-        // asiolink dependency to libdhcp++ and that is something we want
-        // to avoid (see CPE market and out long term plans for minimalistic
-        // implementations.
+        // Calling the external socket's callback provides its service
+        // layer access without integrating any specific features
+        // in IfaceMgr
         if (s->callback_) {
             s->callback_();
         }
@@ -925,7 +920,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     const SocketInfo* candidate = 0;
     fd_set sockets;
     int maxfd = 0;
-    stringstream names;
 
     FD_ZERO(&sockets);
 
@@ -940,7 +934,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
             // Only deal with IPv6 addresses.
             if (s->addr_.isV6()) {
-                names << s->sockfd_ << "(" << iface->getName() << ") ";
 
                 // Add this socket to listening set
                 FD_SET(s->sockfd_, &sockets);
@@ -951,7 +944,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         }
     }
 
-    // if there are any session sockets registered...
+    // if there are any callbacks for external sockets registered...
     if (!callbacks_.empty()) {
         for (SocketCallbackContainer::const_iterator s = callbacks_.begin();
              s != callbacks_.end(); ++s) {
@@ -961,7 +954,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
             if (maxfd < s->socket_) {
                 maxfd = s->socket_;
             }
-            names << s->socket_ << "(session)";
         }
     }
 
@@ -982,13 +974,11 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     for (SocketCallbackContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
         if (FD_ISSET(s->socket_, &sockets)) {
-            // something received over session socket
+            // something received over external socket
             if (s->callback_) {
-                // in theory we could call io_service.run_one() here, instead of
-                // implementing callback mechanism, but that would introduce
-                // asiolink dependency to libdhcp++ and that is something we want
-                // to avoid (see CPE market and out long term plans for minimalistic
-                // implementations.
+                // Calling the external socket's callback provides its service
+                // layer access without integrating any specific features
+                // in IfaceMgr
                 s->callback_();
             }
         }
