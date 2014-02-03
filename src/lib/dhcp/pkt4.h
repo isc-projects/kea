@@ -20,6 +20,7 @@
 #include <util/buffer.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/classify.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
@@ -52,9 +53,6 @@ public:
     /// Mask for the value of flags field in the DHCPv4 message
     /// to check whether client requested broadcast response.
     const static uint16_t FLAG_BROADCAST_MASK = 0x8000;
-
-    /// Container for storing client classes
-    typedef std::set<std::string> Classes;
 
     /// Constructor, used in replying to a message.
     ///
