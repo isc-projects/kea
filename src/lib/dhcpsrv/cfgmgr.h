@@ -170,7 +170,7 @@ public:
     ///
     /// @return a subnet object (or NULL if no suitable match was fount)
     Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint,
-                          const isc::dhcp::Classes& classes);
+                          const isc::dhcp::ClientClasses& classes);
 
     /// @brief get IPv6 subnet by interface name
     ///
@@ -180,7 +180,7 @@ public:
     /// @param iface_name interface name
     /// @return a subnet object (or NULL if no suitable match was fount)
     Subnet6Ptr getSubnet6(const std::string& iface_name,
-                          const isc::dhcp::Classes& classes);
+                          const isc::dhcp::ClientClasses& classes);
 
     /// @brief get IPv6 subnet by interface-id
     ///
@@ -190,7 +190,7 @@ public:
     ///
     /// @return a subnet object
     Subnet6Ptr getSubnet6(OptionPtr interface_id,
-                          const isc::dhcp::Classes& classes);
+                          const isc::dhcp::ClientClasses& classes);
 
     /// @brief adds an IPv6 subnet
     ///
@@ -249,7 +249,7 @@ public:
     ///
     /// @return a subnet object
     Subnet4Ptr getSubnet4(const isc::asiolink::IOAddress& hint,
-                          const isc::dhcp::Classes& classes);
+                          const isc::dhcp::ClientClasses& classes);
 
     /// @brief adds a subnet4
     void addSubnet4(const Subnet4Ptr& subnet);

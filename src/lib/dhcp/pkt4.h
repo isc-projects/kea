@@ -581,7 +581,7 @@ public:
     /// existing classes. Having it public also solves the problem of returned
     /// reference lifetime. It is preferred to use @ref inClass and @ref addClass
     /// should be used to operate on this field.
-    Classes classes_;
+    ClientClasses classes_;
 
 private:
 

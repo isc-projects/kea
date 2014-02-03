@@ -455,7 +455,7 @@ public:
     ///
     /// This field is public, so code can iterate over existing classes.
     /// Having it public also solves the problem of returned reference lifetime.
-    Classes classes_;
+    ClientClasses classes_;
 
 protected:
     /// Builds on wire packet for TCP transmission.

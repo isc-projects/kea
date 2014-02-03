@@ -456,10 +456,10 @@ public:
     }
 
 
-    boost::scoped_ptr<Dhcpv4Srv> srv_;      // DHCP4 server under test
-    int rcode_;                             // Return code from element parsing
-    ConstElementPtr comment_;               // Reason for parse fail
-    isc::dhcp::Classes classify_;           // used in client classification
+    boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
+    int rcode_;                         ///< Return code from element parsing
+    ConstElementPtr comment_;           ///< Reason for parse fail
+    isc::dhcp::ClientClasses classify_; ///< used in client classification
 };
 
 // Goal of this test is a verification if a very simple config update
