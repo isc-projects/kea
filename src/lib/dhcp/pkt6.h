@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcp/classify.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_array.hpp>
@@ -47,9 +48,6 @@ public:
         UDP = 0, // most packets are UDP
         TCP = 1  // there are TCP DHCPv6 packets (bulk leasequery, failover)
     };
-
-    /// Container for storing client classes
-    typedef std::set<std::string> Classes;
 
     /// @brief defines relay search pattern
     ///
