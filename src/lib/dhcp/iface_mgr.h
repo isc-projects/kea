@@ -1026,7 +1026,7 @@ private:
     /// error occurs during opening a socket, or NULL if exception should
     /// be thrown upon error.
     bool openMulticastSocket(Iface& iface,
-                             const isc::asiolink::IOAddress addr,
+                             const isc::asiolink::IOAddress& addr,
                              const uint16_t port,
                              IfaceMgrErrorMsgCallback error_handler = NULL);
 

@@ -152,7 +152,7 @@ IfaceMgr::setMatchingPacketFilter(const bool /* direct_response_desired */) {
 
 bool
 IfaceMgr::openMulticastSocket(Iface& iface,
-                              const isc::asiolink::IOAddress addr,
+                              const isc::asiolink::IOAddress& addr,
                               const uint16_t port,
                               IfaceMgrErrorMsgCallback error_handler) {
     try {
