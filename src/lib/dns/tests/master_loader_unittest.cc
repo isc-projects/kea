@@ -522,7 +522,7 @@ TEST_F(MasterLoaderTest, generateWithModifiers) {
         // number of labels as width=8 above.
         "$GENERATE 94-96 ${0,7,n} A 192.0.2.$\n"
         // Uppercase nibble
-        "$GENERATE 98-98 ${0,10,n} A 192.0.2.$\n"
+        "$GENERATE 98-98 ${0,10,N} A 192.0.2.$\n"
         // Junk type will not parse and 'd' is assumed.
         "$GENERATE 100-101 host${0,4,j} A 192.0.2.$\n";
     stringstream ss(input);
@@ -558,8 +558,8 @@ TEST_F(MasterLoaderTest, generateWithModifiers) {
     checkRR("b.5.0.0.example.org", RRType::A(), "192.0.2.91");
     checkRR("c.5.0.0.example.org", RRType::A(), "192.0.2.92");
 
-    checkRR("e.5.0.0.example.org", RRType::A(), "192.0.2.94");
-    checkRR("f.5.0.0.example.org", RRType::A(), "192.0.2.95");
+    checkRR("E.5.0.0.example.org", RRType::A(), "192.0.2.94");
+    checkRR("F.5.0.0.example.org", RRType::A(), "192.0.2.95");
     checkRR("0.6.0.0.example.org", RRType::A(), "192.0.2.96");
 
     checkRR("2.6.0.0.0.example.org", RRType::A(), "192.0.2.98");
