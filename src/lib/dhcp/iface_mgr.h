@@ -394,20 +394,20 @@ boost::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
 ///
 class IfaceMgr : public boost::noncopyable {
 public:
-    /// Defines callback used when commands are received over control session.
-    typedef void (*SessionCallback) (void);
+    /// Defines callback used when data is received over external sockets.
+    typedef boost::function<void ()> SocketCallback;
 
     /// Keeps callback information for external sockets.
-    struct SocketCallback {
+    struct SocketCallbackInfo {
         /// Socket descriptor of the external socket.
         int socket_;
 
         /// A callback that will be called when data arrives over socket_.
-        SessionCallback callback_;
+        SocketCallback callback_;
     };
 
     /// Defines storage container for callbacks for external sockets
-    typedef std::list<SocketCallback> SocketCallbackContainer;
+    typedef std::list<SocketCallbackInfo> SocketCallbackContainer;
 
     /// @brief Packet reception buffer size
     ///
@@ -797,14 +797,14 @@ public:
     /// @return number of detected interfaces
     uint16_t countIfaces() { return ifaces_.size(); }
 
-    /// @brief Sets external socket and a callback
+    /// @brief Adds external socket and a callback
     ///
-    /// Specifies session socket and a callback that will be called
+    /// Specifies external socket and a callback that will be called
     /// when data will be received over that socket.
     ///
     /// @param socketfd socket descriptor
     /// @param callback callback function
-    void addExternalSocket(int socketfd, SessionCallback callback);
+    void addExternalSocket(int socketfd, SocketCallback callback);
 
     /// @brief Deletes external socket
 

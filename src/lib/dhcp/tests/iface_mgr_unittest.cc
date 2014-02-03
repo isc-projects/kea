@@ -2601,9 +2601,9 @@ void my_callback2(void) {
     callback2_ok = true;
 }
 
-// Tests if a signle external socket and its callback can be passed and
+// Tests if a single external socket and its callback can be passed and
 // it is supported properly by receive4() method.
-TEST_F(IfaceMgrTest, SingleExternalSession) {
+TEST_F(IfaceMgrTest, SingleExternalSocket) {
 
     callback_ok = false;
 
@@ -2642,7 +2642,7 @@ TEST_F(IfaceMgrTest, SingleExternalSession) {
 
 // Tests if multiple external sockets and their callbacks can be passed and
 // it is supported properly by receive4() method.
-TEST_F(IfaceMgrTest, MiltipleControlSessions) {
+TEST_F(IfaceMgrTest, MiltipleExternalSockets) {
 
     callback_ok = false;
     callback2_ok = false;
@@ -2683,7 +2683,8 @@ TEST_F(IfaceMgrTest, MiltipleControlSessions) {
     EXPECT_FALSE(callback2_ok);
 
     // Read the data sent, because our test callbacks are too dumb to actually
-    // do it.
+    // do it. We don't care about the content read, because we're testing
+    // the callbacks, not pipes.
     char buf[80];
     read(pipefd[0], buf, 80);
 
@@ -2714,7 +2715,7 @@ TEST_F(IfaceMgrTest, MiltipleControlSessions) {
 
 // Tests if existing external socket can be deleted and that such deletion does
 // not affect any other existing sockets.
-TEST_F(IfaceMgrTest, DeleteControlSessions) {
+TEST_F(IfaceMgrTest, DeleteExternalSockets) {
 
     callback_ok = false;
     callback2_ok = false;
@@ -2747,6 +2748,18 @@ TEST_F(IfaceMgrTest, DeleteControlSessions) {
     // There was some data, so this time callback should be called
     EXPECT_FALSE(callback_ok);
     EXPECT_TRUE(callback2_ok);
+
+    // Let's reset the status
+    callback_ok = false;
+    callback2_ok = false;
+
+    // Now let's send something over the first callback that was unregistered.
+    // We should NOT receive any callback.
+    EXPECT_EQ(38, write(pipefd[1], "Hi, this is a message sent over a pipe", 38));
+
+    // Now check that the first callback is NOT called.
+    ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
+    EXPECT_FALSE(callback_ok);
 
     // close both pipe ends
     close(pipefd[1]);
