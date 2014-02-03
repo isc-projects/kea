@@ -452,7 +452,7 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
 
   for (std::string::const_iterator it = str.begin(); it != str.end();) {
       switch (*it) {
-      case '$':
+      case '$': {
           ++it;
           if ((it != str.end()) && (*it == '$')) {
               rstr.push_back('$');
@@ -460,9 +460,56 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
               continue;
           }
 
-          // TODO: This doesn't handle format specifiers in {} yet.
-          rstr += boost::str(boost::format("%d") % i);
+          bool nibble_mode = false;
+          bool nibble_uppercase = false;
+          std::string fmt("%d");
+          int delta = 0;
+
+          if (*it == '{') {
+              const char* scan_str =
+                  str.c_str() + std::distance(str.begin(), it);
+              unsigned int width;
+              char mode[2] = {'d', 0}; // char plus null byte
+              const int n = sscanf(scan_str, "{%d,%u,%1[doxXnN]}",
+                                   &delta, &width, mode);
+              switch (n) {
+              case 1:
+                  break;
+
+              case 2:
+                  fmt = boost::str(boost::format("%%0%ud") % width);
+                  break;
+
+              case 3:
+                  if ((mode[0] == 'n') || (mode[0] == 'N')) {
+                      nibble_mode = true;
+                      nibble_uppercase = (mode[0] == 'N');
+                  }
+                  fmt = boost::str(boost::format("%%0%u%c") % width % mode[0]);
+                  break;
+
+              default:
+                  reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                              "Invalid $GENERATE format modifiers");
+                  return ("");
+              }
+
+              /* Skip past closing brace. */
+              while ((it != str.end()) && (*it != '}')) {
+                  ++it;
+              }
+              if (it != str.end()) {
+                  ++it;
+              }
+          }
+
+          // TODO: Handle nibble mode
+          assert(!nibble_mode);
+          nibble_uppercase = nibble_uppercase;
+
+          rstr += boost::str(boost::format(fmt) % (i + delta));
           break;
+      }
 
       case '\\':
           rstr.push_back(*it);
@@ -539,6 +586,14 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
     for (int i = start; i <= stop; i += step) {
         const std::string generated_name = generateForIter(lhs, i);
         const std::string generated_rdata = generateForIter(rhs, i);
+        if (generated_name.empty() || generated_rdata.empty()) {
+            // The error should have been sent to the callbacks already
+            // by generateForIter().
+            reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
+                        "$GENERATE error");
+            return;
+        }
+
         const size_t name_length = generated_name.size();
         last_name_.reset(new Name(generated_name.c_str(), name_length,
                                   &active_origin_));

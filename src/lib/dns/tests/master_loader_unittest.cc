@@ -502,6 +502,93 @@ TEST_F(MasterLoaderTest, generateWithStep) {
     checkRR("host31.example.org", RRType::A(), "192.0.2.31");
 }
 
+TEST_F(MasterLoaderTest, generateWithModifiers) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$TTL 3600\n"
+        "$GENERATE 2-9/2 host${1} A 192.0.2.${-1}\n"
+        "$GENERATE 10-12 host${0,4} A 192.0.2.$\n"
+        "$GENERATE 14-15 host${0,4,d} A 192.0.2.$\n"
+        "$GENERATE 30-31 host${0,4,x} A 192.0.2.$\n"
+        // Names are case-insensitive, so we use TXT's RDATA to check
+        // case.
+        "$GENERATE 42-43 host$ TXT \"Value ${0,4,X}\"\n"
+        "$GENERATE 45-46 host${0,4,o} A 192.0.2.$\n"
+        // Junk type will not parse and 'd' is assumed.
+        "$GENERATE 100-101 host${0,4,j} A 192.0.2.$\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+
+    checkRR("host3.example.org", RRType::A(), "192.0.2.1");
+    checkRR("host5.example.org", RRType::A(), "192.0.2.3");
+    checkRR("host7.example.org", RRType::A(), "192.0.2.5");
+    checkRR("host9.example.org", RRType::A(), "192.0.2.7");
+
+    checkRR("host0010.example.org", RRType::A(), "192.0.2.10");
+    checkRR("host0011.example.org", RRType::A(), "192.0.2.11");
+    checkRR("host0012.example.org", RRType::A(), "192.0.2.12");
+
+    checkRR("host0014.example.org", RRType::A(), "192.0.2.14");
+    checkRR("host0015.example.org", RRType::A(), "192.0.2.15");
+
+    checkRR("host001e.example.org", RRType::A(), "192.0.2.30");
+    checkRR("host001f.example.org", RRType::A(), "192.0.2.31");
+
+    checkRR("host42.example.org", RRType::TXT(), "Value 002A");
+    checkRR("host43.example.org", RRType::TXT(), "Value 002B");
+
+    checkRR("host0055.example.org", RRType::A(), "192.0.2.45");
+    checkRR("host0056.example.org", RRType::A(), "192.0.2.46");
+
+    checkRR("host0100.example.org", RRType::A(), "192.0.2.100");
+    checkRR("host0101.example.org", RRType::A(), "192.0.2.101");
+}
+
+TEST_F(MasterLoaderTest, generateWithNoModifiers) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$TTL 3600\n"
+        "$GENERATE 10-12 host${} A 192.0.2.$\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    ASSERT_EQ(2, errors_.size()); // For the broken GENERATE
+    EXPECT_TRUE(warnings_.empty());
+
+    checkCallbackMessage(errors_.at(0),
+                         "Invalid $GENERATE format modifiers", 3);
+    checkCallbackMessage(errors_.at(1),
+                         "$GENERATE error", 3);
+}
+
+TEST_F(MasterLoaderTest, generateWithBadModifiers) {
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$TTL 3600\n"
+        "$GENERATE 10-12 host${GARBAGE} A 192.0.2.$\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_FALSE(loader_->loadedSucessfully());
+    ASSERT_EQ(2, errors_.size()); // For the broken GENERATE
+    EXPECT_TRUE(warnings_.empty());
+
+    checkCallbackMessage(errors_.at(0),
+                         "Invalid $GENERATE format modifiers", 3);
+    checkCallbackMessage(errors_.at(1),
+                         "$GENERATE error", 3);
+}
+
 TEST_F(MasterLoaderTest, generateMissingRange) {
     const string input =
         "$ORIGIN example.org.\n"
