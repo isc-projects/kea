@@ -34,8 +34,11 @@ namespace isc {
 
 namespace dhcp {
 
+    /// Definition of a single class.
+    typedef std::string ClientClass;
+
     /// Container for storing client classes
-    typedef std::set<std::string> Classes;
+    typedef std::set<ClientClass> ClientClasses;
 
 };
 

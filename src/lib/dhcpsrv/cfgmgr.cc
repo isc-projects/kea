@@ -123,7 +123,7 @@ CfgMgr::getOptionDef(const std::string& option_space,
 
 Subnet6Ptr
 CfgMgr::getSubnet6(const std::string& iface,
-                   const isc::dhcp::Classes& /*classes*/) {
+                   const isc::dhcp::ClientClasses& /*classes*/) {
 
     if (!iface.length()) {
         return (Subnet6Ptr());
@@ -144,7 +144,7 @@ CfgMgr::getSubnet6(const std::string& iface,
 
 Subnet6Ptr
 CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint,
-                   const isc::dhcp::Classes& /*classes*/) {
+                   const isc::dhcp::ClientClasses& /*classes*/) {
 
     // If there's only one subnet configured, let's just use it
     // The idea is to keep small deployments easy. In a small network - one
@@ -180,7 +180,7 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint,
 }
 
 Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option,
-                              const isc::dhcp::Classes& /*classes*/) {
+                              const isc::dhcp::ClientClasses& /*classes*/) {
     if (!iface_id_option) {
         return (Subnet6Ptr());
     }
@@ -211,7 +211,7 @@ void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
 
 Subnet4Ptr
 CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint,
-                   const isc::dhcp::Classes& /*classes*/) {
+                   const isc::dhcp::ClientClasses& /*classes*/) {
 
     // If there's only one subnet configured, let's just use it
     // The idea is to keep small deployments easy. In a small network - one
