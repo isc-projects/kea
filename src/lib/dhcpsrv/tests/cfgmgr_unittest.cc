@@ -388,6 +388,47 @@ TEST_F(CfgMgrTest, subnet4) {
     EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.85"), classify_));
 }
 
+// This test verifies if the configuration manager is able to hold subnets with
+// their classifier information and return proper subnets, based on those
+// classes.
+TEST_F(CfgMgrTest, classifySubnet4) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    // Let's configure 3 subnets
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+
+    cfg_mgr.addSubnet4(subnet1);
+    cfg_mgr.addSubnet4(subnet2);
+    cfg_mgr.addSubnet4(subnet3);
+
+    // Let's sanity check that we can use that configuration.
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("192.0.2.5"), classify_));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("192.0.2.70"), classify_));
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
+
+    // Client now belongs to bar class.
+    classify_.insert("bar");
+
+    // There are no class restrictions defined, so everything should work
+    // as before
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("192.0.2.5"), classify_));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("192.0.2.70"), classify_));
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
+
+    // Now let's add client class restrictions.
+    subnet1->allowClientClass("foo"); // Serve here only clients from foo class
+    subnet2->allowClientClass("bar"); // Serve here only clients from bar class
+    subnet3->allowClientClass("baz"); // Serve here only clients from baz class
+
+    // The same check as above should result in client being served only in
+    // bar class, i.e. subnet2
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.5"), classify_));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("192.0.2.70"), classify_));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
+}
+
 // This test verifies if the configuration manager is able to hold and return
 // valid leases
 TEST_F(CfgMgrTest, subnet6) {

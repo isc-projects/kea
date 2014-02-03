@@ -211,7 +211,7 @@ void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
 
 Subnet4Ptr
 CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint,
-                   const isc::dhcp::ClientClasses& /*classes*/) {
+                   const isc::dhcp::ClientClasses& classes) {
 
     // If there's only one subnet configured, let's just use it
     // The idea is to keep small deployments easy. In a small network - one
@@ -231,6 +231,13 @@ CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint,
     // If there is more than one, we need to choose the proper one
     for (Subnet4Collection::iterator subnet = subnets4_.begin();
          subnet != subnets4_.end(); ++subnet) {
+
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
+
+        // Let's check if the client belongs to the given subnet
         if ((*subnet)->inRange(hint)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET4)
