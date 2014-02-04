@@ -2971,4 +2971,93 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
     EXPECT_EQ("2001:db8:1::abcd", subnet->relay_.addr_.toText());
 }
 
+// Goal of this test is to verify that multiple subnets can be configured
+// with defined client classes.
+TEST_F(Dhcp6ParserTest, classifySubnets) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\", "
+        "    \"client-class\": \"alpha\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\", "
+        "    \"client-class\": \"beta\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\", "
+        "    \"client-class\": \"gamma\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:4::/80\" ],"
+        "    \"subnet\": \"2001:db8:4::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+    // Let's check if client belonging to alpha class is supported in subnet[0]
+    // and not supported in any other subnet (except subnet[3], which allows
+    // everyone).
+    ClientClasses classes;
+    classes.insert("alpha");
+    EXPECT_TRUE (subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to beta class is supported in subnet[1]
+    // and not supported in any other subnet  (except subnet[3], which allows
+    // everyone).
+    classes.clear();
+    classes.insert("beta");
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to gamma class is supported in subnet[2]
+    // and not supported in any other subnet  (except subnet[3], which allows
+    // everyone).
+    classes.clear();
+    classes.insert("gamma");
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to some other class (not mentioned in
+    // the config) is supported only in subnet[3], which allows everyone.
+    classes.clear();
+    classes.insert("delta");
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Finally, let's check class-less client. He should be allowed only in
+    // the last subnet, which does not have any class restrictions.
+    classes.clear();
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+}
+
+
 };
