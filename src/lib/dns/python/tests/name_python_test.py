@@ -105,6 +105,8 @@ class NameTest(unittest.TestCase):
         self.assertTrue(isinstance(TooLongName(), NameParserException))
         self.assertTrue(isinstance(IncompleteName(), NameParserException))
 
+        self.assertTrue(isinstance(NameParserException(), DNSTextError))
+
     def test_at(self):
         self.assertEqual(7, self.name1.at(0))
         self.assertEqual(101, self.name1.at(1))

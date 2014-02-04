@@ -545,7 +545,6 @@ PyObject* po_BadLabelType;
 PyObject* po_BadEscape;
 PyObject* po_IncompleteName;
 PyObject* po_InvalidBufferPosition;
-PyObject* po_DNSMessageFORMERR;
 
 //
 // Definition of enums
