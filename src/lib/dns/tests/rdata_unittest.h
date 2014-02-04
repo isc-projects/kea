@@ -27,8 +27,6 @@
 #include <string>
 #include <sstream>
 
-using namespace isc::util;
-
 namespace isc {
 namespace dns {
 namespace rdata {
@@ -77,7 +75,7 @@ protected:
         }
     }
 
-    OutputBuffer obuffer;
+    isc::util::OutputBuffer obuffer;
     MessageRenderer renderer;
     /// This is an RDATA object of some "unknown" RR type so that it can be
     /// used to test the compare() method against a well-known RR type.
