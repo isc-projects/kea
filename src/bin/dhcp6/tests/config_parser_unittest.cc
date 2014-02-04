@@ -1746,9 +1746,9 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulateOwnSpace) {
 
 /// The purpose of this test is to verify that it is not allowed
 /// to override the standard option (that belongs to dhcp6 option
-/// space) and that it is allowed to define option in the dhcp6
-/// option space that has a code which is not used by any of the
-/// standard options.
+/// space and has its definition) and that it is allowed to define
+/// option in the dhcp6 option space that has a code which is not
+/// used by any of the standard options.
 TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
 
     // Configuration string. The option code 100 is unassigned
@@ -1786,9 +1786,8 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
 
-    // The combination of option space and code is
-    // invalid. The 'dhcp6' option space groups
-    // standard options and the code 3 is reserved
+    // The combination of option space and code is invalid. The 'dhcp6'
+    // option space groups standard options and the code 3 is reserved
     // for one of them.
     config =
         "{ \"option-def\": [ {"
@@ -1808,6 +1807,39 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+
+    /// @todo The option 59 is a standard DHCPv6 option. However, at this point
+    /// there is no definition for this option in libdhcp++, so it should be
+    /// allowed to define it from the configuration interface. This test will
+    /// have to be removed once definitions for remaining standard options are
+    /// created.
+    config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"boot-file-name\","
+        "      \"code\": 59,"
+        "      \"type\": \"string\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp6\","
+        "      \"encapsulate\": \"\""
+        "  } ]"
+        "}";
+    json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting success.
+    checkResult(status, 0);
+
+    def = CfgMgr::instance().getOptionDef("dhcp6", 59);
+    ASSERT_TRUE(def);
+
+    // Check the option data.
+    EXPECT_EQ("boot-file-name", def->getName());
+    EXPECT_EQ(59, def->getCode());
+    EXPECT_EQ(OPT_STRING_TYPE, def->getType());
+    EXPECT_FALSE(def->getArrayType());
 }
 
 // Goal of this test is to verify that global option
