@@ -410,6 +410,7 @@ protected:
             parser = new Uint32Parser(config_id, uint32_values_);
         } else if ((config_id.compare("subnet") == 0) ||
                    (config_id.compare("interface") == 0) ||
+                   (config_id.compare("client-class") == 0) ||
                    (config_id.compare("interface-id") == 0)) {
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pool") == 0) {
@@ -524,6 +525,14 @@ protected:
             OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
             OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
             subnet6->setInterfaceId(opt);
+        }
+
+        // Try setting up client class (if specified)
+        try {
+            string client_class = string_values_->getParam("client-class");
+            subnet6->allowClientClass(client_class);
+        } catch (const DhcpConfigError&) {
+            // That's ok if it fails. client-class is optional.
         }
 
         subnet_.reset(subnet6);
