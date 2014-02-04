@@ -97,6 +97,14 @@ class NameTest(unittest.TestCase):
         self.assertRaises(DNSMessageFORMERR, Name, b, 0)
         self.assertRaises(IndexError, Name, b, -1)
 
+    def test_exception_hierarchy(self):
+        self.assertTrue(isinstance(EmptyLabel(), NameParserException))
+        self.assertTrue(isinstance(TooLongLabel(), NameParserException))
+        self.assertTrue(isinstance(BadLabelType(), NameParserException))
+        self.assertTrue(isinstance(BadEscape(), NameParserException))
+        self.assertTrue(isinstance(TooLongName(), NameParserException))
+        self.assertTrue(isinstance(IncompleteName(), NameParserException))
+
     def test_at(self):
         self.assertEqual(7, self.name1.at(0))
         self.assertEqual(101, self.name1.at(1))
