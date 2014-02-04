@@ -3635,6 +3635,14 @@ $</screen>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
+      <para>
+        Note that the server was only removed from the list, so BIND10 will not
+        restart it, but the server itself is still running. Hence it is usually
+        desired to stop it:
+<screen>
+&gt; <userinput>Dhcp4 shutdown</userinput>
+</screen>
+      </para>
 
       <para>
         On start-up, the server will detect available network interfaces
@@ -4646,13 +4654,21 @@ Dhcp4/renew-timer	1000	integer	(default)
       </para>
       <para>
          To remove <command>b10-dhcp6</command> from the set of running services,
-         the <command>b10-dhcp4</command> is removed from list of Init components:
+         the <command>b10-dhcp6</command> is removed from list of Init components:
 <screen>
 &gt; <userinput>config remove Init/components b10-dhcp6</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
 
+      <para>
+        Note that the server was only removed from the list, so BIND10 will not
+        restart it, but the server itself is still running. Hence it is usually
+        desired to stop it:
+<screen>
+&gt; <userinput>Dhcp6 shutdown</userinput>
+</screen>
+      </para>
 
       <para>
         During start-up the server will detect available network interfaces
