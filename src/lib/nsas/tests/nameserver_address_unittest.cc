@@ -26,11 +26,12 @@
 #include "../nameserver_entry.h"
 #include "nsas_test.h"
 
+using namespace isc::dns;
+using namespace isc::dns::rdata;
+using isc::util::unittests::TestResolver;
+
 namespace isc {
 namespace nsas {
-
-using namespace dns;
-using namespace rdata;
 
 #define TEST_ADDRESS_INDEX 1
 

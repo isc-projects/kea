@@ -43,6 +43,7 @@
 #include <resolve/recursive_query.h>
 
 using namespace isc::dns;
+using namespace isc::nsas;
 using namespace isc::util;
 using namespace isc::asiolink;
 using namespace isc::resolve;
