@@ -3309,4 +3309,56 @@ TEST_F(Dhcpv4SrvTest, clientClassification) {
     EXPECT_FALSE(dis2->inClass("docsis3.0"));
 }
 
+// This test verifies that the direct message is dropped when it has been
+// received by the server via an interface for which there is no subnet
+// configured. It also checks that the message is not dropped (is processed)
+// when it is relayed or unicast.
+TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1234));
+    // Set Giaddr and local server's unicast address, but don't set hops.
+    // Hops value must be greater than 0, when giaddr is set. Otherwise,
+    // message is considered malformed and the accept() function should
+    // return false.
+    pkt->setGiaddr(IOAddress("192.0.10.1"));
+    pkt->setLocalAddr(IOAddress("192.0.2.3"));
+    pkt->setIface("eth1");
+    EXPECT_FALSE(srv.accept(pkt));
+
+    // Let's set hops and check that the message is now accepted as
+    // a relayed message.
+    pkt->setHops(1);
+    EXPECT_TRUE(srv.accept(pkt));
+
+    // Make it a direct message but keep unicast server's address. The
+    // messages sent to unicast address should be accepted as they are
+    // most likely to renew existing leases. The server should respond
+    // to renews so they have to be accepted and processed.
+    pkt->setHops(0);
+    pkt->setGiaddr(IOAddress("0.0.0.0"));
+    EXPECT_TRUE(srv.accept(pkt));
+
+    // Direct message is now sent to a broadcast address. The server
+    // should accept this message because it has been received via
+    // eth1 for which there is a subnet configured (see test fixture
+    // class constructor).
+    pkt->setLocalAddr(IOAddress("255.255.255.255"));
+    EXPECT_TRUE(srv.accept(pkt));
+
+    // For eth0, there is no subnet configured. Such message is expected
+    // to be silently dropped.
+    pkt->setIface("eth0");
+    EXPECT_FALSE(srv.accept(pkt));
+
+    // But, if the message is unicast it should be accepted, even though
+    // it has been received via eth0.
+    pkt->setLocalAddr(IOAddress("10.0.0.1"));
+    EXPECT_TRUE(srv.accept(pkt));
+
+}
+
 }; // end of anonymous namespace
