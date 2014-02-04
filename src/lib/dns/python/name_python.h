@@ -23,6 +23,7 @@ class Name;
 
 namespace python {
 
+extern PyObject* po_NameParserException;
 extern PyObject* po_EmptyLabel;
 extern PyObject* po_TooLongName;
 extern PyObject* po_TooLongLabel;

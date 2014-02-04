@@ -243,23 +243,33 @@ initModulePart_Name(PyObject* mod) {
 
     // Add the exceptions to the module
     try {
-        po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel", NULL, NULL);
+        po_NameParserException =
+            PyErr_NewException("pydnspp.NameParserException", NULL, NULL);
+        PyObjectContainer(po_NameParserException)
+            .installToModule(mod, "NameParserException");
+
+        po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel",
+                                           po_NameParserException, NULL);
         PyObjectContainer(po_EmptyLabel).installToModule(mod, "EmptyLabel");
 
-        po_TooLongName = PyErr_NewException("pydnspp.TooLongName", NULL, NULL);
+        po_TooLongName = PyErr_NewException("pydnspp.TooLongName",
+                                            po_NameParserException, NULL);
         PyObjectContainer(po_TooLongName).installToModule(mod, "TooLongName");
 
-        po_TooLongLabel = PyErr_NewException("pydnspp.TooLongLabel", NULL, NULL);
+        po_TooLongLabel = PyErr_NewException("pydnspp.TooLongLabel",
+                                             po_NameParserException, NULL);
         PyObjectContainer(po_TooLongLabel).installToModule(mod, "TooLongLabel");
 
-        po_BadLabelType = PyErr_NewException("pydnspp.BadLabelType", NULL, NULL);
+        po_BadLabelType = PyErr_NewException("pydnspp.BadLabelType",
+                                             po_NameParserException, NULL);
         PyObjectContainer(po_BadLabelType).installToModule(mod, "BadLabelType");
 
-        po_BadEscape = PyErr_NewException("pydnspp.BadEscape", NULL, NULL);
+        po_BadEscape = PyErr_NewException("pydnspp.BadEscape",
+                                          po_NameParserException, NULL);
         PyObjectContainer(po_BadEscape).installToModule(mod, "BadEscape");
 
-        po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName", NULL,
-                                               NULL);
+        po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName",
+                                               po_NameParserException, NULL);
         PyObjectContainer(po_IncompleteName).installToModule(mod, "IncompleteName");
 
         po_InvalidBufferPosition =
