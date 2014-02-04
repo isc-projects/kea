@@ -2685,7 +2685,7 @@ TEST_F(IfaceMgrTest, MiltipleExternalSockets4) {
     // do it. We don't care about the content read, because we're testing
     // the callbacks, not pipes.
     char buf[80];
-    read(pipefd[0], buf, 80);
+    EXPECT_EQ(38, read(pipefd[0], buf, 80));
 
     // Clear the status...
     callback_ok = false;
@@ -2854,7 +2854,7 @@ TEST_F(IfaceMgrTest, MiltipleExternalSockets6) {
     // do it. We don't care about the content read, because we're testing
     // the callbacks, not pipes.
     char buf[80];
-    read(pipefd[0], buf, 80);
+    EXPECT_EQ(38, read(pipefd[0], buf, 80));
 
     // Clear the status...
     callback_ok = false;
