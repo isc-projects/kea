@@ -20,8 +20,6 @@
 
 #include <util/lru_list.h>
 
-using namespace isc::nsas;
-
 namespace isc {
 namespace cache {
 
