@@ -3805,7 +3805,7 @@ Dhcp4/subnet4	[]	list	(default)
       </section>
 
       <section id="dhcp4-address-config">
-      <title>Configuration of Address Pools</title>
+      <title>Configuration of IPv4 Address Pools</title>
       <para>
         The essential role of DHCPv4 server is address assignment. The server
         has to be configured with at least one subnet and one pool of dynamic
@@ -4391,8 +4391,9 @@ Dhcp4/subnet4	[]	list	(default)
       <note>
       <para>
         DHCPv4 server has been extended to support limited client classification.
-        Although the current capability is limited, it is expected to be expanded
-        in the future.
+        Although the current capability is modest, it is expected to be expanded
+        in the future. It is envisaged that the majority of client classification
+        extensions will be using hooks extensions.
       </para>
       </note>
       <para>In certain cases it is useful to differentiate between different types
@@ -4437,7 +4438,7 @@ Dhcp4/subnet4	[]	list	(default)
     </section>
 
     <section id="dhcp4-subnet-class">
-      <title>Limiting access to subnet to certain classes</title>
+      <title>Limiting access to IPv4 subnet to certain classes</title>
       <para>
         In certain cases it beneficial to restrict access to certains subnets
         only to clients that belong to a given subnet. For details on client
@@ -4857,7 +4858,7 @@ Dhcp6/subnet6/	list
       </para>
     </section>
 
-    <section>
+    <section id="dhcp6-address-config">
       <title>Subnet and Address Pool</title>
       <para>
         The essential role of a DHCPv6 server is address assignment. For this,
@@ -5361,7 +5362,7 @@ should include options from the isc option space:
     </section>
 
       <section id="dhcp6-config-subnets">
-        <title>Subnet Selection</title>
+        <title>IPv6 Subnet Selection</title>
           <para>
           The DHCPv6 server may receive requests from local (connected to the
           same subnet as the server) and remote (connecting via relays) clients.
@@ -5448,6 +5449,76 @@ should include options from the isc option space:
 </screen>
         </para>
       </section>
+
+    <section id="dhcp6-client-classifier">
+      <title>Client Classification in DHCPv6</title>
+      <note>
+      <para>
+        DHCPv6 server has been extended to support limited client classification.
+        Although the current capability is modest, it is expected to be expanded
+        in the future. It is envisaged that the majority of client classification
+        extensions will be using hooks extensions.
+      </para>
+      </note>
+      <para>In certain cases it is useful to differentiate between different types
+      of clients and treat them differently. The process of doing classification
+      is conducted in two steps. The first step is to assess incoming packet and
+      assign it to zero or more classes. This classification is currently simple,
+      but is expected to grow in capability soon. Currently the server checks whether
+      incoming packet has vendor class option (16). If it has, content
+      of that option is interpreted as a class. For example, modern cable modems
+      will send this option with value &quot;docsis3.0&quot; and as a result the
+      packet will belong to class &quot;docsis3.0&quot;.
+      </para>
+
+      <para>It is envisaged that the client classification will be used for changing
+      behavior of almost any part of the DHCP engine processing, including assigning
+      leases from different pools, assigning different option (or different values of
+      the same options) etc. For now, there is only one mechanism that is taking
+      advantage of client classification: subnet selection.</para>
+
+      <para>
+        Kea can be instructed to limit access to given subnets based on class information.
+        This is particularly useful for cases where two types of devices share the
+        same link and are expected to be served from two different subnets. The
+        primary use case for such a scenario are cable networks. There are two
+        classes of devices: cable modem itself, which should be handled a lease
+        from subnet A and all other devices behind modems that should get a lease
+        from subnet B. That segregation is essential to prevent overly curious
+        users from playing with their cable modems. For details on how to set up
+        class restrictions on subnets, see <xref linkend="dhcp6-subnet-class"/>.
+      </para>
+
+    </section>
+
+    <section id="dhcp6-subnet-class">
+      <title>Limiting access to IPv6 subnet to certain classes</title>
+      <para>
+        In certain cases it beneficial to restrict access to certains subnets
+        only to clients that belong to a given subnet. For details on client
+        classes, see <xref linkend="dhcp6-client-classifier"/>. This is an
+        extension of a previous example from <xref linkend="dhcp6-address-config"/>.
+
+        Let's assume that the server is connected to a network segment that uses
+        the 2001:db8:1::/64 prefix. The Administrator of that network has
+        decided that addresses from range 2001:db8:1::1 to 2001:db8:1::ffff are
+        going to be managed by the Dhcp6 server. Only clients belonging to the
+        eRouter1.0 client class are allowed to use that pool. Such a
+        configuration can be achieved in the following way:
+
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:1::0 - 2001:db8:1::ffff" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/client-class "eRouter1.0"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <para>
+        Care should be taken with client classification as it is easy to prevent
+        clients that do not meet class criteria to be denied any service altogether.
+      </para>
+    </section>
 
    </section>
 
