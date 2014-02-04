@@ -506,25 +506,38 @@ TEST_F(MasterLoaderTest, generateWithModifiers) {
     const string input =
         "$ORIGIN example.org.\n"
         "$TTL 3600\n"
+
+        // Use a positive delta of 1 in the LHS and a negative delta of
+        // -1 in the RHS
         "$GENERATE 2-9/2 host${1} A 192.0.2.${-1}\n"
+
         "$GENERATE 10-12 host${0,4} A 192.0.2.$\n"
         "$GENERATE 14-15 host${0,4,d} A 192.0.2.$\n"
-        "$GENERATE 30-31 host${0,4,x} A 192.0.2.$\n"
+
         // Names are case-insensitive, so we use TXT's RDATA to check
-        // case.
+        // case with hex representation.
+        "$GENERATE 30-31 host$ TXT \"Value ${0,4,x}\"\n"
         "$GENERATE 42-43 host$ TXT \"Value ${0,4,X}\"\n"
+
+        // Octal does not use any alphabets
         "$GENERATE 45-46 host${0,4,o} A 192.0.2.$\n"
+
         // Here, the LHS has a trailing dot (which would result in an
         // out-of-zone name), but that should be handled as a relative
         // name.
         "$GENERATE 90-92 ${0,8,n} A 192.0.2.$\n"
+
         // Here, the LHS has no trailing dot, and results in the same
         // number of labels as width=8 above.
         "$GENERATE 94-96 ${0,7,n} A 192.0.2.$\n"
-        // Uppercase nibble
-        "$GENERATE 98-98 ${0,10,N} A 192.0.2.$\n"
+
+        // Names are case-insensitive, so we use TXT's RDATA to check
+        // case with nibble representation.
+        "$GENERATE 106-107 host$ TXT \"Value ${0,9,n}\"\n"
+        "$GENERATE 109-110 host$ TXT \"Value ${0,9,N}\"\n"
+
         // Junk type will not parse and 'd' is assumed.
-        "$GENERATE 100-101 host${0,4,j} A 192.0.2.$\n";
+        "$GENERATE 200-201 host${0,4,j} A 192.0.2.$\n";
     stringstream ss(input);
     setLoader(ss, Name("example.org."), RRClass::IN(),
               MasterLoader::MANY_ERRORS);
@@ -545,8 +558,8 @@ TEST_F(MasterLoaderTest, generateWithModifiers) {
     checkRR("host0014.example.org", RRType::A(), "192.0.2.14");
     checkRR("host0015.example.org", RRType::A(), "192.0.2.15");
 
-    checkRR("host001e.example.org", RRType::A(), "192.0.2.30");
-    checkRR("host001f.example.org", RRType::A(), "192.0.2.31");
+    checkRR("host30.example.org", RRType::TXT(), "Value 001e");
+    checkRR("host31.example.org", RRType::TXT(), "Value 001f");
 
     checkRR("host42.example.org", RRType::TXT(), "Value 002A");
     checkRR("host43.example.org", RRType::TXT(), "Value 002B");
@@ -562,10 +575,13 @@ TEST_F(MasterLoaderTest, generateWithModifiers) {
     checkRR("f.5.0.0.example.org", RRType::A(), "192.0.2.95");
     checkRR("0.6.0.0.example.org", RRType::A(), "192.0.2.96");
 
-    checkRR("2.6.0.0.0.example.org", RRType::A(), "192.0.2.98");
+    checkRR("host106.example.org", RRType::TXT(), "Value a.6.0.0.0");
+    checkRR("host107.example.org", RRType::TXT(), "Value b.6.0.0.0");
+    checkRR("host109.example.org", RRType::TXT(), "Value D.6.0.0.0");
+    checkRR("host110.example.org", RRType::TXT(), "Value E.6.0.0.0");
 
-    checkRR("host0100.example.org", RRType::A(), "192.0.2.100");
-    checkRR("host0101.example.org", RRType::A(), "192.0.2.101");
+    checkRR("host0200.example.org", RRType::A(), "192.0.2.200");
+    checkRR("host0201.example.org", RRType::A(), "192.0.2.201");
 }
 
 TEST_F(MasterLoaderTest, generateWithNoModifiers) {
