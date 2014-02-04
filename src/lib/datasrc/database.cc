@@ -23,6 +23,7 @@
 
 #include <exceptions/exceptions.h>
 #include <dns/name.h>
+#include <dns/labelsequence.h>
 #include <dns/rrclass.h>
 #include <dns/rrttl.h>
 #include <dns/rrset.h>
@@ -1108,12 +1109,14 @@ DatabaseClient::Finder::findNSEC3(const Name& name, bool recursive) {
     // This will be set to the one covering the query name
     ConstRRsetPtr covering_proof;
 
+    LabelSequence name_ls(name);
     // We keep stripping the leftmost label until we find something.
     // In case it is recursive, we'll exit the loop at the first iteration.
-    for (unsigned labels(qlabels); labels >= olabels; -- labels) {
-        const string hash(calculator->calculate(labels == qlabels ? name :
-                                                name.split(qlabels - labels,
-                                                           labels)));
+    for (unsigned int labels = qlabels; labels >= olabels;
+         --labels, name_ls.stripLeft(1))
+    {
+        const std::string hash = calculator->calculate(name_ls);
+
         // Get the exact match for the name.
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_DATABASE_FINDNSEC3_TRYHASH).
             arg(name).arg(labels).arg(hash);
