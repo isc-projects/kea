@@ -2593,7 +2593,6 @@ volatile bool callback_ok;
 volatile bool callback2_ok;
 
 void my_callback(void) {
-    cout << "Callback triggered." << endl;
     callback_ok = true;
 }
 
