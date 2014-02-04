@@ -47,6 +47,8 @@
 #include <sstream>
 
 using namespace isc;
+using namespace isc::data;
+using namespace isc::config;
 using namespace isc::test;
 using namespace isc::asiolink;
 using namespace isc::dhcp;

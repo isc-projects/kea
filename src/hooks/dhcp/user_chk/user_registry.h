@@ -24,16 +24,14 @@
 
 #include <string>
 
-using namespace std;
-
 namespace user_chk {
 
 /// @brief Thrown UserRegistry encounters an error
 class UserRegistryError : public isc::Exception {
 public:
-    UserRegistryError(const char* file, size_t line,
-                               const char* what) :
-        isc::Exception(file, line, what) { };
+    UserRegistryError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what)
+    {}
 };
 
 /// @brief Defines a map of unique Users keyed by UserId.
