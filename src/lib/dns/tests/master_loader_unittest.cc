@@ -558,8 +558,8 @@ TEST_F(MasterLoaderTest, generateWithModifiers) {
     checkRR("b.5.0.0.example.org", RRType::A(), "192.0.2.91");
     checkRR("c.5.0.0.example.org", RRType::A(), "192.0.2.92");
 
-    checkRR("E.5.0.0.example.org", RRType::A(), "192.0.2.94");
-    checkRR("F.5.0.0.example.org", RRType::A(), "192.0.2.95");
+    checkRR("e.5.0.0.example.org", RRType::A(), "192.0.2.94");
+    checkRR("f.5.0.0.example.org", RRType::A(), "192.0.2.95");
     checkRR("0.6.0.0.example.org", RRType::A(), "192.0.2.96");
 
     checkRR("2.6.0.0.0.example.org", RRType::A(), "192.0.2.98");
