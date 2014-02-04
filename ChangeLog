@@ -1,3 +1,10 @@
+7XX.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: Simple client classification has been
+	implemented. Incoming packets can be assigned to zero or more
+	client classes. It is possible to restrict subnet usage to a given
+	client class. User's Guide and Developer's Guide has been updated.
+	(Trac #3274, git abcd)
+
 739.	[bug]		muks
 	Various minor updates were made to the SSHFP RDATA parser. Mainly,
 	the SSHFP constructor no longer throws an isc::BadValue exception.
