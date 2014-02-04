@@ -408,6 +408,7 @@ public:
     using Dhcpv4Srv::unpackOptions;
     using Dhcpv4Srv::name_change_reqs_;
     using Dhcpv4Srv::classifyPacket;
+    using Dhcpv4Srv::accept;
 };
 
 }; // end of isc::dhcp::test namespace
