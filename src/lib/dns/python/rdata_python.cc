@@ -25,6 +25,7 @@
 #include "rrclass_python.h"
 #include "messagerenderer_python.h"
 #include "name_python.h"
+#include "pydnspp_common.h"
 
 using namespace isc::dns;
 using namespace isc::dns::python;
