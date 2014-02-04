@@ -25,7 +25,7 @@ TESTS_ENVIRONMENT = \
 TESTS =
 if HAVE_GTEST
 
-lib_LTLIBRARIES = libdhcptest.la
+noinst_LTLIBRARIES = libdhcptest.la
 
 libdhcptest_la_SOURCES  = iface_mgr_test_config.cc iface_mgr_test_config.h
 libdhcptest_la_SOURCES  += pkt_filter_test_stub.cc pkt_filter_test_stub.h
