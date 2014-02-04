@@ -31,7 +31,6 @@ extern PyObject* po_BadLabelType;
 extern PyObject* po_BadEscape;
 extern PyObject* po_IncompleteName;
 extern PyObject* po_InvalidBufferPosition;
-extern PyObject* po_DNSMessageFORMERR;
 
 //
 // Declaration of enums

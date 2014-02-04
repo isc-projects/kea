@@ -26,5 +26,9 @@ class CommonTest(unittest.TestCase):
         self.assertTrue(isinstance(InvalidOperation(), IscException))
         self.assertTrue(isinstance(InvalidParameter(), IscException))
 
+        self.assertTrue(isinstance(DNSException(), IscException))
+        self.assertTrue(isinstance(DNSTextError(), DNSException))
+        self.assertTrue(isinstance(DNSProtocolError(), DNSException))
+
 if __name__ == '__main__':
     unittest.main()
