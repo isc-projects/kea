@@ -164,6 +164,64 @@ checkBadTextName(const string& txt) {
                  NameParserException);
 }
 
+TEST_F(NameTest, checkExceptionsHierarchy) {
+    EXPECT_NO_THROW({
+        const isc::dns::EmptyLabel exception("", 0, "");
+        const isc::dns::NameParserException& exception_cast =
+          dynamic_cast<const isc::dns::NameParserException&>(exception);
+        // to avoid compiler warning
+        exception_cast.what();
+    });
+
+    EXPECT_NO_THROW({
+        const isc::dns::TooLongName exception("", 0, "");
+        const isc::dns::NameParserException& exception_cast =
+          dynamic_cast<const isc::dns::NameParserException&>(exception);
+        // to avoid compiler warning
+        exception_cast.what();
+    });
+
+    EXPECT_NO_THROW({
+        const isc::dns::TooLongLabel exception("", 0, "");
+        const isc::dns::NameParserException& exception_cast =
+          dynamic_cast<const isc::dns::NameParserException&>(exception);
+        // to avoid compiler warning
+        exception_cast.what();
+    });
+
+    EXPECT_NO_THROW({
+        const isc::dns::BadLabelType exception("", 0, "");
+        const isc::dns::NameParserException& exception_cast =
+          dynamic_cast<const isc::dns::NameParserException&>(exception);
+        // to avoid compiler warning
+        exception_cast.what();
+    });
+
+    EXPECT_NO_THROW({
+        const isc::dns::BadEscape exception("", 0, "");
+        const isc::dns::NameParserException& exception_cast =
+          dynamic_cast<const isc::dns::NameParserException&>(exception);
+        // to avoid compiler warning
+        exception_cast.what();
+    });
+
+    EXPECT_NO_THROW({
+        const isc::dns::IncompleteName exception("", 0, "");
+        const isc::dns::NameParserException& exception_cast =
+          dynamic_cast<const isc::dns::NameParserException&>(exception);
+        // to avoid compiler warning
+        exception_cast.what();
+    });
+
+    EXPECT_NO_THROW({
+        const isc::dns::MissingNameOrigin exception("", 0, "");
+        const isc::dns::NameParserException& exception_cast =
+          dynamic_cast<const isc::dns::NameParserException&>(exception);
+        // to avoid compiler warning
+        exception_cast.what();
+    });
+}
+
 TEST_F(NameTest, fromText) {
     vector<string> strnames;
     strnames.push_back("www.example.com");
