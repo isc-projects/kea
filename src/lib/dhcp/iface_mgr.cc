@@ -228,7 +228,7 @@ IfaceMgr::isDirectResponseSupported() const {
 
 void
 IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
-    for (SocketCallbackContainer::iterator s = callbacks_.begin();
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
 
         // There's such a socket description there already.
@@ -248,7 +248,7 @@ IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
 
 void
 IfaceMgr::deleteExternalSocket(int socketfd) {
-    for (SocketCallbackContainer::iterator s = callbacks_.begin();
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
         if (s->socket_ == socketfd) {
             callbacks_.erase(s);
@@ -845,7 +845,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
 
     // if there are any callbacks for external sockets registered...
     if (!callbacks_.empty()) {
-        for (SocketCallbackContainer::const_iterator s = callbacks_.begin();
+        for (SocketCallbackInfoContainer::const_iterator s = callbacks_.begin();
              s != callbacks_.end(); ++s) {
             FD_SET(s->socket_, &sockets);
             if (maxfd < s->socket_) {
@@ -868,7 +868,7 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     }
 
     // Let's find out which socket has the data
-    for (SocketCallbackContainer::iterator s = callbacks_.begin();
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
         if (!FD_ISSET(s->socket_, &sockets)) {
             continue;
@@ -946,7 +946,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     // if there are any callbacks for external sockets registered...
     if (!callbacks_.empty()) {
-        for (SocketCallbackContainer::const_iterator s = callbacks_.begin();
+        for (SocketCallbackInfoContainer::const_iterator s = callbacks_.begin();
              s != callbacks_.end(); ++s) {
 
             // Add it to the set as well
@@ -971,7 +971,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     }
 
     // Let's find out which socket has the data
-    for (SocketCallbackContainer::iterator s = callbacks_.begin();
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
          s != callbacks_.end(); ++s) {
         if (!FD_ISSET(s->socket_, &sockets)) {
             continue;
