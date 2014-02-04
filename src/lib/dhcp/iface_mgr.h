@@ -407,7 +407,7 @@ public:
     };
 
     /// Defines storage container for callbacks for external sockets
-    typedef std::list<SocketCallbackInfo> SocketCallbackContainer;
+    typedef std::list<SocketCallbackInfo> SocketCallbackInfoContainer;
 
     /// @brief Packet reception buffer size
     ///
@@ -1047,7 +1047,7 @@ private:
     PktFilter6Ptr packet_filter6_;
 
     /// @brief Contains list of callbacks for external sockets
-    SocketCallbackContainer callbacks_;
+    SocketCallbackInfoContainer callbacks_;
 };
 
 }; // namespace isc::dhcp
