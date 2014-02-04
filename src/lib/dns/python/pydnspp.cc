@@ -244,7 +244,8 @@ initModulePart_Name(PyObject* mod) {
     // Add the exceptions to the module
     try {
         po_NameParserException =
-            PyErr_NewException("pydnspp.NameParserException", NULL, NULL);
+            PyErr_NewException("pydnspp.NameParserException",
+                               po_IscException, NULL);
         PyObjectContainer(po_NameParserException)
             .installToModule(mod, "NameParserException");
 
@@ -875,14 +876,14 @@ PyInit_pydnspp(void) {
         PyObjectContainer(po_IscException).installToModule(mod, "IscException");
 
         po_InvalidOperation = PyErr_NewException("pydnspp.InvalidOperation",
-                                                 NULL, NULL);
-        PyObjectContainer(po_InvalidOperation).installToModule(
-            mod, "InvalidOperation");
+                                                 po_IscException, NULL);
+        PyObjectContainer(po_InvalidOperation)
+	    .installToModule(mod, "InvalidOperation");
 
         po_InvalidParameter = PyErr_NewException("pydnspp.InvalidParameter",
-                                                 NULL, NULL);
-        PyObjectContainer(po_InvalidParameter).installToModule(
-            mod, "InvalidParameter");
+                                                 po_IscException, NULL);
+        PyObjectContainer(po_InvalidParameter)
+	    .installToModule(mod, "InvalidParameter");
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in pydnspp initialization: " +
