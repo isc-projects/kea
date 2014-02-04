@@ -170,7 +170,6 @@ bool Iface::delSocket(const uint16_t sockfd) {
 IfaceMgr::IfaceMgr()
     :control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
      control_buf_(new char[control_buf_len_]),
-     session_socket_(INVALID_SOCKET), session_callback_(NULL),
      packet_filter_(new PktFilterInet()),
      packet_filter6_(new PktFilterInet6())
 {
@@ -225,6 +224,37 @@ IfaceMgr::~IfaceMgr() {
 bool
 IfaceMgr::isDirectResponseSupported() const {
     return (packet_filter_->isDirectResponseSupported());
+}
+
+void
+IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
+         s != callbacks_.end(); ++s) {
+
+        // There's such a socket description there already.
+        // Update the callback and we're done
+        if (s->socket_ == socketfd) {
+            s->callback_ = callback;
+            return;
+        }
+    }
+
+    // Add a new entry to the callbacks vector
+    SocketCallbackInfo x;
+    x.socket_ = socketfd;
+    x.callback_ = callback;
+    callbacks_.push_back(x);
+}
+
+void
+IfaceMgr::deleteExternalSocket(int socketfd) {
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
+         s != callbacks_.end(); ++s) {
+        if (s->socket_ == socketfd) {
+            callbacks_.erase(s);
+            return;
+        }
+    }
 }
 
 void
@@ -789,7 +819,6 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     IfaceCollection::const_iterator iface;
     fd_set sockets;
     int maxfd = 0;
-    stringstream names;
 
     FD_ZERO(&sockets);
 
@@ -804,7 +833,6 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
 
             // Only deal with IPv4 addresses.
             if (s->addr_.isV4()) {
-                names << s->sockfd_ << "(" << iface->getName() << ") ";
 
                 // Add this socket to listening set
                 FD_SET(s->sockfd_, &sockets);
@@ -815,13 +843,15 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
         }
     }
 
-    // if there is session socket registered...
-    if (session_socket_ != INVALID_SOCKET) {
-        // at it to the set as well
-        FD_SET(session_socket_, &sockets);
-        if (maxfd < session_socket_)
-            maxfd = session_socket_;
-        names << session_socket_ << "(session)";
+    // if there are any callbacks for external sockets registered...
+    if (!callbacks_.empty()) {
+        for (SocketCallbackInfoContainer::const_iterator s = callbacks_.begin();
+             s != callbacks_.end(); ++s) {
+            FD_SET(s->socket_, &sockets);
+            if (maxfd < s->socket_) {
+                maxfd = s->socket_;
+            }
+        }
     }
 
     struct timeval select_timeout;
@@ -838,18 +868,22 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     }
 
     // Let's find out which socket has the data
-    if ((session_socket_ != INVALID_SOCKET) && (FD_ISSET(session_socket_, &sockets))) {
-        // something received over session socket
-        if (session_callback_) {
-            // in theory we could call io_service.run_one() here, instead of
-            // implementing callback mechanism, but that would introduce
-            // asiolink dependency to libdhcp++ and that is something we want
-            // to avoid (see CPE market and out long term plans for minimalistic
-            // implementations.
-            session_callback_();
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
+         s != callbacks_.end(); ++s) {
+        if (!FD_ISSET(s->socket_, &sockets)) {
+            continue;
         }
 
-        return (Pkt4Ptr()); // NULL
+        // something received over external socket
+
+        // Calling the external socket's callback provides its service
+        // layer access without integrating any specific features
+        // in IfaceMgr
+        if (s->callback_) {
+            s->callback_();
+        }
+
+        return (Pkt4Ptr());
     }
 
     // Let's find out which interface/socket has the data
@@ -886,7 +920,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     const SocketInfo* candidate = 0;
     fd_set sockets;
     int maxfd = 0;
-    stringstream names;
 
     FD_ZERO(&sockets);
 
@@ -901,7 +934,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
             // Only deal with IPv6 addresses.
             if (s->addr_.isV6()) {
-                names << s->sockfd_ << "(" << iface->getName() << ") ";
 
                 // Add this socket to listening set
                 FD_SET(s->sockfd_, &sockets);
@@ -912,13 +944,17 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         }
     }
 
-    // if there is session socket registered...
-    if (session_socket_ != INVALID_SOCKET) {
-        // at it to the set as well
-        FD_SET(session_socket_, &sockets);
-        if (maxfd < session_socket_)
-            maxfd = session_socket_;
-        names << session_socket_ << "(session)";
+    // if there are any callbacks for external sockets registered...
+    if (!callbacks_.empty()) {
+        for (SocketCallbackInfoContainer::const_iterator s = callbacks_.begin();
+             s != callbacks_.end(); ++s) {
+
+            // Add it to the set as well
+            FD_SET(s->socket_, &sockets);
+            if (maxfd < s->socket_) {
+                maxfd = s->socket_;
+            }
+        }
     }
 
     struct timeval select_timeout;
@@ -935,18 +971,22 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     }
 
     // Let's find out which socket has the data
-    if ((session_socket_ != INVALID_SOCKET) && (FD_ISSET(session_socket_, &sockets))) {
-        // something received over session socket
-        if (session_callback_) {
-            // in theory we could call io_service.run_one() here, instead of
-            // implementing callback mechanism, but that would introduce
-            // asiolink dependency to libdhcp++ and that is something we want
-            // to avoid (see CPE market and out long term plans for minimalistic
-            // implementations.
-            session_callback_();
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
+         s != callbacks_.end(); ++s) {
+        if (!FD_ISSET(s->socket_, &sockets)) {
+            continue;
         }
 
-        return (Pkt6Ptr()); // NULL
+        // something received over external socket
+
+        // Calling the external socket's callback provides its service
+        // layer access without integrating any specific features
+        // in IfaceMgr
+        if (s->callback_) {
+            s->callback_();
+        }
+
+        return (Pkt6Ptr());
     }
 
     // Let's find out which interface/socket has the data
