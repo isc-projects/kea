@@ -123,7 +123,9 @@ public:
         EXPECT_EQ(rrttl, current->getTTL());
         ASSERT_EQ(1, current->getRdataCount());
         EXPECT_EQ(0, isc::dns::rdata::createRdata(type, RRClass::IN(), data)->
-                  compare(current->getRdataIterator()->getCurrent()));
+                  compare(current->getRdataIterator()->getCurrent()))
+            << data << " vs. "
+            << current->getRdataIterator()->getCurrent().toText();
     }
 
     void checkBasicRRs() {
