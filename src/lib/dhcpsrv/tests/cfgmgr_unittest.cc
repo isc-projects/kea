@@ -325,18 +325,46 @@ TEST_F(CfgMgrTest, getOptionDef) {
 
 }
 
+// This test verifies that it is not allowed to override a definition of the
+// standard option which has its definition defined in libdhcp++, but it is
+// allowed to create a definition for the standard option which doesn't have
+// its definition in libdhcp++.
+TEST_F(CfgMgrTest, overrideStdOptionDef) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    OptionDefinitionPtr def;
+    // There is a definition for routers option in libdhcp++, so an attempt
+    // to add (override) another definition for this option should fail.
+    def.reset(new OptionDefinition("routers", DHO_ROUTERS, "uint32"));
+    EXPECT_THROW(cfg_mgr.addOptionDef(def, "dhcp4"), isc::BadValue);
+
+    /// @todo There is no definition for the NIS Server Addr option in
+    /// libdhcp++. Once it is implemented it should be not allowed to
+    /// add a custom definition for it. At the moment, it should be ok
+    /// to add a definition for this option (using configuration mechanism)
+    /// because we haven't implemented the one in libdhcp++.
+    def.reset(new OptionDefinition("nis-server-addr", 65, "uint16"));
+    EXPECT_NO_THROW(cfg_mgr.addOptionDef(def, "dhcp4"));
+
+    // It is not allowed to override the definition of the option which
+    // has its definition in the libdhcp++.
+    def.reset(new OptionDefinition("sntp-servers", D6O_SNTP_SERVERS,
+                                   "ipv4-address"));
+    EXPECT_THROW(cfg_mgr.addOptionDef(def, "dhcp6"), isc::BadValue);
+    // There is no definition for option 59 in libdhcp++ yet, so it should
+    // be possible provide a custom definition.
+    def.reset(new OptionDefinition("bootfile-url", 59, "uint32"));
+    EXPECT_NO_THROW(cfg_mgr.addOptionDef(def, "dhcp6"));
+
+}
+
 // This test verifies that the function that adds new option definition
 // throws exceptions when arguments are invalid.
 TEST_F(CfgMgrTest, addOptionDefNegative) {
     CfgMgr& cfg_mgr = CfgMgr::instance();
-    // The option code 65 is reserved for standard options either in
-    // DHCPv4 or DHCPv6. Thus we expect that adding an option to this
-    // option space fails.
-    OptionDefinitionPtr def(new OptionDefinition("option-foo", 65, "uint16"));
 
-    // Try reserved option space names.
-    ASSERT_THROW(cfg_mgr.addOptionDef(def, "dhcp4"), isc::BadValue);
-    ASSERT_THROW(cfg_mgr.addOptionDef(def, "dhcp6"), isc::BadValue);
+    OptionDefinitionPtr def(new OptionDefinition("option-foo", 1000, "uint16"));
+
     // Try empty option space name.
     ASSERT_THROW(cfg_mgr.addOptionDef(def, ""), isc::BadValue);
     // Try NULL option definition.
