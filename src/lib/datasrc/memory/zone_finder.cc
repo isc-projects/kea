@@ -968,7 +968,8 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     // the deepest label one by one, until we find a name that has a matching
     // NSEC3 hash.
     for (unsigned int labels = qlabels; labels >= olabels;
-         --labels, name_ls.stripLeft(1)) {
+         --labels, name_ls.stripLeft(1))
+    {
         const std::string hlabel = hash->calculate(name_ls);
 
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_FINDNSEC3_TRYHASH).
