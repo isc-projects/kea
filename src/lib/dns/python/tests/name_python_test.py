@@ -14,7 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #
-# Tests for the messagerenderer part of the pydnspp module
+# Tests for the name part of the pydnspp module
 #
 
 import unittest
