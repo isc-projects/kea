@@ -74,12 +74,15 @@ CfgMgr::addOptionDef(const OptionDefinitionPtr& def,
         isc_throw(DuplicateOptionDefinition, "option definition already added"
                   << " to option space " << option_space);
 
+    // We must not override standard (assigned) option for which there is a
+    // definition in libdhcp++. The standard options belong to dhcp4 or dhcp6
+    // option space.
     } else if ((option_space == "dhcp4" &&
-                LibDHCP::isStandardOption(Option::V4, def->getCode())) ||
+                LibDHCP::isStandardOption(Option::V4, def->getCode()) &&
+                LibDHCP::getOptionDef(Option::V4, def->getCode())) ||
                (option_space == "dhcp6" &&
-                LibDHCP::isStandardOption(Option::V6, def->getCode()))) {
-        // We must not override standard (assigned) option. The standard options
-        // belong to dhcp4 or dhcp6 option space.
+                LibDHCP::isStandardOption(Option::V6, def->getCode()) &&
+                LibDHCP::getOptionDef(Option::V6, def->getCode()))) {
         isc_throw(BadValue, "unable to override definition of option '"
                   << def->getCode() << "' in standard option space '"
                   << option_space << "'.");
