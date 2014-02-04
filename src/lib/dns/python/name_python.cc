@@ -537,6 +537,7 @@ namespace python {
 // Initialization and addition of these go in the module init at the
 // end
 //
+PyObject* po_NameParserException;
 PyObject* po_EmptyLabel;
 PyObject* po_TooLongName;
 PyObject* po_TooLongLabel;
