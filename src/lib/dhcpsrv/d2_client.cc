@@ -36,7 +36,7 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                const std::string& generated_prefix,
                                const std::string& qualifying_suffix)
     : enable_updates_(enable_updates),
-    server_ip_(server_ip.getAddress()),
+    server_ip_(server_ip),
     server_port_(server_port),
     ncr_protocol_(ncr_protocol),
     ncr_format_(ncr_format),
