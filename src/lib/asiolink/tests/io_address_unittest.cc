@@ -183,8 +183,9 @@ TEST(IOAddressTest, LeftShiftOperator) {
     EXPECT_EQ(addr.toText(), oss.str());
 }
 
-// test v6-specific operations
-TEST(IOAddressTest, v6specific) {
+// Tests address classification methods (which were previously used by accessing
+// underlying asio objects directly)
+TEST(IOAddressTest, accessClassificationMethods) {
     IOAddress addr1("192.0.2.5"); // IPv4
     IOAddress addr2("::");  // IPv6
     IOAddress addr3("2001:db8::1"); // global IPv6
