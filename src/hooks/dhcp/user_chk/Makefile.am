@@ -31,7 +31,8 @@ EXTRA_DIST = libdhcp_user_chk.dox
 #CLEANFILES = *.gcno *.gcda user_chk_messages.h user_chk_messages.cc s-messages
 CLEANFILES = *.gcno *.gcda
 
-lib_LTLIBRARIES = libdhcp_user_chk.la
+nodistdir=$(abs_top_builddir)/src/hooks/dhcp/user_chk
+nodist_LTLIBRARIES = libdhcp_user_chk.la
 libdhcp_user_chk_la_SOURCES  =
 libdhcp_user_chk_la_SOURCES += load_unload.cc
 libdhcp_user_chk_la_SOURCES += pkt_receive_co.cc
