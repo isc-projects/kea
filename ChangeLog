@@ -1,3 +1,10 @@
+745.	[bug]		muks
+	b10-auth now returns rcode=REFUSED for all questions with
+	qtype=RRSIG (i.e., where RRSIGs are queried directly). This is
+	because RRSIGs are meaningless without being bundled alongside the
+	RRs they cover.
+	(Trac #2226, git 68d24e65c9c3dfee38adfbe1c93367b0083f9a58)
+
 744.	[func]		marcin
 	b10-dhcp6: Refactored the code which is processing Client FQDN option.
 	The major user-visible change is that server generates DDNS
