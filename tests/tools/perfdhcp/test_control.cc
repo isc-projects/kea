@@ -1642,7 +1642,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
 
     /// Set client address.
     asiolink::IOAddress yiaddr = offer_pkt4->getYiaddr();
-    if (yiaddr.isV6()) {
+    if (!yiaddr.isV4()) {
         isc_throw(BadValue, "the YIADDR returned in OFFER packet is not "
                   " IPv4 address");
     }
