@@ -1215,6 +1215,13 @@ TEST_P(QueryTest, exactMatchMultipleQueries) {
                   www_a_txt, zone_ns_txt, ns_addrs_txt);
 }
 
+TEST_P(QueryTest, qtypeIsRRSIG) {
+    // Directly querying for RRSIGs should result in rcode=REFUSED.
+    EXPECT_NO_THROW(query.process(*list_, qname, RRType::RRSIG(), response));
+    responseCheck(response, Rcode::REFUSED(), AA_FLAG, 0, 0, 0,
+                  "", "", "");
+}
+
 TEST_P(QueryTest, exactMatchIgnoreSIG) {
     // Check that we do not include the RRSIG when not requested even when
     // we receive it from the data source.
