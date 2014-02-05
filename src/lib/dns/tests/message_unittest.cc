@@ -893,7 +893,7 @@ commonTSIGToWireCheck(Message& message, MessageRenderer& renderer,
         message.addRRset(Message::SECTION_ANSWER, ans_rrset);
     }
 
-    message.toWire(renderer, tsig_ctx);
+    message.toWire(renderer, &tsig_ctx);
     vector<unsigned char> expected_data;
     UnitTestUtil::readWireData(expected_file, expected_data);
     EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
@@ -1026,7 +1026,7 @@ TEST_F(MessageTest, toWireTSIGTruncation3) {
         message_render.addQuestion(Question(Name("www.example.com"),
                                             RRClass::IN(), RRType(i)));
     }
-    message_render.toWire(renderer, tsig_ctx);
+    message_render.toWire(renderer, &tsig_ctx);
 
     // Check the rendered data by parsing it.  We only check it has the
     // TC bit on, has the correct number of questions, and has a TSIG RR.
