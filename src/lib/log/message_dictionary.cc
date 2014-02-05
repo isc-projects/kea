@@ -63,13 +63,13 @@ MessageDictionary::load(const char* messages[]) {
     vector<std::string> duplicates;
     int i = 0;
     while (messages[i]) {
-
-        // ID present, so note it and point to text.
-        const MessageID ident(messages[i++]);
+        // ID present, so point to text.
+        ++i;
         if (messages[i]) {
-
+            const MessageID ident(messages[i - 1]);
             // Text not null, note it and point to next ident.
-            string text(messages[i++]);
+            const std::string text(messages[i]);
+            ++i;
 
             // Add ID and text to message dictionary, noting if the ID was
             // already present.

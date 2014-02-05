@@ -251,9 +251,9 @@ PyObject*
 RRset_toWire(PyObject* self_p, PyObject* args) {
     PyObject* bytes;
     PyObject* mr;
-    const s_RRset* self(static_cast<const s_RRset*>(self_p));
 
     try {
+        const s_RRset* self = static_cast<const s_RRset*>(self_p);
         if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
             PyObject* bytes_o = bytes;
 
