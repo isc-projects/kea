@@ -211,14 +211,53 @@ operator<<(std::ostream& os, const D2ClientConfig& config);
 /// @brief Defines a pointer for D2ClientConfig instances.
 typedef boost::shared_ptr<D2ClientConfig> D2ClientConfigPtr;
 
+/// @brief Defines the type for D2 IO error handler.
+/// This callback is invoked when a send to b10-dhcp-ddns completes with a
+/// failed status.  This provides the application layer (Kea) with a means to
+/// handle the error appropriately.
+///
+/// @param result Result code of the send operation.
+/// @param ncr NameChangeRequest which failed to send.
+///
+/// @note Handlers are expected not to throw. In the event a hanlder does
+/// throw invoking code logs the exception and then swallows it.
+typedef
+boost::function<void(const dhcp_ddns::NameChangeSender::Result result,
+                     dhcp_ddns::NameChangeRequestPtr& ncr)> D2ClientErrorHandler;
+
 /// @brief D2ClientMgr isolates Kea from the details of being a D2 client.
 ///
-/// Provides services for managing the current D2ClientConfig and managing
-/// communications with D2. (@todo The latter will be added once communication
-/// with D2 is implemented through the integration of
-/// dhcp_ddns::NameChangeSender interface(s)).
+/// Provides services for managing the current dhcp-ddns configuration and
+/// as well as communications with b10-dhcp-ddns.  Regarding configuration it
+/// provides services to store, update, and access the current dhcp-ddns
+/// configuration.  As for b10-dhcp-ddns communications, D2ClientMgr creates
+/// maintains a NameChangeSender appropriate to the current configuration and
+/// provides services to start, stop, and post NCRs to the sender.  Additionally/// there are methods to examine the queue of requests currently waiting for
+/// transmission.
 ///
-class D2ClientMgr {
+/// The manager also provides the mechanics to integrate the ASIO-based IO
+/// used by the NCR IPC with the select-driven IO used by Kea.  Senders expose
+/// a file descriptor, the "select-fd" that can monitored for read-readiness
+/// with the select() function (or variants).  D2ClientMgr provides a method,
+/// runReadyIO(), that will process all ready events on a sender's
+/// IOservice.  Track# 3315 is extending Kea's IfaceMgr to support the
+/// registration of multiple external sockets with callbacks that are then
+/// monitored with IO readiness via select().
+/// @todo D2ClientMgr will be modified to register the sender's select-fd and
+/// runReadyIO() with IfaceMgr when entering the send mode and will
+/// unregister when exiting send mode.
+///
+/// To place the manager in send mode, the calling layer must supply an error
+/// handler and optionally an IOService instance.  The error handler is invoked
+/// if a send completes with a failed status. This provides the calling layer
+/// an opportunity act upon the error.
+///
+/// If the caller supplies an IOService, that service will be used to process
+/// the sender's IO.  If not supplied, D2ClientMgr pass a private IOService
+/// into the sender.  Using a private service isolates the sender's IO from
+/// any other services.
+///
+class D2ClientMgr : public dhcp_ddns::NameChangeSender::RequestSendHandler {
 public:
     /// @brief Constructor
     ///
@@ -331,9 +370,143 @@ public:
     template <class T>
     void adjustDomainName(const T& fqdn, T& fqdn_resp);
 
+    /// @brief Enables sending NameChangeRequests to b10-dhcp-ddns
+    ///
+    /// Places the NameChangeSender into send mode. This instructs the
+    /// sender to begin dequeuing and transmitting requests and to accept
+    /// additional requests via the sendRequest() method.
+    ///
+    /// @param error_handler application level error handler to cope with
+    /// sends that complete with a failed status.  A valid function must be
+    /// supplied as the manager cannot know how an application should deal
+    /// with send failures.
+    /// @param io_service IOService to be used for sender IO event processing
+    ///
+    /// @throw D2ClientError if sender instance is null. Underlying layer
+    /// may throw NCRSenderExceptions exceptions.
+    void startSender(D2ClientErrorHandler error_handler,
+                     isc::asiolink::IOService& io_service);
+
+    /// @brief Enables sending NameChangeRequests to b10-dhcp-ddns
+    ///
+    /// Places the NameChangeSender into send mode. This instructs the
+    /// sender to begin dequeuing and transmitting requests and to accept
+    /// additional requests via the sendRequest() method.  The manager
+    /// will create a new, private instance of an IOService for the sender
+    /// to use for IO event processing.
+    ///
+    /// @param error_handler application level error handler to cope with
+    /// sends that complete with a failed status.  A valid function must be
+    /// supplied as the manager cannot know how an application should deal
+    /// with send failures.
+    ///
+    /// @throw D2ClientError if sender instance is null. Underlying layer
+    /// may throw NCRSenderExceptions exceptions.
+    void startSender(D2ClientErrorHandler error_handler);
+
+    /// @brief Returns true if the sender is in send mode, false otherwise.
+    ///
+    /// A true value indicates that the sender is present and in accepting
+    /// messages for transmission, false otherwise.
+    bool amSending() const;
+
+    /// @brief Disables sending NameChangeRequests to b10-dhcp-ddns
+    ///
+    /// Takes the NameChangeSender out of send mode.  The sender will stop
+    /// transmitting requests, though any queued requests remain queued.
+    /// Attempts to queue additional requests via sendRequest will fail.
+    ///
+    /// @param io_service IOService to be used for sender IO event processing
+    ///
+    /// @throw D2ClientError if sender instance is null. Underlying layer
+    /// may throw NCRSenderExceptions exceptions.
+    void stopSender();
+
+    /// @brief Send the given NameChangeRequests to b10-dhcp-ddns
+    ///
+    /// Passes NameChangeRequests to the NCR sender for transmission to
+    /// b10-dhcp-ddns.
+    ///
+    /// @param ncr NameChangeRequest to send
+    ///
+    /// @throw D2ClientError if sender instance is null. Underlying layer
+    /// may throw NCRSenderExceptions exceptions.
+    void sendRequest(dhcp_ddns::NameChangeRequestPtr& ncr);
+
+    /// @brief Returns the number of NCRs queued for transmission.
+    size_t getQueueSize() const;
+
+    /// @brief Returns the nth NCR queued for transmission.
+    ///
+    /// Note that the entry is not removed from the queue.
+    /// @param index the index of the entry in the queue to fetch.
+    /// Valid values are 0 (front of the queue) to (queue size - 1).
+    /// @note This method is for test purposes only.
+    ///
+    /// @return Pointer reference to the queue entry.
+    ///
+    /// @throw D2ClientError if sender instance is null. Underlying layer
+    /// may throw NCRSenderExceptions exceptions.
+    const dhcp_ddns::NameChangeRequestPtr& peekAt(const size_t index) const;
+
+    /// @brief Removes all NCRs queued for transmission.
+    ///
+    /// @throw D2ClientError if sender instance is null. Underlying layer
+    /// may throw NCRSenderExceptions exceptions.
+    void clearQueue();
+
+    /// @brief Processes sender IO events
+    ///
+    /// Runs all handlers ready for execution on the sender's IO service.
+    void runReadyIO();
+
+protected:
+    /// @brief Function operator implementing the NCR sender callback.
+    ///
+    /// This method is invoked each time the NameChangeSender completes
+    /// an asychronous send.
+    ///
+    /// @param result contains that send outcome status.
+    /// @param ncr is a pointer to the NameChangeRequest that was
+    /// delivered (or attempted).
+    ///
+    /// @throw This method MUST NOT throw.
+    virtual void operator ()(const dhcp_ddns::NameChangeSender::Result result,
+                             dhcp_ddns::NameChangeRequestPtr& ncr);
+
+    /// @brief Fetches the sender's select-fd.
+    ///
+    /// The select-fd may be used with select() or poll().  If the sender has
+    /// IO waiting to process, the fd will evaluate as !EWOULDBLOCK.
+    /// @note This is only exposed for testing purposes.
+    ///
+    /// @return The sender's select-fd
+    ///
+    /// @throw D2ClientError if the sender does not exist or is not in send
+    /// mode.
+    int getSelectFd();
+
 private:
     /// @brief Container class for DHCP-DDNS configuration parameters.
     D2ClientConfigPtr d2_client_config_;
+
+    /// @brief Pointer to the current interface to DHCP-DDNS.
+    dhcp_ddns::NameChangeSenderPtr name_change_sender_;
+
+    /// @brief Private IOService to use if calling layer doesn't wish to
+    /// supply one.
+    boost::shared_ptr<asiolink::IOService> private_io_service_;
+
+    /// @brief Application supplied error handler invoked when a send
+    /// completes with a failed status.
+    D2ClientErrorHandler client_error_handler_;
+
+    /// @brief Pointer to the IOService currently being used by the sender.
+    /// @note We need to remember the io_service given to the sender however
+    /// we may have received only a referenece to it from the calling layer.
+    /// Use a raw pointer to store it.  This value should never be exposed
+    /// and is only valid while in send mode.
+    asiolink::IOService* sender_io_service_;
 };
 
 template <class T>
