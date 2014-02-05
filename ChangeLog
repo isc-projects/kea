@@ -1,3 +1,8 @@
+746.	[func]		tomek
+	IOAddress no longer exposes underlying asio objects. The getAddress()
+	method has been removed and replaced with several convenience methods.
+	(Trac #1485, git ecdb62db16b3f3d447db4a9d2a4079d5260431f0)
+
 745.	[bug]		muks
 	b10-auth now returns rcode=REFUSED for all questions with
 	qtype=RRSIG (i.e., where RRSIGs are queried directly). This is
