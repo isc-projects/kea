@@ -588,10 +588,13 @@ NameAddTransaction::buildAddFwdAddressRequest() {
 
     // Next build the Update Section.
 
+    // Create the TTL based on lease length.
+    dns::RRTTL lease_ttl(getNcr()->getLeaseLength());
+
     // Create the FQDN/IP 'add' RR and add it to the to update section.
     // Based on RFC 2136, section 2.5.1
     dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::IN(),
-                         getAddressRRType(), dns::RRTTL(0)));
+                         getAddressRRType(), lease_ttl));
 
     addLeaseAddressRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
@@ -599,7 +602,7 @@ NameAddTransaction::buildAddFwdAddressRequest() {
     // Now create the FQDN/DHCID 'add' RR and add it to update section.
     // Based on RFC 2136, section 2.5.1
     update.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
-                                dns::RRType::DHCID(), dns::RRTTL(0)));
+                                dns::RRType::DHCID(), lease_ttl));
     addDhcidRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
 
@@ -635,6 +638,9 @@ NameAddTransaction::buildReplaceFwdAddressRequest() {
 
     // Next build the Update Section.
 
+    // Create the TTL based on lease length.
+    dns::RRTTL lease_ttl(getNcr()->getLeaseLength());
+
     // Create the FQDN/IP 'delete' RR and add it to the update section.
     // Based on RFC 2136, section 2.5.2
     dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::ANY(),
@@ -644,7 +650,7 @@ NameAddTransaction::buildReplaceFwdAddressRequest() {
     // Create the FQDN/IP 'add' RR and add it to the update section.
     // Based on RFC 2136, section 2.5.1
     update.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
-                                getAddressRRType(), dns::RRTTL(0)));
+                                getAddressRRType(), lease_ttl));
     addLeaseAddressRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
 
@@ -660,6 +666,9 @@ NameAddTransaction::buildReplaceRevPtrsRequest() {
     // Create the reverse IP address "FQDN".
     std::string rev_addr = D2CfgMgr::reverseIpAddress(getNcr()->getIpAddress());
     dns::Name rev_ip(rev_addr);
+
+    // Create the TTL based on lease length.
+    dns::RRTTL lease_ttl(getNcr()->getLeaseLength());
 
     // Content on this request is based on RFC 4703, section 5.4
     // Reverse replacement has no prerequisites so straight on to
@@ -678,14 +687,14 @@ NameAddTransaction::buildReplaceRevPtrsRequest() {
     // Create the FQDN/IP PTR 'add' RR, add the FQDN as the PTR Rdata
     // then add it to update section.
     update.reset(new dns::RRset(rev_ip, dns::RRClass::IN(),
-                                dns::RRType::PTR(), dns::RRTTL(0)));
+                                dns::RRType::PTR(), lease_ttl));
     addPtrRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
 
     // Create the FQDN/IP PTR 'add' RR, add the DHCID Rdata
     // then add it to update section.
     update.reset(new dns::RRset(rev_ip, dns::RRClass::IN(),
-                                dns::RRType::DHCID(), dns::RRTTL(0)));
+                                dns::RRType::DHCID(), lease_ttl));
     addDhcidRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
 
