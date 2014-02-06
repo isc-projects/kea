@@ -523,21 +523,13 @@ FindNodeResult findNode(const ZoneData& zone_data,
                 return (FindNodeResult(ZoneFinder::NXDOMAIN, nsec_rrset.first,
                                        nsec_rrset.second));
             }
-            uint8_t ls_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
 
-            // Create the wildcard name (i.e. take "*" and extend it
-            // with all node labels down to the wildcard node
-            LabelSequence wildcard_ls(LabelSequence::WILDCARD(), ls_buf);
-            const ZoneNode* extend_with = node;
-            while (extend_with != NULL) {
-                wildcard_ls.extend(extend_with->getLabels(), ls_buf);
-                extend_with = extend_with->getUpperNode();
-            }
-
-            // Clear the node_path so that we don't keep incorrect (NSEC)
-            // context
-            node_path.clear();
-            ZoneTree::Result result = tree.find(wildcard_ls, &node, node_path,
+            // Pass the wildcard label sequence ("*") (which is
+            // non-absolute) and the previous node_path result to this
+            // special shortcut form of find() that searches below from
+            // the node_path.
+            ZoneTree::Result result = tree.find(LabelSequence::WILDCARD(),
+                                                &node, node_path,
                                                 cutCallback, &state);
             // Otherwise, why would the domain_flag::WILD be there if
             // there was no wildcard under it?
