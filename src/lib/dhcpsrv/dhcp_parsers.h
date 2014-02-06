@@ -768,6 +768,7 @@ public:
     /// @param dummy first argument is ignored, all Parser constructors
     /// accept string as first argument.
     /// @param relay_info is the storage in which to store the parsed
+    /// @param default_addr 0.0.0.0 for IPv4 or :: for IPv6
     /// relay information upon "commit".
     RelayInfoParser(const std::string& dummy,
                     const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
@@ -803,7 +804,6 @@ public:
 
     /// @brief constructor
     ///
-    /// @param unusued
     /// @param global_context
     /// @param default_addr default IP address (0.0.0.0 for IPv4, :: for IPv6)
     SubnetConfigParser(const std::string&, ParserContextPtr global_context,
