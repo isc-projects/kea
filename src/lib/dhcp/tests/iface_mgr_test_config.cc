@@ -98,7 +98,7 @@ IfaceMgrTestConfig::createIfaces() {
     // eth1
     addIface("eth1", 2);
     addAddress("eth1", IOAddress("192.0.2.3"));
-    addAddress("eth1", IOAddress("fe80::3a60:77ff:fed5:cdef"));
+    addAddress("eth1", IOAddress("fe80::3a60:77ff:fed5:abcd"));
 
 }
 

@@ -135,6 +135,11 @@ A "libreload" command was issued to reload the hooks libraries but for
 some reason the reload failed.  Other error messages issued from the
 hooks framework will indicate the nature of the problem.
 
+% DHCP4_UNRECOGNIZED_RCVD_PACKET_TYPE received message (transaction id %1) has unregonized type %2
+This debug message indicates that the message type carried in DHCPv4 option
+53 is unrecognized by the server. The valid message types are available
+on the IANA website. The message will not be processed by the server.
+
 % DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of othe advertised
