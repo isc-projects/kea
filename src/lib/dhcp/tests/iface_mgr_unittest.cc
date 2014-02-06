@@ -269,6 +269,7 @@ public:
             }
         }
     }
+
 };
 
 /// @brief A test fixture class for IfaceMgr.
@@ -427,10 +428,10 @@ TEST_F(IfaceMgrTest, dhcp6Sniffer) {
         cout << "    pkt = new Pkt6(" << pkt->data_len_ << ");" << endl;
         cout << "    pkt->remote_port_ = " << pkt-> remote_port_ << ";" << endl;
         cout << "    pkt->remote_addr_ = IOAddress(\""
-             << pkt->remote_addr_.toText() << "\");" << endl;
+             << pkt->remote_addr_ << "\");" << endl;
         cout << "    pkt->local_port_ = " << pkt-> local_port_ << ";" << endl;
         cout << "    pkt->local_addr_ = IOAddress(\""
-             << pkt->local_addr_.toText() << "\");" << endl;
+             << pkt->local_addr_ << "\");" << endl;
         cout << "    pkt->ifindex_ = " << pkt->ifindex_ << ";" << endl;
         cout << "    pkt->iface_ = \"" << pkt->iface_ << "\";" << endl;
 
@@ -1014,7 +1015,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     EXPECT_EQ(0, memcmp(&sendPkt->data_[0], &rcvPkt->data_[0],
                         rcvPkt->data_.size()));
 
-    EXPECT_EQ(sendPkt->getRemoteAddr().toText(), rcvPkt->getRemoteAddr().toText());
+    EXPECT_EQ(sendPkt->getRemoteAddr(), rcvPkt->getRemoteAddr());
 
     // since we opened 2 sockets on the same interface and none of them is multicast,
     // none is preferred over the other for sending data, so we really should not
@@ -1503,6 +1504,43 @@ TEST_F(IfaceMgrTest, openSocket4ErrorHandler) {
 
 }
 
+// This test verifies that the function correctly checks that the v4 socket is
+// open and bound to a specific address.
+TEST_F(IfaceMgrTest, hasOpenSocketForAddress4) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    // Use the custom packet filter object. This object mimics the socket
+    // opening operation - the real socket is not open.
+    boost::shared_ptr<TestPktFilter> custom_packet_filter(new TestPktFilter());
+    ASSERT_TRUE(custom_packet_filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(custom_packet_filter));
+
+    // Simulate opening sockets using the dummy packet filter.
+    ASSERT_NO_THROW(ifacemgr.openSockets4(DHCP4_SERVER_PORT, true, NULL));
+
+    // Expect that the sockets are open on both eth0 and eth1.
+    ASSERT_EQ(1, ifacemgr.getIface("eth0")->getSockets().size());
+    ASSERT_EQ(1, ifacemgr.getIface("eth1")->getSockets().size());
+    // Socket shouldn't have been opened on loopback.
+    ASSERT_TRUE(ifacemgr.getIface("lo")->getSockets().empty());
+
+    // Check that there are sockets bound to addresses that we have
+    // set for interfaces.
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("192.0.2.3")));
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("10.0.0.1")));
+    // Check that there is no socket for the address which is not
+    // configured on any interface.
+    EXPECT_FALSE(ifacemgr.hasOpenSocket(IOAddress("10.1.1.1")));
+
+    // Check that v4 sockets are open, but no v6 socket is open.
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(AF_INET));
+    EXPECT_FALSE(ifacemgr.hasOpenSocket(AF_INET6));
+
+}
+
 // This test checks that the sockets are open and bound to link local addresses
 // only, if unicast addresses are not specified.
 TEST_F(IfaceMgrTest, openSockets6LinkLocal) {
@@ -1830,32 +1868,6 @@ TEST_F(IfaceMgrTest, openSockets6NoIfaces) {
     EXPECT_FALSE(socket_open);
 }
 
-// Test that exception is thrown when trying to bind a new socket to the port
-// and address which is already in use by another socket.
-TEST_F(IfaceMgrTest, openSockets6NoErrorHandler) {
-    NakedIfaceMgr ifacemgr;
-
-    // Remove all real interfaces and create a set of dummy interfaces.
-    ifacemgr.createIfaces();
-
-    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
-    ASSERT_TRUE(filter);
-    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
-
-    // Open socket on eth0. The openSockets6 should detect that this
-    // socket has been already open and an attempt to open another socket
-    // and bind to this address and port should fail.
-    ASSERT_NO_THROW(ifacemgr.openSocket("eth0",
-                                        IOAddress("fe80::3a60:77ff:fed5:cdef"),
-                                        DHCP6_SERVER_PORT));
-
-    // The function throws an exception when it tries to open a socket
-    // and bind it to the address in use.
-    EXPECT_THROW(ifacemgr.openSockets6(DHCP6_SERVER_PORT),
-                 isc::dhcp::SocketConfigError);
-
-}
-
 // Test that the external error handler is called when trying to bind a new
 // socket to the address and port being in use. The sockets on the other
 // interfaces should open just fine.
@@ -1894,6 +1906,41 @@ TEST_F(IfaceMgrTest, openSocket6ErrorHandler) {
     // when opening a socket on eth1.
     ASSERT_NO_THROW(ifacemgr.openSockets6(DHCP6_SERVER_PORT, error_handler));
     EXPECT_EQ(2, errors_count_);
+
+}
+
+// This test verifies that the function correctly checks that the v6 socket is
+// open and bound to a specific address.
+TEST_F(IfaceMgrTest, hasOpenSocketForAddress6) {
+    NakedIfaceMgr ifacemgr;
+
+    // Remove all real interfaces and create a set of dummy interfaces.
+    ifacemgr.createIfaces();
+
+    boost::shared_ptr<PktFilter6Stub> filter(new PktFilter6Stub());
+    ASSERT_TRUE(filter);
+    ASSERT_NO_THROW(ifacemgr.setPacketFilter(filter));
+
+    // Simulate opening sockets using the dummy packet filter.
+    bool success = false;
+    ASSERT_NO_THROW(success = ifacemgr.openSockets6(DHCP6_SERVER_PORT));
+    EXPECT_TRUE(success);
+
+    // Make sure that the sockets are bound as expected.
+    ASSERT_TRUE(ifacemgr.isBound("eth0", "fe80::3a60:77ff:fed5:cdef"));
+    EXPECT_TRUE(ifacemgr.isBound("eth1", "fe80::3a60:77ff:fed5:abcd"));
+
+    // There should be v6 sockets only, no v4 sockets.
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(AF_INET6));
+    EXPECT_FALSE(ifacemgr.hasOpenSocket(AF_INET));
+
+    // Check that there are sockets bound to the addresses we have configured
+    // for interfaces.
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("fe80::3a60:77ff:fed5:cdef")));
+    EXPECT_TRUE(ifacemgr.hasOpenSocket(IOAddress("fe80::3a60:77ff:fed5:abcd")));
+    // Check that there is no socket bound to the address which hasn't been
+    // configured on any interface.
+    EXPECT_FALSE(ifacemgr.hasOpenSocket(IOAddress("fe80::3a60:77ff:feed:1")));
 
 }
 
@@ -2289,7 +2336,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
         const Iface::AddressCollection& addrs = i->getAddresses();
         for (Iface::AddressCollection::const_iterator a= addrs.begin();
              a != addrs.end(); ++a) {
-            cout << a->toText() << " ";
+            cout << *a << " ";
         }
         cout << endl;
     }
@@ -2347,7 +2394,7 @@ TEST_F(IfaceMgrTest, DISABLED_detectIfaces_linux) {
                          << " address on " << detected->getFullName() << " interface." << endl;
                     FAIL();
                 }
-                cout << "Address " << addr->toText() << " on interface " << detected->getFullName()
+                cout << "Address " << *addr << " on interface " << detected->getFullName()
                      << " matched with 'ifconfig -a' output." << endl;
             }
         }
@@ -2543,15 +2590,19 @@ TEST_F(IfaceMgrTest, detectIfaces) {
 }
 
 volatile bool callback_ok;
+volatile bool callback2_ok;
 
 void my_callback(void) {
-    cout << "Callback triggered." << endl;
     callback_ok = true;
 }
 
-TEST_F(IfaceMgrTest, controlSession) {
-    // Tests if extra control socket and its callback can be passed and
-    // it is supported properly by receive4() method.
+void my_callback2(void) {
+    callback2_ok = true;
+}
+
+// Tests if a single external socket and its callback can be passed and
+// it is supported properly by receive4() method.
+TEST_F(IfaceMgrTest, SingleExternalSocket4) {
 
     callback_ok = false;
 
@@ -2560,7 +2611,7 @@ TEST_F(IfaceMgrTest, controlSession) {
     // Create pipe and register it as extra socket
     int pipefd[2];
     EXPECT_TRUE(pipe(pipefd) == 0);
-    EXPECT_NO_THROW(ifacemgr->set_session_socket(pipefd[0], my_callback));
+    EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0], my_callback));
 
     Pkt4Ptr pkt4;
     ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
@@ -2587,6 +2638,305 @@ TEST_F(IfaceMgrTest, controlSession) {
     close(pipefd[1]);
     close(pipefd[0]);
 }
+
+// Tests if multiple external sockets and their callbacks can be passed and
+// it is supported properly by receive4() method.
+TEST_F(IfaceMgrTest, MiltipleExternalSockets4) {
+
+    callback_ok = false;
+    callback2_ok = false;
+
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Create first pipe and register it as extra socket
+    int pipefd[2];
+    EXPECT_TRUE(pipe(pipefd) == 0);
+    EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0], my_callback));
+
+    // Let's create a second pipe and register it as well
+    int secondpipe[2];
+    EXPECT_TRUE(pipe(secondpipe) == 0);
+    EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0], my_callback2));
+
+    Pkt4Ptr pkt4;
+    ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
+
+    // Our callbacks should not be called this time (there was no data)
+    EXPECT_FALSE(callback_ok);
+    EXPECT_FALSE(callback2_ok);
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt4);
+
+    // Now, send some data over the first pipe (38 bytes)
+    EXPECT_EQ(38, write(pipefd[1], "Hi, this is a message sent over a pipe", 38));
+
+    // ... and repeat
+    ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt4);
+
+    // There was some data, so this time callback should be called
+    EXPECT_TRUE(callback_ok);
+    EXPECT_FALSE(callback2_ok);
+
+    // Read the data sent, because our test callbacks are too dumb to actually
+    // do it. We don't care about the content read, because we're testing
+    // the callbacks, not pipes.
+    char buf[80];
+    EXPECT_EQ(38, read(pipefd[0], buf, 80));
+
+    // Clear the status...
+    callback_ok = false;
+    callback2_ok = false;
+
+    // And try again, using the second pipe
+    EXPECT_EQ(38, write(secondpipe[1], "Hi, this is a message sent over a pipe", 38));
+
+    // ... and repeat
+    ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt4);
+
+    // There was some data, so this time callback should be called
+    EXPECT_FALSE(callback_ok);
+    EXPECT_TRUE(callback2_ok);
+
+    // close both pipe ends
+    close(pipefd[1]);
+    close(pipefd[0]);
+
+    close(secondpipe[1]);
+    close(secondpipe[0]);
+}
+
+// Tests if existing external socket can be deleted and that such deletion does
+// not affect any other existing sockets. Tests uses receive4()
+TEST_F(IfaceMgrTest, DeleteExternalSockets4) {
+
+    callback_ok = false;
+    callback2_ok = false;
+
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Create first pipe and register it as extra socket
+    int pipefd[2];
+    EXPECT_TRUE(pipe(pipefd) == 0);
+    EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0], my_callback));
+
+    // Let's create a second pipe and register it as well
+    int secondpipe[2];
+    EXPECT_TRUE(pipe(secondpipe) == 0);
+    EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0], my_callback2));
+
+    // Now delete the first session socket
+    EXPECT_NO_THROW(ifacemgr->deleteExternalSocket(pipefd[0]));
+
+    // Now check whether the second callback is still functional
+    EXPECT_EQ(38, write(secondpipe[1], "Hi, this is a message sent over a pipe", 38));
+
+    // ... and repeat
+    Pkt4Ptr pkt4;
+    ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt4);
+
+    // There was some data, so this time callback should be called
+    EXPECT_FALSE(callback_ok);
+    EXPECT_TRUE(callback2_ok);
+
+    // Let's reset the status
+    callback_ok = false;
+    callback2_ok = false;
+
+    // Now let's send something over the first callback that was unregistered.
+    // We should NOT receive any callback.
+    EXPECT_EQ(38, write(pipefd[1], "Hi, this is a message sent over a pipe", 38));
+
+    // Now check that the first callback is NOT called.
+    ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
+    EXPECT_FALSE(callback_ok);
+
+    // close both pipe ends
+    close(pipefd[1]);
+    close(pipefd[0]);
+
+    close(secondpipe[1]);
+    close(secondpipe[0]);
+}
+
+
+// Tests if a single external socket and its callback can be passed and
+// it is supported properly by receive6() method.
+TEST_F(IfaceMgrTest, SingleExternalSocket6) {
+
+    callback_ok = false;
+
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Create pipe and register it as extra socket
+    int pipefd[2];
+    EXPECT_TRUE(pipe(pipefd) == 0);
+    EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0], my_callback));
+
+    Pkt6Ptr pkt6;
+    ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(1));
+
+    // Our callback should not be called this time (there was no data)
+    EXPECT_FALSE(callback_ok);
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt6);
+
+    // Now, send some data over pipe (38 bytes)
+    EXPECT_EQ(38, write(pipefd[1], "Hi, this is a message sent over a pipe", 38));
+
+    // ... and repeat
+    ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(1));
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt6);
+
+    // There was some data, so this time callback should be called
+    EXPECT_TRUE(callback_ok);
+
+    // close both pipe ends
+    close(pipefd[1]);
+    close(pipefd[0]);
+}
+
+// Tests if multiple external sockets and their callbacks can be passed and
+// it is supported properly by receive6() method.
+TEST_F(IfaceMgrTest, MiltipleExternalSockets6) {
+
+    callback_ok = false;
+    callback2_ok = false;
+
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Create first pipe and register it as extra socket
+    int pipefd[2];
+    EXPECT_TRUE(pipe(pipefd) == 0);
+    EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0], my_callback));
+
+    // Let's create a second pipe and register it as well
+    int secondpipe[2];
+    EXPECT_TRUE(pipe(secondpipe) == 0);
+    EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0], my_callback2));
+
+    Pkt6Ptr pkt6;
+    ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(1));
+
+    // Our callbacks should not be called this time (there was no data)
+    EXPECT_FALSE(callback_ok);
+    EXPECT_FALSE(callback2_ok);
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt6);
+
+    // Now, send some data over the first pipe (38 bytes)
+    EXPECT_EQ(38, write(pipefd[1], "Hi, this is a message sent over a pipe", 38));
+
+    // ... and repeat
+    ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(1));
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt6);
+
+    // There was some data, so this time callback should be called
+    EXPECT_TRUE(callback_ok);
+    EXPECT_FALSE(callback2_ok);
+
+    // Read the data sent, because our test callbacks are too dumb to actually
+    // do it. We don't care about the content read, because we're testing
+    // the callbacks, not pipes.
+    char buf[80];
+    EXPECT_EQ(38, read(pipefd[0], buf, 80));
+
+    // Clear the status...
+    callback_ok = false;
+    callback2_ok = false;
+
+    // And try again, using the second pipe
+    EXPECT_EQ(38, write(secondpipe[1], "Hi, this is a message sent over a pipe", 38));
+
+    // ... and repeat
+    ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(1));
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt6);
+
+    // There was some data, so this time callback should be called
+    EXPECT_FALSE(callback_ok);
+    EXPECT_TRUE(callback2_ok);
+
+    // close both pipe ends
+    close(pipefd[1]);
+    close(pipefd[0]);
+
+    close(secondpipe[1]);
+    close(secondpipe[0]);
+}
+
+// Tests if existing external socket can be deleted and that such deletion does
+// not affect any other existing sockets. Tests uses receive6()
+TEST_F(IfaceMgrTest, DeleteExternalSockets6) {
+
+    callback_ok = false;
+    callback2_ok = false;
+
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // Create first pipe and register it as extra socket
+    int pipefd[2];
+    EXPECT_TRUE(pipe(pipefd) == 0);
+    EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0], my_callback));
+
+    // Let's create a second pipe and register it as well
+    int secondpipe[2];
+    EXPECT_TRUE(pipe(secondpipe) == 0);
+    EXPECT_NO_THROW(ifacemgr->addExternalSocket(secondpipe[0], my_callback2));
+
+    // Now delete the first session socket
+    EXPECT_NO_THROW(ifacemgr->deleteExternalSocket(pipefd[0]));
+
+    // Now check whether the second callback is still functional
+    EXPECT_EQ(38, write(secondpipe[1], "Hi, this is a message sent over a pipe", 38));
+
+    // ... and repeat
+    Pkt6Ptr pkt6;
+    ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(1));
+
+    // IfaceMgr should not process control socket data as incoming packets
+    EXPECT_FALSE(pkt6);
+
+    // There was some data, so this time callback should be called
+    EXPECT_FALSE(callback_ok);
+    EXPECT_TRUE(callback2_ok);
+
+    // Let's reset the status
+    callback_ok = false;
+    callback2_ok = false;
+
+    // Now let's send something over the first callback that was unregistered.
+    // We should NOT receive any callback.
+    EXPECT_EQ(38, write(pipefd[1], "Hi, this is a message sent over a pipe", 38));
+
+    // Now check that the first callback is NOT called.
+    ASSERT_NO_THROW(pkt6 = ifacemgr->receive6(1));
+    EXPECT_FALSE(callback_ok);
+
+    // close both pipe ends
+    close(pipefd[1]);
+    close(pipefd[0]);
+
+    close(secondpipe[1]);
+    close(secondpipe[0]);
+}
+
 
 // Test checks if the unicast sockets can be opened.
 // This test is now disabled, because there is no reliable way to test it. We

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -538,7 +538,7 @@ TEST_F(CfgMgrTest, optionSpace4) {
         cfg_mgr.addOptionSpace4(space3), isc::dhcp::InvalidOptionSpace
     );
 
-    // @todo decode if a duplicate vendor space is allowed.
+    /// @todo decode if a duplicate vendor space is allowed.
 }
 
 // This test verifies that new DHCPv6 option spaces can be added to
@@ -571,7 +571,7 @@ TEST_F(CfgMgrTest, optionSpace6) {
         cfg_mgr.addOptionSpace6(space3), isc::dhcp::InvalidOptionSpace
     );
 
-    // @todo decide if a duplicate vendor space is allowed.
+    /// @todo decide if a duplicate vendor space is allowed.
 }
 
 // This test verifies that it is possible to specify interfaces that server
@@ -669,6 +669,48 @@ TEST_F(CfgMgrTest, echoClientId) {
     cfg_mgr.echoClientId(true);
     EXPECT_TRUE(cfg_mgr.echoClientId());
 }
+
+// This test checks the D2ClientMgr wrapper methods.
+TEST_F(CfgMgrTest, d2ClientConfig) {
+    // After CfgMgr construction, D2ClientMgr member should be initialized
+    // with a D2 configuration that is disabled.
+    // Verify we can Fetch the mgr.
+    D2ClientMgr d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    EXPECT_FALSE(d2_mgr.ddnsEnabled());
+
+    // Make sure the convenience method fetches the config correctly.
+    D2ClientConfigPtr original_config = CfgMgr::instance().getD2ClientConfig();
+    ASSERT_TRUE(original_config);
+    EXPECT_FALSE(original_config->getEnableUpdates());
+
+    // Verify that we cannot set the configuration to an empty pointer.
+    D2ClientConfigPtr new_cfg;
+    ASSERT_THROW(CfgMgr::instance().setD2ClientConfig(new_cfg), D2ClientError);
+
+    // Create a new, enabled configuration.
+    ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  true, true, true, true,
+                                  "pre-fix", "suf-fix")));
+
+    // Verify that we can assign a new, non-empty configuration.
+    ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(new_cfg));
+
+    // Verify that we can fetch the newly assigned configuration.
+    D2ClientConfigPtr updated_config = CfgMgr::instance().getD2ClientConfig();
+    ASSERT_TRUE(updated_config);
+    EXPECT_TRUE(updated_config->getEnableUpdates());
+
+    // Make sure convenience method agrees with updated configuration.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Make sure the configuration we fetched is the one we assigned,
+    // and not the original configuration.
+    EXPECT_EQ(*new_cfg, *updated_config);
+    EXPECT_NE(*original_config, *updated_config);
+}
+
 
 /// @todo Add unit-tests for testing:
 /// - addActiveIface() with invalid interface name

@@ -18,6 +18,7 @@
 #include <dhcp/option_int_array.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp_ddns/ncr_msg.h>
+#include <dhcpsrv/cfgmgr.h>
 
 #include <gtest/gtest.h>
 #include <boost/scoped_ptr.hpp>
@@ -32,11 +33,51 @@ namespace {
 
 class NameDhcpv4SrvTest : public Dhcpv4SrvFakeIfaceTest {
 public:
+
+    // Bit Constants for turning on and off DDNS configuration options.
+    static const uint16_t ALWAYS_INCLUDE_FQDN = 1;
+    static const uint16_t OVERRIDE_NO_UPDATE = 2;
+    static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
+    static const uint16_t REPLACE_CLIENT_NAME = 8;
+
     NameDhcpv4SrvTest() : Dhcpv4SrvFakeIfaceTest() {
         srv_ = new NakedDhcpv4Srv(0);
+        // Config DDNS to be enabled, all controls off
+        enableD2();
     }
+
     virtual ~NameDhcpv4SrvTest() {
         delete srv_;
+    }
+
+    /// @brief Sets the server's DDNS configuration to ddns updates disabled.
+    void disableD2() {
+        // Default constructor creates a config with DHCP-DDNS updates
+        // disabled.
+        D2ClientConfigPtr cfg(new D2ClientConfig());
+        CfgMgr::instance().setD2ClientConfig(cfg);
+    }
+
+    /// @brief Enables DHCP-DDNS updates with the given options enabled.
+    ///
+    /// Replaces the current D2ClientConfiguration with a configuration
+    /// which as updates enabled and the control options set based upon
+    /// the bit mask of options.
+    ///
+    /// @param mask Bit mask of configuration options that should be enabled.
+    void enableD2(const uint16_t mask = 0) {
+        D2ClientConfigPtr cfg;
+
+        ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("192.0.2.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  (mask & ALWAYS_INCLUDE_FQDN),
+                                  (mask & OVERRIDE_NO_UPDATE),
+                                  (mask & OVERRIDE_CLIENT_UPDATE),
+                                  (mask & REPLACE_CLIENT_NAME),
+                                  "myhost", "example.com")));
+
+        CfgMgr::instance().setD2ClientConfig(cfg);
     }
 
     // Create a lease to be used by various tests.
@@ -78,15 +119,18 @@ public:
         return (opt_hostname);
     }
 
-    // Generates partial hostname from the address. The format of the
-    // generated address is: host-A-B-C-D, where A.B.C.D is an IP
-    // address.
+    /// @brief Convenience method for generating an FQDN from an IP address.
+    ///
+    /// This is just a wrapper method around the D2ClientMgr's method for
+    /// generating domain names from the configured prefix, suffix, and a
+    /// given IP address.  This is useful for verifying that fully generated
+    /// names are correct.
+    ///
+    /// @param addr IP address used in the lease.
+    ///
+    /// @return An std::string contained the generated FQDN.
     std::string generatedNameFromAddress(const IOAddress& addr) {
-        std::string gen_name = addr.toText();
-        std::replace(gen_name.begin(), gen_name.end(), '.', '-');
-        std::ostringstream hostname;
-        hostname << "host-" << gen_name;
-        return (hostname.str());
+        return(CfgMgr::instance().getD2ClientMgr().generateFqdn(addr));
     }
 
     // Get the Client FQDN Option from the given message.
@@ -182,6 +226,21 @@ public:
         Option4ClientFqdnPtr fqdn = getClientFqdnOption(answer);
         ASSERT_TRUE(fqdn);
 
+        checkFqdnFlags(answer, exp_flags);
+
+        EXPECT_EQ(exp_domain_name, fqdn->getDomainName());
+        EXPECT_EQ(exp_domain_type, fqdn->getDomainNameType());
+
+    }
+
+    /// @brief Checks the packet's FQDN option flags against a given mask
+    ///
+    /// @param pkt IPv4 packet whose FQDN flags should be checked.
+    /// @param exp_flags Bit mask of flags that are expected to be true.
+    void checkFqdnFlags(const Pkt4Ptr& pkt, const uint8_t exp_flags) {
+        Option4ClientFqdnPtr fqdn = getClientFqdnOption(pkt);
+        ASSERT_TRUE(fqdn);
+
         const bool flag_n = (exp_flags & Option4ClientFqdn::FLAG_N) != 0;
         const bool flag_s = (exp_flags & Option4ClientFqdn::FLAG_S) != 0;
         const bool flag_o = (exp_flags & Option4ClientFqdn::FLAG_O) != 0;
@@ -191,11 +250,8 @@ public:
         EXPECT_EQ(flag_s, fqdn->getFlag(Option4ClientFqdn::FLAG_S));
         EXPECT_EQ(flag_o, fqdn->getFlag(Option4ClientFqdn::FLAG_O));
         EXPECT_EQ(flag_e, fqdn->getFlag(Option4ClientFqdn::FLAG_E));
-
-        EXPECT_EQ(exp_domain_name, fqdn->getDomainName());
-        EXPECT_EQ(exp_domain_type, fqdn->getDomainNameType());
-
     }
+
 
     // Processes the Hostname option in the client's message and returns
     // the hostname option which would be sent to the client. It will
@@ -221,8 +277,8 @@ public:
 
     }
 
-    // Test that the client message holding an FQDN is processed and the
-    // NameChangeRequests are generated.
+    // Test that the client message holding an FQDN is processed and
+    // that the response packet is as expected.
     void testProcessMessageWithFqdn(const uint8_t msg_type,
                             const std::string& hostname) {
         Pkt4Ptr req = generatePktWithFqdn(msg_type, Option4ClientFqdn::FLAG_S |
@@ -287,6 +343,50 @@ public:
         srv_->name_change_reqs_.pop();
     }
 
+
+    /// @brief Tests processing a request with the given client flags
+    ///
+    /// This method creates a request with its FQDN flags set to the given
+    /// value and submits it to the server for processing.  It then checks
+    /// the following:
+    /// 1. Did the server generate an ACK with the correct FQDN flags
+    /// 2. If the server should have generated an NCR, did it? and If
+    /// so was it correct?
+    ///
+    /// @param client_flags Mask of client FQDN flags which are true
+    /// @param response_flags Mask of expected FQDN flags in the response
+    void flagVsConfigScenario(const uint8_t client_flags,
+                       const uint8_t response_flags) {
+        Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, client_flags,
+                                          "myhost.example.com.",
+                                          Option4ClientFqdn::FULL, true);
+
+        // Process the request.
+        Pkt4Ptr reply;
+        ASSERT_NO_THROW(reply = srv_->processRequest(req));
+
+        // Verify the response and flags.
+        checkResponse(reply, DHCPACK, 1234);
+        checkFqdnFlags(reply, response_flags);
+
+        // There should be an NCR only if response S flag is 1.
+        /// @todo This logic will need to change if forward and reverse
+        /// updates are ever controlled independently.
+        if ((response_flags & Option4ClientFqdn::FLAG_S) == 0) {
+            ASSERT_EQ(0, srv_->name_change_reqs_.size());
+        } else {
+            // Verify that there is one NameChangeRequest generated as expected.
+            ASSERT_EQ(1, srv_->name_change_reqs_.size());
+            verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                                    reply->getYiaddr().toText(),
+                                    "myhost.example.com.",
+                                    "", // empty DHCID means don't check it
+                                    time(NULL) + subnet_->getValid(),
+                                    subnet_->getValid(), true);
+        }
+    }
+
+
     NakedDhcpv4Srv* srv_;
 
 };
@@ -348,21 +448,101 @@ TEST_F(NameDhcpv4SrvTest, dhcidComputeFromHWAddr) {
     EXPECT_EQ(dhcid_ref, dhcid.toStr());
 }
 
+// Tests the following scenario:
+//  - Updates are enabled
+//  - All overrides are off
+//  - Client requests forward update  (N = 0, S = 1)
+//
+//  Server should perform the update:
+//  - Reponse flags should N = 0, S = 1, O = 0
+//  - Should queue an NCR
+TEST_F(NameDhcpv4SrvTest, updatesEnabled) {
+    flagVsConfigScenario((Option4ClientFqdn::FLAG_E |
+                          Option4ClientFqdn::FLAG_S),
+                          (Option4ClientFqdn::FLAG_E |
+                           Option4ClientFqdn::FLAG_S));
+}
 
-// Test that server confirms to perform the forward and reverse DNS update,
-// when client asks for it.
-TEST_F(NameDhcpv4SrvTest, serverUpdateForwardFqdn) {
-    Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
-                                        Option4ClientFqdn::FLAG_E |
-                                        Option4ClientFqdn::FLAG_S,
-                                        "myhost.example.com.",
-                                        Option4ClientFqdn::FULL,
-                                        true);
+// Tests the following scenario
+//  - Updates are disabled
+//  - Client requests forward update  (N = 0, S = 1)
+//
+//  Server should NOT perform updates:
+//   - Response flags should N = 1, S = 0, O = 1
+//   - Should not queue any NCRs
+TEST_F(NameDhcpv4SrvTest, updatesDisabled) {
+    disableD2();
+    flagVsConfigScenario((Option4ClientFqdn::FLAG_E |
+                          Option4ClientFqdn::FLAG_S),
+                          (Option4ClientFqdn::FLAG_E |
+                           Option4ClientFqdn::FLAG_N |
+                           Option4ClientFqdn::FLAG_O));
+}
 
-    testProcessFqdn(query,
-                    Option4ClientFqdn::FLAG_E | Option4ClientFqdn::FLAG_S,
-                    "myhost.example.com.");
+// Tests the following scenario:
+//  - Updates are enabled
+//  - All overrides are off.
+//  - Client requests no updates  (N = 1, S = 0)
+//
+//  Server should NOT perform updates:
+//  - Response flags should N = 1, S = 0, O = 0
+//  - Should not queue any NCRs
+TEST_F(NameDhcpv4SrvTest, respectNoUpdate) {
+    flagVsConfigScenario((Option4ClientFqdn::FLAG_E |
+                          Option4ClientFqdn::FLAG_N),
+                          (Option4ClientFqdn::FLAG_E |
+                           Option4ClientFqdn::FLAG_N));
+}
 
+// Tests the following scenario:
+//  - Updates are enabled
+//  - override-no-update is on
+//  - Client requests no updates  (N = 1, S = 0)
+//
+// Server should override "no update" request and perform updates:
+// - Response flags should be  N = 0, S = 1, O = 1
+// - Should queue an NCR
+TEST_F(NameDhcpv4SrvTest, overrideNoUpdate) {
+    enableD2(OVERRIDE_NO_UPDATE);
+    flagVsConfigScenario((Option4ClientFqdn::FLAG_E |
+                          Option4ClientFqdn::FLAG_N),
+                          (Option4ClientFqdn::FLAG_E |
+                           Option4ClientFqdn::FLAG_S |
+                           Option4ClientFqdn::FLAG_O));
+}
+
+// Tests the following scenario:
+//  - Updates are enabled
+//  - All overrides are off.
+//  - Client requests delegation  (N = 0, S = 0)
+//
+// Server should respect client's delegation request and NOT do updates:
+
+// - Response flags should be  N = 1, S = 0, O = 0
+// - Should not queue any NCRs
+TEST_F(NameDhcpv4SrvTest, respectClientDelegation) {
+
+    flagVsConfigScenario(Option4ClientFqdn::FLAG_E,
+                         (Option4ClientFqdn::FLAG_E |
+                          Option4ClientFqdn::FLAG_N));
+}
+
+// Tests the following scenario:
+//  - Updates are enabled
+//  - override-client-update is on.
+//  - Client requests delegation  (N = 0, S = 0)
+//
+// Server should override client's delegation request and do updates:
+// - Response flags should be  N = 0, S = 1, O = 1
+// - Should queue an NCR
+TEST_F(NameDhcpv4SrvTest, overrideClientDelegation) {
+    // Turn on override-client-update.
+    enableD2(OVERRIDE_CLIENT_UPDATE);
+
+    flagVsConfigScenario(Option4ClientFqdn::FLAG_E,
+                         (Option4ClientFqdn::FLAG_E |
+                          Option4ClientFqdn::FLAG_S |
+                          Option4ClientFqdn::FLAG_O));
 }
 
 // Test that server processes the Hostname option sent by a client and
@@ -444,34 +624,6 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateForwardNoNameFqdn) {
     testProcessFqdn(query,
                     Option4ClientFqdn::FLAG_E | Option4ClientFqdn::FLAG_S,
                     "", Option4ClientFqdn::PARTIAL);
-
-}
-
-// Test server's response when client requests no DNS update.
-TEST_F(NameDhcpv4SrvTest, noUpdateFqdn) {
-    Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
-                                        Option4ClientFqdn::FLAG_E |
-                                        Option4ClientFqdn::FLAG_N,
-                                        "myhost.example.com.",
-                                        Option4ClientFqdn::FULL,
-                                        true);
-    testProcessFqdn(query, Option4ClientFqdn::FLAG_E |
-                    Option4ClientFqdn::FLAG_N,
-                    "myhost.example.com.");
-}
-
-// Test that server does not accept delegation of the forward DNS update
-// to a client.
-TEST_F(NameDhcpv4SrvTest, clientUpdateNotAllowedFqdn) {
-    Pkt4Ptr query = generatePktWithFqdn(DHCPREQUEST,
-                                        Option4ClientFqdn::FLAG_E,
-                                        "myhost.example.com.",
-                                        Option4ClientFqdn::FULL,
-                                        true);
-
-    testProcessFqdn(query, Option4ClientFqdn::FLAG_E |
-                    Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_O,
-                    "myhost.example.com.");
 
 }
 
@@ -600,16 +752,40 @@ TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
 
     // Verify that there is one NameChangeRequest generated.
     ASSERT_EQ(1, srv_->name_change_reqs_.size());
+
     // The hostname is generated from the IP address acquired (yiaddr).
-    std::ostringstream hostname;
-    hostname << generatedNameFromAddress(reply->getYiaddr())
-             << ".example.com.";
+    std::string hostname = generatedNameFromAddress(reply->getYiaddr());
+
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            reply->getYiaddr().toText(), hostname.str(),
+                            reply->getYiaddr().toText(), hostname,
                             "", // empty DHCID forces that it is not checked
                             time(NULL) + subnet_->getValid(),
                             subnet_->getValid(), true);
 }
+
+// Test that server generates client's hostname from the IP address assigned
+// to it when DHCPv4 Client FQDN option specifies an empty domain-name  AND
+// ddns updates are disabled.
+TEST_F(NameDhcpv4SrvTest, processRequestEmptyDomainNameDisabled) {
+    disableD2();
+    Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
+                                      Option4ClientFqdn::FLAG_E,
+                                      "", Option4ClientFqdn::PARTIAL, true);
+    Pkt4Ptr reply;
+    ASSERT_NO_THROW(reply = srv_->processRequest(req));
+
+    checkResponse(reply, DHCPACK, 1234);
+
+    Option4ClientFqdnPtr fqdn = getClientFqdnOption(reply);
+    ASSERT_TRUE(fqdn);
+
+    // The hostname is generated from the IP address acquired (yiaddr).
+    std::string hostname = generatedNameFromAddress(reply->getYiaddr());
+
+    EXPECT_EQ(hostname, fqdn->getDomainName());
+    EXPECT_EQ(Option4ClientFqdn::FULL, fqdn->getDomainNameType());
+}
+
 
 // Test that server generates client's hostname from the IP address assigned
 // to it when Hostname option carries the top level domain-name.
@@ -626,11 +802,12 @@ TEST_F(NameDhcpv4SrvTest, processRequestEmptyHostname) {
 
     // Verify that there is one NameChangeRequest generated.
     ASSERT_EQ(1, srv_->name_change_reqs_.size());
+
     // The hostname is generated from the IP address acquired (yiaddr).
-    std::ostringstream hostname;
-    hostname << generatedNameFromAddress(reply->getYiaddr()) << ".example.com.";
+    std::string hostname = generatedNameFromAddress(reply->getYiaddr());
+
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
-                            reply->getYiaddr().toText(), hostname.str(),
+                            reply->getYiaddr().toText(), hostname,
                             "", // empty DHCID forces that it is not checked
                             time(NULL), subnet_->getValid(), true);
 }
@@ -742,21 +919,23 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
                             time(NULL), subnet_->getValid(), true);
 }
 
-// Test that when the Release message is sent for the previously acquired
-// lease, then server genenerates a NameChangeRequest to remove the entries
-// corresponding to the lease being released.
+// Test that when a release message is sent for a previously acquired lease,
+// DDNS updates are enabled that the server genenerates a NameChangeRequest
+// to remove entries corresponding to the released lease.
 TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
+    // Verify the updates are enabled.
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Create and process a lease request so we have a lease to release.
     Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                       Option4ClientFqdn::FLAG_E,
                                       "myhost.example.com.",
                                       Option4ClientFqdn::FULL, true);
-
     Pkt4Ptr reply;
     ASSERT_NO_THROW(reply = srv_->processRequest(req));
-
     checkResponse(reply, DHCPACK, 1234);
 
-    // Verify that there is one NameChangeRequest generated.
+    // Verify that there is one NameChangeRequest generated for lease.
     ASSERT_EQ(1, srv_->name_change_reqs_.size());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             reply->getYiaddr().toText(), "myhost.example.com.",
@@ -764,18 +943,57 @@ TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
                             "965B68B6D438D98E680BF10B09F3BCF",
                             time(NULL), subnet_->getValid(), true);
 
-    // Create a Release message.
+    // Create and process the Release message.
     Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
     rel->setCiaddr(reply->getYiaddr());
     rel->setRemoteAddr(IOAddress("192.0.2.3"));
     rel->addOption(generateClientId());
     rel->addOption(srv_->getServerID());
-
     ASSERT_NO_THROW(srv_->processRelease(rel));
 
     // The lease has been removed, so there should be a NameChangeRequest to
     // remove corresponding DNS entries.
     ASSERT_EQ(1, srv_->name_change_reqs_.size());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
+                            reply->getYiaddr().toText(), "myhost.example.com.",
+                            "00010132E91AA355CFBB753C0F0497A5A940436"
+                            "965B68B6D438D98E680BF10B09F3BCF",
+                            time(NULL), subnet_->getValid(), true);
 }
+
+// Test that when the Release message is sent for a previously acquired lease
+// and DDNS updates are disabled that server does NOT generate a
+// NameChangeRequest to remove entries corresponding to the released lease.
+TEST_F(NameDhcpv4SrvTest, processRequestReleaseUpdatesDisabled) {
+    // Disable DDNS.
+    disableD2();
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    // Create and process a lease request so we have a lease to release.
+    Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
+                                      Option4ClientFqdn::FLAG_E,
+                                      "myhost.example.com.",
+                                      Option4ClientFqdn::FULL, true);
+    Pkt4Ptr reply;
+    ASSERT_NO_THROW(reply = srv_->processRequest(req));
+    checkResponse(reply, DHCPACK, 1234);
+
+    // With DDNS updates disabled, there should be not be a NameChangeRequest
+    // for the add.
+    ASSERT_EQ(0, srv_->name_change_reqs_.size());
+
+    // Create and process the Release message.
+    Pkt4Ptr rel = Pkt4Ptr(new Pkt4(DHCPRELEASE, 1234));
+    rel->setCiaddr(reply->getYiaddr());
+    rel->setRemoteAddr(IOAddress("192.0.2.3"));
+    rel->addOption(generateClientId());
+    rel->addOption(srv_->getServerID());
+    ASSERT_NO_THROW(srv_->processRelease(rel));
+
+    // With DDNS updates disabled, there should be not be a NameChangeRequest
+    // for the remove.
+    ASSERT_EQ(0, srv_->name_change_reqs_.size());
+}
+
 
 } // end of anonymous namespace

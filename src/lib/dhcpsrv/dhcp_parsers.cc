@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -400,15 +400,27 @@ void
 OptionDataParser::createOption() {
     // Option code is held in the uint32_t storage but is supposed to
     // be uint16_t value. We need to check that value in the configuration
-    // does not exceed range of uint8_t and is not zero.
+    // does not exceed range of uint8_t for DHCPv4, uint16_t for DHCPv6 and
+    // is not zero.
     uint32_t option_code = uint32_values_->getParam("code");
     if (option_code == 0) {
         isc_throw(DhcpConfigError, "option code must not be zero."
-                << " Option code '0' is reserved in DHCPv4.");
-    } else if (option_code > std::numeric_limits<uint8_t>::max()) {
+                << " Option code '0' is reserved.");
+
+    } else if (global_context_->universe_ == Option::V4 &&
+               option_code > std::numeric_limits<uint8_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << option_code
                 << "', it must not exceed '"
-                << std::numeric_limits<uint8_t>::max() << "'");
+                  << static_cast<int>(std::numeric_limits<uint8_t>::max())
+                  << "'");
+
+    } else if (global_context_->universe_ == Option::V6 &&
+               option_code > std::numeric_limits<uint16_t>::max()) {
+        isc_throw(DhcpConfigError, "invalid option code '" << option_code
+                << "', it must not exceed '"
+                  << std::numeric_limits<uint16_t>::max()
+                  << "'");
+
     }
 
     // Check that the option name has been specified, is non-empty and does not
@@ -464,7 +476,7 @@ OptionDataParser::createOption() {
     }
 
     // Get option data from the configuration database ('data' field).
-    const std::string option_data = string_values_->getParam("data");
+    std::string option_data = string_values_->getParam("data");
 
     // Transform string of hexadecimal digits into binary format.
     std::vector<uint8_t> binary;
@@ -480,6 +492,12 @@ OptionDataParser::createOption() {
         // Otherwise, the option data is specified as a string of
         // hexadecimal digits that we have to turn into binary format.
         try {
+            // The decodeHex function expects that the string contains an
+            // even number of digits. If we don't meet this requirement,
+            // we have to insert a leading 0.
+            if (!option_data.empty() && option_data.length() % 2) {
+                option_data = option_data.insert(0, "0");
+            }
             util::encode::decodeHex(option_data, binary);
         } catch (...) {
             isc_throw(DhcpConfigError, "option data is not a valid"
@@ -1161,6 +1179,109 @@ SubnetConfigParser::getParam(const std::string& name) {
     }
 
     return (Triplet<uint32_t>(value));
+}
+
+//**************************** D2ClientConfigParser **********************
+D2ClientConfigParser::D2ClientConfigParser(const std::string& entry_name)
+    : entry_name_(entry_name), boolean_values_(new BooleanStorage()),
+      uint32_values_(new Uint32Storage()), string_values_(new StringStorage()),
+      local_client_config_() {
+}
+
+D2ClientConfigParser::~D2ClientConfigParser() {
+}
+
+void
+D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
+    BOOST_FOREACH(ConfigPair param, client_config->mapValue()) {
+        ParserPtr parser(createConfigParser(param.first));
+        parser->build(param.second);
+        parser->commit();
+    }
+
+    bool enable_updates = boolean_values_->getParam("enable-updates");
+    if (!enable_updates && (client_config->mapValue().size() == 1)) {
+        // If enable-updates is the only parameter and it is false then
+        // we're done.  This allows for an abbreviated configuration entry
+        // that only contains that flag.  Use the default D2ClientConfig
+        // constructor to a create a disabled instance.
+        local_client_config_.reset(new D2ClientConfig());
+        return;
+    }
+
+    // Get all parameters that are needed to create the D2ClientConfig.
+    asiolink::IOAddress server_ip(string_values_->getParam("server-ip"));
+
+    uint32_t server_port = uint32_values_->getParam("server-port");
+
+    dhcp_ddns::NameChangeProtocol
+    ncr_protocol = dhcp_ddns:: stringToNcrProtocol(string_values_->
+                                                   getParam("ncr-protocol"));
+
+    dhcp_ddns::NameChangeFormat
+    ncr_format = dhcp_ddns::stringToNcrFormat(string_values_->
+                                              getParam("ncr-format"));
+
+    std::string generated_prefix = string_values_->getParam("generated-prefix");
+    std::string qualifying_suffix = string_values_->
+                                    getParam("qualifying-suffix");
+
+    bool always_include_fqdn = boolean_values_->getParam("always-include-fqdn");
+    bool override_no_update = boolean_values_->getParam("override-no-update");
+    bool override_client_update = boolean_values_->
+                                  getParam("override-client-update");
+    bool replace_client_name = boolean_values_->getParam("replace-client-name");
+
+    // Attempt to create the new client config.
+    local_client_config_.reset(new D2ClientConfig(enable_updates, server_ip,
+                                                  server_port, ncr_protocol,
+                                                  ncr_format,
+                                                  always_include_fqdn,
+                                                  override_no_update,
+                                                  override_client_update,
+                                                  replace_client_name,
+                                                  generated_prefix,
+                                                  qualifying_suffix));
+}
+
+isc::dhcp::ParserPtr
+D2ClientConfigParser::createConfigParser(const std::string& config_id) {
+    DhcpConfigParser* parser = NULL;
+    if (config_id.compare("server-port") == 0) {
+        parser = new Uint32Parser(config_id, uint32_values_);
+    } else if ((config_id.compare("server-ip") == 0) ||
+        (config_id.compare("ncr-protocol") == 0) ||
+        (config_id.compare("ncr-format") == 0) ||
+        (config_id.compare("generated-prefix") == 0) ||
+        (config_id.compare("qualifying-suffix") == 0)) {
+        parser = new StringParser(config_id, string_values_);
+    } else if ((config_id.compare("enable-updates") == 0) ||
+        (config_id.compare("always-include-fqdn") == 0) ||
+        (config_id.compare("allow-client-update") == 0) ||
+        (config_id.compare("override-no-update") == 0) ||
+        (config_id.compare("override-client-update") == 0) ||
+        (config_id.compare("replace-client-name") == 0)) {
+        parser = new BooleanParser(config_id, boolean_values_);
+    } else {
+        isc_throw(NotImplemented,
+            "parser error: D2ClientConfig parameter not supported: "
+            << config_id);
+    }
+
+    return (isc::dhcp::ParserPtr(parser));
+}
+
+void
+D2ClientConfigParser::commit() {
+    // @todo if local_client_config_ is empty then shutdown the listener...
+    // @todo Should this also attempt to start a listener?
+    // In keeping with Interface, Subnet, and Hooks parsers, then this
+    // should initialize the listener.  Failure to init it, should cause
+    // rollback.  This gets sticky, because who owns the listener instance?
+    // Does CfgMgr maintain it or does the server class?  If the latter
+    // how do we get that value here?
+    // I'm thinkikng D2ClientConfig could contain the listener instance
+    CfgMgr::instance().setD2ClientConfig(local_client_config_);
 }
 
 };  // namespace dhcp

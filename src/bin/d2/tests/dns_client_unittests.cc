@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -128,7 +128,7 @@ public:
                           response_->getRRCount(D2UpdateMessage::SECTION_ZONE));
                 D2ZonePtr zone = response_->getZone();
                 ASSERT_TRUE(zone);
-                EXPECT_EQ("response.example.com.", zone->getName().toText());
+                EXPECT_EQ("example.com.", zone->getName().toText());
                 EXPECT_EQ(RRClass::IN().getCode(), zone->getClass().getCode());
 
             } else {
@@ -263,8 +263,16 @@ public:
         ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
         ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
 
-        // Set the response wait time to 0 so as our test is not hanging. This
-        // should cause instant timeout.
+        /// @todo The timeout value could be set to 0 to trigger timeout
+        /// instantly. However, it may lead to situations that the message sent
+        /// in one test will not be dropped by the kernel by the time, the next
+        /// test starts. This will lead to intermittent unit test errors as
+        /// described in the ticket http://bind10.isc.org/ticket/3265.
+        /// Increasing the timeout to a non-zero value mitigates this problem.
+        /// The proper way to solve this problem is to receive the packet
+        /// on our own and drop it. Such a fix will need to be applied not only
+        /// to this test but also for other tests that rely on arbitrary timeout
+        /// values.
         const int timeout = 500;
         // The doUpdate() function starts asynchronous message exchange with DNS
         // server. When message exchange is done or timeout occurs, the
@@ -288,7 +296,7 @@ public:
         // Create a request DNS Update message.
         D2UpdateMessage message(D2UpdateMessage::OUTBOUND);
         ASSERT_NO_THROW(message.setRcode(Rcode(Rcode::NOERROR_CODE)));
-        ASSERT_NO_THROW(message.setZone(Name("response.example.com"), RRClass::IN()));
+        ASSERT_NO_THROW(message.setZone(Name("example.com"), RRClass::IN()));
 
         // In order to perform the full test, when the client sends the request
         // and receives a response from the server, we have to emulate the
@@ -324,8 +332,10 @@ public:
                                                   corrupt_response));
 
         // The socket is now ready to receive the data. Let's post some request
-        // message then.
-        const int timeout = 5;
+        // message then. Set timeout to some reasonable value to make sure that
+        // there is sufficient amount of time for the test to generate a
+        // response.
+        const int timeout = 500;
         expected_++;
         dns_client_->doUpdate(service_, IOAddress(TEST_ADDRESS), TEST_PORT,
                              message, timeout);

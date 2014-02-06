@@ -378,7 +378,6 @@ protected:
                             DNSLookup* lookup = NULL,
                             DNSAnswer* answer = NULL) :
             io_(io_service),
-            done_(false),
             message_(new Message(Message::PARSE)),
             answer_message_(new Message(Message::RENDER)),
             respbuf_(new OutputBuffer(0)),
@@ -407,7 +406,6 @@ protected:
 
     protected:
         IOService& io_;
-        bool done_;
 
     private:
         // Currently unused; these will be used for testing

@@ -366,6 +366,15 @@ public:
     /// @return textual representation
     virtual std::string toText() const;
 
+    /// @brief Resets subnet-id counter to its initial value (1)
+    ///
+    /// This should be called during reconfiguration, before any new
+    /// subnet objects are created. It will ensure that the subnet_id will
+    /// be consistent between reconfigures.
+    static void resetSubnetID() {
+        static_id_ = 1;
+    }
+
 protected:
     /// @brief Returns all pools (non-const variant)
     ///
@@ -378,7 +387,12 @@ protected:
     /// @brief Protected constructor
     //
     /// By making the constructor protected, we make sure that noone will
-    /// ever instantiate that class. Pool4 and Pool6 should be used instead.
+    /// ever instantiate that class. Subnet4 and Subnet6 should be used instead.
+    ///
+    /// This constructor assigns a new subnet-id (see @ref generateNextID).
+    /// This subnet-id has unique value that is strictly monotonously increasing
+    /// for each subnet, until it is explicitly reset back to 1 during
+    /// reconfiguration process.
     Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
            const Triplet<uint32_t>& t1,
            const Triplet<uint32_t>& t2,
@@ -390,12 +404,24 @@ protected:
     /// derive from this class.
     virtual ~Subnet() { };
 
+    /// @brief keeps the subnet-id value
+    ///
+    /// It is inreased every time a new Subnet object is created.
+    /// It is reset (@ref resetSubnetId) every time reconfiguration occurs.
+    ///
+    /// Static value initialized in subnet.cc.
+    static SubnetID static_id_;
+
     /// @brief returns the next unique Subnet-ID
     ///
+    /// This method generates and returns the next unique subnet-id.
+    /// It is a strictly monotonously increasing value (1,2,3,...) for
+    /// each new Subnet object created. It can be explicitly reset
+    /// back to 1 during reconfiguration (@ref resetSubnetID).
+    ///
     /// @return the next unique Subnet-ID
-    static SubnetID getNextID() {
-        static SubnetID id = 0;
-        return (id++);
+    static SubnetID generateNextID() {
+        return (static_id_++);
     }
 
     /// @brief Checks if used pool type is valid
@@ -495,6 +521,8 @@ public:
 
     /// @brief Constructor with all parameters
     ///
+    /// This constructor calls Subnet::Subnet, where subnet-id is generated.
+    ///
     /// @param prefix Subnet4 prefix
     /// @param length prefix length
     /// @param t1 renewal timer (in seconds)
@@ -558,6 +586,8 @@ class Subnet6 : public Subnet {
 public:
 
     /// @brief Constructor with all parameters
+    ///
+    /// This constructor calls Subnet::Subnet, where subnet-id is generated.
     ///
     /// @param prefix Subnet6 prefix
     /// @param length prefix length

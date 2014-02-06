@@ -213,7 +213,7 @@ public:
     /// vary.
     void processAll(unsigned int timeout_millisec =
                     NameChangeTransaction::DNS_UPDATE_DEFAULT_TIMEOUT + 100,
-                    size_t max_passes = 20) {
+                    size_t max_passes = 100) {
         // Loop until all the transactions have been dequeued and run through to
         // completion.
         size_t passes = 0;
@@ -238,9 +238,9 @@ public:
             }
 
             // This is a last resort fail safe to ensure we don't go around
-            // forever. We cut it off the number of passes at 20.  This is
-            // roughly twice the number for the longest test (currently,
-            // multiTransactionTimeout).
+            // forever. We cut it off the number of passes at 100 (default
+            // value).  This is roughly ten times the number for the longest
+            // test (currently, multiTransactionTimeout).
             if (passes > max_passes) {
                 ADD_FAILURE() << "processALL failed, too many passes: "
                     << passes <<  ", total handlers executed: " << handlers;

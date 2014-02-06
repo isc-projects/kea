@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <cstring>
 #include <vector>
+#include <sstream>
 
 using namespace isc::asiolink;
 
@@ -83,7 +84,7 @@ TEST(IOAddressTest, fromBytes) {
     EXPECT_NO_THROW({
         addr = IOAddress::fromBytes(AF_INET, v4);
     });
-    EXPECT_EQ(addr.toText(), IOAddress("192.0.2.3").toText());
+    EXPECT_EQ(addr, IOAddress("192.0.2.3"));
 }
 
 TEST(IOAddressTest, toBytesV4) {
@@ -171,4 +172,48 @@ TEST(IOAddressTest, lessThanEqual) {
     EXPECT_TRUE(addr2 < addr5);
 
     EXPECT_TRUE(addr6 <= addr7);
+}
+
+// test operator<<.  We simply confirm it appends the result of toText().
+TEST(IOAddressTest, LeftShiftOperator) {
+    const IOAddress addr("192.0.2.5");
+
+    std::ostringstream oss;
+    oss << addr;
+    EXPECT_EQ(addr.toText(), oss.str());
+}
+
+// Tests address classification methods (which were previously used by accessing
+// underlying asio objects directly)
+TEST(IOAddressTest, accessClassificationMethods) {
+    IOAddress addr1("192.0.2.5"); // IPv4
+    IOAddress addr2("::");  // IPv6
+    IOAddress addr3("2001:db8::1"); // global IPv6
+    IOAddress addr4("fe80::1234");  // link-local
+    IOAddress addr5("ff02::1:2");   // multicast
+
+    EXPECT_TRUE (addr1.isV4());
+    EXPECT_FALSE(addr1.isV6());
+    EXPECT_FALSE(addr1.isV6LinkLocal());
+    EXPECT_FALSE(addr1.isV6Multicast());
+
+    EXPECT_FALSE(addr2.isV4());
+    EXPECT_TRUE (addr2.isV6());
+    EXPECT_FALSE(addr2.isV6LinkLocal());
+    EXPECT_FALSE(addr2.isV6Multicast());
+
+    EXPECT_FALSE(addr3.isV4());
+    EXPECT_TRUE (addr3.isV6());
+    EXPECT_FALSE(addr3.isV6LinkLocal());
+    EXPECT_FALSE(addr3.isV6Multicast());
+
+    EXPECT_FALSE(addr4.isV4());
+    EXPECT_TRUE (addr4.isV6());
+    EXPECT_TRUE (addr4.isV6LinkLocal());
+    EXPECT_FALSE(addr4.isV6Multicast());
+
+    EXPECT_FALSE(addr5.isV4());
+    EXPECT_TRUE (addr5.isV6());
+    EXPECT_FALSE(addr5.isV6LinkLocal());
+    EXPECT_TRUE (addr5.isV6Multicast());
 }

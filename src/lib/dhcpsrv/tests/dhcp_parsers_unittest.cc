@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -367,8 +367,8 @@ public:
     ///
     /// Note that the method currently it only supports option-defs, option-data
     /// and hooks-libraries.
-    /// 
-    /// @param config_id is the name of the configuration element. 
+    ///
+    /// @param config_id is the name of the configuration element.
     ///
     /// @return returns a shared pointer to DhcpConfigParser.
     ///
@@ -376,20 +376,21 @@ public:
     ParserPtr createConfigParser(const std::string& config_id) {
         ParserPtr parser;
         if (config_id.compare("option-data") == 0) {
-            parser.reset(new OptionDataListParser(config_id, 
-                                              parser_context_->options_, 
+            parser.reset(new OptionDataListParser(config_id,
+                                              parser_context_->options_,
                                               parser_context_,
                                               UtestOptionDataParser::factory));
 
         } else if (config_id.compare("option-def") == 0) {
-            parser.reset(new OptionDefListParser(config_id, 
+            parser.reset(new OptionDefListParser(config_id,
                                               parser_context_->option_defs_));
 
         } else if (config_id.compare("hooks-libraries") == 0) {
             parser.reset(new HooksLibrariesParser(config_id));
             hooks_libraries_parser_ =
                 boost::dynamic_pointer_cast<HooksLibrariesParser>(parser);
-
+        } else if (config_id.compare("dhcp-ddns") == 0) {
+            parser.reset(new D2ClientConfigParser(config_id));
         } else {
             isc_throw(NotImplemented,
                 "Parser error: configuration parameter not supported: "
@@ -399,8 +400,8 @@ public:
         return (parser);
     }
 
-    /// @brief Convenience method for parsing a configuration 
-    /// 
+    /// @brief Convenience method for parsing a configuration
+    ///
     /// Given a configuration string, convert it into Elements
     /// and parse them.
     /// @param config is the configuration string to parse
@@ -491,6 +492,10 @@ public:
 
         // Ensure no hooks libraries are loaded.
         HooksManager::unloadLibraries();
+
+        // Set it to minimal, disabled config
+        D2ClientConfigPtr tmp(new D2ClientConfig());
+        CfgMgr::instance().setD2ClientConfig(tmp);
     }
 
     /// @brief Parsers used in the parsing of the configuration
@@ -566,7 +571,7 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
         "    \"name\": \"foo\","
         "    \"space\": \"isc\","
         "    \"code\": 100,"
-        "    \"data\": \"192.168.2.1\","
+        "    \"data\": \"192.0.2.0\","
         "    \"csv-format\": True"
         " } ]"
         "}";
@@ -581,7 +586,7 @@ TEST_F(ParseConfigTest, basicOptionDataTest) {
 
     // Verify that the option definition is correct.
     std::string val = "type=100, len=4, data fields:\n "
-                      " #0 192.168.2.1 ( ipv4-address ) \n";
+                      " #0 192.0.2.0 ( ipv4-address ) \n";
 
     EXPECT_EQ(val, opt_ptr->toText());
 }
@@ -677,7 +682,7 @@ TEST_F(ParseConfigTest, validHooksLibrariesTest) {
 // Check with a set of libraries, some of which are invalid.
 TEST_F(ParseConfigTest, invalidHooksLibrariesTest) {
 
-    // @todo Initialize global library context to null
+    /// @todo Initialize global library context to null
 
     // Configuration string.  This contains an invalid library which should
     // trigger an error in the "build" stage.
@@ -701,6 +706,252 @@ TEST_F(ParseConfigTest, invalidHooksLibrariesTest) {
     // Check that the message contains the library in error.
     EXPECT_FALSE(error_text_.find(NOT_PRESENT_LIBRARY) == string::npos) <<
         "Error text returned from parse failure is " << error_text_;
+}
+
+/// @brief Checks that a valid, enabled D2 client configuration works correctly.
+TEST_F(ParseConfigTest, validD2Config) {
+
+    // Configuration string containing valid values.
+    std::string config_str =
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.0.2.0\", "
+        "     \"server-port\" : 3432, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" "
+        "    }"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config_str);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Verify that DHCP-DDNS is enabled and we can fetch the configuration.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+    D2ClientConfigPtr d2_client_config;
+    ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are as expected.
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("192.0.2.0", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(3432, d2_client_config->getServerPort());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
+    EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_TRUE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+
+    // Another valid Configuration string.
+    // This one is disabled, has IPV6 server ip, control flags false,
+    // empty prefix/suffix
+    std::string config_str2 =
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : false, "
+        "     \"server-ip\" : \"2001:db8::\", "
+        "     \"server-port\" : 43567, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : false, "
+        "     \"override-no-update\" : false, "
+        "     \"override-client-update\" : false, "
+        "     \"replace-client-name\" : false, "
+        "     \"generated-prefix\" : \"\", "
+        "     \"qualifying-suffix\" : \"\" "
+        "    }"
+        "}";
+
+    // Verify that the configuration string parses.
+    rcode = parseConfiguration(config_str2);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Verify that DHCP-DDNS is disabled and we can fetch the configuration.
+    EXPECT_FALSE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are as expected.
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("2001:db8::", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(43567, d2_client_config->getServerPort());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_FALSE(d2_client_config->getAlwaysIncludeFqdn());
+    EXPECT_FALSE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_FALSE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_FALSE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ("", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("", d2_client_config->getQualifyingSuffix());
+}
+
+/// @brief Checks that D2 client can be configured with enable flag of
+/// false only.
+TEST_F(ParseConfigTest, validDisabledD2Config) {
+
+    // Configuration string.  This contains a set of valid libraries.
+    std::string config_str =
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : false"
+        "    }"
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config_str);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Verify that DHCP-DDNS is disabled.
+    EXPECT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    // Make sure fetched config agrees.
+    D2ClientConfigPtr d2_client_config;
+    ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
+    EXPECT_TRUE(d2_client_config);
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+}
+
+/// @brief Check various invalid D2 client configurations.
+TEST_F(ParseConfigTest, invalidD2Config) {
+    std::string invalid_configs[] = {
+        // only the enable flag of true
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true"
+        "    }"
+        "}",
+        // Missing server ip value
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true, "
+        //"     \"server-ip\" : \"192.0.2.0\", "
+        "     \"server-port\" : 53001, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" "
+        "    }"
+        "}",
+        // Invalid server ip value
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"x192.0.2.0\", "
+        "     \"server-port\" : 53001, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" "
+        "    }"
+        "}",
+        // Unknown protocol
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.0.2.0\", "
+        "     \"server-port\" : 53001, "
+        "     \"ncr-protocol\" : \"Bogus\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" "
+        "    }"
+        "}",
+        // Unsupported protocol
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.0.2.0\", "
+        "     \"server-port\" : 53001, "
+        "     \"ncr-protocol\" : \"TCP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" "
+        "    }"
+        "}",
+        // Unknown format
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.0.2.0\", "
+        "     \"server-port\" : 53001, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"Bogus\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" "
+        "    }"
+        "}",
+        // Missig Port
+        "{ \"dhcp-ddns\" :"
+        "    {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.0.2.0\", "
+        // "     \"server-port\" : 53001, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" "
+        "    }"
+        "}",
+        // stop
+        ""
+    };
+
+    // Fetch the original config.
+    D2ClientConfigPtr original_config;
+    ASSERT_NO_THROW(original_config = CfgMgr::instance().getD2ClientConfig());
+
+    // Iterate through the invalid configuration strings, attempting to
+    // parse each one.  They should fail to parse, but fail gracefully.
+    D2ClientConfigPtr current_config;
+    int i = 0;
+    while (!invalid_configs[i].empty()) {
+        // Verify that the configuration string parses without throwing.
+        int rcode = parseConfiguration(invalid_configs[i]);
+
+        // Verify that parse result indicates a parsing error.
+        ASSERT_TRUE(rcode != 0) << "Invalid config #: " << i
+                                << " should not have passed!";
+
+        // Verify that the "official" config still matches the original config.
+        ASSERT_NO_THROW(current_config =
+                        CfgMgr::instance().getD2ClientConfig());
+        EXPECT_EQ(*original_config, *current_config);
+        ++i;
+    }
 }
 
 /// @brief DHCP Configuration Parser Context test fixture.

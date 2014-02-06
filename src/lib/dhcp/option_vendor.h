@@ -25,6 +25,11 @@
 namespace isc {
 namespace dhcp {
 
+/// Indexes for fields in vendor-class (17) DHCPv6 option
+const int VENDOR_CLASS_ENTERPRISE_ID_INDEX = 0;
+const int VENDOR_CLASS_DATA_LEN_INDEX = 1;
+const int VENDOR_CLASS_STRING_INDEX = 2;
+
 /// @brief This class represents vendor-specific information option.
 ///
 /// As specified in RFC3925, the option formatting is slightly different
@@ -72,7 +77,7 @@ public:
 
     /// @brief Sets enterprise identifier
     ///
-    /// @param value vendor identifier
+    /// @param vendor_id vendor identifier
     void setVendorId(const uint32_t vendor_id) { vendor_id_ = vendor_id; }
 
     /// @brief Returns enterprise identifier

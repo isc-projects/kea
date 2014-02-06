@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -152,7 +152,7 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     // configuration. Such requirement makes sense in IPv4, but not in IPv6.
     // The server does not need to have a global address (using just link-local
     // is ok for DHCPv6 server) from the pool it serves.
-    if ((subnets6_.size() == 1) && hint.getAddress().to_v6().is_link_local()) {
+    if ((subnets6_.size() == 1) && hint.isV6LinkLocal()) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                   DHCPSRV_CFGMGR_ONLY_SUBNET6)
                   .arg(subnets6_[0]->toText()).arg(hint.toText());
@@ -348,9 +348,30 @@ CfgMgr::getUnicast(const std::string& iface) const {
     return (&(*addr).second);
 }
 
+void
+CfgMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
+    d2_client_mgr_.setD2ClientConfig(new_config);
+}
+
+bool
+CfgMgr::ddnsEnabled() {
+    return (d2_client_mgr_.ddnsEnabled());
+}
+
+const D2ClientConfigPtr&
+CfgMgr::getD2ClientConfig() const {
+    return (d2_client_mgr_.getD2ClientConfig());
+}
+
+D2ClientMgr&
+CfgMgr::getD2ClientMgr() {
+    return (d2_client_mgr_);
+}
+
 CfgMgr::CfgMgr()
     : datadir_(DHCP_DATA_DIR),
-      all_ifaces_active_(false), echo_v4_client_id_(true) {
+      all_ifaces_active_(false), echo_v4_client_id_(true),
+      d2_client_mgr_() {
     // DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
     // Note: the definition of DHCP_DATA_DIR needs to include quotation marks
     // See AM_CPPFLAGS definition in Makefile.am

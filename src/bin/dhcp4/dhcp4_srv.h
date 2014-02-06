@@ -167,6 +167,21 @@ public:
 
 protected:
 
+    /// @brief Verifies if the server id belongs to our server.
+    ///
+    /// This function checks if the server identifier carried in the specified
+    /// DHCPv4 message belongs to this server. If the server identifier option
+    /// is absent or the value carried by this option is equal to one of the
+    /// server identifiers used by the server, the true is returned. If the
+    /// server identifier option is present, but it doesn't match any server
+    /// identifier used by this server, the false value is returned.
+    ///
+    /// @param pkt DHCPv4 message which server identifier is to be checked.
+    ///
+    /// @return true, if the server identifier is absent or matches one of the
+    /// server identifiers that the server is using; false otherwise.
+    bool acceptServerId(const Pkt4Ptr& pkt) const;
+
     /// @brief verifies if specified packet meets RFC requirements
     ///
     /// Checks if mandatory option is really there, that forbidden option
@@ -247,7 +262,7 @@ protected:
     /// using separate options within their respective vendor-option spaces.
     ///
     /// @param question DISCOVER or REQUEST message from a client.
-    /// @param msg outgoing message (options will be added here)
+    /// @param answer outgoing message (options will be added here)
     void appendRequestedVendorOptions(const Pkt4Ptr& question, Pkt4Ptr& answer);
 
     /// @brief Assigns a lease and appends corresponding options
@@ -543,6 +558,25 @@ protected:
     size_t unpackOptions(const OptionBuffer& buf,
                          const std::string& option_space,
                          isc::dhcp::OptionCollection& options);
+
+    /// @brief Assigns incoming packet to zero or more classes.
+    ///
+    /// @note For now, the client classification is very simple. It just uses
+    /// content of the vendor-class-identifier option as a class. The resulting
+    /// class will be stored in packet (see @ref isc::dhcp::Pkt4::classes_ and
+    /// @ref isc::dhcp::Pkt4::inClass).
+    ///
+    /// @param pkt packet to be classified
+    void classifyPacket(const Pkt4Ptr& pkt);
+
+    /// @brief Performs packet processing specific to a class
+    ///
+    /// This processing is a likely candidate to be pushed into hooks.
+    ///
+    /// @param query incoming client's packet
+    /// @param rsp server's response
+    /// @return true if successful, false otherwise (will prevent sending response)
+    bool classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp);
 
 private:
 

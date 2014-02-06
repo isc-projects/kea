@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -642,12 +642,12 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     checkClientId(reply3, clientid3);
 
     // Finally check that the addresses offered are different
-    EXPECT_NE(addr1->getAddress().toText(), addr2->getAddress().toText());
-    EXPECT_NE(addr2->getAddress().toText(), addr3->getAddress().toText());
-    EXPECT_NE(addr3->getAddress().toText(), addr1->getAddress().toText());
-    cout << "Offered address to client1=" << addr1->getAddress().toText() << endl;
-    cout << "Offered address to client2=" << addr2->getAddress().toText() << endl;
-    cout << "Offered address to client3=" << addr3->getAddress().toText() << endl;
+    EXPECT_NE(addr1->getAddress(), addr2->getAddress());
+    EXPECT_NE(addr2->getAddress(), addr3->getAddress());
+    EXPECT_NE(addr3->getAddress(), addr1->getAddress());
+    cout << "Offered address to client1=" << addr1->getAddress() << endl;
+    cout << "Offered address to client2=" << addr2->getAddress() << endl;
+    cout << "Offered address to client3=" << addr3->getAddress() << endl;
 }
 
 // This test verifies that incoming REQUEST can be handled properly, that a
@@ -852,12 +852,12 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     checkClientId(reply3, clientid3);
 
     // Finally check that the addresses offered are different
-    EXPECT_NE(addr1->getAddress().toText(), addr2->getAddress().toText());
-    EXPECT_NE(addr2->getAddress().toText(), addr3->getAddress().toText());
-    EXPECT_NE(addr3->getAddress().toText(), addr1->getAddress().toText());
-    cout << "Assigned address to client1=" << addr1->getAddress().toText() << endl;
-    cout << "Assigned address to client2=" << addr2->getAddress().toText() << endl;
-    cout << "Assigned address to client3=" << addr3->getAddress().toText() << endl;
+    EXPECT_NE(addr1->getAddress(), addr2->getAddress());
+    EXPECT_NE(addr2->getAddress(), addr3->getAddress());
+    EXPECT_NE(addr3->getAddress(), addr1->getAddress());
+    cout << "Assigned address to client1=" << addr1->getAddress() << endl;
+    cout << "Assigned address to client2=" << addr2->getAddress() << endl;
+    cout << "Assigned address to client3=" << addr3->getAddress() << endl;
 }
 
 // This test verifies that incoming (positive) RENEW can be handled properly, that a
@@ -1072,6 +1072,42 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
                  RFCViolation);
     EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::MANDATORY),
                  RFCViolation);
+}
+// Check that the server is testing if server identifier received in the
+// query, matches server identifier used by the server.
+TEST_F(Dhcpv6SrvTest, testServerID) {
+	NakedDhcpv6Srv srv(0);
+
+	Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    std::vector<uint8_t> bin;
+
+    // diud_llt constructed with: time = 0, macaddress = 00:00:00:00:00:00
+    // it's necessary to generate server identifier option
+    isc::util::encode::decodeHex("0001000100000000000000000000", bin);
+    // Now create server identifier option
+    OptionPtr serverid = OptionPtr(new Option(Option::V6, D6O_SERVERID, bin));
+
+    // Server identifier option is MANDATORY in Request message.
+    // Add server identifier option with different value from one that
+    // server is using.
+    req->addOption(serverid);
+
+    // Message shoud be dropped
+    EXPECT_FALSE(srv.testServerID(req));
+
+    // Delete server identifier option and add new one, with same value as
+    // server's server identifier.
+    req->delOption(D6O_SERVERID);
+    req->addOption(srv.getServerID());
+
+    // With proper server identifier we expect true
+    EXPECT_TRUE(srv.testServerID(req));
+
+    // server-id MUST NOT appear in Solicit, so check if server is
+    // not dropping a message without server id.
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+
+    EXPECT_TRUE(srv.testServerID(req));
 }
 
 // This test verifies if selectSubnet() selects proper subnet for a given
@@ -1671,6 +1707,35 @@ TEST_F(Dhcpv6SrvTest, unpackOptions) {
     ASSERT_TRUE(option_bar);
     EXPECT_EQ(1, option_bar->getType());
     EXPECT_EQ(0x0, option_bar->getValue());
+}
+
+// Checks if client packets are classified properly
+TEST_F(Dhcpv6SrvTest, clientClassification) {
+
+    NakedDhcpv6Srv srv(0);
+
+    // Let's create a relayed SOLICIT. This particular relayed SOLICIT has
+    // vendor-class set to docsis3.0
+    Pkt6Ptr sol1;
+    ASSERT_NO_THROW(sol1 = captureDocsisRelayedSolicit());
+    ASSERT_NO_THROW(sol1->unpack());
+
+    srv.classifyPacket(sol1);
+
+    // It should belong to docsis3.0 class. It should not belong to eRouter1.0
+    EXPECT_TRUE(sol1->inClass("docsis3.0"));
+    EXPECT_FALSE(sol1->inClass("eRouter1.0"));
+
+    // Let's get a relayed SOLICIT. This particular relayed SOLICIT has
+    // vendor-class set to eRouter1.0
+    Pkt6Ptr sol2;
+    ASSERT_NO_THROW(sol2 = captureeRouterRelayedSolicit());
+    ASSERT_NO_THROW(sol2->unpack());
+
+    srv.classifyPacket(sol2);
+
+    EXPECT_TRUE(sol2->inClass("eRouter1.0"));
+    EXPECT_FALSE(sol2->inClass("docsis3.0"));
 }
 
 
