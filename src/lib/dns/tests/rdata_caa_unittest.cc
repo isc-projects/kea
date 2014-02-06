@@ -38,10 +38,10 @@ using namespace isc::dns::rdata;
 namespace {
 class Rdata_CAA_Test : public RdataTest {
 protected:
-        Rdata_CAA_Test() :
-            caa_txt("0 issue \"ca.example.net\""),
-            rdata_caa(caa_txt)
-        {}
+    Rdata_CAA_Test() :
+        caa_txt("0 issue \"ca.example.net\""),
+        rdata_caa(caa_txt)
+    {}
 
     void checkFromText_None(const string& rdata_str) {
         checkFromText<generic::CAA, isc::Exception, isc::Exception>(
