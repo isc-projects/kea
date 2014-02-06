@@ -188,7 +188,7 @@ TSIGTest::createMessageAndSign(uint16_t id, const Name& qname,
         (ctx->getState() == TSIGContext::INIT) ?
         TSIGContext::SENT_REQUEST : TSIGContext::SENT_RESPONSE;
 
-    message.toWire(renderer, *ctx);
+    message.toWire(renderer, ctx);
 
     message.clear(Message::PARSE);
     InputBuffer buffer(renderer.getData(), renderer.getLength());
