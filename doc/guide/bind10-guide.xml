@@ -13,7 +13,7 @@
  - purpose with or without fee is hereby granted, provided that the above
  - copyright notice and this permission notice appear in all copies.
  -
- - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - THE SOFTWARE IS PROVIDED "DAS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
  - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
  - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
  - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
@@ -4446,6 +4446,40 @@ Dhcp4/subnet4	[]	list	(default)
 &gt; <userinput>config commit</userinput>
 </screen>
 
+    </section>
+
+    <section id="dhcp4-subnet-selection">
+      <title>How DHCPv4 server selects subnet for a client</title>
+      <para>
+        The DHCPv4 server differentiates between the directly connected clients,
+        clients trying to renew leases and clients sending their messages through
+        relays. For the directly connected clients the server will check the
+        configuration of the interface on which the message has been received, and
+        if the server configuration doesn't match any configured subnet the
+        message is discarded.</para>
+        <para>Assuming that the server's interface is configured with the 192.0.2.3
+        IPv4 address, the server will only process messages received through
+        this interface from the directly connected client, if there is a subnet
+        configured, to which this IPv4 address belongs, e.g. 192.0.2.0/24.
+        The server will use this subnet to assign IPv4 address for the client.
+      </para>
+      <para>
+        The rule above does not apply when the client unicasts its message, i.e.
+        is trying to renew its lease. Such message is accepted through any
+        interface. The renewing client sets ciaddr to the currently used IPv4
+        address. The server uses this address to select the subnet for the client
+        (in particular, to extend the lease using this address).
+      </para>
+      <para>
+        If the message is relayed it is accepted through any interface. The giaddr
+        set by the relay agent is used to select the subnet for the client.
+      </para>
+      <note>
+        <para>The subnet selection mechanism described in this section is based
+        on the assumption that client classification is not used. The classification
+        mechanism alters the way in which subnet is selected for the client,
+        depending on the clasess that the client belongs to.</para>
+      </note>
     </section>
 
     <section id="dhcp4-std">
