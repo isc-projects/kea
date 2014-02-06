@@ -24,11 +24,14 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
+// This is an initial value of subnet-id. See comments in subnet.h for details.
+SubnetID Subnet::static_id_ = 1;
+
 Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const Triplet<uint32_t>& t1,
                const Triplet<uint32_t>& t2,
                const Triplet<uint32_t>& valid_lifetime)
-    :id_(getNextID()), prefix_(prefix), prefix_len_(len), t1_(t1),
+    :id_(generateNextID()), prefix_(prefix), prefix_len_(len), t1_(t1),
      t2_(t2), valid_(valid_lifetime),
      last_allocated_ia_(lastAddrInPrefix(prefix, len)),
      last_allocated_ta_(lastAddrInPrefix(prefix, len)),
@@ -162,7 +165,7 @@ void Subnet::setLastAllocated(Lease::Type type,
 std::string
 Subnet::toText() const {
     std::stringstream tmp;
-    tmp << prefix_.toText() << "/" << static_cast<unsigned int>(prefix_len_);
+    tmp << prefix_ << "/" << static_cast<unsigned int>(prefix_len_);
     return (tmp.str());
 }
 
@@ -187,7 +190,7 @@ Subnet4::Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
 void Subnet4::setSiaddr(const isc::asiolink::IOAddress& siaddr) {
     if (!siaddr.isV4()) {
         isc_throw(BadValue, "Can't set siaddr to non-IPv4 address "
-                  << siaddr.toText());
+                  << siaddr);
     }
     siaddr_ = siaddr;
 }
@@ -263,9 +266,8 @@ Subnet::addPool(const PoolPtr& pool) {
     IOAddress last_addr = pool->getLastAddress();
 
     if (!inRange(first_addr) || !inRange(last_addr)) {
-        isc_throw(BadValue, "Pool (" << first_addr.toText() << "-"
-                  << last_addr.toText()
-                  << " does not belong in this (" << prefix_.toText() << "/"
+        isc_throw(BadValue, "Pool (" << first_addr << "-" << last_addr
+                  << " does not belong in this (" << prefix_ << "/"
                   << static_cast<int>(prefix_len_) << ") subnet");
     }
 
@@ -332,7 +334,7 @@ Subnet6::Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
     :Subnet(prefix, length, t1, t2, valid_lifetime),
      preferred_(preferred_lifetime){
     if (!prefix.isV6()) {
-        isc_throw(BadValue, "Non IPv6 prefix " << prefix.toText()
+        isc_throw(BadValue, "Non IPv6 prefix " << prefix
                   << " specified in subnet6");
     }
 }

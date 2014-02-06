@@ -22,6 +22,7 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <util/range_utilities.h>
 
 #include <boost/bind.hpp>
@@ -777,6 +778,36 @@ TEST_F(Pkt6Test, getAnyRelayOption) {
 
     opt = msg->getAnyRelayOption(500, Pkt6::RELAY_SEARCH_FROM_CLIENT);
     EXPECT_FALSE(opt);
+}
+
+// Tests whether a packet can be assigned to a class and later
+// checked if it belongs to a given class
+TEST_F(Pkt6Test, clientClasses) {
+    Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
+
+    // Default values (do not belong to any class)
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
+    EXPECT_TRUE(pkt.classes_.empty());
+
+    // Add to the first class
+    pkt.addClass(DOCSIS3_CLASS_EROUTER);
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
+    ASSERT_FALSE(pkt.classes_.empty());
+
+    // Add to a second class
+    pkt.addClass(DOCSIS3_CLASS_MODEM);
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_MODEM));
+
+    // Check that it's ok to add to the same class repeatedly
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+
+    // Check that the packet belongs to 'foo'
+    EXPECT_TRUE(pkt.inClass("foo"));
 }
 
 }

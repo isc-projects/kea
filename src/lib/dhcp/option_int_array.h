@@ -201,10 +201,12 @@ public:
                 values_.push_back(*begin);
                 break;
             case 2:
-                values_.push_back(isc::util::readUint16(&(*begin)));
+                values_.push_back(isc::util::readUint16(&(*begin),
+                                      std::distance(begin, end)));
                 break;
             case 4:
-                values_.push_back(isc::util::readUint32(&(*begin)));
+                values_.push_back(isc::util::readUint32(&(*begin),
+                                      std::distance(begin, end)));
                 break;
             default:
                 isc_throw(dhcp::InvalidDataType, "non-integer type");

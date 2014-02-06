@@ -358,7 +358,7 @@ TCPSocket<C>::processReceivedData(const void* staging, size_t length,
         }
 
         // Have enough data to interpret the packet count, so do so now.
-        expected = isc::util::readUint16(data);
+        expected = isc::util::readUint16(data, cumulative);
 
         // We have two bytes less of data to process.  Point to the start of the
         // data and adjust the packet size.  Note that at this point,

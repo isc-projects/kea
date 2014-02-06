@@ -696,10 +696,10 @@ Message_toWire(s_Message* self, PyObject* args) {
     PyObject* mr;
     PyObject* tsig_ctx = NULL;
 
-    if (PyArg_ParseTuple(args, "O!|O!", &messagerenderer_type, &mr,
-                         &tsigcontext_type, &tsig_ctx)) {
+    if (PyArg_ParseTuple(args, "O!|O", &messagerenderer_type, &mr,
+                         &tsig_ctx)) {
         try {
-            if (tsig_ctx == NULL) {
+            if ((tsig_ctx == NULL) || (tsig_ctx == Py_None)) {
                 self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr));
             } else {
                 self->cppobj->toWire(PyMessageRenderer_ToMessageRenderer(mr),
@@ -726,7 +726,7 @@ Message_toWire(s_Message* self, PyObject* args) {
     }
     PyErr_Clear();
     PyErr_SetString(PyExc_TypeError,
-                    "toWire argument must be a MessageRenderer");
+                    "Bad to_wire() arguments were passed");
     return (NULL);
 }
 

@@ -297,6 +297,8 @@ public:
     ///
     /// \param server The DNSServer as passed to processMessage()
     /// \param message The response as constructed by processMessage()
+    /// \param stats_attrs Object to store message attributes in for use
+    ///                    with statistics
     /// \param done If true, it indicates there is a response.
     ///             this value will be passed to server->resume(bool)
     void resumeServer(isc::asiodns::DNSServer* server,
@@ -440,12 +442,9 @@ makeErrorMessage(MessageRenderer& renderer, Message& message,
     message.setRcode(rcode);
 
     RendererHolder holder(renderer, &buffer, stats_attrs);
-    if (tsig_context.get() != NULL) {
-        message.toWire(renderer, *tsig_context);
-        stats_attrs.setResponseTSIG(true);
-    } else {
-        message.toWire(renderer);
-    }
+    message.toWire(renderer, tsig_context.get());
+    stats_attrs.setResponseTSIG(tsig_context.get() != NULL);
+
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_ERROR_RESPONSE)
               .arg(renderer.getLength()).arg(message);
 }
@@ -582,8 +581,9 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                                  Rcode::NOTIMP(), stats_attrs, tsig_context);
             }
         } else if (opcode != Opcode::QUERY()) {
+            const IOEndpoint& remote_ep = io_message.getRemoteEndpoint();
             LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_UNSUPPORTED_OPCODE)
-                      .arg(message.getOpcode().toText());
+                .arg(message.getOpcode().toText()).arg(remote_ep);
             makeErrorMessage(impl_->renderer_, message, buffer,
                              Rcode::NOTIMP(), stats_attrs, tsig_context);
         } else if (message.getRRCount(Message::SECTION_QUESTION) != 1) {
@@ -671,12 +671,9 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message,
     const bool udp_buffer =
         (io_message.getSocket().getProtocol() == IPPROTO_UDP);
     renderer_.setLengthLimit(udp_buffer ? remote_bufsize : 65535);
-    if (tsig_context.get() != NULL) {
-        message.toWire(renderer_, *tsig_context);
-        stats_attrs.setResponseTSIG(true);
-    } else {
-        message.toWire(renderer_);
-    }
+    message.toWire(renderer_, tsig_context.get());
+    stats_attrs.setResponseTSIG(tsig_context.get() != NULL);
+
     LOG_DEBUG(auth_logger, DBG_AUTH_MESSAGES, AUTH_SEND_NORMAL_RESPONSE)
               .arg(renderer_.getLength()).arg(message);
     return (true);
@@ -833,12 +830,8 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
     message.setRcode(Rcode::NOERROR());
 
     RendererHolder holder(renderer_, &buffer, stats_attrs);
-    if (tsig_context.get() != NULL) {
-        message.toWire(renderer_, *tsig_context);
-        stats_attrs.setResponseTSIG(true);
-    } else {
-        message.toWire(renderer_);
-    }
+    message.toWire(renderer_, tsig_context.get());
+    stats_attrs.setResponseTSIG(tsig_context.get() != NULL);
     return (true);
 }
 

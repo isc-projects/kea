@@ -36,6 +36,9 @@
 
 #include "tempdir.h"
 
+#include <sys/types.h>
+#include <regex.h>
+
 using namespace isc;
 using namespace isc::log;
 using namespace std;
@@ -322,4 +325,82 @@ TEST_F(LoggerManagerTest, FileSizeRollover) {
     for (vector<string>::size_type i = 0; i < prev_name.size(); ++i) {
        (void) unlink(prev_name[i].c_str());
     }
+}
+
+namespace { // begin unnamed namespace
+
+// When we begin to use C++11, we could replace use of POSIX API with
+// <regex>.
+
+class RegexHolder {
+public:
+    RegexHolder(const char* expr, const int flags = REG_EXTENDED) {
+        const int rc = regcomp(&regex_, expr, flags);
+        if (rc) {
+            regfree(&regex_);
+            throw;
+        }
+    }
+
+    ~RegexHolder() {
+        regfree(&regex_);
+    }
+
+    regex_t* operator*() {
+        return (&regex_);
+    }
+
+private:
+    regex_t regex_;
+};
+
+} // end of unnamed namespace
+
+// Check that the logger correctly outputs the full formatted layout
+// pattern.
+TEST_F(LoggerManagerTest, checkLayoutPattern) {
+    // Create a specification for the file logger and use the manager to
+    // connect the "filelogger" logger to it.
+    SpecificationForFileLogger file_spec;
+
+    // For the first test, we want to check that the file is created
+    // if it does not already exist.  So delete the temporary file before
+    // logging the first message.
+    unlink(file_spec.getFileName().c_str());
+
+    // Set up the file appenders.
+    LoggerManager manager;
+    manager.process(file_spec.getSpecification());
+
+    // Try logging to the file.  Local scope is set to ensure that the logger
+    // is destroyed before we reset the global logging.
+    {
+        Logger logger(file_spec.getLoggerName().c_str());
+        LOG_FATAL(logger, LOG_DUPLICATE_MESSAGE_ID).arg("test");
+    }
+
+    LoggerManager::reset();
+
+    // Access the file for input
+    const std::string& filename = file_spec.getFileName();
+    ifstream infile(filename.c_str());
+    if (! infile.good()) {
+        FAIL() << "Unable to open the logging file " << filename;
+    }
+
+    std::string line;
+    std::getline(infile, line);
+
+    RegexHolder regex(// %D{%Y-%m-%d %H:%M:%S.%q}
+                      "^[[:digit:]]{4}-[[:digit:]]{2}-[[:digit:]]{2}[[:space:]]"
+                      "[[:digit:]]{2}:[[:digit:]]{2}:[[:digit:]]{2}\\.[[:digit:]]+[[:space:]]"
+                      // %-5p
+                      "[[:alpha:]]{1,5}[[:space:]]"
+                      // [%c/%i]
+                      "\\[[[:alnum:]\\-\\.]+/[[:digit:]]+\\][[:space:]]"
+                      );
+
+    const int re = regexec(*regex, line.c_str(), 0, NULL, 0);
+    ASSERT_EQ(0, re)
+        << "Logged message does not match expected layout pattern";
 }

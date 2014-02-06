@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -584,7 +584,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverHint) {
     // lifetime is correct, that T1 and T2 are returned properly
     checkAddressParams(offer, subnet_);
 
-    EXPECT_EQ(offer->getYiaddr().toText(), hint.toText());
+    EXPECT_EQ(offer->getYiaddr(), hint);
 
     // Check identifiers
     checkServerId(offer, srv->getServerID());
@@ -624,7 +624,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverNoClientId) {
     // lifetime is correct, that T1 and T2 are returned properly
     checkAddressParams(offer, subnet_);
 
-    EXPECT_EQ(offer->getYiaddr().toText(), hint.toText());
+    EXPECT_EQ(offer->getYiaddr(), hint);
 
     // Check identifiers
     checkServerId(offer, srv->getServerID());
@@ -664,7 +664,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, DiscoverInvalidHint) {
     // lifetime is correct, that T1 and T2 are returned properly
     checkAddressParams(offer, subnet_);
 
-    EXPECT_NE(offer->getYiaddr().toText(), hint.toText());
+    EXPECT_NE(offer->getYiaddr(), hint);
 
     // Check identifiers
     checkServerId(offer, srv->getServerID());
@@ -735,12 +735,12 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ManyDiscovers) {
     checkClientId(offer3, clientid3);
 
     // Finally check that the addresses offered are different
-    EXPECT_NE(addr1.toText(), addr2.toText());
-    EXPECT_NE(addr2.toText(), addr3.toText());
-    EXPECT_NE(addr3.toText(), addr1.toText());
-    cout << "Offered address to client1=" << addr1.toText() << endl;
-    cout << "Offered address to client2=" << addr2.toText() << endl;
-    cout << "Offered address to client3=" << addr3.toText() << endl;
+    EXPECT_NE(addr1, addr2);
+    EXPECT_NE(addr2, addr3);
+    EXPECT_NE(addr3, addr1);
+    cout << "Offered address to client1=" << addr1 << endl;
+    cout << "Offered address to client2=" << addr2 << endl;
+    cout << "Offered address to client3=" << addr3 << endl;
 }
 
 // Checks whether echoing back client-id is controllable, i.e.
@@ -802,7 +802,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, RequestBasic) {
 
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
-    EXPECT_EQ(hint.toText(), ack->getYiaddr().toText());
+    EXPECT_EQ(hint, ack->getYiaddr());
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
@@ -886,9 +886,9 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ManyRequests) {
     IOAddress addr3 = ack3->getYiaddr();
 
     // Check that every client received the address it requested
-    EXPECT_EQ(req_addr1.toText(), addr1.toText());
-    EXPECT_EQ(req_addr2.toText(), addr2.toText());
-    EXPECT_EQ(req_addr3.toText(), addr3.toText());
+    EXPECT_EQ(req_addr1, addr1);
+    EXPECT_EQ(req_addr2, addr2);
+    EXPECT_EQ(req_addr3, addr3);
 
     // Check that the assigned address is indeed from the configured pool
     checkAddressParams(ack1, subnet_);
@@ -910,12 +910,12 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, ManyRequests) {
     l = checkLease(ack3, clientid3, req3->getHWAddr(), addr3);
 
     // Finally check that the addresses offered are different
-    EXPECT_NE(addr1.toText(), addr2.toText());
-    EXPECT_NE(addr2.toText(), addr3.toText());
-    EXPECT_NE(addr3.toText(), addr1.toText());
-    cout << "Offered address to client1=" << addr1.toText() << endl;
-    cout << "Offered address to client2=" << addr2.toText() << endl;
-    cout << "Offered address to client3=" << addr3.toText() << endl;
+    EXPECT_NE(addr1, addr2);
+    EXPECT_NE(addr2, addr3);
+    EXPECT_NE(addr3, addr1);
+    cout << "Offered address to client1=" << addr1 << endl;
+    cout << "Offered address to client2=" << addr2 << endl;
+    cout << "Offered address to client3=" << addr3 << endl;
 }
 
 // Checks whether echoing back client-id is controllable
@@ -1003,7 +1003,7 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, RenewBasic) {
 
     // Check if we get response at all
     checkResponse(ack, DHCPACK, 1234);
-    EXPECT_EQ(addr.toText(), ack->getYiaddr().toText());
+    EXPECT_EQ(addr, ack->getYiaddr());
 
     // Check that address was returned from proper range, that its lease
     // lifetime is correct, that T1 and T2 are returned properly
@@ -1029,6 +1029,56 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, RenewBasic) {
     EXPECT_GE(1, abs(cltt - expected));
 
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+}
+
+// This test verifies that the logic which matches server identifier in the
+// received message with server identifiers used by a server works correctly:
+// - a message with no server identifier is accepted,
+// - a message with a server identifier which matches one of the server
+// identifiers used by a server is accepted,
+// - a message with a server identifier which doesn't match any server
+// identifier used by a server, is not accepted.
+TEST_F(Dhcpv4SrvFakeIfaceTest, acceptServerId) {
+    NakedDhcpv4Srv srv(0);
+
+    Pkt4Ptr pkt(new Pkt4(DHCPREQUEST, 1234));
+    // If no server identifier option is present, the message is always
+    // accepted.
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+    // Create definition of the server identifier option.
+    OptionDefinition def("server-identifier", DHO_DHCP_SERVER_IDENTIFIER,
+                         "ipv4-address", false);
+
+    // Add a server identifier option which doesn't match server ids being
+    // used by the server. The accepted server ids are the IPv4 addresses
+    // configured on the interfaces. The 10.1.2.3 is not configured on
+    // any interfaces.
+    OptionCustomPtr other_serverid(new OptionCustom(def, Option::V6));
+    other_serverid->writeAddress(IOAddress("10.1.2.3"));
+    pkt->addOption(other_serverid);
+    EXPECT_FALSE(srv.acceptServerId(pkt));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Add a server id being an IPv4 address configured on eth0 interface.
+    // A DHCPv4 message holding this server identifier should be accepted.
+    OptionCustomPtr eth0_serverid(new OptionCustom(def, Option::V6));
+    eth0_serverid->writeAddress(IOAddress("192.0.3.1"));
+    ASSERT_NO_THROW(pkt->addOption(eth0_serverid));
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
+    // Remove the server identifier.
+    ASSERT_NO_THROW(pkt->delOption(DHO_DHCP_SERVER_IDENTIFIER));
+
+    // Add a server id being an IPv4 address configured on eth1 interface.
+    // A DHCPv4 message holding this server identifier should be accepted.
+    OptionCustomPtr eth1_serverid(new OptionCustom(def, Option::V6));
+    eth1_serverid->writeAddress(IOAddress("10.0.0.1"));
+    ASSERT_NO_THROW(pkt->addOption(eth1_serverid));
+    EXPECT_TRUE(srv.acceptServerId(pkt));
+
 }
 
 // @todo: Implement tests for rejecting renewals
@@ -3123,8 +3173,32 @@ TEST_F(Dhcpv4SrvFakeIfaceTest, vendorOptionsDocsisDefinitions) {
     ASSERT_EQ(0, rcode_);
 }
 
+// Checks if client packets are classified properly
+TEST_F(Dhcpv4SrvTest, clientClassification) {
+
+    NakedDhcpv4Srv srv(0);
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // vendor-class set to docsis3.0
+    Pkt4Ptr dis1;
+    ASSERT_NO_THROW(dis1 = captureRelayedDiscover());
+    ASSERT_NO_THROW(dis1->unpack());
+
+    srv.classifyPacket(dis1);
+
+    EXPECT_TRUE(dis1->inClass("docsis3.0"));
+    EXPECT_FALSE(dis1->inClass("eRouter1.0"));
+
+    // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
+    // vendor-class set to eRouter1.0
+    Pkt4Ptr dis2;
+    ASSERT_NO_THROW(dis2 = captureRelayedDiscover2());
+    ASSERT_NO_THROW(dis2->unpack());
+
+    srv.classifyPacket(dis2);
+
+    EXPECT_TRUE(dis2->inClass("eRouter1.0"));
+    EXPECT_FALSE(dis2->inClass("docsis3.0"));
 }
 
-    /*I}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace */
+}; // end of anonymous namespace

@@ -126,7 +126,7 @@ void Dhcpv4SrvTest::messageCheck(const Pkt4Ptr& q, const Pkt4Ptr& a) {
     EXPECT_TRUE(a->getOption(DHO_DHCP_SERVER_IDENTIFIER));
 
     // Check that something is offered
-    EXPECT_TRUE(a->getYiaddr().toText() != "0.0.0.0");
+    EXPECT_NE("0.0.0.0", a->getYiaddr().toText());
 }
 
 ::testing::AssertionResult
@@ -299,14 +299,14 @@ Lease4Ptr Dhcpv4SrvTest::checkLease(const Pkt4Ptr& rsp,
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(expected_addr);
     if (!lease) {
-        cout << "Lease for " << expected_addr.toText()
+        cout << "Lease for " << expected_addr
              << " not found in the database backend.";
         return (Lease4Ptr());
     }
 
-    EXPECT_EQ(rsp->getYiaddr().toText(), expected_addr.toText());
+    EXPECT_EQ(rsp->getYiaddr(), expected_addr);
 
-    EXPECT_EQ(expected_addr.toText(), lease->addr_.toText());
+    EXPECT_EQ(expected_addr, lease->addr_);
     if (client_id) {
         EXPECT_TRUE(*lease->client_id_ == *id);
     }

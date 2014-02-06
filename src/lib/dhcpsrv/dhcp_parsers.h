@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/option_definition.h>
+#include <dhcpsrv/d2_client.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/subnet.h>
@@ -243,7 +244,7 @@ public:
         // its value. If it doesn't we insert a new element.
         storage_->setParam(param_name_, value_);
     }
- 
+
 private:
     /// Pointer to the storage where committed value is stored.
     boost::shared_ptr<ValueStorage<ValueType> > storage_;
@@ -874,6 +875,77 @@ protected:
     /// Parsing context which contains global values, options and option
     /// definitions.
     ParserContextPtr global_context_;
+};
+
+/// @brief Parser for  D2ClientConfig
+///
+/// This class parses the configuration element "dhcp-ddns" common to the
+/// spec files for both dhcp4 and dhcp6. It creates an instance of a
+/// D2ClientConfig.
+class D2ClientConfigParser : public  isc::dhcp::DhcpConfigParser {
+public:
+    /// @brief Constructor
+    ///
+    /// @param entry_name is an arbitrary label assigned to this configuration
+    /// definition.
+    D2ClientConfigParser(const std::string& entry_name);
+
+    /// @brief Destructor
+    virtual ~D2ClientConfigParser();
+
+    /// @brief Performs the parsing of the given dhcp-ddns element.
+    ///
+    /// The results of the parsing are retained internally for use during
+    /// commit.
+    ///
+    /// @param client_config is the "dhcp-ddns" configuration to parse
+    virtual void build(isc::data::ConstElementPtr client_config);
+
+    /// @brief Creates a parser for the given "dhcp-ddns" member element id.
+    ///
+    /// The elements currently supported are (see isc::dhcp::D2ClientConfig
+    /// for details on each):
+    /// -# enable-updates
+    /// -# server-ip
+    /// -# server-port
+    /// -# ncr-protocol
+    /// -# ncr-format
+    /// -# remove-on-renew
+    /// -# always-include-fqdn
+    /// -# allow-client-update
+    /// -# override-no-update
+    /// -# override-client-update
+    /// -# replace-client-name
+    /// -# generated-prefix
+    /// -# qualifying-suffix
+    ///
+    /// @param config_id is the "item_name" for a specific member element of
+    /// the "dns_server" specification.
+    ///
+    /// @return returns a pointer to newly created parser.
+    virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
+                                                    config_id);
+
+    /// @brief Instantiates a D2ClientConfig from internal data values
+    /// passes to CfgMgr singleton.
+    virtual void commit();
+
+private:
+    /// @brief Arbitrary label assigned to this parser instance.
+    /// Primarily used for diagnostics.
+    std::string entry_name_;
+
+    /// Storage for subnet-specific boolean values.
+    BooleanStoragePtr boolean_values_;
+
+    /// Storage for subnet-specific integer values.
+    Uint32StoragePtr uint32_values_;
+
+    /// Storage for subnet-specific string values.
+    StringStoragePtr string_values_;
+
+    /// @brief Pointer to temporary local instance created during build.
+    D2ClientConfigPtr local_client_config_ ;
 };
 
 // Pointers to various parser objects.

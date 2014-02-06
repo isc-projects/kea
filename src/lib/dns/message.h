@@ -550,29 +550,18 @@ public:
     std::string toText() const;
 
     /// \brief Render the message in wire formant into a message renderer
-    /// object.
+    /// object with (or without) TSIG.
     ///
     /// This \c Message must be in the \c RENDER mode and both \c Opcode and
     /// \c Rcode must have been set beforehand; otherwise, an exception of
     /// class \c InvalidMessageOperation will be thrown.
     ///
-    /// \note The renderer's internal buffers and data are automatically
-    /// cleared, keeping the length limit and the compression mode intact.
-    /// In case truncation is triggered, the renderer is cleared completely.
-    ///
-    /// \param renderer DNS message rendering context that encapsulates the
-    /// output buffer and name compression information.
-    void toWire(AbstractMessageRenderer& renderer);
-
-    /// \brief Render the message in wire formant into a message renderer
-    /// object with TSIG.
-    ///
-    /// This method is similar to the other version of \c toWire(), but
-    /// it will also add a TSIG RR with (in many cases) the TSIG MAC for
-    /// the message along with the given TSIG context (\c tsig_ctx).
-    /// The TSIG RR will be placed at the end of \c renderer.
-    /// \c tsig_ctx will be updated based on the fact it was used for signing
-    /// and with the latest MAC.
+    /// If a non-NULL \c tsig_ctx is passed, it will also add a TSIG RR
+    /// with (in many cases) the TSIG MAC for the message along with the
+    /// given TSIG context (\c tsig_ctx).  The TSIG RR will be placed at
+    /// the end of \c renderer. The \c TSIGContext at \c tsig_ctx will
+    /// be updated based on the fact it was used for signing and with
+    /// the latest MAC.
     ///
     /// \exception InvalidMessageOperation The message is not in the Render
     /// mode, or either Rcode or Opcode is not set.
@@ -589,10 +578,12 @@ public:
     /// cleared, keeping the length limit and the compression mode intact.
     /// In case truncation is triggered, the renderer is cleared completely.
     ///
-    /// \param renderer See the other version
+    /// \param renderer DNS message rendering context that encapsulates the
+    /// output buffer and name compression information.
     /// \param tsig_ctx A TSIG context that is to be used for signing the
     /// message
-    void toWire(AbstractMessageRenderer& renderer, TSIGContext& tsig_ctx);
+    void toWire(AbstractMessageRenderer& renderer,
+                TSIGContext* tsig_ctx = NULL);
 
     /// Parse options.
     ///
@@ -607,6 +598,10 @@ public:
     };
 
     /// \brief Parse the header section of the \c Message.
+    ///
+    /// NOTE: If the header has already been parsed by a previous call
+    /// to this method, this method simply returns (i.e., it does not
+    /// read from the \c buffer).
     void parseHeader(isc::util::InputBuffer& buffer);
 
     /// \brief (Re)build a \c Message object from wire-format data.
@@ -642,7 +637,8 @@ public:
     /// \exception std::bad_alloc Memory allocation failure
     /// \exception Others \c Name, \c Rdata, and \c EDNS classes can also throw
     ///
-    /// \param buffer A input buffer object that stores the wire data
+    /// \param buffer A input buffer object that stores the wire
+    /// data. This method reads from position 0 in the passed buffer.
     /// \param options Parse options
     void fromWire(isc::util::InputBuffer& buffer, ParseOptions options
         = PARSE_DEFAULT);
