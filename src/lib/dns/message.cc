@@ -604,13 +604,8 @@ Message::addQuestion(const Question& question) {
 }
 
 void
-Message::toWire(AbstractMessageRenderer& renderer) {
-    impl_->toWire(renderer, NULL);
-}
-
-void
-Message::toWire(AbstractMessageRenderer& renderer, TSIGContext& tsig_ctx) {
-    impl_->toWire(renderer, &tsig_ctx);
+Message::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
+    impl_->toWire(renderer, tsig_ctx);
 }
 
 void
