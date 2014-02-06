@@ -27,6 +27,7 @@ if HAVE_GTEST
 TESTS += libdhcp++_unittests
 
 libdhcp___unittests_SOURCES  = run_unittests.cc
+libdhcp___unittests_SOURCES += classify_unittest.cc
 libdhcp___unittests_SOURCES += hwaddr_unittest.cc
 libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
