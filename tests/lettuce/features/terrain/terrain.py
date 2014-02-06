@@ -78,6 +78,8 @@ copylist = [
      "configurations/xfrin/retransfer_slave_notify.conf"],
     ["configurations/root.config.orig",
      "configurations/root.config"],
+    ["configurations/static.config.orig",
+     "configurations/static.config"],
     ["data/inmem-xfrin.sqlite3.orig",
      "data/inmem-xfrin.sqlite3"],
     ["data/root.sqlite3.orig",
