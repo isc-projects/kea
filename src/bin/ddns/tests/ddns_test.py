@@ -900,10 +900,7 @@ def create_msg(opcode=Opcode.UPDATE, zones=[TEST_ZONE_RECORD], prereq=[],
         msg.add_rrset(SECTION_PREREQUISITE, p)
 
     renderer = MessageRenderer()
-    if tsigctx is not None:
-        msg.to_wire(renderer, tsigctx)
-    else:
-        msg.to_wire(renderer)
+    msg.to_wire(renderer, tsigctx)
 
     # re-read the created data in the parse mode
     msg.clear(Message.PARSE)
