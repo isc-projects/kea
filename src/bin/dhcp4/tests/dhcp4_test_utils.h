@@ -436,6 +436,7 @@ public:
 
     std::list<Pkt4Ptr> fake_sent_;
 
+    /// Let's make those methods public, so they can be accessed easily in tests.
     using Dhcpv4Srv::adjustIfaceData;
     using Dhcpv4Srv::appendServerID;
     using Dhcpv4Srv::processDiscover;
@@ -452,6 +453,7 @@ public:
     using Dhcpv4Srv::unpackOptions;
     using Dhcpv4Srv::name_change_reqs_;
     using Dhcpv4Srv::classifyPacket;
+    using Dhcpv4Srv::selectSubnet;
 };
 
 }; // end of isc::dhcp::test namespace

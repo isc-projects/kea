@@ -32,7 +32,7 @@
 
  @section dhcpv6Session BIND10 message queue integration
 
- DHCPv4 server component is now integrated with BIND10 message queue.
+ DHCPv6 server component is now integrated with BIND10 message queue.
  It follows the same principle as DHCPv4. See \ref dhcpv4Session for
  details.
 
@@ -218,8 +218,8 @@ Currently there is no class behaviour coded in DHCPv6, hence no v6 equivalent of
 it will be conducted in an external hooks library.
 
 It is possible to define class restrictions in subnet, so a given subnet is only
-accessible to clients that belong to a given class. That is implemented as isc::dhcp::Pkt4::classes_
-being passed in isc::dhcp::Dhcpv4Srv::selectSubnet() to isc::dhcp::CfgMgr::getSubnet4().
+accessible to clients that belong to a given class. That is implemented as isc::dhcp::Pkt6::classes_
+being passed in isc::dhcp::Dhcpv6Srv::selectSubnet() to isc::dhcp::CfgMgr::getSubnet6().
 Currently this capability is usable, but the number of scenarios it supports is
 limited.
 

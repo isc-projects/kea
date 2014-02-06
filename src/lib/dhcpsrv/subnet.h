@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -412,7 +412,7 @@ public:
     ///
     /// Setting this parameter is not needed in most deployments.
     ///
-    /// @params relay IP address of the relay
+    /// @param relay IP address of the relay
     void setRelay(const isc::dhcp::Subnet::RelayInfo& relay);
 
     /// @brief Relay information
@@ -482,8 +482,9 @@ protected:
 
     /// @brief keeps the subnet-id value
     ///
-    /// It is inreased every time a new Subnet object is created.
-    /// It is reset (@ref resetSubnetId) every time reconfiguration occurs.
+    /// It is inreased every time a new Subnet object is created. It is reset
+    /// (@ref resetSubnetID) every time reconfiguration
+    /// occurs.
     ///
     /// Static value initialized in subnet.cc.
     static SubnetID static_id_;

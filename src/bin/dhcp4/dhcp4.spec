@@ -261,14 +261,14 @@
                   "item_type": "map",
                   "item_optional": false,
                   "item_default": {},
-                  "item_description" : "Structure holding optional relay information.",
+                  "item_description" : "Structure holding relay information.",
                   "map_item_spec": [
                       {
                           "item_name": "ip-address",
                           "item_type": "string",
                           "item_optional": false,
                           "item_default": "0.0.0.0",
-                          "item_description" : "IPv4 address of the relay (optional)."
+                          "item_description" : "IPv4 address of the relay (defaults to 0.0.0.0 if not specified)."
                       }
                    ]
                 },
