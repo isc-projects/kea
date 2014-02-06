@@ -229,6 +229,11 @@ TEST_F(Rdata_CAA_Test, toWire) {
 }
 
 TEST_F(Rdata_CAA_Test, compare) {
+    // Equality test is repeated from createFromWire tests above.
+    EXPECT_EQ(0, rdata_caa.compare(
+                  *rdataFactoryFromFile(RRType("CAA"), RRClass("IN"),
+                                        "rdata_caa_fromWire1.wire")));
+
     const generic::CAA rdata_caa2("1 issue \"ca.example.net\"");
 
     EXPECT_EQ(1, rdata_caa2.compare(rdata_caa));
