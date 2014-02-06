@@ -3201,4 +3201,68 @@ TEST_F(Dhcpv4SrvTest, clientClassification) {
     EXPECT_FALSE(dis2->inClass("docsis3.0"));
 }
 
+// Checks if the client-class field is indeed used for subnet selection.
+// Note that packet classification is already checked in Dhcpv4SrvTest
+// .clientClassification above.
+TEST_F(Dhcpv4SrvTest, clientClassify2) {
+
+    NakedDhcpv4Srv srv(0);
+
+    ConstElementPtr status;
+
+    // This test configures 2 subnets. We actually only need the
+    // first one, but since there's still this ugly hack that picks
+    // the pool if there is only one, we must use more than one
+    // subnet. That ugly hack will be removed in #3242, currently
+    // under review.
+
+    // The second subnet does not play any role here. The client's
+    // IP address belongs to the first subnet, so only that first
+    // subnet it being tested.
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ "
+        "{   \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"client-class\": \"foo\", "
+        "    \"subnet\": \"192.0.2.0/24\" }, "
+        "{   \"pool\": [ \"192.0.3.1 - 192.0.3.100\" ],"
+        "    \"client-class\": \"xyzzy\", "
+        "    \"subnet\": \"192.0.3.0/24\" } "
+        "],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
+
+    // check if returned status is OK
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    dis->setIface("eth0");
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+
+    // This discover does not belong to foo class, so it will not
+    // be serviced
+    EXPECT_FALSE(srv.selectSubnet(dis));
+
+    // Let's add the packet to bar class and try again.
+    dis->addClass("bar");
+
+    // Still not supported, because it belongs to wrong class.
+    EXPECT_FALSE(srv.selectSubnet(dis));
+
+    // Let's add it to maching class.
+    dis->addClass("foo");
+
+    // This time it should work
+    EXPECT_TRUE(srv.selectSubnet(dis));
+}
+
+
 }; // end of anonymous namespace

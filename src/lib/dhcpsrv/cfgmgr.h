@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -166,7 +166,11 @@ public:
     /// b) our global address on the interface the message was received on
     ///    (for directly connected clients)
     ///
+    /// If there are any classes specified in a subnet, that subnet
+    /// will be selected only if the client belongs to appropriate class.
+    ///
     /// @param hint an address that belongs to a searched subnet
+    /// @param classes classes the client belongs to
     ///
     /// @return a subnet object (or NULL if no suitable match was fount)
     Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint,
@@ -177,7 +181,13 @@ public:
     /// Finds a matching local subnet, based on interface name. This
     /// is used for selecting subnets that were explicitly marked by the
     /// user as reachable over specified network interface.
+    ///
+    /// If there are any classes specified in a subnet, that subnet
+    /// will be selected only if the client belongs to appropriate class.
+    ///
     /// @param iface_name interface name
+    /// @param classes classes the client belongs to
+    ///
     /// @return a subnet object (or NULL if no suitable match was fount)
     Subnet6Ptr getSubnet6(const std::string& iface_name,
                           const isc::dhcp::ClientClasses& classes);
@@ -186,7 +196,11 @@ public:
     ///
     /// Another possibility to find a subnet is based on interface-id.
     ///
+    /// If there are any classes specified in a subnet, that subnet
+    /// will be selected only if the client belongs to appropriate class.
+    ///
     /// @param interface_id content of interface-id option returned by a relay
+    /// @param classes classes the client belongs to
     ///
     /// @return a subnet object
     Subnet6Ptr getSubnet6(OptionPtr interface_id,
@@ -245,7 +259,11 @@ public:
     /// b) our global address on the interface the message was received on
     ///    (for directly connected clients)
     ///
+    /// If there are any classes specified in a subnet, that subnet
+    /// will be selected only if the client belongs to appropriate class.
+    ///
     /// @param hint an address that belongs to a searched subnet
+    /// @param classes classes the client belongs to
     ///
     /// @return a subnet object
     Subnet4Ptr getSubnet4(const isc::asiolink::IOAddress& hint,
@@ -346,7 +364,7 @@ public:
     /// pointer.
     void setD2ClientConfig(D2ClientConfigPtr& new_config);
 
-    /// @param Convenience method for checking if DHCP-DDNS updates are enabled.
+    /// @brief Convenience method for checking if DHCP-DDNS updates are enabled.
     ///
     /// @return True if the D2 configuration is enabled.
     bool ddnsEnabled();

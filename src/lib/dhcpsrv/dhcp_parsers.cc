@@ -811,7 +811,7 @@ OptionDefListParser::commit() {
     }
 }
 
-//****************************** PoolParser ********************************
+//****************************** RelayInfoParser ********************************
 RelayInfoParser::RelayInfoParser(const std::string&,
                                  const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
                                  const asiolink::IOAddress& default_addr)

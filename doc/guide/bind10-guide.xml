@@ -3525,7 +3525,7 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     protocols. BIND 10 offers two server implementations, one for DHCPv4
     and one for DHCPv6. The DHCP part of the BIND 10 project is codenamed
     Kea. The DHCPv4 component is colloquially referred to as Kea4 and its
-    DHCPv6 is called Kea6.</para>
+    DHCPv6 counterpart is called Kea6.</para>
     <para>This chapter covers those parts of BIND 10 that are common to
     both servers.  DHCPv4-specific details are covered in <xref linkend="dhcp4"/>,
     while those details specific to DHCPv6 are described in <xref linkend="dhcp6"/>
@@ -4416,7 +4416,7 @@ Dhcp4/subnet4	[]	list	(default)
       </para>
 
       <para>It is envisaged that the client classification will be used for changing
-      behavior of almost any part of the DHCP engine processing, including assigning
+      behavior of almost any part of the DHCP message processing, including assigning
       leases from different pools, assigning different option (or different values of
       the same options) etc. For now, there are only two mechanisms that are taking
       advantage of client classification: specific processing for cable modems and
@@ -4435,7 +4435,7 @@ Dhcp4/subnet4	[]	list	(default)
         Kea can be instructed to limit access to given subnets based on class information.
         This is particularly useful for cases where two types of devices share the
         same link and are expected to be served from two different subnets. The
-        primary use case for such a scenario are cable networks. There are two
+        primary use case for such a scenario is cable networks. There are two
         classes of devices: cable modem itself, which should be handled a lease
         from subnet A and all other devices behind modems that should get a lease
         from subnet B. That segregation is essential to prevent overly curious
@@ -4448,7 +4448,7 @@ Dhcp4/subnet4	[]	list	(default)
     <section id="dhcp4-subnet-class">
       <title>Limiting access to IPv4 subnet to certain classes</title>
       <para>
-        In certain cases it beneficial to restrict access to certains subnets
+        In certain cases it beneficial to restrict access to certain subnets
         only to clients that belong to a given subnet. For details on client
         classes, see <xref linkend="dhcp4-client-classifier"/>. This is an
         extension of a previous example from <xref linkend="dhcp4-address-config"/>.

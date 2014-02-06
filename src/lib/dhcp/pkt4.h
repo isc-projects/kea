@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -556,7 +556,7 @@ public:
     ///
     /// @param client_class name of the class
     /// @return true if belongs
-    bool inClass(const std::string& client_class);
+    bool inClass(const isc::dhcp::ClientClass& client_class);
 
     /// @brief Adds packet to a specified class
     ///
@@ -573,7 +573,7 @@ public:
     /// so I decided to stick with addClass().
     ///
     /// @param client_class name of the class to be added
-    void addClass(const std::string& client_class);
+    void addClass(const isc::dhcp::ClientClass& client_class);
 
     /// @brief Classes this packet belongs to.
     ///
