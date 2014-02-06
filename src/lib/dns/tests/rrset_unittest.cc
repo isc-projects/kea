@@ -131,7 +131,7 @@ TEST_F(RRsetTest, isSameKind) {
 
 void
 addRdataTestCommon(const RRset& rrset) {
-    EXPECT_EQ(2, rrset.getRdataCount());
+    ASSERT_EQ(2, rrset.getRdataCount());
 
     RdataIteratorPtr it = rrset.getRdataIterator(); // cursor is set to the 1st
     EXPECT_FALSE(it->isLast());
@@ -158,14 +158,34 @@ TEST_F(RRsetTest, addRdataPtr) {
     rrset_a_empty.addRdata(createRdata(rrset_a_empty.getType(),
                                        rrset_a_empty.getClass(),
                                        "192.0.2.2"));
+    addRdataTestCommon(rrset_a_empty);
+}
 
-    addRdataTestCommon(rrset_a);
-
+TEST_F(RRsetTest, addRdataPtrMismatched) {
     // Pointer version of addRdata() doesn't type check and does allow to
     //add a different type of Rdata as a result.
+
+    // Type mismatch
     rrset_a_empty.addRdata(createRdata(RRType::NS(), RRClass::IN(),
                                        "ns.example.com."));
-    EXPECT_EQ(3, rrset_a_empty.getRdataCount());
+    EXPECT_EQ(1, rrset_a_empty.getRdataCount());
+
+    // Class mismatch
+    rrset_ch_txt.addRdata(createRdata(RRType::TXT(), RRClass::IN(),
+                                      "Test String"));
+    EXPECT_EQ(1, rrset_ch_txt.getRdataCount());
+}
+
+TEST_F(RRsetTest, addRdataString) {
+    rrset_a_empty.addRdata("192.0.2.1");
+    rrset_a_empty.addRdata("192.0.2.2");
+
+    addRdataTestCommon(rrset_a_empty);
+
+    // String version of addRdata() will throw for bad RDATA for
+    // RRType::A().
+    EXPECT_THROW(rrset_a_empty.addRdata("ns.example.com."), InvalidRdataText);
+    addRdataTestCommon(rrset_a_empty);
 }
 
 TEST_F(RRsetTest, iterator) {
@@ -205,6 +225,30 @@ TEST_F(RRsetTest, toText) {
               rrset_none_a_empty.toText());
 }
 
+TEST_F(RRsetTest, getLength) {
+    // Empty RRset should throw
+    EXPECT_THROW(rrset_a_empty.getLength(), EmptyRRset);
+
+    // Unless it is type ANY or NONE:
+    // test.example.com = 1 + 4 + 1 + 7 + 1 + 3 + 1 = 18 octets
+    // TYPE field = 2 octets
+    // CLASS field = 2 octets
+    // TTL field = 4 octets
+    // RDLENGTH field = 2 octets
+    // Total = 18 + 2 + 2 + 4 + 2 = 28 octets
+    EXPECT_EQ(28, rrset_any_a_empty.getLength());
+    EXPECT_EQ(28, rrset_none_a_empty.getLength());
+
+    // RRset with single RDATA
+    // 28 (above) + 4 octets (A RDATA) = 32 octets
+    rrset_a_empty.addRdata(in::A("192.0.2.1"));
+    EXPECT_EQ(32, rrset_a_empty.getLength());
+
+    // 2 A RRs
+    rrset_a_empty.addRdata(in::A("192.0.2.2"));
+    EXPECT_EQ(32 + 32, rrset_a_empty.getLength());
+}
+
 TEST_F(RRsetTest, toWireBuffer) {
     rrset_a.toWire(buffer);
 
@@ -212,11 +256,13 @@ TEST_F(RRsetTest, toWireBuffer) {
     matchWireData(&wiredata[0], wiredata.size(),
                   buffer.getData(), buffer.getLength());
 
-    // toWire() cannot be performed for an empty RRset.
+    // toWire() cannot be performed for an empty RRset except when
+    // class=ANY or class=NONE.
     buffer.clear();
     EXPECT_THROW(rrset_a_empty.toWire(buffer), EmptyRRset);
 
-    // Unless it is type ANY or None
+    // When class=ANY or class=NONE, toWire() can also be performed for
+    // an empty RRset.
     buffer.clear();
     rrset_any_a_empty.toWire(buffer);
     wiredata.clear();
@@ -242,25 +288,26 @@ TEST_F(RRsetTest, toWireRenderer) {
     matchWireData(&wiredata[0], wiredata.size(),
                   renderer.getData(), renderer.getLength());
 
-    // toWire() cannot be performed for an empty RRset.
-    buffer.clear();
-    EXPECT_THROW(rrset_a_empty.toWire(buffer), EmptyRRset);
+    // toWire() cannot be performed for an empty RRset except when
+    // class=ANY or class=NONE.
+    renderer.clear();
+    EXPECT_THROW(rrset_a_empty.toWire(renderer), EmptyRRset);
 
-    // Unless it is type ANY or None
-    // toWire() can also be performed for an empty RRset.
-    buffer.clear();
-    rrset_any_a_empty.toWire(buffer);
+    // When class=ANY or class=NONE, toWire() can also be performed for
+    // an empty RRset.
+    renderer.clear();
+    rrset_any_a_empty.toWire(renderer);
     wiredata.clear();
     UnitTestUtil::readWireData("rrset_toWire3", wiredata);
     matchWireData(&wiredata[0], wiredata.size(),
-                  buffer.getData(), buffer.getLength());
+                  renderer.getData(), renderer.getLength());
 
-    buffer.clear();
-    rrset_none_a_empty.toWire(buffer);
+    renderer.clear();
+    rrset_none_a_empty.toWire(renderer);
     wiredata.clear();
     UnitTestUtil::readWireData("rrset_toWire4", wiredata);
     matchWireData(&wiredata[0], wiredata.size(),
-                  buffer.getData(), buffer.getLength());
+                  renderer.getData(), renderer.getLength());
 }
 
 // test operator<<.  We simply confirm it appends the result of toText().
@@ -363,5 +410,39 @@ TEST_F(RRsetRRSIGTest, toText) {
               "test.example.com. 3600 IN RRSIG AAAA 5 3 7200 "
               "20100322084538 20100220084538 1 example.com. FAKEFAKEFAKEFAKE\n",
               rrset_aaaa->toText());
+}
+
+TEST_F(RRsetRRSIGTest, getLength) {
+    // A RR
+    // test.example.com = 1 + 4 + 1 + 7 + 1 + 3 + 1 = 18 octets
+    // TYPE field = 2 octets
+    // CLASS field = 2 octets
+    // TTL field = 4 octets
+    // RDLENGTH field = 2 octets
+    // A RDATA = 4 octets
+    // Total = 18 + 2 + 2 + 4 + 2 + 4 = 32 octets
+
+    // 2 A RRs
+    EXPECT_EQ(32 + 32, rrset_a->getLength());
+
+    // RRSIG
+    // test.example.com = 1 + 4 + 1 + 7 + 1 + 3 + 1 = 18 octets
+    // TYPE field = 2 octets
+    // CLASS field = 2 octets
+    // TTL field = 4 octets
+    // RDLENGTH field = 2 octets
+    // RRSIG RDATA = 40 octets
+    // Total = 18 + 2 + 2 + 4 + 2 + 40 = 68 octets
+    RRsetPtr my_rrsig(new RRset(test_name, RRClass::IN(),
+                                RRType::RRSIG(), RRTTL(3600)));
+    my_rrsig->addRdata(generic::RRSIG("A 4 3 3600 "
+                                      "20000101000000 20000201000000 "
+                                      "12345 example.com. FAKEFAKEFAKE"));
+    EXPECT_EQ(68, my_rrsig->getLength());
+
+    // RRset with attached RRSIG
+    rrset_a->addRRsig(my_rrsig);
+
+    EXPECT_EQ(32 + 32 + 68, rrset_a->getLength());
 }
 }

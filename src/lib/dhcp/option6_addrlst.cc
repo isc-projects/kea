@@ -102,9 +102,9 @@ std::string Option6AddrLst::toText(int indent /* =0 */) {
 
     tmp << "type=" << type_ << " " << addrs_.size() << "addr(s): ";
 
-    for (AddressContainer::const_iterator addr=addrs_.begin();
-         addr!=addrs_.end(); ++addr) {
-        tmp << addr->toText() << " ";
+    for (AddressContainer::const_iterator addr = addrs_.begin();
+         addr != addrs_.end(); ++addr) {
+        tmp << *addr << " ";
     }
     return tmp.str();
 }

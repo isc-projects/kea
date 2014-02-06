@@ -76,7 +76,7 @@ AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 dnl Determine if weare using GNU sed
 GNU_SED=no
-$SED --version 2> /dev/null | grep -q GNU
+$SED --version 2> /dev/null | grep GNU > /dev/null 2>&1
 if test $? -eq 0; then
   GNU_SED=yes
 fi
@@ -445,7 +445,7 @@ fi
 # Python 3.2 has an unused parameter in one of its headers. This
 # has been reported, but not fixed as of yet, so we check if we need
 # to set -Wno-unused-parameter.
-if test "X$GXX" = "Xyes" -a $werror_ok = 1; then
+if test "X$GXX" = "Xyes" -a "$werror_ok" = 1; then
 	CPPFLAGS_SAVED="$CPPFLAGS"
 	CPPFLAGS=${PYTHON_INCLUDES}
 	CXXFLAGS_SAVED="$CXXFLAGS"
@@ -1389,6 +1389,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/dhcp4/spec_config.h.pre
                  src/bin/dhcp4/tests/Makefile
                  src/bin/dhcp4/tests/marker_file.h
+                 src/bin/dhcp4/tests/test_data_files_config.h
                  src/bin/dhcp4/tests/test_libraries.h
                  src/bin/dhcp6/Makefile
                  src/bin/dhcp6/spec_config.h.pre

@@ -80,12 +80,12 @@ Dhcpv6SrvTest::checkLease(const DuidPtr& duid, const OptionPtr& ia_na,
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
                                                             addr->getAddress());
     if (!lease) {
-        std::cout << "Lease for " << addr->getAddress().toText()
+        std::cout << "Lease for " << addr->getAddress()
                   << " not found in the database backend.";
         return (Lease6Ptr());
     }
 
-    EXPECT_EQ(addr->getAddress().toText(), lease->addr_.toText());
+    EXPECT_EQ(addr->getAddress(), lease->addr_);
     EXPECT_TRUE(*lease->duid_ == *duid);
     EXPECT_EQ(ia->getIAID(), lease->iaid_);
     EXPECT_EQ(subnet_->getID(), lease->subnet_id_);
@@ -101,12 +101,12 @@ Dhcpv6SrvTest::checkPdLease(const DuidPtr& duid, const OptionPtr& ia_pd,
     Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD,
                                                             prefix->getAddress());
     if (!lease) {
-        std::cout << "PD lease for " << prefix->getAddress().toText()
+        std::cout << "PD lease for " << prefix->getAddress()
                   << " not found in the database backend.";
         return (Lease6Ptr());
     }
 
-    EXPECT_EQ(prefix->getAddress().toText(), lease->addr_.toText());
+    EXPECT_EQ(prefix->getAddress(), lease->addr_);
     EXPECT_TRUE(*lease->duid_ == *duid);
     EXPECT_EQ(ia->getIAID(), lease->iaid_);
     EXPECT_EQ(subnet_->getID(), lease->subnet_id_);

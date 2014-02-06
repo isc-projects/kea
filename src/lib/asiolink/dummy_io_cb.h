@@ -17,6 +17,8 @@
 
 #include <iostream>
 
+#include <exceptions/exceptions.h>
+
 #include <asio/error.hpp>
 #include <asio/error_code.hpp>
 
@@ -39,20 +41,30 @@ public:
 
     /// \brief Asynchronous I/O callback method
     ///
-    /// TODO: explain why this method should never be called.
-    /// This should be unused.
-    void operator()(asio::error_code)
-    {
-        // TODO: log an error if this method ever gets called.
+    /// Should never be called, as this class is a convenience class provided
+    /// for instances where a socket is required but it is known that no
+    /// asynchronous operations will be carried out.
+    void operator()(asio::error_code) {
+        // If the function is called, there is a serious logic error in
+        // the program (this class should not be used as the callback
+        // class).  As the asiolink module is too low-level for logging
+        // errors, throw an exception.
+        isc_throw(isc::Unexpected,
+                  "DummyIOCallback::operator() must not be called");
     }
 
     /// \brief Asynchronous I/O callback method
     ///
-    /// TODO: explain why this method should never be called.
-    /// This should be unused.
-    void operator()(asio::error_code, size_t)
-    {
-        // TODO: log an error if this method ever gets called.
+    /// Should never be called, as this class is a convenience class provided
+    /// for instances where a socket is required but it is known that no
+    /// asynchronous operations will be carried out.
+    void operator()(asio::error_code, size_t) {
+        // If the function is called, there is a serious logic error in
+        // the program (this class should not be used as the callback
+        // class).  As the asiolink module is too low-level for logging
+        // errors, throw an exception.
+        isc_throw(isc::Unexpected,
+                  "DummyIOCallback::operator() must not be called");
     }
 };
 

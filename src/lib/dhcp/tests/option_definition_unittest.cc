@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -663,6 +663,112 @@ TEST_F(OptionDefinitionTest, recordIAAddr6Tokenized) {
     EXPECT_EQ(5678, option_cast_v6->getValid());
 }
 
+// The purpose of this test is to verify that the definition for option
+// that comprises a boolean value can be created and that this definition
+// can be used to create and option with a single boolean value.
+TEST_F(OptionDefinitionTest, boolValue) {
+    // The IP Forwarding option comprises one boolean value.
+    OptionDefinition opt_def("ip-forwarding", DHO_IP_FORWARDING,
+                             "boolean");
+
+    OptionPtr option_v4;
+    // Use an option buffer which holds one value of 1 (true).
+    ASSERT_NO_THROW(
+        option_v4 = opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING,
+                                          OptionBuffer(1, 1));
+    );
+    ASSERT_TRUE(typeid(*option_v4) == typeid(OptionCustom));
+    // Validate parsed value in the received option.
+    boost::shared_ptr<OptionCustom> option_cast_v4 =
+        boost::static_pointer_cast<OptionCustom>(option_v4);
+    EXPECT_TRUE(option_cast_v4->readBoolean());
+
+    // Repeat the test above, but set the value to 0 (false).
+    ASSERT_NO_THROW(
+        option_v4 = opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING,
+                                          OptionBuffer(1, 0));
+    );
+    option_cast_v4 = boost::static_pointer_cast<OptionCustom>(option_v4);
+    EXPECT_FALSE(option_cast_v4->readBoolean());
+
+    // Try to provide zero-length buffer. Expect exception.
+    EXPECT_THROW(
+        opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING, OptionBuffer()),
+        InvalidOptionValue
+    );
+
+}
+
+// The purpose of this test is to verify that definition for option that
+// comprises single boolean value can be created and that this definition
+// can be used to create an option holding a single boolean value. The
+// boolean value is converted from a string which is expected to hold
+// the following values: "true", "false", "1" or "0". For all other
+// values exception should be thrown.
+TEST_F(OptionDefinitionTest, boolTokenized) {
+    OptionDefinition opt_def("ip-forwarding", DHO_IP_FORWARDING, "boolean");
+
+    OptionPtr option_v4;
+    std::vector<std::string> values;
+    // Specify a value for the option instance being created.
+    values.push_back("true");
+    ASSERT_NO_THROW(
+        option_v4 = opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING,
+                                          values);
+    );
+    ASSERT_TRUE(typeid(*option_v4) == typeid(OptionCustom));
+    // Validate the value.
+    OptionCustomPtr option_cast_v4 =
+        boost::static_pointer_cast<OptionCustom>(option_v4);
+    EXPECT_TRUE(option_cast_v4->readBoolean());
+
+    // Repeat the test but for "false" value this time.
+    values[0] = "false";
+    ASSERT_NO_THROW(
+        option_v4 = opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING,
+                                          values);
+    );
+    ASSERT_TRUE(typeid(*option_v4) == typeid(OptionCustom));
+    // Validate the value.
+    option_cast_v4 = boost::static_pointer_cast<OptionCustom>(option_v4);
+    EXPECT_FALSE(option_cast_v4->readBoolean());
+
+    // Check if that will work for numeric values.
+    values[0] = "0";
+    ASSERT_NO_THROW(
+        option_v4 = opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING,
+                                          values);
+    );
+    ASSERT_TRUE(typeid(*option_v4) == typeid(OptionCustom));
+    // Validate the value.
+    option_cast_v4 = boost::static_pointer_cast<OptionCustom>(option_v4);
+    EXPECT_FALSE(option_cast_v4->readBoolean());
+
+    // Swap numeric values and test if it works for "true" case.
+    values[0] = "1";
+    ASSERT_NO_THROW(
+        option_v4 = opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING,
+                                          values);
+    );
+    ASSERT_TRUE(typeid(*option_v4) == typeid(OptionCustom));
+    // Validate the value.
+    option_cast_v4 = boost::static_pointer_cast<OptionCustom>(option_v4);
+    EXPECT_TRUE(option_cast_v4->readBoolean());
+
+    // A conversion of non-numeric value to boolean should fail if
+    // this value is neither "true" nor "false".
+    values[0] = "garbage";
+    EXPECT_THROW(opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING, values),
+      isc::dhcp::BadDataTypeCast);
+
+    // A conversion of numeric value to boolean should fail if this value
+    // is neither "0" nor "1".
+    values[0] = "2";
+    EXPECT_THROW(opt_def.optionFactory(Option::V4, DHO_IP_FORWARDING, values),
+      isc::dhcp::BadDataTypeCast);
+
+}
+
 // The purpose of this test is to verify that definition for option that
 // comprises single uint8 value can be created and that this definition
 // can be used to create an option with single uint8 value.
@@ -672,7 +778,8 @@ TEST_F(OptionDefinitionTest, uint8) {
     OptionPtr option_v6;
     // Try to use correct buffer length = 1 byte.
     ASSERT_NO_THROW(
-        option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE, OptionBuffer(1, 1));
+        option_v6 = opt_def.optionFactory(Option::V6, D6O_PREFERENCE,
+                                          OptionBuffer(1, 1));
     );
     ASSERT_TRUE(typeid(*option_v6) == typeid(OptionInt<uint8_t>));
     // Validate the value.

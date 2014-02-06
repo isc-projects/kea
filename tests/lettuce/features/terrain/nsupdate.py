@@ -106,7 +106,7 @@ def prepare_update(step, zone, server, port):
     if port is not None:
         commands[0] = commands[0] + " " + port
     else:
-        commands[0] = commands[0] + " 47806"
+        commands[0] = commands[0] + " 56176"
     if zone is not None:
         commands.append("zone " + zone)
     world.nsupdate_commands = commands

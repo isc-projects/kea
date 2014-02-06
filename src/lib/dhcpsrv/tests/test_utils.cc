@@ -48,7 +48,7 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
     // odd things happen when they are different: the EXPECT_EQ macro appears to
     // call the operator uint32_t() function, which causes an exception to be
     // thrown for IPv6 addresses.
-    EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
+    EXPECT_EQ(first->addr_, second->addr_);
     EXPECT_TRUE(first->hwaddr_ == second->hwaddr_);
     if (first->client_id_ && second->client_id_) {
         EXPECT_TRUE(*first->client_id_ == *second->client_id_);
@@ -83,7 +83,7 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
     // odd things happen when they are different: the EXPECT_EQ macro appears to
     // call the operator uint32_t() function, which causes an exception to be
     // thrown for IPv6 addresses.
-    EXPECT_EQ(first->addr_.toText(), second->addr_.toText());
+    EXPECT_EQ(first->addr_, second->addr_);
     EXPECT_EQ(first->prefixlen_, second->prefixlen_);
     EXPECT_EQ(first->iaid_, second->iaid_);
     ASSERT_TRUE(first->duid_);

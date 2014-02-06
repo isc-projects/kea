@@ -206,6 +206,20 @@ public:
     /// \return The number of \c Rdata objects contained.
     virtual unsigned int getRdataCount() const = 0;
 
+    /// \brief Get the wire format length of the \c AbstractRRset.
+    ///
+    /// This method returns the wire format length of the
+    /// \c AbstractRRset, which is calculated by summing the individual
+    /// lengths of the various fields that make up each RR.
+    ///
+    /// NOTE: When including name lengths, the allocation for
+    /// uncompressed name wire format representation is used.
+    ///
+    /// \return The length of the wire format representation of the
+    /// \c AbstractRRset.
+    /// \throw \c EmptyRRset if the \c AbstractRRset is empty.
+    virtual uint16_t getLength() const = 0;
+
     /// \brief Returns the owner name of the \c RRset.
     ///
     /// \return A reference to a \c Name class object corresponding to the
@@ -376,9 +390,26 @@ public:
     /// Still, this version would offer a more intuitive interface and is
     /// provided as such.
     ///
+    /// NOTE: Because a new Rdata object is constructed, this method can
+    /// throw a std::bad_cast exception if this RRset's class is NONE,
+    /// or if some other error occurs. If you want to be able to add
+    /// RDATA to an RRset whose class is NONE, please use the other
+    /// variant of \c addRdata() which accepts a \c ConstRdataPtr
+    /// argument.
+    ///
     /// \param rdata A reference to a \c rdata::RdataPtr (derived) class
     /// object, a copy of which is to be added to the \c RRset.
     virtual void addRdata(const rdata::Rdata& rdata) = 0;
+
+    /// \brief Add an RDATA to the RRset (string version).
+    ///
+    /// This method constructs an Rdata object from the the given
+    /// \c rdata_str in presentation format and adds it to the \c RRset.
+    ///
+    /// \param rdata_str RDATA string in presentation format.
+    /// \throw InvalidRdataText if the \c rdata_str is invalid for this
+    /// \c RRset.
+    virtual void addRdata(const std::string& rdata_str) = 0;
 
     /// \brief Return an iterator to go through all RDATA stored in the
     /// \c RRset.
@@ -642,6 +673,13 @@ public:
     /// \return The number of \c Rdata objects contained.
     virtual unsigned int getRdataCount() const;
 
+    /// \brief Get the wire format length of the \c BasicRRset.
+    ///
+    /// \return The length of the wire format representation of the
+    /// \c BasicRRset.
+    /// \throw \c EmptyRRset if the \c BasicRRset is empty.
+    virtual uint16_t getLength() const;
+
     /// \brief Returns the owner name of the \c RRset.
     ///
     /// This method never throws an exception.
@@ -726,6 +764,13 @@ public:
     /// This method simply uses the default implementation.
     /// See \c AbstractRRset::addRdata(const rdata::Rdata&).
     virtual void addRdata(const rdata::Rdata& rdata);
+
+    /// \brief Add an RDATA to the RRset (string version).
+    ///
+    /// \param rdata_str RDATA string in presentation format.
+    /// \throw InvalidRdataText if the \c rdata_str is invalid for this
+    /// \c RRset.
+    virtual void addRdata(const std::string& rdata_str);
 
     /// \brief Return an iterator to go through all RDATA stored in the
     /// \c BasicRRset.
@@ -812,6 +857,13 @@ public:
           const RRType& rrtype, const RRTTL& ttl);
 
     virtual ~RRset();
+
+    /// \brief Get the wire format length of the \c RRset.
+    ///
+    /// \return The length of the wire format representation of the
+    /// \c RRset.
+    /// \throw \c EmptyRRset if the \c RRset is empty.
+    virtual uint16_t getLength() const;
 
     /// \brief Render the RRset in the wire format with name compression and
     /// truncation handling.

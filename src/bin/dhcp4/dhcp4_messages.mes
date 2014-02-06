@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,14 @@ to establish a session with the BIND 10 control channel.
 This debug message is issued when the DHCP server was unable to process the
 FQDN or Hostname option sent by a client. This is likely because the client's
 name was malformed or due to internal server error.
+
+% DHCP4_CLASS_PROCESSING_FAILED client class specific processing failed
+This debug message means that the server processing that is unique for each
+client class has reported a failure. The response packet will not be sent.
+
+% DHCP4_CLASS_ASSIGNED client packet has been assigned to the following class(es): %1
+This debug message informs that incoming packet has been assigned to specified
+class or classes. This is a norma
 
 % DHCP4_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
@@ -174,6 +182,13 @@ IPv4 DHCP server but it is not running.
 % DHCP4_OPEN_SOCKET opening sockets on port %1
 A debug message issued during startup, this indicates that the IPv4 DHCP
 server is about to open sockets on the specified port.
+
+% DHCP4_PACKET_NOT_FOR_US received DHCPv4 message (transid=%1, iface=%2) dropped because it contains foreign server identifier
+This debug message is issued when received DHCPv4 message is dropped because
+it is addressed to a different server, i.e. a server identifier held by
+this message doesn't match the identifier used by our server. The arguments
+of this message hold the name of the transaction id and interface on which
+the message has been received.
 
 % DHCP4_OPEN_SOCKET_FAIL failed to create socket: %1
 A warning message issued when IfaceMgr fails to open and bind a socket. The reason

@@ -36,8 +36,8 @@ extern PyObject* po_TSIGContextError;
 /// \return true if the object is of type TSIGContext, false otherwise
 bool PyTSIGContext_Check(PyObject* obj);
 
-/// \brief Returns a reference to the TSIGContext object contained within the given
-///        Python object.
+/// \brief Returns a pointer to the TSIGContext object contained within
+///        the given Python object.
 ///
 /// \note The given object MUST be of type TSIGContext; this can be checked with
 ///       either the right call to ParseTuple("O!"), or with PyTSIGContext_Check()
@@ -46,7 +46,7 @@ bool PyTSIGContext_Check(PyObject* obj);
 /// may be destroyed, the caller must copy it itself.
 ///
 /// \param tsigcontext_obj The tsigcontext object to convert
-TSIGContext& PyTSIGContext_ToTSIGContext(PyObject* tsigcontext_obj);
+TSIGContext* PyTSIGContext_ToTSIGContext(PyObject* tsigcontext_obj);
 
 
 } // namespace python

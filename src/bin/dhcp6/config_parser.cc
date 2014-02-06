@@ -497,12 +497,12 @@ protected:
                       "parser error: interface (defined for locally reachable "
                       "subnets) and interface-id (defined for subnets reachable"
                       " via relays) cannot be defined at the same time for "
-                      "subnet " << addr.toText() << "/" << (int)len);
+                      "subnet " << addr << "/" << (int)len);
             }
         }
 
         stringstream tmp;
-        tmp << addr.toText() << "/" << static_cast<int>(len)
+        tmp << addr << "/" << static_cast<int>(len)
             << " with params t1=" << t1 << ", t2=" << t2 << ", pref="
             << pref << ", valid=" << valid;
 
@@ -645,6 +645,10 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND,
               DHCP6_CONFIG_START).arg(config_set->str());
+
+    // Before starting any subnet operations, let's reset the subnet-id counter,
+    // so newly recreated configuration starts with first subnet-id equal 1.
+    Subnet::resetSubnetID();
 
     // Some of the values specified in the configuration depend on
     // other values. Typically, the values in the subnet6 structure

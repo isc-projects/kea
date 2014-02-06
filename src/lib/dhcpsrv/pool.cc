@@ -34,8 +34,8 @@ bool Pool::inRange(const isc::asiolink::IOAddress& addr) const {
 std::string
 Pool::toText() const {
     std::stringstream tmp;
-    tmp << "type=" << Lease::typeToText(type_) << ", " << first_.toText()
-        << "-" << last_.toText();
+    tmp << "type=" << Lease::typeToText(type_) << ", " << first_
+        << "-" << last_;
     return (tmp.str());
 }
 
@@ -143,8 +143,8 @@ Pool6::Pool6(Lease::Type type, const isc::asiolink::IOAddress& prefix,
 std::string
 Pool6::toText() const {
     std::stringstream tmp;
-    tmp << "type=" << Lease::typeToText(type_) << ", " << first_.toText()
-        << "-" << last_.toText() << ", delegated_len="
+    tmp << "type=" << Lease::typeToText(type_) << ", " << first_
+        << "-" << last_ << ", delegated_len="
         << static_cast<int>(prefix_len_);
     return (tmp.str());
 }

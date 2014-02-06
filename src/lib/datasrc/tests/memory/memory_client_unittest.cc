@@ -774,13 +774,22 @@ TEST_F(MemoryClientTest, getIteratorSeparateSigned) {
     EXPECT_TRUE(seen_nsec3);
 }
 
-TEST_F(MemoryClientTest, getIteratorGetSOAThrowsNotImplemented) {
+TEST_F(MemoryClientTest, getIteratorGetSOA) {
     loadZoneIntoTable(*ztable_segment_, Name("example.org"), zclass_,
                       TEST_DATA_DIR "/example.org-empty.zone");
     ZoneIteratorPtr iterator(client_->getIterator(Name("example.org")));
 
-    // This method is not implemented.
-    EXPECT_THROW(iterator->getSOA(), isc::NotImplemented);
+    ConstRRsetPtr soa_rrset(iterator->getSOA());
+
+    ASSERT_EQ(RRType::SOA(), soa_rrset->getType());
+    ASSERT_EQ(1, soa_rrset->getRdataCount());
+
+    RdataIteratorPtr it(soa_rrset->getRdataIterator());
+    const generic::SOA& soa
+        (dynamic_cast<const generic::SOA&>(it->getCurrent()));
+
+    EXPECT_EQ(71, soa.getSerial().getValue());
+    EXPECT_EQ(3600, soa.getMinimum());
 }
 
 TEST_F(MemoryClientTest, addEmptyRRsetThrows) {

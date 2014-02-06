@@ -94,7 +94,7 @@ NameChangeUDPListener::~NameChangeUDPListener() {
 void
 NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
     // create our endpoint and bind the the low level socket to it.
-    isc::asiolink::UDPEndpoint endpoint(ip_address_.getAddress(), port_);
+    isc::asiolink::UDPEndpoint endpoint(ip_address_, port_);
 
     // Create the low level socket.
     try {
@@ -227,7 +227,7 @@ NameChangeUDPSender::~NameChangeUDPSender() {
 void
 NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
     // create our endpoint and bind the the low level socket to it.
-    isc::asiolink::UDPEndpoint endpoint(ip_address_.getAddress(), port_);
+    isc::asiolink::UDPEndpoint endpoint(ip_address_, port_);
 
     // Create the low level socket.
     try {
@@ -252,8 +252,7 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
 
     // Create the server endpoint
     server_endpoint_.reset(new isc::asiolink::
-                           UDPEndpoint(server_address_.getAddress(),
-                                       server_port_));
+                           UDPEndpoint(server_address_, server_port_));
 
     send_callback_->setDataSource(server_endpoint_);
 }
