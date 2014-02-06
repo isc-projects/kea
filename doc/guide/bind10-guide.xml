@@ -3976,6 +3976,20 @@ Dhcp4/subnet4	[]	list	(default)
       <!-- @todo: describe record types -->
 
       <para>
+        The <xref linkend="dhcp4-custom-options"/> describes the configuration
+        syntax to create custom option definitions (formats). It is generally not
+        allowed to create custom definitions for standard options, even if the
+        definition being created matches the actual option format defined in the
+        RFCs. There is an exception from this rule for standard options for which
+        Kea does not provide a definition yet. In order to use such options,
+        a server administrator must create a definition as described in
+        <xref linkend="dhcp4-custom-options"/> in the 'dhcp4' option space. This
+        definition should match the option format described in the relevant
+        RFC but configuration mechanism would allow any option format as it has
+        no means to validate it at the moment.
+      </para>
+
+      <para>
         <table frame="all" id="dhcp4-std-options-list">
           <title>List of standard DHCPv4 options</title>
           <tgroup cols='4'>
@@ -4977,6 +4991,21 @@ Dhcp6/subnet6/	list
     </para>
 
 <!-- @todo: describe record types -->
+
+      <para>
+        The <xref linkend="dhcp6-custom-options"/> describes the configuration
+        syntax to create custom option definitions (formats). It is generally not
+        allowed to create custom definitions for standard options, even if the
+        definition being created matches the actual option format defined in the
+        RFCs. There is an exception from this rule for standard options for which
+        Kea does not provide a definition yet. In order to use such options,
+        a server administrator must create a definition as described in
+        <xref linkend="dhcp6-custom-options"/> in the 'dhcp6' option space. This
+        definition should match the option format described in the relevant
+        RFC but configuration mechanism would allow any option format as it has
+        no means to validate it at the moment.
+      </para>
+
 
     <para>
       <table frame="all" id="dhcp6-std-options-list">
