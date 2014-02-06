@@ -242,11 +242,12 @@ CAA::~CAA() {
 void
 CAA::toWire(OutputBuffer& buffer) const {
     buffer.writeUint8(impl_->flags_);
+
+    // The constructors must ensure that the tag field is not empty.
+    assert(!impl_->tag_.empty());
     buffer.writeUint8(impl_->tag_.size());
-    if (!impl_->tag_.empty()) {
-        buffer.writeData(&impl_->tag_[0],
-                         impl_->tag_.size());
-    }
+    buffer.writeData(&impl_->tag_[0], impl_->tag_.size());
+
     if (impl_->value_.size() > 1) {
         buffer.writeData(&impl_->value_[1],
                          impl_->value_.size() - 1);
@@ -256,11 +257,12 @@ CAA::toWire(OutputBuffer& buffer) const {
 void
 CAA::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint8(impl_->flags_);
+
+    // The constructors must ensure that the tag field is not empty.
+    assert(!impl_->tag_.empty());
     renderer.writeUint8(impl_->tag_.size());
-    if (!impl_->tag_.empty()) {
-        renderer.writeData(&impl_->tag_[0],
-                           impl_->tag_.size());
-    }
+    renderer.writeData(&impl_->tag_[0], impl_->tag_.size());
+
     if (impl_->value_.size() > 1) {
         renderer.writeData(&impl_->value_[1],
                            impl_->value_.size() - 1);
