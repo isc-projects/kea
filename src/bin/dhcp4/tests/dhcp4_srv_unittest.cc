@@ -3361,4 +3361,46 @@ TEST_F(Dhcpv4SrvTest, acceptDirectRequest) {
 
 }
 
+// This test checks that the server rejects a message with invalid type.
+TEST_F(Dhcpv4SrvTest, acceptMessageType) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    NakedDhcpv4Srv srv(0);
+
+    // Specify messages to be accepted by the server.
+    int allowed[] = {
+        DHCPDISCOVER,
+        DHCPREQUEST,
+        DHCPRELEASE,
+        DHCPDECLINE,
+        DHCPINFORM
+    };
+    size_t allowed_size = sizeof(allowed) / sizeof(allowed[0]);
+    // Check that the server actually accepts these message types.
+    for (int i = 0; i < allowed_size; ++i) {
+        EXPECT_TRUE(srv.acceptMessageType(Pkt4Ptr(new Pkt4(allowed[i], 1234))))
+            << "Test failed for message type " << i;
+    }
+    // Specify messages which server is supposed to drop.
+    int not_allowed[] = {
+        DHCPOFFER,
+        DHCPACK,
+        DHCPNAK,
+        DHCPLEASEQUERY,
+        DHCPLEASEUNASSIGNED,
+        DHCPLEASEUNKNOWN,
+        DHCPLEASEACTIVE,
+        DHCPBULKLEASEQUERY,
+        DHCPLEASEQUERYDONE
+    };
+    size_t not_allowed_size = sizeof(not_allowed) / sizeof(not_allowed[0]);
+    // Actually check that the server will drop these messages.
+    for (int i = 0; i < not_allowed_size; ++i) {
+        EXPECT_FALSE(srv.acceptMessageType(Pkt4Ptr(new Pkt4(not_allowed[i],
+                                                            1234))))
+            << "Test failed for message type " << i;
+    }
+}
+
 }; // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,9 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <config/ccsession.h>
+#include <dhcp4/config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_int_array.h>
@@ -29,14 +31,14 @@
 
 using namespace std;
 using namespace isc::asiolink;
-
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
 namespace test {
 
 Dhcpv4SrvTest::Dhcpv4SrvTest()
-:rcode_(-1) {
+:rcode_(-1), srv_(0) {
     subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1000,
                                      2000, 3000));
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"), IOAddress("192.0.2.110")));
@@ -552,6 +554,20 @@ Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
     EXPECT_TRUE(noRequestedOptions(rsp));
     EXPECT_TRUE(noBasicOptions(rsp));
 }
+
+void
+Dhcpv4SrvTest::configure(const std::string& config) {
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv_, json));
+    ASSERT_TRUE(status);
+    int rcode;
+    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+}
+
 
 }; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace

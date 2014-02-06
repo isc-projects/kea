@@ -167,6 +167,13 @@ public:
 
 protected:
 
+    /// @name Functions filtering and sanity-checking received messages.
+    ///
+    /// @todo These functions are supposed to be moved to a new class which
+    /// will manage different rules for accepting and rejecting messages.
+    /// Perhaps ticket #3116 is a good opportunity to do it.
+    ///
+    //@{
     /// @brief Checks whether received message should be processed or discarded.
     ///
     /// This function checks whether received message should be processed or
@@ -211,11 +218,31 @@ protected:
     /// - all broadcast messages received on the interface for which the
     /// suitable subnet exists (is configured).
     ///
-    /// @param pkt Message sent by a client.
+    /// @param query Message sent by a client.
     ///
     /// @return true if message is accepted for further processing, false
     /// otherwise.
-    bool acceptDirectRequest(const Pkt4Ptr& pkt) const;
+    bool acceptDirectRequest(const Pkt4Ptr& query) const;
+
+    /// @brief Check if received message type is valid for the server to
+    /// process.
+    ///
+    /// This function checks that the received message type belongs to the range
+    /// of types regonized by the server and that the message of this type
+    /// should be processed by the server.
+    ///
+    /// The messages types accepted for processing are:
+    /// - Discover
+    /// - Request
+    /// - Release
+    /// - Decline
+    /// - Inform
+    ///
+    /// @param query Message sent by a client.
+    ///
+    /// @return true if message is accepted for further processing, false
+    /// otherwise.
+    bool acceptMessageType(const Pkt4Ptr& query) const;
 
     /// @brief Verifies if the server id belongs to our server.
     ///
@@ -231,6 +258,7 @@ protected:
     /// @return true, if the server identifier is absent or matches one of the
     /// server identifiers that the server is using; false otherwise.
     bool acceptServerId(const Pkt4Ptr& pkt) const;
+    //@}
 
     /// @brief verifies if specified packet meets RFC requirements
     ///

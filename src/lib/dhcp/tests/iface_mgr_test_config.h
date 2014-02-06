@@ -26,6 +26,35 @@ namespace test {
 ///
 /// @name Set of structures describing interface flags.
 ///
+/// These flags encapsulate the boolean type to pass the flags values
+/// to @c IfaceMgrTestConfig methods. If the values passed to these methods
+/// were not encapsulated by the types defined here, the API would become
+/// prone to errors like swapping parameters being passed to specific functions.
+/// For example, in the call to @c IfaceMgrTestConfig::setIfaceFlags:
+/// @code
+///     IfaceMgrTestConfig test_config(true);
+///     test_config.setIfaceFlags("eth1", false, false, true, false, false);
+/// @endcode
+///
+/// it is quite likely that the developer by mistake swaps the values and
+/// assigns them to wrong flags. When the flags are encapsulated with dedicated
+/// structs, the compiler will return an error if values are swapped. For
+/// example:
+/// @code
+///     IfaceMgrTestConfig test_config(true);
+///     test_config.setIfaceFlags("eth1", FlagLoopback(false), FlagUp(false),
+///                               FlagRunning(true), FlagInactive4(false),
+///                               FlagInactive6(false));
+/// @endcode
+/// will succeed, but the following code will result in the compilation error
+/// and thus protect a developer from making an error:
+/// @code
+///     IfaceMgrTestConfig test_config(true);
+///     test_config.setIfaceFlags("eth1", FlagLoopback(false),
+///                               FlagRunning(true), FlagUp(false),
+///                               FlagInactive4(false), FlagInactive6(false));
+/// @endcode
+///
 //@{
 /// @brief Structure describing the loopback interface flag.
 struct FlagLoopback {
@@ -84,6 +113,25 @@ struct FlagInactive6 {
 ///
 /// This class provides a set of convenience functions that should be called
 /// by unit tests to configure the @c IfaceMgr with fake interfaces.
+///
+/// The class allows the caller to create custom fake interfaces (with custom
+/// IPv4 and IPv6 addresses, flags etc.), but it also provides a default
+/// test configuration for interfaces as follows:
+/// - lo
+///   - 127.0.0.1
+///   - ::1
+/// - eth0
+///   - 10.0.0.1
+///   - fe80::3a60:77ff:fed5:cdef
+///   - 2001:db8:1::1
+/// - eth1
+///   - 192.0.2.3
+///   - fe80::3a60:77ff:fed5:abcd
+///
+/// For all interfaces the following flags are set:
+/// - multicast
+/// - up
+/// - running
 class IfaceMgrTestConfig : public boost::noncopyable {
 public:
 
@@ -106,7 +154,7 @@ public:
     ///
     /// @param iface_name Name of the interface on which new address should
     /// be configured.
-    /// @param IPv4 or IPv6 address to be configured on the interface.
+    /// @param address IPv4 or IPv6 address to be configured on the interface.
     void addAddress(const std::string& iface_name,
                     const asiolink::IOAddress& address);
 
@@ -165,6 +213,7 @@ public:
     ///
     /// This function configures interface with new values for flags.
     ///
+    /// @param name Interface name.
     /// @param loopback Specifies if interface is a loopback interface.
     /// @param up Specifies if the interface is up.
     /// @param running Specifies if the interface is running.

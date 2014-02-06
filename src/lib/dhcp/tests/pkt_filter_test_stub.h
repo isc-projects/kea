@@ -65,7 +65,9 @@ public:
     /// fallback socket descriptor is set to a negative value.
     virtual SocketInfo openSocket(const Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
-                                  const uint16_t port, const bool, const bool);
+                                  const uint16_t port,
+                                  const bool receive_bcast,
+                                  const bool send_bcast);
 
     /// @brief Simulate reception of the DHCPv4 message.
     ///
