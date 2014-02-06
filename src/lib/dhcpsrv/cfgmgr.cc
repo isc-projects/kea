@@ -236,7 +236,7 @@ CfgMgr::getSubnet4(const std::string& iface_name) const {
                   " doesn't exist and therefore it is impossible"
                   " to find a suitable subnet for its IPv4 address");
     }
-    IOAddress addr("::1");
+    IOAddress addr("0.0.0.0");
     // If IPv4 address assigned to the interface exists, find a suitable
     // subnet for it, else return NULL pointer to indicate that no subnet
     // could be found.

@@ -718,8 +718,8 @@ TEST_F(CfgMgrTest, getSubnet4ForInterface) {
 
     // Initially, there are no subnets configured, so none of the IPv4
     // addresses assigned to eth0 and eth1 can match with any subnet.
-    ASSERT_FALSE(CfgMgr::instance().getSubnet4("eth0"));
-    ASSERT_FALSE(CfgMgr::instance().getSubnet4("eth1"));
+    EXPECT_FALSE(CfgMgr::instance().getSubnet4("eth0"));
+    EXPECT_FALSE(CfgMgr::instance().getSubnet4("eth1"));
 
     // Configure first subnet which address on eth0 corresponds to.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.1"), 24, 1, 2, 3));

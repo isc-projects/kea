@@ -12,7 +12,6 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <cc/data.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
@@ -50,7 +49,9 @@ public:
     /// a specified prefix.
     ///
     /// The subnet parameters (such as options, timers etc.) are aribitrarily
-    /// selected. The subnet and pool mask is always /24.
+    /// selected. The subnet and pool mask is always /24. The real configuration
+    /// would exclude .0 (network address) and .255 (broadcast address), but we
+    /// ignore that fact for the sake of test simplicity.
     ///
     /// @param prefix Prefix for a subnet.
     void configureSubnet(const std::string& prefix);
@@ -59,7 +60,9 @@ public:
     ///
     /// This function configures DHCPv4 server with two different subnets.
     /// The subnet parameters (such as options, timers etc.) are aribitrarily
-    /// selected. The subnet and pool mask is /24.
+    /// selected. The subnet and pool mask is /24. The real configuration
+    /// would exclude .0 (network address) and .255 (broadcast address), but we
+    /// ignore that fact for the sake of test simplicity.
     ///
     /// @param prefix1 Prefix of the first subnet to be configured.
     /// @param prefix2 Prefix of the second subnet to be configured.
@@ -98,18 +101,9 @@ public:
     /// @return Configured and parsed message.
     Pkt4Ptr createClientMessage(const Pkt4Ptr &msg, const std::string& iface);
 
-    /// @brief Runs DHCPv4 configuration from the JSON string.
-    ///
-    /// @param config String holding server configuration in JSON format.
-    void configure(const std::string& config);
-
-    /// @brief Server object to be unit tested.
-    NakedDhcpv4Srv srv_;
-
 };
 
-DirectClientTest::DirectClientTest()
-    : srv_(0) {
+DirectClientTest::DirectClientTest() : Dhcpv4SrvTest() {
 }
 
 void
@@ -185,19 +179,6 @@ DirectClientTest::createClientMessage(const Pkt4Ptr& msg,
     received->setRemoteAddr(IOAddress("0.0.0.0"));
 
     return (received);
-}
-
-void
-DirectClientTest::configure(const std::string& config) {
-    ElementPtr json = Element::fromJSON(config);
-    ConstElementPtr status;
-
-    // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv_, json));
-    ASSERT_TRUE(status);
-    int rcode;
-    ConstElementPtr comment = config::parseAnswer(rcode, status);
-    ASSERT_EQ(0, rcode);
 }
 
 // This test checks that the message from directly connected client

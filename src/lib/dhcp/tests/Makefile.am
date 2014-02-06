@@ -25,6 +25,13 @@ TESTS_ENVIRONMENT = \
 TESTS =
 if HAVE_GTEST
 
+# Creates a library which is shared by various unit tests which require
+# configuration of fake interfaces.
+# The libdhcp++ does not link with this library because this would cause
+# build failures being a result of concurrency between build of this
+# library and the unit tests when make -j option was used, as they
+# are built out of the same makefile. Instead, the libdhcp++ tests link to
+# files belonging to this library, directly.
 noinst_LTLIBRARIES = libdhcptest.la
 
 libdhcptest_la_SOURCES  = iface_mgr_test_config.cc iface_mgr_test_config.h
@@ -39,6 +46,7 @@ TESTS += libdhcp++_unittests
 libdhcp___unittests_SOURCES  = run_unittests.cc
 libdhcp___unittests_SOURCES += hwaddr_unittest.cc
 libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
+libdhcp___unittests_SOURCES += iface_mgr_test_config.cc iface_mgr_test_config.h
 libdhcp___unittests_SOURCES += libdhcp++_unittest.cc
 libdhcp___unittests_SOURCES += option4_addrlst_unittest.cc
 libdhcp___unittests_SOURCES += option4_client_fqdn_unittest.cc
@@ -61,6 +69,7 @@ libdhcp___unittests_SOURCES += pkt6_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_inet_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_inet6_unittest.cc
+libdhcp___unittests_SOURCES += pkt_filter_test_stub.cc pkt_filter_test_stub.h
 libdhcp___unittests_SOURCES += pkt_filter_test_utils.h pkt_filter_test_utils.cc
 libdhcp___unittests_SOURCES += pkt_filter6_test_utils.h pkt_filter6_test_utils.cc
 
@@ -84,7 +93,6 @@ libdhcp___unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 
 libdhcp___unittests_LDADD  = $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
 libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la

@@ -396,6 +396,7 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
     case DHCPRELEASE:
     case DHCPINFORM:
     case DHCPLEASEQUERY:
+    case DHCPBULKLEASEQUERY:
         return (BOOTREQUEST);
 
     case DHCPACK:
@@ -404,6 +405,7 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
     case DHCPLEASEUNASSIGNED:
     case DHCPLEASEUNKNOWN:
     case DHCPLEASEACTIVE:
+    case DHCPLEASEQUERYDONE:
         return (BOOTREPLY);
 
     default:

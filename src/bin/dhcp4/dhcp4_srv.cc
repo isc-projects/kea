@@ -266,7 +266,7 @@ Dhcpv4Srv::run() {
             continue;
         }
 
-        // We have sanity checked (in accept()) that the Message Type option
+        // We have sanity checked (in accept() that the Message Type option
         // exists, so we can safely get it here.
         int type = query->getType();
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_RECEIVED)
@@ -1573,15 +1573,12 @@ Dhcpv4Srv::accept(const Pkt4Ptr& query) const {
         return (false);
     }
 
-    // When receiving a packet without message type option, getType() will
-    // throw.
-    try {
-        query->getType();
-    } catch (...) {
-        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_NO_TYPE)
-            .arg(query->getIface());
+    // Check that the message type is accepted by the server. We rely on the
+    // function called to log a message if needed.
+    if (!acceptMessageType(query)) {
         return (false);
     }
+
     return (true);
 }
 
@@ -1595,11 +1592,51 @@ Dhcpv4Srv::acceptDirectRequest(const Pkt4Ptr& pkt) const {
         return (false);
     }
     static const IOAddress bcast("255.255.255.255");
-    return ((pkt->getLocalAddr() == bcast && !selectSubnet(pkt)) ? false : true);
+    return ((pkt->getLocalAddr() != bcast || selectSubnet(pkt)));
 }
 
 bool
-Dhcpv4Srv::acceptServerId(const Pkt4Ptr& pkt) const {
+Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
+    // When receiving a packet without message type option, getType() will
+    // throw.
+    int type;
+    try {
+        type = query->getType();
+
+    } catch (...) {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PACKET_DROP_NO_TYPE)
+            .arg(query->getIface());
+        return (false);
+    }
+
+    // If we receive a message with a non-existing type, we are logging it.
+    if (type > DHCPLEASEQUERYDONE) {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
+                  DHCP4_UNRECOGNIZED_RCVD_PACKET_TYPE)
+            .arg(type)
+            .arg(query->getTransid());
+        return (false);
+    }
+
+    // Once we know that the message type is within a range of defined DHCPv4
+    // messages, we do a detailed check to make sure that the received message
+    // is targeted at server. Note that we could have received some Offer
+    // message broadcasted by the other server to a relay. Even though, the
+    // server would rather unicast its response to a relay, let's be on the
+    // safe side. Also, we want to drop other messages which we don't support.
+    // All these valid messages that we are not going to process are dropped
+    // silently.
+    if ((type != DHCPDISCOVER) && (type != DHCPREQUEST) &&
+        (type != DHCPRELEASE) && (type != DHCPDECLINE) &&
+        (type != DHCPINFORM)) {
+        return (false);
+    }
+
+    return (true);
+}
+
+bool
+Dhcpv4Srv::acceptServerId(const Pkt4Ptr& query) const {
     // This function is meant to be called internally by the server class, so
     // we rely on the caller to sanity check the pointer and we don't check
     // it here.
@@ -1609,7 +1646,7 @@ Dhcpv4Srv::acceptServerId(const Pkt4Ptr& pkt) const {
     // Note that we don't check cases that server identifier is mandatory
     // but not present. This is meant to be sanity checked in other
     // functions.
-    OptionPtr option = pkt->getOption(DHO_DHCP_SERVER_IDENTIFIER);
+    OptionPtr option = query->getOption(DHO_DHCP_SERVER_IDENTIFIER);
     if (!option) {
         return (true);
     }
