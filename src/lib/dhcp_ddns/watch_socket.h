@@ -21,6 +21,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <stdint.h>
+
 namespace isc {
 namespace dhcp_ddns {
 

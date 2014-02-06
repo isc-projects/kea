@@ -17,6 +17,8 @@
 #include <dhcp_ddns/dhcp_ddns_log.h>
 #include <dhcp_ddns/watch_socket.h>
 
+#include <errno.h>
+
 namespace isc {
 namespace dhcp_ddns {
 
