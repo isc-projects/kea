@@ -116,7 +116,8 @@ TEST_F(Rdata_CAA_Test, fields) {
     EXPECT_NO_THROW(const generic::CAA rdata_caa2("0 relaxed-too \"ca.example.net\""));
     EXPECT_NO_THROW(const generic::CAA rdata_caa2("0 RELAXED.too \"ca.example.net\""));
 
-    // No value
+    // No value (this is redundant to the last test case in the
+    // .createFromText test
     EXPECT_NO_THROW(const generic::CAA rdata_caa2("0 issue"));
 
     // > 255 would be broken
