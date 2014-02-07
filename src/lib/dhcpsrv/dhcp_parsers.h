@@ -765,14 +765,13 @@ class RelayInfoParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor
-    /// @param dummy first argument is ignored, all Parser constructors
+    /// @param unused first argument is ignored, all Parser constructors
     /// accept string as first argument.
     /// @param relay_info is the storage in which to store the parsed
-    /// @param default_addr 0.0.0.0 for IPv4 or :: for IPv6
-    /// relay information upon "commit".
-    RelayInfoParser(const std::string& dummy,
+    /// @param family specifies protocol family (IPv4 or IPv6)
+    RelayInfoParser(const std::string& unused,
                     const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
-                    const asiolink::IOAddress& default_addr);
+                    const isc::dhcp::Option::Universe family);
 
     /// @brief parses the actual relay parameters
     /// @param relay_info JSON strcture holding relay parameters to parse
@@ -782,6 +781,16 @@ public:
     virtual void commit();
 
 protected:
+
+    /// @brief Creates a parser for the given "relay" member element id.
+    ///
+    /// The elements currently supported are:
+    /// -# ip-address
+    ///
+    /// @param config_id is the "item_name" for a specific member element of
+    /// the "relay" specification.
+    ///
+    /// @return returns a pointer to newly created parser.
     isc::dhcp::ParserPtr
     createConfigParser(const std::string& parser);
 
@@ -793,6 +802,9 @@ protected:
 
     /// Storage for subnet-specific string values.
     StringStoragePtr string_values_;
+
+    /// Protocol family (IPv4 or IPv6)
+    Option::Universe family_;
 };
 
 /// @brief this class parses a single subnet

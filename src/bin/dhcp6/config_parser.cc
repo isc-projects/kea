@@ -416,7 +416,7 @@ protected:
         } else if (config_id.compare("pool") == 0) {
             parser = new Pool6Parser(config_id, pools_);
         } else if (config_id.compare("relay") == 0) {
-            parser = new RelayInfoParser(config_id, relay_info_, IOAddress("::"));
+            parser = new RelayInfoParser(config_id, relay_info_, Option::V6);
         } else if (config_id.compare("pd-pools") == 0) {
             parser = new PdPoolListParser(config_id, pools_);
         } else if (config_id.compare("option-data") == 0) {

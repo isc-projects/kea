@@ -211,7 +211,7 @@ protected:
         } else if (config_id.compare("pool") == 0) {
             parser = new Pool4Parser(config_id, pools_);
         } else if (config_id.compare("relay") == 0) {
-            parser = new RelayInfoParser(config_id, relay_info_, IOAddress("0.0.0.0"));
+            parser = new RelayInfoParser(config_id, relay_info_, Option::V4);
         } else if (config_id.compare("option-data") == 0) {
            parser = new OptionDataListParser(config_id, options_,
                                              global_context_,

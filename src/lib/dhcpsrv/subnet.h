@@ -396,7 +396,7 @@ public:
         static_id_ = 1;
     }
 
-    /// @brief Sets address of the relay
+    /// @brief Sets information about relay
     ///
     /// In some situations where there are shared subnets (i.e. two different
     /// subnets are available on the same physical link), there is only one
@@ -411,8 +411,10 @@ public:
     /// from different subnet, so users won't tinker with their modems.
     ///
     /// Setting this parameter is not needed in most deployments.
+    /// This structure holds IP address only for now, but it is expected to
+    /// be extended in the future.
     ///
-    /// @param relay IP address of the relay
+    /// @param relay structure that contains relay information
     void setRelay(const isc::dhcp::Subnet::RelayInfo& relay);
 
     /// @brief Relay information
@@ -438,6 +440,8 @@ public:
     clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
 
     /// @brief adds class class_name to the list of supported classes
+    ///
+    /// Also see explanation note in @ref white_list_.
     ///
     /// @param class_name client class to be supported by this subnet
     void
@@ -575,6 +579,12 @@ protected:
     /// If defined, only clients belonging to that class will be allowed to use
     /// this particular subnet. The default value for this is "", which means
     /// that any client is allowed, regardless of its class.
+    ///
+    /// @todo This is just a single class for now, but it will eventually be
+    /// list of classes (only classes on the list are allowed, the rest is
+    /// rejected) and we'll also have black-list (only classes on the list are
+    /// rejected, the rest are allowed). Implementing this will require
+    /// fancy parser logic, so it may be a while until we support this.
     ClientClass white_list_;
 
 private:
