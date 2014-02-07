@@ -137,6 +137,7 @@ libb10_dns___la_SOURCES += master_loader.h
 libb10_dns___la_SOURCES += rrset_collection_base.h
 libb10_dns___la_SOURCES += rrset_collection.h rrset_collection.cc
 libb10_dns___la_SOURCES += zone_checker.h zone_checker.cc
+libb10_dns___la_SOURCES += rdata_pimpl_holder.h
 libb10_dns___la_SOURCES += rdata/generic/detail/char_string.h
 libb10_dns___la_SOURCES += rdata/generic/detail/char_string.cc
 libb10_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
