@@ -1629,6 +1629,10 @@ Dhcpv4Srv::acceptMessageType(const Pkt4Ptr& query) const {
     if ((type != DHCPDISCOVER) && (type != DHCPREQUEST) &&
         (type != DHCPRELEASE) && (type != DHCPDECLINE) &&
         (type != DHCPINFORM)) {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
+                  DHCP4_UNSUPPORTED_RCVD_PACKET_TYPE)
+            .arg(type)
+            .arg(query->getTransid());
         return (false);
     }
 
