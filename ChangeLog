@@ -1,3 +1,10 @@
+747.	[bug]		marcin
+	libdhcpsrv: server configuration mechanism allows creating definitions
+	for standard options for which Kea doesn't provide a definition yet.
+	Without this, the server administrator couldn't configure options for
+	which a definition didn't exist.
+	(Trac# 3309, git 16a6ed6e48a6a950670c4874a2e81b1faf287d99)
+
 746.	[func]		tomek
 	IOAddress no longer exposes underlying asio objects. The getAddress()
 	method has been removed and replaced with several convenience methods.
