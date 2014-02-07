@@ -24,6 +24,7 @@
 #include <dns/messagerenderer.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
+#include <dns/rdata_pimpl_holder.h>
 
 using namespace std;
 using boost::lexical_cast;
@@ -126,10 +127,10 @@ TLSA::constructFromLexer(MasterLexer& lexer) {
 TLSA::TLSA(const string& tlsa_str) :
     impl_(NULL)
 {
-    // We use auto_ptr here because if there is an exception in this
-    // constructor, the destructor is not called and there could be a
-    // leak of the TLSAImpl that constructFromLexer() returns.
-    std::auto_ptr<TLSAImpl> impl_ptr(NULL);
+    // We use a smart pointer here because if there is an exception in
+    // this constructor, the destructor is not called and there could be
+    // a leak of the TLSAImpl that constructFromLexer() returns.
+    RdataPimplHolder<TLSAImpl> impl_ptr;
 
     try {
         std::istringstream ss(tlsa_str);
