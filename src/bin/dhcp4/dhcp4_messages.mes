@@ -141,6 +141,12 @@ This debug message indicates that the message type carried in DHCPv4 option
 on the IANA website: http://www.iana.org/assignments/bootp-dhcp-parameters/bootp-dhcp-parameters.xhtml#message-type-53.
 The message will not be processed by the server.
 
+% DHCP4_UNSUPPORTED_RCVD_PACKET_TYPE received message (transaction id %1), having type %2 is not supported
+This debug message indicates that the message type carried in DHCPv4 option
+53 is valid but the message will not be processed by the server. This includes
+messages being normally sent by the server to the client, such as Offer, ACK,
+NAK etc.
+
 % DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of othe advertised
