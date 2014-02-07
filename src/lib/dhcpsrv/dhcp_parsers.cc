@@ -814,9 +814,10 @@ OptionDefListParser::commit() {
 //****************************** RelayInfoParser ********************************
 RelayInfoParser::RelayInfoParser(const std::string&,
                                  const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
-                                 const asiolink::IOAddress& default_addr)
-    :storage_(relay_info), local_(default_addr),
-     string_values_(new StringStorage()) {
+                                 const Option::Universe family)
+    :storage_(relay_info), local_(isc::asiolink::IOAddress(
+                                  family == Option::V4 ? "0.0.0.0" : "::")),
+     string_values_(new StringStorage()), family_(family) {
     if (!relay_info) {
         isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
                   << "relay-info storage may not be NULL");
@@ -834,9 +835,22 @@ RelayInfoParser::build(ConstElementPtr relay_info) {
     }
 
     // Get the IP address
-    asiolink::IOAddress ip(string_values_->getParam("ip-address"));
+    boost::scoped_ptr<asiolink::IOAddress> ip;
+    try {
+        ip.reset(new asiolink::IOAddress(string_values_->getParam("ip-address")));
+    } catch (...)  {
+        isc_throw(DhcpConfigError, "Failed to parse ip-address "
+                  "value: " << string_values_->getParam("ip-address"));
+    }
 
-    local_.addr_ = ip;
+    if ( (ip->isV4() && family_ != Option::V4) ||
+         (ip->isV6() && family_ != Option::V6) ) {
+        isc_throw(DhcpConfigError, "ip-address field " << ip->toText()
+                  << "does not have IP address of expected family type:"
+                  << (family_ == Option::V4?"IPv4":"IPv6"));
+    }
+
+    local_.addr_ = *ip;
 }
 
 isc::dhcp::ParserPtr
