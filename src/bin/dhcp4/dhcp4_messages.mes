@@ -135,10 +135,11 @@ A "libreload" command was issued to reload the hooks libraries but for
 some reason the reload failed.  Other error messages issued from the
 hooks framework will indicate the nature of the problem.
 
-% DHCP4_UNRECOGNIZED_RCVD_PACKET_TYPE received message (transaction id %1) has unregonized type %2
+% DHCP4_UNRECOGNIZED_RCVD_PACKET_TYPE received message (transaction id %1) has unrecognized type %2 in option 53
 This debug message indicates that the message type carried in DHCPv4 option
-53 is unrecognized by the server. The valid message types are available
-on the IANA website. The message will not be processed by the server.
+53 is unrecognized by the server. The valid message types are listed
+on the IANA website: http://www.iana.org/assignments/bootp-dhcp-parameters/bootp-dhcp-parameters.xhtml#message-type-53.
+The message will not be processed by the server.
 
 % DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
 This debug message indicates that the server successfully advertised
