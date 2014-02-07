@@ -952,4 +952,19 @@ TEST_F(MasterLoaderTest, previousInInclude) {
     checkARR("www.example.org");
 }
 
+TEST_F(MasterLoaderTest, numericOwnerName) {
+    const string input("$ORIGIN example.org.\n"
+                       "1 3600 IN A 192.0.2.1\n");
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+    EXPECT_TRUE(warnings_.empty());
+
+    checkRR("1.example.org", RRType::A(), "192.0.2.1");
+}
+
 }
