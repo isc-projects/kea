@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -338,8 +338,8 @@ NameChangeSender::peekAt(const size_t index) const {
 
 
 void
-NameChangeSender::assumeQueue(NameChangeSender& sourceSender) {
-    if (sourceSender.amSending()) {
+NameChangeSender::assumeQueue(NameChangeSender& source_sender) {
+    if (source_sender.amSending()) {
         isc_throw(NcrSenderError, "Cannot assume queue:"
                   " source sender is actively sending");
     }
@@ -349,17 +349,17 @@ NameChangeSender::assumeQueue(NameChangeSender& sourceSender) {
                   " target sender is actively sending");
     }
 
-    if (getQueueMaxSize() < sourceSender.getQueueSize()) {
+    if (getQueueMaxSize() < source_sender.getQueueSize()) {
         isc_throw(NcrSenderError, "Cannot assume queue:"
                   " source queue count exceeds target queue max");
     }
 
-    if (send_queue_.size() != 0) {
+    if (!send_queue_.empty()) {
         isc_throw(NcrSenderError, "Cannot assume queue:"
                   " target queue is not empty");
     }
 
-    send_queue_.swap(sourceSender.getSendQueue());
+    send_queue_.swap(source_sender.getSendQueue());
 }
 
 int

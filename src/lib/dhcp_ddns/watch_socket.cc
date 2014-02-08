@@ -17,16 +17,19 @@
 #include <dhcp_ddns/dhcp_ddns_log.h>
 #include <dhcp_ddns/watch_socket.h>
 
+#include <fcntl.h>
 #include <errno.h>
+#include <sys/select.h>
 
 namespace isc {
 namespace dhcp_ddns {
 
+
 const int WatchSocket::INVALID_SOCKET;
 const uint32_t WatchSocket::MARKER;
 
-WatchSocket::WatchSocket() 
-    : source_(INVALID_SOCKET), sink_(INVALID_SOCKET), ready_flag_(false) {
+WatchSocket::WatchSocket()
+    : source_(INVALID_SOCKET), sink_(INVALID_SOCKET) {
     // Open the pipe.
     int fds[2];
     if (pipe(fds)) {
@@ -36,18 +39,95 @@ WatchSocket::WatchSocket()
 
     source_ = fds[1];
     sink_ = fds[0];
+
+    if (fcntl(sink_, F_SETFL, O_NONBLOCK)) {
+        const char* errstr = strerror(errno);
+        isc_throw(WatchSocketError, "Cannot set sink to non-blocking: "
+                                     << errstr);
+    }
 }
 
 WatchSocket::~WatchSocket() {
+    closeSocket();
+}
+
+void
+WatchSocket::markReady() {
+    // Make sure it hasn't been orphaned!  Otherwise we may get SIGPIPE.
+    // We use fcntl to check as select() on some systems may show it as ready to read.
+    if (fcntl(sink_, F_GETFL) < 0) {
+        closeSocket();
+        isc_throw(WatchSocketError, "WatchSocket markReady - select_fd was closed!");
+    }
+
+    if (!isReady()) {
+        int nbytes = write (source_, &MARKER, sizeof(MARKER));
+        if (nbytes != sizeof(MARKER)) {
+            // If there's an error get the error message than close
+            // the pipe.  This should ensure any further use of the socket
+            // or testing the fd with select_fd will fail.
+            const char* errstr = strerror(errno);
+            closeSocket();
+            isc_throw(WatchSocketError, "WatchSocket markReady failed:"
+                      << " bytes written: " << nbytes << " : " << errstr);
+        }
+    }
+}
+
+bool
+WatchSocket::isReady() {
+    // Report it as not ready rather than error here.
+    if (sink_ == INVALID_SOCKET) {
+        return (false);
+    }
+
+    fd_set read_fds;
+    FD_ZERO(&read_fds);
+
+    // Add select_fd socket to listening set
+    FD_SET(sink_,  &read_fds);
+
+    // Set zero timeout (non-blocking).
+    struct timeval select_timeout;
+    select_timeout.tv_sec = 0;
+    select_timeout.tv_usec = 0;
+
+    // Return true only if read ready, treat error same as not ready.
+    return (select(sink_ + 1, &read_fds, NULL, NULL, &select_timeout) > 0);
+}
+
+void
+WatchSocket::clearReady() {
+    if (isReady()) {
+        uint32_t buf = 0;
+        int nbytes = read (sink_, &buf, sizeof(buf));
+        if ((nbytes != sizeof(MARKER) || (buf != MARKER))) {
+            // If there's an error get the error message than close
+            // the pipe.  This should ensure any further use of the socket
+            // or testing the fd with select_fd will fail.
+            const char* errstr = strerror(errno);
+            closeSocket();
+            isc_throw(WatchSocketError, "WatchSocket clearReady failed:"
+                      << " bytes read: " << nbytes << " : "
+                      << " value read: " << buf << " error :" <<errstr);
+        }
+    }
+}
+
+void
+WatchSocket::closeSocket() {
     // Close the pipe fds.  Technically a close can fail (hugely unlikely)
-    // but there's no recovery for it either.  If one does fail we log it 
-    // and go on. Plus no likes destructors that throw.
+    // but there's no recovery for it either.  If one does fail we log it
+    // and go on. Plus this is called by the destructor and no one likes
+    // destructors that throw.
     if (source_ != INVALID_SOCKET) {
         if (close(source_)) {
             const char* errstr = strerror(errno);
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_WATCH_SOURCE_CLOSE_ERROR)
                       .arg(errstr);
         }
+
+        source_ = INVALID_SOCKET;
     }
 
     if (sink_ != INVALID_SOCKET) {
@@ -56,44 +136,12 @@ WatchSocket::~WatchSocket() {
             LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_WATCH_SINK_CLOSE_ERROR)
                       .arg(errstr);
         }
+
+        sink_ = INVALID_SOCKET;
     }
 }
 
-void 
-WatchSocket::markReady() {
-    if (!isReady()) {
-        int nbytes = write (source_, &MARKER, sizeof(MARKER));
-        if (nbytes != sizeof(MARKER)) {
-            const char* errstr = strerror(errno);
-            isc_throw(WatchSocketError, "WatchSocket markReady failed:"
-                      << " bytes written: " << nbytes << " : " << errstr);
-        }
-
-        ready_flag_ = true;
-    } 
-}
-
-bool 
-WatchSocket::isReady() {
-    return (ready_flag_);
-}
-
-void 
-WatchSocket::clearReady() {
-    if (isReady()) {
-        uint32_t buf;
-        int nbytes = read (sink_, &buf, sizeof(buf));
-        if (nbytes != sizeof(MARKER)) { 
-            const char* errstr = strerror(errno);
-            isc_throw(WatchSocketError, "WatchSocket clearReady failed:"
-                      << " bytes read: " << nbytes << " : " << errstr);
-        }
-
-        ready_flag_ = false;
-    }
-}
-
-int 
+int
 WatchSocket::getSelectFd() {
     return (sink_);
 }

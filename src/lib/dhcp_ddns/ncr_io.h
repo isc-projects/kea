@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -554,28 +554,27 @@ public:
     /// messages from one sender to another. This is useful for dealing with
     /// dynamic configuration changes.
     ///
-    /// @param Sender from whom the queued messages will be taken
+    /// @param source_sender from whom the queued messages will be taken
     ///
     /// @throw NcrSenderError if either sender is in send mode, if the number of
     /// messages in the source sender's queue is larger than this sender's
     /// maxium queue size, or if this sender's queue is not empty.
-    void assumeQueue(NameChangeSender& fromSender);
+    void assumeQueue(NameChangeSender& source_sender);
 
-    /// @brief Returns a file description suitable for use with select
+    /// @brief Returns a file descriptor suitable for use with select
     ///
     /// The value returned is an open file descriptor which can be used with
     /// select() system call to monitor the sender for IO events.  This allows
     /// NameChangeSenders to be used in applications which use select, rather
     /// than IOService to wait for IO events to occur.
     ///
-    /// @note Attempting other use of this value may lead to unpredictable
+    /// @warning Attempting other use of this value may lead to unpredictable
     /// behavior in the sender.
     ///
     /// @return Returns an "open" file descriptor
     ///
     /// @throw NcrSenderError if the sender is not in send mode,
-    /// NotImplemented if the implementation does not support such an fd.
-    virtual int getSelectFd();
+    virtual int getSelectFd() = 0;
 
 protected:
     /// @brief Dequeues and sends the next request on the send queue.
