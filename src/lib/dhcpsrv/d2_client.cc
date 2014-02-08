@@ -173,7 +173,7 @@ D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
                 /// but are covered in Trac# 3328.
                 isc::asiolink::IOAddress any_addr("0.0.0.0");
                 uint32_t any_port = 0;
-                uint32_t queueMax = 1024;
+                uint32_t queue_max = 1024;
 
                 // Instantiate a new sender.
                 new_sender.reset(new dhcp_ddns::NameChangeUDPSender(
@@ -181,7 +181,7 @@ D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
                                                 new_config->getServerIp(),
                                                 new_config->getServerPort(),
                                                 new_config->getNcrFormat(),
-                                                *this, queueMax));
+                                                *this, queue_max));
                 break;
                 }
             default:
