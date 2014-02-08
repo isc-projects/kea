@@ -28,7 +28,6 @@
 #include <gtest/gtest.h>
 
 #include <sys/select.h>
-//#include <sys/ioctl.h>
 
 using namespace std;
 using namespace isc::dhcp;
