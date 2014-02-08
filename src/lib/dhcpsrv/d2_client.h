@@ -232,7 +232,8 @@ boost::function<void(const dhcp_ddns::NameChangeSender::Result result,
 /// provides services to store, update, and access the current dhcp-ddns
 /// configuration.  As for b10-dhcp-ddns communications, D2ClientMgr creates
 /// maintains a NameChangeSender appropriate to the current configuration and
-/// provides services to start, stop, and post NCRs to the sender.  Additionally/// there are methods to examine the queue of requests currently waiting for
+/// provides services to start, stop, and post NCRs to the sender.  Additionally
+/// there are methods to examine the queue of requests currently waiting for
 /// transmission.
 ///
 /// The manager also provides the mechanics to integrate the ASIO-based IO

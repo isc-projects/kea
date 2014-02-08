@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -71,7 +71,6 @@ const char *valid_msgs[] =
 };
 
 const char* TEST_ADDRESS = "127.0.0.1";
-//const char* TEST_ADDRESS = "192.0.2.10";
 const uint32_t LISTENER_PORT = 5301;
 const uint32_t SENDER_PORT = LISTENER_PORT+1;
 const long TEST_TIMEOUT = 5 * 1000;
@@ -315,8 +314,7 @@ TEST(NameChangeUDPSenderBasicTest, constructionTests) {
 /// @brief Tests NameChangeUDPSender basic send functionality
 /// This test verifies that:
 TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
-    isc::asiolink::IOAddress ip_address("127.0.0.1");
-    uint32_t port = 5301;
+    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
     isc::asiolink::IOService io_service;
     SimpleSendHandler ncr_handler;
 
@@ -325,9 +323,9 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
-    isc::asiolink::IOAddress any("0.0.0.0");
-    NameChangeUDPSender sender(any, 0, ip_address, port,
-                               FMT_JSON, ncr_handler, num_msgs);
+    NameChangeUDPSender sender(ip_address, SENDER_PORT, ip_address,
+                               LISTENER_PORT, FMT_JSON, ncr_handler,
+                               num_msgs, true);
 
     // Verify that we can start sending.
     EXPECT_NO_THROW(sender.startSending(io_service));
@@ -426,6 +424,45 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     EXPECT_EQ(0, sender.getQueueSize());
 }
 
+/// @brief Tests NameChangeUDPSender basic send  with INADDR_ANY and port 0.
+TEST(NameChangeUDPSenderBasicTest, anyAddressSend) {
+    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    isc::asiolink::IOAddress any_address("0.0.0.0");
+    isc::asiolink::IOService io_service;
+    SimpleSendHandler ncr_handler;
+
+    // Tests are based on a list of messages, get the count now.
+    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+
+    // Create the sender, setting the queue max equal to the number of
+    // messages we will have in the list.
+    NameChangeUDPSender sender(any_address, 0, ip_address, LISTENER_PORT,
+                               FMT_JSON, ncr_handler, num_msgs);
+
+    // Enter send mode.
+    ASSERT_NO_THROW(sender.startSending(io_service));
+    EXPECT_TRUE(sender.amSending());
+
+    // Fetch the sender's select-fd.
+    int select_fd = sender.getSelectFd();
+
+    // Create and queue up a message.
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[0]));
+    EXPECT_NO_THROW(sender.sendRequest(ncr));
+    EXPECT_EQ(1, sender.getQueueSize());
+
+    // message and the queue count should decrement accordingly.
+    // Execute at one ready handler.
+    ASSERT_TRUE(selectCheck(select_fd) > 0);
+    ASSERT_NO_THROW(io_service.run_one());
+
+    // Verify that sender shows no IO ready.
+    // and that the queue is empty.
+    EXPECT_EQ(0, selectCheck(select_fd));
+    EXPECT_EQ(0, sender.getQueueSize());
+}
+
 /// @brief Test the NameChangeSender::assumeQueue method.
 TEST(NameChangeSender, assumeQueue) {
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
@@ -519,9 +556,9 @@ public:
                                       *this, true));
 
         // Create our sender instance. Note that reuse_address is true.
-        sender_.reset(
-            new NameChangeUDPSender(addr, SENDER_PORT, addr, LISTENER_PORT,
-                                    FMT_JSON, *this, 100, true));
+         sender_.reset(
+             new NameChangeUDPSender(addr, SENDER_PORT, addr, LISTENER_PORT,
+                                     FMT_JSON, *this, 100, true));
 
         // Set the test timeout to break any running tasks if they hang.
         test_timer_.setup(boost::bind(&NameChangeUDPTest::testTimeoutHandler,
