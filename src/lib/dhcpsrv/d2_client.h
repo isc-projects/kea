@@ -417,8 +417,6 @@ public:
     /// transmitting requests, though any queued requests remain queued.
     /// Attempts to queue additional requests via sendRequest will fail.
     ///
-    /// @param io_service IOService to be used for sender IO event processing
-    ///
     /// @throw D2ClientError if sender instance is null. Underlying layer
     /// may throw NCRSenderExceptions exceptions.
     void stopSender();
