@@ -480,6 +480,7 @@ public:
     Pkt6Ptr captureRelayedSolicit();
     Pkt6Ptr captureDocsisRelayedSolicit();
     Pkt6Ptr captureeRouterRelayedSolicit();
+    Pkt6Ptr captureCableLabsShortVendorClass();
 
     /// @brief Auxiliary method that sets Pkt6 fields
     ///
