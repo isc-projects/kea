@@ -1,3 +1,12 @@
+748.	[bug]		marcin
+	b10-dhcp4 server picks a subnet, to assign address for a directly
+	connected client, using IP address of the interface on which the
+	client's message has been received. If the message is received on
+	the interface for which there is no suitable subnet, the message
+	is discarded. Also, the subnet for renewing client which unicasts
+	its request, is selected using ciaddr.
+	(Trac #3242, git 9e571cc217d6b1a2fd6fdae1565fcc6fde6d08b1)
+
 747.	[bug]		marcin
 	libdhcpsrv: server configuration mechanism allows creating definitions
 	for standard options for which Kea doesn't provide a definition yet.
