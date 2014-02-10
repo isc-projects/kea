@@ -219,7 +219,7 @@ public:
     /// to choose a different subnet. Server code has to offer a list
     /// of possible choices (i.e. all subnets).
     /// @return a pointer to const Subnet6 collection
-    const Subnet4Collection* getSubnets4() {
+    const Subnet4Collection* getSubnets4() const {
         return (&subnets4_);
     }
 
@@ -244,7 +244,19 @@ public:
     /// @param hint an address that belongs to a searched subnet
     ///
     /// @return a subnet object
-    Subnet4Ptr getSubnet4(const isc::asiolink::IOAddress& hint);
+    Subnet4Ptr getSubnet4(const isc::asiolink::IOAddress& hint) const;
+
+    /// @brief Returns a subnet for the specified local interface.
+    ///
+    /// This function checks that the IP address assigned to the specified
+    /// interface belongs to any IPv4 subnet configured, and returns this
+    /// subnet.
+    ///
+    /// @param iface Short name of the interface which is being checked.
+    ///
+    /// @return Pointer to the subnet matching interface specified or NULL
+    /// pointer if IPv4 address on the interface doesn't match any subnet.
+    Subnet4Ptr getSubnet4(const std::string& iface) const;
 
     /// @brief adds a subnet4
     void addSubnet4(const Subnet4Ptr& subnet);

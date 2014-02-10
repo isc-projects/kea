@@ -135,6 +135,18 @@ A "libreload" command was issued to reload the hooks libraries but for
 some reason the reload failed.  Other error messages issued from the
 hooks framework will indicate the nature of the problem.
 
+% DHCP4_UNRECOGNIZED_RCVD_PACKET_TYPE received message (transaction id %1) has unrecognized type %2 in option 53
+This debug message indicates that the message type carried in DHCPv4 option
+53 is unrecognized by the server. The valid message types are listed
+on the IANA website: http://www.iana.org/assignments/bootp-dhcp-parameters/bootp-dhcp-parameters.xhtml#message-type-53.
+The message will not be processed by the server.
+
+% DHCP4_UNSUPPORTED_RCVD_PACKET_TYPE received message (transaction id %1), having type %2 is not supported
+This debug message indicates that the message type carried in DHCPv4 option
+53 is valid but the message will not be processed by the server. This includes
+messages being normally sent by the server to the client, such as Offer, ACK,
+NAK etc.
+
 % DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of othe advertised
@@ -174,6 +186,13 @@ message.
 This warning message is issued when current server configuration specifies
 no interfaces that server should listen on, or specified interfaces are not
 configured to receive the traffic.
+
+% DHCP4_NO_SUBNET_FOR_DIRECT_CLIENT no suitable subnet configured for a direct client sending packet with transaction id %1, on interface %2, received message is dropped
+This info messsage is logged when received a message from a directly connected
+client but there is no suitable subnet configured for the interface on
+which this message has been received. The IPv4 address assigned on this
+interface must belong to one of the configured subnets. Otherwise
+received message is dropped.
 
 % DHCP4_NOT_RUNNING IPv4 DHCP server is not running
 A warning message is issued when an attempt is made to shut down the
