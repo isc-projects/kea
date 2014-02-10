@@ -774,7 +774,7 @@ public:
                     const isc::dhcp::Option::Universe family);
 
     /// @brief parses the actual relay parameters
-    /// @param relay_info JSON strcture holding relay parameters to parse
+    /// @param relay_info JSON structure holding relay parameters to parse
     virtual void build(isc::data::ConstElementPtr relay_info);
 
     /// @brief stores parsed info in relay_info
