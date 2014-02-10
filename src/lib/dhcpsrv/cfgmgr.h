@@ -20,7 +20,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
 #include <dhcp/classify.h>
-#include <dhcpsrv/d2_client.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
