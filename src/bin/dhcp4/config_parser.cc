@@ -180,7 +180,7 @@ public:
 
             // Set relay information if it was parsed
             if (relay_info_) {
-                sub4ptr->setRelay(*relay_info_);
+                sub4ptr->setRelayInfo(*relay_info_);
             }
 
             isc::dhcp::CfgMgr::instance().addSubnet4(sub4ptr);

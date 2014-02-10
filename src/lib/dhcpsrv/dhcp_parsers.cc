@@ -814,7 +814,7 @@ OptionDefListParser::commit() {
 //****************************** RelayInfoParser ********************************
 RelayInfoParser::RelayInfoParser(const std::string&,
                                  const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
-                                 const Option::Universe family)
+                                 const Option::Universe& family)
     :storage_(relay_info), local_(isc::asiolink::IOAddress(
                                   family == Option::V4 ? "0.0.0.0" : "::")),
      string_values_(new StringStorage()), family_(family) {

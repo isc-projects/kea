@@ -384,7 +384,7 @@ public:
 
             // Set relay infomation if it was provided
             if (relay_info_) {
-                sub6ptr->setRelay(*relay_info_);
+                sub6ptr->setRelayInfo(*relay_info_);
             }
 
             isc::dhcp::CfgMgr::instance().addSubnet6(sub6ptr);

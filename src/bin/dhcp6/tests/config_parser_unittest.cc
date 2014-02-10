@@ -2968,7 +2968,7 @@ TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
     Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::1"),
                                                       classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ("2001:db8:1::abcd", subnet->relay_.addr_.toText());
+    EXPECT_EQ("2001:db8:1::abcd", subnet->getRelayInfo().addr_.toText());
 }
 
 // Goal of this test is to verify that multiple subnets can be configured
