@@ -304,6 +304,10 @@ NameChangeUDPSender::doSend(NameChangeRequestPtr& ncr) {
                        send_callback_->getDataSource().get(), *send_callback_);
 
     // Set IO ready marker so sender activity is visible to select() or poll().
+    // Note, if this call throws it will manifest itself as a throw from
+    // from sendRequest() which the application calls directly and is documented
+    // as throwing exceptions; or caught inside invokeSendHandler() which
+    // will invoke the application's send_handler with an error status.
     watch_socket_->markReady();
 }
 
@@ -311,7 +315,18 @@ void
 NameChangeUDPSender::sendCompletionHandler(const bool successful,
                                            const UDPCallback *send_callback) {
     // Clear the IO ready marker.
-    watch_socket_->clearReady();
+    try {
+        watch_socket_->clearReady();
+    } catch (const std::exception& ex) {
+        // This can only happen if the WatchSocket's select_fd has been
+        // compromised which is a programmatic error. We'll log the error
+        // here, then continue on and process the IO result we were given.
+        // WatchSocket issue will resurface on the next send as a closed
+        // fd in markReady().  This allows application's handler to deal
+        // with watch errors more uniformly.
+        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_CLEAR_READY_ERROR)
+                 .arg(ex.what());
+    }
 
     Result result;
     if (successful) {
