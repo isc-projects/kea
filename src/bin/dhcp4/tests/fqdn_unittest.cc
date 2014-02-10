@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_int_array.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp_ddns/ncr_msg.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -31,16 +32,15 @@ using namespace isc::dhcp_ddns;
 
 namespace {
 
-class NameDhcpv4SrvTest : public Dhcpv4SrvFakeIfaceTest {
+class NameDhcpv4SrvTest : public Dhcpv4SrvTest {
 public:
-
     // Bit Constants for turning on and off DDNS configuration options.
     static const uint16_t ALWAYS_INCLUDE_FQDN = 1;
     static const uint16_t OVERRIDE_NO_UPDATE = 2;
     static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
     static const uint16_t REPLACE_CLIENT_NAME = 8;
 
-    NameDhcpv4SrvTest() : Dhcpv4SrvFakeIfaceTest() {
+    NameDhcpv4SrvTest() : Dhcpv4SrvTest() {
         srv_ = new NakedDhcpv4Srv(0);
         // Config DDNS to be enabled, all controls off
         enableD2();
@@ -154,7 +154,7 @@ public:
                                 const bool include_clientid = true) {
         Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
         pkt->setRemoteAddr(IOAddress("192.0.2.3"));
-        pkt->setIface("eth0");
+        pkt->setIface("eth1");
         // For DISCOVER we don't include server id, because client broadcasts
         // the message to all servers.
         if (msg_type != DHCPDISCOVER) {
@@ -357,6 +357,10 @@ public:
     /// @param response_flags Mask of expected FQDN flags in the response
     void flagVsConfigScenario(const uint8_t client_flags,
                        const uint8_t response_flags) {
+        // Create fake interfaces and open fake sockets.
+        IfaceMgrTestConfig iface_config(true);
+        IfaceMgr::instance().openSockets4();
+
         Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, client_flags,
                                           "myhost.example.com.",
                                           Option4ClientFqdn::FULL, true);
@@ -726,6 +730,9 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsLeaseMismatch) {
 // Test that the OFFER message generated as a result of the DISCOVER message
 // processing will not result in generation of the NameChangeRequests.
 TEST_F(NameDhcpv4SrvTest, processDiscover) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     Pkt4Ptr req = generatePktWithFqdn(DHCPDISCOVER, Option4ClientFqdn::FLAG_S |
                                       Option4ClientFqdn::FLAG_E,
                                       "myhost.example.com.",
@@ -741,6 +748,9 @@ TEST_F(NameDhcpv4SrvTest, processDiscover) {
 // Test that server generates client's hostname from the IP address assigned
 // to it when DHCPv4 Client FQDN option specifies an empty domain-name.
 TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                       Option4ClientFqdn::FLAG_E,
                                       "", Option4ClientFqdn::PARTIAL, true);
@@ -767,6 +777,10 @@ TEST_F(NameDhcpv4SrvTest, processRequestFqdnEmptyDomainName) {
 // to it when DHCPv4 Client FQDN option specifies an empty domain-name  AND
 // ddns updates are disabled.
 TEST_F(NameDhcpv4SrvTest, processRequestEmptyDomainNameDisabled) {
+    // Create fake interfaces and open fake sockets.
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     disableD2();
     Pkt4Ptr req = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                       Option4ClientFqdn::FLAG_E,
@@ -790,10 +804,13 @@ TEST_F(NameDhcpv4SrvTest, processRequestEmptyDomainNameDisabled) {
 // Test that server generates client's hostname from the IP address assigned
 // to it when Hostname option carries the top level domain-name.
 TEST_F(NameDhcpv4SrvTest, processRequestEmptyHostname) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     Pkt4Ptr req = generatePktWithHostname(DHCPREQUEST, ".");
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
-    req->setIface("eth0");
+    req->setIface("eth1");
 
     Pkt4Ptr reply;
     ASSERT_NO_THROW(reply = srv_->processRequest(req));
@@ -817,6 +834,9 @@ TEST_F(NameDhcpv4SrvTest, processRequestEmptyHostname) {
 // request but modify the DNS entries for the lease according to the contents
 // of the FQDN sent in the second request.
 TEST_F(NameDhcpv4SrvTest, processTwoRequestsFqdn) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     Pkt4Ptr req1 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                        Option4ClientFqdn::FLAG_E,
                                        "myhost.example.com.",
@@ -869,11 +889,14 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsFqdn) {
 // but modify the DNS entries for the lease according to the contents of the
 // Hostname sent in the second request.
 TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     Pkt4Ptr req1 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
 
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
-    req1->setIface("eth0");
+    req1->setIface("eth1");
 
 
     Pkt4Ptr reply;
@@ -896,7 +919,7 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
 
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
-    req2->setIface("eth0");
+    req2->setIface("eth1");
 
     ASSERT_NO_THROW(reply = srv_->processRequest(req2));
 
@@ -923,6 +946,9 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
 // DDNS updates are enabled that the server genenerates a NameChangeRequest
 // to remove entries corresponding to the released lease.
 TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     // Verify the updates are enabled.
     ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
 
@@ -965,6 +991,10 @@ TEST_F(NameDhcpv4SrvTest, processRequestRelease) {
 // and DDNS updates are disabled that server does NOT generate a
 // NameChangeRequest to remove entries corresponding to the released lease.
 TEST_F(NameDhcpv4SrvTest, processRequestReleaseUpdatesDisabled) {
+    // Create fake interfaces and open fake sockets.
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
     // Disable DDNS.
     disableD2();
     ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());

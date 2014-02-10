@@ -199,6 +199,24 @@ void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
     unicasts_.push_back(addr);
 }
 
+bool
+Iface::getAddress4(isc::asiolink::IOAddress& address) const {
+    // Iterate over existing addresses assigned to the interface.
+    // Try to find the one that is IPv4.
+    const AddressCollection& addrs = getAddresses();
+    for (AddressCollection::const_iterator addr = addrs.begin();
+         addr != addrs.end(); ++addr) {
+        // If address is IPv4, we assign it to the function argument
+        // and return true.
+        if (addr->isV4()) {
+            address = *addr;
+            return (true);
+        }
+    }
+    // There is no IPv4 address assigned to this interface.
+    return (false);
+}
+
 void IfaceMgr::closeSockets() {
     for (IfaceCollection::iterator iface = ifaces_.begin();
          iface != ifaces_.end(); ++iface) {

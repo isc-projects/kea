@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <asiolink/io_address.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -210,25 +211,10 @@ void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
 }
 
 Subnet4Ptr
-CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint) {
-
-    // If there's only one subnet configured, let's just use it
-    // The idea is to keep small deployments easy. In a small network - one
-    // router that also runs DHCPv6 server. Users specifies a single pool and
-    // expects it to just work. Without this, the server would complain that it
-    // doesn't have IP address on its interfaces that matches that
-    // configuration. Such requirement makes sense in IPv4, but not in IPv6.
-    // The server does not need to have a global address (using just link-local
-    // is ok for DHCPv6 server) from the pool it serves.
-    if (subnets4_.size() == 1) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_CFGMGR_ONLY_SUBNET4)
-                  .arg(subnets4_[0]->toText()).arg(hint.toText());
-        return (subnets4_[0]);
-    }
-
-    // If there is more than one, we need to choose the proper one
-    for (Subnet4Collection::iterator subnet = subnets4_.begin();
+CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint) const {
+    // Iterate over existing subnets to find a suitable one for the
+    // given address.
+    for (Subnet4Collection::const_iterator subnet = subnets4_.begin();
          subnet != subnets4_.end(); ++subnet) {
         if ((*subnet)->inRange(hint)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
@@ -242,6 +228,22 @@ CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_NO_SUBNET4)
               .arg(hint.toText());
     return (Subnet4Ptr());
+}
+
+Subnet4Ptr
+CfgMgr::getSubnet4(const std::string& iface_name) const {
+    Iface* iface = IfaceMgr::instance().getIface(iface_name);
+    // This should never happen in the real life. Hence we throw an exception.
+    if (iface == NULL) {
+        isc_throw(isc::BadValue, "interface " << iface_name <<
+                  " doesn't exist and therefore it is impossible"
+                  " to find a suitable subnet for its IPv4 address");
+    }
+    IOAddress addr("0.0.0.0");
+    // If IPv4 address assigned to the interface exists, find a suitable
+    // subnet for it, else return NULL pointer to indicate that no subnet
+    // could be found.
+    return (iface->getAddress4(addr) ? getSubnet4(addr) : Subnet4Ptr());
 }
 
 void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {

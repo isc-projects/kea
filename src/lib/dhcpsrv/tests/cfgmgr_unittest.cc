@@ -18,6 +18,7 @@
 #include <dhcpsrv/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 
 #include <gtest/gtest.h>
 
@@ -29,6 +30,7 @@
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::util;
 using namespace isc;
 
@@ -737,6 +739,47 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
     // and not the original configuration.
     EXPECT_EQ(*new_cfg, *updated_config);
     EXPECT_NE(*original_config, *updated_config);
+}
+
+// This test verfies that CfgMgr correctly determines that the address of the
+// interface belongs to existing IPv4 subnet.
+TEST_F(CfgMgrTest, getSubnet4ForInterface) {
+    IfaceMgrTestConfig config(true);
+
+    // Initially, there are no subnets configured, so none of the IPv4
+    // addresses assigned to eth0 and eth1 can match with any subnet.
+    EXPECT_FALSE(CfgMgr::instance().getSubnet4("eth0"));
+    EXPECT_FALSE(CfgMgr::instance().getSubnet4("eth1"));
+
+    // Configure first subnet which address on eth0 corresponds to.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.1"), 24, 1, 2, 3));
+    CfgMgr::instance().addSubnet4(subnet1);
+
+    // The address on eth0 should match the existing subnet.
+    Subnet4Ptr subnet1_ret;
+    subnet1_ret = CfgMgr::instance().getSubnet4("eth0");
+    ASSERT_TRUE(subnet1_ret);
+    EXPECT_EQ(subnet1->get().first, subnet1_ret->get().first);
+    // There should still be no match for eth1.
+    EXPECT_FALSE(CfgMgr::instance().getSubnet4("eth1"));
+
+    // Configure a second subnet.
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.1"), 24, 1, 2, 3));
+    CfgMgr::instance().addSubnet4(subnet2);
+
+    // There should be match between eth0 and subnet1 and between eth1 and
+    // subnet 2.
+    subnet1_ret = CfgMgr::instance().getSubnet4("eth0");
+    ASSERT_TRUE(subnet1_ret);
+    EXPECT_EQ(subnet1->get().first, subnet1_ret->get().first);
+    Subnet4Ptr subnet2_ret = CfgMgr::instance().getSubnet4("eth1");
+    ASSERT_TRUE(subnet2_ret);
+    EXPECT_EQ(subnet2->get().first, subnet2_ret->get().first);
+
+    // This function throws an exception if the name of the interface is wrong.
+    EXPECT_THROW(CfgMgr::instance().getSubnet4("bogus-interface"),
+                 isc::BadValue);
+
 }
 
 
