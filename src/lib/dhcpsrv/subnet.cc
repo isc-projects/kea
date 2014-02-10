@@ -83,12 +83,19 @@ Subnet::clientSupported(const isc::dhcp::ClientClasses& classes) const {
                        // support everyone.
     }
 
-    return (classes.contains(white_list_));
+    for (ClientClasses::const_iterator it = white_list_.begin();
+         it != white_list_.end(); ++it) {
+        if (classes.contains(*it)) {
+            return (true);
+        }
+    }
+
+    return (false);
 }
 
 void
 Subnet::allowClientClass(const isc::dhcp::ClientClass& class_name) {
-    white_list_ = class_name;
+    white_list_.insert(class_name);
 }
 
 void
