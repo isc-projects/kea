@@ -32,11 +32,11 @@ Subnet::Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
                const Triplet<uint32_t>& t2,
                const Triplet<uint32_t>& valid_lifetime,
                const isc::dhcp::Subnet::RelayInfo& relay)
-    :relay_(relay), id_(generateNextID()), prefix_(prefix), prefix_len_(len),
+    :id_(generateNextID()), prefix_(prefix), prefix_len_(len),
      t1_(t1), t2_(t2), valid_(valid_lifetime),
      last_allocated_ia_(lastAddrInPrefix(prefix, len)),
      last_allocated_ta_(lastAddrInPrefix(prefix, len)),
-     last_allocated_pd_(lastAddrInPrefix(prefix, len))
+     last_allocated_pd_(lastAddrInPrefix(prefix, len)), relay_(relay)
       {
     if ((prefix.isV6() && len > 128) ||
         (prefix.isV4() && len > 32)) {
@@ -72,7 +72,7 @@ Subnet::addOption(const OptionPtr& option, bool persistent,
 }
 
 void
-Subnet::setRelay(const isc::dhcp::Subnet::RelayInfo& relay) {
+Subnet::setRelayInfo(const isc::dhcp::Subnet::RelayInfo& relay) {
     relay_ = relay;
 }
 

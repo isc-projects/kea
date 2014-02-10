@@ -415,15 +415,18 @@ public:
     /// be extended in the future.
     ///
     /// @param relay structure that contains relay information
-    void setRelay(const isc::dhcp::Subnet::RelayInfo& relay);
+    void setRelayInfo(const isc::dhcp::Subnet::RelayInfo& relay);
 
-    /// @brief Relay information
+
+    /// @brief Returns const reference to relay information
     ///
-    /// See @ref RelayInfo for detailed description. This structure is public,
-    /// so its fields are easily accessible. Making it protected would bring in
-    /// the issue of returning references that may become stale after its parent
-    /// subnet object disappears.
-    RelayInfo relay_;
+    /// @note The returned reference is only valid as long as the object
+    /// returned it is valid.
+    ///
+    /// @return const reference to the relay information
+    const isc::dhcp::Subnet::RelayInfo& getRelayInfo() {
+        return (relay_);
+    }
 
     /// @brief checks whether this subnet supports client that belongs to
     ///        specified classes.
@@ -574,6 +577,14 @@ protected:
     /// @brief Name of the network interface (if connected directly)
     std::string iface_;
 
+    /// @brief Relay information
+    ///
+    /// See @ref RelayInfo for detailed description. This structure is public,
+    /// so its fields are easily accessible. Making it protected would bring in
+    /// the issue of returning references that may become stale after its parent
+    /// subnet object disappears.
+    RelayInfo relay_;
+
     /// @brief optional definition of a client class
     ///
     /// If defined, only clients belonging to that class will be allowed to use
@@ -585,6 +596,10 @@ protected:
     /// rejected) and we'll also have black-list (only classes on the list are
     /// rejected, the rest are allowed). Implementing this will require
     /// fancy parser logic, so it may be a while until we support this.
+    /// This will lead to changing type of white_list_ to ClientClasses.
+    /// Note that the interface will remain the same (allowClientClass()
+    /// would still take a single ClientClass. It will just be possible
+    /// to call it multiple times to allow multiple classes).
     ClientClass white_list_;
 
 private:
