@@ -254,6 +254,30 @@
                         "item_default": ""
                     }
                 },
+
+                { "item_name": "client-class",
+                  "item_type": "string",
+                  "item_optional": false,
+                  "item_default": "",
+                  "item_description" : "Restricts access to this subnet to specified client class (if defined)"
+                },
+
+                { "item_name": "relay",
+                  "item_type": "map",
+                  "item_optional": false,
+                  "item_default": {},
+                  "item_description" : "Structure holding relay information.",
+                  "map_item_spec": [
+                      {
+                          "item_name": "ip-address",
+                          "item_type": "string",
+                          "item_optional": false,
+                          "item_default": "::",
+                          "item_description" : "IPv6 address of the relay (defaults to :: if not specified)."
+                      }
+                   ]
+                },
+
                 {
                   "item_name": "pd-pools",
                   "item_type": "list",
