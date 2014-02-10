@@ -1738,6 +1738,72 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
     EXPECT_FALSE(sol2->inClass("docsis3.0"));
 }
 
+// Checks if the client-class field is indeed used for subnet selection.
+// Note that packet classification is already checked in Dhcpv6SrvTest
+// .clientClassification above.
+TEST_F(Dhcpv6SrvTest, clientClassify2) {
+
+    NakedDhcpv6Srv srv(0);
+
+    ConstElementPtr status;
+
+    // This test configures 2 subnets. We actually only need the
+    // first one, but since there's still this ugly hack that picks
+    // the pool if there is only one, we must use more than one
+    // subnet. That ugly hack will be removed in #3242, currently
+    // under review.
+
+    // The second subnet does not play any role here. The client's
+    // IP address belongs to the first subnet, so only that first
+    // subnet it being tested.
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " {  \"pool\": [ \"2001:db8:1::/64\" ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"client-class\": \"foo\" "
+        " }, "
+        " {  \"pool\": [ \"2001:db8:2::/64\" ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"client-class\": \"xyzzy\" "
+        " } "
+        "],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
+
+    // check if returned status is OK
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // This discover does not belong to foo class, so it will not
+    // be serviced
+    EXPECT_FALSE(srv.selectSubnet(sol));
+
+    // Let's add the packet to bar class and try again.
+    sol->addClass("bar");
+
+    // Still not supported, because it belongs to wrong class.
+    EXPECT_FALSE(srv.selectSubnet(sol));
+
+    // Let's add it to maching class.
+    sol->addClass("foo");
+
+    // This time it should work
+    EXPECT_TRUE(srv.selectSubnet(sol));
+}
+
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.

@@ -126,7 +126,8 @@ CfgMgr::getOptionDef(const std::string& option_space,
 }
 
 Subnet6Ptr
-CfgMgr::getSubnet6(const std::string& iface) {
+CfgMgr::getSubnet6(const std::string& iface,
+                   const isc::dhcp::ClientClasses& classes) {
 
     if (!iface.length()) {
         return (Subnet6Ptr());
@@ -135,6 +136,12 @@ CfgMgr::getSubnet6(const std::string& iface) {
     // If there is more than one, we need to choose the proper one
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
+
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
+
         if (iface == (*subnet)->getIface()) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET6_IFACE)
@@ -146,7 +153,8 @@ CfgMgr::getSubnet6(const std::string& iface) {
 }
 
 Subnet6Ptr
-CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
+CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint,
+                   const isc::dhcp::ClientClasses& classes) {
 
     // If there's only one subnet configured, let's just use it
     // The idea is to keep small deployments easy. In a small network - one
@@ -167,6 +175,11 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
 
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
+
         if ((*subnet)->inRange(hint)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET6)
@@ -181,7 +194,8 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     return (Subnet6Ptr());
 }
 
-Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option) {
+Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option,
+                              const isc::dhcp::ClientClasses& classes) {
     if (!iface_id_option) {
         return (Subnet6Ptr());
     }
@@ -190,6 +204,12 @@ Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option) {
     // defined, check if the interface-id is equal to what we are looking for
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
+
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
+
         if ( (*subnet)->getInterfaceId() &&
              ((*subnet)->getInterfaceId()->equal(iface_id_option))) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
@@ -211,11 +231,19 @@ void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
 }
 
 Subnet4Ptr
-CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint) const {
+CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint,
+                   const isc::dhcp::ClientClasses& classes) const {
     // Iterate over existing subnets to find a suitable one for the
     // given address.
     for (Subnet4Collection::const_iterator subnet = subnets4_.begin();
          subnet != subnets4_.end(); ++subnet) {
+
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
+
+        // Let's check if the client belongs to the given subnet
         if ((*subnet)->inRange(hint)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET4)
@@ -231,7 +259,8 @@ CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint) const {
 }
 
 Subnet4Ptr
-CfgMgr::getSubnet4(const std::string& iface_name) const {
+CfgMgr::getSubnet4(const std::string& iface_name,
+                   const isc::dhcp::ClientClasses& classes) const {
     Iface* iface = IfaceMgr::instance().getIface(iface_name);
     // This should never happen in the real life. Hence we throw an exception.
     if (iface == NULL) {
@@ -243,7 +272,7 @@ CfgMgr::getSubnet4(const std::string& iface_name) const {
     // If IPv4 address assigned to the interface exists, find a suitable
     // subnet for it, else return NULL pointer to indicate that no subnet
     // could be found.
-    return (iface->getAddress4(addr) ? getSubnet4(addr) : Subnet4Ptr());
+    return (iface->getAddress4(addr) ? getSubnet4(addr, classes) : Subnet4Ptr());
 }
 
 void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
