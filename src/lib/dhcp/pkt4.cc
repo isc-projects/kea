@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,6 +67,7 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       remote_port_(DHCP4_CLIENT_PORT),
       op_(BOOTREQUEST),
       hwaddr_(new HWAddr()),
+      hops_(0),
       transid_(0),
       secs_(0),
       flags_(0),
