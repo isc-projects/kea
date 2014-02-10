@@ -437,6 +437,11 @@ public:
     /// it is supported. On the other hand, client belonging to classes
     /// "foobar" and "zyxxy" is not supported.
     ///
+    /// @todo: Currently the logic is simple: client is supported if it belongs
+    /// to any class mentioned in white_list_. We will eventually need a
+    /// way to specify more fancy logic (e.g. to meet all classes, not just
+    /// any)
+    ///
     /// @param client_classes list of all classes the client belongs to
     /// @return true if client can be supported, false otherwise
     bool
@@ -588,19 +593,14 @@ protected:
     /// @brief optional definition of a client class
     ///
     /// If defined, only clients belonging to that class will be allowed to use
-    /// this particular subnet. The default value for this is "", which means
-    /// that any client is allowed, regardless of its class.
+    /// this particular subnet. The default value for this is an empty list,
+    /// which means that any client is allowed, regardless of its class.
     ///
-    /// @todo This is just a single class for now, but it will eventually be
-    /// list of classes (only classes on the list are allowed, the rest is
-    /// rejected) and we'll also have black-list (only classes on the list are
-    /// rejected, the rest are allowed). Implementing this will require
-    /// fancy parser logic, so it may be a while until we support this.
-    /// This will lead to changing type of white_list_ to ClientClasses.
-    /// Note that the interface will remain the same (allowClientClass()
-    /// would still take a single ClientClass. It will just be possible
-    /// to call it multiple times to allow multiple classes).
-    ClientClass white_list_;
+    /// @todo This is just a single list of allowed classes. We'll also need
+    /// to add a black-list (only classes on the list are rejected, the rest
+    /// are allowed). Implementing this will require more fancy parser logic,
+    /// so it may be a while until we support this.
+    ClientClasses white_list_;
 
 private:
 
