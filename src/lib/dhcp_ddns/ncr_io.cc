@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,7 @@ namespace dhcp_ddns {
 NameChangeProtocol stringToNcrProtocol(const std::string& protocol_str) {
     if (boost::iequals(protocol_str, "UDP")) {
         return (NCR_UDP);
-    } 
+    }
 
     if (boost::iequals(protocol_str, "TCP")) {
         return (NCR_TCP);
@@ -162,10 +162,7 @@ NameChangeSender::NameChangeSender(RequestSendHandler& send_handler,
       send_queue_max_(send_queue_max) {
 
     // Queue size must be big enough to hold at least 1 entry.
-    if (send_queue_max == 0) {
-        isc_throw(NcrSenderError, "NameChangeSender constructor"
-                  " queue size must be greater than zero");
-    }
+    setQueueMaxSize(send_queue_max);
 }
 
 void
@@ -316,6 +313,58 @@ NameChangeSender::clearSendQueue() {
     }
 
     send_queue_.clear();
+}
+
+void
+NameChangeSender::setQueueMaxSize(const size_t new_max) {
+    if (new_max == 0) {
+        isc_throw(NcrSenderError, "NameChangeSender:"
+                  " queue size must be greater than zero");
+    }
+
+    send_queue_max_ = new_max;
+
+}
+const NameChangeRequestPtr&
+NameChangeSender::peekAt(const size_t index) const {
+    if (index >= getQueueSize()) {
+        isc_throw(NcrSenderError,
+                  "NameChangeSender::peekAt peek beyond end of queue attempted"
+                  << " index: " << index << " queue size: " << getQueueSize());
+    }
+
+    return (send_queue_.at(index));
+}
+
+
+void
+NameChangeSender::assumeQueue(NameChangeSender& source_sender) {
+    if (source_sender.amSending()) {
+        isc_throw(NcrSenderError, "Cannot assume queue:"
+                  " source sender is actively sending");
+    }
+
+    if (amSending()) {
+        isc_throw(NcrSenderError, "Cannot assume queue:"
+                  " target sender is actively sending");
+    }
+
+    if (getQueueMaxSize() < source_sender.getQueueSize()) {
+        isc_throw(NcrSenderError, "Cannot assume queue:"
+                  " source queue count exceeds target queue max");
+    }
+
+    if (!send_queue_.empty()) {
+        isc_throw(NcrSenderError, "Cannot assume queue:"
+                  " target queue is not empty");
+    }
+
+    send_queue_.swap(source_sender.getSendQueue());
+}
+
+int
+NameChangeSender::getSelectFd() {
+    isc_throw(NotImplemented, "NameChangeSender::getSelectFd is not supported");
 }
 
 } // namespace isc::dhcp_ddns
