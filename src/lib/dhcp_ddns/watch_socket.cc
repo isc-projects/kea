@@ -53,11 +53,13 @@ WatchSocket::~WatchSocket() {
 
 void
 WatchSocket::markReady() {
-    // Make sure it hasn't been orphaned!  Otherwise we may get SIGPIPE.
-    // We use fcntl to check as select() on some systems may show it as ready to read.
+    // Make sure it hasn't been orphaned!  Otherwise we may get SIGPIPE.  We
+    // use fcntl to check as select() on some systems may show it as ready to
+    // read.
     if (fcntl(sink_, F_GETFL) < 0) {
         closeSocket();
-        isc_throw(WatchSocketError, "WatchSocket markReady - select_fd was closed!");
+        isc_throw(WatchSocketError, "WatchSocket markReady failed:"
+                  " select_fd was closed!");
     }
 
     if (!isReady()) {
