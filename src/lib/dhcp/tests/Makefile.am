@@ -44,6 +44,7 @@ libdhcptest_la_LIBADD    = $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 TESTS += libdhcp++_unittests
 
 libdhcp___unittests_SOURCES  = run_unittests.cc
+libdhcp___unittests_SOURCES += classify_unittest.cc
 libdhcp___unittests_SOURCES += hwaddr_unittest.cc
 libdhcp___unittests_SOURCES += iface_mgr_unittest.cc
 libdhcp___unittests_SOURCES += iface_mgr_test_config.cc iface_mgr_test_config.h

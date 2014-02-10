@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcp/classify.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_array.hpp>
@@ -47,9 +48,6 @@ public:
         UDP = 0, // most packets are UDP
         TCP = 1  // there are TCP DHCPv6 packets (bulk leasequery, failover)
     };
-
-    /// Container for storing client classes
-    typedef std::set<std::string> Classes;
 
     /// @brief defines relay search pattern
     ///
@@ -457,7 +455,7 @@ public:
     ///
     /// This field is public, so code can iterate over existing classes.
     /// Having it public also solves the problem of returned reference lifetime.
-    Classes classes_;
+    ClientClasses classes_;
 
 protected:
     /// Builds on wire packet for TCP transmission.
