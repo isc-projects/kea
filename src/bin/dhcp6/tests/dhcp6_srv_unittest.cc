@@ -1738,6 +1738,31 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
     EXPECT_FALSE(sol2->inClass("docsis3.0"));
 }
 
+// This test checks that the server will handle a Solicit with the Vendor Class
+// having a length of 4 (enterprise-id only).
+TEST_F(Dhcpv6SrvTest, cableLabsShortVendorClass) {
+    NakedDhcpv6Srv srv(0);
+
+    // Create a simple Solicit with the 4-byte long vendor class option.
+    Pkt6Ptr sol = captureCableLabsShortVendorClass();
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // Get Advertise...
+    ASSERT_FALSE(srv.fake_sent_.empty());
+    Pkt6Ptr adv = srv.fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // This is sent back to relay, so port is 547
+    EXPECT_EQ(DHCP6_SERVER_PORT, adv->getRemotePort());
+
+}
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.

@@ -299,5 +299,29 @@ DHCPv6
     return (pkt);
 }
 
+Pkt6Ptr isc::test::Dhcpv6SrvTest::captureCableLabsShortVendorClass() {
+    // This is a simple non-relayed Solicit:
+    // - client-identifier
+    // - IA_NA
+    // - Vendor Class (4 bytes)
+    //   - enterprise-id 4491
+    // - Vendor-specific Information
+    //   - enterprise-id 4491
+    std::string hex_string =
+        "01671cb90001000e0001000152ea903a08002758f1e80003000c00004bd10000000000"
+        "000000001000040000118b0011000a0000118b000100020020";
+
+    std::vector<uint8_t> bin;
+
+    // Decode the hex string and store it in bin (which happens
+    // to be OptionBuffer format)
+    isc::util::encode::decodeHex(hex_string, bin);
+
+    Pkt6Ptr pkt(new Pkt6(&bin[0], bin.size()));
+    captureSetDefaultFields(pkt);
+    return (pkt);
+
+}
+
 }; // end of isc::test namespace
 }; // end of isc namespace
