@@ -1,3 +1,9 @@
+749.	[bug]		tmark
+	b10-dhcp-ddns now sets the TTL value in RRs that add A, AAAA, or PTR DNS
+	entries to the lease length provided in instigating NameChangeRequest.
+	This corrected a bug in which the TTL was always set to 0.
+	(Trac# 3299, git dbacf27ece77f3d857da793341c6bd31ef1ea239)
+
 748.	[bug]		marcin
 	b10-dhcp4 server picks a subnet, to assign address for a directly
 	connected client, using IP address of the interface on which the
