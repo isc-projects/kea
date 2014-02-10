@@ -2850,7 +2850,7 @@ TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
     Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
                                                       classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ("192.0.2.123", subnet->relay_.addr_.toText());
+    EXPECT_EQ("192.0.2.123", subnet->getRelayInfo().addr_.toText());
 }
 
 // Goal of this test is to verify that multiple subnets can be configured

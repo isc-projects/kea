@@ -771,7 +771,7 @@ public:
     /// @param family specifies protocol family (IPv4 or IPv6)
     RelayInfoParser(const std::string& unused,
                     const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
-                    const isc::dhcp::Option::Universe family);
+                    const isc::dhcp::Option::Universe& family);
 
     /// @brief parses the actual relay parameters
     /// @param relay_info JSON structure holding relay parameters to parse

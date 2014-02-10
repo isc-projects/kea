@@ -49,7 +49,7 @@ TEST(Subnet4Test, in_range) {
     EXPECT_EQ(2000, subnet.getT2());
     EXPECT_EQ(3000, subnet.getValid());
 
-    EXPECT_EQ("0.0.0.0", subnet.relay_.addr_.toText());
+    EXPECT_EQ("0.0.0.0", subnet.getRelayInfo().addr_.toText());
 
     EXPECT_FALSE(subnet.inRange(IOAddress("192.0.0.0")));
     EXPECT_TRUE(subnet.inRange(IOAddress("192.0.2.0")));
@@ -65,10 +65,10 @@ TEST(Subnet4Test, in_range) {
 TEST(Subnet4Test, relay) {
     Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
 
-    EXPECT_EQ("0.0.0.0", subnet.relay_.addr_.toText());
+    EXPECT_EQ("0.0.0.0", subnet.getRelayInfo().addr_.toText());
 
-    subnet.setRelay(IOAddress("192.0.123.45"));
-    EXPECT_EQ("192.0.123.45", subnet.relay_.addr_.toText());
+    subnet.setRelayInfo(IOAddress("192.0.123.45"));
+    EXPECT_EQ("192.0.123.45", subnet.getRelayInfo().addr_.toText());
 }
 
 // Checks whether siaddr field can be set and retrieved correctly.
@@ -347,11 +347,11 @@ TEST(Subnet6Test, in_range) {
 TEST(Subnet6Test, relay) {
     Subnet6 subnet(IOAddress("2001:db8:1::"), 64, 1000, 2000, 3000, 4000);
 
-    EXPECT_EQ("::", subnet.relay_.addr_.toText());
+    EXPECT_EQ("::", subnet.getRelayInfo().addr_.toText());
 
-    subnet.setRelay(IOAddress("2001:ffff::1"));
+    subnet.setRelayInfo(IOAddress("2001:ffff::1"));
 
-    EXPECT_EQ("2001:ffff::1", subnet.relay_.addr_.toText());
+    EXPECT_EQ("2001:ffff::1", subnet.getRelayInfo().addr_.toText());
 }
 
 TEST(Subnet6Test, Pool6InSubnet6) {
