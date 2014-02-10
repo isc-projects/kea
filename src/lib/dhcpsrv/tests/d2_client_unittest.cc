@@ -15,7 +15,7 @@
 #include <config.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option6_client_fqdn.h>
-#include <dhcpsrv/d2_client.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>

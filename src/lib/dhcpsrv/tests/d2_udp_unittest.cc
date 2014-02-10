@@ -19,7 +19,7 @@
 #include <asio.hpp>
 #include <asiolink/io_service.h>
 #include <config.h>
-#include <dhcpsrv/d2_client.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/function.hpp>
