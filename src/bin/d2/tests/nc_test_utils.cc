@@ -427,15 +427,19 @@ void checkAddFwdAddressRequest(NameChangeTransaction& tran) {
     // Should be 2 RRs: 1 to add the FQDN/IP and one to add the DHCID RR
     checkRRCount(request, D2UpdateMessage::SECTION_UPDATE, 2);
 
+    // Fetch ttl.
+    uint32_t ttl = ncr->getLeaseLength();
+
     // First, Verify the FQDN/IP add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
                                                   SECTION_UPDATE, 0));
-    checkRR(rrset, exp_fqdn, dns::RRClass::IN(), exp_ip_rr_type, 0, ncr);
+    checkRR(rrset, exp_fqdn, dns::RRClass::IN(), exp_ip_rr_type, ttl, ncr);
 
     // Now, verify the DHCID add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
                                                   SECTION_UPDATE, 1));
-    checkRR(rrset, exp_fqdn, dns::RRClass::IN(), dns::RRType::DHCID(), 0, ncr);
+    checkRR(rrset, exp_fqdn, dns::RRClass::IN(), dns::RRType::DHCID(),
+            ttl, ncr);
 
     // Verify there are no RRs in the ADDITIONAL Section.
     checkRRCount(request, D2UpdateMessage::SECTION_ADDITIONAL, 0);
@@ -483,6 +487,9 @@ void checkReplaceFwdAddressRequest(NameChangeTransaction& tran) {
     // adds the new one.
     checkRRCount(request, D2UpdateMessage::SECTION_UPDATE, 2);
 
+    // Fetch ttl.
+    uint32_t ttl = ncr->getLeaseLength();
+
     // Verify the FQDN delete RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
                                                   SECTION_UPDATE, 0));
@@ -491,7 +498,7 @@ void checkReplaceFwdAddressRequest(NameChangeTransaction& tran) {
     // Verify the FQDN/IP add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
                                                   SECTION_UPDATE, 1));
-    checkRR(rrset, exp_fqdn, dns::RRClass::IN(), exp_ip_rr_type, 0, ncr);
+    checkRR(rrset, exp_fqdn, dns::RRClass::IN(), exp_ip_rr_type, ttl, ncr);
 
     // Verify there are no RRs in the ADDITIONAL Section.
     checkRRCount(request, D2UpdateMessage::SECTION_ADDITIONAL, 0);
@@ -520,6 +527,9 @@ void checkReplaceRevPtrsRequest(NameChangeTransaction& tran) {
     // Verify there are no RRs in the PREREQUISITE Section.
     checkRRCount(request, D2UpdateMessage::SECTION_PREREQUISITE, 0);
 
+    // Fetch ttl.
+    uint32_t ttl = ncr->getLeaseLength();
+
     // Verify the UPDATE Section.
     // It should contain 4 RRs:
     // 1. A delete all PTR RRs for the given IP
@@ -545,13 +555,13 @@ void checkReplaceRevPtrsRequest(NameChangeTransaction& tran) {
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
                                                   SECTION_UPDATE, 2));
     checkRR(rrset, exp_rev_addr, dns::RRClass::IN(), dns::RRType::PTR(),
-            0, ncr);
+            ttl, ncr);
 
     // Verify the DHCID add RR.
     ASSERT_TRUE(rrset = getRRFromSection(request, D2UpdateMessage::
                                                   SECTION_UPDATE, 3));
     checkRR(rrset, exp_rev_addr, dns::RRClass::IN(), dns::RRType::DHCID(),
-            0, ncr);
+            ttl, ncr);
 
     // Verify there are no RRs in the ADDITIONAL Section.
     checkRRCount(request, D2UpdateMessage::SECTION_ADDITIONAL, 0);
