@@ -12,9 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dhcp/iface_mgr.h>
 #include <dhcp_ddns/ncr_udp.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+
+#include <boost/bind.hpp>
 
 #include <string>
 
@@ -24,11 +27,13 @@ namespace isc {
 namespace dhcp {
 
 D2ClientMgr::D2ClientMgr() : d2_client_config_(new D2ClientConfig()),
-    name_change_sender_(), private_io_service_(), sender_io_service_(NULL) {
+    name_change_sender_(), private_io_service_(),
+    registered_select_fd_(dhcp_ddns::WatchSocket::INVALID_SOCKET) {
     // Default constructor initializes with a disabled configuration.
 }
 
 D2ClientMgr::~D2ClientMgr(){
+    stopSender();
 }
 
 void
@@ -209,14 +214,16 @@ D2ClientMgr::startSender(D2ClientErrorHandler error_handler,
     // Set the error handler.
     client_error_handler_ = error_handler;
 
-    // Remember the io service being used.
-    sender_io_service_ = &io_service;
-
     // Start the sender on the given service.
-    name_change_sender_->startSending(*sender_io_service_);
+    name_change_sender_->startSending(io_service);
 
-    /// @todo need to register sender's select-fd with IfaceMgr once 3315 is
-    /// done.
+    // Register sender's select-fd with IfaceMgr.
+    // We need to remember the fd that is registered so we can unregister later.
+    // IO error handling in the sender may alter its select-fd.
+    registered_select_fd_ = name_change_sender_->getSelectFd();
+    IfaceMgr::instance().addExternalSocket(registered_select_fd_,
+                                           boost::bind(&D2ClientMgr::runReadyIO,
+                                                       this));
 }
 
 bool
@@ -226,14 +233,16 @@ D2ClientMgr::amSending() const {
 
 void
 D2ClientMgr::stopSender() {
-    if (!name_change_sender_)  {
-        isc_throw(D2ClientError, "D2ClientMgr::stopSender sender is null");
+    /// Unregister sender's select-fd.
+    if (registered_select_fd_ != dhcp_ddns::WatchSocket::INVALID_SOCKET) {
+        IfaceMgr::instance().deleteExternalSocket(registered_select_fd_);
+        registered_select_fd_ = dhcp_ddns::WatchSocket::INVALID_SOCKET;
     }
 
-    /// @todo need to unregister sender's select-fd with IfaceMgr once 3315 is
-    /// done.
-
-    name_change_sender_->stopSending();
+    // If its not null, call stop.
+    if (name_change_sender_)  {
+        name_change_sender_->stopSending();
+    }
 }
 
 void
@@ -309,17 +318,13 @@ D2ClientMgr::getSelectFd() {
 
 void
 D2ClientMgr::runReadyIO() {
-    if (!sender_io_service_) {
+    if (!name_change_sender_) {
         // This should never happen.
         isc_throw(D2ClientError, "D2ClientMgr::runReadyIO"
-                  " sender io service is null");
+                  " name_change_sender is null");
     }
 
-    // We shouldn't be here if IO isn't ready to execute.
-    // By running poll we're gauranteed not to hang.
-    /// @todo Trac# 3325 requests that asiolink::IOService provide a
-    /// wrapper for poll().
-    sender_io_service_->get_io_service().poll();
+    name_change_sender_->runReadyIO();
 }
 
 };  // namespace dhcp
