@@ -194,8 +194,8 @@ TEST(WatchSocketTest, badReadOnClear) {
     /// @todo maybe clear should never throw, log only
     ASSERT_THROW(watch->clearReady(), WatchSocketError);
 
-    // Verify the select_fd fails as socket is invalid/closed.
-    EXPECT_EQ(-1, selectCheck(select_fd));
+    // Verify the select_fd does not evalute to ready.
+    EXPECT_NE(1, selectCheck(select_fd));
 
     // Verify that getSelectFd() returns INVALID.
     ASSERT_EQ(WatchSocket::INVALID_SOCKET, watch->getSelectFd());
