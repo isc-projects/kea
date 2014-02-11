@@ -195,9 +195,12 @@ CAA::CAA(uint8_t flags, const std::string& tag, const std::string& value) :
                   "CAA tag field is too large: " << tag.size());
     }
 
+    MasterToken::StringRegion region;
+    region.beg = &value[0]; // note std ensures this works even if str is empty
+    region.len = value.size();
+
     detail::CharStringData value_vec;
-    value_vec.reserve(value.size());
-    value_vec.insert(value_vec.end(), value.begin(), value.end());
+    detail::stringToCharStringData(region, value_vec);
 
     impl_ = new CAAImpl(flags, tag, value_vec);
 }
