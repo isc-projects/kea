@@ -19,6 +19,7 @@
 #include <asio.hpp>
 #include <asiolink/io_service.h>
 #include <config.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcpsrv/d2_client_mgr.h>
 #include <exceptions/exceptions.h>
 
@@ -375,5 +376,46 @@ TEST_F(D2ClientMgrTest, udpSendErrorHandler) {
     // Count should still be 1.
     ASSERT_EQ(1, error_handler_count_);
 }
+
+TEST_F(D2ClientMgrTest, ifaceRegister) {
+    // Enable DDNS with server at 127.0.0.1/prot 53001 via UDP.
+    enableDdns("127.0.0.1", 530001, dhcp_ddns::NCR_UDP);
+
+    // Place sender in send mode.
+    ASSERT_NO_THROW(startSender(getErrorHandler()));
+
+    // Queue three messages.
+    for (int i = 0; i < 3; ++i) {
+        dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
+        ASSERT_NO_THROW(sendRequest(ncr));
+    }
+
+    EXPECT_EQ(3, getQueueSize());
+
+    // select_fd should evaluate to ready to read.
+    selectCheck(true);
+
+    // Calling receive should complete the first message and start the second.
+    IfaceMgr::instance().receive4(0, 0);
+
+    // Verify the callback hander was invoked, no errors counted.
+    EXPECT_EQ(2, getQueueSize());
+    ASSERT_EQ(1, callback_count_);
+    ASSERT_EQ(0, error_handler_count_);
+
+    // Stop the sender.  This should complete the second message but leave
+    // the third in the queue.
+    ASSERT_NO_THROW(stopSender());
+    EXPECT_EQ(1, getQueueSize());
+    ASSERT_EQ(2, callback_count_);
+    ASSERT_EQ(0, error_handler_count_);
+
+    // Calling recevie again should have no affect.
+    IfaceMgr::instance().receive4(0, 0);
+    EXPECT_EQ(1, getQueueSize());
+    ASSERT_EQ(2, callback_count_);
+    ASSERT_EQ(0, error_handler_count_);
+}
+
 
 } // end of anonymous namespace
