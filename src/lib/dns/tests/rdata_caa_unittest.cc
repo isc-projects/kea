@@ -134,6 +134,20 @@ TEST_F(Rdata_CAA_Test, fields) {
     EXPECT_THROW(const generic::CAA rdata_caa2(rdata_txt), InvalidRdataText);
 }
 
+TEST_F(Rdata_CAA_Test, characterStringValue) {
+    const generic::CAA rdata_caa_unquoted("0 issue ca.example.net");
+    EXPECT_EQ(0, rdata_caa_unquoted.compare(rdata_caa));
+
+    const generic::CAA rdata_caa_escape_X("0 issue ca.e\\xample.net");
+    EXPECT_EQ(0, rdata_caa_escape_X.compare(rdata_caa));
+
+    const generic::CAA rdata_caa_escape_DDD("0 issue ca.e\\120ample.net");
+    EXPECT_EQ(0, rdata_caa_escape_DDD.compare(rdata_caa));
+
+    const generic::CAA rdata_caa_multiline("0 issue (\nca.example.net)");
+    EXPECT_EQ(0, rdata_caa_multiline.compare(rdata_caa));
+}
+
 TEST_F(Rdata_CAA_Test, badText) {
     checkFromText_LexerError("0");
     checkFromText_LexerError("ZERO issue \"ca.example.net\"");
