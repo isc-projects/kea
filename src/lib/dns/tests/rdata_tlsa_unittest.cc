@@ -217,6 +217,11 @@ TEST_F(Rdata_TLSA_Test, createFromWire) {
                                       "rdata_tlsa_fromWire10"),
                  InvalidBufferPosition);
 
+    // certificate association data is empty
+    EXPECT_THROW(rdataFactoryFromFile(RRType("TLSA"), RRClass("IN"),
+                                      "rdata_tlsa_fromWire12"),
+                 InvalidRdataLength);
+
     // all RDATA is missing
     EXPECT_THROW(rdataFactoryFromFile(RRType("TLSA"), RRClass("IN"),
                                       "rdata_tlsa_fromWire11"),
@@ -228,17 +233,14 @@ TEST_F(Rdata_TLSA_Test, createFromParams) {
         0, 0, 1, "d2abde240d7cd3ee6b4b28c54df034b9"
                  "7983a1d16e8a410e4561cb106618e971");
     EXPECT_EQ(0, rdata_tlsa2.compare(rdata_tlsa));
+
+    // empty certificate association data should throw
+    EXPECT_THROW(const generic::TLSA rdata_tlsa2(0, 0, 1, ""),
+                 InvalidRdataText);
 }
 
 TEST_F(Rdata_TLSA_Test, toText) {
     EXPECT_TRUE(boost::iequals(tlsa_txt, rdata_tlsa.toText()));
-
-    const string tlsa_txt2("3 2 1");
-    const generic::TLSA rdata_tlsa2(tlsa_txt2);
-    EXPECT_TRUE(boost::iequals(tlsa_txt2, rdata_tlsa2.toText()));
-
-    const generic::TLSA rdata_tlsa3("3 2 1 ");
-    EXPECT_TRUE(boost::iequals(tlsa_txt2, rdata_tlsa3.toText()));
 }
 
 TEST_F(Rdata_TLSA_Test, toWire) {
@@ -255,7 +257,8 @@ TEST_F(Rdata_TLSA_Test, toWire) {
 }
 
 TEST_F(Rdata_TLSA_Test, compare) {
-    const generic::TLSA rdata_tlsa2("0 0 0");
+    const generic::TLSA rdata_tlsa2("0 0 0 d2abde240d7cd3ee6b4b28c54df034b9"
+                                    "7983a1d16e8a410e4561cb106618e971");
     EXPECT_EQ(-1, rdata_tlsa2.compare(rdata_tlsa));
     EXPECT_EQ(1, rdata_tlsa.compare(rdata_tlsa2));
 }
@@ -274,63 +277,5 @@ TEST_F(Rdata_TLSA_Test, getMatchingType) {
 
 TEST_F(Rdata_TLSA_Test, getDataLength) {
     EXPECT_EQ(32, rdata_tlsa.getDataLength());
-}
-
-TEST_F(Rdata_TLSA_Test, emptyCertificateAssociationDataFromWire) {
-    const uint8_t rdf_wiredata[] = {
-        // certificate usage
-        0x03,
-        // selector
-        0x01,
-        // matching type
-        0x02,
-    };
-
-    const generic::TLSA rdf =
-        dynamic_cast<const generic::TLSA&>
-        (*rdataFactoryFromFile(RRType("TLSA"), RRClass("IN"),
-                               "rdata_tlsa_fromWire12"));
-
-    EXPECT_EQ(3, rdf.getCertificateUsage());
-    EXPECT_EQ(1, rdf.getSelector());
-    EXPECT_EQ(2, rdf.getMatchingType());
-    EXPECT_EQ(0, rdf.getDataLength());
-
-    this->obuffer.clear();
-    rdf.toWire(this->obuffer);
-
-    EXPECT_EQ(3, this->obuffer.getLength());
-
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        rdf_wiredata, sizeof(rdf_wiredata));
-}
-
-TEST_F(Rdata_TLSA_Test, emptyCertificateAssociationDataFromString) {
-    const generic::TLSA rdata_tlsa2("3 2 1");
-    const uint8_t rdata_tlsa2_wiredata[] = {
-        // certificate usage
-        0x03,
-        // selector
-        0x02,
-        // matching type
-        0x01
-    };
-
-    EXPECT_EQ(3, rdata_tlsa2.getCertificateUsage());
-    EXPECT_EQ(2, rdata_tlsa2.getSelector());
-    EXPECT_EQ(1, rdata_tlsa2.getMatchingType());
-    EXPECT_EQ(0, rdata_tlsa2.getDataLength());
-
-    this->obuffer.clear();
-    rdata_tlsa2.toWire(this->obuffer);
-
-    EXPECT_EQ(3, this->obuffer.getLength());
-
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        rdata_tlsa2_wiredata, sizeof(rdata_tlsa2_wiredata));
 }
 }
