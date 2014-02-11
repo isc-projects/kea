@@ -576,6 +576,8 @@ public:
     /// @throw NcrSenderError if the sender is not in send mode,
     virtual int getSelectFd() = 0;
 
+    virtual bool ioReady() = 0;
+
 protected:
     /// @brief Dequeues and sends the next request on the send queue.
     ///
@@ -715,6 +717,14 @@ public:
     /// end of the queue.
     const NameChangeRequestPtr& peekAt(const size_t index) const;
 
+    /// @brief Processes sender IO events
+    ///
+    /// Executes at most one ready handler on the sender's IO service. If
+    /// no handlers are ready it returns immediately.
+    /// @warning - Running all ready handlers, in theory, could process all
+    /// messages currently queued.
+    virtual void runReadyIO();
+
 protected:
     /// @brief Returns a reference to the send queue.
     SendQueue& getSendQueue() {
@@ -746,6 +756,12 @@ private:
 
     /// @brief Pointer to the request which is in the process of being sent.
     NameChangeRequestPtr ncr_to_send_;
+
+    /// @brief Pointer to the IOService currently being used by the sender.
+    /// @note We need to remember the io_service but we receive it by
+    /// reference.  Use a raw pointer to store it.  This value should never be
+    /// exposed and is only valid while in send mode.
+    asiolink::IOService* io_service_;
 };
 
 /// @brief Defines a smart pointer to an instance of a sender.

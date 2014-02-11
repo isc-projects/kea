@@ -361,7 +361,11 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
 
     // Verify select_fd is valid and currently shows no ready to read.
     ASSERT_NE(dhcp_ddns::WatchSocket::INVALID_SOCKET, select_fd);
+
+    // Make sure select_fd does evaluates to not ready via select and
+    // that ioReady() method agrees.
     ASSERT_EQ(0, selectCheck(select_fd));
+    ASSERT_FALSE(sender.ioReady());
 
     // Iterate over a series of messages, sending each one. Since we
     // do not invoke IOService::run, then the messages should accumulate
@@ -392,18 +396,22 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     // IOService::run_one. This should complete the send of exactly one
     // message and the queue count should decrement accordingly.
     for (int i = num_msgs; i > 0; i--) {
-        // Verify that sender shows IO ready.
+        // Make sure select_fd does evaluates to ready via select and
+        // that ioReady() method agrees.
         ASSERT_TRUE(selectCheck(select_fd) > 0);
+        ASSERT_TRUE(sender.ioReady());
 
         // Execute at one ready handler.
-        io_service.run_one();
+        ASSERT_NO_THROW(sender.runReadyIO());
 
         // Verify that the queue count decrements in step with each run.
         EXPECT_EQ(i-1, sender.getQueueSize());
     }
 
-    // Verify that sender shows no IO ready.
-    EXPECT_EQ(0, selectCheck(select_fd));
+    // Make sure select_fd does evaluates to not ready via select and
+    // that ioReady() method agrees.
+    ASSERT_EQ(0, selectCheck(select_fd));
+    ASSERT_FALSE(sender.ioReady());
 
     // Verify that the queue is empty.
     EXPECT_EQ(0, sender.getQueueSize());
@@ -419,16 +427,21 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     // Verify that flushing the queue is not allowed in sending state.
     EXPECT_THROW(sender.clearSendQueue(), NcrSenderError);
 
-    // Put a message on the queue.
-    EXPECT_NO_THROW(sender.sendRequest(ncr));
-    EXPECT_EQ(1, sender.getQueueSize());
+    // Put num_msgs messages on the queue.
+    for (int i = 0; i < num_msgs; i++) {
+        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
+        EXPECT_NO_THROW(sender.sendRequest(ncr));
+    }
+
+    // Make sure we have number of messages expected.
+    EXPECT_EQ(num_msgs, sender.getQueueSize());
 
     // Verify that we can gracefully stop sending.
     EXPECT_NO_THROW(sender.stopSending());
     EXPECT_FALSE(sender.amSending());
 
     // Verify that the queue is preserved after leaving sending state.
-    EXPECT_EQ(1, sender.getQueueSize());
+    EXPECT_EQ(num_msgs - 1, sender.getQueueSize());
 
     // Verify that flushing the queue works when not sending.
     EXPECT_NO_THROW(sender.clearSendQueue());
@@ -454,23 +467,19 @@ TEST(NameChangeUDPSenderBasicTest, anyAddressSend) {
     ASSERT_NO_THROW(sender.startSending(io_service));
     EXPECT_TRUE(sender.amSending());
 
-    // Fetch the sender's select-fd.
-    int select_fd = sender.getSelectFd();
-
     // Create and queue up a message.
     NameChangeRequestPtr ncr;
     ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[0]));
     EXPECT_NO_THROW(sender.sendRequest(ncr));
     EXPECT_EQ(1, sender.getQueueSize());
 
-    // message and the queue count should decrement accordingly.
-    // Execute at one ready handler.
-    ASSERT_TRUE(selectCheck(select_fd) > 0);
-    ASSERT_NO_THROW(io_service.run_one());
+    // Verify we have a ready IO, then execute at one ready handler.
+    ASSERT_TRUE(sender.ioReady());
+    ASSERT_NO_THROW(sender.runReadyIO());
 
     // Verify that sender shows no IO ready.
     // and that the queue is empty.
-    EXPECT_EQ(0, selectCheck(select_fd));
+    ASSERT_FALSE(sender.ioReady());
     EXPECT_EQ(0, sender.getQueueSize());
 }
 
@@ -514,6 +523,9 @@ TEST(NameChangeSender, assumeQueue) {
     // Take sender1 out of send mode.
     ASSERT_NO_THROW(sender1.stopSending());
     ASSERT_FALSE(sender1.amSending());
+    // Stopping should have completed the first message.
+    --num_msgs;
+    EXPECT_EQ(num_msgs, sender1.getQueueSize());
 
     // Transfer should succeed. Verify sender1 has none,
     // and sender2 has num_msgs queued.
@@ -719,7 +731,7 @@ TEST(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
     // Run one handler. This should execute the send completion handler
     // after sending the first message.  Duing completion handling, we will
     // attempt to queue the second message which should fail.
-    ASSERT_NO_THROW(io_service.run_one());
+    ASSERT_NO_THROW(sender.runReadyIO());
 
     // Verify handler got called twice. First request should have be sent
     // without error, second call should have failed to send due to watch
@@ -767,7 +779,7 @@ TEST(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
     // after sending the message.  Duing completion handling clearing the
     // watch socket should fail, which will close the socket, but not
     // result in a throw.
-    ASSERT_NO_THROW(io_service.run_one());
+    ASSERT_NO_THROW(sender.runReadyIO());
 
     // Verify handler got called twice. First request should have be sent
     // without error, second call should have failed to send due to watch

@@ -542,6 +542,8 @@ public:
     /// @throw NcrSenderError if the sender is not in send mode,
     virtual int getSelectFd();
 
+    virtual bool ioReady();
+
 private:
     /// @brief IP address from which to send.
     isc::asiolink::IOAddress ip_address_;
