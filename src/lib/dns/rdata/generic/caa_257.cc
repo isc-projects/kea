@@ -37,19 +37,20 @@ using namespace isc::util;
 struct CAAImpl {
     // straightforward representation of CAA RDATA fields
     CAAImpl(uint8_t flags, const std::string& tag,
-            const std::vector<uint8_t>& value) :
+            const detail::CharStringData& value) :
         flags_(flags),
         tag_(tag),
         value_(value)
-    {}
+    {
+        if ((sizeof(flags) + 1 + tag_.size() + value_.size()) > 65535) {
+            isc_throw(InvalidRdataLength,
+                      "CAA Value field is too large: " << value_.size());
+        }
+    }
 
     uint8_t flags_;
     const std::string tag_;
-
-    // The first byte of this vector contains the length of the rest of
-    // the vector. This byte is actually unused and is skipped when
-    // reading the vector.
-    const detail::CharString value_;
+    const detail::CharStringData value_;
 };
 
 // helper function for string and lexer constructors
@@ -73,15 +74,12 @@ CAA::constructFromLexer(MasterLexer& lexer) {
     }
 
     // Value field may be empty.
-    std::vector<uint8_t> value;
+    detail::CharStringData value;
     MasterToken token = lexer.getNextToken(MasterToken::QSTRING, true);
     if ((token.getType() != MasterToken::END_OF_FILE) &&
         (token.getType() != MasterToken::END_OF_LINE))
     {
-        detail::stringToCharString(token.getStringRegion(), value);
-    } else {
-        // Convert it into a CharString.
-        value.push_back(0);
+        detail::stringToCharStringData(token.getStringRegion(), value);
     }
 
     return (new CAAImpl(flags, tag, value));
@@ -172,23 +170,15 @@ CAA::CAA(InputBuffer& buffer, size_t rdata_len) {
     }
 
     vector<uint8_t> tag_vec;
-    tag_vec.resize(tag_length + 1);
-    tag_vec[0] = tag_length;
-    buffer.readData(&tag_vec[1], tag_length);
+    tag_vec.resize(tag_length);
+    buffer.readData(&tag_vec[0], tag_length);
+    std::string tag(tag_vec.begin(), tag_vec.end());
     rdata_len -= tag_length;
 
-    const std::string tag = detail::charStringToString(tag_vec);
-
-    if (rdata_len > 255) {
-        isc_throw(InvalidRdataLength,
-                  "CAA value field is too long: " << rdata_len);
-    }
-
-    vector<uint8_t> value;
-    value.resize(rdata_len + 1);
-    value[0] = rdata_len;
+    detail::CharStringData value;
+    value.resize(rdata_len);
     if (rdata_len > 0) {
-        buffer.readData(&value[1], rdata_len);
+        buffer.readData(&value[0], rdata_len);
     }
 
     impl_ = new CAAImpl(flags, tag, value);
@@ -205,14 +195,8 @@ CAA::CAA(uint8_t flags, const std::string& tag, const std::string& value) :
                   "CAA tag field is too large: " << tag.size());
     }
 
-    if (value.size() > 255) {
-        isc_throw(isc::InvalidParameter,
-                  "CAA value field is too long: " << value.size());
-    }
-
-    std::vector<uint8_t> value_vec;
-    value_vec.reserve(value.size() + 1);
-    value_vec.push_back(value.size());
+    detail::CharStringData value_vec;
+    value_vec.reserve(value.size());
     value_vec.insert(value_vec.end(), value.begin(), value.end());
 
     impl_ = new CAAImpl(flags, tag, value_vec);
@@ -248,9 +232,9 @@ CAA::toWire(OutputBuffer& buffer) const {
     buffer.writeUint8(impl_->tag_.size());
     buffer.writeData(&impl_->tag_[0], impl_->tag_.size());
 
-    if (impl_->value_.size() > 1) {
-        buffer.writeData(&impl_->value_[1],
-                         impl_->value_.size() - 1);
+    if (!impl_->value_.empty()) {
+        buffer.writeData(&impl_->value_[0],
+                         impl_->value_.size());
     }
 }
 
@@ -263,9 +247,9 @@ CAA::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint8(impl_->tag_.size());
     renderer.writeData(&impl_->tag_[0], impl_->tag_.size());
 
-    if (impl_->value_.size() > 1) {
-        renderer.writeData(&impl_->value_[1],
-                           impl_->value_.size() - 1);
+    if (!impl_->value_.empty()) {
+        renderer.writeData(&impl_->value_[0],
+                           impl_->value_.size());
     }
 }
 
@@ -275,7 +259,7 @@ CAA::toText() const {
 
     result = lexical_cast<std::string>(static_cast<int>(impl_->flags_));
     result += " " + impl_->tag_;
-    result += " \"" + detail::charStringToString(impl_->value_) + "\"";
+    result += " \"" + detail::charStringDataToString(impl_->value_) + "\"";
 
     return (result);
 }
@@ -297,8 +281,8 @@ CAA::compare(const Rdata& other) const {
         return (result);
     }
 
-    return (detail::compareCharStrings(impl_->value_,
-                                       other_caa.impl_->value_));
+    return (detail::compareCharStringDatas(impl_->value_,
+                                           other_caa.impl_->value_));
 }
 
 uint8_t
