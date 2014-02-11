@@ -295,5 +295,10 @@ CAA::getTag() const {
     return (impl_->tag_);
 }
 
+const std::vector<uint8_t>&
+CAA::getValue() const {
+    return (impl_->value_);
+}
+
 // END_RDATA_NAMESPACE
 // END_ISC_NAMESPACE
