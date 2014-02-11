@@ -22,8 +22,6 @@
 #include "rrset_cache.h"
 #include "rrset_entry.h"
 
-using namespace isc::nsas;
-
 namespace isc {
 namespace cache {
 
@@ -33,7 +31,7 @@ class RRsetEntry;
 ///
 /// The object of MessageEntry represents one response message
 /// answered to the resolver client.
-class MessageEntry : public NsasEntry<MessageEntry> {
+class MessageEntry : public isc::nsas::NsasEntry<MessageEntry> {
 // Noncopyable
 private:
     MessageEntry(const MessageEntry& source);
@@ -92,7 +90,7 @@ public:
     /// \brief Get the hash key of the message entry.
     ///
     /// \return return hash key
-    virtual HashKey hashKey() const {
+    virtual isc::nsas::HashKey hashKey() const {
         return (*hash_key_ptr_);
     }
 
@@ -173,7 +171,7 @@ protected:
 
 private:
     std::string entry_name_; // The name for this entry(name + type)
-    HashKey* hash_key_ptr_;  // the key for messag entry in hash table.
+    isc::nsas::HashKey* hash_key_ptr_;  // the key for messag entry in hash table.
 
     std::vector<RRsetRef> rrsets_;
     RRsetCachePtr rrset_cache_; //Normal rrset cache
