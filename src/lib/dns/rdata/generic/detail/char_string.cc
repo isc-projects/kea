@@ -93,10 +93,60 @@ stringToCharString(const MasterToken::StringRegion& str_region,
     result[0] = result.size() - 1;
 }
 
+void
+stringToCharStringData(const MasterToken::StringRegion& str_region,
+                       CharStringData& result)
+{
+    bool escape = false;
+    const char* s = str_region.beg;
+    const char* const s_end = str_region.beg + str_region.len;
+
+    for (size_t n = str_region.len; n != 0; --n, ++s) {
+        int c = (*s & 0xff);
+        if (escape && std::isdigit(c) != 0) {
+            c = decimalToNumber(s, s_end);
+            assert(n >= 3);
+            n -= 2;
+            s += 2;
+        } else if (!escape && c == '\\') {
+            escape = true;
+            continue;
+        }
+        escape = false;
+        result.push_back(c);
+    }
+    if (escape) {               // terminated by non-escaped '\'
+        isc_throw(InvalidRdataText, "character-string ends with '\\'");
+    }
+}
+
 std::string
 charStringToString(const CharString& char_string) {
     std::string s;
     for (CharString::const_iterator it = char_string.begin() + 1;
+         it != char_string.end(); ++it) {
+        const uint8_t ch = *it;
+        if ((ch < 0x20) || (ch >= 0x7f)) {
+            // convert to escaped \xxx (decimal) format
+            s.push_back('\\');
+            s.push_back('0' + ((ch / 100) % 10));
+            s.push_back('0' + ((ch / 10) % 10));
+            s.push_back('0' + (ch % 10));
+            continue;
+        }
+        if ((ch == '"') || (ch == ';') || (ch == '\\')) {
+            s.push_back('\\');
+        }
+        s.push_back(ch);
+    }
+
+    return (s);
+}
+
+std::string
+charStringDataToString(const CharStringData& char_string) {
+    std::string s;
+    for (CharString::const_iterator it = char_string.begin();
          it != char_string.end(); ++it) {
         const uint8_t ch = *it;
         if ((ch < 0x20) || (ch >= 0x7f)) {
@@ -131,6 +181,34 @@ int compareCharStrings(const detail::CharString& self,
     const size_t other_len = other[0];
     const size_t cmp_len = std::min(self_len, other_len);
     const int cmp = std::memcmp(&self[1], &other[1], cmp_len);
+    if (cmp < 0) {
+        return (-1);
+    } else if (cmp > 0) {
+        return (1);
+    } else if (self_len < other_len) {
+        return (-1);
+    } else if (self_len > other_len) {
+        return (1);
+    } else {
+        return (0);
+    }
+}
+
+int compareCharStringDatas(const detail::CharStringData& self,
+                           const detail::CharStringData& other) {
+    if (self.size() == 0 && other.size() == 0) {
+        return (0);
+    }
+    if (self.size() == 0) {
+        return (-1);
+    }
+    if (other.size() == 0) {
+        return (1);
+    }
+    const size_t self_len = self.size();
+    const size_t other_len = other.size();
+    const size_t cmp_len = std::min(self_len, other_len);
+    const int cmp = std::memcmp(&self[0], &other[0], cmp_len);
     if (cmp < 0) {
         return (-1);
     } else if (cmp > 0) {
