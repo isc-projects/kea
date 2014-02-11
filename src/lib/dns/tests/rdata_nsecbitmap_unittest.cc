@@ -34,6 +34,7 @@ using boost::lexical_cast;
 using isc::UnitTestUtil;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using namespace isc::util;
 
 namespace {
 

@@ -41,8 +41,10 @@
 #include "nsas_test.h"
 
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::util;
 using namespace std;
+using isc::util::unittests::TestResolver;
 
 namespace isc {
 namespace nsas {
