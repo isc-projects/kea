@@ -203,9 +203,9 @@ TEST_F(Rdata_CAA_Test, createFromParams) {
                  isc::InvalidParameter);
 
     // Value is too long
-    const std::string value(256, 'a');
+    const std::string value(65536, 'a');
     EXPECT_THROW(const generic::CAA rdata_caa3(0, "issue", value),
-                 isc::InvalidParameter);
+                 InvalidRdataLength);
 }
 
 TEST_F(Rdata_CAA_Test, toText) {
