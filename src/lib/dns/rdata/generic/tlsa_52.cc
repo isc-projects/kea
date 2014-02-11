@@ -89,16 +89,16 @@ TLSA::constructFromLexer(MasterLexer& lexer) {
     }
     lexer.ungetToken();
 
+    if (certificate_assoc_data.empty()) {
+        isc_throw(InvalidRdataText, "Empty TLSA certificate association data");
+    }
+
     vector<uint8_t> data;
-    // If certificate association data is missing, it's OK. See the API
-    // documentation of the constructor.
-    if (certificate_assoc_data.size() > 0) {
-        try {
-            decodeHex(certificate_assoc_data, data);
-        } catch (const isc::BadValue& e) {
-            isc_throw(InvalidRdataText,
-                      "Bad TLSA certificate association data: " << e.what());
-        }
+    try {
+        decodeHex(certificate_assoc_data, data);
+    } catch (const isc::BadValue& e) {
+        isc_throw(InvalidRdataText,
+                  "Bad TLSA certificate association data: " << e.what());
     }
 
     return (new TLSAImpl(certificate_usage, selector, matching_type, data));
@@ -187,18 +187,26 @@ TLSA::TLSA(InputBuffer& buffer, size_t rdata_len) {
 
     vector<uint8_t> data;
     rdata_len -= 3;
-    if (rdata_len > 0) {
-        data.resize(rdata_len);
-        buffer.readData(&data[0], rdata_len);
+
+    if (rdata_len == 0) {
+        isc_throw(InvalidRdataLength,
+                  "Empty TLSA certificate association data");
     }
+
+    data.resize(rdata_len);
+    buffer.readData(&data[0], rdata_len);
 
     impl_ = new TLSAImpl(certificate_usage, selector, matching_type, data);
 }
 
 TLSA::TLSA(uint8_t certificate_usage, uint8_t selector,
-         uint8_t matching_type, const std::string& certificate_assoc_data) :
+           uint8_t matching_type, const std::string& certificate_assoc_data) :
     impl_(NULL)
 {
+    if (certificate_assoc_data.empty()) {
+        isc_throw(InvalidRdataText, "Empty TLSA certificate association data");
+    }
+
     vector<uint8_t> data;
     try {
         decodeHex(certificate_assoc_data, data);
@@ -237,10 +245,10 @@ TLSA::toWire(OutputBuffer& buffer) const {
     buffer.writeUint8(impl_->selector_);
     buffer.writeUint8(impl_->matching_type_);
 
-    if (!impl_->data_.empty()) {
-        buffer.writeData(&impl_->data_[0],
-                         impl_->data_.size());
-    }
+    // The constructors must ensure that the certificate association
+    // data field is not empty.
+    assert(!impl_->data_.empty());
+    buffer.writeData(&impl_->data_[0], impl_->data_.size());
 }
 
 void
@@ -249,19 +257,22 @@ TLSA::toWire(AbstractMessageRenderer& renderer) const {
     renderer.writeUint8(impl_->selector_);
     renderer.writeUint8(impl_->matching_type_);
 
-    if (!impl_->data_.empty()) {
-        renderer.writeData(&impl_->data_[0],
-                           impl_->data_.size());
-    }
+    // The constructors must ensure that the certificate association
+    // data field is not empty.
+    assert(!impl_->data_.empty());
+    renderer.writeData(&impl_->data_[0], impl_->data_.size());
 }
 
 string
 TLSA::toText() const {
+    // The constructors must ensure that the certificate association
+    // data field is not empty.
+    assert(!impl_->data_.empty());
+
     return (lexical_cast<string>(static_cast<int>(impl_->certificate_usage_)) + " " +
             lexical_cast<string>(static_cast<int>(impl_->selector_)) + " " +
-            lexical_cast<string>(static_cast<int>(impl_->matching_type_)) +
-            (impl_->data_.empty() ? "" :
-             " " + encodeHex(impl_->data_)));
+            lexical_cast<string>(static_cast<int>(impl_->matching_type_)) + " " +
+            encodeHex(impl_->data_));
 }
 
 int
