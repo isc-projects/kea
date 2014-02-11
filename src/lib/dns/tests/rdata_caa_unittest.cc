@@ -249,6 +249,19 @@ TEST_F(Rdata_CAA_Test, getTag) {
     EXPECT_EQ("issue", rdata_caa.getTag());
 }
 
+TEST_F(Rdata_CAA_Test, getValue) {
+    const uint8_t value_data[] = {
+        'c', 'a', '.',
+        'e', 'x', 'a', 'm', 'p', 'l', 'e', '.',
+        'n', 'e', 't'
+    };
+
+    const std::vector<uint8_t>& value = rdata_caa.getValue();
+    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
+                        &value[0], value.size(),
+                        value_data, sizeof(value_data));
+}
+
 TEST_F(Rdata_CAA_Test, emptyValueFromWire) {
     const uint8_t rdf_wiredata[] = {
         // flags

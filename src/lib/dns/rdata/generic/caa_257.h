@@ -45,6 +45,7 @@ public:
     ///
     uint8_t getFlags() const;
     const std::string& getTag() const;
+    const std::vector<uint8_t>& getValue() const;
 
 private:
     CAAImpl* constructFromLexer(MasterLexer& lexer);
