@@ -16,7 +16,7 @@
 #define D2_CLIENT_MGR_H
 
 /// @file d2_client_mgr.h Defines the D2ClientMgr class.
-/// This file defines the class Kea uses to act as a client of the 
+/// This file defines the class Kea uses to act as a client of the
 /// b10-dhcp-ddns module (aka D2).
 ///
 #include <asiolink/io_address.h>
@@ -62,13 +62,13 @@ boost::function<void(const dhcp_ddns::NameChangeSender::Result result,
 /// used by the NCR IPC with the select-driven IO used by Kea.  Senders expose
 /// a file descriptor, the "select-fd" that can monitored for read-readiness
 /// with the select() function (or variants).  D2ClientMgr provides a method,
-/// runReadyIO(), that will process all ready events on a sender's
-/// IOservice.  Track# 3315 is extending Kea's IfaceMgr to support the
-/// registration of multiple external sockets with callbacks that are then
-/// monitored with IO readiness via select().
-/// @todo D2ClientMgr will be modified to register the sender's select-fd and
-/// runReadyIO() with IfaceMgr when entering the send mode and will
-/// unregister when exiting send mode.
+/// runReadyIO(), that will instructs the sender to process the next ready
+/// ready IO handler on the sender's IOservice.  Track# 3315 extended
+/// Kea's IfaceMgr to support the registration of multiple external sockets
+/// with callbacks that are then monitored with IO readiness via select().
+/// D2ClientMgr registers the sender's select-fd and runReadyIO() with
+/// IfaceMgr when entering the send mode and unregisters it when exiting send
+/// mode.
 ///
 /// To place the manager in send mode, the calling layer must supply an error
 /// handler and optionally an IOService instance.  The error handler is invoked
@@ -161,7 +161,7 @@ public:
     /// Templated wrapper around the analyzeFqdn() allowing that method to
     /// be used for either IPv4 or IPv6 processing.  This methods resets all
     /// of the flags in the response to zero and then sets the S,N, and O
-    /// flags.  Any other flags are the responsiblity of the invoking layer.
+    /// flags.  Any other flags are the responsibility of the invoking layer.
     ///
     /// @param fqdn FQDN option from which to read client (inbound) flags
     /// @param fqdn_resp FQDN option to update with the server (outbound) flags
@@ -278,14 +278,17 @@ public:
 
     /// @brief Processes sender IO events
     ///
-    /// Runs all handlers ready for execution on the sender's IO service.
+    /// Serves as callback registered for the sender's select-fd with IfaceMgr.
+    /// It instructs the sender to execute the next ready IO handler.
+    /// It provides an instance method that can be bound via boost::bind, as
+    /// NameChangeSender is abstract.
     void runReadyIO();
 
 protected:
     /// @brief Function operator implementing the NCR sender callback.
     ///
     /// This method is invoked each time the NameChangeSender completes
-    /// an asychronous send.
+    /// an asynchronous send.
     ///
     /// @param result contains that send outcome status.
     /// @param ncr is a pointer to the NameChangeRequest that was
@@ -307,6 +310,14 @@ protected:
     /// mode.
     int getSelectFd();
 
+    /// @brief Fetches the select-fd that is currently registered.
+    ///
+    /// @return The currently registered select-fd or
+    /// dhcp_ddns::WatchSocket::INVALID_SOCKET.
+    ///
+    /// @note This is only exposed for testing purposes.
+    int getRegisteredSelectFd();
+
 private:
     /// @brief Container class for DHCP-DDNS configuration parameters.
     D2ClientConfigPtr d2_client_config_;
@@ -322,12 +333,8 @@ private:
     /// completes with a failed status.
     D2ClientErrorHandler client_error_handler_;
 
-    /// @brief Pointer to the IOService currently being used by the sender.
-    /// @note We need to remember the io_service given to the sender however
-    /// we may have received only a referenece to it from the calling layer.
-    /// Use a raw pointer to store it.  This value should never be exposed
-    /// and is only valid while in send mode.
-    asiolink::IOService* sender_io_service_;
+    /// @brief Remembers the select-fd registered with IfaceMgr.
+    int registered_select_fd_;
 };
 
 template <class T>
