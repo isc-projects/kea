@@ -207,6 +207,12 @@ TEST_F(Rdata_CAA_Test, createFromParams) {
     const generic::CAA rdata_caa2(0, "issue", "ca.example.net");
     EXPECT_EQ(0, rdata_caa2.compare(rdata_caa));
 
+    const generic::CAA rdata_caa4(0, "issue", "ca.e\\xample.net");
+    EXPECT_EQ(0, rdata_caa4.compare(rdata_caa));
+
+    const generic::CAA rdata_caa5(0, "issue", "ca.e\\120ample.net");
+    EXPECT_EQ(0, rdata_caa5.compare(rdata_caa));
+
     // Tag is empty
     EXPECT_THROW(const generic::CAA rdata_caa3(0, "", "ca.example.net"),
                  isc::InvalidParameter);
