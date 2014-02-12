@@ -382,6 +382,12 @@ public:
     /// supplied as the manager cannot know how an application should deal
     /// with send failures.
     /// @param io_service IOService to be used for sender IO event processing
+    /// @warning It is up to the invoking layer to ensure the io_service
+    /// instance used outlives the D2ClientMgr send mode. When the send mode
+    /// is exited, either expliclity by callind stopSender() or implicitly
+    /// through D2CLientMgr destruction, any ASIO objects such as sockets or
+    /// timers will be closed and released.  If the io_service goes out of scope
+    /// first this behavior could be unpredictable.
     ///
     /// @throw D2ClientError if sender instance is null. Underlying layer
     /// may throw NCRSenderExceptions exceptions.
