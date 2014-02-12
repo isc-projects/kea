@@ -154,7 +154,8 @@ CfgMgr::getSubnet6(const std::string& iface,
 
 Subnet6Ptr
 CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint,
-                   const isc::dhcp::ClientClasses& classes) {
+                   const isc::dhcp::ClientClasses& classes,
+                   bool relay) {
 
     // If there's only one subnet configured, let's just use it
     // The idea is to keep small deployments easy. In a small network - one
@@ -178,6 +179,12 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint,
         // If client is rejected because of not meeting client class criteria...
         if (!(*subnet)->clientSupported(classes)) {
             continue;
+        }
+
+        // If the hint is a relay address, and there is relay info specified
+        // for this subnet and those two match, then use this subnet.
+        if (relay && ((*subnet)->getRelayInfo().addr_ == hint) ) {
+            return (*subnet);
         }
 
         if ((*subnet)->inRange(hint)) {
@@ -232,7 +239,8 @@ void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
 
 Subnet4Ptr
 CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint,
-                   const isc::dhcp::ClientClasses& classes) const {
+                   const isc::dhcp::ClientClasses& classes,
+                   bool relay /* = false */) const {
     // Iterate over existing subnets to find a suitable one for the
     // given address.
     for (Subnet4Collection::const_iterator subnet = subnets4_.begin();
@@ -241,6 +249,12 @@ CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint,
         // If client is rejected because of not meeting client class criteria...
         if (!(*subnet)->clientSupported(classes)) {
             continue;
+        }
+
+        // If the hint is a relay address, and there is relay info specified
+        // for this subnet and those two match, then use this subnet.
+        if (relay && ((*subnet)->getRelayInfo().addr_ == hint) ) {
+            return (*subnet);
         }
 
         // Let's check if the client belongs to the given subnet
