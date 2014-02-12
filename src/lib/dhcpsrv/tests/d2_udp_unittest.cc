@@ -319,6 +319,11 @@ TEST_F(D2ClientMgrTest, udpSendExternalIOService) {
 
     // select_fd should evaluate to not ready to read.
     selectCheck(false);
+
+    // Explicitly stop the sender. This ensures the sender's
+    // ASIO socket is closed prior to the local io_service
+    // instance goes out of scope.
+    ASSERT_NO_THROW(stopSender());
 }
 
 /// @brief Checks that D2ClientMgr invokes the client error handler
