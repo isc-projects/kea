@@ -576,6 +576,9 @@ public:
     /// @throw NcrSenderError if the sender is not in send mode,
     virtual int getSelectFd() = 0;
 
+    /// @brief Returns whether or not the sender has IO ready to process.
+    ///
+    /// @return true if the sender has at IO ready, false otherwise.
     virtual bool ioReady() = 0;
 
 protected:
