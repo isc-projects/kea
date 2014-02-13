@@ -15,6 +15,7 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/opaque_data_tuple.h>
 #include <dhcp/option_vendor_class.h>
+#include <sstream>
 
 namespace isc {
 namespace dhcp {
@@ -161,6 +162,29 @@ OptionVendorClass::len() {
     }
 
     return (length);
+}
+
+std::string
+OptionVendorClass::toText(int indent) {
+    std::ostringstream s;
+
+    // Apply indentation
+    s << std::string(indent, ' ');
+    // Print type, length and first occurence of enterprise id.
+    s << "type=" << getType() << ", len=" << len() - getHeaderLen() << ", "
+        " enterprise id=0x" << std::hex << getVendorId() << std::dec;
+    // Iterate over all tuples and print their size and contents.
+    for (int i = 0; i < getTuplesNum(); ++i) {
+        // The DHCPv4 V-I Vendor Class has enterprise id before every tuple.
+        if ((getUniverse() == V4) && (i > 0)) {
+            s << ", enterprise id=0x" << std::hex << getVendorId() << std::dec;
+        }
+        // Print the tuple.
+        s << ", data-len" << i << "=" << getTuple(i).getLength();
+        s << ", vendor-class-data" << i << "='" << getTuple(i) << "'";
+    }
+
+    return (s.str());
 }
 
 } // namespace isc::dhcp
