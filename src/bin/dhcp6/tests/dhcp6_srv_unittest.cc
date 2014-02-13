@@ -1806,6 +1806,161 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
     EXPECT_TRUE(srv.selectSubnet(sol));
 }
 
+// Checks if relay IP address specified in the relay-info structure in
+// subnet4 is being used properly.
+TEST_F(Dhcpv6SrvTest, relayOverride) {
+
+    NakedDhcpv6Srv srv(0);
+
+    // We have 2 subnets defined. Note that both have a relay address
+    // defined. Both are not belonging to the subnets. That is
+    // important, because if the relay belongs to the subnet, there's
+    // no need to specify relay override.
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " {  \"pool\": [ \"2001:db8:1::/64\" ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"relay\": { "
+        "        \"ip-address\": \"2001:db8:3::1\""
+        "    }"
+        " }, "
+        " {  \"pool\": [ \"2001:db8:2::/64\" ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"relay\": { "
+        "        \"ip-address\": \"2001:db8:3::2\""
+        "    }"
+        " } "
+        "],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Use this config to set up the server
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Let's get the subnet configuration objects
+    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_EQ(2, subnets->size());
+
+    // Let's get them for easy reference
+    Subnet6Ptr subnet1 = (*subnets)[0];
+    Subnet6Ptr subnet2 = (*subnets)[1];
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet2);
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Now pretend the packet came via one relay.
+    Pkt6::RelayInfo relay;
+    relay.linkaddr_ = IOAddress("2001:db8:1::1");
+    relay.peeraddr_ = IOAddress("fe80::1");
+
+    sol->relay_info_.push_back(relay);
+     
+    // This is just a sanity check, we're using regular method: the relay
+    // belongs to the first (2001:db8:1::/64) subnet, so it's an easy decision.
+    EXPECT_TRUE(subnet1 == srv.selectSubnet(sol));
+
+    // Relay belongs to the second subnet, so it should be selected.
+    sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:2::1");
+    EXPECT_TRUE(subnet2 == srv.selectSubnet(sol));
+
+    // Now let's check if the relay override for the first subnets works
+    sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:3::1");
+    EXPECT_TRUE(subnet1 == srv.selectSubnet(sol));
+
+    // Now repeat that for relay matching the second subnet.
+    sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:3::2");
+    EXPECT_TRUE(subnet2 == srv.selectSubnet(sol));
+
+    // Finally, let's check that completely mismatched relay will not get us
+    // anything
+    sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:1234::1");
+    EXPECT_FALSE(srv.selectSubnet(sol));
+}
+
+// Checks if relay IP address specified in the relay-info structure can be
+// used together with client-classification.
+TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
+
+    NakedDhcpv6Srv srv(0);
+
+    // This test configures 2 subnets. They both are on the same link, so they
+    // have the same relay-ip address. Furthermore, the first subnet is
+    // reserved for clients that belong to class "foo".
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " {  \"pool\": [ \"2001:db8:1::/64\" ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"client-class\": \"foo\", "
+        "    \"relay\": { "
+        "        \"ip-address\": \"2001:db8:3::1\""
+        "    }"
+        " }, "
+        " {  \"pool\": [ \"2001:db8:2::/64\" ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"relay\": { "
+        "        \"ip-address\": \"2001:db8:3::1\""
+        "    }"
+        " } "
+        "],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Use this config to set up the server
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    // Let's get the subnet configuration objects
+    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_EQ(2, subnets->size());
+
+    // Let's get them for easy reference
+    Subnet6Ptr subnet1 = (*subnets)[0];
+    Subnet6Ptr subnet2 = (*subnets)[1];
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet2);
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Now pretend the packet came via one relay.
+    Pkt6::RelayInfo relay;
+    relay.linkaddr_ = IOAddress("2001:db8:3::1");
+    relay.peeraddr_ = IOAddress("fe80::1");
+
+    sol->relay_info_.push_back(relay);
+
+    // This packet does not belong to class foo, so it should be rejected in
+    // subnet[0], even though the relay-ip matches. It should be accepted in
+    // subnet[1], because the subnet matches and there are no class
+    // requirements.
+    EXPECT_TRUE(subnet2 == srv.selectSubnet(sol));
+
+    // Now let's add this packet to class foo and recheck. This time it should
+    // be accepted in the first subnet, because both class and relay-ip match.
+    sol->addClass("foo");
+    EXPECT_TRUE(subnet1 == srv.selectSubnet(sol));
+}
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.
