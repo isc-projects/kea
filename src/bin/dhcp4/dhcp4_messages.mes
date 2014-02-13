@@ -370,3 +370,8 @@ steps in the processing of incoming client message.
 This warning message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable
 cause is a misconfiguration of the server.
+
+% DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error : %1,  ncr: %2
+This error message indicates that IPv4 DHCP server attempted to send a DDNS
+update reqeust to the DHCP-DDNS server.  This is most likely a configuration or
+networking error.
