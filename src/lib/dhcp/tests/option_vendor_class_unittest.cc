@@ -394,5 +394,55 @@ TEST(OptionVendorClass, unpack6NoTuple) {
     EXPECT_EQ(0, vendor_class->getTuplesNum());
 }
 
+// Verifies correctness of the text representation of the DHCPv4 option.
+TEST(OptionVendorClass, toText4) {
+    OptionVendorClass vendor_class(Option::V4, 1234);
+    ASSERT_EQ(1, vendor_class.getTuplesNum());
+    // By default, there is an empty tuple in the option. Let's replace
+    // it with the tuple with some data.
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
+    tuple = "Hello world";
+    vendor_class.setTuple(0, tuple);
+    // And add another tuple so as resulting option is a bit more complex.
+    tuple = "foo";
+    vendor_class.addTuple(tuple);
+    // Check that the text representation of the option is as expected.
+    EXPECT_EQ("type=124, len=24,  enterprise id=0x4d2,"
+              " data-len0=11, vendor-class-data0='Hello world',"
+              " enterprise id=0x4d2, data-len1=3, vendor-class-data1='foo'",
+              vendor_class.toText());
+
+    // Check that indentation works.
+    EXPECT_EQ("   type=124, len=24,  enterprise id=0x4d2,"
+              " data-len0=11, vendor-class-data0='Hello world',"
+              " enterprise id=0x4d2, data-len1=3, vendor-class-data1='foo'",
+              vendor_class.toText(3));
+}
+
+// Verifies correctness of the text representation of the DHCPv4 option.
+TEST(OptionVendorClass, toText6) {
+    OptionVendorClass vendor_class(Option::V6, 1234);
+    ASSERT_EQ(0, vendor_class.getTuplesNum());
+    // By default, there is an empty tuple in the option. Let's replace
+    // it with the tuple with some data.
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
+    tuple = "Hello world";
+    vendor_class.addTuple(tuple);
+    // And add another tuple so as resulting option is a bit more complex.
+    tuple = "foo";
+    vendor_class.addTuple(tuple);
+    // Check that the text representation of the option is as expected.
+    EXPECT_EQ("type=16, len=22,  enterprise id=0x4d2,"
+              " data-len0=11, vendor-class-data0='Hello world',"
+              " data-len1=3, vendor-class-data1='foo'",
+              vendor_class.toText());
+
+    // Check that indentation works.
+    EXPECT_EQ("  type=16, len=22,  enterprise id=0x4d2,"
+              " data-len0=11, vendor-class-data0='Hello world',"
+              " data-len1=3, vendor-class-data1='foo'",
+              vendor_class.toText(2));
+}
+
 } // end of anonymous namespace
 

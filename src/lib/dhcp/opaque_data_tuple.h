@@ -70,8 +70,8 @@ public:
 
     /// @brief Default constructor.
     ///
-    /// @param length_field_size Length of the field which holds the size of
-    /// the tuple.
+    /// @param length_field_type Indicates a length of the field which holds
+    /// the size of the tuple.
     OpaqueDataTuple(LengthFieldType length_field_type = LENGTH_2_BYTES);
 
     /// @brief Constructor
@@ -79,11 +79,13 @@ public:
     /// Creates a tuple from on-wire data. It calls @c OpaqueDataTuple::unpack
     /// internally.
     ///
+    /// @param length_field_type Indicates the length of the field holding the
+    /// opaque data size.
     /// @param begin Iterator pointing to the begining of the buffer holding
     /// wire data.
     /// @param end Iterator pointing to the end of the buffer holding wire data.
     /// @tparam InputIterator Type of the iterators passed to this function.
-    /// @throw It may throw an exception if the @unpack throws.
+    /// @throw It may throw an exception if the @c unpack throws.
     template<typename InputIterator>
     OpaqueDataTuple(LengthFieldType length_field_type, InputIterator begin,
                     InputIterator end)

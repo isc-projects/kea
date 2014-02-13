@@ -138,6 +138,12 @@ public:
     /// @brief Returns the full length of the option, including option header.
     virtual uint16_t len();
 
+    /// @brief Returns text representation of the option.
+    ///
+    /// @param indent Number of space characters before text.
+    /// @return Text representation of the option.
+    virtual std::string toText(int indent = 0);
+
 private:
 
     /// @brief Returns option code appropriate for the specified universe.
