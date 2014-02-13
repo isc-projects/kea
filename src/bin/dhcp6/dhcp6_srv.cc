@@ -28,6 +28,7 @@
 #include <dhcp/option6_iaprefix.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_vendor_class.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/pkt6.h>
 #include <dhcp6/dhcp6_log.h>
@@ -54,6 +55,7 @@
 #include <time.h>
 #include <iomanip>
 #include <fstream>
+#include <sstream>
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -2436,36 +2438,32 @@ Dhcpv6Srv::ifaceMgrSocket6ErrorHandler(const std::string& errmsg) {
 }
 
 void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
+    OptionVendorClassPtr vclass = boost::dynamic_pointer_cast<
+        OptionVendorClass>(pkt->getOption(D6O_VENDOR_CLASS));
 
-    boost::shared_ptr<OptionCustom> vclass =
-        boost::dynamic_pointer_cast<OptionCustom>(pkt->getOption(D6O_VENDOR_CLASS));
-
-    if (!vclass) {
+    if (!vclass || vclass->getTuplesNum() == 0) {
         return;
     }
 
-    string classes = "";
+    std::ostringstream classes;
 
-    // DOCSIS specific section
-    if (vclass->readString(VENDOR_CLASS_STRING_INDEX)
-        .find(DOCSIS3_CLASS_MODEM) != std::string::npos) {
+    if (vclass->hasTuple(DOCSIS3_CLASS_MODEM)) {
         pkt->addClass(DOCSIS3_CLASS_MODEM);
-        classes += string(DOCSIS3_CLASS_MODEM) + " ";
-    } else
-    if (vclass->readString(VENDOR_CLASS_STRING_INDEX)
-        .find(DOCSIS3_CLASS_EROUTER) != std::string::npos) {
+        classes << DOCSIS3_CLASS_MODEM;
+
+    } else if (vclass->hasTuple(DOCSIS3_CLASS_EROUTER)) {
         pkt->addClass(DOCSIS3_CLASS_EROUTER);
-        classes += string(DOCSIS3_CLASS_EROUTER) + " ";
-    }else
-    {
-        // Otherwise use the string as is
-        classes += vclass->readString(VENDOR_CLASS_STRING_INDEX);
-        pkt->addClass(vclass->readString(VENDOR_CLASS_STRING_INDEX));
+        classes << DOCSIS3_CLASS_EROUTER;
+
+    } else {
+        pkt->addClass(vclass->getTuple(0).getText());
+        classes << vclass->getTuple(0);
+
     }
 
-    if (!classes.empty()) {
+    if (!classes.str().empty()) {
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
-            .arg(classes);
+            .arg(classes.str());
     }
 }
 
