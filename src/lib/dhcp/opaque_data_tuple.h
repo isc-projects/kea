@@ -150,9 +150,19 @@ public:
     /// @param other String to compare tuple data against.
     bool equals(const std::string& other) const;
 
+    /// @brief Returns tuple length data field type.
+    LengthFieldType getLengthFieldType() const {
+        return (length_field_type_);
+    }
+
     /// @brief Returns the length of the data in the tuple.
     size_t getLength() const {
         return (data_.size());
+    }
+
+    /// @brief Returns a total size of the tuple, including length field.
+    size_t getTotalLength() const {
+        return (getDataFieldSize() + getLength());
     }
 
     /// @brief Returns a reference to the buffer holding tuple data.
@@ -264,18 +274,21 @@ public:
     bool operator!=(const std::string& other);
     //@}
 
-private:
-
     /// @brief Returns the size of the tuple length field.
     ///
     /// The returned value depends on the @c LengthFieldType set for the tuple.
     int getDataFieldSize() const;
+
+private:
 
     /// @brief Buffer which holds the opaque tuple data.
     Buffer data_;
     /// @brief Holds a type of tuple size field (1 byte long or 2 bytes long).
     LengthFieldType length_field_type_;
 };
+
+/// @brief Pointer to the @c OpaqueDataTuple object.
+typedef boost::shared_ptr<OpaqueDataTuple> OpaqueDataTuplePtr;
 
 /// @brief Inserts the @c OpaqueDataTuple as a string into stream.
 ///
