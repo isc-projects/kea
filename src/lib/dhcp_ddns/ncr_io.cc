@@ -188,6 +188,9 @@ NameChangeSender::startSending(isc::asiolink::IOService& io_service) {
 
     // Set our status to sending.
     setSending(true);
+
+    // If there's any queued already.. we'll start sending.
+    sendNext();
 }
 
 void
