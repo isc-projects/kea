@@ -89,7 +89,7 @@ OpaqueDataTuple::operator=(const std::string& other) {
 }
 
 bool
-OpaqueDataTuple::operator==(const std::string& other) {
+OpaqueDataTuple::operator==(const std::string& other) const {
     return (equals(other));
 }
 
