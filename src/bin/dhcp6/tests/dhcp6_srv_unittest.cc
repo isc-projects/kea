@@ -1759,8 +1759,8 @@ TEST_F(Dhcpv6SrvTest, cableLabsShortVendorClass) {
     Pkt6Ptr adv = srv.fake_sent_.front();
     ASSERT_TRUE(adv);
 
-    // This is sent back to relay, so port is 547
-    EXPECT_EQ(DHCP6_SERVER_PORT, adv->getRemotePort());
+    // This is sent back to client, so port is 546
+    EXPECT_EQ(DHCP6_CLIENT_PORT, adv->getRemotePort());
 
 }
 

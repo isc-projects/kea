@@ -29,6 +29,7 @@
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_vendor_class.h>
 #include <util/buffer.h>
 #include <util/encode/hex.h>
 
@@ -981,6 +982,14 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     client_fqdn_buf.insert(client_fqdn_buf.end(), fqdn_buf.begin(),
                            fqdn_buf.end());
 
+    // Initialize test buffer for Vendor Class option.
+    const char vclass_data[] = {
+        0x00, 0x01, 0x02, 0x03,
+        0x00, 0x01, 0x02
+    };
+    std::vector<uint8_t> vclass_buf(vclass_data,
+                                    vclass_data + sizeof(vclass_data));;
+
     // The actual test starts here for all supported option codes.
     LibDhcpTest::testStdOptionDefs6(D6O_CLIENTID, begin, end,
                                     typeid(Option));
@@ -1018,8 +1027,9 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
     LibDhcpTest::testStdOptionDefs6(D6O_USER_CLASS, begin, end,
                                     typeid(Option));
 
-    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_CLASS, begin, end,
-                                    typeid(OptionCustom));
+    LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_CLASS, vclass_buf.begin(),
+                                    vclass_buf.end(),
+                                    typeid(OptionVendorClass));
 
     LibDhcpTest::testStdOptionDefs6(D6O_VENDOR_OPTS, begin, end,
                                     typeid(OptionVendor),
@@ -1148,22 +1158,18 @@ TEST_F(LibDhcpTest, vendorClass6) {
     // Option vendor-class should be there
     ASSERT_FALSE(options.find(D6O_VENDOR_CLASS) == options.end());
 
-    // It should be of type OptionCustom
-    boost::shared_ptr<OptionCustom> vclass =
-        boost::dynamic_pointer_cast<OptionCustom> (options.begin()->second);
+    // It should be of type OptionVendorClass
+    boost::shared_ptr<OptionVendorClass> vclass =
+        boost::dynamic_pointer_cast<OptionVendorClass>(options.begin()->second);
     ASSERT_TRUE(vclass);
 
     // Let's investigate if the option content is correct
 
     // 3 fields expected: vendor-id, data-len and data
-    ASSERT_EQ(3, vclass->getDataFieldsNum());
-
-    EXPECT_EQ(4491, vclass->readInteger<uint32_t>
-              (VENDOR_CLASS_ENTERPRISE_ID_INDEX)); // vendor-id=4491
-    EXPECT_EQ(10, vclass->readInteger<uint16_t>
-              (VENDOR_CLASS_DATA_LEN_INDEX)); // data len = 10
-    EXPECT_EQ("eRouter1.0", vclass->readString
-              (VENDOR_CLASS_STRING_INDEX)); // data="eRouter1.0"
+    EXPECT_EQ(4491, vclass->getVendorId());
+    EXPECT_EQ(20, vclass->len());
+    ASSERT_EQ(1, vclass->getTuplesNum());
+    EXPECT_EQ("eRouter1.0", vclass->getTuple(0).getText());
 }
 
 } // end of anonymous space

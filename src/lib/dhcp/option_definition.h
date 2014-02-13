@@ -324,6 +324,11 @@ public:
     /// Vendor-Specific Information %Option.
     bool haveVendor6Format() const;
 
+    /// @brief Check if the option has format of DHCPv6 Vendor Class option.
+    ///
+    /// @return true if option has the format of DHCPv6 Vendor Class option.
+    bool haveVendorClass6Format() const;
+
     /// @brief Option factory.
     ///
     /// This function creates an instance of DHCP option using
