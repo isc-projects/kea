@@ -1,3 +1,10 @@
+7XX.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: IP address of the relay agent can now be specified
+	for both IPv4 and IPv6 subnets. That information allows the server to
+	properly handle a case where relay agent address does not match	subnet.
+	This is mostly useful in shared subnets and cable networks.
+	(Trac #3322, git abcd)
+
 750.	[func]		tomek
 	b10-dhcp4, b10-dhcp6: Simple client classification has been
 	implemented. Incoming packets can be assigned to zero or more
