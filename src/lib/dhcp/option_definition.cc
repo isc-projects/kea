@@ -401,6 +401,14 @@ OptionDefinition::haveVendor6Format() const {
 }
 
 bool
+OptionDefinition::haveVendorClass4Format() const {
+    return (haveType(OPT_RECORD_TYPE) &&
+            (record_fields_.size() == 2) &&
+            (record_fields_[0] == OPT_UINT32_TYPE) &&
+            (record_fields_[1] == OPT_BINARY_TYPE));
+}
+
+bool
 OptionDefinition::haveVendorClass6Format() const {
     return (haveType(OPT_RECORD_TYPE) &&
             (record_fields_.size() == 2) &&
@@ -669,7 +677,10 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
-
+            // V-I VendorClass
+        } else if ((getCode() == DHO_VIVCO_SUBOPTIONS) &&
+                   haveVendorClass4Format()) {
+            return (OptionPtr(new OptionVendorClass(Option::V4, begin, end)));
         } else if (getCode() == DHO_VIVSO_SUBOPTIONS && haveVendor4Format()) {
             // Vendor-Specific Information.
             return (OptionPtr(new OptionVendor(Option::V4, begin, end)));

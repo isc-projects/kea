@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -942,8 +942,14 @@ TEST_F(LibDhcpTest, stdOptionDefs4) {
     LibDhcpTest::testStdOptionDefs4(DHO_DOMAIN_SEARCH, begin, end,
                                     typeid(Option));
 
-    LibDhcpTest::testStdOptionDefs4(DHO_VIVCO_SUBOPTIONS, begin, end,
-                                    typeid(Option));
+    // V-I Vendor option requires specially crafted data.
+    const char vivco_data[] = {
+        1, 2, 3, 4, // enterprise id
+        3, 1, 2, 3  // first byte is opaque data length, the rest is opaque data
+    };
+    std::vector<uint8_t> vivco_buf(vivco_data, vivco_data + sizeof(vivco_data));
+    LibDhcpTest::testStdOptionDefs4(DHO_VIVCO_SUBOPTIONS, vivco_buf.begin(),
+                                    vivco_buf.end(), typeid(OptionVendorClass));
 
     LibDhcpTest::testStdOptionDefs4(DHO_VIVSO_SUBOPTIONS, begin, end,
                                     typeid(OptionVendor));

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -323,6 +323,11 @@ public:
     /// @return true if option definition conforms to the format of the
     /// Vendor-Specific Information %Option.
     bool haveVendor6Format() const;
+
+    /// @brief Check if the option has format of DHCPv4 V-I Vendor Class option.
+    ///
+    /// @return true if the option has the format of DHCPv4 Vendor Class option.
+    bool haveVendorClass4Format() const;
 
     /// @brief Check if the option has format of DHCPv6 Vendor Class option.
     ///
