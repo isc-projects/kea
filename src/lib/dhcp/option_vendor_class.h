@@ -128,6 +128,13 @@ public:
         return (tuples_);
     }
 
+    /// @brief Checks if the Vendor Class holds the opaque data tuple with the
+    /// specified string.
+    ///
+    /// @param tuple_str String representation of the tuple being searched.
+    /// @return true if the specified tuple exists for this option.
+    bool hasTuple(const std::string& tuple_str) const;
+
     /// @brief Returns the full length of the option, including option header.
     virtual uint16_t len();
 
