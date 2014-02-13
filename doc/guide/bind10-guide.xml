@@ -4600,6 +4600,75 @@ Dhcp4/subnet4	[]	list	(default)
       </note>
     </section>
 
+    <section id="dhcp4-relay-override">
+      <title>Using specific relay for a subnet</title>
+      <para>
+        The relay has to have an interface connected to the link on which
+        the clients are being configured. Typically the relay has an IPv4
+        address configured on that interface that belongs to the subnet that
+        the server will assign addresses from. In such typical case, the
+        server is able to use IPv4 address inserted by the relay (in GIADDR
+        field of the DHCPv4 packet) to select appropriate subnet.
+      </para>
+      <para>
+        However, that is not always the case. In certain uncommon, but
+        valid deployments, the relay address may not match the subnet. This
+        usually means that there is more than one subnet allocated for a given
+        link. Two most common examples where this is the case are long lasting
+        network renumbering (where both old and new address space is still being
+        used) and a cable network. In a cable network both cable modems and the
+        devices behind them are physically connected to the same link, yet
+        they use distinct addressing. In such case, the DHCPv4 server needs
+        additional information (IPv4 address of the relay) to properly select
+        an appropriate subnet.
+      </para>
+      <para>
+        The following example assumes that there is a subnet 192.0.2.0/24
+        that is accessible via relay that uses 10.0.0.1 as its IPv4 address.
+        The server will be able to select this subnet for any incoming packets
+        that came from a relay that has an address in 192.0.2.0/24 subnet.
+        It will also select that subnet for a relay with address 10.0.0.1.
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/relay/ip-address "10.0.0.1"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+    </section>
+
+      <section id="dhcp4-srv-example-client-class-relay">
+        <title>Segregating IPv4 clients in a cable network</title>
+        <para>
+          In certain cases, it is useful to mix relay address information,
+          introduced in <xref linkend="dhcp4-relay-override"/> with client
+          classification, explained in <xref linkend="dhcp4-subnet-class"/>.
+          One specific example is cable network, where typically modems
+          get addresses from a different subnet than all devices connected
+          behind them.
+        </para>
+        <para>
+          Let's assume that there is one CMTS (Cable Modem Termination System)
+          with one CM MAC (a physical link that modems are connected to).
+          We want the modems to get addresses from the 10.1.1.0/24 subnet, while
+          everything connected behind modems should get addresses from another
+          subnet (192.0.2.0/24). The CMTS that acts as a relay an uses address
+          10.1.1.1. The following configuration can serve that configuration:
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "10.1.1.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "10.1.1.2 - 10.1.1.20" ]</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/client-class "docsis3.0"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/relay/ip-address "10.1.1.1"</userinput>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[1]/subnet "192.0.2.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[1]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[1]/relay/ip-address "10.1.1.1"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+      </section>
+
     <section id="dhcp4-std">
       <title>Supported Standards</title>
       <para>The following standards and draft standards are currently
@@ -4690,6 +4759,23 @@ Dhcp4/renew-timer	1000	integer	(default)
           </listitem>
       </itemizedlist>
     </section>
+
+    <!--
+    <section id="dhcp4-srv-examples">
+      <title>Kea DHCPv4 server examples</title>
+
+      <para>
+        This section provides easy to use example. Each example can be read
+        separately. It is not intended to be read sequentially as there will
+        be many repetitions between examples. They are expected to serve as
+        easy to use copy-paste solutions to many common deployments.
+      </para>
+
+      @todo: add simple configuration for direct clients
+      @todo: add configuration for relayed clients
+      @todo: add client classification example
+
+    </section> -->
 
   </chapter>
 
@@ -5641,6 +5727,78 @@ should include options from the isc option space:
 
     </section>
 
+    <section id="dhcp6-relay-override">
+      <title>Using specific relay agent for a subnet</title>
+      <para>
+        The relay has to have an interface connected to the link on which
+        the clients are being configured. Typically the relay has a global IPv6
+        address configured on that interface that belongs to the subnet that
+        the server will assign addresses from. In such typical case, the
+        server is able to use IPv6 address inserted by the relay (in link-addr
+        field in RELAY-FORW message) to select appropriate subnet.
+      </para>
+      <para>
+        However, that is not always the case. The relay 
+        address may not match the subnet in certain deployments. This
+        usually means that there is more than one subnet allocated for a given
+        link. Two most common examples where this is the case are long lasting
+        network renumbering (where both old and new address space is still being
+        used) and a cable network. In a cable network both cable modems and the
+        devices behind them are physically connected to the same link, yet
+        they use distinct addressing. In such case, the DHCPv6 server needs
+        additional information (like the value of interface-id option or IPv6
+        address inserted in the link-addr field in RELAY-FORW message) to
+        properly select an appropriate subnet.
+      </para>
+      <para>
+        The following example assumes that there is a subnet 2001:db8:1::/64
+        that is accessible via relay that uses 3000::1 as its IPv6 address.
+        The server will be able to select this subnet for any incoming packets
+        that came from a relay that has an address in 2001:db8:1::/64 subnet.
+        It will also select that subnet for a relay with address 3000::1.
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:1::2 - 2001:db8:1::ffff" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/relay/ip-address "3000::1"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+    </section>
+
+      <section id="dhcp6-client-class-relay">
+        <title>Segregating IPv6 clients in a cable network</title>
+        <para>
+          In certain cases, it is useful to mix relay address information,
+          introduced in <xref linkend="dhcp6-relay-override"/> with client
+          classification, explained in <xref linkend="dhcp6-subnet-class"/>.
+          One specific example is cable network, where typically modems
+          get addresses from a different subnet than all devices connected
+          behind them.
+        </para>
+        <para>
+          Let's assume that there is one CMTS (Cable Modem Termination System)
+          with one CM MAC (a physical link that modems are connected to).
+          We want the modems to get addresses from the 3000::/64 subnet,
+          while everything connected behind modems should get addresses from
+          another subnet (2001:db8:1::/64). The CMTS that acts as a relay
+          an uses address 3000::1. The following configuration can serve
+          that configuration:
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "3000::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "3000::2 - 3000::ffff" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/client-class "docsis3.0"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/relay/ip-address "3000::1"</userinput>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/pool [ "2001:db8:1::1 - 2001:db8:1::ffff" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[1]/relay/ip-address "3000::1"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+      </section>
+
+
     <section id="dhcp6-std">
       <title>Supported Standards</title>
       <para>The following standards and draft standards are currently
@@ -5711,6 +5869,23 @@ Dhcp6/renew-timer	1000	integer	(default)
         </listitem>
       </itemizedlist>
     </section>
+
+    <!--
+    <section id="dhcp6-srv-examples">
+      <title>Kea DHCPv6 server examples</title>
+
+      <para>
+        This section provides easy to use example. Each example can be read
+        separately. It is not intended to be read sequentially as there will
+        be many repetitions between examples. They are expected to serve as
+        easy to use copy-paste solutions to many common deployments.
+      </para>
+
+      @todo: add simple configuration for direct clients
+      @todo: add configuration for relayed clients
+      @todo: add client classification example
+
+    </section> -->
 
   </chapter>
 
