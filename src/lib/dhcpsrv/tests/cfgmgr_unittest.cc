@@ -903,7 +903,7 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
     // After CfgMgr construction, D2ClientMgr member should be initialized
     // with a D2 configuration that is disabled.
     // Verify we can Fetch the mgr.
-    D2ClientMgr d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
     EXPECT_FALSE(d2_mgr.ddnsEnabled());
 
     // Make sure the convenience method fetches the config correctly.

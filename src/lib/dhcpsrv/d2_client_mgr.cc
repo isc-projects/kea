@@ -37,6 +37,19 @@ D2ClientMgr::~D2ClientMgr(){
 }
 
 void
+D2ClientMgr::suspendUpdates() {
+    if (ddnsEnabled()) {
+        /// @todo For now we will disable updates and stop sending.
+        /// This at least provides a means to shut it off if there are errors.
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES);
+        d2_client_config_->enableUpdates(false);
+        if (name_change_sender_) {
+            stopSender();
+        }
+    }
+}
+
+void
 D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
     if (!new_config) {
         isc_throw(D2ClientError,
@@ -45,9 +58,11 @@ D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
 
     // Don't do anything unless configuration values are actually different.
     if (*d2_client_config_ != *new_config) {
+        // Make sure we stop sending first.
+        stopSender();
         if (!new_config->getEnableUpdates()) {
-            // Updating has been turned off, destroy current sender.
-            // Any queued requests are tossed.
+            // Updating has been turned off.
+            // Destroy current sender (any queued requests are tossed).
             name_change_sender_.reset();
         } else {
             dhcp_ddns::NameChangeSenderPtr new_sender;
@@ -84,7 +99,6 @@ D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
             /// then the queued contents might now be invalid.  There is
             /// no way to regenerate them if they are wrong.
             if (name_change_sender_) {
-                name_change_sender_->stopSending();
                 new_sender->assumeQueue(*name_change_sender_);
             }
 
@@ -194,15 +208,25 @@ D2ClientMgr::qualifyName(const std::string& partial_name) const {
 
 void
 D2ClientMgr::startSender(D2ClientErrorHandler error_handler) {
+    if (amSending()) {
+        return;
+    }
+
     // Create a our own service instance when we are not being multiplexed
     // into an external service..
     private_io_service_.reset(new asiolink::IOService());
     startSender(error_handler, *private_io_service_);
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_SENDER_STARTED)
+             .arg(d2_client_config_->toText());
 }
 
 void
 D2ClientMgr::startSender(D2ClientErrorHandler error_handler,
                          isc::asiolink::IOService& io_service) {
+    if (amSending()) {
+        return;
+    }
+
     if (!name_change_sender_)  {
         isc_throw(D2ClientError, "D2ClientMgr::startSender sender is null");
     }
@@ -242,6 +266,7 @@ D2ClientMgr::stopSender() {
     // If its not null, call stop.
     if (name_change_sender_)  {
         name_change_sender_->stopSending();
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_SENDER_STOPPED);
     }
 }
 
