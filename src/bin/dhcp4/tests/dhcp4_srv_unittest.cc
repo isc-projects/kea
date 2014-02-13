@@ -3379,14 +3379,6 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
 
     NakedDhcpv4Srv srv(0);
 
-    ConstElementPtr status;
-
-    // This test configures 2 subnets. We actually only need the
-    // first one, but since there's still this ugly hack that picks
-    // the pool if there is only one, we must use more than one
-    // subnet. That ugly hack will be removed in #3242, currently
-    // under review.
-
     // We have 2 subnets defined. Note that both have a relay address
     // defined. Both are not belonging to the subnets. That is
     // important, because if the relay belongs to the subnet, there's
@@ -3410,11 +3402,13 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
 
     // Use this config to set up the server
     ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
     ASSERT_TRUE(status);
     comment_ = config::parseAnswer(rcode_, status);
     ASSERT_EQ(0, rcode_);
 
+    // Let's get the subnet configuration objects
     const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
     ASSERT_EQ(2, subnets->size());
 
