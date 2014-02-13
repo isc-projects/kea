@@ -28,6 +28,7 @@
 #include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_vendor_class.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
@@ -400,6 +401,14 @@ OptionDefinition::haveVendor6Format() const {
 }
 
 bool
+OptionDefinition::haveVendorClass6Format() const {
+    return (haveType(OPT_RECORD_TYPE) &&
+            (record_fields_.size() == 2) &&
+            (record_fields_[0] == OPT_UINT32_TYPE) &&
+            (record_fields_[1] == OPT_BINARY_TYPE));
+}
+
+bool
 OptionDefinition::convertToBool(const std::string& value_str) const {
     // Case insensitve check that the input is one of: "true" or "false".
     if (boost::iequals(value_str, "true")) {
@@ -653,6 +662,9 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
         } else if (getCode() == D6O_VENDOR_OPTS && haveVendor6Format()) {
             // Vendor-Specific Information.
             return (OptionPtr(new OptionVendor(Option::V6, begin, end)));
+        } else if (getCode() == D6O_VENDOR_CLASS && haveVendorClass6Format()) {
+            // Vendor Class.
+            return (OptionPtr(new OptionVendorClass(Option::V6, begin, end)));
         }
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
