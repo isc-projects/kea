@@ -448,6 +448,59 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     EXPECT_EQ(0, sender.getQueueSize());
 }
 
+/// @brief Tests that sending gets kick-started if the queue isn't empty
+/// when startSending is called.
+TEST(NameChangeUDPSenderBasicTest, autoStart) {
+    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    isc::asiolink::IOService io_service;
+    SimpleSendHandler ncr_handler;
+
+    // Tests are based on a list of messages, get the count now.
+    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+
+    // Create the sender, setting the queue max equal to the number of
+    // messages we will have in the list.
+    NameChangeUDPSender sender(ip_address, SENDER_PORT, ip_address,
+                               LISTENER_PORT, FMT_JSON, ncr_handler,
+                               num_msgs, true);
+
+    // Verify that we can start sending.
+    EXPECT_NO_THROW(sender.startSending(io_service));
+    EXPECT_TRUE(sender.amSending());
+
+    // Queue up messages.
+    NameChangeRequestPtr ncr;
+    for (int i = 0; i < num_msgs; i++) {
+        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
+        EXPECT_NO_THROW(sender.sendRequest(ncr));
+    }
+    // Make sure queue count is what we expect.
+    EXPECT_EQ(num_msgs, sender.getQueueSize());
+
+    // Stop sending.
+    ASSERT_NO_THROW(sender.stopSending());
+    ASSERT_FALSE(sender.amSending());
+
+    // We should have completed the first message only.
+    EXPECT_EQ(--num_msgs, sender.getQueueSize());
+
+    // Restart sending.
+    EXPECT_NO_THROW(sender.startSending(io_service));
+
+    // We should be able to loop through remaining messages and send them.
+    for (int i = num_msgs; i > 0; i--) {
+        // Make sure select_fd does evaluates to ready via select and
+        // that ioReady() method agrees.
+        ASSERT_TRUE(sender.ioReady());
+
+        // Execute at one ready handler.
+        ASSERT_NO_THROW(sender.runReadyIO());
+    }
+
+    // Verify that the queue is empty.
+    EXPECT_EQ(0, sender.getQueueSize());
+}
+
 /// @brief Tests NameChangeUDPSender basic send  with INADDR_ANY and port 0.
 TEST(NameChangeUDPSenderBasicTest, anyAddressSend) {
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
