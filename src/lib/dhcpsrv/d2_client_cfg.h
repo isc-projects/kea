@@ -159,6 +159,15 @@ public:
     /// @brief Generates a string representation of the class contents.
     std::string toText() const;
 
+    /// @brief Sets enable-updates flag to the given value.
+    ///
+    /// This is the only value that may be altered outside the constructor
+    /// as it may be desirable to toggle it off and on when dealing with
+    /// D2 IO errors.
+    ///
+    /// @param enable boolean value to assign to the enable-updates flag
+    void enableUpdates(bool enable);
+
 protected:
     /// @brief Validates member values.
     ///

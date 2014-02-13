@@ -68,6 +68,11 @@ D2ClientConfig::D2ClientConfig()
 D2ClientConfig::~D2ClientConfig(){};
 
 void
+D2ClientConfig::enableUpdates(bool enable) {
+    enable_updates_ = enable;
+}
+
+void
 D2ClientConfig::validateContents() {
     if (ncr_format_ != dhcp_ddns::FMT_JSON) {
         isc_throw(D2ClientError, "D2ClientConfig: NCR Format:"
