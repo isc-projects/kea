@@ -36,6 +36,12 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     ASSERT_NO_THROW(d2_client_config.reset(new D2ClientConfig()));
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
 
+    // Verify the enable-updates can be toggled.
+    d2_client_config->enableUpdates(true);
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    d2_client_config->enableUpdates(false);
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
     d2_client_config.reset();
 
     bool enable_updates = true;
