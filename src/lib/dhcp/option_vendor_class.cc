@@ -130,6 +130,20 @@ OptionVendorClass::getTuple(const size_t at) const {
     return (tuples_[at]);
 }
 
+bool
+OptionVendorClass::hasTuple(const std::string& tuple_str) const {
+    // Iterate over existing tuples (there shouldn't be many of them),
+    // and try to match the searched one.
+    for (TuplesCollection::const_iterator it = tuples_.begin();
+         it != tuples_.end(); ++it) {
+        if (*it == tuple_str) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+
 uint16_t
 OptionVendorClass::len() {
     // The option starts with the header and enterprise id.

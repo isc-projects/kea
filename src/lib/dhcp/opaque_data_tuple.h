@@ -261,7 +261,7 @@ public:
     ///
     /// @param other String to compare the tuple against.
     /// @return true if data carried in the tuple is equal to the string.
-    bool operator==(const std::string& other);
+    bool operator==(const std::string& other) const;
 
     /// @brief Inequality operator.
     ///

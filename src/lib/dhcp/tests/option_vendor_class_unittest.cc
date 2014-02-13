@@ -74,6 +74,11 @@ TEST(OptionVendorClass, addTuple) {
     EXPECT_EQ("xyz", vendor_class.getTuple(0).getText());
     EXPECT_EQ("abc", vendor_class.getTuple(1).getText());
 
+    // Check that hasTuple correctly identifies existing tuples.
+    EXPECT_TRUE(vendor_class.hasTuple("xyz"));
+    EXPECT_TRUE(vendor_class.hasTuple("abc"));
+    EXPECT_FALSE(vendor_class.hasTuple("other"));
+
     // Attempt to add the tuple with 1 byte long length field should fail
     // for DHCPv6 option.
     OpaqueDataTuple tuple2(OpaqueDataTuple::LENGTH_1_BYTE);
