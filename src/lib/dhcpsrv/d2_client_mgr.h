@@ -25,6 +25,7 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <stdint.h>
 #include <string>
@@ -80,7 +81,8 @@ boost::function<void(const dhcp_ddns::NameChangeSender::Result result,
 /// into the sender.  Using a private service isolates the sender's IO from
 /// any other services.
 ///
-class D2ClientMgr : public dhcp_ddns::NameChangeSender::RequestSendHandler {
+class D2ClientMgr : public dhcp_ddns::NameChangeSender::RequestSendHandler,
+                    boost::noncopyable {
 public:
     /// @brief Constructor
     ///
@@ -283,6 +285,17 @@ public:
     /// It provides an instance method that can be bound via boost::bind, as
     /// NameChangeSender is abstract.
     void runReadyIO();
+
+    /// @brief Suspends sending requests.
+    ///
+    /// This method is intended to be used when IO errors occur.  It toggles
+    /// the enable-updates configuration flag to off, and takes the sender
+    /// out of send mode.  Messages in the sender's queue will remain in the
+    /// queue.
+    /// @todo This logic may change in NameChangeSender is altered allow
+    /// queuing while stopped.  Currently when a sender is not in send mode
+    /// it will not accept additional messages.
+    void suspendUpdates();
 
 protected:
     /// @brief Function operator implementing the NCR sender callback.
