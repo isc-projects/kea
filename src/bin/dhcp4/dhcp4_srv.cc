@@ -420,9 +420,6 @@ Dhcpv4Srv::run() {
             LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL)
                 .arg(e.what());
         }
-
-        // Send NameChangeRequests to the b10-dhcp_ddns module.
-        sendNameChangeRequests();
     }
 
     return (true);
@@ -881,26 +878,23 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
             .arg(ex.what());
         return;
     }
+
     // Create NameChangeRequest
-    NameChangeRequest ncr(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
-                          lease->hostname_, lease->addr_.toText(),
-                          dhcid, lease->cltt_ + lease->valid_lft_,
-                          lease->valid_lft_);
-    // And queue it.
+    NameChangeRequestPtr ncr(new NameChangeRequest(chg_type, lease->fqdn_fwd_,
+                                                   lease->fqdn_rev_,
+                                                   lease->hostname_,
+                                                   lease->addr_.toText(),
+                                                   dhcid,
+                                                   (lease->cltt_ +
+                                                    lease->valid_lft_),
+                                                   lease->valid_lft_));
+
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
         .arg(chg_type == CHG_ADD ? "add" : "remove")
-        .arg(ncr.toText());
-    name_change_reqs_.push(ncr);
-}
+        .arg(ncr->toText());
 
-void
-Dhcpv4Srv::sendNameChangeRequests() {
-    while (!name_change_reqs_.empty()) {
-        /// @todo Once next NameChangeRequest is picked from the queue
-        /// we should send it to the b10-dhcp_ddns module. Currently we
-        /// just drop it.
-        name_change_reqs_.pop();
-    }
+    // And pass it to the the manager.
+    CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
 }
 
 void
