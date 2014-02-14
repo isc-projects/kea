@@ -398,6 +398,23 @@ TEST_F(MasterLoaderTest, generateInMiddle) {
     checkRR("num10-host.example.org", RRType::TXT(), "This is 10 pomegranate");
 }
 
+TEST_F(MasterLoaderTest, generateAtEnd) {
+    // $ is at the end
+    const string input =
+        "$ORIGIN example.org.\n"
+        "$GENERATE 9-10 num$-host 3600 TXT Pomegranate$\n";
+    stringstream ss(input);
+    setLoader(ss, Name("example.org."), RRClass::IN(),
+              MasterLoader::MANY_ERRORS);
+
+    loader_->load();
+    EXPECT_TRUE(loader_->loadedSucessfully());
+    EXPECT_TRUE(errors_.empty());
+
+    checkRR("num9-host.example.org", RRType::TXT(), "Pomegranate9");
+    checkRR("num10-host.example.org", RRType::TXT(), "Pomegranate10");
+}
+
 TEST_F(MasterLoaderTest, generateStripsQuotes) {
     const string input =
         "$ORIGIN example.org.\n"
