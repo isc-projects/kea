@@ -264,7 +264,7 @@ D2ClientMgr::stopSender() {
     }
 
     // If its not null, call stop.
-    if (name_change_sender_)  {
+    if (amSending()) {
         name_change_sender_->stopSending();
         LOG_INFO(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_SENDER_STOPPED);
     }
@@ -272,11 +272,36 @@ D2ClientMgr::stopSender() {
 
 void
 D2ClientMgr::sendRequest(dhcp_ddns::NameChangeRequestPtr& ncr) {
-    if (!name_change_sender_) {
-        isc_throw(D2ClientError, "D2ClientMgr::sendRequest sender is null");
+    if (!amSending()) {
+        // This is programmatic error so bust them for it.
+        isc_throw(D2ClientError, "D2ClientMgr::sendRequest not in send mode");
     }
 
-    name_change_sender_->sendRequest(ncr);
+    try {
+        name_change_sender_->sendRequest(ncr);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_NCR_REJECTED)
+                  .arg(ex.what()).arg((ncr ? ncr->toText() : " NULL "));
+        invokeClientErrorHandler(dhcp_ddns::NameChangeSender::ERROR, ncr);
+    }
+}
+
+void
+D2ClientMgr::invokeClientErrorHandler(const dhcp_ddns::NameChangeSender::
+                                      Result result,
+                                      dhcp_ddns::NameChangeRequestPtr& ncr) {
+    // Handler is mandatory to enter send mode but test it just to be safe.
+    if (!client_error_handler_) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_HANDLER_NULL);
+    } else {
+        // Handler is not supposed to throw, but catch just in case.
+        try {
+            (client_error_handler_)(result, ncr);
+        } catch (const std::exception& ex) {
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION)
+                      .arg(ex.what());
+        }
+    }
 }
 
 size_t
@@ -287,6 +312,16 @@ D2ClientMgr::getQueueSize() const {
 
     return(name_change_sender_->getQueueSize());
 }
+
+size_t
+D2ClientMgr::getQueueMaxSize() const {
+    if (!name_change_sender_) {
+        isc_throw(D2ClientError, "D2ClientMgr::getQueueMaxSize sender is null");
+    }
+
+    return(name_change_sender_->getQueueMaxSize());
+}
+
 
 
 const dhcp_ddns::NameChangeRequestPtr&
@@ -314,21 +349,8 @@ D2ClientMgr::operator()(const dhcp_ddns::NameChangeSender::Result result,
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
                   DHCPSRV_DHCP_DDNS_NCR_SENT).arg(ncr->toText());
     } else {
-        // Handler is mandatory but test it just to be safe.
-        /// @todo Until we have a better feel for how errors need to be
-        /// handled we farm it out to the application layer.
-        if (client_error_handler_) {
-            // Handler is not supposed to throw, but catch just in case.
-            try {
-                (client_error_handler_)(result, ncr);
-            } catch (const std::exception& ex) {
-                LOG_ERROR(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION)
-                          .arg(ex.what());
-            }
-        } else {
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_HANDLER_NULL);
-        }
-   }
+        invokeClientErrorHandler(result, ncr);
+    }
 }
 
 int

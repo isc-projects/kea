@@ -42,7 +42,7 @@ namespace dhcp {
 /// @param result Result code of the send operation.
 /// @param ncr NameChangeRequest which failed to send.
 ///
-/// @note Handlers are expected not to throw. In the event a hanlder does
+/// @note Handlers are expected not to throw. In the event a handler does
 /// throw invoking code logs the exception and then swallows it.
 typedef
 boost::function<void(const dhcp_ddns::NameChangeSender::Result result,
@@ -248,16 +248,35 @@ public:
     /// @brief Send the given NameChangeRequests to b10-dhcp-ddns
     ///
     /// Passes NameChangeRequests to the NCR sender for transmission to
-    /// b10-dhcp-ddns.
+    /// b10-dhcp-ddns. If the sender rejects the message, the client's error
+    /// handler will be invoked.  The most likely cause for rejection is
+    /// the senders' queue has reached maximum capacity.
     ///
     /// @param ncr NameChangeRequest to send
     ///
-    /// @throw D2ClientError if sender instance is null. Underlying layer
-    /// may throw NCRSenderExceptions exceptions.
+    /// @throw D2ClientError if sender instance is null or not in send
+    /// mode.  Either of these represents a programmatic error.
     void sendRequest(dhcp_ddns::NameChangeRequestPtr& ncr);
+
+    /// @brief Calls the client's error handler.
+    ///
+    /// Calls the error handler method set by startSender() when an
+    /// error occurs attempting to send a method.  If the error handler
+    /// throws an exception it will be caught and logged.
+    ///
+    /// @param result contains that send outcome status.
+    /// @param ncr is a pointer to the NameChangeRequest that was attempted.
+    ///
+    /// This method is exception safe.
+    void invokeClientErrorHandler(const dhcp_ddns::NameChangeSender::
+                                  Result result,
+                                  dhcp_ddns::NameChangeRequestPtr& ncr);
 
     /// @brief Returns the number of NCRs queued for transmission.
     size_t getQueueSize() const;
+
+    /// @brief Returns the maximum number of NCRs allowed in the queue.
+    size_t getQueueMaxSize() const;
 
     /// @brief Returns the nth NCR queued for transmission.
     ///
