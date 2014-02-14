@@ -195,7 +195,6 @@ public:
     using Dhcpv4Srv::sanityCheck;
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::unpackOptions;
-    using Dhcpv4Srv::name_change_reqs_;
     using Dhcpv4Srv::classifyPacket;
     using Dhcpv4Srv::accept;
     using Dhcpv4Srv::acceptMessageType;

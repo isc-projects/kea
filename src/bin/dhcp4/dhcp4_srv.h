@@ -480,27 +480,16 @@ protected:
     /// @brief Creates the NameChangeRequest and adds to the queue for
     /// processing.
     ///
-    /// This function adds the @c isc::dhcp_ddns::NameChangeRequest to the
-    /// queue and emits the debug message which indicates whether the request
-    /// being added is to remove DNS entry or add a new entry. This function
-    /// is exception free.
+    /// This creates the @c isc::dhcp_ddns::NameChangeRequest; emits a
+    /// the debug message which indicates whether the request being added is
+    /// to remove DNS entry or add a new entry; and then sends the request
+    /// to the D2ClientMgr for transmission to b10-dhcp-ddns.
     ///
     /// @param chg_type A type of the NameChangeRequest (ADD or REMOVE).
     /// @param lease A lease for which the NameChangeRequest is created and
     /// queued.
     void queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
                                 const Lease4Ptr& lease);
-
-    /// @brief Sends all outstanding NameChangeRequests to b10-dhcp-ddns module.
-    ///
-    /// The purpose of this function is to pick all outstanding
-    /// NameChangeRequests from the FIFO queue and send them to b10-dhcp-ddns
-    /// module.
-    ///
-    /// @todo Currently this function simply removes all requests from the
-    /// queue but doesn't send them anywhere. In the future, the
-    /// NameChangeSender will be used to deliver requests to the other module.
-    void sendNameChangeRequests();
 
     /// @brief Attempts to renew received addresses
     ///
@@ -711,12 +700,6 @@ private:
     int hook_index_pkt4_receive_;
     int hook_index_subnet4_select_;
     int hook_index_pkt4_send_;
-
-protected:
-
-    /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects which
-    /// are waiting for sending  to b10-dhcp-ddns module.
-    std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
 };
 
 }; // namespace isc::dhcp
