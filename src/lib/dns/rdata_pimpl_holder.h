@@ -17,6 +17,8 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <cstddef> // for NULL
+
 namespace isc {
 namespace dns {
 namespace rdata {
