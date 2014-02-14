@@ -612,13 +612,13 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
     const std::string lhs = lhs_token.getString();
 
     // Parse the TTL, RR class and RR type tokens. Note that TTL and RR
-    // class may come in any order and may be missing. If TTL is
-    // missing, we expect that it was either specified explicitly using
-    // $TTL, or is implicitly known from a previous RR, or that this is
-    // the SOA RR from which the MINIMUM field is used. It's unlikely
-    // that $GENERATE will be used with an SOA RR, but it's
-    // possible. The parsing happens within the parseRRParams() helper
-    // method which is called below.
+    // class may come in any order, or may be missing (either or
+    // both). If TTL is missing, we expect that it was either specified
+    // explicitly using $TTL, or is implicitly known from a previous RR,
+    // or that this is the SOA RR from which the MINIMUM field is
+    // used. It's unlikely that $GENERATE will be used with an SOA RR,
+    // but it's possible. The parsing happens within the parseRRParams()
+    // helper method which is called below.
     const MasterToken& param_token = lexer_.getNextToken(MasterToken::STRING);
     if (param_token.getType() != MasterToken::STRING) {
         reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
