@@ -447,13 +447,13 @@ public:
 namespace { // begin unnamed namespace
 
 std::string
-genNibbles(int i, unsigned int width, bool uppercase) {
+genNibbles(int num, unsigned int width, bool uppercase) {
     static const char *hex = "0123456789abcdef0123456789ABCDEF";
     std::string rstr;
 
     do {
-        char ch = hex[(i & 0x0f) + (uppercase ? 16 : 0)];
-        i >>= 4;
+        char ch = hex[(num & 0x0f) + (uppercase ? 16 : 0)];
+        num >>= 4;
         rstr.push_back(ch);
 
         if (width > 0) {
@@ -463,14 +463,14 @@ genNibbles(int i, unsigned int width, bool uppercase) {
         // If width is non zero then we need to add a label separator.
         // If value is non zero then we need to add another label and
         // that requires a label separator.
-        if (width > 0 || i != 0) {
+        if (width > 0 || num != 0) {
             rstr.push_back('.');
 
             if (width > 0) {
                 --width;
             }
         }
-    } while ((i != 0) || (width > 0));
+    } while ((num != 0) || (width > 0));
 
     return (rstr);
 }
@@ -479,7 +479,7 @@ genNibbles(int i, unsigned int width, bool uppercase) {
 
 std::string
 MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
-                                                const int i)
+                                                const int num)
 {
   std::string rstr;
 
@@ -494,7 +494,7 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
           }
 
           if (*it != '{') {
-              rstr += boost::str(boost::format("%d") % i);
+              rstr += boost::str(boost::format("%d") % num);
           } else {
               const char* scan_str =
                   str.c_str() + std::distance(str.begin(), it);
@@ -505,23 +505,23 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
                                    &offset, &width, base);
               switch (n) {
               case 1:
-                  rstr += boost::str(boost::format("%d") % (i + offset));
+                  rstr += boost::str(boost::format("%d") % (num + offset));
                   break;
 
               case 2: {
                   const std::string fmt =
                       boost::str(boost::format("%%0%ud") % width);
-                  rstr += boost::str(boost::format(fmt) % (i + offset));
+                  rstr += boost::str(boost::format(fmt) % (num + offset));
                   break;
               }
 
               case 3:
                   if ((base[0] == 'n') || (base[0] == 'N')) {
-                      rstr += genNibbles(i + offset, width, (base[0] == 'N'));
+                      rstr += genNibbles(num + offset, width, (base[0] == 'N'));
                   } else {
                       const std::string fmt =
                           boost::str(boost::format("%%0%u%c") % width % base[0]);
-                      rstr += boost::str(boost::format(fmt) % (i + offset));
+                      rstr += boost::str(boost::format(fmt) % (num + offset));
                   }
                   break;
 
