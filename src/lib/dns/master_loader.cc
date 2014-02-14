@@ -460,9 +460,9 @@ genNibbles(int i, unsigned int width, bool uppercase) {
             --width;
         }
 
-        // If width is non zero then we need to add a label seperator.
+        // If width is non zero then we need to add a label separator.
         // If value is non zero then we need to add another label and
-        // that requires a label seperator.
+        // that requires a label separator.
         if (width > 0 || i != 0) {
             rstr.push_back('.');
 
