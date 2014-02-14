@@ -320,6 +320,36 @@ TEST_F(Dhcp4SrvD2Test, forceUDPSendFailure) {
     EXPECT_EQ(2, mgr.getQueueSize());
 }
 
+// Tests error handling of D2ClientMgr::sendRequest() failure
+// by attempting to queue maximum number of messages.
+TEST_F(Dhcp4SrvD2Test, queueMaxError) {
+    // Configure it enabled and start it.
+    dhcp::D2ClientMgr& mgr = CfgMgr::instance().getD2ClientMgr();
+    ASSERT_NO_FATAL_FAILURE(configureD2(true));
+    ASSERT_TRUE(mgr.ddnsEnabled());
+    ASSERT_NO_THROW(srv_.startD2());
+    ASSERT_TRUE(mgr.amSending());
+
+    // Attempt to queue more then the maximum allowed.
+    int max_msgs = mgr.getQueueMaxSize();
+    for (int i = 0; i < max_msgs + 1; i++) {
+        dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr(i + 1);
+        ASSERT_NO_THROW(mgr.sendRequest(ncr));
+    }
+
+    // Stopping sender will coπplete the first message so there
+    // should be max less one.
+    EXPECT_EQ(max_msgs - 1, mgr.getQueueSize());
+
+    // Verify the error handler was invoked.
+    EXPECT_EQ(1, srv_.error_count_);
+
+    // Verify that updates are disabled and we are no longer sending.
+    ASSERT_FALSE(mgr.ddnsEnabled());
+    ASSERT_FALSE(mgr.amSending());
+}
+
+
 } // namespace test
 } // namespace dhcp
 } // namespace isc
