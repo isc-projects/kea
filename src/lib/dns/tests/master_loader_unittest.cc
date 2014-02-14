@@ -337,6 +337,9 @@ TEST_F(MasterLoaderTest, generate) {
         EXPECT_TRUE(loader_->loadedSucessfully());
         EXPECT_TRUE(errors_.empty());
 
+        // The "before" and "after" scaffolding below checks that no
+        // extra records are added by $GENERATE outside the requested
+        // range.
         checkRR("before.example.org", RRType::A(), "192.0.2.0");
         checkRR("host3.example.org", RRType::A(), "192.0.2.3");
         checkRR("host4.example.org", RRType::A(), "192.0.2.4");
