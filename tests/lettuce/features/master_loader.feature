@@ -41,3 +41,10 @@ Feature: Master loader feature
         host4.example.org.        3600    IN      A       192.0.2.4
         """
         A query for host5.example.org should have rcode NXDOMAIN
+
+        A query for example.org type NS should have rcode NOERROR
+        The answer section of the last query response should be
+        """
+        example.org.              3600    IN      NS      ns1.example.org.
+        example.org.              3600    IN      NS      ns2.example.org.
+        """
