@@ -375,3 +375,9 @@ off.  This should only occur if IO errors communicating with b10-dhcp-ddns
 have been experienced.  Any such errors should have preceding entries in the
 log with details.  No further attempts to communicate with b10-dhcp-ddns will
 be made without intervention.
+
+% DHCPSRV_DHCP_DDNS_NCR_REJECTED NameChangeRequest rejected by the sender: %1, ncr: %2
+This is an error message indicating that NameChangeSender used to deliver DDNS
+update requests to b10-dhcp-ddns rejected the request.  This most likely cause
+is the sender's queue has reached maximum capacity.  This would imply that
+requests are being generated faster than they can be delivered.
