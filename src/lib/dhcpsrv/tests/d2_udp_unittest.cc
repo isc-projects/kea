@@ -232,7 +232,7 @@ TEST_F(D2ClientMgrTest, udpSenderQueing) {
 
     // Trying to send a NCR when not in send mode should fail.
     dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
-    EXPECT_THROW(sendRequest(ncr), dhcp_ddns::NcrSenderError);
+    EXPECT_THROW(sendRequest(ncr), D2ClientError);
 
     // Place sender in send mode.
     ASSERT_NO_THROW(startSender(getErrorHandler()));
@@ -380,6 +380,7 @@ TEST_F(D2ClientMgrTest, udpSendErrorHandlerThrow) {
     ASSERT_EQ(0, error_handler_count_);
 }
 
+/// @brief Tests that D2ClientMgr registers and unregisters with IfaceMgr.
 TEST_F(D2ClientMgrTest, ifaceRegister) {
     // Enable DDNS with server at 127.0.0.1/prot 53001 via UDP.
     enableDdns("127.0.0.1", 530001, dhcp_ddns::NCR_UDP);
@@ -414,7 +415,7 @@ TEST_F(D2ClientMgrTest, ifaceRegister) {
     ASSERT_EQ(2, callback_count_);
     ASSERT_EQ(0, error_handler_count_);
 
-    // Calling recevie again should have no affect.
+    // Calling receive again should have no affect.
     IfaceMgr::instance().receive4(0, 0);
     EXPECT_EQ(1, getQueueSize());
     ASSERT_EQ(2, callback_count_);
@@ -451,6 +452,21 @@ TEST_F(D2ClientMgrTest, udpSuspendUpdates) {
     // Stopping the sender should have completed the second message's
     // in-progess send, so queue size should be 1.
     ASSERT_EQ(1, getQueueSize());
+}
+
+/// @brief Tests that invokeErrorHandler does not fail if there is no handler.
+TEST_F(D2ClientMgrTest, missingErrorHandler) {
+    // Ensure we aren't in send mode.
+    ASSERT_FALSE(ddnsEnabled());
+    ASSERT_FALSE(amSending());
+
+    // There is no error handler at this point, so invoking should not throw.
+    dhcp_ddns::NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(invokeClientErrorHandler(dhcp_ddns::NameChangeSender::ERROR,
+                                             ncr));
+
+    // Verify we didn't invoke the error handler, error count is zero.
+    ASSERT_EQ(0, error_handler_count_);
 }
 
 } // end of anonymous namespace
