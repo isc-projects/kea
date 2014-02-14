@@ -498,30 +498,30 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
           } else {
               const char* scan_str =
                   str.c_str() + std::distance(str.begin(), it);
-              int delta = 0;
+              int offset = 0;
               unsigned int width;
-              char mode[2] = {'d', 0}; // char plus null byte
+              char base[2] = {'d', 0}; // char plus null byte
               const int n = sscanf(scan_str, "{%d,%u,%1[doxXnN]}",
-                                   &delta, &width, mode);
+                                   &offset, &width, base);
               switch (n) {
               case 1:
-                  rstr += boost::str(boost::format("%d") % (i + delta));
+                  rstr += boost::str(boost::format("%d") % (i + offset));
                   break;
 
               case 2: {
                   const std::string fmt =
                       boost::str(boost::format("%%0%ud") % width);
-                  rstr += boost::str(boost::format(fmt) % (i + delta));
+                  rstr += boost::str(boost::format(fmt) % (i + offset));
                   break;
               }
 
               case 3:
-                  if ((mode[0] == 'n') || (mode[0] == 'N')) {
-                      rstr += genNibbles(i + delta, width, (mode[0] == 'N'));
+                  if ((base[0] == 'n') || (base[0] == 'N')) {
+                      rstr += genNibbles(i + offset, width, (base[0] == 'N'));
                   } else {
                       const std::string fmt =
-                          boost::str(boost::format("%%0%u%c") % width % mode[0]);
-                      rstr += boost::str(boost::format(fmt) % (i + delta));
+                          boost::str(boost::format("%%0%u%c") % width % base[0]);
+                      rstr += boost::str(boost::format(fmt) % (i + offset));
                   }
                   break;
 
