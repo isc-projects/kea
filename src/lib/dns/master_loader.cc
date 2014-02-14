@@ -593,6 +593,7 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
 
 void
 MasterLoader::MasterLoaderImpl::doGenerate() {
+    // Parse the range token
     const MasterToken& range_token = lexer_.getNextToken(MasterToken::STRING);
     if (range_token.getType() != MasterToken::STRING) {
         reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
@@ -601,6 +602,7 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
     }
     const std::string range = range_token.getString();
 
+    // Parse the LHS token
     const MasterToken& lhs_token = lexer_.getNextToken(MasterToken::STRING);
     if (lhs_token.getType() != MasterToken::STRING) {
         reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
@@ -609,15 +611,25 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
     }
     const std::string lhs = lhs_token.getString();
 
+    // Parse the TTL, RR class and RR type tokens. Note that TTL and RR
+    // class may come in any order and may be missing. If TTL is
+    // missing, we expect that it was either specified explicitly using
+    // $TTL, or is implicitly known from a previous RR, or that this is
+    // the SOA RR from which the MINIMUM field is used. It's unlikely
+    // that $GENERATE will be used with an SOA RR, but it's
+    // possible. The parsing happens within the parseRRParams() helper
+    // method which is called below.
     const MasterToken& param_token = lexer_.getNextToken(MasterToken::STRING);
     if (param_token.getType() != MasterToken::STRING) {
         reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
                     "Invalid $GENERATE syntax");
         return;
     }
+
     bool explicit_ttl = false;
     const RRType rrtype = parseRRParams(explicit_ttl, param_token);
 
+    // Parse the RHS token. It can be a quoted string.
     const MasterToken& rhs_token = lexer_.getNextToken(MasterToken::QSTRING);
     if ((rhs_token.getType() != MasterToken::QSTRING) &&
         (rhs_token.getType() != MasterToken::STRING))
@@ -628,10 +640,12 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
     }
     const std::string rhs = rhs_token.getString();
 
+    // Range can be one of two forms: start-stop or start-stop/step. If
+    // the first form is used, then step is set to 1. All of start, stop
+    // and step must be positive.
     unsigned int start;
     unsigned int stop;
     unsigned int step;
-
     const int n = sscanf(range.c_str(), "%u-%u/%u", &start, &stop, &step);
     if ((n < 2) || (stop < start)) {
         reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
@@ -643,7 +657,10 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
         step = 1;
     }
 
+    // Generate and add the records.
     for (int i = start; i <= stop; i += step) {
+        // Get generated strings for LHS and RHS. LHS goes to form the
+        // name, RHS goes to form the RDATA of the RR.
         const std::string generated_name = generateForIter(lhs, i);
         const std::string generated_rdata = generateForIter(rhs, i);
         if (generated_name.empty() || generated_rdata.empty()) {
@@ -656,7 +673,9 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
 
         // generateForIter() can return a string with a trailing '.' in
         // case of a nibble representation. So we cannot use the
-        // relative Name constructor.
+        // relative Name constructor. We use concatenate() which is
+        // expensive, but keeps the generated LHS-based Name within the
+        // active origin.
         last_name_.reset
             (new Name(Name(generated_name).concatenate(active_origin_)));
         previous_name_ = true;
