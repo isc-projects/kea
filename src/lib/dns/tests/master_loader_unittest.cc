@@ -538,7 +538,8 @@ TEST_F(MasterLoaderTest, generateWithModifiers) {
         "$GENERATE 106-107 host$ TXT \"Value ${0,9,n}\"\n"
         "$GENERATE 109-110 host$ TXT \"Value ${0,9,N}\"\n"
 
-        // Junk type will not parse and 'd' is assumed.
+        // Junk type will not parse and 'd' is assumed. No error is
+        // generated (this is to match BIND 9 behavior).
         "$GENERATE 200-201 host${0,4,j} A 192.0.2.$\n";
     stringstream ss(input);
     setLoader(ss, Name("example.org."), RRClass::IN(),
