@@ -486,6 +486,9 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
   for (std::string::const_iterator it = str.begin(); it != str.end();) {
       switch (*it) {
       case '$':
+          // This is the case when the '$' character is encountered in
+          // the LHS or RHS. A computed value is added in its place in
+          // the generated string.
           ++it;
           if ((it != str.end()) && (*it == '$')) {
               rstr.push_back('$');
@@ -493,9 +496,15 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
               continue;
           }
 
+          // 'it' can be equal to str.end() here, but it is handled
+          // correctly.
           if (*it != '{') {
+              // There is no modifier (between {}), so just copy the
+              // passed number into the generated string.
               rstr += boost::str(boost::format("%d") % num);
           } else {
+              // There is a modifier (between {}). Parse it and handle
+              // the various cases below.
               const char* scan_str =
                   str.c_str() + std::distance(str.begin(), it);
               int offset = 0;
@@ -505,10 +514,15 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
                                    &offset, &width, base);
               switch (n) {
               case 1:
+                  // Only 1 item was matched (the offset). Copy (num +
+                  // offset) into the generated string.
                   rstr += boost::str(boost::format("%d") % (num + offset));
                   break;
 
               case 2: {
+                  // 2 items were matched (the offset and width). Copy
+                  // (num + offset) and format it according to the width
+                  // into the generated string.
                   const std::string fmt =
                       boost::str(boost::format("%%0%ud") % width);
                   rstr += boost::str(boost::format(fmt) % (num + offset));
@@ -516,9 +530,15 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
               }
 
               case 3:
+                  // 3 items were matched (offset, width and base).
                   if ((base[0] == 'n') || (base[0] == 'N')) {
+                      // The base is requesting nibbles. Format it
+                      // specially (see genNibbles() documentation).
                       rstr += genNibbles(num + offset, width, (base[0] == 'N'));
                   } else {
+                      // The base is not requesting nibbles. Copy (num +
+                      // offset) and format it according to the width
+                      // and base into the generated string.
                       const std::string fmt =
                           boost::str(boost::format("%%0%u%c") % width % base[0]);
                       rstr += boost::str(boost::format(fmt) % (num + offset));
@@ -526,15 +546,18 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
                   break;
 
               default:
+                  // Any other case in the modifiers is an error.
                   reportError(lexer_.getSourceName(), lexer_.getSourceLine(),
                               "Invalid $GENERATE format modifiers");
                   return ("");
               }
 
-              /* Skip past closing brace. */
+              // Find the closing brace. Careful that 'it' can be equal
+              // to str.end() here.
               while ((it != str.end()) && (*it != '}')) {
                   ++it;
               }
+              // Skip past the closing brace (if there is one).
               if (it != str.end()) {
                   ++it;
               }
@@ -542,6 +565,10 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
           break;
 
       case '\\':
+          // This is the case when the '\' character is encountered in
+          // the LHS or RHS. The '\' and the following character are
+          // copied as-is into the generated string. This is usually
+          // used for escaping the $ character.
           rstr.push_back(*it);
           ++it;
           if (it == str.end()) {
@@ -552,6 +579,9 @@ MasterLoader::MasterLoaderImpl::generateForIter(const std::string& str,
           break;
 
       default:
+          // This is the default case that handles all other
+          // characters. They are copied as-is into the generated
+          // string.
           rstr.push_back(*it);
           ++it;
           break;
