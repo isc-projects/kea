@@ -30,7 +30,7 @@
 #include <memory>
 #include <vector>
 
-#include <stdio.h> // for sscanf()
+#include <cstdio> // for sscanf()
 
 using std::string;
 using std::auto_ptr;
