@@ -49,7 +49,7 @@ Dhcp4SrvD2Test::~Dhcp4SrvD2Test() {
     reset();
 }
 
-dhcp_ddns::NameChangeRequestPtr 
+dhcp_ddns::NameChangeRequestPtr
 Dhcp4SrvD2Test::buildTestNcr(uint32_t dhcid_id_num) {
     // Build an NCR from json string.
     std::ostringstream stream;
@@ -61,7 +61,7 @@ Dhcp4SrvD2Test::buildTestNcr(uint32_t dhcid_id_num) {
         " \"reverse_change\" : false , "
         " \"fqdn\" : \"myhost.example.com.\" , "
         " \"ip_address\" : \"192.168.2.1\" , "
-        " \"dhcid\" : \"" 
+        " \"dhcid\" : \""
 
         << std::hex << std::setfill('0') << std::setw(16)
         << dhcid_id_num << "\" , "
@@ -88,7 +88,7 @@ Dhcp4SrvD2Test::reset() {
 }
 
 void
-Dhcp4SrvD2Test::configureD2(bool enable_d2, const bool exp_result, 
+Dhcp4SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
                             const std::string& ip_address,
                             const uint32_t port) {
     std::ostringstream config;
@@ -101,7 +101,7 @@ Dhcp4SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "    \"subnet\": \"192.0.2.0/24\" } ],"
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : " << (enable_d2 ? "true" : "false") <<  ", "
-        "     \"server-ip\" : \"" << ip_address << "\", " 
+        "     \"server-ip\" : \"" << ip_address << "\", "
         "     \"server-port\" : " << port << ", "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
@@ -132,9 +132,12 @@ Dhcp4SrvD2Test::configure(const std::string& config, bool exp_result) {
         ASSERT_EQ(0, rcode);
     } else {
         ASSERT_EQ(1, rcode);
-    } 
+    }
 }
 
+// Tests ability to turn on and off ddns updates by submitting
+// by submitting the appropriate configuration to Dhcp4 server
+// and then invoking its startD2() method.
 TEST_F(Dhcp4SrvD2Test, enableDisable) {
     // Grab the manager and verify that be default ddns is off
     // and a sender was not started.
@@ -148,7 +151,7 @@ TEST_F(Dhcp4SrvD2Test, enableDisable) {
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_FALSE(mgr.amSending());
 
-    // Verify that calling start does not throw and starts the sender. 
+    // Verify that calling start does not throw and starts the sender.
     ASSERT_NO_THROW(srv_.startD2());
     ASSERT_TRUE(mgr.amSending());
 
@@ -163,6 +166,10 @@ TEST_F(Dhcp4SrvD2Test, enableDisable) {
     ASSERT_FALSE(mgr.amSending());
 }
 
+// Tests Dhcp4 server's ability to correctly handle a flawed dhcp-ddns configuration.
+// It does so by first enabling updates by submitting a valid configuration and then
+// ensuring they remain on after submitting a flawed configuration.
+// and then invoking its startD2() method.
 TEST_F(Dhcp4SrvD2Test, badConfig) {
     // Grab the manager and verify that be default ddns is off
     // and a sender was not started.
@@ -183,12 +190,16 @@ TEST_F(Dhcp4SrvD2Test, badConfig) {
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_TRUE(mgr.amSending());
 
-    // Verify that calling start does not throw or stop the sender. 
+    // Verify that calling start does not throw or stop the sender.
     ASSERT_NO_THROW(srv_.startD2());
     ASSERT_TRUE(mgr.amSending());
 
 }
 
+// Checks that submitting an identical dhcp-ddns configuration
+// is handled properly.  Not effect should be no change in
+// status for ddns updating.  Updates should still enabled and
+// in send mode.  This indicates that the sender was not stopped.
 TEST_F(Dhcp4SrvD2Test, sameConfig) {
     // Grab the manager and verify that be default ddns is off
     // and a sender was not started.
@@ -208,11 +219,15 @@ TEST_F(Dhcp4SrvD2Test, sameConfig) {
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_TRUE(mgr.amSending());
 
-    // Verify that calling start does not throw or stop the sender. 
+    // Verify that calling start does not throw or stop the sender.
     ASSERT_NO_THROW(srv_.startD2());
     ASSERT_TRUE(mgr.amSending());
 }
 
+// Checks that submitting an different, but valid dhcp-ddns configuration
+// is handled properly.  Updates should be enabled, however they should
+// not yet be running.  This indicates that the sender was stopped and
+// replaced, but not yet started.
 TEST_F(Dhcp4SrvD2Test, differentConfig) {
     // Grab the manager and verify that be default ddns is off
     // and a sender was not started.
@@ -237,6 +252,11 @@ TEST_F(Dhcp4SrvD2Test, differentConfig) {
     ASSERT_TRUE(mgr.amSending());
 }
 
+// Checks that given a valid, enabled configuration and placing
+// sender in send mode, permits NCR requests to be sent via UPD
+// socket.  Note this test does not employ any sort of receiving
+// client to verify actual transmission.  These types of tests
+// are including under dhcp_ddns and d2 unit testing.
 TEST_F(Dhcp4SrvD2Test, simpleUDPSend) {
     // Grab the manager and verify that be default ddns is off
     // and a sender was not started.
@@ -255,13 +275,17 @@ TEST_F(Dhcp4SrvD2Test, simpleUDPSend) {
     EXPECT_EQ(1, mgr.getQueueSize());
 
     // Calling receive should detect the ready IO on the sender's select-fd,
-    // and invoke callback, which should complete the send.  
+    // and invoke callback, which should complete the send.
     ASSERT_NO_THROW(IfaceMgr::instance().receive4(0,0));
 
     // Verify the queue is now empty.
     EXPECT_EQ(0, mgr.getQueueSize());
 }
 
+// Checks that an IO error in sending a request to D2, results in ddns updates being
+// suspended.  This indicates that Dhcp4Srv's error handler has been invoked as expected.
+// Note that this unit test relies on an attempt to send to a server address of 0.0.0.0
+// port 0 fails under all OSs.
 TEST_F(Dhcp4SrvD2Test, forceUDPSendFailure) {
     // Grab the manager and verify that be default ddns is off
     // and a sender was not started.
@@ -337,7 +361,7 @@ TEST_F(Dhcp4SrvD2Test, queueMaxError) {
         ASSERT_NO_THROW(mgr.sendRequest(ncr));
     }
 
-    // Stopping sender will coπplete the first message so there
+    // Stopping sender will complete the first message so there
     // should be max less one.
     EXPECT_EQ(max_msgs - 1, mgr.getQueueSize());
 
