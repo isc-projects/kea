@@ -221,6 +221,10 @@ void ControlledDhcpv4Srv::establishSession() {
 
     try {
         configureDhcp4Server(*this, config_session_->getFullConfig());
+
+        // Server will start DDNS communications if its enabled.
+        server_->startD2();
+
         // Configuration may disable or enable interfaces so we have to
         // reopen sockets according to new configuration.
         openActiveSockets(getPort(), useBroadcast());
