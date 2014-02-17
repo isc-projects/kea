@@ -43,20 +43,62 @@ namespace {
 /// @brief A test fixture class for testing DHCPv6 Client FQDN Option handling.
 class FqdnDhcpv6SrvTest : public Dhcpv6SrvTest {
 public:
+    // Reference to D2ClientMgr singleton
+    D2ClientMgr& d2_mgr_;
+
+    // Bit Constants for turning on and off DDNS configuration options.
+    static const uint16_t ALWAYS_INCLUDE_FQDN = 1;
+    static const uint16_t OVERRIDE_NO_UPDATE = 2;
+    static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
+    static const uint16_t REPLACE_CLIENT_NAME = 8;
 
     /// @brief Constructor
     FqdnDhcpv6SrvTest()
-        : Dhcpv6SrvTest() {
+        : Dhcpv6SrvTest(), d2_mgr_(CfgMgr::instance().getD2ClientMgr()) {
         // generateClientId assigns DUID to duid_.
         generateClientId();
         lease_.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
                                 duid_, 1234, 501, 502, 503,
                                 504, 1, 0));
-
+        // Config DDNS to be enabled, all controls off
+        enableD2();
     }
 
     /// @brief Destructor
     virtual ~FqdnDhcpv6SrvTest() {
+        // Default constructor creates a config with DHCP-DDNS updates
+        // disabled.
+        D2ClientConfigPtr cfg(new D2ClientConfig());
+        CfgMgr::instance().setD2ClientConfig(cfg);
+    }
+
+    /// @brief Sets the server's DDNS configuration to ddns updates disabled.
+    void disableD2() {
+        // Default constructor creates a config with DHCP-DDNS updates
+        // disabled.
+        D2ClientConfigPtr cfg(new D2ClientConfig());
+        CfgMgr::instance().setD2ClientConfig(cfg);
+    }
+
+    /// @brief Enables DHCP-DDNS updates with the given options enabled.
+    ///
+    /// Replaces the current D2ClientConfiguration with a configuration
+    /// which as updates enabled and the control options set based upon
+    /// the bit mask of options.
+    ///
+    /// @param mask Bit mask of configuration options that should be enabled.
+    void enableD2(const uint16_t mask = 0) {
+        D2ClientConfigPtr cfg;
+
+        ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 53001,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  (mask & ALWAYS_INCLUDE_FQDN),
+                                  (mask & OVERRIDE_NO_UPDATE),
+                                  (mask & OVERRIDE_CLIENT_UPDATE),
+                                  (mask & REPLACE_CLIENT_NAME),
+                                  "myhost", "example.com")));
+        ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
     }
 
     /// @brief Construct the DHCPv6 Client FQDN option using flags and
@@ -443,6 +485,7 @@ TEST_F(FqdnDhcpv6SrvTest, noUpdate) {
 // Test server's response when client requests that server delegates the AAAA
 // update to the client and this delegation is not allowed.
 TEST_F(FqdnDhcpv6SrvTest, clientAAAAUpdateNotAllowed) {
+    enableD2(OVERRIDE_CLIENT_UPDATE);
     testFqdn(DHCPV6_SOLICIT, 0, "myhost.example.com.",
              Option6ClientFqdn::FULL,
              Option6ClientFqdn::FLAG_S | Option6ClientFqdn::FLAG_O,
