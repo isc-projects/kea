@@ -29,7 +29,7 @@ namespace {
 // This test checks that when the default constructor is called, the data buffer
 // is empty.
 TEST(OpaqueDataTuple, constructor) {
-    OpaqueDataTuple tuple;
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // There should be no data in the tuple.
     EXPECT_EQ(0, tuple.getLength());
     EXPECT_TRUE(tuple.getData().empty());
@@ -73,7 +73,7 @@ TEST(OpaqueDataTuple, constructorParse2Bytes) {
 
 // This test checks that it is possible to set the tuple data using raw buffer.
 TEST(OpaqueDataTuple, assignData) {
-    OpaqueDataTuple tuple;
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // Initially the tuple buffer should be empty.
     OpaqueDataTuple::Buffer buf = tuple.getData();
     ASSERT_TRUE(buf.empty());
@@ -98,10 +98,10 @@ TEST(OpaqueDataTuple, assignData) {
     EXPECT_TRUE(std::equal(buf.begin(), buf.end(), data2));
 }
 
-// This test checks thet it is possible to append the data to the tuple using
+// This test checks that it is possible to append the data to the tuple using
 // raw buffer.
 TEST(OpaqueDataTuple, appendData) {
-    OpaqueDataTuple tuple;
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // Initially the tuple buffer should be empty.
     OpaqueDataTuple::Buffer buf = tuple.getData();
     ASSERT_TRUE(buf.empty());
@@ -131,7 +131,7 @@ TEST(OpaqueDataTuple, appendData) {
 
 // This test checks that it is possible to assign the string to the tuple.
 TEST(OpaqueDataTuple, assignString) {
-    OpaqueDataTuple tuple;
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // Initially, the tuple should be empty.
     ASSERT_EQ(0, tuple.getLength());
     // Assign some string data.
@@ -148,7 +148,7 @@ TEST(OpaqueDataTuple, assignString) {
 
 // This test checks that it is possible to append the string to the tuple.
 TEST(OpaqueDataTuple, appendString) {
-    OpaqueDataTuple tuple;
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // Initially the tuple should be empty.
     ASSERT_EQ(0, tuple.getLength());
     // Append the string to it.
@@ -163,19 +163,20 @@ TEST(OpaqueDataTuple, appendString) {
     EXPECT_EQ("First part and second part", tuple.getText());
 }
 
-// This test checks that equals function correctly checks that the tuple
-// holds a given string but it doesn't hold the other.
+// This test verifies that equals function correctly checks that the tuple
+// holds a given string but it doesn't hold the other. This test also
+// checks the assignment operator for the tuple.
 TEST(OpaqueDataTuple, equals) {
-    OpaqueDataTuple tuple;
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // Tuple is supposed to be empty so it is not equal xyz.
     EXPECT_FALSE(tuple.equals("xyz"));
     // Assign xyz.
-    tuple = "xyz";
+    EXPECT_NO_THROW(tuple = "xyz");
     // The tuple should be equal xyz, but not abc.
     EXPECT_FALSE(tuple.equals("abc"));
     EXPECT_TRUE(tuple.equals("xyz"));
     // Assign abc to the tuple.
-    tuple = "abc";
+    EXPECT_NO_THROW(tuple = "abc");
     // It should be now opposite.
     EXPECT_TRUE(tuple.equals("abc"));
     EXPECT_FALSE(tuple.equals("xyz"));
@@ -184,7 +185,7 @@ TEST(OpaqueDataTuple, equals) {
 // This test checks that the conversion of the data in the tuple to the string
 // is performed correctly.
 TEST(OpaqueDataTuple, getText) {
-    OpaqueDataTuple tuple;
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // Initially the tuple should be empty.
     ASSERT_TRUE(tuple.getText().empty());
     // ASCII representation of 'Hello world'.
@@ -200,16 +201,16 @@ TEST(OpaqueDataTuple, getText) {
 
 // This test verifies the behavior of (in)equality and assignment operators.
 TEST(OpaqueDataTuple, operators) {
-    OpaqueDataTuple tuple;
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // Tuple should be empty initially.
     ASSERT_EQ(0, tuple.getLength());
     // Check assignment.
-    tuple = "Hello World";
+    EXPECT_NO_THROW(tuple = "Hello World");
     EXPECT_EQ(11, tuple.getLength());
     EXPECT_TRUE(tuple == "Hello World");
     EXPECT_TRUE(tuple != "Something else");
     // Assign something else to make sure it affects the tuple.
-    tuple = "Something else";
+    EXPECT_NO_THROW(tuple = "Something else");
     EXPECT_EQ(14, tuple.getLength());
     EXPECT_TRUE(tuple == "Something else");
     EXPECT_TRUE(tuple != "Hello World");
@@ -218,19 +219,19 @@ TEST(OpaqueDataTuple, operators) {
 // This test verifies that the tuple is inserted in the textual format to the
 // output stream.
 TEST(OpaqueDataTuple, operatorOutputStream) {
-    OpaqueDataTuple tuple;
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // The tuple should be empty initially.
     ASSERT_EQ(0, tuple.getLength());
     // The tuple is empty, so assigning its content to the output stream should
     // be no-op and result in the same text in the stream.
     std::ostringstream s;
     s << "Some text";
-    s << tuple;
+    EXPECT_NO_THROW(s << tuple);
     EXPECT_EQ("Some text", s.str());
     // Now, let's assign some text to the tuple and call operator again.
     // The new text should be added to the stream.
-    tuple = " and some other text";
-    s << tuple;
+    EXPECT_NO_THROW(tuple = " and some other text");
+    EXPECT_NO_THROW(s << tuple);
     EXPECT_EQ(s.str(), "Some text and some other text");
 
 }
@@ -238,19 +239,19 @@ TEST(OpaqueDataTuple, operatorOutputStream) {
 // This test verifies that the value of the tuple can be initialized from the
 // input stream.
 TEST(OpaqueDataTuple, operatorInputStream) {
-    OpaqueDataTuple tuple;
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // The tuple should be empty initially.
     ASSERT_EQ(0, tuple.getLength());
     // The input stream has some text. This text should be appended to the
     // tuple.
     std::istringstream s;
     s.str("Some text");
-    s >> tuple;
+    EXPECT_NO_THROW(s >> tuple);
     EXPECT_EQ("Some text", tuple.getText());
     // Now, let's assign some other text to the stream. This new text should be
     // assigned to the tuple.
     s.str("And some other");
-    s >> tuple;
+    EXPECT_NO_THROW(s >> tuple);
     EXPECT_EQ("And some other", tuple.getText());
 }
 
@@ -349,6 +350,19 @@ TEST(OpaqueDataTuple, pack2Bytes) {
     // append the data to the current buffer.
     ASSERT_NO_THROW(tuple.pack(out_buf));
     EXPECT_EQ(1028, out_buf.getLength());
+
+    // Check that we can render the buffer of the maximal allowed size.
+    data.assign(65535, 1);
+    ASSERT_NO_THROW(tuple.assign(data.begin(), data.size()));
+    ASSERT_NO_THROW(tuple.pack(out_buf));
+
+    out_buf.clear();
+
+    // Append one additional byte. The total length of the tuple now exceeds
+    // the maximal value. An attempt to render it should throw an exception.
+    data.assign(1, 1);
+    ASSERT_NO_THROW(tuple.append(data.begin(), data.size()));
+    EXPECT_THROW(tuple.pack(out_buf), OpaqueDataTupleError);
 }
 
 // This test verifies that the tuple is decoded from the wire format.
@@ -369,7 +383,7 @@ TEST(OpaqueDataTuple, unpack1Byte) {
 // the wire format.
 TEST(OpaqueDataTuple, unpack1ByteZeroLength) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
-    tuple = "Hello world";
+    EXPECT_NO_THROW(tuple = "Hello world");
     ASSERT_NE(tuple.getLength(), 0);
 
     const char wire_data[] = {
@@ -390,7 +404,7 @@ TEST(OpaqueDataTuple, unpack1ByteEmptyBuffer) {
     EXPECT_THROW(tuple.unpack(wire_data, wire_data), OpaqueDataTupleError);
 }
 
-// This test verifies that exception if thrown when parsing truncated buffer.
+// This test verifies that exception is thrown when parsing truncated buffer.
 TEST(OpaqueDataTuple, unpack1ByteTruncatedBuffer) {
    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
     const char wire_data[] = {
@@ -425,7 +439,7 @@ TEST(OpaqueDataTuple, unpack2Byte) {
 TEST(OpaqueDataTuple, unpack2ByteZeroLength) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     // Set some data for the tuple.
-    tuple = "Hello world";
+    EXPECT_NO_THROW(tuple = "Hello world");
     ASSERT_NE(tuple.getLength(), 0);
     // The buffer holds just a length field with the value of 0.
     const char wire_data[] = {
