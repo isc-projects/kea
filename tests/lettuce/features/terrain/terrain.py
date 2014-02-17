@@ -1,5 +1,4 @@
-
-# Copyright (C) 2011  Internet Systems Consortium.
+# Copyright (C) 2011-2014  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -52,6 +51,8 @@ copylist = [
      "configurations/bindctl_commands.config"],
     ["configurations/example.org.config.orig",
      "configurations/example.org.config"],
+    ["configurations/generate.config.orig",
+     "configurations/generate.config"],
     ["configurations/bindctl/bindctl.config.orig",
      "configurations/bindctl/bindctl.config"],
     ["configurations/auth/auth_basic.config.orig",
