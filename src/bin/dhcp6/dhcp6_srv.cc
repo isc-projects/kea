@@ -104,8 +104,6 @@ namespace {
 // DHCPv6 Client FQDN Option sent by a client. They will be removed
 // when DDNS parameters for DHCPv6 are implemented with the ticket #3034.
 
-// Globally enable updates (Enabled).
-const bool FQDN_ENABLE_UPDATE = true;
 // Do update, even if client requested no updates with N flag (Disabled).
 const bool FQDN_OVERRIDE_NO_UPDATE = false;
 // Server performs an update when client requested delegation (Enabled).
@@ -1030,7 +1028,7 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
 void
 Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
     // Don't create NameChangeRequests if DNS updates are disabled.
-    if (!FQDN_ENABLE_UPDATE) {
+    if (!CfgMgr::instance().ddnsEnabled()) {
         return;
     }
 
@@ -1117,7 +1115,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
 void
 Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
     // Don't create NameChangeRequests if DNS updates are disabled.
-    if (!FQDN_ENABLE_UPDATE) {
+    if (!CfgMgr::instance().ddnsEnabled()) {
         return;
     }
 

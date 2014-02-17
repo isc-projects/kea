@@ -588,6 +588,34 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
 
 }
 
+// Checks that NameChangeRequests to add entries are not
+// created when ddns updates are disabled.
+TEST_F(FqdnDhcpv6SrvTest, noAddRequestsWhenDisabled) {
+    NakedDhcpv6Srv srv(0);
+
+    // Disable DDNS udpates.
+    disableD2();
+
+    // Create Reply message with Client Id and Server id.
+    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY, srv);
+
+    // Create three IAs, each having different address.
+    addIA(1234, IOAddress("2001:db8:1::1"), answer);
+
+    // Use domain name in upper case. It should be converted to lower-case
+    // before DHCID is calculated. So, we should get the same result as if
+    // we typed domain name in lower-case.
+    Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
+                                                 "MYHOST.EXAMPLE.COM",
+                                                 Option6ClientFqdn::FULL);
+    answer->addOption(fqdn);
+
+    // Create NameChangeRequest for the first allocated address.
+    ASSERT_NO_THROW(srv.createNameChangeRequests(answer));
+    ASSERT_TRUE(srv.name_change_reqs_.empty());
+}
+
+
 // Test creation of the NameChangeRequest to remove both forward and reverse
 // mapping for the given lease.
 TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
@@ -611,6 +639,27 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
                             0, 502);
 
 }
+
+// Checks that NameChangeRequests to remove entries are not created
+// when ddns updates are disabled.
+TEST_F(FqdnDhcpv6SrvTest, noRemovalsWhenDisabled) {
+    NakedDhcpv6Srv srv(0);
+
+    // Disable DDNS updates.
+    disableD2();
+
+    lease_->fqdn_fwd_ = true;
+    lease_->fqdn_rev_ = true;
+    // Part of the domain name is in upper case, to test that it gets converted
+    // to lower case before DHCID is computed. So, we should get the same DHCID
+    // as if we typed domain-name in lower case.
+    lease_->hostname_ = "MYHOST.example.com.";
+
+    ASSERT_NO_THROW(srv.createRemovalNameChangeRequest(lease_));
+
+    ASSERT_TRUE(srv.name_change_reqs_.empty());
+}
+
 
 // Test creation of the NameChangeRequest to remove reverse mapping for the
 // given lease.
