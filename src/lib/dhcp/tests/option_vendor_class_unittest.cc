@@ -59,7 +59,7 @@ TEST(OptionVendorClass, addTuple) {
     // Initially there should be no tuples (for DHCPv6).
     ASSERT_EQ(0, vendor_class.getTuplesNum());
     // Create a new tuple and add it to the option.
-    OpaqueDataTuple tuple;
+    OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     tuple = "xyz";
     vendor_class.addTuple(tuple);
     // The option should now hold one tuple.
@@ -362,7 +362,11 @@ TEST(OptionVendorClass, unpack6Truncated) {
 }
 
 // This test checks that exception is thrown when parsing DHCPv4 V-I Vendor
-// Class option which doesn't have opaque data length.
+// Class option which doesn't have opaque data length. This test is different
+// from the corresponding test for v6 in that, the v4 test expects that
+// exception is thrown when parsing DHCPv4 option without data-len field
+// (has no tuples), whereas for DHCPv6 option it is perfectly ok that
+// option has no tuples (see class constructor).
 TEST(OptionVendorClass, unpack4NoTuple) {
     // Prepare data to decode.
     const uint8_t buf_data[] = {
@@ -375,7 +379,11 @@ TEST(OptionVendorClass, unpack4NoTuple) {
 }
 
 // This test checks that the DHCPv6 Vendor Class option containing no opaque
-// data is parsed correctly.
+// data is parsed correctly. This test is different from the corresponding
+// test for v4 in that, the v6 test checks that the option parsing succeeds
+// when option has no opaque data tuples, whereas the v4 test expects that
+// parsing fails for DHCPv4 option which doesn't have opaque-data (see
+// class constructor).
 TEST(OptionVendorClass, unpack6NoTuple) {
     // Prepare data to decode.
     const uint8_t buf_data[] = {

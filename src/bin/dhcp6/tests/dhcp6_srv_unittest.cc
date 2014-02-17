@@ -1723,7 +1723,7 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
     srv.classifyPacket(sol1);
 
     // It should belong to docsis3.0 class. It should not belong to eRouter1.0
-    EXPECT_TRUE(sol1->inClass("docsis3.0"));
+    EXPECT_TRUE(sol1->inClass("VENDOR_CLASS_docsis3.0"));
     EXPECT_FALSE(sol1->inClass("eRouter1.0"));
 
     // Let's get a relayed SOLICIT. This particular relayed SOLICIT has

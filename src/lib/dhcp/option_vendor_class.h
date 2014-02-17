@@ -29,10 +29,10 @@ namespace dhcp {
 /// @brief This class encapsulates DHCPv6 Vendor Class and DHCPv4 V-I Vendor
 /// Class options.
 ///
-/// The format of DHCPv6 Vendor Class option is described in section 22.16 of
-/// RFC3315 and the format of the DHCPv4 V-I Vendor Class option is described
-/// in section 3 of RFC3925. Each of these options carries enterprise id
-/// followed by the collection of tuples carring opaque data. A single tuple
+/// The format of DHCPv6 Vendor Class option (16) is described in section 22.16
+/// of RFC3315 and the format of the DHCPv4 V-I Vendor Class option (124) is
+/// described in section 3 of RFC3925. Each of these options carries enterprise
+/// id followed by the collection of tuples carring opaque data. A single tuple
 /// consists of the field holding opaque data length and the actual data.
 /// In case of the DHCPv4 V-I Vendor Class each tuple is preceded by the
 /// 4-byte long enterprise id. Also, the field which carries the length of
@@ -53,6 +53,13 @@ public:
     typedef std::vector<OpaqueDataTuple> TuplesCollection;
 
     /// @brief Constructor.
+    ///
+    /// This constructor instance of the DHCPv4 V-I Vendor Class option (124)
+    /// or DHCPv6 Vendor Class option (16), depending on universe specified.
+    /// If the universe is v4, the constructor adds one empty tuple to the
+    /// option, as per RFC3925, section 3. the complete option must hold at
+    /// least one data-len field for opaque data. If the specified universe
+    /// is v6, the constructor adds no tuples.
     ///
     /// @param u universe (v4 or v6).
     /// @param vendor_id vendor enterprise id (unique 32-bit integer).
