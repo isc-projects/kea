@@ -913,13 +913,13 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestEmptyFqdn) {
     NakedDhcpv6Srv srv(0);
 
     testProcessMessage(DHCPV6_REQUEST, "",
-                       "host-2001-db8-1-1--dead-beef.example.com.",
+                       "myhost-2001-db8-1-1--dead-beef.example.com.",
                        srv, false);
     ASSERT_EQ(1, srv.name_change_reqs_.size());
     verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
-                            "0002018D6874B105A5C92DBBD6E4F6C80A93161"
-                            "BC03996F0CD0EB75800DEF997C29961",
+                            "000201C905E54BE12DE6AF92ADE72752B9F362"
+                            "13B5A8BC9D217548CD739B4CF31AFB1B",
                             0, 4000);
 
 }
