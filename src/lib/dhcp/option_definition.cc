@@ -668,21 +668,21 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // a specialized class to handle it.
             return (OptionPtr(new Option6ClientFqdn(begin, end)));
         } else if (getCode() == D6O_VENDOR_OPTS && haveVendor6Format()) {
-            // Vendor-Specific Information.
+            // Vendor-Specific Information (option code 17)
             return (OptionPtr(new OptionVendor(Option::V6, begin, end)));
         } else if (getCode() == D6O_VENDOR_CLASS && haveVendorClass6Format()) {
-            // Vendor Class.
+            // Vendor Class (option code 16).
             return (OptionPtr(new OptionVendorClass(Option::V6, begin, end)));
         }
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
-            // V-I VendorClass
         } else if ((getCode() == DHO_VIVCO_SUBOPTIONS) &&
                    haveVendorClass4Format()) {
+            // V-I Vendor Class (option code 124).
             return (OptionPtr(new OptionVendorClass(Option::V4, begin, end)));
         } else if (getCode() == DHO_VIVSO_SUBOPTIONS && haveVendor4Format()) {
-            // Vendor-Specific Information.
+            // Vendor-Specific Information (option code 125).
             return (OptionPtr(new OptionVendor(Option::V4, begin, end)));
 
         }

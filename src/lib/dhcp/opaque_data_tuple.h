@@ -25,7 +25,7 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief Exception to be thrown when there operation on @c OpaqueDataTuple
+/// @brief Exception to be thrown when the operation on @c OpaqueDataTuple
 /// object results in an error.
 class OpaqueDataTupleError : public Exception {
 public:
@@ -72,7 +72,7 @@ public:
     ///
     /// @param length_field_type Indicates a length of the field which holds
     /// the size of the tuple.
-    OpaqueDataTuple(LengthFieldType length_field_type = LENGTH_2_BYTES);
+    OpaqueDataTuple(LengthFieldType length_field_type);
 
     /// @brief Constructor
     ///
@@ -81,7 +81,7 @@ public:
     ///
     /// @param length_field_type Indicates the length of the field holding the
     /// opaque data size.
-    /// @param begin Iterator pointing to the begining of the buffer holding
+    /// @param begin Iterator pointing to the beginning of the buffer holding
     /// wire data.
     /// @param end Iterator pointing to the end of the buffer holding wire data.
     /// @tparam InputIterator Type of the iterators passed to this function.
@@ -96,7 +96,7 @@ public:
     /// @brief Appends data to the tuple.
     ///
     /// This function appends the data of the specified length to the tuple.
-    /// If the speficified buffer length is greater than the size of the buffer,
+    /// If the specified buffer length is greater than the size of the buffer,
     /// the behavior of this function is undefined.
     ///
     /// @param data Iterator pointing to the beginning of the buffer being
@@ -213,7 +213,7 @@ public:
     ///
     /// This function allows opaque data with the length of 0.
     ///
-    /// @param begin Iterator pointing to the begining of the buffer holding
+    /// @param begin Iterator pointing to the beginning of the buffer holding
     /// wire data.
     /// @param end Iterator pointing to the end of the buffer holding wire data.
     /// @tparam InputIterator Type of the iterators passed to this function.

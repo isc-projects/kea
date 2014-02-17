@@ -2446,22 +2446,20 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
     }
 
     std::ostringstream classes;
-
     if (vclass->hasTuple(DOCSIS3_CLASS_MODEM)) {
-        pkt->addClass(DOCSIS3_CLASS_MODEM);
-        classes << DOCSIS3_CLASS_MODEM;
+        classes << "VENDOR_CLASS_" << DOCSIS3_CLASS_MODEM;
 
     } else if (vclass->hasTuple(DOCSIS3_CLASS_EROUTER)) {
-        pkt->addClass(DOCSIS3_CLASS_EROUTER);
         classes << DOCSIS3_CLASS_EROUTER;
 
     } else {
-        pkt->addClass(vclass->getTuple(0).getText());
-        classes << vclass->getTuple(0);
+        classes << vclass->getTuple(0).getText();
 
     }
 
+    // If there is no class identified, leave.
     if (!classes.str().empty()) {
+        pkt->addClass(classes.str());
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CLASS_ASSIGNED)
             .arg(classes.str());
     }

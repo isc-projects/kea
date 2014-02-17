@@ -126,7 +126,7 @@ OptionVendorClass::getTuple(const size_t at) const {
     if (at >= getTuplesNum()) {
         isc_throw(isc::OutOfRange, "attempted to get an opaque data for the"
                   " vendor option at position " << at << " which is out of"
-                  " range");
+                  " range. There are only " << getTuplesNum() << " tuples");
     }
     return (tuples_[at]);
 }
