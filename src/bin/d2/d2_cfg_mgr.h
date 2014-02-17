@@ -126,6 +126,16 @@ public:
         return (boost::dynamic_pointer_cast<D2CfgContext>(getContext()));
     }
 
+    /// @brief Returns whether not forward updates are enabled.
+    ///
+    /// @return true if forward updates are enabled, false otherwise.
+    bool forwardUpdatesEnabled();
+
+    /// @brief Returns whether not reverse updates are enabled.
+    ///
+    /// @return true if reverse updates are enabled, false otherwise.
+    bool reverseUpdatesEnabled();
+
     /// @brief Matches a given FQDN to a forward domain.
     ///
     /// This calls the matchDomain method of the forward domain manager to

@@ -147,13 +147,21 @@ protected:
 
     /// @brief Create a new transaction for the given request.
     ///
-    /// This method will attempt to match the request to a list of configured
-    /// DNS servers.  If a list of servers is found, it will instantiate a
-    /// transaction for it and add the transaction to the transaction list.
+    /// This method will attempt to match the request to suitable DNS servers.
+    /// If matching servers are found, it will instantiate a transaction for
+    /// the requests, add the transaction to the transaction list, and start
+    /// the transaction.
     ///
-    /// If no servers are found that match the request, this constitutes a
-    /// configuration error.  The error will be logged and the request will
-    /// be discarded.
+    /// If updates in a given direction are disabled requests for updates in
+    /// that direction will be ignored.  For example: If a request is received
+    /// which asks for updates both directions but only forward updates are
+    /// enabled; only the forward update will be attempted.  Effectively, the
+    /// request will be treated as if it only asked for forward updates.
+    ///
+    /// If updates in a given direction are enabled, and a request asks for
+    /// updates in that direction, failing to match the request to a list
+    /// of servers is an error which will be logged and the request will be
+    /// discarded.
     ///
     /// @param ncr the NameChangeRequest for which to create a transaction.
     ///
@@ -162,7 +170,7 @@ protected:
     void makeTransaction(isc::dhcp_ddns::NameChangeRequestPtr& ncr);
 
 public:
-    /// @brief Gets the UpdateMgr's IOService.
+    /// @brief Gets the D2UpdateMgr's IOService.
     ///
     /// @return returns a reference to the IOService
     const IOServicePtr& getIOService() {

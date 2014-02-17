@@ -73,6 +73,18 @@ D2CfgMgr::~D2CfgMgr() {
 }
 
 bool
+D2CfgMgr::forwardUpdatesEnabled() {
+    // Forward updates are not enabled if no forward servers are defined.
+    return (getD2CfgContext()->getForwardMgr()->size() > 0);
+}
+
+bool
+D2CfgMgr::reverseUpdatesEnabled() {
+    // Reverse updates are not enabled if no revese servers are defined.
+    return (getD2CfgContext()->getReverseMgr()->size() > 0);
+}
+
+bool
 D2CfgMgr::matchForward(const std::string& fqdn, DdnsDomainPtr& domain) {
     if (fqdn.empty()) {
         // This is a programmatic error and should not happen.
