@@ -98,24 +98,6 @@ Dhcp6Hooks Hooks;
 namespace isc {
 namespace dhcp {
 
-namespace {
-
-// The following constants describe server's behavior with respect to the
-// DHCPv6 Client FQDN Option sent by a client. They will be removed
-// when DDNS parameters for DHCPv6 are implemented with the ticket #3034.
-
-// Do update, even if client requested no updates with N flag (Disabled).
-const bool FQDN_OVERRIDE_NO_UPDATE = false;
-// Server performs an update when client requested delegation (Enabled).
-const bool FQDN_OVERRIDE_CLIENT_UPDATE = true;
-// The fully qualified domain-name suffix if partial name provided by
-// a client.
-const char* FQDN_PARTIAL_SUFFIX = "example.com";
-// Should server replace the domain-name supplied by the client (Disabled).
-const bool FQDN_REPLACE_CLIENT_NAME = false;
-
-}
-
 /// @brief file name of a server-id file
 ///
 /// Server must store its duid in persistent storage that must not change
@@ -2442,17 +2424,8 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
     }
     // Get the IPv6 address acquired by the client.
     IOAddress addr = iaaddr->getAddress();
-    std::string hostname = addr.toText();
-    // Colons may not be ok for FQDNs so let's replace them with hyphens.
-    std::replace(hostname.begin(), hostname.end(), ':', '-');
-    std::ostringstream stream;
-    // The final FQDN consists of the partial domain name and the suffix.
-    // For example, if the acquired address is 2001:db8:1::2, the generated
-    // FQDN may be:
-    //     host-2001-db8:1--2.example.com.
-    // where prefix 'host' should be configurable. The domain name suffix
-    // should also be configurable.
-    stream << "host-" << hostname << "." << FQDN_PARTIAL_SUFFIX << ".";
+    std::string generated_name =
+        CfgMgr::instance().getD2ClientMgr().generateFqdn(addr);
     try {
         // The lease has been acquired but the FQDN for this lease hasn't
         // been updated in the lease database. We now have new FQDN
@@ -2463,7 +2436,7 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
             Lease6Ptr lease =
                 LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
             if (lease) {
-                lease->hostname_ = stream.str();
+                lease->hostname_ = generated_name;
                 LeaseMgrFactory::instance().updateLease6(lease);
 
             } else {
@@ -2474,13 +2447,12 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
                           " client");
             }
         }
-
         // Set the generated FQDN in the Client FQDN option.
-        fqdn->setDomainName(stream.str(), Option6ClientFqdn::FULL);
+        fqdn->setDomainName(generated_name, Option6ClientFqdn::FULL);
 
     } catch (const Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_NAME_GEN_UPDATE_FAIL)
-            .arg(hostname)
+            .arg(addr.toText())
             .arg(ex.what());
     }
 }
