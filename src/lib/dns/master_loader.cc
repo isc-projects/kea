@@ -587,9 +587,23 @@ namespace { // begin unnamed namespace
 /// num = 0xabcd, width = 0, uppercase = true
 /// "D.C.B.A"
 ///
+/// num = 0, width = 0
+/// "0"
+///
+/// num = 0, width = 1
+/// "0"
+///
+/// num = 0, width = 2
+/// "0."
+///
+/// num = 0, width = 3
+/// "0.0"
+///
 /// \param num The number for which the dotted nibble sequence should be
 /// generated.
-/// \param width The width of the generated string.
+/// \param width The width of the generated string. This is only
+/// meaningful when it is larger than the dotted nibble sequence
+/// representation of \c num.
 /// \param uppercase Whether to use uppercase characters in nibble
 /// sequence.
 /// \return A string containing the dotted nibble sequence.
