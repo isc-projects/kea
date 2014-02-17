@@ -56,9 +56,34 @@ public:
 
 } // end unnamed namespace
 
+/// \brief Private implementation class for the \c MasterLoader
+///
+/// This class is used internally by the \c MasterLoader and is not
+/// publicly visible. It is present to avoid polluting the public API
+/// with internal implementation details of the \c MasterLoader.
 // cppcheck-suppress noConstructor
 class MasterLoader::MasterLoaderImpl {
 public:
+    /// \brief Constructor.
+    ///
+    /// \param master_file Path to the file to load.
+    /// \param zone_origin The origin of zone to be expected inside
+    ///     the master file. Currently unused, but it is expected to
+    ///     be used for some validation.
+    /// \param zone_class The class of zone to be expected inside the
+    ///     master file.
+    /// \param callbacks The callbacks by which it should report problems.
+    ///     Usually, the callback carries a filename and line number of the
+    ///     input where the problem happens. There's a special case of empty
+    ///     filename and zero line in case the opening of the top-level master
+    ///     file fails.
+    /// \param add_callback The callback which would be called with each
+    ///     loaded RR.
+    /// \param options Options for the parsing, which is bitwise-or of
+    ///     the Options values or DEFAULT. If the MANY_ERRORS option is
+    ///     included, the parser tries to continue past errors. If it
+    ///     is not included, it stops at first encountered error.
+    /// \throw std::bad_alloc when there's not enough memory.
     MasterLoaderImpl(const char* master_file,
                      const Name& zone_origin,
                      const RRClass& zone_class,
@@ -83,6 +108,16 @@ public:
         rr_count_(0)
     {}
 
+    /// \brief Wrapper around \c MasterLexer::pushSource() (file version)
+    ///
+    /// This method is used as a wrapper around the lexer's
+    /// \c pushSource() to also save the current origin and the last
+    /// seen name (to be restored upon \c popSource()). It also calls
+    /// \c pushSource(). See \c doInclude() implementation for more
+    /// details.
+    ///
+    /// \param filename Path to the file to push as a new source.
+    /// \param current_origin The current origin name to save.
     void pushSource(const std::string& filename, const Name& current_origin) {
         std::string error;
         if (!lexer_.pushSource(filename.c_str(), &error)) {
@@ -100,17 +135,35 @@ public:
         previous_name_ = false;
     }
 
+    /// \brief Wrapper around \c MasterLexer::pushSource() (stream version)
+    ///
+    /// Similar to \c pushSource(). This method need not save the
+    /// current origin as it is not used with $INCLUDE processing.
+    ///
+    /// \param stream The input stream to use as a new source.
     void pushStreamSource(std::istream& stream) {
         lexer_.pushSource(stream);
         initialized_ = true;
     }
 
+    /// \brief Implementation of \c MasterLoader::loadIncremental()
+    ///
+    /// See \c MasterLoader::loadIncremental() for details.
     bool loadIncremental(size_t count_limit);
 
+    /// \brief Return the total size of the input sources pushed so
+    /// far. See \c MasterLexer::getTotalSourceSize().
     size_t getSize() const { return (lexer_.getTotalSourceSize()); }
+
+    /// \brief Return the line number being parsed in the pushed input
+    /// sources. See \c MasterLexer::getPosition().
     size_t getPosition() const { return (lexer_.getPosition()); }
 
 private:
+    /// \brief Report an error using the callbacks that were supplied
+    /// during \c MasterLoader construction. Note that this method also
+    /// throws \c MasterLoaderError exception if necessary, so the
+    /// caller need not throw it.
     void reportError(const std::string& filename, size_t line,
                      const std::string& reason)
     {
@@ -125,6 +178,12 @@ private:
         }
     }
 
+    /// \brief Wrapper around \c MasterLexer::popSource()
+    ///
+    /// This method is used as a wrapper around the lexer's
+    /// \c popSource() to also restore the current origin and the last
+    /// seen name (at time of push). It also calls \c popSource(). See
+    /// \c doInclude() implementation for more details.
     bool popSource() {
         if (lexer_.getSourceCount() == 1) {
             return (false);
@@ -143,16 +202,43 @@ private:
         return (true);
     }
 
-    // Get a string token. Handle it as error if it is not string.
+    /// \brief Get a string token. Handle it as error if it is not string.
     const string getString() {
         lexer_.getNextToken(MasterToken::STRING).getString(string_token_);
         return (string_token_);
     }
 
+    /// \brief Parse the initial token at the beginning of a line in a
+    /// master file (or stream).
+    ///
+    /// A helper method of \c loadIncremental(), parsing the first token
+    /// of a new line.  If it looks like an RR, detect its owner name
+    /// and return a string token for the next field of the RR.
+    ///
+    /// Otherwise, return either \c END_OF_LINE or \c END_OF_FILE token
+    /// depending on whether the loader continues to the next line or
+    /// completes the load, respectively.  Other corner cases including
+    /// $-directive handling is done here.
+    ///
+    /// For unexpected errors, it throws an exception, which will be
+    /// handled in \c loadIncremental().
     MasterToken handleInitialToken();
+
+    /// \brief Helper method for \c doGenerate().
+    ///
+    /// This is a helper method for \c doGenerate() that processes the
+    /// LHS or RHS for a single iteration in the range that is requested
+    /// by the $GENERATE directive and returns a generated string (that
+    /// is used to build a name (LHS) or RDATA (RHS) for an RR). See the
+    /// commented implementation for details.
     std::string generateForIter(const std::string& str, const int it);
+
+    /// \brief Process the $GENERATE directive.
+    ///
+    /// See the commented implementation for details.
     void doGenerate();
 
+    /// \brief Process the $ORIGIN directive.
     void doOrigin(bool is_optional) {
         // Parse and create the new origin. It is relative to the previous
         // one.
@@ -185,6 +271,7 @@ private:
         }
     }
 
+    /// \brief Process the $INCLUDE directive.
     void doInclude() {
         // First, get the filename to include
         const string
@@ -205,11 +292,16 @@ private:
         pushSource(filename, current_origin);
     }
 
-    // A helper method for loadIncremental(). It parses part of an RR
-    // until it finds the RR type field.  If TTL or RR class is
-    // specified before the RR type, it also recognizes and validates
-    // them.  explicit_ttl will be set to true if this method finds a
-    // valid TTL field.
+    /// \brief Parse RR fields (TTL, CLASS and TYPE).
+    ///
+    /// A helper method for \c loadIncremental(). It parses part of an
+    /// RR until it finds the RR type field.  If TTL or RR class is
+    /// specified before the RR type, it also recognizes and validates
+    /// them.
+    ///
+    /// \param explicit_ttl will be set to true if this method finds a
+    /// valid TTL field.
+    /// \param rrparam_token Pass the current (parsed) token here.
     RRType parseRRParams(bool& explicit_ttl, MasterToken rrparam_token) {
         // Find TTL, class and type.  Both TTL and class are
         // optional and may occur in any order if they exist. TTL
@@ -249,20 +341,25 @@ private:
         return (RRType(rrparam_token.getString()));
     }
 
-    // Upper limit check when recognizing a specific TTL value from the
-    // zone file ($TTL, the RR's TTL field, or the SOA minimum).  RFC2181
-    // Section 8 limits the range of TTL values to 2^31-1 (0x7fffffff),
-    // and prohibits transmitting a TTL field exceeding this range.  We
-    // guarantee that by limiting the value at the time of zone
-    // parsing/loading, following what BIND 9 does.  Resetting it to 0
-    // at this point may not be exactly what the RFC states (depending on
-    // the meaning of 'received'), but the end result would be the same (i.e.,
-    // the guarantee on transmission).  Again, we follow the BIND 9's behavior
-    // here.
-    //
-    // post_parsing is true iff this method is called after parsing the entire
-    // RR and the lexer is positioned at the next line.  It's just for
-    // calculating the accurate source line when callback is necessary.
+    /// \brief Check and limit TTL to maximum value.
+    ///
+    /// Upper limit check when recognizing a specific TTL value from the
+    /// zone file ($TTL, the RR's TTL field, or the SOA minimum).  RFC2181
+    /// Section 8 limits the range of TTL values to 2^31-1 (0x7fffffff),
+    /// and prohibits transmitting a TTL field exceeding this range.  We
+    /// guarantee that by limiting the value at the time of zone
+    /// parsing/loading, following what BIND 9 does.  Resetting it to 0
+    /// at this point may not be exactly what the RFC states (depending on
+    /// the meaning of 'received'), but the end result would be the same (i.e.,
+    /// the guarantee on transmission).  Again, we follow the BIND 9's behavior
+    /// here.
+    ///
+    /// \param ttl the TTL to check. If it is larger than the maximum
+    /// allowed, it is set to 0.
+    /// \param post_parsing should be true iff this method is called
+    /// after parsing the entire RR and the lexer is positioned at the
+    /// next line. It's just for calculating the accurate source line
+    /// when callback is necessary.
     void limitTTL(RRTTL& ttl, bool post_parsing) {
         if (ttl > RRTTL::MAX_TTL()) {
             const size_t src_line = lexer_.getSourceLine() -
@@ -274,19 +371,25 @@ private:
         }
     }
 
-    // Set/reset the default TTL.  This should be from either $TTL or SOA
-    // minimum TTL (it's the caller's responsibility; this method doesn't
-    // care about where it comes from).  see LimitTTL() for parameter
-    // post_parsing.
+    /// \brief Set/reset the default TTL.
+    ///
+    /// This should be from either $TTL or SOA minimum TTL (it's the
+    /// caller's responsibility; this method doesn't care about where it
+    /// comes from). See \c limitTTL() for parameter post_parsing.
     void setDefaultTTL(const RRTTL& ttl, bool post_parsing) {
         assignTTL(default_ttl_, ttl);
         limitTTL(*default_ttl_, post_parsing);
     }
 
-    // Try to set/reset the current TTL from candidate TTL text.  It's possible
-    // it does not actually represent a TTL (which is not immediately
-    // considered an error).  Return true iff it's recognized as a valid TTL
-    // (and only in which case the current TTL is set).
+    /// \brief Try to set/reset the current TTL from candidate TTL text.
+    ///
+    /// It's possible it that the text does not actually represent a TTL
+    /// (which is not immediately considered an error). Returns \c true
+    /// iff it's recognized as a valid TTL (and only in which case the
+    /// current TTL is set).
+    ///
+    /// \param ttl_txt The text to parse as a TTL.
+    /// \return true if a TTL was parsed (and set as the current TTL).
     bool setCurrentTTL(const string& ttl_txt) {
         // We use the factory version instead of RRTTL constructor as we
         // need to expect cases where ttl_txt does not actually represent a TTL
@@ -300,14 +403,15 @@ private:
         return (false);
     }
 
-    // Determine the TTL of the current RR based on the given parsing context.
-    //
-    // explicit_ttl is true iff the TTL is explicitly specified for that RR
-    // (in which case current_ttl_ is set to that TTL).
-    // rrtype is the type of the current RR, and rdata is its RDATA.  They
-    // only matter if the type is SOA and no available TTL is known.  In this
-    // case the minimum TTL of the SOA will be used as the TTL of that SOA
-    // and the default TTL for subsequent RRs.
+    /// \brief Determine the TTL of the current RR based on the given
+    /// parsing context.
+    ///
+    /// \c explicit_ttl is true iff the TTL is explicitly specified for that RR
+    /// (in which case current_ttl_ is set to that TTL).
+    /// \c rrtype is the type of the current RR, and \c rdata is its RDATA.  They
+    /// only matter if the type is SOA and no available TTL is known.  In this
+    /// case the minimum TTL of the SOA will be used as the TTL of that SOA
+    /// and the default TTL for subsequent RRs.
     const RRTTL& getCurrentTTL(bool explicit_ttl, const RRType& rrtype,
                                const rdata::ConstRdataPtr& rdata) {
         // We've completed parsing the full of RR, and the lexer is already
@@ -346,6 +450,10 @@ private:
         return (*current_ttl_);
     }
 
+    /// \brief Handle a $DIRECTIVE
+    ///
+    /// This method is called when a $DIRECTIVE is encountered in the
+    /// input stream.
     void handleDirective(const char* directive, size_t length) {
         if (iequals(directive, "INCLUDE")) {
             doInclude();
@@ -364,6 +472,7 @@ private:
         }
     }
 
+    /// \brief Skip tokens until end-of-line.
     void eatUntilEOL(bool reportExtra) {
         // We want to continue. Try to read until the end of line
         for (;;) {
@@ -446,6 +555,44 @@ public:
 
 namespace { // begin unnamed namespace
 
+/// \brief Generate a dotted nibble sequence.
+///
+/// This method generates a dotted nibble sequence and returns it as a
+/// string. The nibbles are appended from the least significant digit
+/// (in hex representation of \c num) to the most significant digit with
+/// dots ('.') to separate the digits. If \c width is non-zero and the
+/// dotted nibble sequence has not filled the requested width, the rest
+/// of the width is filled with a dotted nibble sequence of 0 nibbles.
+///
+/// Some sample representations:
+///
+/// num = 0x1234, width = 0
+/// "4.3.2.1"
+///
+/// num = 0x1234, width = 1
+/// "4.3.2.1"
+///
+/// num = 0x1234, width = 8
+/// "4.3.2.1"
+///
+/// num = 0x1234, width = 9
+/// "4.3.2.1."
+///
+/// num = 0x1234, width = 10
+/// "4.3.2.1.0"
+///
+/// num = 0x1234, width = 11
+/// "4.3.2.1.0."
+///
+/// num = 0xabcd, width = 0, uppercase = true
+/// "D.C.B.A"
+///
+/// \param num The number for which the dotted nibble sequence should be
+/// generated.
+/// \param width The width of the generated string.
+/// \param uppercase Whether to use uppercase characters in nibble
+/// sequence.
+/// \return A string containing the dotted nibble sequence.
 std::string
 genNibbles(int num, unsigned int width, bool uppercase) {
     static const char *hex = "0123456789abcdef0123456789ABCDEF";
@@ -704,15 +851,6 @@ MasterLoader::MasterLoaderImpl::doGenerate() {
     }
 }
 
-// A helper method of loadIncremental, parsing the first token of a new line.
-// If it looks like an RR, detect its owner name and return a string token for
-// the next field of the RR.
-// Otherwise, return either END_OF_LINE or END_OF_FILE token depending on
-// whether the loader continues to the next line or completes the load,
-// respectively.  Other corner cases including $-directive handling is done
-// here.
-// For unexpected errors, it throws an exception, which will be handled in
-// loadIncremental.
 MasterToken
 MasterLoader::MasterLoaderImpl::handleInitialToken() {
     const MasterToken& initial_token =
