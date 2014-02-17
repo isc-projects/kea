@@ -1,3 +1,8 @@
+751.	[func]		muks
+	The BIND 10 zone loader now supports the $GENERATE directive (a
+	BIND 9 extension).
+	(Trac #2430, git b05064f681231fe7f8571253c5786f4ff0f2ca03)
+
 750.	[func]		tomek
 	b10-dhcp4, b10-dhcp6: Simple client classification has been
 	implemented. Incoming packets can be assigned to zero or more
