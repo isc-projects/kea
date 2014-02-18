@@ -21,7 +21,7 @@
 #include <string>
 #include <ostream>
 
-#include <exceptions/exceptions.h>
+#include <dns/exceptions.h>
 
 #include <dns/edns.h>
 #include <dns/question.h>
@@ -41,10 +41,10 @@ class TSIGRecord;
 /// message parser encounters a short length of data that don't even contain
 /// the full header section.
 ///
-class MessageTooShort : public Exception {
+class MessageTooShort : public isc::dns::Exception {
 public:
     MessageTooShort(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
@@ -52,10 +52,10 @@ public:
 /// is being constructed for an incompatible section.  Specifically, this
 /// happens RRset iterator is being constructed for a Question section.
 ///
-class InvalidMessageSection : public Exception {
+class InvalidMessageSection : public isc::dns::Exception {
 public:
     InvalidMessageSection(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
@@ -63,10 +63,10 @@ public:
 /// class method is called that is prohibited for the current mode of
 /// the message.
 ///
-class InvalidMessageOperation : public Exception {
+class InvalidMessageOperation : public isc::dns::Exception {
 public:
     InvalidMessageOperation(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
@@ -74,10 +74,10 @@ public:
 /// smaller than the standard default maximum (DEFAULT_MAX_UDPSIZE) is
 /// being specified for the message.
 ///
-class InvalidMessageUDPSize : public Exception {
+class InvalidMessageUDPSize : public isc::dns::Exception {
 public:
     InvalidMessageUDPSize(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 typedef uint16_t qid_t;
