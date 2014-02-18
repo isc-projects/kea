@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 #include <util/buffer.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <dhcp/classify.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
@@ -52,9 +53,6 @@ public:
     /// Mask for the value of flags field in the DHCPv4 message
     /// to check whether client requested broadcast response.
     const static uint16_t FLAG_BROADCAST_MASK = 0x8000;
-
-    /// Container for storing client classes
-    typedef std::set<std::string> Classes;
 
     /// Constructor, used in replying to a message.
     ///
@@ -558,7 +556,7 @@ public:
     ///
     /// @param client_class name of the class
     /// @return true if belongs
-    bool inClass(const std::string& client_class);
+    bool inClass(const isc::dhcp::ClientClass& client_class);
 
     /// @brief Adds packet to a specified class
     ///
@@ -575,7 +573,7 @@ public:
     /// so I decided to stick with addClass().
     ///
     /// @param client_class name of the class to be added
-    void addClass(const std::string& client_class);
+    void addClass(const isc::dhcp::ClientClass& client_class);
 
     /// @brief Classes this packet belongs to.
     ///
@@ -583,7 +581,7 @@ public:
     /// existing classes. Having it public also solves the problem of returned
     /// reference lifetime. It is preferred to use @ref inClass and @ref addClass
     /// should be used to operate on this field.
-    Classes classes_;
+    ClientClasses classes_;
 
 private:
 

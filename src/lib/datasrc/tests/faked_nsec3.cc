@@ -15,6 +15,7 @@
 #include "faked_nsec3.h"
 
 #include <dns/name.h>
+#include <dns/labelsequence.h>
 #include <testutils/dnsmessage_test.h>
 
 #include <map>
@@ -86,6 +87,13 @@ public:
         }
         isc_throw(isc::Unexpected, "unexpected name for NSEC3 test: "
                   << name);
+    }
+    virtual string calculate(const LabelSequence& ls) const {
+        assert(ls.isAbsolute());
+        // This is not very optimal, but it's only going to be used in
+        // tests.
+        const Name name(ls.toText());
+        return (calculate(name));
     }
     virtual bool match(const rdata::generic::NSEC3PARAM&) const {
         return (true);

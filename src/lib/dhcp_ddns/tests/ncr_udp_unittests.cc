@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,12 +16,15 @@
 #include <dhcp_ddns/ncr_io.h>
 #include <dhcp_ddns/ncr_udp.h>
 #include <util/time_utilities.h>
+#include <test_utils.h>
 
 #include <asio/ip/udp.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 #include <gtest/gtest.h>
 #include <algorithm>
+
+#include <sys/select.h>
 
 using namespace std;
 using namespace isc;
@@ -113,6 +116,7 @@ TEST(NameChangeUDPListenerBasicTest, basicListenTests) {
 
     // Verify that we can start listening.
     EXPECT_NO_THROW(listener->startListening(io_service));
+
     // Verify that we are in listening mode.
     EXPECT_TRUE(listener->amListening());
     // Verify that a read is in progress.
@@ -268,9 +272,20 @@ TEST_F(NameChangeUDPListenerTest, basicReceivetest) {
 /// @brief A NOP derivation for constructor test purposes.
 class SimpleSendHandler : public NameChangeSender::RequestSendHandler {
 public:
-    virtual void operator ()(const NameChangeSender::Result,
-                             NameChangeRequestPtr&) {
+    SimpleSendHandler() : pass_count_(0), error_count_(0) {
     }
+
+    virtual void operator ()(const NameChangeSender::Result result,
+                             NameChangeRequestPtr&) {
+        if (result == NameChangeSender::SUCCESS) {
+            ++pass_count_;
+        } else {
+            ++error_count_;
+        }
+    }
+
+    int pass_count_;
+    int error_count_;
 };
 
 /// @brief Tests the NameChangeUDPSender constructors.
@@ -311,7 +326,6 @@ TEST(NameChangeUDPSenderBasicTest, constructionTests) {
 /// This test verifies that:
 TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
-    uint32_t port = SENDER_PORT;
     isc::asiolink::IOService io_service;
     SimpleSendHandler ncr_handler;
 
@@ -320,8 +334,9 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
 
     // Create the sender, setting the queue max equal to the number of
     // messages we will have in the list.
-    NameChangeUDPSender sender(ip_address, port, ip_address, port,
-                               FMT_JSON, ncr_handler, num_msgs);
+    NameChangeUDPSender sender(ip_address, SENDER_PORT, ip_address,
+                               LISTENER_PORT, FMT_JSON, ncr_handler,
+                               num_msgs, true);
 
     // Verify that we can start sending.
     EXPECT_NO_THROW(sender.startSending(io_service));
@@ -341,29 +356,54 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     EXPECT_NO_THROW(sender.startSending(io_service));
     EXPECT_TRUE(sender.amSending());
 
+    // Fetch the sender's select-fd.
+    int select_fd = sender.getSelectFd();
+
+    // Verify select_fd is valid and currently shows no ready to read.
+    ASSERT_NE(dhcp_ddns::WatchSocket::INVALID_SOCKET, select_fd);
+    ASSERT_EQ(0, selectCheck(select_fd));
+
     // Iterate over a series of messages, sending each one. Since we
     // do not invoke IOService::run, then the messages should accumulate
     // in the queue.
     NameChangeRequestPtr ncr;
+    NameChangeRequestPtr ncr2;
     for (int i = 0; i < num_msgs; i++) {
         ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
         EXPECT_NO_THROW(sender.sendRequest(ncr));
         // Verify that the queue count increments in step with each send.
         EXPECT_EQ(i+1, sender.getQueueSize());
+
+        // Verify that peekAt(i) returns the NCR we just added.
+        ASSERT_NO_THROW(ncr2 = sender.peekAt(i));
+        ASSERT_TRUE(ncr2);
+        EXPECT_TRUE(*ncr == *ncr2);
     }
+
+    // Verify that attempting to peek beyond the end of the queue, throws.
+    ASSERT_THROW(sender.peekAt(sender.getQueueSize()+1), NcrSenderError);
 
     // Verify that attempting to send an additional message results in a
     // queue full exception.
     EXPECT_THROW(sender.sendRequest(ncr), NcrSenderQueueFull);
 
-    // Loop for the number of valid messages and invoke IOService::run_one.
-    // This should send exactly one message and the queue count should
-    // decrement accordingly.
+    // Loop for the number of valid messages. So long as there is at least
+    // on NCR in the queue, select-fd indicate ready to read. Invoke
+    // IOService::run_one. This should complete the send of exactly one
+    // message and the queue count should decrement accordingly.
     for (int i = num_msgs; i > 0; i--) {
+        // Verify that sender shows IO ready.
+        ASSERT_TRUE(selectCheck(select_fd) > 0);
+
+        // Execute at one ready handler.
         io_service.run_one();
+
         // Verify that the queue count decrements in step with each run.
         EXPECT_EQ(i-1, sender.getQueueSize());
     }
+
+    // Verify that sender shows no IO ready.
+    EXPECT_EQ(0, selectCheck(select_fd));
 
     // Verify that the queue is empty.
     EXPECT_EQ(0, sender.getQueueSize());
@@ -395,6 +435,111 @@ TEST(NameChangeUDPSenderBasicTest, basicSendTests) {
     EXPECT_EQ(0, sender.getQueueSize());
 }
 
+/// @brief Tests NameChangeUDPSender basic send  with INADDR_ANY and port 0.
+TEST(NameChangeUDPSenderBasicTest, anyAddressSend) {
+    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    isc::asiolink::IOAddress any_address("0.0.0.0");
+    isc::asiolink::IOService io_service;
+    SimpleSendHandler ncr_handler;
+
+    // Tests are based on a list of messages, get the count now.
+    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+
+    // Create the sender, setting the queue max equal to the number of
+    // messages we will have in the list.
+    NameChangeUDPSender sender(any_address, 0, ip_address, LISTENER_PORT,
+                               FMT_JSON, ncr_handler, num_msgs);
+
+    // Enter send mode.
+    ASSERT_NO_THROW(sender.startSending(io_service));
+    EXPECT_TRUE(sender.amSending());
+
+    // Fetch the sender's select-fd.
+    int select_fd = sender.getSelectFd();
+
+    // Create and queue up a message.
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[0]));
+    EXPECT_NO_THROW(sender.sendRequest(ncr));
+    EXPECT_EQ(1, sender.getQueueSize());
+
+    // message and the queue count should decrement accordingly.
+    // Execute at one ready handler.
+    ASSERT_TRUE(selectCheck(select_fd) > 0);
+    ASSERT_NO_THROW(io_service.run_one());
+
+    // Verify that sender shows no IO ready.
+    // and that the queue is empty.
+    EXPECT_EQ(0, selectCheck(select_fd));
+    EXPECT_EQ(0, sender.getQueueSize());
+}
+
+/// @brief Test the NameChangeSender::assumeQueue method.
+TEST(NameChangeSender, assumeQueue) {
+    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    uint32_t port = SENDER_PORT;
+    isc::asiolink::IOService io_service;
+    SimpleSendHandler ncr_handler;
+    NameChangeRequestPtr ncr;
+
+    // Tests are based on a list of messages, get the count now.
+    int num_msgs = sizeof(valid_msgs)/sizeof(char*);
+
+    // Create two senders with queue max equal to the number of
+    // messages we will have in the list.
+    NameChangeUDPSender sender1(ip_address, port, ip_address, port,
+                               FMT_JSON, ncr_handler, num_msgs);
+
+    NameChangeUDPSender sender2(ip_address, port+1, ip_address, port,
+                                FMT_JSON, ncr_handler, num_msgs);
+
+    // Place sender1 into send mode and queue up messages.
+    ASSERT_NO_THROW(sender1.startSending(io_service));
+    for (int i = 0; i < num_msgs; i++) {
+        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
+        ASSERT_NO_THROW(sender1.sendRequest(ncr));
+    }
+
+    // Make sure sender1's queue count is as expected.
+    ASSERT_EQ(num_msgs, sender1.getQueueSize());
+
+    // Verify sender1 is sending, sender2 is not.
+    ASSERT_TRUE(sender1.amSending());
+    ASSERT_FALSE(sender2.amSending());
+
+    // Transfer from sender1 to sender2 should fail because
+    // sender1 is in send mode.
+    ASSERT_THROW(sender2.assumeQueue(sender1), NcrSenderError);
+
+    // Take sender1 out of send mode.
+    ASSERT_NO_THROW(sender1.stopSending());
+    ASSERT_FALSE(sender1.amSending());
+
+    // Transfer should succeed. Verify sender1 has none,
+    // and sender2 has num_msgs queued.
+    EXPECT_NO_THROW(sender2.assumeQueue(sender1));
+    EXPECT_EQ(0, sender1.getQueueSize());
+    EXPECT_EQ(num_msgs, sender2.getQueueSize());
+
+    // Reduce sender1's max queue size.
+    ASSERT_NO_THROW(sender1.setQueueMaxSize(num_msgs - 1));
+
+    // Transfer should fail as sender1's queue is not large enough.
+    ASSERT_THROW(sender1.assumeQueue(sender2), NcrSenderError);
+
+    // Place sender1 into send mode and queue up a message.
+    ASSERT_NO_THROW(sender1.startSending(io_service));
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[0]));
+    ASSERT_NO_THROW(sender1.sendRequest(ncr));
+
+    // Take sender1 out of send mode.
+    ASSERT_NO_THROW(sender1.stopSending());
+
+    // Try to transfer from sender1 to sender2. This should fail
+    // as sender2's queue is not empty.
+    ASSERT_THROW(sender2.assumeQueue(sender1), NcrSenderError);
+}
+
 /// @brief Text fixture that allows testing a listener and sender together
 /// It derives from both the receive and send handler classes and contains
 /// and instance of UDP listener and UDP sender.
@@ -422,9 +567,9 @@ public:
                                       *this, true));
 
         // Create our sender instance. Note that reuse_address is true.
-        sender_.reset(
-            new NameChangeUDPSender(addr, SENDER_PORT, addr, LISTENER_PORT,
-                                    FMT_JSON, *this, 100, true));
+         sender_.reset(
+             new NameChangeUDPSender(addr, SENDER_PORT, addr, LISTENER_PORT,
+                                     FMT_JSON, *this, 100, true));
 
         // Set the test timeout to break any running tasks if they hang.
         test_timer_.setup(boost::bind(&NameChangeUDPTest::testTimeoutHandler,
@@ -513,6 +658,125 @@ TEST_F (NameChangeUDPTest, roundTripTest) {
     // Verify that we can gracefully stop sending.
     EXPECT_NO_THROW(sender_->stopSending());
     EXPECT_FALSE(sender_->amSending());
+}
+
+// Tests error handling of a failure to mark the watch socket ready, when
+// sendRequestt() is called.
+TEST(NameChangeUDPSenderBasicTest, watchClosedBeforeSendRequest) {
+    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    isc::asiolink::IOService io_service;
+    SimpleSendHandler ncr_handler;
+
+    // Create the sender and put into send mode.
+    NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
+                               FMT_JSON, ncr_handler, 100, true);
+    ASSERT_NO_THROW(sender.startSending(io_service));
+    ASSERT_TRUE(sender.amSending());
+
+    // Create an NCR.
+    NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[0]));
+
+    // Tamper with the watch socket by closing the select-fd.
+    close(sender.getSelectFd());
+
+    // Send should fail as we interferred by closing the select-fd.
+    ASSERT_THROW(sender.sendRequest(ncr), WatchSocketError);
+
+    // Verify we didn't invoke the handler.
+    EXPECT_EQ(0, ncr_handler.pass_count_);
+    EXPECT_EQ(0, ncr_handler.error_count_);
+
+    // Request remains in the queue. Technically it was sent but its
+    // completion handler won't get called.
+    EXPECT_EQ(1, sender.getQueueSize());
+}
+
+// Tests error handling of a failure to mark the watch socket ready, when
+// sendNext() is called during completion handling.
+TEST(NameChangeUDPSenderBasicTest, watchClosedAfterSendRequest) {
+    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    isc::asiolink::IOService io_service;
+    SimpleSendHandler ncr_handler;
+
+    // Create the sender and put into send mode.
+    NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
+                               FMT_JSON, ncr_handler, 100, true);
+    ASSERT_NO_THROW(sender.startSending(io_service));
+    ASSERT_TRUE(sender.amSending());
+
+    // Build and queue up 2 messages.  No handlers will get called yet.
+    for (int i = 0; i < 2; i++) {
+        NameChangeRequestPtr ncr;
+        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
+        sender.sendRequest(ncr);
+        EXPECT_EQ(i+1, sender.getQueueSize());
+    }
+
+    // Tamper with the watch socket by closing the select-fd.
+    close (sender.getSelectFd());
+
+    // Run one handler. This should execute the send completion handler
+    // after sending the first message.  Duing completion handling, we will
+    // attempt to queue the second message which should fail.
+    ASSERT_NO_THROW(io_service.run_one());
+
+    // Verify handler got called twice. First request should have be sent
+    // without error, second call should have failed to send due to watch
+    // socket markReady failure.
+    EXPECT_EQ(1, ncr_handler.pass_count_);
+    EXPECT_EQ(1, ncr_handler.error_count_);
+
+    // The second request should still be in the queue.
+    EXPECT_EQ(1, sender.getQueueSize());
+}
+
+// Tests error handling of a failure to clear the watch socket during
+// completion handling.
+TEST(NameChangeUDPSenderBasicTest, watchSocketBadRead) {
+    isc::asiolink::IOAddress ip_address(TEST_ADDRESS);
+    isc::asiolink::IOService io_service;
+    SimpleSendHandler ncr_handler;
+
+    // Create the sender and put into send mode.
+    NameChangeUDPSender sender(ip_address, 0, ip_address, LISTENER_PORT,
+                               FMT_JSON, ncr_handler, 100, true);
+    ASSERT_NO_THROW(sender.startSending(io_service));
+    ASSERT_TRUE(sender.amSending());
+
+    // Build and queue up 2 messages.  No handlers will get called yet.
+    for (int i = 0; i < 2; i++) {
+        NameChangeRequestPtr ncr;
+        ASSERT_NO_THROW(ncr = NameChangeRequest::fromJSON(valid_msgs[i]));
+        sender.sendRequest(ncr);
+        EXPECT_EQ(i+1, sender.getQueueSize());
+    }
+
+    // Fetch the sender's select-fd.
+    int select_fd = sender.getSelectFd();
+
+    // Verify that select_fd appears ready.
+    ASSERT_TRUE(selectCheck(select_fd) > 0);
+
+    // Interfere by reading part of the marker from the select-fd.
+    uint32_t buf = 0;
+    ASSERT_EQ((read (select_fd, &buf, 1)), 1);
+    ASSERT_NE(WatchSocket::MARKER, buf);
+
+    // Run one handler. This should execute the send completion handler
+    // after sending the message.  Duing completion handling clearing the
+    // watch socket should fail, which will close the socket, but not
+    // result in a throw.
+    ASSERT_NO_THROW(io_service.run_one());
+
+    // Verify handler got called twice. First request should have be sent
+    // without error, second call should have failed to send due to watch
+    // socket markReady failure.
+    EXPECT_EQ(1, ncr_handler.pass_count_);
+    EXPECT_EQ(1, ncr_handler.error_count_);
+
+    // The second request should still be in the queue.
+    EXPECT_EQ(1, sender.getQueueSize());
 }
 
 } // end of anonymous namespace

@@ -39,7 +39,7 @@
       servers with development managed by Internet Systems Consortium (ISC).
       It includes DNS libraries, modular components for controlling
       authoritative and recursive DNS servers, and experimental DHCPv4
-      and DHCPv6 servers.
+      and DHCPv6 servers (codenamed Kea).
       </para>
       <para>
         This is the reference guide for BIND 10 version &__VERSION__;.
@@ -3536,7 +3536,9 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     clients. Even though principles of both DHCPv4 and DHCPv6 are
     somewhat similar, these are two radically different
     protocols. BIND 10 offers two server implementations, one for DHCPv4
-    and one for DHCPv6.</para>
+    and one for DHCPv6. The DHCP part of the BIND 10 project is codenamed
+    Kea. The DHCPv4 component is colloquially referred to as Kea4 and its
+    DHCPv6 counterpart is called Kea6.</para>
     <para>This chapter covers those parts of BIND 10 that are common to
     both servers.  DHCPv4-specific details are covered in <xref linkend="dhcp4"/>,
     while those details specific to DHCPv6 are described in <xref linkend="dhcp6"/>
@@ -3644,6 +3646,14 @@ $</screen>
 <screen>
 &gt; <userinput>config remove Init/components b10-dhcp4</userinput>
 &gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      <para>
+        Note that the server was only removed from the list, so BIND10 will not
+        restart it, but the server itself is still running. Hence it is usually
+        desired to stop it:
+<screen>
+&gt; <userinput>Dhcp4 shutdown</userinput>
 </screen>
       </para>
 
@@ -3816,7 +3826,7 @@ Dhcp4/subnet4	[]	list	(default)
       </section>
 
       <section id="dhcp4-address-config">
-      <title>Configuration of Address Pools</title>
+      <title>Configuration of IPv4 Address Pools</title>
       <para>
         The essential role of DHCPv4 server is address assignment. The server
         has to be configured with at least one subnet and one pool of dynamic
@@ -4410,7 +4420,87 @@ Dhcp4/subnet4	[]	list	(default)
     e.g. "123" - would then be assigned to the uint16 field in the "container" option.
     </para>
     </section>
-        </section>
+
+    <section id="dhcp4-client-classifier">
+      <title>Client Classification in DHCPv4</title>
+      <note>
+      <para>
+        DHCPv4 server has been extended to support limited client classification.
+        Although the current capability is modest, it is expected to be expanded
+        in the future. It is envisaged that the majority of client classification
+        extensions will be using hooks extensions.
+      </para>
+      </note>
+      <para>In certain cases it is useful to differentiate between different types
+      of clients and treat them differently. The process of doing classification
+      is conducted in two steps. The first step is to assess incoming packet and
+      assign it to zero or more classes. This classification is currently simple,
+      but is expected to grow in capability soon. Currently the server checks whether
+      incoming packet has vendor class identifier option (60). If it has, content
+      of that option is interpreted as a class. For example, modern cable modems
+      will send this option with value &quot;docsis3.0&quot; and as a result the
+      packet will belong to class &quot;docsis3.0&quot;.
+      </para>
+
+      <para>It is envisaged that the client classification will be used for changing
+      behavior of almost any part of the DHCP message processing, including assigning
+      leases from different pools, assigning different option (or different values of
+      the same options) etc. For now, there are only two mechanisms that are taking
+      advantage of client classification: specific processing for cable modems and
+      subnet selection.</para>
+
+      <para>
+        For clients that belong to the docsis3.0 class, the siaddr field is set to
+        the value of next-server (if specified in a subnet). If there is
+        boot-file-name option specified, its value is also set in the file field
+        in the DHCPv4 packet. For eRouter1.0 class, the siaddr is always set to
+        0.0.0.0. That capability is expected to be moved to external hook
+        library that will be dedicated to cable modems.
+      </para>
+
+      <para>
+        Kea can be instructed to limit access to given subnets based on class information.
+        This is particularly useful for cases where two types of devices share the
+        same link and are expected to be served from two different subnets. The
+        primary use case for such a scenario is cable networks. There are two
+        classes of devices: cable modem itself, which should be handled a lease
+        from subnet A and all other devices behind modems that should get a lease
+        from subnet B. That segregation is essential to prevent overly curious
+        users from playing with their cable modems. For details on how to set up
+        class restrictions on subnets, see <xref linkend="dhcp4-subnet-class"/>.
+      </para>
+
+    </section>
+
+    <section id="dhcp4-subnet-class">
+      <title>Limiting access to IPv4 subnet to certain classes</title>
+      <para>
+        In certain cases it beneficial to restrict access to certain subnets
+        only to clients that belong to a given subnet. For details on client
+        classes, see <xref linkend="dhcp4-client-classifier"/>. This is an
+        extension of a previous example from <xref linkend="dhcp4-address-config"/>.
+        Let's assume that the server is connected to a network segment that uses
+        the 192.0.2.0/24 prefix. The Administrator of that network has decided
+        that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
+        managed by the Dhcp4 server. Only clients belonging to client class
+        docsis3.0 are allowed to use this subnet. Such a configuration can be
+        achieved in the following way:
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/client-class "docsis3.0"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <para>
+        Care should be taken with client classification as it is easy to prevent
+        clients that do not meet class criteria to be denied any service altogether.
+      </para>
+    </section>
+
+  </section> <!-- end of configuring DHCPv4 server section with many subsections -->
+
     <section id="dhcp4-serverid">
       <title>Server Identifier in DHCPv4</title>
       <para>
@@ -4427,6 +4517,7 @@ Dhcp4/subnet4	[]	list	(default)
         to specify the custom server identifier.
       </para>
     </section>
+
 
     <section id="dhcp4-next-server">
       <title>Next server (siaddr)</title>
@@ -4528,6 +4619,8 @@ Dhcp4/subnet4	[]	list	(default)
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc3046">RFC 3046</ulink>:
             Relay Agent Information option is supported.</simpara>
+          </listitem>
+          <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc6842">RFC 6842</ulink>:
             Server by default sends back client-id option. That capability may be
             disabled. See <xref linkend="dhcp4-echo-client-id"/> for details.
@@ -4622,13 +4715,21 @@ Dhcp4/renew-timer	1000	integer	(default)
       </para>
       <para>
          To remove <command>b10-dhcp6</command> from the set of running services,
-         the <command>b10-dhcp4</command> is removed from list of Init components:
+         the <command>b10-dhcp6</command> is removed from list of Init components:
 <screen>
 &gt; <userinput>config remove Init/components b10-dhcp6</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       </para>
 
+      <para>
+        Note that the server was only removed from the list, so BIND10 will not
+        restart it, but the server itself is still running. Hence it is usually
+        desired to stop it:
+<screen>
+&gt; <userinput>Dhcp6 shutdown</userinput>
+</screen>
+      </para>
 
       <para>
         During start-up the server will detect available network interfaces
@@ -4834,7 +4935,7 @@ Dhcp6/subnet6/	list
       </para>
     </section>
 
-    <section>
+    <section id="dhcp6-address-config">
       <title>Subnet and Address Pool</title>
       <para>
         The essential role of a DHCPv6 server is address assignment. For this,
@@ -5353,7 +5454,7 @@ should include options from the isc option space:
     </section>
 
       <section id="dhcp6-config-subnets">
-        <title>Subnet Selection</title>
+        <title>IPv6 Subnet Selection</title>
           <para>
           The DHCPv6 server may receive requests from local (connected to the
           same subnet as the server) and remote (connecting via relays) clients.
@@ -5440,6 +5541,76 @@ should include options from the isc option space:
 </screen>
         </para>
       </section>
+
+    <section id="dhcp6-client-classifier">
+      <title>Client Classification in DHCPv6</title>
+      <note>
+      <para>
+        DHCPv6 server has been extended to support limited client classification.
+        Although the current capability is modest, it is expected to be expanded
+        in the future. It is envisaged that the majority of client classification
+        extensions will be using hooks extensions.
+      </para>
+      </note>
+      <para>In certain cases it is useful to differentiate between different types
+      of clients and treat them differently. The process of doing classification
+      is conducted in two steps. The first step is to assess incoming packet and
+      assign it to zero or more classes. This classification is currently simple,
+      but is expected to grow in capability soon. Currently the server checks whether
+      incoming packet has vendor class option (16). If it has, content
+      of that option is interpreted as a class. For example, modern cable modems
+      will send this option with value &quot;docsis3.0&quot; and as a result the
+      packet will belong to class &quot;docsis3.0&quot;.
+      </para>
+
+      <para>It is envisaged that the client classification will be used for changing
+      behavior of almost any part of the DHCP engine processing, including assigning
+      leases from different pools, assigning different option (or different values of
+      the same options) etc. For now, there is only one mechanism that is taking
+      advantage of client classification: subnet selection.</para>
+
+      <para>
+        Kea can be instructed to limit access to given subnets based on class information.
+        This is particularly useful for cases where two types of devices share the
+        same link and are expected to be served from two different subnets. The
+        primary use case for such a scenario are cable networks. There are two
+        classes of devices: cable modem itself, which should be handled a lease
+        from subnet A and all other devices behind modems that should get a lease
+        from subnet B. That segregation is essential to prevent overly curious
+        users from playing with their cable modems. For details on how to set up
+        class restrictions on subnets, see <xref linkend="dhcp6-subnet-class"/>.
+      </para>
+
+    </section>
+
+    <section id="dhcp6-subnet-class">
+      <title>Limiting access to IPv6 subnet to certain classes</title>
+      <para>
+        In certain cases it beneficial to restrict access to certains subnets
+        only to clients that belong to a given subnet. For details on client
+        classes, see <xref linkend="dhcp6-client-classifier"/>. This is an
+        extension of a previous example from <xref linkend="dhcp6-address-config"/>.
+
+        Let's assume that the server is connected to a network segment that uses
+        the 2001:db8:1::/64 prefix. The Administrator of that network has
+        decided that addresses from range 2001:db8:1::1 to 2001:db8:1::ffff are
+        going to be managed by the Dhcp6 server. Only clients belonging to the
+        eRouter1.0 client class are allowed to use that pool. Such a
+        configuration can be achieved in the following way:
+
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/pool [ "2001:db8:1::0 - 2001:db8:1::ffff" ]</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/client-class "eRouter1.0"</userinput>
+&gt; <userinput>config commit</userinput></screen>
+      </para>
+
+      <para>
+        Care should be taken with client classification as it is easy to prevent
+        clients that do not meet class criteria to be denied any service altogether.
+      </para>
+    </section>
 
    </section>
 

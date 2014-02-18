@@ -73,8 +73,8 @@ protected:
     /// \param name query name of the message.
     /// \param type query type of the message.
     /// \return return the hash key.
-    HashKey getEntryHashKey(const isc::dns::Name& name,
-                            const isc::dns::RRType& type) const;
+    isc::nsas::HashKey getEntryHashKey(const isc::dns::Name& name,
+                                       const isc::dns::RRType& type) const;
 
     // Make these variants be protected for easy unittest.
 protected:
@@ -91,4 +91,3 @@ typedef boost::shared_ptr<MessageCache> MessageCachePtr;
 } // namespace isc
 
 #endif // MESSAGE_CACHE_H
-
