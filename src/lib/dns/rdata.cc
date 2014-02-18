@@ -247,6 +247,9 @@ Generic::constructFromLexer(MasterLexer& lexer) {
                 lexer.getNextToken(MasterToken::STRING, true);
             if ((token.getType() == MasterToken::END_OF_FILE) ||
                 (token.getType() == MasterToken::END_OF_LINE)) {
+                // Unget the last read token as createRdata() expects us
+                // to leave it at the end-of-line or end-of-file when we
+                // return.
                 lexer.ungetToken();
                 break;
             }
