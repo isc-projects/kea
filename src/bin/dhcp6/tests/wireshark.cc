@@ -38,6 +38,8 @@
 ///    (Make sure that the packet is expanded in the view. The text file will
 ///    contain whatever expansion level you have in the graphical tree.)
 
+using namespace isc::dhcp;
+using namespace isc::asiolink;
 using namespace std;
 
 namespace isc {

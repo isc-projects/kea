@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,29 +12,26 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <vector>
-#include <dns/tests/unittest_util.h>
-#include <util/buffer.h>
-#include <dns/message.h>
+#ifndef TEST_UTILS_H
+#define TEST_UTILS_H
 
-namespace {
+/// @file test_utils.h Common dhcp_ddns testing elements
 
-/// \brief Counts the number of rrsets in the given section
+#include <gtest/gtest.h>
+
+
+namespace isc {
+namespace dhcp_ddns {
+
+/// @brief Returns the result of select() given an fd to check for read status.
 ///
-/// \param msg The message to count in
-/// \param section The section to count
+/// @param fd_to_check The file descriptor to test
 ///
-/// \return The number of RRsets in the given section
-int
-sectionRRsetCount(isc::dns::Message& msg, isc::dns::Message::Section section) {
-    int count = 0;
-    for (isc::dns::RRsetIterator rrset_iter = msg.beginSection(section);
-         rrset_iter != msg.endSection(section);
-         ++rrset_iter) {
-        ++count;
-    }
+/// @return Returns less than one on an error, 0 if the fd is not ready to
+/// read, > 0 if it is ready to read. 
+int selectCheck(int fd_to_check);
 
-    return count;
-}
+}; // namespace isc::dhcp_ddns;
+}; // namespace isc;
 
-}   // namespace
+#endif 

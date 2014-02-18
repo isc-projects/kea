@@ -199,7 +199,7 @@ public:
     using Dhcpv4Srv::classifyPacket;
     using Dhcpv4Srv::accept;
     using Dhcpv4Srv::acceptMessageType;
-
+    using Dhcpv4Srv::selectSubnet;
     using Dhcpv4Srv::VENDOR_CLASS_PREFIX;
 };
 
@@ -419,7 +419,6 @@ public:
 
     /// @brief Server object under test.
     NakedDhcpv4Srv srv_;
-
 };
 
 }; // end of isc::dhcp::test namespace

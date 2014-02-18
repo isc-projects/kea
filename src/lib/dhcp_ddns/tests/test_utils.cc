@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,29 +12,32 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <vector>
-#include <dns/tests/unittest_util.h>
-#include <util/buffer.h>
-#include <dns/message.h>
+#include <gtest/gtest.h>
 
-namespace {
+#include <sys/select.h>
+#include <sys/ioctl.h>
 
-/// \brief Counts the number of rrsets in the given section
-///
-/// \param msg The message to count in
-/// \param section The section to count
-///
-/// \return The number of RRsets in the given section
-int
-sectionRRsetCount(isc::dns::Message& msg, isc::dns::Message::Section section) {
-    int count = 0;
-    for (isc::dns::RRsetIterator rrset_iter = msg.beginSection(section);
-         rrset_iter != msg.endSection(section);
-         ++rrset_iter) {
-        ++count;
-    }
+using namespace std;
 
-    return count;
+namespace isc {
+namespace dhcp_ddns {
+
+int selectCheck(int fd_to_check) {
+    fd_set read_fds;
+    int maxfd = 0;
+
+    FD_ZERO(&read_fds);
+
+    // Add this socket to listening set
+    FD_SET(fd_to_check,  &read_fds);
+    maxfd = fd_to_check;
+
+    struct timeval select_timeout;
+    select_timeout.tv_sec = 0;
+    select_timeout.tv_usec = 0;
+
+    return (select(maxfd + 1, &read_fds, NULL, NULL, &select_timeout));
 }
 
-}   // namespace
+}; // namespace isc::d2
+}; // namespace isc

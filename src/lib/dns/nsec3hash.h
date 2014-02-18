@@ -23,6 +23,7 @@
 namespace isc {
 namespace dns {
 class Name;
+class LabelSequence;
 
 namespace rdata {
 namespace generic {
@@ -129,18 +130,32 @@ public:
     /// \brief The destructor.
     virtual ~NSEC3Hash() {}
 
-    /// \brief Calculate the NSEC3 hash.
+    /// \brief Calculate the NSEC3 hash (Name variant).
     ///
     /// This method calculates the NSEC3 hash value for the given \c name
     /// with the hash parameters (algorithm, iterations and salt) given at
     /// construction, and returns the value as a base32hex-encoded string
     /// (without containing any white spaces).  All US-ASCII letters in the
-    /// string will be upper cased.
+    /// string will be lower cased.
     ///
     /// \param name The domain name for which the hash value is to be
     /// calculated.
     /// \return Base32hex-encoded string of the hash value.
     virtual std::string calculate(const Name& name) const = 0;
+
+    /// \brief Calculate the NSEC3 hash (LabelSequence variant).
+    ///
+    /// This method calculates the NSEC3 hash value for the given
+    /// absolute LabelSequence \c ls with the hash parameters
+    /// (algorithm, iterations and salt) given at construction, and
+    /// returns the value as a base32hex-encoded string (without
+    /// containing any white spaces).  All US-ASCII letters in the
+    /// string will be lower cased.
+    ///
+    /// \param ls The absolute label sequence for which the hash value
+    /// is to be calculated.
+    /// \return Base32hex-encoded string of the hash value.
+    virtual std::string calculate(const LabelSequence& ls) const = 0;
 
     /// \brief Match given NSEC3 parameters with that of the hash.
     ///

@@ -1,4 +1,4 @@
-# Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -32,18 +32,24 @@ start another read after receiving a request.  While possible, this is highly
 unlikely and is probably a programmatic error.  The application should recover
 on its own.
 
-% DHCP_DDNS_NCR_SEND_CLOSE_ERROR DHCP-DDNS client encountered an error while closing the sender connection used to send NameChangeRequests : %1
+% DHCP_DDNS_NCR_SEND_CLOSE_ERROR DHCP-DDNS client encountered an error while closing the sender connection used to send NameChangeRequests: %1
 This is an error message that indicates the DHCP-DDNS client was unable to
 close the connection used to send NameChangeRequests.  Closure may occur during
 the course of error recovery or during normal shutdown procedure.  In either
 case the error is unlikely to impair the client's ability to send requests but
 it should be reported for analysis.
 
-% DHCP_DDNS_NCR_SEND_NEXT_ERROR DHCP-DDNS client could not initiate the next request send following send completion.
+% DHCP_DDNS_NCR_SEND_NEXT_ERROR DHCP-DDNS client could not initiate the next request send following send completion: %1
 This is a error message indicating that NameChangeRequest sender could not
 start another send after completing the send of the previous request.  While
 possible, this is highly unlikely and is probably a programmatic error.  The
 application should recover on its own.
+
+% DHCP_DDNS_NCR_UDP_CLEAR_READY_ERROR NCR UDP watch socket failed to clear: %1
+This is an error message that indicates the application was unable to reset the
+UDP NCR sender ready status after completing a send.  This is programmatic error
+that should be reported.  The application may or may not continue to operate
+correctly.
 
 % DHCP_DDNS_NCR_UDP_RECV_CANCELED UDP socket receive was canceled while listening for DNS Update requests: %1
 This is an informational  message indicating that the listening over a UDP socket for DNS update requests has been canceled.  This is a normal part of suspending listening operations.
@@ -74,3 +80,15 @@ This is an error message that indicates that an exception was thrown but not
 caught in the application's send completion handler.  This is a programmatic
 error that needs to be reported.  Dependent upon the nature of the error the
 client may or may not continue operating normally.
+
+% DHCP_DDNS_WATCH_SINK_CLOSE_ERROR Sink-side watch socket failed to close: %1
+This is an error message that indicates the application was unable to close
+the inbound side of a NCR sender's watch socket.  While technically possible
+this error is highly unlikely to occur and should not impair the application's
+ability to process requests.
+
+% DHCP_DDNS_WATCH_SOURCE_CLOSE_ERROR Source-side watch socket failed to close: %1
+This is an error message that indicates the application was unable to close
+the outbound side of a NCR sender's watch socket.  While technically possible
+this error is highly unlikely to occur and should not impair the application's
+ability to process requests.
