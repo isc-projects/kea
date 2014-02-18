@@ -811,6 +811,67 @@ OptionDefListParser::commit() {
     }
 }
 
+//****************************** RelayInfoParser ********************************
+RelayInfoParser::RelayInfoParser(const std::string&,
+                                 const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
+                                 const Option::Universe& family)
+    :storage_(relay_info), local_(isc::asiolink::IOAddress(
+                                  family == Option::V4 ? "0.0.0.0" : "::")),
+     string_values_(new StringStorage()), family_(family) {
+    if (!relay_info) {
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+                  << "relay-info storage may not be NULL");
+    }
+
+};
+
+void
+RelayInfoParser::build(ConstElementPtr relay_info) {
+
+    BOOST_FOREACH(ConfigPair param, relay_info->mapValue()) {
+        ParserPtr parser(createConfigParser(param.first));
+        parser->build(param.second);
+        parser->commit();
+    }
+
+    // Get the IP address
+    boost::scoped_ptr<asiolink::IOAddress> ip;
+    try {
+        ip.reset(new asiolink::IOAddress(string_values_->getParam("ip-address")));
+    } catch (...)  {
+        isc_throw(DhcpConfigError, "Failed to parse ip-address "
+                  "value: " << string_values_->getParam("ip-address"));
+    }
+
+    if ( (ip->isV4() && family_ != Option::V4) ||
+         (ip->isV6() && family_ != Option::V6) ) {
+        isc_throw(DhcpConfigError, "ip-address field " << ip->toText()
+                  << "does not have IP address of expected family type: "
+                  << (family_ == Option::V4?"IPv4":"IPv6"));
+    }
+
+    local_.addr_ = *ip;
+}
+
+isc::dhcp::ParserPtr
+RelayInfoParser::createConfigParser(const std::string& parameter) {
+    DhcpConfigParser* parser = NULL;
+    if (parameter.compare("ip-address") == 0) {
+        parser = new StringParser(parameter, string_values_);
+    } else {
+        isc_throw(NotImplemented,
+                  "parser error: RelayInfoParser parameter not supported: "
+                  << parameter);
+    }
+
+    return (isc::dhcp::ParserPtr(parser));
+}
+
+void
+RelayInfoParser::commit() {
+    *storage_ = local_;
+}
+
 //****************************** PoolParser ********************************
 PoolParser::PoolParser(const std::string&,  PoolStoragePtr pools)
         :pools_(pools) {
@@ -894,10 +955,12 @@ PoolParser::commit() {
 //****************************** SubnetConfigParser *************************
 
 SubnetConfigParser::SubnetConfigParser(const std::string&,
-                                       ParserContextPtr global_context)
+                                       ParserContextPtr global_context,
+                                       const isc::asiolink::IOAddress& default_addr)
     : uint32_values_(new Uint32Storage()), string_values_(new StringStorage()),
     pools_(new PoolStorage()), options_(new OptionStorage()),
-    global_context_(global_context) {
+    global_context_(global_context),
+    relay_info_(new isc::dhcp::Subnet::RelayInfo(default_addr)) {
     // The first parameter should always be "subnet", but we don't check
     // against that here in case some wants to reuse this parser somewhere.
     if (!global_context_) {

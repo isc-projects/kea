@@ -17,9 +17,6 @@
 #include <util/buffer.h>
 #include <dns/message.h>
 
-using namespace isc;
-using namespace isc::dns;
-
 namespace {
 
 /// \brief Reads a Message from a data file
@@ -27,13 +24,12 @@ namespace {
 /// \param message Message to put the read data in
 /// \param datafile The file to read from
 void
-messageFromFile(Message& message, const char* datafile) {
+messageFromFile(isc::dns::Message& message, const char* datafile) {
     std::vector<unsigned char> data;
-    UnitTestUtil::readWireData(datafile, data);
+    isc::UnitTestUtil::readWireData(datafile, data);
 
     isc::util::InputBuffer buffer(&data[0], data.size());
     message.fromWire(buffer);
 }
 
 }   // namespace
-

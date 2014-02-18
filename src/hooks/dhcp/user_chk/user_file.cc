@@ -35,7 +35,7 @@ UserFile::~UserFile(){
 void
 UserFile::open() {
     if (isOpen()) {
-        isc_throw (UserFileError, "file is already open");
+        isc_throw(UserFileError, "file is already open");
     }
 
     file_.open(fname_.c_str(), std::ifstream::in);

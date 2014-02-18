@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -164,7 +164,7 @@ public:
     /// @param ignored first parameter
     /// stores global scope parameters, options, option defintions.
     Subnet4ConfigParser(const std::string&)
-        :SubnetConfigParser("", globalContext()) {
+        :SubnetConfigParser("", globalContext(), IOAddress("0.0.0.0")) {
     }
 
     /// @brief Adds the created subnet to a server's configuration.
@@ -176,6 +176,11 @@ public:
                 // If we hit this, it is a programming error.
                 isc_throw(Unexpected,
                           "Invalid cast in Subnet4ConfigParser::commit");
+            }
+
+            // Set relay information if it was parsed
+            if (relay_info_) {
+                sub4ptr->setRelayInfo(*relay_info_);
             }
 
             isc::dhcp::CfgMgr::instance().addSubnet4(sub4ptr);
@@ -200,10 +205,13 @@ protected:
             parser = new Uint32Parser(config_id, uint32_values_);
         } else if ((config_id.compare("subnet") == 0) ||
                    (config_id.compare("interface") == 0) ||
+                   (config_id.compare("client-class") == 0) ||
                    (config_id.compare("next-server") == 0)) {
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pool") == 0) {
             parser = new Pool4Parser(config_id, pools_);
+        } else if (config_id.compare("relay") == 0) {
+            parser = new RelayInfoParser(config_id, relay_info_, Option::V4);
         } else if (config_id.compare("option-data") == 0) {
            parser = new OptionDataListParser(config_id, options_,
                                              global_context_,
@@ -291,6 +299,14 @@ protected:
             }
         } catch (const DhcpConfigError&) {
             // Don't care. next_server is optional. We can live without it
+        }
+
+        // Try setting up client class (if specified)
+        try {
+            string client_class = string_values_->getParam("client-class");
+            subnet4->allowClientClass(client_class);
+        } catch (const DhcpConfigError&) {
+            // That's ok if it fails. client-class is optional.
         }
     }
 };

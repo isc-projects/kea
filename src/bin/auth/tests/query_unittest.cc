@@ -22,6 +22,7 @@
 #include <dns/message.h>
 #include <dns/master_loader.h>
 #include <dns/name.h>
+#include <dns/labelsequence.h>
 #include <dns/nsec3hash.h>
 #include <dns/opcode.h>
 #include <dns/rcode.h>
@@ -244,6 +245,13 @@ public:
         }
         isc_throw(isc::Unexpected, "unexpected name for NSEC3 test: "
                   << name);
+    }
+    virtual string calculate(const LabelSequence& ls) const {
+        assert(ls.isAbsolute());
+        // This is not very optimal, but it's only going to be used in
+        // tests.
+        const Name name(ls.toText());
+        return (calculate(name));
     }
     virtual bool match(const rdata::generic::NSEC3PARAM&) const {
         return (true);

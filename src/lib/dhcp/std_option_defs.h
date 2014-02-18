@@ -19,6 +19,9 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 
+namespace isc {
+namespace dhcp {
+
 namespace {
 
 /// @brief Declare an array holding parameters used to create instance
@@ -41,8 +44,6 @@ namespace {
 #ifndef NO_RECORD_DEF
 #define NO_RECORD_DEF 0, 0
 #endif
-
-using namespace isc::dhcp;
 
 /// @brief Parameters being used to make up an option definition.
 struct OptionDefParams {
@@ -336,6 +337,9 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
 const int OPTION_DEF_PARAMS_SIZE6  =
     sizeof(OPTION_DEF_PARAMS6) / sizeof(OPTION_DEF_PARAMS6[0]);
 
-}; // anonymous namespace
+} // unnamed namespace
+
+} // namespace dhcp
+} // namespace isc
 
 #endif // STD_OPTION_DEFS_H

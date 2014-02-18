@@ -1416,7 +1416,8 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
     // to be malformed anyway and the message will be dropped by the higher
     // level functions.
     if (question->isRelayed()) {
-        subnet = CfgMgr::instance().getSubnet4(question->getGiaddr());
+        subnet = CfgMgr::instance().getSubnet4(question->getGiaddr(),
+                                               question->classes_);
 
     // The message is not relayed so it is sent directly by a client. But
     // the client may be renewing its lease and in such case it unicasts
@@ -1426,14 +1427,16 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
     // we rely on the client's address to get the subnet.
     } else if ((question->getLocalAddr() != bcast) &&
                (question->getCiaddr() != notset)) {
-        subnet = CfgMgr::instance().getSubnet4(question->getCiaddr());
+        subnet = CfgMgr::instance().getSubnet4(question->getCiaddr(),
+                                               question->classes_);
 
     // The message has been received from a directly connected client
     // and this client appears to have no address. The IPv4 address
     // assigned to the interface on which this message has been received,
     // will be used to determine the subnet suitable for the client.
     } else {
-        subnet = CfgMgr::instance().getSubnet4(question->getIface());
+        subnet = CfgMgr::instance().getSubnet4(question->getIface(),
+                                               question->classes_);
     }
 
     // Let's execute all callouts registered for subnet4_select
