@@ -221,7 +221,8 @@ Generic::constructFromLexer(MasterLexer& lexer) {
                   "unknown RDATA encoding");
     }
 
-    uint32_t rdlen;
+    // Initialize with an absurd value.
+    uint32_t rdlen = 65536;
 
     try {
         rdlen = lexer.getNextToken(MasterToken::NUMBER).getNumber();
