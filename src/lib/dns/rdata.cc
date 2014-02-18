@@ -247,13 +247,12 @@ Generic::constructFromLexer(MasterLexer& lexer) {
                 lexer.getNextToken(MasterToken::STRING, true);
             if ((token.getType() == MasterToken::END_OF_FILE) ||
                 (token.getType() == MasterToken::END_OF_LINE)) {
+                lexer.ungetToken();
                 break;
             }
             token.getString(hex_part);
             hex_txt.append(hex_part);
         }
-
-        lexer.ungetToken();
 
         try {
             isc::util::encode::decodeHex(hex_txt, data);
