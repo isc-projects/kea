@@ -1841,7 +1841,7 @@ bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp
         return (true);
     }
 
-    if (query->inClass(DOCSIS3_CLASS_MODEM)) {
+    if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM)) {
 
         // Set next-server. This is TFTP server address. Cable modems will
         // download their configuration from that server.
