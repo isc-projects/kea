@@ -100,6 +100,8 @@ Dhcp6Hooks Hooks;
 namespace isc {
 namespace dhcp {
 
+const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
+
 namespace {
 
 // The following constants describe server's behavior with respect to the
@@ -2447,10 +2449,10 @@ void Dhcpv6Srv::classifyPacket(const Pkt6Ptr& pkt) {
 
     std::ostringstream classes;
     if (vclass->hasTuple(DOCSIS3_CLASS_MODEM)) {
-        classes << "VENDOR_CLASS_" << DOCSIS3_CLASS_MODEM;
+        classes << VENDOR_CLASS_PREFIX << DOCSIS3_CLASS_MODEM;
 
     } else if (vclass->hasTuple(DOCSIS3_CLASS_EROUTER)) {
-        classes << DOCSIS3_CLASS_EROUTER;
+        classes << VENDOR_CLASS_PREFIX << DOCSIS3_CLASS_EROUTER;
 
     } else {
         classes << vclass->getTuple(0).getText();

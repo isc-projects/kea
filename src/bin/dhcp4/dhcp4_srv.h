@@ -405,6 +405,14 @@ protected:
     /// @param [out] answer A response message to be sent to a client.
     void processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer);
 
+    /// @brief this is a prefix added to the contend of vendor-class option
+    ///
+    /// If incoming packet has a vendor class option, its content is
+    /// prepended with this prefix and then interpreted as a class.
+    /// For example, a packet that sends vendor class with value of "FOO"
+    /// will cause the packet to be assigned to class VENDOR_CLASS_FOO.
+    static const std::string VENDOR_CLASS_PREFIX;
+
 private:
     /// @brief Process Client FQDN %Option sent by a client.
     ///

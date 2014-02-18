@@ -80,6 +80,8 @@ Dhcp4Hooks Hooks;
 namespace isc {
 namespace dhcp {
 
+const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
+
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
                      const bool direct_response_desired)
 : shutdown_(true), alloc_engine_(), port_(port),
@@ -1812,15 +1814,15 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     // quals subscriber-id option that was inserted by the relay (CMTS).
     // This kind of logic will appear here soon.
     if (vendor_class->getValue().find(DOCSIS3_CLASS_MODEM) != std::string::npos) {
-        pkt->addClass(DOCSIS3_CLASS_MODEM);
-        classes += string(DOCSIS3_CLASS_MODEM) + " ";
+        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM);
+        classes += string(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM) + " ";
     } else
     if (vendor_class->getValue().find(DOCSIS3_CLASS_EROUTER) != std::string::npos) {
-        pkt->addClass(DOCSIS3_CLASS_EROUTER);
-        classes += string(DOCSIS3_CLASS_EROUTER) + " ";
+        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER);
+        classes += string(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER) + " ";
     } else {
-        classes += vendor_class->getValue();
-        pkt->addClass(vendor_class->getValue());
+        classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
+        pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
     }
 
     if (!classes.empty()) {
