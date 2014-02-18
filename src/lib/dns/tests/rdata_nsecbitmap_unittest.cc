@@ -33,6 +33,7 @@
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using namespace isc::util;
 using isc::UnitTestUtil;
 using isc::util::unittests::matchWireData;
 using boost::lexical_cast;

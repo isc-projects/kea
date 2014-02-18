@@ -246,6 +246,17 @@ public:
     /// @return collection of addresses
     const AddressCollection& getAddresses() const { return addrs_; }
 
+    /// @brief Returns IPv4 address assigned to the interface.
+    ///
+    /// This function looks for an IPv4 address assigned to the interface
+    /// and returns it through the argument.
+    ///
+    /// @param [out] address IPv4 address assigned to the interface.
+    ///
+    /// @return Boolean value which informs whether IPv4 address has been found
+    /// for the interface (if true), or not (false).
+    bool getAddress4(isc::asiolink::IOAddress& address) const;
+
     /// @brief Adds an address to an interface.
     ///
     /// This only adds an address to collection, it does not physically

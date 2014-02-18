@@ -1,3 +1,37 @@
+751.	[func]		muks
+	The BIND 10 zone loader now supports the $GENERATE directive (a
+	BIND 9 extension).
+	(Trac #2430, git b05064f681231fe7f8571253c5786f4ff0f2ca03)
+
+750.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: Simple client classification has been
+	implemented. Incoming packets can be assigned to zero or more
+	client classes. It is possible to restrict subnet usage to a given
+	client class. User's Guide and Developer's Guide has been updated.
+	(Trac #3274, git 1791d19899b92a6ee411199f664bdfc690ec08b2)
+
+749.	[bug]		tmark
+	b10-dhcp-ddns now sets the TTL value in RRs that add A, AAAA, or PTR DNS
+	entries to the lease length provided in instigating NameChangeRequest.
+	This corrected a bug in which the TTL was always set to 0.
+	(Trac# 3299, git dbacf27ece77f3d857da793341c6bd31ef1ea239)
+
+748.	[bug]		marcin
+	b10-dhcp4 server picks a subnet, to assign address for a directly
+	connected client, using IP address of the interface on which the
+	client's message has been received. If the message is received on
+	the interface for which there is no suitable subnet, the message
+	is discarded. Also, the subnet for renewing client which unicasts
+	its request, is selected using ciaddr.
+	(Trac #3242, git 9e571cc217d6b1a2fd6fdae1565fcc6fde6d08b1)
+
+747.	[bug]		marcin
+	libdhcpsrv: server configuration mechanism allows creating definitions
+	for standard options for which Kea doesn't provide a definition yet.
+	Without this, the server administrator couldn't configure options for
+	which a definition didn't exist.
+	(Trac# 3309, git 16a6ed6e48a6a950670c4874a2e81b1faf287d99)
+
 746.	[func]		tomek
 	IOAddress no longer exposes underlying asio objects. The getAddress()
 	method has been removed and replaced with several convenience methods.

@@ -23,6 +23,7 @@
 #include "cache_test_messagefromfile.h"
 
 using namespace isc::cache;
+using namespace isc::nsas;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;

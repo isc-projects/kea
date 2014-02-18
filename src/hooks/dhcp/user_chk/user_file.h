@@ -23,17 +23,15 @@
 #include <fstream>
 #include <string>
 
-using namespace std;
-
 namespace user_chk {
 
 /// @brief Thrown a UserFile encounters an error.
 /// Note that it derives from UserDataSourceError to comply with the interface.
 class UserFileError : public UserDataSourceError {
 public:
-    UserFileError(const char* file, size_t line,
-                               const char* what) :
-        UserDataSourceError(file, line, what) { };
+    UserFileError(const char* file, size_t line, const char* what) :
+        UserDataSourceError(file, line, what)
+    {}
 };
 
 /// @brief Provides a UserDataSource implementation for JSON text files.
@@ -125,7 +123,7 @@ public:
 
 private:
     /// @brief Pathname of the input text file.
-    string fname_;
+    std::string fname_;
 
     /// @brief Input file stream.
     std::ifstream file_;
