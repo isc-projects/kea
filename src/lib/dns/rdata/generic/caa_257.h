@@ -43,8 +43,18 @@ public:
     ///
     /// Specialized methods
     ///
+
+    /// \brief Return the Flags field of the CAA RDATA.
     uint8_t getFlags() const;
+
+    /// \brief Return the Tag field of the CAA RDATA.
     const std::string& getTag() const;
+
+    /// \brief Return the Value field of the CAA RDATA.
+    ///
+    /// Note: The const reference which is returned is valid only during
+    /// the lifetime of this \c generic::CAA object. It should not be
+    /// used afterwards.
     const std::vector<uint8_t>& getValue() const;
 
 private:
