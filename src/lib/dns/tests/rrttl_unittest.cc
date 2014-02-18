@@ -19,6 +19,7 @@
 #include <dns/rrttl.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
 #include <boost/scoped_ptr.hpp>
 
@@ -27,6 +28,7 @@ using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using boost::scoped_ptr;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class RRTTLTest : public ::testing::Test {
@@ -193,9 +195,8 @@ TEST_F(RRTTLTest, toWireBuffer) {
     ttl_32bit.toWire(obuffer);
     ttl_max.toWire(obuffer);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        wiredata, sizeof(wiredata));
+    matchWireData(wiredata, sizeof(wiredata),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(RRTTLTest, toWireRenderer) {
@@ -205,9 +206,8 @@ TEST_F(RRTTLTest, toWireRenderer) {
     ttl_32bit.toWire(renderer);
     ttl_max.toWire(renderer);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata, sizeof(wiredata));
+    matchWireData(wiredata, sizeof(wiredata),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(RRTTLTest, equal) {

@@ -26,14 +26,17 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
+
 #include <boost/algorithm/string.hpp>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_SSHFP_Test : public RdataTest {
@@ -230,10 +233,8 @@ TEST_F(Rdata_SSHFP_Test, toWire) {
     EXPECT_EQ(sizeof (rdata_sshfp_wiredata),
               this->obuffer.getLength());
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        rdata_sshfp_wiredata, sizeof(rdata_sshfp_wiredata));
+    matchWireData(rdata_sshfp_wiredata, sizeof(rdata_sshfp_wiredata),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_SSHFP_Test, compare) {
@@ -288,10 +289,8 @@ TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromWire) {
 
     EXPECT_EQ(2, this->obuffer.getLength());
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        rdf_wiredata, sizeof(rdf_wiredata));
+    matchWireData(rdf_wiredata, sizeof(rdf_wiredata),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromString) {
@@ -312,9 +311,7 @@ TEST_F(Rdata_SSHFP_Test, emptyFingerprintFromString) {
 
     EXPECT_EQ(2, this->obuffer.getLength());
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        rdata_sshfp2_wiredata, sizeof(rdata_sshfp2_wiredata));
+    matchWireData(rdata_sshfp2_wiredata, sizeof(rdata_sshfp2_wiredata),
+                  obuffer.getData(), obuffer.getLength());
 }
 }

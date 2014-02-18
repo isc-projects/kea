@@ -19,6 +19,7 @@
 #include <dns/messagerenderer.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
 #include <gtest/gtest.h>
 
@@ -33,6 +34,7 @@ using isc::dns::LabelSequence;
 using isc::dns::MessageRenderer;
 using isc::util::OutputBuffer;
 using boost::lexical_cast;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class MessageRendererTest : public ::testing::Test {
@@ -56,8 +58,8 @@ TEST_F(MessageRendererTest, writeIntger) {
     renderer.writeUint16(data16);
     expected_size += sizeof(data16);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &testdata[1], sizeof(data16));
+    matchWireData(&testdata[1], sizeof(data16),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageRendererTest, writeName) {
@@ -65,8 +67,8 @@ TEST_F(MessageRendererTest, writeName) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
     renderer.writeName(Name("a.example.org."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageRendererTest, writeNameInLargeBuffer) {
@@ -77,11 +79,9 @@ TEST_F(MessageRendererTest, writeNameInLargeBuffer) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t*>(renderer.getData()) +
-                        offset,
-                        renderer.getLength() - offset,
-                        &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  static_cast<const uint8_t*>(renderer.getData()) + offset,
+                  renderer.getLength() - offset);
 }
 
 TEST_F(MessageRendererTest, writeNameWithUncompressed) {
@@ -89,8 +89,8 @@ TEST_F(MessageRendererTest, writeNameWithUncompressed) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."), false);
     renderer.writeName(Name("b.example.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageRendererTest, writeNamePointerChain) {
@@ -98,8 +98,8 @@ TEST_F(MessageRendererTest, writeNamePointerChain) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.example.com."));
     renderer.writeName(Name("b.example.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageRendererTest, compressMode) {
@@ -126,8 +126,8 @@ TEST_F(MessageRendererTest, writeNameCaseCompress) {
     // this should match the first name in terms of compression:
     renderer.writeName(Name("b.exAmple.CoM."));
     renderer.writeName(Name("a.example.org."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageRendererTest, writeNameCaseSensitiveCompress) {
@@ -138,8 +138,8 @@ TEST_F(MessageRendererTest, writeNameCaseSensitiveCompress) {
     renderer.writeName(Name("a.example.com."));
     renderer.writeName(Name("b.eXample.com."));
     renderer.writeName(Name("c.eXample.com."));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageRendererTest, writeNameMixedCaseCompress) {
@@ -171,11 +171,10 @@ TEST_F(MessageRendererTest, writeRootName) {
 
     renderer.writeName(Name("."));
     renderer.writeName(example_name);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t*>(renderer.getData()),
-                        renderer.getLength(),
-                        static_cast<const uint8_t*>(expected.getData()),
-                        expected.getLength());
+    matchWireData(static_cast<const uint8_t*>(expected.getData()),
+                  expected.getLength(),
+                  static_cast<const uint8_t*>(renderer.getData()),
+                  renderer.getLength());
 }
 
 TEST_F(MessageRendererTest, writeNameLabelSequence1) {
@@ -192,8 +191,8 @@ TEST_F(MessageRendererTest, writeNameLabelSequence1) {
     // example.com.
     renderer.writeName(ls1);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageRendererTest, writeNameLabelSequence2) {
@@ -207,8 +206,8 @@ TEST_F(MessageRendererTest, writeNameLabelSequence2) {
     // a.example.com (without root .)
     renderer.writeName(ls1);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageRendererTest, writeNameLabelSequence3) {
@@ -235,8 +234,8 @@ TEST_F(MessageRendererTest, writeNameLabelSequence3) {
     // example
     renderer.writeName(ls1);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageRendererTest, setBuffer) {
