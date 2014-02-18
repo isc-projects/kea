@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -344,3 +344,18 @@ indicate an error in the source code, please submit a bug report.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software.  This is a configuration error.
+
+% DHCPSRV_DHCP_DDNS_HANDLER_NULL error handler for DHCP_DDNS IO is not set.
+This is an error message that occurs when an attempt to send a request to
+b10-dhcp-ddns fails and there is no registered error handler.  This is a
+programmatic error which should never occur and should be reported.
+
+% DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION error handler for DHCP_DDNS IO generated an expected exception: %1
+This is an error message that occurs when an attempt to send a request to
+b10-dhcp-ddns fails there registered error handler threw an uncaught exception.
+This is a programmatic error which should not occur. By convention, the error
+handler should not propagate exceptions. Please report this error.
+
+% DHCPSRV_DHCP_DDNS_NCR_SENT NameChangeRequest sent to b10-dhcp-ddns: %1
+A debug message issued when a NameChangeRequest has been successfully sent to
+b10-dhcp-ddns.
