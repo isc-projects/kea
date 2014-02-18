@@ -24,12 +24,14 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_CNAME_Test : public RdataTest {
@@ -115,20 +117,18 @@ TEST_F(Rdata_CNAME_Test, createFromLexer) {
 
 TEST_F(Rdata_CNAME_Test, toWireBuffer) {
     rdata_cname.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        wiredata_cname, sizeof(wiredata_cname));
+    matchWireData(wiredata_cname, sizeof(wiredata_cname),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_CNAME_Test, toWireRenderer) {
     rdata_cname.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata_cname, sizeof(wiredata_cname));
+    matchWireData(wiredata_cname, sizeof(wiredata_cname),
+                  renderer.getData(), renderer.getLength());
+
     rdata_cname2.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata_cname2, sizeof(wiredata_cname2));
+    matchWireData(wiredata_cname2, sizeof(wiredata_cname2),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_CNAME_Test, toText) {

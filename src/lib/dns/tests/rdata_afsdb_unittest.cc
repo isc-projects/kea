@@ -24,12 +24,14 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 const char* const afsdb_text = "1 afsdb.example.com.";
 const char* const afsdb_text2 = "0 root.example.com.";
@@ -155,9 +157,8 @@ TEST_F(Rdata_AFSDB_Test, toWireBuffer) {
     UnitTestUtil::readWireData("rdata_afsdb_toWire1.wire", expected_wire);
 
     // then compare them
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        &expected_wire[0], expected_wire.size());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  obuffer.getData(), obuffer.getLength());
 
     // clear buffer for the next test
     obuffer.clear();
@@ -170,9 +171,8 @@ TEST_F(Rdata_AFSDB_Test, toWireBuffer) {
     UnitTestUtil::readWireData("rdata_afsdb_toWire2.wire", expected_wire);
 
     // then compare them
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        &expected_wire[0], expected_wire.size());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_AFSDB_Test, toWireRenderer) {
@@ -187,9 +187,8 @@ TEST_F(Rdata_AFSDB_Test, toWireRenderer) {
     UnitTestUtil::readWireData("rdata_afsdb_toWire1.wire", expected_wire);
 
     // then compare them
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        &expected_wire[0], expected_wire.size());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  renderer.getData(), renderer.getLength());
 
     // clear renderer for the next test
     renderer.clear();
@@ -202,9 +201,8 @@ TEST_F(Rdata_AFSDB_Test, toWireRenderer) {
     UnitTestUtil::readWireData("rdata_afsdb_toWire2.wire", expected_wire);
 
     // then compare them
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        &expected_wire[0], expected_wire.size());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_AFSDB_Test, toText) {

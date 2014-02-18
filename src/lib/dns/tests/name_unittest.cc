@@ -25,6 +25,7 @@
 #include <dns/messagerenderer.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
 #include <gtest/gtest.h>
 
@@ -32,6 +33,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
+using isc::util::unittests::matchWireData;
 
 //
 // XXX: these are defined as class static constants, but some compilers
@@ -137,9 +139,8 @@ NameTest::compareInWireFormat(const Name& name_actual,
     name_actual.toWire(buffer_actual);
     name_expected.toWire(buffer_expected);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        buffer_actual.getData(), buffer_actual.getLength(),
-                        buffer_expected.getData(), buffer_expected.getLength());
+    matchWireData(buffer_expected.getData(), buffer_expected.getLength(),
+                  buffer_actual.getData(), buffer_actual.getLength());
 }
 
 TEST_F(NameTest, nonlocalObject) {
@@ -512,8 +513,8 @@ TEST_F(NameTest, toWireBuffer) {
 
     UnitTestUtil::readWireData(string("01610376697803636f6d00"), data);
     Name("a.vix.com.").toWire(buffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &data[0], data.size(),
-                        buffer.getData(), buffer.getLength());
+    matchWireData(&data[0], data.size(),
+                  buffer.getData(), buffer.getLength());
 }
 
 //
@@ -526,8 +527,8 @@ TEST_F(NameTest, toWireRenderer) {
 
     UnitTestUtil::readWireData(string("01610376697803636f6d00"), data);
     Name("a.vix.com.").toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &data[0], data.size(),
-                        renderer.getData(), renderer.getLength());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 //
@@ -686,9 +687,8 @@ TEST_F(NameTest, at) {
     }
 
     example_name.toWire(buffer_expected);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        &data[0], data.size(), buffer_expected.getData(),
-                        buffer_expected.getLength());
+    matchWireData(&data[0], data.size(),
+                  buffer_expected.getData(), buffer_expected.getLength());
 
     // Out-of-range access: should trigger an exception.
     EXPECT_THROW(example_name.at(example_name.getLength()), OutOfRange);
