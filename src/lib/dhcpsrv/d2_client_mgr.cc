@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,9 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dhcp/iface_mgr.h>
 #include <dhcp_ddns/ncr_udp.h>
-#include <dhcpsrv/d2_client.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+
+#include <boost/bind.hpp>
 
 #include <string>
 
@@ -23,133 +26,26 @@ using namespace std;
 namespace isc {
 namespace dhcp {
 
-//***************************** D2ClientConfig ********************************
-
-D2ClientConfig::D2ClientConfig(const  bool enable_updates,
-                               const isc::asiolink::IOAddress& server_ip,
-                               const size_t server_port,
-                               const dhcp_ddns::
-                                     NameChangeProtocol& ncr_protocol,
-                               const dhcp_ddns::
-                                     NameChangeFormat& ncr_format,
-                               const bool always_include_fqdn,
-                               const bool override_no_update,
-                               const bool override_client_update,
-                               const bool replace_client_name,
-                               const std::string& generated_prefix,
-                               const std::string& qualifying_suffix)
-    : enable_updates_(enable_updates),
-    server_ip_(server_ip),
-    server_port_(server_port),
-    ncr_protocol_(ncr_protocol),
-    ncr_format_(ncr_format),
-    always_include_fqdn_(always_include_fqdn),
-    override_no_update_(override_no_update),
-    override_client_update_(override_client_update),
-    replace_client_name_(replace_client_name),
-    generated_prefix_(generated_prefix),
-    qualifying_suffix_(qualifying_suffix) {
-    validateContents();
-}
-
-D2ClientConfig::D2ClientConfig()
-    : enable_updates_(false),
-      server_ip_(isc::asiolink::IOAddress("0.0.0.0")),
-      server_port_(0),
-      ncr_protocol_(dhcp_ddns::NCR_UDP),
-      ncr_format_(dhcp_ddns::FMT_JSON),
-      always_include_fqdn_(false),
-      override_no_update_(false),
-      override_client_update_(false),
-      replace_client_name_(false),
-      generated_prefix_("myhost"),
-      qualifying_suffix_("example.com") {
-    validateContents();
-}
-
-D2ClientConfig::~D2ClientConfig(){};
-
-void
-D2ClientConfig::validateContents() {
-    if (ncr_format_ != dhcp_ddns::FMT_JSON) {
-        isc_throw(D2ClientError, "D2ClientConfig: NCR Format:"
-                    << dhcp_ddns::ncrFormatToString(ncr_format_)
-                    << " is not yet supported");
-    }
-
-    if (ncr_protocol_ != dhcp_ddns::NCR_UDP) {
-        isc_throw(D2ClientError, "D2ClientConfig: NCR Protocol:"
-                    << dhcp_ddns::ncrProtocolToString(ncr_protocol_)
-                    << " is not yet supported");
-    }
-
-    /// @todo perhaps more validation we should do yet?
-    /// Are there any invalid combinations of options we need to test against?
-}
-
-bool
-D2ClientConfig::operator == (const D2ClientConfig& other) const {
-    return ((enable_updates_ == other.enable_updates_) &&
-            (server_ip_ == other.server_ip_) &&
-            (server_port_ == other.server_port_) &&
-            (ncr_protocol_ == other.ncr_protocol_) &&
-            (ncr_format_ == other.ncr_format_) &&
-            (always_include_fqdn_ == other.always_include_fqdn_) &&
-            (override_no_update_ == other.override_no_update_) &&
-            (override_client_update_ == other.override_client_update_) &&
-            (replace_client_name_ == other.replace_client_name_) &&
-            (generated_prefix_ == other.generated_prefix_) &&
-            (qualifying_suffix_ == other.qualifying_suffix_));
-}
-
-bool
-D2ClientConfig::operator != (const D2ClientConfig& other) const {
-    return (!(*this == other));
-}
-
-std::string
-D2ClientConfig::toText() const {
-    std::ostringstream stream;
-
-    stream << "enable_updates: " << (enable_updates_ ? "yes" : "no");
-    if (enable_updates_) {
-        stream << ", server_ip: " << server_ip_.toText()
-               << ", server_port: " << server_port_
-               << ", ncr_protocol: " << ncr_protocol_
-               << ", ncr_format: " << ncr_format_
-               << ", always_include_fqdn: " << (always_include_fqdn_ ?
-                                                "yes" : "no")
-               << ", override_no_update: " << (override_no_update_ ?
-                                               "yes" : "no")
-               << ", override_client_update: " << (override_client_update_ ?
-                                                   "yes" : "no")
-               << ", replace_client_name: " << (replace_client_name_ ?
-                                                "yes" : "no")
-               << ", generated_prefix: [" << generated_prefix_ << "]"
-               << ", qualifying_suffix: [" << qualifying_suffix_ << "]";
-    }
-
-    return (stream.str());
-}
-
-std::ostream&
-operator<<(std::ostream& os, const D2ClientConfig& config) {
-    os << config.toText();
-    return (os);
-}
-
-
-//******************************** D2ClientMgr ********************************
-
-
 D2ClientMgr::D2ClientMgr() : d2_client_config_(new D2ClientConfig()),
-    name_change_sender_(), private_io_service_(), sender_io_service_(NULL) {
+    name_change_sender_(), private_io_service_(),
+    registered_select_fd_(dhcp_ddns::WatchSocket::INVALID_SOCKET) {
     // Default constructor initializes with a disabled configuration.
 }
 
 D2ClientMgr::~D2ClientMgr(){
-    if (name_change_sender_) {
-        stopSender();
+    stopSender();
+}
+
+void
+D2ClientMgr::suspendUpdates() {
+    if (ddnsEnabled()) {
+        /// @todo For now we will disable updates and stop sending.
+        /// This at least provides a means to shut it off if there are errors.
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES);
+        d2_client_config_->enableUpdates(false);
+        if (name_change_sender_) {
+            stopSender();
+        }
     }
 }
 
@@ -162,9 +58,11 @@ D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
 
     // Don't do anything unless configuration values are actually different.
     if (*d2_client_config_ != *new_config) {
+        // Make sure we stop sending first.
+        stopSender();
         if (!new_config->getEnableUpdates()) {
-            // Updating has been turned off, destroy current sender.
-            // Any queued requests are tossed.
+            // Updating has been turned off.
+            // Destroy current sender (any queued requests are tossed).
             name_change_sender_.reset();
         } else {
             dhcp_ddns::NameChangeSenderPtr new_sender;
@@ -201,7 +99,6 @@ D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
             /// then the queued contents might now be invalid.  There is
             /// no way to regenerate them if they are wrong.
             if (name_change_sender_) {
-                name_change_sender_->stopSending();
                 new_sender->assumeQueue(*name_change_sender_);
             }
 
@@ -311,15 +208,25 @@ D2ClientMgr::qualifyName(const std::string& partial_name) const {
 
 void
 D2ClientMgr::startSender(D2ClientErrorHandler error_handler) {
+    if (amSending()) {
+        return;
+    }
+
     // Create a our own service instance when we are not being multiplexed
     // into an external service..
     private_io_service_.reset(new asiolink::IOService());
     startSender(error_handler, *private_io_service_);
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_SENDER_STARTED)
+             .arg(d2_client_config_->toText());
 }
 
 void
 D2ClientMgr::startSender(D2ClientErrorHandler error_handler,
                          isc::asiolink::IOService& io_service) {
+    if (amSending()) {
+        return;
+    }
+
     if (!name_change_sender_)  {
         isc_throw(D2ClientError, "D2ClientMgr::startSender sender is null");
     }
@@ -331,14 +238,16 @@ D2ClientMgr::startSender(D2ClientErrorHandler error_handler,
     // Set the error handler.
     client_error_handler_ = error_handler;
 
-    // Remember the io service being used.
-    sender_io_service_ = &io_service;
-
     // Start the sender on the given service.
-    name_change_sender_->startSending(*sender_io_service_);
+    name_change_sender_->startSending(io_service);
 
-    /// @todo need to register sender's select-fd with IfaceMgr once 3315 is
-    /// done.
+    // Register sender's select-fd with IfaceMgr.
+    // We need to remember the fd that is registered so we can unregister later.
+    // IO error handling in the sender may alter its select-fd.
+    registered_select_fd_ = name_change_sender_->getSelectFd();
+    IfaceMgr::instance().addExternalSocket(registered_select_fd_,
+                                           boost::bind(&D2ClientMgr::runReadyIO,
+                                                       this));
 }
 
 bool
@@ -348,23 +257,51 @@ D2ClientMgr::amSending() const {
 
 void
 D2ClientMgr::stopSender() {
-    if (!name_change_sender_)  {
-        isc_throw(D2ClientError, "D2ClientMgr::stopSender sender is null");
+    /// Unregister sender's select-fd.
+    if (registered_select_fd_ != dhcp_ddns::WatchSocket::INVALID_SOCKET) {
+        IfaceMgr::instance().deleteExternalSocket(registered_select_fd_);
+        registered_select_fd_ = dhcp_ddns::WatchSocket::INVALID_SOCKET;
     }
 
-    /// @todo need to unregister sender's select-fd with IfaceMgr once 3315 is
-    /// done.
-
-    name_change_sender_->stopSending();
+    // If its not null, call stop.
+    if (amSending()) {
+        name_change_sender_->stopSending();
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_SENDER_STOPPED);
+    }
 }
 
 void
 D2ClientMgr::sendRequest(dhcp_ddns::NameChangeRequestPtr& ncr) {
-    if (!name_change_sender_) {
-        isc_throw(D2ClientError, "D2ClientMgr::sendRequest sender is null");
+    if (!amSending()) {
+        // This is programmatic error so bust them for it.
+        isc_throw(D2ClientError, "D2ClientMgr::sendRequest not in send mode");
     }
 
-    name_change_sender_->sendRequest(ncr);
+    try {
+        name_change_sender_->sendRequest(ncr);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_NCR_REJECTED)
+                  .arg(ex.what()).arg((ncr ? ncr->toText() : " NULL "));
+        invokeClientErrorHandler(dhcp_ddns::NameChangeSender::ERROR, ncr);
+    }
+}
+
+void
+D2ClientMgr::invokeClientErrorHandler(const dhcp_ddns::NameChangeSender::
+                                      Result result,
+                                      dhcp_ddns::NameChangeRequestPtr& ncr) {
+    // Handler is mandatory to enter send mode but test it just to be safe.
+    if (!client_error_handler_) {
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_HANDLER_NULL);
+    } else {
+        // Handler is not supposed to throw, but catch just in case.
+        try {
+            (client_error_handler_)(result, ncr);
+        } catch (const std::exception& ex) {
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION)
+                      .arg(ex.what());
+        }
+    }
 }
 
 size_t
@@ -375,6 +312,16 @@ D2ClientMgr::getQueueSize() const {
 
     return(name_change_sender_->getQueueSize());
 }
+
+size_t
+D2ClientMgr::getQueueMaxSize() const {
+    if (!name_change_sender_) {
+        isc_throw(D2ClientError, "D2ClientMgr::getQueueMaxSize sender is null");
+    }
+
+    return(name_change_sender_->getQueueMaxSize());
+}
+
 
 
 const dhcp_ddns::NameChangeRequestPtr&
@@ -402,21 +349,8 @@ D2ClientMgr::operator()(const dhcp_ddns::NameChangeSender::Result result,
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
                   DHCPSRV_DHCP_DDNS_NCR_SENT).arg(ncr->toText());
     } else {
-        // Handler is mandatory but test it just to be safe.
-        /// @todo Until we have a better feel for how errors need to be
-        /// handled we farm it out to the application layer.
-        if (client_error_handler_) {
-            // Handler is not supposed to throw, but catch just in case.
-            try {
-                (client_error_handler_)(result, ncr);
-            } catch (const std::exception& ex) {
-                LOG_ERROR(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION)
-                          .arg(ex.what());
-            }
-        } else {
-            LOG_ERROR(dhcpsrv_logger, DHCPSRV_DHCP_DDNS_HANDLER_NULL);
-        }
-   }
+        invokeClientErrorHandler(result, ncr);
+    }
 }
 
 int
@@ -431,17 +365,13 @@ D2ClientMgr::getSelectFd() {
 
 void
 D2ClientMgr::runReadyIO() {
-    if (!sender_io_service_) {
+    if (!name_change_sender_) {
         // This should never happen.
         isc_throw(D2ClientError, "D2ClientMgr::runReadyIO"
-                  " sender io service is null");
+                  " name_change_sender is null");
     }
 
-    // We shouldn't be here if IO isn't ready to execute.
-    // By running poll we're gauranteed not to hang.
-    /// @todo Trac# 3325 requests that asiolink::IOService provide a
-    /// wrapper for poll().
-    sender_io_service_->get_io_service().poll();
+    name_change_sender_->runReadyIO();
 }
 
 };  // namespace dhcp

@@ -19,6 +19,12 @@ This is an error message that indicates that an invalid request to update
 a DNS entry was received by the application.  Either the format or the content
 of the request is incorrect. The request will be ignored.
 
+% DHCP_DDNS_NCR_FLUSH_IO_ERROR DHCP-DDNS Last send before stopping did not complete successfully: %1
+This is an error message that indicates the DHCP-DDNS client was unable to
+complete the last send prior to exiting send mode.  This is a programmatic
+error, highly unlikely to occur, and should not impair the application's ability
+to process requests.
+
 % DHCP_DDNS_NCR_LISTEN_CLOSE_ERROR application encountered an error while closing the listener used to receive NameChangeRequests : %1
 This is an error message that indicates the application was unable to close the
 listener connection used to receive NameChangeRequests.  Closure may occur

@@ -19,7 +19,8 @@
 #include <asio.hpp>
 #include <asiolink/io_service.h>
 #include <config.h>
-#include <dhcpsrv/d2_client.h>
+#include <dhcp/iface_mgr.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/function.hpp>
@@ -231,7 +232,7 @@ TEST_F(D2ClientMgrTest, udpSenderQueing) {
 
     // Trying to send a NCR when not in send mode should fail.
     dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
-    EXPECT_THROW(sendRequest(ncr), dhcp_ddns::NcrSenderError);
+    EXPECT_THROW(sendRequest(ncr), D2ClientError);
 
     // Place sender in send mode.
     ASSERT_NO_THROW(startSender(getErrorHandler()));
@@ -330,55 +331,147 @@ TEST_F(D2ClientMgrTest, udpSendExternalIOService) {
 /// when send errors occur.
 TEST_F(D2ClientMgrTest, udpSendErrorHandler) {
     // Enable DDNS with server at 127.0.0.1/prot 53001 via UDP.
-    enableDdns("127.0.0.1", 530001, dhcp_ddns::NCR_UDP);
-
-    // Trying to fetch the select-fd when not sending should fail.
-    ASSERT_THROW(getSelectFd(), D2ClientError);
-
     // Place sender in send mode.
+    enableDdns("127.0.0.1", 530001, dhcp_ddns::NCR_UDP);
     ASSERT_NO_THROW(startSender(getErrorHandler()));
-
-    // select_fd should evaluate to NOT ready to read.
-    selectCheck(false);
 
     // Simulate a failed response in the send call back. This should
     // cause the error handler to get invoked.
     simulate_send_failure_ = true;
 
+    // Verify error count is zero.
     ASSERT_EQ(0, error_handler_count_);
 
     // Send a test request.
     dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
     ASSERT_NO_THROW(sendRequest(ncr));
 
-    // select_fd should evaluate to ready to read.
-    selectCheck(true);
+    // Call the ready handler. This should complete the message with an error.
+    ASSERT_NO_THROW(runReadyIO());
 
-    // Call service handler.
-    runReadyIO();
-
-    // select_fd should evaluate to not ready to read.
-    selectCheck(false);
-
+    // If we executed error handler properly, the error count should one.
     ASSERT_EQ(1, error_handler_count_);
+}
 
-    // Simulate a failed response in the send call back. This should
-    // cause the error handler to get invoked.
+
+/// @brief Checks that client error handler exceptions are handled gracefully.
+TEST_F(D2ClientMgrTest, udpSendErrorHandlerThrow) {
+    // Enable DDNS with server at 127.0.0.1/prot 53001 via UDP.
+    // Place sender in send mode.
+    enableDdns("127.0.0.1", 530001, dhcp_ddns::NCR_UDP);
+    ASSERT_NO_THROW(startSender(getErrorHandler()));
+
+    // Simulate a failed response in the send call back and
+    // force a throw in the error handler.
     simulate_send_failure_ = true;
     error_handler_throw_ = true;
 
+    // Verify error count is zero.
+    ASSERT_EQ(0, error_handler_count_);
+
     // Send a test request.
-    ncr = buildTestNcr();
+    dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
     ASSERT_NO_THROW(sendRequest(ncr));
 
-    // Call the io service handler.
-    runReadyIO();
+    // Call the ready handler. This should complete the message with an error.
+    // The handler should throw but the exception should not escape.
+    ASSERT_NO_THROW(runReadyIO());
 
-    // Simulation flag should be false.
+    // If throw flag is false, then we were in the error handler should
+    // have thrown.
     ASSERT_FALSE(error_handler_throw_);
 
-    // Count should still be 1.
-    ASSERT_EQ(1, error_handler_count_);
+    // If error count is still zero, then we did throw.
+    ASSERT_EQ(0, error_handler_count_);
+}
+
+/// @brief Tests that D2ClientMgr registers and unregisters with IfaceMgr.
+TEST_F(D2ClientMgrTest, ifaceRegister) {
+    // Enable DDNS with server at 127.0.0.1/prot 53001 via UDP.
+    enableDdns("127.0.0.1", 530001, dhcp_ddns::NCR_UDP);
+
+    // Place sender in send mode.
+    ASSERT_NO_THROW(startSender(getErrorHandler()));
+
+    // Queue three messages.
+    for (int i = 0; i < 3; ++i) {
+        dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
+        ASSERT_NO_THROW(sendRequest(ncr));
+    }
+
+    // Make sure queue count is correct.
+    EXPECT_EQ(3, getQueueSize());
+
+    // select_fd should evaluate to ready to read.
+    selectCheck(true);
+
+    // Calling receive should complete the first message and start the second.
+    IfaceMgr::instance().receive4(0, 0);
+
+    // Verify the callback hander was invoked, no errors counted.
+    EXPECT_EQ(2, getQueueSize());
+    ASSERT_EQ(1, callback_count_);
+    ASSERT_EQ(0, error_handler_count_);
+
+    // Stop the sender.  This should complete the second message but leave
+    // the third in the queue.
+    ASSERT_NO_THROW(stopSender());
+    EXPECT_EQ(1, getQueueSize());
+    ASSERT_EQ(2, callback_count_);
+    ASSERT_EQ(0, error_handler_count_);
+
+    // Calling receive again should have no affect.
+    IfaceMgr::instance().receive4(0, 0);
+    EXPECT_EQ(1, getQueueSize());
+    ASSERT_EQ(2, callback_count_);
+    ASSERT_EQ(0, error_handler_count_);
+}
+
+/// @brief Checks that D2ClientMgr suspendUpdates works properly.
+TEST_F(D2ClientMgrTest, udpSuspendUpdates) {
+    // Enable DDNS with server at 127.0.0.1/prot 53001 via UDP.
+    // Place sender in send mode.
+    enableDdns("127.0.0.1", 530001, dhcp_ddns::NCR_UDP);
+    ASSERT_NO_THROW(startSender(getErrorHandler()));
+
+    // Send a test request.
+    for (int i = 0; i < 3; ++i) {
+        dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
+        ASSERT_NO_THROW(sendRequest(ncr));
+    }
+    ASSERT_EQ(3, getQueueSize());
+
+    // Call the ready handler. This should complete the first message
+    // and initiate sending the second message.
+    ASSERT_NO_THROW(runReadyIO());
+
+    // Queue count should have gone down by 1.
+    ASSERT_EQ(2, getQueueSize());
+
+    // Suspend updates. This should disable updates and stop the sender.
+    ASSERT_NO_THROW(suspendUpdates());
+
+    EXPECT_FALSE(ddnsEnabled());
+    EXPECT_FALSE(amSending());
+
+    // Stopping the sender should have completed the second message's
+    // in-progess send, so queue size should be 1.
+    ASSERT_EQ(1, getQueueSize());
+}
+
+/// @brief Tests that invokeErrorHandler does not fail if there is no handler.
+TEST_F(D2ClientMgrTest, missingErrorHandler) {
+    // Ensure we aren't in send mode.
+    ASSERT_FALSE(ddnsEnabled());
+    ASSERT_FALSE(amSending());
+
+    // There is no error handler at this point, so invoking should not throw.
+    dhcp_ddns::NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(invokeClientErrorHandler(dhcp_ddns::NameChangeSender::ERROR,
+                                             ncr));
+
+    // Verify we didn't invoke the error handler, error count is zero.
+    ASSERT_EQ(0, error_handler_count_);
 }
 
 } // end of anonymous namespace
