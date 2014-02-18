@@ -145,7 +145,7 @@ TEST_F(CharStringDataTest, charStringDataToString) {
     for (const TestData* cur = conversion_data; cur->data != NULL; ++cur) {
         uint8_t idata[32];
         size_t length = std::strlen(cur->data);
-        assert(sizeof(idata) >= length);
+        ASSERT_LT(length, sizeof(idata));
         std::memcpy(idata, cur->data, length);
         const CharStringData test_data(idata, idata + length);
         EXPECT_EQ(cur->expected, charStringDataToString(test_data));
