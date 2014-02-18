@@ -18,7 +18,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/option_definition.h>
-#include <dhcpsrv/d2_client.h>
+#include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/subnet.h>
