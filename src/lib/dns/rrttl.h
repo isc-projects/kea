@@ -15,7 +15,7 @@
 #ifndef RRTTL_H
 #define RRTTL_H 1
 
-#include <exceptions/exceptions.h>
+#include <dns/exceptions.h>
 
 #include <boost/optional.hpp>
 
@@ -36,20 +36,20 @@ class AbstractMessageRenderer;
 /// \brief A standard DNS module exception that is thrown if an RRTTL object
 /// is being constructed from an unrecognized string.
 ///
-class InvalidRRTTL : public Exception {
+class InvalidRRTTL : public DNSTextError {
 public:
     InvalidRRTTL(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        DNSTextError(file, line, what) {}
 };
 
 ///
 /// \brief A standard DNS module exception that is thrown if an RRTTL object
 /// is being constructed from a incomplete (too short) wire-format data.
 ///
-class IncompleteRRTTL : public Exception {
+class IncompleteRRTTL : public isc::dns::Exception {
 public:
     IncompleteRRTTL(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///

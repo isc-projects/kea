@@ -20,7 +20,7 @@
 #include <string>
 #include <ostream>
 
-#include <exceptions/exceptions.h>
+#include <dns/exceptions.h>
 
 // Solaris x86 defines DS in <sys/regset.h>, which gets pulled in by Boost
 #if defined(__sun) && defined(DS)
@@ -42,20 +42,20 @@ class AbstractMessageRenderer;
 /// \brief A standard DNS module exception that is thrown if an RRType object
 /// is being constructed from an unrecognized string.
 ///
-class InvalidRRType : public Exception {
+class InvalidRRType : public DNSTextError {
 public:
     InvalidRRType(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        DNSTextError(file, line, what) {}
 };
 
 ///
 /// \brief A standard DNS module exception that is thrown if an RRType object
 /// is being constructed from a incomplete (too short) wire-format data.
 ///
-class IncompleteRRType : public Exception {
+class IncompleteRRType : public isc::dns::Exception {
 public:
     IncompleteRRType(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
