@@ -1734,8 +1734,8 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
 
     srv.classifyPacket(sol2);
 
-    EXPECT_TRUE(sol2->inClass("eRouter1.0"));
-    EXPECT_FALSE(sol2->inClass("docsis3.0"));
+    EXPECT_TRUE(sol2->inClass(srv.VENDOR_CLASS_PREFIX + "eRouter1.0"));
+    EXPECT_FALSE(sol2->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0"));
 }
 
 // This test checks that the server will handle a Solicit with the Vendor Class

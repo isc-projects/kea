@@ -118,6 +118,7 @@ public:
     using Dhcpv6Srv::writeServerID;
     using Dhcpv6Srv::unpackOptions;
     using Dhcpv6Srv::name_change_reqs_;
+    using Dhcpv6Srv::VENDOR_CLASS_PREFIX;
 
     /// @brief packets we pretend to receive
     ///

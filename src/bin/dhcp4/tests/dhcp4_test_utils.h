@@ -199,6 +199,8 @@ public:
     using Dhcpv4Srv::classifyPacket;
     using Dhcpv4Srv::accept;
     using Dhcpv4Srv::acceptMessageType;
+
+    using Dhcpv4Srv::VENDOR_CLASS_PREFIX;
 };
 
 class Dhcpv4SrvTest : public ::testing::Test {
