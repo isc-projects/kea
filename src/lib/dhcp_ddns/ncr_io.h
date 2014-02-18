@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -547,6 +547,35 @@ public:
     /// capacity.
     void sendRequest(NameChangeRequestPtr& ncr);
 
+    /// @brief Move all queued requests from a given sender into the send queue
+    ///
+    /// Moves all of the entries in the given sender's queue and places them
+    /// into send queue.  This provides a mechanism of reassigning queued
+    /// messages from one sender to another. This is useful for dealing with
+    /// dynamic configuration changes.
+    ///
+    /// @param source_sender from whom the queued messages will be taken
+    ///
+    /// @throw NcrSenderError if either sender is in send mode, if the number of
+    /// messages in the source sender's queue is larger than this sender's
+    /// maxium queue size, or if this sender's queue is not empty.
+    void assumeQueue(NameChangeSender& source_sender);
+
+    /// @brief Returns a file descriptor suitable for use with select
+    ///
+    /// The value returned is an open file descriptor which can be used with
+    /// select() system call to monitor the sender for IO events.  This allows
+    /// NameChangeSenders to be used in applications which use select, rather
+    /// than IOService to wait for IO events to occur.
+    ///
+    /// @warning Attempting other use of this value may lead to unpredictable
+    /// behavior in the sender.
+    ///
+    /// @return Returns an "open" file descriptor
+    ///
+    /// @throw NcrSenderError if the sender is not in send mode,
+    virtual int getSelectFd() = 0;
+
 protected:
     /// @brief Dequeues and sends the next request on the send queue.
     ///
@@ -659,9 +688,37 @@ public:
         return (send_queue_max_);
     }
 
+    /// @brief Sets the maxium queue size to the given value.
+    ///
+    /// Sets the maximum number of entries allowed in the queue to the
+    /// the given value.
+    ///
+    /// @param new_max the new value to use as the maximum
+    ///
+    /// @throw NcrSenderError if the value is less than one.
+    void setQueueMaxSize(const size_t new_max);
+
     /// @brief Returns the number of entries currently in the send queue.
     size_t getQueueSize() const {
         return (send_queue_.size());
+    }
+
+    /// @brief Returns the entry at a given position in the queue.
+    ///
+    /// Note that the entry is not removed from the queue.
+    /// @param index the index of the entry in the queue to fetch.
+    /// Valid values are 0 (front of the queue) to (queue size - 1).
+    ///
+    /// @return Pointer reference to the queue entry.
+    ///
+    /// @throw NcrSenderError if the given index is beyond the
+    /// end of the queue.
+    const NameChangeRequestPtr& peekAt(const size_t index) const;
+
+protected:
+    /// @brief Returns a reference to the send queue.
+    SendQueue& getSendQueue() {
+        return (send_queue_);
     }
 
 private:

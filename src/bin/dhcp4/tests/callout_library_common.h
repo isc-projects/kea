@@ -34,9 +34,6 @@
 
 #include <fstream>
 
-using namespace isc::hooks;
-using namespace std;
-
 extern "C" {
 
 /// @brief Append digit to marker file
@@ -51,7 +48,7 @@ extern "C" {
 int
 appendDigit(const char* name) {
     // Open the file and check if successful.
-    fstream file(name, fstream::out | fstream::app);
+    std::fstream file(name, std::fstream::out | std::fstream::app);
     if (!file.good()) {
         return (1);
     }
@@ -70,7 +67,7 @@ version() {
 }
 
 int
-load(LibraryHandle&) {
+load(isc::hooks::LibraryHandle&) {
     return (appendDigit(LOAD_MARKER_FILE));
 }
 

@@ -22,8 +22,6 @@
 #include <nsas/fetchable.h>
 #include "cache_entry_key.h"
 
-using namespace isc::nsas;
-
 namespace isc {
 namespace cache {
 
@@ -60,7 +58,7 @@ enum RRsetTrustLevel {
 /// The object of RRsetEntry represents one cached RRset.
 /// Each RRset entry may be refered using shared_ptr by several message
 /// entries.
-class RRsetEntry : public NsasEntry<RRsetEntry>
+class RRsetEntry : public isc::nsas::NsasEntry<RRsetEntry>
 {
     ///
     /// \name Constructors and Destructor
@@ -105,7 +103,7 @@ public:
     /// \brief Get the hash key
     ///
     /// \return return hash key
-    HashKey hashKey() const {
+    isc::nsas::HashKey hashKey() const {
         return (hash_key_);
     }
 
@@ -124,7 +122,7 @@ private:
     time_t expire_time_;     // Expiration time of rrset.
     RRsetTrustLevel trust_level_; // RRset trustworthiness.
     boost::shared_ptr<isc::dns::RRset> rrset_;
-    HashKey hash_key_;       // RRsetEntry hash key
+    isc::nsas::HashKey hash_key_; // RRsetEntry hash key
 };
 
 typedef boost::shared_ptr<RRsetEntry> RRsetEntryPtr;

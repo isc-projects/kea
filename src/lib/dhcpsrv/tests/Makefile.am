@@ -54,6 +54,7 @@ libdhcpsrv_unittests_SOURCES += alloc_engine_unittest.cc
 libdhcpsrv_unittests_SOURCES += callout_handle_store_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += d2_client_unittest.cc
+libdhcpsrv_unittests_SOURCES += d2_udp_unittest.cc
 libdhcpsrv_unittests_SOURCES += dbaccess_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_factory_unittest.cc
@@ -89,6 +90,7 @@ libdhcpsrv_unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 
 libdhcpsrv_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
