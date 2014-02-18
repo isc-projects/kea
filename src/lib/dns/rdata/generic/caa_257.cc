@@ -169,8 +169,7 @@ CAA::CAA(InputBuffer& buffer, size_t rdata_len) {
                   "RDATA is too short for CAA tag field");
     }
 
-    vector<uint8_t> tag_vec;
-    tag_vec.resize(tag_length);
+    std::vector<uint8_t> tag_vec(tag_length);
     buffer.readData(&tag_vec[0], tag_length);
     std::string tag(tag_vec.begin(), tag_vec.end());
     rdata_len -= tag_length;
