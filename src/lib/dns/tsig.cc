@@ -79,7 +79,7 @@ struct TSIGContext::TSIGContextImpl {
                                 key_.getSecret(), key_.getSecretLength(),
                                 key_.getAlgorithm()),
                             deleteHMAC);
-            } catch (const Exception&) {
+            } catch (const isc::Exception&) {
                 return;
             }
             digest_len_ = hmac_->getOutputLength();
@@ -289,20 +289,20 @@ TSIGContext::getTSIGLength() const {
     //
     // The space required for an TSIG record is:
     //
-    //	n1 bytes for the (key) name
-    //	2 bytes for the type
-    //	2 bytes for the class
-    //	4 bytes for the ttl
-    //	2 bytes for the rdlength
-    //	n2 bytes for the algorithm name
-    //	6 bytes for the time signed
-    //	2 bytes for the fudge
-    //	2 bytes for the MAC size
-    //	x bytes for the MAC
-    //	2 bytes for the original id
-    //	2 bytes for the error
-    //	2 bytes for the other data length
-    //	y bytes for the other data (at most)
+    //  n1 bytes for the (key) name
+    //  2 bytes for the type
+    //  2 bytes for the class
+    //  4 bytes for the ttl
+    //  2 bytes for the rdlength
+    //  n2 bytes for the algorithm name
+    //  6 bytes for the time signed
+    //  2 bytes for the fudge
+    //  2 bytes for the MAC size
+    //  x bytes for the MAC
+    //  2 bytes for the original id
+    //  2 bytes for the error
+    //  2 bytes for the other data length
+    //  y bytes for the other data (at most)
     // ---------------------------------
     //     26 + n1 + n2 + x + y bytes
     //

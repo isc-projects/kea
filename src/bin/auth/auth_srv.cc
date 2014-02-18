@@ -498,7 +498,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
             impl_->resumeServer(server, message, stats_attrs, false);
             return;
         }
-    } catch (const Exception& ex) {
+    } catch (const isc::Exception& ex) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_HEADER_PARSE_FAIL)
                   .arg(ex.what());
         impl_->resumeServer(server, message, stats_attrs, false);
@@ -522,7 +522,7 @@ AuthSrv::processMessage(const IOMessage& io_message, Message& message,
                          stats_attrs);
         impl_->resumeServer(server, message, stats_attrs, true);
         return;
-    } catch (const Exception& ex) {
+    } catch (const isc::Exception& ex) {
         LOG_DEBUG(auth_logger, DBG_AUTH_DETAIL, AUTH_PACKET_PARSE_FAILED)
                   .arg(ex.what());
         makeErrorMessage(impl_->renderer_, message, buffer, Rcode::SERVFAIL(),
@@ -660,7 +660,7 @@ AuthSrvImpl::processNormalQuery(const IOMessage& io_message,
                              stats_attrs);
             return (true);
         }
-    } catch (const Exception& ex) {
+    } catch (const isc::Exception& ex) {
         LOG_ERROR(auth_logger, AUTH_PROCESS_FAIL).arg(ex.what());
         makeErrorMessage(renderer_, message, buffer, Rcode::SERVFAIL(),
                          stats_attrs);
@@ -820,7 +820,7 @@ AuthSrvImpl::processNotify(const IOMessage& io_message, Message& message,
                       .arg(parsed_answer->str());
             return (false);
         }
-    } catch (const Exception& ex) {
+    } catch (const isc::Exception& ex) {
         LOG_ERROR(auth_logger, AUTH_ZONEMGR_COMMS).arg(ex.what());
         return (false);
     }

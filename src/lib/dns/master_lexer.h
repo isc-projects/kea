@@ -15,7 +15,7 @@
 #ifndef MASTER_LEXER_H
 #define MASTER_LEXER_H 1
 
-#include <exceptions/exceptions.h>
+#include <dns/exceptions.h>
 
 #include <istream>
 #include <string>
@@ -324,10 +324,10 @@ public:
     ///
     /// The \c token_ member variable (read-only) is set to a \c MasterToken
     /// object of type ERROR indicating the reason for the error.
-    class LexerError : public Exception {
+    class LexerError : public isc::dns::Exception {
     public:
         LexerError(const char* file, size_t line, MasterToken error_token) :
-            Exception(file, line, error_token.getErrorText().c_str()),
+            isc::dns::Exception(file, line, error_token.getErrorText().c_str()),
             token_(error_token)
         {}
         const MasterToken token_;
