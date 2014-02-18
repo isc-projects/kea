@@ -29,7 +29,6 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-/// @todo
 void
 D2Dhcpv4Srv::d2ClientErrorHandler(const
                                 dhcp_ddns::NameChangeSender::Result result,

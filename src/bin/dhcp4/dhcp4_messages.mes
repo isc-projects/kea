@@ -20,11 +20,11 @@ to receive DHCPv4 traffic. IPv4 socket on this interface will be opened once
 Interface Manager starts up procedure of opening sockets.
 
 % DHCP4_CCSESSION_STARTED control channel session started on socket %1
-A debug message issued during startup after the IPv4 DHCP server has
+A debug message issued during startup after the DHCPv4 server has
 successfully established a session with the BIND 10 control channel.
 
 % DHCP4_CCSESSION_STARTING starting control channel session, specfile: %1
-This debug message is issued just before the IPv4 DHCP server attempts
+This debug message is issued just before the DHCPv4 server attempts
 to establish a session with the BIND 10 control channel.
 
 % DHCP4_CLIENT_NAME_PROC_FAIL failed to process the fqdn or hostname sent by a client: %1
@@ -42,7 +42,7 @@ class or classes. This is a norma
 
 % DHCP4_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
-from the BIND 10 control system by the IPv4 DHCP server.
+from the BIND 10 control system by the DHCPv4 server.
 
 % DHCP4_CONFIG_COMPLETE DHCPv4 server has completed configuration: %1
 This is an informational message announcing the successful processing of a
@@ -70,7 +70,7 @@ configuration. That happens at start up and also when a server configuration
 change is committed by the administrator.
 
 % DHCP4_CONFIG_UPDATE updated configuration received: %1
-A debug message indicating that the IPv4 DHCP server has received an
+A debug message indicating that the DHCPv4 server has received an
 updated configuration from the BIND 10 configuration system.
 
 % DHCP4_DB_BACKEND_STARTED lease database started (type: %1, name: %2)
@@ -194,12 +194,12 @@ which this message has been received. The IPv4 address assigned on this
 interface must belong to one of the configured subnets. Otherwise
 received message is dropped.
 
-% DHCP4_NOT_RUNNING IPv4 DHCP server is not running
+% DHCP4_NOT_RUNNING DHCPv4 server is not running
 A warning message is issued when an attempt is made to shut down the
-IPv4 DHCP server but it is not running.
+DHCPv4 server but it is not running.
 
 % DHCP4_OPEN_SOCKET opening sockets on port %1
-A debug message issued during startup, this indicates that the IPv4 DHCP
+A debug message issued during startup, this indicates that the DHCPv4
 server is about to open sockets on the specified port.
 
 % DHCP4_PACKET_NOT_FOR_US received DHCPv4 message (transid=%1, iface=%2) dropped because it contains foreign server identifier
@@ -214,7 +214,7 @@ A warning message issued when IfaceMgr fails to open and bind a socket. The reas
 for the failure is appended as an argument of the log message.
 
 % DHCP4_PACKET_PARSE_FAIL failed to parse incoming packet: %1
-The IPv4 DHCP server has received a packet that it is unable to
+The DHCPv4 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
 
 % DHCP4_PACKET_PROCESS_FAIL failed to process packet received from %1: %2
@@ -233,35 +233,35 @@ may well be a valid DHCP packet, just a type not expected by the server
 (e.g. it will report a received OFFER packet as UNKNOWN).
 
 % DHCP4_PACKET_RECEIVE_FAIL error on attempt to receive packet: %1
-The IPv4 DHCP server tried to receive a packet but an error
+The DHCPv4 server tried to receive a packet but an error
 occurred during this attempt. The reason for the error is included in
 the message.
 
 % DHCP4_PACKET_SEND_FAIL failed to send DHCPv4 packet: %1
-This error is output if the IPv4 DHCP server fails to send an assembled
+This error is output if the DHCPv4 server fails to send an assembled
 DHCP message to a client. The reason for the error is included in the
 message.
 
 % DHCP4_PARSER_COMMIT_EXCEPTION parser failed to commit changes
-On receipt of message containing details to a change of the IPv4 DHCP
+On receipt of message containing details to a change of the DHCPv4
 server configuration, a set of parsers were successfully created, but one
 of them failed to commit its changes due to a low-level system exception
 being raised.  Additional messages may be output indicating the reason.
 
 % DHCP4_PARSER_COMMIT_FAIL parser failed to commit changes: %1
-On receipt of message containing details to a change of the IPv4 DHCP
+On receipt of message containing details to a change of the DHCPv4
 server configuration, a set of parsers were successfully created, but
 one of them failed to commit its changes.  The reason for the failure
 is given in the message.
 
 % DHCP4_PARSER_CREATED created parser for configuration element %1
-A debug message output during a configuration update of the IPv4 DHCP
+A debug message output during a configuration update of the DHCPv4
 server, notifying that the parser for the specified configuration element
 has been successfully created.
 
 % DHCP4_PARSER_EXCEPTION failed to create or run parser for configuration element %1
 On receipt of message containing details to a change of its configuration,
-the IPv4 DHCP server failed to create a parser to decode the contents of
+the DHCPv4 server failed to create a parser to decode the contents of
 the named configuration element, or the creation succeeded but the parsing
 actions and committal of changes failed.  The message has been output in
 response to a non-BIND 10 exception being raised.  Additional messages
@@ -269,7 +269,7 @@ may give further information.
 
 % DHCP4_PARSER_FAIL failed to create or run parser for configuration element %1: %2
 On receipt of message containing details to a change of its configuration,
-the IPv4 DHCP server failed to create a parser to decode the contents
+the DHCPv4 server failed to create a parser to decode the contents
 of the named configuration element, or the creation succeeded but the
 parsing actions and committal of changes failed.  The reason for the
 failure is given in the message.
@@ -324,40 +324,40 @@ both clones use the same client-id.
 A debug message listing the data returned to the client.
 
 % DHCP4_SERVER_FAILED server failed: %1
-The IPv4 DHCP server has encountered a fatal error and is terminating.
+The DHCPv4 server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
 
 % DHCP4_SESSION_FAIL failed to establish BIND 10 session (%1), running stand-alone
 The server has failed to establish communication with the rest of BIND
 10 and is running in stand-alone mode.  (This behavior will change once
-the IPv4 DHCP server is properly integrated with the rest of BIND 10.)
+the DHCPv4 server is properly integrated with the rest of BIND 10.)
 
 % DHCP4_SHUTDOWN server shutdown
-The IPv4 DHCP server has terminated normally.
+The DHCPv4 server has terminated normally.
 
 % DHCP4_SHUTDOWN_REQUEST shutdown of server requested
-This debug message indicates that a shutdown of the IPv4 server has
+This debug message indicates that a shutdown of the DHCPv4 server has
 been requested via a call to the 'shutdown' method of the core Dhcpv4Srv
 object.
 
 % DHCP4_SRV_CONSTRUCT_ERROR error creating Dhcpv4Srv object, reason: %1
 This error message indicates that during startup, the construction of a
-core component within the IPv4 DHCP server (the Dhcpv4 server object)
+core component within the DHCPv4 server (the Dhcpv4 server object)
 has failed.  As a result, the server will exit.  The reason for the
 failure is given within the message.
 
 % DHCP4_STANDALONE skipping message queue, running standalone
-This is a debug message indicating that the IPv4 server is running in
+This is a debug message indicating that the DHCPv4 server is running in
 standalone mode, not connected to the message queue.  Standalone mode
 is only useful during program development, and should not be used in a
 production environment.
 
 % DHCP4_STARTING server starting
-This informational message indicates that the IPv4 DHCP server has
+This informational message indicates that the DHCPv4 server has
 processed any command-line switches and is starting.
 
 % DHCP4_START_INFO pid: %1, port: %2, verbose: %3, standalone: %4
-This is a debug message issued during the IPv4 DHCP server startup.
+This is a debug message issued during the DHCPv4 server startup.
 It lists some information about the parameters with which the server
 is running.
 
@@ -371,7 +371,7 @@ This warning message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable
 cause is a misconfiguration of the server.
 
-% DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error : %1,  ncr: %2
-This error message indicates that IPv4 DHCP server attempted to send a DDNS
+% DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error: %1,  ncr: %2
+This error message indicates that DHCP4 server attempted to send a DDNS
 update reqeust to the DHCP-DDNS server.  This is most likely a configuration or
 networking error.
