@@ -359,6 +359,16 @@ NameChangeUDPSender::getSelectFd() {
     return(watch_socket_->getSelectFd());
 }
 
+bool
+NameChangeUDPSender::ioReady() {
+    if (watch_socket_) {
+        return (watch_socket_->isReady());
+    }
+
+    return (false);
+}
+
+
 
 }; // end of isc::dhcp_ddns namespace
 }; // end of isc namespace

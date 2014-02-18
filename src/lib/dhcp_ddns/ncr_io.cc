@@ -15,6 +15,7 @@
 #include <dhcp_ddns/dhcp_ddns_log.h>
 #include <dhcp_ddns/ncr_io.h>
 
+#include <asio.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 namespace isc {
@@ -159,7 +160,7 @@ NameChangeListener::invokeRecvHandler(const Result result,
 NameChangeSender::NameChangeSender(RequestSendHandler& send_handler,
                                    size_t send_queue_max)
     : sending_(false), send_handler_(send_handler),
-      send_queue_max_(send_queue_max) {
+      send_queue_max_(send_queue_max), io_service_(NULL) {
 
     // Queue size must be big enough to hold at least 1 entry.
     setQueueMaxSize(send_queue_max);
@@ -177,6 +178,8 @@ NameChangeSender::startSending(isc::asiolink::IOService& io_service) {
 
     // Call implementation dependent open.
     try {
+        // Remember io service we're given.
+        io_service_ = &io_service;
         open(io_service);
     } catch (const isc::Exception& ex) {
         stopSending();
@@ -185,10 +188,30 @@ NameChangeSender::startSending(isc::asiolink::IOService& io_service) {
 
     // Set our status to sending.
     setSending(true);
+
+    // If there's any queued already.. we'll start sending.
+    sendNext();
 }
 
 void
 NameChangeSender::stopSending() {
+    // Set it send indicator to false, no matter what. This allows us to at 
+    // least try to re-open via startSending(). Also, setting it false now, 
+    // allows us to break sendNext() chain in invokeSendHandler.
+    setSending(false);
+
+    // If there is an outstanding IO to complete, attempt to process it.
+    if (ioReady() && io_service_ != NULL) {
+        try {
+            runReadyIO();
+        } catch (const std::exception& ex) {
+            // Swallow exceptions. If we have some sort of error we'll log
+            // it but we won't propagate the throw.
+            LOG_ERROR(dhcp_ddns_logger,
+                  DHCP_DDNS_NCR_FLUSH_IO_ERROR).arg(ex.what());
+        }
+    }
+
     try {
         // Call implementation dependent close.
         close();
@@ -199,9 +222,7 @@ NameChangeSender::stopSending() {
                   DHCP_DDNS_NCR_SEND_CLOSE_ERROR).arg(ex.what());
     }
 
-    // Set it false, no matter what.  This allows us to at least try to
-    // re-open via startSending().
-    setSending(false);
+    io_service_ = NULL;
 }
 
 void
@@ -274,7 +295,9 @@ NameChangeSender::invokeSendHandler(const NameChangeSender::Result result) {
 
     // Set up the next send
     try {
-        sendNext();
+        if (amSending()) {
+            sendNext();
+        }
     } catch (const isc::Exception& ex) {
         // It is possible though unlikely, for sendNext to fail without
         // scheduling the send. While, unlikely, it does mean the callback
@@ -366,6 +389,21 @@ int
 NameChangeSender::getSelectFd() {
     isc_throw(NotImplemented, "NameChangeSender::getSelectFd is not supported");
 }
+
+void
+NameChangeSender::runReadyIO() {
+    if (!io_service_) {
+        isc_throw(NcrSenderError, "NameChangeSender::runReadyIO"
+                  " sender io service is null");
+    }
+
+    // We shouldn't be here if IO isn't ready to execute.
+    // By running poll we're gauranteed not to hang.
+    /// @todo Trac# 3325 requests that asiolink::IOService provide a
+    /// wrapper for poll().
+    io_service_->get_io_service().poll_one();
+}
+
 
 } // namespace isc::dhcp_ddns
 } // namespace isc
