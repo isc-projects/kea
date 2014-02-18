@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -229,7 +229,7 @@ void ControlledDhcpv4Srv::establishSession() {
         // reopen sockets according to new configuration.
         openActiveSockets(getPort(), useBroadcast());
 
-    } catch (const DhcpConfigError& ex) {
+    } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL).arg(ex.what());
 
     }

@@ -161,7 +161,7 @@ public:
 /// Assuming the open is successful, startListener will call receiveNext, to
 /// initiate an asynchronous receive.  This method calls the virtual method,
 /// doReceive().  The listener derivation uses doReceive to instigate an IO
-/// layer asynchronous receieve passing in its IO layer callback to
+/// layer asynchronous receive passing in its IO layer callback to
 /// handle receive events from the IO source.
 ///
 /// As stated earlier, the derivation's NameChangeRequest completion handler
@@ -693,7 +693,7 @@ public:
         return (send_queue_max_);
     }
 
-    /// @brief Sets the maxium queue size to the given value.
+    /// @brief Sets the maximum queue size to the given value.
     ///
     /// Sets the maximum number of entries allowed in the queue to the
     /// the given value.
@@ -724,8 +724,22 @@ public:
     ///
     /// Executes at most one ready handler on the sender's IO service. If
     /// no handlers are ready it returns immediately.
+    ///
     /// @warning - Running all ready handlers, in theory, could process all
     /// messages currently queued.
+    ///
+    /// NameChangeSender daisy chains requests together in its completion
+    /// by one message completion's handler initiating the next message's send.
+    /// When using UDP, a send immediately marks its event handler as ready
+    /// to run.  If this occurs inside a call to ioservice::poll() or run(),
+    /// that event will also be run.  If that handler calls UDP send then
+    /// that send's handler will be marked ready and executed and so on.  If
+    /// there were 1000 messages in the queue then all them would be sent from
+    /// within the context of one call to runReadyIO().
+    /// By running only one handler at time, we ensure that NCR IO activity
+    /// doesn't starve other processing.  It is unclear how much of a real
+    /// threat this poses but for now it is best to err on the side of caution.
+    ///
     virtual void runReadyIO();
 
 protected:
