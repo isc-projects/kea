@@ -489,8 +489,7 @@ TEST(NameChangeUDPSenderBasicTest, autoStart) {
 
     // We should be able to loop through remaining messages and send them.
     for (int i = num_msgs; i > 0; i--) {
-        // Make sure select_fd does evaluates to ready via select and
-        // that ioReady() method agrees.
+        // ioReady() should evaluate to true.
         ASSERT_TRUE(sender.ioReady());
 
         // Execute at one ready handler.
