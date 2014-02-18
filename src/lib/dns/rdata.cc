@@ -267,7 +267,7 @@ Generic::constructFromLexer(MasterLexer& lexer) {
 
     if (data.size() != rdlen) {
         isc_throw(InvalidRdataLength,
-                  "Unknown RDATA hex data doesn't match RDLENGTH: "
+                  "Size of unknown RDATA hex data doesn't match RDLENGTH: "
                   << data.size() << " vs. " << rdlen);
     }
 
