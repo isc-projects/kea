@@ -1,3 +1,8 @@
+752.	[func]		tmark
+	If configured to do so, b10-dhcp4 will now create DHCP-DDNS update
+	requests and send them to b10-dhcp-ddns for processing.
+	(Trac# 3329, git 4546dd186782eec5cfcb4ddb61b0a3aa5c700751)
+
 751.	[func]		muks
 	The BIND 10 zone loader now supports the $GENERATE directive (a
 	BIND 9 extension).
