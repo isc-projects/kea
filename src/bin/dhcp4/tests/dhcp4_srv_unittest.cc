@@ -3294,8 +3294,8 @@ TEST_F(Dhcpv4SrvTest, clientClassification) {
 
     srv.classifyPacket(dis1);
 
-    EXPECT_TRUE(dis1->inClass("docsis3.0"));
-    EXPECT_FALSE(dis1->inClass("eRouter1.0"));
+    EXPECT_TRUE(dis1->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0"));
+    EXPECT_FALSE(dis1->inClass(srv.VENDOR_CLASS_PREFIX + "eRouter1.0"));
 
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
     // vendor-class set to eRouter1.0
@@ -3305,8 +3305,8 @@ TEST_F(Dhcpv4SrvTest, clientClassification) {
 
     srv.classifyPacket(dis2);
 
-    EXPECT_TRUE(dis2->inClass("eRouter1.0"));
-    EXPECT_FALSE(dis2->inClass("docsis3.0"));
+    EXPECT_TRUE(dis2->inClass(srv.VENDOR_CLASS_PREFIX + "eRouter1.0"));
+    EXPECT_FALSE(dis2->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0"));
 }
 
 // This test verifies that the direct message is dropped when it has been
