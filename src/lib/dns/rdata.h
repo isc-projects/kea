@@ -393,7 +393,7 @@ public:
     //@}
 
 private:
-    void constructHelper(const std::string& rdata_string);
+    GenericImpl* constructFromLexer(MasterLexer& lexer);
 
     GenericImpl* impl_;
 };
