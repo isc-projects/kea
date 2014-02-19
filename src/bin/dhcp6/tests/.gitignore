@@ -1,1 +1,4 @@
 /dhcp6_unittests
+/marker_file.h
+/test_data_files_config.h
+/test_libraries.h

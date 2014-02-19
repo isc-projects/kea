@@ -105,7 +105,8 @@ protected:
     /// various configuration values. Installing the dummy handler
     /// that guarantees to return success causes initial configuration
     /// to be stored for the session being created and that it can
-    /// be later accessed with \ref isc::ConfigData::getFullConfig.
+    /// be later accessed with
+    /// \ref isc::config::ConfigData::getFullConfig().
     ///
     /// @param new_config new configuration.
     ///

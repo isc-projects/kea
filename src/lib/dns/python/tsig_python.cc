@@ -334,14 +334,21 @@ PyTSIGContext_Check(PyObject* obj) {
     return (PyObject_TypeCheck(obj, &tsigcontext_type));
 }
 
-TSIGContext&
+TSIGContext*
 PyTSIGContext_ToTSIGContext(PyObject* tsigcontext_obj) {
     if (tsigcontext_obj == NULL) {
         isc_throw(PyCPPWrapperException,
                   "obj argument NULL in TSIGContext PyObject conversion");
     }
+
+    if (!PyTSIGContext_Check(tsigcontext_obj)) {
+        isc_throw(TSIGContextError,
+                  "obj argument is of wrong type in TSIGContext "
+                  "PyObject conversion");
+    }
+
     s_TSIGContext* tsigcontext = static_cast<s_TSIGContext*>(tsigcontext_obj);
-    return (*tsigcontext->cppobj);
+    return (tsigcontext->cppobj);
 }
 
 } // namespace python

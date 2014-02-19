@@ -19,6 +19,9 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 
+namespace isc {
+namespace dhcp {
+
 namespace {
 
 /// @brief Declare an array holding parameters used to create instance
@@ -41,8 +44,6 @@ namespace {
 #ifndef NO_RECORD_DEF
 #define NO_RECORD_DEF 0, 0
 #endif
-
-using namespace isc::dhcp;
 
 /// @brief Parameters being used to make up an option definition.
 struct OptionDefParams {
@@ -160,7 +161,7 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     { "dhcp-rebinding-time", DHO_DHCP_REBINDING_TIME,
       OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
     { "vendor-class-identifier", DHO_VENDOR_CLASS_IDENTIFIER,
-      OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+      OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "dhcp-client-identifier", DHO_DHCP_CLIENT_IDENTIFIER,
       OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "nwip-domain-name", DHO_NWIP_DOMAIN_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
@@ -230,7 +231,8 @@ RECORD_DECL(REMOTE_ID_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 // status-code
 RECORD_DECL(STATUS_CODE_RECORDS, OPT_UINT16_TYPE, OPT_STRING_TYPE);
 // vendor-class
-RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
+RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_UINT16_TYPE,
+            OPT_STRING_TYPE);
 
 /// Standard DHCPv6 option definitions.
 ///
@@ -331,6 +333,9 @@ const OptionDefParams OPTION_DEF_PARAMS6[] = {
 const int OPTION_DEF_PARAMS_SIZE6  =
     sizeof(OPTION_DEF_PARAMS6) / sizeof(OPTION_DEF_PARAMS6[0]);
 
-}; // anonymous namespace
+} // unnamed namespace
+
+} // namespace dhcp
+} // namespace isc
 
 #endif // STD_OPTION_DEFS_H

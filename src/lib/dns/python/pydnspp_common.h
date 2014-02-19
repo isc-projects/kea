@@ -34,6 +34,10 @@ extern PyObject* po_InvalidOperation;
 extern PyObject* po_InvalidParameter;
 
 // For our own isc::dns::Exception
+extern PyObject* po_DNSException;
+extern PyObject* po_DNSTextError;
+extern PyObject* po_DNSProtocolError;
+extern PyObject* po_DNSMessageFORMERR;
 extern PyObject* po_DNSMessageBADVERS;
 
 // This function reads 'bytes' from a sequence

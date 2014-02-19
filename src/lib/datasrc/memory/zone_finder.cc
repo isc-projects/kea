@@ -523,21 +523,13 @@ FindNodeResult findNode(const ZoneData& zone_data,
                 return (FindNodeResult(ZoneFinder::NXDOMAIN, nsec_rrset.first,
                                        nsec_rrset.second));
             }
-            uint8_t ls_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
 
-            // Create the wildcard name (i.e. take "*" and extend it
-            // with all node labels down to the wildcard node
-            LabelSequence wildcard_ls(LabelSequence::WILDCARD(), ls_buf);
-            const ZoneNode* extend_with = node;
-            while (extend_with != NULL) {
-                wildcard_ls.extend(extend_with->getLabels(), ls_buf);
-                extend_with = extend_with->getUpperNode();
-            }
-
-            // Clear the node_path so that we don't keep incorrect (NSEC)
-            // context
-            node_path.clear();
-            ZoneTree::Result result = tree.find(wildcard_ls, &node, node_path,
+            // Pass the wildcard label sequence ("*") (which is
+            // non-absolute) and the previous node_path result to this
+            // special shortcut form of find() that searches below from
+            // the node_path.
+            ZoneTree::Result result = tree.find(LabelSequence::WILDCARD(),
+                                                &node, node_path,
                                                 cutCallback, &state);
             // Otherwise, why would the domain_flag::WILD be there if
             // there was no wildcard under it?
@@ -911,7 +903,7 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
     const LabelSequence origin_ls(zone_data_.getOriginNode()->
                                   getAbsoluteLabels(labels_buf));
-    const LabelSequence name_ls(name);
+    LabelSequence name_ls(name);
 
     if (!zone_data_.isNSEC3Signed()) {
         isc_throw(DataSourceError,
@@ -967,10 +959,10 @@ InMemoryZoneFinder::findNSEC3(const isc::dns::Name& name, bool recursive) {
     // Examine all names from the query name to the origin name, stripping
     // the deepest label one by one, until we find a name that has a matching
     // NSEC3 hash.
-    for (unsigned int labels = qlabels; labels >= olabels; --labels) {
-        const Name& hname = (labels == qlabels ?
-                             name : name.split(qlabels - labels, labels));
-        const std::string hlabel = hash->calculate(hname);
+    for (unsigned int labels = qlabels; labels >= olabels;
+         --labels, name_ls.stripLeft(1))
+    {
+        const std::string hlabel = hash->calculate(name_ls);
 
         LOG_DEBUG(logger, DBG_TRACE_BASIC, DATASRC_MEMORY_FINDNSEC3_TRYHASH).
             arg(name).arg(labels).arg(hlabel);

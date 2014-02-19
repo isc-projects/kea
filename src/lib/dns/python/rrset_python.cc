@@ -53,6 +53,7 @@ int RRset_init(s_RRset* self, PyObject* args);
 void RRset_destroy(s_RRset* self);
 
 PyObject* RRset_getRdataCount(PyObject* self, PyObject* args);
+PyObject* RRset_getLength(PyObject* self, PyObject* args);
 PyObject* RRset_getName(PyObject* self, PyObject* args);
 PyObject* RRset_getClass(PyObject* self, PyObject* args);
 PyObject* RRset_getType(PyObject* self, PyObject* args);
@@ -70,6 +71,8 @@ PyObject* RRset_removeRRsig(PyObject* self, PyObject* args);
 PyMethodDef RRset_methods[] = {
     { "get_rdata_count", RRset_getRdataCount, METH_NOARGS,
       "Returns the number of rdata fields." },
+    { "get_length", RRset_getLength, METH_NOARGS,
+      "Returns the wire format length of the RRset." },
     { "get_name", RRset_getName, METH_NOARGS,
       "Returns the name of the RRset, as a Name object." },
     { "get_class", RRset_getClass, METH_NOARGS,
@@ -133,6 +136,18 @@ PyObject*
 RRset_getRdataCount(PyObject* self, PyObject*) {
     return (Py_BuildValue("I", static_cast<const s_RRset*>(self)->cppobj->
                           getRdataCount()));
+}
+
+PyObject*
+RRset_getLength(PyObject* self, PyObject*) {
+    try {
+        return (Py_BuildValue("H", static_cast<const s_RRset*>(self)->cppobj->
+                              getLength()));
+    } catch (const EmptyRRset& ers) {
+        PyErr_Clear();
+        PyErr_SetString(po_EmptyRRset, ers.what());
+        return (NULL);
+    }
 }
 
 PyObject*
@@ -236,9 +251,9 @@ PyObject*
 RRset_toWire(PyObject* self_p, PyObject* args) {
     PyObject* bytes;
     PyObject* mr;
-    const s_RRset* self(static_cast<const s_RRset*>(self_p));
 
     try {
+        const s_RRset* self = static_cast<const s_RRset*>(self_p);
         if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
             PyObject* bytes_o = bytes;
 

@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include <exceptions/exceptions.h>
+#include <dns/exceptions.h>
 
 namespace isc {
 namespace util {
@@ -30,15 +30,6 @@ class OutputBuffer;
 
 namespace dns {
 class AbstractMessageRenderer;
-
-///
-/// \brief Base class for name parser exceptions.
-///
-class NameParserException : public Exception {
-public:
-    NameParserException(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
-};
 
 ///
 /// \brief A standard DNS module exception that is thrown if the name parser
