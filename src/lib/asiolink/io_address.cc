@@ -100,14 +100,25 @@ IOAddress::getFamily() const {
     }
 }
 
-const asio::ip::address&
-IOAddress::getAddress() const {
-    return asio_address_;
+bool
+IOAddress::isV6LinkLocal() const {
+    if (!asio_address_.is_v6()) {
+        return (false);
+    }
+    return (asio_address_.to_v6().is_link_local());
+}
+
+bool
+IOAddress::isV6Multicast() const {
+    if (!asio_address_.is_v6()) {
+        return (false);
+    }
+    return (asio_address_.to_v6().is_multicast());
 }
 
 IOAddress::operator uint32_t() const {
-    if (getAddress().is_v4()) {
-        return (getAddress().to_v4().to_ulong());
+    if (asio_address_.is_v4()) {
+        return (asio_address_.to_v4().to_ulong());
     } else {
         isc_throw(BadValue, "Can't convert " << toText()
                   << " address to IPv4.");

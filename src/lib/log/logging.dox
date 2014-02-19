@@ -1,0 +1,762 @@
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
+//
+// Permission to use, copy, modify, and/or distribute this software for any
+// purpose with or without fee is hereby granted, provided that the above
+// copyright notice and this permission notice appear in all copies.
+//
+// THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+// AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+// LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+// OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+// PERFORMANCE OF THIS SOFTWARE.
+
+// Note: the prefix "log" to all labels is an abbreviation for "Logging"
+// and is used to prevent a clash with symbols in any other Doxygen file.
+
+/**
+@page logBind10Logging BIND 10 Logging
+
+@section logBasicIdeas Basic Ideas
+
+The BIND 10 logging system is based on the log4J logging system
+common in Java development, and includes the following ideas:
+
+- A set of severity levels.
+- A hierarchy of logging sources.
+- Separation of message use from message text.
+
+@subsection logSeverity Message Severity
+Each message logged by BIND 10 has a severity associated with it, ranging
+from FATAL - the most severe - to DEBUG - messages output as the code
+executes to facilitate debugging.  In order of decreasing severity,
+the levels are:
+
+<dl>
+<dt>FATAL</dt>
+<dd>The program has encountered an error that is so severe that it
+cannot continue (or there is no point in continuing).  For example, an
+unhandled exception generated deep within the code has been caught by the
+top-level program. When a fatal error has been logged, the program will
+exit immediately (or shortly afterwards) after dumping some diagnostic
+information.</dd>
+
+<dt>ERROR</dt>
+<dd>Something has happened such that the program can continue but the
+results for the current (or future) operations cannot be guaranteed to
+be correct, or the results will be correct but the service is impaired.
+For example, the program started but attempts to open one or more network
+interfaces failed.</dd>
+
+<dt>WARN</dt>
+<dd>(Warning) An unusual event  happened.  Although the program will
+continue working normally, the event was sufficiently out of the ordinary
+to warrant drawing attention to it.  For example, the authoritative
+server loaded a zone that contained no resource records.</dd>
+
+<dt>INFO</dt>
+<dd>(Information) A normal but significant event has occurred that should
+be recorded, e.g. the program has started or is just about to terminate,
+a new zone has been created, etc.</dd>
+
+<dt>DEBUG</dt>
+<dd>Debug messages are output at this severity.  Each message also
+has a debug level associated with it, ranging from 0 (the default)
+for high-level messages and level 99 (the maximum) for the the lowest
+level.</dd>
+</dl>
+
+When logging is enabled for a component, it is enabled for a particular
+severity level and all higher severities.  So if logging is enabled
+for INFO messages, WARN, ERROR and FATAL messages will also be logged,
+but not DEBUG ones.  If enabled for ERROR, only ERROR and FATAL messages
+will be logged.
+
+As noted above, DEBUG messages are also associated with a debug level.
+This allows the developer to control the amount of debugging information
+produced; the higher the debug level, the more information is output.
+For example, if debugging the NSAS (nameserver address store), debug
+levels might be assigned as follows: a level 0 debug message records
+the creation of a new zone, a level 10 logs every timeout when trying
+to get a nameserver address, a level of 50 records every query for an
+address and a level of 70 records every update of the round-trip time.
+
+Like severities, levels are cumulative; so if level 25 is set as the
+debug level, all debug messages associated levels 0 to 25 (inclusive)
+will be output.  In fact, it is probably easier to visualise the debug
+levels as part of the severity system:
+@code
+FATAL            Most severe
+ERROR
+WARN
+INFO
+DEBUG level 0
+DEBUG level 1
+   :
+DEBUG level 99   Least severe
+@endcode
+When a particular debug level is set, it - and all debug levels and
+severities above it - will be logged.
+
+To try to ensure that the information from different modules is roughly
+comparable for the same debug level, a set of standard debug levels has
+been defined for common types of debug output.  (These can be found in
+@ref log_dbglevels.h) However, modules are free to set their own debug
+levels or define additional ones.
+
+@subsection logHierarchical Hierarchical Logging System
+
+When a program writes a message to the logging system, it does so using an
+instance of the @ref isc::log::Logger class.  As well as performing the
+write of the message, the logger identifies the source of the message:
+different sources can write to different destinations and can log
+different severities of messages.  For example, the logger associated
+with the resolver's cache code could write debugging and other messages
+to a file while all other components only write messages relating to
+errors to the syslog file.
+
+The loggers are hierarchical in that each logger is the child of another
+logger.  The top of the hierarchy is the root logger; this does not
+have a parent.  The reason for this hierarchy is that unless a logger
+explicitly assigns a value to an attribute (such as severity of messages
+it should log), it picks it up the value from the parent.  In BIND 10,
+each component (b10-auth, b10-resolver etc.)  has a root logger (named
+after the program) and every other logger in the component is a child
+of that.  So in the example above, the error/syslog attributes could be
+associated with the b10-resolver logger while the logger associated with
+the cache sets its own values for the debug/file attributes.
+
+More information about the logging hierarchy can be found in the section
+on Logging configuration in the <a
+href="http://bind10.isc.org/docs/bind10-guide.html#logging">BIND 10
+Guide</a>.
+
+@subsection logSeparationUseText Separation of Messages Use from Message Text
+
+Separating the use of the message from the text associated with it -
+in essence, defining message text in an external file - allows for the
+replacement the supplied text of the messages with a local language version.
+It also means that other attributes can be associated with the message,
+for example, an explanation of the meaning of the message and other
+information such as remedial action in the case of errors.
+
+Each message has an identifier such as "LOG_WRITE_ERROR".
+Within the program, this is the symbol passed to the logging system
+which uses the symbol as an index into a dictionary to retrieve the message
+associated with it (e.g. "unable to open %1 for input"), after which it
+substitutes any message parameters (in this example, the name of the file
+where the write operation failed) and logs the result to the destination.
+
+In BIND 10, a the default text for each message is linked into the
+program.  Each program is able to read a locally-defined message file
+when it starts, updating the stored definitions with site-specific text.
+When the message is logged, the updated text is output. However, the
+message identifier is always included in the output so that the origin
+of the message can be identified even if the text has been changed.
+
+@note Local message files have not yet been implemented in BIND 10.
+
+
+
+@section logDeveloperUse Using Logging in a BIND 10 Component
+
+The steps in using the logging system in a BIND 10 component (such as
+an executable or library) are:
+
+<ol>
+<li>Create a message file.  This defines messages by an identification
+string and and text that explains the message in more detail.  Ideally the
+file should have a file type of ".mes".</li>
+
+<li>Run it through the message compiler to produce the files for your
+module.  This step should be included in the build process.  The message
+compiler is a BIND10 program and is one of the first programs built and
+linked in the build process. As a result, it should be available for
+compiling the message files of all BIND 10 components and libraries.
+
+For C++ development, the message compiler produces two files in the
+default directory, having the same name as the input file but with file
+types of ".h" and ".cc". For Python, the message compiler will produce
+a Python module containing the symbols.</li>
+
+<li>Include the resultant files in your source code to define message symbols,
+and (for C++) compile the code and link it into your program.</li>
+
+<li>Declare loggers in your code and use them to log messages.</li>
+
+<li>Call the logger initialization function in the program's main module.</li>
+
+</ol>
+
+The following sections describe these steps in more detail.
+
+
+@subsection logMessageFiles Create a Message File
+
+A message file contains message definitions.  Typically there
+will be one message file for each component that uses BIND 10 logging.
+An example file could be:
+
+@code
+# Example message file
+
+$NAMESPACE isc::log
+
+% LOG_UNRECOGNISED_DIRECTIVE line %1: unrecognised directive '%2'
+A line starting with a dollar symbol was found, but the first word on the line
+(shown in the message) was not a recognised message compiler directive.
+
+% LOG_WRITE_ERROR error writing to %1: %2
+The specified error was encountered by the message compiler when writing to
+the named output file.
+@endcode
+
+Points to note are:
+
+<ul>
+<li>Leading and trailing spaces are trimmed from each line before it
+is processed.  Although the above example has every line starting at
+column 1, the lines could be indented if desired.</li>
+
+<li>Lines starting with "#" are comments are are ignored.  Comments must
+be on a line by themselves; inline comments will be interpreted as part
+of the text of that line.</li>
+
+<li>Lines starting with "$" are directives.  At present, just one
+directive is recognised:
+    <dl>
+        <dt>$NAMESPACE &lt;namespace-name&gt;</dt>
+        <dd>The sole argument is the name of the namespace in which the
+        symbols are created.  In the absence of a $NAMESPACE directive,
+        symbols will be put in the anonymous namespace.</dd>
+    </dl>
+</li>
+
+<li>Lines starting with "%" are message definitions and comprise the message
+identification and the message text.  For example:
+@code
+% LOG_WRITE_ERROR error writing to %1: %2
+@endcode
+
+There may be zero or more spaces between the leading "%" and the
+message identification (which, in the example above, is the string
+"LOG_WRITE_ERROR").</li>
+
+<li>The message identification can be any string of letters, digits and
+underscores, but must not start with a digit.</li>
+
+<li>The rest of the line - from the first non-space character to the
+last non- space character - is the text of the message. There are no
+restrictions on what characters may be in this text, other than they be
+printable (so both single-quote (') and double-quote (") characters are
+allowed).  The message text may include replacement tokens (the strings
+"%1", "%2" etc.).  When a message is logged, these are replaced with the
+arguments passed to the logging call: %1 refers to the first argument,
+%2 to the second etc.  Within the message text, the placeholders can
+appear in any order and placeholders can be repeated. Otherwise, the
+message is printed unmodified.</li>
+
+<li>Remaining lines indicate an explanation for the preceding message.
+The explanation can comprise multiple paragraphs, the paragraphs being
+separated by blank lines.  These lines are intended to be processed by a
+separate program to generate an error messages manual; they are ignored
+by the message compiler.</li>
+
+<li>Except when used to separate paragraphs in the message explanation,
+blank lines are ignored.</li>
+</ul>
+
+Although there are few restriction on what can be in the message
+identifcation and text, there are a number of conventions used by BIND
+10, both in the contents of the message and in the usage.  All code
+should adhere to these:
+
+<ul>
+<li>Message identifications should include at least one underscore.
+The component before the first underscore is a string indicating the
+origin of the message, and the remainder describes the condition.
+So in the example above, the LOG indicates that the error originated
+from the logging library and the "WRITE_ERROR" indicates that there was
+a problem in a write operation.</li>
+
+<li>The part of the message identification describing the error (e.g.
+"WRITE_ERROR" in the example above) should comprise no more than
+two or three words separated by underscores.  An excessive number
+of words or overly long message identification should be avoided;
+such information should be put in the text of the message.  For example,
+"RESOLVER_ERROR_FETCHING_NAME_FROM_UPSTREAM_SERVER" is excessively long,
+"RESOLVER_FETCH_ERROR" being better.</li>
+
+<li>Similarly, the text of the message should be reasonably concise.  It should
+include enough information (possibly supplied at run-time in the form of
+parameters) to allow further investigations to be undertaken if required.
+
+Taking the above example, a suitable error message to indicate that the
+resolver has failed to read a name from an upstream authoritative server
+could be:
+
+@code
+% RESOLVER_FETCH_ERROR fetch from %1 failed, error code %2 (%3)
+@endcode
+
+... where %1 indicates the name or IP address of the server to which the
+fetch was sent, %2 the errno value returned and %3 the message associated
+with that error number (retrieved via a call to "strerror()").
+
+</li>
+
+<li>The message should not have a comma after the message identification.
+The message text should neither start with a capital letter (unless
+the first word is a proper noun or is normally written in capitals)
+nor end with a period. The message reporting system takes care of such
+punctuation.</li>
+
+<li>The parameters substituted into the message text should not include
+line breaks.  Messages are normally output to the syslog file which
+has the inbuilt assumption of one line per message. Splitting a message
+across multiple lines makes it awkward to search the file for messages
+and associated information.</li>
+
+<li>The message identifier should be unique across the entire BIND 10
+system.  (An error will be reported at system start-up if an identifier
+is repeated.)</li>
+
+<li>A particular message identifier should only be used at one place in
+the BIND 10 code. In this way, if the message indicates a problem, the
+code in question can be quickly identified.</li>
+
+<li>The explanation of the message - the free-form text following the
+message identification - appears in the BIND 10 message manual.  It
+should:
+
+<ul>
+<li>Describe the serverity of the message (debug, informational etc.)</li>
+
+<li>Expand on the text of the message.  In some cases, such as
+debug messages, the message text may provide more or less sufficient
+description.  For warnings and errors, the explanation should provide
+sufficient background to the problem to allow a non-developer to
+understand the issue and to begin fault-finding.  If possible, the
+explanation should also include suggested remedial action.</li>
+</ul>
+</ul>
+
+@subsection logSourceFiles Produce Source Files
+The message file created in the previous step is then run through the
+message compiler to produce source files that are included in the BIND
+10 programs.
+
+@subsubsection logMessageCompiler Message Compiler
+The message compiler is a program built in the src/log/compiler directory.
+It is invoked by the command:
+@code
+message [-h] [-v] [-p] [-d dir] <message-file>
+@endcode
+"-v" prints the version number and exits; "-h" prints brief help text.
+The compiler produces source files for C++ unless the "-p" switch is
+specified, in which case it produces Python code.  Finally, the "-d"
+switch directs the compiler to produce the output files in the specified
+directory (the default being the current working directory).
+
+<b>C++ Files</b><br/>
+Without the "-p" option, the message compiler processes the message file
+to produce two files:
+
+<ol>
+<li>A C++ header file (called <message-file-name>.h) holding lines of
+the form:
+@code
+namespace <namespace-name> {
+   extern const isc::log::MessageID LOG_BAD_DESTINATION;
+   extern const isc::log::MessageID LOG_BAD_SEVERITY;
+      :
+}
+@endcode
+The symbols define keys in the global message dictionary, with
+the namespace enclosing the symbols set by the $NAMESPACE directive.
+(This is the reason for the restriction on message identifiers - they
+have to be valid C++ symbol names.)</li>
+
+<li>A C++ source file (called <message-file-name>.cc) that holds the definitions
+of the global symbols and code to insert the symbols and messages into
+an internal dictionary.
+
+Symbols are defined to be equal to strings equal to the identifier, e.g.
+@code
+extern const isc::log::MessageID LOG_BAD_DESTINATION = "LOG_BAD_DESTINATION";
+extern const isc::log::MessageID LOG_BAD_SEVERITY = "LOG_BAD_SEVERITY";
+   :
+@endcode
+(The current implementation allows symbols to be compared.  However,
+use of strings should not be assumed - a future implementation may change
+this.)  In addition, the file declares an array of identifiers/messages
+and an object to add them to the global dictionary, e.g.:
+@code
+namespace {
+    const char* values[] = {
+       "LOG_BAD_DESTINATION", "unrecognized log destination: %1",
+       "LOG_BAD_SEVERITY", "unrecognized log severity: %1",
+        :
+        NULL
+    };
+    const isc::log::MessageInitializer initializer(values);
+}
+@endcode
+
+The constructor of the @ref isc::log::MessageInitializer object retrieves
+the singleton global @ref isc::log::MessageDictionary object (created
+using standard methods to avoid the "static initialization fiasco") and
+adds each identifier and associated text to it. These constructors are run
+when the program starts; a check is made as each identifier is added and,
+if the identifier already exists in the dictionary, a warning message
+is printed to the main logging output when logging is finally enabled.
+The appearance of such a message indicates a programming error.
+</li>
+</ol>
+
+<b>Python Files</b><br/>
+If the "-p" option is given, the compiler produces a Python module defining
+the messages.  The content of this is of the form:
+@code
+import isc.log
+    :
+LOG_WRITE_ERROR = isc.log.create_message("LOG_WRITE_ERROR",
+        "error writing to %1 : %2")
+@endcode
+(The definition is output on one line - it is split across two lines in this
+document for readability.)
+
+The module can be imported into other Python code, and messages logged
+in a similar way to C++ using the Python logging library.
+
+@subsubsection logMakefile Include Message Compilation in Makefile
+The source file for the messages is the ".mes" file, but the files used
+by the code (which, in the case of C++, must be compiled and linked)
+are the output of the message compiler.  (The compiler is produced very
+early on in the BIND 10 build sequence, so is available for use in the
+building of subsequent components.)  To allow this, certain dependencies
+must be included in the Makefile.am for each component that uses logging.
+
+<b>Including Message files in C++ Component Builds</b><br/>
+The following segment from the "hooks" Makefile.am illustrates
+the entries needed.
+@code
+# Define rule to build logging source files from message file
+hooks_messages.h hooks_messages.cc: s-messages
+
+s-messages: hooks_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message $(top_srcdir)/src/lib/hooks/hooks_messages.mes
+	touch $@
+
+# Tell automake that the message files are built as part of the build process
+# (so that they are built before the main library is built).
+BUILT_SOURCES = hooks_messages.h hooks_messages.cc
+
+# Ensure that the message file is included in the distribution
+EXTRA_DIST = hooks_messages.mes
+
+# Get rid of generated message files on a clean
+CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc s-messages
+@endcode
+The first two rules relate the output .h and .cc files produced by the
+message compiler to the input .mes file.  The intermediate "s-messages"
+file is used to overcome synchronization issues with parallel builds
+(where "make" uses multiple processes running in parallel).  Note that the
+reference to both the compiler and the input message file are via absolute
+paths defined in terms of Automake macros.  In particular it is important
+that the message compiler - which is created during the build process - is
+referred to via the "top_builddir" macro, whereas the input message file -
+which is in the repository - is accessed through the "top_srcdir" macro.
+
+The BUILT_SOURCES line notifies the Automake that the .h and .cc files
+need to be created before they can be used in the compilation, so
+instructs it to organse things so that the message compiler is run first.
+
+As the .mes file is not directly included in any compilation, it will
+not be automatically copied into a distribution created through this
+Makefile.am.  The EXTRA_DIST line informs Automake that this file does
+need to be included.
+
+Finally, the intermediate files - the .cc and .h file, as well as the
+intermediate s-messages file - need to be removed when "make clean" is run.
+These files are therefore included in the definition of the CLEANFILES macro.
+
+Not shown are the Makefile.am lines where the .h and .cc file are used.  These
+are the same as other lines specifying .h and .cc source files.
+
+<b>Including Message files in Python Component Builds</b><br/>
+The following (modified) segments from the "xfrin" Makefile.am illustrates
+the entries needed.
+
+@code
+CLEANFILES  = $(PYTHON_LOGMSGPKG_DIR)/work/xfrin_messages.py
+CLEANFILES += $(PYTHON_LOGMSGPKG_DIR)/work/xfrin_messages.pyc
+  :
+EXTRA_DIST += xfrin_messages.mes
+  :
+# Define rule to build logging source files from message file
+$(PYTHON_LOGMSGPKG_DIR)/work/xfrin_messages.py : xfrin_messages.mes
+	$(top_builddir)/src/lib/log/compiler/message \
+	-d $(PYTHON_LOGMSGPKG_DIR)/work -p $(srcdir)/xfrin_messages.mes
+@endcode
+The CLEANFILES lines remove the created Python (and compiled Python)
+code when "make clean" is run.
+
+The EXTRA_DIST line ensures that the .mes file is copied to the
+distribution tarball.
+
+The final dependency shows the use of the message compiler to
+create the Python message module in a working directory.
+
+
+@subsection logUsage Using Logging Files in Program Development
+
+@subsubsection logCppUsage Use in a C++ Program or Module
+To use logging in a C++ program or module:
+
+<ol>
+<li>Build the message header file and source file as described above.</li>
+
+<li>In each C++ file in which logging is to be used, declare a logger
+through which the message will be logged.
+
+@code
+isc::log::Logger logger("name");
+@endcode
+This declaration can be per-function, or it can be declared statically
+in file scope.  The string passed to the constructor is the name of
+the logger (it can be any string) and is used when configuring it.
+(Remember though that the name of root logger for the program will be
+prepended to the name chosen.  So if, for example, the name "cache"
+is chosen and the model is included in the "b10-resolver" program, the
+full name of the logger will be "b10-resolver.cache".)  Loggers with
+the same name share the same configuration.  For this reason if, as is
+usual, messages logged in different files in the same component (e.g.
+hooks module, nameserver address store, etc.) originate from loggers
+with the same name, the logger declaration can be placed into a header
+file.</li>
+
+<li>Issue logging calls using supplied macros in "log/macros.h", e.g.
+@code
+LOG_ERROR(logger, LOG_WRITE_ERROR).arg("output.txt");
+LOG_DEBUG(nsas_logger, NSAS_DBG_TRACE, NSAS_LOOKUP_CANCEL).arg(zone);
+@endcode
+All macros (with the exception of LOG_DEBUG) take two arguments:
+the C++ logger object that will be used to log the message, and the
+identification of the message to be logged.  LOG_DEBUG takes three
+arguments, the additional one being the debug level associated with
+the message.  The .arg() call appended to the end of the LOG_XXX()
+macro handles the arguments to the message.  A chain of these is used
+in cases where a message takes multiple arguments, e.g.
+@code
+LOG_DEBUG(nsas_logger, NSAS_DBG_RTT, NSAS_UPDATE_RTT)
+          .arg(addresses_[family][index].getAddress().toText())
+          .arg(old_rtt).arg(new_rtt);
+@endcode
+Using the macros is more efficient than direct calls to the methods on
+the logger class: they avoid the overhead of evaluating the parameters
+to arg() if the logging settings are such that the message is not going
+to be output (e.g. it is a DEBUG message and the logging is set to output
+messages of INFO severity or above).</li>
+
+<li>The main program unit must include a call to isc::log::initLogger()
+(described in more detail below) to set the initial logging severity, debug log
+level, and external message file.
+</ol>
+
+@subsubsection logPythonUsage Use in a Python Module
+To use logging in a Python module:
+<ol>
+<li>Build message module as described above.</li>
+
+<li>Declare a logger through which the message will be logged.
+@code
+isc.log.Logger logger("name")
+@endcode
+The string passed to the constructor is the name of the logger (it can
+be any string) and is used when configuring it.  Loggers with the same
+name share the same configuration.</li>
+
+<li>Issue calls to the logging methods:
+@code
+logger.error(LOG_WRITE_ERROR, "output.txt")
+@endcode
+The message parameters are included as trailing arguments in the
+logger call.</li>
+
+<li>The main program unit must include a call to isc.log.init() (described
+in more detail below) to set the to set the logging severity, debug log
+level, and external message file.  The settings remain in effect until
+the logging configuration is read, so are the ones used during program
+initialization.</li>
+</ol>
+
+
+@subsection logInitialization Logging Initialization
+In all cases, if an attempt is made to use a logging method before
+the logging has been initialized, the program will terminate with a
+LoggingNotInitialized exception.
+
+@subsection logInitializationCpp C++ Initialization
+Logging Initialization is carried out by calling @ref
+isc::log::initLogger().  There are two variants to the call, one for
+use by production programs and one for use by unit tests.
+
+@subsubsection logInitializationCppVariant1 Variant #1, Used by Production Programs
+The call that should be used by all production programs is:
+@code
+void isc::log::initLogger(const std::string& root,
+                          isc::log::Severity severity = isc::log::INFO,
+                          int dbglevel = 0, const char* file = NULL,
+                          bool buffer = false);
+@endcode
+Arguments are:
+<dl>
+<dt><code>root</code></dt>
+<dd>Name of the root logger.  This should be the name of the program
+(e.g. "b10-auth") and is used when configuring logging.</dd>
+
+<dt><code>severity</code></dt>
+<dd>Default severity that the program will start logging with.  Although
+this may be overridden when the program obtains its configuration from
+the configuration database, this is the severity that it used until then.
+The logging severity is one of the enum defined in @ref logger.h, i.e.
+
+@code
+isc::log::DEBUG
+isc::log::INFO
+isc::log::WARN
+isc::log::ERROR
+isc::log::FATAL
+isc::log::NONE
+@endcode
+
+(The level NONE may be used to disable logging.)
+</dd>
+
+<dt><code>dbglevel</code></dt>
+<dd>The debug log level is only interpreted when the severity is
+isc::log::DEBUG and is an integer ranging from 0 to 99.  0 should be
+used for the highest-level debug messages and 99 for the lowest-level
+(and typically more verbose) messages.</dd>
+
+<dt><code>file</code></dt>
+<dd>The name of a local message file.  This will be read and its
+definitions used to replace the compiled-in text of the messages.
+The default value of NULL indicates that no local message file is
+supplied.</dd>
+
+<dt><code>buffer</code></dt>
+<dd>If set to true, initial log messages will be internally buffered,
+until the first time a logger specification is processed. This
+way the program can use logging before even processing its logging
+configuration. As soon as any specification is processed (even an
+empty one), the buffered log messages will be flushed according to
+the specification. Note that if this option is used, the program
+SHOULD call one of the @ref isc::log::LoggerManager::process() calls.
+(If you are using the built-in logging configuration handling in @ref
+isc::config::ModuleCCSession, this is automatically handled.) If the
+program exits before this is done, all log messages are dumped in a raw
+format to stdout (so that no messages get lost).</dd>
+</dl>
+
+@subsubsection logInitializationCppVariant2 Variant #2, Used by Unit Tests
+@code
+void isc::log::initLogger()
+@endcode
+This is the call that should be used by unit tests.  In this variant,
+all the options are supplied by environment variables: it should not
+be used for production programs to avoid the chance that the program
+operation is affected by inadvertently-defined environment variables. The
+environment variables are:
+
+<dl>
+<dt>B10_LOGGER_ROOT</dt>
+<dd>Sets the "root" for the unit test.  If not defined, the name "bind10"
+is used.</dd>
+
+<dt>B10_LOGGER_SEVERITY</dt>
+<dd>The severity to set for the root logger in the unit test.
+Valid values are "DEBUG", "INFO", "WARN", "ERROR", "FATAL" and "NONE".
+If not defined, "INFO" is used.</dd>
+
+<dt>B10_LOGGER_DBGLEVEL</dt>
+<dd>If B10_LOGGER_SEVERITY is set to "DEBUG", the debug level.  This can
+be a number between 0 and 99, and defaults to 0.</dd>
+
+<dt>B10_LOGGER_LOCALMSG</dt>
+<dd>If defined, points to a local message file.  The default is not to
+use a local message file.</dd>
+
+<dt>B10_LOGGER_DESTINATION</dt>
+<dd>The location to which log message are written.  This can be one of:
+<ul>
+<li><b>stdout</b> Message are written to stdout.</li>
+<li><b>stderr</b> Messages are written to stderr.</li>
+<li><b>syslog[:facility]</b> Messages are written to syslog.  If the
+optional "facility" is used, the messages are written using that facility.
+(This defaults to "local0" if not specified.)</li>
+<li><b>Anything else</b> Interpreted as the name of a file to which
+output is appended.  If the file does not exist, a new one is opened.</li>
+</ul>
+In the case of "stdout", "stderr" and "syslog", they must be written exactly
+as is - no leading or trailing spaces, and in lower-case.</dd>
+</dl>
+
+@subsection logInitializationPython Python Initialization
+To initialize the logger in a Python program, the "init" method must be
+called:
+@code
+isc.log.init(name, severity, debuglevel, file, buffer)
+@endcode
+
+<dl>
+<dt><code>name</code></dt>
+<dd>String giving the name of the root logger.  This is the only mandatory
+argument, the rest are optional.</dd>
+
+<dt><code>severity</code></dt>
+<dd>The severity, and is one of the strings "DEBUG", INFO" etc.
+The default is "INFO".</dd>
+
+<dt><code>debuglevel</code></dt>
+<dd>Debug level, an integer between 0 and 99. A default value of 0 will
+be used if this is not specified.</dd>
+
+<dt><code>file</code></dt>
+<dd>Name of the external message file (if present).  By default, no
+external message file is used.</dd>
+
+<dt><code>buffer</code></dt>
+<dd>If set to true, initial log messages will be internally buffered,
+until the first time a logger specification is processed. This
+way the program can use logging before even processing its logging
+configuration. By default, no buffer is used.</dd>
+</dl>
+
+
+@section logNotes Notes on the Use of Logging
+One thing that should always be kept in mind is whether the logging
+could be used as a means for a DOS attack.  For example, if a warning
+message is logged every time an invalid packet is received, an attacker
+could simply send large numbers of invalid packets.  Of course, warnings
+could be disabled (or just warnings for that that particular logger),
+but nevertheless the message is an attack vector.  As a general rule,
+if the message can be triggered by a user action, it can be used as an
+attack vector.
+
+There are two approaches to get round this:
+<ol>
+<li>Log messages generated by such user actions as DEBUG messages. DEBUG
+is not enabled by default, so these events will not be recorded unless
+DEBUG is specifically enabled.  Choosing a suitable debug level for
+such messages will select only those messages and not the more general
+debug messages.</li>
+
+<li>Record system-related and packet-related messages via different
+loggers.  As the loggers are independent and the severity levels
+independent, fine-tuning of what and what is not recorded can be achieved.</li>
+
+</ol>
+*/

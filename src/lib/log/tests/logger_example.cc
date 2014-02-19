@@ -215,7 +215,7 @@ int main(int argc, char** argv) {
                 return (1);
             }
             try {
-                cur_opt.maxsize = boost::lexical_cast<unsigned int>(optarg);
+                cur_opt.maxver = boost::lexical_cast<unsigned int>(optarg);
             } catch (boost::bad_lexical_cast&) {
                 std::cerr << "Maximum version (-m) argument must be a positive "
                              "integer\n";

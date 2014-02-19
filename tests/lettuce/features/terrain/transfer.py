@@ -61,11 +61,11 @@ class TransferResult(object):
 
 def parse_addr_port(address, port):
     if address is None:
-        address = "::1"         # default address
+        address = "::1"   # default address
     # convert [IPv6_addr] to IPv6_addr:
     address = re.sub(r"\[(.+)\]", r"\1", address)
     if port is None:
-        port = 47806            # default port
+        port = 56176            # default port
     return (address, port)
 
 @step('An AXFR transfer of ([\w.]+)(?: from ([\d.]+|\[[0-9a-fA-F:]+\])(?::([0-9]+))?)?')
@@ -78,19 +78,19 @@ def perform_axfr(step, zone_name, address, port):
     An AXFR transfer of <zone_name> [from <address>:<port>]
 
     Address defaults to ::1
-    Port defaults to 47806
+    Port defaults to 56176
     """
     (address, port) = parse_addr_port(address, port)
     args = [ 'dig', 'AXFR', '@' + str(address), '-p', str(port), zone_name ]
     world.transfer_result = TransferResult(args)
 
-@step('A customized AXFR transfer of ([\w.]+)(?: from ([\d.]+|\[[0-9a-fA-F:]+\])(?::([0-9]+))?)?(?: with pose of (\d+) seconds?)?')
+@step('A customized AXFR transfer of ([\w.]+)(?: from ([\d.]+|\[[0-9a-fA-F:]+\])(?::([0-9]+))?)?(?: with pause of (\d+) seconds?)?')
 def perform_custom_axfr(step, zone_name, address, port, delay):
     """Checks AXFR transfer, and store the result in the form of internal
     CustomTransferResult class, which is compatible with TransferResult.
 
     Step definition:
-    A customized AXFR transfer of <zone_name> [from <address>:<port>] [with pose of <delay> second]
+    A customized AXFR transfer of <zone_name> [from <address>:<port>] [with pause of <delay> second]
 
     If optional delay is specified (not None), it waits for the specified
     seconds after sending the AXFR query before starting receiving
@@ -144,13 +144,13 @@ def perform_ixfr(step, zone_name, serial, address, port, protocol):
     An IXFR transfer of <zone_name> <serial> [from <address>:port] [over <tcp|udp>]
 
     Address defaults to 127.0.0.1
-    Port defaults to 47806
+    Port defaults to 56176
     If either tcp or udp is specified, only this protocol will be used.
     """
     if address is None:
         address = "127.0.0.1"
     if port is None:
-        port = 47806
+        port = 56176
     args = [ 'dig', 'IXFR=' + str(serial), '@' + str(address), '-p', str(port), zone_name ]
     if protocol is not None:
         assert protocol == 'tcp' or protocol == 'udp', "Unknown protocol: " + protocol

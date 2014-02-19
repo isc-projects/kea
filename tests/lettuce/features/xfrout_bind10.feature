@@ -35,5 +35,5 @@ Feature: Xfrout
     And wait for bind10 stderr message XFROUT_STARTED
     And wait for bind10 stderr message ZONEMGR_STARTED
 
-    When I do a customized AXFR transfer of example.org from [::1]:47806 with pose of 5 seconds
+    When I do a customized AXFR transfer of example.org from [::1]:56176 with pause of 5 seconds
     Then transfer result should have 50001 rrs

@@ -24,12 +24,14 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 //
 // This test currently simply copies the NS RDATA tests.
@@ -118,20 +120,18 @@ TEST_F(Rdata_PTR_Test, createFromLexer) {
 
 TEST_F(Rdata_PTR_Test, toWireBuffer) {
     rdata_ptr.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        wiredata_ptr, sizeof(wiredata_ptr));
+    matchWireData(wiredata_ptr, sizeof(wiredata_ptr),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_PTR_Test, toWireRenderer) {
     rdata_ptr.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata_ptr, sizeof(wiredata_ptr));
+    matchWireData(wiredata_ptr, sizeof(wiredata_ptr),
+                  renderer.getData(), renderer.getLength());
+
     rdata_ptr2.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata_ptr2, sizeof(wiredata_ptr2));
+    matchWireData(wiredata_ptr2, sizeof(wiredata_ptr2),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_PTR_Test, toText) {

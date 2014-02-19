@@ -54,7 +54,7 @@ void OptionVendor::unpack(OptionBufferConstIter begin,
                   << ", length=" << distance(begin, end));
     }
 
-    vendor_id_ = isc::util::readUint32(&(*begin));
+    vendor_id_ = isc::util::readUint32(&(*begin), distance(begin, end));
 
     OptionBuffer vendor_buffer(begin +4, end);
 

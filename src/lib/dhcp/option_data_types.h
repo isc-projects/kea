@@ -298,12 +298,12 @@ public:
         case 2:
             // Calling readUint16 works either for unsigned
             // or signed types.
-            value = isc::util::readUint16(&(*buf.begin()));
+            value = isc::util::readUint16(&(*buf.begin()), buf.size());
             break;
         case 4:
             // Calling readUint32 works either for unsigned
             // or signed types.
-            value = isc::util::readUint32(&(*buf.begin()));
+            value = isc::util::readUint32(&(*buf.begin()), buf.size());
             break;
         default:
             // This should not happen because we made checks on data types
@@ -331,11 +331,11 @@ public:
             break;
         case 2:
             buf.resize(buf.size() + 2);
-            isc::util::writeUint16(static_cast<uint16_t>(value), &buf[buf.size() - 2]);
+            isc::util::writeUint16(static_cast<uint16_t>(value), &buf[buf.size() - 2], 2);
             break;
         case 4:
             buf.resize(buf.size() + 4);
-            isc::util::writeUint32(static_cast<uint32_t>(value), &buf[buf.size() - 4]);
+            isc::util::writeUint32(static_cast<uint32_t>(value), &buf[buf.size() - 4], 4);
             break;
         default:
             // The cases above cover whole range of possible data lengths because

@@ -17,9 +17,6 @@
 #include <util/buffer.h>
 #include <dns/message.h>
 
-using namespace isc;
-using namespace isc::dns;
-
 namespace {
 
 /// \brief Counts the number of rrsets in the given section
@@ -29,9 +26,9 @@ namespace {
 ///
 /// \return The number of RRsets in the given section
 int
-sectionRRsetCount(Message& msg, Message::Section section) {
+sectionRRsetCount(isc::dns::Message& msg, isc::dns::Message::Section section) {
     int count = 0;
-    for (RRsetIterator rrset_iter = msg.beginSection(section);
+    for (isc::dns::RRsetIterator rrset_iter = msg.beginSection(section);
          rrset_iter != msg.endSection(section);
          ++rrset_iter) {
         ++count;
@@ -41,4 +38,3 @@ sectionRRsetCount(Message& msg, Message::Section section) {
 }
 
 }   // namespace
-

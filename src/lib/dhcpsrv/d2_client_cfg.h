@@ -12,12 +12,12 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef D2_CLIENT_H
-#define D2_CLIENT_H
+#ifndef D2_CLIENT_CFG_H
+#define D2_CLIENT_CFG_H
 
-/// @file d2_client.h Defines the D2ClientConfig and D2ClientMgr classes.
-/// This file defines the classes Kea uses to act as a client of the b10-
-/// dhcp-ddns module (aka D2).
+/// @file d2_client_cfg.h Defines the D2ClientConfig class.
+/// This file defines the classes Kea uses to manage configuration needed to
+/// act as a client of the b10-dhcp-ddns module (aka D2).
 ///
 #include <asiolink/io_address.h>
 #include <dhcp_ddns/ncr_io.h>
@@ -64,11 +64,6 @@ public:
     /// Currently only UDP is supported.
     /// @param ncr_format Format of the b10-dhcp-ddns requests.
     /// Currently only JSON format is supported.
-    /// @param remove_on_renew Enables DNS Removes when renewing a lease
-    /// If true, Kea should request an explicit DNS remove prior to requesting
-    /// a DNS update when renewing a lease.
-    /// (Note: b10-dhcp-ddns is implemented per RFC 4703 and such a remove
-    /// is unnecessary).
     /// @param always_include_fqdn Enables always including the FQDN option in
     /// DHCP responses.
     /// @param override_no_update Enables updates, even if clients request no
@@ -86,7 +81,6 @@ public:
                    const size_t server_port,
                    const dhcp_ddns::NameChangeProtocol& ncr_protocol,
                    const dhcp_ddns::NameChangeFormat& ncr_format,
-                   const bool remove_on_renew,
                    const bool always_include_fqdn,
                    const bool override_no_update,
                    const bool override_client_update,
@@ -124,11 +118,6 @@ public:
     /// @brief Return the b10-dhcp-ddns request format.
     const dhcp_ddns::NameChangeFormat& getNcrFormat() const {
         return(ncr_format_);
-    }
-
-    /// @brief Return whether or not removes should be sent for lease renewals.
-    bool getRemoveOnRenew() const {
-        return(remove_on_renew_);
     }
 
     /// @brief Return whether or not FQDN is always included in DHCP responses.
@@ -170,6 +159,15 @@ public:
     /// @brief Generates a string representation of the class contents.
     std::string toText() const;
 
+    /// @brief Sets enable-updates flag to the given value.
+    ///
+    /// This is the only value that may be altered outside the constructor
+    /// as it may be desirable to toggle it off and on when dealing with
+    /// D2 IO errors.
+    ///
+    /// @param enable boolean value to assign to the enable-updates flag
+    void enableUpdates(bool enable);
+
 protected:
     /// @brief Validates member values.
     ///
@@ -189,19 +187,12 @@ private:
     size_t server_port_;
 
     /// @brief The socket protocol to use with b10-dhcp-ddns.
-    /// Currently only UPD is supported.
+    /// Currently only UDP is supported.
     dhcp_ddns::NameChangeProtocol ncr_protocol_;
 
     /// @brief Format of the b10-dhcp-ddns requests.
     /// Currently only JSON format is supported.
     dhcp_ddns::NameChangeFormat ncr_format_;
-
-    /// @brief Should Kea request a DNS Remove when renewing a lease.
-    /// If true, Kea should request an explicit DNS remove prior to requesting
-    /// a DNS update when renewing a lease.
-    /// (Note: b10-dhcp-ddns is implemented per RFC 4703 and such a remove
-    /// is unnecessary).
-    bool remove_on_renew_;
 
     /// @brief Should Kea always include the FQDN option in its response.
     bool always_include_fqdn_;
@@ -228,49 +219,6 @@ operator<<(std::ostream& os, const D2ClientConfig& config);
 
 /// @brief Defines a pointer for D2ClientConfig instances.
 typedef boost::shared_ptr<D2ClientConfig> D2ClientConfigPtr;
-
-/// @brief D2ClientMgr isolates Kea from the details of being a D2 client.
-///
-/// Provides services for managing the current D2ClientConfig and managing
-/// communications with D2. (@todo The latter will be added once communication
-/// with D2 is implemented through the integration of
-/// dhcp_ddns::NameChangeSender interface(s)).
-///
-class D2ClientMgr {
-public:
-    /// @brief Constructor
-    ///
-    /// Default constructor which constructs an instance which has DHCP-DDNS
-    /// updates disabled.
-    D2ClientMgr();
-
-    /// @brief Destructor.
-    ~D2ClientMgr();
-
-    /// @brief Updates the DHCP-DDNS client configuration to the given value.
-    ///
-    /// @param new_config pointer to the new client configuration.
-    /// @throw D2ClientError if passed an empty pointer.
-    void setD2ClientConfig(D2ClientConfigPtr& new_config);
-
-    /// @brief Convenience method for checking if DHCP-DDNS is enabled.
-    ///
-    /// @return True if the D2 configuration is enabled.
-    bool ddnsEnabled();
-
-    /// @brief Fetches the DHCP-DDNS configuration pointer.
-    ///
-    /// @return a reference to the current configuration pointer.
-    const D2ClientConfigPtr& getD2ClientConfig() const;
-
-private:
-    /// @brief Container class for DHCP-DDNS configuration parameters.
-    D2ClientConfigPtr d2_client_config_;
-};
-
-/// @brief Defines a pointer for D2ClientMgr instances.
-typedef boost::shared_ptr<D2ClientMgr> D2ClientMgrPtr;
-
 
 } // namespace isc
 } // namespace dhcp

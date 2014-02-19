@@ -41,13 +41,15 @@
 #include <gtest/gtest.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 //
 // Note: we need more tests, including:
@@ -217,10 +219,9 @@ TEST_F(MessageTest, fromWireWithTSIG) {
     EXPECT_EQ(TSIGKey::HMACMD5_NAME(), tsig_rr->getRdata().getAlgorithm());
     EXPECT_EQ(0x4da8877a, tsig_rr->getRdata().getTimeSigned());
     EXPECT_EQ(TSIGContext::DEFAULT_FUDGE, tsig_rr->getRdata().getFudge());
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        tsig_rr->getRdata().getMAC(),
-                        tsig_rr->getRdata().getMACSize(),
-                        expected_mac, sizeof(expected_mac));
+    matchWireData(expected_mac, sizeof(expected_mac),
+                  tsig_rr->getRdata().getMAC(),
+                  tsig_rr->getRdata().getMACSize());
     EXPECT_EQ(0, tsig_rr->getRdata().getError());
     EXPECT_EQ(0, tsig_rr->getRdata().getOtherLen());
     EXPECT_EQ(static_cast<void*>(NULL), tsig_rr->getRdata().getOtherData());
@@ -572,12 +573,10 @@ TEST_F(MessageTest, parseHeader) {
                 message_parse.endSection(Message::SECTION_ADDITIONAL));
 }
 
-TEST_F(MessageTest, fromWire) {
-    // fromWire() isn't allowed in the render mode.
-    EXPECT_THROW(factoryFromFile(message_render, "message_fromWire1"),
-                 InvalidMessageOperation);
-
-    factoryFromFile(message_parse, "message_fromWire1");
+void
+checkMessageFromWire(const Message& message_parse,
+                     const Name& test_name)
+{
     EXPECT_EQ(0x1035, message_parse.getQid());
     EXPECT_EQ(Opcode::QUERY(), message_parse.getOpcode());
     EXPECT_EQ(Rcode::NOERROR(), message_parse.getRcode());
@@ -606,6 +605,37 @@ TEST_F(MessageTest, fromWire) {
     EXPECT_EQ("192.0.2.2", it->getCurrent().toText());
     it->next();
     EXPECT_TRUE(it->isLast());
+}
+
+
+TEST_F(MessageTest, fromWire) {
+    // fromWire() isn't allowed in the render mode.
+    EXPECT_THROW(factoryFromFile(message_render, "message_fromWire1"),
+                 InvalidMessageOperation);
+
+    factoryFromFile(message_parse, "message_fromWire1");
+    checkMessageFromWire(message_parse, test_name);
+}
+
+TEST_F(MessageTest, fromWireMultiple) {
+    // Parse from wire multiple times.
+    factoryFromFile(message_parse, "message_fromWire1");
+    factoryFromFile(message_parse, "message_fromWire1");
+    factoryFromFile(message_parse, "message_fromWire1");
+    factoryFromFile(message_parse, "message_fromWire1");
+    checkMessageFromWire(message_parse, test_name);
+
+    // Calling parseHeader() directly before fromWire() should not cause
+    // any problems.
+    received_data.clear();
+    UnitTestUtil::readWireData("message_fromWire1", received_data);
+
+    InputBuffer buffer(&received_data[0], received_data.size());
+    message_parse.parseHeader(buffer);
+    message_parse.fromWire(buffer);
+    message_parse.parseHeader(buffer);
+    message_parse.fromWire(buffer);
+    checkMessageFromWire(message_parse, test_name);
 }
 
 TEST_F(MessageTest, fromWireShortBuffer) {
@@ -729,8 +759,8 @@ TEST_F(MessageTest, toWire) {
     message_render.toWire(renderer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("message_toWire1", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageTest, toWireSigned) {
@@ -766,8 +796,8 @@ TEST_F(MessageTest, toWireSigned) {
     message_render.toWire(renderer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("message_toWire6", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageTest, toWireSignedAndTruncated) {
@@ -810,8 +840,8 @@ TEST_F(MessageTest, toWireSignedAndTruncated) {
     message_render.toWire(renderer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("message_toWire7", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageTest, toWireInParseMode) {
@@ -864,12 +894,11 @@ commonTSIGToWireCheck(Message& message, MessageRenderer& renderer,
         message.addRRset(Message::SECTION_ANSWER, ans_rrset);
     }
 
-    message.toWire(renderer, tsig_ctx);
+    message.toWire(renderer, &tsig_ctx);
     vector<unsigned char> expected_data;
     UnitTestUtil::readWireData(expected_file, expected_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(),
-                        &expected_data[0], expected_data.size());
+    matchWireData(&expected_data[0], expected_data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(MessageTest, toWireWithTSIG) {
@@ -997,7 +1026,7 @@ TEST_F(MessageTest, toWireTSIGTruncation3) {
         message_render.addQuestion(Question(Name("www.example.com"),
                                             RRClass::IN(), RRType(i)));
     }
-    message_render.toWire(renderer, tsig_ctx);
+    message_render.toWire(renderer, &tsig_ctx);
 
     // Check the rendered data by parsing it.  We only check it has the
     // TC bit on, has the correct number of questions, and has a TSIG RR.

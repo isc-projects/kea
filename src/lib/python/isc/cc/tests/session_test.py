@@ -334,10 +334,10 @@ class testSession(unittest.TestCase):
         self.assertEqual(sess._sequence, 1)
         self.assertEqual(sess._next_sequence(), 2)
         self.assertEqual(sess._sequence, 2)
-        sess._sequence = 47805
-        self.assertEqual(sess._sequence, 47805)
-        self.assertEqual(sess._next_sequence(), 47806)
-        self.assertEqual(sess._sequence, 47806)
+        sess._sequence = 56175
+        self.assertEqual(sess._sequence, 56175)
+        self.assertEqual(sess._next_sequence(), 56176)
+        self.assertEqual(sess._sequence, 56176)
 
     def test_group_subscribe(self):
         sess = MySession()

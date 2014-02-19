@@ -333,6 +333,37 @@ checkToWireResult(OutputType& expected_output, OutputType& actual_output,
                   actual_output.getData(), actual_output.getLength());
 }
 
+TEST_F(TreeNodeRRsetTest, getLength) {
+    // A RR
+    // www.example.com = 1 + 3 + 1 + 7 + 1 + 3 + 1 = 17 octets
+    // TYPE field = 2 octets
+    // CLASS field = 2 octets
+    // TTL field = 4 octets
+    // RDLENGTH field = 2 octets
+    // A RDATA = 4 octets
+    // Total = 17 + 2 + 2 + 4 + 2 + 4 = 31 octets
+
+    // RRSIG RR
+    // www.example.com = 1 + 4 + 1 + 7 + 1 + 3 + 1 = 17 octets
+    // TYPE field = 2 octets
+    // CLASS field = 2 octets
+    // TTL field = 4 octets
+    // RDLENGTH field = 2 octets
+    // RRSIG RDATA = 18 + [1 + 7 + 1 + 3 + 1 (example.com)] + 3 (base64
+    //               decode of FAKE) octets
+    // Total = 17 + 2 + 2 + 4 + 2 + 34 = 61 octets
+
+    // 1. with RRSIG, DNSSEC not OK
+    // ` 2 A RRs + 0 RRSIG RRs
+    const TreeNodeRRset rrset1(rrclass_, www_node_, a_rdataset_, false);
+    EXPECT_EQ(31 + 31, rrset1.getLength());
+
+    // 2. with RRSIG, DNSSEC OK
+    // ` 2 A RRs + 1 RRSIG RR
+    const TreeNodeRRset rrset2(rrclass_, www_node_, a_rdataset_, true);
+    EXPECT_EQ(31 + 31 + 61, rrset2.getLength());
+}
+
 TEST_F(TreeNodeRRsetTest, toWire) {
     MessageRenderer expected_renderer, actual_renderer;
     OutputBuffer expected_buffer(0), actual_buffer(0);
@@ -663,6 +694,7 @@ TEST_F(TreeNodeRRsetTest, unexpectedMethods) {
     EXPECT_THROW(rrset.setTTL(RRTTL(0)), isc::Unexpected);
     EXPECT_THROW(rrset.addRdata(createRdata(RRType::A(), rrclass_, "0.0.0.0")),
                  isc::Unexpected);
+    EXPECT_THROW(rrset.addRdata("0.0.0.0"), isc::Unexpected);
     RdataPtr sig_rdata = createRdata(
         RRType::RRSIG(), rrclass_,
         "A 5 2 3600 20120814220826 20120715220826 5300 example.com. FAKE");

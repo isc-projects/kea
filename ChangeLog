@@ -1,3 +1,139 @@
+752.	[func]		tmark
+	If configured to do so, b10-dhcp4 will now create DHCP-DDNS update
+	requests and send them to b10-dhcp-ddns for processing.
+	(Trac# 3329, git 4546dd186782eec5cfcb4ddb61b0a3aa5c700751)
+
+751.	[func]		muks
+	The BIND 10 zone loader now supports the $GENERATE directive (a
+	BIND 9 extension).
+	(Trac #2430, git b05064f681231fe7f8571253c5786f4ff0f2ca03)
+
+750.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: Simple client classification has been
+	implemented. Incoming packets can be assigned to zero or more
+	client classes. It is possible to restrict subnet usage to a given
+	client class. User's Guide and Developer's Guide has been updated.
+	(Trac #3274, git 1791d19899b92a6ee411199f664bdfc690ec08b2)
+
+749.	[bug]		tmark
+	b10-dhcp-ddns now sets the TTL value in RRs that add A, AAAA, or PTR DNS
+	entries to the lease length provided in instigating NameChangeRequest.
+	This corrected a bug in which the TTL was always set to 0.
+	(Trac# 3299, git dbacf27ece77f3d857da793341c6bd31ef1ea239)
+
+748.	[bug]		marcin
+	b10-dhcp4 server picks a subnet, to assign address for a directly
+	connected client, using IP address of the interface on which the
+	client's message has been received. If the message is received on
+	the interface for which there is no suitable subnet, the message
+	is discarded. Also, the subnet for renewing client which unicasts
+	its request, is selected using ciaddr.
+	(Trac #3242, git 9e571cc217d6b1a2fd6fdae1565fcc6fde6d08b1)
+
+747.	[bug]		marcin
+	libdhcpsrv: server configuration mechanism allows creating definitions
+	for standard options for which Kea doesn't provide a definition yet.
+	Without this, the server administrator couldn't configure options for
+	which a definition didn't exist.
+	(Trac# 3309, git 16a6ed6e48a6a950670c4874a2e81b1faf287d99)
+
+746.	[func]		tomek
+	IOAddress no longer exposes underlying asio objects. The getAddress()
+	method has been removed and replaced with several convenience methods.
+	(Trac #1485, git ecdb62db16b3f3d447db4a9d2a4079d5260431f0)
+
+745.	[bug]		muks
+	b10-auth now returns rcode=REFUSED for all questions with
+	qtype=RRSIG (i.e., where RRSIGs are queried directly). This is
+	because RRSIGs are meaningless without being bundled alongside the
+	RRs they cover.
+	(Trac #2226, git 68d24e65c9c3dfee38adfbe1c93367b0083f9a58)
+
+744.	[func]		marcin
+	b10-dhcp6: Refactored the code which is processing Client FQDN option.
+	The major user-visible change is that server generates DDNS
+	NameChangeRequest for the first IPv6 address (instead of all)
+	acquired by a client. Also, the server generates fully qualified domain
+	name from acquired IPv6 address, if the client sends an empty name in
+	Client FQDN option.
+	(Trac# 3295, git aa1c94a54114e848c64771fde308fc9ac0c00fd0)
+
+743.	[func]		tmark
+	b10-dhcp4 now responds with changes in DDNS behavior based upon
+	configuration parameters specified through its dhcp-ddns configuration
+	element. The parameters now supported are override-no-update,
+	override-client-update, replace-client-name, generated-prefix, and
+	qualifying-suffix.
+	(Trac# 3282, git 42b1f1e4c4f5aa48b7588233402876f5012c043c)
+
+742.	[func]		muks
+	The authoritative server now includes the datasource configuration
+	when logging some errors with the
+	AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR message ID.
+	(Trac #2756, git 31872754f36c840b4ec0b412a86afe9f38be86e0)
+
+741.	[bug]		shane
+	Remove hard-coded (and unnecessary) TSIG key from error message.
+	This also prevents a crash if the TSIG name is missing.
+	(Trac #3099, git 0ba8bbabe09756a4627e80aacdbb5050407faaac)
+
+740.	[func]		muks
+	When displaying messages about mismatched configuration data types
+	in entered values (between the supplied value type and expected
+	schema type), bindctl now includes both the supplied and expected
+	configuration data types in the returned error. The user has more
+	information on what caused the error now.
+	(Trac #3239, git 84d5eda2a6ae0d737aef68d56023fc33fef623e6)
+
+739.	[bug]		muks
+	Various minor updates were made to the SSHFP RDATA parser. Mainly,
+	the SSHFP constructor no longer throws an isc::BadValue exception.
+	generic::SSHFP::getFingerprintLen() was also renamed to
+	getFingerprintLength().
+	(Trac #3287, git 2f26d781704618c6007ba896ad3d9e0c107d04b0)
+
+738.	[bug]		muks
+	b10-auth now correctly processes NXDOMAIN results in the root zone
+	when using a SQLite3 data source.
+	(Trac #2951, git 13685cc4580660eaf5b041b683a2d2f31fd24de3)
+
+737.	[func]		muks
+	b10-auth now additionally logs the source address and port when
+	DNS messages with unsupported opcodes are received.
+	(Trac #1516, git 71611831f6d1aaaea09143d4837eddbd1d67fbf4)
+
+736.    [bug]           wlodek
+	b10-dhcp6 is now capable to determine if a received
+	message is addressed to it, using server identifier option.
+	The messages with non-matching server identifier are dropped.
+	(Trac #2892, git 3bd69e9b4ab9be231f7c966fd62b95a4e1595901)
+
+735.	[doc]		stephen
+	Expanded Developer's Guide to include chapter on logging.
+	(Trac #2566, git a08d702839d9df6cddefeccab1e7e657377145de)
+
+734.	[bug]		marcin
+	libdhcp++: fixed a bug which caused an error when setting boolean
+	values for an option. Also, bind10-guide has been updated with the
+	examples how to set the boolean values for an option.
+	(Trac# 3292, git 7c4c0514ede3cffc52d8c2874cdbdb74ced5f4ac)
+
+733.	[bug]		marcin
+	libdhcp++: a function which opens IPv6/UDPv6 sockets for the
+	DHCPv6 server, gracefully handles errors to bind socket to
+	a multicast address.
+	(Trac #3288, git 76ace0c46a5fe0e53a29dad093b817ad6c891f1b)
+
+732.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: Support for simplified client classification
+        added. Incoming packets are now assigned to a client class based on
+	the content of the packet's user class option (DHCPv4) or vendor class
+	option (DHCPv6). Two classes (docsis3.0 and eRouter1.0) have class
+	specific behavior in b10-dhcp4. See DHCPv4 Client Classification and
+	DHCPv6 Client Classification in BIND10 Developer's Guide for details.
+	This is a first ticket in a series of planned at least three tickets.
+	(Trac #3203, git afea612c23143f81a4201e39ba793bc837c5c9f1)
+
 731.	[func]		tmark
 	b10-dhcp4 now parses parameters which support DHCP-DDNS updates via
 	the DHCP-DDNS module, b10-dhcp-ddns.  These parameters are part of new

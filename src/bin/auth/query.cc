@@ -37,20 +37,6 @@ using namespace isc::dns;
 using namespace isc::datasrc;
 using namespace isc::dns::rdata;
 
-// This is a "constant" vector storing desired RR types for the additional
-// section.  The vector is filled first time it's used.
-namespace {
-const vector<RRType>&
-A_AND_AAAA() {
-    static vector<RRType> needed_types;
-    if (needed_types.empty()) {
-        needed_types.push_back(RRType::A());
-        needed_types.push_back(RRType::AAAA());
-    }
-    return (needed_types);
-}
-}
-
 namespace isc {
 namespace auth {
 
@@ -393,6 +379,17 @@ Query::process(datasrc::ClientList& client_list,
         response_->setRcode(Rcode::SERVFAIL());
         return;
     }
+
+    if (qtype == RRType::RRSIG()) {
+        // We will not serve RRSIGs directly. See #2226 and the
+        // following thread for discussion why:
+        // http://www.ietf.org/mail-archive/web/dnsext/current/msg07123.html
+        // RRSIGs go together with their covered RRset.
+        response_->setHeaderFlag(Message::HEADERFLAG_AA);
+        response_->setRcode(Rcode::REFUSED());
+        return;
+    }
+
     ZoneFinder& zfinder = *result.finder_;
 
     // We have authority for a zone that contain the query name (possibly

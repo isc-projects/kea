@@ -50,7 +50,11 @@ PyObject* po_IscException;
 PyObject* po_InvalidOperation;
 PyObject* po_InvalidParameter;
 
-// For our own isc::dns::Exception
+// For DNS exceptions
+PyObject* po_DNSException;
+PyObject* po_DNSTextError;
+PyObject* po_DNSProtocolError;
+PyObject* po_DNSMessageFORMERR;
 PyObject* po_DNSMessageBADVERS;
 
 

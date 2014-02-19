@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -129,7 +129,9 @@ public:
     /// fallback socket descriptor is set to a negative value.
     virtual SocketInfo openSocket(const Iface& iface,
                                   const isc::asiolink::IOAddress& addr,
-                                  const uint16_t port, const bool, const bool);
+                                  const uint16_t port,
+                                  const bool receive_bcast,
+                                  const bool send_bcast);
 
     /// @brief Simulate reception of the DHCPv4 message.
     ///

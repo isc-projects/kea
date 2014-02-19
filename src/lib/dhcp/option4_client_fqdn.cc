@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -217,7 +217,6 @@ setDomainName(const std::string& domain_name,
     } else {
         try {
             domain_name_.reset(new isc::dns::Name(name));
-            domain_name_type_ = name_type;
 
         } catch (const Exception& ex) {
             isc_throw(InvalidOption4FqdnDomainName,
@@ -227,6 +226,8 @@ setDomainName(const std::string& domain_name,
 
         }
     }
+
+    domain_name_type_ = name_type;
 }
 
 void
