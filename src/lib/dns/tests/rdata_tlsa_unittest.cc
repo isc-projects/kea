@@ -26,14 +26,17 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
+
 #include <boost/algorithm/string.hpp>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_TLSA_Test : public RdataTest {
@@ -250,10 +253,8 @@ TEST_F(Rdata_TLSA_Test, toWire) {
     EXPECT_EQ(sizeof (rdata_tlsa_wiredata),
               this->obuffer.getLength());
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        rdata_tlsa_wiredata, sizeof(rdata_tlsa_wiredata));
+    matchWireData(rdata_tlsa_wiredata, sizeof(rdata_tlsa_wiredata),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_TLSA_Test, compare) {
