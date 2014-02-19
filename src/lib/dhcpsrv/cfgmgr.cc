@@ -155,7 +155,7 @@ CfgMgr::getSubnet6(const std::string& iface,
 Subnet6Ptr
 CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint,
                    const isc::dhcp::ClientClasses& classes,
-                   bool relay) {
+                   const bool relay) {
 
     // If there's only one subnet configured, let's just use it
     // The idea is to keep small deployments easy. In a small network - one
@@ -240,7 +240,7 @@ void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
 Subnet4Ptr
 CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint,
                    const isc::dhcp::ClientClasses& classes,
-                   bool relay /* = false */) const {
+                   bool relay) const {
     // Iterate over existing subnets to find a suitable one for the
     // given address.
     for (Subnet4Collection::const_iterator subnet = subnets4_.begin();

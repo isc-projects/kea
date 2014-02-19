@@ -3314,10 +3314,6 @@ TEST_F(Dhcpv4SrvTest, clientClassification) {
 // .clientClassification above.
 TEST_F(Dhcpv4SrvTest, clientClassify2) {
 
-    NakedDhcpv4Srv srv(0);
-
-    ConstElementPtr status;
-
     // This test configures 2 subnets. We actually only need the
     // first one, but since there's still this ugly hack that picks
     // the pool if there is only one, we must use more than one
@@ -3340,15 +3336,9 @@ TEST_F(Dhcpv4SrvTest, clientClassify2) {
         "],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
+    ASSERT_NO_THROW(configure(config));
 
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
-
-    // check if returned status is OK
-    ASSERT_TRUE(status);
-    comment_ = config::parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
-
+    // Create a simple packet that we'll use for classification
     Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
     dis->setRemoteAddr(IOAddress("192.0.2.1"));
     dis->setCiaddr(IOAddress("192.0.2.1"));
@@ -3358,26 +3348,24 @@ TEST_F(Dhcpv4SrvTest, clientClassify2) {
 
     // This discover does not belong to foo class, so it will not
     // be serviced
-    EXPECT_FALSE(srv.selectSubnet(dis));
+    EXPECT_FALSE(srv_.selectSubnet(dis));
 
     // Let's add the packet to bar class and try again.
     dis->addClass("bar");
 
     // Still not supported, because it belongs to wrong class.
-    EXPECT_FALSE(srv.selectSubnet(dis));
+    EXPECT_FALSE(srv_.selectSubnet(dis));
 
     // Let's add it to maching class.
     dis->addClass("foo");
 
     // This time it should work
-    EXPECT_TRUE(srv.selectSubnet(dis));
+    EXPECT_TRUE(srv_.selectSubnet(dis));
 }
 
 // Checks if relay IP address specified in the relay-info structure in
 // subnet4 is being used properly.
 TEST_F(Dhcpv4SrvTest, relayOverride) {
-
-    NakedDhcpv4Srv srv(0);
 
     // We have 2 subnets defined. Note that both have a relay address
     // defined. Both are not belonging to the subnets. That is
@@ -3401,12 +3389,7 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
         "\"valid-lifetime\": 4000 }";
 
     // Use this config to set up the server
-    ElementPtr json = Element::fromJSON(config);
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
-    ASSERT_TRUE(status);
-    comment_ = config::parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
+    ASSERT_NO_THROW(configure(config));
 
     // Let's get the subnet configuration objects
     const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
@@ -3429,40 +3412,36 @@ TEST_F(Dhcpv4SrvTest, relayOverride) {
     // This is just a sanity check, we're using regular method: ciaddr 192.0.2.1
     // belongs to the first subnet, so it is selected
     dis->setGiaddr(IOAddress("192.0.2.1"));
-    EXPECT_TRUE(subnet1 == srv.selectSubnet(dis));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
 
     // Relay belongs to the second subnet, so it  should be selected.
     dis->setGiaddr(IOAddress("192.0.3.1"));
-    EXPECT_TRUE(subnet2 == srv.selectSubnet(dis));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
 
     // Now let's check if the relay override for the first subnets works
     dis->setGiaddr(IOAddress("192.0.5.1"));
-    EXPECT_TRUE(subnet1 == srv.selectSubnet(dis));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
 
     // The same check for the second subnet...
     dis->setGiaddr(IOAddress("192.0.5.2"));
-    EXPECT_TRUE(subnet2 == srv.selectSubnet(dis));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
 
     // And finally, let's check if mis-matched relay address will end up
     // in not selecting a subnet at all
     dis->setGiaddr(IOAddress("192.0.5.3"));
-    EXPECT_FALSE(srv.selectSubnet(dis));
+    EXPECT_FALSE(srv_.selectSubnet(dis));
 
     // Finally, check that the relay override works only with relay address
     // (GIADDR) and does not affect client address (CIADDR)
     dis->setGiaddr(IOAddress("0.0.0.0"));
     dis->setHops(0);
     dis->setCiaddr(IOAddress("192.0.5.1"));
-    EXPECT_FALSE(srv.selectSubnet(dis));
+    EXPECT_FALSE(srv_.selectSubnet(dis));
 }
 
 // Checks if relay IP address specified in the relay-info structure can be
 // used together with client-classification.
 TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
-
-    NakedDhcpv4Srv srv(0);
-
-    ConstElementPtr status;
 
     // This test configures 2 subnets. They both are on the same link, so they
     // have the same relay-ip address. Furthermore, the first subnet is
@@ -3486,11 +3465,7 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
         "\"valid-lifetime\": 4000 }";
 
     // Use this config to set up the server
-    ElementPtr json = Element::fromJSON(config);
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
-    ASSERT_TRUE(status);
-    comment_ = config::parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
+    ASSERT_NO_THROW(configure(config));
 
     const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
     ASSERT_EQ(2, subnets->size());
@@ -3514,12 +3489,12 @@ TEST_F(Dhcpv4SrvTest, relayOverrideAndClientClass) {
     // subnet[0], even though the relay-ip matches. It should be accepted in
     // subnet[1], because the subnet matches and there are no class
     // requirements.
-    EXPECT_TRUE(subnet2 == srv.selectSubnet(dis));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(dis));
 
     // Now let's add this packet to class foo and recheck. This time it should
     // be accepted in the first subnet, because both class and relay-ip match.
     dis->addClass("foo");
-    EXPECT_TRUE(subnet1 == srv.selectSubnet(dis));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(dis));
 }
 
 // This test verifies that the direct message is dropped when it has been
