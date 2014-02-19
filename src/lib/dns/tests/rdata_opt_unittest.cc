@@ -37,7 +37,7 @@ class Rdata_OPT_Test : public RdataTest {
 
 const uint8_t rdata_opt_wiredata[] = {
     // Option code
-    0x00, 0x03,
+    0x00, 0x2a,
     // Option length
     0x00, 0x03,
     // Option data
@@ -197,7 +197,7 @@ TEST_F(Rdata_OPT_Test, getPseudoRRs) {
     const std::vector<generic::OPT::PseudoRR>& rrs = rdf.getPseudoRRs();
     ASSERT_FALSE(rrs.empty());
     EXPECT_EQ(1, rrs.size());
-    EXPECT_EQ(3, rrs.at(0).getCode());
+    EXPECT_EQ(0x2a, rrs.at(0).getCode());
     EXPECT_EQ(3, rrs.at(0).getLength());
 
     const uint8_t expected_data[] = {0x00, 0x01, 0x02};
