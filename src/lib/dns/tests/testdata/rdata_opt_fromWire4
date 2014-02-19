@@ -2,8 +2,8 @@
 #
 # OPT RDATA, RDLEN=14 (0x000e)
 000e
-# psuedo RR 1 (code=3, len=3)
+# pseudo RR 1 (code=3, len=3)
 00 03 00 03 00 01 02
-# psuedo RR 2 (code=4, len=65535 overflows RDLEN)
+# pseudo RR 2 (code=4, len=65535 overflows RDLEN)
 00 04 ff ff 00 01 02
 # rest of option data is omitted...
