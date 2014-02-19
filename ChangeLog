@@ -1,3 +1,7 @@
+755.	[func]		muks
+	Add support for the CAA RR type (RFC 6844).
+	(Trac #2512, git 39162608985e5c904448f308951c73bb9c32da8f)
+
 754.	[func]		muks
 	Add support for the TLSA RR type (RFC 6698).
 	(Trac #2185, git a168170430f6927f28597b2a6debebe31cf39b13)
