@@ -1,3 +1,7 @@
+754.	[func]		muks
+	Add support for the TLSA RR type (RFC 6698).
+	(Trac #2185, git a168170430f6927f28597b2a6debebe31cf39b13)
+
 753.	[func]		muks
 	libdns++: the unknown/generic (RFC 3597) RDATA class now uses the
 	generic lexer in constructors from text.
