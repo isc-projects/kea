@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -138,19 +138,19 @@ public:
             params["name"] = param_value;
             params["space"] = "dhcp6";
             params["code"] = "38";
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "space") {
             params["name"] = "subscriber-id";
             params["space"] = param_value;
             params["code"] = "38";
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "code") {
             params["name"] = "subscriber-id";
             params["space"] = "dhcp6";
             params["code"] = param_value;
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "data") {
             params["name"] = "subscriber-id";
@@ -162,12 +162,20 @@ public:
             params["name"] = "subscriber-id";
             params["space"] = "dhcp6";
             params["code"] = "38";
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = param_value;
         }
         return (createConfigWithOption(params));
     }
 
+    /// @brief Create simple configuration with single option.
+    ///
+    /// This function creates a configuration for a single option with
+    /// custom values for all parameters that describe the option.
+    ///
+    /// @params params map holding parameters and their values.
+    /// @return configuration string containing custom values of parameters
+    /// describing an option.
     std::string createConfigWithOption(const std::map<std::string,
                                        std::string>& params)
     {
@@ -176,6 +184,15 @@ public:
             "\"preferred-lifetime\": 3000,"
             "\"rebind-timer\": 2000, "
             "\"renew-timer\": 1000, "
+            "\"option-def\": [ {"
+            "  \"name\": \"bool-option\","
+            "  \"code\": 1000,"
+            "  \"type\": \"boolean\","
+            "  \"array\": False,"
+            "  \"record-types\": \"\","
+            "  \"space\": \"dhcp6\","
+            "  \"encapsulate\": \"\""
+            "} ],"
             "\"subnet6\": [ { "
             "    \"pool\": [ \"2001:db8:1::/80\" ],"
             "    \"subnet\": \"2001:db8:1::/64\", "
@@ -206,6 +223,63 @@ public:
             " } ],"
             "\"valid-lifetime\": 4000 }";
         return (stream.str());
+    }
+
+    /// @brief Returns an option from the subnet.
+    ///
+    /// This function returns an option from a subnet to which the
+    /// specified subnet address belongs. The option is identified
+    /// by its code.
+    ///
+    /// @param subnet_address Address which belongs to the subnet from
+    /// which the option is to be returned.
+    /// @param option_code Code of the option to be returned.
+    /// @param expected_options_count Expected number of options in
+    /// the particular subnet.
+    ///
+    /// @return Descriptor of the option. If the descriptor holds a
+    /// NULL option pointer, it means that there was no such option
+    /// in the subnet.
+    Subnet::OptionDescriptor
+    getOptionFromSubnet(const IOAddress& subnet_address,
+                        const uint16_t option_code,
+                        const uint16_t expected_options_count = 1) {
+        Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(subnet_address,
+                                                          classify_);
+        if (!subnet) {
+            /// @todo replace toText() with the use of operator <<.
+            ADD_FAILURE() << "A subnet for the specified address "
+                          << subnet_address.toText()
+                          << "does not exist in Config Manager";
+        }
+        Subnet::OptionContainerPtr options =
+            subnet->getOptionDescriptors("dhcp6");
+        if (expected_options_count != options->size()) {
+            ADD_FAILURE() << "The number of options in the subnet '"
+                          << subnet_address.toText() << "' is different "
+                " than expected number of options '"
+                          << expected_options_count << "'";
+        }
+
+        // Get the search index. Index #1 is to search using option code.
+        const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
+
+        // Get the options for specified index. Expecting one option to be
+        // returned but in theory we may have multiple options with the same
+        // code so we get the range.
+        std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+                  Subnet::OptionContainerTypeIndex::const_iterator> range =
+            idx.equal_range(option_code);
+        if (std::distance(range.first, range.second) > 1) {
+            ADD_FAILURE() << "There is more than one option having the"
+                " option code '" << option_code << "' in a subnet '"
+                          << subnet_address.toText() << "'. Expected "
+                " at most one option";
+        } else if (std::distance(range.first, range.second) == 0) {
+            return (Subnet::OptionDescriptor(OptionPtr(), false));
+        }
+
+        return (*range.first);
     }
 
     /// @brief Parse and Execute configuration
@@ -305,6 +379,24 @@ public:
         ASSERT_EQ(1, rcode_);
     }
 
+    /// @brief Test invalid option paramater value.
+    ///
+    /// This test function constructs the simple configuration
+    /// string and injects invalid option configuration into it.
+    /// It expects that parser will fail with provided option code.
+    ///
+    /// @param params Map of parameters defining an option.
+    void
+    testInvalidOptionParam(const std::map<std::string, std::string>& params) {
+        ConstElementPtr x;
+        std::string config = createConfigWithOption(params);
+        ElementPtr json = Element::fromJSON(config);
+        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(1, rcode_);
+    }
+
     /// @brief Test option against given code and data.
     ///
     /// @param option_desc option descriptor that carries the option to
@@ -346,11 +438,45 @@ public:
                             expected_data_len));
     }
 
+    /// @brief Test option configuration.
+    ///
+    /// This function creates a configuration for a specified option using
+    /// a map of parameters specified as the argument. The map holds
+    /// name/value pairs which identifies option's configuration parameters:
+    /// - name
+    /// - space
+    /// - code
+    /// - data
+    /// - csv-format.
+    /// This function applies a new server configuration and checks that the
+    /// option being configured is inserted into CfgMgr. The raw contents of
+    /// this option are compared with the binary data specified as expected
+    /// data passed to this function.
+    ///
+    /// @param params Map of parameters defining an option.
+    /// @param option_code Option code.
+    /// @param expected_data Array containing binary data expected to be stored
+    /// in the configured option.
+    /// @param expected_data_len Length of the array holding reference data.
+    void testConfiguration(const std::map<std::string, std::string>& params,
+                           const uint16_t option_code,
+                           const uint8_t* expected_data,
+                           const size_t expected_data_len) {
+        std::string config = createConfigWithOption(params);
+        ASSERT_TRUE(executeConfiguration(config, "parse option configuration"));
+        // The subnet should now hold one option with the specified code.
+        Subnet::OptionDescriptor desc =
+            getOptionFromSubnet(IOAddress("2001:db8:1::5"), option_code);
+        ASSERT_TRUE(desc.option);
+        testOption(desc, option_code, expected_data, expected_data_len);
+    }
+
     int rcode_;          ///< Return code (see @ref isc::config::parseAnswer)
     Dhcpv6Srv srv_;      ///< Instance of the Dhcp6Srv used during tests
     ConstElementPtr comment_; ///< Comment (see @ref isc::config::parseAnswer)
     string valid_iface_; ///< Valid network interface name (present in system)
     string bogus_iface_; ///< invalid network interface name (not in system)
+    isc::dhcp::ClientClasses classify_; ///< used in client classification
 };
 
 // Goal of this test is a verification if a very simple config update
@@ -430,13 +556,196 @@ TEST_F(Dhcp6ParserTest, subnetGlobalDefaults) {
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+        classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(3000, subnet->getPreferred());
     EXPECT_EQ(4000, subnet->getValid());
+
+    // Check that subnet-id is 1
+    EXPECT_EQ(1, subnet->getID());
 }
+
+// Goal of this test is to verify that multiple subnets get unique
+// subnet-ids. Also, test checks that it's possible to do reconfiguration
+// multiple times.
+TEST_F(Dhcp6ParserTest, multipleSubnets) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:4::/80\" ],"
+        "    \"subnet\": \"2001:db8:4::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    int cnt = 0; // Number of reconfigurations
+
+    do {
+        ElementPtr json = Element::fromJSON(config);
+
+        EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(0, rcode_);
+
+        const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+        ASSERT_TRUE(subnets);
+        ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+        // Check subnet-ids of each subnet (it should be monotonously increasing)
+        EXPECT_EQ(1, subnets->at(0)->getID());
+        EXPECT_EQ(2, subnets->at(1)->getID());
+        EXPECT_EQ(3, subnets->at(2)->getID());
+        EXPECT_EQ(4, subnets->at(3)->getID());
+
+        // Repeat reconfiguration process 10 times and check that the subnet-id
+        // is set to the same value. Technically, just two iterations would be
+        // sufficient, but it's nice to have a test that exercises reconfiguration
+        // a bit.
+    } while (++cnt < 10);
+}
+
+// Goal of this test is to verify that a previously configured subnet can be
+// deleted in subsequent reconfiguration.
+TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
+    ConstElementPtr x;
+
+    // All four subnets
+    string config4 = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:4::/80\" ],"
+        "    \"subnet\": \"2001:db8:4::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Three subnets (the last one removed)
+    string config_first3 = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Second subnet removed
+    string config_second_removed = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:4::/80\" ],"
+        "    \"subnet\": \"2001:db8:4::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // CASE 1: Configure 4 subnets, then reconfigure and remove the
+    // last one.
+
+    ElementPtr json = Element::fromJSON(config4);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+    // Do the reconfiguration (the last subnet is removed)
+    json = Element::fromJSON(config_first3);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size()); // We expect 3 subnets now (4th is removed)
+
+    EXPECT_EQ(1, subnets->at(0)->getID());
+    EXPECT_EQ(2, subnets->at(1)->getID());
+    EXPECT_EQ(3, subnets->at(2)->getID());
+
+    /// CASE 2: Configure 4 subnets, then reconfigure and remove one
+    /// from in between (not first, not last)
+
+#if 0
+    /// @todo: Uncomment subnet removal test as part of #3281.
+    json = Element::fromJSON(config4);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    // Do reconfiguration
+    json = Element::fromJSON(config_second_removed);
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size()); // We expect 4 subnets
+
+    EXPECT_EQ(1, subnets->at(0)->getID());
+    // The second subnet (with subnet-id = 2) is no longer there
+    EXPECT_EQ(3, subnets->at(1)->getID());
+    EXPECT_EQ(4, subnets->at(2)->getID());
+#endif
+}
+
+
 
 // This test checks if it is possible to override global values
 // on a per subnet basis.
@@ -466,7 +775,8 @@ TEST_F(Dhcp6ParserTest, subnetLocal) {
     comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1, subnet->getT1());
     EXPECT_EQ(2, subnet->getT2());
@@ -502,7 +812,8 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
     comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(valid_iface_, subnet->getIface());
 }
@@ -535,7 +846,8 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceBogus) {
     comment_ = parseAnswer(rcode_, status);
     EXPECT_EQ(1, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     EXPECT_FALSE(subnet);
 }
 
@@ -600,13 +912,13 @@ TEST_F(Dhcp6ParserTest, subnetInterfaceId) {
     // Try to get a subnet based on bogus interface-id option
     OptionBuffer tmp(bogus_interface_id.begin(), bogus_interface_id.end());
     OptionPtr ifaceid(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(ifaceid);
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(ifaceid, classify_);
     EXPECT_FALSE(subnet);
 
     // Now try to get subnet for valid interface-id value
     tmp = OptionBuffer(valid_interface_id.begin(), valid_interface_id.end());
     ifaceid.reset(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
-    subnet = CfgMgr::instance().getSubnet6(ifaceid);
+    subnet = CfgMgr::instance().getSubnet6(ifaceid, classify_);
     ASSERT_TRUE(subnet);
     EXPECT_TRUE(ifaceid->equal(subnet->getInterfaceId()));
 }
@@ -719,7 +1031,8 @@ TEST_F(Dhcp6ParserTest, poolPrefixLen) {
     comment_ = parseAnswer(rcode_, x);
     EXPECT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
@@ -762,9 +1075,8 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     EXPECT_EQ(0, rcode_);
 
     // Test that we can retrieve the subnet.
-    Subnet6Ptr subnet = CfgMgr::
-                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
-
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Fetch the collection of PD pools.  It should have 1 entry.
@@ -783,8 +1095,7 @@ TEST_F(Dhcp6ParserTest, pdPoolBasics) {
     // verify that it was interpreted correctly by checking the last address
     // value.
     isc::asiolink::IOAddress prefixAddress("2001:db8:1::");
-    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64).toText(),
-              p6->getLastAddress().toText());
+    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64), p6->getLastAddress());
 }
 
 // Goal of this test is verify that a list of PD pools can be configured.
@@ -838,8 +1149,8 @@ TEST_F(Dhcp6ParserTest, pdPoolList) {
     EXPECT_EQ(0, rcode_);
 
     // Test that we can retrieve the subnet.
-    Subnet6Ptr subnet = CfgMgr::
-                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Fetch the collection of NA pools.  It should have 1 entry.
@@ -896,8 +1207,8 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
     EXPECT_EQ(0, rcode_);
 
     // Test that we can retrieve the subnet.
-    Subnet6Ptr subnet = CfgMgr::
-                        instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
 
     ASSERT_TRUE(subnet);
 
@@ -917,8 +1228,7 @@ TEST_F(Dhcp6ParserTest, subnetAndPrefixDelegated) {
     // verify that it was interpreted correctly by checking the last address
     // value.
     isc::asiolink::IOAddress prefixAddress("2001:db8:1::");
-    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64).toText(),
-              p6->getLastAddress().toText());
+    EXPECT_EQ(lastAddrInPrefix(prefixAddress, 64), p6->getLastAddress());
 }
 
 
@@ -1442,9 +1752,9 @@ TEST_F(Dhcp6ParserTest, optionDefEncapsulateOwnSpace) {
 
 /// The purpose of this test is to verify that it is not allowed
 /// to override the standard option (that belongs to dhcp6 option
-/// space) and that it is allowed to define option in the dhcp6
-/// option space that has a code which is not used by any of the
-/// standard options.
+/// space and has its definition) and that it is allowed to define
+/// option in the dhcp6 option space that has a code which is not
+/// used by any of the standard options.
 TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
 
     // Configuration string. The option code 100 is unassigned
@@ -1482,9 +1792,8 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
 
-    // The combination of option space and code is
-    // invalid. The 'dhcp6' option space groups
-    // standard options and the code 3 is reserved
+    // The combination of option space and code is invalid. The 'dhcp6'
+    // option space groups standard options and the code 3 is reserved
     // for one of them.
     config =
         "{ \"option-def\": [ {"
@@ -1504,6 +1813,39 @@ TEST_F(Dhcp6ParserTest, optionStandardDefOverride) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+
+    /// @todo The option 59 is a standard DHCPv6 option. However, at this point
+    /// there is no definition for this option in libdhcp++, so it should be
+    /// allowed to define it from the configuration interface. This test will
+    /// have to be removed once definitions for remaining standard options are
+    /// created.
+    config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"boot-file-name\","
+        "      \"code\": 59,"
+        "      \"type\": \"string\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp6\","
+        "      \"encapsulate\": \"\""
+        "  } ]"
+        "}";
+    json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting success.
+    checkResult(status, 0);
+
+    def = CfgMgr::instance().getOptionDef("dhcp6", 59);
+    ASSERT_TRUE(def);
+
+    // Check the option data.
+    EXPECT_EQ("boot-file-name", def->getName());
+    EXPECT_EQ(59, def->getCode());
+    EXPECT_EQ(OPT_STRING_TYPE, def->getType());
+    EXPECT_FALSE(def->getArrayType());
 }
 
 // Goal of this test is to verify that global option
@@ -1519,7 +1861,7 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
         "    \"name\": \"subscriber-id\","
         "    \"space\": \"dhcp6\","
         "    \"code\": 38,"
-        "    \"data\": \"AB CDEF0105\","
+        "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
@@ -1542,7 +1884,8 @@ TEST_F(Dhcp6ParserTest, optionDataDefaults) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
     ASSERT_EQ(2, options->size());
@@ -1600,7 +1943,7 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
         "    \"name\": \"subscriber-id\","
         "    \"space\": \"dhcp6\","
         "    \"code\": 38,"
-        "    \"data\": \"AB CDEF0105\","
+        "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
@@ -1634,7 +1977,8 @@ TEST_F(Dhcp6ParserTest, optionDataTwoSpaces) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     // Try to get the option from the space dhcp6.
     Subnet::OptionDescriptor desc1 = subnet->getOptionDescriptor("dhcp6", 38);
@@ -1785,7 +2129,8 @@ TEST_F(Dhcp6ParserTest, optionDataEncapsulate) {
     checkResult(status, 0);
 
     // Get the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
@@ -1849,7 +2194,8 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet1 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet1 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                       classify_);
     ASSERT_TRUE(subnet1);
     Subnet::OptionContainerPtr options1 = subnet1->getOptionDescriptors("dhcp6");
     ASSERT_EQ(1, options1->size());
@@ -1874,7 +2220,8 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
                sizeof(subid_expected));
 
     // Test another subnet in the same way.
-    Subnet6Ptr subnet2 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:2::4"));
+    Subnet6Ptr subnet2 = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:2::4"),
+                                                       classify_);
     ASSERT_TRUE(subnet2);
     Subnet::OptionContainerPtr options2 = subnet2->getOptionDescriptors("dhcp6");
     ASSERT_EQ(1, options2->size());
@@ -1890,6 +2237,89 @@ TEST_F(Dhcp6ParserTest, optionDataInMultipleSubnets) {
     };
     testOption(*range2.first, D6O_USER_CLASS, user_class_expected,
                sizeof(user_class_expected));
+}
+
+// The goal of this test is to check that the option carrying a boolean
+// value can be configured using one of the values: "true", "false", "0"
+// or "1".
+TEST_F(Dhcp6ParserTest, optionDataBoolean) {
+    // Create configuration. Use standard option 1000.
+    std::map<std::string, std::string> params;
+    params["name"] = "bool-option";
+    params["space"] = "dhcp6";
+    params["code"] = "1000";
+    params["data"] = "true";
+    params["csv-format"] = "true";
+
+    std::string config = createConfigWithOption(params);
+    ASSERT_TRUE(executeConfiguration(config, "parse configuration with a"
+                                     " boolean value"));
+
+    // The subnet should now hold one option with the code 1000.
+    Subnet::OptionDescriptor desc =
+        getOptionFromSubnet(IOAddress("2001:db8:1::5"), 1000);
+    ASSERT_TRUE(desc.option);
+
+    // This option should be set to "true", represented as 0x1 in the option
+    // buffer.
+    uint8_t expected_option_data[] = {
+        0x1
+    };
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Configure the option with the "1" value. This should have the same
+    // effect as if "true" was specified.
+    params["data"] = "1";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // The value of "1" with a few leading zeros should work too.
+    params["data"] = "00001";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Configure the option with the "false" value.
+    params["data"] = "false";
+    // The option buffer should now hold the value of 0.
+    expected_option_data[0] = 0;
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Specifying "0" should have the same effect as "false".
+    params["data"] = "0";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // The same effect should be for multiple 0 chars.
+    params["data"] = "00000";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Bogus values should not be accepted.
+    params["data"] = "bugus";
+    testInvalidOptionParam(params);
+
+    params["data"] = "2";
+    testInvalidOptionParam(params);
+
+    // Now let's test that it is possible to use binary format.
+    params["data"] = "0";
+    params["csv-format"] = "false";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // The binary 1 should work as well.
+    params["data"] = "1";
+    expected_option_data[0] = 1;
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // As well as an even number of digits.
+    params["data"] = "01";
+    testConfiguration(params, 1000, expected_option_data,
+                      sizeof(expected_option_data));
+
 }
 
 // Verify that empty option name is rejected in the configuration.
@@ -1949,14 +2379,6 @@ TEST_F(Dhcp6ParserTest, optionDataUnexpectedPrefix) {
     testInvalidOptionParam("0x0102", "data");
 }
 
-// Verify that option data consisting od an odd number of
-// hexadecimal digits is rejected in the configuration.
-TEST_F(Dhcp6ParserTest, optionDataOddLength) {
-    // Option code 0 is reserved and should not be accepted
-    // by configuration parser.
-    testInvalidOptionParam("123", "data");
-}
-
 // Verify that either lower or upper case characters are allowed
 // to specify the option data.
 TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
@@ -1969,7 +2391,8 @@ TEST_F(Dhcp6ParserTest, optionDataLowerCase) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
     ASSERT_EQ(1, options->size());
@@ -2013,7 +2436,8 @@ TEST_F(Dhcp6ParserTest, stdOptionData) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp6");
     ASSERT_EQ(1, options->size());
@@ -2063,7 +2487,7 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
         "    \"name\": \"option-one\","
         "    \"space\": \"vendor-4491\","
         "    \"code\": 100,"
-        "    \"data\": \"AB CDEF0105\","
+        "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
@@ -2088,7 +2512,8 @@ TEST_F(Dhcp6ParserTest, vendorOptionsHex) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Try to get the option from the vendor space 4491
@@ -2147,7 +2572,8 @@ TEST_F(Dhcp6ParserTest, vendorOptionsCsv) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Try to get the option from the vendor space 4491
@@ -2281,7 +2707,8 @@ TEST_F(Dhcp6ParserTest, stdOptionDataEncapsulate) {
     checkResult(status, 0);
 
     // Get the subnet.
-    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"));
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
@@ -2542,6 +2969,126 @@ TEST_F(Dhcp6ParserTest, allInterfaces) {
     EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth0"));
     EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth1"));
     EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth2"));
+}
+
+
+// This test checks if it is possible to specify relay information
+TEST_F(Dhcp6ParserTest, subnetRelayInfo) {
+
+    ConstElementPtr status;
+
+    // A config with relay information.
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::1 - 2001:db8:1::ffff\" ],"
+        "    \"relay\": { "
+        "        \"ip-address\": \"2001:db8:1::abcd\""
+        "    },"
+        "    \"subnet\": \"2001:db8:1::/64\" } ],"
+        "\"preferred-lifetime\": 3000, "
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (configuration success)
+    checkResult(status, 0);
+
+    Subnet6Ptr subnet = CfgMgr::instance().getSubnet6(IOAddress("2001:db8:1::1"),
+                                                      classify_);
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("2001:db8:1::abcd", subnet->getRelayInfo().addr_.toText());
+}
+
+// Goal of this test is to verify that multiple subnets can be configured
+// with defined client classes.
+TEST_F(Dhcp6ParserTest, classifySubnets) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\", "
+        "    \"client-class\": \"alpha\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:2::/80\" ],"
+        "    \"subnet\": \"2001:db8:2::/64\", "
+        "    \"client-class\": \"beta\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:3::/80\" ],"
+        "    \"subnet\": \"2001:db8:3::/64\", "
+        "    \"client-class\": \"gamma\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"2001:db8:4::/80\" ],"
+        "    \"subnet\": \"2001:db8:4::/64\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+    // Let's check if client belonging to alpha class is supported in subnet[0]
+    // and not supported in any other subnet (except subnet[3], which allows
+    // everyone).
+    ClientClasses classes;
+    classes.insert("alpha");
+    EXPECT_TRUE (subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to beta class is supported in subnet[1]
+    // and not supported in any other subnet  (except subnet[3], which allows
+    // everyone).
+    classes.clear();
+    classes.insert("beta");
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to gamma class is supported in subnet[2]
+    // and not supported in any other subnet  (except subnet[3], which allows
+    // everyone).
+    classes.clear();
+    classes.insert("gamma");
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to some other class (not mentioned in
+    // the config) is supported only in subnet[3], which allows everyone.
+    classes.clear();
+    classes.insert("delta");
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Finally, let's check class-less client. He should be allowed only in
+    // the last subnet, which does not have any class restrictions.
+    classes.clear();
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
 }
 
 

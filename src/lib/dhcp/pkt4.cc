@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,6 +67,7 @@ Pkt4::Pkt4(const uint8_t* data, size_t len)
       remote_port_(DHCP4_CLIENT_PORT),
       op_(BOOTREQUEST),
       hwaddr_(new HWAddr()),
+      hops_(0),
       transid_(0),
       secs_(0),
       flags_(0),
@@ -278,8 +279,8 @@ void Pkt4::repack() {
 std::string
 Pkt4::toText() {
     stringstream tmp;
-    tmp << "localAddr=" << local_addr_.toText() << ":" << local_port_
-        << " remoteAddr=" << remote_addr_.toText()
+    tmp << "localAddr=" << local_addr_ << ":" << local_port_
+        << " remoteAddr=" << remote_addr_
         << ":" << remote_port_ << ", msgtype=" << static_cast<int>(getType())
         << ", transid=0x" << hex << transid_ << dec << endl;
 
@@ -396,6 +397,7 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
     case DHCPRELEASE:
     case DHCPINFORM:
     case DHCPLEASEQUERY:
+    case DHCPBULKLEASEQUERY:
         return (BOOTREQUEST);
 
     case DHCPACK:
@@ -404,6 +406,7 @@ Pkt4::DHCPTypeToBootpType(uint8_t dhcpType) {
     case DHCPLEASEUNASSIGNED:
     case DHCPLEASEUNKNOWN:
     case DHCPLEASEACTIVE:
+    case DHCPLEASEQUERYDONE:
         return (BOOTREPLY);
 
     default:
@@ -480,7 +483,17 @@ Pkt4::isRelayed() const {
               << static_cast<int>(getHops()) << ". Valid values"
               " are: (giaddr = 0 and hops = 0) or (giaddr != 0 and"
               "hops != 0)");
+}
 
+bool Pkt4::inClass(const isc::dhcp::ClientClass& client_class) {
+    return (classes_.find(client_class) != classes_.end());
+}
+
+void
+Pkt4::addClass(const isc::dhcp::ClientClass& client_class) {
+    if (classes_.find(client_class) == classes_.end()) {
+        classes_.insert(client_class);
+    }
 }
 
 } // end of namespace isc::dhcp

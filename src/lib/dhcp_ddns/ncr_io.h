@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -66,6 +66,35 @@
 namespace isc {
 namespace dhcp_ddns {
 
+/// @brief Defines the list of socket protocols supported.
+/// Currently only UDP is implemented.
+/// @todo TCP is intended to be implemented prior 1.0 release.
+/// @todo Give some thought to an ANY protocol which might try
+/// first as UDP then as TCP, etc.
+enum NameChangeProtocol {
+  NCR_UDP,
+  NCR_TCP
+};
+
+/// @brief Function which converts labels to  NameChangeProtocol enum values.
+///
+/// @param protocol_str text to convert to an enum.
+/// Valid string values: "UDP", "TCP"
+///
+/// @return NameChangeProtocol value which maps to the given string.
+///
+/// @throw isc::BadValue if given a string value which does not map to an
+/// enum value.
+extern NameChangeProtocol stringToNcrProtocol(const std::string& protocol_str);
+
+/// @brief Function which converts NameChangeProtocol enums to text labels.
+///
+/// @param protocol enum value to convert to label
+///
+/// @return std:string containing the text label if the value is valid, or
+/// "UNKNOWN" if not.
+extern std::string ncrProtocolToString(NameChangeProtocol protocol);
+
 /// @brief Exception thrown if an NcrListenerError encounters a general error.
 class NcrListenerError : public isc::Exception {
 public:
@@ -132,7 +161,7 @@ public:
 /// Assuming the open is successful, startListener will call receiveNext, to
 /// initiate an asynchronous receive.  This method calls the virtual method,
 /// doReceive().  The listener derivation uses doReceive to instigate an IO
-/// layer asynchronous receieve passing in its IO layer callback to
+/// layer asynchronous receive passing in its IO layer callback to
 /// handle receive events from the IO source.
 ///
 /// As stated earlier, the derivation's NameChangeRequest completion handler
@@ -518,6 +547,40 @@ public:
     /// capacity.
     void sendRequest(NameChangeRequestPtr& ncr);
 
+    /// @brief Move all queued requests from a given sender into the send queue
+    ///
+    /// Moves all of the entries in the given sender's queue and places them
+    /// into send queue.  This provides a mechanism of reassigning queued
+    /// messages from one sender to another. This is useful for dealing with
+    /// dynamic configuration changes.
+    ///
+    /// @param source_sender from whom the queued messages will be taken
+    ///
+    /// @throw NcrSenderError if either sender is in send mode, if the number of
+    /// messages in the source sender's queue is larger than this sender's
+    /// maxium queue size, or if this sender's queue is not empty.
+    void assumeQueue(NameChangeSender& source_sender);
+
+    /// @brief Returns a file descriptor suitable for use with select
+    ///
+    /// The value returned is an open file descriptor which can be used with
+    /// select() system call to monitor the sender for IO events.  This allows
+    /// NameChangeSenders to be used in applications which use select, rather
+    /// than IOService to wait for IO events to occur.
+    ///
+    /// @warning Attempting other use of this value may lead to unpredictable
+    /// behavior in the sender.
+    ///
+    /// @return Returns an "open" file descriptor
+    ///
+    /// @throw NcrSenderError if the sender is not in send mode,
+    virtual int getSelectFd() = 0;
+
+    /// @brief Returns whether or not the sender has IO ready to process.
+    ///
+    /// @return true if the sender has at IO ready, false otherwise.
+    virtual bool ioReady() = 0;
+
 protected:
     /// @brief Dequeues and sends the next request on the send queue.
     ///
@@ -630,9 +693,59 @@ public:
         return (send_queue_max_);
     }
 
+    /// @brief Sets the maximum queue size to the given value.
+    ///
+    /// Sets the maximum number of entries allowed in the queue to the
+    /// the given value.
+    ///
+    /// @param new_max the new value to use as the maximum
+    ///
+    /// @throw NcrSenderError if the value is less than one.
+    void setQueueMaxSize(const size_t new_max);
+
     /// @brief Returns the number of entries currently in the send queue.
     size_t getQueueSize() const {
         return (send_queue_.size());
+    }
+
+    /// @brief Returns the entry at a given position in the queue.
+    ///
+    /// Note that the entry is not removed from the queue.
+    /// @param index the index of the entry in the queue to fetch.
+    /// Valid values are 0 (front of the queue) to (queue size - 1).
+    ///
+    /// @return Pointer reference to the queue entry.
+    ///
+    /// @throw NcrSenderError if the given index is beyond the
+    /// end of the queue.
+    const NameChangeRequestPtr& peekAt(const size_t index) const;
+
+    /// @brief Processes sender IO events
+    ///
+    /// Executes at most one ready handler on the sender's IO service. If
+    /// no handlers are ready it returns immediately.
+    ///
+    /// @warning - Running all ready handlers, in theory, could process all
+    /// messages currently queued.
+    ///
+    /// NameChangeSender daisy chains requests together in its completion
+    /// by one message completion's handler initiating the next message's send.
+    /// When using UDP, a send immediately marks its event handler as ready
+    /// to run.  If this occurs inside a call to ioservice::poll() or run(),
+    /// that event will also be run.  If that handler calls UDP send then
+    /// that send's handler will be marked ready and executed and so on.  If
+    /// there were 1000 messages in the queue then all them would be sent from
+    /// within the context of one call to runReadyIO().
+    /// By running only one handler at time, we ensure that NCR IO activity
+    /// doesn't starve other processing.  It is unclear how much of a real
+    /// threat this poses but for now it is best to err on the side of caution.
+    ///
+    virtual void runReadyIO();
+
+protected:
+    /// @brief Returns a reference to the send queue.
+    SendQueue& getSendQueue() {
+        return (send_queue_);
     }
 
 private:
@@ -660,6 +773,12 @@ private:
 
     /// @brief Pointer to the request which is in the process of being sent.
     NameChangeRequestPtr ncr_to_send_;
+
+    /// @brief Pointer to the IOService currently being used by the sender.
+    /// @note We need to remember the io_service but we receive it by
+    /// reference.  Use a raw pointer to store it.  This value should never be
+    /// exposed and is only valid while in send mode.
+    asiolink::IOService* io_service_;
 };
 
 /// @brief Defines a smart pointer to an instance of a sender.

@@ -18,14 +18,11 @@
 #include <fstream>
 #include <string>
 
-using namespace std;
-using namespace user_chk;
-
 // The following constants are used throughout the library.  They are defined
 // in load_unload.cc
 
 /// @brief Pointer to the registry instance.
-extern UserRegistryPtr user_registry;
+extern user_chk::UserRegistryPtr user_registry;
 
 /// @brief Output filestream for recording user check outcomes.
 extern std::fstream user_chk_output;

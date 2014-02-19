@@ -60,6 +60,7 @@
  *   - @subpage dhcpv4ConfigInherit
  *   - @subpage dhcpv4OptionsParse
  *   - @subpage dhcpv4DDNSIntegration
+ *   - @subpage dhcpv4Classifier
  *   - @subpage dhcpv4Other
  * - @subpage dhcp6
  *   - @subpage dhcpv6Session
@@ -67,6 +68,7 @@
  *   - @subpage dhcpv6ConfigInherit
  *   - @subpage dhcpv6DDNSIntegration
  *   - @subpage dhcpv6OptionsParse
+ *   - @subpage dhcpv6Classifier
  *   - @subpage dhcpv6Other
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
@@ -74,6 +76,7 @@
  *   - @subpage libdhcpIfaceMgr
  *   - @subpage libdhcpPktFilter
  *   - @subpage libdhcpPktFilter6
+ *   - @subpage libdhcpErrorLogging
  * - @subpage libdhcpsrv
  *   - @subpage leasemgr
  *   - @subpage cfgmgr
@@ -83,10 +86,10 @@
  * - @subpage libdhcp_ddns
  *
  * @section miscellaneousTopics Miscellaneous Topics
- * - @subpage LoggingApi
- *   - @subpage LoggingApiOverview
- *   - @subpage LoggingApiLoggerNames
- *   - @subpage LoggingApiLoggingMessages
+ * - @subpage logBind10Logging
+ *   - @subpage logBasicIdeas
+ *   - @subpage logDeveloperUse
+ *   - @subpage logNotes
  * - @subpage SocketSessionUtility
  * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
  *

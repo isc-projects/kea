@@ -54,7 +54,8 @@ if HAVE_GTEST
 # to unexpected errors. For this reason, the --enable-static-link option is
 # ignored for unit tests built here.
 
-lib_LTLIBRARIES = libco1.la libco2.la
+nodistdir=$(abs_top_builddir)/src/bin/dhcp6/tests
+nodist_LTLIBRARIES = libco1.la libco2.la
 
 libco1_la_SOURCES  = callout_library_1.cc callout_library_common.h
 libco1_la_CXXFLAGS = $(AM_CXXFLAGS)

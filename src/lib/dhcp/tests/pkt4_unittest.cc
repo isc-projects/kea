@@ -17,6 +17,7 @@
 #include <asiolink/io_address.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/libdhcp++.h>
+#include <dhcp/docsis3_option_defs.h>
 #include <dhcp/option_string.h>
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
@@ -316,10 +317,10 @@ TEST_F(Pkt4Test, fixedFields) {
     EXPECT_EQ(dummySecs, pkt->getSecs());
     EXPECT_EQ(dummyFlags, pkt->getFlags());
 
-    EXPECT_EQ(dummyCiaddr.toText(), pkt->getCiaddr().toText());
-    EXPECT_EQ(dummyYiaddr.toText(), pkt->getYiaddr().toText());
-    EXPECT_EQ(dummySiaddr.toText(), pkt->getSiaddr().toText());
-    EXPECT_EQ(dummyGiaddr.toText(), pkt->getGiaddr().toText());
+    EXPECT_EQ(dummyCiaddr, pkt->getCiaddr());
+    EXPECT_EQ(dummyYiaddr, pkt->getYiaddr());
+    EXPECT_EQ(dummySiaddr, pkt->getSiaddr());
+    EXPECT_EQ(dummyGiaddr, pkt->getGiaddr());
 
     // Chaddr contains link-layer addr (MAC). It is no longer always 16 bytes
     // long and its length depends on hlen value (it is up to 16 bytes now).
@@ -382,10 +383,10 @@ TEST_F(Pkt4Test, fixedFieldsUnpack) {
     EXPECT_EQ(dummySecs, pkt->getSecs());
     EXPECT_EQ(dummyFlags, pkt->getFlags());
 
-    EXPECT_EQ(dummyCiaddr.toText(), pkt->getCiaddr().toText());
-    EXPECT_EQ(string("1.2.3.4"), pkt->getYiaddr().toText());
-    EXPECT_EQ(string("192.0.2.255"), pkt->getSiaddr().toText());
-    EXPECT_EQ(string("255.255.255.255"), pkt->getGiaddr().toText());
+    EXPECT_EQ(dummyCiaddr, pkt->getCiaddr());
+    EXPECT_EQ("1.2.3.4", pkt->getYiaddr().toText());
+    EXPECT_EQ("192.0.2.255", pkt->getSiaddr().toText());
+    EXPECT_EQ("255.255.255.255", pkt->getGiaddr().toText());
 
     // chaddr is always 16 bytes long and contains link-layer addr (MAC)
     EXPECT_EQ(0, memcmp(dummyChaddr, &pkt->getHWAddr()->hwaddr_[0], dummyHlen));
@@ -818,7 +819,36 @@ TEST_F(Pkt4Test, isRelayed) {
     // should throw an exception.
     pkt.setGiaddr(IOAddress("0.0.0.0"));
     EXPECT_THROW(pkt.isRelayed(), isc::BadValue);
+}
 
+// Tests whether a packet can be assigned to a class and later
+// checked if it belongs to a given class
+TEST_F(Pkt4Test, clientClasses) {
+    Pkt4 pkt(DHCPOFFER, 1234);
+
+    // Default values (do not belong to any class)
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
+    EXPECT_TRUE(pkt.classes_.empty());
+
+    // Add to the first class
+    pkt.addClass(DOCSIS3_CLASS_EROUTER);
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
+    ASSERT_FALSE(pkt.classes_.empty());
+
+    // Add to a second class
+    pkt.addClass(DOCSIS3_CLASS_MODEM);
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
+    EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_MODEM));
+
+    // Check that it's ok to add to the same class repeatedly
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+    EXPECT_NO_THROW(pkt.addClass("foo"));
+
+    // Check that the packet belongs to 'foo'
+    EXPECT_TRUE(pkt.inClass("foo"));
 }
 
 } // end of anonymous namespace

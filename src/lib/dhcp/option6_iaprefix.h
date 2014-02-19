@@ -90,7 +90,8 @@ public:
 
     /// sets address in this option.
     ///
-    /// @param addr address to be sent in this option
+    /// @param prefix prefix to be sent in this option
+    /// @param length prefix length
     void setPrefix(const isc::asiolink::IOAddress& prefix,
                    uint8_t length) { addr_ = prefix; prefix_len_ = length; }
 

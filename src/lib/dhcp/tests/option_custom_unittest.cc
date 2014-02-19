@@ -667,7 +667,7 @@ TEST_F(OptionCustomTest, ipv4AddressDataArray) {
     for (int i = 0; i < 3; ++i) {
         IOAddress address("10.10.10.10");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 
     // Check that it is ok if buffer length is not a multiple of IPv4
@@ -717,7 +717,7 @@ TEST_F(OptionCustomTest, ipv6AddressDataArray) {
     for (int i = 0; i < 3; ++i) {
         IOAddress address("fe80::4");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 
     // Check that it is ok if buffer length is not a multiple of IPv6
@@ -1451,7 +1451,7 @@ TEST_F(OptionCustomTest, unpack) {
     for (int i = 0; i < 3; ++i) {
         IOAddress address("10.10.10.10");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 
     // Remove all addresses we had added. We are going to replace
@@ -1478,7 +1478,7 @@ TEST_F(OptionCustomTest, unpack) {
     for (int i = 0; i < 2; ++i) {
         IOAddress address("10.10.10.10");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 }
 
@@ -1513,7 +1513,7 @@ TEST_F(OptionCustomTest, initialize) {
     for (int i = 0; i < 3; ++i) {
         IOAddress address("fe80::4");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 
     // Clear addresses we had previously added.
@@ -1539,7 +1539,7 @@ TEST_F(OptionCustomTest, initialize) {
     for (int i = 0; i < 2; ++i) {
         IOAddress address("10.10.10.10");
         ASSERT_NO_THROW(address = option->readAddress(i));
-        EXPECT_EQ(addresses[i].toText(), address.toText());
+        EXPECT_EQ(addresses[i], address);
     }
 }
 

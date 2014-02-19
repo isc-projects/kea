@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -114,6 +114,16 @@ ControlledDhcpv4Srv::dhcp4ConfigHandler(ConstElementPtr new_config) {
         return (answer);
     }
 
+    // Server will start DDNS communications if its enabled.
+    try {
+        server_->startD2();
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "error starting DHCP_DDNS client "
+                " after server reconfiguration: " << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
     // Configuration may change active interfaces. Therefore, we have to reopen
     // sockets according to new configuration. This operation is not exception
     // safe and we really don't want to emit exceptions to the callback caller.
@@ -211,11 +221,15 @@ void ControlledDhcpv4Srv::establishSession() {
 
     try {
         configureDhcp4Server(*this, config_session_->getFullConfig());
+
+        // Server will start DDNS communications if its enabled.
+        server_->startD2();
+
         // Configuration may disable or enable interfaces so we have to
         // reopen sockets according to new configuration.
         openActiveSockets(getPort(), useBroadcast());
 
-    } catch (const DhcpConfigError& ex) {
+    } catch (const std::exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_CONFIG_LOAD_FAIL).arg(ex.what());
 
     }
@@ -226,7 +240,7 @@ void ControlledDhcpv4Srv::establishSession() {
     int ctrl_socket = cc_session_->getSocketDesc();
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_CCSESSION_STARTED)
               .arg(ctrl_socket);
-    IfaceMgr::instance().set_session_socket(ctrl_socket, sessionReader);
+    IfaceMgr::instance().addExternalSocket(ctrl_socket, sessionReader);
 }
 
 void ControlledDhcpv4Srv::disconnectSession() {
@@ -235,13 +249,14 @@ void ControlledDhcpv4Srv::disconnectSession() {
         config_session_ = NULL;
     }
     if (cc_session_) {
+
+        int ctrl_socket = cc_session_->getSocketDesc();
         cc_session_->disconnect();
+
+        IfaceMgr::instance().deleteExternalSocket(ctrl_socket);
         delete cc_session_;
         cc_session_ = NULL;
     }
-
-    // deregister session socket
-    IfaceMgr::instance().set_session_socket(IfaceMgr::INVALID_SOCKET, NULL);
 }
 
 ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)

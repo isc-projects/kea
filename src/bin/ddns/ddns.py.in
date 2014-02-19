@@ -495,10 +495,7 @@ class DDNSServer:
             return False
         msg = update_session.get_message()
         self.__response_renderer.clear()
-        if tsig_ctx is not None:
-            msg.to_wire(self.__response_renderer, tsig_ctx)
-        else:
-            msg.to_wire(self.__response_renderer)
+        msg.to_wire(self.__response_renderer, tsig_ctx)
 
         ret = self.__send_response(sock, self.__response_renderer.get_data(),
                                    remote_addr)

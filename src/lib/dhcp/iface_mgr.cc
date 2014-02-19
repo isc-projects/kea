@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/iface_mgr_error_handler.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/pkt_filter_inet6.h>
 #include <exceptions/exceptions.h>
@@ -149,7 +150,7 @@ bool Iface::delAddress(const isc::asiolink::IOAddress& addr) {
     return (false);
 }
 
-bool Iface::delSocket(uint16_t sockfd) {
+bool Iface::delSocket(const uint16_t sockfd) {
     list<SocketInfo>::iterator sock = sockets_.begin();
     while (sock!=sockets_.end()) {
         if (sock->sockfd_ == sockfd) {
@@ -169,7 +170,6 @@ bool Iface::delSocket(uint16_t sockfd) {
 IfaceMgr::IfaceMgr()
     :control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
      control_buf_(new char[control_buf_len_]),
-     session_socket_(INVALID_SOCKET), session_callback_(NULL),
      packet_filter_(new PktFilterInet()),
      packet_filter6_(new PktFilterInet6())
 {
@@ -192,11 +192,29 @@ void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
     for (Iface::AddressCollection::const_iterator i = unicasts_.begin();
          i != unicasts_.end(); ++i) {
         if (*i == addr) {
-            isc_throw(BadValue, "Address " << addr.toText()
+            isc_throw(BadValue, "Address " << addr
                       << " already defined on the " << name_ << " interface.");
         }
     }
     unicasts_.push_back(addr);
+}
+
+bool
+Iface::getAddress4(isc::asiolink::IOAddress& address) const {
+    // Iterate over existing addresses assigned to the interface.
+    // Try to find the one that is IPv4.
+    const AddressCollection& addrs = getAddresses();
+    for (AddressCollection::const_iterator addr = addrs.begin();
+         addr != addrs.end(); ++addr) {
+        // If address is IPv4, we assign it to the function argument
+        // and return true.
+        if (addr->isV4()) {
+            address = *addr;
+            return (true);
+        }
+    }
+    // There is no IPv4 address assigned to this interface.
+    return (false);
 }
 
 void IfaceMgr::closeSockets() {
@@ -224,6 +242,37 @@ IfaceMgr::~IfaceMgr() {
 bool
 IfaceMgr::isDirectResponseSupported() const {
     return (packet_filter_->isDirectResponseSupported());
+}
+
+void
+IfaceMgr::addExternalSocket(int socketfd, SocketCallback callback) {
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
+         s != callbacks_.end(); ++s) {
+
+        // There's such a socket description there already.
+        // Update the callback and we're done
+        if (s->socket_ == socketfd) {
+            s->callback_ = callback;
+            return;
+        }
+    }
+
+    // Add a new entry to the callbacks vector
+    SocketCallbackInfo x;
+    x.socket_ = socketfd;
+    x.callback_ = callback;
+    callbacks_.push_back(x);
+}
+
+void
+IfaceMgr::deleteExternalSocket(int socketfd) {
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
+         s != callbacks_.end(); ++s) {
+        if (s->socket_ == socketfd) {
+            callbacks_.erase(s);
+            return;
+        }
+    }
 }
 
 void
@@ -279,6 +328,24 @@ IfaceMgr::hasOpenSocket(const uint16_t family) const {
             // Check if the socket matches specified family.
             if (sock->family_ == family) {
                 // There is at least one socket open, so return.
+                return (true);
+            }
+        }
+    }
+    // There are no open sockets found for the specified family.
+    return (false);
+}
+
+bool
+IfaceMgr::hasOpenSocket(const IOAddress& addr) const {
+    // Iterate over all interfaces and search for open sockets.
+    for (IfaceCollection::const_iterator iface = ifaces_.begin();
+         iface != ifaces_.end(); ++iface) {
+        const Iface::SocketCollection& sockets = iface->getSockets();
+        for (Iface::SocketCollection::const_iterator sock = sockets.begin();
+             sock != sockets.end(); ++sock) {
+            // Check if the socket address matches the specified address.
+            if (sock->addr_ == addr) {
                 return (true);
             }
         }
@@ -366,7 +433,6 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                 continue;
             }
 
-            int sock = -1;
             // If selected interface is broadcast capable set appropriate
             // options on the socket so as it can receive and send broadcast
             // messages.
@@ -376,22 +442,24 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
                 // bind to INADDR_ANY address but we can do it only once. Thus,
                 // if one socket has been bound we can't do it any further.
                 if (!bind_to_device && bcast_num > 0) {
-                    handleSocketConfigError("SO_BINDTODEVICE socket option is"
-                                            " not supported on this OS;"
-                                            " therefore, DHCP server can only"
-                                            " listen broadcast traffic on a"
-                                            " single interface",
-                                            error_handler);
+                    IFACEMGR_ERROR(SocketConfigError, error_handler,
+                                   "SO_BINDTODEVICE socket option is"
+                                   " not supported on this OS;"
+                                   " therefore, DHCP server can only"
+                                   " listen broadcast traffic on a"
+                                   " single interface");
                     continue;
 
                 } else {
                     try {
                         // We haven't open any broadcast sockets yet, so we can
                         // open at least one more.
-                        sock = openSocket(iface->getName(), *addr, port,
-                                          true, true);
+                        openSocket(iface->getName(), *addr, port, true, true);
                     } catch (const Exception& ex) {
-                        handleSocketConfigError(ex.what(), error_handler);
+                        IFACEMGR_ERROR(SocketConfigError, error_handler,
+                                       "failed to open socket on interface "
+                                       << iface->getName() << ", reason: "
+                                       << ex.what());
                         continue;
 
                     }
@@ -406,30 +474,26 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             } else {
                 try {
                     // Not broadcast capable, do not set broadcast flags.
-                    sock = openSocket(iface->getName(), *addr, port,
-                                      false, false);
+                    openSocket(iface->getName(), *addr, port, false, false);
                 } catch (const Exception& ex) {
-                    handleSocketConfigError(ex.what(), error_handler);
+                    IFACEMGR_ERROR(SocketConfigError, error_handler,
+                                   "failed to open socket on interface "
+                                   << iface->getName() << ", reason: "
+                                   << ex.what());
                     continue;
                 }
 
             }
-            if (sock < 0) {
-                const char* errstr = strerror(errno);
-                handleSocketConfigError(std::string("failed to open IPv4 socket,"
-                                                    " reason:") + errstr,
-                                        error_handler);
-            } else {
-                ++count;
-            }
+            ++count;
 
         }
     }
     return (count > 0);
 }
 
-bool IfaceMgr::openSockets6(const uint16_t port) {
-    int sock;
+bool
+IfaceMgr::openSockets6(const uint16_t port,
+                       IfaceMgrErrorMsgCallback error_handler) {
     int count = 0;
 
     for (IfaceCollection::iterator iface = ifaces_.begin();
@@ -448,12 +512,14 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
         for (Iface::AddressCollection::iterator addr = unicasts.begin();
              addr != unicasts.end(); ++addr) {
 
-            sock = openSocket(iface->getName(), *addr, port);
-            if (sock < 0) {
-                const char* errstr = strerror(errno);
-                isc_throw(SocketConfigError, "failed to open unicast socket on "
-                          << addr->toText() << " on interface " << iface->getName()
-                          << ", reason: " << errstr);
+            try {
+                openSocket(iface->getName(), *addr, port);
+            } catch (const Exception& ex) {
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "Failed to open unicast socket on  interface "
+                               << iface->getName() << ", reason: "
+                               << ex.what());
+                continue;
             }
 
             count++;
@@ -475,64 +541,20 @@ bool IfaceMgr::openSockets6(const uint16_t port) {
             // with interface with 2 global addresses, we would bind 3 sockets
             // (one for link-local and two for global). That would result in
             // getting each message 3 times.
-            if (!addr->getAddress().to_v6().is_link_local()){
+            if (!addr->isV6LinkLocal()){
                 continue;
             }
 
-            // Open socket and join multicast group only if the interface
-            // is multicast-capable.
-            // @todo The DHCPv6 requires multicast so we may want to think
-            // whether we want to open the socket on a multicast-incapable
-            // interface or not. For now, we prefer to be liberal and allow
-            // it for some odd use cases which may utilize non-multicast
-            // interfaces. Perhaps a warning should be emitted if the
-            // interface is not a multicast one.
-            sock = openSocket(iface->getName(), *addr, port,
-                              iface->flag_multicast_);
-            if (sock < 0) {
-                const char* errstr = strerror(errno);
-                isc_throw(SocketConfigError, "failed to open link-local"
-                          " socket on " << addr->toText() << " on interface "
-                          << iface->getName() << ", reason: " << errstr);
+            // Run OS-specific function to open a socket on link-local address
+            // and join multicast group (non-Linux OSes), or open two sockets and
+            // bind one to link-local, another one to multicast address.
+            if (openMulticastSocket(*iface, *addr, port, error_handler)) {
+                ++count;
             }
 
-            count++;
-
-            /// @todo: Remove this ifdef once we start supporting BSD systems.
-#if defined(OS_LINUX)
-            // To receive multicast traffic, Linux requires binding socket to
-            // a multicast group. That in turn doesn't work on NetBSD.
-            if (iface->flag_multicast_) {
-                int sock2 =
-                    openSocket(iface->getName(),
-                               IOAddress(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
-                               port);
-                if (sock2 < 0) {
-                    const char* errstr = strerror(errno);
-                    isc_throw(SocketConfigError, "Failed to open multicast"
-                              " socket on interface " << iface->getFullName()
-                              << ", reason:" << errstr);
-                    iface->delSocket(sock); // delete previously opened socket
-                }
-            }
-#endif
         }
     }
     return (count > 0);
-}
-
-void
-IfaceMgr::handleSocketConfigError(const std::string& errmsg,
-                                  IfaceMgrErrorMsgCallback handler) {
-    // If error handler is installed, we don't want to throw an exception, but
-    // rather call this handler.
-    if (handler != NULL) {
-        handler(errmsg);
-
-    } else {
-        isc_throw(SocketConfigError, errmsg);
-
-    }
 }
 
 void
@@ -607,7 +629,7 @@ int IfaceMgr::openSocket(const std::string& ifname, const IOAddress& addr,
 
     } else {
         isc_throw(BadValue, "Failed to detect family of address: "
-                  << addr.toText());
+                  << addr);
     }
 }
 
@@ -682,14 +704,14 @@ int IfaceMgr::openSocketFromAddress(const IOAddress& addr,
     }
     // If we got here it means that we did not find specified address
     // on any available interface.
-    isc_throw(BadValue, "There is no such address " << addr.toText());
+    isc_throw(BadValue, "There is no such address " << addr);
 }
 
 int IfaceMgr::openSocketFromRemoteAddress(const IOAddress& remote_addr,
                                           const uint16_t port) {
     try {
         // Get local address to be used to connect to remote location.
-        IOAddress local_address(getLocalAddress(remote_addr, port).getAddress());
+        IOAddress local_address(getLocalAddress(remote_addr, port));
         return openSocketFromAddress(local_address, port);
     } catch (const Exception& e) {
         isc_throw(SocketConfigError, e.what());
@@ -754,7 +776,6 @@ IfaceMgr::getLocalAddress(const IOAddress& remote_addr, const uint16_t port) {
     return IOAddress(local_address);
 }
 
-
 int
 IfaceMgr::openSocket6(Iface& iface, const IOAddress& addr, uint16_t port,
                       const bool join_multicast) {
@@ -816,7 +837,6 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     IfaceCollection::const_iterator iface;
     fd_set sockets;
     int maxfd = 0;
-    stringstream names;
 
     FD_ZERO(&sockets);
 
@@ -831,7 +851,6 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
 
             // Only deal with IPv4 addresses.
             if (s->addr_.isV4()) {
-                names << s->sockfd_ << "(" << iface->getName() << ") ";
 
                 // Add this socket to listening set
                 FD_SET(s->sockfd_, &sockets);
@@ -842,13 +861,15 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
         }
     }
 
-    // if there is session socket registered...
-    if (session_socket_ != INVALID_SOCKET) {
-        // at it to the set as well
-        FD_SET(session_socket_, &sockets);
-        if (maxfd < session_socket_)
-            maxfd = session_socket_;
-        names << session_socket_ << "(session)";
+    // if there are any callbacks for external sockets registered...
+    if (!callbacks_.empty()) {
+        for (SocketCallbackInfoContainer::const_iterator s = callbacks_.begin();
+             s != callbacks_.end(); ++s) {
+            FD_SET(s->socket_, &sockets);
+            if (maxfd < s->socket_) {
+                maxfd = s->socket_;
+            }
+        }
     }
 
     struct timeval select_timeout;
@@ -865,18 +886,22 @@ IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     }
 
     // Let's find out which socket has the data
-    if ((session_socket_ != INVALID_SOCKET) && (FD_ISSET(session_socket_, &sockets))) {
-        // something received over session socket
-        if (session_callback_) {
-            // in theory we could call io_service.run_one() here, instead of
-            // implementing callback mechanism, but that would introduce
-            // asiolink dependency to libdhcp++ and that is something we want
-            // to avoid (see CPE market and out long term plans for minimalistic
-            // implementations.
-            session_callback_();
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
+         s != callbacks_.end(); ++s) {
+        if (!FD_ISSET(s->socket_, &sockets)) {
+            continue;
         }
 
-        return (Pkt4Ptr()); // NULL
+        // something received over external socket
+
+        // Calling the external socket's callback provides its service
+        // layer access without integrating any specific features
+        // in IfaceMgr
+        if (s->callback_) {
+            s->callback_();
+        }
+
+        return (Pkt4Ptr());
     }
 
     // Let's find out which interface/socket has the data
@@ -913,7 +938,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     const SocketInfo* candidate = 0;
     fd_set sockets;
     int maxfd = 0;
-    stringstream names;
 
     FD_ZERO(&sockets);
 
@@ -928,7 +952,6 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
             // Only deal with IPv6 addresses.
             if (s->addr_.isV6()) {
-                names << s->sockfd_ << "(" << iface->getName() << ") ";
 
                 // Add this socket to listening set
                 FD_SET(s->sockfd_, &sockets);
@@ -939,13 +962,17 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
         }
     }
 
-    // if there is session socket registered...
-    if (session_socket_ != INVALID_SOCKET) {
-        // at it to the set as well
-        FD_SET(session_socket_, &sockets);
-        if (maxfd < session_socket_)
-            maxfd = session_socket_;
-        names << session_socket_ << "(session)";
+    // if there are any callbacks for external sockets registered...
+    if (!callbacks_.empty()) {
+        for (SocketCallbackInfoContainer::const_iterator s = callbacks_.begin();
+             s != callbacks_.end(); ++s) {
+
+            // Add it to the set as well
+            FD_SET(s->socket_, &sockets);
+            if (maxfd < s->socket_) {
+                maxfd = s->socket_;
+            }
+        }
     }
 
     struct timeval select_timeout;
@@ -962,18 +989,22 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     }
 
     // Let's find out which socket has the data
-    if ((session_socket_ != INVALID_SOCKET) && (FD_ISSET(session_socket_, &sockets))) {
-        // something received over session socket
-        if (session_callback_) {
-            // in theory we could call io_service.run_one() here, instead of
-            // implementing callback mechanism, but that would introduce
-            // asiolink dependency to libdhcp++ and that is something we want
-            // to avoid (see CPE market and out long term plans for minimalistic
-            // implementations.
-            session_callback_();
+    for (SocketCallbackInfoContainer::iterator s = callbacks_.begin();
+         s != callbacks_.end(); ++s) {
+        if (!FD_ISSET(s->socket_, &sockets)) {
+            continue;
         }
 
-        return (Pkt6Ptr()); // NULL
+        // something received over external socket
+
+        // Calling the external socket's callback provides its service
+        // layer access without integrating any specific features
+        // in IfaceMgr
+        if (s->callback_) {
+            s->callback_();
+        }
+
+        return (Pkt6Ptr());
     }
 
     // Let's find out which interface/socket has the data
@@ -1020,7 +1051,7 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
         }
 
         // Sockets bound to multicast address are useless for sending anything.
-        if (s->addr_.getAddress().to_v6().is_multicast()) {
+        if (s->addr_.isV6Multicast()) {
             continue;
         }
 
@@ -1037,10 +1068,10 @@ uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
             // If we want to send something to link-local and the socket is
             // bound to link-local or we want to send to global and the socket
             // is bound to global, then use it as candidate
-            if ( (pkt.getRemoteAddr().getAddress().to_v6().is_link_local() &&
-                s->addr_.getAddress().to_v6().is_link_local()) ||
-                 (!pkt.getRemoteAddr().getAddress().to_v6().is_link_local() &&
-                  !s->addr_.getAddress().to_v6().is_link_local()) ) {
+            if ( (pkt.getRemoteAddr().isV6LinkLocal() &&
+                s->addr_.isV6LinkLocal()) ||
+                 (!pkt.getRemoteAddr().isV6LinkLocal() &&
+                  !s->addr_.isV6LinkLocal()) ) {
                 candidate = s;
             }
         }
@@ -1075,7 +1106,6 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     isc_throw(Unexpected, "Interface " << iface->getFullName()
               << " does not have any suitable IPv4 sockets open.");
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

@@ -70,6 +70,25 @@ enum NameChangeFormat {
   FMT_JSON
 };
 
+/// @brief Function which converts labels to  NameChangeFormat enum values.
+///
+/// @param fmt_str text to convert to an enum.
+/// Valid string values: "JSON"
+///
+/// @return NameChangeFormat value which maps to the given string.
+///
+/// @throw isc::BadValue if given a string value which does not map to an
+/// enum value.
+extern NameChangeFormat stringToNcrFormat(const std::string& fmt_str);
+
+/// @brief Function which converts NameChangeFormat enums to text labels.
+///
+/// @param format enum value to convert to label
+///
+/// @return std:string containing the text label if the value is valid, or
+/// "UNKNOWN" if not.
+extern std::string ncrFormatToString(NameChangeFormat format);
+
 /// @brief Container class for handling the DHCID value within a
 /// NameChangeRequest. It provides conversion to and from string for JSON
 /// formatting, but stores the data internally as unsigned bytes.

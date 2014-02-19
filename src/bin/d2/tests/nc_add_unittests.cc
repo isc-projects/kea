@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -187,18 +187,11 @@ typedef boost::shared_ptr<NameAddStub> NameAddStubPtr;
 ///
 /// Note this class uses NameAddStub class to exercise non-public
 /// aspects of NameAddTransaction.
-class NameAddTransactionTest : public ::testing::Test {
+class NameAddTransactionTest : public TransactionTest {
 public:
-    IOServicePtr io_service_;
-    DdnsDomainPtr forward_domain_;
-    DdnsDomainPtr reverse_domain_;
 
-    NameAddTransactionTest() : io_service_(new isc::asiolink::IOService()) {
+    NameAddTransactionTest() {
     }
-
-    static const unsigned int FORWARD_CHG = 0x01;
-    static const unsigned int REVERSE_CHG = 0x02;
-    static const unsigned int FWD_AND_REV_CHG = REVERSE_CHG | FORWARD_CHG;
 
     virtual ~NameAddTransactionTest() {
     }
@@ -211,53 +204,12 @@ public:
     /// will have either the forward, reverse, or both domains populated.
     ///
     /// @param change_mask determines which change directions are requested
-    NameAddStubPtr makeTransaction4(int change_mask=FWD_AND_REV_CHG) {
-        const char* msg_str =
-            "{"
-            " \"change_type\" : 0 , "
-            " \"forward_change\" : true , "
-            " \"reverse_change\" : true , "
-            " \"fqdn\" : \"my.forward.example.com.\" , "
-            " \"ip_address\" : \"192.168.2.1\" , "
-            " \"dhcid\" : \"0102030405060708\" , "
-            " \"lease_expires_on\" : \"20130121132405\" , "
-            " \"lease_length\" : 1300 "
-            "}";
-
-        // Create NameChangeRequest from JSON string.
-        dhcp_ddns::NameChangeRequestPtr ncr = dhcp_ddns::NameChangeRequest::
-                                              fromJSON(msg_str);
-
-        // If the change mask does not include a forward change clear the
-        // forward domain; otherwise create the domain and its servers.
-        if (!(change_mask & FORWARD_CHG)) {
-            ncr->setForwardChange(false);
-            forward_domain_.reset();
-        } else {
-            // Create the forward domain and then its servers.
-            forward_domain_ = makeDomain("example.com.");
-            addDomainServer(forward_domain_, "forward.example.com",
-                            "1.1.1.1");
-            addDomainServer(forward_domain_, "forward2.example.com",
-                            "1.1.1.2");
-        }
-
-        // If the change mask does not include a reverse change clear the
-        // reverse domain; otherwise create the domain and its servers.
-        if (!(change_mask & REVERSE_CHG)) {
-            ncr->setReverseChange(false);
-            reverse_domain_.reset();
-        } else {
-            // Create the reverse domain and its server.
-            reverse_domain_ = makeDomain("2.168.192.in.addr.arpa.");
-            addDomainServer(reverse_domain_, "reverse.example.com",
-                            "2.2.2.2");
-            addDomainServer(reverse_domain_, "reverse2.example.com",
-                            "2.2.2.3");
-        }
+    NameAddStubPtr makeTransaction4(int change_mask = FWD_AND_REV_CHG) {
+        // Creates IPv4 remove request, forward, and reverse domains.
+        setupForIPv4Transaction(dhcp_ddns::CHG_ADD, change_mask);
 
         // Now create the test transaction as would occur in update manager.
-        return (NameAddStubPtr(new NameAddStub(io_service_, ncr,
+        return (NameAddStubPtr(new NameAddStub(io_service_, ncr_,
                                                forward_domain_,
                                                reverse_domain_)));
     }
@@ -270,52 +222,15 @@ public:
     /// will have either the forward, reverse, or both domains populated.
     ///
     /// @param change_mask determines which change directions are requested
-    NameAddStubPtr makeTransaction6(int change_mask=FWD_AND_REV_CHG) {
-        const char* msg_str =
-            "{"
-            " \"change_type\" : 0 , "
-            " \"forward_change\" : true , "
-            " \"reverse_change\" : true , "
-            " \"fqdn\" : \"my6.forward.example.com.\" , "
-            " \"ip_address\" : \"2001:1::100\" , "
-            " \"dhcid\" : \"0102030405060708\" , "
-            " \"lease_expires_on\" : \"20130121132405\" , "
-            " \"lease_length\" : 1300 "
-            "}";
-
-        // Create NameChangeRequest from JSON string.
-        dhcp_ddns::NameChangeRequestPtr ncr = makeNcrFromString(msg_str);
-
-        // If the change mask does not include a forward change clear the
-        // forward domain; otherwise create the domain and its servers.
-        if (!(change_mask & FORWARD_CHG)) {
-            ncr->setForwardChange(false);
-            forward_domain_.reset();
-        } else {
-            // Create the forward domain and then its servers.
-            forward_domain_ = makeDomain("example.com.");
-            addDomainServer(forward_domain_, "fwd6-server.example.com",
-                            "2001:1::5");
-        }
-
-        // If the change mask does not include a reverse change clear the
-        // reverse domain; otherwise create the domain and its servers.
-        if (!(change_mask & REVERSE_CHG)) {
-            ncr->setReverseChange(false);
-            reverse_domain_.reset();
-        } else {
-            // Create the reverse domain and its server.
-            reverse_domain_ = makeDomain("1.2001.ip6.arpa.");
-            addDomainServer(reverse_domain_, "rev6-server.example.com",
-                            "2001:1::6");
-        }
+    NameAddStubPtr makeTransaction6(int change_mask = FWD_AND_REV_CHG) {
+        // Creates IPv6 remove request, forward, and reverse domains.
+        setupForIPv6Transaction(dhcp_ddns::CHG_ADD, change_mask);
 
         // Now create the test transaction as would occur in update manager.
-        return (NameAddStubPtr(new NameAddStub(io_service_, ncr,
+        return (NameAddStubPtr(new NameAddStub(io_service_, ncr_,
                                                forward_domain_,
                                                reverse_domain_)));
     }
-
 
     /// @brief Create a test transaction at a known point in the state model.
     ///
@@ -329,15 +244,19 @@ public:
     /// @param state value to set as the current state
     /// @param event value to post as the next event
     /// @param change_mask determines which change directions are requested
+    /// @param family selects between an IPv4 (AF_INET) and IPv6 (AF_INET6)
+    /// transaction.
     NameAddStubPtr prepHandlerTest(unsigned int state, unsigned int event,
-                                   unsigned int change_mask = FWD_AND_REV_CHG) {
-        NameAddStubPtr name_add = makeTransaction4(change_mask);
+                                   unsigned int change_mask = FWD_AND_REV_CHG,
+                                   short family = AF_INET) {
+        NameAddStubPtr name_add =  (family == AF_INET ?
+                                    makeTransaction4(change_mask) :
+                                    makeTransaction4(change_mask));
         name_add->initDictionaries();
         name_add->postNextEvent(event);
         name_add->setState(state);
         return (name_add);
     }
-
 };
 
 /// @brief Tests NameAddTransaction construction.

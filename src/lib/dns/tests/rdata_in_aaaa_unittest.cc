@@ -24,12 +24,14 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_IN_AAAA_Test : public RdataTest {
@@ -117,16 +119,14 @@ TEST_F(Rdata_IN_AAAA_Test, createFromLexer) {
 
 TEST_F(Rdata_IN_AAAA_Test, toWireBuffer) {
     rdata_in_aaaa.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        wiredata_in_aaaa, sizeof(wiredata_in_aaaa));
+    matchWireData(wiredata_in_aaaa, sizeof (wiredata_in_aaaa),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_IN_AAAA_Test, toWireRenderer) {
     rdata_in_aaaa.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata_in_aaaa, sizeof(wiredata_in_aaaa));
+    matchWireData(wiredata_in_aaaa, sizeof (wiredata_in_aaaa),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_IN_AAAA_Test, toText) {

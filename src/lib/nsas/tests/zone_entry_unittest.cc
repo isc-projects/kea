@@ -33,9 +33,11 @@
 
 using namespace isc::nsas;
 using namespace isc::asiolink;
-using namespace std;
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::util;
+using namespace std;
+using isc::util::unittests::TestResolver;
 
 namespace {
 
@@ -473,11 +475,21 @@ TEST_F(ZoneEntryTest, DirectAnswer) {
     EXPECT_EQ(Fetchable::NOT_ASKED, zone->getState());
     resolver_->addPresetAnswer(Question(Name(EXAMPLE_CO_UK), RRClass::IN(),
         RRType::NS()), rr_single_);
+
     Name ns_name("ns.example.net");
-    rrv4_->setName(ns_name);
+
+    rrv4_.reset(new RRset(ns_name, RRClass::IN(), RRType::A(), RRTTL(1200)));
+    rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
+    rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("5.6.7.8")));
+    rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
+
     resolver_->addPresetAnswer(Question(ns_name, RRClass::IN(), RRType::A()),
         rrv4_);
-    rrv6_->setName(ns_name);
+
+    rrv6_.reset(new RRset(ns_name, RRClass::IN(), RRType::AAAA(), RRTTL(900)));
+    rrv6_->addRdata(ConstRdataPtr(new RdataTest<AAAA>("2001::1002")));
+    rrv6_->addRdata(ConstRdataPtr(new RdataTest<AAAA>("dead:beef:feed::")));
+
     resolver_->addPresetAnswer(Question(ns_name, RRClass::IN(),
         RRType::AAAA()), rrv6_);
     // Reset the results

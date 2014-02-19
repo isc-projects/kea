@@ -164,16 +164,16 @@ Feature: DDNS System
     #    And wait for primary stderr message XFROUT_STARTED
     #    And wait for primary stderr message DDNS_STARTED
 
-    #    And I start bind10 with configuration example2.org.config with cmdctl port 47804 as secondary
+    #    And I start bind10 with configuration example2.org.config with cmdctl port 56174 as secondary
     #    And wait for secondary stderr message AUTH_SERVER_STARTED
     #    And wait for secondary stderr message XFRIN_STARTED
 
     #    # Sanity check
     #    The SOA serial for example.org should be 1234
-    #    The SOA serial for example.org at 127.0.0.1:47807 should be 1234
+    #    The SOA serial for example.org at 127.0.0.1:56177 should be 1234
 
     #    When I use DDNS to set the SOA serial to 1235
     #    The DDNS response should be SUCCESS
 
     #    The SOA serial for example.org should be 1235
-    #    The SOA serial for example.org at 127.0.0.1:47807 should be 1235
+    #    The SOA serial for example.org at 127.0.0.1:56177 should be 1235

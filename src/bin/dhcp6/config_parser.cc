@@ -368,7 +368,7 @@ public:
     /// @param ignored first parameter
     /// stores global scope parameters, options, option defintions.
     Subnet6ConfigParser(const std::string&)
-        :SubnetConfigParser("", globalContext()) {
+        :SubnetConfigParser("", globalContext(), IOAddress("::")) {
     }
 
     /// @brief Adds the created subnet to a server's configuration.
@@ -381,6 +381,12 @@ public:
                 isc_throw(Unexpected,
                           "Invalid cast in Subnet4ConfigParser::commit");
             }
+
+            // Set relay infomation if it was provided
+            if (relay_info_) {
+                sub6ptr->setRelayInfo(*relay_info_);
+            }
+
             isc::dhcp::CfgMgr::instance().addSubnet6(sub6ptr);
         }
     }
@@ -404,10 +410,13 @@ protected:
             parser = new Uint32Parser(config_id, uint32_values_);
         } else if ((config_id.compare("subnet") == 0) ||
                    (config_id.compare("interface") == 0) ||
+                   (config_id.compare("client-class") == 0) ||
                    (config_id.compare("interface-id") == 0)) {
             parser = new StringParser(config_id, string_values_);
         } else if (config_id.compare("pool") == 0) {
             parser = new Pool6Parser(config_id, pools_);
+        } else if (config_id.compare("relay") == 0) {
+            parser = new RelayInfoParser(config_id, relay_info_, Option::V6);
         } else if (config_id.compare("pd-pools") == 0) {
             parser = new PdPoolListParser(config_id, pools_);
         } else if (config_id.compare("option-data") == 0) {
@@ -497,12 +506,12 @@ protected:
                       "parser error: interface (defined for locally reachable "
                       "subnets) and interface-id (defined for subnets reachable"
                       " via relays) cannot be defined at the same time for "
-                      "subnet " << addr.toText() << "/" << (int)len);
+                      "subnet " << addr << "/" << (int)len);
             }
         }
 
         stringstream tmp;
-        tmp << addr.toText() << "/" << static_cast<int>(len)
+        tmp << addr << "/" << static_cast<int>(len)
             << " with params t1=" << t1 << ", t2=" << t2 << ", pref="
             << pref << ", valid=" << valid;
 
@@ -516,6 +525,14 @@ protected:
             OptionBuffer tmp(ifaceid.begin(), ifaceid.end());
             OptionPtr opt(new Option(Option::V6, D6O_INTERFACE_ID, tmp));
             subnet6->setInterfaceId(opt);
+        }
+
+        // Try setting up client class (if specified)
+        try {
+            string client_class = string_values_->getParam("client-class");
+            subnet6->allowClientClass(client_class);
+        } catch (const DhcpConfigError&) {
+            // That's ok if it fails. client-class is optional.
         }
 
         subnet_.reset(subnet6);
@@ -645,6 +662,10 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_COMMAND,
               DHCP6_CONFIG_START).arg(config_set->str());
+
+    // Before starting any subnet operations, let's reset the subnet-id counter,
+    // so newly recreated configuration starts with first subnet-id equal 1.
+    Subnet::resetSubnetID();
 
     // Some of the values specified in the configuration depend on
     // other values. Typically, the values in the subnet6 structure

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,6 +24,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcp/classify.h>
 #include <dhcpsrv/key_from_key.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
@@ -154,7 +155,7 @@ public:
         >
     > OptionContainer;
 
-    // Pointer to the OptionContainer object.
+    /// Pointer to the OptionContainer object.
     typedef boost::shared_ptr<OptionContainer> OptionContainerPtr;
     /// Type of the index #1 - option type.
     typedef OptionContainer::nth_index<1>::type OptionContainerTypeIndex;
@@ -165,6 +166,26 @@ public:
                       OptionContainerTypeIndex::const_iterator> OptionContainerTypeRange;
     /// Type of the index #2 - option persistency flag.
     typedef OptionContainer::nth_index<2>::type OptionContainerPersistIndex;
+
+    /// @brief Holds optional information about relay.
+    ///
+    /// In some cases it is beneficial to have additional information about
+    /// a relay configured in the subnet. For now, the structure holds only
+    /// IP address, but there may potentially be additional parameters added
+    /// later, e.g. relay interface-id or relay-id.
+    struct RelayInfo {
+
+        /// @brief default and the only constructor
+        ///
+        /// @param addr an IP address of the relay (may be :: or 0.0.0.0)
+        RelayInfo(const isc::asiolink::IOAddress& addr);
+
+        /// @brief IP address of the relay
+        isc::asiolink::IOAddress addr_;
+    };
+
+    /// Pointer to the RelayInfo structure
+    typedef boost::shared_ptr<Subnet::RelayInfo> RelayInfoPtr;
 
     /// @brief checks if specified address is in range
     bool inRange(const isc::asiolink::IOAddress& addr) const;
@@ -366,6 +387,74 @@ public:
     /// @return textual representation
     virtual std::string toText() const;
 
+    /// @brief Resets subnet-id counter to its initial value (1)
+    ///
+    /// This should be called during reconfiguration, before any new
+    /// subnet objects are created. It will ensure that the subnet_id will
+    /// be consistent between reconfigures.
+    static void resetSubnetID() {
+        static_id_ = 1;
+    }
+
+    /// @brief Sets information about relay
+    ///
+    /// In some situations where there are shared subnets (i.e. two different
+    /// subnets are available on the same physical link), there is only one
+    /// relay that handles incoming requests from clients. In such a case,
+    /// the usual subnet selection criteria based on relay belonging to the
+    /// subnet being selected are no longer sufficient and we need to explicitly
+    /// specify a relay. One notable example of such uncommon, but valid
+    /// scenario is a cable network, where there is only one CMTS (one relay),
+    /// but there are 2 distinct subnets behind it: one for cable modems
+    /// and another one for CPEs and other user equipment behind modems.
+    /// From manageability perspective, it is essential that modems get addresses
+    /// from different subnet, so users won't tinker with their modems.
+    ///
+    /// Setting this parameter is not needed in most deployments.
+    /// This structure holds IP address only for now, but it is expected to
+    /// be extended in the future.
+    ///
+    /// @param relay structure that contains relay information
+    void setRelayInfo(const isc::dhcp::Subnet::RelayInfo& relay);
+
+
+    /// @brief Returns const reference to relay information
+    ///
+    /// @note The returned reference is only valid as long as the object
+    /// returned it is valid.
+    ///
+    /// @return const reference to the relay information
+    const isc::dhcp::Subnet::RelayInfo& getRelayInfo() {
+        return (relay_);
+    }
+
+    /// @brief checks whether this subnet supports client that belongs to
+    ///        specified classes.
+    ///
+    /// This method checks whether a client that belongs to given classes can
+    /// use this subnet. For example, if this class is reserved for client
+    /// class "foo" and the client belongs to classes "foo", "bar" and "baz",
+    /// it is supported. On the other hand, client belonging to classes
+    /// "foobar" and "zyxxy" is not supported.
+    ///
+    /// @todo: Currently the logic is simple: client is supported if it belongs
+    /// to any class mentioned in white_list_. We will eventually need a
+    /// way to specify more fancy logic (e.g. to meet all classes, not just
+    /// any)
+    ///
+    /// @param client_classes list of all classes the client belongs to
+    /// @return true if client can be supported, false otherwise
+    bool
+    clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
+
+    /// @brief adds class class_name to the list of supported classes
+    ///
+    /// Also see explanation note in @ref white_list_.
+    ///
+    /// @param class_name client class to be supported by this subnet
+    void
+    allowClientClass(const isc::dhcp::ClientClass& class_name);
+
 protected:
     /// @brief Returns all pools (non-const variant)
     ///
@@ -378,11 +467,24 @@ protected:
     /// @brief Protected constructor
     //
     /// By making the constructor protected, we make sure that noone will
-    /// ever instantiate that class. Pool4 and Pool6 should be used instead.
+    /// ever instantiate that class. Subnet4 and Subnet6 should be used instead.
+    ///
+    /// This constructor assigns a new subnet-id (see @ref generateNextID).
+    /// This subnet-id has unique value that is strictly monotonously increasing
+    /// for each subnet, until it is explicitly reset back to 1 during
+    /// reconfiguration process.
+    ///
+    /// @param prefix subnet prefix
+    /// @param len prefix length for the subnet
+    /// @param t1 T1 (renewal-time) timer, expressed in seconds
+    /// @param t2 T2 (rebind-time) timer, expressed in seconds
+    /// @param valid_lifetime valid lifetime of leases in this subnet (in seconds)
+    /// @param relay optional relay information (currently with address only)
     Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
            const Triplet<uint32_t>& t1,
            const Triplet<uint32_t>& t2,
-           const Triplet<uint32_t>& valid_lifetime);
+           const Triplet<uint32_t>& valid_lifetime,
+           const isc::dhcp::Subnet::RelayInfo& relay);
 
     /// @brief virtual destructor
     ///
@@ -390,12 +492,25 @@ protected:
     /// derive from this class.
     virtual ~Subnet() { };
 
+    /// @brief keeps the subnet-id value
+    ///
+    /// It is inreased every time a new Subnet object is created. It is reset
+    /// (@ref resetSubnetID) every time reconfiguration
+    /// occurs.
+    ///
+    /// Static value initialized in subnet.cc.
+    static SubnetID static_id_;
+
     /// @brief returns the next unique Subnet-ID
     ///
+    /// This method generates and returns the next unique subnet-id.
+    /// It is a strictly monotonously increasing value (1,2,3,...) for
+    /// each new Subnet object created. It can be explicitly reset
+    /// back to 1 during reconfiguration (@ref resetSubnetID).
+    ///
     /// @return the next unique Subnet-ID
-    static SubnetID getNextID() {
-        static SubnetID id = 0;
-        return (id++);
+    static SubnetID generateNextID() {
+        return (static_id_++);
     }
 
     /// @brief Checks if used pool type is valid
@@ -467,6 +582,26 @@ protected:
     /// @brief Name of the network interface (if connected directly)
     std::string iface_;
 
+    /// @brief Relay information
+    ///
+    /// See @ref RelayInfo for detailed description. This structure is public,
+    /// so its fields are easily accessible. Making it protected would bring in
+    /// the issue of returning references that may become stale after its parent
+    /// subnet object disappears.
+    RelayInfo relay_;
+
+    /// @brief optional definition of a client class
+    ///
+    /// If defined, only clients belonging to that class will be allowed to use
+    /// this particular subnet. The default value for this is an empty list,
+    /// which means that any client is allowed, regardless of its class.
+    ///
+    /// @todo This is just a single list of allowed classes. We'll also need
+    /// to add a black-list (only classes on the list are rejected, the rest
+    /// are allowed). Implementing this will require more fancy parser logic,
+    /// so it may be a while until we support this.
+    ClientClasses white_list_;
+
 private:
 
     /// A collection of option spaces grouping option descriptors.
@@ -494,6 +629,8 @@ class Subnet4 : public Subnet {
 public:
 
     /// @brief Constructor with all parameters
+    ///
+    /// This constructor calls Subnet::Subnet, where subnet-id is generated.
     ///
     /// @param prefix Subnet4 prefix
     /// @param length prefix length
@@ -558,6 +695,8 @@ class Subnet6 : public Subnet {
 public:
 
     /// @brief Constructor with all parameters
+    ///
+    /// This constructor calls Subnet::Subnet, where subnet-id is generated.
     ///
     /// @param prefix Subnet6 prefix
     /// @param length prefix length

@@ -72,12 +72,7 @@ SrvTestBase::createRequestPacket(Message& message,
                                  const char* const remote_address,
                                  uint16_t remote_port)
 {
-    if (context == NULL) {
-        message.toWire(request_renderer);
-    } else {
-        message.toWire(request_renderer, *context);
-    }
-
+    message.toWire(request_renderer, context);
     endpoint.reset(IOEndpoint::create(protocol, IOAddress(remote_address),
                                       remote_port));
     io_sock = (protocol == IPPROTO_UDP) ? &IOSocket::getDummyUDPSocket() :

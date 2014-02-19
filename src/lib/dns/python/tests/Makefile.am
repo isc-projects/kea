@@ -6,6 +6,7 @@ PYTESTS += name_python_test.py
 PYTESTS += nsec3hash_python_test.py
 PYTESTS += question_python_test.py
 PYTESTS += opcode_python_test.py
+PYTESTS += pydnspp_python_test.py
 PYTESTS += rcode_python_test.py
 PYTESTS += rdata_python_test.py
 PYTESTS += rrclass_python_test.py

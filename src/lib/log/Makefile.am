@@ -32,7 +32,7 @@ libb10_log_la_SOURCES += message_types.h
 libb10_log_la_SOURCES += output_option.cc output_option.h
 libb10_log_la_SOURCES += buffer_appender_impl.cc buffer_appender_impl.h
 
-EXTRA_DIST  = README
+EXTRA_DIST  = logging.dox
 EXTRA_DIST += logimpl_messages.mes
 EXTRA_DIST += log_messages.mes
 

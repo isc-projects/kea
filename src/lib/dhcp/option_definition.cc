@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -399,18 +399,49 @@ OptionDefinition::haveVendor6Format() const {
     return  (getType() == OPT_UINT32_TYPE && !getEncapsulatedSpace().empty());
 }
 
+bool
+OptionDefinition::convertToBool(const std::string& value_str) const {
+    // Case insensitve check that the input is one of: "true" or "false".
+    if (boost::iequals(value_str, "true")) {
+        return (true);
+
+    } else if (boost::iequals(value_str, "false")) {
+        return (false);
+
+    }
+
+    // The input string is neither "true" nor "false", so let's check
+    // if it is not an integer wrapped in a string.
+    int result;
+    try {
+       result = boost::lexical_cast<int>(value_str);
+
+    } catch (const boost::bad_lexical_cast&) {
+        isc_throw(BadDataTypeCast, "unable to covert the value '"
+                  << value_str << "' to boolean data type");
+    }
+    // The boolean value is encoded in DHCP option as 0 or 1. Therefore,
+    // we only allow a user to specify those values for options which
+    // have boolean fields.
+    if (result != 1 && result != 0) {
+        isc_throw(BadDataTypeCast, "unable to convert '" << value_str
+                  << "' to boolean data type");
+    }
+    return (static_cast<bool>(result));
+}
+
 template<typename T>
 T
 OptionDefinition::lexicalCastWithRangeCheck(const std::string& value_str)
     const {
-    // Lexical cast in case of our data types make sense only
-    // for uintX_t, intX_t and bool type.
-    if (!OptionDataTypeTraits<T>::integer_type &&
-        OptionDataTypeTraits<T>::type != OPT_BOOLEAN_TYPE) {
+    // The lexical cast should be attempted when converting to an integer
+    // value only.
+    if (!OptionDataTypeTraits<T>::integer_type) {
         isc_throw(BadDataTypeCast,
-                  "unable to do lexical cast to non-integer and"
-                  << " non-boolean data type");
+                  "must not convert '" << value_str
+                  << "' to non-integer data type");
     }
+
     // We use the 64-bit value here because it has wider range than
     // any other type we use here and it allows to detect out of
     // bounds conditions e.g. negative value specified for uintX_t
@@ -419,23 +450,19 @@ OptionDefinition::lexicalCastWithRangeCheck(const std::string& value_str)
     int64_t result = 0;
     try {
         result = boost::lexical_cast<int64_t>(value_str);
-    } catch (const boost::bad_lexical_cast& ex) {
-        // Prepare error message here.
-        std::string data_type_str = "boolean";
-        if (OptionDataTypeTraits<T>::integer_type) {
-            data_type_str = "integer";
-        }
-        isc_throw(BadDataTypeCast, "unable to do lexical cast to "
-                  << data_type_str << " data type for value "
-                  << value_str << ": " << ex.what());
+
+    } catch (const boost::bad_lexical_cast&) {
+        isc_throw(BadDataTypeCast, "unable to convert the value '"
+                  << value_str << "' to integer data type");
     }
-    // Perform range checks for integer values only (exclude bool values).
+    // Perform range checks.
     if (OptionDataTypeTraits<T>::integer_type) {
         if (result > numeric_limits<T>::max() ||
             result < numeric_limits<T>::min()) {
-            isc_throw(BadDataTypeCast, "unable to do lexical cast for value "
-                      << value_str << ". This value is expected to be"
-                      << " in the range of " << numeric_limits<T>::min()
+            isc_throw(BadDataTypeCast, "unable to convert '"
+                      << value_str << "' to numeric type. This value is "
+                      " expected to be in the range of "
+                      << numeric_limits<T>::min()
                       << ".." << numeric_limits<T>::max());
         }
     }
@@ -458,8 +485,7 @@ OptionDefinition::writeToBuffer(const std::string& value,
         // That way we actually waste 7 bits but it seems to be the
         // simpler way to encode boolean.
         // @todo Consider if any other encode methods can be used.
-        OptionDataTypeUtil::writeBool(lexicalCastWithRangeCheck<bool>(value),
-                                      buf);
+        OptionDataTypeUtil::writeBool(convertToBool(value), buf);
         return;
     case OPT_INT8_TYPE:
         OptionDataTypeUtil::writeInt<uint8_t>
@@ -497,7 +523,7 @@ OptionDefinition::writeToBuffer(const std::string& value,
             asiolink::IOAddress address(value);
             if (!address.isV4() && !address.isV6()) {
                 isc_throw(BadDataTypeCast, "provided address "
-                          << address.toText()
+                          << address
                           << " is not a valid IPv4 or IPv6 address.");
             }
             OptionDataTypeUtil::writeAddress(address, buf);
