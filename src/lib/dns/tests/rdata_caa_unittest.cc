@@ -26,14 +26,17 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
+
 #include <boost/algorithm/string.hpp>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_CAA_Test : public RdataTest {
@@ -237,16 +240,11 @@ TEST_F(Rdata_CAA_Test, toText) {
 }
 
 TEST_F(Rdata_CAA_Test, toWire) {
-    this->obuffer.clear();
-    rdata_caa.toWire(this->obuffer);
+    obuffer.clear();
+    rdata_caa.toWire(obuffer);
 
-    EXPECT_EQ(sizeof (rdata_caa_wiredata),
-              this->obuffer.getLength());
-
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        rdata_caa_wiredata, sizeof(rdata_caa_wiredata));
+    matchWireData(rdata_caa_wiredata, sizeof(rdata_caa_wiredata),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_CAA_Test, compare) {
@@ -277,9 +275,8 @@ TEST_F(Rdata_CAA_Test, getValue) {
     };
 
     const std::vector<uint8_t>& value = rdata_caa.getValue();
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        &value[0], value.size(),
-                        value_data, sizeof(value_data));
+    matchWireData(value_data, sizeof(value_data),
+                  &value[0], value.size());
 }
 
 TEST_F(Rdata_CAA_Test, emptyValueFromWire) {
@@ -300,15 +297,11 @@ TEST_F(Rdata_CAA_Test, emptyValueFromWire) {
     EXPECT_EQ(0, rdf.getFlags());
     EXPECT_EQ("issue", rdf.getTag());
 
-    this->obuffer.clear();
-    rdf.toWire(this->obuffer);
+    obuffer.clear();
+    rdf.toWire(obuffer);
 
-    EXPECT_EQ(sizeof(rdf_wiredata), this->obuffer.getLength());
-
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        rdf_wiredata, sizeof(rdf_wiredata));
+    matchWireData(rdf_wiredata, sizeof(rdf_wiredata),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_CAA_Test, emptyValueFromString) {
@@ -325,15 +318,10 @@ TEST_F(Rdata_CAA_Test, emptyValueFromString) {
     EXPECT_EQ(0, rdata_caa2.getFlags());
     EXPECT_EQ("issue", rdata_caa2.getTag());
 
-    this->obuffer.clear();
-    rdata_caa2.toWire(this->obuffer);
+    obuffer.clear();
+    rdata_caa2.toWire(obuffer);
 
-    EXPECT_EQ(sizeof(rdata_caa2_wiredata),
-              this->obuffer.getLength());
-
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        rdata_caa2_wiredata, sizeof(rdata_caa2_wiredata));
+    matchWireData(rdata_caa2_wiredata, sizeof(rdata_caa2_wiredata),
+                  obuffer.getData(), obuffer.getLength());
 }
 }
