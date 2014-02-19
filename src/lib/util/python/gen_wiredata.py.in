@@ -355,7 +355,7 @@ dict_rrtype = { 'none' : 0, 'a' : 1, 'ns' : 2, 'md' : 3, 'mf' : 4, 'cname' : 5,
                 'dhcid' : 49, 'nsec3' : 50, 'nsec3param' : 51, 'tlsa' : 52, 'hip' : 55,
                 'spf' : 99, 'unspec' : 103, 'tkey' : 249, 'tsig' : 250,
                 'dlv' : 32769, 'ixfr' : 251, 'axfr' : 252, 'mailb' : 253,
-                'maila' : 254, 'any' : 255 }
+                'maila' : 254, 'any' : 255, 'caa' : 257 }
 rdict_rrtype = dict([(dict_rrtype[k], k.upper()) for k in dict_rrtype.keys()])
 dict_rrclass = { 'in' : 1, 'ch' : 3, 'hs' : 4, 'any' : 255 }
 rdict_rrclass = dict([(dict_rrclass[k], k.upper()) for k in \
@@ -892,6 +892,32 @@ class AFSDB(RR):
         self.dump_header(f, self.rdlen)
         f.write('# SUBTYPE=%d SERVER=%s\n' % (self.subtype, self.server))
         f.write('%04x %s\n' % (self.subtype, server_wire))
+
+class CAA(RR):
+    '''Implements rendering CAA RDATA in the test data format.
+
+    Configurable parameters are as follows (see the description of the
+    same name of attribute for the default value):
+    - flags (int): The flags field.
+    - tag (string): The tag field.
+    - value (string): The value field.
+    '''
+    flags = 0
+    tag = 'issue'
+    value = 'ca.example.net'
+    def dump(self, f):
+        if self.rdlen is None:
+            self.rdlen = 1 + 1 + len(self.tag) + len(self.value)
+        else:
+            self.rdlen = int(self.rdlen)
+        self.dump_header(f, self.rdlen)
+        f.write('# FLAGS=%d TAG=%s VALUE=%s\n' % \
+                (self.flags, self.tag, self.value))
+        f.write('%02x %02x ' % \
+                (self.flags, len(self.tag)))
+        f.write(encode_string(self.tag))
+        f.write(encode_string(self.value))
+        f.write('\n')
 
 class DNSKEY(RR):
     '''Implements rendering DNSKEY RDATA in the test data format.
