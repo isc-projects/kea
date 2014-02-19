@@ -169,10 +169,14 @@ public:
     /// If there are any classes specified in a subnet, that subnet
     /// will be selected only if the client belongs to appropriate class.
     ///
+    /// @note The client classification is checked before any relay
+    /// information checks are conducted.
+    ///
     /// If relay is true then relay info overrides (i.e. value the sysadmin
-    /// can configure in Dhcp4/subnet6[X]/relay/ip-address) can be used.
-    /// That is true only for relays. Those overrides must not be used
-    /// for client address or for client hints. They are for giaddr only.
+    /// can configure in Dhcp6/subnet6[X]/relay/ip-address) can be used.
+    /// That is applicable only for relays. Those overrides must not be used
+    /// for client address or for client hints. They are for link-addr field
+    /// in the RELAY_FORW message only.
     ///
     /// @param hint an address that belongs to a searched subnet
     /// @param classes classes the client belongs to
@@ -181,7 +185,7 @@ public:
     /// @return a subnet object (or NULL if no suitable match was fount)
     Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint,
                           const isc::dhcp::ClientClasses& classes,
-                          bool relay = false);
+                          const bool relay = false);
 
     /// @brief get IPv6 subnet by interface name
     ///
