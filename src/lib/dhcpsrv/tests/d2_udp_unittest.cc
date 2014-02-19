@@ -106,6 +106,7 @@ public:
         FD_ZERO(&read_fds);
 
         int select_fd = -1;
+        // cppcheck-suppress redundantAssignment
         ASSERT_NO_THROW(select_fd = getSelectFd());
 
         FD_SET(select_fd,  &read_fds);

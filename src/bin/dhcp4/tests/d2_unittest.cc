@@ -41,7 +41,7 @@ D2Dhcpv4Srv::d2ClientErrorHandler(const
 const bool Dhcp4SrvD2Test::SHOULD_PASS;
 const bool Dhcp4SrvD2Test::SHOULD_FAIL;
 
-Dhcp4SrvD2Test::Dhcp4SrvD2Test() {
+Dhcp4SrvD2Test::Dhcp4SrvD2Test() : rcode_(-1) {
 }
 
 Dhcp4SrvD2Test::~Dhcp4SrvD2Test() {
