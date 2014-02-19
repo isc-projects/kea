@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,12 +15,15 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <cc/data.h>
 #include <config/ccsession.h>
+#include <dhcp4/config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/iface_mgr.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr.h>
@@ -28,17 +31,14 @@
 
 using namespace std;
 using namespace isc::asiolink;
-
+using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
 namespace test {
 
-/// dummy server-id file location
-static const char* SRVID_FILE = "server-id-test.txt";
-
 Dhcpv4SrvTest::Dhcpv4SrvTest()
-:rcode_(-1) {
+:rcode_(-1), srv_(0) {
     subnet_ = Subnet4Ptr(new Subnet4(IOAddress("192.0.2.0"), 24, 1000,
                                      2000, 3000));
     pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"), IOAddress("192.0.2.110")));
@@ -52,9 +52,6 @@ Dhcpv4SrvTest::Dhcpv4SrvTest()
     Option4AddrLstPtr opt_routers(new Option4AddrLst(DHO_ROUTERS));
     opt_routers->setAddress(IOAddress("192.0.2.2"));
     subnet_->addOption(opt_routers, false, "dhcp4");
-
-    // it's ok if that fails. There should not be such a file anyway
-    unlink(SRVID_FILE);
 }
 
 Dhcpv4SrvTest::~Dhcpv4SrvTest() {
@@ -126,7 +123,7 @@ void Dhcpv4SrvTest::messageCheck(const Pkt4Ptr& q, const Pkt4Ptr& a) {
     EXPECT_TRUE(a->getOption(DHO_DHCP_SERVER_IDENTIFIER));
 
     // Check that something is offered
-    EXPECT_TRUE(a->getYiaddr().toText() != "0.0.0.0");
+    EXPECT_NE("0.0.0.0", a->getYiaddr().toText());
 }
 
 ::testing::AssertionResult
@@ -299,14 +296,14 @@ Lease4Ptr Dhcpv4SrvTest::checkLease(const Pkt4Ptr& rsp,
 
     Lease4Ptr lease = LeaseMgrFactory::instance().getLease4(expected_addr);
     if (!lease) {
-        cout << "Lease for " << expected_addr.toText()
+        cout << "Lease for " << expected_addr
              << " not found in the database backend.";
         return (Lease4Ptr());
     }
 
-    EXPECT_EQ(rsp->getYiaddr().toText(), expected_addr.toText());
+    EXPECT_EQ(rsp->getYiaddr(), expected_addr);
 
-    EXPECT_EQ(expected_addr.toText(), lease->addr_.toText());
+    EXPECT_EQ(expected_addr, lease->addr_);
     if (client_id) {
         EXPECT_TRUE(*lease->client_id_ == *id);
     }
@@ -387,9 +384,6 @@ void Dhcpv4SrvTest::TearDown() {
 
     CfgMgr::instance().deleteSubnets4();
 
-    // Let's clean up if there is such a file.
-    unlink(SRVID_FILE);
-
     // Close all open sockets.
     IfaceMgr::instance().closeSockets();
 
@@ -413,58 +407,11 @@ void Dhcpv4SrvTest::TearDown() {
 
 }
 
-Dhcpv4SrvFakeIfaceTest::Dhcpv4SrvFakeIfaceTest()
-: Dhcpv4SrvTest(), current_pkt_filter_() {
-    // Remove current interface configuration. Instead we want to add
-    // a couple of fake interfaces.
-    IfaceMgr& ifacemgr = IfaceMgr::instance();
-    ifacemgr.closeSockets();
-    ifacemgr.clearIfaces();
-
-    // Add fake interfaces.
-    ifacemgr.addInterface(createIface("lo", 0, "127.0.0.1"));
-    ifacemgr.addInterface(createIface("eth0", 1, "192.0.3.1"));
-    ifacemgr.addInterface(createIface("eth1", 2, "10.0.0.1"));
-
-    // In order to use fake interfaces we have to supply the custom
-    // packet filtering class, which can mimic opening sockets on
-    // fake interafaces.
-    current_pkt_filter_.reset(new PktFilterTest());
-    ifacemgr.setPacketFilter(current_pkt_filter_);
-    ifacemgr.openSockets4();
-}
-
 void
-Dhcpv4SrvFakeIfaceTest::TearDown() {
-    // The base class function restores the original packet filtering class.
-    Dhcpv4SrvTest::TearDown();
-    // The base class however, doesn't re-detect real interfaces.
-    try {
-        IfaceMgr::instance().clearIfaces();
-        IfaceMgr::instance().detectIfaces();
+Dhcpv4SrvTest::testDiscoverRequest(const uint8_t msg_type) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
 
-    } catch (const Exception& ex) {
-        FAIL() << "Failed to restore interface configuration after using"
-            " fake interfaces";
-    }
-}
-
-Iface
-Dhcpv4SrvFakeIfaceTest::createIface(const std::string& name, const int ifindex,
-                                    const std::string& addr) {
-    Iface iface(name, ifindex);
-    iface.addAddress(IOAddress(addr));
-    if (name == "lo") {
-        iface.flag_loopback_ = true;
-    }
-    iface.flag_up_ = true;
-    iface.flag_running_ = true;
-    iface.inactive4_ = false;
-    return (iface);
-}
-
-void
-Dhcpv4SrvFakeIfaceTest::testDiscoverRequest(const uint8_t msg_type) {
     // Create an instance of the tested class.
     boost::scoped_ptr<NakedDhcpv4Srv> srv(new NakedDhcpv4Srv(0));
 
@@ -607,6 +554,20 @@ Dhcpv4SrvFakeIfaceTest::testDiscoverRequest(const uint8_t msg_type) {
     EXPECT_TRUE(noRequestedOptions(rsp));
     EXPECT_TRUE(noBasicOptions(rsp));
 }
+
+void
+Dhcpv4SrvTest::configure(const std::string& config) {
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv_, json));
+    ASSERT_TRUE(status);
+    int rcode;
+    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
+}
+
 
 }; // end of isc::dhcp::test namespace
 }; // end of isc::dhcp namespace

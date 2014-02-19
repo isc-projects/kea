@@ -41,7 +41,7 @@ using namespace isc::nsas;
 using namespace isc::asiolink;
 using namespace std;
 using namespace isc::dns;
-using namespace rdata;
+using isc::util::unittests::TestResolver;
 
 namespace {
 

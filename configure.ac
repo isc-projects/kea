@@ -76,7 +76,7 @@ AM_CONDITIONAL(USE_CLANGPP, test "X${CLANGPP}" = "Xyes")
 
 dnl Determine if weare using GNU sed
 GNU_SED=no
-$SED --version 2> /dev/null | grep -q GNU
+$SED --version 2> /dev/null | grep GNU > /dev/null 2>&1
 if test $? -eq 0; then
   GNU_SED=yes
 fi
@@ -410,6 +410,24 @@ fi
 AC_SUBST(PYTHON_LIB)
 LDFLAGS=$LDFLAGS_SAVED
 
+# Python 3.2 changed the return type of internal hash function to
+# Py_hash_t and some platforms (such as Solaris) strictly check for long
+# vs Py_hash_t. So we detect and use the appropriate return type.
+# Remove this test (and associated changes in pydnspp_config.h.in) when
+# we require Python 3.2.
+have_py_hash_t=0
+CPPFLAGS_SAVED="$CPPFLAGS"
+CPPFLAGS=${PYTHON_INCLUDES}
+AC_MSG_CHECKING(for Py_hash_t)
+AC_TRY_COMPILE([#include <Python.h>
+                Py_hash_t h;],,
+    [AC_MSG_RESULT(yes)
+     have_py_hash_t=1],
+    [AC_MSG_RESULT(no)])
+CPPFLAGS="$CPPFLAGS_SAVED"
+HAVE_PY_HASH_T=$have_py_hash_t
+AC_SUBST(HAVE_PY_HASH_T)
+
 # Check for the setproctitle module
 if test "$setproctitle_check" = "yes" ; then
     AC_MSG_CHECKING(for setproctitle module)
@@ -427,7 +445,7 @@ fi
 # Python 3.2 has an unused parameter in one of its headers. This
 # has been reported, but not fixed as of yet, so we check if we need
 # to set -Wno-unused-parameter.
-if test "X$GXX" = "Xyes" -a $werror_ok = 1; then
+if test "X$GXX" = "Xyes" -a "$werror_ok" = 1; then
 	CPPFLAGS_SAVED="$CPPFLAGS"
 	CPPFLAGS=${PYTHON_INCLUDES}
 	CXXFLAGS_SAVED="$CXXFLAGS"
@@ -1371,6 +1389,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/dhcp4/spec_config.h.pre
                  src/bin/dhcp4/tests/Makefile
                  src/bin/dhcp4/tests/marker_file.h
+                 src/bin/dhcp4/tests/test_data_files_config.h
                  src/bin/dhcp4/tests/test_libraries.h
                  src/bin/dhcp6/Makefile
                  src/bin/dhcp6/spec_config.h.pre
@@ -1478,6 +1497,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/dns/gen-rdatacode.py
                  src/lib/dns/Makefile
                  src/lib/dns/python/Makefile
+                 src/lib/dns/python/pydnspp_config.h
                  src/lib/dns/python/tests/Makefile
                  src/lib/dns/tests/Makefile
                  src/lib/dns/tests/testdata/Makefile

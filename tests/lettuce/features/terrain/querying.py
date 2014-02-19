@@ -18,7 +18,7 @@
 #
 # query for <name> [type X] [class X] [to <addr>[:port]] should have rcode <rc>
 #
-# By default, it will send queries to 127.0.0.1:47806 unless specified
+# By default, it will send queries to 127.0.0.1:56176 unless specified
 # otherwise. The rcode is always checked. If the result is not NO_ANSWER,
 # the result will be stored in last_query_result, which can then be inspected
 # more closely, for instance with the step
@@ -221,7 +221,7 @@ def query(step, dnssec, recursive, query_name, qtype, qclass, addr, port,
     addr ('to <address>', optional): The IP address of the nameserver to query.
                            Defaults to 127.0.0.1.
     port (':<port>', optional): The port number of the nameserver to query.
-                      Defaults to 47806.
+                      Defaults to 56176.
     rcode ('should have rcode <rcode>'): The expected rcode of the answer.
     """
     if qtype is None:
@@ -232,7 +232,7 @@ def query(step, dnssec, recursive, query_name, qtype, qclass, addr, port,
         addr = "127.0.0.1"
     addr = re.sub(r"\[(.+)\]", r"\1", addr) # convert [IPv6_addr] to IPv6_addr
     if port is None:
-        port = 47806
+        port = 56176
     additional_arguments = []
     if dnssec is not None:
         additional_arguments.append("+dnssec")
@@ -254,7 +254,7 @@ def query(step, dnssec, recursive, query_name, qtype, qclass, addr, port,
 def query_soa(step, query_name, address, port, serial=None):
     """
     Convenience function to check the SOA SERIAL value of the given zone at
-    the nameserver at the default address (127.0.0.1:47806).
+    the nameserver at the default address (127.0.0.1:56176).
     Parameters:
     query_name ('for <name>'): The zone to find the SOA record for.
     serial ('should be <number>'): The expected value of the SOA SERIAL.
@@ -264,7 +264,7 @@ def query_soa(step, query_name, address, port, serial=None):
     if address is None:
         address = "127.0.0.1"
     if port is None:
-        port = "47806"
+        port = "56176"
     query_result = QueryResult(query_name, "SOA", "IN", address, port)
     assert "NOERROR" == query_result.rcode,\
         "Got " + query_result.rcode + ", expected NOERROR"

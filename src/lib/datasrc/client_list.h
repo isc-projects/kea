@@ -316,7 +316,7 @@ typedef boost::shared_ptr<ClientList> ClientListPtr;
 typedef boost::shared_ptr<const ClientList> ConstClientListPtr;
 
 /// \brief Concrete implementation of the ClientList, which is constructed
-/// based on configuration.
+///     based on configuration.
 ///
 /// This is the implementation which is expected to be used in the servers.
 /// However, it is expected most of the code will use it as the ClientList,

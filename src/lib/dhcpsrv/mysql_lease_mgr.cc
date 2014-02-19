@@ -1809,12 +1809,12 @@ MySqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, MYSQL_BIND* bind,
     int affected_rows = mysql_stmt_affected_rows(statements_[stindex]);
     if (affected_rows == 0) {
         isc_throw(NoSuchLease, "unable to update lease for address " <<
-                  lease->addr_.toText() << " as it does not exist");
+                  lease->addr_ << " as it does not exist");
     } else if (affected_rows > 1) {
         // Should not happen - primary key constraint should only have selected
         // one row.
         isc_throw(DbOperationError, "apparently updated more than one lease "
-                  "that had the address " << lease->addr_.toText());
+                  "that had the address " << lease->addr_);
     }
 }
 

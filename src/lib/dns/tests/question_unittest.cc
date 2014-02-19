@@ -28,11 +28,13 @@
 #include <gtest/gtest.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class QuestionTest : public ::testing::Test {
@@ -86,24 +88,30 @@ TEST_F(QuestionTest, fromWire) {
 }
 
 TEST_F(QuestionTest, toText) {
-    EXPECT_EQ("foo.example.com. IN NS\n", test_question1.toText());
-    EXPECT_EQ("bar.example.com. CH A\n", test_question2.toText());
+    EXPECT_EQ("foo.example.com. IN NS", test_question1.toText());
+    EXPECT_EQ("bar.example.com. CH A", test_question2.toText());
+
+    EXPECT_EQ("foo.example.com. IN NS", test_question1.toText(false));
+    EXPECT_EQ("bar.example.com. CH A", test_question2.toText(false));
+
+    EXPECT_EQ("foo.example.com. IN NS\n", test_question1.toText(true));
+    EXPECT_EQ("bar.example.com. CH A\n", test_question2.toText(true));
 }
 
 TEST_F(QuestionTest, toWireBuffer) {
     test_question1.toWire(obuffer);
     test_question2.toWire(obuffer);
     UnitTestUtil::readWireData("question_toWire1", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), &wiredata[0], wiredata.size());
+    matchWireData(&wiredata[0], wiredata.size(),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(QuestionTest, toWireRenderer) {
     test_question1.toWire(renderer);
     test_question2.toWire(renderer);
     UnitTestUtil::readWireData("question_toWire2", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &wiredata[0], wiredata.size());
+    matchWireData(&wiredata[0], wiredata.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(QuestionTest, toWireTruncated) {

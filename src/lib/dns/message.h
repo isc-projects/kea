@@ -21,7 +21,7 @@
 #include <string>
 #include <ostream>
 
-#include <exceptions/exceptions.h>
+#include <dns/exceptions.h>
 
 #include <dns/edns.h>
 #include <dns/question.h>
@@ -41,10 +41,10 @@ class TSIGRecord;
 /// message parser encounters a short length of data that don't even contain
 /// the full header section.
 ///
-class MessageTooShort : public Exception {
+class MessageTooShort : public isc::dns::Exception {
 public:
     MessageTooShort(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
@@ -52,10 +52,10 @@ public:
 /// is being constructed for an incompatible section.  Specifically, this
 /// happens RRset iterator is being constructed for a Question section.
 ///
-class InvalidMessageSection : public Exception {
+class InvalidMessageSection : public isc::dns::Exception {
 public:
     InvalidMessageSection(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
@@ -63,10 +63,10 @@ public:
 /// class method is called that is prohibited for the current mode of
 /// the message.
 ///
-class InvalidMessageOperation : public Exception {
+class InvalidMessageOperation : public isc::dns::Exception {
 public:
     InvalidMessageOperation(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
@@ -74,10 +74,10 @@ public:
 /// smaller than the standard default maximum (DEFAULT_MAX_UDPSIZE) is
 /// being specified for the message.
 ///
-class InvalidMessageUDPSize : public Exception {
+class InvalidMessageUDPSize : public isc::dns::Exception {
 public:
     InvalidMessageUDPSize(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 typedef uint16_t qid_t;
@@ -481,14 +481,14 @@ public:
     /// This should probably be extended to be a "find" method that returns
     /// a matching RRset if found.
     bool hasRRset(const Section section, const Name& name,
-                  const RRClass& rrclass, const RRType& rrtype);
+                  const RRClass& rrclass, const RRType& rrtype) const;
 
     /// \brief Determine whether the given section already has an RRset
     /// matching the one pointed to by the argumet
     ///
     /// \c section must be a valid constant of the \c Section type;
     /// otherwise, an exception of class \c OutOfRange will be thrown.
-    bool hasRRset(const Section section, const RRsetPtr& rrset);
+    bool hasRRset(const Section section, const RRsetPtr& rrset) const;
 
     /// \brief Remove RRSet from Message
     ///
@@ -550,29 +550,18 @@ public:
     std::string toText() const;
 
     /// \brief Render the message in wire formant into a message renderer
-    /// object.
+    /// object with (or without) TSIG.
     ///
     /// This \c Message must be in the \c RENDER mode and both \c Opcode and
     /// \c Rcode must have been set beforehand; otherwise, an exception of
     /// class \c InvalidMessageOperation will be thrown.
     ///
-    /// \note The renderer's internal buffers and data are automatically
-    /// cleared, keeping the length limit and the compression mode intact.
-    /// In case truncation is triggered, the renderer is cleared completely.
-    ///
-    /// \param renderer DNS message rendering context that encapsulates the
-    /// output buffer and name compression information.
-    void toWire(AbstractMessageRenderer& renderer);
-
-    /// \brief Render the message in wire formant into a message renderer
-    /// object with TSIG.
-    ///
-    /// This method is similar to the other version of \c toWire(), but
-    /// it will also add a TSIG RR with (in many cases) the TSIG MAC for
-    /// the message along with the given TSIG context (\c tsig_ctx).
-    /// The TSIG RR will be placed at the end of \c renderer.
-    /// \c tsig_ctx will be updated based on the fact it was used for signing
-    /// and with the latest MAC.
+    /// If a non-NULL \c tsig_ctx is passed, it will also add a TSIG RR
+    /// with (in many cases) the TSIG MAC for the message along with the
+    /// given TSIG context (\c tsig_ctx).  The TSIG RR will be placed at
+    /// the end of \c renderer. The \c TSIGContext at \c tsig_ctx will
+    /// be updated based on the fact it was used for signing and with
+    /// the latest MAC.
     ///
     /// \exception InvalidMessageOperation The message is not in the Render
     /// mode, or either Rcode or Opcode is not set.
@@ -589,10 +578,12 @@ public:
     /// cleared, keeping the length limit and the compression mode intact.
     /// In case truncation is triggered, the renderer is cleared completely.
     ///
-    /// \param renderer See the other version
+    /// \param renderer DNS message rendering context that encapsulates the
+    /// output buffer and name compression information.
     /// \param tsig_ctx A TSIG context that is to be used for signing the
     /// message
-    void toWire(AbstractMessageRenderer& renderer, TSIGContext& tsig_ctx);
+    void toWire(AbstractMessageRenderer& renderer,
+                TSIGContext* tsig_ctx = NULL);
 
     /// Parse options.
     ///
@@ -607,6 +598,10 @@ public:
     };
 
     /// \brief Parse the header section of the \c Message.
+    ///
+    /// NOTE: If the header has already been parsed by a previous call
+    /// to this method, this method simply returns (i.e., it does not
+    /// read from the \c buffer).
     void parseHeader(isc::util::InputBuffer& buffer);
 
     /// \brief (Re)build a \c Message object from wire-format data.
@@ -642,7 +637,8 @@ public:
     /// \exception std::bad_alloc Memory allocation failure
     /// \exception Others \c Name, \c Rdata, and \c EDNS classes can also throw
     ///
-    /// \param buffer A input buffer object that stores the wire data
+    /// \param buffer A input buffer object that stores the wire
+    /// data. This method reads from position 0 in the passed buffer.
     /// \param options Parse options
     void fromWire(isc::util::InputBuffer& buffer, ParseOptions options
         = PARSE_DEFAULT);

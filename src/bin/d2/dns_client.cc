@@ -44,8 +44,17 @@ class DNSClientImpl : public asiodns::IOFetch::Callback {
 public:
     // A buffer holding response from a DNS.
     util::OutputBufferPtr in_buf_;
-    // A caller-supplied object holding a parsed response from DNS.
-    D2UpdateMessagePtr response_;
+    // A caller-supplied object which will hold the parsed response from DNS.
+    // The response object is (or descends from) isc::dns::Message and is
+    // populated using Message::fromWire().  This method may only be called
+    // once in the lifetime of a Message instance.  Therefore, response_ is a
+    // pointer reference thus allowing this class to replace the object
+    // pointed to with a new Message instance each time a message is
+    // received. This allows a single DNSClientImpl instance to be used for
+    // multiple, sequential IOFetch calls. (@todo Trac# 3286 has been opened
+    // against dns::Message::fromWire.  Should the behavior of fromWire change
+    // the behavior here with could be rexamined).
+    D2UpdateMessagePtr& response_;
     // A caller-supplied external callback which is invoked when DNS message
     // exchange is complete or interrupted.
     DNSClient::Callback* callback_;
@@ -81,6 +90,12 @@ DNSClientImpl::DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
     : in_buf_(new OutputBuffer(DEFAULT_BUFFER_SIZE)),
       response_(response_placeholder), callback_(callback), proto_(proto) {
 
+    // Response should be an empty pointer. It gets populated by the
+    // operator() method.
+    if (response_) {
+        isc_throw(isc::BadValue, "Response buffer pointer should be null");
+    }
+
     // @todo Currently we only support UDP. The support for TCP is planned for
     // the future release.
     if (proto_ == DNSClient::TCP) {
@@ -104,12 +119,6 @@ DNSClientImpl::DNSClientImpl(D2UpdateMessagePtr& response_placeholder,
                       << proto_ << "' specified for DNS Updates");
         }
     }
-
-    if (!response_) {
-        isc_throw(BadValue, "a pointer to an object to encapsulate the DNS"
-                  " server must be provided; found NULL value");
-
-    }
 }
 
 DNSClientImpl::~DNSClientImpl() {
@@ -122,13 +131,18 @@ DNSClientImpl::operator()(asiodns::IOFetch::Result result) {
     DNSClient::Status status = getStatus(result);
     if (status == DNSClient::SUCCESS) {
         InputBuffer response_buf(in_buf_->getData(), in_buf_->getLength());
+        // Allocate a new response message. (Note that Message::fromWire
+        // may only be run once per message, so we need to start fresh
+        // each time.)
+        response_.reset(new D2UpdateMessage(D2UpdateMessage::INBOUND));
+
         // Server's response may be corrupted. In such case, fromWire will
         // throw an exception. We want to catch this exception to return
         // appropriate status code to the caller and log this event.
         try {
             response_->fromWire(response_buf);
 
-        } catch (const Exception& ex) {
+        } catch (const isc::Exception& ex) {
             status = DNSClient::INVALID_RESPONSE;
             LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
                       DHCP_DDNS_INVALID_RESPONSE).arg(ex.what());

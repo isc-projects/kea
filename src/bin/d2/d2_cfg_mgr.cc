@@ -119,7 +119,7 @@ std::string
 D2CfgMgr::reverseV4Address(const isc::asiolink::IOAddress& ioaddr) {
     if (!ioaddr.isV4()) {
         isc_throw(D2CfgError, "D2CfgMgr address is not IPv4 address :"
-                              << ioaddr.toText());
+                  << ioaddr);
     }
 
     // Get the address in byte vector form.
@@ -148,8 +148,7 @@ D2CfgMgr::reverseV4Address(const isc::asiolink::IOAddress& ioaddr) {
 std::string
 D2CfgMgr::reverseV6Address(const isc::asiolink::IOAddress& ioaddr) {
     if (!ioaddr.isV6()) {
-        isc_throw(D2CfgError, "D2Cfg address is not IPv6 address: "
-                              << ioaddr.toText());
+        isc_throw(D2CfgError, "D2Cfg address is not IPv6 address: " << ioaddr);
     }
 
     // Turn the address into a string of digits.

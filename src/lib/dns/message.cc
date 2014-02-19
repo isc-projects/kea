@@ -522,7 +522,7 @@ Message::addRRset(const Section section, RRsetPtr rrset) {
 
 bool
 Message::hasRRset(const Section section, const Name& name,
-                  const RRClass& rrclass, const RRType& rrtype)
+                  const RRClass& rrclass, const RRType& rrtype) const
 {
     if (static_cast<int>(section) >= MessageImpl::NUM_SECTIONS) {
         isc_throw(OutOfRange, "Invalid message section: " << section);
@@ -540,8 +540,9 @@ Message::hasRRset(const Section section, const Name& name,
 }
 
 bool
-Message::hasRRset(const Section section, const RRsetPtr& rrset) {
-    return (hasRRset(section, rrset->getName(), rrset->getClass(), rrset->getType()));
+Message::hasRRset(const Section section, const RRsetPtr& rrset) const {
+    return (hasRRset(section, rrset->getName(),
+                     rrset->getClass(), rrset->getType()));
 }
 
 bool
@@ -603,13 +604,8 @@ Message::addQuestion(const Question& question) {
 }
 
 void
-Message::toWire(AbstractMessageRenderer& renderer) {
-    impl_->toWire(renderer, NULL);
-}
-
-void
-Message::toWire(AbstractMessageRenderer& renderer, TSIGContext& tsig_ctx) {
-    impl_->toWire(renderer, &tsig_ctx);
+Message::toWire(AbstractMessageRenderer& renderer, TSIGContext* tsig_ctx) {
+    impl_->toWire(renderer, tsig_ctx);
 }
 
 void
@@ -617,6 +613,10 @@ Message::parseHeader(InputBuffer& buffer) {
     if (impl_->mode_ != Message::PARSE) {
         isc_throw(InvalidMessageOperation,
                   "Message parse attempted in non parse mode");
+    }
+
+    if (impl_->header_parsed_) {
+        return;
     }
 
     if ((buffer.getLength() - buffer.getPosition()) < HEADERLEN) {
@@ -644,9 +644,11 @@ Message::fromWire(InputBuffer& buffer, ParseOptions options) {
                   "Message parse attempted in non parse mode");
     }
 
-    if (!impl_->header_parsed_) {
-        parseHeader(buffer);
-    }
+    // Clear any old parsed data
+    clear(Message::PARSE);
+
+    buffer.setPosition(0);
+    parseHeader(buffer);
 
     impl_->counts_[SECTION_QUESTION] = impl_->parseQuestion(buffer);
     impl_->counts_[SECTION_ANSWER] =
@@ -869,8 +871,11 @@ struct SectionFormatter {
     void operator()(const T& entry) {
         if (section_ == Message::SECTION_QUESTION) {
             output_ += ";";
+            output_ += entry->toText();
+            output_ += "\n";
+        } else {
+            output_ += entry->toText();
         }
-        output_ += entry->toText();
     }
     const Message::Section section_;
     string& output_;
