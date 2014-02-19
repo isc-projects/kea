@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -70,6 +70,9 @@ specified IPv6 subnet to its database.
 A debug message issued when server is being configured to listen on all
 interfaces.
 
+% DHCPSRV_CFGMGR_CFG_DHCP_DDNS Setting DHCP-DDNS configuration to: %1
+A debug message issued when the server's DHCP-DDNS settings are changed.
+
 % DHCPSRV_CFGMGR_CLEAR_ACTIVE_IFACES stop listening on all interfaces
 A debug message issued when configuration manager clears the internal list
 of active interfaces. This doesn't prevent the server from listening to
@@ -135,17 +138,41 @@ the database access parameters are changed: in the latter case, the
 server closes the currently open database, and opens a database using
 the new parameters.
 
-% DHCPSRV_HOOK_LEASE4_SELECT_SKIP Lease4 creation was skipped, because of callout skip flag.
-This debug message is printed when a callout installed on lease4_select
-hook point sets the skip flag. It means that the server was told that
-no lease4 should be assigned. The server will not put that lease in its
-database and the client will get a NAK packet.
+% DHCPSRV_DHCP_DDNS_ERROR_EXCEPTION error handler for DHCP_DDNS IO generated an expected exception: %1
+This is an error message that occurs when an attempt to send a request to
+b10-dhcp-ddns fails there registered error handler threw an uncaught exception.
+This is a programmatic error which should not occur. By convention, the error
+handler should not propagate exceptions. Please report this error.
+
+% DHCPSRV_DHCP_DDNS_HANDLER_NULL error handler for DHCP_DDNS IO is not set.
+This is an error message that occurs when an attempt to send a request to
+b10-dhcp-ddns fails and there is no registered error handler.  This is a
+programmatic error which should never occur and should be reported.
+
+% DHCPSRV_DHCP_DDNS_NCR_SENT NameChangeRequest sent to b10-dhcp-ddns: %1
+A debug message issued when a NameChangeRequest has been successfully sent to
+b10-dhcp-ddns.
+
+% DHCPSRV_DHCP_DDNS_SENDER_STARTED NameChangeRequest sender has been started: %1
+A informational message issued when a communications with b10-dhcp-ddns has
+been successfully started.
+
+% DHCPSRV_DHCP_DDNS_SENDER_STOPPED NameChangeRequest sender has been stopped.
+A informational message issued when a communications with b10-dhcp-ddns has
+been stopped. This normally occurs during reconfiguration and as part of normal
+shutdown. It may occur if b10-dhcp-ddns communications breakdown.
 
 % DHCPSRV_HOOK_LEASE4_RENEW_SKIP DHCPv4 lease was not renewed because a callout set the skip flag.
 This debug message is printed when a callout installed on lease4_renew
 hook point set the skip flag. For this particular hook point, the setting
 of the flag by a callout instructs the server to not renew a lease. The
 server will use existing lease as it is, without extending its lifetime.
+
+% DHCPSRV_HOOK_LEASE4_SELECT_SKIP Lease4 creation was skipped, because of callout skip flag.
+This debug message is printed when a callout installed on lease4_select
+hook point sets the skip flag. It means that the server was told that
+no lease4 should be assigned. The server will not put that lease in its
+database and the client will get a NAK packet.
 
 % DHCPSRV_HOOK_LEASE6_SELECT_SKIP Lease6 (non-temporary) creation was skipped, because of callout skip flag.
 This debug message is printed when a callout installed on lease6_select
@@ -195,6 +222,11 @@ A debug message issued when the server is attempting to obtain a set of
 IPv4 leases from the memory file database for a client with the specified
 client identification.
 
+% DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID obtaining IPv4 lease for client ID %1, hardware address %2 and subnet ID %3
+A debug message issued when the server is attempting to obtain an IPv4
+lease from the memory file database for a client with the specified
+client ID, hardware address and subnet ID.
+
 % DHCPSRV_MEMFILE_GET_HWADDR obtaining IPv4 leases for hardware address %1
 A debug message issued when the server is attempting to obtain a set of
 IPv4 leases from the memory file database for a client with the specified
@@ -209,11 +241,6 @@ IAID (Identity Association ID) and DUID (DHCP Unique Identifier).
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the memory file database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
-
-% DHCPSRV_MEMFILE_GET_CLIENTID_HWADDR_SUBID obtaining IPv4 lease for client ID %1, hardware address %2 and subnet ID %3
-A debug message issued when the server is attempting to obtain an IPv4
-lease from the memory file database for a client with the specified
-client ID, hardware address and subnet ID.
 
 % DHCPSRV_MEMFILE_GET_SUBID_CLIENTID obtaining IPv4 lease for subnet ID %1 and client ID %2
 A debug message issued when the server is attempting to obtain an IPv4
@@ -341,3 +368,16 @@ indicate an error in the source code, please submit a bug report.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software.  This is a configuration error.
+
+% DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES DHCP_DDNS updates are being suspended.
+This is a warning message indicating the DHCP_DDNS updates have been turned
+off.  This should only occur if IO errors communicating with b10-dhcp-ddns
+have been experienced.  Any such errors should have preceding entries in the
+log with details.  No further attempts to communicate with b10-dhcp-ddns will
+be made without intervention.
+
+% DHCPSRV_DHCP_DDNS_NCR_REJECTED NameChangeRequest rejected by the sender: %1, ncr: %2
+This is an error message indicating that NameChangeSender used to deliver DDNS
+update requests to b10-dhcp-ddns rejected the request.  This most likely cause
+is the sender's queue has reached maximum capacity.  This would imply that
+requests are being generated faster than they can be delivered.

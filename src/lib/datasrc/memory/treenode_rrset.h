@@ -155,7 +155,7 @@ public:
         node_(node), rdataset_(rdataset),
         rrsig_count_(rdataset_->getSigRdataCount()), rrclass_(rrclass),
         dnssec_ok_(dnssec_ok), name_(NULL), realname_(new dns::Name(realname)),
-	ttl_data_(rdataset->getTTLData()), ttl_(NULL)
+        ttl_data_(rdataset->getTTLData()), ttl_(NULL)
     {}
 
     virtual ~TreeNodeRRset() {
@@ -167,6 +167,8 @@ public:
     virtual unsigned int getRdataCount() const {
         return (rdataset_->getRdataCount());
     }
+
+    virtual uint16_t getLength() const;
 
     virtual const dns::Name& getName() const;
     virtual const dns::RRClass& getClass() const {
@@ -180,12 +182,7 @@ public:
     /// \brief Specialized version of \c getTTL() for \c TreeNodeRRset.
     virtual const dns::RRTTL& getTTL() const;
 
-    /// \brief Specialized version of \c setName() for \c TreeNodeRRset.
-    ///
-    /// It throws \c isc::Unexpected unconditionally.
-    virtual void setName(const dns::Name& name);
-
-    /// \brief Specialized version of \c setName() for \c TreeNodeRRset.
+    /// \brief Specialized version of \c setTTL() for \c TreeNodeRRset.
     ///
     /// It throws \c isc::Unexpected unconditionally.
     virtual void setTTL(const dns::RRTTL& ttl);
@@ -208,6 +205,11 @@ public:
     ///
     /// It throws \c isc::Unexpected unconditionally.
     virtual void addRdata(const dns::rdata::Rdata& rdata);
+
+    /// \brief Specialized version of \c addRdata() for \c TreeNodeRRset.
+    ///
+    /// It throws \c isc::Unexpected unconditionally.
+    virtual void addRdata(const std::string& rdata_str);
 
     virtual dns::RdataIteratorPtr getRdataIterator() const;
 

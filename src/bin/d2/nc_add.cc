@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -230,7 +230,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
                 // If we get not authorized should we try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_REJECTED)
-                          .arg(getCurrentServer()->getIpAddress())
+                          .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -247,7 +247,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_IO_ERROR)
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             retryTransition(SELECTING_FWD_SERVER_ST);
             break;
@@ -256,7 +256,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_RESP_CORRUPT)
-                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
             retryTransition(SELECTING_FWD_SERVER_ST);
@@ -268,7 +268,7 @@ NameAddTransaction::addingFwdAddrsHandler() {
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_ADD_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             break;
@@ -342,7 +342,7 @@ NameAddTransaction::replacingFwdAddrsHandler() {
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_REJECTED)
-                          .arg(getCurrentServer()->getIpAddress())
+                          .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -359,7 +359,7 @@ NameAddTransaction::replacingFwdAddrsHandler() {
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_IO_ERROR)
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             // If we are out of retries on this server, we go back and start
             // all over on a new server.
@@ -370,7 +370,7 @@ NameAddTransaction::replacingFwdAddrsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_FORWARD_REPLACE_RESP_CORRUPT)
-                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
             // If we are out of retries on this server, we go back and start
@@ -385,7 +385,7 @@ NameAddTransaction::replacingFwdAddrsHandler() {
                       DHCP_DDNS_FORWARD_REPLACE_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             break;
@@ -476,7 +476,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
                 // If we get not authorized should try the next server in
                 // the list? @todo  This needs some discussion perhaps.
                 LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_REJECTED)
-                          .arg(getCurrentServer()->getIpAddress())
+                          .arg(getCurrentServer()->toText())
                           .arg(getNcr()->getFqdn())
                           .arg(rcode.getCode());
                 transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
@@ -493,7 +493,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
             // is not entirely clear if this is accurate.
             LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_IO_ERROR)
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             // If we are out of retries on this server, we go back and start
             // all over on a new server.
@@ -504,7 +504,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
             // A response was received but was corrupt. Retry it like an IO
             // error.
             LOG_ERROR(dctl_logger, DHCP_DDNS_REVERSE_REPLACE_RESP_CORRUPT)
-                      .arg(getCurrentServer()->getIpAddress())
+                      .arg(getCurrentServer()->toText())
                       .arg(getNcr()->getFqdn());
 
             // If we are out of retries on this server, we go back and start
@@ -519,7 +519,7 @@ NameAddTransaction::replacingRevPtrsHandler() {
                       DHCP_DDNS_REVERSE_REPLACE_BAD_DNSCLIENT_STATUS)
                       .arg(getDnsUpdateStatus())
                       .arg(getNcr()->getFqdn())
-                      .arg(getCurrentServer()->getIpAddress());
+                      .arg(getCurrentServer()->toText());
 
             transition(PROCESS_TRANS_FAILED_ST, UPDATE_FAILED_EVT);
             break;
@@ -557,7 +557,7 @@ NameAddTransaction::processAddFailedHandler() {
     case UPDATE_FAILED_EVT:
     case NO_MORE_SERVERS_EVT:
         LOG_ERROR(dctl_logger, DHCP_DDNS_ADD_FAILED).arg(getNcr()->toText())
-        .arg(getContextStr());
+        .arg(getEventLabel(getNextEvent()));
         setNcrStatus(dhcp_ddns::ST_FAILED);
         endModel();
         break;
@@ -588,10 +588,13 @@ NameAddTransaction::buildAddFwdAddressRequest() {
 
     // Next build the Update Section.
 
+    // Create the TTL based on lease length.
+    dns::RRTTL lease_ttl(getNcr()->getLeaseLength());
+
     // Create the FQDN/IP 'add' RR and add it to the to update section.
     // Based on RFC 2136, section 2.5.1
     dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::IN(),
-                         getAddressRRType(), dns::RRTTL(0)));
+                         getAddressRRType(), lease_ttl));
 
     addLeaseAddressRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
@@ -599,7 +602,7 @@ NameAddTransaction::buildAddFwdAddressRequest() {
     // Now create the FQDN/DHCID 'add' RR and add it to update section.
     // Based on RFC 2136, section 2.5.1
     update.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
-                                dns::RRType::DHCID(), dns::RRTTL(0)));
+                                dns::RRType::DHCID(), lease_ttl));
     addDhcidRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
 
@@ -635,6 +638,9 @@ NameAddTransaction::buildReplaceFwdAddressRequest() {
 
     // Next build the Update Section.
 
+    // Create the TTL based on lease length.
+    dns::RRTTL lease_ttl(getNcr()->getLeaseLength());
+
     // Create the FQDN/IP 'delete' RR and add it to the update section.
     // Based on RFC 2136, section 2.5.2
     dns::RRsetPtr update(new dns::RRset(fqdn, dns::RRClass::ANY(),
@@ -644,7 +650,7 @@ NameAddTransaction::buildReplaceFwdAddressRequest() {
     // Create the FQDN/IP 'add' RR and add it to the update section.
     // Based on RFC 2136, section 2.5.1
     update.reset(new dns::RRset(fqdn, dns::RRClass::IN(),
-                                getAddressRRType(), dns::RRTTL(0)));
+                                getAddressRRType(), lease_ttl));
     addLeaseAddressRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
 
@@ -660,6 +666,9 @@ NameAddTransaction::buildReplaceRevPtrsRequest() {
     // Create the reverse IP address "FQDN".
     std::string rev_addr = D2CfgMgr::reverseIpAddress(getNcr()->getIpAddress());
     dns::Name rev_ip(rev_addr);
+
+    // Create the TTL based on lease length.
+    dns::RRTTL lease_ttl(getNcr()->getLeaseLength());
 
     // Content on this request is based on RFC 4703, section 5.4
     // Reverse replacement has no prerequisites so straight on to
@@ -678,14 +687,14 @@ NameAddTransaction::buildReplaceRevPtrsRequest() {
     // Create the FQDN/IP PTR 'add' RR, add the FQDN as the PTR Rdata
     // then add it to update section.
     update.reset(new dns::RRset(rev_ip, dns::RRClass::IN(),
-                                dns::RRType::PTR(), dns::RRTTL(0)));
+                                dns::RRType::PTR(), lease_ttl));
     addPtrRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
 
     // Create the FQDN/IP PTR 'add' RR, add the DHCID Rdata
     // then add it to update section.
     update.reset(new dns::RRset(rev_ip, dns::RRClass::IN(),
-                                dns::RRType::DHCID(), dns::RRTTL(0)));
+                                dns::RRType::DHCID(), lease_ttl));
     addDhcidRdata(update);
     request->addRRset(D2UpdateMessage::SECTION_UPDATE, update);
 

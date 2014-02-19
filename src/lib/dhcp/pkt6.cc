@@ -453,8 +453,8 @@ Pkt6::unpackTCP() {
 std::string
 Pkt6::toText() {
     stringstream tmp;
-    tmp << "localAddr=[" << local_addr_.toText() << "]:" << local_port_
-        << " remoteAddr=[" << remote_addr_.toText()
+    tmp << "localAddr=[" << local_addr_ << "]:" << local_port_
+        << " remoteAddr=[" << remote_addr_
         << "]:" << remote_port_ << endl;
     tmp << "msgtype=" << static_cast<int>(msg_type_) << ", transid=0x" <<
         hex << transid_ << dec << endl;
@@ -586,6 +586,17 @@ void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
     }
 }
 
+bool
+Pkt6::inClass(const std::string& client_class) {
+    return (classes_.find(client_class) != classes_.end());
+}
+
+void
+Pkt6::addClass(const std::string& client_class) {
+    if (classes_.find(client_class) == classes_.end()) {
+        classes_.insert(client_class);
+    }
+}
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

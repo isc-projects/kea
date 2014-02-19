@@ -38,11 +38,6 @@
 #include <dns/rdataclass.h>
 #include "../nsas_entry.h"
 
-using namespace isc::dns::rdata;
-using namespace isc::dns;
-using namespace isc::util;
-using isc::util::unittests::TestResolver;
-
 namespace isc {
 namespace dns {
 
@@ -77,15 +72,15 @@ public:
 /// For this reason, a single class definition
 
 template <typename T>
-class RdataTest: public Rdata {
+class RdataTest: public rdata::Rdata {
 public:
 
     /// \brief Constructor
     ///
     /// Set the data in the object.
     ///
-    /// \param v4address IPV4 address to store.  (The format of this address is
-    /// not checked.)
+    /// \param v4address IPV4 address to store.  (The format of this
+    /// address is not checked.)
     RdataTest(const std::string& data) : data_(data)
     {}
 
@@ -99,8 +94,9 @@ public:
 
     /// \brief Return type of Rdata
     ///
-    /// Returns the type of the data.  May be useful in the tests, although this
-    /// will not appear in the main code as this interface is not defined.
+    /// Returns the type of the data.  May be useful in the tests,
+    /// although this will not appear in the main code as this interface
+    /// is not defined.
     virtual uint16_t getType() const {
         return (type_.getType());
     }
@@ -111,13 +107,13 @@ public:
     ///
     //@{
     /// \brief Render the \c Rdata in the wire format to a buffer
-    virtual void toWire(OutputBuffer& buffer) const;
+    virtual void toWire(isc::util::OutputBuffer& buffer) const;
 
     /// \brief render the \Rdata in the wire format to a \c MessageRenderer
     virtual void toWire(AbstractMessageRenderer& renderer) const;
     
     /// \brief Comparison Method
-    virtual int compare(const Rdata& other) const;
+    virtual int compare(const rdata::Rdata& other) const;
     //@}
 
 private:
@@ -126,7 +122,7 @@ private:
 };
 
 template <typename T>
-void RdataTest<T>::toWire(OutputBuffer&) const {
+void RdataTest<T>::toWire(isc::util::OutputBuffer&) const {
 }
 
 template <typename T>
@@ -134,7 +130,7 @@ void RdataTest<T>::toWire(AbstractMessageRenderer&) const {
 }
 
 template <typename T>
-int RdataTest<T>::compare(const Rdata&) const {
+int RdataTest<T>::compare(const rdata::Rdata&) const {
     return 0;
 }
 
@@ -210,7 +206,8 @@ private:
 ///
 /// Some constants used in the various tests.
 
-static const uint32_t HASHTABLE_DEFAULT_SIZE = 1009; ///< First prime above 1000
+static const uint32_t HASHTABLE_DEFAULT_SIZE = 1009; ///< First prime
+                                                     ///above 1000
 
 // String constants.  These should end in a dot.
 static const std::string EXAMPLE_CO_UK("example.co.uk.");
@@ -219,63 +216,92 @@ static const std::string MIXED_EXAMPLE_CO_UK("EXAmple.co.uk.");
 
 class TestWithRdata : public ::testing::Test {
 protected:
-    typedef boost::shared_ptr<RRset> RRsetPtr;
+    typedef boost::shared_ptr<isc::dns::RRset> RRsetPtr;
     /// \brief Constructor
     ///
-    /// Initializes the RRsets used in the tests.  The RRsets themselves have to
-    /// be initialized with the basic data on their construction. The Rdata for
-    /// them is added in SetUp().
+    /// Initializes the RRsets used in the tests.  The RRsets themselves
+    /// have to be initialized with the basic data on their
+    /// construction. The Rdata for them is added in SetUp().
     TestWithRdata() :
-        rrv4_(new RRset(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::A(),
-            RRTTL(1200))),
-        rrcase_(new RRset(Name(MIXED_EXAMPLE_CO_UK), RRClass::IN(),
-            RRType::A(), RRTTL(1200))),
-        rrch_(new RRset(Name(EXAMPLE_CO_UK), RRClass::CH(), RRType::A(),
-            RRTTL(1200))),
-        rrns_(new RRset(Name(EXAMPLE_CO_UK), RRClass::IN(), RRType::NS(),
-            RRTTL(1200))),
-        rr_single_(new RRset(Name(EXAMPLE_CO_UK), RRClass::IN(),
-            RRType::NS(), RRTTL(600))),
-        rr_empty_(new RRset(Name(EXAMPLE_CO_UK), RRClass::IN(),
-            RRType::NS(), RRTTL(600))),
-        rrv6_(new RRset(Name(EXAMPLE_CO_UK), RRClass::IN(),
-            RRType::AAAA(), RRTTL(900))),
-        rrnet_(new RRset(Name(EXAMPLE_NET), RRClass::IN(), RRType::A(),
-            RRTTL(600))),
+        rrv4_(new isc::dns::RRset(isc::dns::Name(EXAMPLE_CO_UK),
+                                  isc::dns::RRClass::IN(),
+                                  isc::dns::RRType::A(),
+                                  isc::dns::RRTTL(1200))),
+        rrcase_(new isc::dns::RRset(isc::dns::Name(MIXED_EXAMPLE_CO_UK),
+                                    isc::dns::RRClass::IN(),
+                                    isc::dns::RRType::A(),
+                                    isc::dns::RRTTL(1200))),
+        rrch_(new isc::dns::RRset(isc::dns::Name(EXAMPLE_CO_UK),
+                                  isc::dns::RRClass::CH(),
+                                  isc::dns::RRType::A(),
+                                  isc::dns::RRTTL(1200))),
+        rrns_(new isc::dns::RRset(isc::dns::Name(EXAMPLE_CO_UK),
+                                  isc::dns::RRClass::IN(),
+                                  isc::dns::RRType::NS(),
+                                  isc::dns::RRTTL(1200))),
+        rr_single_(new isc::dns::RRset(isc::dns::Name(EXAMPLE_CO_UK),
+                                       isc::dns::RRClass::IN(),
+                                       isc::dns::RRType::NS(),
+                                       isc::dns::RRTTL(600))),
+        rr_empty_(new isc::dns::RRset(isc::dns::Name(EXAMPLE_CO_UK),
+                                      isc::dns::RRClass::IN(),
+                                      isc::dns::RRType::NS(),
+                                      isc::dns::RRTTL(600))),
+        rrv6_(new isc::dns::RRset(isc::dns::Name(EXAMPLE_CO_UK),
+                                  isc::dns::RRClass::IN(),
+                                  isc::dns::RRType::AAAA(),
+                                  isc::dns::RRTTL(900))),
+        rrnet_(new isc::dns::RRset(isc::dns::Name(EXAMPLE_NET),
+                                   isc::dns::RRClass::IN(),
+                                   isc::dns::RRType::A(),
+                                   isc::dns::RRTTL(600))),
         ns_name_("ns.example.net.")
     {}
 
     /// \brief Add Rdata to RRsets
     ///
-    /// The data are added as const pointers to avoid the stricter type checking
-    /// applied by the Rdata code.  There is no need for it in these tests.
+    /// The data are added as const pointers to avoid the stricter type
+    /// checking applied by the Rdata code.  There is no need for it in
+    /// these tests.
     virtual void SetUp() {
 
         // A records
-        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("1.2.3.4")));
-        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("5.6.7.8")));
-        rrv4_->addRdata(ConstRdataPtr(new RdataTest<A>("9.10.11.12")));
+        rrv4_->addRdata(isc::dns::rdata::ConstRdataPtr
+                        (new isc::dns::RdataTest<isc::dns::A>("1.2.3.4")));
+        rrv4_->addRdata(isc::dns::rdata::ConstRdataPtr
+                        (new isc::dns::RdataTest<isc::dns::A>("5.6.7.8")));
+        rrv4_->addRdata(isc::dns::rdata::ConstRdataPtr
+                        (new isc::dns::RdataTest<isc::dns::A>("9.10.11.12")));
 
         // A records
-        rrcase_->addRdata(ConstRdataPtr(new RdataTest<A>("13.14.15.16")));
+        rrcase_->addRdata(isc::dns::rdata::ConstRdataPtr
+                          (new isc::dns::RdataTest<isc::dns::A>
+                           ("13.14.15.16")));
 
         // No idea what Chaosnet address look like other than they are 16 bits
         // The fact that they are type A is probably also incorrect.
-        rrch_->addRdata(ConstRdataPtr(new RdataTest<A>("1324")));
+        rrch_->addRdata(isc::dns::rdata::ConstRdataPtr
+                        (new isc::dns::RdataTest<isc::dns::A>("1324")));
 
         // NS records take a single name
-        rrns_->addRdata(rdata::generic::NS("example.fr."));
-        rrns_->addRdata(rdata::generic::NS("example.de."));
+        rrns_->addRdata(isc::dns::rdata::generic::NS("example.fr."));
+        rrns_->addRdata(isc::dns::rdata::generic::NS("example.de."));
 
         // Single NS record with 0 TTL
-        rr_single_->addRdata(rdata::generic::NS(ns_name_));
+        rr_single_->addRdata(isc::dns::rdata::generic::NS(ns_name_));
 
         // AAAA records
-        rrv6_->addRdata(ConstRdataPtr(new RdataTest<AAAA>("2001::1002")));
-        rrv6_->addRdata(ConstRdataPtr(new RdataTest<AAAA>("dead:beef:feed::")));
+        rrv6_->addRdata(isc::dns::rdata::ConstRdataPtr
+                        (new isc::dns::RdataTest<isc::dns::AAAA>
+                         ("2001::1002")));
+        rrv6_->addRdata(isc::dns::rdata::ConstRdataPtr
+                        (new isc::dns::RdataTest<isc::dns::AAAA>
+                         ("dead:beef:feed::")));
 
         // A record for example.net
-        rrnet_->addRdata(ConstRdataPtr(new RdataTest<A>("17.18.18.20")));
+        rrnet_->addRdata(isc::dns::rdata::ConstRdataPtr
+                         (new isc::dns::RdataTest<isc::dns::A>
+                          ("17.18.18.20")));
     }
 
     /// \brief Data for the tests
@@ -287,7 +313,7 @@ protected:
     RRsetPtr rr_empty_;       ///< NS RRset without any nameservers
     RRsetPtr rrv6_;           ///< Standard RRset, IN, AAAA, lowercase name
     RRsetPtr rrnet_;          ///< example.net A RRset
-    Name ns_name_;  ///< Nameserver name of ns.example.net
+    isc::dns::Name ns_name_;  ///< Nameserver name of ns.example.net
 };
 
 } // namespace nsas

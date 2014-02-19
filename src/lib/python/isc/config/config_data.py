@@ -53,6 +53,22 @@ def spec_part_is_any(spec_part):
     return (type(spec_part) == dict and 'item_type' in spec_part and
             spec_part['item_type'] == "any")
 
+def _type_as_string(value):
+    if type(value) == int:
+        return 'integer'
+    elif type(value) == float:
+        return 'real'
+    elif type(value) == bool:
+        return 'boolean'
+    elif type(value) == str:
+        return 'string'
+    elif type(value) == list:
+        return 'list'
+    elif type(value) == dict:
+        return 'map'
+    else:
+        return '<unknown>'
+
 def check_type(spec_part, value):
     """Does nothing if the value is of the correct type given the
        specification part relevant for the value. Raises an
@@ -65,27 +81,35 @@ def check_type(spec_part, value):
 
     if data_type == "integer":
         if type(value) != int:
-            raise isc.cc.data.DataTypeError(str(value) + " is not an integer")
+            raise isc.cc.data.DataTypeError('%s is not an integer (%s was passed)' % \
+                                            (str(value), _type_as_string(value)))
         if value > sys.maxsize:
-            raise isc.cc.data.DataTypeError(str(value) + " is too large an integer")
+            raise isc.cc.data.DataTypeError('%s is too large an integer' % \
+                                            (str(value)))
     elif data_type == "real":
         if type(value) != float:
-            raise isc.cc.data.DataTypeError(str(value) + " is not a real")
+            raise isc.cc.data.DataTypeError('%s is not a real (%s was passed)' % \
+                                            (str(value), _type_as_string(value)))
         if float(value) > sys.float_info.max:
-            raise isc.cc.data.DataTypeError(str(value) + " is too large a float")
+            raise isc.cc.data.DataTypeError('%s is too large for a float' % \
+                                            (str(value)))
     elif data_type == "boolean" and type(value) != bool:
-        raise isc.cc.data.DataTypeError(str(value) + " is not a boolean")
+        raise isc.cc.data.DataTypeError('%s is not a boolean (%s was passed)' % \
+                                        (str(value), _type_as_string(value)))
     elif data_type == "string" and type(value) != str:
-        raise isc.cc.data.DataTypeError(str(value) + " is not a string")
+        raise isc.cc.data.DataTypeError('%s is not a string (%s was passed)' % \
+                                        (str(value), _type_as_string(value)))
     elif data_type == "list":
         if type(value) != list:
-            raise isc.cc.data.DataTypeError(str(value) + " is not a list")
+            raise isc.cc.data.DataTypeError('%s is not a list (%s was passed)' % \
+                                            (str(value), _type_as_string(value)))
         else:
             for element in value:
                 check_type(spec_part['list_item_spec'], element)
     elif data_type == "map" and type(value) != dict:
         # todo: check types of map contents too
-        raise isc.cc.data.DataTypeError(str(value) + " is not a map")
+        raise isc.cc.data.DataTypeError('%s is not a map (%s was passed)' % \
+                                        (str(value), _type_as_string(value)))
 
 def convert_type(spec_part, value):
     """Convert the given value(type is string) according specification

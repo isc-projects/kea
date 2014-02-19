@@ -53,11 +53,11 @@ int RRset_init(s_RRset* self, PyObject* args);
 void RRset_destroy(s_RRset* self);
 
 PyObject* RRset_getRdataCount(PyObject* self, PyObject* args);
+PyObject* RRset_getLength(PyObject* self, PyObject* args);
 PyObject* RRset_getName(PyObject* self, PyObject* args);
 PyObject* RRset_getClass(PyObject* self, PyObject* args);
 PyObject* RRset_getType(PyObject* self, PyObject* args);
 PyObject* RRset_getTTL(PyObject* self, PyObject* args);
-PyObject* RRset_setName(PyObject* self, PyObject* args);
 PyObject* RRset_setTTL(PyObject* self, PyObject* args);
 PyObject* RRset_toText(PyObject* self, PyObject* args);
 PyObject* RRset_str(PyObject* self);
@@ -71,6 +71,8 @@ PyObject* RRset_removeRRsig(PyObject* self, PyObject* args);
 PyMethodDef RRset_methods[] = {
     { "get_rdata_count", RRset_getRdataCount, METH_NOARGS,
       "Returns the number of rdata fields." },
+    { "get_length", RRset_getLength, METH_NOARGS,
+      "Returns the wire format length of the RRset." },
     { "get_name", RRset_getName, METH_NOARGS,
       "Returns the name of the RRset, as a Name object." },
     { "get_class", RRset_getClass, METH_NOARGS,
@@ -79,8 +81,6 @@ PyMethodDef RRset_methods[] = {
       "Returns the type of the RRset as an RRType object." },
     { "get_ttl", RRset_getTTL, METH_NOARGS,
       "Returns the TTL of the RRset as an RRTTL object." },
-    { "set_name", RRset_setName, METH_VARARGS,
-      "Sets the name of the RRset.\nTakes a Name object as an argument." },
     { "set_ttl", RRset_setTTL, METH_VARARGS,
       "Sets the TTL of the RRset.\nTakes an RRTTL object as an argument." },
     { "to_text", RRset_toText, METH_NOARGS,
@@ -136,6 +136,18 @@ PyObject*
 RRset_getRdataCount(PyObject* self, PyObject*) {
     return (Py_BuildValue("I", static_cast<const s_RRset*>(self)->cppobj->
                           getRdataCount()));
+}
+
+PyObject*
+RRset_getLength(PyObject* self, PyObject*) {
+    try {
+        return (Py_BuildValue("H", static_cast<const s_RRset*>(self)->cppobj->
+                              getLength()));
+    } catch (const EmptyRRset& ers) {
+        PyErr_Clear();
+        PyErr_SetString(po_EmptyRRset, ers.what());
+        return (NULL);
+    }
 }
 
 PyObject*
@@ -207,16 +219,6 @@ RRset_getTTL(PyObject* self, PyObject*) {
 }
 
 PyObject*
-RRset_setName(PyObject* self, PyObject* args) {
-    PyObject* name;
-    if (!PyArg_ParseTuple(args, "O!", &name_type, &name)) {
-        return (NULL);
-    }
-    static_cast<s_RRset*>(self)->cppobj->setName(PyName_ToName(name));
-    Py_RETURN_NONE;
-}
-
-PyObject*
 RRset_setTTL(PyObject* self, PyObject* args) {
     PyObject* rrttl;
     if (!PyArg_ParseTuple(args, "O!", &rrttl_type, &rrttl)) {
@@ -249,9 +251,9 @@ PyObject*
 RRset_toWire(PyObject* self_p, PyObject* args) {
     PyObject* bytes;
     PyObject* mr;
-    const s_RRset* self(static_cast<const s_RRset*>(self_p));
 
     try {
+        const s_RRset* self = static_cast<const s_RRset*>(self_p);
         if (PyArg_ParseTuple(args, "O", &bytes) && PySequence_Check(bytes)) {
             PyObject* bytes_o = bytes;
 

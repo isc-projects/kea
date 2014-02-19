@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -95,7 +95,7 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
                              IOAddress("2001:db8:1::456"));
     ASSERT_TRUE(x);
 
-    EXPECT_EQ(x->addr_.toText(), addr.toText());
+    EXPECT_EQ(x->addr_, addr);
     EXPECT_TRUE(*x->duid_ == *duid);
     EXPECT_EQ(x->iaid_, iaid);
     EXPECT_EQ(x->subnet_id_, subnet_id);
@@ -114,7 +114,7 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
     ASSERT_TRUE(y);
     EXPECT_TRUE(*y->duid_ == *duid);
     EXPECT_EQ(y->iaid_, iaid);
-    EXPECT_EQ(y->addr_.toText(), addr.toText());
+    EXPECT_EQ(y->addr_, addr);
 
     // Test getLease6(duid, iaid, subnet_id) - wrong iaid
     uint32_t invalid_iaid = 9; // no such iaid
@@ -144,7 +144,7 @@ TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
     EXPECT_EQ(Lease6Ptr(), x);
 }
 
-// @todo Write more memfile tests
+/// @todo Write more memfile tests
 
 // Simple test about lease4 retrieval through client id method
 TEST_F(MemfileLeaseMgrTest, getLease4ClientId) {

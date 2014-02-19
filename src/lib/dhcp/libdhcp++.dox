@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -230,5 +230,34 @@ functions.
 
 Use \ref isc::dhcp::IfaceMgr::setPacketFilter function to set the custom packet
 filter object to be used by Interface Manager.
+
+@section libdhcpErrorLogging Logging non-fatal errors in IfaceMgr
+
+The libdhcp++ is a common library, meant to be used by various components,
+such as DHCP servers, relays and clients. It is also used by a perfdhcp
+benchmarking application. It provides a basic capabilities for these
+applications to perform operations on DHCP messages such as encoding
+or decoding them. It also provides capabilities to perform low level
+operations on sockets. Since libdhcp++ is a common library, its dependency
+on other BINDX modules should be minimal. In particular, errors occurring
+in the libdhcp++ are reported using exceptions, not a BINDX logger. This
+works well in most cases, but there are some cases in which it is
+undesired for a function to throw an exception in case of non-fatal error.
+
+The typical case, when exception should not be thrown, is when the \ref
+isc::dhcp::IfaceMgr::openSockets4 or \ref isc::dhcp::IfaceMgr::openSockets6
+fails to open a socket on one of the interfaces. This should not preclude
+the function from attempting to open sockets on other interfaces, which
+would be the case if exception was thrown.
+
+In such cases the IfaceMgr makes use of error handler callback function
+which may be installed by a caller. This function must implement the
+isc::dhcp::IfaceMgrErrorMsgCallback. Note that it is allowed to pass a NULL
+value instead, which would result falling back to a default behavior and
+exception will be thrown. If non-NULL value is provided, the
+\ref isc::dhcp::IfaceMgr will call error handler function and pass an
+error string as an argument. The handler function may use its logging
+mechanism to log this error message. In particular, the DHCP server
+will use BINDX logger to log the error message.
 
 */

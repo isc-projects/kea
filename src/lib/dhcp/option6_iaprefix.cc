@@ -51,7 +51,7 @@ Option6IAPrefix::Option6IAPrefix(uint32_t type, OptionBuffer::const_iterator beg
 
 void Option6IAPrefix::pack(isc::util::OutputBuffer& buf) {
     if (!addr_.isV6()) {
-        isc_throw(isc::BadValue, addr_.toText() << " is not an IPv6 address");
+        isc_throw(isc::BadValue, addr_ << " is not an IPv6 address");
     }
 
     buf.writeUint16(type_);
@@ -76,10 +76,10 @@ void Option6IAPrefix::unpack(OptionBuffer::const_iterator begin,
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
 
-    preferred_ = readUint32( &(*begin) );
+    preferred_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
 
-    valid_ = readUint32( &(*begin) );
+    valid_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
 
     prefix_len_ = *begin;
@@ -98,7 +98,7 @@ std::string Option6IAPrefix::toText(int indent /* =0 */) {
     for (int i=0; i<indent; i++)
         tmp << " ";
 
-    tmp << "type=" << type_ << "(IAPREFIX) prefix=" << addr_.toText() << "/"
+    tmp << "type=" << type_ << "(IAPREFIX) prefix=" << addr_ << "/"
         << prefix_len_ << ", preferred-lft=" << preferred_ << ", valid-lft="
         << valid_ << endl;
 

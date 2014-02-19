@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -24,12 +24,14 @@
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp/classify.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <hooks/hooks_manager.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
+#include "test_data_files_config.h"
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
@@ -49,6 +51,23 @@ using namespace isc::hooks;
 using namespace std;
 
 namespace {
+
+/// @brief Prepends the given name with the DHCP4 source directory
+///
+/// @param name file name of the desired file
+/// @return string containing the absolute path of the file in the DHCP source
+/// directory.
+std::string specfile(const std::string& name) {
+    return (std::string(DHCP4_SRC_DIR) + "/" + name);
+}
+
+/// @brief Tests that the spec file is valid.
+/// Verifies that the BIND10 DHCP-DDNS configuration specification file
+//  is valid.
+TEST(Dhcp4SpecTest, basicSpec) {
+    (isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));
+    ASSERT_NO_THROW(isc::config::moduleSpecFromFile(specfile("dhcp4.spec")));
+}
 
 class Dhcp4ParserTest : public ::testing::Test {
 public:
@@ -119,19 +138,19 @@ public:
             params["name"] = param_value;
             params["space"] = "dhcp4";
             params["code"] = "56";
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "space") {
             params["name"] = "dhcp-message";
             params["space"] = param_value;
             params["code"] = "56";
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "code") {
             params["name"] = "dhcp-message";
             params["space"] = "dhcp4";
             params["code"] = param_value;
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = "False";
         } else if (parameter == "data") {
             params["name"] = "dhcp-message";
@@ -143,7 +162,7 @@ public:
             params["name"] = "dhcp-message";
             params["space"] = "dhcp4";
             params["code"] = "56";
-            params["data"] = "AB CDEF0105";
+            params["data"] = "ABCDEF0105";
             params["csv-format"] = param_value;
         }
         return (createConfigWithOption(params));
@@ -194,6 +213,63 @@ public:
         return (stream.str());
     }
 
+    /// @brief Returns an option from the subnet.
+    ///
+    /// This function returns an option from a subnet to which the
+    /// specified subnet address belongs. The option is identified
+    /// by its code.
+    ///
+    /// @param subnet_address Address which belongs to the subnet from
+    /// which the option is to be returned.
+    /// @param option_code Code of the option to be returned.
+    /// @param expected_options_count Expected number of options in
+    /// the particular subnet.
+    ///
+    /// @return Descriptor of the option. If the descriptor holds a
+    /// NULL option pointer, it means that there was no such option
+    /// in the subnet.
+    Subnet::OptionDescriptor
+    getOptionFromSubnet(const IOAddress& subnet_address,
+                        const uint16_t option_code,
+                        const uint16_t expected_options_count = 1) {
+        Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(subnet_address,
+                                                          classify_);
+        if (!subnet) {
+            /// @todo replace toText() with the use of operator <<.
+            ADD_FAILURE() << "A subnet for the specified address "
+                          << subnet_address.toText()
+                          << "does not exist in Config Manager";
+        }
+        Subnet::OptionContainerPtr options =
+            subnet->getOptionDescriptors("dhcp4");
+        if (expected_options_count != options->size()) {
+            ADD_FAILURE() << "The number of options in the subnet '"
+                          << subnet_address.toText() << "' is different "
+                " than expected number of options '"
+                          << expected_options_count << "'";
+        }
+
+        // Get the search index. Index #1 is to search using option code.
+        const Subnet::OptionContainerTypeIndex& idx = options->get<1>();
+
+        // Get the options for specified index. Expecting one option to be
+        // returned but in theory we may have multiple options with the same
+        // code so we get the range.
+        std::pair<Subnet::OptionContainerTypeIndex::const_iterator,
+                  Subnet::OptionContainerTypeIndex::const_iterator> range =
+            idx.equal_range(option_code);
+        if (std::distance(range.first, range.second) > 1) {
+            ADD_FAILURE() << "There is more than one option having the"
+                " option code '" << option_code << "' in a subnet '"
+                          << subnet_address.toText() << "'. Expected "
+                " at most one option";
+        } else if (std::distance(range.first, range.second) == 0) {
+            return (Subnet::OptionDescriptor(OptionPtr(), false));
+        }
+
+        return (*range.first);
+    }
+
     /// @brief Test invalid option parameter value.
     ///
     /// This test function constructs the simple configuration
@@ -208,6 +284,24 @@ public:
                                 const std::string& parameter) {
         ConstElementPtr x;
         std::string config = createConfigWithOption(param_value, parameter);
+        ElementPtr json = Element::fromJSON(config);
+        EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(1, rcode_);
+    }
+
+    /// @brief Test invalid option paramater value.
+    ///
+    /// This test function constructs the simple configuration
+    /// string and injects invalid option configuration into it.
+    /// It expects that parser will fail with provided option code.
+    ///
+    /// @param params Map of parameters defining an option.
+    void
+    testInvalidOptionParam(const std::map<std::string, std::string>& params) {
+        ConstElementPtr x;
+        std::string config = createConfigWithOption(params);
         ElementPtr json = Element::fromJSON(config);
         EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
         ASSERT_TRUE(x);
@@ -254,6 +348,39 @@ public:
         const uint8_t* data = static_cast<const uint8_t*>(buf.getData());
         EXPECT_EQ(0, memcmp(expected_data, data + option_desc.option->getHeaderLen(),
                             expected_data_len));
+    }
+
+    /// @brief Test option configuration.
+    ///
+    /// This function creates a configuration for a specified option using
+    /// a map of parameters specified as the argument. The map holds
+    /// name/value pairs which identifies option's configuration parameters:
+    /// - name
+    /// - space
+    /// - code
+    /// - data
+    /// - csv-format.
+    /// This function applies a new server configuration and checks that the
+    /// option being configured is inserted into CfgMgr. The raw contents of
+    /// this option are compared with the binary data specified as expected
+    /// data passed to this function.
+    ///
+    /// @param params Map of parameters defining an option.
+    /// @param option_code Option code.
+    /// @param expected_data Array containing binary data expected to be stored
+    /// in the configured option.
+    /// @param expected_data_len Length of the array holding reference data.
+    void testConfiguration(const std::map<std::string, std::string>& params,
+                           const uint16_t option_code,
+                           const uint8_t* expected_data,
+                           const size_t expected_data_len) {
+        std::string config = createConfigWithOption(params);
+        ASSERT_TRUE(executeConfiguration(config, "parse option configuration"));
+        // The subnet should now hold one option with the specified option code.
+        Subnet::OptionDescriptor desc =
+            getOptionFromSubnet(IOAddress("192.0.2.24"), option_code);
+        ASSERT_TRUE(desc.option);
+        testOption(desc, option_code, expected_data, expected_data_len);
     }
 
     /// @brief Parse and Execute configuration
@@ -321,6 +448,7 @@ public:
             "\"renew-timer\": 1000, "
             "\"valid-lifetime\": 4000, "
             "\"subnet4\": [ ], "
+            "\"dhcp-ddns\": { \"enable-updates\" : false }, "
             "\"option-def\": [ ], "
             "\"option-data\": [ ] }";
         static_cast<void>(executeConfiguration(config,
@@ -328,9 +456,10 @@ public:
     }
 
 
-    boost::scoped_ptr<Dhcpv4Srv> srv_;      // DHCP4 server under test
-    int rcode_;                             // Return code from element parsing
-    ConstElementPtr comment_;               // Reason for parse fail
+    boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
+    int rcode_;                         ///< Return code from element parsing
+    ConstElementPtr comment_;           ///< Reason for parse fail
+    isc::dhcp::ClientClasses classify_; ///< used in client classification
 };
 
 // Goal of this test is a verification if a very simple config update
@@ -405,12 +534,200 @@ TEST_F(Dhcp4ParserTest, subnetGlobalDefaults) {
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
     EXPECT_EQ(4000, subnet->getValid());
+
+    // Check that subnet-id is 1
+    EXPECT_EQ(1, subnet->getID());
 }
+
+// Goal of this test is to verify that multiple subnets get unique
+// subnet-ids. Also, test checks that it's possible to do reconfiguration
+// multiple times.
+TEST_F(Dhcp4ParserTest, multipleSubnets) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"subnet\": \"192.0.4.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"subnet\": \"192.0.5.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    int cnt = 0; // Number of reconfigurations
+
+    do {
+        ElementPtr json = Element::fromJSON(config);
+
+        EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+        ASSERT_TRUE(x);
+        comment_ = parseAnswer(rcode_, x);
+        ASSERT_EQ(0, rcode_);
+
+        const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+        ASSERT_TRUE(subnets);
+        ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+        // Check subnet-ids of each subnet (it should be monotonously increasing)
+        EXPECT_EQ(1, subnets->at(0)->getID());
+        EXPECT_EQ(2, subnets->at(1)->getID());
+        EXPECT_EQ(3, subnets->at(2)->getID());
+        EXPECT_EQ(4, subnets->at(3)->getID());
+
+        // Repeat reconfiguration process 10 times and check that the subnet-id
+        // is set to the same value. Technically, just two iterations would be
+        // sufficient, but it's nice to have a test that exercises reconfiguration
+        // a bit.
+    } while (++cnt < 10);
+}
+
+// Goal of this test is to verify that a previously configured subnet can be
+// deleted in subsequent reconfiguration.
+TEST_F(Dhcp4ParserTest, reconfigureRemoveSubnet) {
+    ConstElementPtr x;
+
+    // All four subnets
+    string config4 = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"subnet\": \"192.0.4.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"subnet\": \"192.0.5.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Three subnets (the last one removed)
+    string config_first3 = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"subnet\": \"192.0.3.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"subnet\": \"192.0.4.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Second subnet removed
+    string config_second_removed = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"subnet\": \"192.0.4.0/24\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"subnet\": \"192.0.5.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    // CASE 1: Configure 4 subnets, then reconfigure and remove the
+    // last one.
+
+    ElementPtr json = Element::fromJSON(config4);
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+    // Do the reconfiguration (the last subnet is removed)
+    json = Element::fromJSON(config_first3);
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    subnets = CfgMgr::instance().getSubnets4();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size()); // We expect 3 subnets now (4th is removed)
+
+    // Check subnet-ids of each subnet (it should be monotonously increasing)
+    EXPECT_EQ(1, subnets->at(0)->getID());
+    EXPECT_EQ(2, subnets->at(1)->getID());
+    EXPECT_EQ(3, subnets->at(2)->getID());
+
+    /// CASE 2: Configure 4 subnets, then reconfigure and remove one
+    /// from in between (not first, not last)
+
+#if 0
+    /// @todo: Uncomment subnet removal test as part of #3281.
+    json = Element::fromJSON(config4);
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    // Do reconfiguration
+    json = Element::fromJSON(config_second_removed);
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    subnets = CfgMgr::instance().getSubnets4();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(3, subnets->size()); // We expect 4 subnets
+
+    EXPECT_EQ(1, subnets->at(0)->getID());
+    // The second subnet (with subnet-id = 2) is no longer there
+    EXPECT_EQ(3, subnets->at(1)->getID());
+    EXPECT_EQ(4, subnets->at(2)->getID());
+#endif
+
+}
+
+/// @todo: implement subnet removal test as part of #3281.
 
 // Checks if the next-server defined as global parameter is taken into
 // consideration.
@@ -436,7 +753,8 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
 }
@@ -465,7 +783,8 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
 }
@@ -552,7 +871,8 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
 
     // Now check if the configuration was indeed handled and we have
     // expected pool configured.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
 }
@@ -622,7 +942,8 @@ TEST_F(Dhcp4ParserTest, subnetLocal) {
     // returned value should be 0 (configuration success)
     checkResult(status, 0);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1, subnet->getT1());
     EXPECT_EQ(2, subnet->getT2());
@@ -674,7 +995,8 @@ TEST_F(Dhcp4ParserTest, poolPrefixLen) {
     // returned value must be 0 (configuration accepted)
     checkResult(status, 0);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     EXPECT_EQ(1000, subnet->getT1());
     EXPECT_EQ(2000, subnet->getT2());
@@ -1112,14 +1434,13 @@ TEST_F(Dhcp4ParserTest, optionDefEncapsulateOwnSpace) {
 
 /// The purpose of this test is to verify that it is not allowed
 /// to override the standard option (that belongs to dhcp4 option
-/// space) and that it is allowed to define option in the dhcp4
-/// option space that has a code which is not used by any of the
-/// standard options.
+/// space and has its definition) and that it is allowed to define
+/// option in the dhcp4 option space that has a code which is not
+/// used by any of the standard options.
 TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
 
-    // Configuration string. The option code 109 is unassigned
-    // so it can be used for a custom option definition in
-    // dhcp4 option space.
+    // Configuration string. The option code 109 is unassigned so it
+    // can be used for a custom option definition in dhcp4 option space.
     std::string config =
         "{ \"option-def\": [ {"
         "      \"name\": \"foo\","
@@ -1152,15 +1473,14 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     EXPECT_EQ(OPT_STRING_TYPE, def->getType());
     EXPECT_FALSE(def->getArrayType());
 
-    // The combination of option space and code is
-    // invalid. The 'dhcp4' option space groups
-    // standard options and the code 100 is reserved
-    // for one of them.
+    // The combination of option space and code is invalid. The 'dhcp4' option
+    // space groups standard options and the code 3 is reserved for one of
+    // them.
     config =
         "{ \"option-def\": [ {"
-        "      \"name\": \"foo\","
-        "      \"code\": 100,"
-        "      \"type\": \"string\","
+        "      \"name\": \"routers\","
+        "      \"code\": 3,"
+        "      \"type\": \"ipv4-address\","
         "      \"array\": False,"
         "      \"record-types\": \"\","
         "      \"space\": \"dhcp4\","
@@ -1174,6 +1494,40 @@ TEST_F(Dhcp4ParserTest, optionStandardDefOverride) {
     ASSERT_TRUE(status);
     // Expecting parsing error (error code 1).
     checkResult(status, 1);
+
+    /// @todo The option 65 is a standard DHCPv4 option. However, at this point
+    /// there is no definition for this option in libdhcp++, so it should be
+    /// allowed to define it from the configuration interface. This test will
+    /// have to be removed once definitions for remaining standard options are
+    /// created.
+    config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"nis-server-addr\","
+        "      \"code\": 65,"
+        "      \"type\": \"ipv4-address\","
+        "      \"array\": False,"
+        "      \"record-types\": \"\","
+        "      \"space\": \"dhcp4\","
+        "      \"encapsulate\": \"\""
+        "  } ]"
+        "}";
+    json = Element::fromJSON(config);
+
+    // Use the configuration string to create new option definition.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(status);
+    // Expecting success.
+    checkResult(status, 0);
+
+    def = CfgMgr::instance().getOptionDef("dhcp4", 65);
+    ASSERT_TRUE(def);
+
+    // Check the option data.
+    EXPECT_EQ("nis-server-addr", def->getName());
+    EXPECT_EQ(65, def->getCode());
+    EXPECT_EQ(OPT_IPV4_ADDRESS_TYPE, def->getType());
+    EXPECT_FALSE(def->getArrayType());
+
 }
 
 // Goal of this test is to verify that global option
@@ -1188,7 +1542,7 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
         "    \"name\": \"dhcp-message\","
         "    \"space\": \"dhcp4\","
         "    \"code\": 56,"
-        "    \"data\": \"AB CDEF0105\","
+        "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
@@ -1211,7 +1565,8 @@ TEST_F(Dhcp4ParserTest, optionDataDefaults) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
     ASSERT_EQ(2, options->size());
@@ -1261,7 +1616,7 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
         "    \"name\": \"dhcp-message\","
         "    \"space\": \"dhcp4\","
         "    \"code\": 56,"
-        "    \"data\": \"AB CDEF0105\","
+        "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
@@ -1295,7 +1650,8 @@ TEST_F(Dhcp4ParserTest, optionDataTwoSpaces) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     // Try to get the option from the space dhcp4.
     Subnet::OptionDescriptor desc1 = subnet->getOptionDescriptor("dhcp4", 56);
@@ -1438,7 +1794,6 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
         " } ]"
         "}";
 
-
     json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
@@ -1446,7 +1801,8 @@ TEST_F(Dhcp4ParserTest, optionDataEncapsulate) {
     checkResult(status, 0);
 
     // Get the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
@@ -1494,7 +1850,7 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         "          \"name\": \"dhcp-message\","
         "          \"space\": \"dhcp4\","
         "          \"code\": 56,"
-        "          \"data\": \"AB CDEF0105\","
+        "          \"data\": \"ABCDEF0105\","
         "          \"csv-format\": False"
         "        },"
         "        {"
@@ -1514,7 +1870,8 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.24"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.24"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
     ASSERT_EQ(2, options->size());
@@ -1543,6 +1900,89 @@ TEST_F(Dhcp4ParserTest, optionDataInSingleSubnet) {
         0x01
     };
     testOption(*range.first, 23, foo2_expected, sizeof(foo2_expected));
+}
+
+// The goal of this test is to check that the option carrying a boolean
+// value can be configured using one of the values: "true", "false", "0"
+// or "1".
+TEST_F(Dhcp4ParserTest, optionDataBoolean) {
+    // Create configuration. Use standard option 19 (ip-forwarding).
+    std::map<std::string, std::string> params;
+    params["name"] = "ip-forwarding";
+    params["space"] = "dhcp4";
+    params["code"] = "19";
+    params["data"] = "true";
+    params["csv-format"] = "true";
+
+    std::string config = createConfigWithOption(params);
+    ASSERT_TRUE(executeConfiguration(config, "parse configuration with a"
+                                     " boolean value"));
+
+    // The subnet should now hold one option with the code 19.
+    Subnet::OptionDescriptor desc = getOptionFromSubnet(IOAddress("192.0.2.24"),
+                                                        19);
+    ASSERT_TRUE(desc.option);
+
+    // This option should be set to "true", represented as 0x1 in the option
+    // buffer.
+    uint8_t expected_option_data[] = {
+        0x1
+    };
+    testConfiguration(params, 19, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Configure the option with the "1" value. This should have the same
+    // effect as if "true" was specified.
+    params["data"] = "1";
+    testConfiguration(params, 19, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // The value of "1" with a few leading zeros should work too.
+    params["data"] = "00001";
+    testConfiguration(params, 19, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Configure the option with the "false" value.
+    params["data"] = "false";
+    // The option buffer should now hold the value of 0.
+    expected_option_data[0] = 0;
+    testConfiguration(params, 19, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Specifying "0" should have the same effect as "false".
+    params["data"] = "0";
+    testConfiguration(params, 19, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // The same effect should be for multiple 0 chars.
+    params["data"] = "00000";
+    testConfiguration(params, 19, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // Bogus values should not be accepted.
+    params["data"] = "bugus";
+    testInvalidOptionParam(params);
+
+    params["data"] = "2";
+    testInvalidOptionParam(params);
+
+    // Now let's test that it is possible to use binary format.
+    params["data"] = "0";
+    params["csv-format"] = "false";
+    testConfiguration(params, 19, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // The binary 1 should work as well.
+    params["data"] = "1";
+    expected_option_data[0] = 1;
+    testConfiguration(params, 19, expected_option_data,
+                      sizeof(expected_option_data));
+
+    // As well as an even number of digits.
+    params["data"] = "01";
+    testConfiguration(params, 19, expected_option_data,
+                      sizeof(expected_option_data));
+
 }
 
 // Goal of this test is to verify options configuration
@@ -1583,7 +2023,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet4Ptr subnet1 = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.100"));
+    Subnet4Ptr subnet1 = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.100"),
+                                                       classify_);
     ASSERT_TRUE(subnet1);
     Subnet::OptionContainerPtr options1 = subnet1->getOptionDescriptors("dhcp4");
     ASSERT_EQ(1, options1->size());
@@ -1607,7 +2048,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     testOption(*range1.first, 56, foo_expected, sizeof(foo_expected));
 
     // Test another subnet in the same way.
-    Subnet4Ptr subnet2 = CfgMgr::instance().getSubnet4(IOAddress("192.0.3.102"));
+    Subnet4Ptr subnet2 = CfgMgr::instance().getSubnet4(IOAddress("192.0.3.102"),
+                                                       classify_);
     ASSERT_TRUE(subnet2);
     Subnet::OptionContainerPtr options2 = subnet2->getOptionDescriptors("dhcp4");
     ASSERT_EQ(1, options2->size());
@@ -1621,6 +2063,8 @@ TEST_F(Dhcp4ParserTest, optionDataInMultipleSubnets) {
     const uint8_t foo2_expected[] = { 0xFF };
     testOption(*range2.first, 23, foo2_expected, sizeof(foo2_expected));
 }
+
+
 
 // Verify that empty option name is rejected in the configuration.
 TEST_F(Dhcp4ParserTest, optionNameEmpty) {
@@ -1672,14 +2116,6 @@ TEST_F(Dhcp4ParserTest, optionDataUnexpectedPrefix) {
     testInvalidOptionParam("0x0102", "data");
 }
 
-// Verify that option data consisting od an odd number of
-// hexadecimal digits is rejected in the configuration.
-TEST_F(Dhcp4ParserTest, optionDataOddLength) {
-    // Option code 0 is reserved and should not be accepted
-    // by configuration parser.
-    testInvalidOptionParam("123", "data");
-}
-
 // Verify that either lower or upper case characters are allowed
 // to specify the option data.
 TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
@@ -1692,7 +2128,8 @@ TEST_F(Dhcp4ParserTest, optionDataLowerCase) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options = subnet->getOptionDescriptors("dhcp4");
     ASSERT_EQ(1, options->size());
@@ -1736,7 +2173,8 @@ TEST_F(Dhcp4ParserTest, stdOptionData) {
     comment_ = parseAnswer(rcode_, x);
     ASSERT_EQ(0, rcode_);
 
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
     Subnet::OptionContainerPtr options =
         subnet->getOptionDescriptors("dhcp4");
@@ -1938,7 +2376,8 @@ TEST_F(Dhcp4ParserTest, stdOptionDataEncapsulate) {
     checkResult(status, 0);
 
     // Get the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // We should have one option available.
@@ -1995,7 +2434,7 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
         "    \"name\": \"option-one\","
         "    \"space\": \"vendor-4491\"," // VENDOR_ID_CABLE_LABS = 4491
         "    \"code\": 100," // just a random code
-        "    \"data\": \"AB CDEF0105\","
+        "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
@@ -2020,7 +2459,8 @@ TEST_F(Dhcp4ParserTest, vendorOptionsHex) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Try to get the option from the vendor space 4491
@@ -2079,7 +2519,8 @@ TEST_F(Dhcp4ParserTest, vendorOptionsCsv) {
     checkResult(status, 0);
 
     // Options should be now available for the subnet.
-    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"));
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.5"),
+                                                      classify_);
     ASSERT_TRUE(subnet);
 
     // Try to get the option from the vendor space 4491
@@ -2127,7 +2568,7 @@ buildHooksLibrariesConfig(const std::vector<std::string>& libraries) {
         "    \"name\": \"dhcp-message\","
         "    \"space\": \"dhcp4\","
         "    \"code\": 56,"
-        "    \"data\": \"AB CDEF0105\","
+        "    \"data\": \"ABCDEF0105\","
         "    \"csv-format\": False"
         " },"
         " {"
@@ -2299,6 +2740,233 @@ TEST_F(Dhcp4ParserTest, allInterfaces) {
     EXPECT_TRUE(CfgMgr::instance().isActiveIface("eth2"));
 }
 
+// This test checks the ability of the server to parse a configuration
+// containing a full, valid dhcp-ddns (D2ClientConfig) entry.
+TEST_F(Dhcp4ParserTest, d2ClientConfig) {
+    ConstElementPtr status;
 
+    // Verify that the D2 configuraiton can be fetched and is set to disabled.
+    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify that the convenience method agrees.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    string config_str = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-port\" : 777, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"allow-client-update\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "\"valid-lifetime\": 4000 }";
+
+    // Convert the JSON string to configuration elements.
+    ElementPtr config;
+    ASSERT_NO_THROW(config = Element::fromJSON(config_str));
+
+    // Pass the configuration in for parsing.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Verify that DHCP-DDNS updating is enabled.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Verify that the D2 configuration can be retrieved.
+    d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are correct.
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(777, d2_client_config->getServerPort());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
+    EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_TRUE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+}
+
+// This test checks the ability of the server to handle a configuration
+// containing an invalid dhcp-ddns (D2ClientConfig) entry.
+TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
+    ConstElementPtr status;
+
+    // Configuration string with an invalid D2 client config,
+    // "server-ip" is missing.
+    string config_str = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-port\" : 5301, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"allow-client-update\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "\"valid-lifetime\": 4000 }";
+
+    // Convert the JSON string to configuration elements.
+    ElementPtr config;
+    ASSERT_NO_THROW(config = Element::fromJSON(config_str));
+
+    // Configuration should not throw, but should fail.
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, config));
+
+    // check if returned status is failed.
+    checkResult(status, 1);
+
+    // Verify that the D2 configuraiton can be fetched and is set to disabled.
+    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify that the convenience method agrees.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+}
+
+// This test checks if it is possible to specify relay information
+TEST_F(Dhcp4ParserTest, subnetRelayInfo) {
+
+    ConstElementPtr status;
+
+    // A config with relay information.
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"renew-timer\": 1, "
+        "    \"rebind-timer\": 2, "
+        "    \"valid-lifetime\": 4,"
+        "    \"relay\": { "
+        "        \"ip-address\": \"192.0.2.123\""
+        "    },"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (configuration success)
+    checkResult(status, 0);
+
+    Subnet4Ptr subnet = CfgMgr::instance().getSubnet4(IOAddress("192.0.2.200"),
+                                                      classify_);
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("192.0.2.123", subnet->getRelayInfo().addr_.toText());
+}
+
+// Goal of this test is to verify that multiple subnets can be configured
+// with defined client classes.
+TEST_F(Dhcp4ParserTest, classifySubnets) {
+    ConstElementPtr x;
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pool\": [ \"192.0.2.1 - 192.0.2.100\" ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"client-class\": \"alpha\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.3.101 - 192.0.3.150\" ],"
+        "    \"subnet\": \"192.0.3.0/24\", "
+        "    \"client-class\": \"beta\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.4.101 - 192.0.4.150\" ],"
+        "    \"subnet\": \"192.0.4.0/24\", "
+        "    \"client-class\": \"gamma\" "
+        " },"
+        " {"
+        "    \"pool\": [ \"192.0.5.101 - 192.0.5.150\" ],"
+        "    \"subnet\": \"192.0.5.0/24\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
+    ASSERT_TRUE(x);
+    comment_ = parseAnswer(rcode_, x);
+    ASSERT_EQ(0, rcode_);
+
+    const Subnet4Collection* subnets = CfgMgr::instance().getSubnets4();
+    ASSERT_TRUE(subnets);
+    ASSERT_EQ(4, subnets->size()); // We expect 4 subnets
+
+    // Let's check if client belonging to alpha class is supported in subnet[0]
+    // and not supported in any other subnet (except subnet[3], which allows
+    // everyone).
+    ClientClasses classes;
+    classes.insert("alpha");
+    EXPECT_TRUE (subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to beta class is supported in subnet[1]
+    // and not supported in any other subnet  (except subnet[3], which allows
+    // everyone).
+    classes.clear();
+    classes.insert("beta");
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to gamma class is supported in subnet[2]
+    // and not supported in any other subnet  (except subnet[3], which allows
+    // everyone).
+    classes.clear();
+    classes.insert("gamma");
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Let's check if client belonging to some other class (not mentioned in
+    // the config) is supported only in subnet[3], which allows everyone.
+    classes.clear();
+    classes.insert("delta");
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+
+    // Finally, let's check class-less client. He should be allowed only in
+    // the last subnet, which does not have any class restrictions.
+    classes.clear();
+    EXPECT_FALSE(subnets->at(0)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(1)->clientSupported(classes));
+    EXPECT_FALSE(subnets->at(2)->clientSupported(classes));
+    EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
+}
 
 }

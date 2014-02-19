@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -33,6 +33,7 @@
 namespace isc {
 
 namespace dhcp {
+
 
 /// @brief IfaceMgr exception thrown thrown when interface detection fails.
 class IfaceDetectError : public Exception {
@@ -245,6 +246,17 @@ public:
     /// @return collection of addresses
     const AddressCollection& getAddresses() const { return addrs_; }
 
+    /// @brief Returns IPv4 address assigned to the interface.
+    ///
+    /// This function looks for an IPv4 address assigned to the interface
+    /// and returns it through the argument.
+    ///
+    /// @param [out] address IPv4 address assigned to the interface.
+    ///
+    /// @return Boolean value which informs whether IPv4 address has been found
+    /// for the interface (if true), or not (false).
+    bool getAddress4(isc::asiolink::IOAddress& address) const;
+
     /// @brief Adds an address to an interface.
     ///
     /// This only adds an address to collection, it does not physically
@@ -393,8 +405,20 @@ boost::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
 ///
 class IfaceMgr : public boost::noncopyable {
 public:
-    /// Defines callback used when commands are received over control session.
-    typedef void (*SessionCallback) (void);
+    /// Defines callback used when data is received over external sockets.
+    typedef boost::function<void ()> SocketCallback;
+
+    /// Keeps callback information for external sockets.
+    struct SocketCallbackInfo {
+        /// Socket descriptor of the external socket.
+        int socket_;
+
+        /// A callback that will be called when data arrives over socket_.
+        SocketCallback callback_;
+    };
+
+    /// Defines storage container for callbacks for external sockets
+    typedef std::list<SocketCallbackInfo> SocketCallbackInfoContainer;
 
     /// @brief Packet reception buffer size
     ///
@@ -643,24 +667,43 @@ public:
 
     /// @brief Opens IPv6 sockets on detected interfaces.
     ///
-    /// @todo This function will throw an exception immediately when a socket
-    /// fails to open. This is undersired behavior because it will preclude
-    /// other sockets from opening. We should strive to provide similar mechanism
-    /// that has been introduced for V4 sockets. If socket creation fails the
-    /// appropriate error handler is called and once the handler returns the
-    /// function contnues to open other sockets. The change in the IfaceMgr
-    /// is quite straight forward and it is proven to work for V4. However,
-    /// unit testing it is a bit involved, because for unit testing we need
-    /// a replacement of the openSocket6 function which will mimic the
-    /// behavior of the real socket opening. For the V4 we have the means to
-    /// to achieve that with the replaceable PktFilter class. For V6, the
-    /// implementation is hardcoded in the openSocket6.
+    /// On the systems with multiple interfaces, it is often desired that the
+    /// failure to open a socket on a particular interface doesn't cause a
+    /// fatal error and sockets should be opened on remaining interfaces.
+    /// However, the warning about the failure for the particular socket should
+    /// be communicated to the caller. The libdhcp++ is a common library with
+    /// no logger associated with it. Most of the functions in this library
+    /// communicate errors via exceptions. In case of openSockets6 function
+    /// exception must not be thrown if the function is supposed to continue
+    /// opening sockets, despite an error. Therefore, if such a behavior is
+    /// desired, the error handler function can be passed as a parameter.
+    /// This error handler is called (if present) with an error string.
+    /// Typically, error handler will simply log an error using an application
+    /// logger, but it can do more sophisticated error handling too.
+    ///
+    /// @todo It is possible that additional parameters will have to be added
+    /// to the error handler, e.g. Iface if it was really supposed to do
+    /// some more sophisticated error handling.
+    ///
+    /// If the error handler is not installed (is NULL), the exception is thrown
+    /// for each failure (default behavior).
+    ///
+    /// @warning This function does not check if there has been any sockets
+    /// already open by the @c IfaceMgr. Therefore a caller should call
+    /// @c IfaceMgr::closeSockets(AF_INET6) before calling this function.
+    /// If there are any sockets open, the function may either throw an
+    /// exception or invoke an error handler on attempt to bind the new socket
+    /// to the same address and port.
     ///
     /// @param port specifies port number (usually DHCP6_SERVER_PORT)
+    /// @param error_handler A pointer to an error handler function which is
+    /// called by the openSockets6 when it fails to open a socket. This
+    /// parameter can be NULL to indicate that the callback should not be used.
     ///
     /// @throw SocketOpenFailure if tried and failed to open socket.
     /// @return true if any sockets were open
-    bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT);
+    bool openSockets6(const uint16_t port = DHCP6_SERVER_PORT,
+                      IfaceMgrErrorMsgCallback error_handler = NULL);
 
     /// @brief Opens IPv4 sockets on detected interfaces.
     ///
@@ -715,6 +758,13 @@ public:
     /// If the error handler is not installed (is NULL), the exception is thrown
     /// for each failure (default behavior).
     ///
+    /// @warning This function does not check if there has been any sockets
+    /// already open by the @c IfaceMgr. Therefore a caller should call
+    /// @c IfaceMgr::closeSockets(AF_INET) before calling this function.
+    /// If there are any sockets open, the function may either throw an
+    /// exception or invoke an error handler on attempt to bind the new socket
+    /// to the same address and port.
+    ///
     /// @param port specifies port number (usually DHCP4_SERVER_PORT)
     /// @param use_bcast configure sockets to support broadcast messages.
     /// @param error_handler A pointer to an error handler function which is
@@ -758,17 +808,18 @@ public:
     /// @return number of detected interfaces
     uint16_t countIfaces() { return ifaces_.size(); }
 
-    /// @brief Sets session socket and a callback
+    /// @brief Adds external socket and a callback
     ///
-    /// Specifies session socket and a callback that will be called
+    /// Specifies external socket and a callback that will be called
     /// when data will be received over that socket.
     ///
     /// @param socketfd socket descriptor
     /// @param callback callback function
-    void set_session_socket(int socketfd, SessionCallback callback) {
-        session_socket_ = socketfd;
-        session_callback_ = callback;
-    }
+    void addExternalSocket(int socketfd, SocketCallback callback);
+
+    /// @brief Deletes external socket
+
+    void deleteExternalSocket(int socketfd);
 
     /// @brief Set packet filter object to handle sending and receiving DHCPv4
     /// messages.
@@ -836,8 +887,23 @@ public:
         ifaces_.push_back(iface);
     }
 
-    /// A value of socket descriptor representing "not specified" state.
-    static const int INVALID_SOCKET = -1;
+    /// @brief Checks if there is at least one socket of the specified family
+    /// open.
+    ///
+    /// @param family A socket family.
+    ///
+    /// @return true if there is at least one socket open, false otherwise.
+    bool hasOpenSocket(const uint16_t family) const;
+
+    /// @brief Checks if there is a socket open and bound to an address.
+    ///
+    /// This function checks if one of the sockets opened by the IfaceMgr is
+    /// bound to the IP address specified as the method parameter.
+    ///
+    /// @param addr Address of the socket being searched.
+    ///
+    /// @return true if there is a socket bound to the specified address.
+    bool hasOpenSocket(const isc::asiolink::IOAddress& addr) const;
 
     // don't use private, we need derived classes in tests
 protected:
@@ -932,13 +998,7 @@ protected:
     /// @return true if successful, false otherwise
     bool os_receive4(struct msghdr& m, Pkt4Ptr& pkt);
 
-    /// Socket descriptor of the session socket.
-    int session_socket_;
-
-    /// A callback that will be called when data arrives over session_socket_.
-    SessionCallback session_callback_;
 private:
-
     /// @brief Identifies local network address to be used to
     /// connect to remote address.
     ///
@@ -957,30 +1017,29 @@ private:
     getLocalAddress(const isc::asiolink::IOAddress& remote_addr,
                     const uint16_t port);
 
-    /// @brief Handles an error which occurs during configuration of a socket.
-    ///
-    /// If the handler callback is specified (non-NULL), this handler is
-    /// called and the specified error message is passed to it. If the
-    /// handler is not specified, the @c isc::dhcpSocketConfigError exception
-    /// is thrown with the specified message.
-    ///
-    /// This function should be called to handle errors which occur during
-    /// socket opening, binding or configuration (e.g. setting socket options
-    /// etc).
-    ///
-    /// @param errmsg An error message to be passed to a handlder function or
-    /// to the @c isc::dhcp::SocketConfigError exception.
-    /// @param handler An error handler function or NULL.
-    void handleSocketConfigError(const std::string& errmsg,
-                                 IfaceMgrErrorMsgCallback handler);
 
-    /// @brief Checks if there is at least one socket of the specified family
-    /// open.
+    /// @brief Open an IPv6 socket with multicast support.
     ///
-    /// @param family A socket family.
+    /// This function opens socket(s) to allow reception of the DHCPv6 sent
+    /// to multicast address. It opens an IPv6 socket, binds it to link-local
+    /// address and joins multicast group (on non-Linux systems) or opens two
+    /// IPv6 sockets and binds one of them to link-local address and another
+    /// one to multicast address (on Linux systems).
     ///
-    /// @return true if there is at least one socket open, false otherwise.
-    bool hasOpenSocket(const uint16_t family) const;
+    /// @note This function is intended to be called internally by the
+    /// @c IfaceMgr::openSockets6. It is not intended to be called from any
+    /// other function.
+    ///
+    /// @param iface Interface on which socket should be open.
+    /// @param addr Link-local address to bind the socket to.
+    /// @param port Port number to bind socket to.
+    /// @param error_handler Error handler function to be called when an
+    /// error occurs during opening a socket, or NULL if exception should
+    /// be thrown upon error.
+    bool openMulticastSocket(Iface& iface,
+                             const isc::asiolink::IOAddress& addr,
+                             const uint16_t port,
+                             IfaceMgrErrorMsgCallback error_handler = NULL);
 
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
@@ -997,6 +1056,9 @@ private:
     /// messages. It is possible to supply a custom object using
     /// setPacketFilter method.
     PktFilter6Ptr packet_filter6_;
+
+    /// @brief Contains list of callbacks for external sockets
+    SocketCallbackInfoContainer callbacks_;
 };
 
 }; // namespace isc::dhcp

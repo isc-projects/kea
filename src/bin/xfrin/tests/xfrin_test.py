@@ -373,10 +373,7 @@ class MockXfrinConnection(XfrinConnection):
         [resp.add_rrset(Message.SECTION_AUTHORITY, a) for a in authorities]
 
         renderer = MessageRenderer()
-        if tsig_ctx is not None:
-            resp.to_wire(renderer, tsig_ctx)
-        else:
-            resp.to_wire(renderer)
+        resp.to_wire(renderer, tsig_ctx)
         reply_data = struct.pack('H', socket.htons(renderer.get_length()))
         reply_data += renderer.get_data()
 

@@ -28,14 +28,17 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 
+#include <util/unittests/wiredata.h>
+
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace isc {
 namespace dns {
@@ -209,6 +212,14 @@ TEST_F(RdataTest, createRdataWithLexer) {
     EXPECT_EQ(0, aaaa_rdata.compare(*rdata));
     callback.check(src_name, line, CreateRdataCallback::WARN,
                    "file does not end with newline");
+}
+
+TEST_F(RdataTest, getLength) {
+    const in::AAAA aaaa_rdata("2001:db8::1");
+    EXPECT_EQ(16, aaaa_rdata.getLength());
+
+    const generic::TXT txt_rdata("Hello World");
+    EXPECT_EQ(12, txt_rdata.getLength());
 }
 
 }
@@ -393,16 +404,14 @@ TEST_F(Rdata_Unknown_Test, toText) {
 
 TEST_F(Rdata_Unknown_Test, toWireBuffer) {
     rdata_unknown.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        wiredata_unknown, sizeof(wiredata_unknown));
+    matchWireData(wiredata_unknown, sizeof(wiredata_unknown),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_Unknown_Test, toWireRenderer) {
     rdata_unknown.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata_unknown, sizeof(wiredata_unknown));
+    matchWireData(wiredata_unknown, sizeof(wiredata_unknown),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_Unknown_Test, compare) {

@@ -383,11 +383,11 @@ This message is also logged when the forwarding is restarted (for instance
 if b10-ddns is restarted and the internal connection needs to be created
 again), in which case it should be followed by AUTH_START_DDNS_FORWARDER.
 
-% AUTH_UNSUPPORTED_OPCODE unsupported opcode: %1
+% AUTH_UNSUPPORTED_OPCODE unsupported opcode %1 received from %2
 This is a debug message, produced when a received DNS packet being
 processed by the authoritative server has been found to contain an
-unsupported opcode. (The opcode is included in the message.) The server
-will return an error code of NOTIMPL to the sender.
+unsupported opcode. (The opcode and sender details are included in the
+message.) The server will return an error code of NOTIMPL to the sender.
 
 % AUTH_XFRIN_CHANNEL_CREATED XFRIN session channel created
 This is a debug message indicating that the authoritative server has

@@ -1,3 +1,183 @@
+752.	[func]		tmark
+	If configured to do so, b10-dhcp4 will now create DHCP-DDNS update
+	requests and send them to b10-dhcp-ddns for processing.
+	(Trac# 3329, git 4546dd186782eec5cfcb4ddb61b0a3aa5c700751)
+
+751.	[func]		muks
+	The BIND 10 zone loader now supports the $GENERATE directive (a
+	BIND 9 extension).
+	(Trac #2430, git b05064f681231fe7f8571253c5786f4ff0f2ca03)
+
+750.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: Simple client classification has been
+	implemented. Incoming packets can be assigned to zero or more
+	client classes. It is possible to restrict subnet usage to a given
+	client class. User's Guide and Developer's Guide has been updated.
+	(Trac #3274, git 1791d19899b92a6ee411199f664bdfc690ec08b2)
+
+749.	[bug]		tmark
+	b10-dhcp-ddns now sets the TTL value in RRs that add A, AAAA, or PTR DNS
+	entries to the lease length provided in instigating NameChangeRequest.
+	This corrected a bug in which the TTL was always set to 0.
+	(Trac# 3299, git dbacf27ece77f3d857da793341c6bd31ef1ea239)
+
+748.	[bug]		marcin
+	b10-dhcp4 server picks a subnet, to assign address for a directly
+	connected client, using IP address of the interface on which the
+	client's message has been received. If the message is received on
+	the interface for which there is no suitable subnet, the message
+	is discarded. Also, the subnet for renewing client which unicasts
+	its request, is selected using ciaddr.
+	(Trac #3242, git 9e571cc217d6b1a2fd6fdae1565fcc6fde6d08b1)
+
+747.	[bug]		marcin
+	libdhcpsrv: server configuration mechanism allows creating definitions
+	for standard options for which Kea doesn't provide a definition yet.
+	Without this, the server administrator couldn't configure options for
+	which a definition didn't exist.
+	(Trac# 3309, git 16a6ed6e48a6a950670c4874a2e81b1faf287d99)
+
+746.	[func]		tomek
+	IOAddress no longer exposes underlying asio objects. The getAddress()
+	method has been removed and replaced with several convenience methods.
+	(Trac #1485, git ecdb62db16b3f3d447db4a9d2a4079d5260431f0)
+
+745.	[bug]		muks
+	b10-auth now returns rcode=REFUSED for all questions with
+	qtype=RRSIG (i.e., where RRSIGs are queried directly). This is
+	because RRSIGs are meaningless without being bundled alongside the
+	RRs they cover.
+	(Trac #2226, git 68d24e65c9c3dfee38adfbe1c93367b0083f9a58)
+
+744.	[func]		marcin
+	b10-dhcp6: Refactored the code which is processing Client FQDN option.
+	The major user-visible change is that server generates DDNS
+	NameChangeRequest for the first IPv6 address (instead of all)
+	acquired by a client. Also, the server generates fully qualified domain
+	name from acquired IPv6 address, if the client sends an empty name in
+	Client FQDN option.
+	(Trac# 3295, git aa1c94a54114e848c64771fde308fc9ac0c00fd0)
+
+743.	[func]		tmark
+	b10-dhcp4 now responds with changes in DDNS behavior based upon
+	configuration parameters specified through its dhcp-ddns configuration
+	element. The parameters now supported are override-no-update,
+	override-client-update, replace-client-name, generated-prefix, and
+	qualifying-suffix.
+	(Trac# 3282, git 42b1f1e4c4f5aa48b7588233402876f5012c043c)
+
+742.	[func]		muks
+	The authoritative server now includes the datasource configuration
+	when logging some errors with the
+	AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_ERROR message ID.
+	(Trac #2756, git 31872754f36c840b4ec0b412a86afe9f38be86e0)
+
+741.	[bug]		shane
+	Remove hard-coded (and unnecessary) TSIG key from error message.
+	This also prevents a crash if the TSIG name is missing.
+	(Trac #3099, git 0ba8bbabe09756a4627e80aacdbb5050407faaac)
+
+740.	[func]		muks
+	When displaying messages about mismatched configuration data types
+	in entered values (between the supplied value type and expected
+	schema type), bindctl now includes both the supplied and expected
+	configuration data types in the returned error. The user has more
+	information on what caused the error now.
+	(Trac #3239, git 84d5eda2a6ae0d737aef68d56023fc33fef623e6)
+
+739.	[bug]		muks
+	Various minor updates were made to the SSHFP RDATA parser. Mainly,
+	the SSHFP constructor no longer throws an isc::BadValue exception.
+	generic::SSHFP::getFingerprintLen() was also renamed to
+	getFingerprintLength().
+	(Trac #3287, git 2f26d781704618c6007ba896ad3d9e0c107d04b0)
+
+738.	[bug]		muks
+	b10-auth now correctly processes NXDOMAIN results in the root zone
+	when using a SQLite3 data source.
+	(Trac #2951, git 13685cc4580660eaf5b041b683a2d2f31fd24de3)
+
+737.	[func]		muks
+	b10-auth now additionally logs the source address and port when
+	DNS messages with unsupported opcodes are received.
+	(Trac #1516, git 71611831f6d1aaaea09143d4837eddbd1d67fbf4)
+
+736.    [bug]           wlodek
+	b10-dhcp6 is now capable to determine if a received
+	message is addressed to it, using server identifier option.
+	The messages with non-matching server identifier are dropped.
+	(Trac #2892, git 3bd69e9b4ab9be231f7c966fd62b95a4e1595901)
+
+735.	[doc]		stephen
+	Expanded Developer's Guide to include chapter on logging.
+	(Trac #2566, git a08d702839d9df6cddefeccab1e7e657377145de)
+
+734.	[bug]		marcin
+	libdhcp++: fixed a bug which caused an error when setting boolean
+	values for an option. Also, bind10-guide has been updated with the
+	examples how to set the boolean values for an option.
+	(Trac# 3292, git 7c4c0514ede3cffc52d8c2874cdbdb74ced5f4ac)
+
+733.	[bug]		marcin
+	libdhcp++: a function which opens IPv6/UDPv6 sockets for the
+	DHCPv6 server, gracefully handles errors to bind socket to
+	a multicast address.
+	(Trac #3288, git 76ace0c46a5fe0e53a29dad093b817ad6c891f1b)
+
+732.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: Support for simplified client classification
+        added. Incoming packets are now assigned to a client class based on
+	the content of the packet's user class option (DHCPv4) or vendor class
+	option (DHCPv6). Two classes (docsis3.0 and eRouter1.0) have class
+	specific behavior in b10-dhcp4. See DHCPv4 Client Classification and
+	DHCPv6 Client Classification in BIND10 Developer's Guide for details.
+	This is a first ticket in a series of planned at least three tickets.
+	(Trac #3203, git afea612c23143f81a4201e39ba793bc837c5c9f1)
+
+731.	[func]		tmark
+	b10-dhcp4 now parses parameters which support DHCP-DDNS updates via
+	the DHCP-DDNS module, b10-dhcp-ddns.  These parameters are part of new
+	configuration element, dhcp-ddns, defined in dhcp4.spec. The parameters
+	parse, store and retrieve but do not yet govern behavior.  That will be
+	provided under separate ticket.
+	(Trac# 3033, git 0ba859834503f2b9b908cd7bc572e0286ca9201f)
+
+730.	[bug]		tomek
+	b10-dhcp4, b10-dhcp6: Both servers used to unnecessarily increase
+	subnet-id values after reconfiguration. The subnet-ids are now reset
+	to 1 every time a server is reconfigured.
+	(Trac #3234, git 31e416087685a6dadc3047fdbb0927bbf60095aa)
+
+729.	[bug]		marcin
+	b10-dhcp4 discards DHCPv4 messages carrying server identifiers
+	which don't match server identifiers used by the server.
+	(Trac #3279, git 805d2b269c6bf3e7be68c13f1da1709d8150a666)
+
+728.	[func]		marcin
+	b10-dhcp6: If server fails to open a socket on one interface it
+	will log a warning and continue to open sockets on other interfaces.
+	The warning message is communicated from the libdhcp++ via the
+	error handler function supplied by the DHCPv6 server.
+	(Trac #3252, git af5eada1bba906697ee92df3fcc25cc0e3979221)
+
+727.	[func]		muks
+	RRset::setName() has now been removed.
+	(Trac #2335, git c918027a387da8514acf7e125fd52c8378113662)
+
+726.	[bug]		muks
+	Don't print trailing newlines in Question::toText() output by
+	default.  This fixes some logging that were split with a line
+	feed.  It is possible to get the old behavior by passing
+	toText(true).  Message::toText() output is unchanged.
+	(Trac #571, git 7286499d5206c6d2aa8a59a5247c3841a772a43e)
+
+725.	[func]		tmark
+	b10-dhcp-ddns D2UpdateMgr now uses the newly implemented
+	NameAddTransaction and NameRemoveTransaction classes.  This allows
+	it to conduct actual DNS update exchanges based upon queued
+	NameChangeRequests.
+	(Trac# 3089, git 9ff948a169e1c1f3ad9e1bad1568375590a3ef42)
+
 724.	[bug]		marcin
 	b10-dhcp4: Different server identifiers are used for the packets
 	being sent through different interfaces. The server uses IPv4 address
@@ -7,12 +187,13 @@
 	(Trac #3231, git c7a229f15089670d2bfde6e9f0530c30ce6f8cf8)
 
 723.	[bug]		marcin
-	libdhcp++: Implemented unit tests for the IfaceMgr's routine which opens
-	IPv6 sockets on detected interfaces. The IfaceMgr logic performing low
-	level operations on sockets has been moved to a separate class. By
-	providing a custom implementation of this class, the unit tests may
-	use fake interfaces with custom configuration and thus cover wide
-	range of test scenarios for the function.
+	libdhcp++: Implemented unit tests for the IfaceMgr's routine
+	which opens IPv6 sockets on detected interfaces. The IfaceMgr
+	logic performing low level operations on sockets has been
+	moved to a separate class. By providing a custom implementation
+	of this class, the unit tests may use fake interfaces with
+	custom configuration and thus cover wide range of test
+	scenarios for the function.
 	(Trac #3251, git 21d2f7ec425f8461b545687104cd76a42da61b2e)
 
 722.	[bug]		muks
@@ -54,11 +235,11 @@
 	(Trac #2772, git c6158690c389d75686545459618ae0bf16f2cdb8)
 
 716.	[func]		marcin
-	perfdhcp: added support for sending DHCPv6 Relese messages at the specified
-	rate and measure performance. The orphan messages counters are not
-	displayed for individual exchanges anymore. The following ticket: #3261
-	has been submitted to implement global orphan counting for all exchange
-	types.
+	perfdhcp: added support for sending DHCPv6 Release messages
+	at the specified rate and measure performance. The orphan
+	messages counters are not displayed for individual exchanges
+	anymore. The following ticket: #3261 has been submitted to
+	implement global orphan counting for all exchange types.
 	(Trac #3181, git 684524bc130080e4fa31b65edfd14d58eec37e50)
 
 715.	[bug]		marcin
@@ -72,13 +253,13 @@
 	(Trac #3109, git 016bfae00460b4f88adbfd07ed26759eb294ef10)
 
 713.	[func]		tmark
-	Added DNS update request construction to d2::NameAddTransaction in
-	b10-dhcp-ddns.  The class now generates all DNS update request variations
-	needed to fulfill it's state machine in compliance with RFC 4703, sections
-	5.3 and 5.4.
+	Added DNS update request construction to d2::NameAddTransaction
+	in b10-dhcp-ddns.  The class now generates all DNS update
+	request variations needed to fulfill it's state machine in
+	compliance with RFC 4703, sections 5.3 and 5.4.
 	(Trac# 3241, git dceca9554cb9410dd8d12371b68198b797cb6cfb)
 
-712.	[func]		marcin,dclink
+712.	[func]		marcin, dclink
 	b10-dhcp4: If server fails to open a socket on one interface it
 	will log a warning and continue to open sockets on other interfaces.
 	The warning message is communicated from the libdhcp++ via the
@@ -117,7 +298,7 @@
 	not request FQDN option to be returned.
 	(Trac #3220, git 0f1ed4205a46eb42ef728ba6b0955c9af384e0be)
 
-708.	[bug]		dclink,marcin
+708.	[bug]		dclink, marcin
 	libdhcpsrv: Fixed a bug in Memfile lease database backend which
 	caused DHCPv4 server crashes when leases with NULL client id
 	were present. Thanks to David Carlier for submitting the patch.
@@ -131,7 +312,7 @@
 
 706.	[func]		marcin
 	b10-dhcp4: Server processes the DHCPv4 Client FQDN and Host Name
-	options sent by a client and generates the response. as a result
+	options sent by a client and generates the response. As a result
 	of processing, the server generates NameChangeRequests which
 	represent changes to DNS mappings for a particular lease (addition
 	or removal of DNS mappings).
@@ -152,7 +333,7 @@
 	bindctl while b10-xfrin is running.
 	(Trac #2300, git 4655c110afa0ec6f5669bf53245bffe6b30ece4b)
 
-703.    [bug]		kean
+703.	[bug]		kean
 	A bug in b10-msgq was fixed where it would remove the socket file if
 	there was an existing copy of b10-msgq running. It now correctly
 	detects and reports this without removing the socket file.
@@ -167,8 +348,8 @@
 	libdhcp++: Incoming DHCPv6 IAPREFIX option is now parsed properly.
 	(Trac #3211, git ed43618a2c7b2387d76f99a5a4b1a3e05ac70f5e)
 
-700.	[func]		tomek,marcin
-	b10-dhcp4,b10-dhcp6: Support for vendor options has been added. It
+700.	[func]		tomek, marcin
+	b10-dhcp4, b10-dhcp6: Support for vendor options has been added. It
 	is now possible to configure vendor options. Server is able to
 	parse some CableLabs vendor options and send configured	vendor
 	options	in response. The support is not complete.
@@ -185,16 +366,16 @@
 	components.
 	(Trac #3094, git ed672a898d28d6249ff0c96df12384b0aee403c8
 
-697.	[func]	tmark
+697.	[func]		tmark
 	Implements "user_check" hooks shared library which supports subnet
 	selection based upon the contents of a list of known DHCP lease users
 	(i.e. clients).  Adds the following subdirectories to the bind10 src
 	directory for maintaining hooks shared libraries:
-		-bind10/src/hooks  - base directory for hooks shared libraries
-		-bind10/src/hooks/dhcp - base directory for all hooks libs pertaining
-		to DHCP(Kea)
-		-bind10/src/hooks/dhcp/user_check - directory containing the user_check
-		 hooks library
+	bind10/src/hooks - base directory for hooks shared libraries;
+	bind10/src/hooks/dhcp - base directory for all hooks libs
+	pertaining to DHCP (Kea);
+	bind10/src/hooks/dhcp/user_check - directory containing the
+	user_check hooks library.
 	(Trac #3186, git f36aab92c85498f8511fbbe19fad5e3f787aef68)
 
 696.	[func]		tomek
@@ -243,7 +424,7 @@
 688.	[func]		tomek
 	b10-dhcp6: Prefix Delegation support is now extended to
 	Renew and Release messages.
-	(Trac #3153,#3154, git 3207932815f58045acea84ae092e0a5aa7c4bfd7)
+	(Trac #3153, #3154, git 3207932815f58045acea84ae092e0a5aa7c4bfd7)
 
 687.	[func]		tomek
 	b10-dhcp6: Prefix Delegation (IA_PD and IAPREFIX options) is now
@@ -268,16 +449,18 @@
 	(Trac #2751, git 7430591b4ae4c7052cab86ed17d0221db3b524a8)
 
 683.	[bug]		stephen
-	Modifications to fix problems running unit tests if they are statically
-	linked.  This includes provision of an initialization function that
-	must be called by user-written hooks libraries if they are loaded by a
-	statically-linked image.
+	Modifications to fix problems running unit tests if they
+	are statically linked.  This includes provision of an
+	initialization function that must be called by user-written
+	hooks libraries if they are loaded by a statically-linked
+	image.
 	(Trac #3113, git 3d19eee4dbfabc7cf7ae528351ee9e3a334cae92)
 
 682.	[func]		naokikambe
-	New statistics items added into b10-xfrin : ixfr_running, axfr_running,
-	and soa_in_progress.  Their values can be obtained by invoking "Stats
-	show Xfrin" via bindctl when b10-xfrin is running.
+	New statistics items added into b10-xfrin : ixfr_running,
+	axfr_running, and soa_in_progress.  Their values can be
+	obtained by invoking "Stats show Xfrin" via bindctl when
+	b10-xfrin is running.
 	(Trac #2274, git ca691626a2be16f08754177bb27983a9f4984702)
 
 681.	[func]		tmark
@@ -291,8 +474,8 @@
 	(Trac #3173, git 4cc844f7cc82c8bd749296a2709ef67af8d9ba87)
 
 679.	[func]		tmark
-	b10-dhcp-ddns Finite state machine logic was refactored into its own class,
-	StateModel.
+	b10-dhcp-ddns: Finite state machine logic was refactored
+	into its own class, StateModel.
 	(Trac# 3156, git 6e9227b1b15448e834d1f60dd655e5633ff9745c)
 
 678.	[func]		tmark
@@ -308,11 +491,11 @@
 676.	[bug]		muks
 	We now also allow the short name ("hmac-md5"), along with the long
 	name ("hmac-md5.sig-alg.reg.int") that was allowed before for
-	HMAC-MD5, so that it is more conveninent to configure TSIG keys
+	HMAC-MD5, so that it is more convenient to configure TSIG keys
 	using it.
 	(Trac #2762, git c543008573eba65567e9c189824322954c6dd43b)
 
-675.    [func]      vorner
+675.	[func]		vorner
 	If there's an exception not handled in a Python BIND10 component,
 	it is now stored in a temporary file and properly logged, instead
 	of dumping to stderr.
@@ -329,15 +512,18 @@
 	(Trac #3145, git 3a844e85ecc3067ccd1c01841f4a61366cb278f4)
 
 672.	[func]		tmark
-	Added b10-dhcp-ddnsupdate transaction base class, NameChangeTransaction.
-	This class provides the common structure and methods to implement the state
-	models described in the DHCP_DDNS design, plus integration with DNSClient
-	and its callback mechanism for asynchronous IO with the DNS servers.
+	Added b10-dhcp-ddnsupdate transaction base class,
+	NameChangeTransaction.  This class provides the common
+	structure and methods to implement the state models described
+	in the DHCP_DDNS design, plus integration with DNSClient
+	and its callback mechanism for asynchronous IO with the
+	DNS servers.
 	(Trac #3086, git 079b862c9eb21056fdf957e560b8fe7b218441b6)
 
-671.	[func]		dclink,tomek
-	memfile backend now supports getLease4(hwaddr) and getLease4(client-id)
-	methods. Thanks to David Carlier for contributing a patch.
+671.	[func]		dclink, tomek
+	The memfile backend now supports getLease4(hwaddr) and
+	getLease4(client-id) methods. Thanks to David Carlier for
+	contributing a patch.
 	(Trac #2592, git a11683be53db2f9f8f9b71c1d1c163511e0319b3)
 
 670.	[func]		marcin
@@ -397,7 +583,7 @@
 	as in deprecated ASCII format.
 	(Trac# 3082, git 1b434debfbf4a43070eb480fa0975a6eff6429d4)
 
-661.    [func]		stephen
+661.	[func]		stephen
 	Copy additional header files to the BIND 10 installation directory
 	to allow the building of DHCP hooks libraries against an installed
 	version of BIND 10.
@@ -617,7 +803,7 @@
 626.	[func]		tmark
 	Created the initial implementation of DHCP-DDNS service
 	controller class, D2Controller, and the abstract class from
-	which it derives,DControllerBase. D2Controller manages the
+	which it derives, DControllerBase. D2Controller manages the
 	lifecycle and BIND10 integration of the DHCP-DDNS application
 	process, D2Process. Also note, module name is now
 	b10-dhcp-ddns.
@@ -1052,7 +1238,7 @@ bind10-1.0.0-rc released on February 14, 2013
 	The lease6 now has the one additional index: iaid/subnet_id/duid.
 	Adding these indexes significantly improves lease acquisition
 	performance.
-	(Trac #2699,#2703, git 54bbed5fcbe237c5a49b515ae4c55148723406ce)
+	(Trac #2699, #2703, git 54bbed5fcbe237c5a49b515ae4c55148723406ce)
 
 573.	[bug]		stephen
 	Fixed problem whereby the DHCP server crashed if it ran out of
@@ -1278,7 +1464,7 @@ bind10-1.0.0-rc released on February 14, 2013
 542.	[func]		marcin
 	Created OptionSpace and OptionSpace6 classes to represent DHCP
 	option spaces. The option spaces are used to group instances
-	and definitions of options having uniqe codes. A special type
+	and definitions of options having unique codes. A special type
 	of option space is the so-called "vendor specific option space"
 	which groups sub-options sent within Vendor Encapsulated Options.
 	The new classes are not used yet but they will be used once
@@ -1373,7 +1559,7 @@ bind10-1.0.0-beta released on December 20, 2012
 	b10-loadzone was fully overhauled.  It now uses C++-based zone
 	parser and loader library, performing stricter checks, having
 	more complete support for master file formats, producing more
-	helpful logs, is more extendable for various types of data
+	helpful logs, is more extendible for various types of data
 	sources, and yet much faster than the old version.  In
 	functionality the new version should be generally backwards
 	compatible to the old version, but there are some
@@ -1738,7 +1924,7 @@ bind10-devel-20121115 released on November 15, 2012
 	A new library (libb10-dhcpsrv) has been created. At present, it
 	only holds the code for the DHCP Configuration Manager. Currently
 	this object only supports basic configuration storage for the DHCPv6
-	server,	but that capability will be expanded.
+	server, but that capability will be expanded.
 	(Trac #2238, git 6f29861b92742da34be9ae76968e82222b5bfd7d)
 
 bind10-devel-20120927 released on September 27, 2012
@@ -2069,7 +2255,7 @@ bind10-devel-20120517 released on May 17, 2012
 	The in-memory data source can now load zones from the
 	sqlite3 data source, so that zones stored in the database
 	(and updated for example by xfrin) can be served from memory.
-	(Trac #1789,#1790,#1792,#1793,#1911,
+	(Trac #1789, #1790, #1792, #1793, #1911,
 	git 93f11d2a96ce4dba9308889bdb9be6be4a765b27)
 
 438.	[bug]		naokikambe
@@ -2139,7 +2325,7 @@ bind10-devel-20120517 released on May 17, 2012
 	now manipulates them in the separate table for the NSEC3 namespace.
 	As a result b10-xfrin now correctly updates NSEC3-signed zones by
 	inbound zone transfers.
-	(Trac #1781,#1788,#1891, git 672f129700dae33b701bb02069cf276238d66be3)
+	(Trac #1781, #1788, #1891, git 672f129700dae33b701bb02069cf276238d66be3)
 
 426.	[bug]		vorner
 	The NSEC3 records are now included when transferring a
@@ -2599,11 +2785,11 @@ bind10-devel-20120119 released on January 19, 2012
 	(Trac #1508, #1509, #1510,
 	git edc5b3c12eb45437361484c843794416ad86bb00)
 
-361.	[func]		vorner,jelte,jinmei
+361.	[func]		vorner, jelte, jinmei
 	The socket creator is now used to provide sockets. It means you can
 	reconfigure the ports and addresses at runtime even when the rest
 	of the bind10 runs as non root user.
-	(Trac #805,#1522, git 1830215f884e3b5efda52bd4dbb120bdca863a6a)
+	(Trac #805, #1522, git 1830215f884e3b5efda52bd4dbb120bdca863a6a)
 
 360.	[bug]		vorner
 	Fixed problem where bindctl crashed when a duplicate non-string
@@ -2683,7 +2869,7 @@ bind10-devel-20120119 released on January 19, 2012
 	interface was awkward. To get all the RRsets of a single domain, use
 	the new findAll method (the same applies to python version, the method
 	is named find_all).
-	(Trac #1483,#1484, git 0020456f8d118c9f3fd6fc585757c822b79a96f6)
+	(Trac #1483, #1484, git 0020456f8d118c9f3fd6fc585757c822b79a96f6)
 
 349.	[bug]		dvv
 	resolver: If an upstream server responds with FORMERR to an EDNS
@@ -3101,7 +3287,7 @@ bind10-devel-20111014 released on October 14, 2011
 	Stats module can read these through the config manager. Stats
 	module and stats httpd report statistics data and statistics
 	schema by each module via both bindctl and HTTP/XML.
-	(Trac #928,#929,#930,#1175,
+	(Trac #928, #929, #930, #1175,
 	git 054699635affd9c9ecbe7a108d880829f3ba229e)
 
 290.	[func]		jinmei
@@ -3319,7 +3505,7 @@ bind10-devel-20110705 released on July 05, 2011
 	Logging now correctly initialized in b10-auth.  Also, fixed
 	bug whereby querying for "version.bind txt ch" would cause
 	b10-auth to crash if BIND 10 was started with the "-v" switch.
-	(Trac #1022,#1023, git 926a65fa08617be677a93e9e388df0f229b01067)
+	(Trac #1022, #1023, git 926a65fa08617be677a93e9e388df0f229b01067)
 
 258.	[build]		jelte
 	Now builds and runs with Python 3.2
@@ -3486,7 +3672,7 @@ bind10-devel-20110519 released on May 19, 2011
 	(Trac #900, git b395258c708b49a5da8d0cffcb48d83294354ba3)
 
 231.	[func]*		vorner
-    The logging interface changed slightly. We use
+	The logging interface changed slightly. We use
 	logger.foo(MESSAGE_ID).arg(bar); instead of logger.foo(MESSAGE_ID,
 	bar); internally. The message definitions use '%1,%2,...'
 	instead of '%s,%d', which allows us to cope better with
@@ -4581,7 +4767,7 @@ bind10-devel-20100701 released on July 1, 2010
 	(Trac #251, svn r2310)
 
 59.	[bug]		jinmei
-	lib/datasrc,bin/auth: The authoritative server could return a
+	lib/datasrc, bin/auth: The authoritative server could return a
 	SERVFAIL with a partial answer if it finds a data source broken
 	while looking for an answer.  This can happen, for example, if a
 	zone that doesn't have an NS RR is configured and loaded as a

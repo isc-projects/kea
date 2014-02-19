@@ -40,10 +40,15 @@ Question::Question(InputBuffer& buffer) :
     rrclass_ = RRClass(buffer);
 }
 
-string
-Question::toText() const {
-    return (name_.toText() + " " + rrclass_.toText() + " " +
-            rrtype_.toText() + "\n");
+std::string
+Question::toText(bool newline) const {
+    std::string r(name_.toText() + " " + rrclass_.toText() + " " +
+                  rrtype_.toText());
+    if (newline) {
+        r.append("\n");
+    }
+
+    return (r);
 }
 
 unsigned int
