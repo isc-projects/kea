@@ -18,6 +18,7 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
+#include <dhcp/option_string.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_custom.h>
 #include <dhcp_ddns/ncr_msg.h>
@@ -452,10 +453,10 @@ private:
     /// prepare the Hostname option to be sent back to the client in the
     /// server's response.
     ///
-    /// @param opt_hostname An @c OptionCustom object encapsulating the Hostname
+    /// @param opt_hostname An @c OptionString object encapsulating the Hostname
     /// %Option.
     /// @param [out] answer A response message to be sent to a client.
-    void processHostnameOption(const OptionCustomPtr& opt_hostname,
+    void processHostnameOption(const OptionStringPtr& opt_hostname,
                                Pkt4Ptr& answer);
 
 protected:

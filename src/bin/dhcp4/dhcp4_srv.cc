@@ -701,12 +701,11 @@ Dhcpv4Srv::processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer) {
             processClientFqdnOption(fqdn, answer);
 
         } else {
-            OptionCustomPtr hostname = boost::dynamic_pointer_cast<OptionCustom>
+            OptionStringPtr hostname = boost::dynamic_pointer_cast<OptionString>
                 (query->getOption(DHO_HOST_NAME));
             if (hostname) {
                 processHostnameOption(hostname, answer);
             }
-
         }
     } catch (const Exception& ex) {
         // In some rare cases it is possible that the client's name processing
@@ -759,7 +758,7 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
 }
 
 void
-Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
+Dhcpv4Srv::processHostnameOption(const OptionStringPtr& opt_hostname,
                                  Pkt4Ptr& answer) {
     // Fetch D2 configuration.
     D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
@@ -769,7 +768,7 @@ Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
         return;
     }
 
-    std::string hostname = isc::util::str::trim(opt_hostname->readString());
+    std::string hostname = isc::util::str::trim(opt_hostname->getValue());
     unsigned int label_count = OptionDataTypeUtil::getLabelCount(hostname);
     // The hostname option sent by the client should be at least 1 octet long.
     // If it isn't we ignore this option. (Per RFC 2131, section 3.14)
@@ -783,7 +782,7 @@ Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
     // possible that we will use the hostname option provided by the client
     // to perform the DNS update and we will send the same option to him to
     // indicate that we accepted this hostname.
-    OptionCustomPtr opt_hostname_resp(new OptionCustom(*opt_hostname));
+    OptionStringPtr opt_hostname_resp(new OptionString(*opt_hostname));
 
     // The hostname option may be unqualified or fully qualified. The lab_count
     // holds the number of labels for the name. The number of 1 means that
@@ -800,12 +799,14 @@ Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
     /// conversion if needed and possible.
     if ((d2_mgr.getD2ClientConfig()->getReplaceClientName()) ||
         (label_count < 2)) {
-        opt_hostname_resp->writeString("");
+        // Set to root domain to signal later on that we should replace it.
+        // DHO_HOST_NAME is a string option which cannot be empty.
+        opt_hostname_resp->setValue(".");
     } else if (label_count == 2) {
         // If there are two labels, it means that the client has specified
         // the unqualified name. We have to concatenate the unqalified name
         // with the domain name.
-        opt_hostname_resp->writeString(d2_mgr.qualifyName(hostname));
+        opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname));
     }
 
     answer->addOption(opt_hostname_resp);
@@ -956,7 +957,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     std::string hostname;
     bool fqdn_fwd = false;
     bool fqdn_rev = false;
-    OptionCustomPtr opt_hostname;
+    OptionStringPtr opt_hostname;
     Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option4ClientFqdn>(answer->getOption(DHO_FQDN));
     if (fqdn) {
@@ -964,10 +965,17 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         fqdn_fwd = fqdn->getFlag(Option4ClientFqdn::FLAG_S);
         fqdn_rev = !fqdn->getFlag(Option4ClientFqdn::FLAG_N);
     } else {
-        opt_hostname = boost::dynamic_pointer_cast<OptionCustom>
+        opt_hostname = boost::dynamic_pointer_cast<OptionString>
             (answer->getOption(DHO_HOST_NAME));
         if (opt_hostname) {
-            hostname = opt_hostname->readString();
+            hostname = opt_hostname->getValue();
+            // DHO_HOST_NAME is string option which cannot be blank,
+            // we use "." to know we should replace it with a fully
+            // generated name. The local string variable needs to be
+            // blank in logic below.
+            if (hostname == ".") {
+                hostname = "";
+            }
             /// @todo It could be configurable what sort of updates the
             /// server is doing when Hostname option was sent.
             fqdn_fwd = true;
@@ -1021,7 +1029,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
                     fqdn->setDomainName(lease->hostname_,
                                         Option4ClientFqdn::FULL);
                 } else if (opt_hostname) {
-                    opt_hostname->writeString(lease->hostname_);
+                    opt_hostname->setValue(lease->hostname_);
                 }
 
             } catch (const Exception& ex) {
