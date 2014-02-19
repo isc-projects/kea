@@ -22,12 +22,14 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_RP_Test : public RdataTest {
@@ -157,9 +159,8 @@ TEST_F(Rdata_RP_Test, toWireBuffer) {
     rdata_rp.toWire(obuffer);
 
     // then compare them
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        &expected_wire[0], expected_wire.size());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_RP_Test, toWireRenderer) {
@@ -172,9 +173,8 @@ TEST_F(Rdata_RP_Test, toWireRenderer) {
     renderer.writeName(Name("a.example.com"));
     renderer.writeName(Name("b.example.net"));
     generic::RP(mailbox_name, Name("rp-text.example.net")).toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        &expected_wire[0], expected_wire.size());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_RP_Test, toText) {

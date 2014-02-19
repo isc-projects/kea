@@ -14,7 +14,7 @@
 # WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #
-# Tests for the messagerenderer part of the pydnspp module
+# Tests for the name part of the pydnspp module
 #
 
 import unittest
@@ -96,6 +96,16 @@ class NameTest(unittest.TestCase):
         b += b'\x07example'*32 + b'\x03com\x00'
         self.assertRaises(DNSMessageFORMERR, Name, b, 0)
         self.assertRaises(IndexError, Name, b, -1)
+
+    def test_exception_hierarchy(self):
+        self.assertTrue(isinstance(EmptyLabel(), NameParserException))
+        self.assertTrue(isinstance(TooLongLabel(), NameParserException))
+        self.assertTrue(isinstance(BadLabelType(), NameParserException))
+        self.assertTrue(isinstance(BadEscape(), NameParserException))
+        self.assertTrue(isinstance(TooLongName(), NameParserException))
+        self.assertTrue(isinstance(IncompleteName(), NameParserException))
+
+        self.assertTrue(isinstance(NameParserException(), DNSTextError))
 
     def test_at(self):
         self.assertEqual(7, self.name1.at(0))

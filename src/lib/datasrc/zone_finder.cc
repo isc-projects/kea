@@ -130,7 +130,7 @@ ZoneFinder::stripRRsigs(isc::dns::ConstRRsetPtr rp,
                                      rp->getClass(),
                                      rp->getType(),
                                      rp->getTTL()));
-            for (isc::dns::RdataIteratorPtr i(rp->getRdataIterator());
+            for (isc::dns::RdataIteratorPtr i = rp->getRdataIterator();
                  !i->isLast();
                  i->next()) {
                 result_base->addRdata(i->getCurrent());

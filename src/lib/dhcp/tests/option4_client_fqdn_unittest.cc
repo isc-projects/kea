@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -615,6 +615,7 @@ TEST(Option4ClientFqdnTest, setDomainName) {
     // Empty domain name (partial). This should be successful.
     ASSERT_NO_THROW(option->setDomainName("", Option4ClientFqdn::PARTIAL));
     EXPECT_TRUE(option->getDomainName().empty());
+    EXPECT_EQ(Option4ClientFqdn::PARTIAL, option->getDomainNameType());
 
     // Fully qualified domain-names must not be empty.
     EXPECT_THROW(option->setDomainName("", Option4ClientFqdn::FULL),

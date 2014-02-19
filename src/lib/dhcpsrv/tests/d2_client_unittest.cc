@@ -13,7 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <config.h>
-#include <dhcpsrv/d2_client.h>
+#include <dhcp/option4_client_fqdn.h>
+#include <dhcp/option6_client_fqdn.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -34,6 +36,12 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     ASSERT_NO_THROW(d2_client_config.reset(new D2ClientConfig()));
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
 
+    // Verify the enable-updates can be toggled.
+    d2_client_config->enableUpdates(true);
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    d2_client_config->enableUpdates(false);
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
     d2_client_config.reset();
 
     bool enable_updates = true;
@@ -41,7 +49,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     size_t server_port = 477;
     dhcp_ddns::NameChangeProtocol ncr_protocol = dhcp_ddns::NCR_UDP;
     dhcp_ddns::NameChangeFormat ncr_format = dhcp_ddns::FMT_JSON;
-    bool remove_on_renew = true;
     bool always_include_fqdn = true;
     bool override_no_update = true;
     bool override_client_update = true;
@@ -56,7 +63,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                           server_port,
                                                           ncr_protocol,
                                                           ncr_format,
-                                                          remove_on_renew,
                                                           always_include_fqdn,
                                                           override_no_update,
                                                          override_client_update,
@@ -73,7 +79,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     EXPECT_EQ(d2_client_config->getServerPort(), server_port);
     EXPECT_EQ(d2_client_config->getNcrProtocol(), ncr_protocol);
     EXPECT_EQ(d2_client_config->getNcrFormat(), ncr_format);
-    EXPECT_EQ(d2_client_config->getRemoveOnRenew(), remove_on_renew);
     EXPECT_EQ(d2_client_config->getAlwaysIncludeFqdn(), always_include_fqdn);
     EXPECT_EQ(d2_client_config->getOverrideNoUpdate(), override_no_update);
     EXPECT_EQ(d2_client_config->getOverrideClientUpdate(),
@@ -94,7 +99,6 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                        server_port,
                                                        dhcp_ddns::NCR_TCP,
                                                        ncr_format,
-                                                       remove_on_renew,
                                                        always_include_fqdn,
                                                        override_no_update,
                                                        override_client_update,
@@ -119,7 +123,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(ref_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true,
+                    true, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(ref_config);
 
@@ -127,7 +131,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true,
+                    true, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_TRUE(*ref_config == *test_config);
@@ -137,7 +141,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(false,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true,
+                    true, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -147,7 +151,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     test_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true,
+                    true, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -157,17 +161,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 333,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true,
-                    "pre-fix", "suf-fix")));
-    ASSERT_TRUE(test_config);
-    EXPECT_FALSE(*ref_config == *test_config);
-    EXPECT_TRUE(*ref_config != *test_config);
-
-    // Check a configuration that differs only by remove_on_renew.
-    ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
-                    ref_address, 477,
-                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    false, true, true, true, true,
+                    true, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -177,7 +171,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, false, true, true, true,
+                    false, true, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -187,7 +181,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, false, true, true,
+                    true, false, true, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -197,7 +191,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, false, true,
+                    true, true, false, true,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -207,7 +201,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, false,
+                    true, true, true, false,
                     "pre-fix", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -217,7 +211,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true,
+                    true, true, true, true,
                     "bogus", "suf-fix")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -227,7 +221,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
     ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
                     ref_address, 477,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                    true, true, true, true, true,
+                    true, true, true, true,
                     "pre-fix", "bogus")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
@@ -270,7 +264,7 @@ TEST(D2ClientMgr, validConfig) {
     ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig(true,
                                   isc::asiolink::IOAddress("127.0.0.1"), 477,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  true, true, true, true, true,
+                                  true, true, true, true,
                                   "pre-fix", "suf-fix")));
 
     // Verify that we can assign a new, non-empty configuration.
@@ -290,5 +284,521 @@ TEST(D2ClientMgr, validConfig) {
     EXPECT_NE(*original_config, *updated_config);
 }
 
+
+/// @brief Tests that analyzeFqdn detects invalid combination of both the
+/// client S and N flags set to true.
+TEST(D2ClientMgr, analyzeFqdnInvalidCombination) {
+    D2ClientMgr mgr;
+    bool server_s = false;
+    bool server_n = false;
+
+    // Create disabled configuration.
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig()));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_FALSE(mgr.ddnsEnabled());
+
+    // client S=1 N=1 is invalid.  analyzeFqdn should throw.
+    ASSERT_THROW(mgr.analyzeFqdn(true, true, server_s, server_n),
+                 isc::BadValue);
+
+    // Create enabled configuration with all controls off (no overrides).
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, false, false,
+                                  "pre-fix", "suf-fix")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_TRUE(mgr.ddnsEnabled());
+
+    // client S=1 N=1 is invalid.  analyzeFqdn should throw.
+    ASSERT_THROW(mgr.analyzeFqdn(true, true, server_s, server_n),
+                 isc::BadValue);
+}
+
+/// @brief Tests that analyzeFqdn generates correct server S and N flags when
+/// updates are enabled and all overrides are off.
+TEST(D2ClientMgr, analyzeFqdnEnabledNoOverrides) {
+    D2ClientMgr mgr;
+    bool server_s = false;
+    bool server_n = false;
+
+    // Create enabled configuration with all controls off (no overrides).
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, false, false,
+                                  "pre-fix", "suf-fix")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_TRUE(mgr.ddnsEnabled());
+    ASSERT_FALSE(cfg->getOverrideClientUpdate());
+    ASSERT_FALSE(cfg->getOverrideNoUpdate());
+
+    // client S=0 N=0 means client wants to do forward update.
+    // server S should be 0 (server is not doing forward updates)
+    // and server N should be 1 (server doing no updates)
+    mgr.analyzeFqdn(false, false, server_s, server_n);
+    EXPECT_FALSE(server_s);
+    EXPECT_TRUE(server_n);
+
+    // client S=1 N=0 means client wants server to do forward update.
+    // server S should be 1 (server is doing forward updates)
+    // and server N should be 0 (server doing updates)
+    mgr.analyzeFqdn(true, false, server_s, server_n);
+    EXPECT_TRUE(server_s);
+    EXPECT_FALSE(server_n);
+
+
+    // client S=0 N=1 means client wants no one to do forward updates.
+    // server S should be 0 (server is  not forward updates)
+    // and server N should be 1 (server is not doing any updates)
+    mgr.analyzeFqdn(false, true, server_s, server_n);
+    EXPECT_FALSE(server_s);
+    EXPECT_TRUE(server_n);
+}
+
+/// @brief Tests that analyzeFqdn generates correct server S and N flags when
+/// updates are enabled and override-no-update is on.
+TEST(D2ClientMgr, analyzeFqdnEnabledOverrideNoUpdate) {
+    D2ClientMgr mgr;
+    bool server_s = false;
+    bool server_n = false;
+
+    // Create enabled configuration with OVERRIDE_NO_UPDATE on.
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, true, false, false,
+                                  "pre-fix", "suf-fix")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_TRUE(mgr.ddnsEnabled());
+    ASSERT_TRUE(cfg->getOverrideNoUpdate());
+    ASSERT_FALSE(cfg->getOverrideClientUpdate());
+
+    // client S=0 N=0 means client wants to do forward update.
+    // server S should be 0 (server is not doing forward updates)
+    // and server N should be 1 (server is not doing any updates)
+    mgr.analyzeFqdn(false, false, server_s, server_n);
+    EXPECT_FALSE(server_s);
+    EXPECT_TRUE(server_n);
+
+    // client S=1 N=0 means client wants server to do forward update.
+    // server S should be 1 (server is doing forward updates)
+    // and server N should be 0 (server doing updates)
+    mgr.analyzeFqdn(true, false, server_s, server_n);
+    EXPECT_TRUE(server_s);
+    EXPECT_FALSE(server_n);
+
+    // client S=0 N=1 means client wants no one to do forward updates.
+    // server S should be 1 (server is doing forward updates)
+    // and server N should be 0 (server is doing updates)
+    mgr.analyzeFqdn(false, true, server_s, server_n);
+    EXPECT_TRUE(server_s);
+    EXPECT_FALSE(server_n);
+}
+
+/// @brief Tests that analyzeFqdn generates correct server S and N flags when
+/// updates are enabled and override-client-update is on.
+TEST(D2ClientMgr, analyzeFqdnEnabledOverrideClientUpdate) {
+    D2ClientMgr mgr;
+    bool server_s = false;
+    bool server_n = false;
+
+    // Create enabled configuration with OVERRIDE_CLIENT_UPDATE on.
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, true, false,
+                                  "pre-fix", "suf-fix")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_TRUE(mgr.ddnsEnabled());
+    ASSERT_FALSE(cfg->getOverrideNoUpdate());
+    ASSERT_TRUE(cfg->getOverrideClientUpdate());
+
+    // client S=0 N=0 means client wants to do forward update.
+    // server S should be 1 (server is doing forward updates)
+    // and server N should be 0 (server doing updates)
+    mgr.analyzeFqdn(false, false, server_s, server_n);
+    EXPECT_TRUE(server_s);
+    EXPECT_FALSE(server_n);
+
+    // client S=1 N=0 means client wants server to do forward update.
+    // server S should be 1 (server is doing forward updates)
+    // and server N should be 0 (server doing updates)
+    mgr.analyzeFqdn(true, false, server_s, server_n);
+    EXPECT_TRUE(server_s);
+    EXPECT_FALSE(server_n);
+
+    // client S=0 N=1 means client wants no one to do forward updates.
+    // server S should be 0 (server is  not forward updates)
+    // and server N should be 1 (server is not doing any updates)
+    mgr.analyzeFqdn(false, true, server_s, server_n);
+    EXPECT_FALSE(server_s);
+    EXPECT_TRUE(server_n);
+}
+
+/// @brief Verifies the adustFqdnFlags template with Option4ClientFqdn objects.
+/// Ensures that the method can set the N, S, and O flags properly.
+/// Other permutations are covered by analyzeFqdnFlag tests.
+TEST(D2ClientMgr, adjustFqdnFlagsV4) {
+    D2ClientMgr mgr;
+    Option4ClientFqdnPtr request;
+    Option4ClientFqdnPtr response;
+
+    // Create enabled configuration and override-no-update on.
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, true, false, false,
+                                  "pre-fix", "suf-fix")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_TRUE(mgr.ddnsEnabled());
+    ASSERT_TRUE(cfg->getOverrideNoUpdate());
+    ASSERT_FALSE(cfg->getOverrideClientUpdate());
+
+    // client S=0 N=0 means client wants to do forward update.
+    // server S should be 0 (server is not doing forward updates)
+    // and server N should be 1 (server doing no updates)
+    // and server O should be 0
+    request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                        "", Option4ClientFqdn::PARTIAL));
+    response.reset(new Option4ClientFqdn(*request));
+    response->resetFlags();
+
+    mgr.adjustFqdnFlags<Option4ClientFqdn>(*request, *response);
+    EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_S));
+    EXPECT_TRUE(response->getFlag(Option4ClientFqdn::FLAG_N));
+    EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_O));
+
+    // client S=1 N=0 means client wants server to do forward update.
+    // server S should be 1 (server is doing forward updates)
+    // and server N should be 0 (server doing updates)
+    // and server O should be 0
+    request.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_S,
+                                        Option4ClientFqdn::RCODE_CLIENT(),
+                                        "", Option4ClientFqdn::PARTIAL));
+    response.reset(new Option4ClientFqdn(*request));
+    response->resetFlags();
+
+    mgr.adjustFqdnFlags<Option4ClientFqdn>(*request, *response);
+    EXPECT_TRUE(response->getFlag(Option4ClientFqdn::FLAG_S));
+    EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_N));
+    EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_O));
+
+    // client S=0 N=1 means client wants no one to do updates
+    // server S should be 1 (server is doing forward updates)
+    // and server N should be 0 (server doing updates)
+    // and O should be 1 (overriding client S)
+    request.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_N,
+                                        Option4ClientFqdn::RCODE_CLIENT(),
+                                        "", Option4ClientFqdn::PARTIAL));
+    response.reset(new Option4ClientFqdn(*request));
+    response->resetFlags();
+
+    mgr.adjustFqdnFlags<Option4ClientFqdn>(*request, *response);
+    EXPECT_TRUE(response->getFlag(Option4ClientFqdn::FLAG_S));
+    EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_N));
+    EXPECT_TRUE(response->getFlag(Option4ClientFqdn::FLAG_O));
+}
+
+/// @brief Tests the qualifyName method's ability to construct FQDNs
+TEST(D2ClientMgr, qualifyName) {
+    D2ClientMgr mgr;
+
+    // Create enabled configuration.
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, true, false,
+                                  "prefix", "suffix.com")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+
+    // Verify that the qualifying suffix gets appended with trailing dot added.
+    std::string partial_name = "somehost";
+    std::string qualified_name = mgr.qualifyName(partial_name);
+    EXPECT_EQ("somehost.suffix.com.", qualified_name);
+
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, true, false,
+                                  "prefix", "hasdot.com.")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+
+    // Verify that the qualifying suffix gets appended without dot added.
+    qualified_name = mgr.qualifyName(partial_name);
+    EXPECT_EQ("somehost.hasdot.com.", qualified_name);
+}
+
+
+/// @brief Tests the generateFdqn method's ability to construct FQDNs
+TEST(D2ClientMgr, generateFqdn) {
+    D2ClientMgr mgr;
+
+    // Create enabled configuration.
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, true, false,
+                                  "prefix", "suffix.com")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+
+    // Verify that it works with an IPv4 address.
+    asiolink::IOAddress v4address("192.0.2.75");
+    EXPECT_EQ("prefix-192-0-2-75.suffix.com.", mgr.generateFqdn(v4address));
+
+    // Verify that it works with an IPv6 address.
+    asiolink::IOAddress v6address("2001:db8::2");
+    EXPECT_EQ("prefix-2001-db8--2.suffix.com.", mgr.generateFqdn(v6address));
+
+    // Create a disabled config.
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig()));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+
+    // Verify names generate properly with a disabled configuration.
+    EXPECT_EQ("myhost-192-0-2-75.example.com.", mgr.generateFqdn(v4address));
+    EXPECT_EQ("myhost-2001-db8--2.example.com.", mgr.generateFqdn(v6address));
+}
+
+/// @brief Tests adjustDomainName template method with Option4ClientFqdn
+TEST(D2ClientMgr, adjustDomainNameV4) {
+    D2ClientMgr mgr;
+    Option4ClientFqdnPtr request;
+    Option4ClientFqdnPtr response;
+
+    // Create enabled configuration.
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, false, false,
+                                  "prefix", "suffix.com")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_FALSE(cfg->getReplaceClientName());
+
+    // replace-client-name is false, client passes in empty fqdn
+    // reponse domain should be empty/partial.
+    request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                        "", Option4ClientFqdn::PARTIAL));
+    response.reset(new Option4ClientFqdn(*request));
+
+    mgr.adjustDomainName<Option4ClientFqdn>(*request, *response);
+    EXPECT_EQ("", response->getDomainName());
+    EXPECT_EQ(Option4ClientFqdn::PARTIAL, response->getDomainNameType());
+
+
+    // replace-client-name is false, client passes in a partial fqdn
+    // response should contain client's name plus the qualifying suffix.
+    request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                        "myhost", Option4ClientFqdn::PARTIAL));
+    response.reset(new Option4ClientFqdn(*request));
+
+    mgr.adjustDomainName<Option4ClientFqdn>(*request, *response);
+    EXPECT_EQ("myhost.suffix.com.", response->getDomainName());
+    EXPECT_EQ(Option4ClientFqdn::FULL, response->getDomainNameType());
+
+
+    // replace-client-name is false, client passes in a full fqdn
+    // response domain should not be altered.
+    request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                        "myhost.example.com.",
+                                         Option4ClientFqdn::FULL));
+    response.reset(new Option4ClientFqdn(*request));
+    mgr.adjustDomainName<Option4ClientFqdn>(*request, *response);
+    EXPECT_EQ("myhost.example.com.", response->getDomainName());
+    EXPECT_EQ(Option4ClientFqdn::FULL, response->getDomainNameType());
+
+    // Create enabled configuration.
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, false, true,
+                                  "prefix", "suffix.com")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_TRUE(cfg->getReplaceClientName());
+
+    // replace-client-name is true, client passes in empty fqdn
+    // reponse domain should be empty/partial.
+    request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                        "", Option4ClientFqdn::PARTIAL));
+    response.reset(new Option4ClientFqdn(*request));
+
+    mgr.adjustDomainName<Option4ClientFqdn>(*request, *response);
+    EXPECT_EQ("", response->getDomainName());
+    EXPECT_EQ(Option4ClientFqdn::PARTIAL, response->getDomainNameType());
+
+    // replace-client-name is true, client passes in a partial fqdn
+    // reponse domain should be empty/partial.
+    request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                        "myhost", Option4ClientFqdn::PARTIAL));
+    response.reset(new Option4ClientFqdn(*request));
+
+    mgr.adjustDomainName<Option4ClientFqdn>(*request, *response);
+    EXPECT_EQ("", response->getDomainName());
+    EXPECT_EQ(Option4ClientFqdn::PARTIAL, response->getDomainNameType());
+
+
+    // replace-client-name is true, client passes in a full fqdn
+    // reponse domain should be empty/partial.
+    request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                        "myhost.example.com.",
+                                         Option4ClientFqdn::FULL));
+    response.reset(new Option4ClientFqdn(*request));
+    mgr.adjustDomainName<Option4ClientFqdn>(*request, *response);
+    EXPECT_EQ("", response->getDomainName());
+    EXPECT_EQ(Option4ClientFqdn::PARTIAL, response->getDomainNameType());
+}
+
+/// @brief Tests adjustDomainName template method with Option6ClientFqdn
+TEST(D2ClientMgr, adjustDomainNameV6) {
+    D2ClientMgr mgr;
+    Option6ClientFqdnPtr request;
+    Option6ClientFqdnPtr response;
+
+    // Create enabled configuration.
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, false, false,
+                                  "prefix", "suffix.com")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_FALSE(cfg->getReplaceClientName());
+
+    // replace-client-name is false, client passes in empty fqdn
+    // reponse domain should be empty/partial.
+    request.reset(new Option6ClientFqdn(0, "", Option6ClientFqdn::PARTIAL));
+    response.reset(new Option6ClientFqdn(*request));
+
+    mgr.adjustDomainName<Option6ClientFqdn>(*request, *response);
+    EXPECT_EQ("", response->getDomainName());
+    EXPECT_EQ(Option6ClientFqdn::PARTIAL, response->getDomainNameType());
+
+    // replace-client-name is false, client passes in a partial fqdn
+    // response should contain client's name plus the qualifying suffix.
+    request.reset(new Option6ClientFqdn(0, "myhost",
+                                        Option6ClientFqdn::PARTIAL));
+    response.reset(new Option6ClientFqdn(*request));
+
+    mgr.adjustDomainName<Option6ClientFqdn>(*request, *response);
+    EXPECT_EQ("myhost.suffix.com.", response->getDomainName());
+    EXPECT_EQ(Option6ClientFqdn::FULL, response->getDomainNameType());
+
+
+    // replace-client-name is false, client passes in a full fqdn
+    // response domain should not be altered.
+    request.reset(new Option6ClientFqdn(0, "myhost.example.com.",
+                                        Option6ClientFqdn::FULL));
+    response.reset(new Option6ClientFqdn(*request));
+    mgr.adjustDomainName<Option6ClientFqdn>(*request, *response);
+    EXPECT_EQ("myhost.example.com.", response->getDomainName());
+    EXPECT_EQ(Option6ClientFqdn::FULL, response->getDomainNameType());
+
+    // Create enabled configuration.
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, false, true,
+                                  "prefix", "suffix.com")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_TRUE(cfg->getReplaceClientName());
+
+    // replace-client-name is true, client passes in empty fqdn
+    // reponse domain should be empty/partial.
+    request.reset(new Option6ClientFqdn(0, "", Option6ClientFqdn::PARTIAL));
+    response.reset(new Option6ClientFqdn(*request));
+
+    mgr.adjustDomainName<Option6ClientFqdn>(*request, *response);
+    EXPECT_EQ("", response->getDomainName());
+    EXPECT_EQ(Option6ClientFqdn::PARTIAL, response->getDomainNameType());
+
+    // replace-client-name is true, client passes in a partial fqdn
+    // reponse domain should be empty/partial.
+    request.reset(new Option6ClientFqdn(0, "myhost",
+                                        Option6ClientFqdn::PARTIAL));
+    response.reset(new Option6ClientFqdn(*request));
+
+    mgr.adjustDomainName<Option6ClientFqdn>(*request, *response);
+    EXPECT_EQ("", response->getDomainName());
+    EXPECT_EQ(Option6ClientFqdn::PARTIAL, response->getDomainNameType());
+
+
+    // replace-client-name is true, client passes in a full fqdn
+    // reponse domain should be empty/partial.
+    request.reset(new Option6ClientFqdn(0, "myhost.example.com.",
+                                        Option6ClientFqdn::FULL));
+    response.reset(new Option6ClientFqdn(*request));
+    mgr.adjustDomainName<Option6ClientFqdn>(*request, *response);
+    EXPECT_EQ("", response->getDomainName());
+    EXPECT_EQ(Option6ClientFqdn::PARTIAL, response->getDomainNameType());
+}
+
+/// @brief Verifies the adustFqdnFlags template with Option6ClientFqdn objects.
+/// Ensures that the method can set the N, S, and O flags properly.
+/// Other permutations are covered by analyzeFqdnFlags tests.
+TEST(D2ClientMgr, adjustFqdnFlagsV6) {
+    D2ClientMgr mgr;
+    Option6ClientFqdnPtr request;
+    Option6ClientFqdnPtr response;
+
+    // Create enabled configuration and override-no-update on.
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, true, false, false,
+                                  "pre-fix", "suf-fix")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_TRUE(mgr.ddnsEnabled());
+    ASSERT_TRUE(cfg->getOverrideNoUpdate());
+    ASSERT_FALSE(cfg->getOverrideClientUpdate());
+
+    // client S=0 N=0 means client wants to do forward update.
+    // server S should be 0 (server is not doing forward updates)
+    // and server N should be 1 (server doing no updates)
+    // and server O should be 0
+    request.reset(new Option6ClientFqdn(0, "", Option6ClientFqdn::PARTIAL));
+    response.reset(new Option6ClientFqdn(*request));
+    response->resetFlags();
+
+    mgr.adjustFqdnFlags<Option6ClientFqdn>(*request, *response);
+    EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_S));
+    EXPECT_TRUE(response->getFlag(Option6ClientFqdn::FLAG_N));
+    EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_O));
+
+    // client S=1 N=0 means client wants server to do forward update.
+    // server S should be 1 (server is doing forward updates)
+    // and server N should be 0 (server doing updates)
+    // and server O should be 0
+    request.reset(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
+                                        "", Option6ClientFqdn::PARTIAL));
+    response.reset(new Option6ClientFqdn(*request));
+    response->resetFlags();
+
+    mgr.adjustFqdnFlags<Option6ClientFqdn>(*request, *response);
+    EXPECT_TRUE(response->getFlag(Option6ClientFqdn::FLAG_S));
+    EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_N));
+    EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_O));
+
+    // client S=0 N=1 means client wants no one to do updates
+    // server S should be 1 (server is doing forward updates)
+    // and server N should be 0 (server doing updates)
+    // and O should be 1 (overriding client S)
+    request.reset(new Option6ClientFqdn(Option6ClientFqdn::FLAG_N,
+                                        "", Option6ClientFqdn::PARTIAL));
+    response.reset(new Option6ClientFqdn(*request));
+    response->resetFlags();
+
+    mgr.adjustFqdnFlags<Option6ClientFqdn>(*request, *response);
+    EXPECT_TRUE(response->getFlag(Option6ClientFqdn::FLAG_S));
+    EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_N));
+    EXPECT_TRUE(response->getFlag(Option6ClientFqdn::FLAG_O));
+}
 
 } // end of anonymous namespace

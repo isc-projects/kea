@@ -26,12 +26,14 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 // hacks to make templates work
@@ -148,11 +150,9 @@ TYPED_TEST(Rdata_DS_LIKE_Test, toWireRenderer) {
 
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_ds_fromWire", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t*>
-                        (this->renderer.getData()) + 2,
-                        this->renderer.getLength() - 2,
-                        &data[2], data.size() - 2);
+    matchWireData(&data[2], data.size() - 2,
+                  static_cast<const uint8_t*>(this->renderer.getData()) + 2,
+                  this->renderer.getLength() - 2);
 }
 
 TYPED_TEST(Rdata_DS_LIKE_Test, toWireBuffer) {

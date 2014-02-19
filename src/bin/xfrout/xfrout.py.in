@@ -143,11 +143,11 @@ def format_addrinfo(addrinfo):
         raise TypeError("addrinfo argument to format_addrinfo() does not "
                         "appear to be consisting of (family, socktype, (addr, port))")
 
+# This function is not inlined as it is replaced with a mock function
+# during testing.
 def get_rrset_len(rrset):
     """Returns the wire length of the given RRset"""
-    bytes = bytearray()
-    rrset.to_wire(bytes)
-    return len(bytes)
+    return rrset.get_length()
 
 def get_soa_serial(soa_rdata):
     '''Extract the serial field of an SOA RDATA and returns it as an Serial object.
@@ -345,12 +345,7 @@ class XfroutSession():
         render.set_compress_mode(MessageRenderer.CASE_SENSITIVE)
         render.set_length_limit(XFROUT_MAX_MESSAGE_SIZE)
 
-        # XXX Currently, python wrapper doesn't accept 'None' parameter in this case,
-        # we should remove the if statement and use a universal interface later.
-        if tsig_ctx is not None:
-            msg.to_wire(render, tsig_ctx)
-        else:
-            msg.to_wire(render)
+        msg.to_wire(render, tsig_ctx)
 
         header_len = struct.pack('H', socket.htons(render.get_length()))
         self._send_data(sock_fd, header_len)

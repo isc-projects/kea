@@ -69,7 +69,7 @@ typedef boost::function<void(isc::dns::ConstRRsetPtr)> LoadCallback;
 class ZoneDataLoader : boost::noncopyable {
 public:
     ZoneDataLoader(util::MemorySegment& mem_sgmt,
-                   const isc::dns::RRClass rrclass,
+                   const isc::dns::RRClass& rrclass,
                    const isc::dns::Name& zone_name, ZoneData& zone_data) :
         updater_(mem_sgmt, rrclass, zone_name, zone_data)
     {}

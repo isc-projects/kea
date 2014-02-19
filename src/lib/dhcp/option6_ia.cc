@@ -72,12 +72,12 @@ void Option6IA::unpack(OptionBufferConstIter begin,
     if (distance(begin, end) < OPTION6_IA_LEN) {
         isc_throw(OutOfRange, "Option " << type_ << " truncated");
     }
-    iaid_ = readUint32( &(*begin) );
+    iaid_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
-    t1_ = readUint32( &(*begin) );
+    t1_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
 
-    t2_ = readUint32( &(*begin) );
+    t2_ = readUint32(&(*begin), distance(begin, end));
     begin += sizeof(uint32_t);
 
     unpackOptions(OptionBuffer(begin, end));

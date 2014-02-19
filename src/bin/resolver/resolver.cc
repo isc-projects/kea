@@ -418,7 +418,7 @@ Resolver::processMessage(const IOMessage& io_message,
             server->resume(false);
             return;
         }
-    } catch (const Exception& ex) {
+    } catch (const isc::Exception& ex) {
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO,
                   RESOLVER_HEADER_PROCESSING_FAILED).arg(ex.what());
         server->resume(false);
@@ -436,7 +436,7 @@ Resolver::processMessage(const IOMessage& io_message,
                          buffer, error.getRcode());
         server->resume(true);
         return;
-    } catch (const Exception& ex) {
+    } catch (const isc::Exception& ex) {
         LOG_DEBUG(resolver_logger, RESOLVER_DBG_IO,
                   RESOLVER_MESSAGE_PROCESSING_FAILED)
                   .arg(ex.what()).arg(Rcode::SERVFAIL());
