@@ -21,6 +21,7 @@
 #include "rrset_copy.h"
 
 using namespace isc::dns;
+using namespace isc::nsas;
 
 namespace isc {
 namespace cache {

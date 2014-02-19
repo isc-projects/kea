@@ -14,7 +14,7 @@
         "database_file": "data/ddns/example.org.sqlite3",
         "listen_on": [
             {
-                "port": 47806,
+                "port": 56176,
                 "address": "127.0.0.1"
             }
         ]

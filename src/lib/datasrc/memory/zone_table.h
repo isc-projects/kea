@@ -146,8 +146,6 @@ public:
     ///
     /// \param mem_sgmt The \c MemorySegment that allocated memory for
     /// \c ztable and used for prior calls to \c addZone().
-    /// \param zone_class The RR class of the zone.  It must be the RR class
-    /// that is supposed to be associated to the zone table.
     /// \param ztable A non NULL pointer to a valid \c ZoneTable object
     /// that was originally created by the \c create() method (the behavior
     /// is undefined if this condition isn't met).

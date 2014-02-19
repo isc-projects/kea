@@ -23,6 +23,7 @@ class Name;
 
 namespace python {
 
+extern PyObject* po_NameParserException;
 extern PyObject* po_EmptyLabel;
 extern PyObject* po_TooLongName;
 extern PyObject* po_TooLongLabel;
@@ -30,7 +31,6 @@ extern PyObject* po_BadLabelType;
 extern PyObject* po_BadEscape;
 extern PyObject* po_IncompleteName;
 extern PyObject* po_InvalidBufferPosition;
-extern PyObject* po_DNSMessageFORMERR;
 
 //
 // Declaration of enums

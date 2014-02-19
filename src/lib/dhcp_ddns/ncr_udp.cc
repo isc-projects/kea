@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -94,7 +94,7 @@ NameChangeUDPListener::~NameChangeUDPListener() {
 void
 NameChangeUDPListener::open(isc::asiolink::IOService& io_service) {
     // create our endpoint and bind the the low level socket to it.
-    isc::asiolink::UDPEndpoint endpoint(ip_address_.getAddress(), port_);
+    isc::asiolink::UDPEndpoint endpoint(ip_address_, port_);
 
     // Create the low level socket.
     try {
@@ -227,7 +227,7 @@ NameChangeUDPSender::~NameChangeUDPSender() {
 void
 NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
     // create our endpoint and bind the the low level socket to it.
-    isc::asiolink::UDPEndpoint endpoint(ip_address_.getAddress(), port_);
+    isc::asiolink::UDPEndpoint endpoint(ip_address_, port_);
 
     // Create the low level socket.
     try {
@@ -252,10 +252,11 @@ NameChangeUDPSender::open(isc::asiolink::IOService& io_service) {
 
     // Create the server endpoint
     server_endpoint_.reset(new isc::asiolink::
-                           UDPEndpoint(server_address_.getAddress(),
-                                       server_port_));
+                           UDPEndpoint(server_address_, server_port_));
 
     send_callback_->setDataSource(server_endpoint_);
+
+    watch_socket_.reset(new WatchSocket());
 }
 
 void
@@ -282,6 +283,8 @@ NameChangeUDPSender::close() {
     }
 
     socket_.reset();
+
+    watch_socket_.reset();
 }
 
 void
@@ -298,11 +301,32 @@ NameChangeUDPSender::doSend(NameChangeRequestPtr& ncr) {
     // Call the socket's asychronous send, passing our callback
     socket_->asyncSend(send_callback_->getData(), send_callback_->getPutLen(),
                        send_callback_->getDataSource().get(), *send_callback_);
+
+    // Set IO ready marker so sender activity is visible to select() or poll().
+    // Note, if this call throws it will manifest itself as a throw from
+    // from sendRequest() which the application calls directly and is documented
+    // as throwing exceptions; or caught inside invokeSendHandler() which
+    // will invoke the application's send_handler with an error status.
+    watch_socket_->markReady();
 }
 
 void
 NameChangeUDPSender::sendCompletionHandler(const bool successful,
                                            const UDPCallback *send_callback) {
+    // Clear the IO ready marker.
+    try {
+        watch_socket_->clearReady();
+    } catch (const std::exception& ex) {
+        // This can only happen if the WatchSocket's select_fd has been
+        // compromised which is a programmatic error. We'll log the error
+        // here, then continue on and process the IO result we were given.
+        // WatchSocket issue will resurface on the next send as a closed
+        // fd in markReady().  This allows application's handler to deal
+        // with watch errors more uniformly.
+        LOG_ERROR(dhcp_ddns_logger, DHCP_DDNS_NCR_UDP_CLEAR_READY_ERROR)
+                 .arg(ex.what());
+    }
+
     Result result;
     if (successful) {
         result = SUCCESS;
@@ -324,5 +348,27 @@ NameChangeUDPSender::sendCompletionHandler(const bool successful,
     // Call the application's registered request send handler.
     invokeSendHandler(result);
 }
+
+int
+NameChangeUDPSender::getSelectFd() {
+    if (!amSending()) {
+        isc_throw(NotImplemented, "NameChangeUDPSender::getSelectFd"
+                                  " not in send mode");
+    }
+
+    return(watch_socket_->getSelectFd());
+}
+
+bool
+NameChangeUDPSender::ioReady() {
+    if (watch_socket_) {
+        return (watch_socket_->isReady());
+    }
+
+    return (false);
+}
+
+
+
 }; // end of isc::dhcp_ddns namespace
 }; // end of isc namespace

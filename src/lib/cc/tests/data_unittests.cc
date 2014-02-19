@@ -84,7 +84,7 @@ TEST(Element, from_and_to_json) {
     sv.push_back("\"asdf\"");
     sv.push_back("null");
     sv.push_back("[ 1, 2, 3, 4 ]");
-    sv.push_back("{ \"name\": \"foo\", \"value\": 47806 }");
+    sv.push_back("{ \"name\": \"foo\", \"value\": 56176 }");
     sv.push_back("[ { \"a\": 1, \"b\": \"c\" }, { \"a\": 2, \"b\": \"d\" } ]");
     sv.push_back("8.23");
     sv.push_back("123.456");
@@ -570,12 +570,12 @@ TEST(Element, ListElement) {
     el->set(0, Element::fromJSON("\"foo\""));
     EXPECT_EQ(el->get(0)->stringValue(), "foo");
 
-    el->add(Element::create(47806));
-    EXPECT_EQ(el->get(3)->intValue(), 47806);
+    el->add(Element::create(56176));
+    EXPECT_EQ(el->get(3)->intValue(), 56176);
 
     el->remove(1);
     el->remove(1);
-    EXPECT_EQ(el->str(), "[ \"foo\", 47806 ]");
+    EXPECT_EQ(el->str(), "[ \"foo\", 56176 ]");
 
     // hmm, it errors on EXPECT_THROW(el->get(3), std::out_of_range)
     EXPECT_ANY_THROW(el->get(3));
@@ -600,8 +600,8 @@ TEST(Element, MapElement) {
 
     EXPECT_TRUE(isNull(el->get("value3")));
 
-    el->set("value3", Element::create(47806));
-    EXPECT_EQ(el->get("value3")->intValue(), 47806);
+    el->set("value3", Element::create(56176));
+    EXPECT_EQ(el->get("value3")->intValue(), 56176);
 
     el->remove("value3");
     EXPECT_TRUE(isNull(el->get("value3")));

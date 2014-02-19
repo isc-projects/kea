@@ -19,11 +19,13 @@
 #include <dns/rrtype.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class RRTypeTest : public ::testing::Test {
@@ -107,9 +109,8 @@ TEST_F(RRTypeTest, toWireBuffer) {
     rrtype_0x8000.toWire(obuffer);
     rrtype_max.toWire(obuffer);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        wiredata, sizeof(wiredata));
+    matchWireData(wiredata, sizeof(wiredata),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(RRTypeTest, toWireRenderer) {
@@ -119,9 +120,8 @@ TEST_F(RRTypeTest, toWireRenderer) {
     rrtype_0x8000.toWire(renderer);
     rrtype_max.toWire(renderer);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata, sizeof(wiredata));
+    matchWireData(wiredata, sizeof(wiredata),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(RRTypeTest, wellKnownTypes) {

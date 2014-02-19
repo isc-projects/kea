@@ -21,6 +21,7 @@
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_custom.h>
 #include <dhcp_ddns/ncr_msg.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <hooks/callout_handle.h>
@@ -165,7 +166,108 @@ public:
     /// @param use_bcast should broadcast flags be set on the sockets.
     static void openActiveSockets(const uint16_t port, const bool use_bcast);
 
+    /// @brief Starts DHCP_DDNS client IO if DDNS updates are enabled.
+    ///
+    /// If updates are enabled, it Instructs the D2ClientMgr singleton to
+    /// enter send mode.  If D2ClientMgr encounters errors it may throw
+    /// D2ClientErrors. This method does not catch exceptions.
+    void startD2();
+
+    /// @brief Implements the error handler for DHCP_DDNS IO errors
+    ///
+    /// Invoked when a NameChangeRequest send to b10-dhcp-ddns completes with
+    /// a failed status.  These are communications errors, not data related
+    /// failures.
+    ///
+    /// This method logs the failure and then suspends all further updates.
+    /// Updating can only be restored by reconfiguration or restarting the
+    /// server.  There is currently no retry logic so the first IO error that
+    /// occurs will suspend updates.
+    /// @todo We may wish to make this more robust or sophisticated.
+    ///
+    /// @param result Result code of the send operation.
+    /// @param ncr NameChangeRequest which failed to send.
+    virtual void d2ClientErrorHandler(const dhcp_ddns::
+                                      NameChangeSender::Result result,
+                                      dhcp_ddns::NameChangeRequestPtr& ncr);
 protected:
+
+    /// @name Functions filtering and sanity-checking received messages.
+    ///
+    /// @todo These functions are supposed to be moved to a new class which
+    /// will manage different rules for accepting and rejecting messages.
+    /// Perhaps ticket #3116 is a good opportunity to do it.
+    ///
+    //@{
+    /// @brief Checks whether received message should be processed or discarded.
+    ///
+    /// This function checks whether received message should be processed or
+    /// discarded. It should be called on the beginning of message processing
+    /// (just after the message has been decoded). This message calls a number
+    /// of other functions which check whether message should be processed,
+    /// using different criteria.
+    ///
+    /// This function should be extended when new criteria for accepting
+    /// received message have to be implemented. This function is meant to
+    /// aggregate all early filtering checks on the received message. By having
+    /// a single function like this, we are avoiding bloat of the server's main
+    /// loop.
+    ///
+    /// @warning This function should remain exception safe.
+    ///
+    /// @param query Received message.
+    ///
+    /// @return true if the message should be further processed, or false if
+    /// the message should be discarded.
+    bool accept(const Pkt4Ptr& query) const;
+
+    /// @brief Check if a message sent by directly connected client should be
+    /// accepted or discared.
+    ///
+    /// This function checks if the received message is from directly connected
+    /// client. If it is, it checks that it should be processed or discarded.
+    ///
+    /// Note that this function doesn't validate all addresses being carried in
+    /// the message. The primary purpose of this function is to filter out
+    /// direct messages in the local network for which there is no suitable
+    /// subnet configured. For example, this function accepts unicast messages
+    /// because unicasts may be used by clients located in remote networks to
+    /// to renew existing leases. If their notion of address is wrong, the
+    /// server will have to sent a NAK, instead of dropping the message.
+    /// Detailed validation of such messages is performed at later stage of
+    /// processing.
+    ///
+    /// This function accepts the following messages:
+    /// - all valid relayed messages,
+    /// - all unicast messages,
+    /// - all broadcast messages received on the interface for which the
+    /// suitable subnet exists (is configured).
+    ///
+    /// @param query Message sent by a client.
+    ///
+    /// @return true if message is accepted for further processing, false
+    /// otherwise.
+    bool acceptDirectRequest(const Pkt4Ptr& query) const;
+
+    /// @brief Check if received message type is valid for the server to
+    /// process.
+    ///
+    /// This function checks that the received message type belongs to the range
+    /// of types regonized by the server and that the message of this type
+    /// should be processed by the server.
+    ///
+    /// The messages types accepted for processing are:
+    /// - Discover
+    /// - Request
+    /// - Release
+    /// - Decline
+    /// - Inform
+    ///
+    /// @param query Message sent by a client.
+    ///
+    /// @return true if message is accepted for further processing, false
+    /// otherwise.
+    bool acceptMessageType(const Pkt4Ptr& query) const;
 
     /// @brief Verifies if the server id belongs to our server.
     ///
@@ -181,6 +283,7 @@ protected:
     /// @return true, if the server identifier is absent or matches one of the
     /// server identifiers that the server is using; false otherwise.
     bool acceptServerId(const Pkt4Ptr& pkt) const;
+    //@}
 
     /// @brief verifies if specified packet meets RFC requirements
     ///
@@ -377,27 +480,16 @@ protected:
     /// @brief Creates the NameChangeRequest and adds to the queue for
     /// processing.
     ///
-    /// This function adds the @c isc::dhcp_ddns::NameChangeRequest to the
-    /// queue and emits the debug message which indicates whether the request
-    /// being added is to remove DNS entry or add a new entry. This function
-    /// is exception free.
+    /// This creates the @c isc::dhcp_ddns::NameChangeRequest; emits a
+    /// the debug message which indicates whether the request being added is
+    /// to remove DNS entry or add a new entry; and then sends the request
+    /// to the D2ClientMgr for transmission to b10-dhcp-ddns.
     ///
     /// @param chg_type A type of the NameChangeRequest (ADD or REMOVE).
     /// @param lease A lease for which the NameChangeRequest is created and
     /// queued.
     void queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
                                 const Lease4Ptr& lease);
-
-    /// @brief Sends all outstanding NameChangeRequests to b10-dhcp-ddns module.
-    ///
-    /// The purpose of this function is to pick all outstanding
-    /// NameChangeRequests from the FIFO queue and send them to b10-dhcp-ddns
-    /// module.
-    ///
-    /// @todo Currently this function simply removes all requests from the
-    /// queue but doesn't send them anywhere. In the future, the
-    /// NameChangeSender will be used to deliver requests to the other module.
-    void sendNameChangeRequests();
 
     /// @brief Attempts to renew received addresses
     ///
@@ -529,7 +621,7 @@ protected:
     ///
     /// @param question client's message
     /// @return selected subnet (or NULL if no suitable subnet was found)
-    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& question);
+    isc::dhcp::Subnet4Ptr selectSubnet(const Pkt4Ptr& question) const;
 
     /// indicates if shutdown is in progress. Setting it to true will
     /// initiate server shutdown procedure.
@@ -608,12 +700,6 @@ private:
     int hook_index_pkt4_receive_;
     int hook_index_subnet4_select_;
     int hook_index_pkt4_send_;
-
-protected:
-
-    /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects which
-    /// are waiting for sending  to b10-dhcp-ddns module.
-    std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
 };
 
 }; // namespace isc::dhcp
