@@ -21,7 +21,7 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <exceptions/exceptions.h>
+#include <dns/exceptions.h>
 
 #include <dns/rdata.h>
 
@@ -35,20 +35,20 @@ struct RRParamRegistryImpl;
 /// \brief A standard DNS module exception that is thrown if a new RR type is
 /// being registered with a different type string.
 ///
-class RRTypeExists : public Exception {
+class RRTypeExists : public isc::dns::Exception {
 public:
     RRTypeExists(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 ///
 /// \brief A standard DNS module exception that is thrown if a new RR class is
 /// being registered with a different type string.
 ///
-class RRClassExists : public Exception {
+class RRClassExists : public isc::dns::Exception {
 public:
     RRClassExists(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+        isc::dns::Exception(file, line, what) {}
 };
 
 namespace rdata {

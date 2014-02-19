@@ -25,6 +25,7 @@
 #include "../nsas_entry_compare.h"
 #include "nsas_test.h"
 
+using namespace isc::dns;
 using namespace std;
 
 namespace isc {

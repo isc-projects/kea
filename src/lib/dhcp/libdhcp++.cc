@@ -52,6 +52,14 @@ VendorOptionDefContainers LibDHCP::vendor4_defs_;
 
 VendorOptionDefContainers LibDHCP::vendor6_defs_;
 
+// Those two vendor classes are used for cable modems:
+
+/// DOCSIS3.0 compatible cable modem
+const char* isc::dhcp::DOCSIS3_CLASS_MODEM = "docsis3.0";
+
+/// DOCSIS3.0 cable modem that has router built-in
+const char* isc::dhcp::DOCSIS3_CLASS_EROUTER = "eRouter1.0";
+
 // Let's keep it in .cc file. Moving it to .h would require including optionDefParams
 // definitions there
 void initOptionSpace(OptionDefContainer& defs,
@@ -223,10 +231,10 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
     // The buffer being read comprises a set of options, each starting with
     // a two-byte type code and a two-byte length field.
     while (offset + 4 <= length) {
-        uint16_t opt_type = isc::util::readUint16(&buf[offset]);
+        uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
-        uint16_t opt_len = isc::util::readUint16(&buf[offset]);
+        uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
         if (offset + opt_len > length) {
@@ -405,10 +413,10 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
     // The buffer being read comprises a set of options, each starting with
     // a two-byte type code and a two-byte length field.
     while (offset + 4 <= length) {
-        uint16_t opt_type = isc::util::readUint16(&buf[offset]);
+        uint16_t opt_type = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
-        uint16_t opt_len = isc::util::readUint16(&buf[offset]);
+        uint16_t opt_len = isc::util::readUint16(&buf[offset], 2);
         offset += 2;
 
         if (offset + opt_len > length) {

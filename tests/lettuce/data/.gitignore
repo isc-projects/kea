@@ -1,4 +1,5 @@
 /inmem-xfrin.sqlite3
+/root.sqlite3
 /test_nonexistent_db.sqlite3
 /xfrin-before-diffs.sqlite3
 /xfrin-notify.sqlite3

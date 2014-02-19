@@ -400,15 +400,27 @@ void
 OptionDataParser::createOption() {
     // Option code is held in the uint32_t storage but is supposed to
     // be uint16_t value. We need to check that value in the configuration
-    // does not exceed range of uint8_t and is not zero.
+    // does not exceed range of uint8_t for DHCPv4, uint16_t for DHCPv6 and
+    // is not zero.
     uint32_t option_code = uint32_values_->getParam("code");
     if (option_code == 0) {
         isc_throw(DhcpConfigError, "option code must not be zero."
-                << " Option code '0' is reserved in DHCPv4.");
-    } else if (option_code > std::numeric_limits<uint8_t>::max()) {
+                << " Option code '0' is reserved.");
+
+    } else if (global_context_->universe_ == Option::V4 &&
+               option_code > std::numeric_limits<uint8_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << option_code
                 << "', it must not exceed '"
-                << std::numeric_limits<uint8_t>::max() << "'");
+                  << static_cast<int>(std::numeric_limits<uint8_t>::max())
+                  << "'");
+
+    } else if (global_context_->universe_ == Option::V6 &&
+               option_code > std::numeric_limits<uint16_t>::max()) {
+        isc_throw(DhcpConfigError, "invalid option code '" << option_code
+                << "', it must not exceed '"
+                  << std::numeric_limits<uint16_t>::max()
+                  << "'");
+
     }
 
     // Check that the option name has been specified, is non-empty and does not
@@ -464,7 +476,7 @@ OptionDataParser::createOption() {
     }
 
     // Get option data from the configuration database ('data' field).
-    const std::string option_data = string_values_->getParam("data");
+    std::string option_data = string_values_->getParam("data");
 
     // Transform string of hexadecimal digits into binary format.
     std::vector<uint8_t> binary;
@@ -480,6 +492,12 @@ OptionDataParser::createOption() {
         // Otherwise, the option data is specified as a string of
         // hexadecimal digits that we have to turn into binary format.
         try {
+            // The decodeHex function expects that the string contains an
+            // even number of digits. If we don't meet this requirement,
+            // we have to insert a leading 0.
+            if (!option_data.empty() && option_data.length() % 2) {
+                option_data = option_data.insert(0, "0");
+            }
             util::encode::decodeHex(option_data, binary);
         } catch (...) {
             isc_throw(DhcpConfigError, "option data is not a valid"
@@ -793,6 +811,67 @@ OptionDefListParser::commit() {
     }
 }
 
+//****************************** RelayInfoParser ********************************
+RelayInfoParser::RelayInfoParser(const std::string&,
+                                 const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
+                                 const Option::Universe& family)
+    :storage_(relay_info), local_(isc::asiolink::IOAddress(
+                                  family == Option::V4 ? "0.0.0.0" : "::")),
+     string_values_(new StringStorage()), family_(family) {
+    if (!relay_info) {
+        isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
+                  << "relay-info storage may not be NULL");
+    }
+
+};
+
+void
+RelayInfoParser::build(ConstElementPtr relay_info) {
+
+    BOOST_FOREACH(ConfigPair param, relay_info->mapValue()) {
+        ParserPtr parser(createConfigParser(param.first));
+        parser->build(param.second);
+        parser->commit();
+    }
+
+    // Get the IP address
+    boost::scoped_ptr<asiolink::IOAddress> ip;
+    try {
+        ip.reset(new asiolink::IOAddress(string_values_->getParam("ip-address")));
+    } catch (...)  {
+        isc_throw(DhcpConfigError, "Failed to parse ip-address "
+                  "value: " << string_values_->getParam("ip-address"));
+    }
+
+    if ( (ip->isV4() && family_ != Option::V4) ||
+         (ip->isV6() && family_ != Option::V6) ) {
+        isc_throw(DhcpConfigError, "ip-address field " << ip->toText()
+                  << "does not have IP address of expected family type: "
+                  << (family_ == Option::V4?"IPv4":"IPv6"));
+    }
+
+    local_.addr_ = *ip;
+}
+
+isc::dhcp::ParserPtr
+RelayInfoParser::createConfigParser(const std::string& parameter) {
+    DhcpConfigParser* parser = NULL;
+    if (parameter.compare("ip-address") == 0) {
+        parser = new StringParser(parameter, string_values_);
+    } else {
+        isc_throw(NotImplemented,
+                  "parser error: RelayInfoParser parameter not supported: "
+                  << parameter);
+    }
+
+    return (isc::dhcp::ParserPtr(parser));
+}
+
+void
+RelayInfoParser::commit() {
+    *storage_ = local_;
+}
+
 //****************************** PoolParser ********************************
 PoolParser::PoolParser(const std::string&,  PoolStoragePtr pools)
         :pools_(pools) {
@@ -876,10 +955,12 @@ PoolParser::commit() {
 //****************************** SubnetConfigParser *************************
 
 SubnetConfigParser::SubnetConfigParser(const std::string&,
-                                       ParserContextPtr global_context)
+                                       ParserContextPtr global_context,
+                                       const isc::asiolink::IOAddress& default_addr)
     : uint32_values_(new Uint32Storage()), string_values_(new StringStorage()),
     pools_(new PoolStorage()), options_(new OptionStorage()),
-    global_context_(global_context) {
+    global_context_(global_context),
+    relay_info_(new isc::dhcp::Subnet::RelayInfo(default_addr)) {
     // The first parameter should always be "subnet", but we don't check
     // against that here in case some wants to reuse this parser somewhere.
     if (!global_context_) {
@@ -1182,10 +1263,11 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
     }
 
     bool enable_updates = boolean_values_->getParam("enable-updates");
-    if (!enable_updates) {
-        // If it's not enabled, don't bother validating the rest.  This
-        // allows for an abbreviated config entry that only contains
-        // the flag.  The default constructor creates a disabled instance.
+    if (!enable_updates && (client_config->mapValue().size() == 1)) {
+        // If enable-updates is the only parameter and it is false then
+        // we're done.  This allows for an abbreviated configuration entry
+        // that only contains that flag.  Use the default D2ClientConfig
+        // constructor to a create a disabled instance.
         local_client_config_.reset(new D2ClientConfig());
         return;
     }
@@ -1207,7 +1289,6 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
     std::string qualifying_suffix = string_values_->
                                     getParam("qualifying-suffix");
 
-    bool remove_on_renew = boolean_values_->getParam("remove-on-renew");
     bool always_include_fqdn = boolean_values_->getParam("always-include-fqdn");
     bool override_no_update = boolean_values_->getParam("override-no-update");
     bool override_client_update = boolean_values_->
@@ -1217,7 +1298,7 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
     // Attempt to create the new client config.
     local_client_config_.reset(new D2ClientConfig(enable_updates, server_ip,
                                                   server_port, ncr_protocol,
-                                                  ncr_format, remove_on_renew,
+                                                  ncr_format,
                                                   always_include_fqdn,
                                                   override_no_update,
                                                   override_client_update,
@@ -1238,7 +1319,6 @@ D2ClientConfigParser::createConfigParser(const std::string& config_id) {
         (config_id.compare("qualifying-suffix") == 0)) {
         parser = new StringParser(config_id, string_values_);
     } else if ((config_id.compare("enable-updates") == 0) ||
-        (config_id.compare("remove-on-renew") == 0) ||
         (config_id.compare("always-include-fqdn") == 0) ||
         (config_id.compare("allow-client-update") == 0) ||
         (config_id.compare("override-no-update") == 0) ||

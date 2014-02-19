@@ -371,6 +371,13 @@ class MessageTest(unittest.TestCase):
         self.__common_tsigmessage_setup()
         self.__common_tsig_checks("message_toWire2.wire")
 
+    def test_to_wire_with_tsig_none(self):
+        message_render = create_message()
+        renderer = MessageRenderer()
+        message_render.to_wire(renderer, None)
+        self.assertEqual(b'\x105\x85\x00\x00\x01\x00\x02\x00\x00\x00\x00\x04test\x07example\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x0e\x10\x00\x04\xc0\x00\x02\x02',
+                         renderer.get_data())
+
     def test_to_wire_with_edns_tsig(self):
         fix_current_time(0x4db60d1f)
         self.r.set_qid(0x6cd)

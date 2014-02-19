@@ -170,7 +170,7 @@ public:
     /// \param zone_name The origin name of the zone
     /// \return A \c LoadAction functor to load zone data or an empty functor
     /// (see above).
-    memory::LoadAction getLoadAction(const dns::RRClass& rrlcass,
+    memory::LoadAction getLoadAction(const dns::RRClass& rrclass,
                                      const dns::Name& zone_name) const;
 
     /// \brief Read only iterator type over configured cached zones.

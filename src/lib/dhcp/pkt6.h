@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,12 +17,14 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/option.h>
+#include <dhcp/classify.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
+#include <set>
 
 #include <time.h>
 
@@ -425,6 +427,35 @@ public:
     /// changes to this member such as access scope restriction or
     /// data format change etc.
     OptionBuffer data_;
+
+    /// @brief Checks whether a client belongs to a given class
+    ///
+    /// @param client_class name of the class
+    /// @return true if belongs
+    bool inClass(const std::string& client_class);
+
+    /// @brief Adds packet to a specified class
+    ///
+    /// A packet can be added to the same class repeatedly. Any additional
+    /// attempts to add to a class the packet already belongs to, will be
+    /// ignored silently.
+    ///
+    /// @note It is a matter of naming convention. Conceptually, the server
+    /// processes a stream of packets, with some packets belonging to given
+    /// classes. From that perspective, this method adds a packet to specifed
+    /// class. Implementation wise, it looks the opposite - the class name
+    /// is added to the packet. Perhaps the most appropriate name for this
+    /// method would be associateWithClass()? But that seems overly long,
+    /// so I decided to stick with addClass().
+    ///
+    /// @param client_class name of the class to be added
+    void addClass(const std::string& client_class);
+
+    /// @brief Classes this packet belongs to.
+    ///
+    /// This field is public, so code can iterate over existing classes.
+    /// Having it public also solves the problem of returned reference lifetime.
+    ClientClasses classes_;
 
 protected:
     /// Builds on wire packet for TCP transmission.

@@ -72,7 +72,7 @@ enum NameChangeFormat {
 
 /// @brief Function which converts labels to  NameChangeFormat enum values.
 ///
-/// @param format_str text to convert to an enum.
+/// @param fmt_str text to convert to an enum.
 /// Valid string values: "JSON"
 ///
 /// @return NameChangeFormat value which maps to the given string.

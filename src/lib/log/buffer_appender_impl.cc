@@ -30,6 +30,7 @@ BufferAppender::~BufferAppender() {
     // So dump all that is left to stdout
     try {
         flushStdout();
+        destructorImpl();
     } catch (...) {
         // Ok if we can't even seem to dump to stdout, never mind.
     }
