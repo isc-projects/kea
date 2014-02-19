@@ -1,3 +1,8 @@
+753.	[func]		muks
+	libdns++: the unknown/generic (RFC 3597) RDATA class now uses the
+	generic lexer in constructors from text.
+	(Trac #2426, git 0770d2df84e5608371db3a47e0456eb2a340b5f4)
+
 752.	[func]		tmark
 	If configured to do so, b10-dhcp4 will now create DHCP-DDNS update
 	requests and send them to b10-dhcp-ddns for processing.
