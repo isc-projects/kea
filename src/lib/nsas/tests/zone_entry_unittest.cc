@@ -33,9 +33,11 @@
 
 using namespace isc::nsas;
 using namespace isc::asiolink;
-using namespace std;
 using namespace isc::dns;
+using namespace isc::dns::rdata;
 using namespace isc::util;
+using namespace std;
+using isc::util::unittests::TestResolver;
 
 namespace {
 

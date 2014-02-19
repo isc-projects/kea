@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -184,6 +184,12 @@ library. See ticket #3275. The class specific behavior is:
 - eRouter1.0 packets have siaddr (next server) field cleared
 
 Aforementioned modifications are conducted in @ref isc::dhcp::Dhcpv4Srv::classSpecificProcessing.
+
+It is possible to define class restrictions in subnet, so a given subnet is only
+accessible to clients that belong to a given class. That is implemented as isc::dhcp::Pkt4::classes_
+being passed in isc::dhcp::Dhcpv4Srv::selectSubnet() to isc::dhcp::CfgMgr::getSubnet4().
+Currently this capability is usable, but the number of scenarios it supports is
+limited.
 
 @section dhcpv4Other Other DHCPv4 topics
 

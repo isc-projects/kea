@@ -67,7 +67,7 @@ public:
     ///    on the given memory segment. Currently, at most one zone data
     ///    updater may exist on the same memory segment.
     ZoneDataUpdater(util::MemorySegment& mem_sgmt,
-                    isc::dns::RRClass rrclass,
+                    const isc::dns::RRClass& rrclass,
                     const isc::dns::Name& zone_name,
                     ZoneData& zone_data) :
        mem_sgmt_(mem_sgmt),

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,8 @@
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
-#include <dhcpsrv/d2_client.h>
+#include <dhcp/classify.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
@@ -165,28 +166,45 @@ public:
     /// b) our global address on the interface the message was received on
     ///    (for directly connected clients)
     ///
+    /// If there are any classes specified in a subnet, that subnet
+    /// will be selected only if the client belongs to appropriate class.
+    ///
     /// @param hint an address that belongs to a searched subnet
+    /// @param classes classes the client belongs to
     ///
     /// @return a subnet object (or NULL if no suitable match was fount)
-    Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint);
+    Subnet6Ptr getSubnet6(const isc::asiolink::IOAddress& hint,
+                          const isc::dhcp::ClientClasses& classes);
 
     /// @brief get IPv6 subnet by interface name
     ///
     /// Finds a matching local subnet, based on interface name. This
     /// is used for selecting subnets that were explicitly marked by the
     /// user as reachable over specified network interface.
+    ///
+    /// If there are any classes specified in a subnet, that subnet
+    /// will be selected only if the client belongs to appropriate class.
+    ///
     /// @param iface_name interface name
+    /// @param classes classes the client belongs to
+    ///
     /// @return a subnet object (or NULL if no suitable match was fount)
-    Subnet6Ptr getSubnet6(const std::string& iface_name);
+    Subnet6Ptr getSubnet6(const std::string& iface_name,
+                          const isc::dhcp::ClientClasses& classes);
 
     /// @brief get IPv6 subnet by interface-id
     ///
     /// Another possibility to find a subnet is based on interface-id.
     ///
+    /// If there are any classes specified in a subnet, that subnet
+    /// will be selected only if the client belongs to appropriate class.
+    ///
     /// @param interface_id content of interface-id option returned by a relay
+    /// @param classes classes the client belongs to
     ///
     /// @return a subnet object
-    Subnet6Ptr getSubnet6(OptionPtr interface_id);
+    Subnet6Ptr getSubnet6(OptionPtr interface_id,
+                          const isc::dhcp::ClientClasses& classes);
 
     /// @brief adds an IPv6 subnet
     ///
@@ -219,7 +237,7 @@ public:
     /// to choose a different subnet. Server code has to offer a list
     /// of possible choices (i.e. all subnets).
     /// @return a pointer to const Subnet6 collection
-    const Subnet4Collection* getSubnets4() {
+    const Subnet4Collection* getSubnets4() const {
         return (&subnets4_);
     }
 
@@ -241,10 +259,31 @@ public:
     /// b) our global address on the interface the message was received on
     ///    (for directly connected clients)
     ///
+    /// If there are any classes specified in a subnet, that subnet
+    /// will be selected only if the client belongs to appropriate class.
+    ///
     /// @param hint an address that belongs to a searched subnet
+    /// @param classes classes the client belongs to
     ///
     /// @return a subnet object
-    Subnet4Ptr getSubnet4(const isc::asiolink::IOAddress& hint);
+    Subnet4Ptr getSubnet4(const isc::asiolink::IOAddress& hint,
+                          const isc::dhcp::ClientClasses& classes) const;
+
+    /// @brief Returns a subnet for the specified local interface.
+    ///
+    /// This function checks that the IP address assigned to the specified
+    /// interface belongs to any IPv4 subnet configured, and returns this
+    /// subnet.
+    ///
+    /// @todo Implement classes support here.
+    ///
+    /// @param iface Short name of the interface which is being checked.
+    /// @param classes classes the client belongs to
+    ///
+    /// @return Pointer to the subnet matching interface specified or NULL
+    /// pointer if IPv4 address on the interface doesn't match any subnet.
+    Subnet4Ptr getSubnet4(const std::string& iface,
+                          const isc::dhcp::ClientClasses& classes) const;
 
     /// @brief adds a subnet4
     void addSubnet4(const Subnet4Ptr& subnet);
@@ -341,7 +380,7 @@ public:
     /// pointer.
     void setD2ClientConfig(D2ClientConfigPtr& new_config);
 
-    /// @param Convenience method for checking if DHCP-DDNS updates are enabled.
+    /// @brief Convenience method for checking if DHCP-DDNS updates are enabled.
     ///
     /// @return True if the D2 configuration is enabled.
     bool ddnsEnabled();
@@ -350,6 +389,11 @@ public:
     ///
     /// @return a reference to the current configuration pointer.
     const D2ClientConfigPtr& getD2ClientConfig() const;
+
+    /// @brief Fetches the DHCP-DDNS manager.
+    ///
+    /// @return a reference to the DHCP-DDNS manager.
+    D2ClientMgr& getD2ClientMgr();
 
 protected:
 

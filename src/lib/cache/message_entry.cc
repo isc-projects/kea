@@ -23,6 +23,7 @@
 #include "logger.h"
 
 using namespace isc::dns;
+using namespace isc::nsas;
 using namespace std;
 
 // Put file scope functions in unnamed namespace.

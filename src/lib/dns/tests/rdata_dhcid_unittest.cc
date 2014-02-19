@@ -22,14 +22,16 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::util::encode;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 
@@ -125,8 +127,8 @@ TEST_F(Rdata_DHCID_Test, toWireRenderer) {
 
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_dhcid_toWire", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_DHCID_Test, toWireBuffer) {
@@ -134,8 +136,8 @@ TEST_F(Rdata_DHCID_Test, toWireBuffer) {
 
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_dhcid_toWire", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_DHCID_Test, toText) {

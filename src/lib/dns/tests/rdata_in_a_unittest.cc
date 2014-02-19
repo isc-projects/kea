@@ -27,17 +27,19 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
 #include <sstream>
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_IN_A_Test : public RdataTest {
@@ -121,16 +123,14 @@ TEST_F(Rdata_IN_A_Test, createFromWire) {
 
 TEST_F(Rdata_IN_A_Test, toWireBuffer) {
     rdata_in_a.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        wiredata_in_a, sizeof(wiredata_in_a));
+    matchWireData(wiredata_in_a, sizeof (wiredata_in_a),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_IN_A_Test, toWireRenderer) {
     rdata_in_a.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata_in_a, sizeof(wiredata_in_a));
+    matchWireData(wiredata_in_a, sizeof (wiredata_in_a),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_IN_A_Test, toText) {
