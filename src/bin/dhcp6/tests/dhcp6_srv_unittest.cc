@@ -1807,7 +1807,7 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
 }
 
 // Checks if relay IP address specified in the relay-info structure in
-// subnet4 is being used properly.
+// subnet6 is being used properly.
 TEST_F(Dhcpv6SrvTest, relayOverride) {
 
     NakedDhcpv6Srv srv(0);
