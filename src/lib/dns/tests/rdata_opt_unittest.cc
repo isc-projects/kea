@@ -23,12 +23,14 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_OPT_Test : public RdataTest {
@@ -93,10 +95,8 @@ TEST_F(Rdata_OPT_Test, toWireBuffer) {
     obuffer.clear();
     rdata_opt.toWire(obuffer);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(),
-                        obuffer.getLength(),
-                        rdata_opt_wiredata, sizeof(rdata_opt_wiredata));
+    matchWireData(rdata_opt_wiredata, sizeof(rdata_opt_wiredata),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_OPT_Test, toWireRenderer) {
@@ -108,10 +108,8 @@ TEST_F(Rdata_OPT_Test, toWireRenderer) {
     renderer.clear();
     rdata_opt.toWire(renderer);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(),
-                        renderer.getLength(),
-                        rdata_opt_wiredata, sizeof(rdata_opt_wiredata));
+    matchWireData(rdata_opt_wiredata, sizeof(rdata_opt_wiredata),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_OPT_Test, toText) {
@@ -182,10 +180,8 @@ TEST_F(Rdata_OPT_Test, appendPseudoRR) {
     obuffer.clear();
     rdata_opt.toWire(obuffer);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(),
-                        obuffer.getLength(),
-                        rdata_opt_wiredata2, sizeof(rdata_opt_wiredata2));
+    matchWireData(rdata_opt_wiredata2, sizeof(rdata_opt_wiredata2),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_OPT_Test, getPseudoRRs) {
