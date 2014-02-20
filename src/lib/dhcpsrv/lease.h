@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -140,6 +140,14 @@ struct Lease {
     /// @brief returns true if the lease is expired
     /// @return true if the lease is expired
     bool expired() const;
+
+    /// @brief Returns true if the other lease has equal FQDN data.
+    ///
+    /// @param other Lease which FQDN data is to be compared with our lease.
+    ///
+    /// @return Boolean value which indicates whether FQDN data of the other
+    /// lease is equal to the FQDN data of our lease (true) or not (false).
+    bool hasIdenticalFqdn(const Lease& other) const;
 
 };
 

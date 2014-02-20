@@ -21,9 +21,9 @@ it is called python-pip. On FreeBSD the port is devel/py-pip.
 Running the tests
 -----------------
 
-At this moment, we have a fixed port for local tests in our setups, port 47806.
+At this moment, we have a fixed port for local tests in our setups, port 56176.
 This port must be free. (TODO: can we make this run-time discovered?).
-Port 47805 is used for cmdctl, and must also be available.
+Port 56175 is used for cmdctl, and must also be available.
 (note, we will need to extend this to a range, or if possible, we will need to
 do some on-the-fly available port finding)
 

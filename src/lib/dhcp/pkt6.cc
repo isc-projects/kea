@@ -586,6 +586,17 @@ void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
     }
 }
 
+bool
+Pkt6::inClass(const std::string& client_class) {
+    return (classes_.find(client_class) != classes_.end());
+}
+
+void
+Pkt6::addClass(const std::string& client_class) {
+    if (classes_.find(client_class) == classes_.end()) {
+        classes_.insert(client_class);
+    }
+}
 
 } // end of isc::dhcp namespace
 } // end of isc namespace

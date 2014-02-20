@@ -727,8 +727,9 @@ class XfrinConnection(asyncore.dispatcher):
             self.connect(self._master_addrinfo[2])
             return True
         except socket.error as e:
-            logger.error(XFRIN_CONNECT_MASTER, self.tsig_key_name,
+            logger.error(XFRIN_CONNECT_MASTER,
                          self._master_addrinfo[2],
+                         self._zone_name.to_text(),
                          str(e))
             return False
 

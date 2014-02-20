@@ -90,6 +90,7 @@ private:
     ZoneChain chain_;
     const RdataSet* set_node_;
     const RRClass rrclass_;
+    ConstRRsetPtr soa_;
     const ZoneTree& tree_;
     const ZoneNode* node_;
     // Only used when separate_rrs_ is true
@@ -120,6 +121,18 @@ public:
             isc_throw(Unexpected,
                       "In-memory zone corrupted, missing origin node");
         }
+
+        if (node_) {
+            const RdataSet* origin_set = node_->getData();
+            if (origin_set) {
+                const RdataSet* soa_set = RdataSet::find(origin_set, RRType::SOA());
+                if (soa_set) {
+                    soa_ = ConstRRsetPtr (new TreeNodeRRset(rrclass_, node_,
+                                                            soa_set, true));
+                }
+            }
+        }
+
         // Initialize the iterator if there's somewhere to point to
         if (node_ != NULL && node_->getData() != NULL) {
             set_node_ = node_->getData();
@@ -231,7 +244,7 @@ public:
     }
 
     virtual ConstRRsetPtr getSOA() const {
-        isc_throw(NotImplemented, "Not implemented");
+        return (soa_);
     }
 };
 

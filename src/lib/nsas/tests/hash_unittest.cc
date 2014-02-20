@@ -26,6 +26,7 @@
 #include "nsas_test.h"
 
 using namespace std;
+using namespace isc::dns;
 
 namespace isc {
 namespace nsas {

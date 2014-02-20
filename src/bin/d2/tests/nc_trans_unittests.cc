@@ -326,8 +326,8 @@ public:
         ASSERT_EQ(NameChangeTransaction::NOP_EVT,
                   name_change->getNextEvent());
 
-        int cnt = 0;
         while (name_change->getNextEvent() == NameChangeTransaction::NOP_EVT) {
+            int cnt = 0;
             ASSERT_NO_THROW(cnt = runTimedIO(run_time));
             if (cnt == 0) {
                 FAIL() << "IO Service stopped unexpectedly";

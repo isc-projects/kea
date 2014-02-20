@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <asiolink/io_address.h>
+#include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
@@ -74,12 +75,15 @@ CfgMgr::addOptionDef(const OptionDefinitionPtr& def,
         isc_throw(DuplicateOptionDefinition, "option definition already added"
                   << " to option space " << option_space);
 
+    // We must not override standard (assigned) option for which there is a
+    // definition in libdhcp++. The standard options belong to dhcp4 or dhcp6
+    // option space.
     } else if ((option_space == "dhcp4" &&
-                LibDHCP::isStandardOption(Option::V4, def->getCode())) ||
+                LibDHCP::isStandardOption(Option::V4, def->getCode()) &&
+                LibDHCP::getOptionDef(Option::V4, def->getCode())) ||
                (option_space == "dhcp6" &&
-                LibDHCP::isStandardOption(Option::V6, def->getCode()))) {
-        // We must not override standard (assigned) option. The standard options
-        // belong to dhcp4 or dhcp6 option space.
+                LibDHCP::isStandardOption(Option::V6, def->getCode()) &&
+                LibDHCP::getOptionDef(Option::V6, def->getCode()))) {
         isc_throw(BadValue, "unable to override definition of option '"
                   << def->getCode() << "' in standard option space '"
                   << option_space << "'.");
@@ -122,7 +126,8 @@ CfgMgr::getOptionDef(const std::string& option_space,
 }
 
 Subnet6Ptr
-CfgMgr::getSubnet6(const std::string& iface) {
+CfgMgr::getSubnet6(const std::string& iface,
+                   const isc::dhcp::ClientClasses& classes) {
 
     if (!iface.length()) {
         return (Subnet6Ptr());
@@ -131,6 +136,12 @@ CfgMgr::getSubnet6(const std::string& iface) {
     // If there is more than one, we need to choose the proper one
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
+
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
+
         if (iface == (*subnet)->getIface()) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET6_IFACE)
@@ -142,7 +153,8 @@ CfgMgr::getSubnet6(const std::string& iface) {
 }
 
 Subnet6Ptr
-CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
+CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint,
+                   const isc::dhcp::ClientClasses& classes) {
 
     // If there's only one subnet configured, let's just use it
     // The idea is to keep small deployments easy. In a small network - one
@@ -152,7 +164,7 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     // configuration. Such requirement makes sense in IPv4, but not in IPv6.
     // The server does not need to have a global address (using just link-local
     // is ok for DHCPv6 server) from the pool it serves.
-    if ((subnets6_.size() == 1) && hint.getAddress().to_v6().is_link_local()) {
+    if ((subnets6_.size() == 1) && hint.isV6LinkLocal()) {
         LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                   DHCPSRV_CFGMGR_ONLY_SUBNET6)
                   .arg(subnets6_[0]->toText()).arg(hint.toText());
@@ -162,6 +174,11 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     // If there is more than one, we need to choose the proper one
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
+
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
 
         if ((*subnet)->inRange(hint)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
@@ -177,7 +194,8 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint) {
     return (Subnet6Ptr());
 }
 
-Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option) {
+Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option,
+                              const isc::dhcp::ClientClasses& classes) {
     if (!iface_id_option) {
         return (Subnet6Ptr());
     }
@@ -186,6 +204,12 @@ Subnet6Ptr CfgMgr::getSubnet6(OptionPtr iface_id_option) {
     // defined, check if the interface-id is equal to what we are looking for
     for (Subnet6Collection::iterator subnet = subnets6_.begin();
          subnet != subnets6_.end(); ++subnet) {
+
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
+
         if ( (*subnet)->getInterfaceId() &&
              ((*subnet)->getInterfaceId()->equal(iface_id_option))) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
@@ -207,26 +231,19 @@ void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
 }
 
 Subnet4Ptr
-CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint) {
-
-    // If there's only one subnet configured, let's just use it
-    // The idea is to keep small deployments easy. In a small network - one
-    // router that also runs DHCPv6 server. Users specifies a single pool and
-    // expects it to just work. Without this, the server would complain that it
-    // doesn't have IP address on its interfaces that matches that
-    // configuration. Such requirement makes sense in IPv4, but not in IPv6.
-    // The server does not need to have a global address (using just link-local
-    // is ok for DHCPv6 server) from the pool it serves.
-    if (subnets4_.size() == 1) {
-        LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                  DHCPSRV_CFGMGR_ONLY_SUBNET4)
-                  .arg(subnets4_[0]->toText()).arg(hint.toText());
-        return (subnets4_[0]);
-    }
-
-    // If there is more than one, we need to choose the proper one
-    for (Subnet4Collection::iterator subnet = subnets4_.begin();
+CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint,
+                   const isc::dhcp::ClientClasses& classes) const {
+    // Iterate over existing subnets to find a suitable one for the
+    // given address.
+    for (Subnet4Collection::const_iterator subnet = subnets4_.begin();
          subnet != subnets4_.end(); ++subnet) {
+
+        // If client is rejected because of not meeting client class criteria...
+        if (!(*subnet)->clientSupported(classes)) {
+            continue;
+        }
+
+        // Let's check if the client belongs to the given subnet
         if ((*subnet)->inRange(hint)) {
             LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                       DHCPSRV_CFGMGR_SUBNET4)
@@ -239,6 +256,23 @@ CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_NO_SUBNET4)
               .arg(hint.toText());
     return (Subnet4Ptr());
+}
+
+Subnet4Ptr
+CfgMgr::getSubnet4(const std::string& iface_name,
+                   const isc::dhcp::ClientClasses& classes) const {
+    Iface* iface = IfaceMgr::instance().getIface(iface_name);
+    // This should never happen in the real life. Hence we throw an exception.
+    if (iface == NULL) {
+        isc_throw(isc::BadValue, "interface " << iface_name <<
+                  " doesn't exist and therefore it is impossible"
+                  " to find a suitable subnet for its IPv4 address");
+    }
+    IOAddress addr("0.0.0.0");
+    // If IPv4 address assigned to the interface exists, find a suitable
+    // subnet for it, else return NULL pointer to indicate that no subnet
+    // could be found.
+    return (iface->getAddress4(addr) ? getSubnet4(addr, classes) : Subnet4Ptr());
 }
 
 void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
@@ -363,6 +397,10 @@ CfgMgr::getD2ClientConfig() const {
     return (d2_client_mgr_.getD2ClientConfig());
 }
 
+D2ClientMgr&
+CfgMgr::getD2ClientMgr() {
+    return (d2_client_mgr_);
+}
 
 CfgMgr::CfgMgr()
     : datadir_(DHCP_DATA_DIR),

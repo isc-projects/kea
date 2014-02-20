@@ -53,7 +53,7 @@ Option4AddrLst::Option4AddrLst(uint8_t type, OptionBufferConstIter first,
 
     while (first != last) {
         const uint8_t* ptr = &(*first);
-        addAddress(IOAddress(readUint32(ptr)));
+        addAddress(IOAddress(readUint32(ptr, distance(first, last))));
         first += V4ADDRESS_LEN;
     }
 }

@@ -1,0 +1,15 @@
+# Various kinds of OPT RDATA stored in an input buffer
+#
+# Empty RDATA (which is okay)
+#
+# 0  1 (bytes)
+ 00 00
+#
+# An OPT RR containing an NSID Option
+#      code=3 len=3 ID value (opaque)
+# 2  3  4  5  6  7  8  9 10
+ 00 07 00 2a 00 03 00 01 02
+#
+# Short buffer (this can be tested only at the end of the buffer)
+# 1  2  3  4  5
+ 00 04 c0 00 02

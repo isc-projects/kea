@@ -101,6 +101,19 @@ TreeNodeRRset::toText() const {
 
 namespace {
 void
+sizeupName(const LabelSequence& name_labels, RdataNameAttributes,
+           size_t* length)
+{
+    *length += name_labels.getDataLength();
+}
+
+void
+sizeupData(const void*, size_t data_len, size_t* length)
+{
+    *length += data_len;
+}
+
+void
 renderName(const LabelSequence& name_labels, RdataNameAttributes attr,
            AbstractMessageRenderer* renderer)
 {
@@ -112,6 +125,35 @@ renderData(const void* data, size_t data_len,
            AbstractMessageRenderer* renderer)
 {
     renderer->writeData(data, data_len);
+}
+
+// Helper for calculating wire data length of a single (etiher main or
+// RRSIG) RRset.
+uint16_t
+getLengthHelper(size_t* rlength, size_t rr_count, uint16_t name_labels_size,
+                RdataReader& reader, bool (RdataReader::* rdata_iterate_fn)())
+{
+    uint16_t length = 0;
+
+    for (size_t i = 0; i < rr_count; ++i) {
+        size_t rrlen = 0;
+
+        rrlen += name_labels_size;
+        rrlen += 2; // TYPE field
+        rrlen += 2; // CLASS field
+        rrlen += 4; // TTL field
+        rrlen += 2; // RDLENGTH field
+
+        *rlength = 0;
+        const bool rendered = (reader.*rdata_iterate_fn)();
+        assert(rendered == true);
+
+        rrlen += *rlength;
+        assert(length + rrlen < 65536);
+        length += rrlen;
+    }
+
+    return (length);
 }
 
 // Common code logic for rendering a single (either main or RRSIG) RRset.
@@ -147,6 +189,39 @@ writeRRs(AbstractMessageRenderer& renderer, size_t rr_count,
     }
     return (rr_count);
 }
+}
+
+uint16_t
+TreeNodeRRset::getLength() const {
+    size_t rlength = 0;
+    RdataReader reader(rrclass_, rdataset_->type, rdataset_->getDataBuf(),
+                       rdataset_->getRdataCount(), rrsig_count_,
+                       boost::bind(sizeupName, _1, _2, &rlength),
+                       boost::bind(sizeupData, _1, _2, &rlength));
+
+    // Get the owner name of the RRset in the form of LabelSequence.
+    uint8_t labels_buf[LabelSequence::MAX_SERIALIZED_LENGTH];
+    const LabelSequence name_labels = getOwnerLabels(labels_buf);
+    const uint16_t name_labels_size = name_labels.getDataLength();
+
+    // Find the length of the main (non RRSIG) RRs
+    const uint16_t rrset_length =
+        getLengthHelper(&rlength, rdataset_->getRdataCount(), name_labels_size,
+                        reader, &RdataReader::iterateRdata);
+
+    rlength = 0;
+    const bool rendered = reader.iterateRdata();
+    assert(rendered == false); // we should've reached the end
+
+    // Find the length of any RRSIGs, if we supposed to do so
+    const uint16_t rrsig_length = dnssec_ok_ ?
+        getLengthHelper(&rlength, rrsig_count_, name_labels_size,
+                        reader, &RdataReader::iterateSingleSig) : 0;
+
+    // the uint16_ts are promoted to ints during addition below, so it
+    // won't overflow a 16-bit register.
+    assert(rrset_length + rrsig_length < 65536);
+    return (rrset_length + rrsig_length);
 }
 
 unsigned int
@@ -192,6 +267,11 @@ TreeNodeRRset::addRdata(rdata::ConstRdataPtr) {
 
 void
 TreeNodeRRset::addRdata(const rdata::Rdata&) {
+    isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
+}
+
+void
+TreeNodeRRset::addRdata(const std::string&) {
     isc_throw(Unexpected, "unexpected method called on TreeNodeRRset");
 }
 

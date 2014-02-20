@@ -12,7 +12,7 @@ Feature: In-memory zone using SQLite3 backend
         The SOA serial for example.org should be 1234
 
     Scenario: 2. In-memory datasource backed by sqlite3
-        Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 47804 as master
+        Given I have bind10 running with configuration xfrin/retransfer_master.conf with cmdctl port 56174 as master
         And wait for master stderr message BIND10_STARTED_CC
         And wait for master stderr message CMDCTL_STARTED
         And wait for master stderr message AUTH_SERVER_STARTED
@@ -26,18 +26,18 @@ Feature: In-memory zone using SQLite3 backend
         And wait for bind10 stderr message XFRIN_STARTED
         And wait for bind10 stderr message ZONEMGR_STARTED
 
-        A query for www.example.org to [::1]:47806 should have rcode NOERROR
+        A query for www.example.org to [::1]:56176 should have rcode NOERROR
         """
         www.example.org.        3600    IN      A       192.0.2.63
         """
-        A query for mail.example.org to [::1]:47806 should have rcode NXDOMAIN
-        When I send bind10 the command Xfrin retransfer example.org IN ::1 47807
+        A query for mail.example.org to [::1]:56176 should have rcode NXDOMAIN
+        When I send bind10 the command Xfrin retransfer example.org IN ::1 56177
         Then wait for new bind10 stderr message XFRIN_TRANSFER_SUCCESS not XFRIN_XFR_PROCESS_FAILURE
         Then wait for new bind10 stderr message AUTH_DATASRC_CLIENTS_BUILDER_LOAD_ZONE
 
-        A query for www.example.org to [::1]:47807 should have rcode NOERROR
+        A query for www.example.org to [::1]:56177 should have rcode NOERROR
         The answer section of the last query response should be
         """
         www.example.org.        3600    IN      A       192.0.2.1
         """
-        A query for mail.example.org to [::1]:47806 should have rcode NOERROR
+        A query for mail.example.org to [::1]:56176 should have rcode NOERROR

@@ -58,7 +58,8 @@ if HAVE_GTEST
 # to unexpected errors. For this reason, the --enable-static-link option is
 # ignored for unit tests built here.
 
-lib_LTLIBRARIES = libco1.la libco2.la
+nodistdir=$(abs_top_builddir)/src/bin/dhcp4/tests
+nodist_LTLIBRARIES = libco1.la libco2.la
 
 libco1_la_SOURCES  = callout_library_1.cc callout_library_common.h
 libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
@@ -75,10 +76,12 @@ TESTS += dhcp4_unittests
 dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc ../ctrl_dhcp4_srv.cc
 dhcp4_unittests_SOURCES += ../dhcp4_log.h ../dhcp4_log.cc
 dhcp4_unittests_SOURCES += ../config_parser.cc ../config_parser.h
+dhcp4_unittests_SOURCES += d2_unittest.h d2_unittest.cc
 dhcp4_unittests_SOURCES += dhcp4_test_utils.h
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += dhcp4_test_utils.cc dhcp4_test_utils.h
+dhcp4_unittests_SOURCES += direct_client_unittest.cc
 dhcp4_unittests_SOURCES += wireshark.cc
 dhcp4_unittests_SOURCES += ctrl_dhcp4_srv_unittest.cc
 dhcp4_unittests_SOURCES += config_parser_unittest.cc
@@ -94,6 +97,7 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
