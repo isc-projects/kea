@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -207,7 +207,7 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
 
         // Call sendUpdate() to initiate the async send. Note it also sets
         // next event to NOP_EVT.
-        sendUpdate();
+        sendUpdate("Forward A/AAAA Remove");
         break;
 
     case IO_COMPLETED_EVT: {
@@ -311,7 +311,7 @@ NameRemoveTransaction::removingFwdRRsHandler() {
 
         // Call sendUpdate() to initiate the async send. Note it also sets
         // next event to NOP_EVT.
-        sendUpdate();
+        sendUpdate("Forward RR Remove");
         break;
 
     case IO_COMPLETED_EVT: {
@@ -464,7 +464,7 @@ NameRemoveTransaction::removingRevPtrsHandler() {
 
         // Call sendUpdate() to initiate the async send. Note it also sets
         // next event to NOP_EVT.
-        sendUpdate();
+        sendUpdate("Reverse Remove");
         break;
 
     case IO_COMPLETED_EVT: {
