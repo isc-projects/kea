@@ -169,12 +169,14 @@ CfgMgr::getSubnet6(const isc::asiolink::IOAddress& hint,
         // If the hint is a relay address, and there is relay info specified
         // for this subnet and those two match, then use this subnet.
         if (relay && ((*subnet)->getRelayInfo().addr_ == hint) ) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_SUBNET6_RELAY)
+                .arg((*subnet)->toText()).arg(hint.toText());
             return (*subnet);
         }
 
         if ((*subnet)->inRange(hint)) {
-            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
-                      DHCPSRV_CFGMGR_SUBNET6)
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_SUBNET6)
                       .arg((*subnet)->toText()).arg(hint.toText());
             return (*subnet);
         }
@@ -239,6 +241,9 @@ CfgMgr::getSubnet4(const isc::asiolink::IOAddress& hint,
         // If the hint is a relay address, and there is relay info specified
         // for this subnet and those two match, then use this subnet.
         if (relay && ((*subnet)->getRelayInfo().addr_ == hint) ) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
+                      DHCPSRV_CFGMGR_SUBNET4_RELAY)
+                .arg((*subnet)->toText()).arg(hint.toText());
             return (*subnet);
         }
 
