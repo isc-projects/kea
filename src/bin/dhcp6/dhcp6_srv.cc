@@ -71,6 +71,7 @@ struct Dhcp6Hooks {
     int hook_index_pkt6_receive_;   ///< index for "pkt6_receive" hook point
     int hook_index_subnet6_select_; ///< index for "subnet6_select" hook point
     int hook_index_lease6_renew_;   ///< index for "lease6_renew" hook point
+    int hook_index_lease6_rebind_;  ///< index for "lease6_rebind" hook point
     int hook_index_lease6_release_; ///< index for "lease6_release" hook point
     int hook_index_pkt6_send_;      ///< index for "pkt6_send" hook point
     int hook_index_buffer6_send_;   ///< index for "buffer6_send" hook point
@@ -81,6 +82,7 @@ struct Dhcp6Hooks {
         hook_index_pkt6_receive_   = HooksManager::registerHook("pkt6_receive");
         hook_index_subnet6_select_ = HooksManager::registerHook("subnet6_select");
         hook_index_lease6_renew_   = HooksManager::registerHook("lease6_renew");
+        hook_index_lease6_rebind_   = HooksManager::registerHook("lease6_rebind");
         hook_index_lease6_release_ = HooksManager::registerHook("lease6_release");
         hook_index_pkt6_send_      = HooksManager::registerHook("pkt6_send");
         hook_index_buffer6_send_   = HooksManager::registerHook("buffer6_send");
@@ -1499,18 +1501,26 @@ Dhcpv6Srv::assignIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
 }
 
 OptionPtr
-Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                      const Pkt6Ptr& query, const Pkt6Ptr& answer,
-                      boost::shared_ptr<Option6IA> ia) {
+Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                       const Pkt6Ptr& query, const Pkt6Ptr& answer,
+                       boost::shared_ptr<Option6IA> ia) {
     if (!subnet) {
-        // There's no subnet select for this client. There's nothing to renew.
-        boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
-
-        // Insert status code NoAddrsAvail.
+        /// @todo For simpliclty and due to limitations of LeaseMgr we don't
+        /// get the binding for the client for which we don't get subnet id.
+        /// Subnet id is a required value when searching for the bindings.
+        /// The fact that we can't identify the subnet for the returning client
+        /// doesn't really mean that the client has no binding. It is possible
+        /// that due to server's reconfiguration the subnet has been removed
+        /// or modified since the client has got his lease. However, we think
+        /// it is fine to send NoBinding status code because this code is
+        /// supposed to be sent when server doesn't find the binding for
+        /// the client (which is the case here).
+        Option6IAPtr ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+        // Insert status code NoBinding.
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
                           "Sorry, no known leases for this duid/iaid."));
-
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_RENEW_UNKNOWN_SUBNET)
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_NA_UNKNOWN_SUBNET)
+            .arg(query->getName())
             .arg(duid->toText())
             .arg(ia->getIAID());
 
@@ -1521,17 +1531,17 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                                                             *duid, ia->getIAID(),
                                                             subnet->getID());
 
+    // Client extending a lease that we don't know about.
     if (!lease) {
-        // client renewing a lease that we don't know about.
-
         // Create empty IA_NA option with IAID matching the request.
         boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
 
-        // Insert status code NoAddrsAvail.
+        // Insert status code NoBinding to indicate that the lease does not
+        // exist for this client.
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
-                          "Sorry, no known leases for this duid/iaid."));
+                          "Sorry, no known leases for this duid/iaid/subnet."));
 
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_UNKNOWN_RENEW_NA)
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_NA_UNKNOWN)
             .arg(duid->toText())
             .arg(ia->getIAID())
             .arg(subnet->toText());
@@ -1539,7 +1549,7 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         return (ia_rsp);
     }
 
-    // Keep the old data in case the callout tells us to skip update
+    // Keep the old data in case the callout tells us to skip update.
     Lease6 old_data = *lease;
 
     // At this point, we have to make make some decisions with respect to the
@@ -1601,8 +1611,10 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     ia_rsp->addOption(addr);
 
     bool skip = false;
-    // Execute all callouts registered for packet6_send
-    if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_renew_)) {
+    // Get the callouts specific for the processed message and execute them.
+    int hook_point = query->getType() == DHCPV6_RENEW ?
+        Hooks.hook_index_lease6_renew_ : Hooks.hook_index_lease6_rebind_;
+    if (HooksManager::calloutsPresent(hook_point)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete all previous arguments
@@ -1618,14 +1630,16 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         callout_handle->setArgument("ia_na", ia_rsp);
 
         // Call all installed callouts
-        HooksManager::callCallouts(Hooks.hook_index_lease6_renew_, *callout_handle);
+        HooksManager::callCallouts(hook_point, *callout_handle);
 
         // Callouts decided to skip the next processing step. The next
         // processing step would to actually renew the lease, so skip at this
         // stage means "keep the old lease as it is".
         if (callout_handle->getSkip()) {
             skip = true;
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RENEW_SKIP);
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS,
+                      DHCP6_HOOK_LEASE6_EXTEND_SKIP)
+                .arg(query->getName());
         }
     }
 
@@ -1654,7 +1668,7 @@ Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
                           "Sorry, no known leases for this duid/iaid."));
 
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_RENEW_UNKNOWN_SUBNET)
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_PD_UNKNOWN_SUBNET)
             .arg(duid->toText())
             .arg(ia->getIAID());
 
@@ -1731,7 +1745,7 @@ Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         // Callouts decided to skip the next processing step. The next
         // processing step would to actually renew the lease, so skip at this
         // stage means "keep the old lease as it is".
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_RENEW_SKIP);
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_EXTEND_SKIP);
 
         // Copy back the original date to the lease. For MySQL it doesn't make
         // much sense, but for memfile, the Lease6Ptr points to the actual lease
@@ -1744,15 +1758,16 @@ Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
 }
 
 void
-Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
+Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply) {
 
-    // We need to renew addresses for all IA_NA options in the client's
-    // RENEW message.
-    // @todo add support for IA_TA
-    // @todo add support for IA_PD
+    // We will try to extend lease lifetime for all IA options in the client's
+    // Renew or Rebind message.
+    /// @todo add support for IA_TA
 
-    // We need to select a subnet the client is connected in.
-    Subnet6Ptr subnet = selectSubnet(renew);
+    // We need to select a subnet the client is connected in. This is needed
+    // to get the client's bindings from the lease database. The subnet id
+    // is one of the lease search parameters.
+    Subnet6Ptr subnet = selectSubnet(query);
     if (!subnet) {
         // This particular client is out of luck today. We do not have
         // information about the subnet he is connected to. This likely means
@@ -1761,20 +1776,24 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
         // addresses or prefixes, no subnet specific configuration etc. The only
         // thing this client can get is some global information (like DNS
         // servers).
-
-        LOG_WARN(dhcp6_logger, DHCP6_SUBNET_SELECTION_FAILED)
-            .arg(renew->getRemoteAddr().toText())
-            .arg(renew->getName());
+        LOG_WARN(dhcp6_logger, DHCP6_EXTEND_LEASE_SUBNET_SELECT_FAILED)
+            .arg(query->getName())
+            .arg(query->getRemoteAddr().toText())
+            .arg(query->getName());
     } else {
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_SUBNET_SELECTED)
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA,
+                  DHCP6_EXTEND_LEASE_SUBNET_SELECTED)
             .arg(subnet->toText());
     }
 
     // Let's find client's DUID. Client is supposed to include its client-id
-    // option almost all the time (the only exception is an anonymous inf-request,
-    // but that is mostly a theoretical case). Our allocation engine needs DUID
-    // and will refuse to allocate anything to anonymous clients.
-    OptionPtr opt_duid = renew->getOption(D6O_CLIENTID);
+    // option almost all the time (the only exception is an anonymous
+    // inf-request, but that is mostly a theoretical case). Our allocation
+    // engine needs DUID and will refuse to allocate anything to anonymous
+    // clients.
+    /// @todo Consider removing this check from here and rely on what we have
+    /// checked on the earlier processing stage.
+    OptionPtr opt_duid = query->getOption(D6O_CLIENTID);
     if (!opt_duid) {
         // This should not happen. We have checked this before.
         reply->addOption(createStatusCode(STATUS_UnspecFail,
@@ -1783,14 +1802,13 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
     }
     DuidPtr duid(new DUID(opt_duid->getData()));
 
-    for (OptionCollection::iterator opt = renew->options_.begin();
-         opt != renew->options_.end(); ++opt) {
+    for (OptionCollection::iterator opt = query->options_.begin();
+         opt != query->options_.end(); ++opt) {
         switch (opt->second->getType()) {
-
         case D6O_IA_NA: {
-            OptionPtr answer_opt = renewIA_NA(subnet, duid, renew, reply,
-                                              boost::dynamic_pointer_cast<
-                                              Option6IA>(opt->second));
+            OptionPtr answer_opt = extendIA_NA(subnet, duid, query, reply,
+                                               boost::dynamic_pointer_cast<
+                                                   Option6IA>(opt->second));
             if (answer_opt) {
                 reply->addOption(answer_opt);
             }
@@ -1798,7 +1816,7 @@ Dhcpv6Srv::renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply) {
         }
 
         case D6O_IA_PD: {
-            OptionPtr answer_opt = renewIA_PD(subnet, duid, renew,
+            OptionPtr answer_opt = renewIA_PD(subnet, duid, query,
                                               boost::dynamic_pointer_cast<
                                                   Option6IA>(opt->second));
             if (answer_opt) {
@@ -2230,7 +2248,7 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
     appendRequestedOptions(renew, reply);
 
     processClientFqdn(renew, reply);
-    renewLeases(renew, reply);
+    extendLeases(renew, reply);
     generateFqdn(reply);
     createNameChangeRequests(reply);
 
