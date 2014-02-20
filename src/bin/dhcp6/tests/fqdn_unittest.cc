@@ -47,6 +47,7 @@ public:
     D2ClientMgr& d2_mgr_;
 
     // Bit Constants for turning on and off DDNS configuration options.
+    // (Defined here as these are only meaningful to this class.)
     static const uint16_t ALWAYS_INCLUDE_FQDN = 1;
     static const uint16_t OVERRIDE_NO_UPDATE = 2;
     static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
@@ -418,6 +419,13 @@ public:
     /// @param addr A string representation of the IPv6 address held in the
     /// NameChangeRequest.
     /// @param dhcid An expected DHCID value.
+    /// @note This value is the value that is produced by
+    /// dhcp_ddns::D2Dhcid::crateDigest() with the appropriate arguments. This
+    /// method uses encryption tools to produce the value which cannot be
+    /// easily duplicated by hand.  It is more or less necessary to generate
+    /// these values programmatically and place them here. Should the
+    /// underlying implementation of createDigest() change these test values
+    /// will likely need to be updated as well.
     /// @param expires A timestamp when the lease associated with the
     /// NameChangeRequest expires.
     /// @param len A valid lifetime of the lease associated with the
