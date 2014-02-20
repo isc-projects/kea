@@ -102,31 +102,6 @@ namespace dhcp {
 
 const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
-namespace {
-
-// The following constants describe server's behavior with respect to the
-// DHCPv6 Client FQDN Option sent by a client. They will be removed
-// when DDNS parameters for DHCPv6 are implemented with the ticket #3034.
-
-// Enable AAAA RR update delegation to the client (Disabled).
-const bool FQDN_ALLOW_CLIENT_UPDATE = false;
-// Globally enable updates (Enabled).
-const bool FQDN_ENABLE_UPDATE = true;
-// The partial name generated for the client if empty name has been
-// supplied.
-const char* FQDN_GENERATED_PARTIAL_NAME = "myhost";
-// Do update, even if client requested no updates with N flag (Disabled).
-const bool FQDN_OVERRIDE_NO_UPDATE = false;
-// Server performs an update when client requested delegation (Enabled).
-const bool FQDN_OVERRIDE_CLIENT_UPDATE = true;
-// The fully qualified domain-name suffix if partial name provided by
-// a client.
-const char* FQDN_PARTIAL_SUFFIX = "example.com";
-// Should server replace the domain-name supplied by the client (Disabled).
-const bool FQDN_REPLACE_CLIENT_NAME = false;
-
-}
-
 /// @brief file name of a server-id file
 ///
 /// Server must store its duid in persistent storage that must not change
@@ -1016,69 +991,18 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
               DHCP6_DDNS_RECEIVE_FQDN).arg(fqdn->toText());
-
-
-    // Prepare the FQDN option which will be included in the response to
-    // the client.
+    // Create the DHCPv6 Client FQDN Option to be included in the server's
+    // response to a client.
     Option6ClientFqdnPtr fqdn_resp(new Option6ClientFqdn(*fqdn));
-    // RFC 4704, section 6. - all flags set to 0.
-    fqdn_resp->resetFlags();
 
-    // Conditions when N flag has to be set to indicate that server will not
-    // perform DNS updates:
-    // 1. Updates are globally disabled,
-    // 2. Client requested no update and server respects it,
-    // 3. Client requested that the AAAA update is delegated to the client but
-    //    server neither respects delegation of updates nor it is configured
-    //    to send update on its own when client requested delegation.
-    if (!FQDN_ENABLE_UPDATE ||
-        (fqdn->getFlag(Option6ClientFqdn::FLAG_N) &&
-         !FQDN_OVERRIDE_NO_UPDATE) ||
-        (!fqdn->getFlag(Option6ClientFqdn::FLAG_S) &&
-         !FQDN_ALLOW_CLIENT_UPDATE && !FQDN_OVERRIDE_CLIENT_UPDATE)) {
-        fqdn_resp->setFlag(Option6ClientFqdn::FLAG_N, true);
+    // Set the server S, N, and O flags based on client's flags and
+    // current configuration.
+    D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    d2_mgr.adjustFqdnFlags<Option6ClientFqdn>(*fqdn, *fqdn_resp);
 
-    // Conditions when S flag is set to indicate that server will perform
-    // DNS update on its own:
-    // 1. Client requested that server performs DNS update and DNS updates are
-    //    globally enabled
-    // 2. Client requested that server delegates AAAA update to the client but
-    //    server doesn't respect delegation and it is configured to perform
-    //    an update on its own when client requested delegation.
-    } else if (fqdn->getFlag(Option6ClientFqdn::FLAG_S) ||
-               (!fqdn->getFlag(Option6ClientFqdn::FLAG_S) &&
-                !FQDN_ALLOW_CLIENT_UPDATE && FQDN_OVERRIDE_CLIENT_UPDATE)) {
-        fqdn_resp->setFlag(Option6ClientFqdn::FLAG_S, true);
-    }
-
-    // Server MUST set the O flag if it has overridden the client's setting
-    // of S flag.
-    if (fqdn->getFlag(Option6ClientFqdn::FLAG_S) !=
-        fqdn_resp->getFlag(Option6ClientFqdn::FLAG_S)) {
-        fqdn_resp->setFlag(Option6ClientFqdn::FLAG_O, true);
-    }
-
-    // If client supplied partial or empty domain-name, server should
-    // generate one.
-    if (fqdn->getDomainNameType() == Option6ClientFqdn::PARTIAL) {
-        std::ostringstream name;
-        if (fqdn->getDomainName().empty() || FQDN_REPLACE_CLIENT_NAME) {
-            fqdn->setDomainName("", Option6ClientFqdn::PARTIAL);
-
-        } else {
-            name << fqdn->getDomainName();
-            name << "." << FQDN_PARTIAL_SUFFIX;
-            fqdn_resp->setDomainName(name.str(), Option6ClientFqdn::FULL);
-        }
-
-    // Server may be configured to replace a name supplied by a client,
-    // even if client supplied fully qualified domain-name.
-    } else if (FQDN_REPLACE_CLIENT_NAME) {
-        std::ostringstream name;
-        name << FQDN_GENERATED_PARTIAL_NAME << "." << FQDN_PARTIAL_SUFFIX;
-        fqdn_resp->setDomainName(name.str(), Option6ClientFqdn::FULL);
-
-    }
+    // Adjust the domain name based on domain name value and type sent by the
+    // client and current configuration.
+    d2_mgr.adjustDomainName<Option6ClientFqdn>(*fqdn, *fqdn_resp);
 
     // The FQDN has been processed successfully. Let's append it to the
     // response to be sent to a client. Note that the Client FQDN option is
@@ -1090,7 +1014,7 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer) {
 void
 Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
     // Don't create NameChangeRequests if DNS updates are disabled.
-    if (!FQDN_ENABLE_UPDATE) {
+    if (!CfgMgr::instance().ddnsEnabled()) {
         return;
     }
 
@@ -1177,7 +1101,7 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
 void
 Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
     // Don't create NameChangeRequests if DNS updates are disabled.
-    if (!FQDN_ENABLE_UPDATE) {
+    if (!CfgMgr::instance().ddnsEnabled()) {
         return;
     }
 
@@ -1299,13 +1223,10 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
     if (fqdn) {
-        // Flag S must not coexist with flag N being set to 1, so if S=1
-        // server takes responsibility for both reverse and forward updates.
-        // Otherwise, we have to check N.
+        /// @todo For now, we assert that if we are doing forward we are also
+        /// doing reverse.
         if (fqdn->getFlag(Option6ClientFqdn::FLAG_S)) {
             do_fwd = true;
-            do_rev = true;
-        } else if (!fqdn->getFlag(Option6ClientFqdn::FLAG_N)) {
             do_rev = true;
         }
     }
@@ -1557,10 +1478,10 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
     if (fqdn) {
+        // For now, we assert that if we are doing forward we are also
+        // doing reverse.
         if (fqdn->getFlag(Option6ClientFqdn::FLAG_S)) {
             do_fwd = true;
-            do_rev = true;
-        } else if (!fqdn->getFlag(Option6ClientFqdn::FLAG_N)) {
             do_rev = true;
         }
     }
@@ -2501,17 +2422,8 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
     }
     // Get the IPv6 address acquired by the client.
     IOAddress addr = iaaddr->getAddress();
-    std::string hostname = addr.toText();
-    // Colons may not be ok for FQDNs so let's replace them with hyphens.
-    std::replace(hostname.begin(), hostname.end(), ':', '-');
-    std::ostringstream stream;
-    // The final FQDN consists of the partial domain name and the suffix.
-    // For example, if the acquired address is 2001:db8:1::2, the generated
-    // FQDN may be:
-    //     host-2001-db8:1--2.example.com.
-    // where prefix 'host' should be configurable. The domain name suffix
-    // should also be configurable.
-    stream << "host-" << hostname << "." << FQDN_PARTIAL_SUFFIX << ".";
+    std::string generated_name =
+        CfgMgr::instance().getD2ClientMgr().generateFqdn(addr);
     try {
         // The lease has been acquired but the FQDN for this lease hasn't
         // been updated in the lease database. We now have new FQDN
@@ -2522,7 +2434,7 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
             Lease6Ptr lease =
                 LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA, addr);
             if (lease) {
-                lease->hostname_ = stream.str();
+                lease->hostname_ = generated_name;
                 LeaseMgrFactory::instance().updateLease6(lease);
 
             } else {
@@ -2533,13 +2445,12 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
                           " client");
             }
         }
-
         // Set the generated FQDN in the Client FQDN option.
-        fqdn->setDomainName(stream.str(), Option6ClientFqdn::FULL);
+        fqdn->setDomainName(generated_name, Option6ClientFqdn::FULL);
 
     } catch (const Exception& ex) {
         LOG_ERROR(dhcp6_logger, DHCP6_NAME_GEN_UPDATE_FAIL)
-            .arg(hostname)
+            .arg(addr.toText())
             .arg(ex.what());
     }
 }

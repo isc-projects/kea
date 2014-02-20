@@ -640,6 +640,8 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id) {
         parser = new DbAccessParser(config_id);
     } else if (config_id.compare("hooks-libraries") == 0) {
         parser = new HooksLibrariesParser(config_id);
+    } else if (config_id.compare("dhcp-ddns") == 0) {
+        parser = new D2ClientConfigParser(config_id);
     } else {
         isc_throw(NotImplemented,
                 "Parser error: Global configuration parameter not supported: "
