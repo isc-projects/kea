@@ -253,23 +253,25 @@ protected:
                           const Pkt6Ptr& query,
                           boost::shared_ptr<Option6IA> ia);
 
-    /// @brief Renews specific IA_NA option
+    /// @brief Extends lifetime of the specific IA_NA option.
     ///
-    /// Generates response to IA_NA in Renew. This typically includes finding a
-    /// lease that corresponds to the received address. If no such lease is
-    /// found, an IA_NA response is generated with an appropriate status code.
+    /// Generates response to IA_NA in Renew or Rebind. This typically includes
+    /// finding a lease that corresponds to the received address. If no such
+    /// lease is found, an IA_NA response is generated with an appropriate
+    /// status code.
     ///
     /// @param subnet subnet the sender belongs to
     /// @param duid client's duid
-    /// @param query client's message
+    /// @param query client's message (Renew or Rebind)
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server
     /// to the client (if the client sent this option to the server).
-    /// @param ia IA_NA option that is being renewed
+    /// @param ia IA_NA option which carries adress for which lease lifetime
+    /// will be extended.
     /// @return IA_NA option (server's response)
-    OptionPtr renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                         const Pkt6Ptr& query, const Pkt6Ptr& answer,
-                         boost::shared_ptr<Option6IA> ia);
+    OptionPtr extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                          const Pkt6Ptr& query, const Pkt6Ptr& answer,
+                          boost::shared_ptr<Option6IA> ia);
 
     /// @brief Renews specific IA_PD option
     ///
@@ -438,15 +440,17 @@ protected:
     /// NameChangeSender will be used to deliver requests to the other module.
     void sendNameChangeRequests();
 
-    /// @brief Attempts to renew received addresses
+    /// @brief Attempts to extend the lifetime of IAs.
     ///
-    /// It iterates through received IA_NA options and attempts to renew
-    /// received addresses. If no such leases are found, proper status
-    /// code is added to reply message. Renewed addresses are added
-    /// as IA_NA/IAADDR to reply packet.
-    /// @param renew client's message asking for renew
+    /// This function is called when a client sends Renew or Rebind message.
+    /// It iterates through received IA options and attempts to extend
+    /// corresponding lease lifetimes. Internally, it calls
+    /// @c Dhcpv6Srv::extendIA_NA and @c Dhcpv6Srv::extendIA_PD to extend
+    /// the lifetime of IA_NA and IA_PD leases accordingly.
+    ///
+    /// @param query client's Renew or Rebind message
     /// @param reply server's response
-    void renewLeases(const Pkt6Ptr& renew, Pkt6Ptr& reply);
+    void extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply);
 
     /// @brief Attempts to release received addresses
     ///
