@@ -1090,9 +1090,9 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
 // Check that the server is testing if server identifier received in the
 // query, matches server identifier used by the server.
 TEST_F(Dhcpv6SrvTest, testServerID) {
-	NakedDhcpv6Srv srv(0);
+        NakedDhcpv6Srv srv(0);
 
-	Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+        Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     std::vector<uint8_t> bin;
 
     // diud_llt constructed with: time = 0, macaddress = 00:00:00:00:00:00
@@ -1543,7 +1543,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    EXPECT_NO_THROW(configure(config));
+    ASSERT_NO_THROW(configure(config));
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
@@ -1751,10 +1751,6 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
 // .clientClassification above.
 TEST_F(Dhcpv6SrvTest, clientClassify2) {
 
-    NakedDhcpv6Srv srv(0);
-
-    ConstElementPtr status;
-
     // This test configures 2 subnets. We actually only need the
     // first one, but since there's still this ugly hack that picks
     // the pool if there is only one, we must use more than one
@@ -1780,14 +1776,7 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
         "],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
-
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
-
-    // check if returned status is OK
-    ASSERT_TRUE(status);
-    comment_ = config::parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
+    ASSERT_NO_THROW(configure(config));
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
@@ -1797,26 +1786,24 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
 
     // This discover does not belong to foo class, so it will not
     // be serviced
-    EXPECT_FALSE(srv.selectSubnet(sol));
+    EXPECT_FALSE(srv_.selectSubnet(sol));
 
     // Let's add the packet to bar class and try again.
     sol->addClass("bar");
 
     // Still not supported, because it belongs to wrong class.
-    EXPECT_FALSE(srv.selectSubnet(sol));
+    EXPECT_FALSE(srv_.selectSubnet(sol));
 
     // Let's add it to maching class.
     sol->addClass("foo");
 
     // This time it should work
-    EXPECT_TRUE(srv.selectSubnet(sol));
+    EXPECT_TRUE(srv_.selectSubnet(sol));
 }
 
 // Checks if relay IP address specified in the relay-info structure in
 // subnet6 is being used properly.
 TEST_F(Dhcpv6SrvTest, relayOverride) {
-
-    NakedDhcpv6Srv srv(0);
 
     // We have 2 subnets defined. Note that both have a relay address
     // defined. Both are not belonging to the subnets. That is
@@ -1843,12 +1830,7 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
         "\"valid-lifetime\": 4000 }";
 
     // Use this config to set up the server
-    ElementPtr json = Element::fromJSON(config);
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
-    ASSERT_TRUE(status);
-    comment_ = config::parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
+    ASSERT_NO_THROW(configure(config));
 
     // Let's get the subnet configuration objects
     const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
@@ -1872,34 +1854,32 @@ TEST_F(Dhcpv6SrvTest, relayOverride) {
     relay.peeraddr_ = IOAddress("fe80::1");
 
     sol->relay_info_.push_back(relay);
-     
+
     // This is just a sanity check, we're using regular method: the relay
     // belongs to the first (2001:db8:1::/64) subnet, so it's an easy decision.
-    EXPECT_TRUE(subnet1 == srv.selectSubnet(sol));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
 
     // Relay belongs to the second subnet, so it should be selected.
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:2::1");
-    EXPECT_TRUE(subnet2 == srv.selectSubnet(sol));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol));
 
     // Now let's check if the relay override for the first subnets works
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:3::1");
-    EXPECT_TRUE(subnet1 == srv.selectSubnet(sol));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
 
     // Now repeat that for relay matching the second subnet.
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:3::2");
-    EXPECT_TRUE(subnet2 == srv.selectSubnet(sol));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol));
 
     // Finally, let's check that completely mismatched relay will not get us
     // anything
     sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:1234::1");
-    EXPECT_FALSE(srv.selectSubnet(sol));
+    EXPECT_FALSE(srv_.selectSubnet(sol));
 }
 
 // Checks if relay IP address specified in the relay-info structure can be
 // used together with client-classification.
 TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
-
-    NakedDhcpv6Srv srv(0);
 
     // This test configures 2 subnets. They both are on the same link, so they
     // have the same relay-ip address. Furthermore, the first subnet is
@@ -1926,12 +1906,7 @@ TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
         "\"valid-lifetime\": 4000 }";
 
     // Use this config to set up the server
-    ElementPtr json = Element::fromJSON(config);
-    ConstElementPtr status;
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
-    ASSERT_TRUE(status);
-    comment_ = config::parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
+    ASSERT_NO_THROW(configure(config));
 
     // Let's get the subnet configuration objects
     const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
@@ -1960,12 +1935,12 @@ TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
     // subnet[0], even though the relay-ip matches. It should be accepted in
     // subnet[1], because the subnet matches and there are no class
     // requirements.
-    EXPECT_TRUE(subnet2 == srv.selectSubnet(sol));
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol));
 
     // Now let's add this packet to class foo and recheck. This time it should
     // be accepted in the first subnet, because both class and relay-ip match.
     sol->addClass("foo");
-    EXPECT_TRUE(subnet1 == srv.selectSubnet(sol));
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
 }
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
