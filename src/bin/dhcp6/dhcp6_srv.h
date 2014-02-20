@@ -536,6 +536,15 @@ protected:
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt6Ptr& pkt);
 
+
+    /// @brief this is a prefix added to the contend of vendor-class option
+    ///
+    /// If incoming packet has a vendor class option, its content is
+    /// prepended with this prefix and then interpreted as a class.
+    /// For example, a packet that sends vendor class with value of "FOO"
+    /// will cause the packet to be assigned to class VENDOR_CLASS_FOO.
+    static const std::string VENDOR_CLASS_PREFIX;
+
 private:
 
     /// @brief Implements the error handler for socket open failure.
