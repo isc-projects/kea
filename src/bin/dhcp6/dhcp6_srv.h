@@ -24,6 +24,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
 
@@ -116,6 +117,31 @@ public:
     ///
     /// @param port UDP port on which server should listen.
     static void openActiveSockets(const uint16_t port);
+
+    /// @brief Starts DHCP_DDNS client IO if DDNS updates are enabled.
+    ///
+    /// If updates are enabled, it Instructs the D2ClientMgr singleton to
+    /// enter send mode.  If D2ClientMgr encounters errors it may throw
+    /// D2ClientErrors. This method does not catch exceptions.
+    void startD2();
+
+    /// @brief Implements the error handler for DHCP_DDNS IO errors
+    ///
+    /// Invoked when a NameChangeRequest send to b10-dhcp-ddns completes with
+    /// a failed status.  These are communications errors, not data related
+    /// failures.
+    ///
+    /// This method logs the failure and then suspends all further updates.
+    /// Updating can only be restored by reconfiguration or restarting the
+    /// server.  There is currently no retry logic so the first IO error that
+    /// occurs will suspend updates.
+    /// @todo We may wish to make this more robust or sophisticated.
+    ///
+    /// @param result Result code of the send operation.
+    /// @param ncr NameChangeRequest which failed to send.
+    virtual void d2ClientErrorHandler(const dhcp_ddns::
+                                      NameChangeSender::Result result,
+                                      dhcp_ddns::NameChangeRequestPtr& ncr);
 
 protected:
 
