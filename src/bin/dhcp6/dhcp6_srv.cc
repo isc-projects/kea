@@ -2455,5 +2455,29 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
     }
 }
 
+void
+Dhcpv6Srv::startD2() {
+    D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    if (d2_mgr.ddnsEnabled()) {
+        // Updates are enabled, so lets start the sender, passing in
+        // our error handler.
+        // This may throw so wherever this is called needs to ready.
+        d2_mgr.startSender(boost::bind(&Dhcpv6Srv::d2ClientErrorHandler,
+                                       this, _1, _2));
+    }
+}
+
+void
+Dhcpv6Srv::d2ClientErrorHandler(const
+                                dhcp_ddns::NameChangeSender::Result result,
+                                dhcp_ddns::NameChangeRequestPtr& ncr) {
+    LOG_ERROR(dhcp6_logger, DHCP6_DDNS_REQUEST_SEND_FAILED).
+              arg(result).arg((ncr ? ncr->toText() : " NULL "));
+    // We cannot communicate with b10-dhcp-ddns, suspend futher updates.
+    /// @todo We may wish to revisit this, but for now we will simpy turn
+    /// them off.
+    CfgMgr::instance().getD2ClientMgr().suspendUpdates();
+}
+
 };
 };

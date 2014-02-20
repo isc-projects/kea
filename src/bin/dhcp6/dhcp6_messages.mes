@@ -544,3 +544,8 @@ recently and does not recognize its well-behaving clients. This is more
 probable if you see many such messages. Clients will recover from this,
 but they will most likely get a different IP addresses and experience
 a brief service interruption.
+
+% DHCP6_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error : %1,  ncr: %2
+This error message indicates that IPv6 DHCP server attempted to send a DDNS
+update reqeust to the DHCP-DDNS server.  This is most likely a configuration or
+networking error.
