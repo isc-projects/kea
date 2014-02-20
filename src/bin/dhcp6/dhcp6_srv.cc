@@ -1219,8 +1219,8 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
     if (fqdn) {
-        // For now, we assert that if we are doing forward we are also
-        // doing reverse.
+        /// @todo For now, we assert that if we are doing forward we are also
+        /// doing reverse.
         if (fqdn->getFlag(Option6ClientFqdn::FLAG_S)) {
             do_fwd = true;
             do_rev = true;
