@@ -98,11 +98,10 @@ TEST_F(Rdata_SOA_Test, createFromText) {
     checkFromTextSOA<EmptyLabel, EmptyLabel>(
         ". bad..example. 2010012601 1H 5M 1000H 20M");
 
-    // Names shouldn't be quoted. (Note: on completion of #2534, the resulting
-    // exception will be different).
-    checkFromTextSOA<MissingNameOrigin, MissingNameOrigin>(
+    // Names shouldn't be quoted.
+    checkFromTextSOA<InvalidRdataText, MasterLexer::LexerError>(
         "\".\" . 0 0 0 0 0");
-    checkFromTextSOA<MissingNameOrigin, MissingNameOrigin>(
+    checkFromTextSOA<InvalidRdataText, MasterLexer::LexerError>(
         ". \".\" 0 0 0 0 0");
 
     // Missing MAME or RNAME: for the string version, the serial would be

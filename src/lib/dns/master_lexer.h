@@ -78,6 +78,7 @@ public:
                            /// error and should never get out of the lexer.
         NUMBER_OUT_OF_RANGE, ///< Number was out of range
         BAD_NUMBER,    ///< Number is expected but not recognized
+        UNEXPECTED_QUOTES, ///< Unexpected quotes character detected
         MAX_ERROR_CODE ///< Max integer corresponding to valid error codes.
                        /// (excluding this one). Mainly for internal use.
     };
@@ -587,6 +588,9 @@ public:
     ///
     /// - If the expected type is MasterToken::QSTRING, both quoted and
     ///   unquoted strings are recognized and returned.
+    /// - A string with quotation marks is not recognized as a
+    /// - MasterToken::STRING. You have to get it as a
+    /// - MasterToken::QSTRING.
     /// - If the optional \c eol_ok parameter is \c true (very rare case),
     ///   MasterToken::END_OF_LINE and MasterToken::END_OF_FILE are recognized
     ///   and returned if they are found instead of the expected type of

@@ -966,7 +966,7 @@ struct ErrorCase {
       "$TTL with extra token" },
     { "$TTL", "unexpected end of input", "missing TTL" },
     { "$TTL No-ttl", "Unknown unit used: N in: No-ttl", "bad TTL" },
-    { "$TTL \"100\"", "invalid TTL: \"100\"", "bad TTL, quoted" },
+    { "$TTL \"100\"", "unexpected quotes", "bad TTL, quoted" },
     { "$TT 100", "Unknown directive 'TT'", "bad directive, too short" },
     { "$TTLLIKE 100", "Unknown directive 'TTLLIKE'", "bad directive, extra" },
     { NULL, NULL, NULL }
