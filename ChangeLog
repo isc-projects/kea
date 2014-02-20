@@ -1,3 +1,13 @@
+756.	[bug]		marcin
+	b10-dhcp6: server parses DHCPv6 Vendor Class option. Previously
+	the server failed to parse Vendor Class option having empty opaque
+	data field because of the invalid definition in libdhcp++. The
+	DHCPv6 Vendor Class option and DHCPv4 V-I Vendor Class option is
+	now represented by the new OptionVendorClass. The b10-dhcp4 is
+	affected by this change such that it uses new class to parse the
+	DHCPv4 V-I Vendor Class option.
+	(Trac #3316, git 1e61d7db5b8dc76682aa568cd62bfae0eeff46e3)
+
 755.	[func]		muks
 	Add support for the CAA RR type (RFC 6844).
 	(Trac #2512, git 39162608985e5c904448f308951c73bb9c32da8f)
