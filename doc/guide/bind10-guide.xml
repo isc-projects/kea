@@ -4592,6 +4592,11 @@ Dhcp4/subnet4	[]	list	(default)
         If the message is relayed it is accepted through any interface. The giaddr
         set by the relay agent is used to select the subnet for the client.
       </para>
+      <para>
+	It is also possible to specify a relay IPv4 address for a given subnet. It
+	can be used to match incoming packets into a subnet in uncommon configurations,
+	e.g. shared subnets. See <xref linkend="dhcp4-relay-override"/> for details.
+      </para>
       <note>
         <para>The subnet selection mechanism described in this section is based
         on the assumption that client classification is not used. The classification
@@ -4601,7 +4606,7 @@ Dhcp4/subnet4	[]	list	(default)
     </section>
 
     <section id="dhcp4-relay-override">
-      <title>Using specific relay for a subnet</title>
+      <title>Using specific relay agent for a subnet</title>
       <para>
         The relay has to have an interface connected to the link on which
         the clients are being configured. Typically the relay has an IPv4
