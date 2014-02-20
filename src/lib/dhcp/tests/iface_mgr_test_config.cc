@@ -16,6 +16,7 @@
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_filter_test_stub.h>
+#include <dhcp/tests/pkt_filter6_test_stub.h>
 
 using namespace isc::asiolink;
 
@@ -27,7 +28,9 @@ IfaceMgrTestConfig::IfaceMgrTestConfig(const bool default_config) {
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().clearIfaces();
     packet_filter4_ = PktFilterPtr(new PktFilterTestStub());
+    packet_filter6_ = PktFilter6Ptr(new PktFilter6TestStub());
     IfaceMgr::instance().setPacketFilter(packet_filter4_);
+    IfaceMgr::instance().setPacketFilter(packet_filter6_);
 
     // Create default set of fake interfaces: lo, eth0 and eth1.
     if (default_config) {

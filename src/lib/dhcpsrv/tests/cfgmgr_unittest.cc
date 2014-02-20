@@ -626,10 +626,10 @@ TEST_F(CfgMgrTest, subnet6) {
     // Now we have only one subnet, any request will be served from it
     EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("2000::1"), classify_));
 
-    // If we have only a single subnet and the request came from a local
-    // address, let's use that subnet
-    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("fe80::dead:beef"),
-                  classify_));
+    // We used to allow getting a sole subnet if there was only one subnet
+    // configured. That is no longer true. The code should not return
+    // a subnet.
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("fe80::dead:beef"), classify_));
 
     cfg_mgr.addSubnet6(subnet2);
     cfg_mgr.addSubnet6(subnet3);
@@ -670,10 +670,10 @@ TEST_F(CfgMgrTest, subnet6Interface) {
     // only one subnet defined.
     EXPECT_FALSE(cfg_mgr.getSubnet6("bar", classify_));
 
-    // If we have only a single subnet and the request came from a local
-    // address, let's use that subnet
-    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("fe80::dead:beef"),
-                                          classify_));
+    // We used to allow getting a sole subnet if there was only one subnet
+    // configured. That is no longer true. The code should not return
+    // a subnet.
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("fe80::dead:beef"), classify_));
 
     cfg_mgr.addSubnet6(subnet2);
     cfg_mgr.addSubnet6(subnet3);
