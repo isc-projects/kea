@@ -384,10 +384,13 @@ TEST_F(MasterLexerStateTest, quotedString) {
     ss << "\"no;comment\"";
     lexer.pushSource(ss);
 
-    // by default, '"' doesn't have any special meaning and part of string
-    EXPECT_EQ(&s_string, State::start(lexer, common_options));
-    s_string.handle(lexer); // recognize str, see \n
-    stringTokenCheck("\"ignore-quotes\"", s_string.getToken(lexer));
+    // by default, '"' is unexpected (when QSTRING is not specified),
+    // and it returns MasterToken::UNEXPECTED_QUOTES.
+    EXPECT_EQ(s_null, State::start(lexer, common_options));
+    EXPECT_EQ(Token::UNEXPECTED_QUOTES, s_string.getToken(lexer).getErrorCode());
+    // Read it as a QSTRING.
+    s_qstring.handle(lexer); // recognize quoted str, see \n
+    stringTokenCheck("ignore-quotes", s_qstring.getToken(lexer), true);
     EXPECT_EQ(s_null, State::start(lexer, common_options)); // skip \n after it
     EXPECT_TRUE(s_string.wasLastEOL(lexer));
 
