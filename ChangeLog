@@ -1,3 +1,12 @@
+757.	[func]		tmark
+	b10-dhcp6 now parses parameters which support DHCP-DDNS updates via
+	the DHCP-DDNS module, b10-dhcp-ddns.  These parameters are part of new
+	configuration element, dhcp-ddns, defined in dhcp4.spec. These parameters
+	influence when and how DDNS updates requests are created but communicating
+	them to b10-dhcp-ddns is not yet supported.  That will be provided under
+	separate ticket, Trac #3222.
+	(Trac# 3034, git 22c667a66536ff3e3741bc67025d824644ed4e7d)
+
 756.	[bug]		marcin
 	b10-dhcp6: server parses DHCPv6 Vendor Class option. Previously
 	the server failed to parse Vendor Class option having empty opaque
