@@ -440,7 +440,7 @@ documented in preceding log entries.
 
 % DHCP_DDNS_STARTING_TRANSACTION Transaction Key: %1
 
-% DHCP_DDNS_UPDATE_REQUEST_SENT for transaction key: %1 to server: %2
+% DHCP_DDNS_UPDATE_REQUEST_SENT %1 for transaction key: %2 to server: %3
 This is a debug message issued when DHCP_DDNS sends a DNS request to a DNS
 server.
 
