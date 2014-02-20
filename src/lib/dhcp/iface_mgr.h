@@ -34,6 +34,7 @@ namespace isc {
 
 namespace dhcp {
 
+
 /// @brief IfaceMgr exception thrown thrown when interface detection fails.
 class IfaceDetectError : public Exception {
 public:
@@ -245,6 +246,17 @@ public:
     /// @return collection of addresses
     const AddressCollection& getAddresses() const { return addrs_; }
 
+    /// @brief Returns IPv4 address assigned to the interface.
+    ///
+    /// This function looks for an IPv4 address assigned to the interface
+    /// and returns it through the argument.
+    ///
+    /// @param [out] address IPv4 address assigned to the interface.
+    ///
+    /// @return Boolean value which informs whether IPv4 address has been found
+    /// for the interface (if true), or not (false).
+    bool getAddress4(isc::asiolink::IOAddress& address) const;
+
     /// @brief Adds an address to an interface.
     ///
     /// This only adds an address to collection, it does not physically
@@ -393,8 +405,20 @@ boost::function<void(const std::string& errmsg)> IfaceMgrErrorMsgCallback;
 ///
 class IfaceMgr : public boost::noncopyable {
 public:
-    /// Defines callback used when commands are received over control session.
-    typedef void (*SessionCallback) (void);
+    /// Defines callback used when data is received over external sockets.
+    typedef boost::function<void ()> SocketCallback;
+
+    /// Keeps callback information for external sockets.
+    struct SocketCallbackInfo {
+        /// Socket descriptor of the external socket.
+        int socket_;
+
+        /// A callback that will be called when data arrives over socket_.
+        SocketCallback callback_;
+    };
+
+    /// Defines storage container for callbacks for external sockets
+    typedef std::list<SocketCallbackInfo> SocketCallbackInfoContainer;
 
     /// @brief Packet reception buffer size
     ///
@@ -784,17 +808,18 @@ public:
     /// @return number of detected interfaces
     uint16_t countIfaces() { return ifaces_.size(); }
 
-    /// @brief Sets session socket and a callback
+    /// @brief Adds external socket and a callback
     ///
-    /// Specifies session socket and a callback that will be called
+    /// Specifies external socket and a callback that will be called
     /// when data will be received over that socket.
     ///
     /// @param socketfd socket descriptor
     /// @param callback callback function
-    void set_session_socket(int socketfd, SessionCallback callback) {
-        session_socket_ = socketfd;
-        session_callback_ = callback;
-    }
+    void addExternalSocket(int socketfd, SocketCallback callback);
+
+    /// @brief Deletes external socket
+
+    void deleteExternalSocket(int socketfd);
 
     /// @brief Set packet filter object to handle sending and receiving DHCPv4
     /// messages.
@@ -879,9 +904,6 @@ public:
     ///
     /// @return true if there is a socket bound to the specified address.
     bool hasOpenSocket(const isc::asiolink::IOAddress& addr) const;
-
-    /// A value of socket descriptor representing "not specified" state.
-    static const int INVALID_SOCKET = -1;
 
     // don't use private, we need derived classes in tests
 protected:
@@ -976,13 +998,7 @@ protected:
     /// @return true if successful, false otherwise
     bool os_receive4(struct msghdr& m, Pkt4Ptr& pkt);
 
-    /// Socket descriptor of the session socket.
-    int session_socket_;
-
-    /// A callback that will be called when data arrives over session_socket_.
-    SessionCallback session_callback_;
 private:
-
     /// @brief Identifies local network address to be used to
     /// connect to remote address.
     ///
@@ -1002,6 +1018,29 @@ private:
                     const uint16_t port);
 
 
+    /// @brief Open an IPv6 socket with multicast support.
+    ///
+    /// This function opens socket(s) to allow reception of the DHCPv6 sent
+    /// to multicast address. It opens an IPv6 socket, binds it to link-local
+    /// address and joins multicast group (on non-Linux systems) or opens two
+    /// IPv6 sockets and binds one of them to link-local address and another
+    /// one to multicast address (on Linux systems).
+    ///
+    /// @note This function is intended to be called internally by the
+    /// @c IfaceMgr::openSockets6. It is not intended to be called from any
+    /// other function.
+    ///
+    /// @param iface Interface on which socket should be open.
+    /// @param addr Link-local address to bind the socket to.
+    /// @param port Port number to bind socket to.
+    /// @param error_handler Error handler function to be called when an
+    /// error occurs during opening a socket, or NULL if exception should
+    /// be thrown upon error.
+    bool openMulticastSocket(Iface& iface,
+                             const isc::asiolink::IOAddress& addr,
+                             const uint16_t port,
+                             IfaceMgrErrorMsgCallback error_handler = NULL);
+
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
     /// sockets. It is possible to supply custom object using
@@ -1017,6 +1056,9 @@ private:
     /// messages. It is possible to supply a custom object using
     /// setPacketFilter method.
     PktFilter6Ptr packet_filter6_;
+
+    /// @brief Contains list of callbacks for external sockets
+    SocketCallbackInfoContainer callbacks_;
 };
 
 }; // namespace isc::dhcp

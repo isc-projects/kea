@@ -1,0 +1,7 @@
+# Test where certificate association data length is smaller than what
+# RDATA length indicates.
+
+# TLSA RDATA, RDLEN=64
+0040
+# CERTIFICATE_USAGE=0 SELECTOR=0 MATCHING_TYPE=1 CERTIFICATE_ASSOCIATION_DATA=(32 bytes)
+00 00 01 d2abde240d7cd3ee6b4b28c54df034b97983a1d16e8a410e4561cb106618e971

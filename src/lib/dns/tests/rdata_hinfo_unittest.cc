@@ -24,13 +24,15 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 using namespace isc::dns::rdata::generic;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_HINFO_Test : public RdataTest {
@@ -113,19 +115,18 @@ TEST_F(Rdata_HINFO_Test, toText) {
 
 TEST_F(Rdata_HINFO_Test, toWire) {
     HINFO hinfo(hinfo_str);
-    hinfo.toWire(obuffer);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), hinfo_rdata, sizeof(hinfo_rdata));
+    hinfo.toWire(obuffer);
+    matchWireData(hinfo_rdata, sizeof (hinfo_rdata),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_HINFO_Test, toWireRenderer) {
     HINFO hinfo(hinfo_str);
 
     hinfo.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), hinfo_rdata,
-                        sizeof(hinfo_rdata));
+    matchWireData(hinfo_rdata, sizeof (hinfo_rdata),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_HINFO_Test, compare) {

@@ -24,14 +24,17 @@
 #include <dns/rdatafields.h>
 #include <dns/tests/unittest_util.h>
 
+#include <util/unittests/wiredata.h>
+
 #include <gtest/gtest.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
 using isc::util::OutputBuffer;
 using isc::util::InputBuffer;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class RdataFieldsTest : public ::testing::Test {
@@ -67,23 +70,21 @@ RdataFieldsTest::constructCommonTests(const RdataFields& fields,
                                       const uint8_t* const expected_data,
                                       const size_t expected_data_len)
 {
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, expected_data,
-                        expected_data_len, fields.getData(),
-                        fields.getDataLength());
+    matchWireData(expected_data, expected_data_len,
+                  fields.getData(), fields.getDataLength());
+
     EXPECT_EQ(sizeof(RdataFields::FieldSpec), fields.getFieldSpecDataSize());
     EXPECT_EQ(1, fields.getFieldCount());
     EXPECT_EQ(RdataFields::DATA, fields.getFieldSpec(0).type);
     EXPECT_EQ(4, fields.getFieldSpec(0).len);
 
     fields.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, expected_data,
-                        expected_data_len, obuffer.getData(),
-                        obuffer.getLength());
+    matchWireData(expected_data, expected_data_len,
+                  obuffer.getData(), obuffer.getLength());
 
     fields.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, expected_data,
-                        expected_data_len, renderer.getData(),
-                        renderer.getLength());
+    matchWireData(expected_data, expected_data_len,
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(RdataFieldsTest, constructFromRdata) {
@@ -112,17 +113,15 @@ RdataFieldsTest::constructCommonTestsNS(const RdataFields& fields) {
     UnitTestUtil::readWireData("rdatafields1.wire", expected_wire);
     other_name.toWire(obuffer);
     fields.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &expected_wire[0],
-                        expected_wire.size(), obuffer.getData(),
-                        obuffer.getLength());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  obuffer.getData(), obuffer.getLength());
 
     expected_wire.clear();
     UnitTestUtil::readWireData("rdatafields2.wire", expected_wire);
     other_name.toWire(renderer);
     fields.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &expected_wire[0],
-                        expected_wire.size(), renderer.getData(),
-                        renderer.getLength());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(RdataFieldsTest, constructFromRdataNS) {
@@ -150,14 +149,12 @@ RdataFieldsTest::constructCommonTestsTXT(const RdataFields& fields) {
     EXPECT_EQ(expected_wire.size(), fields.getFieldSpec(0).len);
 
     fields.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &expected_wire[0],
-                        expected_wire.size(), obuffer.getData(),
-                        obuffer.getLength());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  obuffer.getData(), obuffer.getLength());
 
     fields.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &expected_wire[0],
-                        expected_wire.size(), renderer.getData(),
-                        renderer.getLength());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(RdataFieldsTest, constructFromRdataTXT) {
@@ -208,9 +205,8 @@ RdataFieldsTest::constructCommonTestsRRSIG(const RdataFields& fields) {
     obuffer.writeUint16(fields.getDataLength());
     fields.toWire(obuffer);
     other_name.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &expected_wire[0],
-                        expected_wire.size(), obuffer.getData(),
-                        obuffer.getLength());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  obuffer.getData(), obuffer.getLength());
 
     expected_wire.clear();
     UnitTestUtil::readWireData("rdatafields6.wire", expected_wire);
@@ -218,9 +214,8 @@ RdataFieldsTest::constructCommonTestsRRSIG(const RdataFields& fields) {
     renderer.writeUint16(fields.getDataLength());
     fields.toWire(renderer);    // the signer field won't be compressed
     other_name.toWire(renderer); // but will be used as a compression target
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &expected_wire[0],
-                        expected_wire.size(), renderer.getData(),
-                        renderer.getLength());
+    matchWireData(&expected_wire[0], expected_wire.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(RdataFieldsTest, constructFromRdataRRSIG) {

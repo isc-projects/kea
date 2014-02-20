@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -47,6 +47,8 @@
 #include <sstream>
 
 using namespace isc;
+using namespace isc::data;
+using namespace isc::config;
 using namespace isc::test;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -1073,6 +1075,42 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
     EXPECT_THROW(srv.sanityCheck(pkt, Dhcpv6Srv::MANDATORY, Dhcpv6Srv::MANDATORY),
                  RFCViolation);
 }
+// Check that the server is testing if server identifier received in the
+// query, matches server identifier used by the server.
+TEST_F(Dhcpv6SrvTest, testServerID) {
+	NakedDhcpv6Srv srv(0);
+
+	Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+    std::vector<uint8_t> bin;
+
+    // diud_llt constructed with: time = 0, macaddress = 00:00:00:00:00:00
+    // it's necessary to generate server identifier option
+    isc::util::encode::decodeHex("0001000100000000000000000000", bin);
+    // Now create server identifier option
+    OptionPtr serverid = OptionPtr(new Option(Option::V6, D6O_SERVERID, bin));
+
+    // Server identifier option is MANDATORY in Request message.
+    // Add server identifier option with different value from one that
+    // server is using.
+    req->addOption(serverid);
+
+    // Message shoud be dropped
+    EXPECT_FALSE(srv.testServerID(req));
+
+    // Delete server identifier option and add new one, with same value as
+    // server's server identifier.
+    req->delOption(D6O_SERVERID);
+    req->addOption(srv.getServerID());
+
+    // With proper server identifier we expect true
+    EXPECT_TRUE(srv.testServerID(req));
+
+    // server-id MUST NOT appear in Solicit, so check if server is
+    // not dropping a message without server id.
+    Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+
+    EXPECT_TRUE(srv.testServerID(req));
+}
 
 // This test verifies if selectSubnet() selects proper subnet for a given
 // source address.
@@ -1671,6 +1709,101 @@ TEST_F(Dhcpv6SrvTest, unpackOptions) {
     ASSERT_TRUE(option_bar);
     EXPECT_EQ(1, option_bar->getType());
     EXPECT_EQ(0x0, option_bar->getValue());
+}
+
+// Checks if client packets are classified properly
+TEST_F(Dhcpv6SrvTest, clientClassification) {
+
+    NakedDhcpv6Srv srv(0);
+
+    // Let's create a relayed SOLICIT. This particular relayed SOLICIT has
+    // vendor-class set to docsis3.0
+    Pkt6Ptr sol1;
+    ASSERT_NO_THROW(sol1 = captureDocsisRelayedSolicit());
+    ASSERT_NO_THROW(sol1->unpack());
+
+    srv.classifyPacket(sol1);
+
+    // It should belong to docsis3.0 class. It should not belong to eRouter1.0
+    EXPECT_TRUE(sol1->inClass("docsis3.0"));
+    EXPECT_FALSE(sol1->inClass("eRouter1.0"));
+
+    // Let's get a relayed SOLICIT. This particular relayed SOLICIT has
+    // vendor-class set to eRouter1.0
+    Pkt6Ptr sol2;
+    ASSERT_NO_THROW(sol2 = captureeRouterRelayedSolicit());
+    ASSERT_NO_THROW(sol2->unpack());
+
+    srv.classifyPacket(sol2);
+
+    EXPECT_TRUE(sol2->inClass("eRouter1.0"));
+    EXPECT_FALSE(sol2->inClass("docsis3.0"));
+}
+
+// Checks if the client-class field is indeed used for subnet selection.
+// Note that packet classification is already checked in Dhcpv6SrvTest
+// .clientClassification above.
+TEST_F(Dhcpv6SrvTest, clientClassify2) {
+
+    NakedDhcpv6Srv srv(0);
+
+    ConstElementPtr status;
+
+    // This test configures 2 subnets. We actually only need the
+    // first one, but since there's still this ugly hack that picks
+    // the pool if there is only one, we must use more than one
+    // subnet. That ugly hack will be removed in #3242, currently
+    // under review.
+
+    // The second subnet does not play any role here. The client's
+    // IP address belongs to the first subnet, so only that first
+    // subnet it being tested.
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " {  \"pool\": [ \"2001:db8:1::/64\" ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"client-class\": \"foo\" "
+        " }, "
+        " {  \"pool\": [ \"2001:db8:2::/64\" ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"client-class\": \"xyzzy\" "
+        " } "
+        "],"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
+
+    // check if returned status is OK
+    ASSERT_TRUE(status);
+    comment_ = config::parseAnswer(rcode_, status);
+    ASSERT_EQ(0, rcode_);
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // This discover does not belong to foo class, so it will not
+    // be serviced
+    EXPECT_FALSE(srv.selectSubnet(sol));
+
+    // Let's add the packet to bar class and try again.
+    sol->addClass("bar");
+
+    // Still not supported, because it belongs to wrong class.
+    EXPECT_FALSE(srv.selectSubnet(sol));
+
+    // Let's add it to maching class.
+    sol->addClass("foo");
+
+    // This time it should work
+    EXPECT_TRUE(srv.selectSubnet(sol));
 }
 
 

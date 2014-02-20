@@ -12,7 +12,8 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#include <dhcpsrv/d2_client.h>
+#include <dhcp_ddns/ncr_udp.h>
+#include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
 #include <string>
@@ -29,7 +30,6 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                      NameChangeProtocol& ncr_protocol,
                                const dhcp_ddns::
                                      NameChangeFormat& ncr_format,
-                               const bool remove_on_renew,
                                const bool always_include_fqdn,
                                const bool override_no_update,
                                const bool override_client_update,
@@ -37,11 +37,10 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                const std::string& generated_prefix,
                                const std::string& qualifying_suffix)
     : enable_updates_(enable_updates),
-    server_ip_(server_ip.getAddress()),
+    server_ip_(server_ip),
     server_port_(server_port),
     ncr_protocol_(ncr_protocol),
     ncr_format_(ncr_format),
-    remove_on_renew_(remove_on_renew),
     always_include_fqdn_(always_include_fqdn),
     override_no_update_(override_no_update),
     override_client_update_(override_client_update),
@@ -57,17 +56,21 @@ D2ClientConfig::D2ClientConfig()
       server_port_(0),
       ncr_protocol_(dhcp_ddns::NCR_UDP),
       ncr_format_(dhcp_ddns::FMT_JSON),
-      remove_on_renew_(false),
       always_include_fqdn_(false),
       override_no_update_(false),
       override_client_update_(false),
       replace_client_name_(false),
-      generated_prefix_(""),
-      qualifying_suffix_("") {
+      generated_prefix_("myhost"),
+      qualifying_suffix_("example.com") {
     validateContents();
 }
 
 D2ClientConfig::~D2ClientConfig(){};
+
+void
+D2ClientConfig::enableUpdates(bool enable) {
+    enable_updates_ = enable;
+}
 
 void
 D2ClientConfig::validateContents() {
@@ -83,9 +86,8 @@ D2ClientConfig::validateContents() {
                     << " is not yet supported");
     }
 
-    // @todo perhaps more validation we should do yet?
-    // Are there any invalid combinations of options we need to test against?
-    // Also do we care about validating contents if it's disabled?
+    /// @todo perhaps more validation we should do yet?
+    /// Are there any invalid combinations of options we need to test against?
 }
 
 bool
@@ -95,7 +97,6 @@ D2ClientConfig::operator == (const D2ClientConfig& other) const {
             (server_port_ == other.server_port_) &&
             (ncr_protocol_ == other.ncr_protocol_) &&
             (ncr_format_ == other.ncr_format_) &&
-            (remove_on_renew_ == other.remove_on_renew_) &&
             (always_include_fqdn_ == other.always_include_fqdn_) &&
             (override_no_update_ == other.override_no_update_) &&
             (override_client_update_ == other.override_client_update_) &&
@@ -119,7 +120,6 @@ D2ClientConfig::toText() const {
                << ", server_port: " << server_port_
                << ", ncr_protocol: " << ncr_protocol_
                << ", ncr_format: " << ncr_format_
-               << ", remove_on_renew: " << (remove_on_renew_ ? "yes" : "no")
                << ", always_include_fqdn: " << (always_include_fqdn_ ?
                                                 "yes" : "no")
                << ", override_no_update: " << (override_no_update_ ?
@@ -141,45 +141,6 @@ operator<<(std::ostream& os, const D2ClientConfig& config) {
     return (os);
 }
 
-D2ClientMgr::D2ClientMgr() : d2_client_config_(new D2ClientConfig()) {
-    // Default contstructor initializes with a disabled config.
-}
-
-D2ClientMgr::~D2ClientMgr(){
-}
-
-void
-D2ClientMgr::setD2ClientConfig(D2ClientConfigPtr& new_config) {
-    if (!new_config) {
-        isc_throw(D2ClientError,
-                  "D2ClientMgr cannot set DHCP-DDNS configuration to NULL.");
-    }
-
-    // @todo When NameChangeSender is integrated, we will need to handle these
-    // scenarios:
-    // 1. D2 was enabled but now it is disabled
-    //     - destroy the sender, flush any queued
-    // 2. D2 is still enabled but server params have changed
-    //     - preserve any queued,  reconnect based on sender params
-    // 3. D2 was was disabled now it is enabled.
-    //     - create sender
-    //
-    // For now we just update the configuration.
-    d2_client_config_ = new_config;
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_CFG_DHCP_DDNS)
-              .arg(!ddnsEnabled() ? "DHCP-DDNS updates disabled" :
-                   "DHCP_DDNS updates enabled");
-}
-
-bool
-D2ClientMgr::ddnsEnabled() {
-    return (d2_client_config_->getEnableUpdates());
-}
-
-const D2ClientConfigPtr&
-D2ClientMgr::getD2ClientConfig() const {
-    return (d2_client_config_);
-}
-
 };  // namespace dhcp
+
 };  // namespace isc

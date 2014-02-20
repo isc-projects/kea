@@ -286,6 +286,9 @@ public:
         answers_.reserve(RESERVE_RRSETS);
         authorities_.reserve(RESERVE_RRSETS);
         additionals_.reserve(RESERVE_RRSETS);
+
+        a_and_aaaa_.push_back(isc::dns::RRType::A());
+        a_and_aaaa_.push_back(isc::dns::RRType::AAAA());
     }
 
 
@@ -488,6 +491,15 @@ private:
     std::vector<isc::dns::ConstRRsetPtr> answers_;
     std::vector<isc::dns::ConstRRsetPtr> authorities_;
     std::vector<isc::dns::ConstRRsetPtr> additionals_;
+
+private:
+    /// \brief Returns a reference to a pre-initialized vector (see the
+    /// \c Query constructor).
+    const std::vector<isc::dns::RRType>& A_AND_AAAA() const {
+        return (a_and_aaaa_);
+    }
+
+    std::vector<isc::dns::RRType> a_and_aaaa_;
 };
 
 }

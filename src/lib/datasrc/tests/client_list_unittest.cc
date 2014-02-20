@@ -142,7 +142,7 @@ public:
             "                \"noiter.org\", \"null.org\"]"
             "}]"))
     {
-        for (size_t i(0); i < ds_count; ++ i) {
+        for (size_t i = 0; i < ds_count; ++ i) {
             boost::shared_ptr<MockDataSourceClient>
                 ds(new MockDataSourceClient(ds_zones[i]));
             ds_.push_back(ds);
@@ -155,12 +155,12 @@ public:
 
     ~ListTest() {
         ds_info_.clear();
-        for (size_t i(0); i < ds_count; ++ i) {
+        for (size_t i = 0; i < ds_count; ++ i) {
             ds_[i].reset();
         }
         ds_.clear();
 
-        for (size_t i(0); i < ds_count; ++ i) {
+        for (size_t i = 0; i < ds_count; ++ i) {
             boost::interprocess::file_mapping::remove(
                 getMappedFilename(i).c_str());
         }
@@ -465,7 +465,7 @@ const char* const test_names[] = {
 
 TEST_P(ListTest, multiExactMatch) {
     // Run through all the multi-configurations
-    for (size_t i(0); i < sizeof(test_names) / sizeof(*test_names); ++i) {
+    for (size_t i = 0; i < sizeof(test_names) / sizeof(*test_names); ++i) {
         SCOPED_TRACE(test_names[i]);
         multiConfiguration(i);
         // Something that is nowhere there
@@ -484,7 +484,7 @@ TEST_P(ListTest, multiExactMatch) {
 
 TEST_P(ListTest, multiBestMatch) {
     // Run through all the multi-configurations
-    for (size_t i(0); i < 4; ++ i) {
+    for (size_t i = 0; i < 4; ++ i) {
         SCOPED_TRACE(test_names[i]);
         multiConfiguration(i);
         // Something that is nowhere there
@@ -545,7 +545,7 @@ TEST_P(ListTest, configureParams) {
         "{}",
         NULL
     };
-    for (const char** param(params); *param; ++param) {
+    for (const char** param = params; *param; ++param) {
         SCOPED_TRACE(*param);
         ConstElementPtr elem(Element::fromJSON(string("["
             "{"
@@ -672,7 +672,7 @@ TEST_P(ListTest, wrongConfig) {
     // Put something inside to see it survives the exception
     list_->configure(config_elem_, true);
     checkDS(0, "test_type", "{}", false);
-    for (const char** config(configs); *config; ++config) {
+    for (const char** config = configs; *config; ++config) {
         SCOPED_TRACE(*config);
         ConstElementPtr elem(Element::fromJSON(*config));
         EXPECT_THROW(list_->configure(elem, true),

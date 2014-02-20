@@ -331,6 +331,28 @@ Feature: Querying feature
           | qryreferral       |          1 |
           | rcode.noerror     |          1 |
 
+    Scenario: RRSIG query
+        # Directly querying for RRSIGs should result in rcode=REFUSED.
+        Given I have bind10 running with configuration nsec3/nsec3_auth.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Resolver should not be running
+        And bind10 module Xfrout should not be running
+        And bind10 module Zonemgr should not be running
+        And bind10 module Xfrin should not be running
+        And bind10 module Stats should not be running
+        And bind10 module StatsHttpd should not be running
+
+        A dnssec query for example. type RRSIG should have rcode REFUSED
+        The last query response should have flags qr aa
+        The last query response should have edns_flags do
+        The last query response should have ancount 0
+        The last query response should have nscount 0
+        The last query response should have adcount 1
+
     Scenario: SSHFP query
         # We are testing one more RR type for a normal successful case
         Given I have bind10 running with configuration example.org.inmem.config
@@ -412,3 +434,61 @@ Feature: Querying feature
           | qryauthans    |          2 |
           | qrynxrrset    |          1 |
           | rcode.noerror |          2 |
+
+    Scenario: Querying non-existing name in root zone from sqlite3 should work
+        Given I have bind10 running with configuration root.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Stats should be running
+        And bind10 module Resolver should not be running
+        And bind10 module Xfrout should not be running
+        And bind10 module Zonemgr should not be running
+        And bind10 module Xfrin should not be running
+        And bind10 module StatsHttpd should not be running
+
+        A query for . type SOA should have rcode NOERROR
+        A query for nonexistent. type A should have rcode NXDOMAIN
+        Then wait for bind10 stderr message AUTH_SEND_NORMAL_RESPONSE not AUTH_PROCESS_FAIL
+
+    Scenario: CH class static zone query
+        # We are testing one more RR type for a normal successful case
+        Given I have bind10 running with configuration static.config
+        And wait for bind10 stderr message BIND10_STARTED_CC
+        And wait for bind10 stderr message CMDCTL_STARTED
+        And wait for bind10 stderr message AUTH_SERVER_STARTED
+
+        bind10 module Auth should be running
+        And bind10 module Stats should be running
+        And bind10 module Resolver should not be running
+        And bind10 module Xfrout should not be running
+        And bind10 module Zonemgr should not be running
+        And bind10 module Xfrin should not be running
+        And bind10 module StatsHttpd should not be running
+
+        A query for version.bind. type TXT class CH should have rcode REFUSED
+
+        When I send bind10 the following commands
+        """
+        config add data_sources/classes/CH
+        config set data_sources/classes/CH[0]/type MasterFiles
+        config set data_sources/classes/CH[0]/cache-enable true
+        config set data_sources/classes/CH[0]/params {"BIND": "data/static.zone"}
+        config commit
+        """
+
+        And wait for new bind10 stderr message AUTH_DATASRC_CLIENTS_BUILDER_RECONFIGURE_SUCCESS
+
+        A query for version.bind. type TXT class CH should have rcode NOERROR
+        The last query response should have ancount 1
+
+        # NOTE: The double double-quote characters trailing 10 in the
+        # response below are required due to a lettuce bug in reading
+        # multi-line strings with embedded double-quotes.
+
+        The answer section of the last query response should be
+        """
+        version.bind.      3600    CH      TXT   "10""
+        """

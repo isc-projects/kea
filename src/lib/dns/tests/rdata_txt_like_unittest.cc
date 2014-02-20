@@ -21,6 +21,8 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 
+#include <util/unittests/wiredata.h>
+
 #include <gtest/gtest.h>
 
 #include <boost/bind.hpp>
@@ -29,11 +31,12 @@
 #include <sstream>
 #include <vector>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 
@@ -133,31 +136,31 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromText) {
     // Null character-string.
     this->obuffer.clear();
     TypeParam(string("\"\"")).toWire(this->obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(), this->obuffer.getLength(),
-                        wiredata_nulltxt, sizeof(wiredata_nulltxt));
+    matchWireData(wiredata_nulltxt, sizeof(wiredata_nulltxt),
+                  this->obuffer.getData(), this->obuffer.getLength());
+
     this->obuffer.clear();
     TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS, this->loader_cb).
         toWire(this->obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(), this->obuffer.getLength(),
-                        wiredata_nulltxt, sizeof(wiredata_nulltxt));
+    matchWireData(wiredata_nulltxt, sizeof(wiredata_nulltxt),
+                  this->obuffer.getData(), this->obuffer.getLength());
+
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // Longest possible character-string.
     this->obuffer.clear();
     TypeParam(string(255, 'a')).toWire(this->obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(), this->obuffer.getLength(),
-                        &this->wiredata_longesttxt[0],
-                        this->wiredata_longesttxt.size());
+    matchWireData(&this->wiredata_longesttxt[0],
+                  this->wiredata_longesttxt.size(),
+                  this->obuffer.getData(), this->obuffer.getLength());
+
     this->obuffer.clear();
     TypeParam(this->lexer, NULL, MasterLoader::MANY_ERRORS, this->loader_cb).
         toWire(this->obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(), this->obuffer.getLength(),
-                        &this->wiredata_longesttxt[0],
-                        this->wiredata_longesttxt.size());
+    matchWireData(&this->wiredata_longesttxt[0],
+                  this->wiredata_longesttxt.size(),
+                  this->obuffer.getData(), this->obuffer.getLength());
+
     EXPECT_EQ(MasterToken::END_OF_LINE, this->lexer.getNextToken().getType());
 
     // Too long text for a valid character-string.
@@ -268,10 +271,8 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
                                   sizeof(wiredata_txt_like));
     expected_data.insert(expected_data.end(), wiredata_txt_like,
                          wiredata_txt_like + sizeof(wiredata_txt_like));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        &expected_data[0], expected_data.size());
+    matchWireData(&expected_data[0], expected_data.size(),
+                  this->obuffer.getData(), this->obuffer.getLength());
 
     // Largest length of data.  There's nothing special, but should be
     // constructed safely, and the content should be identical to the original
@@ -283,11 +284,8 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromWire) {
     TypeParam largest_txt_like(ibuffer, largest_txt_like_data.size());
     this->obuffer.clear();
     largest_txt_like.toWire(this->obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        &largest_txt_like_data[0],
-                        largest_txt_like_data.size());
+    matchWireData(&largest_txt_like_data[0], largest_txt_like_data.size(),
+                  this->obuffer.getData(), this->obuffer.getLength());
 
     // rdlen parameter is out of range.  This is a rare event because we'd
     // normally call the constructor via a polymorphic wrapper, where the
@@ -315,18 +313,14 @@ TYPED_TEST(Rdata_TXT_LIKE_Test, createFromLexer) {
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toWireBuffer) {
     this->rdata_txt_like.toWire(this->obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->obuffer.getData(),
-                        this->obuffer.getLength(),
-                        wiredata_txt_like, sizeof(wiredata_txt_like));
+    matchWireData(wiredata_txt_like, sizeof(wiredata_txt_like),
+                  this->obuffer.getData(), this->obuffer.getLength());
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toWireRenderer) {
     this->rdata_txt_like.toWire(this->renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        this->renderer.getData(),
-                        this->renderer.getLength(),
-                        wiredata_txt_like, sizeof(wiredata_txt_like));
+    matchWireData(wiredata_txt_like, sizeof(wiredata_txt_like),
+                  this->renderer.getData(), this->renderer.getLength());
 }
 
 TYPED_TEST(Rdata_TXT_LIKE_Test, toText) {

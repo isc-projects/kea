@@ -28,14 +28,17 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 
+#include <util/unittests/wiredata.h>
+
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace isc {
 namespace dns {
@@ -211,6 +214,14 @@ TEST_F(RdataTest, createRdataWithLexer) {
                    "file does not end with newline");
 }
 
+TEST_F(RdataTest, getLength) {
+    const in::AAAA aaaa_rdata("2001:db8::1");
+    EXPECT_EQ(16, aaaa_rdata.getLength());
+
+    const generic::TXT txt_rdata("Hello World");
+    EXPECT_EQ(12, txt_rdata.getLength());
+}
+
 }
 }
 }
@@ -290,14 +301,14 @@ TEST_F(Rdata_Unknown_Test, createFromText) {
     // the length should be 16-bit unsigned integer
     EXPECT_THROW(generic::Generic("\\# 65536 a1b2c30d"), InvalidRdataLength);
     EXPECT_THROW(generic::Generic("\\# -1 a1b2c30d"), InvalidRdataLength);
-    EXPECT_THROW(generic::Generic("\\# 1.1 a1"), InvalidRdataText);
+    EXPECT_THROW(generic::Generic("\\# 1.1 a1"), InvalidRdataLength);
     EXPECT_THROW(generic::Generic("\\# 0a 00010203040506070809"),
-                 InvalidRdataText);
+                 InvalidRdataLength);
     // should reject if the special token is missing.
     EXPECT_THROW(generic::Generic("4 a1b2c30d"), InvalidRdataText);
     // the special token, the RDLENGTH and the data must be space separated.
     EXPECT_THROW(generic::Generic("\\#0"), InvalidRdataText);
-    EXPECT_THROW(generic::Generic("\\# 1ff"), InvalidRdataText);
+    EXPECT_THROW(generic::Generic("\\# 1ff"), InvalidRdataLength);
 }
 
 TEST_F(Rdata_Unknown_Test, createFromWire) {
@@ -393,16 +404,14 @@ TEST_F(Rdata_Unknown_Test, toText) {
 
 TEST_F(Rdata_Unknown_Test, toWireBuffer) {
     rdata_unknown.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        wiredata_unknown, sizeof(wiredata_unknown));
+    matchWireData(wiredata_unknown, sizeof(wiredata_unknown),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_Unknown_Test, toWireRenderer) {
     rdata_unknown.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata_unknown, sizeof(wiredata_unknown));
+    matchWireData(wiredata_unknown, sizeof(wiredata_unknown),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_Unknown_Test, compare) {
