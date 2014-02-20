@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -112,9 +112,11 @@
 #include <asiolink/udp_endpoint.h>
 #include <asiolink/udp_socket.h>
 #include <dhcp_ddns/ncr_io.h>
+#include <dhcp_ddns/watch_socket.h>
 #include <util/buffer.h>
 
 #include <boost/shared_array.hpp>
+
 
 /// responsibility of the completion handler to perform the steps necessary
 /// to interpret the raw data provided by the service outcome.   The
@@ -502,6 +504,7 @@ public:
     /// asyncSend() method is called, passing in send_callback_ member's
     /// transfer buffer as the send buffer and the send_callback_ itself
     /// as the callback object.
+    /// @param ncr NameChangeRequest to send.
     virtual void doSend(NameChangeRequestPtr& ncr);
 
     /// @brief Implements the NameChangeRequest level send completion handler.
@@ -523,6 +526,26 @@ public:
     /// the socket receive completion.
     void sendCompletionHandler(const bool successful,
                                const UDPCallback* send_callback);
+
+    /// @brief Returns a file descriptor suitable for use with select
+    ///
+    /// The value returned is an open file descriptor which can be used with
+    /// select() system call to monitor the sender for IO events.  This allows
+    /// NameChangeUDPSenders to be used in applications which use select,
+    /// rather than IOService to wait for IO events to occur.
+    ///
+    /// @warning Attempting other use of this value may lead to unpredictable
+    /// behavior in the sender.
+    ///
+    /// @return Returns an "open" file descriptor
+    ///
+    /// @throw NcrSenderError if the sender is not in send mode,
+    virtual int getSelectFd();
+
+    /// @brief Returns whether or not the sender has IO ready to process.
+    ///
+    /// @return true if the sender has at IO ready, false otherwise.
+    virtual bool ioReady();
 
 private:
     /// @brief IP address from which to send.
@@ -554,6 +577,9 @@ private:
 
     /// @brief Flag which enables the reuse address socket option if true.
     bool reuse_address_;
+
+    /// @brief Pointer to WatchSocket instance supplying the "select-fd".
+    WatchSocketPtr watch_socket_;
 };
 
 } // namespace isc::dhcp_ddns

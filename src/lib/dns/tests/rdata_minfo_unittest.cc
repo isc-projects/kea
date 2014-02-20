@@ -26,12 +26,14 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_MINFO_Test : public RdataTest {
@@ -177,33 +179,30 @@ TEST_F(Rdata_MINFO_Test, toWireBuffer) {
     rdata_minfo.toWire(obuffer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_minfo_toWireUncompressed1.wire", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()),
-                        obuffer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  obuffer.getData(), obuffer.getLength());
 
     obuffer.clear();
     rdata_minfo2.toWire(obuffer);
     vector<unsigned char> data2;
     UnitTestUtil::readWireData("rdata_minfo_toWireUncompressed2.wire", data2);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()),
-                        obuffer.getLength(), &data2[0], data2.size());
+    matchWireData(&data2[0], data2.size(),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_MINFO_Test, toWireRenderer) {
     rdata_minfo.toWire(renderer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_minfo_toWire1.wire", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(renderer.getData()),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
+
     renderer.clear();
     rdata_minfo2.toWire(renderer);
     vector<unsigned char> data2;
     UnitTestUtil::readWireData("rdata_minfo_toWire2.wire", data2);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(renderer.getData()),
-                        renderer.getLength(), &data2[0], data2.size());
+    matchWireData(&data2[0], data2.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_MINFO_Test, toText) {

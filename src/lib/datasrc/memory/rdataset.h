@@ -300,7 +300,7 @@ public:
     /// needs to be extended, unless there's a reason other than simply
     /// because it's already a member function.
     ///
-    /// \param rdata_head A pointer to \c RdataSet from which the search
+    /// \param rdataset_head A pointer to \c RdataSet from which the search
     /// starts.  It can be NULL.
     /// \param type The RRType of \c RdataSet to find.
     /// \param sigonly_ok Whether it should find an RdataSet that only has

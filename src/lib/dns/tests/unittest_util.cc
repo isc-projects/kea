@@ -132,33 +132,6 @@ UnitTestUtil::readWireData(const string& datastr,
 }
 
 ::testing::AssertionResult
-UnitTestUtil::matchWireData(const char*, const char*, const char*, const char*,
-                            const void* data1, size_t len1,
-                            const void* data2, size_t len2)
-{
-    ::testing::Message msg;
-    size_t cmplen = min(len1, len2);
-
-    for (size_t i = 0; i < cmplen; i++) {
-        int ch1 = static_cast<const uint8_t*>(data1)[i];
-        int ch2 = static_cast<const uint8_t*>(data2)[i];
-        if (ch1 != ch2) {
-            msg << "Wire data mismatch at " << i << "th byte\n"
-                << "  Actual: " << ch1 << "\n"
-                << "Expected: " << ch2 << "\n";
-            return (::testing::AssertionFailure(msg));
-        }
-    }
-    if (len1 != len2) {
-        msg << "Wire data mismatch in length:\n"
-            << "  Actual: " << len1 << "\n"
-            << "Expected: " << len2 << "\n";
-        return (::testing::AssertionFailure(msg));
-    }
-    return (::testing::AssertionSuccess());
-}
-
-::testing::AssertionResult
 UnitTestUtil::matchName(const char*, const char*,
                         const isc::dns::Name& name1,
                         const isc::dns::Name& name2)

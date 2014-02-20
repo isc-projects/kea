@@ -91,14 +91,6 @@ public:
     /// \return A string representation of the address.
     std::string toText() const;
 
-    /// \brief Returns const reference to the underlying address object.
-    ///
-    /// This is useful, when access to interface offerted by
-    //  asio::ip::address_v4 and asio::ip::address_v6 is beneficial.
-    /// 
-    /// \return A const reference to asio::ip::address object
-    const asio::ip::address& getAddress() const;
-
     /// \brief Returns the address family
     ///
     /// \return AF_INET for IPv4 or AF_INET6 for IPv6.
@@ -117,6 +109,16 @@ public:
     bool isV6() const {
         return (asio_address_.is_v6());
     }
+
+    /// \brief checks whether and address is IPv6 and is link-local
+    ///
+    /// \return true if the address is IPv6 link-local, false otherwise
+    bool isV6LinkLocal() const;
+
+    /// \brief checks whether and address is IPv6 and is multicast
+    ///
+    /// \return true if the address is IPv6 multicast, false otherwise
+    bool isV6Multicast() const;
 
     /// \brief Creates an address from over wire data.
     ///
@@ -196,7 +198,7 @@ public:
     ///
     /// \param other Address to compare against.
     ///
-    /// See \ref smaller_than method for details.
+    /// See \ref lessThan method for details.
     bool operator<(const IOAddress& other) const {
         return (lessThan(other));
     }
@@ -205,7 +207,7 @@ public:
     ///
     /// \param other Address to compare against.
     ///
-    /// See \ref smaller_equal method for details.
+    /// See \ref smallerEqual method for details.
     bool operator<=(const IOAddress& other) const {
         return (smallerEqual(other));
     }

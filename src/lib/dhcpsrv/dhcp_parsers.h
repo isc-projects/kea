@@ -18,7 +18,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/option_definition.h>
-#include <dhcpsrv/d2_client.h>
+#include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/option_space_container.h>
 #include <dhcpsrv/subnet.h>
@@ -754,6 +754,59 @@ protected:
     PoolStorage local_pools_;
 };
 
+/// @brief parser for additional relay information
+///
+/// This concrete parser handles RelayInfo structure defintions.
+/// So far that structure holds only relay IP (v4 or v6) address, but it
+/// is expected that the number of parameters will increase over time.
+///
+/// It is useful for parsing Dhcp<4/6>/subnet<4/6>[x]/relay parameters.
+class RelayInfoParser : public DhcpConfigParser {
+public:
+
+    /// @brief constructor
+    /// @param unused first argument is ignored, all Parser constructors
+    /// accept string as first argument.
+    /// @param relay_info is the storage in which to store the parsed
+    /// @param family specifies protocol family (IPv4 or IPv6)
+    RelayInfoParser(const std::string& unused,
+                    const isc::dhcp::Subnet::RelayInfoPtr& relay_info,
+                    const isc::dhcp::Option::Universe& family);
+
+    /// @brief parses the actual relay parameters
+    /// @param relay_info JSON structure holding relay parameters to parse
+    virtual void build(isc::data::ConstElementPtr relay_info);
+
+    /// @brief stores parsed info in relay_info
+    virtual void commit();
+
+protected:
+
+    /// @brief Creates a parser for the given "relay" member element id.
+    ///
+    /// The elements currently supported are:
+    /// -# ip-address
+    ///
+    /// @param config_id is the "item_name" for a specific member element of
+    /// the "relay" specification.
+    ///
+    /// @return returns a pointer to newly created parser.
+    isc::dhcp::ParserPtr
+    createConfigParser(const std::string& parser);
+
+    /// Parsed data will be stored there on commit()
+    isc::dhcp::Subnet::RelayInfoPtr storage_;
+
+    /// Local storage information (for temporary values)
+    isc::dhcp::Subnet::RelayInfo local_;
+
+    /// Storage for subnet-specific string values.
+    StringStoragePtr string_values_;
+
+    /// Protocol family (IPv4 or IPv6)
+    Option::Universe family_;
+};
+
 /// @brief this class parses a single subnet
 ///
 /// This class parses the whole subnet definition. It creates parsers
@@ -762,7 +815,11 @@ class SubnetConfigParser : public DhcpConfigParser {
 public:
 
     /// @brief constructor
-    SubnetConfigParser(const std::string&, ParserContextPtr global_context);
+    ///
+    /// @param global_context
+    /// @param default_addr default IP address (0.0.0.0 for IPv4, :: for IPv6)
+    SubnetConfigParser(const std::string&, ParserContextPtr global_context,
+                       const isc::asiolink::IOAddress& default_addr);
 
     /// @brief parses parameter value
     ///
@@ -875,6 +932,9 @@ protected:
     /// Parsing context which contains global values, options and option
     /// definitions.
     ParserContextPtr global_context_;
+
+    /// Pointer to relay information
+    isc::dhcp::Subnet::RelayInfoPtr relay_info_;
 };
 
 /// @brief Parser for  D2ClientConfig

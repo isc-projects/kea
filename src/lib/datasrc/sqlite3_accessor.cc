@@ -904,6 +904,7 @@ public:
     /// sequence.  Note that because of serial number rollover, it may well
     /// be that the start serial number is greater than the end one.
     ///
+    /// \param accessor The accessor to the database to use to get data.
     /// \param zone_id ID of the zone (in the zone table)
     /// \param start Serial number of first version in difference sequence
     /// \param end Serial number of last version in difference sequence

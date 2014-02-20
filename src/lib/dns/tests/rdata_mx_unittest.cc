@@ -23,12 +23,14 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_MX_Test : public RdataTest {
@@ -101,8 +103,8 @@ TEST_F(Rdata_MX_Test, toWireRenderer) {
 
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_mx_toWire1", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_MX_Test, toWireBuffer) {
@@ -111,8 +113,8 @@ TEST_F(Rdata_MX_Test, toWireBuffer) {
 
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_mx_toWire2", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_MX_Test, toText) {

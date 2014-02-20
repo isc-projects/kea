@@ -15,6 +15,9 @@
 #include <gtest/gtest.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 
+using namespace isc::dhcp;
+using namespace isc::asiolink;
+
 namespace isc {
 namespace test {
 

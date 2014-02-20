@@ -29,12 +29,14 @@
 #include <dns/tsigrecord.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
 using namespace std;
 using namespace isc::util;
 using namespace isc::dns;
 using namespace isc::dns::rdata;
 using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class TSIGRecordTest : public ::testing::Test {
@@ -108,16 +110,14 @@ TEST_F(TSIGRecordTest, fromParams) {
 TEST_F(TSIGRecordTest, recordToWire) {
     UnitTestUtil::readWireData("tsigrecord_toWire1.wire", data);
     EXPECT_EQ(1, test_record.toWire(renderer));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 
     // Same test for a dumb buffer
     buffer.clear();
     EXPECT_EQ(1, test_record.toWire(buffer));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        buffer.getData(), buffer.getLength(),
-                        &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  buffer.getData(), buffer.getLength());
 }
 
 TEST_F(TSIGRecordTest, recordToOLongToWire) {
@@ -139,9 +139,8 @@ TEST_F(TSIGRecordTest, recordToWireAfterNames) {
     renderer.writeName(TSIGKey::HMACMD5_NAME());
     renderer.writeName(Name("foo.example.com"));
     EXPECT_EQ(1, test_record.toWire(renderer));
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        &data[0], data.size());
+    matchWireData(&data[0], data.size(),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(TSIGRecordTest, toText) {

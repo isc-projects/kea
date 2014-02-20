@@ -250,6 +250,28 @@
                     }
                 },
 
+                { "item_name": "client-class",
+                  "item_type": "string",
+                  "item_optional": false,
+                  "item_default": "",
+                  "item_description" : "Restricts access to this subnet to specified client class (if defined)"
+                },
+
+                { "item_name": "relay",
+                  "item_type": "map",
+                  "item_optional": false,
+                  "item_default": {},
+                  "item_description" : "Structure holding relay information.",
+                  "map_item_spec": [
+                      {
+                          "item_name": "ip-address",
+                          "item_type": "string",
+                          "item_optional": false,
+                          "item_default": "0.0.0.0",
+                          "item_description" : "IPv4 address of the relay (defaults to 0.0.0.0 if not specified)."
+                      }
+                   ]
+                },
                 { "item_name": "option-data",
                   "item_type": "list",
                   "item_optional": false,
@@ -334,13 +356,6 @@
                 "item_optional": true,
                 "item_default": "JSON",
                 "item_description" : "Format of the update request packet"
-            },
-            {
-                "item_name": "remove-on-renew",
-                "item_type": "boolean",
-                "item_optional": true,
-                "item_default": false,
-                "item_description": "Enable requesting a DNS Remove, before a DNS Update on renewals"
             },
             {
 

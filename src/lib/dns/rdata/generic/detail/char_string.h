@@ -34,6 +34,9 @@ namespace detail {
 /// be the bare char basis.
 typedef std::vector<uint8_t> CharString;
 
+/// \brief Type for DNS character string without the length prefix.
+typedef std::vector<uint8_t> CharStringData;
+
 /// \brief Convert a DNS character-string into corresponding binary data.
 ///
 /// This helper function takes a string object that is expected to be a
@@ -53,6 +56,20 @@ typedef std::vector<uint8_t> CharString;
 void stringToCharString(const MasterToken::StringRegion& str_region,
                         CharString& result);
 
+/// \brief Convert a DNS character-string into corresponding binary data.
+///
+/// This method functions similar to \c stringToCharString() except it
+/// does not include the 1-octet length prefix in the \c result, and the
+/// result is not limited to MAX_CHARSTRING_LEN octets.
+///
+/// \throw InvalidRdataText Upon syntax errors.
+///
+/// \brief str_region A string that represents a character-string.
+/// \brief result A placeholder vector where the resulting data are to be
+/// stored.  Expected to be empty, but it's not checked.
+void stringToCharStringData(const MasterToken::StringRegion& str_region,
+                            CharStringData& result);
+
 /// \brief Convert a CharString into a textual DNS character-string.
 ///
 /// This method converts a binary 8-bit representation of a DNS
@@ -67,6 +84,15 @@ void stringToCharString(const MasterToken::StringRegion& str_region,
 /// \return A string representation of \c char_string.
 std::string charStringToString(const CharString& char_string);
 
+/// \brief Convert a CharStringData into a textual DNS character-string.
+///
+/// Reverse of \c stringToCharStringData(). See \c stringToCharString()
+/// vs. \c stringToCharStringData().
+///
+/// \param char_string The \c CharStringData to convert.
+/// \return A string representation of \c char_string.
+std::string charStringDataToString(const CharStringData& char_string);
+
 /// \brief Compare two CharString objects
 ///
 /// \param self The CharString field to compare
@@ -76,6 +102,17 @@ std::string charStringToString(const CharString& char_string);
 ///          1 if \c self would be sorted after \c other
 ///          0 if \c self and \c other are equal
 int compareCharStrings(const CharString& self, const CharString& other);
+
+/// \brief Compare two CharStringData objects
+///
+/// \param self The CharStringData field to compare
+/// \param other The CharStringData field to compare to
+///
+/// \return -1 if \c self would be sorted before \c other
+///          1 if \c self would be sorted after \c other
+///          0 if \c self and \c other are equal
+int compareCharStringDatas(const CharStringData& self,
+                           const CharStringData& other);
 
 /// \brief Convert a buffer containing a character-string to CharString
 ///
