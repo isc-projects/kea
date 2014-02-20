@@ -127,9 +127,10 @@ TEST_F(Rdata_CAA_Test, fields) {
     EXPECT_THROW(const generic::CAA rdata_caa2("256 issue \"ca.example.net\""),
                  InvalidRdataText);
 
-    // Missing tag actually passes because it parses the value as tag
-    // and assumes that the value is empty instead.
-    EXPECT_NO_THROW(const generic::CAA rdata_caa2("0 \"ca.example.net\""));
+    // Missing tag causes the value to be parsed as the tag field. As
+    // the tag field does not allow quoted strings, this throws.
+    EXPECT_THROW(const generic::CAA rdata_caa2("0 \"ca.example.net\""),
+                 InvalidRdataText);
 
     // Tag is too long
     const std::string tag(256, 'a');
