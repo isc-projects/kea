@@ -1066,6 +1066,10 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
     EXPECT_TRUE(cfg_mgr_->matchForward("tmark.org", match));
     EXPECT_EQ("tmark.org", match->getName());
 
+    // Verify that search is case insensisitive.
+    EXPECT_TRUE(cfg_mgr_->matchForward("TMARK.ORG", match));
+    EXPECT_EQ("tmark.org", match->getName());
+
     // Verify that an exact match works.
     EXPECT_TRUE(cfg_mgr_->matchForward("one.tmark.org", match));
     EXPECT_EQ("one.tmark.org", match->getName());
@@ -1207,7 +1211,8 @@ TEST_F(D2CfgMgrTest, matchReverse) {
                         "  \"dns_servers\" : [ "
                         "  { \"ip_address\": \"127.0.0.1\" } "
                         "  ] }, "
-                        "{ \"name\": \"2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.\" , "
+                        // Note mixed case to test case insensitivity.
+                        "{ \"name\": \"2.0.3.0.8.b.d.0.1.0.0.2.IP6.ARPA.\" , "
                         "  \"dns_servers\" : [ "
                         "  { \"ip_address\": \"127.0.0.1\" } "
                         "  ] },"
@@ -1247,7 +1252,7 @@ TEST_F(D2CfgMgrTest, matchReverse) {
 
     // Verify a IPv6 match.
     EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:302:99::",match));
-    EXPECT_EQ("2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.", match->getName());
+    EXPECT_EQ("2.0.3.0.8.b.d.0.1.0.0.2.IP6.ARPA.", match->getName());
 
     // Verify a IPv6 wild card match.
     EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:99:302::",match));
