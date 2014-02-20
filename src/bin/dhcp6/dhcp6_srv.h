@@ -405,6 +405,7 @@ protected:
     /// objects and store them in the internal queue. Requests created by this
     /// function are only adding or updating DNS records. In order to generate
     /// requests for DNS records removal, use @c createRemovalNameChangeRequest.
+    /// If ddns updates are disabled, this method returns immediately.
     ///
     /// @todo Add support for multiple IAADDR options in the IA_NA.
     ///
@@ -422,6 +423,7 @@ protected:
     /// Note that this function will not remove the entries which server hadn't
     /// added. This is the case, when client performs forward DNS update on its
     /// own.
+    /// If ddns updates are disabled, this method returns immediately.
     ///
     /// @param lease A lease for which the the removal of corresponding DNS
     /// records will be performed.

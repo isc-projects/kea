@@ -347,6 +347,7 @@ public:
             "\"renew-timer\": 1000, "
             "\"valid-lifetime\": 4000, "
             "\"subnet6\": [ ], "
+            "\"dhcp-ddns\": { \"enable-updates\" : false }, "
             "\"option-def\": [ ], "
             "\"option-data\": [ ] }";
         static_cast<void>(executeConfiguration(config,
@@ -3091,5 +3092,113 @@ TEST_F(Dhcp6ParserTest, classifySubnets) {
     EXPECT_TRUE (subnets->at(3)->clientSupported(classes));
 }
 
+// This test checks the ability of the server to parse a configuration
+// containing a full, valid dhcp-ddns (D2ClientConfig) entry.
+TEST_F(Dhcp6ParserTest, d2ClientConfig) {
+    ConstElementPtr status;
+
+    // Verify that the D2 configuraiton can be fetched and is set to disabled.
+    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify that the convenience method agrees.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+
+    string config_str = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ], "
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-port\" : 777, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"allow-client-update\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "\"valid-lifetime\": 4000 }";
+
+    // Convert the JSON string to configuration elements.
+    ElementPtr config;
+    ASSERT_NO_THROW(config = Element::fromJSON(config_str));
+
+    // Pass the configuration in for parsing.
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+
+    // check if returned status is OK
+    checkResult(status, 0);
+
+    // Verify that DHCP-DDNS updating is enabled.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Verify that the D2 configuration can be retrieved.
+    d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    ASSERT_TRUE(d2_client_config);
+
+    // Verify that the configuration values are correct.
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ(777, d2_client_config->getServerPort());
+    EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
+    EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
+    EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
+    EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
+    EXPECT_TRUE(d2_client_config->getReplaceClientName());
+    EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+}
+
+// This test checks the ability of the server to handle a configuration
+// containing an invalid dhcp-ddns (D2ClientConfig) entry.
+TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
+    ConstElementPtr status;
+
+    // Configuration string with an invalid D2 client config,
+    // "server-ip" is missing.
+    string config_str = "{ \"interfaces\": [ \"*\" ],"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ { "
+        "    \"pool\": [ \"2001:db8:1::/80\" ],"
+        "    \"subnet\": \"2001:db8:1::/64\" } ], "
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-port\" : 5301, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"allow-client-update\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : true, "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "\"valid-lifetime\": 4000 }";
+
+    // Convert the JSON string to configuration elements.
+    ElementPtr config;
+    ASSERT_NO_THROW(config = Element::fromJSON(config_str));
+
+    // Configuration should not throw, but should fail.
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
+
+    // check if returned status is failed.
+    checkResult(status, 1);
+
+    // Verify that the D2 configuraiton can be fetched and is set to disabled.
+    D2ClientConfigPtr d2_client_config = CfgMgr::instance().getD2ClientConfig();
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify that the convenience method agrees.
+    ASSERT_FALSE(CfgMgr::instance().ddnsEnabled());
+}
 
 };
