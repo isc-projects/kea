@@ -98,6 +98,7 @@ public:
                             OptionPtr srvid = OptionPtr()) {
         Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(msg_type, 1234));
         pkt->setRemoteAddr(IOAddress("fe80::abcd"));
+        pkt->setIface("eth0");
         Option6IAPtr ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
 
         if (msg_type != DHCPV6_REPLY) {
@@ -844,6 +845,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
     CfgMgr::instance().deleteSubnets6();
     subnet_ = Subnet6Ptr(new Subnet6(IOAddress("2001:db8:1:1::"), 56, 1, 2,
                                      3, 4));
+    subnet_->setIface("eth0");
     pool_ = Pool6Ptr(new Pool6(Lease::TYPE_NA, addr, addr));
     subnet_->addPool(pool_);
     CfgMgr::instance().addSubnet6(subnet_);

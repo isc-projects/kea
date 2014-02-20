@@ -29,6 +29,7 @@
 #include <dhcp6/config_parser.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -52,6 +53,7 @@ using namespace isc::config;
 using namespace isc::test;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::util;
 using namespace isc::hooks;
 using namespace std;
@@ -283,6 +285,9 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 // This test checks if Option Request Option (ORO) is parsed correctly
 // and the requested options are actually assigned.
 TEST_F(Dhcpv6SrvTest, advertiseOptions) {
+
+    IfaceMgrTestConfig test_config(true);
+
     ConstElementPtr x;
     string config = "{ \"interfaces\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
@@ -291,6 +296,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::/64\" ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth0\", "
         "    \"option-data\": [ {"
         "          \"name\": \"dns-servers\","
         "          \"space\": \"dhcp6\","
@@ -307,25 +313,17 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
-
-    ElementPtr json = Element::fromJSON(config);
-
-    NakedDhcpv6Srv srv(0);
-
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-
-    ASSERT_EQ(0, rcode_);
+    ASSERT_NO_THROW(configure(config));
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr adv = srv.processSolicit(sol);
+    Pkt6Ptr adv = srv_.processSolicit(sol);
 
     // check if we get response at all
     ASSERT_TRUE(adv);
@@ -349,7 +347,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     sol->addOption(option_oro);
 
     // Need to process SOLICIT again after requesting new option.
-    adv = srv.processSolicit(sol);
+    adv = srv_.processSolicit(sol);
     ASSERT_TRUE(adv);
 
     OptionPtr tmp = adv->getOption(D6O_NAME_SERVERS);
@@ -404,6 +402,7 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -447,6 +446,7 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     sol->addOption(generateIA(D6O_IA_PD, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -492,6 +492,7 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     // Let's create a SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
 
     // with a valid hint
@@ -546,6 +547,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     // Let's create a SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
     IOAddress hint("2001:db8:1::cafe:babe");
     ASSERT_FALSE(subnet_->inPool(Lease::TYPE_NA, hint));
@@ -595,6 +597,10 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     sol1->setRemoteAddr(IOAddress("fe80::abcd"));
     sol2->setRemoteAddr(IOAddress("fe80::1223"));
     sol3->setRemoteAddr(IOAddress("fe80::3467"));
+
+    sol1->setIface("eth0");
+    sol2->setIface("eth0");
+    sol3->setIface("eth0");
 
     sol1->addOption(generateIA(D6O_IA_NA, 1, 1500, 3000));
     sol2->addOption(generateIA(D6O_IA_NA, 2, 1500, 3000));
@@ -673,6 +679,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     // Let's create a REQUEST
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
 
     // with a valid hint
@@ -737,6 +744,7 @@ TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
     // Let's create a REQUEST
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_PD, 234, 1500, 3000);
 
     // with a valid hint
@@ -799,6 +807,10 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     req1->setRemoteAddr(IOAddress("fe80::abcd"));
     req2->setRemoteAddr(IOAddress("fe80::1223"));
     req3->setRemoteAddr(IOAddress("fe80::3467"));
+
+    req1->setIface("eth0");
+    req2->setIface("eth0");
+    req3->setIface("eth0");
 
     req1->addOption(generateIA(D6O_IA_NA, 1, 1500, 3000));
     req2->addOption(generateIA(D6O_IA_NA, 2, 1500, 3000));
@@ -1122,15 +1134,16 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
 
     // CASE 1: We have only one subnet defined and we received local traffic.
-    // The only available subnet should be selected
+    // The only available subnet used to be picked, but not anymore
     CfgMgr::instance().deleteSubnets6();
     CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
 
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     pkt->setRemoteAddr(IOAddress("fe80::abcd"));
 
-    Subnet6Ptr selected = srv.selectSubnet(pkt);
-    EXPECT_EQ(selected, subnet1);
+    // The clause for assuming local subnet if there is only one subnet is was
+    // removed.
+    EXPECT_FALSE(srv.selectSubnet(pkt));
 
     // CASE 2: We have only one subnet defined and we received relayed traffic.
     // We should NOT select it.
@@ -1139,7 +1152,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     CfgMgr::instance().deleteSubnets6();
     CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
     pkt->setRemoteAddr(IOAddress("2001:db8:abcd::2345"));
-    selected = srv.selectSubnet(pkt);
+    Subnet6Ptr selected = srv.selectSubnet(pkt);
     EXPECT_FALSE(selected);
 
     // CASE 3: We have three subnets defined and we received local traffic.
@@ -1169,9 +1182,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     CfgMgr::instance().addSubnet6(subnet2);
     CfgMgr::instance().addSubnet6(subnet3);
     pkt->setRemoteAddr(IOAddress("2001:db8:4::baca"));
-    selected = srv.selectSubnet(pkt);
-    EXPECT_FALSE(selected);
-
+    EXPECT_FALSE(srv.selectSubnet(pkt));
 }
 
 // This test verifies if selectSubnet() selects proper subnet for a given
@@ -1497,7 +1508,9 @@ TEST_F(Dhcpv6SrvTest, docsisVendorORO) {
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
 TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
-    ConstElementPtr x;
+
+    IfaceMgrTestConfig test_config(true);
+
     string config = "{ \"interfaces\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -1526,28 +1539,21 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
         "    \"preferred-lifetime\": 3000,"
         "    \"valid-lifetime\": 4000,"
         "    \"interface-id\": \"\","
-        "    \"interface\": \"\""
+        "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
-
-    NakedDhcpv6Srv srv(0);
-
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-
-    ASSERT_EQ(0, rcode_);
+    EXPECT_NO_THROW(configure(config));
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr adv = srv.processSolicit(sol);
+    Pkt6Ptr adv = srv_.processSolicit(sol);
 
     // check if we get response at all
     ASSERT_TRUE(adv);
@@ -1566,7 +1572,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
     sol->addOption(vendor);
 
     // Need to process SOLICIT again after requesting new option.
-    adv = srv.processSolicit(sol);
+    adv = srv_.processSolicit(sol);
     ASSERT_TRUE(adv);
 
     // Check if thre is vendor option response
