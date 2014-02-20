@@ -1725,7 +1725,7 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
     srv.classifyPacket(sol1);
 
     // It should belong to docsis3.0 class. It should not belong to eRouter1.0
-    EXPECT_TRUE(sol1->inClass("docsis3.0"));
+    EXPECT_TRUE(sol1->inClass("VENDOR_CLASS_docsis3.0"));
     EXPECT_FALSE(sol1->inClass("eRouter1.0"));
 
     // Let's get a relayed SOLICIT. This particular relayed SOLICIT has
@@ -1736,8 +1736,8 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
 
     srv.classifyPacket(sol2);
 
-    EXPECT_TRUE(sol2->inClass("eRouter1.0"));
-    EXPECT_FALSE(sol2->inClass("docsis3.0"));
+    EXPECT_TRUE(sol2->inClass(srv.VENDOR_CLASS_PREFIX + "eRouter1.0"));
+    EXPECT_FALSE(sol2->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0"));
 }
 
 // Checks if the client-class field is indeed used for subnet selection.
@@ -1806,6 +1806,31 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
     EXPECT_TRUE(srv.selectSubnet(sol));
 }
 
+// This test checks that the server will handle a Solicit with the Vendor Class
+// having a length of 4 (enterprise-id only).
+TEST_F(Dhcpv6SrvTest, cableLabsShortVendorClass) {
+    NakedDhcpv6Srv srv(0);
+
+    // Create a simple Solicit with the 4-byte long vendor class option.
+    Pkt6Ptr sol = captureCableLabsShortVendorClass();
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // Get Advertise...
+    ASSERT_FALSE(srv.fake_sent_.empty());
+    Pkt6Ptr adv = srv.fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // This is sent back to client, so port is 546
+    EXPECT_EQ(DHCP6_CLIENT_PORT, adv->getRemotePort());
+
+}
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test
 /// to call processX() methods.

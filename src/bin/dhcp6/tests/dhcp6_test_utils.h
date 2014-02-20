@@ -110,6 +110,7 @@ public:
     using Dhcpv6Srv::writeServerID;
     using Dhcpv6Srv::unpackOptions;
     using Dhcpv6Srv::name_change_reqs_;
+    using Dhcpv6Srv::VENDOR_CLASS_PREFIX;
 
     /// @brief packets we pretend to receive
     ///
@@ -508,6 +509,7 @@ public:
     isc::dhcp::Pkt6Ptr captureRelayedSolicit();
     isc::dhcp::Pkt6Ptr captureDocsisRelayedSolicit();
     isc::dhcp::Pkt6Ptr captureeRouterRelayedSolicit();
+    isc::dhcp::Pkt6Ptr captureCableLabsShortVendorClass();
 
     /// @brief Auxiliary method that sets Pkt6 fields
     ///

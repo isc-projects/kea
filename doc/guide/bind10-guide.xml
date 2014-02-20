@@ -4431,15 +4431,16 @@ Dhcp4/subnet4	[]	list	(default)
         extensions will be using hooks extensions.
       </para>
       </note>
-      <para>In certain cases it is useful to differentiate between different types
-      of clients and treat them differently. The process of doing classification
-      is conducted in two steps. The first step is to assess incoming packet and
-      assign it to zero or more classes. This classification is currently simple,
-      but is expected to grow in capability soon. Currently the server checks whether
-      incoming packet has vendor class identifier option (60). If it has, content
-      of that option is interpreted as a class. For example, modern cable modems
-      will send this option with value &quot;docsis3.0&quot; and as a result the
-      packet will belong to class &quot;docsis3.0&quot;.
+      <para>In certain cases it is useful to differentiate between different
+      types of clients and treat them differently. The process of doing
+      classification is conducted in two steps. The first step is to assess
+      incoming packet and assign it to zero or more classes. This classification
+      is currently simple, but is expected to grow in capability soon. Currently
+      the server checks whether incoming packet has vendor class identifier
+      option (60). If it has, content of that option is prepended with
+      &quot;VENDOR_CLASS_&quot; then is interpreted as a class. For example,
+      modern cable modems will send this option with value &quot;docsis3.0&quot;
+      and as a result the packet will belong to class &quot;VENDOR_CLASS_docsis3.0&quot;.
       </para>
 
       <para>It is envisaged that the client classification will be used for changing
@@ -4450,12 +4451,12 @@ Dhcp4/subnet4	[]	list	(default)
       subnet selection.</para>
 
       <para>
-        For clients that belong to the docsis3.0 class, the siaddr field is set to
-        the value of next-server (if specified in a subnet). If there is
-        boot-file-name option specified, its value is also set in the file field
-        in the DHCPv4 packet. For eRouter1.0 class, the siaddr is always set to
-        0.0.0.0. That capability is expected to be moved to external hook
-        library that will be dedicated to cable modems.
+        For clients that belong to the VENDOR_CLASS_docsis3.0 class, the siaddr
+        field is set to the value of next-server (if specified in a subnet). If
+        there is boot-file-name option specified, its value is also set in the
+        file field in the DHCPv4 packet. For eRouter1.0 class, the siaddr is
+        always set to 0.0.0.0. That capability is expected to be moved to
+        external hook library that will be dedicated to cable modems.
       </para>
 
       <para>
@@ -4483,13 +4484,13 @@ Dhcp4/subnet4	[]	list	(default)
         the 192.0.2.0/24 prefix. The Administrator of that network has decided
         that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
         managed by the Dhcp4 server. Only clients belonging to client class
-        docsis3.0 are allowed to use this subnet. Such a configuration can be
-        achieved in the following way:
+        VENDOR_CLASS_docsis3.0 are allowed to use this subnet. Such a
+        configuration can be achieved in the following way:
         <screen>
 &gt; <userinput>config add Dhcp4/subnet4</userinput>
 &gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
 &gt; <userinput>config set Dhcp4/subnet4[0]/pool [ "192.0.2.10 - 192.0.2.20" ]</userinput>
-&gt; <userinput>config set Dhcp4/subnet4[0]/client-class "docsis3.0"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/client-class "VENDOR_CLASS_docsis3.0"</userinput>
 &gt; <userinput>config commit</userinput></screen>
       </para>
 
@@ -5558,9 +5559,10 @@ should include options from the isc option space:
       assign it to zero or more classes. This classification is currently simple,
       but is expected to grow in capability soon. Currently the server checks whether
       incoming packet has vendor class option (16). If it has, content
-      of that option is interpreted as a class. For example, modern cable modems
-      will send this option with value &quot;docsis3.0&quot; and as a result the
-      packet will belong to class &quot;docsis3.0&quot;.
+      of that option is prepended with &quot;VENDOR_CLASS_&quot; interpreted as a
+      class. For example, modern cable modems will send this option with value
+      &quot;docsis3.0&quot; and as a result the packet will belong to class
+      &quot;VENDOR_CLASS_docsis3.0&quot;.
       </para>
 
       <para>It is envisaged that the client classification will be used for changing
