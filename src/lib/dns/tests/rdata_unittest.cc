@@ -278,7 +278,7 @@ TEST_F(Rdata_Unknown_Test, createFromText) {
     EXPECT_EQ(0, generic::Generic("\\# 4 a1b2c30d").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
                                         "rdata_unknown_fromWire")));
-    // upper case hexadecimal digits should also be okay. 
+    // upper case hexadecimal digits should also be okay.
     EXPECT_EQ(0, generic::Generic("\\# 4 A1B2C30D").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
                                         "rdata_unknown_fromWire")));
