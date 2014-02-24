@@ -14,12 +14,38 @@
 
 #include <gtest/gtest.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
+#include <dhcp6/config_parser.h>
 
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 
 namespace isc {
 namespace test {
+
+Dhcpv6SrvTest::Dhcpv6SrvTest()
+:srv_(0) {
+    subnet_ = isc::dhcp::Subnet6Ptr
+        (new isc::dhcp::Subnet6(isc::asiolink::IOAddress("2001:db8:1::"),
+                                48, 1000, 2000, 3000, 4000));
+    subnet_->setIface("eth0");
+
+    pool_ = isc::dhcp::Pool6Ptr
+        (new isc::dhcp::Pool6(isc::dhcp::Lease::TYPE_NA,
+                              isc::asiolink::IOAddress("2001:db8:1:1::"),
+                              64));
+    subnet_->addPool(pool_);
+
+    isc::dhcp::CfgMgr::instance().deleteSubnets6();
+    isc::dhcp::CfgMgr::instance().addSubnet6(subnet_);
+
+    // configure PD pool
+    pd_pool_ = isc::dhcp::Pool6Ptr
+        (new isc::dhcp::Pool6(isc::dhcp::Lease::TYPE_PD,
+                              isc::asiolink::IOAddress("2001:db8:1:2::"),
+                              64, 80));
+    subnet_->addPool(pd_pool_);
+}
 
 // Checks that server response (ADVERTISE or REPLY) contains proper IA_NA option
 // It returns IAADDR option for each chaining with checkIAAddr method.
@@ -125,6 +151,7 @@ Dhcpv6SrvTest::createMessage(uint8_t message_type, Lease::Type lease_type,
     // Let's create a RENEW
     Pkt6Ptr msg = Pkt6Ptr(new Pkt6(message_type, 1234));
     msg->setRemoteAddr(IOAddress("fe80::abcd"));
+    msg->setIface("eth0");
 
     uint16_t code;
     OptionPtr subopt;
@@ -542,6 +569,19 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
 
     // Finally, let's cleanup the database
     EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+}
+
+void
+Dhcpv6SrvTest::configure(const std::string& config) {
+    ElementPtr json = data::Element::fromJSON(config);
+    ConstElementPtr status;
+
+    // Configure the server and make sure the config is accepted
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+    ASSERT_TRUE(status);
+    int rcode;
+    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    ASSERT_EQ(0, rcode);
 }
 
 

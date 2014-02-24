@@ -864,7 +864,7 @@ Dhcpv6Srv::selectSubnet(const Pkt6Ptr& question) {
             // if relay filled in link_addr field, then let's use it
             if (link_addr != IOAddress("::")) {
                 subnet = CfgMgr::instance().getSubnet6(link_addr,
-                                                       question->classes_);
+                                                       question->classes_, true);
             }
         }
     }

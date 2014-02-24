@@ -29,6 +29,7 @@
 #include <dhcp6/config_parser.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/docsis3_option_defs.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -52,6 +53,7 @@ using namespace isc::config;
 using namespace isc::test;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::util;
 using namespace isc::hooks;
 using namespace std;
@@ -283,6 +285,9 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 // This test checks if Option Request Option (ORO) is parsed correctly
 // and the requested options are actually assigned.
 TEST_F(Dhcpv6SrvTest, advertiseOptions) {
+
+    IfaceMgrTestConfig test_config(true);
+
     ConstElementPtr x;
     string config = "{ \"interfaces\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
@@ -291,6 +296,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
         "\"subnet6\": [ { "
         "    \"pool\": [ \"2001:db8:1::/64\" ],"
         "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"interface\": \"eth0\", "
         "    \"option-data\": [ {"
         "          \"name\": \"dns-servers\","
         "          \"space\": \"dhcp6\","
@@ -307,25 +313,17 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
         "        } ]"
         " } ],"
         "\"valid-lifetime\": 4000 }";
-
-    ElementPtr json = Element::fromJSON(config);
-
-    NakedDhcpv6Srv srv(0);
-
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-
-    ASSERT_EQ(0, rcode_);
+    ASSERT_NO_THROW(configure(config));
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr adv = srv.processSolicit(sol);
+    Pkt6Ptr adv = srv_.processSolicit(sol);
 
     // check if we get response at all
     ASSERT_TRUE(adv);
@@ -349,7 +347,7 @@ TEST_F(Dhcpv6SrvTest, advertiseOptions) {
     sol->addOption(option_oro);
 
     // Need to process SOLICIT again after requesting new option.
-    adv = srv.processSolicit(sol);
+    adv = srv_.processSolicit(sol);
     ASSERT_TRUE(adv);
 
     OptionPtr tmp = adv->getOption(D6O_NAME_SERVERS);
@@ -404,6 +402,7 @@ TEST_F(Dhcpv6SrvTest, SolicitBasic) {
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -447,6 +446,7 @@ TEST_F(Dhcpv6SrvTest, pdSolicitBasic) {
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     sol->addOption(generateIA(D6O_IA_PD, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
@@ -492,6 +492,7 @@ TEST_F(Dhcpv6SrvTest, SolicitHint) {
     // Let's create a SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
 
     // with a valid hint
@@ -546,6 +547,7 @@ TEST_F(Dhcpv6SrvTest, SolicitInvalidHint) {
     // Let's create a SOLICIT
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
     IOAddress hint("2001:db8:1::cafe:babe");
     ASSERT_FALSE(subnet_->inPool(Lease::TYPE_NA, hint));
@@ -595,6 +597,10 @@ TEST_F(Dhcpv6SrvTest, ManySolicits) {
     sol1->setRemoteAddr(IOAddress("fe80::abcd"));
     sol2->setRemoteAddr(IOAddress("fe80::1223"));
     sol3->setRemoteAddr(IOAddress("fe80::3467"));
+
+    sol1->setIface("eth0");
+    sol2->setIface("eth0");
+    sol3->setIface("eth0");
 
     sol1->addOption(generateIA(D6O_IA_NA, 1, 1500, 3000));
     sol2->addOption(generateIA(D6O_IA_NA, 2, 1500, 3000));
@@ -673,6 +679,7 @@ TEST_F(Dhcpv6SrvTest, RequestBasic) {
     // Let's create a REQUEST
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_NA, 234, 1500, 3000);
 
     // with a valid hint
@@ -737,6 +744,7 @@ TEST_F(Dhcpv6SrvTest, pdRequestBasic) {
     // Let's create a REQUEST
     Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     req->setRemoteAddr(IOAddress("fe80::abcd"));
+    req->setIface("eth0");
     boost::shared_ptr<Option6IA> ia = generateIA(D6O_IA_PD, 234, 1500, 3000);
 
     // with a valid hint
@@ -799,6 +807,10 @@ TEST_F(Dhcpv6SrvTest, ManyRequests) {
     req1->setRemoteAddr(IOAddress("fe80::abcd"));
     req2->setRemoteAddr(IOAddress("fe80::1223"));
     req3->setRemoteAddr(IOAddress("fe80::3467"));
+
+    req1->setIface("eth0");
+    req2->setIface("eth0");
+    req3->setIface("eth0");
 
     req1->addOption(generateIA(D6O_IA_NA, 1, 1500, 3000));
     req2->addOption(generateIA(D6O_IA_NA, 2, 1500, 3000));
@@ -1078,9 +1090,9 @@ TEST_F(Dhcpv6SrvTest, sanityCheck) {
 // Check that the server is testing if server identifier received in the
 // query, matches server identifier used by the server.
 TEST_F(Dhcpv6SrvTest, testServerID) {
-	NakedDhcpv6Srv srv(0);
+        NakedDhcpv6Srv srv(0);
 
-	Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
+        Pkt6Ptr req = Pkt6Ptr(new Pkt6(DHCPV6_REQUEST, 1234));
     std::vector<uint8_t> bin;
 
     // diud_llt constructed with: time = 0, macaddress = 00:00:00:00:00:00
@@ -1122,15 +1134,16 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
 
     // CASE 1: We have only one subnet defined and we received local traffic.
-    // The only available subnet should be selected
+    // The only available subnet used to be picked, but not anymore
     CfgMgr::instance().deleteSubnets6();
     CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
 
     Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     pkt->setRemoteAddr(IOAddress("fe80::abcd"));
 
-    Subnet6Ptr selected = srv.selectSubnet(pkt);
-    EXPECT_EQ(selected, subnet1);
+    // The clause for assuming local subnet if there is only one subnet is was
+    // removed.
+    EXPECT_FALSE(srv.selectSubnet(pkt));
 
     // CASE 2: We have only one subnet defined and we received relayed traffic.
     // We should NOT select it.
@@ -1139,7 +1152,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     CfgMgr::instance().deleteSubnets6();
     CfgMgr::instance().addSubnet6(subnet1); // just a single subnet
     pkt->setRemoteAddr(IOAddress("2001:db8:abcd::2345"));
-    selected = srv.selectSubnet(pkt);
+    Subnet6Ptr selected = srv.selectSubnet(pkt);
     EXPECT_FALSE(selected);
 
     // CASE 3: We have three subnets defined and we received local traffic.
@@ -1169,9 +1182,7 @@ TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {
     CfgMgr::instance().addSubnet6(subnet2);
     CfgMgr::instance().addSubnet6(subnet3);
     pkt->setRemoteAddr(IOAddress("2001:db8:4::baca"));
-    selected = srv.selectSubnet(pkt);
-    EXPECT_FALSE(selected);
-
+    EXPECT_FALSE(srv.selectSubnet(pkt));
 }
 
 // This test verifies if selectSubnet() selects proper subnet for a given
@@ -1497,7 +1508,9 @@ TEST_F(Dhcpv6SrvTest, docsisVendorORO) {
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
 TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
-    ConstElementPtr x;
+
+    IfaceMgrTestConfig test_config(true);
+
     string config = "{ \"interfaces\": [ \"all\" ],"
         "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
@@ -1526,28 +1539,21 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
         "    \"preferred-lifetime\": 3000,"
         "    \"valid-lifetime\": 4000,"
         "    \"interface-id\": \"\","
-        "    \"interface\": \"\""
+        "    \"interface\": \"eth0\""
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
-
-    NakedDhcpv6Srv srv(0);
-
-    EXPECT_NO_THROW(x = configureDhcp6Server(srv, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-
-    ASSERT_EQ(0, rcode_);
+    ASSERT_NO_THROW(configure(config));
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("fe80::abcd"));
+    sol->setIface("eth0");
     sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
     OptionPtr clientid = generateClientId();
     sol->addOption(clientid);
 
     // Pass it to the server and get an advertise
-    Pkt6Ptr adv = srv.processSolicit(sol);
+    Pkt6Ptr adv = srv_.processSolicit(sol);
 
     // check if we get response at all
     ASSERT_TRUE(adv);
@@ -1566,7 +1572,7 @@ TEST_F(Dhcpv6SrvTest, vendorOptionsORO) {
     sol->addOption(vendor);
 
     // Need to process SOLICIT again after requesting new option.
-    adv = srv.processSolicit(sol);
+    adv = srv_.processSolicit(sol);
     ASSERT_TRUE(adv);
 
     // Check if thre is vendor option response
@@ -1745,10 +1751,6 @@ TEST_F(Dhcpv6SrvTest, clientClassification) {
 // .clientClassification above.
 TEST_F(Dhcpv6SrvTest, clientClassify2) {
 
-    NakedDhcpv6Srv srv(0);
-
-    ConstElementPtr status;
-
     // This test configures 2 subnets. We actually only need the
     // first one, but since there's still this ugly hack that picks
     // the pool if there is only one, we must use more than one
@@ -1774,14 +1776,7 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
         "],"
         "\"valid-lifetime\": 4000 }";
 
-    ElementPtr json = Element::fromJSON(config);
-
-    EXPECT_NO_THROW(status = configureDhcp6Server(srv, json));
-
-    // check if returned status is OK
-    ASSERT_TRUE(status);
-    comment_ = config::parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
+    ASSERT_NO_THROW(configure(config));
 
     Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
     sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
@@ -1791,19 +1786,19 @@ TEST_F(Dhcpv6SrvTest, clientClassify2) {
 
     // This discover does not belong to foo class, so it will not
     // be serviced
-    EXPECT_FALSE(srv.selectSubnet(sol));
+    EXPECT_FALSE(srv_.selectSubnet(sol));
 
     // Let's add the packet to bar class and try again.
     sol->addClass("bar");
 
     // Still not supported, because it belongs to wrong class.
-    EXPECT_FALSE(srv.selectSubnet(sol));
+    EXPECT_FALSE(srv_.selectSubnet(sol));
 
     // Let's add it to maching class.
     sol->addClass("foo");
 
     // This time it should work
-    EXPECT_TRUE(srv.selectSubnet(sol));
+    EXPECT_TRUE(srv_.selectSubnet(sol));
 }
 
 // This test checks that the server will handle a Solicit with the Vendor Class
@@ -1829,7 +1824,148 @@ TEST_F(Dhcpv6SrvTest, cableLabsShortVendorClass) {
 
     // This is sent back to client, so port is 546
     EXPECT_EQ(DHCP6_CLIENT_PORT, adv->getRemotePort());
+}
 
+// Checks if relay IP address specified in the relay-info structure in
+// subnet6 is being used properly.
+TEST_F(Dhcpv6SrvTest, relayOverride) {
+
+    // We have 2 subnets defined. Note that both have a relay address
+    // defined. Both are not belonging to the subnets. That is
+    // important, because if the relay belongs to the subnet, there's
+    // no need to specify relay override.
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " {  \"pool\": [ \"2001:db8:1::/64\" ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"relay\": { "
+        "        \"ip-address\": \"2001:db8:3::1\""
+        "    }"
+        " }, "
+        " {  \"pool\": [ \"2001:db8:2::/64\" ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"relay\": { "
+        "        \"ip-address\": \"2001:db8:3::2\""
+        "    }"
+        " } "
+        "],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Use this config to set up the server
+    ASSERT_NO_THROW(configure(config));
+
+    // Let's get the subnet configuration objects
+    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_EQ(2, subnets->size());
+
+    // Let's get them for easy reference
+    Subnet6Ptr subnet1 = (*subnets)[0];
+    Subnet6Ptr subnet2 = (*subnets)[1];
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet2);
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Now pretend the packet came via one relay.
+    Pkt6::RelayInfo relay;
+    relay.linkaddr_ = IOAddress("2001:db8:1::1");
+    relay.peeraddr_ = IOAddress("fe80::1");
+
+    sol->relay_info_.push_back(relay);
+
+    // This is just a sanity check, we're using regular method: the relay
+    // belongs to the first (2001:db8:1::/64) subnet, so it's an easy decision.
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
+
+    // Relay belongs to the second subnet, so it should be selected.
+    sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:2::1");
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol));
+
+    // Now let's check if the relay override for the first subnets works
+    sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:3::1");
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
+
+    // Now repeat that for relay matching the second subnet.
+    sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:3::2");
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol));
+
+    // Finally, let's check that completely mismatched relay will not get us
+    // anything
+    sol->relay_info_.back().linkaddr_ = IOAddress("2001:db8:1234::1");
+    EXPECT_FALSE(srv_.selectSubnet(sol));
+}
+
+// Checks if relay IP address specified in the relay-info structure can be
+// used together with client-classification.
+TEST_F(Dhcpv6SrvTest, relayOverrideAndClientClass) {
+
+    // This test configures 2 subnets. They both are on the same link, so they
+    // have the same relay-ip address. Furthermore, the first subnet is
+    // reserved for clients that belong to class "foo".
+    string config = "{ \"interfaces\": [ \"*\" ],"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet6\": [ "
+        " {  \"pool\": [ \"2001:db8:1::/64\" ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"client-class\": \"foo\", "
+        "    \"relay\": { "
+        "        \"ip-address\": \"2001:db8:3::1\""
+        "    }"
+        " }, "
+        " {  \"pool\": [ \"2001:db8:2::/64\" ],"
+        "    \"subnet\": \"2001:db8:2::/48\", "
+        "    \"relay\": { "
+        "        \"ip-address\": \"2001:db8:3::1\""
+        "    }"
+        " } "
+        "],"
+        "\"valid-lifetime\": 4000 }";
+
+    // Use this config to set up the server
+    ASSERT_NO_THROW(configure(config));
+
+    // Let's get the subnet configuration objects
+    const Subnet6Collection* subnets = CfgMgr::instance().getSubnets6();
+    ASSERT_EQ(2, subnets->size());
+
+    // Let's get them for easy reference
+    Subnet6Ptr subnet1 = (*subnets)[0];
+    Subnet6Ptr subnet2 = (*subnets)[1];
+    ASSERT_TRUE(subnet1);
+    ASSERT_TRUE(subnet2);
+
+    Pkt6Ptr sol = Pkt6Ptr(new Pkt6(DHCPV6_SOLICIT, 1234));
+    sol->setRemoteAddr(IOAddress("2001:db8:1::3"));
+    sol->addOption(generateIA(D6O_IA_NA, 234, 1500, 3000));
+    OptionPtr clientid = generateClientId();
+    sol->addOption(clientid);
+
+    // Now pretend the packet came via one relay.
+    Pkt6::RelayInfo relay;
+    relay.linkaddr_ = IOAddress("2001:db8:3::1");
+    relay.peeraddr_ = IOAddress("fe80::1");
+
+    sol->relay_info_.push_back(relay);
+
+    // This packet does not belong to class foo, so it should be rejected in
+    // subnet[0], even though the relay-ip matches. It should be accepted in
+    // subnet[1], because the subnet matches and there are no class
+    // requirements.
+    EXPECT_TRUE(subnet2 == srv_.selectSubnet(sol));
+
+    // Now let's add this packet to class foo and recheck. This time it should
+    // be accepted in the first subnet, because both class and relay-ip match.
+    sol->addClass("foo");
+    EXPECT_TRUE(subnet1 == srv_.selectSubnet(sol));
 }
 
 /// @todo: Add more negative tests for processX(), e.g. extend sanityCheck() test

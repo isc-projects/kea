@@ -1419,7 +1419,8 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
     // level functions.
     if (question->isRelayed()) {
         subnet = CfgMgr::instance().getSubnet4(question->getGiaddr(),
-                                               question->classes_);
+                                               question->classes_,
+                                               true);
 
     // The message is not relayed so it is sent directly by a client. But
     // the client may be renewing its lease and in such case it unicasts
