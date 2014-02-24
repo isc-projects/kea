@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -848,7 +848,7 @@ TEST(Element, merge) {
     ElementPtr a = Element::createMap();
     ElementPtr b = Element::createMap();
     ConstElementPtr c = Element::createMap();
-    merge(a, b);
+    ASSERT_NO_THROW(merge(a, b));
     EXPECT_EQ(*a, *c);
 
     a = Element::fromJSON("1");
@@ -858,75 +858,102 @@ TEST(Element, merge) {
     a = Element::createMap();
     b = Element::fromJSON("{ \"a\": 1 }");
     c = Element::fromJSON("{ \"a\": 1 }");
-    merge(a, b);
+    ASSERT_NO_THROW(merge(a, b));
     EXPECT_EQ(*a, *c);
 
     a = Element::createMap();
     b = Element::fromJSON("{ \"a\": 1 }");
     c = Element::fromJSON("{ \"a\": 1 }");
-    merge(b, a);
+    ASSERT_NO_THROW(merge(b, a));
     EXPECT_EQ(*b, *c);
 
     a = Element::fromJSON("{ \"a\": 1 }");
     b = Element::fromJSON("{ \"a\": 2 }");
     c = Element::fromJSON("{ \"a\": 2 }");
-    merge(a, b);
+    ASSERT_NO_THROW(merge(a, b));
     EXPECT_EQ(*a, *c);
 
     a = Element::fromJSON("{ \"a\": 1 }");
     b = Element::fromJSON("{ \"a\": 2 }");
     c = Element::fromJSON("{ \"a\": 1 }");
-    merge(b, a);
+    ASSERT_NO_THROW(merge(b, a));
     EXPECT_EQ(*b, *c);
 
     a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
     c = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
-    merge(a, b);
+    ASSERT_NO_THROW(merge(a, b));
     EXPECT_EQ(*a, *c);
 
     a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::fromJSON("{ \"a\": { \"b\": \"d\" } }");
     c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
-    merge(b, a);
+    ASSERT_NO_THROW(merge(b, a));
     EXPECT_EQ(*b, *c);
 
     a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::fromJSON("{ \"a\": null }");
     c = Element::fromJSON("{  }");
-    merge(a, b);
+    ASSERT_NO_THROW(merge(a, b));
     EXPECT_EQ(*a, *c);
 
     a = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
     b = Element::fromJSON("{ \"a\": null }");
     c = Element::fromJSON("{ \"a\": { \"b\": \"c\" } }");
-    merge(b, a);
+    ASSERT_NO_THROW(merge(b, a));
     EXPECT_EQ(*b, *c);
 
     // And some tests with multiple values
     a = Element::fromJSON("{ \"a\": 1, \"b\": true, \"c\": null }");
     b = Element::fromJSON("{ \"a\": 1, \"b\": null, \"c\": \"a string\" }");
     c = Element::fromJSON("{ \"a\": 1, \"c\": \"a string\" }");
-    merge(a, b);
+    ASSERT_NO_THROW(merge(a, b));
     EXPECT_EQ(*a, *c);
 
     a = Element::fromJSON("{ \"a\": 1, \"b\": true, \"c\": null }");
     b = Element::fromJSON("{ \"a\": 1, \"b\": null, \"c\": \"a string\" }");
     c = Element::fromJSON("{ \"a\": 1, \"b\": true }");
-    merge(b, a);
+    ASSERT_NO_THROW(merge(b, a));
     EXPECT_EQ(*b, *c);
 
     a = Element::fromJSON("{ \"a\": 1, \"b\": 2, \"c\": 3 }");
     b = Element::fromJSON("{ \"a\": 3, \"b\": 2, \"c\": 1 }");
     c = Element::fromJSON("{ \"a\": 3, \"b\": 2, \"c\": 1 }");
-    merge(a, b);
+    ASSERT_NO_THROW(merge(a, b));
     EXPECT_EQ(*a, *c);
 
     a = Element::fromJSON("{ \"a\": 1, \"b\": 2, \"c\": 3 }");
     b = Element::fromJSON("{ \"a\": 3, \"b\": 2, \"c\": 1 }");
     c = Element::fromJSON("{ \"a\": 1, \"b\": 2, \"c\": 3 }");
-    merge(b, a);
+    ASSERT_NO_THROW(merge(b, a));
     EXPECT_EQ(*b, *c);
 
+    // Map sub-elements: original map element is null
+    a = Element::fromJSON("{ \"a\": 1, \"m\": null }");
+    b = Element::fromJSON("{ \"a\": 3, \"m\": {  \"b\": 9 } }");
+    c = Element::fromJSON("{ \"a\": 3, \"m\": {  \"b\": 9 } }");
+    ASSERT_NO_THROW(merge(a, b));
+    EXPECT_EQ(*a, *c);
+
+    // Map sub-elements new map element has less elements than original
+    a = Element::fromJSON("{ \"a\": 1, \"m\": { \"b\": 2, \"c\": 3 } }");
+    b = Element::fromJSON("{ \"a\": 3, \"m\": { \"b\": 9 } }");
+    c = Element::fromJSON("{ \"a\": 3, \"m\": { \"b\": 9, \"c\": 3 } }");
+    ASSERT_NO_THROW(merge(a, b));
+    EXPECT_EQ(*a, *c);
+
+    // Map sub-elements new map element is null
+    a = Element::fromJSON("{ \"a\": 1, \"m\": { \"b\": 2, \"c\": 3 } }");
+    b = Element::fromJSON("{ \"a\": 3, \"m\": null }");
+    c = Element::fromJSON("{ \"a\": 3 }");
+    ASSERT_NO_THROW(merge(a, b));
+    EXPECT_EQ(*a, *c);
+
+    // Map sub-elements new map element has more elments than origina
+    a = Element::fromJSON("{ \"a\": 1, \"m\": { \"b\": 2, \"c\": 3 } }");
+    b = Element::fromJSON("{ \"a\": 3, \"m\": { \"b\": 2, \"c\": 3, \"d\": 4} }");
+    c = Element::fromJSON("{ \"a\": 3, \"m\": { \"b\": 2, \"c\": 3, \"d\": 4} }");
+    ASSERT_NO_THROW(merge(a, b));
+    EXPECT_EQ(*a, *c);
 }
 }
