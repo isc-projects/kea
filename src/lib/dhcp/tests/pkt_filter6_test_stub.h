@@ -96,4 +96,4 @@ public:
 } // namespace isc::dhcp
 } // namespace isc
 
-#endif // PKT_FILTER_TEST_STUB_H
+#endif // PKT_FILTER6_TEST_STUB_H
