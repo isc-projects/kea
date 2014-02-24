@@ -227,10 +227,28 @@ TEST_F(RdataTest, getLength) {
 }
 
 namespace {
+
+// Wire-format data correspond to rdata_unknown.  Note that it doesn't
+// include RDLENGTH.
+const uint8_t wiredata_unknown[] = { 0xa1, 0xb2, 0xc3, 0x0d };
+
 class Rdata_Unknown_Test : public RdataTest {
+public:
+    Rdata_Unknown_Test() :
+        // "Unknown" RR Type used for the test cases below.  If/when we
+        // use this type number as a "well-known" (probably
+        // experimental) type, we'll need to renumber it.
+        unknown_rrtype(RRType(65000)),
+        rdata_unknowntxt("\\# 4 a1b2c30d"),
+        rdata_unknown(rdata_unknowntxt)
+    {}
 protected:
     static string getLongestRdataTxt();
     static void getLongestRdataWire(vector<uint8_t>& v);
+
+    const RRType unknown_rrtype;
+    const std::string rdata_unknowntxt;
+    const generic::Generic rdata_unknown;
 };
 
 string
@@ -255,23 +273,12 @@ Rdata_Unknown_Test::getLongestRdataWire(vector<uint8_t>& v) {
     }
 }
 
-const string rdata_unknowntxt("\\# 4 a1b2c30d");
-const generic::Generic rdata_unknown(rdata_unknowntxt);
-// Wire-format data correspond to rdata_unknown.  Note that it doesn't include
-// RDLENGTH
-const uint8_t wiredata_unknown[] = { 0xa1, 0xb2, 0xc3, 0x0d };
-
-// "Unknown" RR Type used for the test cases below.  If/when we use this
-// type number as a "well-known" (probably experimental) type, we'll need to
-// renumber it.
-const RRType unknown_rrtype = RRType(65000);
-
 TEST_F(Rdata_Unknown_Test, createFromText) {
     // valid construction.  This also tests a normal case of "FromWire".
     EXPECT_EQ(0, generic::Generic("\\# 4 a1b2c30d").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
                                         "rdata_unknown_fromWire")));
-    // upper case hexadecimal digits should also be okay. 
+    // upper case hexadecimal digits should also be okay.
     EXPECT_EQ(0, generic::Generic("\\# 4 A1B2C30D").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
                                         "rdata_unknown_fromWire")));
