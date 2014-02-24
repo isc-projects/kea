@@ -147,6 +147,13 @@ information about existing subnet was removed. Note that in a sense this is wors
 case of DHCP6_EXTEND_NA_UNKNOWN, as not only the lease is unknown, but also the subnet
 is. Depending on the reasons of this condition, it may or may not correct on its own.
 
+% DHCP6_EXTEND_PD_NO_BINDING client sent a %1 message to extend lifetimes of prefixes for an unknown binding: duid=%2, iaid=%3, subnet=%4
+This warning message is logged when a client attempts to extend the lifetime of the
+prefix it is using, but the server was unable to find the binding to which
+this lease belongs. This error condition has different implications for the
+Renew and Rebind messages. For the former, the server will respond with NoBinding
+status code. For the latter, the server will discard the message.
+
 % DHCP6_EXTEND_PD_UNKNOWN_SUBNET %1 message received from client on unknown subnet (duid=%2, iaid=%3)
 A warning message indicating that a client is attempting to extend lease lifetime
 for the prefix, but the server doesn't have any information about the subnet this
@@ -546,18 +553,3 @@ This warning message is printed when client attempts to release an prefix
 lease, but no such lease is known by the server. See the explanation
 of the status code DHCP6_UNKNOWN_RENEW_PD for possible reasons for
 such behavior.
-
-% DHCP6_UNKNOWN_RENEW_PD received unknown IA_NA RENEW from client (duid=%1, iaid=%2) in subnet %3
-This warning message is printed when client attempts to renew an address lease
-(in IA_NA option), but no such lease is known by the server. It typically means
-that client has attempted to use its lease past its lifetime: causes of this
-include a adjustment of the clients date/time setting or poor support
-for sleep/recovery. A properly implemented client will recover from such
-a situation by restarting the lease allocation process after receiving
-a negative reply from the server.
-
-An alternative cause could be that the server has lost its database
-recently and does not recognize its well-behaving clients. This is more
-probable if you see many such messages. Clients will recover from this,
-but they will most likely get a different IP addresses and experience
-a brief service interruption.

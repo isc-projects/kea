@@ -136,7 +136,7 @@ const bool FQDN_REPLACE_CLIENT_NAME = false;
 static const char* SERVER_DUID_FILE = "b10-dhcp6-serverid";
 
 Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
-:alloc_engine_(), serverid_(), shutdown_(true), port_(port)
+:alloc_engine_(), serverid_(), port_(port), shutdown_(true)
 {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
@@ -211,30 +211,48 @@ void Dhcpv6Srv::sendPacket(const Pkt6Ptr& packet) {
 }
 
 bool
-Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt){
-	/// @todo Currently we always check server identifier regardless if
-	/// it is allowed in the received message or not (per RFC3315).
-	/// If the server identifier is not allowed in the message, the
-	/// sanityCheck function should deal with it. We may rethink this
-	/// design if we decide that it is appropriate to check at this stage
-	/// of message processing that the server identifier must or must not
-	/// be present. In such case however, the logic checking server id
-	/// will have to be removed from sanityCheck and placed here instead,
-	/// to avoid duplicate checks.
-	OptionPtr server_id = pkt->getOption(D6O_SERVERID);
-	if (server_id){
-		// Let us test received ServerID if it is same as ServerID
-		// which is beeing used by server
-		if (getServerID()->getData() != server_id->getData()){
-			LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_PACKET_MISMATCH_SERVERID_DROP)
-				.arg(pkt->getName())
-				.arg(pkt->getTransid())
-				.arg(pkt->getIface());
-			return (false);
-		}
-	}
-	// retun True if: no serverid received or ServerIDs matching
-	return (true);
+Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
+    /// @todo Currently we always check server identifier regardless if
+    /// it is allowed in the received message or not (per RFC3315).
+    /// If the server identifier is not allowed in the message, the
+    /// sanityCheck function should deal with it. We may rethink this
+    /// design if we decide that it is appropriate to check at this stage
+    /// of message processing that the server identifier must or must not
+    /// be present. In such case however, the logic checking server id
+    /// will have to be removed from sanityCheck and placed here instead,
+    /// to avoid duplicate checks.
+    OptionPtr server_id = pkt->getOption(D6O_SERVERID);
+    if (server_id){
+        // Let us test received ServerID if it is same as ServerID
+        // which is beeing used by server
+        if (getServerID()->getData() != server_id->getData()){
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL_DATA, DHCP6_PACKET_MISMATCH_SERVERID_DROP)
+                .arg(pkt->getName())
+                .arg(pkt->getTransid())
+                .arg(pkt->getIface());
+            return (false);
+        }
+    }
+    // retun True if: no serverid received or ServerIDs matching
+    return (true);
+}
+
+bool
+Dhcpv6Srv::testUnicast(const Pkt6Ptr& pkt) const {
+    switch (pkt->getType()) {
+    case DHCPV6_SOLICIT:
+    case DHCPV6_CONFIRM:
+    case DHCPV6_REBIND:
+    case DHCPV6_INFORMATION_REQUEST:
+        if (pkt->relay_info_.empty() && !pkt->getLocalAddr().isV6Multicast()) {
+            return (false);
+        }
+        break;
+    default:
+        // do nothing
+        ;
+    }
+    return (true);
 }
 
 bool Dhcpv6Srv::run() {
@@ -258,7 +276,8 @@ bool Dhcpv6Srv::run() {
             LOG_ERROR(dhcp6_logger, DHCP6_PACKET_RECEIVE_FAIL).arg(e.what());
         }
 
-        // Timeout may be reached or signal received, which breaks select() with no packet received
+        // Timeout may be reached or signal received, which breaks select()
+        // with no packet received
         if (!query) {
             continue;
         }
@@ -311,8 +330,15 @@ bool Dhcpv6Srv::run() {
         }
         // Check if received query carries server identifier matching
         // server identifier being used by the server.
-        if (!testServerID(query)){
-        	continue;
+        if (!testServerID(query)) {
+            continue;
+        }
+
+        // Check if the received query has been sent to unicast or multicast.
+        // The Solicit, Confirm, Rebind and Information Request will be
+        // discarded if sent to unicast address.
+        if (!testUnicast(query)) {
+            continue;
         }
 
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PACKET_RECEIVED)
@@ -1657,66 +1683,133 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 }
 
 OptionPtr
-Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                      const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia) {
+Dhcpv6Srv::extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                       const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia) {
 
-    // Let's create a IA_NA response and fill it in later
-    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
+    // Let's create a IA_PD response and fill it in later
+    Option6IAPtr ia_rsp(new Option6IA(D6O_IA_PD, ia->getIAID()));
 
+    // If there is no subnet for the particular client, we can't retrieve
+    // information about client's leases from lease database. We treat this
+    // as no binding for the client.
     if (!subnet) {
-        // Insert status code NoBinding
-        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
-                          "Sorry, no known leases for this duid/iaid."));
+        // Per RFC3633, section 12.2, if there is no binding and we are
+        // processing a Renew, the NoBinding status code should be returned.
+        if (query->getType() == DHCPV6_RENEW) {
+            // Insert status code NoBinding
+            ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                                               "Sorry, no known PD leases"
+                                               " for this duid/iaid."));
 
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_PD_UNKNOWN_SUBNET)
-            .arg(duid->toText())
-            .arg(ia->getIAID());
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                      DHCP6_EXTEND_PD_UNKNOWN_SUBNET)
+                .arg(duid->toText())
+                .arg(ia->getIAID());
 
-        return (ia_rsp);
+            return (ia_rsp);
+
+        // Per RFC3633, section 12.2, if there is no binding and we are
+        // processing Rebind, the message has to be discarded (assuming that
+        // the server doesn't know if the prefix in the IA_PD option is
+        // appropriate for the client's link). The exception being thrown
+        // here should propagate to the main loop and cause the message to
+        // be discarded.
+        } else {
+            isc_throw(DHCPv6DiscardMessageError, "no subnet found for the"
+                      " client sending Rebind to extend lifetime of the"
+                      " prefix (DUID=" << duid->toText() << ", IAID="
+                      << ia->getIAID());
+        }
     }
 
-    Lease6Ptr lease = LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD,
-                                                            *duid, ia->getIAID(),
-                                                            subnet->getID());
+    // There is a subnet selected. Let's pick the lease.
+    Lease6Ptr lease =
+        LeaseMgrFactory::instance().getLease6(Lease::TYPE_PD,
+                                              *duid, ia->getIAID(),
+                                              subnet->getID());
 
+    // There is no binding for the client.
     if (!lease) {
-        // Client is renewing a lease that we don't know about.
+        // Per RFC3633, section 12.2, if there is no binding and we are
+        // processing a Renew, the NoBinding status code should be returned.
+        if (query->getType() == DHCPV6_RENEW) {
+            // Insert status code NoBinding.
+            ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
+                                               "Sorry, no known PD"
+                                               " leases for this duid/iaid."));
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                      DHCP6_EXTEND_PD_NO_BINDING)
+                .arg(query->getName())
+                .arg(duid->toText())
+                .arg(ia->getIAID())
+                .arg(subnet->toText());
 
-        // Insert status code NoBinding
-        ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
-                          "Sorry, no known leases for this duid/iaid."));
-
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_UNKNOWN_RENEW_PD)
-            .arg(duid->toText())
-            .arg(ia->getIAID())
-            .arg(subnet->toText());
-
+        // Per RFC3633, section 12.2, if there is no binding and we are
+        // processing Rebind, the message has to be discarded (assuming that
+        // the server doesn't know if the prefix in the IA_PD option is
+        // appropriate for the client's link). The exception being thrown
+        // here should propagate to the main loop and cause the message to
+        // be discarded.
+        } else {
+            isc_throw(DHCPv6DiscardMessageError, "no binding found for the"
+                      " DUID=" << duid->toText() << ", IAID="
+                      << ia->getIAID() << ", subnet="
+                      << subnet->toText() << " when processing a Rebind"
+                      " message with IA_PD option");
+        }
         return (ia_rsp);
+
     }
 
     // Keep the old data in case the callout tells us to skip update.
     Lease6 old_data = *lease;
 
-    // Do the actual lease update
-    lease->preferred_lft_ = subnet->getPreferred();
-    lease->valid_lft_ = subnet->getValid();
-    lease->t1_ = subnet->getT1();
-    lease->t2_ = subnet->getT2();
-    lease->cltt_ = time(NULL);
+    bool invalid_prefix = false;
+    // Check what prefix the client has sent. The prefix should match the
+    // one that we have associated with the IAID. If it doesn't match we
+    // have to return the prefix with the lifetimes set to 0 (see section
+    // 12.2. of RFC3633).
+    Option6IAPrefixPtr ia_prefix = boost::dynamic_pointer_cast<
+        Option6IAPrefix>(ia->getOption(D6O_IAPREFIX));
+    if (ia_prefix && ((ia_prefix->getAddress() != lease->addr_) ||
+                      (ia_prefix->getLength() != lease->prefixlen_))) {
+        Option6IAPrefixPtr prefix(new Option6IAPrefix(D6O_IAPREFIX,
+                                                      ia_prefix->getAddress(),
+                                                      ia_prefix->getLength(),
+                                                      0, 0));
+        ia_rsp->addOption(prefix);
+        invalid_prefix = true;
 
-    // Also update IA_PD container with proper T1, T2 values
-    ia_rsp->setT1(subnet->getT1());
-    ia_rsp->setT2(subnet->getT2());
+    } else {
+        // The prefix sent by a client is correct. Let's extend the lease
+        // for the client.
+        lease->preferred_lft_ = subnet->getPreferred();
+        lease->valid_lft_ = subnet->getValid();
+        // Do the actual lease update
+        lease->t1_ = subnet->getT1();
+        lease->t2_ = subnet->getT2();
+        lease->cltt_ = time(NULL);
 
-    boost::shared_ptr<Option6IAPrefix>
-        prefix(new Option6IAPrefix(D6O_IAPREFIX, lease->addr_,
-                                   lease->prefixlen_, lease->preferred_lft_,
-                                   lease->valid_lft_));
-    ia_rsp->addOption(prefix);
+        // Also update IA_PD container with proper T1, T2 values
+        ia_rsp->setT1(subnet->getT1());
+        ia_rsp->setT2(subnet->getT2());
+
+        Option6IAPrefixPtr prefix(new Option6IAPrefix(D6O_IAPREFIX,
+                                                      lease->addr_,
+                                                      lease->prefixlen_,
+                                                      lease->preferred_lft_,
+                                                      lease->valid_lft_));
+        ia_rsp->addOption(prefix);
+
+    }
+
 
     bool skip = false;
     // Execute all callouts registered for packet6_send
-    if (HooksManager::calloutsPresent(Hooks.hook_index_lease6_renew_)) {
+    // Get the callouts specific for the processed message and execute them.
+    int hook_point = query->getType() == DHCPV6_RENEW ?
+        Hooks.hook_index_lease6_renew_ : Hooks.hook_index_lease6_rebind_;
+    if (HooksManager::calloutsPresent(hook_point)) {
         CalloutHandlePtr callout_handle = getCalloutHandle(query);
 
         // Delete all previous arguments
@@ -1732,7 +1825,7 @@ Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
         callout_handle->setArgument("ia_pd", ia_rsp);
 
         // Call all installed callouts
-        HooksManager::callCallouts(Hooks.hook_index_lease6_renew_,
+        HooksManager::callCallouts(hook_point,
                                    *callout_handle);
 
         // Remember hook's instruction whether we want to skip update or not
@@ -1740,12 +1833,17 @@ Dhcpv6Srv::renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
     }
 
     if (!skip) {
-        LeaseMgrFactory::instance().updateLease6(lease);
+        // If the prefix specified by the client is wrong, we don't want to
+        // update client's lease.
+        if (!invalid_prefix) {
+            LeaseMgrFactory::instance().updateLease6(lease);
+        }
     } else {
         // Callouts decided to skip the next processing step. The next
-        // processing step would to actually renew the lease, so skip at this
-        // stage means "keep the old lease as it is".
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_EXTEND_SKIP);
+        // processing step would to actually renew/rebind the lease, so skip
+        // at this stage means "keep the old lease as it is".
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_HOOKS, DHCP6_HOOK_LEASE6_EXTEND_SKIP)
+            .arg(query->getName());
 
         // Copy back the original date to the lease. For MySQL it doesn't make
         // much sense, but for memfile, the Lease6Ptr points to the actual lease
@@ -1816,9 +1914,9 @@ Dhcpv6Srv::extendLeases(const Pkt6Ptr& query, Pkt6Ptr& reply) {
         }
 
         case D6O_IA_PD: {
-            OptionPtr answer_opt = renewIA_PD(subnet, duid, query,
-                                              boost::dynamic_pointer_cast<
-                                                  Option6IA>(opt->second));
+            OptionPtr answer_opt = extendIA_PD(subnet, duid, query,
+                                               boost::dynamic_pointer_cast<
+                                                   Option6IA>(opt->second));
             if (answer_opt) {
                 reply->addOption(answer_opt);
             }
@@ -2258,9 +2356,18 @@ Dhcpv6Srv::processRenew(const Pkt6Ptr& renew) {
 Pkt6Ptr
 Dhcpv6Srv::processRebind(const Pkt6Ptr& rebind) {
 
-    /// @todo: Implement this
     Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, rebind->getTransid()));
-    return reply;
+
+    copyDefaultOptions(rebind, reply);
+    appendDefaultOptions(rebind, reply);
+    appendRequestedOptions(rebind, reply);
+
+    processClientFqdn(rebind, reply);
+    extendLeases(rebind, reply);
+    generateFqdn(reply);
+    createNameChangeRequests(rebind);
+
+    return (reply);
 }
 
 Pkt6Ptr

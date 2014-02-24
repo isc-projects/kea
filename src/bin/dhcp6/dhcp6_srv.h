@@ -35,6 +35,14 @@
 namespace isc {
 namespace dhcp {
 
+/// @brief This exception is thrown when DHCP server hits the error which should
+/// result in discarding the message being processed.
+class DHCPv6DiscardMessageError : public Exception {
+public:
+    DHCPv6DiscardMessageError(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
+
 /// @brief DHCPv6 server service.
 ///
 /// This class represents DHCPv6 server. It contains all
@@ -128,6 +136,18 @@ protected:
     /// @return true if server id carried in the query matches server id
     /// used by the server; false otherwise.
     bool testServerID(const Pkt6Ptr& pkt);
+
+    /// @brief Check if the message can be sent to unicast.
+    ///
+    /// This function checks if the received message conforms to the section 15
+    /// of RFC3315 which says that: "A server MUST discard any Solicit, Confirm,
+    /// Rebind or Information-request messages it receives with a unicast
+    /// destination address.
+    ///
+    /// @param pkt DHCPv6 message to be checked.
+    /// @return false if the message has been sent to unicast address but it is
+    /// not allowed according to RFC3315, section 15; true otherwise.
+    bool testUnicast(const Pkt6Ptr& pkt) const;
 
     /// @brief verifies if specified packet meets RFC requirements
     ///
@@ -271,21 +291,29 @@ protected:
     /// @return IA_NA option (server's response)
     OptionPtr extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                           const Pkt6Ptr& query, const Pkt6Ptr& answer,
-                          boost::shared_ptr<Option6IA> ia);
+                          Option6IAPtr ia);
 
-    /// @brief Renews specific IA_PD option
+    /// @brief Extends lifetime of the prefix.
     ///
-    /// Generates response to IA_PD in Renew. This typically includes finding a
-    /// lease that corresponds to the received prefix. If no such lease is
-    /// found, an IA_PD response is generated with an appropriate status code.
+    /// This function is called by the logic which processes Renew and Rebind
+    /// messages to extend the lifetime of the existing prefix.
+    ///
+    /// The behavior of this function is different in that when there is no
+    /// binding found in the lease database for the particular client the
+    /// NoBinding status code is returned when processing Renew, the exception
+    /// is thrown when there is no binding and the Rebind message is processed
+    /// (see RFC3633, section 12.2. for details).
     ///
     /// @param subnet subnet the sender belongs to
     /// @param duid client's duid
     /// @param query client's message
     /// @param ia IA_PD option that is being renewed
     /// @return IA_PD option (server's response)
-    OptionPtr renewIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
-                         const Pkt6Ptr& query, boost::shared_ptr<Option6IA> ia);
+    /// @throw DHCPv6DiscardMessageError when the message being processed should
+    /// be discarded by the server, i.e. there is no binding for the client doing
+    /// Rebind.
+    OptionPtr extendIA_PD(const Subnet6Ptr& subnet, const DuidPtr& duid,
+                          const Pkt6Ptr& query, Option6IAPtr ia);
 
     /// @brief Releases specific IA_NA option
     ///
@@ -602,14 +630,14 @@ private:
     /// Server DUID (to be sent in server-identifier option)
     OptionPtr serverid_;
 
-    /// Indicates if shutdown is in progress. Setting it to true will
-    /// initiate server shutdown procedure.
-    volatile bool shutdown_;
-
     /// UDP port number on which server listens.
     uint16_t port_;
 
 protected:
+
+    /// Indicates if shutdown is in progress. Setting it to true will
+    /// initiate server shutdown procedure.
+    volatile bool shutdown_;
 
     /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects, which
     /// are waiting for sending to b10-dhcp-ddns module.
