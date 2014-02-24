@@ -1,3 +1,9 @@
+758.    [bug]		tmark
+	b10-dhcp4 now correctly handles DHO_HOST_OPTION.  This corrects a bug
+	where the server would fail to recognize the option in the DHCP request
+	and then skip generating the appropriate DHCP-DDNS update request. 
+	(Trac #2426, git 985d66cba7665a71e17ef70c5d22c767abaad1b6)
+
 757.	[func]		tmark
 	b10-dhcp6 now parses parameters which support DHCP-DDNS updates via
 	the DHCP-DDNS module, b10-dhcp-ddns.  These parameters are part of new
