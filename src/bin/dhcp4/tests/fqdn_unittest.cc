@@ -118,11 +118,11 @@ public:
    }
 
     // Create an instance of the Hostname option.
-    OptionCustomPtr
+    OptionStringPtr
     createHostname(const std::string& hostname) {
-        OptionDefinition def("hostname", DHO_HOST_NAME, "string");
-        OptionCustomPtr opt_hostname(new OptionCustom(def, Option::V4));
-        opt_hostname->writeString(hostname);
+        OptionStringPtr opt_hostname(new OptionString(Option::V4,
+                                                      DHO_HOST_NAME,
+                                                      hostname));
         return (opt_hostname);
     }
 
@@ -147,9 +147,9 @@ public:
     }
 
     // get the Hostname option from the given message.
-    OptionCustomPtr getHostnameOption(const Pkt4Ptr& pkt) {
+    OptionStringPtr getHostnameOption(const Pkt4Ptr& pkt) {
         return (boost::dynamic_pointer_cast<
-                OptionCustom>(pkt->getOption(DHO_HOST_NAME)));
+                OptionString>(pkt->getOption(DHO_HOST_NAME)));
     }
 
     // Create a message holding DHCPv4 Client FQDN Option.
@@ -264,7 +264,7 @@ public:
     // the hostname option which would be sent to the client. It will
     // throw NULL pointer if the hostname option is not to be included
     // in the response.
-    OptionCustomPtr processHostname(const Pkt4Ptr& query) {
+    OptionStringPtr processHostname(const Pkt4Ptr& query) {
         if (!getHostnameOption(query)) {
             ADD_FAILURE() << "Hostname option not carried in the query";
         }
@@ -279,7 +279,7 @@ public:
         }
         srv_->processClientName(query, answer);
 
-        OptionCustomPtr hostname = getHostnameOption(answer);
+        OptionStringPtr hostname = getHostnameOption(answer);
         return (hostname);
 
     }
@@ -571,21 +571,12 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateHostname) {
     Pkt4Ptr query;
     ASSERT_NO_THROW(query = generatePktWithHostname(DHCPREQUEST,
                                                     "myhost.example.com."));
-    OptionCustomPtr hostname;
+    OptionStringPtr hostname;
     ASSERT_NO_THROW(hostname = processHostname(query));
 
     ASSERT_TRUE(hostname);
-    EXPECT_EQ("myhost.example.com.", hostname->readString());
+    EXPECT_EQ("myhost.example.com.", hostname->getValue());
 
-}
-
-// Test that the server skips processing of the empty Hostname option.
-TEST_F(NameDhcpv4SrvTest, serverUpdateEmptyHostname) {
-    Pkt4Ptr query;
-    ASSERT_NO_THROW(query = generatePktWithHostname(DHCPREQUEST, ""));
-    OptionCustomPtr hostname;
-    ASSERT_NO_THROW(hostname = processHostname(query));
-    EXPECT_FALSE(hostname);
 }
 
 // Test that the server skips processing of a wrong Hostname option.
@@ -593,7 +584,7 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateWrongHostname) {
     Pkt4Ptr query;
     ASSERT_NO_THROW(query = generatePktWithHostname(DHCPREQUEST,
                                                     "abc..example.com"));
-    OptionCustomPtr hostname;
+    OptionStringPtr hostname;
     ASSERT_NO_THROW(hostname = processHostname(query));
     EXPECT_FALSE(hostname);
 }
@@ -620,11 +611,11 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateForwardPartialNameFqdn) {
 TEST_F(NameDhcpv4SrvTest, serverUpdateUnqualifiedHostname) {
     Pkt4Ptr query;
     ASSERT_NO_THROW(query = generatePktWithHostname(DHCPREQUEST, "myhost"));
-    OptionCustomPtr hostname;
+    OptionStringPtr hostname;
     ASSERT_NO_THROW(hostname =  processHostname(query));
 
     ASSERT_TRUE(hostname);
-    EXPECT_EQ("myhost.example.com.", hostname->readString());
+    EXPECT_EQ("myhost.example.com.", hostname->getValue());
 
 }
 
@@ -818,7 +809,7 @@ TEST_F(NameDhcpv4SrvTest, processRequestEmptyDomainNameDisabled) {
 
 // Test that server generates client's hostname from the IP address assigned
 // to it when Hostname option carries the top level domain-name.
-TEST_F(NameDhcpv4SrvTest, processRequestEmptyHostname) {
+TEST_F(NameDhcpv4SrvTest, processRequestTopLevelHostname) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
