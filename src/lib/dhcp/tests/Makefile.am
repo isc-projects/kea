@@ -36,6 +36,7 @@ noinst_LTLIBRARIES = libdhcptest.la
 
 libdhcptest_la_SOURCES  = iface_mgr_test_config.cc iface_mgr_test_config.h
 libdhcptest_la_SOURCES  += pkt_filter_test_stub.cc pkt_filter_test_stub.h
+libdhcptest_la_SOURCES  += pkt_filter6_test_stub.cc pkt_filter6_test_stub.h
 libdhcptest_la_CXXFLAGS  = $(AM_CXXFLAGS)
 libdhcptest_la_CPPFLAGS  = $(AM_CPPFLAGS)
 libdhcptest_la_LDFLAGS   = $(AM_LDFLAGS)
@@ -73,6 +74,7 @@ libdhcp___unittests_SOURCES += pkt_filter_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_inet_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_inet6_unittest.cc
 libdhcp___unittests_SOURCES += pkt_filter_test_stub.cc pkt_filter_test_stub.h
+libdhcp___unittests_SOURCES += pkt_filter6_test_stub.cc pkt_filter_test_stub.h
 libdhcp___unittests_SOURCES += pkt_filter_test_utils.h pkt_filter_test_utils.cc
 libdhcp___unittests_SOURCES += pkt_filter6_test_utils.h pkt_filter6_test_utils.cc
 

@@ -340,26 +340,7 @@ public:
     ///
     /// Sets up a single subnet6 with one pool for addresses and second
     /// pool for prefixes.
-    Dhcpv6SrvTest() {
-        subnet_ = isc::dhcp::Subnet6Ptr
-            (new isc::dhcp::Subnet6(isc::asiolink::IOAddress("2001:db8:1::"),
-                                    48, 1000, 2000, 3000, 4000));
-        pool_ = isc::dhcp::Pool6Ptr
-            (new isc::dhcp::Pool6(isc::dhcp::Lease::TYPE_NA,
-                                  isc::asiolink::IOAddress("2001:db8:1:1::"),
-                                  64));
-        subnet_->addPool(pool_);
-
-        isc::dhcp::CfgMgr::instance().deleteSubnets6();
-        isc::dhcp::CfgMgr::instance().addSubnet6(subnet_);
-
-        // configure PD pool
-        pd_pool_ = isc::dhcp::Pool6Ptr
-            (new isc::dhcp::Pool6(isc::dhcp::Lease::TYPE_PD,
-                                  isc::asiolink::IOAddress("2001:db8:1:2::"),
-                                  64, 80));
-        subnet_->addPool(pd_pool_);
-    }
+    Dhcpv6SrvTest();
 
     /// @brief destructor
     ///
@@ -367,6 +348,12 @@ public:
     ~Dhcpv6SrvTest() {
         isc::dhcp::CfgMgr::instance().deleteSubnets6();
     };
+
+    /// @brief Runs DHCPv6 configuration from the JSON string.
+    ///
+    /// @param config String holding server configuration in JSON format.
+    void
+    configure(const std::string& config);
 
     /// @brief Checks that server response (ADVERTISE or REPLY) contains proper
     ///        IA_NA option
@@ -526,6 +513,9 @@ public:
 
     /// A prefix pool used in most tests
     isc::dhcp::Pool6Ptr pd_pool_;
+
+    /// @brief Server object under test.
+    NakedDhcpv6Srv srv_;
 };
 
 }; // end of isc::test namespace

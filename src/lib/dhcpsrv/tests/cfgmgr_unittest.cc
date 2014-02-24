@@ -472,6 +472,79 @@ TEST_F(CfgMgrTest, classifySubnet4) {
     EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("192.0.2.130"), classify_));
 }
 
+// This test verifies if the configuration manager is able to hold v4 subnets
+// with their relay address information and return proper subnets, based on
+// those addresses.
+TEST_F(CfgMgrTest, subnet4RelayOverride) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    // Let's configure 3 subnets
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3));
+
+    cfg_mgr.addSubnet4(subnet1);
+    cfg_mgr.addSubnet4(subnet2);
+    cfg_mgr.addSubnet4(subnet3);
+
+    // Check that without relay-info specified, subnets are not selected
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.1"), classify_, true));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.2"), classify_, true));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.3"), classify_, true));
+
+    // Now specify relay info
+    subnet1->setRelayInfo(IOAddress("10.0.0.1"));
+    subnet2->setRelayInfo(IOAddress("10.0.0.2"));
+    subnet3->setRelayInfo(IOAddress("10.0.0.3"));
+
+    // And try again. This time relay-info is there and should match.
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet4(IOAddress("10.0.0.1"), classify_, true));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet4(IOAddress("10.0.0.2"), classify_, true));
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet4(IOAddress("10.0.0.3"), classify_, true));
+
+    // Finally, check that the relay works only if hint provided is relay address
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.1"), classify_, false));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.2"), classify_, false));
+    EXPECT_FALSE(cfg_mgr.getSubnet4(IOAddress("10.0.0.3"), classify_, false));
+}
+
+// This test verifies if the configuration manager is able to hold v6 subnets
+// with their relay address information and return proper subnets, based on
+// those addresses.
+TEST_F(CfgMgrTest, subnet6RelayOverride) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    // Let's configure 3 subnets
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 48, 1, 2, 3, 4));
+
+    cfg_mgr.addSubnet6(subnet1);
+    cfg_mgr.addSubnet6(subnet2);
+    cfg_mgr.addSubnet6(subnet3);
+
+    // Check that without relay-info specified, subnets are not selected
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("2001:db8:ff::1"), classify_, true));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("2001:db8:ff::2"), classify_, true));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("2001:db8:ff::3"), classify_, true));
+
+    // Now specify relay info
+    subnet1->setRelayInfo(IOAddress("2001:db8:ff::1"));
+    subnet2->setRelayInfo(IOAddress("2001:db8:ff::2"));
+    subnet3->setRelayInfo(IOAddress("2001:db8:ff::3"));
+
+    // And try again. This time relay-info is there and should match.
+    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("2001:db8:ff::1"), classify_, true));
+    EXPECT_EQ(subnet2, cfg_mgr.getSubnet6(IOAddress("2001:db8:ff::2"), classify_, true));
+    EXPECT_EQ(subnet3, cfg_mgr.getSubnet6(IOAddress("2001:db8:ff::3"), classify_, true));
+
+    // Finally, check that the relay works only if hint provided is relay address
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("2001:db8:ff::1"), classify_, false));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("2001:db8:ff::2"), classify_, false));
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("2001:db8:ff::3"), classify_, false));
+}
+
+
 // This test verifies if the configuration manager is able to hold and return
 // valid leases
 TEST_F(CfgMgrTest, classifySubnet6) {
@@ -626,10 +699,10 @@ TEST_F(CfgMgrTest, subnet6) {
     // Now we have only one subnet, any request will be served from it
     EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("2000::1"), classify_));
 
-    // If we have only a single subnet and the request came from a local
-    // address, let's use that subnet
-    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("fe80::dead:beef"),
-                  classify_));
+    // We used to allow getting a sole subnet if there was only one subnet
+    // configured. That is no longer true. The code should not return
+    // a subnet.
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("fe80::dead:beef"), classify_));
 
     cfg_mgr.addSubnet6(subnet2);
     cfg_mgr.addSubnet6(subnet3);
@@ -670,10 +743,10 @@ TEST_F(CfgMgrTest, subnet6Interface) {
     // only one subnet defined.
     EXPECT_FALSE(cfg_mgr.getSubnet6("bar", classify_));
 
-    // If we have only a single subnet and the request came from a local
-    // address, let's use that subnet
-    EXPECT_EQ(subnet1, cfg_mgr.getSubnet6(IOAddress("fe80::dead:beef"),
-                                          classify_));
+    // We used to allow getting a sole subnet if there was only one subnet
+    // configured. That is no longer true. The code should not return
+    // a subnet.
+    EXPECT_FALSE(cfg_mgr.getSubnet6(IOAddress("fe80::dead:beef"), classify_));
 
     cfg_mgr.addSubnet6(subnet2);
     cfg_mgr.addSubnet6(subnet3);
