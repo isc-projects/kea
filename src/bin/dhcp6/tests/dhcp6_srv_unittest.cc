@@ -1112,6 +1112,52 @@ TEST_F(Dhcpv6SrvTest, testServerID) {
     EXPECT_TRUE(srv.testServerID(req));
 }
 
+// Test that some messages are discarded by the server if they are sent to
+// unicast address.
+TEST_F(Dhcpv6SrvTest, testUnicast) {
+    NakedDhcpv6Srv srv(0);
+    // Explicitly list client's message types which must be discarded if
+    // sent to unicast address.
+    const uint8_t not_allowed_unicast[] = {
+        DHCPV6_SOLICIT,
+        DHCPV6_CONFIRM,
+        DHCPV6_REBIND,
+        DHCPV6_INFORMATION_REQUEST
+    };
+    // Iterate over these messages and make sure they are discarded.
+    for (int i = 0; i < sizeof(not_allowed_unicast); ++i) {
+        Pkt6Ptr msg = Pkt6Ptr(new Pkt6(not_allowed_unicast[i], 1234));
+        msg->setLocalAddr(IOAddress("2001:db8:1::1"));
+        EXPECT_FALSE(srv.testUnicast(msg))
+            << "server accepts message type "
+            << static_cast<int>(not_allowed_unicast[i])
+            << "being sent to unicast address; this message should"
+            " be discarded according to section 15 of RFC3315";
+    }
+    // Explicitly list client/relay message types which are allowed to
+    // be sent to unicast.
+    const uint8_t allowed_unicast[] = {
+        DHCPV6_REQUEST,
+        DHCPV6_RENEW,
+        DHCPV6_RELEASE,
+        DHCPV6_DECLINE,
+        DHCPV6_RELAY_FORW
+    };
+    // Iterate over these messages and check that they are accepted being
+    // sent to unicast.
+    for (int i = 0; i < sizeof(allowed_unicast); ++i) {
+        Pkt6Ptr msg = Pkt6Ptr(new Pkt6(allowed_unicast[i], 1234));
+        msg->setLocalAddr(IOAddress("2001:db8:1::1"));
+        msg->addOption(srv.getServerID());
+        EXPECT_TRUE(srv.testUnicast(msg))
+            << "server doesn't accept message type "
+            << static_cast<int>(allowed_unicast[i])
+            << "being sent to unicast address";
+    }
+
+
+}
+
 // This test verifies if selectSubnet() selects proper subnet for a given
 // source address.
 TEST_F(Dhcpv6SrvTest, selectSubnetAddr) {

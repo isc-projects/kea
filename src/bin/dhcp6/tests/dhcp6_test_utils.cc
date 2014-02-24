@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -96,6 +96,18 @@ Dhcpv6SrvTest::checkLease(const DuidPtr& duid, const OptionPtr& ia_na,
     return (lease);
 }
 
+isc::dhcp::Lease6Ptr
+Dhcpv6SrvTest::checkLease(const isc::dhcp::Lease6& lease) {
+    Lease6Ptr lease_db = LeaseMgrFactory::instance().getLease6(lease.type_,
+                                                               lease.addr_);
+    if (!lease_db) {
+        return (Lease6Ptr());
+    }
+
+    EXPECT_TRUE(lease_db->matches(lease));
+    return (lease_db);
+}
+
 Lease6Ptr
 Dhcpv6SrvTest::checkPdLease(const DuidPtr& duid, const OptionPtr& ia_pd,
                             boost::shared_ptr<Option6IAPrefix> prefix){
@@ -121,11 +133,17 @@ Dhcpv6SrvTest::checkPdLease(const DuidPtr& duid, const OptionPtr& ia_pd,
 Pkt6Ptr
 Dhcpv6SrvTest::createMessage(uint8_t message_type, Lease::Type lease_type,
                              const IOAddress& addr, const uint8_t prefix_len,
-                             uint32_t iaid) {
-    // Let's create a RENEW
+                             const uint32_t iaid) {
     Pkt6Ptr msg = Pkt6Ptr(new Pkt6(message_type, 1234));
     msg->setRemoteAddr(IOAddress("fe80::abcd"));
+    msg->addOption(createIA(lease_type, addr, prefix_len, iaid));
+    return (msg);
+}
 
+Option6IAPtr
+Dhcpv6SrvTest::createIA(isc::dhcp::Lease::Type lease_type,
+                        const isc::asiolink::IOAddress& addr,
+                        const uint8_t prefix_len, const uint32_t iaid) {
     uint16_t code;
     OptionPtr subopt;
     switch (lease_type) {
@@ -139,15 +157,14 @@ Dhcpv6SrvTest::createMessage(uint8_t message_type, Lease::Type lease_type,
                                          300, 500));
         break;
     default:
-        isc_throw(BadValue, "Invalid lease type specified");
+        isc_throw(BadValue, "Invalid lease type specified "
+                  << static_cast<int>(lease_type));
     }
 
-    boost::shared_ptr<Option6IA> ia = generateIA(code, iaid, 1500, 3000);
-
+    Option6IAPtr ia = generateIA(code, iaid, 1500, 3000);
     ia->addOption(subopt);
-    msg->addOption(ia);
 
-    return (msg);
+    return (ia);
 }
 
 void
