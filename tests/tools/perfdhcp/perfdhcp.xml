@@ -90,7 +90,9 @@
 
         <para>
             By default, tests are run using the full four-packet exchange sequence (DORA for DHCPv4, SARR for DHCPv6).
-            An option is provided to run tests using the initial two-packet exchange (DO and SA) instead.
+            An option is provided to run tests using the initial two-packet exchange (DO and SA) instead.  It is also
+            possible to configure perfdhcp to send DHCPv6 RENEW and RELEASE messages at a specified rate in parallel
+            with the DHCPv6 four-way exchanges.
         </para>
 
         <para>
@@ -104,7 +106,7 @@
     <refsect1>
         <title>TEMPLATES</title>
         <para>
-            To allow the contents of packets sent to the server to be customised, <command>perfdhcp</command> allows the
+            To allow the contents of packets sent to the server to be customized, <command>perfdhcp</command> allows the
             specification of template files that determine the contents of the packets.  For example, the customized packet
             may contain a DHCPv6 ORO to request a set of options to be returned by the server, or it may contain the Client
             FQDN option to request that server performs DNS updates. This may be used to discover performance bottlenecks
@@ -120,13 +122,13 @@
             <listitem>
                 <para>
                     With no template files specified on the command line, <command>perfdhcp</command> will generate both
-                    SOLICIT and ADVERTISE packets.
+                    SOLICIT and REQUEST packets.
                 </para>
             </listitem> <listitem>
                 <para>
                     With one template file specified, that file will be used as the pattern for SOLICIT packets:
-                    <command>perfdhcp</command> will generate the ADVERTISE packets.
-                .</para>
+                    <command>perfdhcp</command> will generate the REQUEST packets.
+                </para>
             </listitem> <listitem>
                 <para>
                     With two template files given on the command line, the first will be used as the pattern for SOLICIT
@@ -404,7 +406,7 @@
                     <para>
                         Include extended diagnostics in the output.  <replaceable
                         class="parameter">diagnostic-selector</replaceable> is a string of single-keywords specifying the
-                        operations for which verbose output is desired.  The selector keyletters are:
+                        operations for which verbose output is desired.  The selector key letters are:
                     </para>
 
                     <variablelist>
@@ -496,7 +498,7 @@
                     <term><option>-f <replaceable class="parameter">renew-rate</replaceable></option></term>
                     <listitem>
                         <para>
-                            Rate at which IPv6 Renew requests are sent to a server. This value is only valid
+                            Rate at which IPv6 RENEW requests are sent to a server. This value is only valid
                             when used in conjunction with the exchange rate (given by <option>-r <replaceable
                             class="parameter">rate</replaceable></option>).  Furthermore the sum of this value and the
                             release-rate (given by <option>-F <replaceable class="parameter">rate</replaceable></option>)
@@ -509,7 +511,7 @@
                     <term><option>-F <replaceable class="parameter">release-rate</replaceable></option></term>
                     <listitem>
                         <para>
-                            Rate at which IPv6 Release requests are sent to a server. This value is only valid
+                            Rate at which IPv6 RELEASE requests are sent to a server. This value is only valid
                             when used in conjunction with the exchange rate (given by <option>-r <replaceable
                             class="parameter">rate</replaceable></option>).  Furthermore the sum of this value and the
                             renew-rate (given by <option>-f <replaceable class="parameter">rate</replaceable></option>)
@@ -681,7 +683,7 @@
                 <listitem>
                     <para>
                         Received a message which doesn't match one sent to the server (i.e. it is a duplicate message,
-                        a message that has arrived after an excessive delay, or one that is just not recognised).
+                        a message that has arrived after an excessive delay, or one that is just not recognized).
                     </para>
                 </listitem>
             </varlistentry>
@@ -748,8 +750,7 @@
     <refsect1>
         <title>HISTORY</title>
         <para>
-            The <command>perfdhcp</command> tool was initially coded by
-            John DuBois, Francis Dupont and Marcin Siodelski of ISC.
+            The <command>perfdhcp</command> tool was initially coded  by John DuBois, Francis Dupont and Marcin Siodelski of ISC.
         </para>
     </refsect1>
 -->
