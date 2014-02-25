@@ -910,6 +910,9 @@ if test "$MYSQL_CONFIG" != "" ; then
     AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
 fi
 
+# Solaris puts FIONREAD in filio.h
+AC_CHECK_HEADERS(sys/filio.h,,,)
+
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
 
