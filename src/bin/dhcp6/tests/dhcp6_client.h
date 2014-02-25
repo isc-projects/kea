@@ -102,7 +102,7 @@ public:
     /// This function simulates the first transaction of the 4-way exchange,
     /// i.e. sends a Solicit to the server and receives Advertise. It doesn't
     /// set the lease configuration in the @c config_.
-    void doSolicitAdvertise();
+    void doSolicit();
 
     /// @brief Sends a Rebind to the server and receives the Reply.
     ///
@@ -120,7 +120,7 @@ public:
     /// from the current context (server's Advertise) to request acquisition
     /// of offered IAs. If the server responds to the Request (leases are
     /// acquired) the client's lease configuration is updated.
-    void doRequestReply();
+    void doRequest();
 
     /// @brief Simulates aging of leases by the specified number of seconds.
     ///
