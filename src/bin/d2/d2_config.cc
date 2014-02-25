@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -132,7 +132,7 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
 
         // If the lengths are identical and the names match we're done.
         if (req_len == dom_len) {
-            if (boost::iequals(fqdn,domain_name)) {
+            if (boost::iequals(fqdn, domain_name)) {
                 // exact match, done
                 domain = map_pair.second;
                 return (true);

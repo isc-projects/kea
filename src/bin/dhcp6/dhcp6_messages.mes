@@ -91,6 +91,11 @@ New  values: hostname = %2, reverse mapping = %3, forward mapping = %4
 This debug message is logged when FQDN mapping for a particular lease has been
 changed by the recent Renew message. This mapping will be changed in DNS.
 
+% DHCP6_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error: %1,  ncr: %2
+This error message indicates that IPv6 DHCP server failed to send a DDNS
+update reqeust to the DHCP-DDNS server. This is most likely a configuration or
+networking error.
+
 % DHCP6_DEACTIVATE_INTERFACE deactivate interface %1
 This message is printed when DHCPv6 server disables an interface from being
 used to receive DHCPv6 traffic. Sockets on this interface will not be opened
@@ -544,8 +549,3 @@ recently and does not recognize its well-behaving clients. This is more
 probable if you see many such messages. Clients will recover from this,
 but they will most likely get a different IP addresses and experience
 a brief service interruption.
-
-% DHCP6_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error : %1,  ncr: %2
-This error message indicates that IPv6 DHCP server attempted to send a DDNS
-update reqeust to the DHCP-DDNS server.  This is most likely a configuration or
-networking error.
