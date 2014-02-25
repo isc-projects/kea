@@ -181,15 +181,15 @@ Dhcp6Client::createMsg(const uint8_t msg_type) {
 
 void
 Dhcp6Client::doSARR() {
-    doSolicitAdvertise();
+    doSolicit();
     // Don't send the Request if there was no Advertise.
     if (context_.response_) {
-        doRequestReply();
+        doRequest();
     }
 }
 
 void
-Dhcp6Client::doSolicitAdvertise() {
+Dhcp6Client::doSolicit() {
     context_.query_ = createMsg(DHCPV6_SOLICIT);
     if (use_na_) {
         context_.query_->addOption(Option6IAPtr(new Option6IA(D6O_IA_NA,
@@ -206,7 +206,7 @@ Dhcp6Client::doSolicitAdvertise() {
 }
 
 void
-Dhcp6Client::doRequestReply() {
+Dhcp6Client::doRequest() {
     Pkt6Ptr query = createMsg(DHCPV6_REQUEST);
     query->addOption(context_.response_->getOption(D6O_SERVERID));
     copyIAs(context_.response_, query);
