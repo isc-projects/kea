@@ -132,7 +132,7 @@
             </listitem> <listitem>
                 <para>
                     With two template files given on the command line, the first will be used as the pattern for SOLICIT
-                    packets, the second as the pattern for ADVERTISE packets.
+                    packets, the second as the pattern for REQUEST packets.
                 </para>
             </listitem>
         </itemizedlist>
