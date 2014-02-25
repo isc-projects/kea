@@ -460,6 +460,44 @@ TEST_F(RebindTest, relayedClientLostLease) {
     EXPECT_EQ(STATUS_NoBinding, client.getStatusCode(0));
 }
 
+TEST_F(RebindTest, relayedClientChangingAddress) {
+    Dhcp6Client client;
+    // Configure client to request IA_NA.
+    client.useNA();
+    // Make 4-way exchange to get the lease.
+    ASSERT_NO_FATAL_FAILURE(requestLease(2, 2, client));
+    // Keep the client's lease for future reference.
+    Lease6 lease_client = client.getLease(0);
+    // Modify the address of the lease record that client stores. The server
+    // should check that the address is invalid (hasn't been allocated for
+    // the particular IAID).
+    client.config_.leases_[0].lease_.addr_ = IOAddress("3000::100");
+    // Try to Rebind. The client will use correct IAID but will specify a
+    // wrong address. The server will discover that the client has a binding
+    // but the address will not match.
+    ASSERT_NO_THROW(client.doRebind());
+    // Make sure that the server has discarded client's message. In such case,
+    // the message sent back to the client should be NULL.
+    EXPECT_TRUE(client.getContext().response_)
+        << "The server discarded the Rebind message, while it should have"
+        " sent a response indicating that the client should stop using the"
+        " lease, by setting lifetime values to 0.";
+    // Get the client's lease.
+    ASSERT_EQ(1, client.getLeaseNum());
+    Lease6 lease_client2 = client.getLease(0);
+    // The lifetimes should be set to 0, as an explicit notification to the
+    // client to stop using invalid prefix.
+    EXPECT_EQ(0, lease_client2.valid_lft_);
+    EXPECT_EQ(0, lease_client2.preferred_lft_);
+    // Check that server still has the same lease.
+    Lease6Ptr lease_server = checkLease(lease_client);
+    EXPECT_TRUE(lease_server);
+    // Make sure that the lease in the data base hasn't been addected.
+    EXPECT_NE(0, lease_server->valid_lft_);
+    EXPECT_NE(0, lease_server->preferred_lft_);
+}
+
+
 TEST_F(RebindTest, directClientPD) {
     Dhcp6Client client;
     // Configure client to request IA_PD.
@@ -558,7 +596,7 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     // Modify the Prefix of the lease record that client stores. The server
     // should check that the prefix is invalid (hasn't been allocated for
     // the particular IAID).
-    client.config_.leases_[0].lease_.addr_ = IOAddress("2001:db8:1:10::1");
+    client.config_.leases_[0].lease_.addr_ = IOAddress("2001:db8:1:10::");
     // Try to Rebind. The client will use correct IAID but will specify a
     // wrong prefix. The server will discover that the client has a binding
     // but the prefix will not match. According to the RFC3633, section 12.2.
@@ -580,7 +618,10 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     EXPECT_EQ(0, lease_client2.preferred_lft_);
     // Check that server still has the same lease.
     Lease6Ptr lease_server = checkLease(lease_client);
-    EXPECT_TRUE(lease_server);
+    ASSERT_TRUE(lease_server);
+    // Make sure that the lease in the data base hasn't been addected.
+    EXPECT_NE(0, lease_server->valid_lft_);
+    EXPECT_NE(0, lease_server->preferred_lft_);
 }
 
 /// @todo Extend PD tests for relayed messages.

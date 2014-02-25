@@ -1530,6 +1530,10 @@ OptionPtr
 Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
                        const Pkt6Ptr& query, const Pkt6Ptr& answer,
                        boost::shared_ptr<Option6IA> ia) {
+
+    // Create empty IA_NA option with IAID matching the request.
+    Option6IAPtr ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
+
     if (!subnet) {
         /// @todo For simpliclty and due to limitations of LeaseMgr we don't
         /// get the binding for the client for which we don't get subnet id.
@@ -1537,15 +1541,13 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
         /// The fact that we can't identify the subnet for the returning client
         /// doesn't really mean that the client has no binding. It is possible
         /// that due to server's reconfiguration the subnet has been removed
-        /// or modified since the client has got his lease. However, we think
-        /// it is fine to send NoBinding status code because this code is
-        /// supposed to be sent when server doesn't find the binding for
-        /// the client (which is the case here).
-        Option6IAPtr ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
-        // Insert status code NoBinding.
+        /// or modified since the client has got his lease. We may need to
+        /// rethink whether it is appropriate to send no binding if the subnet
+        // hasn't been found for the client.
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
                           "Sorry, no known leases for this duid/iaid."));
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_EXTEND_NA_UNKNOWN_SUBNET)
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                  DHCP6_EXTEND_NA_UNKNOWN_SUBNET)
             .arg(query->getName())
             .arg(duid->toText())
             .arg(ia->getIAID());
@@ -1559,9 +1561,6 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
 
     // Client extending a lease that we don't know about.
     if (!lease) {
-        // Create empty IA_NA option with IAID matching the request.
-        boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
-
         // Insert status code NoBinding to indicate that the lease does not
         // exist for this client.
         ia_rsp->addOption(createStatusCode(STATUS_NoBinding,
@@ -1578,63 +1577,84 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     // Keep the old data in case the callout tells us to skip update.
     Lease6 old_data = *lease;
 
-    // At this point, we have to make make some decisions with respect to the
-    // FQDN option that we have generated as a result of receiving client's
-    // FQDN. In particular, we have to get to know if the DNS update will be
-    // performed or not. It is possible that option is NULL, which is valid
-    // condition if client didn't request DNS updates and server didn't force
-    // the update.
-    bool do_fwd = false;
-    bool do_rev = false;
-    Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
-        Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
-    if (fqdn) {
-        if (fqdn->getFlag(Option6ClientFqdn::FLAG_S)) {
-            do_fwd = true;
-            do_rev = true;
-        } else if (!fqdn->getFlag(Option6ClientFqdn::FLAG_N)) {
-            do_rev = true;
+    bool invalid_addr = false;
+    // Check what address the client has sent. The address should match the one
+    // that we have associated with the IAID. If it doesn't match we have two
+    // options: allocate the address for the client, if the server's
+    // configuration allows to do so, or notify the client that his address is
+    // wrong. For now we will just notify the client that the address is wrong,
+    // but both solutions require that we check the contents of the IA_NA option
+    // sent by the client. Without this check we would extend the existing lease
+    // even if the address being carried in the IA_NA is different than the
+    // one we are extending.
+    Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<
+        Option6IAAddr>(ia->getOption(D6O_IAADDR));
+    if (iaaddr && (iaaddr->getAddress() != lease->addr_)) {
+        Option6IAAddrPtr zero_lft_addr(new Option6IAAddr(D6O_IAADDR,
+                                                         iaaddr->getAddress(),
+                                                         0, 0));
+        ia_rsp->addOption(zero_lft_addr);
+        // Mark that the client's notion of the address is invalid, so as
+        // we don't update the actual client's lease.
+        invalid_addr = true;
+
+    } else {
+
+        // At this point, we have to make make some decisions with respect
+        // to the FQDN option that we have generated as a result of receiving
+        // client's FQDN. In particular, we have to get to know if the DNS
+        // update will be performed or not. It is possible that option is NULL,
+        // which is valid condition if client didn't request DNS updates and
+        // server didn't force the update.
+        bool do_fwd = false;
+        bool do_rev = false;
+        Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
+            Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
+        if (fqdn) {
+            if (fqdn->getFlag(Option6ClientFqdn::FLAG_S)) {
+                do_fwd = true;
+                do_rev = true;
+            } else if (!fqdn->getFlag(Option6ClientFqdn::FLAG_N)) {
+                do_rev = true;
+            }
         }
+
+        std::string hostname;
+        if (do_fwd || do_rev) {
+            hostname = fqdn->getDomainName();
+        }
+
+        // If the new FQDN settings have changed for the lease, we need to
+        // delete any existing FQDN records for this lease.
+        if ((lease->hostname_ != hostname) || (lease->fqdn_fwd_ != do_fwd) ||
+            (lease->fqdn_rev_ != do_rev)) {
+            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
+                      DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE)
+                .arg(lease->toText())
+                .arg(hostname)
+                .arg(do_rev ? "true" : "false")
+                .arg(do_fwd ? "true" : "false");
+
+            createRemovalNameChangeRequest(lease);
+        }
+
+        lease->preferred_lft_ = subnet->getPreferred();
+        lease->valid_lft_ = subnet->getValid();
+        lease->t1_ = subnet->getT1();
+        lease->t2_ = subnet->getT2();
+        lease->cltt_ = time(NULL);
+        lease->hostname_ = hostname;
+        lease->fqdn_fwd_ = do_fwd;
+        lease->fqdn_rev_ = do_rev;
+
+        ia_rsp->setT1(subnet->getT1());
+        ia_rsp->setT2(subnet->getT2());
+
+        Option6IAAddrPtr addr(new Option6IAAddr(D6O_IAADDR, lease->addr_,
+                                                lease->preferred_lft_,
+                                                lease->valid_lft_));
+        ia_rsp->addOption(addr);
     }
-
-    std::string hostname;
-    if (do_fwd || do_rev) {
-        hostname = fqdn->getDomainName();
-    }
-
-    // If the new FQDN settings have changed for the lease, we need to
-    // delete any existing FQDN records for this lease.
-    if ((lease->hostname_ != hostname) || (lease->fqdn_fwd_ != do_fwd) ||
-        (lease->fqdn_rev_ != do_rev)) {
-        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
-                  DHCP6_DDNS_LEASE_RENEW_FQDN_CHANGE)
-            .arg(lease->toText())
-            .arg(hostname)
-            .arg(do_rev ? "true" : "false")
-            .arg(do_fwd ? "true" : "false");
-
-        createRemovalNameChangeRequest(lease);
-    }
-
-    lease->preferred_lft_ = subnet->getPreferred();
-    lease->valid_lft_ = subnet->getValid();
-    lease->t1_ = subnet->getT1();
-    lease->t2_ = subnet->getT2();
-    lease->cltt_ = time(NULL);
-    lease->hostname_ = hostname;
-    lease->fqdn_fwd_ = do_fwd;
-    lease->fqdn_rev_ = do_rev;
-
-    // Create empty IA_NA option with IAID matching the request.
-    boost::shared_ptr<Option6IA> ia_rsp(new Option6IA(D6O_IA_NA, ia->getIAID()));
-
-    ia_rsp->setT1(subnet->getT1());
-    ia_rsp->setT2(subnet->getT2());
-
-    boost::shared_ptr<Option6IAAddr> addr(new Option6IAAddr(D6O_IAADDR,
-                                          lease->addr_, lease->preferred_lft_,
-                                          lease->valid_lft_));
-    ia_rsp->addOption(addr);
 
     bool skip = false;
     // Get the callouts specific for the processed message and execute them.
@@ -1670,12 +1690,16 @@ Dhcpv6Srv::extendIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     }
 
     if (!skip) {
-        LeaseMgrFactory::instance().updateLease6(lease);
+        // If the client has sent an invalid address, it shouldn't affect the
+        // lease in our lease database.
+        if (!invalid_addr) {
+            LeaseMgrFactory::instance().updateLease6(lease);
+        }
     } else {
         // Copy back the original date to the lease. For MySQL it doesn't make
         // much sense, but for memfile, the Lease6Ptr points to the actual lease
-        // in memfile, so the actual update is performed when we manipulate fields
-        // of returned Lease6Ptr, the actual updateLease6() is no-op.
+        // in memfile, so the actual update is performed when we manipulate
+        // fields of returned Lease6Ptr, the actual updateLease6() is no-op.
         *lease = old_data;
     }
 
