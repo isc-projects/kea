@@ -1,4 +1,4 @@
-if BUILD_EXPERIMENTAL_RESOLVER
+if WANT_EXPERIMENTAL_RESOLVER
 # Build resolver only with --enable-experimental-resolver
 experimental_resolver = resolve
 endif
