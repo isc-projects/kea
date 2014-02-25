@@ -27,7 +27,7 @@ AC_PROG_CXX
 want_experimental_resolver=no
 AC_ARG_ENABLE(experimental-resolver,
   [AC_HELP_STRING([--enable-experimental-resolver],
-  [enable building of the experimental resolver [default=no]])],
+  [enable the experimental resolver [default=no]])],
   [want_experimental_resolver=$enableval])
 AM_CONDITIONAL([WANT_EXPERIMENTAL_RESOLVER], [test "$want_experimental_resolver" = "yes"])
 if test "$want_experimental_resolver" = "yes"; then
