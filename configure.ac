@@ -24,6 +24,32 @@ AC_CONFIG_MACRO_DIR([m4macros])
 # Checks for programs.
 AC_PROG_CXX
 
+want_dns=yes
+AC_ARG_ENABLE(dns,
+  [AC_HELP_STRING([--enable-dns],
+  [enable DNS components [default=yes]])],
+  [want_dns=$enableval])
+AM_CONDITIONAL([WANT_DNS], [test "$want_dns" = "yes"])
+if test "$want_dns" = "yes"; then
+   WANT_DNS=yes
+else
+   WANT_DNS=no
+fi
+AC_SUBST(WANT_DNS)
+
+want_dhcp=yes
+AC_ARG_ENABLE(dhcp,
+  [AC_HELP_STRING([--enable-dhcp],
+  [enable DHCP components [default=yes]])],
+  [want_dhcp=$enableval])
+AM_CONDITIONAL([WANT_DHCP], [test "$want_dhcp" = "yes"])
+if test "$want_dhcp" = "yes"; then
+   WANT_DHCP=yes
+else
+   WANT_DHCP=no
+fi
+AC_SUBST(WANT_DHCP)
+
 want_experimental_resolver=no
 AC_ARG_ENABLE(experimental-resolver,
   [AC_HELP_STRING([--enable-experimental-resolver],
@@ -36,6 +62,16 @@ else
    WANT_EXPERIMENTAL_RESOLVER=no
 fi
 AC_SUBST(WANT_EXPERIMENTAL_RESOLVER)
+
+# At least DNS or DHCP components must be enabled
+if test "$want_dns" != "yes" -a "$want_dhcp" != "yes"; then
+    AC_MSG_ERROR([At least one of DNS or DHCP components must be enabled to do a BIND 10 build.])
+fi
+
+# Experimental resolver requires DNS components to be enabled
+if test "$want_experimental_resolver" = "yes" -a "$want_dns" != "yes"; then
+    AC_MSG_ERROR([You must also enable DNS components if you want to enable the experimental resolver.])
+fi
 
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
@@ -1718,6 +1754,11 @@ END
 fi
 
 cat >> config.report << END
+
+Components:
+  DHCP: $want_dhcp
+  DNS: $want_dns
+  Experimental resolver: $want_experimental_resolver
 
 Features:
   $enable_features
