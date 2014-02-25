@@ -280,6 +280,18 @@ protected:
     /// lease is found, an IA_NA response is generated with an appropriate
     /// status code.
     ///
+    /// @todo The behavior of this function will need to be extended to support
+    /// draft-ietf-dhc-dhcpv6-stateful-issues. This draft modifies the behavior
+    /// described in RFC3315 with respect to Renew and Rebind processing. Key
+    /// changes are (version -05):
+    /// - Renewing and Rebinding client MAY request additional bindings by
+    /// putting an IA for all bindings it desires but has been unable to obtain.
+    /// Server MAY allocate addresses if it finds that they are appropriate for
+    /// the link that client is attached to.
+    /// - When receiving Rebind, if the server determines that the addresses are
+    /// not appropriate for the link the client is attached to, the server MAY
+    /// send the IA with address lifetimes set to 0 or discard the message.
+    ///
     /// @param subnet subnet the sender belongs to
     /// @param duid client's duid
     /// @param query client's message (Renew or Rebind)
