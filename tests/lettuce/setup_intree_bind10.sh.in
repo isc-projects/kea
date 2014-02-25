@@ -34,8 +34,8 @@ if test $SET_ENV_LIBRARY_PATH = yes; then
 	export @ENV_LIBRARY_PATH@
 fi
 
-BUILD_EXPERIMENTAL_RESOLVER=@BUILD_EXPERIMENTAL_RESOLVER@
-if test $BUILD_EXPERIMENTAL_RESOLVER = yes; then
+WANT_EXPERIMENTAL_RESOLVER=@WANT_EXPERIMENTAL_RESOLVER@
+if test $WANT_EXPERIMENTAL_RESOLVER = yes; then
     cp -f @srcdir@/features/resolver_basic.feature.disabled @srcdir@/features/resolver_basic.feature
 fi
 

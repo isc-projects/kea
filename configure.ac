@@ -24,18 +24,18 @@ AC_CONFIG_MACRO_DIR([m4macros])
 # Checks for programs.
 AC_PROG_CXX
 
-build_experimental_resolver=no
+want_experimental_resolver=no
 AC_ARG_ENABLE(experimental-resolver,
   [AC_HELP_STRING([--enable-experimental-resolver],
   [enable building of the experimental resolver [default=no]])],
-  [build_experimental_resolver=$enableval])
-AM_CONDITIONAL([BUILD_EXPERIMENTAL_RESOLVER], [test "$build_experimental_resolver" = "yes"])
-if test "$build_experimental_resolver" = "yes"; then
-   BUILD_EXPERIMENTAL_RESOLVER=yes
+  [want_experimental_resolver=$enableval])
+AM_CONDITIONAL([WANT_EXPERIMENTAL_RESOLVER], [test "$want_experimental_resolver" = "yes"])
+if test "$want_experimental_resolver" = "yes"; then
+   WANT_EXPERIMENTAL_RESOLVER=yes
 else
-   BUILD_EXPERIMENTAL_RESOLVER=no
+   WANT_EXPERIMENTAL_RESOLVER=no
 fi
-AC_SUBST(BUILD_EXPERIMENTAL_RESOLVER)
+AC_SUBST(WANT_EXPERIMENTAL_RESOLVER)
 
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
