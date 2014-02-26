@@ -1,4 +1,4 @@
-760.    [bug]       tmark
+760.    [bug]		tmark
 	When merging a map of configuration elements into another, elements that
 	are themselves maps will be merged. In particular, this corrects a defect
 	which caused a configuration commit error to occur when using bindctl to
