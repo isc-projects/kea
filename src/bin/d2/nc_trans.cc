@@ -107,7 +107,7 @@ NameChangeTransaction::operator()(DNSClient::Status status) {
 }
 
 std::string
-NameChangeTransaction::responseString() {
+NameChangeTransaction::responseString() const {
     std::ostringstream stream;
     switch (getDnsUpdateStatus()) {
         case DNSClient::SUCCESS:
@@ -139,6 +139,28 @@ NameChangeTransaction::responseString() {
 
     return (stream.str());
 }
+
+std::string
+NameChangeTransaction::transactionOutcomeString() const {
+    std::ostringstream stream;
+    stream << "Status: " << (getNcrStatus() == dhcp_ddns::ST_COMPLETED
+                             ? "Completed, " : "Failed, ")
+           << "Event: " << getEventLabel(getNextEvent()) << ", ";
+
+    if (ncr_->isForwardChange()) {
+        stream << " Forward change:" << (getForwardChangeCompleted()
+                                         ? " completed, " : " failed, ");
+    }
+
+    if (ncr_->isReverseChange()) {
+        stream << " Reverse change:" << (getReverseChangeCompleted()
+                                          ? " completed, " : " failed, ");
+    }
+
+    stream << " request: " << ncr_->toText();
+    return (stream.str());
+}
+
 
 void
 NameChangeTransaction::sendUpdate(const std::string& comment,

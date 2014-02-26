@@ -1081,11 +1081,12 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
                                         true, opt_fqdn->getDomainName(),
                                         iaaddr->getAddress().toText(),
                                         dhcid, 0, iaaddr->getValid()));
-        // Post the NCR to the D2ClientMgr.
-        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
 
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
                   DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST).arg(ncr->toText());
+
+        // Post the NCR to the D2ClientMgr.
+        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
 
         /// @todo Currently we create NCR with the first IPv6 address that
         /// is carried in one of the IA_NAs. In the future, the NCR API should
@@ -1142,11 +1143,12 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
                                     lease->hostname_,
                                     lease->addr_.toText(),
                                     dhcid, 0, lease->valid_lft_));
-    CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
               DHCP6_DDNS_CREATE_REMOVE_NAME_CHANGE_REQUEST).arg(ncr->toText());
 
+    // Post the NCR to the D2ClientMgr.
+    CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
 }
 
 OptionPtr

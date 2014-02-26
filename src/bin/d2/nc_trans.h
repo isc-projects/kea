@@ -409,7 +409,17 @@ protected:
     /// and RCODE (if status is DNSClient::SUCCESS)
     ///
     /// @return std::string containing constructed text
-    std::string responseString();
+    std::string responseString() const;
+
+    /// @brief Returns a string version of transaction outcome.
+    ///
+    /// Renders a string containing summarizes the outcome of the
+    /// transaction. The information includes the overall status,
+    /// the last event, whether not forward and reverse changes were
+    /// done, as well as the NCR serviced.
+    ///
+    /// @return std::string containing constructed text
+    std::string transactionOutcomeString() const;
 
 public:
     /// @brief Fetches the NameChangeRequest for this transaction.
