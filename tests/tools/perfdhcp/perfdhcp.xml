@@ -1,0 +1,872 @@
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
+               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
+	       [<!ENTITY mdash "&#8212;">]>
+<!--
+ - Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<refentry>
+    <refentryinfo>
+        <date>February 19, 2014</date>
+    </refentryinfo>
+
+    <refmeta>
+        <refentrytitle>perfdhcp</refentrytitle>
+        <manvolnum>1</manvolnum>
+        <refmiscinfo>Kea</refmiscinfo>
+    </refmeta>
+
+    <refnamediv>
+        <refname>perfdhcp</refname>
+        <refpurpose>DHCP benchmarking tool</refpurpose>
+    </refnamediv>
+
+    <docinfo>
+        <copyright>
+            <year>2014</year>
+            <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+        </copyright>
+    </docinfo>
+
+    <refsynopsisdiv>
+        <cmdsynopsis>
+            <command>perfdhcp</command>
+            <arg><option>-1</option></arg>
+            <arg><option>-4|-6</option></arg>
+            <arg><option>-a <replaceable class="parameter">aggressivity</replaceable></option></arg>
+            <arg><option>-b <replaceable class="parameter">base</replaceable></option></arg>
+            <arg><option>-B</option></arg>
+            <arg><option>-c</option></arg>
+            <arg><option>-d <replaceable class="parameter">drop-time</replaceable></option></arg>
+            <arg><option>-D <replaceable class="parameter">max-drop</replaceable></option></arg>
+            <arg><option>-e <replaceable class="parameter">lease-type</replaceable></option></arg>
+            <arg><option>-E <replaceable class="parameter">time-offset</replaceable></option></arg>
+            <arg><option>-f <replaceable class="parameter">renew-rate</replaceable></option></arg>
+            <arg><option>-F <replaceable class="parameter">release-rate</replaceable></option></arg>
+            <arg><option>-h</option></arg>
+            <arg><option>-i</option></arg>
+            <arg><option>-I <replaceable class="parameter">ip-offset</replaceable></option></arg>
+            <arg><option>-l <replaceable class="parameter">local-address|interface</replaceable></option></arg>
+            <arg><option>-L <replaceable class="parameter">local-port</replaceable></option></arg>
+            <arg><option>-n <replaceable class="parameter">num-request</replaceable></option></arg>
+            <arg><option>-O <replaceable class="parameter">random-offset</replaceable></option></arg>
+            <arg><option>-p <replaceable class="parameter">test-period</replaceable></option></arg>
+            <arg><option>-P <replaceable class="parameter">preload</replaceable></option></arg>
+            <arg><option>-r <replaceable class="parameter">rate</replaceable></option></arg>
+            <arg><option>-R <replaceable class="parameter">num-clients</replaceable></option></arg>
+            <arg><option>-s <replaceable class="parameter">seed</replaceable></option></arg>
+            <arg><option>-S <replaceable class="parameter">srvid-offset</replaceable></option></arg>
+            <arg><option>-t <replaceable class="parameter">report</replaceable></option></arg>
+            <arg><option>-T <replaceable class="parameter">template-file</replaceable></option></arg>
+            <arg><option>-v</option></arg>
+            <arg><option>-W <replaceable class="parameter">wrapped</replaceable></option></arg>
+            <arg><option>-x <replaceable class="parameter">diagnostic-selector</replaceable></option></arg>
+            <arg><option>-X <replaceable class="parameter">xid-offset</replaceable></option></arg>
+            <arg>server</arg>
+        </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1>
+        <title>DESCRIPTION</title>
+        <para>
+            <command>perfdhcp</command> is a DHCP benchmarking tool. It
+            provides a way of measuring the performance of DHCP servers by
+            generating large amounts of traffic from simulated multiple
+            clients. It is able to test both IPv4 and IPv6 servers, and
+            provides statistics concerning response times and the number of
+            requests that are dropped.
+        </para>
+
+        <para>
+            By default, tests are run using the full four-packet exchange
+            sequence (DORA for DHCPv4, SARR for DHCPv6).  An option is
+            provided to run tests using the initial two-packet exchange (DO
+            and SA) instead.  It is also possible to configure perfdhcp to
+            send DHCPv6 RENEW and RELEASE messages at a specified rate in
+            parallel with the DHCPv6 four-way exchanges.
+        </para>
+
+        <para>
+            When running a performance test, <command>perfdhcp</command>
+            will exchange packets with the server under test as fast as
+            possible unless the <option>-r</option> is given to limit the
+            request rate. The length of the test can be limited by setting
+            a threshold on any or all of the number of requests made by
+            <command>perfdhcp</command>, the elapsed time, or the number of
+            requests dropped by the server.
+        </para>
+    </refsect1>
+
+    <refsect1>
+        <title>TEMPLATES</title>
+        <para>
+            To allow the contents of packets sent to the server to be
+            customized, <command>perfdhcp</command> allows the specification
+            of template files that determine the contents of the packets.
+            For example, the customized packet may contain a DHCPv6 ORO to
+            request a set of options to be returned by the server, or it may
+            contain the Client FQDN option to request that server performs DNS
+            updates. This may be used to discover performance bottlenecks for
+            different server configurations (e.g. DDNS enabled or disabled).
+        </para>
+
+        <para>
+            Up to two template files can be specified on the command line,
+            each file representing the contents of a particular type of
+            packet,  the type being determined by the test being carried out.
+            For example, if testing DHCPv6:
+        </para>
+
+        <itemizedlist>
+            <listitem>
+                <para>
+                    With no template files specified on the command line,
+                    <command>perfdhcp</command> will generate both SOLICIT
+                    and REQUEST packets.
+                </para>
+            </listitem> <listitem>
+                <para>
+                    With one template file specified, that file
+                    will be used as the pattern for SOLICIT packets:
+                    <command>perfdhcp</command> will generate the REQUEST
+                    packets.
+                </para>
+            </listitem> <listitem>
+                <para>
+                    With two template files given on the command line, the
+                    first will be used as the pattern for SOLICIT packets,
+                    the second as the pattern for REQUEST packets.
+                </para>
+            </listitem>
+        </itemizedlist>
+
+        <para>
+            (Similar determination applies to DHCPv4's DISCOVER and REQUEST
+            packets.)
+        </para>
+
+        <para>
+            The template file holds the DHCP packet represented as a stream
+            of ASCII hexadecimal digits and it excludes any IP/UDP stack
+            headers. The template file must not contain any characters other
+            than hexadecimal digits and spaces. Spaces are discarded when the
+            template file is parsed (so in the file, '12B4' is the same as
+            '12 B4' which is the same as '1 2 B 4')
+        </para>
+
+        <para>
+            The template files should be used in conjunction with the command
+            line parameters which specify offsets of the data fields being
+            modified in outbound packets. For example, example, the <option>-E
+            <replaceable class="parameter">time-offset</replaceable></option>
+            switch specifies the offset of the DHCPv6 Elapsed Time option in
+            the packet template. If the offset is specified, perfdhcp will
+            inject the current elapsed time value into this field before
+            sending the packet to the server.
+        </para>
+
+        <para>
+            In many scenarios, <command>perfdhcp</command> needs to simulate
+            multiple clients (having unique client identifier). Since
+            packets for each client are generated from the same template
+            file, it is necessary to randomize the client identifier (or HW
+            address in DHCPv4) in the packet created from it. The <option>-O
+            <replaceable class="parameter">random-offset</replaceable></option>
+            option allows specification of the offset in the template where
+            randomization should be performed. It is important to note that
+            this offset points to the end (not the beginning) of the client
+            identifier (or HW address field). The number of bytes being
+            randomized depends on the number of simulated clients. If the
+            number of simulated clients is between 1 and 255, only one byte
+            (to which randomization offset points) will be randomized. If the
+            number of simulated clients is between 256 and 65535, two bytes
+            will be randomized. Note, that two last bytes of the client
+            identifier will be randomized in this case: the byte which
+            randomization offset parameter points to, and the one which
+            precedes it (random-offset - 1). If the number of simulated
+            clients exceeds 65535, three bytes will be randomized; and so on.
+        </para>
+
+        <para>
+            Templates may be currently used to generate packets being sent
+            to the server in 4-way exchanges, i.e. SOLICIT, REQUEST (DHCPv6)
+            and DISCOVER, REQUEST (DHCPv4). They cannot be used when RENEW
+            or RELEASE packets are being sent.
+        </para>
+
+    </refsect1>
+
+    <refsect1>
+        <title>OPTIONS</title>
+
+        <variablelist>
+
+            <varlistentry>
+                <term><option>-1</option></term>
+                <listitem>
+                    <para>
+                        Take the server-ID option from the first received
+                        message.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-4</option></term>
+                <listitem>
+                    <para>
+                        DHCPv4 operation; this is the default. It is
+                        incompatible with the <option>-6</option> option.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-6</option></term>
+                <listitem>
+                    <para>
+                        DHCPv6 operation. This is incompatible with the
+                        <option>-4</option> option.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-a <replaceable class="parameter">aggressivity</replaceable></option></term>
+                <listitem>
+                    <para>
+                        When the target sending rate is not yet reached,
+                        control how many exchanges are initiated before the
+                        next pause. This is a positive integer and defaults
+                        to 1.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-b <replaceable class="parameter">basetype=value</replaceable></option></term>
+                <listitem>
+                    <para>
+                        The base MAC or DUID used to simulate
+                        different clients. The <replaceable
+                        class="parameter">basetype</replaceable> may be "mac"
+                        or "duid". (The keyword "ether" may alternatively
+                        used for MAC.)  The <option>-b</option> option can be
+                        specified multiple times. The MAC address must consist
+                        of six octets separated by single (:) or double (::)
+                        colons, for example: mac=00:0c:01:02:03:04. The DUID
+                        value is a hexadecimal string: it must be at least six
+                        octets long and must not be longer than 64 bytes and
+                        the length must be less than 128 hexadecimal digits,
+                        for example: duid=0101010101010101010110111F14.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-d <replaceable class="parameter">drop-time</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Specify the time after which a request is treated
+                        as having been lost.  The value is given in seconds
+                        and may contain a fractional component.  The default
+                        is 1 second.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-e <replaceable class="parameter">lease-type</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Specifies the type of lease being requested from
+                        the server. It may be one of the following:
+                    </para>
+
+                    <variablelist>
+                        <varlistentry>
+                            <term>address-only</term>
+                            <listitem>
+                                <para>Only regular addresses (v4 or v6) will be requested.</para>
+                            </listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                            <term>prefix-only</term>
+                            <listitem>
+                                <para>Only IPv6 prefixes will be requested.</para>
+                            </listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                            <term>address-and-prefix</term>
+                            <listitem>
+                                <para>Both IPv6 addresses and prefixes will be requested.</para>
+                            </listitem>
+                        </varlistentry>
+                    </variablelist>
+
+                    <para>
+                        The <option>-e prefix-only</option> and <option>-e
+                        address-and-prefix</option> forms may not be used
+                        with the <option>-4</option> option.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-h</option></term>
+                <listitem>
+                    <para>
+                        Print help and exit.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-i</option></term>
+                <listitem>
+                    <para>
+                        Do only the initial part of the exchange:
+                        DISCOVER-OFFER if <option>-4</option> is selected,
+                        SOLICIT-ADVERTISE if <option>-6</option> is chosen.
+                    </para>
+
+                    <para>
+                        <option>-i</option> is incompatible with the following
+                        options: <option>-1</option>, <option>-d</option>,
+                        <option>-D</option>, <option>-E</option>,
+                        <option>-S</option>, <option>-I</option> and
+                        <option>-F</option>.  In addition, it cannot be
+                        used with multiple instances of <option>-O</option>,
+                        <option>-T</option> and <option>-X</option>.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-l <replaceable class="parameter">local-addr|interface</replaceable></option></term>
+                <listitem>
+                    <para>
+                        For DHCPv4 operation, specify the local
+                        hostname/address to use when communicating with
+                        the server.  By default, the interface address
+                        through which traffic would normally be routed to
+                        the server is used.  For DHCPv6 operation, specify
+                        the name of the network interface through which
+                        exchanges are initiated.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-L <replaceable class="parameter">local-port</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Specify the local port to use.  This must be zero
+                        or a positive integer up to 65535.  A value of 0
+                        (the default) allows <command>perfdhcp</command>
+                        to choose its own port.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-P <replaceable class="parameter">preload</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Initiate <replaceable
+                        class="parameter">preload</replaceable>
+                        exchanges back to back at startup.  <replaceable
+                        class="parameter">preload</replaceable> must be 0
+                        (the default) or a positive integer.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-r <replaceable class="parameter">rate</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Initiate <replaceable
+                        class="parameter">rate</replaceable> DORA/SARR (or
+                        if <option>-i</option> is given, DO/SA) exchanges
+                        per second.  A periodic report is generated showing
+                        the number of exchanges which were not completed,
+                        as well as the average response latency.  The program
+                        continues until interrupted, at which point a final
+                        report is generated.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-R <replaceable class="parameter">num-clients</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Specify how many different clients are used. With
+                        a value of 1 (the default), all requests seem
+                        to come from the same client. <replaceable
+                        class="parameter">num-clients</replaceable> must be
+                        a positive number.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-s <replaceable class="parameter">seed</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Specify the seed for randomization, making runs of
+                        <command>perfdhcp</command> repeatable. <replaceable
+                        class="parameter">seed</replaceable> is 0 or a positive
+                        integer. The value 0 means that a seed is not used;
+                        this is the default.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-T <replaceable class="parameter">template-file</replaceable></option></term>
+                <listitem>
+                    <para>
+                        The name of a file containing the template to use as a
+                        stream of hexadecimal digits.  This may be specified
+                        up to two times and controls the contents of the
+                        packets sent (see the "TEMPLATES" section above).
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-v</option></term>
+                <listitem>
+                    <para>
+                        Print the version of this program.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-w <replaceable class="parameter">wrapped</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Command to call with  a single parameter of "start"
+                        or "stop" at the beginning/end of the program.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-x <replaceable class="parameter">diagnostic-selector</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Include extended diagnostics
+                        in the output.  <replaceable
+                        class="parameter">diagnostic-selector</replaceable>
+                        is a string of single-keywords specifying the
+                        operations for which verbose output is desired.
+                        The selector key letters are:
+                    </para>
+
+                    <variablelist>
+                        <varlistentry>
+                            <term>a</term>
+                            <listitem>
+                                <para>Print the decoded command line arguments.</para>
+                            </listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                            <term>e</term>
+                            <listitem>
+                                <para>Print the exit reason.</para>
+                            </listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                            <term>i</term>
+                            <listitem>
+                                <para>Print rate processing details.</para>
+                            </listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                            <term>s</term>
+                            <listitem>
+                                <para>Print the first server-ID.</para>
+                            </listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                            <term>t</term>
+                            <listitem>
+                                <para>When finished, print timers of all successful exchanges.</para>
+                            </listitem>
+                        </varlistentry>
+
+                        <varlistentry>
+                            <term>T</term>
+                            <listitem>
+                                <para>When finished, print templates</para>
+                            </listitem>
+                        </varlistentry>
+                    </variablelist>
+                </listitem>
+
+            </varlistentry>
+
+        </variablelist>
+
+        <refsect2>
+            <title>DHCPv4-Only Options</title>
+            <para>
+                The following options only apply for DHCPv4 (i.e. when
+                <option>-4</option> is given).
+            </para>
+
+            <variablelist>
+                <varlistentry>
+                    <term><option>-B</option></term>
+                    <listitem>
+                        <para>
+                            Force broadcast handling.
+                        </para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+
+        <refsect2>
+            <title>DHCPv6-Only Options</title>
+            <para>
+                The following options only apply for DHCPv6 (i.e. when
+                <option>-6</option> is given).
+            </para>
+
+            <variablelist>
+
+                <varlistentry>
+                    <term><option>-c</option></term>
+                    <listitem>
+                        <para>
+                            Add a rapid commit option (exchanges will be
+                            SOLICIT-ADVERTISE).
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><option>-f <replaceable class="parameter">renew-rate</replaceable></option></term>
+                    <listitem>
+                        <para>
+                            Rate at which IPv6 RENEW requests are sent
+                            to a server. This value is only valid when
+                            used in conjunction with the exchange
+                            rate (given by <option>-r <replaceable
+                            class="parameter">rate</replaceable></option>).
+                            Furthermore the sum of this value and the
+                            release-rate (given by <option>-F <replaceable
+                            class="parameter">rate</replaceable></option>)
+                            must be equal to or less than the exchange rate.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><option>-F <replaceable class="parameter">release-rate</replaceable></option></term>
+                    <listitem>
+                        <para>
+                            Rate at which IPv6 RELEASE requests are
+                            sent to a server. This value is only valid
+                            when used in conjunction with the exchange
+                            rate (given by <option>-r <replaceable
+                            class="parameter">rate</replaceable></option>).
+                            Furthermore the sum of this value and the
+                            renew-rate (given by <option>-f <replaceable
+                            class="parameter">rate</replaceable></option>)
+                            must be equal to or less than the exchange rate.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+            </variablelist>
+        </refsect2>
+
+        <refsect2>
+            <title>Template-Related Options</title>
+            <para>
+                The following options may only be used in conjunction with
+                <option>-T</option> and control how <command>perfdhcp</command>
+                modifies the template.  The options may be specified multiple
+                times on the command line; each occurrence affects the
+                corresponding template file (see "TEMPLATES" above).
+            </para>
+
+            <varlistentry>
+                <term><option>-E <replaceable class="parameter">time-offset</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Offset of the (DHCPv4) secs field or (DHCPv6)
+                        elapsed-time option in the (second i.e. REQUEST)
+                        template and must be 0 or a positive integer:
+                        a value of 0 disables this.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-I <replaceable class="parameter">ip-offset</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Offset of the (DHCPv4) IP address in the requested-IP
+                        option / (DHCPv6) IA_NA option in the (second/request)
+                        template.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-O <replaceable class="parameter">random-offset</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Offset of the last octet to
+                        randomize in the template.  <replaceable
+                        class="parameter">random-offset</replaceable> must be
+                        an integer greater than 3.  The <option>-T</option>
+                        switch must be given to use this option.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-S <replaceable class="parameter">srvid-offset</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Offset of the server-ID option in the
+                        (second/request) template.  <replaceable
+                        class="parameter">srvid-offset</replaceable> must
+                        be a positive integer, and the switch can only be
+                        used when the template option (<option>-T</option>)
+                        is also given.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-X <replaceable class="parameter">xid-offset</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Offset of the transaction ID (xid) in the template.
+                        <replaceable class="parameter">xid-offset</replaceable>
+                        must be a positive integer, and the switch can only
+                        be used when the template option (<option>-T</option>)
+                        is also given.
+                    </para>
+                </listitem>
+            </varlistentry>
+        </refsect2>
+
+        <refsect2>
+            <title>Options Controlling a Test</title>
+            <para>
+                The following options may only be used in conjunction with
+                <option>-r</option> and control both the length of the test
+                and the frequency of reports.
+            </para>
+
+            <variablelist>
+
+                <varlistentry>
+                    <term><option>-D <replaceable class="parameter">max-drop</replaceable></option></term>
+                    <listitem>
+                        <para>
+                            Abort the test if more than <replaceable
+                            class="parameter">max-drop</replaceable>
+                            requests have been dropped.  Use <option>-D
+                            0</option> to abort if even a single
+                            request has been dropped.  If <replaceable
+                            class="parameter">max-drop</replaceable> includes
+                            the suffix '%', it specifies a maximum percentage
+                            of requests that may be dropped before abort.
+                            In this case, testing of the threshold begins after
+                            10 requests have been expected to be received.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><option>-n <replaceable class="parameter">num-requests</replaceable></option></term>
+                    <listitem>
+                        <para>
+                            Initiate <replaceable
+                            class="parameter">num-request</replaceable>
+                            transactions.  No report is generated until all
+                            transactions have been initiated/waited-for,
+                            after which a report is generated and the
+                            program terminates.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><option>-p <replaceable class="parameter">test-period</replaceable></option></term>
+                    <listitem>
+                        <para>
+                            Send requests for <replaceable
+                            class="parameter">test-period</replaceable>,
+                            which is specified in the same manner as
+                            <option>-d</option>.  This can be used as an
+                            alternative to <option>-n</option>, or both
+                            options can be given, in which case the testing
+                            is completed when either limit is reached.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+                <varlistentry>
+                    <term><option>-t <replaceable class="parameter">interval</replaceable></option></term>
+                    <listitem>
+                        <para>
+                            Sets the delay (in seconds) between two successive reports.
+                        </para>
+                    </listitem>
+                </varlistentry>
+
+            </variablelist>
+        </refsect2>
+
+        <refsect2>
+            <title>Arguments</title>
+
+            <variablelist>
+                <varlistentry>
+                    <term>server</term>
+                    <listitem>
+                        <para>
+                            Server to test, specified as an IP address.
+                            In the DHCPv6 case, the special name 'all' can be
+                            used to refer to All_DHCP_Relay_Agents_and_Servers
+                            (the multicast address FF02::1:2), or the special
+                            name 'servers' to refer to All_DHCP_Servers (the
+                            multicast address FF05::1:3).  The server is
+                            mandatory except where the <option>-l</option>
+                            option is given to specify an interface, in
+                            which case it defauls to 'all'.
+                        </para>
+                    </listitem>
+                </varlistentry>
+            </variablelist>
+        </refsect2>
+
+
+    </refsect1>
+
+    <refsect1>
+        <title>ERRORS</title>
+
+        <para>
+            <command>perfdhcp</command> can report the following errors in the packet exchange:
+        </para>
+
+        <variablelist>
+            <varlistentry>
+                <term>tooshort</term>
+                <listitem>
+                    <para>A message was received that was too short.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>orphans</term>
+                <listitem>
+                    <para>
+                        Received a message which doesn't match one sent
+                        to the server (i.e. it is a duplicate message, a
+                        message that has arrived after an excessive delay,
+                        or one that is just not recognized).
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>locallimit</term>
+                <listitem>
+                    <para>Reached local system limits when sending a message.</para>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+
+    </refsect1>
+
+    <refsect1>
+        <title>EXIT STATUS</title>
+
+        <para>
+            <command>perfdhcp</command> can exit with one of the following
+            status codes:
+        </para>
+
+        <variablelist>
+            <varlistentry>
+                <term>0</term> <listitem>
+                    <para>Success.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>1</term>
+                <listitem>
+                    <para>General error.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>2</term>
+                <listitem>
+                    <para>Error in command-line arguments.</para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term>3</term>
+                <listitem>
+                    <para>No general failures in operation, but one or more exchanges were unsuccessful.</para>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+
+    </refsect1>
+
+    <refsect1>
+        <title>SEE ALSO</title>
+        <para>
+            <citerefentry><refentrytitle>b10-dhcp4</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+            <citerefentry><refentrytitle>b10-dhcp6</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+            <citetitle>BIND 10 Guide</citetitle>,
+            <citetitle>DHCP Performance Guide</citetitle>.
+        </para>
+    </refsect1>
+
+<!--
+    <refsect1>
+        <title>HISTORY</title>
+        <para>
+            The <command>perfdhcp</command> tool was initially coded  by John DuBois, Francis Dupont and Marcin Siodelski of ISC.
+        </para>
+    </refsect1>
+-->
+
+</refentry>
