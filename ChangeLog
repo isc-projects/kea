@@ -1,3 +1,10 @@
+760.    [bug]       tmark
+	When merging a map of configuration elements into another, elements that
+	are themselves maps will be merged. In particular, this corrects a defect
+	which caused a configuration commit error to occur when using bindctl to
+	modify a single a parameter in dhcp-ddns portion of b10-dhcp4 configuration.
+	(Trac# 3339, git 3ae0d93d89f3277a566eeb045191a43b2dd9d9b1)
+
 759.	[func]		tomek
 	b10-dhcp4, b10-dhcp6: IP address of the relay agent can now be specified
 	for both IPv4 and IPv6 subnets. That information allows the server to
@@ -8,7 +15,7 @@
 758.    [bug]		tmark
 	b10-dhcp4 now correctly handles DHO_HOST_OPTION.  This corrects a bug
 	where the server would fail to recognize the option in the DHCP request
-	and then skip generating the appropriate DHCP-DDNS update request. 
+	and then skip generating the appropriate DHCP-DDNS update request.
 	(Trac #2426, git 985d66cba7665a71e17ef70c5d22c767abaad1b6)
 
 757.	[func]		tmark
