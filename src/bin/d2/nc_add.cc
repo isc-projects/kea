@@ -539,7 +539,7 @@ void
 NameAddTransaction::processAddOkHandler() {
     switch(getNextEvent()) {
     case UPDATE_OK_EVT:
-        LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL, DHCP_DDNS_ADD_SUCCEEDED)
+        LOG_INFO(dctl_logger, DHCP_DDNS_ADD_SUCCEEDED)
                   .arg(getNcr()->toText());
         setNcrStatus(dhcp_ddns::ST_COMPLETED);
         endModel();
@@ -556,9 +556,9 @@ NameAddTransaction::processAddFailedHandler() {
     switch(getNextEvent()) {
     case UPDATE_FAILED_EVT:
     case NO_MORE_SERVERS_EVT:
-        LOG_ERROR(dctl_logger, DHCP_DDNS_ADD_FAILED).arg(getNcr()->toText())
-        .arg(getEventLabel(getNextEvent()));
         setNcrStatus(dhcp_ddns::ST_FAILED);
+        LOG_ERROR(dctl_logger, DHCP_DDNS_ADD_FAILED)
+                  .arg(transactionOutcomeString());
         endModel();
         break;
     default:
