@@ -239,7 +239,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
         case 'b':
             check(base_.size() > 3, "-b<value> already specified,"
-                  " unexpected occurence of 5th -b<value>");
+                  " unexpected occurrence of 5th -b<value>");
             base_.push_back(optarg);
             decodeBase(base_.back());
             break;
@@ -255,7 +255,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case 'd':
             check(drop_time_set_ > 1,
                   "maximum number of drops already specified, "
-                  "unexpected 3rd occurence of -d<value>");
+                  "unexpected 3rd occurrence of -d<value>");
             try {
                 drop_time_[drop_time_set_] =
                     boost::lexical_cast<double>(optarg);
@@ -274,7 +274,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             percent_loc = drop_arg.find('%');
             check(max_pdrop_.size() > 1 || max_drop_.size() > 1,
                   "values of maximum drops: -D<value> already "
-                  "specified, unexpected 3rd occurence of -D,value>");
+                  "specified, unexpected 3rd occurrence of -D<value>");
             if ((percent_loc) != std::string::npos) {
                 try {
                     drop_percent =
@@ -349,7 +349,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             if (num_request_.size() >= 2) {
                 isc_throw(isc::InvalidParameter,
                           "value of maximum number of requests: -n<value> "
-                          "already specified, unexpected 3rd occurence"
+                          "already specified, unexpected 3rd occurrence"
                           " of -n<value>");
             }
             num_request_.push_back(num_req);
@@ -362,7 +362,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             } else {
                 isc_throw(isc::InvalidParameter,
                           "random offsets already specified,"
-                          " unexpected 3rd occurence of -O<value>");
+                          " unexpected 3rd occurrence of -O<value>");
             }
             check(offset_arg < 3, "value of random random-offset:"
                   " -O<value> must be greater than 3 ");
@@ -416,7 +416,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             } else {
                 isc_throw(isc::InvalidParameter,
                           "template files are already specified,"
-                          " unexpected 3rd -T<filename> occurence");
+                          " unexpected 3rd -T<filename> occurrence");
             }
             break;
 
@@ -442,7 +442,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             } else {
                 isc_throw(isc::InvalidParameter,
                           "transaction ids already specified,"
-                          " unexpected 3rd -X<value> occurence");
+                          " unexpected 3rd -X<value> occurrence");
             }
             xid_offset_.push_back(offset_arg);
             break;
@@ -821,7 +821,7 @@ CommandOptions::printCommandLine() const {
         if (ipversion_ == 4) {
             std::cout << "DISCOVER-OFFER only" << std::endl;
         } else {
-            std::cout << "SOLICIT-ADVERETISE only" << std::endl;
+            std::cout << "SOLICIT-ADVERTISE only" << std::endl;
         }
     }
     std::cout << "lease-type=" << getLeaseType().toText() << std::endl;
@@ -953,7 +953,7 @@ CommandOptions::usage() const {
         "    clients.  This can be specified multiple times, each instance is\n"
         "    in the <type>=<value> form, for instance:\n"
         "    (and default) mac=00:0c:01:02:03:04.\n"
-        "-d<drop-time>: Specify the time after which a requeqst is treated as\n"
+        "-d<drop-time>: Specify the time after which a request is treated as\n"
         "    having been lost.  The value is given in seconds and may contain a\n"
         "    fractional component.  The default is 1 second.\n"
         "-e<lease-type>: A type of lease being requested from the server. It\n"
