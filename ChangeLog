@@ -1,3 +1,7 @@
+761.	[doc]		stephen, jreed
+	Added "man" page for perfdhcp.
+	(Trac #2307, git ff2f538912c205fbdb1408ee613c09b90de53514)
+
 760.    [bug]		tmark
 	When merging a map of configuration elements into another, elements that
 	are themselves maps will be merged. In particular, this corrects a defect
