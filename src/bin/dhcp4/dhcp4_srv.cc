@@ -232,9 +232,9 @@ Dhcpv4Srv::run() {
             }
         }
 
-        // Assign this packet to one or more classes if needed. We need to do this
-	// before calling accept(), because getSubnet4() may need client class
-	// information.
+        // Assign this packet to one or more classes if needed. We need to do
+        // this before calling accept(), because getSubnet4() may need client
+        // class information.
         classifyPacket(query);
 
         // Check whether the message should be further processed or discarded.
