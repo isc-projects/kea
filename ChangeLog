@@ -1,3 +1,8 @@
+765.	[bug]		tomek
+	b10-dhcp4: Fixed a minor bug in eRouter1.0 class processing. The server
+	no longer sets giaddr field.
+	(Trac #3353, git 23c22e9b1141c699f361d45c309e737dfecf6f3f)
+
 764.	[bug]		tomek
 	b10-dhcp4: Fixed a bug caused client classification to not work
 	properly.
