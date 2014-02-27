@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -55,10 +55,11 @@ public:
     /// It will also simulate an exception-based failure of sendUpdate, if
     /// the simulate_send_exception_ flag is true.
     ///
-    /// @param use_tsig_ Parameter is unused, but present in the base class
-    /// method.
+    /// @param comment Parameter is unused, but present in base class method
+    /// @param use_tsig Parameter is unused, but present in base class method.
     ///
-    virtual void sendUpdate(bool /* use_tsig_ = false */) {
+    virtual void sendUpdate(const std::string& /* comment */,
+                            bool /* use_tsig = false */) {
         if (simulate_send_exception_) {
             // Make the flag a one-shot by resetting it.
             simulate_send_exception_ = false;

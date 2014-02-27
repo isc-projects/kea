@@ -114,6 +114,16 @@ ControlledDhcpv6Srv::dhcp6ConfigHandler(ConstElementPtr new_config) {
         return (answer);
     }
 
+    // Server will start DDNS communications if its enabled.
+    try {
+        server_->startD2();
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "error starting DHCP_DDNS client "
+                " after server reconfiguration: " << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
     // Configuration may change active interfaces. Therefore, we have to reopen
     // sockets according to new configuration. This operation is not exception
     // safe and we really don't want to emit exceptions to the callback caller.
@@ -212,6 +222,10 @@ void ControlledDhcpv6Srv::establishSession() {
     try {
         // Pull the full configuration out from the session.
         configureDhcp6Server(*this, config_session_->getFullConfig());
+
+        // Server will start DDNS communications if its enabled.
+        server_->startD2();
+
         // Configuration may disable or enable interfaces so we have to
         // reopen sockets according to new configuration.
         openActiveSockets(getPort());
