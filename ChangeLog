@@ -1,3 +1,8 @@
+762.	[func]		tmark
+	If configured to do so, b10-dhcp6 will now create DHCP-DDNS update
+	requests and send them to b10-dhcp-ddns for processing.
+	(Trac# 3329, git 239956696465a13196a2b6bc0f3a61aed21a5de8)
+
 761.	[doc]		stephen, jreed
 	Added "man" page for perfdhcp.
 	(Trac #2307, git ff2f538912c205fbdb1408ee613c09b90de53514)
