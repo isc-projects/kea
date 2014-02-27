@@ -232,6 +232,11 @@ Dhcpv4Srv::run() {
             }
         }
 
+        // Assign this packet to one or more classes if needed. We need to do this
+	// before calling accept(), because getSubnet4() may need client class
+	// information.
+        classifyPacket(query);
+
         // Check whether the message should be further processed or discarded.
         // There is no need to log anything here. This function logs by itself.
         if (!accept(query)) {
@@ -273,9 +278,6 @@ Dhcpv4Srv::run() {
 
             callout_handle->getArgument("query4", query);
         }
-
-        // Assign this packet to one or more classes if needed
-        classifyPacket(query);
 
         try {
             switch (query->getType()) {
