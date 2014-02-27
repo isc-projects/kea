@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -20,6 +20,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <string>
 
@@ -131,7 +132,7 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
 
         // If the lengths are identical and the names match we're done.
         if (req_len == dom_len) {
-            if (fqdn == domain_name) {
+            if (boost::iequals(fqdn, domain_name)) {
                 // exact match, done
                 domain = map_pair.second;
                 return (true);
@@ -143,7 +144,7 @@ DdnsDomainListMgr::matchDomain(const std::string& fqdn, DdnsDomainPtr& domain) {
             // prevents "onetwo.net" from matching "two.net".
             size_t offset = req_len - dom_len;
             if ((fqdn[offset - 1] == '.')  &&
-               (fqdn.compare(offset, std::string::npos, domain_name) == 0)) {
+               (boost::iequals(fqdn.substr(offset), domain_name))) {
                 // Fqdn contains domain name, keep it if its better than
                 // any we have matched so far.
                 if (dom_len > match_len) {

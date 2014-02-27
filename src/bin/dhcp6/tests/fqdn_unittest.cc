@@ -43,6 +43,9 @@ namespace {
 /// @brief A test fixture class for testing DHCPv6 Client FQDN Option handling.
 class FqdnDhcpv6SrvTest : public Dhcpv6SrvTest {
 public:
+    /// Pointer to Dhcpv6Srv that is used in tests
+    boost::scoped_ptr<NakedDhcpv6Srv> srv_;
+
     // Reference to D2ClientMgr singleton
     D2ClientMgr& d2_mgr_;
 
@@ -55,7 +58,8 @@ public:
 
     /// @brief Constructor
     FqdnDhcpv6SrvTest()
-        : Dhcpv6SrvTest(), d2_mgr_(CfgMgr::instance().getD2ClientMgr()) {
+        : Dhcpv6SrvTest(), srv_(new NakedDhcpv6Srv(0)),
+          d2_mgr_(CfgMgr::instance().getD2ClientMgr()) {
         // generateClientId assigns DUID to duid_.
         generateClientId();
         lease_.reset(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
@@ -100,6 +104,7 @@ public:
                                   (mask & REPLACE_CLIENT_NAME),
                                   "myhost", "example.com")));
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
+        ASSERT_NO_THROW(srv_->startD2());
     }
 
     /// @brief Construct the DHCPv6 Client FQDN option using flags and
@@ -174,12 +179,9 @@ public:
     /// server id.
     ///
     /// @param msg_type A type of the message to be created.
-    /// @param srv An object representing the DHCPv6 server, which
-    /// is used to generate the client identifier.
     ///
     /// @return An object representing the created message.
-    Pkt6Ptr generateMessageWithIds(const uint8_t msg_type,
-                                   NakedDhcpv6Srv& srv) {
+    Pkt6Ptr generateMessageWithIds(const uint8_t msg_type) {
         Pkt6Ptr pkt = Pkt6Ptr(new Pkt6(msg_type, 1234));
         // Generate client-id.
         OptionPtr opt_clientid = generateClientId();
@@ -187,7 +189,7 @@ public:
 
         if (msg_type != DHCPV6_SOLICIT) {
             // Generate server-id.
-            pkt->addOption(srv.getServerID());
+            pkt->addOption(srv_->getServerID());
         }
 
         return (pkt);
@@ -286,7 +288,7 @@ public:
                   const Option6ClientFqdn::DomainNameType in_domain_type,
                   const uint8_t exp_flags,
                   const std::string& exp_domain_name) {
-        NakedDhcpv6Srv srv(0);
+
         Pkt6Ptr question = generateMessage(msg_type,
                                            in_flags,
                                            in_domain_name,
@@ -296,7 +298,7 @@ public:
 
         Pkt6Ptr answer(new Pkt6(msg_type == DHCPV6_SOLICIT ? DHCPV6_ADVERTISE :
                                 DHCPV6_REPLY, question->getTransid()));
-        ASSERT_NO_THROW(srv.processClientFqdn(question, answer));
+        ASSERT_NO_THROW(srv_->processClientFqdn(question, answer));
         Option6ClientFqdnPtr answ_fqdn = boost::dynamic_pointer_cast<
             Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
         ASSERT_TRUE(answ_fqdn);
@@ -330,7 +332,6 @@ public:
     ///
     /// @param msg_type A type of the client's message.
     /// @param hostname A domain name in the client's FQDN.
-    /// @param srv A server object, used to process the message.
     /// @param include_oro A boolean value which indicates whether the ORO
     /// option should be included in the client's message (if true) or not
     /// (if false). In the former case, the function will expect that server
@@ -339,11 +340,10 @@ public:
     void testProcessMessage(const uint8_t msg_type,
                             const std::string& hostname,
                             const std::string& exp_hostname,
-                            NakedDhcpv6Srv& srv,
                             const bool include_oro = true) {
         // Create a message of a specified type, add server id and
         // FQDN option.
-        OptionPtr srvid = srv.getServerID();
+        OptionPtr srvid = srv_->getServerID();
         // Set the appropriate FQDN type. It must be partial if hostname is
         // empty.
         Option6ClientFqdn::DomainNameType fqdn_type = (hostname.empty() ?
@@ -356,18 +356,18 @@ public:
         // functions to generate response.
         Pkt6Ptr reply;
         if (msg_type == DHCPV6_SOLICIT) {
-            ASSERT_NO_THROW(reply = srv.processSolicit(req));
+            ASSERT_NO_THROW(reply = srv_->processSolicit(req));
 
         } else if (msg_type == DHCPV6_REQUEST) {
-            ASSERT_NO_THROW(reply = srv.processRequest(req));
+            ASSERT_NO_THROW(reply = srv_->processRequest(req));
 
         } else if (msg_type == DHCPV6_RENEW) {
-            ASSERT_NO_THROW(reply = srv.processRequest(req));
+            ASSERT_NO_THROW(reply = srv_->processRequest(req));
 
         } else if (msg_type == DHCPV6_RELEASE) {
             // For Release no lease will be acquired so we have to leave
             // function here.
-            ASSERT_NO_THROW(reply = srv.processRelease(req));
+            ASSERT_NO_THROW(reply = srv_->processRelease(req));
             return;
         } else {
             // We are not interested in testing other message types.
@@ -413,7 +413,6 @@ public:
     /// queue and checks that it holds valid parameters. The NameChangeRequest
     /// is removed from the queue.
     ///
-    /// @param srv A server object holding a queue of NameChangeRequests.
     /// @param type An expected type of the NameChangeRequest (Add or Remove).
     /// @param reverse An expected setting of the reverse update flag.
     /// @param forward An expected setting of the forward udpate flag.
@@ -431,23 +430,27 @@ public:
     /// NameChangeRequest expires.
     /// @param len A valid lifetime of the lease associated with the
     /// NameChangeRequest.
-    void verifyNameChangeRequest(NakedDhcpv6Srv& srv,
-                                 const isc::dhcp_ddns::NameChangeType type,
+    void verifyNameChangeRequest(const isc::dhcp_ddns::NameChangeType type,
                                  const bool reverse, const bool forward,
                                  const std::string& addr,
                                  const std::string& dhcid,
                                  const uint16_t expires,
                                  const uint16_t len) {
-        NameChangeRequest ncr = srv.name_change_reqs_.front();
-        EXPECT_EQ(type, ncr.getChangeType());
-        EXPECT_EQ(forward, ncr.isForwardChange());
-        EXPECT_EQ(reverse, ncr.isReverseChange());
-        EXPECT_EQ(addr, ncr.getIpAddress());
-        EXPECT_EQ(dhcid, ncr.getDhcid().toStr());
-        EXPECT_EQ(expires, ncr.getLeaseExpiresOn());
-        EXPECT_EQ(len, ncr.getLeaseLength());
-        EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr.getStatus());
-        srv.name_change_reqs_.pop();
+        NameChangeRequestPtr ncr;
+        ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
+        ASSERT_TRUE(ncr);
+
+        EXPECT_EQ(type, ncr->getChangeType());
+        EXPECT_EQ(forward, ncr->isForwardChange());
+        EXPECT_EQ(reverse, ncr->isReverseChange());
+        EXPECT_EQ(addr, ncr->getIpAddress());
+        EXPECT_EQ(dhcid, ncr->getDhcid().toStr());
+        EXPECT_EQ(expires, ncr->getLeaseExpiresOn());
+        EXPECT_EQ(len, ncr->getLeaseLength());
+        EXPECT_EQ(isc::dhcp_ddns::ST_NEW, ncr->getStatus());
+
+        // Process the message off the queue
+        ASSERT_NO_THROW(d2_mgr_.runReadyIO());
     }
 
     // Holds a lease used by a test.
@@ -504,11 +507,9 @@ TEST_F(FqdnDhcpv6SrvTest, clientAAAAUpdateNotAllowed) {
 // Test that exception is thrown if supplied NULL answer packet when
 // creating NameChangeRequests.
 TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAnswer) {
-    NakedDhcpv6Srv srv(0);
-
     Pkt6Ptr answer;
 
-    EXPECT_THROW(srv.createNameChangeRequests(answer),
+    EXPECT_THROW(srv_->createNameChangeRequests(answer),
                  isc::Unexpected);
 
 }
@@ -516,39 +517,33 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAnswer) {
 // Test that exception is thrown if supplied answer from the server
 // contains no DUID when creating NameChangeRequests.
 TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoDUID) {
-    NakedDhcpv6Srv srv(0);
-
     Pkt6Ptr answer = Pkt6Ptr(new Pkt6(DHCPV6_REPLY, 1234));
     Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
                                                  "myhost.example.com",
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    EXPECT_THROW(srv.createNameChangeRequests(answer), isc::Unexpected);
+    EXPECT_THROW(srv_->createNameChangeRequests(answer), isc::Unexpected);
 
 }
 
 // Test no NameChangeRequests if Client FQDN is not added to the server's
 // response.
 TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoFQDN) {
-    NakedDhcpv6Srv srv(0);
-
     // Create Reply message with Client Id and Server id.
-    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY, srv);
+    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
-    ASSERT_NO_THROW(srv.createNameChangeRequests(answer));
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer));
 
     // There should be no new NameChangeRequests.
-    EXPECT_TRUE(srv.name_change_reqs_.empty());
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
 
 // Test that NameChangeRequests are not generated if an answer message
 // contains no addresses.
 TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAddr) {
-    NakedDhcpv6Srv srv(0);
-
     // Create Reply message with Client Id and Server id.
-    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY, srv);
+    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
     // Add Client FQDN option.
     Option6ClientFqdnPtr fqdn = createClientFqdn(Option6ClientFqdn::FLAG_S,
@@ -556,20 +551,18 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequestsNoAddr) {
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    ASSERT_NO_THROW(srv.createNameChangeRequests(answer));
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer));
 
     // We didn't add any IAs, so there should be no NameChangeRequests in th
     // queue.
-    ASSERT_TRUE(srv.name_change_reqs_.empty());
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
 
 // Test that exactly one NameChangeRequest is created as a result of processing
 // the answer message which holds 3 IAs and when FQDN is specified.
 TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
-    NakedDhcpv6Srv srv(0);
-
     // Create Reply message with Client Id and Server id.
-    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY, srv);
+    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
     // Create three IAs, each having different address.
     addIA(1234, IOAddress("2001:db8:1::1"), answer);
@@ -585,11 +578,11 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
     answer->addOption(fqdn);
 
     // Create NameChangeRequest for the first allocated address.
-    ASSERT_NO_THROW(srv.createNameChangeRequests(answer));
-    ASSERT_EQ(1, srv.name_change_reqs_.size());
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer));
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
     // Verify that NameChangeRequest is correct.
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -600,13 +593,11 @@ TEST_F(FqdnDhcpv6SrvTest, createNameChangeRequests) {
 // Checks that NameChangeRequests to add entries are not
 // created when ddns updates are disabled.
 TEST_F(FqdnDhcpv6SrvTest, noAddRequestsWhenDisabled) {
-    NakedDhcpv6Srv srv(0);
-
     // Disable DDNS udpates.
     disableD2();
 
     // Create Reply message with Client Id and Server id.
-    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY, srv);
+    Pkt6Ptr answer = generateMessageWithIds(DHCPV6_REPLY);
 
     // Create three IAs, each having different address.
     addIA(1234, IOAddress("2001:db8:1::1"), answer);
@@ -619,17 +610,14 @@ TEST_F(FqdnDhcpv6SrvTest, noAddRequestsWhenDisabled) {
                                                  Option6ClientFqdn::FULL);
     answer->addOption(fqdn);
 
-    // Create NameChangeRequest for the first allocated address.
-    ASSERT_NO_THROW(srv.createNameChangeRequests(answer));
-    ASSERT_TRUE(srv.name_change_reqs_.empty());
+    // An attempt to send a NCR would throw.
+    ASSERT_NO_THROW(srv_->createNameChangeRequests(answer));
 }
 
 
 // Test creation of the NameChangeRequest to remove both forward and reverse
 // mapping for the given lease.
 TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
-    NakedDhcpv6Srv srv(0);
-
     lease_->fqdn_fwd_ = true;
     lease_->fqdn_rev_ = true;
     // Part of the domain name is in upper case, to test that it gets converted
@@ -637,11 +625,10 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
     // as if we typed domain-name in lower case.
     lease_->hostname_ = "MYHOST.example.com.";
 
-    ASSERT_NO_THROW(srv.createRemovalNameChangeRequest(lease_));
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
 
-    ASSERT_EQ(1, srv.name_change_reqs_.size());
-
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, true,
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -652,8 +639,6 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestFwdRev) {
 // Checks that NameChangeRequests to remove entries are not created
 // when ddns updates are disabled.
 TEST_F(FqdnDhcpv6SrvTest, noRemovalsWhenDisabled) {
-    NakedDhcpv6Srv srv(0);
-
     // Disable DDNS updates.
     disableD2();
 
@@ -664,26 +649,23 @@ TEST_F(FqdnDhcpv6SrvTest, noRemovalsWhenDisabled) {
     // as if we typed domain-name in lower case.
     lease_->hostname_ = "MYHOST.example.com.";
 
-    ASSERT_NO_THROW(srv.createRemovalNameChangeRequest(lease_));
-
-    ASSERT_TRUE(srv.name_change_reqs_.empty());
+    // When DDNS is disabled an attempt to send a request will throw.
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
 }
 
 
 // Test creation of the NameChangeRequest to remove reverse mapping for the
 // given lease.
 TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
-    NakedDhcpv6Srv srv(0);
-
     lease_->fqdn_fwd_ = false;
     lease_->fqdn_rev_ = true;
     lease_->hostname_ = "myhost.example.com.";
 
-    ASSERT_NO_THROW(srv.createRemovalNameChangeRequest(lease_));
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
 
-    ASSERT_EQ(1, srv.name_change_reqs_.size());
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
 
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, false,
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, false,
                             "2001:db8:1::1",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -694,29 +676,25 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestRev) {
 // Test that NameChangeRequest to remove DNS records is not generated when
 // neither forward nor reverse DNS update has been performed for a lease.
 TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoUpdate) {
-    NakedDhcpv6Srv srv(0);
-
     lease_->fqdn_fwd_ = false;
     lease_->fqdn_rev_ = false;
 
-    ASSERT_NO_THROW(srv.createRemovalNameChangeRequest(lease_));
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
 
-    EXPECT_TRUE(srv.name_change_reqs_.empty());
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
 }
 
 // Test that NameChangeRequest is not generated if the hostname hasn't been
 // specified for a lease for which forward and reverse mapping has been set.
 TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoHostname) {
-    NakedDhcpv6Srv srv(0);
-
     lease_->fqdn_fwd_ = true;
     lease_->fqdn_rev_ = true;
     lease_->hostname_ = "";
 
-    ASSERT_NO_THROW(srv.createRemovalNameChangeRequest(lease_));
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
 
-    EXPECT_TRUE(srv.name_change_reqs_.empty());
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
 }
 
@@ -724,28 +702,24 @@ TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestNoHostname) {
 // been specified for a lease for which forward and reverse mapping has been
 // set.
 TEST_F(FqdnDhcpv6SrvTest, createRemovalNameChangeRequestWrongHostname) {
-    NakedDhcpv6Srv srv(0);
-
     lease_->fqdn_fwd_ = true;
     lease_->fqdn_rev_ = true;
     lease_->hostname_ = "myhost..example.com.";
 
-    ASSERT_NO_THROW(srv.createRemovalNameChangeRequest(lease_));
+    ASSERT_NO_THROW(srv_->createRemovalNameChangeRequest(lease_));
 
-    EXPECT_TRUE(srv.name_change_reqs_.empty());
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
 }
 
 // Test that Advertise message generated in a response to the Solicit will
 // not result in generation if the NameChangeRequests.
 TEST_F(FqdnDhcpv6SrvTest, processSolicit) {
-    NakedDhcpv6Srv srv(0);
-
     // Create a Solicit message with FQDN option and generate server's
     // response using processSolicit function.
     testProcessMessage(DHCPV6_SOLICIT, "myhost.example.com",
-                       "myhost.example.com.", srv);
-    EXPECT_TRUE(srv.name_change_reqs_.empty());
+                       "myhost.example.com.");
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 }
 
 // Test that client may send two requests, each carrying FQDN option with
@@ -753,16 +727,14 @@ TEST_F(FqdnDhcpv6SrvTest, processSolicit) {
 // request but modify the DNS entries for the lease according to the contents
 // of the FQDN sent in the second request.
 TEST_F(FqdnDhcpv6SrvTest, processTwoRequests) {
-    NakedDhcpv6Srv srv(0);
-
     // Create a Request message with FQDN option and generate server's
     // response using processRequest function. This will result in the
     // creation of a new lease and the appropriate NameChangeRequest
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
-                       "myhost.example.com.", srv);
-    ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                       "myhost.example.com.");
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -776,14 +748,14 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequests) {
     // should be added. Therefore, we expect two NameChangeRequests. One to
     // remove the existing entries, one to add new entries.
     testProcessMessage(DHCPV6_REQUEST, "otherhost.example.com",
-                       "otherhost.example.com.", srv);
-    ASSERT_EQ(2, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                       "otherhost.example.com.");
+    ASSERT_EQ(2, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 4000);
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
@@ -797,16 +769,14 @@ TEST_F(FqdnDhcpv6SrvTest, processTwoRequests) {
 // DNS if the Request was sent instead of Soicit. The code should differentiate
 // behavior depending whether Solicit or Request is sent.
 TEST_F(FqdnDhcpv6SrvTest, processRequestSolicit) {
-    NakedDhcpv6Srv srv(0);
-
     // Create a Request message with FQDN option and generate server's
     // response using processRequest function. This will result in the
     // creation of a new lease and the appropriate NameChangeRequest
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
-                       "myhost.example.com.", srv);
-    ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                       "myhost.example.com.");
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -817,8 +787,8 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestSolicit) {
     // The NameChangeRequest should only be generated when a client sends
     // Request or Renew.
     testProcessMessage(DHCPV6_SOLICIT, "otherhost.example.com",
-                       "otherhost.example.com.", srv);
-    ASSERT_TRUE(srv.name_change_reqs_.empty());
+                       "otherhost.example.com.");
+    ASSERT_EQ(0, d2_mgr_.getQueueSize());
 
 }
 
@@ -829,16 +799,14 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestSolicit) {
 // DNS entry added previously when Request was processed, another one to
 // add a new entry for the FQDN held in the Renew.
 TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
-    NakedDhcpv6Srv srv(0);
-
     // Create a Request message with FQDN option and generate server's
     // response using processRequest function. This will result in the
     // creation of a new lease and the appropriate NameChangeRequest
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
-                       "myhost.example.com.", srv);
-    ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                       "myhost.example.com.");
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -852,14 +820,14 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
     // should be added. Therefore, we expect two NameChangeRequests. One to
     // remove the existing entries, one to add new entries.
     testProcessMessage(DHCPV6_RENEW, "otherhost.example.com",
-                       "otherhost.example.com.", srv);
-    ASSERT_EQ(2, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                       "otherhost.example.com.");
+    ASSERT_EQ(2, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
                             0, 4000);
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD265FC"
                             "EA97F93623019B2E0D14E5323D5A",
@@ -868,16 +836,14 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRenew) {
 }
 
 TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
-    NakedDhcpv6Srv srv(0);
-
     // Create a Request message with FQDN option and generate server's
     // response using processRequest function. This will result in the
     // creation of a new lease and the appropriate NameChangeRequest
     // to add both reverse and forward mapping to DNS.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
-                       "myhost.example.com.", srv);
-    ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                       "myhost.example.com.");
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -888,9 +854,9 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
     // also removed. Therefore, we expect that single NameChangeRequest to
     // remove DNS entries is generated.
     testProcessMessage(DHCPV6_RELEASE, "otherhost.example.com",
-                       "otherhost.example.com.", srv);
-    ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, true,
+                       "otherhost.example.com.");
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -901,15 +867,13 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestRelease) {
 // Checks that the server include DHCPv6 Client FQDN option in its
 // response even when client doesn't request this option using ORO.
 TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
-    NakedDhcpv6Srv srv(0);
-
     // The last parameter disables use of the ORO to request FQDN option
     // In this case, we expect that the FQDN option will not be included
     // in the server's response. The testProcessMessage will check that.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
-                       "myhost.example.com.", srv, false);
-    ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                       "myhost.example.com.", false);
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -919,13 +883,10 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
 // Checks that FQDN is generated from an ip address, when client sends an empty
 // FQDN.
 TEST_F(FqdnDhcpv6SrvTest, processRequestEmptyFqdn) {
-    NakedDhcpv6Srv srv(0);
-
     testProcessMessage(DHCPV6_REQUEST, "",
-                       "myhost-2001-db8-1-1--dead-beef.example.com.",
-                       srv, false);
-    ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+                       "myhost-2001-db8-1-1--dead-beef.example.com.", false);
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201C905E54BE12DE6AF92ADE72752B9F362"
                             "13B5A8BC9D217548CD739B4CF31AFB1B",
@@ -951,12 +912,11 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
     CfgMgr::instance().addSubnet6(subnet_);
 
     // Allocate a lease.
-    NakedDhcpv6Srv srv(0);
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
-                       "myhost.example.com.", srv);
+                       "myhost.example.com.");
     // Test that the appropriate NameChangeRequest has been generated.
-    ASSERT_EQ(1, srv.name_change_reqs_.size());
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",
@@ -986,18 +946,18 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
     // lease database, it is guaranteed that the allocation engine will
     // reuse this lease.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com.",
-                       "myhost.example.com.", srv);
-    ASSERT_EQ(2, srv.name_change_reqs_.size());
+                       "myhost.example.com.");
+    ASSERT_EQ(2, d2_mgr_.getQueueSize());
     // The first name change request generated, should remove a DNS
     // mapping for an expired lease.
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_REMOVE, true, true,
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_REMOVE, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201D422AA463306223D269B6CB7AFE7AAD2"
                             "65FCEA97F93623019B2E0D14E5323D5A",
                             0, 5);
     // The second name change request should add a DNS mapping for
     // a new lease.
-    verifyNameChangeRequest(srv, isc::dhcp_ddns::CHG_ADD, true, true,
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
                             "000201415AA33D1187D148275136FA30300478"
                             "FAAAA3EBD29826B5C907B2C9268A6F52",

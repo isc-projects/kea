@@ -344,10 +344,10 @@ due to invalid data contained in the NameChangeRequest. The request will be
 aborted.  This is most likely a configuration issue.
 
 % DHCP_DDNS_ADD_SUCCEEDED DHCP_DDNS successfully added the DNS mapping addition for this request: %1
-This is a debug message issued after DHCP_DDNS has submitted DNS mapping
-additions which were received and accepted by an appropriate DNS server.
+This is an informational message issued after DHCP_DDNS has submitted DNS
+mapping additions which were received and accepted by an appropriate DNS server.
 
-% DHCP_DDNS_ADD_FAILED DHCP_DDNS failed attempting to make DNS mapping additions for this request: %1, event: %2
+% DHCP_DDNS_ADD_FAILED DHCP_DDNS Transaction outcome: %1
 This is an error message issued after DHCP_DDNS attempts to submit DNS mapping
 entry additions have failed.  The precise reason for the failure should be
 documented in preceding log entries.
@@ -430,17 +430,17 @@ while DHCP_DDNS was removing a reverse address mapping.  The request will be
 aborted.  This is most likely a programmatic issue and should be reported.
 
 % DHCP_DDNS_REMOVE_SUCCEEDED DHCP_DDNS successfully removed the DNS mapping addition for this request: %1
-This is a debug message issued after DHCP_DDNS has submitted DNS mapping
-removals which were received and accepted by an appropriate DNS server.
+This is an informational message issued after DHCP_DDNS has submitted DNS
+mapping removals which were received and accepted by an appropriate DNS server.
 
-% DHCP_DDNS_REMOVE_FAILED DHCP_DDNS failed attempting to make DNS mapping removals for this request: %1, event: %2
+% DHCP_DDNS_REMOVE_FAILED DHCP_DDNS Transaction outcome: %1
 This is an error message issued after DHCP_DDNS attempts to submit DNS mapping
 entry removals have failed.  The precise reason for the failure should be
 documented in preceding log entries.
 
 % DHCP_DDNS_STARTING_TRANSACTION Transaction Key: %1
 
-% DHCP_DDNS_UPDATE_REQUEST_SENT for transaction key: %1 to server: %2
+% DHCP_DDNS_UPDATE_REQUEST_SENT %1 for transaction key: %2 to server: %3
 This is a debug message issued when DHCP_DDNS sends a DNS request to a DNS
 server.
 

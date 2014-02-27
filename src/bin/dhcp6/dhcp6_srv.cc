@@ -494,9 +494,6 @@ bool Dhcpv6Srv::run() {
                 LOG_ERROR(dhcp6_logger, DHCP6_PACKET_SEND_FAIL)
                     .arg(e.what());
             }
-
-            // Send NameChangeRequests to the b10-dhcp-ddns module.
-            sendNameChangeRequests();
         }
     }
 
@@ -1077,18 +1074,19 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
         // Get the IP address from the lease. Also, use the S flag to determine
         // if forward change should be performed. This flag will always be
         // set if server has taken responsibility for the forward update.
-        NameChangeRequest ncr(isc::dhcp_ddns::CHG_ADD,
-                              opt_fqdn->getFlag(Option6ClientFqdn::FLAG_S),
-                              true, opt_fqdn->getDomainName(),
-                              iaaddr->getAddress().toText(),
-                              dhcid, 0, iaaddr->getValid());
-        // Add the request to the queue. This queue will be read elsewhere in
-        // the code and all requests from this queue will be sent to the
-        // D2 module.
-        name_change_reqs_.push(ncr);
+        NameChangeRequestPtr ncr;
+        ncr.reset(new NameChangeRequest(isc::dhcp_ddns::CHG_ADD,
+                                        opt_fqdn->getFlag(Option6ClientFqdn::
+                                                          FLAG_S),
+                                        true, opt_fqdn->getDomainName(),
+                                        iaaddr->getAddress().toText(),
+                                        dhcid, 0, iaaddr->getValid()));
 
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
-                  DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST).arg(ncr.toText());
+                  DHCP6_DDNS_CREATE_ADD_NAME_CHANGE_REQUEST).arg(ncr->toText());
+
+        // Post the NCR to the D2ClientMgr.
+        CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
 
         /// @todo Currently we create NCR with the first IPv6 address that
         /// is carried in one of the IA_NAs. In the future, the NCR API should
@@ -1138,30 +1136,20 @@ Dhcpv6Srv::createRemovalNameChangeRequest(const Lease6Ptr& lease) {
 
     }
     isc::dhcp_ddns::D2Dhcid dhcid(*lease->duid_, hostname_wire);
-
     // Create a NameChangeRequest to remove the entry.
-    NameChangeRequest ncr(isc::dhcp_ddns::CHG_REMOVE,
-                          lease->fqdn_fwd_, lease->fqdn_rev_,
-                          lease->hostname_,
-                          lease->addr_.toText(),
-                          dhcid, 0, lease->valid_lft_);
-    name_change_reqs_.push(ncr);
+    NameChangeRequestPtr ncr;
+    ncr.reset(new NameChangeRequest(isc::dhcp_ddns::CHG_REMOVE,
+                                    lease->fqdn_fwd_, lease->fqdn_rev_,
+                                    lease->hostname_,
+                                    lease->addr_.toText(),
+                                    dhcid, 0, lease->valid_lft_));
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL,
-              DHCP6_DDNS_CREATE_REMOVE_NAME_CHANGE_REQUEST).arg(ncr.toText());
+              DHCP6_DDNS_CREATE_REMOVE_NAME_CHANGE_REQUEST).arg(ncr->toText());
 
+    // Post the NCR to the D2ClientMgr.
+    CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
 }
-
-void
-Dhcpv6Srv::sendNameChangeRequests() {
-    while (!name_change_reqs_.empty()) {
-        // @todo Once next NameChangeRequest is picked from the queue
-        // we should send it to the b10-dhcp_ddns module. Currently we
-        // just drop it.
-        name_change_reqs_.pop();
-    }
-}
-
 
 OptionPtr
 Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
@@ -2453,6 +2441,30 @@ Dhcpv6Srv::generateFqdn(const Pkt6Ptr& answer) {
             .arg(addr.toText())
             .arg(ex.what());
     }
+}
+
+void
+Dhcpv6Srv::startD2() {
+    D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    if (d2_mgr.ddnsEnabled()) {
+        // Updates are enabled, so lets start the sender, passing in
+        // our error handler.
+        // This may throw so wherever this is called needs to ready.
+        d2_mgr.startSender(boost::bind(&Dhcpv6Srv::d2ClientErrorHandler,
+                                       this, _1, _2));
+    }
+}
+
+void
+Dhcpv6Srv::d2ClientErrorHandler(const
+                                dhcp_ddns::NameChangeSender::Result result,
+                                dhcp_ddns::NameChangeRequestPtr& ncr) {
+    LOG_ERROR(dhcp6_logger, DHCP6_DDNS_REQUEST_SEND_FAILED).
+              arg(result).arg((ncr ? ncr->toText() : " NULL "));
+    // We cannot communicate with b10-dhcp-ddns, suspend futher updates.
+    /// @todo We may wish to revisit this, but for now we will simpy turn
+    /// them off.
+    CfgMgr::instance().getD2ClientMgr().suspendUpdates();
 }
 
 };

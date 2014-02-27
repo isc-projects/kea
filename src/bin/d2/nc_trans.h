@@ -207,12 +207,14 @@ protected:
     /// currently selected server.  Since the send is asynchronous, the method
     /// posts NOP_EVT as the next event and then returns.
     ///
+    /// @param comment text to include in log detail
     /// @param use_tsig True if the update should be include a TSIG key. This
     /// is not yet implemented.
     ///
     /// If an exception occurs it will be logged and and the transaction will
     /// be failed.
-    virtual void sendUpdate(bool use_tsig = false);
+    virtual void sendUpdate(const std::string& comment = "",
+                            bool use_tsig = false);
 
     /// @brief Adds events defined by NameChangeTransaction to the event set.
     ///
@@ -400,6 +402,24 @@ protected:
     /// @throw NameChangeTransactionError if RData cannot be constructed or
     /// the RData cannot be added to the given RRset.
     void addPtrRdata(dns::RRsetPtr& rrset);
+
+    /// @brief Returns a string version of the current response status and rcode
+    ///
+    /// Renders a string containing the a text label current DNS update status
+    /// and RCODE (if status is DNSClient::SUCCESS)
+    ///
+    /// @return std::string containing constructed text
+    std::string responseString() const;
+
+    /// @brief Returns a string version of transaction outcome.
+    ///
+    /// Renders a string containing summarizes the outcome of the
+    /// transaction. The information includes the overall status,
+    /// the last event, whether not forward and reverse changes were
+    /// done, as well as the NCR serviced.
+    ///
+    /// @return std::string containing constructed text
+    std::string transactionOutcomeString() const;
 
 public:
     /// @brief Fetches the NameChangeRequest for this transaction.
