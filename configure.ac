@@ -924,6 +924,10 @@ elif test "${mysql_config}" != "no" ; then
 fi
 
 if test "$MYSQL_CONFIG" != "" ; then
+    if test "$want_dhcp" != "yes"; then
+        AC_MSG_ERROR([--with-dhcp-mysql should not be used when DHCP components are disabled])
+    fi
+
     if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
         AC_MSG_ERROR([--with-dhcp-mysql should point to a mysql_config program])
     fi
