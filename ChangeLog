@@ -1,3 +1,8 @@
+764.	[bug]		tomek
+	b10-dhcp4: Fixed a bug caused client classification to not work
+	properly.
+	(Trac #3343, git 1801400ac874380e7a565d373b4bae96a49e21f7)
+
 763.	[func]		tmark
 	b10-dhcp-ddns may now be configured to disable DNS updates in
 	in a given direction by simply not defining any domains for that
