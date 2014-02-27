@@ -1008,6 +1008,10 @@ TEST_F(D2CfgMgrTest, fullConfig) {
         EXPECT_EQ(3, count);
     }
 
+    // Test directional update flags.
+    EXPECT_TRUE(cfg_mgr_->forwardUpdatesEnabled());
+    EXPECT_TRUE(cfg_mgr_->reverseUpdatesEnabled());
+
     // Verify that parsing the exact same configuration a second time
     // does not cause a duplicate value errors. 
     answer_ = cfg_mgr_->parseConfig(config_set_);
@@ -1060,6 +1064,10 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
     // Verify that the D2 context can be retrieved and is not null.
     D2CfgContextPtr context;
     ASSERT_NO_THROW(context = cfg_mgr_->getD2CfgContext());
+
+    // Test directional update flags.
+    EXPECT_TRUE(cfg_mgr_->forwardUpdatesEnabled());
+    EXPECT_FALSE(cfg_mgr_->reverseUpdatesEnabled());
 
     DdnsDomainPtr match;
     // Verify that an exact match works.
@@ -1231,6 +1239,10 @@ TEST_F(D2CfgMgrTest, matchReverse) {
     // Verify that the D2 context can be retrieved and is not null.
     D2CfgContextPtr context;
     ASSERT_NO_THROW(context = cfg_mgr_->getD2CfgContext());
+
+    // Test directional update flags.
+    EXPECT_FALSE(cfg_mgr_->forwardUpdatesEnabled());
+    EXPECT_TRUE(cfg_mgr_->reverseUpdatesEnabled());
 
     DdnsDomainPtr match;
 
