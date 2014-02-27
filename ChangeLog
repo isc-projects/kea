@@ -1,3 +1,8 @@
+7XX.	[bug]		tomek
+	b10-dhcp4: Fixed a bug caused client classification to not work
+	properly.
+	(Trac #3343, git abcd)
+
 761.	[doc]		stephen, jreed
 	Added "man" page for perfdhcp.
 	(Trac #2307, git ff2f538912c205fbdb1408ee613c09b90de53514)
