@@ -1865,7 +1865,7 @@ bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp
         }
     }
 
-    if (query->inClass(DOCSIS3_CLASS_EROUTER)) {
+    if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER)) {
 
         // Do not set TFTP server address for eRouter devices.
         rsp->setSiaddr(IOAddress("0.0.0.0"));
