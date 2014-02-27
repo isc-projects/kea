@@ -26,8 +26,8 @@ AC_PROG_CXX
 
 want_dns=yes
 AC_ARG_ENABLE(dns,
-  [AC_HELP_STRING([--enable-dns],
-  [enable DNS components [default=yes]])],
+  [AC_HELP_STRING([--disable-dns],
+  [disable DNS components])],
   [want_dns=$enableval])
 AM_CONDITIONAL([WANT_DNS], [test "$want_dns" = "yes"])
 if test "$want_dns" = "yes"; then
@@ -39,8 +39,8 @@ AC_SUBST(WANT_DNS)
 
 want_dhcp=yes
 AC_ARG_ENABLE(dhcp,
-  [AC_HELP_STRING([--enable-dhcp],
-  [enable DHCP components [default=yes]])],
+  [AC_HELP_STRING([--disable-dhcp],
+  [disable DHCP components])],
   [want_dhcp=$enableval])
 AM_CONDITIONAL([WANT_DHCP], [test "$want_dhcp" = "yes"])
 if test "$want_dhcp" = "yes"; then
