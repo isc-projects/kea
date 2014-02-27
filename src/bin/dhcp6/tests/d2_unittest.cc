@@ -95,6 +95,8 @@ Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
     std::ostringstream config;
     config <<
         "{ \"interfaces\": [ \"*\" ],"
+        "\"hooks-libraries\": [ ],"
+        "\"preferred-lifetime\": 3000,"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
         "\"subnet6\": [ { "
