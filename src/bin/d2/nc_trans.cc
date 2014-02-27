@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,8 @@
 #include <d2/d2_log.h>
 #include <d2/nc_trans.h>
 #include <dns/rdata.h>
+
+#include <sstream>
 
 namespace isc {
 namespace d2 {
@@ -94,18 +96,75 @@ NameChangeTransaction::operator()(DNSClient::Status status) {
     // set to indicate IO completed.
     // runModel is exception safe so we are good to call it here.
     // It won't exit until we hit the next IO wait or the state model ends.
+    setDnsUpdateStatus(status);
     LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
               DHCP_DDNS_UPDATE_RESPONSE_RECEIVED)
               .arg(getTransactionKey().toStr())
               .arg(current_server_->toText())
-              .arg(status);
+              .arg(responseString());
 
-    setDnsUpdateStatus(status);
     runModel(IO_COMPLETED_EVT);
 }
 
+std::string
+NameChangeTransaction::responseString() const {
+    std::ostringstream stream;
+    switch (getDnsUpdateStatus()) {
+        case DNSClient::SUCCESS:
+            stream << "SUCCESS, rcode: ";
+            if (getDnsUpdateResponse()) {
+                 stream << getDnsUpdateResponse()->getRcode().toText();
+            } else {
+                stream << " update response is NULL";
+            }
+            break;
+        case DNSClient::TIMEOUT:
+            stream << "TIMEOUT";
+            break;
+        case DNSClient::IO_STOPPED:
+            stream << "IO_STOPPED";
+            break;
+        case DNSClient::INVALID_RESPONSE:
+            stream << "INVALID_RESPONSE";
+            break;
+        case DNSClient::OTHER:
+            stream << "OTHER";
+            break;
+        default:
+            stream << "UKNOWNN("
+                   << static_cast<int>(getDnsUpdateStatus()) << ")";
+            break;
+
+    }
+
+    return (stream.str());
+}
+
+std::string
+NameChangeTransaction::transactionOutcomeString() const {
+    std::ostringstream stream;
+    stream << "Status: " << (getNcrStatus() == dhcp_ddns::ST_COMPLETED
+                             ? "Completed, " : "Failed, ")
+           << "Event: " << getEventLabel(getNextEvent()) << ", ";
+
+    if (ncr_->isForwardChange()) {
+        stream << " Forward change:" << (getForwardChangeCompleted()
+                                         ? " completed, " : " failed, ");
+    }
+
+    if (ncr_->isReverseChange()) {
+        stream << " Reverse change:" << (getReverseChangeCompleted()
+                                          ? " completed, " : " failed, ");
+    }
+
+    stream << " request: " << ncr_->toText();
+    return (stream.str());
+}
+
+
 void
-NameChangeTransaction::sendUpdate(bool /* use_tsig_ */) {
+NameChangeTransaction::sendUpdate(const std::string& comment,
+                                  bool /* use_tsig_ */) {
     try {
         ++update_attempts_;
         // @todo add logic to add/replace TSIG key info in request if
@@ -122,6 +181,7 @@ NameChangeTransaction::sendUpdate(bool /* use_tsig_ */) {
         postNextEvent(NOP_EVT);
         LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL,
                   DHCP_DDNS_UPDATE_REQUEST_SENT)
+                  .arg(comment)
                   .arg(getTransactionKey().toStr())
                   .arg(current_server_->toText());
     } catch (const std::exception& ex) {
