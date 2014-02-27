@@ -1,3 +1,12 @@
+763.	[func]		tmark
+	b10-dhcp-ddns may now be configured to disable DNS updates in
+	in a given direction by simply not defining any domains for that
+	direction in its configuration.  This allows it to be configured to
+	support either forward DNS or reverse DNS only.  Prior to this if
+	a request was received that could not be matched to servers in a
+	given direction it was failed immediately.
+	(Trac #3341, git 01f26bce1d9faaddb8be59802f73891ea065b200)
+
 762.	[func]		tmark
 	If configured to do so, b10-dhcp6 will now create DHCP-DDNS update
 	requests and send them to b10-dhcp-ddns for processing.
