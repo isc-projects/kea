@@ -1055,7 +1055,7 @@ AC_ARG_WITH(shared-memory,
     AC_HELP_STRING([--with-shared-memory],
     [Build with Boost shared memory support; for large scale authoritative DNS servers]),
     [use_shared_memory=$withval])
-if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes"; then
+if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes" -a "$want_dns" = "yes"; then
     AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it by rerunning this script with --without-shared-memory; using a different compiler or a different version of Boost may also help.])
 fi
 AM_CONDITIONAL([USE_SHARED_MEMORY], [test x$use_shared_memory = xyes])
@@ -1064,7 +1064,7 @@ if test "x$use_shared_memory" = "xyes"; then
 fi
 AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
 
-if test "$BOOST_OFFSET_PTR_OLD" = "yes" -a "$use_shared_memory" = "yes" ; then
+if test "$BOOST_OFFSET_PTR_OLD" = "yes" -a "$use_shared_memory" = "yes" -a "$want_dns" = "yes"; then
     AC_MSG_ERROR([You're trying to compile against boost older than 1.48 with
 shared memory. Older versions of boost have a bug which causes segfaults in
 offset_ptr implementation when compiled by GCC with optimisations enabled.
