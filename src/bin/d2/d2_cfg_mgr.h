@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -125,6 +125,26 @@ public:
     D2CfgContextPtr getD2CfgContext() {
         return (boost::dynamic_pointer_cast<D2CfgContext>(getContext()));
     }
+
+    /// @brief Returns whether not forward updates are enabled.
+    ///
+    /// This method currently uses the presence or absence of Foward DDNS
+    /// Domains to determine if forward updates are enabled or disabled.
+    /// @todo This could be expanded to include the check of a configurable
+    /// boolean value.
+    ///
+    /// @return true if forward updates are enabled, false otherwise.
+    bool forwardUpdatesEnabled();
+
+    /// @brief Returns whether not reverse updates are enabled.
+    ///
+    /// This method currently uses the presence or absence of Reverse DDNS
+    /// Domains to determine if reverse updates are enabled or disabled.
+    /// @todo This could be expanded to include the check of a configurable
+    /// boolean value.
+    ///
+    /// @return true if reverse updates are enabled, false otherwise.
+    bool reverseUpdatesEnabled();
 
     /// @brief Matches a given FQDN to a forward domain.
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -70,6 +70,18 @@ D2CfgMgr::D2CfgMgr() : DCfgMgrBase(DCfgContextBasePtr(new D2CfgContext())) {
 }
 
 D2CfgMgr::~D2CfgMgr() {
+}
+
+bool
+D2CfgMgr::forwardUpdatesEnabled() {
+    // Forward updates are not enabled if no forward servers are defined.
+    return (getD2CfgContext()->getForwardMgr()->size() > 0);
+}
+
+bool
+D2CfgMgr::reverseUpdatesEnabled() {
+    // Reverse updates are not enabled if no revese servers are defined.
+    return (getD2CfgContext()->getReverseMgr()->size() > 0);
 }
 
 bool

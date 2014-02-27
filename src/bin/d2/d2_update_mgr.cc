@@ -132,32 +132,59 @@ D2UpdateMgr::makeTransaction(dhcp_ddns::NameChangeRequestPtr& next_ncr) {
             << key.toStr());
     }
 
+    int direction_count = 0;
     // If forward change is enabled, match to forward servers.
     DdnsDomainPtr forward_domain;
     if (next_ncr->isForwardChange()) {
-        bool matched = cfg_mgr_->matchForward(next_ncr->getFqdn(),
-                                             forward_domain);
-        // Could not find a match for forward DNS server. Log it and get out.
-        // This has the net affect of dropping the request on the floor.
-        if (!matched) {
-            LOG_ERROR(dctl_logger, DHCP_DDNS_NO_FWD_MATCH_ERROR)
-                      .arg(next_ncr->getFqdn());
-            return;
+        if (!cfg_mgr_->forwardUpdatesEnabled()) {
+            next_ncr->setForwardChange(false);
+            LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL_DATA,
+                      DHCP_DDNS_FWD_REQUEST_IGNORED).arg(next_ncr->toText());
+        } else {
+            bool matched = cfg_mgr_->matchForward(next_ncr->getFqdn(),
+                                                  forward_domain);
+            // Could not find a match for forward DNS server. Log it and get
+            // out. This has the net affect of dropping the request on the
+            // floor.
+            if (!matched) {
+                LOG_ERROR(dctl_logger, DHCP_DDNS_NO_FWD_MATCH_ERROR)
+                          .arg(next_ncr->toText());
+                return;
+            }
+
+            ++direction_count;
         }
     }
 
     // If reverse change is enabled, match to reverse servers.
     DdnsDomainPtr reverse_domain;
     if (next_ncr->isReverseChange()) {
-        bool matched = cfg_mgr_->matchReverse(next_ncr->getIpAddress(),
-                                              reverse_domain);
-        // Could not find a match for reverse DNS server. Log it and get out.
-        // This has the net affect of dropping the request on the floor.
-        if (!matched) {
-            LOG_ERROR(dctl_logger, DHCP_DDNS_NO_REV_MATCH_ERROR)
-                      .arg(next_ncr->getIpAddress());
-            return;
+        if (!cfg_mgr_->reverseUpdatesEnabled()) {
+            next_ncr->setReverseChange(false);
+            LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL_DATA,
+                      DHCP_DDNS_REV_REQUEST_IGNORED).arg(next_ncr->toText());
+        } else {
+            bool matched = cfg_mgr_->matchReverse(next_ncr->getIpAddress(),
+                                                  reverse_domain);
+            // Could not find a match for reverse DNS server. Log it and get
+            // out. This has the net affect of dropping the request on the
+            // floor.
+            if (!matched) {
+                LOG_ERROR(dctl_logger, DHCP_DDNS_NO_REV_MATCH_ERROR)
+                          .arg(next_ncr->toText());
+                return;
+            }
+
+            ++direction_count;
         }
+    }
+
+    // If there is nothing to actually do, then the request falls on the floor.
+    // Should we log this?
+    if (!direction_count) {
+        LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL_DATA,
+                  DHCP_DDNS_REQUEST_DROPPED).arg(next_ncr->toText());
+        return;
     }
 
     // We matched to the required servers, so construct the transaction.
