@@ -6563,12 +6563,12 @@ Dhcp6/renew-timer	1000	integer	(default)
         configuration will be available. It will look similar to this:
 <screen>
 &gt; <userinput>config show DhcpDdns</userinput>
-DhcpDdns/interface  "eth0"  string
-DhcpDdns/ip_address "127.0.0.1" string
-DhcpDdns/port   53001   integer
+DhcpDdns/interface  "eth0"  string  (default)
+DhcpDdns/ip_address "127.0.0.1" string  (default)
+DhcpDdns/port   53001   integer (default)
 DhcpDdns/tsig_keys  []  list    (default)
-DhcpDdns/forward_ddns/ddns_domains/ list
-DhcpDdns/reverse_ddns/ddns_domains/ list
+DhcpDdns/forward_ddns/ddns_domains  []  list    (default)
+DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
 </screen>
       <para>
       (While displayed, the parameter "interface" is not implemented, and
@@ -6725,12 +6725,12 @@ DhcpDdns/forward_ddns/ddns_domains  [] list  (default)
           forward DDNS Domain for each zone you wish to service.  It may very
           well be that some or all of your zones are maintained by the same
           servers. You will still need one DDNS Domain per zone. Remember that
-          matching a request to the appropriate server(s) is done by zone and 
+          matching a request to the appropriate server(s) is done by zone and
           a DDNS Domain only defines a single zone.
           </para>
           <para>
           The section describes how to add Forward DDNS Domains. Repeat these
-          steps for each Forward DDNS Domain desired.  Each Forward DDNS Domain 
+          steps for each Forward DDNS Domain desired.  Each Forward DDNS Domain
           has the following parameters:
           <itemizedlist>
             <listitem>
@@ -6999,11 +6999,182 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
 
       </section> <!-- "d2-reverse-ddns-config" -->
 
-      <section id="Exmaple Configuration">
+      <section id="d2-exmaple-config">
         <title>Example DHCP-DDNS Server Configuration</title>
-        <para>COMING SOON</para>
-      </section>
+        <para>
+        This section provides an example DHCP-DDNS server configuration based
+        on a small example network.  Let's suppose our example network has
+        three domains, each with their own subnet.
 
+        <table>
+          <title>Our example network</title>
+          <tgroup cols='4' align='left'>
+          <colspec colname='domain'/>
+          <colspec colname='subnet'/>
+          <colspec colname='fservers'/>
+          <colspec colname='rservers'/>
+          <thead>
+            <row>
+              <entry>Domain</entry>
+              <entry>Subnet</entry>
+              <entry>Forward DNS Servers</entry>
+              <entry>Reverse DNS Servers</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>four.example.com</entry>
+              <entry>192.0.2.0/24</entry>
+              <entry>172.16.1.5, 172.16.2.5</entry>
+              <entry>172.16.1.5, 172.16.2.5</entry>
+            </row>
+            <row>
+              <entry>six.example.com</entry>
+              <entry>2001:db8:1::/64</entry>
+              <entry>3001:1::50</entry>
+              <entry>3001:1::51</entry>
+            </row>
+            <row>
+              <entry>example.com</entry>
+              <entry>192.0.0.0/16</entry>
+              <entry>172.16.2.5</entry>
+              <entry>172.16.2.5</entry>
+            </row>
+          </tbody>
+          </tgroup>
+        </table>
+        </para>
+        <para>
+        You will need to construct three forward DDNS Domains:
+        <table>
+          <title>Forward DDNS Domains Needed</title>
+          <tgroup cols='3' align='left'>
+          <colspec colname='num'/>
+          <colspec colname='name'/>
+          <colspec colname='servers'/>
+          <thead>
+            <row>
+              <entry>#</entry>
+              <entry>DDNS Domain Name</entry>
+              <entry>DNS Servers</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>1.</entry>
+              <entry>four.example.com.</entry>
+              <entry>172.16.1.5, 172.16.2.5</entry>
+            </row>
+            <row>
+              <entry>2.</entry>
+              <entry>six.example.com.</entry>
+              <entry>3001:1::50</entry>
+            </row>
+            <row>
+              <entry>3.</entry>
+              <entry>example.com.</entry>
+              <entry>172.16.2.5</entry>
+            </row>
+          </tbody>
+          </tgroup>
+        </table>
+        As discussed earlier, FQDN to domain matching is based on the longest
+        match. The FQDN, "myhost.four.example.com.", will match the first
+        domain while "admin.example.com." will match the third domain. The
+        FQDN, "other.example.net." , would fail to match any domain and would
+        be rejected.
+        </para>
+        <para>
+        The following series of commands in bindctl will create our Forward
+        DDNS Domains.
+<screen>
+<userinput>
+> config add DhcpDdns/forward_ddns/ddns_domains
+> config set DhcpDdns/forward_ddns/ddns_domains[0]/name "four.example.com."
+> config add DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers
+> config set DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/ip_address "172.16.1.5"
+> config add DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers
+> config set DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[1]/ip_address "172.16.2.5"
+>
+> config add DhcpDdns/forward_ddns/ddns_domains
+> config set DhcpDdns/forward_ddns/ddns_domains[1]/name "six.example.com."
+> config add DhcpDdns/forward_ddns/ddns_domains[1]/dns_servers
+> config set DhcpDdns/forward_ddns/ddns_domains[1]/dns_servers[0]/ip_address "3001:1::50:"
+>
+> config add DhcpDdns/forward_ddns/ddns_domains
+> config set DhcpDdns/forward_ddns/ddns_domains[2]/name "example.com."
+> config add DhcpDdns/forward_ddns/ddns_domains[2]/dns_servers
+> config set DhcpDdns/forward_ddns/ddns_domains[2]/dns_servers[0]/ip_address "172.16.2.5"
+>
+> config commit
+</userinput>
+</screen>
+        </para>
+        <para>
+        Similarly, you will need to construct three reverse DDNS Domains:
+        <table>
+          <title>Reverse DDNS Domains Needed</title>
+          <tgroup cols='3' align='left'>
+          <colspec colname='num'/>
+          <colspec colname='DDNS Domain name'/>
+          <colspec colname='DDNS Domain DNS Servers'/>
+          <thead>
+            <row>
+              <entry>#</entry>
+              <entry>DDNS Domain Name</entry>
+              <entry>DNS Servers</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>1.</entry>
+              <entry>2.0.192.in-addr.arpa.</entry>
+              <entry>172.16.1.5, 172.16.2.5</entry>
+            </row>
+            <row>
+              <entry>2.</entry>
+              <entry>1.0.0.0.8.d.b.0.1.0.0.2.ip6.arpa.</entry>
+              <entry>3001:1::50</entry>
+            </row>
+            <row>
+              <entry>3.</entry>
+              <entry>0.182.in-addr.arpa.</entry>
+              <entry>172.16.2.5</entry>
+            </row>
+          </tbody>
+          </tgroup>
+        </table>
+        An address of "192.0.2.150" will match the first domain,
+        "2001:db8:1::10" will match the second domain, and "192.0.50.77"
+        the third domain.
+        </para>
+        <para>
+        The following series of commands in bindctl will create our Reverse
+        DDNS Domains.
+<screen>
+<userinput>
+> config add DhcpDdns/reverse_ddns/ddns_domains
+> config set DhcpDdns/reverse_ddns/ddns_domains[0]/name "2.0.192.in-addr.arpa."
+> config add DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers
+> config set DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/ip_address "172.16.1.5"
+> config add DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers
+> config set DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[1]/ip_address "172.16.2.5"
+>
+> config add DhcpDdns/reverse_ddns/ddns_domains
+> config set DhcpDdns/reverse_ddns/ddns_domains[1]/name "1.0.0.0.8.d.b.0.1.0.0.2.ip6.arpa."
+> config add DhcpDdns/reverse_ddns/ddns_domains[1]/dns_servers
+> config set DhcpDdns/reverse_ddns/ddns_domains[1]/dns_servers[0]/ip_address "3001:1::50:"
+>
+> config add DhcpDdns/reverse_ddns/ddns_domains
+> config set DhcpDdns/reverse_ddns/ddns_domains[2]/name "0.192.in-addrs.arpa."
+> config add DhcpDdns/reverse_ddns/ddns_domains[2]/dns_servers
+> config set DhcpDdns/reverse_ddns/ddns_domains[2]/dns_servers[0]/ip_address "172.16.2.5"
+>
+> config commit
+</userinput>
+</screen>
+        </para>
+        </section> <!-- end of "d2-example" -->
     </section> <!-- end of section "d2-configuration" -->
   </chapter> <!-- DHCP-DDNS Server -->
 
