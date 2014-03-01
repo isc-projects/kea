@@ -337,10 +337,10 @@ TEST(D2ClientMgr, analyzeFqdnEnabledNoOverrides) {
 
     // client S=0 N=0 means client wants to do forward update.
     // server S should be 0 (server is not doing forward updates)
-    // and server N should be 1 (server doing no updates)
+    // and server N should be 0 (server doing reverse updates)
     mgr.analyzeFqdn(false, false, server_s, server_n);
     EXPECT_FALSE(server_s);
-    EXPECT_TRUE(server_n);
+    EXPECT_FALSE(server_n);
 
     // client S=1 N=0 means client wants server to do forward update.
     // server S should be 1 (server is doing forward updates)
@@ -379,10 +379,10 @@ TEST(D2ClientMgr, analyzeFqdnEnabledOverrideNoUpdate) {
 
     // client S=0 N=0 means client wants to do forward update.
     // server S should be 0 (server is not doing forward updates)
-    // and server N should be 1 (server is not doing any updates)
+    // and server N should be 0 (server is doing reverse updates)
     mgr.analyzeFqdn(false, false, server_s, server_n);
     EXPECT_FALSE(server_s);
-    EXPECT_TRUE(server_n);
+    EXPECT_FALSE(server_n);
 
     // client S=1 N=0 means client wants server to do forward update.
     // server S should be 1 (server is doing forward updates)
@@ -462,7 +462,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV4) {
 
     // client S=0 N=0 means client wants to do forward update.
     // server S should be 0 (server is not doing forward updates)
-    // and server N should be 1 (server doing no updates)
+    // and server N should be 0 (server is doing reverse updates)
     // and server O should be 0
     request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
                                         "", Option4ClientFqdn::PARTIAL));
@@ -471,7 +471,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV4) {
 
     mgr.adjustFqdnFlags<Option4ClientFqdn>(*request, *response);
     EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_S));
-    EXPECT_TRUE(response->getFlag(Option4ClientFqdn::FLAG_N));
+    EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_N));
     EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_O));
 
     // client S=1 N=0 means client wants server to do forward update.
@@ -503,6 +503,42 @@ TEST(D2ClientMgr, adjustFqdnFlagsV4) {
     EXPECT_TRUE(response->getFlag(Option4ClientFqdn::FLAG_S));
     EXPECT_FALSE(response->getFlag(Option4ClientFqdn::FLAG_N));
     EXPECT_TRUE(response->getFlag(Option4ClientFqdn::FLAG_O));
+}
+
+/// @brief Verified the getUpdateDirections template method with
+/// Option4ClientFqdn objects.
+TEST(D2ClientMgr, updateDirectionsV4) {
+    D2ClientMgr mgr;
+    Option4ClientFqdnPtr response;
+
+    bool do_forward = false;
+    bool do_reverse = false;
+
+    // Response S=0, N=0 should mean do reverse only.
+    response.reset(new Option4ClientFqdn(0,
+                                         Option4ClientFqdn::RCODE_CLIENT(),
+                                         "", Option4ClientFqdn::PARTIAL));
+    mgr.getUpdateDirections(*response, do_forward, do_reverse);
+    EXPECT_FALSE(do_forward);
+    EXPECT_TRUE(do_reverse);
+
+    // Response S=0, N=1 should mean don't do either.
+    response.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_N,
+                                         Option4ClientFqdn::RCODE_CLIENT(),
+                                         "", Option4ClientFqdn::PARTIAL));
+    mgr.getUpdateDirections(*response, do_forward, do_reverse);
+    EXPECT_FALSE(do_forward);
+    EXPECT_FALSE(do_reverse);
+
+    // Response S=1, N=0 should mean do both.
+    response.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_S,
+                                         Option4ClientFqdn::RCODE_CLIENT(),
+                                         "", Option4ClientFqdn::PARTIAL));
+    mgr.getUpdateDirections(*response, do_forward, do_reverse);
+    EXPECT_TRUE(do_forward);
+    EXPECT_TRUE(do_reverse);
+
+    // Response S=1, N=1 isn't possible.
 }
 
 /// @brief Tests the qualifyName method's ability to construct FQDNs
@@ -761,7 +797,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV6) {
 
     // client S=0 N=0 means client wants to do forward update.
     // server S should be 0 (server is not doing forward updates)
-    // and server N should be 1 (server doing no updates)
+    // and server N should be 0 (server doing reverse updates)
     // and server O should be 0
     request.reset(new Option6ClientFqdn(0, "", Option6ClientFqdn::PARTIAL));
     response.reset(new Option6ClientFqdn(*request));
@@ -769,7 +805,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV6) {
 
     mgr.adjustFqdnFlags<Option6ClientFqdn>(*request, *response);
     EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_S));
-    EXPECT_TRUE(response->getFlag(Option6ClientFqdn::FLAG_N));
+    EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_N));
     EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_O));
 
     // client S=1 N=0 means client wants server to do forward update.
@@ -799,6 +835,39 @@ TEST(D2ClientMgr, adjustFqdnFlagsV6) {
     EXPECT_TRUE(response->getFlag(Option6ClientFqdn::FLAG_S));
     EXPECT_FALSE(response->getFlag(Option6ClientFqdn::FLAG_N));
     EXPECT_TRUE(response->getFlag(Option6ClientFqdn::FLAG_O));
+}
+
+/// @brief Verified the getUpdateDirections template method with
+/// Option6ClientFqdn objects.
+TEST(D2ClientMgr, updateDirectionsV6) {
+    D2ClientMgr mgr;
+    Option6ClientFqdnPtr response;
+
+    bool do_forward = false;
+    bool do_reverse = false;
+
+    // Response S=0, N=0 should mean do reverse only.
+    response.reset(new Option6ClientFqdn(0,
+                                         "", Option6ClientFqdn::PARTIAL));
+    mgr.getUpdateDirections(*response, do_forward, do_reverse);
+    EXPECT_FALSE(do_forward);
+    EXPECT_TRUE(do_reverse);
+
+    // Response S=0, N=1 should mean don't do either.
+    response.reset(new Option6ClientFqdn(Option6ClientFqdn::FLAG_N,
+                                         "", Option6ClientFqdn::PARTIAL));
+    mgr.getUpdateDirections(*response, do_forward, do_reverse);
+    EXPECT_FALSE(do_forward);
+    EXPECT_FALSE(do_reverse);
+
+    // Response S=1, N=0 should mean do both.
+    response.reset(new Option6ClientFqdn(Option6ClientFqdn::FLAG_S,
+                                         "", Option6ClientFqdn::PARTIAL));
+    mgr.getUpdateDirections(*response, do_forward, do_reverse);
+    EXPECT_TRUE(do_forward);
+    EXPECT_TRUE(do_reverse);
+
+    // Response S=1, N=1 isn't possible.
 }
 
 } // end of anonymous namespace
