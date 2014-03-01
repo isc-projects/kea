@@ -332,6 +332,7 @@ public:
     ///
     /// @param msg_type A type of the client's message.
     /// @param hostname A domain name in the client's FQDN.
+    /// @param client_flags A bitmask of the client FQDN flags
     /// @param include_oro A boolean value which indicates whether the ORO
     /// option should be included in the client's message (if true) or not
     /// (if false). In the former case, the function will expect that server
@@ -340,6 +341,8 @@ public:
     void testProcessMessage(const uint8_t msg_type,
                             const std::string& hostname,
                             const std::string& exp_hostname,
+                            const uint8_t client_flags =
+                                Option6ClientFqdn::FLAG_S,
                             const bool include_oro = true) {
         // Create a message of a specified type, add server id and
         // FQDN option.
@@ -348,8 +351,7 @@ public:
         // empty.
         Option6ClientFqdn::DomainNameType fqdn_type = (hostname.empty() ?
             Option6ClientFqdn::PARTIAL : Option6ClientFqdn::FULL);
-
-        Pkt6Ptr req = generateMessage(msg_type, Option6ClientFqdn::FLAG_S,
+        Pkt6Ptr req = generateMessage(msg_type, client_flags,
                                       hostname, fqdn_type, include_oro, srvid);
 
         // For different client's message types we have to invoke different
@@ -460,8 +462,6 @@ public:
 
 // A set of tests verifying server's behaviour when it receives the DHCPv6
 // Client Fqdn Option.
-// @todo: Extend these tests once appropriate configuration parameters are
-// implemented (ticket #3034).
 
 // Test server's response when client requests that server performs AAAA update.
 TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdate) {
@@ -491,6 +491,26 @@ TEST_F(FqdnDhcpv6SrvTest, noUpdate) {
     testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_N,
              "myhost.example.com",
              Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_N,
+             "myhost.example.com.");
+}
+
+// Test server's response when client requests no DNS update and
+// override-no-updates is true.
+TEST_F(FqdnDhcpv6SrvTest, overrideNoUpdate) {
+    enableD2(OVERRIDE_NO_UPDATE);
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_N,
+             "myhost.example.com",
+             Option6ClientFqdn::FULL,
+             (Option6ClientFqdn::FLAG_S | Option6ClientFqdn::FLAG_O),
+             "myhost.example.com.");
+}
+
+// Test server's response when client requests that server delegates the AAAA
+// update to the client
+TEST_F(FqdnDhcpv6SrvTest, clientAAAAUpdate) {
+    testFqdn(DHCPV6_SOLICIT, 0, "myhost.example.com.",
+             Option6ClientFqdn::FULL,
+             0,
              "myhost.example.com.");
 }
 
@@ -871,7 +891,7 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
     // In this case, we expect that the FQDN option will not be included
     // in the server's response. The testProcessMessage will check that.
     testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
-                       "myhost.example.com.", false);
+                       "myhost.example.com.", Option6ClientFqdn::FLAG_S, false);
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
@@ -884,7 +904,8 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestWithoutFqdn) {
 // FQDN.
 TEST_F(FqdnDhcpv6SrvTest, processRequestEmptyFqdn) {
     testProcessMessage(DHCPV6_REQUEST, "",
-                       "myhost-2001-db8-1-1--dead-beef.example.com.", false);
+                       "myhost-2001-db8-1-1--dead-beef.example.com.",
+                       Option6ClientFqdn::FLAG_S, false);
     ASSERT_EQ(1, d2_mgr_.getQueueSize());
     verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
                             "2001:db8:1:1::dead:beef",
@@ -964,5 +985,17 @@ TEST_F(FqdnDhcpv6SrvTest, processRequestReuseExpiredLease) {
                             0, 4);
 
 }
+
+TEST_F(FqdnDhcpv6SrvTest, processClientDelegation) {
+    testProcessMessage(DHCPV6_REQUEST, "myhost.example.com",
+                       "myhost.example.com.", 0);
+    ASSERT_EQ(1, d2_mgr_.getQueueSize());
+    verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, false,
+                            "2001:db8:1:1::dead:beef",
+                            "000201415AA33D1187D148275136FA30300478"
+                            "FAAAA3EBD29826B5C907B2C9268A6F52",
+                            0, 4000);
+}
+
 
 }   // end of anonymous namespace
