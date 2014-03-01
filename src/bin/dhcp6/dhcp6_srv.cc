@@ -1074,11 +1074,16 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
         // Get the IP address from the lease. Also, use the S flag to determine
         // if forward change should be performed. This flag will always be
         // set if server has taken responsibility for the forward update.
+        // Use the inverse of the N flag to determine if a reverse change
+        // should be performed.
         NameChangeRequestPtr ncr;
+        bool do_fwd = false;
+        bool do_rev = false;
+        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*opt_fqdn,
+                                                                do_fwd, do_rev);
         ncr.reset(new NameChangeRequest(isc::dhcp_ddns::CHG_ADD,
-                                        opt_fqdn->getFlag(Option6ClientFqdn::
-                                                          FLAG_S),
-                                        true, opt_fqdn->getDomainName(),
+                                        do_fwd, do_rev,
+                                        opt_fqdn->getDomainName(),
                                         iaaddr->getAddress().toText(),
                                         dhcid, 0, iaaddr->getValid()));
 
@@ -1211,12 +1216,8 @@ Dhcpv6Srv::assignIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
     if (fqdn) {
-        /// @todo For now, we assert that if we are doing forward we are also
-        /// doing reverse.
-        if (fqdn->getFlag(Option6ClientFqdn::FLAG_S)) {
-            do_fwd = true;
-            do_rev = true;
-        }
+        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn,
+                                                                do_fwd, do_rev);
     }
     // Set hostname only in case any of the updates is being performed.
     std::string hostname;
@@ -1466,12 +1467,8 @@ Dhcpv6Srv::renewIA_NA(const Subnet6Ptr& subnet, const DuidPtr& duid,
     Option6ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option6ClientFqdn>(answer->getOption(D6O_CLIENT_FQDN));
     if (fqdn) {
-        // For now, we assert that if we are doing forward we are also
-        // doing reverse.
-        if (fqdn->getFlag(Option6ClientFqdn::FLAG_S)) {
-            do_fwd = true;
-            do_rev = true;
-        }
+        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn,
+                                                                do_fwd, do_rev);
     }
 
     std::string hostname;
