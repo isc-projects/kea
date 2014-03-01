@@ -144,14 +144,20 @@ D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
 
     switch (mask) {
     case 0:
-        // If updates are enabled and we are overriding client delegation
-        // then S flag should be true.
-        server_s = (d2_client_config_->getEnableUpdates() &&
-                    d2_client_config_->getOverrideClientUpdate());
+        if (!d2_client_config_->getEnableUpdates()) {
+            server_s = false;
+            server_n = true;
+        } else {
+            // If updates are enabled and we are overriding client delegation
+            // then S flag should be true.  N-flag should be false.
+            server_s = d2_client_config_->getOverrideClientUpdate();
+            server_n = false;
+        }
         break;
 
     case 1:
         server_s = d2_client_config_->getEnableUpdates();
+        server_n = !server_s;
         break;
 
     case 2:
@@ -159,6 +165,7 @@ D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
         // S flag should be true.
         server_s = (d2_client_config_->getEnableUpdates() &&
                     d2_client_config_->getOverrideNoUpdate());
+        server_n = !server_s;
         break;
 
     default:
@@ -167,17 +174,6 @@ D2ClientMgr::analyzeFqdn(const bool client_s, const bool client_n,
                   "Invalid client FQDN - N and S cannot both be 1");
         break;
     }
-
-    /// @todo Currently we are operating under the premise that N should be 1
-    /// if the server is not doing updates nor do we have configuration
-    /// controls to govern forward and reverse updates independently.
-    /// In addition, the client FQDN flags cannot explicitly suggest what to
-    /// do with reverse updates. They request either forward updates or no
-    /// updates.  In other words, the client cannot request the server do or
-    /// not do reverse updates.  For now, we are either going to do updates in
-    /// both directions or none at all.  If and when additional configuration
-    /// parameters are added this logic will have to be reassessed.
-    server_n = !server_s;
 }
 
 std::string
