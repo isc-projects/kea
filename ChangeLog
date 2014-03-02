@@ -1,3 +1,11 @@
+766.	[func]		muks
+	--disable-dns and --disable-dhcp configure arguments have been
+	added to conditionally disable the DNS or DHCP components
+	respectively. This facility can be used to do a DNS or DHCP-only
+	build of BIND 10. DNS and DHCP components are both enabled by
+	default.
+	(Trac #2367, git 81a689b61b1c4abf8a1a4fcbe41cfc96fd11792a)
+
 765.	[bug]		tomek
 	b10-dhcp4: Fixed a minor bug in eRouter1.0 class processing. The server
 	no longer sets giaddr field.
