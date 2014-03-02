@@ -24,6 +24,55 @@ AC_CONFIG_MACRO_DIR([m4macros])
 # Checks for programs.
 AC_PROG_CXX
 
+want_dns=yes
+AC_ARG_ENABLE(dns,
+  [AC_HELP_STRING([--disable-dns],
+  [disable DNS components])],
+  [want_dns=$enableval])
+AM_CONDITIONAL([WANT_DNS], [test "$want_dns" = "yes"])
+if test "$want_dns" = "yes"; then
+   WANT_DNS=yes
+else
+   WANT_DNS=no
+fi
+AC_SUBST(WANT_DNS)
+
+want_dhcp=yes
+AC_ARG_ENABLE(dhcp,
+  [AC_HELP_STRING([--disable-dhcp],
+  [disable DHCP components])],
+  [want_dhcp=$enableval])
+AM_CONDITIONAL([WANT_DHCP], [test "$want_dhcp" = "yes"])
+if test "$want_dhcp" = "yes"; then
+   WANT_DHCP=yes
+else
+   WANT_DHCP=no
+fi
+AC_SUBST(WANT_DHCP)
+
+want_experimental_resolver=no
+AC_ARG_ENABLE(experimental-resolver,
+  [AC_HELP_STRING([--enable-experimental-resolver],
+  [enable the experimental resolver [default=no]])],
+  [want_experimental_resolver=$enableval])
+AM_CONDITIONAL([WANT_EXPERIMENTAL_RESOLVER], [test "$want_experimental_resolver" = "yes"])
+if test "$want_experimental_resolver" = "yes"; then
+   WANT_EXPERIMENTAL_RESOLVER=yes
+else
+   WANT_EXPERIMENTAL_RESOLVER=no
+fi
+AC_SUBST(WANT_EXPERIMENTAL_RESOLVER)
+
+# At least DNS or DHCP components must be enabled
+if test "$want_dns" != "yes" -a "$want_dhcp" != "yes"; then
+    AC_MSG_ERROR([At least one of DNS or DHCP components must be enabled to do a BIND 10 build.])
+fi
+
+# Experimental resolver requires DNS components to be enabled
+if test "$want_experimental_resolver" = "yes" -a "$want_dns" != "yes"; then
+    AC_MSG_ERROR([You must also enable DNS components if you want to enable the experimental resolver.])
+fi
+
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
 # by default.
@@ -875,6 +924,10 @@ elif test "${mysql_config}" != "no" ; then
 fi
 
 if test "$MYSQL_CONFIG" != "" ; then
+    if test "$want_dhcp" != "yes"; then
+        AC_MSG_ERROR([--with-dhcp-mysql should not be used when DHCP components are disabled])
+    fi
+
     if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
         AC_MSG_ERROR([--with-dhcp-mysql should point to a mysql_config program])
     fi
@@ -1001,25 +1054,12 @@ if test "$BOOST_NUMERIC_CAST_WOULDFAIL" = "yes" -a X"$werror_ok" = X1 -a $CLANGP
     AC_MSG_ERROR([Failed to compile a required header file.  If you are using FreeBSD and Boost installed via ports, retry with specifying --without-werror.  See the ChangeLog entry for Trac no. 1991 for more details.])
 fi
 
-build_experimental_resolver=no
-AC_ARG_ENABLE(experimental-resolver,
-  [AC_HELP_STRING([--enable-experimental-resolver],
-  [enable building of the experimental resolver [default=no]])],
-  [build_experimental_resolver=$enableval])
-AM_CONDITIONAL([BUILD_EXPERIMENTAL_RESOLVER], [test "$build_experimental_resolver" = "yes"])
-if test "$build_experimental_resolver" = "yes"; then
-   BUILD_EXPERIMENTAL_RESOLVER=yes
-else
-   BUILD_EXPERIMENTAL_RESOLVER=no
-fi
-AC_SUBST(BUILD_EXPERIMENTAL_RESOLVER)
-
 use_shared_memory=yes
 AC_ARG_WITH(shared-memory,
     AC_HELP_STRING([--with-shared-memory],
     [Build with Boost shared memory support; for large scale authoritative DNS servers]),
     [use_shared_memory=$withval])
-if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes"; then
+if test X$use_shared_memory = Xyes -a "$BOOST_MAPPED_FILE_WOULDFAIL" = "yes" -a "$want_dns" = "yes"; then
     AC_MSG_ERROR([Boost shared memory does not compile on this system.  If you don't need it (most normal users won't) build without it by rerunning this script with --without-shared-memory; using a different compiler or a different version of Boost may also help.])
 fi
 AM_CONDITIONAL([USE_SHARED_MEMORY], [test x$use_shared_memory = xyes])
@@ -1028,7 +1068,7 @@ if test "x$use_shared_memory" = "xyes"; then
 fi
 AC_SUBST(BOOST_MAPPED_FILE_CXXFLAG)
 
-if test "$BOOST_OFFSET_PTR_OLD" = "yes" -a "$use_shared_memory" = "yes" ; then
+if test "$BOOST_OFFSET_PTR_OLD" = "yes" -a "$use_shared_memory" = "yes" -a "$want_dns" = "yes"; then
     AC_MSG_ERROR([You're trying to compile against boost older than 1.48 with
 shared memory. Older versions of boost have a bug which causes segfaults in
 offset_ptr implementation when compiled by GCC with optimisations enabled.
@@ -1718,6 +1758,11 @@ END
 fi
 
 cat >> config.report << END
+
+Components:
+  DHCP: $want_dhcp
+  DNS: $want_dns
+  Experimental resolver: $want_experimental_resolver
 
 Features:
   $enable_features
