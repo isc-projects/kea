@@ -19,11 +19,11 @@ tests and example programs. (It also includes an experimental proof
 of concept recursive or forwarding DNS server, b10-resolver.)
 
 BIND 10 also provides experimental DHCPv4 and DHCPv6 servers,
-b10-dhcp4 and b10-dhcp6, a portable DHCP library, libdhcp++, and
-a DHCP benchmarking tool, perfdhcp.  In this release of BIND 10,
-the DHCPv4 and DHCPv6 servers must be considered experimental.
-Limitations and known issues with this DHCP release can be found
-at http://bind10.isc.org/wiki/KeaKnownIssues
+b10-dhcp4 and b10-dhcp6, a dynamic DNS update module, b10-dhcp-ddns,
+a portable DHCP library, libdhcp++, and a DHCP benchmarking tool,
+perfdhcp.  In this release of BIND 10, the DHCPv4 and DHCPv6 servers
+must be considered experimental.  Limitations and known issues with
+this DHCP release can be found at http://bind10.isc.org/wiki/KeaKnownIssues
 
 NOTE: The API/ABI provided by libraries in BIND 10 may change in future
 point releases. So please do not assume currently that any code that you
