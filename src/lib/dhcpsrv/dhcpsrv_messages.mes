@@ -122,11 +122,6 @@ This is a debug message reporting that the DHCP configuration manager has
 returned the specified IPv6 subnet when given the address hint specified
 as the address is within the subnet.
 
-% DHCPSRV_CFGMGR_SUBNET6_RELAY selected subnet %1, because of matching relay addr %2
-This is a debug message reporting that the DHCP configuration manager has
-returned the specified IPv6 subnet, because detected relay agent address
-matches value specified for this subnet.
-
 % DHCPSRV_CFGMGR_SUBNET6_IFACE selected subnet %1 for packet received over interface %2
 This is a debug message reporting that the DHCP configuration manager
 has returned the specified IPv6 subnet for a packet received over
@@ -140,6 +135,11 @@ has returned the specified IPv6 subnet for a received packet. This particular
 subnet was selected, because value of interface-id option matched what was
 configured in server's interface-id option for that selected subnet6.
 (see 'interface-id' parameter in the subnet6 definition).
+
+% DHCPSRV_CFGMGR_SUBNET6_RELAY selected subnet %1, because of matching relay addr %2
+This is a debug message reporting that the DHCP configuration manager has
+returned the specified IPv6 subnet, because detected relay agent address
+matches value specified for this subnet.
 
 % DHCPSRV_CLOSE_DB closing currently open %1 database
 This is a debug message, issued when the DHCP server closes the currently
@@ -159,6 +159,12 @@ This is an error message that occurs when an attempt to send a request to
 b10-dhcp-ddns fails and there is no registered error handler.  This is a
 programmatic error which should never occur and should be reported.
 
+% DHCPSRV_DHCP_DDNS_NCR_REJECTED NameChangeRequest rejected by the sender: %1, ncr: %2
+This is an error message indicating that NameChangeSender used to deliver DDNS
+update requests to b10-dhcp-ddns rejected the request.  This most likely cause
+is the sender's queue has reached maximum capacity.  This would imply that
+requests are being generated faster than they can be delivered.
+
 % DHCPSRV_DHCP_DDNS_NCR_SENT NameChangeRequest sent to b10-dhcp-ddns: %1
 A debug message issued when a NameChangeRequest has been successfully sent to
 b10-dhcp-ddns.
@@ -171,6 +177,13 @@ been successfully started.
 A informational message issued when a communications with b10-dhcp-ddns has
 been stopped. This normally occurs during reconfiguration and as part of normal
 shutdown. It may occur if b10-dhcp-ddns communications breakdown.
+
+% DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES DHCP_DDNS updates are being suspended.
+This is a warning message indicating the DHCP_DDNS updates have been turned
+off.  This should only occur if IO errors communicating with b10-dhcp-ddns
+have been experienced.  Any such errors should have preceding entries in the
+log with details.  No further attempts to communicate with b10-dhcp-ddns will
+be made without intervention.
 
 % DHCPSRV_HOOK_LEASE4_RENEW_SKIP DHCPv4 lease was not renewed because a callout set the skip flag.
 This debug message is printed when a callout installed on lease4_renew
@@ -378,16 +391,3 @@ indicate an error in the source code, please submit a bug report.
 % DHCPSRV_UNKNOWN_DB unknown database type: %1
 The database access string specified a database type (given in the
 message) that is unknown to the software.  This is a configuration error.
-
-% DHCPSRV_DHCP_DDNS_SUSPEND_UPDATES DHCP_DDNS updates are being suspended.
-This is a warning message indicating the DHCP_DDNS updates have been turned
-off.  This should only occur if IO errors communicating with b10-dhcp-ddns
-have been experienced.  Any such errors should have preceding entries in the
-log with details.  No further attempts to communicate with b10-dhcp-ddns will
-be made without intervention.
-
-% DHCPSRV_DHCP_DDNS_NCR_REJECTED NameChangeRequest rejected by the sender: %1, ncr: %2
-This is an error message indicating that NameChangeSender used to deliver DDNS
-update requests to b10-dhcp-ddns rejected the request.  This most likely cause
-is the sender's queue has reached maximum capacity.  This would imply that
-requests are being generated faster than they can be delivered.
