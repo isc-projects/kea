@@ -443,7 +443,7 @@ This is informational message issued when the application has been instructed
 to shut down by the controller.
 
 % DHCP_DDNS_STARTING_TRANSACTION Transaction Key: %1
-This is a debug message issued when DHCP-DDNS has begun a transaction for 
+This is a debug message issued when DHCP-DDNS has begun a transaction for
 a given request.
 
 % DHCP_DDNS_STATE_MODEL_UNEXPECTED_ERROR application encountered an unexpected error while carrying out a NameChangeRequest: %1

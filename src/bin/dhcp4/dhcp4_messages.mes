@@ -27,18 +27,18 @@ successfully established a session with the BIND 10 control channel.
 This debug message is issued just before the DHCPv4 server attempts
 to establish a session with the BIND 10 control channel.
 
-% DHCP4_CLIENT_NAME_PROC_FAIL failed to process the fqdn or hostname sent by a client: %1
-This debug message is issued when the DHCP server was unable to process the
-FQDN or Hostname option sent by a client. This is likely because the client's
-name was malformed or due to internal server error.
+% DHCP4_CLASS_ASSIGNED client packet has been assigned to the following class(es): %1
+This debug message informs that incoming packet has been assigned to specified
+class or classes. This is a norma
 
 % DHCP4_CLASS_PROCESSING_FAILED client class specific processing failed
 This debug message means that the server processing that is unique for each
 client class has reported a failure. The response packet will not be sent.
 
-% DHCP4_CLASS_ASSIGNED client packet has been assigned to the following class(es): %1
-This debug message informs that incoming packet has been assigned to specified
-class or classes. This is a norma
+% DHCP4_CLIENT_NAME_PROC_FAIL failed to process the fqdn or hostname sent by a client: %1
+This debug message is issued when the DHCP server was unable to process the
+FQDN or Hostname option sent by a client. This is likely because the client's
+name was malformed or due to internal server error.
 
 % DHCP4_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
@@ -78,6 +78,11 @@ This informational message is printed every time DHCPv4 server is started
 and gives both the type and name of the database being used to store
 lease and other information.
 
+% DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error: %1,  ncr: %2
+This error message indicates that DHCP4 server attempted to send a DDNS
+update reqeust to the DHCP-DDNS server.  This is most likely a configuration or
+networking error.
+
 % DHCP4_DEACTIVATE_INTERFACE deactivate interface %1
 This message is printed when DHCPv4 server disables an interface from being
 used to receive DHCPv4 traffic. Sockets on this interface will not be opened
@@ -92,6 +97,11 @@ message.
 This debug message is issued when the server received an empty Hostname option
 from a client. Server does not process empty Hostname options and therefore
 option is skipped.
+
+% DHCP4_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
+A "libreload" command was issued to reload the hooks libraries but for
+some reason the reload failed.  Other error messages issued from the
+hooks framework will indicate the nature of the problem.
 
 % DHCP4_HOOK_BUFFER_RCVD_SKIP received DHCPv4 buffer was dropped because a callout set the skip flag.
 This debug message is printed when a callout installed on buffer4_receive
@@ -130,23 +140,6 @@ point, the setting of the flag instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses will be assigned.
 
-% DHCP4_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
-A "libreload" command was issued to reload the hooks libraries but for
-some reason the reload failed.  Other error messages issued from the
-hooks framework will indicate the nature of the problem.
-
-% DHCP4_UNRECOGNIZED_RCVD_PACKET_TYPE received message (transaction id %1) has unrecognized type %2 in option 53
-This debug message indicates that the message type carried in DHCPv4 option
-53 is unrecognized by the server. The valid message types are listed
-on the IANA website: http://www.iana.org/assignments/bootp-dhcp-parameters/bootp-dhcp-parameters.xhtml#message-type-53.
-The message will not be processed by the server.
-
-% DHCP4_UNSUPPORTED_RCVD_PACKET_TYPE received message (transaction id %1), having type %2 is not supported
-This debug message indicates that the message type carried in DHCPv4 option
-53 is valid but the message will not be processed by the server. This includes
-messages being normally sent by the server to the client, such as Offer, ACK,
-NAK etc.
-
 % DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of othe advertised
@@ -182,6 +175,10 @@ new DNS records for the lease being acquired or to update existing records
 for the renewed lease. The reason for the failure is printed in the logged
 message.
 
+% DHCP4_NOT_RUNNING DHCPv4 server is not running
+A warning message is issued when an attempt is made to shut down the
+DHCPv4 server but it is not running.
+
 % DHCP4_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
 This warning message is issued when current server configuration specifies
 no interfaces that server should listen on, or specified interfaces are not
@@ -194,13 +191,17 @@ which this message has been received. The IPv4 address assigned on this
 interface must belong to one of the configured subnets. Otherwise
 received message is dropped.
 
-% DHCP4_NOT_RUNNING DHCPv4 server is not running
-A warning message is issued when an attempt is made to shut down the
-DHCPv4 server but it is not running.
-
 % DHCP4_OPEN_SOCKET opening sockets on port %1
 A debug message issued during startup, this indicates that the DHCPv4
 server is about to open sockets on the specified port.
+
+% DHCP4_OPEN_SOCKET_FAIL failed to create socket: %1
+A warning message issued when IfaceMgr fails to open and bind a socket. The reason
+for the failure is appended as an argument of the log message.
+
+% DHCP4_PACKET_DROP_NO_TYPE packet received on interface %1 dropped, because of missing msg-type option
+This is a debug message informing that incoming DHCPv4 packet did not
+have mandatory DHCP message type option and thus was dropped.
 
 % DHCP4_PACKET_NOT_FOR_US received DHCPv4 message (transid=%1, iface=%2) dropped because it contains foreign server identifier
 This debug message is issued when received DHCPv4 message is dropped because
@@ -208,10 +209,6 @@ it is addressed to a different server, i.e. a server identifier held by
 this message doesn't match the identifier used by our server. The arguments
 of this message hold the name of the transaction id and interface on which
 the message has been received.
-
-% DHCP4_OPEN_SOCKET_FAIL failed to create socket: %1
-A warning message issued when IfaceMgr fails to open and bind a socket. The reason
-for the failure is appended as an argument of the log message.
 
 % DHCP4_PACKET_PARSE_FAIL failed to parse incoming packet: %1
 The DHCPv4 server has received a packet that it is unable to
@@ -221,10 +218,6 @@ interpret. The reason why the packet is invalid is included in the message.
 This is a general catch-all message indicating that the processing of a
 received packet failed.  The reason is given in the message.  The server
 will not send a response but will instead ignore the packet.
-
-% DHCP4_PACKET_DROP_NO_TYPE packet received on interface %1 dropped, because of missing msg-type option
-This is a debug message informing that incoming DHCPv4 packet did not
-have mandatory DHCP message type option and thus was dropped.
 
 % DHCP4_PACKET_RECEIVED %1 (type %2) packet received on interface %3
 A debug message noting that the server has received the specified type of
@@ -371,7 +364,14 @@ This warning message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable
 cause is a misconfiguration of the server.
 
-% DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error: %1,  ncr: %2
-This error message indicates that DHCP4 server attempted to send a DDNS
-update reqeust to the DHCP-DDNS server.  This is most likely a configuration or
-networking error.
+% DHCP4_UNRECOGNIZED_RCVD_PACKET_TYPE received message (transaction id %1) has unrecognized type %2 in option 53
+This debug message indicates that the message type carried in DHCPv4 option
+53 is unrecognized by the server. The valid message types are listed
+on the IANA website: http://www.iana.org/assignments/bootp-dhcp-parameters/bootp-dhcp-parameters.xhtml#message-type-53.
+The message will not be processed by the server.
+
+% DHCP4_UNSUPPORTED_RCVD_PACKET_TYPE received message (transaction id %1), having type %2 is not supported
+This debug message indicates that the message type carried in DHCPv4 option
+53 is valid but the message will not be processed by the server. This includes
+messages being normally sent by the server to the client, such as Offer, ACK,
+NAK etc.

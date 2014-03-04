@@ -91,20 +91,6 @@ New  values: hostname = %2, reverse mapping = %3, forward mapping = %4
 This debug message is logged when FQDN mapping for a particular lease has been
 changed by the recent Renew message. This mapping will be changed in DNS.
 
-% DHCP6_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error: %1,  ncr: %2
-This error message indicates that IPv6 DHCP server failed to send a DDNS
-update reqeust to the DHCP-DDNS server. This is most likely a configuration or
-networking error.
-
-% DHCP6_DEACTIVATE_INTERFACE deactivate interface %1
-This message is printed when DHCPv6 server disables an interface from being
-used to receive DHCPv6 traffic. Sockets on this interface will not be opened
-by the Interface Manager until interface is enabled.
-
-% DHCP6_DDNS_SEND_FQDN sending DHCPv6 Client FQDN Option to the client: %1
-This debug message is logged when server includes an DHCPv6 Client FQDN Option
-in its response to the client.
-
 % DHCP6_DDNS_RECEIVE_FQDN received DHCPv6 Client FQDN Option: %1
 This debug message is logged when server has found the DHCPv6 Client FQDN Option
 sent by a client and started processing it.
@@ -114,6 +100,25 @@ This error message is issued when a lease being deleted contains an indication
 that the DNS Update has been performed for it, but the FQDN held in the lease
 database has invalid format and can't be transformed to the canonical on-wire
 format.
+
+% DHCP6_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error: %1,  ncr: %2
+This error message indicates that IPv6 DHCP server failed to send a DDNS
+update reqeust to the DHCP-DDNS server. This is most likely a configuration or
+networking error.
+
+% DHCP6_DDNS_SEND_FQDN sending DHCPv6 Client FQDN Option to the client: %1
+This debug message is logged when server includes an DHCPv6 Client FQDN Option
+in its response to the client.
+
+% DHCP6_DEACTIVATE_INTERFACE deactivate interface %1
+This message is printed when DHCPv6 server disables an interface from being
+used to receive DHCPv6 traffic. Sockets on this interface will not be opened
+by the Interface Manager until interface is enabled.
+
+% DHCP6_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
+A "libreload" command was issued to reload the hooks libraries but for
+some reason the reload failed.  Other error messages issued from the
+hooks framework will indicate the nature of the problem.
 
 % DHCP6_HOOK_BUFFER_RCVD_SKIP received DHCPv6 buffer was dropped because a callout set the skip flag
 This debug message is printed when a callout installed on buffer6_receive
@@ -126,14 +131,6 @@ hook point set the skip flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to drop the packet.
 Server completed all the processing (e.g. may have assigned, updated
 or released leases), but the response will not be send to the client.
-
-% DHCP6_HOOK_LEASE6_RENEW_SKIP DHCPv6 lease was not renewed because a callout set the skip flag
-This debug message is printed when a callout installed on lease6_renew
-hook point set the skip flag. For this particular hook point, the setting
-of the flag by a callout instructs the server to not renew a lease. If
-client requested renewal of multiples leases (by sending multiple IA
-options), the server will skip the renewal of the one in question and
-will proceed with other renewals as usual.
 
 % DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP DHCPv6 address lease was not released because a callout set the skip flag
 This debug message is printed when a callout installed on the
@@ -149,6 +146,14 @@ hook point set the skip flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to not release
 a lease. If client requested release of multiples leases (by sending
 multiple IA options), the server will retains this particular lease and
+will proceed with other renewals as usual.
+
+% DHCP6_HOOK_LEASE6_RENEW_SKIP DHCPv6 lease was not renewed because a callout set the skip flag
+This debug message is printed when a callout installed on lease6_renew
+hook point set the skip flag. For this particular hook point, the setting
+of the flag by a callout instructs the server to not renew a lease. If
+client requested renewal of multiples leases (by sending multiple IA
+options), the server will skip the renewal of the one in question and
 will proceed with other renewals as usual.
 
 % DHCP6_HOOK_PACKET_RCVD_SKIP received DHCPv6 packet was dropped because a callout set the skip flag
@@ -172,20 +177,9 @@ subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses or prefixes
 will be assigned.
 
-% DHCP6_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
-A "libreload" command was issued to reload the hooks libraries but for
-some reason the reload failed.  Other error messages issued from the
-hooks framework will indicate the nature of the problem.
-
 % DHCP6_LEASE_ADVERT address lease %1 advertised (client duid=%2, iaid=%3)
 This debug message indicates that the server successfully advertised
 an address lease. It is up to the client to choose one server out of the
-advertised servers and continue allocation with that server. This
-is a normal behavior and indicates successful operation.
-
-% DHCP6_PD_LEASE_ADVERT prefix lease %1/%2 advertised (client duid=%3, iaid=%4)
-This debug message indicates that the server successfully advertised
-a prefix lease. It is up to the client to choose one server out of the
 advertised servers and continue allocation with that server. This
 is a normal behavior and indicates successful operation.
 
@@ -195,32 +189,16 @@ failed to advertise a non-temporary lease for a given client. There may
 be many reasons for such failure. Each failure is logged in a separate
 log entry.
 
-% DHCP6_PD_LEASE_ADVERT_FAIL failed to advertise a prefix lease for client duid=%1, iaid=%2
-This message indicates that in response to a received SOLICIT, the
-server failed to advertise a prefix lease for the client. There may
-be many reasons for such failure. Each failure is logged in a separate
-log entry.
-
 % DHCP6_LEASE_ALLOC address lease %1 has been allocated (client duid=%2, iaid=%3)
 This debug message indicates that in response to a client's REQUEST
 message, the server successfully granted an non-temporary address
 lease. This is a normal behavior and indicates successful operation.
-
-% DHCP6_PD_LEASE_ALLOC prefix lease %1/%2 has been allocated (client duid=%3, iaid=%4)
-This debug message indicates that in response to a client's REQUEST
-message, the server successfully granted a prefix delegation lease. This
-is a normal behavior and indicates successful operation.
 
 % DHCP6_LEASE_ALLOC_FAIL failed to grant an address lease for client duid=%1, iaid=%2
 This message indicates that in response to a received REQUEST, the server
 failed to grant a non-temporary address lease for the client. There may
 be many reasons for such failure. Each failure is logged in a separate
 log entry.
-
-% DHCP6_PD_LEASE_ALLOC_FAIL failed to grant a prefix lease for client duid=%1, iaid=%2
-This message indicates that the server failed to grant (in response to
-received REQUEST) a prefix lease for a given client. There may be many reasons
-for such failure. Each failure is logged in a separate log entry.
 
 % DHCP6_LEASE_NA_WITHOUT_DUID address lease for address %1 does not have a DUID
 This error message indicates a database consistency problem. The lease
@@ -262,6 +240,10 @@ server is about to open sockets on the specified port.
 A warning message issued when IfaceMgr fails to open and bind a socket. The reason
 for the failure is appended as an argument of the log message.
 
+% DHCP6_PACKET_MISMATCH_SERVERID_DROP dropping packet %1 (transid=%2, interface=%3) having mismatched server identifier
+A debug message noting that server has received message with server identifier
+option that not matching server identifier that server is using.
+
 % DHCP6_PACKET_PARSE_FAIL failed to parse incoming packet
 The IPv6 DHCP server has received a packet that it is unable to interpret.
 
@@ -275,10 +257,6 @@ A debug message noting that the server has received the specified type
 of packet.  Note that a packet marked as UNKNOWN may well be a valid
 DHCP packet, just a type not expected by the server (e.g. it will report
 a received OFFER packet as UNKNOWN).
-
-% DHCP6_PACKET_MISMATCH_SERVERID_DROP dropping packet %1 (transid=%2, interface=%3) having mismatched server identifier
-A debug message noting that server has received message with server identifier
-option that not matching server identifier that server is using.
 
 % DHCP6_PACKET_RECEIVE_FAIL error on attempt to receive packet: %1
 The IPv6 DHCP server tried to receive a packet but an error
@@ -332,6 +310,28 @@ of the named configuration element, or the creation succeeded but the
 parsing actions and committal of changes failed.  The reason for the
 failure is given in the message.
 
+% DHCP6_PD_LEASE_ADVERT prefix lease %1/%2 advertised (client duid=%3, iaid=%4)
+This debug message indicates that the server successfully advertised
+a prefix lease. It is up to the client to choose one server out of the
+advertised servers and continue allocation with that server. This
+is a normal behavior and indicates successful operation.
+
+% DHCP6_PD_LEASE_ADVERT_FAIL failed to advertise a prefix lease for client duid=%1, iaid=%2
+This message indicates that in response to a received SOLICIT, the
+server failed to advertise a prefix lease for the client. There may
+be many reasons for such failure. Each failure is logged in a separate
+log entry.
+
+% DHCP6_PD_LEASE_ALLOC prefix lease %1/%2 has been allocated (client duid=%3, iaid=%4)
+This debug message indicates that in response to a client's REQUEST
+message, the server successfully granted a prefix delegation lease. This
+is a normal behavior and indicates successful operation.
+
+% DHCP6_PD_LEASE_ALLOC_FAIL failed to grant a prefix lease for client duid=%1, iaid=%2
+This message indicates that the server failed to grant (in response to
+received REQUEST) a prefix lease for a given client. There may be many reasons
+for such failure. Each failure is logged in a separate log entry.
+
 % DHCP6_PROCESS_IA_NA_REQUEST server is processing IA_NA option (duid=%1, iaid=%2, hint=%3)
 This is a debug message that indicates the processing of a received
 IA_NA option. It may optionally contain an address that may be used by
@@ -345,24 +345,18 @@ as a hint for possible requested prefix.
 % DHCP6_QUERY_DATA received packet length %1, data length %2, data is %3
 A debug message listing the data received from the client or relay.
 
+% DHCP6_RELEASE_MISSING_CLIENTID client (address=%1) sent RELEASE message without mandatory client-id
+This warning message indicates that client sent RELEASE message without
+mandatory client-id option. This is most likely caused by a buggy client
+(or a relay that malformed forwarded message). This request will not be
+processed and a response with error status code will be sent back.
+
 % DHCP6_RELEASE_NA address %1 belonging to client duid=%2, iaid=%3 was released properly
 This debug message indicates that an address was released properly. It
 is a normal operation during client shutdown.
 
-% DHCP6_RELEASE_PD prefix %1 belonging to client duid=%2, iaid=%3 was released properly
-This debug message indicates that a prefix was released properly. It
-is a normal operation during client shutdown.
-
 % DHCP6_RELEASE_NA_FAIL failed to remove address lease for address %1 for duid=%2, iaid=%3
 This error message indicates that the software failed to remove an address
-lease from the lease database.  It probably due to an error during a
-database operation: resolution will most likely require administrator
-intervention (e.g. check if DHCP process has sufficient privileges to
-update the database). It may also be triggered if a lease was manually
-removed from the database during RELEASE message processing.
-
-% DHCP6_RELEASE_PD_FAIL failed to remove prefix lease for address %1 for duid=%2, iaid=%3
-This error message indicates that the software failed to remove a prefix
 lease from the lease database.  It probably due to an error during a
 database operation: resolution will most likely require administrator
 intervention (e.g. check if DHCP process has sufficient privileges to
@@ -376,6 +370,24 @@ circumstances and may indicate a misconfiguration of the client.  However,
 since the client releasing the address will stop using it anyway, there
 is a good chance that the situation will correct itself.
 
+% DHCP6_RELEASE_NA_FAIL_WRONG_IAID client (duid=%1) tried to release address %2, but it used wrong IAID (expected %3, but got %4)
+This warning message indicates that client tried to release an address
+that does belong to it, but the address was expected to be in a different
+IA (identity association) container. This probably means that the client's
+support for multiple addresses is flawed.
+
+% DHCP6_RELEASE_PD prefix %1 belonging to client duid=%2, iaid=%3 was released properly
+This debug message indicates that a prefix was released properly. It
+is a normal operation during client shutdown.
+
+% DHCP6_RELEASE_PD_FAIL failed to remove prefix lease for address %1 for duid=%2, iaid=%3
+This error message indicates that the software failed to remove a prefix
+lease from the lease database.  It probably due to an error during a
+database operation: resolution will most likely require administrator
+intervention (e.g. check if DHCP process has sufficient privileges to
+update the database). It may also be triggered if a lease was manually
+removed from the database during RELEASE message processing.
+
 % DHCP6_RELEASE_PD_FAIL_WRONG_DUID client (duid=%1) tried to release prefix %2, but it belongs to another client (duid=%3)
 This warning message indicates that client tried to release a prefix
 that belongs to a different client. This should not happen in normal
@@ -383,23 +395,11 @@ circumstances and may indicate a misconfiguration of the client.  However,
 since the client releasing the prefix will stop using it anyway, there
 is a good chance that the situation will correct itself.
 
-% DHCP6_RELEASE_NA_FAIL_WRONG_IAID client (duid=%1) tried to release address %2, but it used wrong IAID (expected %3, but got %4)
-This warning message indicates that client tried to release an address
-that does belong to it, but the address was expected to be in a different
-IA (identity association) container. This probably means that the client's
-support for multiple addresses is flawed.
-
 % DHCP6_RELEASE_PD_FAIL_WRONG_IAID client (duid=%1) tried to release prefix %2, but it used wrong IAID (expected %3, but got %4)
 This warning message indicates that client tried to release a prefix
 that does belong to it, but the address was expected to be in a different
 IA (identity association) container. This probably means that the client's
 support for multiple prefixes is flawed.
-
-% DHCP6_RELEASE_MISSING_CLIENTID client (address=%1) sent RELEASE message without mandatory client-id
-This warning message indicates that client sent RELEASE message without
-mandatory client-id option. This is most likely caused by a buggy client
-(or a relay that malformed forwarded message). This request will not be
-processed and a response with error status code will be sent back.
 
 % DHCP6_RENEW_UNKNOWN_SUBNET RENEW message received from client on unknown subnet (duid=%1, iaid=%2)
 A warning message indicating that a client is attempting to renew his lease,
