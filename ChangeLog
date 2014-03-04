@@ -1,3 +1,5 @@
+bind10-1.2.0beta1 released on March 6, 2014
+
 766.	[func]		muks
 	--disable-dns and --disable-dhcp configure arguments have been
 	added to conditionally disable the DNS or DHCP components
