@@ -14,6 +14,7 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libb10-dhcp++.la
 libb10_dhcp___la_SOURCES  =
+libb10_dhcp___la_SOURCES += classify.h
 libb10_dhcp___la_SOURCES += dhcp6.h dhcp4.h
 libb10_dhcp___la_SOURCES += duid.cc duid.h
 libb10_dhcp___la_SOURCES += hwaddr.cc hwaddr.h
@@ -69,6 +70,7 @@ EXTRA_DIST  = README libdhcp++.dox
 # written libraries may need access to all libdhcp++ headers.
 libb10_dhcp___includedir = $(pkgincludedir)/dhcp
 libb10_dhcp___include_HEADERS = \
+    classify.h \
     dhcp4.h \
     dhcp6.h \
     duid.h \
