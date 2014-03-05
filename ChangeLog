@@ -782,7 +782,7 @@ bind10-1.2.0beta1 released on March 6, 2014
 
 645.	[func]		tomek
 	Added initial set of hooks (pkt4_receive, subnet4_select,
-	lease4_select, pkt4_send) to the DHCPv6 server.
+	lease4_select, pkt4_send) to the DHCPv4 server.
 	(Trac #2994, git be65cfba939a6a7abd3c93931ce35c33d3e8247b)
 
 644.	[func]		marcin
