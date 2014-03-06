@@ -31,8 +31,7 @@ EXTRA_DIST = libdhcp_user_chk.dox
 #CLEANFILES = *.gcno *.gcda user_chk_messages.h user_chk_messages.cc s-messages
 CLEANFILES = *.gcno *.gcda
 
-nodistdir=$(abs_top_builddir)/src/hooks/dhcp/user_chk
-nodist_LTLIBRARIES = libdhcp_user_chk.la
+noinst_LTLIBRARIES = libdhcp_user_chk.la
 libdhcp_user_chk_la_SOURCES  =
 libdhcp_user_chk_la_SOURCES += load_unload.cc
 libdhcp_user_chk_la_SOURCES += pkt_receive_co.cc
@@ -54,6 +53,9 @@ libdhcp_user_chk_la_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcp_user_chk_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
 libdhcp_user_chk_la_LDFLAGS  = $(AM_LDFLAGS)
 libdhcp_user_chk_la_LDFLAGS  += -avoid-version -export-dynamic -module
+# -rpath /nowhere is a hack to trigger libtool to not create a
+# convenience archive, resulting in shared modules
+libdhcp_user_chk_la_LDFLAGS  += -rpath /nowhere
 libdhcp_user_chk_la_LIBADD  =
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/hooks/libb10-hooks.la
 libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/log/libb10-log.la
