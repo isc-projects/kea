@@ -122,7 +122,13 @@ public:
     void testGetLease4NullClientId();
 
     /// @brief Test lease retrieval using HW address.
-    void testGetLease4HWAddr();
+    void testGetLease4HWAddr1();
+
+    /// @brief Check GetLease4 methods - access by Hardware Address
+    ///
+    /// Adds leases to the database and checks that they can be accessed using
+    /// HWAddr information.
+    void testGetLease4HWAddr2();
 
     /// @brief Test lease retrieval using client id, HW address and subnet id.
     void testGetLease4ClientIdHWAddrSubnetId();
@@ -135,6 +141,12 @@ public:
     ///
     /// @todo: check if it does overlap with @ref testGetLease4NullClientId()
     void testLease4NullClientId();
+
+    /// @brief Basic Lease6 Checks
+    ///
+    /// Checks that the addLease, getLease6 (by address) and deleteLease (with an
+    /// IPv6 address) works.
+    void testBasicLease6();
 
     /// @brief Test that IPv6 lease can be added, retrieved and deleted.
     ///
