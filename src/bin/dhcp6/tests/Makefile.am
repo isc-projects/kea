@@ -54,18 +54,20 @@ if HAVE_GTEST
 # to unexpected errors. For this reason, the --enable-static-link option is
 # ignored for unit tests built here.
 
-nodistdir=$(abs_top_builddir)/src/bin/dhcp6/tests
-nodist_LTLIBRARIES = libco1.la libco2.la
+noinst_LTLIBRARIES = libco1.la libco2.la
+
+# -rpath /nowhere is a hack to trigger libtool to not create a
+# convenience archive, resulting in shared modules
 
 libco1_la_SOURCES  = callout_library_1.cc callout_library_common.h
 libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco1_la_CPPFLAGS = $(AM_CPPFLAGS)
-libco1_la_LDFLAGS = -avoid-version -export-dynamic -module
+libco1_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 libco2_la_SOURCES  = callout_library_2.cc callout_library_common.h
 libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco2_la_CPPFLAGS = $(AM_CPPFLAGS)
-libco2_la_LDFLAGS = -avoid-version -export-dynamic -module
+libco2_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 TESTS += dhcp6_unittests
 dhcp6_unittests_SOURCES  = dhcp6_unittests.cc

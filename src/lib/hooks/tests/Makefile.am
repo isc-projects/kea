@@ -45,40 +45,42 @@ if HAVE_GTEST
 # to unexpected errors. For this reason, the --enable-static-link option is
 # ignored for unit tests built here.
 
-nodistdir=$(abs_top_builddir)/src/lib/hooks/tests
-nodist_LTLIBRARIES = libnvl.la  libivl.la libfxl.la libbcl.la liblcl.la \
+noinst_LTLIBRARIES = libnvl.la  libivl.la libfxl.la libbcl.la liblcl.la \
                      liblecl.la libucl.la libfcl.la
+
+# -rpath /nowhere is a hack to trigger libtool to not create a
+# convenience archive, resulting in shared modules
 
 # No version function
 libnvl_la_SOURCES  = no_version_library.cc
 libnvl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libnvl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libnvl_la_LDFLAGS  = -avoid-version -export-dynamic -module
+libnvl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
 # Incorrect version function
 libivl_la_SOURCES  = incorrect_version_library.cc
 libivl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libivl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libivl_la_LDFLAGS  = -avoid-version -export-dynamic -module
+libivl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
 # All framework functions throw an exception
 libfxl_la_SOURCES  = framework_exception_library.cc
 libfxl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libfxl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libfxl_la_LDFLAGS  = -avoid-version -export-dynamic -module
+libfxl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
 # The basic callout library - contains standard callouts
 libbcl_la_SOURCES  = basic_callout_library.cc
 libbcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libbcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libbcl_la_LDFLAGS  = -avoid-version -export-dynamic -module
+libbcl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 libbcl_la_LIBADD    = $(ALL_LIBS)
 
 # The load callout library - contains a load function
 liblcl_la_SOURCES  = load_callout_library.cc
 liblcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-liblcl_la_LDFLAGS  = -avoid-version -export-dynamic -module
+liblcl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 liblcl_la_LIBADD    = $(ALL_LIBS)
 
 # The load error callout library - contains a load function that returns
@@ -86,20 +88,20 @@ liblcl_la_LIBADD    = $(ALL_LIBS)
 liblecl_la_SOURCES  = load_error_callout_library.cc
 liblecl_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblecl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-liblecl_la_LDFLAGS  = -avoid-version -export-dynamic -module
+liblecl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
 # The unload callout library - contains an unload function that
 # creates a marker file.
 libucl_la_SOURCES  = unload_callout_library.cc
 libucl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libucl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libucl_la_LDFLAGS  = -avoid-version -export-dynamic -module
+libucl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
 # The full callout library - contains all three framework functions.
 libfcl_la_SOURCES  = full_callout_library.cc
 libfcl_la_CXXFLAGS = $(AM_CXXFLAGS)
 libfcl_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libfcl_la_LDFLAGS  = -avoid-version -export-dynamic -module
+libfcl_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 libfcl_la_LIBADD   = $(ALL_LIBS)
 
 TESTS += run_unittests
