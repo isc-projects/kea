@@ -429,80 +429,14 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
 /// @brief Check GetLease6 methods - access by DUID/IAID
 ///
 /// Adds leases to the database and checks that they can be accessed via
-/// a combination of DIUID and IAID.
+/// a combination of DUID and IAID.
 TEST_F(MySqlLeaseMgrTest, getLeases6DuidIaid) {
-    // Get the leases to be used for the test.
-    vector<Lease6Ptr> leases = createLeases6();
-    ASSERT_LE(6, leases.size());    // Expect to access leases 0 through 5
-
-    // Add them to the database
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // Get the leases matching the DUID and IAID of lease[1].
-    Lease6Collection returned = lmptr_->getLeases6(leasetype6_[1],
-                                                   *leases[1]->duid_,
-                                                   leases[1]->iaid_);
-
-    // Should be two leases, matching leases[1] and [4].
-    ASSERT_EQ(2, returned.size());
-
-    // Easiest way to check is to look at the addresses.
-    vector<string> addresses;
-    for (Lease6Collection::const_iterator i = returned.begin();
-         i != returned.end(); ++i) {
-        addresses.push_back((*i)->addr_.toText());
-    }
-    sort(addresses.begin(), addresses.end());
-    EXPECT_EQ(straddress6_[1], addresses[0]);
-    EXPECT_EQ(straddress6_[4], addresses[1]);
-
-    // Check that nothing is returned when either the IAID or DUID match
-    // nothing.
-    returned = lmptr_->getLeases6(leasetype6_[1], *leases[1]->duid_,
-                                  leases[1]->iaid_ + 1);
-    EXPECT_EQ(0, returned.size());
-
-    // Alter the leases[1] DUID to match nothing in the database.
-    vector<uint8_t> duid_vector = leases[1]->duid_->getDuid();
-    ++duid_vector[0];
-    DUID new_duid(duid_vector);
-    returned = lmptr_->getLeases6(leasetype6_[1], new_duid, leases[1]->iaid_);
-    EXPECT_EQ(0, returned.size());
+    testGetLeases6DuidIaid();
 }
 
-// @brief Get Lease4 by DUID and IAID (2)
-//
-// Check that the system can cope with a DUID of any size.
-TEST_F(MySqlLeaseMgrTest, getLeases6DuidIaidSize) {
-
-    // Create leases, although we need only one.
-    vector<Lease6Ptr> leases = createLeases6();
-
-    // Now add leases with increasing DUID size can be retrieved.
-    // For speed, go from 0 to 128 is steps of 16.
-    int duid_max = DUID::MAX_DUID_LEN;
-    EXPECT_EQ(128, duid_max);
-
-    int duid_min = DUID::MIN_DUID_LEN;
-    EXPECT_EQ(1, duid_min);
-
-    for (uint8_t i = duid_min; i <= duid_max; i += 16) {
-        vector<uint8_t> duid_vec(i, i);
-        leases[1]->duid_.reset(new DUID(duid_vec));
-        EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[1],
-                                                       *leases[1]->duid_,
-                                                       leases[1]->iaid_);
-        ASSERT_EQ(1, returned.size());
-        detailCompareLease(leases[1], *returned.begin());
-        (void) lmptr_->deleteLease(leases[1]->addr_);
-    }
-
-    // Don't bother to check DUIDs longer than the maximum - these cannot be
-    // constructed, and that limitation is tested in the DUID/Client ID unit
-    // tests.
+// Check that the system can cope with a DUID of allowed size.
+TEST_F(MySqlLeaseMgrTest, getLeases6DuidSize) {
+    testGetLeases6DuidSize();
 }
 
 /// @brief Check that getLease6 methods discriminate by lease type.
@@ -512,95 +446,7 @@ TEST_F(MySqlLeaseMgrTest, getLeases6DuidIaidSize) {
 /// It then verifies that all of getLeases6() method variants correctly
 /// discriminate between the leases based on lease type alone.
 TEST_F(MySqlLeaseMgrTest, lease6LeaseTypeCheck) {
-
-    Lease6Ptr empty_lease(new Lease6());
-
-    DuidPtr duid(new DUID(vector<uint8_t>(8, 0x77)));
-
-    // Initialize unused fields.
-    empty_lease->t1_ = 0;                             // Not saved
-    empty_lease->t2_ = 0;                             // Not saved
-    empty_lease->fixed_ = false;                      // Unused
-    empty_lease->comments_ = std::string("");         // Unused
-    empty_lease->iaid_ = 142;
-    empty_lease->duid_ = DuidPtr(new DUID(*duid));
-    empty_lease->subnet_id_ = 23;
-    empty_lease->preferred_lft_ = 100;
-    empty_lease->valid_lft_ = 100;
-    empty_lease->cltt_ = 100;
-    empty_lease->fqdn_fwd_ = true;
-    empty_lease->fqdn_rev_ = true;
-    empty_lease->hostname_ = "myhost.example.com.";
-    empty_lease->prefixlen_ = 4;
-
-    // Make Two leases per lease type, all with the same  DUID, IAID but
-    // alternate the subnet_ids.
-    vector<Lease6Ptr> leases;
-    for (int i = 0; i < 6; ++i) {
-          Lease6Ptr lease(new Lease6(*empty_lease));
-          lease->type_ = leasetype6_[i / 2];
-          lease->addr_ = IOAddress(straddress6_[i]);
-          lease->subnet_id_ += (i % 2);
-          leases.push_back(lease);
-          EXPECT_TRUE(lmptr_->addLease(lease));
-     }
-
-    // Verify getting a single lease by type and address.
-    for (int i = 0; i < 6; ++i) {
-        // Look for exact match for each lease type.
-        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i / 2],
-                                               leases[i]->addr_);
-        // We should match one per lease type.
-        ASSERT_TRUE(returned);
-        EXPECT_TRUE(*returned == *leases[i]);
-
-        // Same address but wrong lease type, should not match.
-        returned = lmptr_->getLease6(leasetype6_[i / 2 + 1], leases[i]->addr_);
-        ASSERT_FALSE(returned);
-    }
-
-    // Verify getting a collection of leases by type, DUID, and IAID.
-    // Iterate over the lease types, asking for leases based on
-    // lease type, DUID, and IAID.
-    for (int i = 0; i < 3; ++i) {
-        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i],
-                                                       *duid, 142);
-        // We should match two per lease type.
-        ASSERT_EQ(2, returned.size());
-
-        // Collection order returned is not guaranteed.
-        // Easiest way to check is to look at the addresses.
-        vector<string> addresses;
-        for (Lease6Collection::const_iterator it = returned.begin();
-            it != returned.end(); ++it) {
-            addresses.push_back((*it)->addr_.toText());
-        }
-        sort(addresses.begin(), addresses.end());
-
-        // Now verify that the lease addresses match.
-        EXPECT_EQ(addresses[0], leases[(i * 2)]->addr_.toText());
-        EXPECT_EQ(addresses[1], leases[(i * 2 + 1)]->addr_.toText());
-    }
-
-    // Verify getting a collection of leases by type, DUID, IAID, and subnet id.
-    // Iterate over the lease types, asking for leases based on
-    // lease type, DUID, IAID, and subnet_id.
-    for (int i = 0; i < 3; ++i) {
-        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i],
-                                                   *duid, 142, 23);
-        // We should match one per lease type.
-        ASSERT_EQ(1, returned.size());
-        EXPECT_TRUE(*(returned[0]) == *leases[i * 2]);
-    }
-
-    // Verify getting a single lease by type, duid, iad, and subnet id.
-    for (int i = 0; i < 6; ++i) {
-        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i / 2],
-                                                *duid, 142, (23 + (i % 2)));
-        // We should match one per lease type.
-        ASSERT_TRUE(returned);
-        EXPECT_TRUE(*returned == *leases[i]);
-    }
+    testLease6LeaseTypeCheck();
 }
 
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
@@ -608,180 +454,25 @@ TEST_F(MySqlLeaseMgrTest, lease6LeaseTypeCheck) {
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of DIUID and IAID.
 TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
-    // Get the leases to be used for the test and add them to the database.
-    vector<Lease6Ptr> leases = createLeases6();
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // Get the leases matching the DUID and IAID of lease[1].
-    Lease6Ptr returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
-                                           leases[1]->iaid_,
-                                           leases[1]->subnet_id_);
-    ASSERT_TRUE(returned);
-    EXPECT_TRUE(*returned == *leases[1]);
-
-    // Modify each of the three parameters (DUID, IAID, Subnet ID) and
-    // check that nothing is returned.
-    returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
-                                 leases[1]->iaid_ + 1, leases[1]->subnet_id_);
-    EXPECT_FALSE(returned);
-
-    returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
-                                 leases[1]->iaid_, leases[1]->subnet_id_ + 1);
-    EXPECT_FALSE(returned);
-
-    // Alter the leases[1] DUID to match nothing in the database.
-    vector<uint8_t> duid_vector = leases[1]->duid_->getDuid();
-    ++duid_vector[0];
-    DUID new_duid(duid_vector);
-    returned = lmptr_->getLease6(leasetype6_[1], new_duid, leases[1]->iaid_,
-                                 leases[1]->subnet_id_);
-    EXPECT_FALSE(returned);
+    testGetLease6DuidIaidSubnetId();
 }
 
-
-// @brief Get Lease4 by DUID, IAID & subnet ID (2)
-//
-// Check that the system can cope with a DUID of any size.
 TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
-
-    // Create leases, although we need only one.
-    vector<Lease6Ptr> leases = createLeases6();
-
-    // Now add leases with increasing DUID size can be retrieved.
-    // For speed, go from 0 to 128 is steps of 16.
-    int duid_max = DUID::MAX_DUID_LEN;
-    EXPECT_EQ(128, duid_max);
-
-    int duid_min = DUID::MIN_DUID_LEN;
-    EXPECT_EQ(1, duid_min);
-
-    for (uint8_t i = duid_min; i <= duid_max; i += 16) {
-        vector<uint8_t> duid_vec(i, i);
-        leases[1]->duid_.reset(new DUID(duid_vec));
-        EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
-                                               leases[1]->iaid_,
-                                               leases[1]->subnet_id_);
-        ASSERT_TRUE(returned);
-        detailCompareLease(leases[1], returned);
-        (void) lmptr_->deleteLease(leases[1]->addr_);
-    }
-
-    // Don't bother to check DUIDs longer than the maximum - these cannot be
-    // constructed, and that limitation is tested in the DUID/Client ID unit
-    // tests.
+    testGetLease6DuidIaidSubnetIdSize();
 }
 
 /// @brief Lease4 update tests
 ///
 /// Checks that we are able to update a lease in the database.
 TEST_F(MySqlLeaseMgrTest, updateLease4) {
-    // Get the leases to be used for the test and add them to the database.
-    vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // Modify some fields in lease 1 (not the address) and update it.
-    ++leases[1]->subnet_id_;
-    leases[1]->valid_lft_ *= 2;
-    leases[1]->hostname_ = "modified.hostname.";
-    leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
-    leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
-    lmptr_->updateLease4(leases[1]);
-
-    // ... and check what is returned is what is expected.
-    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Alter the lease again and check.
-    ++leases[1]->subnet_id_;
-    leases[1]->cltt_ += 6;
-    lmptr_->updateLease4(leases[1]);
-
-    // Explicitly clear the returned pointer before getting new data to ensure
-    // that the new data is returned.
-    l_returned.reset();
-    l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Check we can do an update without changing data.
-    lmptr_->updateLease4(leases[1]);
-    l_returned.reset();
-    l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Try to update the lease with the too long hostname.
-    leases[1]->hostname_.assign(256, 'a');
-    EXPECT_THROW(lmptr_->updateLease4(leases[1]), isc::dhcp::DbOperationError);
-
-    // Try updating a lease not in the database.
-    lmptr_->deleteLease(ioaddress4_[2]);
-    EXPECT_THROW(lmptr_->updateLease4(leases[2]), isc::dhcp::NoSuchLease);
+    testUpdateLease4();
 }
 
 /// @brief Lease6 update tests
 ///
 /// Checks that we are able to update a lease in the database.
 TEST_F(MySqlLeaseMgrTest, updateLease6) {
-    // Get the leases to be used for the test.
-    vector<Lease6Ptr> leases = createLeases6();
-    ASSERT_LE(3, leases.size());    // Expect to access leases 0 through 2
-
-    // Add a lease to the database and check that the lease is there.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    lmptr_->commit();
-
-    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Modify some fields in lease 1 (not the address) and update it.
-    ++leases[1]->iaid_;
-    leases[1]->type_ = Lease::TYPE_PD;
-    leases[1]->valid_lft_ *= 2;
-    leases[1]->hostname_ = "modified.hostname.v6.";
-    leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
-    leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
-    lmptr_->updateLease6(leases[1]);
-    lmptr_->commit();
-
-    // ... and check what is returned is what is expected.
-    l_returned.reset();
-    l_returned = lmptr_->getLease6(Lease::TYPE_PD, ioaddress6_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Alter the lease again and check.
-    ++leases[1]->iaid_;
-    leases[1]->type_ = Lease::TYPE_TA;
-    leases[1]->cltt_ += 6;
-    leases[1]->prefixlen_ = 93;
-    lmptr_->updateLease6(leases[1]);
-
-    l_returned.reset();
-    l_returned = lmptr_->getLease6(Lease::TYPE_TA, ioaddress6_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Check we can do an update without changing data.
-    lmptr_->updateLease6(leases[1]);
-    l_returned.reset();
-    l_returned = lmptr_->getLease6(Lease::TYPE_TA, ioaddress6_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Try to update the lease with the too long hostname.
-    leases[1]->hostname_.assign(256, 'a');
-    EXPECT_THROW(lmptr_->updateLease6(leases[1]), isc::dhcp::DbOperationError);
-
-    // Try updating a lease not in the database.
-    EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::dhcp::NoSuchLease);
+    testUpdateLease6();
 }
 
 }; // Of anonymous namespace

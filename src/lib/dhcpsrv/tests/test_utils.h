@@ -193,6 +193,32 @@ public:
     /// @param check_t1_t2 controls whether T1,T2 timers should be checked
     void testAddGetDelete6(bool check_t1_t2);
 
+    /// @brief Check GetLease6 methods - access by DUID/IAID
+    ///
+    /// Adds leases to the database and checks that they can be accessed via
+    /// a combination of DUID and IAID.
+    void testGetLeases6DuidIaid();
+
+    /// @brief Check that the system can cope with a DUID of allowed size.
+    void testGetLeases6DuidSize();
+
+    /// @brief Check that getLease6 methods discriminate by lease type.
+    ///
+    /// Adds six leases, two per lease type all with the same duid and iad but
+    /// with alternating subnet_ids.
+    /// It then verifies that all of getLeases6() method variants correctly
+    /// discriminate between the leases based on lease type alone.
+    void testLease6LeaseTypeCheck();
+
+    /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
+    ///
+    /// Adds leases to the database and checks that they can be accessed via
+    /// a combination of DIUID and IAID.
+    void testGetLease6DuidIaidSubnetId();
+
+    /// @brief Checks that getLease6() works with different DUID sizes
+    void testGetLease6DuidIaidSubnetIdSize();
+
     /// @brief Verify that too long hostname for Lease4 is not accepted.
     ///
     /// Checks that the it is not possible to create a lease when the hostname
@@ -204,6 +230,16 @@ public:
     /// Checks that the it is not possible to create a lease when the hostname
     /// length exceeds 255 characters.
     void testLease6InvalidHostname();
+
+    /// @brief Lease4 update test
+    ///
+    /// Checks that the code is able to update an IPv4 lease in the database.
+    void testUpdateLease4();
+
+    /// @brief Lease6 update test
+    ///
+    /// Checks that the code is able to update an IPv6 lease in the database.
+    void testUpdateLease6();
 
     // Member variables
     std::vector<std::string>  straddress4_;   ///< String forms of IPv4 addresses
