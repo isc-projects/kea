@@ -127,6 +127,15 @@ public:
     /// @brief Test lease retrieval using client id, HW address and subnet id.
     void testGetLease4ClientIdHWAddrSubnetId();
 
+    /// @brief Basic Lease4 Checks
+    ///
+    /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
+    /// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
+    /// (client-id is optional and may not be present)
+    ///
+    /// @todo: check if it does overlap with @ref testGetLease4NullClientId()
+    void testLease4NullClientId();
+
     /// @brief Test that IPv6 lease can be added, retrieved and deleted.
     ///
     /// This method checks basic IPv6 lease operations. There's check_t1_t2
