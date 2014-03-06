@@ -158,6 +158,18 @@ public:
     /// @param check_t1_t2 controls whether T1,T2 timers should be checked
     void testAddGetDelete6(bool check_t1_t2);
 
+    /// @brief Verify that too long hostname for Lease4 is not accepted.
+    ///
+    /// Checks that the it is not possible to create a lease when the hostname
+    /// length exceeds 255 characters.
+    void testLease4InvalidHostname();
+
+    /// @brief Verify that too long hostname for Lease6 is not accepted.
+    ///
+    /// Checks that the it is not possible to create a lease when the hostname
+    /// length exceeds 255 characters.
+    void testLease6InvalidHostname();
+
     // Member variables
     std::vector<std::string>  straddress4_;   ///< String forms of IPv4 addresses
     std::vector<isc::asiolink::IOAddress> ioaddress4_;  ///< IOAddress forms of IPv4 addresses
