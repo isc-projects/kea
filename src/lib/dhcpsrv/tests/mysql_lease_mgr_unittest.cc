@@ -323,45 +323,11 @@ TEST_F(MySqlLeaseMgrTest, checkVersion) {
 /// Checks that the addLease, getLease4 (by address) and deleteLease (with an
 /// IPv4 address) works.
 TEST_F(MySqlLeaseMgrTest, basicLease4) {
-    // Get the leases to be used for the test.
-    vector<Lease4Ptr> leases = createLeases4();
+    testBasicLease4();
+}
 
-    // Start the tests.  Add three leases to the database, read them back and
-    // check they are what we think they are.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    EXPECT_TRUE(lmptr_->addLease(leases[2]));
-    EXPECT_TRUE(lmptr_->addLease(leases[3]));
-    lmptr_->commit();
-
-    // Reopen the database to ensure that they actually got stored.
-    reopen();
-
-    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
-
-    l_returned = lmptr_->getLease4(ioaddress4_[3]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[3], l_returned);
-
-    // Check that we can't add a second lease with the same address
-    EXPECT_FALSE(lmptr_->addLease(leases[1]));
-
-    // Delete a lease, check that it's gone, and that we can't delete it
-    // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[1]));
-    l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease(ioaddress4_[1]));
-
-    // Check that the second address is still there.
-    l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
+TEST_F(MySqlLeaseMgrTest, testAddGetDelete6) {
+    testAddGetDelete6(false);
 }
 
 /// @brief Basic Lease4 Checks

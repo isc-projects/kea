@@ -577,6 +577,130 @@ GenericLeaseMgrTest::testGetLease4ClientIdHWAddrSubnetId() {
     EXPECT_FALSE(lease);
 }
 
+// Test that IPv6 lease can be added, retrieved and deleted
+void
+GenericLeaseMgrTest::testAddGetDelete6(bool check_t1_t2) {
+    IOAddress addr("2001:db8:1::456");
+
+    uint8_t llt[] = {0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf};
+    DuidPtr duid(new DUID(llt, sizeof(llt)));
+
+    uint32_t iaid = 7; // just a number
+
+    SubnetID subnet_id = 8; // just another number
+
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, addr, duid, iaid, 100, 200, 50,
+                               80, subnet_id));
+
+    EXPECT_TRUE(lmptr_->addLease(lease));
+
+    // should not be allowed to add a second lease with the same address
+    EXPECT_FALSE(lmptr_->addLease(lease));
+
+    Lease6Ptr x = lmptr_->getLease6(Lease::TYPE_NA,
+                                    IOAddress("2001:db8:1::234"));
+    EXPECT_EQ(Lease6Ptr(), x);
+
+    x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::456"));
+    ASSERT_TRUE(x);
+
+    EXPECT_EQ(x->addr_, addr);
+    EXPECT_TRUE(*x->duid_ == *duid);
+    EXPECT_EQ(x->iaid_, iaid);
+    EXPECT_EQ(x->subnet_id_, subnet_id);
+
+    // These are not important from lease management perspective, but
+    // let's check them anyway.
+    EXPECT_EQ(Lease::TYPE_NA, x->type_);
+    EXPECT_EQ(100, x->preferred_lft_);
+    EXPECT_EQ(200, x->valid_lft_);
+    if (check_t1_t2) {
+        // Backend supports T1,T2 storage: check the values
+        EXPECT_EQ(50, x->t1_);
+        EXPECT_EQ(80, x->t2_);
+    } else {
+        // Backend does not support storing, check that it returns 0s.
+        EXPECT_EQ(0, x->t1_);
+        EXPECT_EQ(0, x->t2_);
+    }
+
+    // Test getLease6(duid, iaid, subnet_id) - positive case
+    Lease6Ptr y = lmptr_->getLease6(Lease::TYPE_NA, *duid, iaid, subnet_id);
+    ASSERT_TRUE(y);
+    EXPECT_TRUE(*y->duid_ == *duid);
+    EXPECT_EQ(y->iaid_, iaid);
+    EXPECT_EQ(y->addr_, addr);
+
+    // Test getLease6(duid, iaid, subnet_id) - wrong iaid
+    uint32_t invalid_iaid = 9; // no such iaid
+    y = lmptr_->getLease6(Lease::TYPE_NA, *duid, invalid_iaid, subnet_id);
+    EXPECT_FALSE(y);
+
+    uint32_t invalid_subnet_id = 999;
+    y = lmptr_->getLease6(Lease::TYPE_NA, *duid, iaid, invalid_subnet_id);
+    EXPECT_FALSE(y);
+
+    // truncated duid
+    DuidPtr invalid_duid(new DUID(llt, sizeof(llt) - 1));
+    y = lmptr_->getLease6(Lease::TYPE_NA, *invalid_duid, iaid, subnet_id);
+    EXPECT_FALSE(y);
+
+    // should return false - there's no such address
+    EXPECT_FALSE(lmptr_->deleteLease(IOAddress("2001:db8:1::789")));
+
+    // this one should succeed
+    EXPECT_TRUE(lmptr_->deleteLease(IOAddress("2001:db8:1::456")));
+
+    // after the lease is deleted, it should really be gone
+    x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::456"));
+    EXPECT_EQ(Lease6Ptr(), x);
+}
+
+/// Checks that the addLease, getLease4 (by address) and deleteLease (with an
+/// IPv4 address) works.
+void
+GenericLeaseMgrTest::testBasicLease4() {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Start the tests.  Add three leases to the database, read them back and
+    // check they are what we think they are.
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    EXPECT_TRUE(lmptr_->addLease(leases[2]));
+    EXPECT_TRUE(lmptr_->addLease(leases[3]));
+    lmptr_->commit();
+
+    // Reopen the database to ensure that they actually got stored.
+    reopen();
+
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[1], l_returned);
+
+    l_returned = lmptr_->getLease4(ioaddress4_[2]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[2], l_returned);
+
+    l_returned = lmptr_->getLease4(ioaddress4_[3]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[3], l_returned);
+
+    // Check that we can't add a second lease with the same address
+    EXPECT_FALSE(lmptr_->addLease(leases[1]));
+
+    // Delete a lease, check that it's gone, and that we can't delete it
+    // a second time.
+    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[1]));
+    l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    EXPECT_FALSE(l_returned);
+    EXPECT_FALSE(lmptr_->deleteLease(ioaddress4_[1]));
+
+    // Check that the second address is still there.
+    l_returned = lmptr_->getLease4(ioaddress4_[2]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[2], l_returned);
+}
+
 
 };
 };
