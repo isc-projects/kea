@@ -161,12 +161,61 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSubnetId) {
     testGetLease4ClientIdSubnetId();
 }
 
+
+
+/// @brief Check GetLease6 methods - access by DUID/IAID
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// a combination of DUID and IAID.
+TEST_F(MemfileLeaseMgrTest, DISABLED_getLeases6DuidIaid) {
+    testGetLeases6DuidIaid();
+}
+
+// Check that the system can cope with a DUID of allowed size.
+TEST_F(MemfileLeaseMgrTest, DISABLED_getLeases6DuidSize) {
+    testGetLeases6DuidSize();
+}
+
+/// @brief Check that getLease6 methods discriminate by lease type.
+///
+/// Adds six leases, two per lease type all with the same duid and iad but
+/// with alternating subnet_ids.
+/// It then verifies that all of getLeases6() method variants correctly
+/// discriminate between the leases based on lease type alone.
+TEST_F(MemfileLeaseMgrTest, DISABLED_lease6LeaseTypeCheck) {
+    testLease6LeaseTypeCheck();
+}
+
+/// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// a combination of DIUID and IAID.
+TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetId) {
+    testGetLease6DuidIaidSubnetId();
+}
+
+TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
+    testGetLease6DuidIaidSubnetIdSize();
+}
+
+/// @brief Lease4 update tests
+///
+/// Checks that we are able to update a lease in the database.
+TEST_F(MemfileLeaseMgrTest, DISABLED_updateLease4) {
+    testUpdateLease4();
+}
+
+/// @brief Lease6 update tests
+///
+/// Checks that we are able to update a lease in the database.
+TEST_F(MemfileLeaseMgrTest, DISABLED_updateLease6) {
+    testUpdateLease6();
+}
+
 // The following tests are not applicable for memfile. When adding
 // new tests to the list here, make sure to provide brief explanation
 // why they are not applicable:
 //
-// testGetLease4ClientIdSubnetId() - memfile just keeps Lease structure
-//     and does not do any checks of HWAddr content
 // testGetLease4HWAddrSubnetIdSize() - memfile just keeps Lease structure
 //     and does not do any checks of HWAddr content
 
