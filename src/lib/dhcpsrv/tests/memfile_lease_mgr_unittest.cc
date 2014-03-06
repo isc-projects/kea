@@ -108,4 +108,17 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdHWAddrSubnetId) {
     testGetLease4ClientIdHWAddrSubnetId();
 }
 
+/// @brief Basic Lease4 Checks
+///
+/// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
+/// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
+/// (client-id is optional and may not be present)
+TEST_F(MemfileLeaseMgrTest, DISABLED_lease4NullClientId) {
+
+    /// @todo Test is disabled, because memfile does not support disk storage, so
+    /// all leases are lost after reopen()
+    testLease4NullClientId();
+}
+
+
 }; // end of anonymous namespace
