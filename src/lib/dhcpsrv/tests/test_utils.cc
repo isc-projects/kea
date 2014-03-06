@@ -860,6 +860,50 @@ GenericLeaseMgrTest::testBasicLease6() {
     detailCompareLease(leases[2], l_returned);
 }
 
+void
+GenericLeaseMgrTest::testLease4InvalidHostname() {
+    // Get the leases to be used for the test.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Create a dummy hostname, consisting of 255 characters.
+    leases[1]->hostname_.assign(255, 'a');
+    ASSERT_TRUE(lmptr_->addLease(leases[1]));
+
+    // The new lease must be in the database.
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    detailCompareLease(leases[1], l_returned);
+
+    // Let's delete the lease, so as we can try to add it again with
+    // invalid hostname.
+    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[1]));
+
+    // Create a hostname with 256 characters. It should not be accepted.
+    leases[1]->hostname_.assign(256, 'a');
+    EXPECT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+}
+
+/// @brief Verify that too long hostname for Lease6 is not accepted.
+void
+GenericLeaseMgrTest::testLease6InvalidHostname() {
+    // Get the leases to be used for the test.
+    vector<Lease6Ptr> leases = createLeases6();
+
+    // Create a dummy hostname, consisting of 255 characters.
+    leases[1]->hostname_.assign(255, 'a');
+    ASSERT_TRUE(lmptr_->addLease(leases[1]));
+
+    // The new lease must be in the database.
+    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    detailCompareLease(leases[1], l_returned);
+
+    // Let's delete the lease, so as we can try to add it again with
+    // invalid hostname.
+    EXPECT_TRUE(lmptr_->deleteLease(ioaddress6_[1]));
+
+    // Create a hostname with 256 characters. It should not be accepted.
+    leases[1]->hostname_.assign(256, 'a');
+    EXPECT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+}
 
 };
 };
