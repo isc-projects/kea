@@ -133,6 +133,41 @@ public:
     /// @brief Test lease retrieval using client id, HW address and subnet id.
     void testGetLease4ClientIdHWAddrSubnetId();
 
+    // @brief Get lease4 by hardware address (2)
+    //
+    // Check that the system can cope with getting a hardware address of
+    // any size.
+    void testGetLease4HWAddrSize();
+
+    /// @brief Check GetLease4 methods - access by Hardware Address & Subnet ID
+    ///
+    /// Adds leases to the database and checks that they can be accessed via
+    /// a combination of hardware address and subnet ID
+    void testGetLease4HWAddrSubnetId();
+
+    /// @brief Get lease4 by hardware address and subnet ID (2)
+    ///
+    /// Check that the system can cope with getting a hardware address of
+    /// any size.
+    void testGetLease4HWAddrSubnetIdSize();
+
+    /// @brief Check GetLease4 methods - access by Client ID
+    ///
+    /// Adds leases to the database and checks that they can be accessed via
+    /// the Client ID.
+    void testGetLease4ClientId2();
+
+    /// @brief Get Lease4 by client ID (2)
+    ///
+    /// Check that the system can cope with a client ID of any size.
+    void testGetLease4ClientIdSize();
+
+    /// @brief Check GetLease4 methods - access by Client ID & Subnet ID
+    ///
+    /// Adds leases to the database and checks that they can be accessed via
+    /// a combination of client and subnet IDs.
+    void testGetLease4ClientIdSubnetId();
+
     /// @brief Basic Lease4 Checks
     ///
     /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
