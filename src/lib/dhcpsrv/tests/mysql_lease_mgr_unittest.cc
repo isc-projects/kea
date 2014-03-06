@@ -370,45 +370,7 @@ TEST_F(MySqlLeaseMgrTest, lease4InvalidHostname) {
 /// Checks that the addLease, getLease6 (by address) and deleteLease (with an
 /// IPv6 address) works.
 TEST_F(MySqlLeaseMgrTest, basicLease6) {
-    // Get the leases to be used for the test.
-    vector<Lease6Ptr> leases = createLeases6();
-
-    // Start the tests.  Add three leases to the database, read them back and
-    // check they are what we think they are.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    EXPECT_TRUE(lmptr_->addLease(leases[2]));
-    EXPECT_TRUE(lmptr_->addLease(leases[3]));
-    lmptr_->commit();
-
-    // Reopen the database to ensure that they actually got stored.
-    reopen();
-
-    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
-
-    l_returned = lmptr_->getLease6(leasetype6_[3], ioaddress6_[3]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[3], l_returned);
-
-    // Check that we can't add a second lease with the same address
-    EXPECT_FALSE(lmptr_->addLease(leases[1]));
-
-    // Delete a lease, check that it's gone, and that we can't delete it
-    // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease(ioaddress6_[1]));
-    l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
-    EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease(ioaddress6_[1]));
-
-    // Check that the second address is still there.
-    l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
+    testBasicLease6();
 }
 
 /// @brief Verify that too long hostname for Lease6 is not accepted.
@@ -437,52 +399,13 @@ TEST_F(MySqlLeaseMgrTest, lease6InvalidHostname) {
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address
-///
-/// Adds leases to the database and checks that they can be accessed via
-/// a combination of DIUID and IAID.
-TEST_F(MySqlLeaseMgrTest, getLease4Hwaddr) {
-    // Get the leases to be used for the test and add to the database
-    vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
+TEST_F(MySqlLeaseMgrTest, getLease4HWAddr1) {
+    testGetLease4HWAddr1();
+}
 
-    // Get the leases matching the hardware address of lease 1
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    HWAddr tmp(leases[1]->hwaddr_, HTYPE_ETHER);
-    Lease4Collection returned = lmptr_->getLease4(tmp);
-
-    // Should be three leases, matching leases[1], [3] and [5].
-    ASSERT_EQ(3, returned.size());
-
-    // Easiest way to check is to look at the addresses.
-    vector<string> addresses;
-    for (Lease4Collection::const_iterator i = returned.begin();
-         i != returned.end(); ++i) {
-        addresses.push_back((*i)->addr_.toText());
-    }
-    sort(addresses.begin(), addresses.end());
-    EXPECT_EQ(straddress4_[1], addresses[0]);
-    EXPECT_EQ(straddress4_[3], addresses[1]);
-    EXPECT_EQ(straddress4_[5], addresses[2]);
-
-    // Repeat test with just one expected match
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    returned = lmptr_->getLease4(HWAddr(leases[2]->hwaddr_, HTYPE_ETHER));
-    ASSERT_EQ(1, returned.size());
-    detailCompareLease(leases[2], *returned.begin());
-
-    // Check that an empty vector is valid
-    EXPECT_TRUE(leases[7]->hwaddr_.empty());
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    returned = lmptr_->getLease4(HWAddr(leases[7]->hwaddr_, HTYPE_ETHER));
-    ASSERT_EQ(1, returned.size());
-    detailCompareLease(leases[7], *returned.begin());
-
-    // Try to get something with invalid hardware address
-    vector<uint8_t> invalid(6, 0);
-    returned = lmptr_->getLease4(invalid);
-    EXPECT_EQ(0, returned.size());
+/// @brief Check GetLease4 methods - access by Hardware Address
+TEST_F(MySqlLeaseMgrTest, getLease4HWAddr2) {
+    testGetLease4HWAddr2();
 }
 
 // @brief Get lease4 by hardware address (2)
