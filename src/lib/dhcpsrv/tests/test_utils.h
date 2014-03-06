@@ -56,6 +56,12 @@ public:
     /// @brief Virtual destructor.
     virtual ~GenericLeaseMgrTest();
 
+    /// @brief Reopen the database
+    ///
+    /// Closes the database and re-open it. This must be implemented
+    /// in derived classes.
+    virtual void reopen() = 0;
+
     /// @brief Initialize Lease4 Fields
     ///
     /// Returns a pointer to a Lease4 structure.  Different values are put into
@@ -106,6 +112,9 @@ public:
     /// @return vector<Lease6Ptr> Vector of pointers to leases
     std::vector<Lease6Ptr> createLeases6();
 
+    /// @brief checks that addLease, getLease4(addr) and deleteLease() works
+    void testBasicLease4();
+
     /// @brief Test lease retrieval using client id.
     void testGetLease4ClientId();
 
@@ -117,6 +126,16 @@ public:
 
     /// @brief Test lease retrieval using client id, HW address and subnet id.
     void testGetLease4ClientIdHWAddrSubnetId();
+
+    /// @brief Test that IPv6 lease can be added, retrieved and deleted.
+    ///
+    /// This method checks basic IPv6 lease operations. There's check_t1_t2
+    /// parameter that controls whether the backend supports storing T1, T2
+    /// parameters. memfile supports it, while MySQL doesn't. If T1,T2
+    /// storage is not supported, the expected values are 0.
+    ///
+    /// @param check_t1_t2 controls whether T1,T2 timers should be checked
+    void testAddGetDelete6(bool check_t1_t2);
 
     // Member variables
     std::vector<std::string>  straddress4_;   ///< String forms of IPv4 addresses
