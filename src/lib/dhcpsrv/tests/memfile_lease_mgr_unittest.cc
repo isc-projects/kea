@@ -128,5 +128,46 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_lease4NullClientId) {
     testLease4NullClientId();
 }
 
+/// @brief Check GetLease4 methods - access by Hardware Address & Subnet ID
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// a combination of hardware address and subnet ID
+TEST_F(MemfileLeaseMgrTest, DISABLED_getLease4HwaddrSubnetId) {
+
+    /// @todo: fails on memfile. It's probably a memfile bug.
+    testGetLease4HWAddrSubnetId();
+}
+
+/// @brief Check GetLease4 methods - access by Client ID
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// the Client ID.
+TEST_F(MemfileLeaseMgrTest, getLease4ClientId2) {
+    testGetLease4ClientId2();
+}
+
+// @brief Get Lease4 by client ID (2)
+//
+// Check that the system can cope with a client ID of any size.
+TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSize) {
+    testGetLease4ClientIdSize();
+}
+
+/// @brief Check GetLease4 methods - access by Client ID & Subnet ID
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// a combination of client and subnet IDs.
+TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSubnetId) {
+    testGetLease4ClientIdSubnetId();
+}
+
+// The following tests are not applicable for memfile. When adding
+// new tests to the list here, make sure to provide brief explanation
+// why they are not applicable:
+//
+// testGetLease4ClientIdSubnetId() - memfile just keeps Lease structure
+//     and does not do any checks of HWAddr content
+// testGetLease4HWAddrSubnetIdSize() - memfile just keeps Lease structure
+//     and does not do any checks of HWAddr content
 
 }; // end of anonymous namespace

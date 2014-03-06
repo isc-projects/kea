@@ -905,6 +905,221 @@ GenericLeaseMgrTest::testLease6InvalidHostname() {
     EXPECT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
 }
 
+void
+GenericLeaseMgrTest::testGetLease4HWAddrSize() {
+    // Create leases, although we need only one.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Now add leases with increasing hardware address size.
+    for (uint8_t i = 0; i <= HWAddr::MAX_HWADDR_LEN; ++i) {
+        leases[1]->hwaddr_.resize(i, i);
+        EXPECT_TRUE(lmptr_->addLease(leases[1]));
+        /// @todo: Simply use HWAddr directly once 2589 is implemented
+        Lease4Collection returned =
+            lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER));
+
+        ASSERT_EQ(1, returned.size());
+        detailCompareLease(leases[1], *returned.begin());
+        (void) lmptr_->deleteLease(leases[1]->addr_);
+    }
+
+    // Database should not let us add one that is too big
+    // (The 42 is a random value put in each byte of the address.)
+    /// @todo: 2589 will make this test impossible
+    leases[1]->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
+    EXPECT_THROW(lmptr_->addLease(leases[1]), isc::dhcp::DbOperationError);
+}
+
+void
+GenericLeaseMgrTest::testGetLease4HWAddrSubnetId() {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease4Ptr> leases = createLeases4();
+    for (int i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Get the leases matching the hardware address of lease 1 and
+    // subnet ID of lease 1.  Result should be a single lease - lease 1.
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
+    Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
+        HTYPE_ETHER), leases[1]->subnet_id_);
+
+    ASSERT_TRUE(returned);
+    detailCompareLease(leases[1], returned);
+
+    // Try for a match to the hardware address of lease 1 and the wrong
+    // subnet ID.
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
+    returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER),
+                                 leases[1]->subnet_id_ + 1);
+    EXPECT_FALSE(returned);
+
+    // Try for a match to the subnet ID of lease 1 (and lease 4) but
+    // the wrong hardware address.
+    vector<uint8_t> invalid_hwaddr(15, 0x77);
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
+    returned = lmptr_->getLease4(HWAddr(invalid_hwaddr, HTYPE_ETHER),
+                                 leases[1]->subnet_id_);
+    EXPECT_FALSE(returned);
+
+    // Try for a match to an unknown hardware address and an unknown
+    // subnet ID.
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
+    returned = lmptr_->getLease4(HWAddr(invalid_hwaddr, HTYPE_ETHER),
+                                 leases[1]->subnet_id_ + 1);
+    EXPECT_FALSE(returned);
+
+    // Add a second lease with the same values as the first and check that
+    // an attempt to access the database by these parameters throws a
+    // "multiple records" exception. (We expect there to be only one record
+    // with that combination, so getting them via getLeaseX() (as opposed
+    // to getLeaseXCollection() should throw an exception.)
+    EXPECT_TRUE(lmptr_->deleteLease(leases[2]->addr_));
+    leases[1]->addr_ = leases[2]->addr_;
+    EXPECT_TRUE(lmptr_->addLease(leases[1]));
+    /// @todo: Simply use HWAddr directly once 2589 is implemented
+    EXPECT_THROW(returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
+                                                    HTYPE_ETHER),
+                                             leases[1]->subnet_id_),
+                 isc::dhcp::MultipleRecords);
+
+
+}
+
+void
+GenericLeaseMgrTest::testGetLease4HWAddrSubnetIdSize() {
+    // Create leases, although we need only one.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Now add leases with increasing hardware address size and check
+    // that they can be retrieved.
+    for (uint8_t i = 0; i <= HWAddr::MAX_HWADDR_LEN; ++i) {
+        leases[1]->hwaddr_.resize(i, i);
+        EXPECT_TRUE(lmptr_->addLease(leases[1]));
+        /// @todo: Simply use HWAddr directly once 2589 is implemented
+        Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
+                                                      HTYPE_ETHER),
+                                               leases[1]->subnet_id_);
+        ASSERT_TRUE(returned);
+        detailCompareLease(leases[1], returned);
+        (void) lmptr_->deleteLease(leases[1]->addr_);
+    }
+
+    // Database should not let us add one that is too big
+    // (The 42 is a random value put in each byte of the address.)
+    leases[1]->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
+    EXPECT_THROW(lmptr_->addLease(leases[1]), isc::dhcp::DbOperationError);
+}
+
+void
+GenericLeaseMgrTest::testGetLease4ClientId2() {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease4Ptr> leases = createLeases4();
+    for (int i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Get the leases matching the Client ID address of lease 1
+    Lease4Collection returned = lmptr_->getLease4(*leases[1]->client_id_);
+
+    // Should be four leases, matching leases[1], [4], [5] and [6].
+    ASSERT_EQ(4, returned.size());
+
+    // Easiest way to check is to look at the addresses.
+    vector<string> addresses;
+    for (Lease4Collection::const_iterator i = returned.begin();
+         i != returned.end(); ++i) {
+        addresses.push_back((*i)->addr_.toText());
+    }
+    sort(addresses.begin(), addresses.end());
+    EXPECT_EQ(straddress4_[1], addresses[0]);
+    EXPECT_EQ(straddress4_[4], addresses[1]);
+    EXPECT_EQ(straddress4_[5], addresses[2]);
+    EXPECT_EQ(straddress4_[6], addresses[3]);
+
+    // Repeat test with just one expected match
+    returned = lmptr_->getLease4(*leases[3]->client_id_);
+    ASSERT_EQ(1, returned.size());
+    detailCompareLease(leases[3], *returned.begin());
+
+    // Check that client-id is NULL
+    EXPECT_FALSE(leases[7]->client_id_);
+    HWAddr tmp(leases[7]->hwaddr_, HTYPE_ETHER);
+    returned = lmptr_->getLease4(tmp);
+    ASSERT_EQ(1, returned.size());
+    detailCompareLease(leases[7], *returned.begin());
+
+    // Try to get something with invalid client ID
+    const uint8_t invalid_data[] = {0, 0, 0};
+    ClientId invalid(invalid_data, sizeof(invalid_data));
+    returned = lmptr_->getLease4(invalid);
+    EXPECT_EQ(0, returned.size());
+}
+
+void
+GenericLeaseMgrTest::testGetLease4ClientIdSize() {
+    // Create leases, although we need only one.
+    vector<Lease4Ptr> leases = createLeases4();
+
+    // Now add leases with increasing Client ID size can be retrieved.
+    // For speed, go from 0 to 128 is steps of 16.
+    // Intermediate client_id_max is to overcome problem if
+    // ClientId::MAX_CLIENT_ID_LEN is used in an EXPECT_EQ.
+    int client_id_max = ClientId::MAX_CLIENT_ID_LEN;
+    EXPECT_EQ(128, client_id_max);
+
+    int client_id_min = ClientId::MIN_CLIENT_ID_LEN;
+    EXPECT_EQ(2, client_id_min); // See RFC2132, section 9.14
+
+    for (uint8_t i = client_id_min; i <= client_id_max; i += 16) {
+        vector<uint8_t> clientid_vec(i, i);
+        leases[1]->client_id_.reset(new ClientId(clientid_vec));
+        EXPECT_TRUE(lmptr_->addLease(leases[1]));
+        Lease4Collection returned = lmptr_->getLease4(*leases[1]->client_id_);
+        ASSERT_TRUE(returned.size() == 1);
+        detailCompareLease(leases[1], *returned.begin());
+        (void) lmptr_->deleteLease(leases[1]->addr_);
+    }
+
+    // Don't bother to check client IDs longer than the maximum -
+    // these cannot be constructed, and that limitation is tested
+    // in the DUID/Client ID unit tests.
+}
+
+void
+GenericLeaseMgrTest::testGetLease4ClientIdSubnetId() {
+    // Get the leases to be used for the test and add to the database
+    vector<Lease4Ptr> leases = createLeases4();
+    for (int i = 0; i < leases.size(); ++i) {
+        EXPECT_TRUE(lmptr_->addLease(leases[i]));
+    }
+
+    // Get the leases matching the client ID of lease 1 and
+    // subnet ID of lease 1.  Result should be a single lease - lease 1.
+    Lease4Ptr returned = lmptr_->getLease4(*leases[1]->client_id_,
+                                           leases[1]->subnet_id_);
+    ASSERT_TRUE(returned);
+    detailCompareLease(leases[1], returned);
+
+    // Try for a match to the client ID of lease 1 and the wrong
+    // subnet ID.
+    returned = lmptr_->getLease4(*leases[1]->client_id_,
+                                 leases[1]->subnet_id_ + 1);
+    EXPECT_FALSE(returned);
+
+    // Try for a match to the subnet ID of lease 1 (and lease 4) but
+    // the wrong client ID
+    const uint8_t invalid_data[] = {0, 0, 0};
+    ClientId invalid(invalid_data, sizeof(invalid_data));
+    returned = lmptr_->getLease4(invalid, leases[1]->subnet_id_);
+    EXPECT_FALSE(returned);
+
+    // Try for a match to an unknown hardware address and an unknown
+    // subnet ID.
+    returned = lmptr_->getLease4(invalid, leases[1]->subnet_id_ + 1);
+    EXPECT_FALSE(returned);
+}
+
 };
 };
 };
