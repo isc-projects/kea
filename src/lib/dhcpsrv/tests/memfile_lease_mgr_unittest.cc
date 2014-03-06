@@ -99,8 +99,16 @@ TEST_F(MemfileLeaseMgrTest, getLease4NullClientId) {
 }
 
 // Checks lease4 retrieval through HWAddr
-TEST_F(MemfileLeaseMgrTest, getLease4HWAddr) {
-    testGetLease4HWAddr();
+TEST_F(MemfileLeaseMgrTest, getLease4HWAddr1) {
+    testGetLease4HWAddr1();
+}
+
+/// @brief Check GetLease4 methods - access by Hardware Address
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// a combination of DUID and IAID.
+TEST_F(MemfileLeaseMgrTest, getLease4HWAddr2) {
+    testGetLease4HWAddr2();
 }
 
 // Checks lease4 retrieval with clientId, HWAddr and subnet_id
