@@ -216,7 +216,7 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
             // We successfully received a response packet from the server.
             const dns::Rcode& rcode = getDnsUpdateResponse()->getRcode();
             if ((rcode == dns::Rcode::NOERROR()) ||
-                (rcode == dns::Rcode::NXDOMAIN())) {
+                (rcode == dns::Rcode::NXRRSET())) {
                 // We were able to remove it or it wasn't there, now we
                 // need to remove any other RRs for this FQDN.
                 transition(REMOVING_FWD_RRS_ST, UPDATE_OK_EVT);
@@ -319,12 +319,11 @@ NameRemoveTransaction::removingFwdRRsHandler() {
         case DNSClient::SUCCESS: {
             // We successfully received a response packet from the server.
             const dns::Rcode& rcode = getDnsUpdateResponse()->getRcode();
-            // @todo Not sure if NXDOMAIN is ok here, but I think so.
-            // A Rcode of NXDOMAIN would mean there are no RRs for the FQDN,
+            // A Rcode of NXRRSET means there are no RRs for the FQDN,
             // which is fine.  We were asked to delete them, they are not there
             // so all is well.
             if ((rcode == dns::Rcode::NOERROR()) ||
-                (rcode == dns::Rcode::NXDOMAIN())) {
+                (rcode == dns::Rcode::NXRRSET())) {
                 // We were able to remove the forward mapping. Mark it as done.
                 setForwardChangeCompleted(true);
 
@@ -473,9 +472,9 @@ NameRemoveTransaction::removingRevPtrsHandler() {
             // We successfully received a response packet from the server.
             const dns::Rcode& rcode = getDnsUpdateResponse()->getRcode();
             if ((rcode == dns::Rcode::NOERROR()) ||
-                (rcode == dns::Rcode::NXDOMAIN())) {
+                (rcode == dns::Rcode::NXRRSET())) {
                 // We were able to update the reverse mapping. Mark it as done.
-                // @todo For now we are also treating NXDOMAIN as success.
+                // We are also treating NXRRSET as success.
                 setReverseChangeCompleted(true);
                 transition(PROCESS_TRANS_OK_ST, UPDATE_OK_EVT);
             } else {
