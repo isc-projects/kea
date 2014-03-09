@@ -1032,6 +1032,19 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
         return;
     }
 
+    // Get the update directions that should be performed based on our
+    // response FQDN flags.
+    bool do_fwd = false;
+    bool do_rev = false;
+    CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*opt_fqdn,
+                                                             do_fwd, do_rev);
+    if (!do_fwd && !do_rev) {
+        // Flags indicate there is Nothing to do, get out now.
+        // The Most likely scenario is that we are honoring the client's
+        // request that no updates be done.
+        return;
+    }
+
     // Get the Client Id. It is mandatory and a function creating a response
     // would have thrown an exception if it was missing. Thus throwning
     // Unexpected if it is missing as it is a programming error.
@@ -1071,16 +1084,8 @@ Dhcpv6Srv::createNameChangeRequests(const Pkt6Ptr& answer) {
         // Create new NameChangeRequest. Use the domain name from the FQDN.
         // This is an FQDN included in the response to the client, so it
         // holds a fully qualified domain-name already (not partial).
-        // Get the IP address from the lease. Also, use the S flag to determine
-        // if forward change should be performed. This flag will always be
-        // set if server has taken responsibility for the forward update.
-        // Use the inverse of the N flag to determine if a reverse change
-        // should be performed.
+        // Get the IP address from the lease.
         NameChangeRequestPtr ncr;
-        bool do_fwd = false;
-        bool do_rev = false;
-        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*opt_fqdn,
-                                                                do_fwd, do_rev);
         ncr.reset(new NameChangeRequest(isc::dhcp_ddns::CHG_ADD,
                                         do_fwd, do_rev,
                                         opt_fqdn->getDomainName(),
