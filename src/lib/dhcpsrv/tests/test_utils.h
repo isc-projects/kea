@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -58,7 +58,7 @@ public:
 
     /// @brief Reopen the database
     ///
-    /// Closes the database and re-open it. This must be implemented
+    /// Closes the database and re-opens it. It must be implemented
     /// in derived classes.
     virtual void reopen() = 0;
 
@@ -95,6 +95,8 @@ public:
     /// will fail.
     ///
     /// @param leases Vector of pointers to leases
+    /// @tparam Type of the leases held in the vector: @c Lease4 or
+    /// @c Lease6.
     template <typename T>
     void checkLeasesDifferent(const std::vector<T>& leases) const;
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -125,17 +125,6 @@ GenericLeaseMgrTest::~GenericLeaseMgrTest() {
     // remove the lmptr_ pointer.
 }
 
-/// @brief Initialize Lease4 Fields
-///
-/// Returns a pointer to a Lease4 structure.  Different values are put into
-/// the lease according to the address passed.
-///
-/// This is just a convenience function for the test methods.
-///
-/// @param address Address to use for the initialization
-///
-/// @return Lease4Ptr.  This will not point to anything if the
-///         initialization failed (e.g. unknown address).
 Lease4Ptr
 GenericLeaseMgrTest::initializeLease4(std::string address) {
     Lease4Ptr lease(new Lease4());
@@ -252,17 +241,6 @@ GenericLeaseMgrTest::initializeLease4(std::string address) {
     return (lease);
 }
 
-/// @brief Initialize Lease6 Fields
-///
-/// Returns a pointer to a Lease6 structure.  Different values are put into
-/// the lease according to the address passed.
-///
-/// This is just a convenience function for the test methods.
-///
-/// @param address Address to use for the initialization
-///
-/// @return Lease6Ptr.  This will not point to anything if the initialization
-///         failed (e.g. unknown address).
 Lease6Ptr
 GenericLeaseMgrTest::initializeLease6(std::string address) {
     Lease6Ptr lease(new Lease6());
@@ -405,13 +383,6 @@ GenericLeaseMgrTest::initializeLease6(std::string address) {
     return (lease);
 }
 
-/// @brief Check Leases present and different
-///
-/// Checks a vector of lease pointers and ensures that all the leases
-/// they point to are present and different.  If not, a GTest assertion
-/// will fail.
-///
-/// @param leases Vector of pointers to leases
 template <typename T>
 void GenericLeaseMgrTest::checkLeasesDifferent(const std::vector<T>& leases) const {
 
@@ -431,11 +402,6 @@ void GenericLeaseMgrTest::checkLeasesDifferent(const std::vector<T>& leases) con
     }
 }
 
-/// @brief Creates leases for the test
-///
-/// Creates all leases for the test and checks that they are different.
-///
-/// @return vector<Lease4Ptr> Vector of pointers to leases
 vector<Lease4Ptr>
 GenericLeaseMgrTest::createLeases4() {
 
@@ -452,11 +418,6 @@ GenericLeaseMgrTest::createLeases4() {
     return (leases);
 }
 
-/// @brief Creates leases for the test
-///
-/// Creates all leases for the test and checks that they are different.
-///
-/// @return vector<Lease6Ptr> Vector of pointers to leases
 vector<Lease6Ptr>
 GenericLeaseMgrTest::createLeases6() {
 
@@ -692,7 +653,6 @@ GenericLeaseMgrTest::testGetLease4ClientIdHWAddrSubnetId() {
     EXPECT_FALSE(lease);
 }
 
-// Test that IPv6 lease can be added, retrieved and deleted
 void
 GenericLeaseMgrTest::testAddGetDelete6(bool check_t1_t2) {
     IOAddress addr("2001:db8:1::456");
@@ -771,8 +731,6 @@ GenericLeaseMgrTest::testAddGetDelete6(bool check_t1_t2) {
     EXPECT_EQ(Lease6Ptr(), x);
 }
 
-/// Checks that the addLease, getLease4 (by address) and deleteLease (with an
-/// IPv4 address) works.
 void
 GenericLeaseMgrTest::testBasicLease4() {
     // Get the leases to be used for the test.
@@ -1120,10 +1078,6 @@ GenericLeaseMgrTest::testGetLease4ClientIdSubnetId() {
     EXPECT_FALSE(returned);
 }
 
-/// @brief Check GetLease6 methods - access by DUID/IAID
-///
-/// Adds leases to the database and checks that they can be accessed via
-/// a combination of DUID and IAID.
 void
 GenericLeaseMgrTest::testGetLeases6DuidIaid() {
     // Get the leases to be used for the test.
@@ -1167,7 +1121,6 @@ GenericLeaseMgrTest::testGetLeases6DuidIaid() {
     EXPECT_EQ(0, returned.size());
 }
 
-/// @brief Check that the system can cope with a DUID of allowed size.
 void
 GenericLeaseMgrTest::testGetLeases6DuidSize() {
     // Create leases, although we need only one.
@@ -1199,12 +1152,6 @@ GenericLeaseMgrTest::testGetLeases6DuidSize() {
 
 }
 
-/// @brief Check that getLease6 methods discriminate by lease type.
-///
-/// Adds six leases, two per lease type all with the same duid and iad but
-/// with alternating subnet_ids.
-/// It then verifies that all of getLeases6() method variants correctly
-/// discriminate between the leases based on lease type alone.
 void
 GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     Lease6Ptr empty_lease(new Lease6());
@@ -1297,10 +1244,6 @@ GenericLeaseMgrTest::testLease6LeaseTypeCheck() {
     }
 }
 
-/// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
-///
-/// Adds leases to the database and checks that they can be accessed via
-/// a combination of DIUID and IAID.
 void
 GenericLeaseMgrTest::testGetLease6DuidIaidSubnetId() {
     // Get the leases to be used for the test and add them to the database.
@@ -1367,9 +1310,6 @@ GenericLeaseMgrTest::testGetLease6DuidIaidSubnetIdSize() {
     // tests.
 }
 
-/// @brief Lease4 update test
-///
-/// Checks that the code is able to update an IPv4 lease in the database.
 void
 GenericLeaseMgrTest::testUpdateLease4() {
     // Get the leases to be used for the test and add them to the database.
@@ -1419,9 +1359,6 @@ GenericLeaseMgrTest::testUpdateLease4() {
     EXPECT_THROW(lmptr_->updateLease4(leases[2]), isc::dhcp::NoSuchLease);
 }
 
-/// @brief Lease6 update test
-///
-/// Checks that the code is able to update an IPv6 lease in the database.
 void
 GenericLeaseMgrTest::testUpdateLease6() {
     // Get the leases to be used for the test.
