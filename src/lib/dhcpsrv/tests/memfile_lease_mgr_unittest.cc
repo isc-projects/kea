@@ -161,8 +161,6 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSubnetId) {
     testGetLease4ClientIdSubnetId();
 }
 
-
-
 /// @brief Check GetLease6 methods - access by DUID/IAID
 ///
 /// Adds leases to the database and checks that they can be accessed via
