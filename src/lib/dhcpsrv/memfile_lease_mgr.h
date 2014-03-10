@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -37,6 +37,17 @@ namespace dhcp {
 // tests/tools/dhcp-ubench/memfile_bench.{cc|h}
 class Memfile_LeaseMgr : public LeaseMgr {
 public:
+
+    /// @brief Specifies universe (V4, V6)
+    ///
+    /// This enumeration is used by various functions in Memfile Lease Manager,
+    /// to identify the lease type referred to. In particular, it is used by
+    /// functions operating on the lease files to distinguish between lease
+    /// files for DHCPv4 and DHCPv6.
+    enum Universe {
+        V4,
+        V6
+    };
 
     /// @brief The sole lease manager constructor
     ///
@@ -245,7 +256,50 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback();
 
+    /// @brief Returns default path to the lease file.
+    ///
+    /// @param u Universe (V4 or V6).
+    std::string getDefaultLeaseFilePath(Universe u) const;
+
+    /// @brief Returns an absolute path to the lease file.
+    ///
+    /// @param u Universe (V4 or V6).
+    std::string getLeaseFilePath(Universe u) const {
+        return (u == V4 ? lease_file4_ : lease_file6_);
+    }
+
+    /// @brief Specifies whether or not leases are written to disk.
+    ///
+    /// It is possible that leases for DHCPv4 are written to disk whereas leases
+    /// for DHCPv6 are not; or vice versa. The argument of the method specifies
+    /// the type of lease in that respect.
+    ///
+    /// @param u Universe (V4 or V6).
+    ///
+    /// @return true if leases are written to lease file; if false is
+    /// returned, leases will be held in memory and will be lost upon
+    /// server shut down.
+    bool persistLeases(Universe u) const;
+
 protected:
+
+    /// @brief Initialize the location of the lease file.
+    ///
+    /// This method uses the parameters passed as a map to the constructor to
+    /// initialize the location of the lease file. If the lease file is not
+    /// specified, the method will use the default location for the universe
+    /// (v4 or v6) selected. If the location is specified in the map as empty
+    /// it will set the empty location, which implies that leases belonging to
+    /// the specified universe will not be written to disk.
+    ///
+    /// @param u Universe (v4 or v6)
+    /// @param parameters Map holding parameters of the Lease Manager, passed to
+    /// the constructor.
+    ///
+    /// @return The location of the lease file that should be assigned to the
+    /// lease_file4_ or lease_file6_, depending on the universe specified as an
+    /// argument to this function.
+    std::string initLeaseFilePath(Universe u);
 
     // This is a multi-index container, which holds elements that can
     // be accessed using different search indexes.
@@ -283,7 +337,7 @@ protected:
     // be accessed using different search indexes.
     typedef boost::multi_index_container<
         // It holds pointers to Lease4 objects.
-        Lease4Ptr, 
+        Lease4Ptr,
         // Specification of search indexes starts here.
         boost::multi_index::indexed_by<
             // Specification of the first index starts here.
@@ -354,6 +408,12 @@ protected:
 
     /// @brief stores IPv6 leases
     Lease6Storage storage6_;
+
+    /// @brief Holds the absolute path to the lease file for DHCPv4.
+    std::string lease_file4_;
+
+    /// @brief Holds the absolute path to the lease file for DHCPv6.
+    std::string lease_file6_;
 };
 
 }; // end of isc::dhcp namespace

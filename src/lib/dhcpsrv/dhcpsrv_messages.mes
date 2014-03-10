@@ -291,13 +291,6 @@ lease from the memory file database for the specified address.
 A debug message issued when the server is attempting to update IPv6
 lease from the memory file database for the specified address.
 
-% DHCPSRV_MEMFILE_WARNING using early version of memfile lease database - leases will be lost after a restart
-This warning message is issued when the 'memfile' lease database is
-opened.  The current version of memfile does not store anything
-to disk, so lease information will be lost in the event of a restart.
-Using this version of memfile in a production environment is NOT
-recommended.
-
 % DHCPSRV_MYSQL_ADD_ADDR4 adding IPv4 lease with address %1
 A debug message issued when the server is about to add an IPv4 lease
 with the specified address to the MySQL backend database.

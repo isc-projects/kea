@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <exceptions/exceptions.h>
@@ -22,7 +23,9 @@ using namespace isc::dhcp;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
     : LeaseMgr(parameters) {
-    LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_WARNING);
+    // Get the lease files locations.
+    lease_file4_ = initLeaseFilePath(V4);
+    lease_file6_ = initLeaseFilePath(V6);
 }
 
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
@@ -309,4 +312,33 @@ void
 Memfile_LeaseMgr::rollback() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_MEMFILE_ROLLBACK);
+}
+
+std::string
+Memfile_LeaseMgr::getDefaultLeaseFilePath(Universe u) const {
+    std::ostringstream s;
+    s << CfgMgr::instance().getDataDir() << "/kea-leases";
+    s << (u == V4 ? "4" : "6");
+    s << ".csv";
+    return (s.str());
+}
+
+bool
+Memfile_LeaseMgr::persistLeases(Universe u) const {
+    // Currently, if the lease file is empty, it means that writes to disk have
+    // been explicitly disabled by the administrator. At some point, there may
+    // be a dedicated ON/OFF flag implemented to control this.
+    return (u == V4 ? !lease_file4_.empty() : !lease_file6_.empty());
+}
+
+std::string
+Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
+    std::string param_name = (u == V4 ? "leasefile4" : "leasefile6");
+    std::string lease_file;
+    try {
+        lease_file = getParameter(param_name);
+    } catch (const Exception& ex) {
+        lease_file = getDefaultLeaseFilePath(u);
+    }
+    return (lease_file);
 }
