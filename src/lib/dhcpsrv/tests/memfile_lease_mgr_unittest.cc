@@ -19,6 +19,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <gtest/gtest.h>
 
 #include <iostream>
@@ -75,7 +76,9 @@ TEST_F(MemfileLeaseMgrTest, getTypeAndName) {
 
 // Checks that adding/getting/deleting a Lease6 object works.
 TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
-    testAddGetDelete6(true);
+    testAddGetDelete6(true); // true - check T1,T2 values
+    // memfile is able to preserve those values, but some other
+    // backends can't do that.
 }
 
 /// @brief Basic Lease4 Checks
@@ -146,7 +149,7 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientId2) {
     testGetLease4ClientId2();
 }
 
-// @brief Get Lease4 by client ID (2)
+// @brief Get Lease4 by client ID
 //
 // Check that the system can cope with a client ID of any size.
 TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSize) {
@@ -165,11 +168,16 @@ TEST_F(MemfileLeaseMgrTest, getLease4ClientIdSubnetId) {
 ///
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of DUID and IAID.
+/// @todo: test disabled, because Memfile_LeaseMgr::getLeases6(Lease::Type,
+/// const DUID& duid, uint32_t iaid) const is not implemented yet.
 TEST_F(MemfileLeaseMgrTest, DISABLED_getLeases6DuidIaid) {
     testGetLeases6DuidIaid();
 }
 
 // Check that the system can cope with a DUID of allowed size.
+
+/// @todo: test disabled, because Memfile_LeaseMgr::getLeases6(Lease::Type,
+/// const DUID& duid, uint32_t iaid) const is not implemented yet.
 TEST_F(MemfileLeaseMgrTest, DISABLED_getLeases6DuidSize) {
     testGetLeases6DuidSize();
 }
@@ -180,6 +188,8 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_getLeases6DuidSize) {
 /// with alternating subnet_ids.
 /// It then verifies that all of getLeases6() method variants correctly
 /// discriminate between the leases based on lease type alone.
+/// @todo: Disabled, because type parameter in Memfile_LeaseMgr::getLease6
+/// (Lease::Type, const isc::asiolink::IOAddress& addr) const is not used.
 TEST_F(MemfileLeaseMgrTest, DISABLED_lease6LeaseTypeCheck) {
     testLease6LeaseTypeCheck();
 }
@@ -192,6 +202,8 @@ TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetId) {
     testGetLease6DuidIaidSubnetId();
 }
 
+/// Checks that getLease6(type, duid, iaid, subnet-id) works with different
+/// DUID sizes
 TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     testGetLease6DuidIaidSubnetIdSize();
 }
@@ -199,6 +211,9 @@ TEST_F(MemfileLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
 /// @brief Lease4 update tests
 ///
 /// Checks that we are able to update a lease in the database.
+/// @todo: Disabled, because memfile does not throw when lease is updated.
+/// We should reconsider if lease{4,6} structures should have a limit
+/// implemented in them.
 TEST_F(MemfileLeaseMgrTest, DISABLED_updateLease4) {
     testUpdateLease4();
 }
@@ -206,6 +221,9 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_updateLease4) {
 /// @brief Lease6 update tests
 ///
 /// Checks that we are able to update a lease in the database.
+/// @todo: Disabled, because memfile does not throw when lease is updated.
+/// We should reconsider if lease{4,6} structures should have a limit
+/// implemented in them.
 TEST_F(MemfileLeaseMgrTest, DISABLED_updateLease6) {
     testUpdateLease6();
 }
