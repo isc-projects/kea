@@ -252,7 +252,7 @@ public:
     ///
     /// No-op implementation. We need to provide concrete implementation,
     /// as this is a pure virtual method in GenericLeaseMgrTest.
-    void reopen() {
+    virtual void reopen() {
     }
 
 };
