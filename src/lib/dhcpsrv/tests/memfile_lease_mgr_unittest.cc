@@ -16,6 +16,7 @@
 
 #include <asiolink/io_address.h>
 #include <dhcp/duid.h>
+#include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
@@ -56,6 +57,18 @@ public:
         lmptr_ = 0;
     }
 
+    /// @brief Return path to the lease file used by unit tests.
+    ///
+    /// @param filename Name of the lease file appended to the path to the
+    /// directory where test data is held.
+    ///
+    /// @return Full path to the lease file.
+    std::string getLeaseFilePath(const std::string& filename) const {
+        std::ostringstream s;
+        s << TEST_DATA_BUILDDIR << "/" << filename;
+        return (s.str());
+    }
+
 };
 
 // This test checks if the LeaseMgr can be instantiated and that it
@@ -73,6 +86,69 @@ TEST_F(MemfileLeaseMgrTest, getTypeAndName) {
     EXPECT_EQ(std::string("memfile"), lmptr_->getType());
     EXPECT_EQ(std::string("memory"),  lmptr_->getName());
 }
+
+// Checks if the path to the lease files is initialized correctly.
+TEST_F(MemfileLeaseMgrTest, getLeaseFilePath) {
+    LeaseMgr::ParameterMap pmap;
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
+
+    std::ostringstream s4;
+    s4 << CfgMgr::instance().getDataDir() << "/" << "kea-leases4.csv";
+    std::ostringstream s6;
+    s6 << CfgMgr::instance().getDataDir() << "/" << "kea-leases6.csv";
+    EXPECT_EQ(s4.str(),
+              lease_mgr->getDefaultLeaseFilePath(Memfile_LeaseMgr::V4));
+    EXPECT_EQ(s6.str(),
+              lease_mgr->getDefaultLeaseFilePath(Memfile_LeaseMgr::V6));
+
+
+    EXPECT_EQ(lease_mgr->getDefaultLeaseFilePath(Memfile_LeaseMgr::V4),
+              lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V4));
+
+    EXPECT_EQ(lease_mgr->getDefaultLeaseFilePath(Memfile_LeaseMgr::V6),
+              lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6));
+
+    pmap["leasefile4"] = getLeaseFilePath("leasefile4.csv");
+    lease_mgr.reset(new Memfile_LeaseMgr(pmap));
+    EXPECT_EQ(pmap["leasefile4"],
+              lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V4));
+    EXPECT_EQ(lease_mgr->getDefaultLeaseFilePath(Memfile_LeaseMgr::V6),
+              lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6));
+
+    pmap["leasefile6"] = getLeaseFilePath("kea-leases6.csv");
+    lease_mgr.reset(new Memfile_LeaseMgr(pmap));
+    EXPECT_EQ(pmap["leasefile4"],
+              lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V4));
+    EXPECT_EQ(pmap["leasefile6"],
+              lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6));
+}
+
+// Check if the persitLeases correctly checks that leases should not be written
+// to disk when lease file is set to empty value.
+TEST_F(MemfileLeaseMgrTest, persistLeases) {
+    LeaseMgr::ParameterMap pmap;
+    boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
+    // If the leasefile4 and leasefile6 are not specified, the default
+    // file names will be used. The leases will be written to these files.
+    EXPECT_TRUE(lease_mgr->persistLeases(Memfile_LeaseMgr::V4));
+    EXPECT_TRUE(lease_mgr->persistLeases(Memfile_LeaseMgr::V6));
+
+    // Specify the names of the lease files. Leases will be written.
+    pmap["leasefile4"] = "leases4.csv";
+    pmap["leasefile6"] = "leases6.csv";
+    lease_mgr.reset(new Memfile_LeaseMgr(pmap));
+    EXPECT_TRUE(lease_mgr->persistLeases(Memfile_LeaseMgr::V4));
+    EXPECT_TRUE(lease_mgr->persistLeases(Memfile_LeaseMgr::V6));
+
+    // Specify empty names of the lease files. This should disable writes
+    // of leases to disk.
+    pmap["leasefile4"] = "";
+    pmap["leasefile6"] = "";
+    lease_mgr.reset(new Memfile_LeaseMgr(pmap));
+    EXPECT_FALSE(lease_mgr->persistLeases(Memfile_LeaseMgr::V4));
+    EXPECT_FALSE(lease_mgr->persistLeases(Memfile_LeaseMgr::V6));
+}
+
 
 // Checks that adding/getting/deleting a Lease6 object works.
 TEST_F(MemfileLeaseMgrTest, addGetDelete6) {
