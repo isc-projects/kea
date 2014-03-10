@@ -59,6 +59,7 @@ libdhcpsrv_unittests_SOURCES += dbaccess_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_factory_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += generic_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += memfile_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp_parsers_unittest.cc
 if HAVE_MYSQL
