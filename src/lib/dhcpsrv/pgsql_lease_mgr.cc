@@ -201,20 +201,24 @@ public:
         params.clear();
         ostringstream tmp;
 
-        tmp << lease_->addr_;
+        tmp << static_cast<uint32_t>(lease_->addr_);
         PgSqlParam paddr4 = { .value = tmp.str() };
 
         params.push_back(paddr4);
         tmp.str("");
         tmp.clear();
 
-        uint8_t* data = const_cast<uint8_t *>(&(lease_->hwaddr_[0]));
-        PgSqlParam pdest = { .value = reinterpret_cast<char *>(data), .isbinary = 1, .binarylen = static_cast<int>(lease_->hwaddr_.size()) };
+        uint8_t* data = const_cast<uint8_t*>(&(lease_->hwaddr_[0]));
+        PgSqlParam pdest = { .value = reinterpret_cast<char *>(data),
+                             .isbinary = 1,
+                             .binarylen = static_cast<int>(lease_->hwaddr_.size()) };
         params.push_back(pdest);
 
         if(lease_->client_id_) {
             vector<uint8_t> client_data = lease_->client_id_->getClientId();
-            PgSqlParam pclient_dest = { .value = reinterpret_cast<char *>(&client_data[0]), .isbinary = 1, .binarylen = static_cast<int>(lease_->client_id_->getClientId().size()) };
+            PgSqlParam pclient_dest = { .value = reinterpret_cast<char *>(&client_data[0]),
+                                        .isbinary = 1,
+                                        .binarylen = static_cast<int>(lease_->client_id_->getClientId().size()) };
             params.push_back(pclient_dest);
         } else {
             params.push_back(PgSqlParam());
@@ -783,7 +787,7 @@ PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     ostringstream tmp;
     string baddr;
 
-    tmp << addr;
+    tmp << static_cast<uint32_t>(addr);
     PgSqlParam addr4 = { .value = tmp.str() };
 
     inparams.push_back(addr4);
@@ -1115,24 +1119,22 @@ PgSqlLeaseMgr::getDescription() const {
 pair<uint32_t, uint32_t>
 PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_GET_VERSION).arg("get_version");
+              DHCPSRV_PGSQL_GET_VERSION);
 
-    PGresult * r = PQexec(status, "SET AUTOCOMMIT TO OFF");
+    PGresult* r = PQexec(status, "SET AUTOCOMMIT TO OFF");
     PQclear(r);
 
     r = PQexec(status, "BEGIN");
     PQclear(r);
 
-    r = PQexecPrepared(status, "get_version",
-                                  0,
-                                  NULL, NULL, NULL, 0);
+    r = PQexecPrepared(status, "get_version", 0, NULL, NULL, NULL, 0);
 
     PQclear(r);
 
     r = PQexec(status, "FETCH ALL in get_version");
 
-    const char * version_str = PQgetvalue(r, 0, 0);
-    const char * minor_str = PQgetvalue(r, 0, 1);
+    const char* version_str = PQgetvalue(r, 0, 0);
+    const char* minor_str = PQgetvalue(r, 0, 1);
 
     istringstream tmp;
 
