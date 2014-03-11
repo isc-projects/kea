@@ -121,4 +121,78 @@
   The unit tests are run automatically when "make check" is executed (providing
   that BIND 10 has been build with the \--with-dhcp-mysql switch (see the installation
   section in the <a href="http://bind10.isc.org/docs/bind10-guide.html">BIND 10 Guide</a>).
+
+ @subsection dhcp-pgsql-unittest PostgreSQL unit-tests
+
+  Conceptually, the steps required to run PostgreSQL unit-tests are the same as
+  in MySQL. First, a database called <i>keatest</i> must be created. A database
+  user, also called <i>keatest</i> (that will be allowed to log in using password
+  <i>keatest</i>) must be created and given full privileges in that database. The
+  unit tests create the schema in the database before each test and delete it
+  afterwards.
+
+  PostgreSQL set up differs from system to system. Please consult your OS-specific
+  PostgreSQL documentation. The remainder of that section uses Ubuntu 13.10 x64 as
+  example. On Ubuntu, after installing PostgreSQL (with <tt>sudo apt-get install
+  postgresql</tt>), it is installed as user <i>postgres</i>. To create new databases
+  or add new users, initial commands must be issued as user postgres:
+
+@verbatim
+$ sudo -u postgres psql postgres
+[sudo] password for thomson:
+psql (9.1.12)
+Type "help" for help.
+postgres=# CREATE USER keatest WITH PASSWORD 'keatest';
+CREATE ROLE
+postgres=# CREATE DATABASE keatest;
+CREATE DATABASE
+postgres=# GRANT ALL PRIVILEGES ON DATABASE keatest TO keatest;
+GRANT
+postgres=# \q
+@endverbatim
+
+  Now we are back to our regular, unprivileged user. Try to log into the newly
+  created database using keatest credentials:
+@verbatim
+$ psql -d keatest -U keatest
+$ psql keatest -U keatest -W
+Password for user keatest:
+psql (9.1.12)
+Type "help" for help.
+
+keatest=>
+@endverbatim
+
+  If instead of seeing keatest=> prompt, your login will be refused with error
+  code about failed peer or indent authentication, it means that PostgreSQL is
+  configured to check unix username and reject login attepts if PostgreSQL names
+  are different. To alter that, PostgreSQL configuration must be changed.
+  Alternatively, you may set up your environment, so the tests would be run from
+  unix account keatest. <tt>/etc/postgresql/9.1/main/pg_hba.conf</tt> config file
+  had to betweaked. It may be in a different location in your system. The following
+  lines:
+
+@verbatim
+local   all             all                                     peer
+host    all             all             127.0.0.1/32            md5
+host    all             all             ::1/128                 md5
+@endverbatim
+
+  were replaced with:
+
+@verbatim
+local   all             all                                     password
+host    all             all             127.0.0.1/32            password
+host    all             all             ::1/128                 password
+@endverbatim
+
+  Please consult your PostgreSQL user manual before applying those changes as
+  those changes may expose your other databases that you run on the same system.
+  In general case, it is a poor idea to run anything of value on a system
+  that runs tests. Use caution!
+
+  The unit tests are run automatically when "make check" is executed (providing
+  that BIND 10 has been build with the \--with-dhcp-pgsql switch (see the installation
+  section in the <a href="http://bind10.isc.org/docs/bind10-guide.html">BIND10 Guide</a>).
+
   */
