@@ -254,6 +254,15 @@ public:
     /// @return shared_ptr to requested suoption
     OptionPtr getOption(uint16_t type);
 
+    /// @brief Returns all encapsulated options.
+    ///
+    /// @warning This function returns a reference to the container holding
+    /// encapsulated options, which is valid as long as the object which
+    /// returned it exists.
+    const OptionCollection& getOptions() const {
+        return (options_);
+    }
+
     /// Attempts to delete first suboption of requested type
     ///
     /// @param type Type of option to be deleted.

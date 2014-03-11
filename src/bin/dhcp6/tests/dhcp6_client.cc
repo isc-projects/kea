@@ -21,6 +21,7 @@
 #include <dhcp6/tests/dhcp6_client.h>
 #include <util/buffer.h>
 #include <boost/pointer_cast.hpp>
+#include <cstdlib>
 #include <time.h>
 
 using namespace isc::test;
@@ -41,63 +42,99 @@ Dhcp6Client::Dhcp6Client() :
     use_relay_(false) {
 }
 
+Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
+    relay_link_addr_("3000:1::1"),
+    curr_transid_(0),
+    dest_addr_(ALL_DHCP_RELAY_AGENTS_AND_SERVERS),
+    duid_(generateDUID(DUID::DUID_LLT)),
+    link_local_("fe80::3a60:77ff:fed5:cdef"),
+    srv_(srv),
+    use_na_(false),
+    use_pd_(false),
+    use_relay_(false) {
+}
+
 void
-Dhcp6Client::applyConfiguration(const Pkt6Ptr& reply) {
+Dhcp6Client::applyRcvdConfiguration(const Pkt6Ptr& reply) {
     typedef OptionCollection Opts;
     // Get all options in the reply message and pick IA_NA and IA_PD.
     Opts opts = reply->options_;
     for (Opts::const_iterator opt = opts.begin(); opt != opts.end(); ++opt) {
         Option6IAPtr ia = boost::dynamic_pointer_cast<Option6IA>(opt->second);
-        // If the current one is not IA option, get the next one.
         if (!ia) {
             continue;
         }
-        // The default value of the prefix length is 128 (as for IPv6 address),
-        // as at this point we don't know if we are dealing with the address
-        // of prefix.
-        int prefix_len = 128;
-        // Check if this is the address.
-        Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<
-            Option6IAAddr>(ia->getOption(D6O_IAADDR));
-        // If this is not the address it may be a prefix.
-        if (!iaaddr) {
-            iaaddr = boost::dynamic_pointer_cast<
-                Option6IAAddr>(ia->getOption(D6O_IAPREFIX));
-            // If this is a prefix, modify the prefix length accordingly.
-            if (iaaddr) {
-                prefix_len = boost::dynamic_pointer_cast<
-                    Option6IAPrefix>(ia->getOption(D6O_IAPREFIX))->getLength();
+
+        const Opts& ia_opts = ia->getOptions();
+        for (Opts::const_iterator iter_ia_opt = ia_opts.begin();
+             iter_ia_opt != ia_opts.end(); ++iter_ia_opt) {
+            OptionPtr ia_opt = iter_ia_opt->second;
+            LeaseInfo lease_info;
+            switch (ia_opt->getType()) {
+            case D6O_IAADDR:
+                {
+                    Option6IAAddrPtr iaaddr = boost::dynamic_pointer_cast<
+                        Option6IAAddr>(ia->getOption(D6O_IAADDR));
+                    if (!iaaddr) {
+                        // There is no address. This IA option may simply
+                        // contain a status code, so let's just reset the
+                        // lease and keep IAID around.
+                        lease_info.lease_ = Lease6();
+                        lease_info.lease_.type_ = Lease::TYPE_NA;
+                        lease_info.lease_.iaid_ = ia->getIAID();
+                        break;
+                    }
+                    lease_info.lease_ = Lease6(Lease::TYPE_NA,
+                                               iaaddr->getAddress(),
+                                               duid_, ia->getIAID(),
+                                               iaaddr->getPreferred(),
+                                               iaaddr->getValid(),
+                                               ia->getT1(), ia->getT2(), 0);
+                    lease_info.lease_.cltt_ = time(NULL);
+                }
+                break;
+
+            case D6O_IAPREFIX:
+                {
+                    Option6IAPrefixPtr iaprefix = boost::dynamic_pointer_cast<
+                        Option6IAPrefix>(ia->getOption(D6O_IAPREFIX));
+                    if (!iaprefix) {
+                        // There is no prefix. This IA option may simply
+                        // contain a status code, so let's just reset the
+                        // lease and keep IAID around.
+                        lease_info.lease_ = Lease6();
+                        lease_info.lease_.type_ = Lease::TYPE_PD;
+                        lease_info.lease_.iaid_ = ia->getIAID();
+                        break;
+                    }
+                    lease_info.lease_ = Lease6(Lease::TYPE_PD,
+                                               iaprefix->getAddress(), duid_,
+                                               ia->getIAID(),
+                                               iaprefix->getPreferred(),
+                                               iaprefix->getValid(),
+                                               ia->getT1(), ia->getT2(), 0,
+                                               iaprefix->getLength());
+                    lease_info.lease_.cltt_ = time(NULL);
+                }
+                break;
+
+            case D6O_STATUS_CODE:
+                {
+                    // Check if the server has sent status code. If no status
+                    // code, assume the status code to be 0.
+                    OptionCustomPtr status_code = boost::dynamic_pointer_cast<
+                        OptionCustom>(ia->getOption(D6O_STATUS_CODE));
+                    lease_info.status_code_ =
+                        status_code ? status_code->readInteger<uint16_t>(0) : 0;
+                }
+                break;
+
+            default:
+                ; // no-op
             }
-        }
-        /// Set the lease information if we have a prefix or address.
-        LeaseInfo lease_info;
-        if (iaaddr) {
-            Lease6 lease((prefix_len == 128 ? Lease::TYPE_NA : Lease::TYPE_PD),
-                         iaaddr->getAddress(), duid_,
-                         ia->getIAID(), iaaddr->getPreferred(),
-                         iaaddr->getValid(), ia->getT1(), ia->getT2(), 0,
-                         prefix_len);
-            lease.cltt_ = time(NULL);
 
-            lease_info.lease_ = lease;
-        } else {
-            // There is no prefix and no address. This IA option may simply
-            // contain a status code, so let's just reset the lease and keep
-            // IAID around.
-            lease_info.lease_ = Lease6();
-            lease_info.lease_.iaid_ = ia->getIAID();
+            applyLease(lease_info);
         }
-
-        // Check if the server has sent status code. If no status code, assume
-        // the status code to be 0.
-        OptionCustomPtr status_code = boost::dynamic_pointer_cast<
-            OptionCustom>(ia->getOption(D6O_STATUS_CODE));
-        if (status_code) {
-            lease_info.status_code_ = status_code->readInteger<uint16_t>(0);
-        } else {
-            lease_info.status_code_ = 0;
-        }
-        applyLease(lease_info);
     }
 }
 
@@ -111,6 +148,7 @@ Dhcp6Client::applyLease(const LeaseInfo& lease_info) {
         // server hasn't sent the IA option. In this case, there is no
         // lease assignment so we keep what we have.
         if ((existing_lease.iaid_ == lease_info.lease_.iaid_)
+            && (existing_lease.type_ == lease_info.lease_.type_)
             && (lease_info.lease_.addr_ != asiolink::IOAddress("::"))) {
             config_.leases_[i] = lease_info;
             return;
@@ -218,7 +256,7 @@ Dhcp6Client::doRequest() {
 
     // Apply new configuration only if the server has responded.
     if (context_.response_) {
-        applyConfiguration(context_.response_);
+        applyRcvdConfiguration(context_.response_);
     }
 }
 
@@ -231,7 +269,7 @@ Dhcp6Client::doRebind() {
     context_.response_ = receiveOneMsg();
     // Apply configuration only if the server has responded.
     if (context_.response_) {
-        applyConfiguration(context_.response_);
+        applyRcvdConfiguration(context_.response_);
     }
 }
 
@@ -253,7 +291,9 @@ Dhcp6Client::generateDUID(DUID::DUIDType duid_type) const {
                   " generation of DUID LLT");
     }
     duid.push_back(static_cast<uint8_t>(duid_type));
-    duid.insert(duid.end(), 4, 0);
+    for (int i = 0; i < 4; ++i) {
+        duid.push_back(static_cast<uint8_t>(rand() % 255));
+    }
     for (int i = 0; i < 6; ++i) {
         duid.push_back(static_cast<uint8_t>(i));
     }
@@ -319,6 +359,6 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
 }
 
 
-}
-}
-}
+} // end of namespace isc::dhcp::test
+} // end of namespace isc::dhcp
+} // end of namespace isc
