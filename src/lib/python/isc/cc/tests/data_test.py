@@ -34,37 +34,37 @@ class TestData(unittest.TestCase):
         c = {}
         data.remove_identical(a, b)
         self.assertEqual(a, c)
-    
+
         a = { "a": 1, "b": [ 1, 2 ] }
         b = {}
         c = { "a": 1, "b": [ 1, 2 ] }
         data.remove_identical(a, b)
         self.assertEqual(a, c)
-    
+
         a = { "a": 1, "b": [ 1, 2 ] }
         b = { "a": 1, "b": [ 1, 2 ] }
         c = {}
         data.remove_identical(a, b)
         self.assertEqual(a, c)
-    
+
         a = { "a": 1, "b": [ 1, 2 ] }
         b = { "a": 1, "b": [ 1, 3 ] }
         c = { "b": [ 1, 2 ] }
         data.remove_identical(a, b)
         self.assertEqual(a, c)
-    
+
         a = { "a": { "b": "c" } }
         b = {}
         c = { "a": { "b": "c" } }
         data.remove_identical(a, b)
         self.assertEqual(a, c)
-    
+
         a = { "a": { "b": "c" } }
         b = { "a": { "b": "c" } }
         c = {}
         data.remove_identical(a, b)
         self.assertEqual(a, c)
-    
+
         a = { "a": { "b": "c" } }
         b = { "a": { "b": "d" } }
         c = { "a": { "b": "c" } }
@@ -75,7 +75,7 @@ class TestData(unittest.TestCase):
                           a, 1)
         self.assertRaises(data.DataTypeError, data.remove_identical,
                           1, b)
-        
+
     def test_merge(self):
         d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2 } }
         d2 = { 'a': None, 'c': { 'd': None, 'e': 3, 'f': [ 1 ] } }
@@ -87,6 +87,13 @@ class TestData(unittest.TestCase):
         self.assertRaises(data.DataTypeError, data.merge, 1, d2)
         self.assertRaises(data.DataTypeError, data.merge, None, None)
 
+        # An example that failed when merge was relying on dict.update.
+        tnew = {'d2': {'port': 54000}}
+        torig = {'ifaces': ['p8p1'], 'db': {'type': 'memfile'}, 'd2': {'ip': '127.0.0.1', 'enable': True}}
+        tchk = {'ifaces': ['p8p1'], 'db': {'type': 'memfile'}, 'd2': {'ip': '127.0.0.1', 'enable': True, 'port': 54000}}
+        tmrg = torig
+        data.merge(tmrg, tnew)
+        self.assertEqual(tmrg, tchk)
 
     def test_split_identifier_list_indices(self):
         id, indices = data.split_identifier_list_indices('a')
@@ -103,15 +110,15 @@ class TestData(unittest.TestCase):
         id, indices = data.split_identifier_list_indices('a/b/c')
         self.assertEqual(id, 'a/b/c')
         self.assertEqual(indices, None)
-        
+
         id, indices = data.split_identifier_list_indices('a/b/c[1]')
         self.assertEqual(id, 'a/b/c')
         self.assertEqual(indices, [1])
-       
+
         id, indices = data.split_identifier_list_indices('a/b/c[1][2][3]')
         self.assertEqual(id, 'a/b/c')
         self.assertEqual(indices, [1, 2, 3])
-        
+
         id, indices = data.split_identifier_list_indices('a[0]/b[1]/c[2]')
         self.assertEqual(id, 'a[0]/b[1]/c')
         self.assertEqual(indices, [2])
@@ -124,7 +131,7 @@ class TestData(unittest.TestCase):
         self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 'a[0]a[1]')
 
         self.assertRaises(data.DataTypeError, data.split_identifier_list_indices, 1)
-        
+
 
     def test_find(self):
         d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2, 'more': { 'data': 'here' } } }
@@ -151,7 +158,7 @@ class TestData(unittest.TestCase):
         d3 = { 'a': [ { 'b': [ {}, { 'c': 'd' } ] } ] }
         self.assertEqual(data.find(d3, 'a[0]/b[1]/c'), 'd')
         self.assertRaises(data.DataNotFoundError, data.find, d3, 'a[1]/b[1]/c')
-        
+
     def test_set(self):
         d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2 } }
         d12 = { 'b': 1, 'c': { 'e': 3, 'f': [ 1 ] } }
@@ -170,7 +177,7 @@ class TestData(unittest.TestCase):
         self.assertEqual(d1, d14)
         data.set(d1, 'c/f[0]/g[1]', 3)
         self.assertEqual(d1, d15)
-        
+
         self.assertRaises(data.DataTypeError, data.set, d1, 1, 2)
         self.assertRaises(data.DataTypeError, data.set, 1, "", 2)
         self.assertRaises(data.DataTypeError, data.set, d1, 'c[1]', 2)
@@ -205,7 +212,7 @@ class TestData(unittest.TestCase):
         self.assertEqual(d3, { 'a': [ [ 1, 3 ] ] })
         data.unset(d3, 'a[0][1]')
         self.assertEqual(d3, { 'a': [ [ 1 ] ] })
-        
+
     def test_find_no_exc(self):
         d1 = { 'a': 'a', 'b': 1, 'c': { 'd': 'd', 'e': 2, 'more': { 'data': 'here' } } }
         self.assertEqual(data.find_no_exc(d1, ''), d1)
@@ -220,7 +227,7 @@ class TestData(unittest.TestCase):
         self.assertEqual(data.find_no_exc(None, 1), None)
         self.assertEqual(data.find_no_exc("123", ""), "123")
         self.assertEqual(data.find_no_exc("123", ""), "123")
-        
+
     def test_parse_value_str(self):
         self.assertEqual(data.parse_value_str("1"), 1)
         self.assertEqual(data.parse_value_str("true"), True)
