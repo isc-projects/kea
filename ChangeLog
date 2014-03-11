@@ -1,5 +1,10 @@
 bind10-1.2.0beta1 released on March 6, 2014
 
+767.	[func]		tomek
+	Unit-tests for all database backends are now shared. This improves
+	test coverage for memfile and any future backends that may appear.
+	(Trac #3359, git 3d6c11630ada9d0681a813cf026f6bb16aabb9fa)
+
 766.	[func]		muks
 	--disable-dns and --disable-dhcp configure arguments have been
 	added to conditionally disable the DNS or DHCP components
