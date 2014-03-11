@@ -1,4 +1,11 @@
-768.    [bug]       tmark
+769.	[bug]		tmark
+	b10-dhcp-ddns now treats a DNS server response code of NXRRSET as a
+	successful outcome when processing a request to remove DNS data.  This
+	corrects a defect in which b10-dhcp-ddns would incorrectly fail a request
+	to remove DNS data when the DNS server's response was NXRRSET.
+	(Trac #3362, git da3b0d4f364d069ffdb47723545798ac589fae42)
+
+768.	[bug]		tmark
 	Python configuration library now properly merges changes into
 	configuration items that are maps of items.  This corrects a
 	defect in which a change to an item in a map of items could
