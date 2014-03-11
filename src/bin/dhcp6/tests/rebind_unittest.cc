@@ -15,6 +15,7 @@
 #include <config.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp6/config_parser.h>
 #include <dhcp6/tests/dhcp6_test_utils.h>
 #include <dhcp6/tests/dhcp6_client.h>
@@ -198,6 +199,15 @@ const char* REBIND_CONFIGS[] = {
 /// @brief Test fixture class for testing Rebind.
 class RebindTest : public Dhcpv6SrvTest {
 public:
+
+    /// @brief Constructor.
+    ///
+    /// Sets up fake interfaces.
+    RebindTest()
+        : Dhcpv6SrvTest(),
+          iface_mgr_test_config_(true) {
+    }
+
     /// @brief Configure the DHCPv6 server using the JSON string.
     ///
     /// @param config New configuration in JSON format.
@@ -213,6 +223,9 @@ public:
     /// @param client Object representing a test DHCPv6 client to use.
     void requestLease(const int config_index, const int subnets_num,
                       Dhcp6Client& client);
+
+    /// @brief Interface Manager's fake configuration control.
+    IfaceMgrTestConfig iface_mgr_test_config_;
 
 };
 
