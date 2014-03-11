@@ -1,9 +1,17 @@
-bind10-1.2.0beta1 released on March 6, 2014
+768.    [bug]       tmark
+	Python configuration library now properly merges changes into
+	configuration items that are maps of items.  This corrects a
+	defect in which a change to an item in a map of items could
+	committed, only to be lost upon committing a subsequent change
+	to same map of items during the same bindctl session.
+	(Trac #3373, git da3b0d4f364d069ffdb47723545798ac589fae42)
 
 767.	[func]		tomek
 	Unit-tests for all database backends are now shared. This improves
 	test coverage for memfile and any future backends that may appear.
 	(Trac #3359, git 3d6c11630ada9d0681a813cf026f6bb16aabb9fa)
+
+bind10-1.2.0beta1 released on March 6, 2014
 
 766.	[func]		muks
 	--disable-dns and --disable-dhcp configure arguments have been
