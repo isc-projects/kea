@@ -7,6 +7,9 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 if HAVE_MYSQL
 AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
 endif
+if HAVE_PGSQL
+AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
+endif
 
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
@@ -54,6 +57,9 @@ libb10_dhcpsrv_la_SOURCES += memfile_lease_mgr.cc memfile_lease_mgr.h
 if HAVE_MYSQL
 libb10_dhcpsrv_la_SOURCES += mysql_lease_mgr.cc mysql_lease_mgr.h
 endif
+if HAVE_PGSQL
+libb10_dhcpsrv_la_SOURCES += pgsql_lease_mgr.cc pgsql_lease_mgr.h
+endif
 libb10_dhcpsrv_la_SOURCES += option_space_container.h
 libb10_dhcpsrv_la_SOURCES += pool.cc pool.h
 libb10_dhcpsrv_la_SOURCES += subnet.cc subnet.h
@@ -77,6 +83,9 @@ libb10_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 3:0:0
 if HAVE_MYSQL
 libb10_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
 endif
+if HAVE_PGSQL
+libb10_dhcpsrv_la_LDFLAGS += $(PGSQL_LIBS)
+endif
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
@@ -88,8 +97,8 @@ endif
 EXTRA_DIST = dhcpsrv_messages.mes
 
 # Distribute MySQL schema creation script and backend documentation
-EXTRA_DIST += dhcpdb_create.mysql database_backends.dox libdhcpsrv.dox
-dist_pkgdata_DATA = dhcpdb_create.mysql
+EXTRA_DIST += dhcpdb_create.mysql dhcpdb_create.pgsql database_backends.dox libdhcpsrv.dox
+dist_pkgdata_DATA = dhcpdb_create.mysql dhcpdb_create.pgsql
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(dhcp_data_dir)

@@ -969,6 +969,58 @@ AC_CHECK_HEADER(sys/filio.h)
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
 
+pg_config="no"
+AC_ARG_WITH([dhcp-pgsql],
+  AC_HELP_STRING([--with-dhcp-pgsql=PATH],
+    [path to the PostgreSQL 'pg_config' script]),
+    [pg_config="$withval"])
+
+if test "${pg_config}" = "yes" ; then
+    PG_CONFIG="/usr/bin/pg_config"
+elif test "${pg_config}" != "no" ; then
+    PG_CONFIG="${withval}"
+fi
+
+if test "$PG_CONFIG" != "" ; then
+    if test -d "$PG_CONFIG" -o ! -x "$PG_CONFIG" ; then
+        AC_MSG_ERROR([--with-dhcp-pgsql should point to a pg_config program])
+    fi
+
+    PGSQL_CPPFLAGS=`$PG_CONFIG --cppflags`
+    PGSQL_INCLUDEDIR=`$PG_CONFIG --includedir`
+    PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$PGSQL_INCLUDEDIR"
+    PGSQL_LIBS=`$PG_CONFIG --ldflags`
+    PGSQL_LIBS="$PGSQL_LIBS -lpq"
+    PGSQL_VERSION=`$PG_CONFIG --version`
+
+    AC_SUBST(PGSQL_CPPFLAGS)
+    AC_SUBST(PGSQL_LIBS)
+
+    # Check that a simple program using PostgreSQL functions can compile and link.
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    LIBS_SAVED="$LIBS"
+
+    CPPFLAGS="$PGSQL_CPPFLAGS $CPPFLAGS"
+    LIBS="$PGSQL_LIBS $LIBS"
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([#include <libpq-fe.h>],
+                             [PGconn * c = PQconnectdb("dbname = 'postgres'");
+                              PQfinish(c);])],
+            [AC_MSG_RESULT([checking for PostgreSQL headers and library... yes])],
+            [AC_MSG_RESULT([checking for PostgreSQL headers and library... no])
+             AC_MSG_ERROR([Needs PostgreSQL library])]
+    )
+
+    CPPFLAGS=$CPPFLAGS_SAVED
+    LIBS=$LIBS_SAVED
+
+    # Note that PostgreSQL is present in the config.h file
+    AC_DEFINE([HAVE_PGSQL], [1], [PostgreSQL is present])
+fi
+
+# ... and at the shell level, so Makefile.am can take action depending on this.
+AM_CONDITIONAL(HAVE_PGSQL, test "$PG_CONFIG" != "")
 
 # Check for log4cplus
 log4cplus_path="yes"
@@ -1742,6 +1794,26 @@ MySQL:
   MYSQL_VERSION:   ${MYSQL_VERSION}
   MYSQL_CPPFLAGS:  ${MYSQL_CPPFLAGS}
   MYSQL_LIBS:      ${MYSQL_LIBS}
+END
+else
+cat >> config.report << END
+
+MySQL: no
+END
+fi
+
+if test "$PGSQL_CPPFLAGS" != "" ; then
+cat >> config.report << END
+
+PostgreSQL:
+  PGSQL_VERSION:   ${PGSQL_VERSION}
+  PGSQL_CPPFLAGS:  ${PGSQL_CPPFLAGS}
+  PGSQL_LIBS:      ${PGSQL_LIBS}
+END
+else
+cat >> config.report << END
+
+PostgreSQL: no
 END
 fi
 

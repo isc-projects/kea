@@ -67,8 +67,12 @@ libdhcpsrv_unittests_SOURCES += dhcp_parsers_unittest.cc
 if HAVE_MYSQL
 libdhcpsrv_unittests_SOURCES += mysql_lease_mgr_unittest.cc
 endif
+if HAVE_PGSQL
+libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
+endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
-libdhcpsrv_unittests_SOURCES += schema_copy.h
+libdhcpsrv_unittests_SOURCES += schema_mysql_copy.h
+libdhcpsrv_unittests_SOURCES += schema_pgsql_copy.h
 libdhcpsrv_unittests_SOURCES += subnet_unittest.cc
 libdhcpsrv_unittests_SOURCES += test_get_callout_handle.cc test_get_callout_handle.h
 libdhcpsrv_unittests_SOURCES += triplet_unittest.cc
@@ -78,10 +82,16 @@ libdhcpsrv_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INC
 if HAVE_MYSQL
 libdhcpsrv_unittests_CPPFLAGS += $(MYSQL_CPPFLAGS)
 endif
+if HAVE_PGSQL
+libdhcpsrv_unittests_CPPFLAGS += $(PGSQL_CPPFLAGS)
+endif
 
 libdhcpsrv_unittests_LDFLAGS  = $(AM_LDFLAGS)  $(GTEST_LDFLAGS)
 if HAVE_MYSQL
 libdhcpsrv_unittests_LDFLAGS  += $(MYSQL_LIBS)
+endif
+if HAVE_PGSQL
+libdhcpsrv_unittests_LDFLAGS  += $(PGSQL_LIBS)
 endif
 
 libdhcpsrv_unittests_CXXFLAGS = $(AM_CXXFLAGS)
