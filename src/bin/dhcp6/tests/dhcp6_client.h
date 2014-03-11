@@ -64,6 +64,10 @@ public:
         /// @brief Holds the last status code that server has sent for
         /// the particular lease.
         uint16_t status_code_;
+
+        /// @brief Default constructor for the structure.
+        LeaseInfo() :
+            lease_(), status_code_(0) { }
     };
 
     /// @brief Holds the current client configuration obtained from the
@@ -85,8 +89,33 @@ public:
 
     /// @brief Creates a new client.
     ///
-    /// This constructor initializes the class members to default values.
+    /// This constructor initializes the class members to default values:
+    /// - relay link-addr = 3000:1::1
+    /// - first transaction id = 0
+    /// - dest-addr = All_DHCP_Relay_Agents_and_Servers
+    /// - duid (LLT) = <random 4 bytes>00010203040506
+    /// - link-local-addr = fe80::3a60:77ff:fed5:cdef
+    /// - IA_NA not requested
+    /// - IA_PD not requested
+    /// - not relayed
     Dhcp6Client();
+
+    /// @brief Creates a new client that communicates with a specified server.
+    ///
+    /// This constructor allows passing a pointer to the server object which
+    /// should be used in a test. The server may be preconfigured before passed
+    /// to the constructor. The default configuration used by the client is:
+    /// - relay link-addr = 3000:1::1
+    /// - first transaction id = 0
+    /// - dest-addr = All_DHCP_Relay_Agents_and_Servers
+    /// - duid (LLT) = <random 4 bytes>00010203040506
+    /// - link-local-addr = fe80::3a60:77ff:fed5:cdef
+    /// - IA_NA not requested
+    /// - IA_PD not requested
+    /// - not relayed
+    ///
+    /// @param srv Object representing server under test.
+    Dhcp6Client(boost::shared_ptr<isc::test::NakedDhcpv6Srv>& srv);
 
     /// @brief Performs a 4-way echange between the client and the server.
     ///
@@ -95,6 +124,12 @@ public:
     /// that have been requested (IA_NA, IA_PD).
     ///
     /// The leases acquired are accessible through the @c config_ member.
+    ///
+    /// @throw This function doesn't throw exceptions on its own, but it calls
+    /// functions that are not exception safe, so it may throw exceptions if
+    /// error occurs.
+    ///
+    /// @todo Perform sanity checks on returned messages.
     void doSARR();
 
     /// @brief Send Solicit and receive Advertise.
@@ -102,6 +137,12 @@ public:
     /// This function simulates the first transaction of the 4-way exchange,
     /// i.e. sends a Solicit to the server and receives Advertise. It doesn't
     /// set the lease configuration in the @c config_.
+    ///
+    /// @throw This function doesn't throw exceptions on its own, but it calls
+    /// functions that are not exception safe, so it may throw exceptions if
+    /// error occurs.
+    ///
+    /// @todo Perform sanity checks on returned messages.
     void doSolicit();
 
     /// @brief Sends a Rebind to the server and receives the Reply.
@@ -111,6 +152,12 @@ public:
     /// (either address or prefixes) and places them in the Rebind message.
     /// If the server responds to the Rebind (and extends the lease lifetimes)
     /// the current lease configuration is updated.
+    ///
+    /// @throw This function doesn't throw exceptions on its own, but it calls
+    /// functions that are not exception safe, so it may throw exceptions if
+    /// error occurs.
+    ///
+    /// @todo Perform sanity checks on returned messages.
     void doRebind();
 
     /// @brief Sends Request to the server and receives Reply.
@@ -120,6 +167,12 @@ public:
     /// from the current context (server's Advertise) to request acquisition
     /// of offered IAs. If the server responds to the Request (leases are
     /// acquired) the client's lease configuration is updated.
+    ///
+    /// @throw This function doesn't throw exceptions on its own, but it calls
+    /// functions that are not exception safe, so it may throw exceptions if
+    /// error occurs.
+    ///
+    /// @todo Perform sanity checks on returned messages.
     void doRequest();
 
     /// @brief Simulates aging of leases by the specified number of seconds.
@@ -141,6 +194,10 @@ public:
 
     /// @brief Returns lease at specified index.
     ///
+    /// @warning This method doesn't check if the specified index is out of
+    /// range. The caller is responsible for using a correct offset by
+    /// invoking the @c getLeaseNum function.
+    ///
     /// @param at Index of the lease held by the client.
     /// @return A lease at the specified index.
     Lease6 getLease(const size_t at) const {
@@ -148,6 +205,10 @@ public:
     }
 
     /// @brief Returns status code set by the server for the lease.
+    ///
+    /// @warning This method doesn't check if the specified index is out of
+    /// range. The caller is responsible for using a correct offset by
+    /// invoking the @c getLeaseNum function.
     ///
     /// @param at Index of the lease held by the client.
     /// @return A status code for the lease at the specified index.
@@ -215,8 +276,11 @@ public:
     ///
     /// @param use Parameter which 'true' value indicates that client should
     /// simulate sending messages via relay.
-    void useRelay(const bool use = true) {
+    /// @param link_addr Relay link-addr.
+    void useRelay(const bool use = true,
+                  const asiolink::IOAddress& link_addr = asiolink::IOAddress("3000:1::1")) {
         use_relay_ = use;
+        relay_link_addr_ = link_addr;
     }
 
     /// @brief Lease configuration obtained by the client.
@@ -231,14 +295,20 @@ private:
     ///
     /// This method is called when the client obtains a new configuration
     /// from the server in the Reply message. This function adds new leases
-    /// or replaces existing ones.
+    /// or replaces existing ones, on the client's side. Client uses these
+    /// leases in any later communication with the server when doing Renew
+    /// or Rebind.
     ///
     /// @param reply Server response.
-    void applyConfiguration(const Pkt6Ptr& reply);
+    ///
+    /// @todo Currently this function supports one IAAddr or IAPrefix option
+    /// within IA. We will need to extend it to support multiple options
+    /// within a single IA once server supports that.
+    void applyRcvdConfiguration(const Pkt6Ptr& reply);
 
     /// @brief Applies configuration for the single lease.
     ///
-    /// This method is called by the @c Dhcp6Client::applyConfiguration for
+    /// This method is called by the @c Dhcp6Client::applyRcvdConfiguration for
     /// each individual lease.
     ///
     /// @param lease_info Structure holding new lease information.
@@ -252,6 +322,8 @@ private:
     ///
     /// @param source Message from which IA options will be copied.
     /// @param dest Message to which IA options will be copied.
+    ///
+    /// @todo Add support for IA_TA.
     void copyIAs(const Pkt6Ptr& source, const Pkt6Ptr& dest);
 
     /// @brief Creates IA options from existing configuration.
@@ -282,6 +354,10 @@ private:
     Pkt6Ptr receiveOneMsg();
 
     /// @brief Simulates sending a message to the server.
+    ///
+    /// This function instantly triggers processing of the message by the
+    /// server. The server's response can be gathered by invoking the
+    /// @c receiveOneMsg function.
     ///
     /// @param msg Message to be sent.
     void sendMsg(const Pkt6Ptr& msg);
