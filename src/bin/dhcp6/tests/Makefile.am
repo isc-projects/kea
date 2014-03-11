@@ -90,6 +90,7 @@ nodist_dhcp6_unittests_SOURCES += marker_file.h test_libraries.h
 dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp6_unittests_LDADD = $(GTEST_LDADD)
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
