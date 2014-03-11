@@ -56,7 +56,7 @@ def merge(orig, new):
        any elements which are themselves dictionaries. If an element value
        is None in new it will be removed in orig. Previously this method
        relied on dict.update but this does not do deep merges properly.
-       Raises a DataTypeError is either argument is not a dict"""
+       Raises a DataTypeError if either argument is not a dict"""
     if type(orig) != dict or type(new) != dict:
         raise DataTypeError("Not a dict in merge()")
 
