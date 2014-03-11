@@ -603,8 +603,8 @@ TEST_F(NameRemoveTransactionTest, removingFwdAddrsHandler_FqdnNotInUse) {
     // Run removingFwdAddrsHandler to construct and send the request.
     EXPECT_NO_THROW(name_remove->removingFwdAddrsHandler());
 
-    // Simulate receiving a FQDN not in use response.
-    name_remove->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NXDOMAIN());
+    // Simulate receiving a RRSET does not exist.
+    name_remove->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NXRRSET());
 
     // Run removingFwdAddrsHandler again to process the response.
     EXPECT_NO_THROW(name_remove->removingFwdAddrsHandler());
@@ -963,8 +963,8 @@ TEST_F(NameRemoveTransactionTest, removingFwdRRsHandler_FqdnNotInUse) {
     // Run removingFwdRRsHandler to construct and send the request.
     EXPECT_NO_THROW(name_remove->removingFwdRRsHandler());
 
-    // Simulate receiving a FQDN not in use response.
-    name_remove->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NXDOMAIN());
+    // Simulate receiving a RRSET does not exist response.
+    name_remove->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NXRRSET());
 
     // Run removingFwdRRsHandler again to process the response.
     EXPECT_NO_THROW(name_remove->removingFwdRRsHandler());
@@ -1340,8 +1340,8 @@ TEST_F(NameRemoveTransactionTest, removingRevPtrsHandler_FqdnNotInUse) {
     EXPECT_EQ(StateModel::NOP_EVT,
               name_remove->getNextEvent());
 
-    // Simulate receiving a FQDN not in use response.
-    name_remove->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NXDOMAIN());
+    // Simulate receiving a RRSET does not exist.
+    name_remove->fakeResponse(DNSClient::SUCCESS, dns::Rcode::NXRRSET());
 
     // Run removingRevPtrsHandler again to process the response.
     EXPECT_NO_THROW(name_remove->removingRevPtrsHandler());
