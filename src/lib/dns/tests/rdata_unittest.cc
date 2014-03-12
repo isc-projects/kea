@@ -28,14 +28,17 @@
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
 
+#include <util/unittests/wiredata.h>
+
 #include <boost/bind.hpp>
 #include <boost/lexical_cast.hpp>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace isc {
 namespace dns {
@@ -224,10 +227,28 @@ TEST_F(RdataTest, getLength) {
 }
 
 namespace {
+
+// Wire-format data correspond to rdata_unknown.  Note that it doesn't
+// include RDLENGTH.
+const uint8_t wiredata_unknown[] = { 0xa1, 0xb2, 0xc3, 0x0d };
+
 class Rdata_Unknown_Test : public RdataTest {
+public:
+    Rdata_Unknown_Test() :
+        // "Unknown" RR Type used for the test cases below.  If/when we
+        // use this type number as a "well-known" (probably
+        // experimental) type, we'll need to renumber it.
+        unknown_rrtype(RRType(65000)),
+        rdata_unknowntxt("\\# 4 a1b2c30d"),
+        rdata_unknown(rdata_unknowntxt)
+    {}
 protected:
     static string getLongestRdataTxt();
     static void getLongestRdataWire(vector<uint8_t>& v);
+
+    const RRType unknown_rrtype;
+    const std::string rdata_unknowntxt;
+    const generic::Generic rdata_unknown;
 };
 
 string
@@ -252,23 +273,12 @@ Rdata_Unknown_Test::getLongestRdataWire(vector<uint8_t>& v) {
     }
 }
 
-const string rdata_unknowntxt("\\# 4 a1b2c30d");
-const generic::Generic rdata_unknown(rdata_unknowntxt);
-// Wire-format data correspond to rdata_unknown.  Note that it doesn't include
-// RDLENGTH
-const uint8_t wiredata_unknown[] = { 0xa1, 0xb2, 0xc3, 0x0d };
-
-// "Unknown" RR Type used for the test cases below.  If/when we use this
-// type number as a "well-known" (probably experimental) type, we'll need to
-// renumber it.
-const RRType unknown_rrtype = RRType(65000);
-
 TEST_F(Rdata_Unknown_Test, createFromText) {
     // valid construction.  This also tests a normal case of "FromWire".
     EXPECT_EQ(0, generic::Generic("\\# 4 a1b2c30d").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
                                         "rdata_unknown_fromWire")));
-    // upper case hexadecimal digits should also be okay. 
+    // upper case hexadecimal digits should also be okay.
     EXPECT_EQ(0, generic::Generic("\\# 4 A1B2C30D").compare(
                   *rdataFactoryFromFile(unknown_rrtype, RRClass::IN(),
                                         "rdata_unknown_fromWire")));
@@ -298,14 +308,14 @@ TEST_F(Rdata_Unknown_Test, createFromText) {
     // the length should be 16-bit unsigned integer
     EXPECT_THROW(generic::Generic("\\# 65536 a1b2c30d"), InvalidRdataLength);
     EXPECT_THROW(generic::Generic("\\# -1 a1b2c30d"), InvalidRdataLength);
-    EXPECT_THROW(generic::Generic("\\# 1.1 a1"), InvalidRdataText);
+    EXPECT_THROW(generic::Generic("\\# 1.1 a1"), InvalidRdataLength);
     EXPECT_THROW(generic::Generic("\\# 0a 00010203040506070809"),
-                 InvalidRdataText);
+                 InvalidRdataLength);
     // should reject if the special token is missing.
     EXPECT_THROW(generic::Generic("4 a1b2c30d"), InvalidRdataText);
     // the special token, the RDLENGTH and the data must be space separated.
     EXPECT_THROW(generic::Generic("\\#0"), InvalidRdataText);
-    EXPECT_THROW(generic::Generic("\\# 1ff"), InvalidRdataText);
+    EXPECT_THROW(generic::Generic("\\# 1ff"), InvalidRdataLength);
 }
 
 TEST_F(Rdata_Unknown_Test, createFromWire) {
@@ -401,16 +411,14 @@ TEST_F(Rdata_Unknown_Test, toText) {
 
 TEST_F(Rdata_Unknown_Test, toWireBuffer) {
     rdata_unknown.toWire(obuffer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        obuffer.getData(), obuffer.getLength(),
-                        wiredata_unknown, sizeof(wiredata_unknown));
+    matchWireData(wiredata_unknown, sizeof(wiredata_unknown),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_Unknown_Test, toWireRenderer) {
     rdata_unknown.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        renderer.getData(), renderer.getLength(),
-                        wiredata_unknown, sizeof(wiredata_unknown));
+    matchWireData(wiredata_unknown, sizeof(wiredata_unknown),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_Unknown_Test, compare) {

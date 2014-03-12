@@ -1,5 +1,13 @@
 PYCOVERAGE_RUN = @PYCOVERAGE_RUN@
-PYTESTS = tsig_keys_test.py logging_test.py datasrc_test.py
+PYTESTS = tsig_keys_test.py logging_test.py
+
+if WANT_DNS
+
+PYTESTS += datasrc_test.py
+
+endif
+
+
 
 EXTRA_DIST = $(PYTESTS)
 

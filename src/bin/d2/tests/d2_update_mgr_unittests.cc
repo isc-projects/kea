@@ -347,6 +347,109 @@ TEST_F(D2UpdateMgrTest, transactionList) {
     EXPECT_NO_THROW(update_mgr_->removeTransaction(ncr->getDhcid()));
 }
 
+/// @brief Checks transaction creation when both update directions are enabled.
+/// Verifies that when both directions are enabled and servers are matched to
+/// the request, that the transaction is created with both directions turned on.
+TEST_F(D2UpdateMgrTest, bothEnabled) {
+    // Grab a canned request for test purposes.
+    NameChangeRequestPtr& ncr = canned_ncrs_[0];
+    ncr->setReverseChange(true);
+
+    // Verify we are requesting both directions.
+    ASSERT_TRUE(ncr->isForwardChange());
+    ASSERT_TRUE(ncr->isReverseChange());
+
+    // Verify both both directions are enabled.
+    ASSERT_TRUE(cfg_mgr_->forwardUpdatesEnabled());
+    ASSERT_TRUE(cfg_mgr_->reverseUpdatesEnabled());
+
+    // Attempt to make a transaction.
+    ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
+
+    // Verify we create a transaction with both directions turned on.
+    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_TRUE(ncr->isForwardChange());
+    EXPECT_TRUE(ncr->isReverseChange());
+}
+
+/// @brief Checks transaction creation when reverse updates are disabled.
+/// Verifies that when reverse updates are disabled, and there matching forward
+/// servers, that the transaction is still created but with only the forward
+/// direction turned on.
+TEST_F(D2UpdateMgrTest, reverseDisable) {
+    // Make a NCR which requests both directions.
+    NameChangeRequestPtr& ncr = canned_ncrs_[0];
+    ncr->setReverseChange(true);
+
+    // Wipe out forward domain list.
+    DdnsDomainMapPtr emptyDomains(new DdnsDomainMap());
+    cfg_mgr_->getD2CfgContext()->getReverseMgr()->setDomains(emptyDomains);
+
+    // Verify enable methods are correct.
+    ASSERT_TRUE(cfg_mgr_->forwardUpdatesEnabled());
+    ASSERT_FALSE(cfg_mgr_->reverseUpdatesEnabled());
+
+    // Attempt to make a transaction.
+    ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
+
+    // Verify we create a transaction with only forward turned on.
+    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_TRUE(ncr->isForwardChange());
+    EXPECT_FALSE(ncr->isReverseChange());
+}
+
+/// @brief Checks transaction creation when forward updates are disabled.
+/// Verifies that when forward updates are disabled, and there matching reverse
+/// servers, that the transaction is still created but with only the reverse
+/// direction turned on.
+TEST_F(D2UpdateMgrTest, forwardDisabled) {
+    // Make a NCR which requests both directions.
+    NameChangeRequestPtr& ncr = canned_ncrs_[0];
+    ncr->setReverseChange(true);
+
+    // Wipe out forward domain list.
+    DdnsDomainMapPtr emptyDomains(new DdnsDomainMap());
+    cfg_mgr_->getD2CfgContext()->getForwardMgr()->setDomains(emptyDomains);
+
+    // Verify enable methods are correct.
+    ASSERT_FALSE(cfg_mgr_->forwardUpdatesEnabled());
+    ASSERT_TRUE(cfg_mgr_->reverseUpdatesEnabled());
+
+    // Attempt to make a transaction.
+    ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
+
+    // Verify we create a transaction with only reverse turned on.
+    EXPECT_EQ(1, update_mgr_->getTransactionCount());
+    EXPECT_FALSE(ncr->isForwardChange());
+    EXPECT_TRUE(ncr->isReverseChange());
+}
+
+
+/// @brief Checks transaction creation when neither update direction is enabled.
+/// Verifies that transactions are not created when both forward and reverse
+/// directions are disabled.
+TEST_F(D2UpdateMgrTest, bothDisabled) {
+    // Grab a canned request for test purposes.
+    NameChangeRequestPtr& ncr = canned_ncrs_[0];
+    ncr->setReverseChange(true);
+    TransactionList::iterator pos;
+
+    // Wipe out both forward and reverse domain lists.
+    DdnsDomainMapPtr emptyDomains(new DdnsDomainMap());
+    cfg_mgr_->getD2CfgContext()->getForwardMgr()->setDomains(emptyDomains);
+    cfg_mgr_->getD2CfgContext()->getReverseMgr()->setDomains(emptyDomains);
+
+    // Verify enable methods are correct.
+    EXPECT_FALSE(cfg_mgr_->forwardUpdatesEnabled());
+    EXPECT_FALSE(cfg_mgr_->reverseUpdatesEnabled());
+
+    // Attempt to make a transaction.
+    ASSERT_NO_THROW(update_mgr_->makeTransaction(ncr));
+
+    // Verify that do not create a transaction.
+    EXPECT_EQ(0, update_mgr_->getTransactionCount());
+}
+
 /// @brief Tests D2UpdateManager's checkFinishedTransactions method.
 /// This test verifies that:
 /// 1. Completed transactions are removed from the transaction list.

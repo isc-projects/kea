@@ -20,29 +20,29 @@ to receive DHCPv4 traffic. IPv4 socket on this interface will be opened once
 Interface Manager starts up procedure of opening sockets.
 
 % DHCP4_CCSESSION_STARTED control channel session started on socket %1
-A debug message issued during startup after the IPv4 DHCP server has
+A debug message issued during startup after the DHCPv4 server has
 successfully established a session with the BIND 10 control channel.
 
 % DHCP4_CCSESSION_STARTING starting control channel session, specfile: %1
-This debug message is issued just before the IPv4 DHCP server attempts
+This debug message is issued just before the DHCPv4 server attempts
 to establish a session with the BIND 10 control channel.
+
+% DHCP4_CLASS_ASSIGNED client packet has been assigned to the following class(es): %1
+This debug message informs that incoming packet has been assigned to specified
+class or classes. This is a norma
+
+% DHCP4_CLASS_PROCESSING_FAILED client class specific processing failed
+This debug message means that the server processing that is unique for each
+client class has reported a failure. The response packet will not be sent.
 
 % DHCP4_CLIENT_NAME_PROC_FAIL failed to process the fqdn or hostname sent by a client: %1
 This debug message is issued when the DHCP server was unable to process the
 FQDN or Hostname option sent by a client. This is likely because the client's
 name was malformed or due to internal server error.
 
-% DHCP4_CLASS_PROCESSING_FAILED client class specific processing failed
-This debug message means that the server processing that is unique for each
-client class has reported a failure. The response packet will not be sent.
-
-% DHCP4_CLASS_ASSIGNED client packet has been assigned to the following class(es): %1
-This debug message informs that incoming packet has been assigned to specified
-class or classes. This is a norma
-
 % DHCP4_COMMAND_RECEIVED received command %1, arguments: %2
 A debug message listing the command (and possible arguments) received
-from the BIND 10 control system by the IPv4 DHCP server.
+from the BIND 10 control system by the DHCPv4 server.
 
 % DHCP4_CONFIG_COMPLETE DHCPv4 server has completed configuration: %1
 This is an informational message announcing the successful processing of a
@@ -70,13 +70,18 @@ configuration. That happens at start up and also when a server configuration
 change is committed by the administrator.
 
 % DHCP4_CONFIG_UPDATE updated configuration received: %1
-A debug message indicating that the IPv4 DHCP server has received an
+A debug message indicating that the DHCPv4 server has received an
 updated configuration from the BIND 10 configuration system.
 
 % DHCP4_DB_BACKEND_STARTED lease database started (type: %1, name: %2)
 This informational message is printed every time DHCPv4 server is started
 and gives both the type and name of the database being used to store
 lease and other information.
+
+% DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to b10-dhcp-ddns, error: %1,  ncr: %2
+This error message indicates that DHCP4 server attempted to send a DDNS
+update reqeust to the DHCP-DDNS server.  This is most likely a configuration or
+networking error.
 
 % DHCP4_DEACTIVATE_INTERFACE deactivate interface %1
 This message is printed when DHCPv4 server disables an interface from being
@@ -92,6 +97,11 @@ message.
 This debug message is issued when the server received an empty Hostname option
 from a client. Server does not process empty Hostname options and therefore
 option is skipped.
+
+% DHCP4_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
+A "libreload" command was issued to reload the hooks libraries but for
+some reason the reload failed.  Other error messages issued from the
+hooks framework will indicate the nature of the problem.
 
 % DHCP4_HOOK_BUFFER_RCVD_SKIP received DHCPv4 buffer was dropped because a callout set the skip flag.
 This debug message is printed when a callout installed on buffer4_receive
@@ -130,23 +140,6 @@ point, the setting of the flag instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses will be assigned.
 
-% DHCP4_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
-A "libreload" command was issued to reload the hooks libraries but for
-some reason the reload failed.  Other error messages issued from the
-hooks framework will indicate the nature of the problem.
-
-% DHCP4_UNRECOGNIZED_RCVD_PACKET_TYPE received message (transaction id %1) has unrecognized type %2 in option 53
-This debug message indicates that the message type carried in DHCPv4 option
-53 is unrecognized by the server. The valid message types are listed
-on the IANA website: http://www.iana.org/assignments/bootp-dhcp-parameters/bootp-dhcp-parameters.xhtml#message-type-53.
-The message will not be processed by the server.
-
-% DHCP4_UNSUPPORTED_RCVD_PACKET_TYPE received message (transaction id %1), having type %2 is not supported
-This debug message indicates that the message type carried in DHCPv4 option
-53 is valid but the message will not be processed by the server. This includes
-messages being normally sent by the server to the client, such as Offer, ACK,
-NAK etc.
-
 % DHCP4_LEASE_ADVERT lease %1 advertised (client client-id %2, hwaddr %3)
 This debug message indicates that the server successfully advertised
 a lease. It is up to the client to choose one server out of othe advertised
@@ -182,6 +175,10 @@ new DNS records for the lease being acquired or to update existing records
 for the renewed lease. The reason for the failure is printed in the logged
 message.
 
+% DHCP4_NOT_RUNNING DHCPv4 server is not running
+A warning message is issued when an attempt is made to shut down the
+DHCPv4 server but it is not running.
+
 % DHCP4_NO_SOCKETS_OPEN no interface configured to listen to DHCP traffic
 This warning message is issued when current server configuration specifies
 no interfaces that server should listen on, or specified interfaces are not
@@ -194,13 +191,17 @@ which this message has been received. The IPv4 address assigned on this
 interface must belong to one of the configured subnets. Otherwise
 received message is dropped.
 
-% DHCP4_NOT_RUNNING IPv4 DHCP server is not running
-A warning message is issued when an attempt is made to shut down the
-IPv4 DHCP server but it is not running.
-
 % DHCP4_OPEN_SOCKET opening sockets on port %1
-A debug message issued during startup, this indicates that the IPv4 DHCP
+A debug message issued during startup, this indicates that the DHCPv4
 server is about to open sockets on the specified port.
+
+% DHCP4_OPEN_SOCKET_FAIL failed to create socket: %1
+A warning message issued when IfaceMgr fails to open and bind a socket. The reason
+for the failure is appended as an argument of the log message.
+
+% DHCP4_PACKET_DROP_NO_TYPE packet received on interface %1 dropped, because of missing msg-type option
+This is a debug message informing that incoming DHCPv4 packet did not
+have mandatory DHCP message type option and thus was dropped.
 
 % DHCP4_PACKET_NOT_FOR_US received DHCPv4 message (transid=%1, iface=%2) dropped because it contains foreign server identifier
 This debug message is issued when received DHCPv4 message is dropped because
@@ -209,22 +210,14 @@ this message doesn't match the identifier used by our server. The arguments
 of this message hold the name of the transaction id and interface on which
 the message has been received.
 
-% DHCP4_OPEN_SOCKET_FAIL failed to create socket: %1
-A warning message issued when IfaceMgr fails to open and bind a socket. The reason
-for the failure is appended as an argument of the log message.
-
 % DHCP4_PACKET_PARSE_FAIL failed to parse incoming packet: %1
-The IPv4 DHCP server has received a packet that it is unable to
+The DHCPv4 server has received a packet that it is unable to
 interpret. The reason why the packet is invalid is included in the message.
 
 % DHCP4_PACKET_PROCESS_FAIL failed to process packet received from %1: %2
 This is a general catch-all message indicating that the processing of a
 received packet failed.  The reason is given in the message.  The server
 will not send a response but will instead ignore the packet.
-
-% DHCP4_PACKET_DROP_NO_TYPE packet received on interface %1 dropped, because of missing msg-type option
-This is a debug message informing that incoming DHCPv4 packet did not
-have mandatory DHCP message type option and thus was dropped.
 
 % DHCP4_PACKET_RECEIVED %1 (type %2) packet received on interface %3
 A debug message noting that the server has received the specified type of
@@ -233,35 +226,35 @@ may well be a valid DHCP packet, just a type not expected by the server
 (e.g. it will report a received OFFER packet as UNKNOWN).
 
 % DHCP4_PACKET_RECEIVE_FAIL error on attempt to receive packet: %1
-The IPv4 DHCP server tried to receive a packet but an error
+The DHCPv4 server tried to receive a packet but an error
 occurred during this attempt. The reason for the error is included in
 the message.
 
 % DHCP4_PACKET_SEND_FAIL failed to send DHCPv4 packet: %1
-This error is output if the IPv4 DHCP server fails to send an assembled
+This error is output if the DHCPv4 server fails to send an assembled
 DHCP message to a client. The reason for the error is included in the
 message.
 
 % DHCP4_PARSER_COMMIT_EXCEPTION parser failed to commit changes
-On receipt of message containing details to a change of the IPv4 DHCP
+On receipt of message containing details to a change of the DHCPv4
 server configuration, a set of parsers were successfully created, but one
 of them failed to commit its changes due to a low-level system exception
 being raised.  Additional messages may be output indicating the reason.
 
 % DHCP4_PARSER_COMMIT_FAIL parser failed to commit changes: %1
-On receipt of message containing details to a change of the IPv4 DHCP
+On receipt of message containing details to a change of the DHCPv4
 server configuration, a set of parsers were successfully created, but
 one of them failed to commit its changes.  The reason for the failure
 is given in the message.
 
 % DHCP4_PARSER_CREATED created parser for configuration element %1
-A debug message output during a configuration update of the IPv4 DHCP
+A debug message output during a configuration update of the DHCPv4
 server, notifying that the parser for the specified configuration element
 has been successfully created.
 
 % DHCP4_PARSER_EXCEPTION failed to create or run parser for configuration element %1
 On receipt of message containing details to a change of its configuration,
-the IPv4 DHCP server failed to create a parser to decode the contents of
+the DHCPv4 server failed to create a parser to decode the contents of
 the named configuration element, or the creation succeeded but the parsing
 actions and committal of changes failed.  The message has been output in
 response to a non-BIND 10 exception being raised.  Additional messages
@@ -269,7 +262,7 @@ may give further information.
 
 % DHCP4_PARSER_FAIL failed to create or run parser for configuration element %1: %2
 On receipt of message containing details to a change of its configuration,
-the IPv4 DHCP server failed to create a parser to decode the contents
+the DHCPv4 server failed to create a parser to decode the contents
 of the named configuration element, or the creation succeeded but the
 parsing actions and committal of changes failed.  The reason for the
 failure is given in the message.
@@ -324,40 +317,40 @@ both clones use the same client-id.
 A debug message listing the data returned to the client.
 
 % DHCP4_SERVER_FAILED server failed: %1
-The IPv4 DHCP server has encountered a fatal error and is terminating.
+The DHCPv4 server has encountered a fatal error and is terminating.
 The reason for the failure is included in the message.
 
 % DHCP4_SESSION_FAIL failed to establish BIND 10 session (%1), running stand-alone
 The server has failed to establish communication with the rest of BIND
 10 and is running in stand-alone mode.  (This behavior will change once
-the IPv4 DHCP server is properly integrated with the rest of BIND 10.)
+the DHCPv4 server is properly integrated with the rest of BIND 10.)
 
 % DHCP4_SHUTDOWN server shutdown
-The IPv4 DHCP server has terminated normally.
+The DHCPv4 server has terminated normally.
 
 % DHCP4_SHUTDOWN_REQUEST shutdown of server requested
-This debug message indicates that a shutdown of the IPv4 server has
+This debug message indicates that a shutdown of the DHCPv4 server has
 been requested via a call to the 'shutdown' method of the core Dhcpv4Srv
 object.
 
 % DHCP4_SRV_CONSTRUCT_ERROR error creating Dhcpv4Srv object, reason: %1
 This error message indicates that during startup, the construction of a
-core component within the IPv4 DHCP server (the Dhcpv4 server object)
+core component within the DHCPv4 server (the Dhcpv4 server object)
 has failed.  As a result, the server will exit.  The reason for the
 failure is given within the message.
 
 % DHCP4_STANDALONE skipping message queue, running standalone
-This is a debug message indicating that the IPv4 server is running in
+This is a debug message indicating that the DHCPv4 server is running in
 standalone mode, not connected to the message queue.  Standalone mode
 is only useful during program development, and should not be used in a
 production environment.
 
 % DHCP4_STARTING server starting
-This informational message indicates that the IPv4 DHCP server has
+This informational message indicates that the DHCPv4 server has
 processed any command-line switches and is starting.
 
 % DHCP4_START_INFO pid: %1, port: %2, verbose: %3, standalone: %4
-This is a debug message issued during the IPv4 DHCP server startup.
+This is a debug message issued during the DHCPv4 server startup.
 It lists some information about the parameters with which the server
 is running.
 
@@ -370,3 +363,15 @@ steps in the processing of incoming client message.
 This warning message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable
 cause is a misconfiguration of the server.
+
+% DHCP4_UNRECOGNIZED_RCVD_PACKET_TYPE received message (transaction id %1) has unrecognized type %2 in option 53
+This debug message indicates that the message type carried in DHCPv4 option
+53 is unrecognized by the server. The valid message types are listed
+on the IANA website: http://www.iana.org/assignments/bootp-dhcp-parameters/bootp-dhcp-parameters.xhtml#message-type-53.
+The message will not be processed by the server.
+
+% DHCP4_UNSUPPORTED_RCVD_PACKET_TYPE received message (transaction id %1), having type %2 is not supported
+This debug message indicates that the message type carried in DHCPv4 option
+53 is valid but the message will not be processed by the server. This includes
+messages being normally sent by the server to the client, such as Offer, ACK,
+NAK etc.

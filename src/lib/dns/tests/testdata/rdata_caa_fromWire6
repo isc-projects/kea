@@ -1,0 +1,4 @@
+# Test where RDATA is completely missing
+
+# CAA RDATA, RDLEN=32
+0020

@@ -23,12 +23,14 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_SOA_Test : public RdataTest {
@@ -96,11 +98,10 @@ TEST_F(Rdata_SOA_Test, createFromText) {
     checkFromTextSOA<EmptyLabel, EmptyLabel>(
         ". bad..example. 2010012601 1H 5M 1000H 20M");
 
-    // Names shouldn't be quoted. (Note: on completion of #2534, the resulting
-    // exception will be different).
-    checkFromTextSOA<MissingNameOrigin, MissingNameOrigin>(
+    // Names shouldn't be quoted.
+    checkFromTextSOA<InvalidRdataText, MasterLexer::LexerError>(
         "\".\" . 0 0 0 0 0");
-    checkFromTextSOA<MissingNameOrigin, MissingNameOrigin>(
+    checkFromTextSOA<InvalidRdataText, MasterLexer::LexerError>(
         ". \".\" 0 0 0 0 0");
 
     // Missing MAME or RNAME: for the string version, the serial would be
@@ -180,9 +181,9 @@ TEST_F(Rdata_SOA_Test, toWireRenderer) {
 
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_soa_fromWire", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(renderer.getData()) + 2,
-                        renderer.getLength() - 2, &data[2], data.size() - 2);
+    matchWireData(&data[2], data.size() - 2,
+                  static_cast<const uint8_t *>(renderer.getData()) + 2,
+                  renderer.getLength() - 2);
 }
 
 TEST_F(Rdata_SOA_Test, toWireBuffer) {
@@ -190,9 +191,9 @@ TEST_F(Rdata_SOA_Test, toWireBuffer) {
     rdata_soa.toWire(obuffer);
     vector<unsigned char> data;
     UnitTestUtil::readWireData("rdata_soa_toWireUncompressed.wire", data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        static_cast<const uint8_t *>(obuffer.getData()) + 2,
-                        obuffer.getLength() - 2, &data[2], data.size() - 2);
+    matchWireData(&data[2], data.size() - 2,
+                  static_cast<const uint8_t *>(obuffer.getData()) + 2,
+                  obuffer.getLength() - 2);
 }
 
 TEST_F(Rdata_SOA_Test, toText) {

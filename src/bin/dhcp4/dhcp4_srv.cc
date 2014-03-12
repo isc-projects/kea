@@ -80,6 +80,8 @@ Dhcp4Hooks Hooks;
 namespace isc {
 namespace dhcp {
 
+const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
+
 Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const char* dbconfig, const bool use_bcast,
                      const bool direct_response_desired)
 : shutdown_(true), alloc_engine_(), port_(port),
@@ -230,6 +232,11 @@ Dhcpv4Srv::run() {
             }
         }
 
+        // Assign this packet to one or more classes if needed. We need to do
+        // this before calling accept(), because getSubnet4() may need client
+        // class information.
+        classifyPacket(query);
+
         // Check whether the message should be further processed or discarded.
         // There is no need to log anything here. This function logs by itself.
         if (!accept(query)) {
@@ -271,9 +278,6 @@ Dhcpv4Srv::run() {
 
             callout_handle->getArgument("query4", query);
         }
-
-        // Assign this packet to one or more classes if needed
-        classifyPacket(query);
 
         try {
             switch (query->getType()) {
@@ -420,9 +424,6 @@ Dhcpv4Srv::run() {
             LOG_ERROR(dhcp4_logger, DHCP4_PACKET_SEND_FAIL)
                 .arg(e.what());
         }
-
-        // Send NameChangeRequests to the b10-dhcp_ddns module.
-        sendNameChangeRequests();
     }
 
     return (true);
@@ -704,12 +705,11 @@ Dhcpv4Srv::processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer) {
             processClientFqdnOption(fqdn, answer);
 
         } else {
-            OptionCustomPtr hostname = boost::dynamic_pointer_cast<OptionCustom>
+            OptionStringPtr hostname = boost::dynamic_pointer_cast<OptionString>
                 (query->getOption(DHO_HOST_NAME));
             if (hostname) {
                 processHostnameOption(hostname, answer);
             }
-
         }
     } catch (const Exception& ex) {
         // In some rare cases it is possible that the client's name processing
@@ -762,7 +762,7 @@ Dhcpv4Srv::processClientFqdnOption(const Option4ClientFqdnPtr& fqdn,
 }
 
 void
-Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
+Dhcpv4Srv::processHostnameOption(const OptionStringPtr& opt_hostname,
                                  Pkt4Ptr& answer) {
     // Fetch D2 configuration.
     D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
@@ -772,7 +772,7 @@ Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
         return;
     }
 
-    std::string hostname = isc::util::str::trim(opt_hostname->readString());
+    std::string hostname = isc::util::str::trim(opt_hostname->getValue());
     unsigned int label_count = OptionDataTypeUtil::getLabelCount(hostname);
     // The hostname option sent by the client should be at least 1 octet long.
     // If it isn't we ignore this option. (Per RFC 2131, section 3.14)
@@ -786,7 +786,7 @@ Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
     // possible that we will use the hostname option provided by the client
     // to perform the DNS update and we will send the same option to him to
     // indicate that we accepted this hostname.
-    OptionCustomPtr opt_hostname_resp(new OptionCustom(*opt_hostname));
+    OptionStringPtr opt_hostname_resp(new OptionString(*opt_hostname));
 
     // The hostname option may be unqualified or fully qualified. The lab_count
     // holds the number of labels for the name. The number of 1 means that
@@ -803,12 +803,14 @@ Dhcpv4Srv::processHostnameOption(const OptionCustomPtr& opt_hostname,
     /// conversion if needed and possible.
     if ((d2_mgr.getD2ClientConfig()->getReplaceClientName()) ||
         (label_count < 2)) {
-        opt_hostname_resp->writeString("");
+        // Set to root domain to signal later on that we should replace it.
+        // DHO_HOST_NAME is a string option which cannot be empty.
+        opt_hostname_resp->setValue(".");
     } else if (label_count == 2) {
         // If there are two labels, it means that the client has specified
         // the unqualified name. We have to concatenate the unqalified name
         // with the domain name.
-        opt_hostname_resp->writeString(d2_mgr.qualifyName(hostname));
+        opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname));
     }
 
     answer->addOption(opt_hostname_resp);
@@ -881,26 +883,23 @@ queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
             .arg(ex.what());
         return;
     }
+
     // Create NameChangeRequest
-    NameChangeRequest ncr(chg_type, lease->fqdn_fwd_, lease->fqdn_rev_,
-                          lease->hostname_, lease->addr_.toText(),
-                          dhcid, lease->cltt_ + lease->valid_lft_,
-                          lease->valid_lft_);
-    // And queue it.
+    NameChangeRequestPtr ncr(new NameChangeRequest(chg_type, lease->fqdn_fwd_,
+                                                   lease->fqdn_rev_,
+                                                   lease->hostname_,
+                                                   lease->addr_.toText(),
+                                                   dhcid,
+                                                   (lease->cltt_ +
+                                                    lease->valid_lft_),
+                                                   lease->valid_lft_));
+
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_QUEUE_NCR)
         .arg(chg_type == CHG_ADD ? "add" : "remove")
-        .arg(ncr.toText());
-    name_change_reqs_.push(ncr);
-}
+        .arg(ncr->toText());
 
-void
-Dhcpv4Srv::sendNameChangeRequests() {
-    while (!name_change_reqs_.empty()) {
-        /// @todo Once next NameChangeRequest is picked from the queue
-        /// we should send it to the b10-dhcp_ddns module. Currently we
-        /// just drop it.
-        name_change_reqs_.pop();
-    }
+    // And pass it to the the manager.
+    CfgMgr::instance().getD2ClientMgr().sendRequest(ncr);
 }
 
 void
@@ -962,7 +961,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
     std::string hostname;
     bool fqdn_fwd = false;
     bool fqdn_rev = false;
-    OptionCustomPtr opt_hostname;
+    OptionStringPtr opt_hostname;
     Option4ClientFqdnPtr fqdn = boost::dynamic_pointer_cast<
         Option4ClientFqdn>(answer->getOption(DHO_FQDN));
     if (fqdn) {
@@ -970,10 +969,17 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         fqdn_fwd = fqdn->getFlag(Option4ClientFqdn::FLAG_S);
         fqdn_rev = !fqdn->getFlag(Option4ClientFqdn::FLAG_N);
     } else {
-        opt_hostname = boost::dynamic_pointer_cast<OptionCustom>
+        opt_hostname = boost::dynamic_pointer_cast<OptionString>
             (answer->getOption(DHO_HOST_NAME));
         if (opt_hostname) {
-            hostname = opt_hostname->readString();
+            hostname = opt_hostname->getValue();
+            // DHO_HOST_NAME is string option which cannot be blank,
+            // we use "." to know we should replace it with a fully
+            // generated name. The local string variable needs to be
+            // blank in logic below.
+            if (hostname == ".") {
+                hostname = "";
+            }
             /// @todo It could be configurable what sort of updates the
             /// server is doing when Hostname option was sent.
             fqdn_fwd = true;
@@ -1027,7 +1033,7 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
                     fqdn->setDomainName(lease->hostname_,
                                         Option4ClientFqdn::FULL);
                 } else if (opt_hostname) {
-                    opt_hostname->writeString(lease->hostname_);
+                    opt_hostname->setValue(lease->hostname_);
                 }
 
             } catch (const Exception& ex) {
@@ -1415,7 +1421,8 @@ Dhcpv4Srv::selectSubnet(const Pkt4Ptr& question) const {
     // level functions.
     if (question->isRelayed()) {
         subnet = CfgMgr::instance().getSubnet4(question->getGiaddr(),
-                                               question->classes_);
+                                               question->classes_,
+                                               true);
 
     // The message is not relayed so it is sent directly by a client. But
     // the client may be renewing its lease and in such case it unicasts
@@ -1815,15 +1822,15 @@ void Dhcpv4Srv::classifyPacket(const Pkt4Ptr& pkt) {
     // quals subscriber-id option that was inserted by the relay (CMTS).
     // This kind of logic will appear here soon.
     if (vendor_class->getValue().find(DOCSIS3_CLASS_MODEM) != std::string::npos) {
-        pkt->addClass(DOCSIS3_CLASS_MODEM);
-        classes += string(DOCSIS3_CLASS_MODEM) + " ";
+        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM);
+        classes += string(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM) + " ";
     } else
     if (vendor_class->getValue().find(DOCSIS3_CLASS_EROUTER) != std::string::npos) {
-        pkt->addClass(DOCSIS3_CLASS_EROUTER);
-        classes += string(DOCSIS3_CLASS_EROUTER) + " ";
+        pkt->addClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER);
+        classes += string(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER) + " ";
     } else {
-        classes += vendor_class->getValue();
-        pkt->addClass(vendor_class->getValue());
+        classes += VENDOR_CLASS_PREFIX + vendor_class->getValue();
+        pkt->addClass(VENDOR_CLASS_PREFIX + vendor_class->getValue());
     }
 
     if (!classes.empty()) {
@@ -1839,7 +1846,7 @@ bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp
         return (true);
     }
 
-    if (query->inClass(DOCSIS3_CLASS_MODEM)) {
+    if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_MODEM)) {
 
         // Set next-server. This is TFTP server address. Cable modems will
         // download their configuration from that server.
@@ -1860,13 +1867,37 @@ bool Dhcpv4Srv::classSpecificProcessing(const Pkt4Ptr& query, const Pkt4Ptr& rsp
         }
     }
 
-    if (query->inClass(DOCSIS3_CLASS_EROUTER)) {
+    if (query->inClass(VENDOR_CLASS_PREFIX + DOCSIS3_CLASS_EROUTER)) {
 
         // Do not set TFTP server address for eRouter devices.
         rsp->setSiaddr(IOAddress("0.0.0.0"));
     }
 
     return (true);
+}
+
+void
+Dhcpv4Srv::startD2() {
+    D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
+    if (d2_mgr.ddnsEnabled()) {
+        // Updates are enabled, so lets start the sender, passing in
+        // our error handler.
+        // This may throw so wherever this is called needs to ready.
+        d2_mgr.startSender(boost::bind(&Dhcpv4Srv::d2ClientErrorHandler,
+                                       this, _1, _2));
+    }
+}
+
+void
+Dhcpv4Srv::d2ClientErrorHandler(const
+                                dhcp_ddns::NameChangeSender::Result result,
+                                dhcp_ddns::NameChangeRequestPtr& ncr) {
+    LOG_ERROR(dhcp4_logger, DHCP4_DDNS_REQUEST_SEND_FAILED).
+              arg(result).arg((ncr ? ncr->toText() : " NULL "));
+    // We cannot communicate with b10-dhcp-ddns, suspend futher updates.
+    /// @todo We may wish to revisit this, but for now we will simpy turn
+    /// them off.
+    CfgMgr::instance().getD2ClientMgr().suspendUpdates();
 }
 
 }   // namespace dhcp

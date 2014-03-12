@@ -31,12 +31,14 @@
 #include <gtest/gtest.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 const uint8_t EDNS::SUPPORTED_VERSION;
 
@@ -159,8 +161,8 @@ TEST_F(EDNSTest, toWireRenderer) {
     EXPECT_EQ(1, edns_base.toWire(renderer,
                                   Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire1.wire", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &wiredata[0], wiredata.size());
+    matchWireData(&wiredata[0], wiredata.size(),
+                  renderer.getData(), renderer.getLength());
 
     // Typical case, enabling DNSSEC
     renderer.clear();
@@ -169,8 +171,8 @@ TEST_F(EDNSTest, toWireRenderer) {
     EXPECT_EQ(1, edns_base.toWire(renderer,
                                   Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire2.wire", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &wiredata[0], wiredata.size());
+    matchWireData(&wiredata[0], wiredata.size(),
+                  renderer.getData(), renderer.getLength());
 
     // Non-0 extended Rcode
     renderer.clear();
@@ -179,8 +181,8 @@ TEST_F(EDNSTest, toWireRenderer) {
     EXPECT_EQ(1, edns_base.toWire(renderer,
                                   Rcode::BADVERS().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire3.wire", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &wiredata[0], wiredata.size());
+    matchWireData(&wiredata[0], wiredata.size(),
+                  renderer.getData(), renderer.getLength());
 
     // Uncommon UDP buffer size
     renderer.clear();
@@ -190,8 +192,8 @@ TEST_F(EDNSTest, toWireRenderer) {
     EXPECT_EQ(1, edns_base.toWire(renderer,
                                   Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire4.wire", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &wiredata[0], wiredata.size());
+    matchWireData(&wiredata[0], wiredata.size(),
+                  renderer.getData(), renderer.getLength());
 
     // From RR with unknown flag.  If used for toWire(), the unknown flag
     // should disappear.
@@ -201,8 +203,8 @@ TEST_F(EDNSTest, toWireRenderer) {
                       *opt_rdata).toWire(renderer,
                                          Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire2.wire", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), &wiredata[0], wiredata.size());
+    matchWireData(&wiredata[0], wiredata.size(),
+                  renderer.getData(), renderer.getLength());
 
     // If the available length in the renderer is not sufficient for the OPT
     // RR, it shouldn't be inserted.
@@ -222,8 +224,8 @@ TEST_F(EDNSTest, toWireBuffer) {
     EXPECT_EQ(1, edns_base.toWire(obuffer,
                                   Rcode::NOERROR().getExtendedCode()));
     UnitTestUtil::readWireData("edns_toWire1.wire", wiredata);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), &wiredata[0], wiredata.size());
+    matchWireData(&wiredata[0], wiredata.size(),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(EDNSTest, createFromRR) {

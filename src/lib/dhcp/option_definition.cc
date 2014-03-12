@@ -28,6 +28,7 @@
 #include <dhcp/option_space.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
+#include <dhcp/option_vendor_class.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <boost/algorithm/string/classification.hpp>
@@ -400,6 +401,22 @@ OptionDefinition::haveVendor6Format() const {
 }
 
 bool
+OptionDefinition::haveVendorClass4Format() const {
+    return (haveType(OPT_RECORD_TYPE) &&
+            (record_fields_.size() == 2) &&
+            (record_fields_[0] == OPT_UINT32_TYPE) &&
+            (record_fields_[1] == OPT_BINARY_TYPE));
+}
+
+bool
+OptionDefinition::haveVendorClass6Format() const {
+    return (haveType(OPT_RECORD_TYPE) &&
+            (record_fields_.size() == 2) &&
+            (record_fields_[0] == OPT_UINT32_TYPE) &&
+            (record_fields_[1] == OPT_BINARY_TYPE));
+}
+
+bool
 OptionDefinition::convertToBool(const std::string& value_str) const {
     // Case insensitve check that the input is one of: "true" or "false".
     if (boost::iequals(value_str, "true")) {
@@ -651,15 +668,21 @@ OptionDefinition::factorySpecialFormatOption(Option::Universe u,
             // a specialized class to handle it.
             return (OptionPtr(new Option6ClientFqdn(begin, end)));
         } else if (getCode() == D6O_VENDOR_OPTS && haveVendor6Format()) {
-            // Vendor-Specific Information.
+            // Vendor-Specific Information (option code 17)
             return (OptionPtr(new OptionVendor(Option::V6, begin, end)));
+        } else if (getCode() == D6O_VENDOR_CLASS && haveVendorClass6Format()) {
+            // Vendor Class (option code 16).
+            return (OptionPtr(new OptionVendorClass(Option::V6, begin, end)));
         }
     } else {
         if ((getCode() == DHO_FQDN) && haveFqdn4Format()) {
             return (OptionPtr(new Option4ClientFqdn(begin, end)));
-
+        } else if ((getCode() == DHO_VIVCO_SUBOPTIONS) &&
+                   haveVendorClass4Format()) {
+            // V-I Vendor Class (option code 124).
+            return (OptionPtr(new OptionVendorClass(Option::V4, begin, end)));
         } else if (getCode() == DHO_VIVSO_SUBOPTIONS && haveVendor4Format()) {
-            // Vendor-Specific Information.
+            // Vendor-Specific Information (option code 125).
             return (OptionPtr(new OptionVendor(Option::V4, begin, end)));
 
         }

@@ -232,6 +232,8 @@ private:
     /// @brief Currently used packet filter for DHCPv4.
     PktFilterPtr packet_filter4_;
 
+    /// @brief Currently used packet filter for DHCPv6.
+    PktFilter6Ptr packet_filter6_;
 };
 
 };

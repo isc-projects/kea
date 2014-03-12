@@ -11,7 +11,10 @@ if "$PYTHON" -c 'import sqlite3' 2>/dev/null ; then
     AC_MSG_RESULT(ok)
 else
     AC_MSG_RESULT(missing)
-    AC_MSG_ERROR([Missing sqlite3 python module.])
+
+    if test "x$want_dns" = "xyes" ; then
+        AC_MSG_ERROR([Missing sqlite3 python module that is required by DNS components.])
+    fi
 fi
 
 ])dnl AX_PYTHON_SQLITE3

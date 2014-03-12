@@ -31,6 +31,7 @@
 #include <exceptions/exceptions.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 #include <dns/rcode.h>
 
 #include <util/buffer.h>
@@ -57,12 +58,13 @@
 #include <asiolink/io_message.h>
 #include <asiolink/io_error.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::asiodns;
 using namespace isc::asiolink;
 using namespace isc::dns;
 using namespace isc::util;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 using boost::scoped_ptr;
 
 namespace isc {
@@ -361,9 +363,8 @@ protected:
         const size_t expected_datasize =
             protocol == IPPROTO_UDP ? sizeof(test_data) :
             sizeof(test_data) - 2;
-        EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, &callback_data_[0],
-                            callback_data_.size(),
-                            expected_data, expected_datasize);
+        matchWireData(expected_data, expected_datasize,
+                      &callback_data_[0], callback_data_.size());
     }
 
 protected:
@@ -1001,7 +1002,5 @@ TEST_F(RecursiveQueryTest, CachedNS) {
 
 // TODO: add tests that check whether the cache is updated on succesfull
 // responses, and not updated on failures.
-
-
 
 }

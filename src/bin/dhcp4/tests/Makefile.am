@@ -58,24 +58,27 @@ if HAVE_GTEST
 # to unexpected errors. For this reason, the --enable-static-link option is
 # ignored for unit tests built here.
 
-nodistdir=$(abs_top_builddir)/src/bin/dhcp4/tests
-nodist_LTLIBRARIES = libco1.la libco2.la
+noinst_LTLIBRARIES = libco1.la libco2.la
+
+# -rpath /nowhere is a hack to trigger libtool to not create a
+# convenience archive, resulting in shared modules
 
 libco1_la_SOURCES  = callout_library_1.cc callout_library_common.h
 libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco1_la_CPPFLAGS = $(AM_CPPFLAGS)
-libco1_la_LDFLAGS = -avoid-version -export-dynamic -module
+libco1_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 libco2_la_SOURCES  = callout_library_2.cc callout_library_common.h
 libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco2_la_CPPFLAGS = $(AM_CPPFLAGS)
-libco2_la_LDFLAGS = -avoid-version -export-dynamic -module
+libco2_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 TESTS += dhcp4_unittests
 
 dhcp4_unittests_SOURCES = ../dhcp4_srv.h ../dhcp4_srv.cc ../ctrl_dhcp4_srv.cc
 dhcp4_unittests_SOURCES += ../dhcp4_log.h ../dhcp4_log.cc
 dhcp4_unittests_SOURCES += ../config_parser.cc ../config_parser.h
+dhcp4_unittests_SOURCES += d2_unittest.h d2_unittest.cc
 dhcp4_unittests_SOURCES += dhcp4_test_utils.h
 dhcp4_unittests_SOURCES += dhcp4_unittests.cc
 dhcp4_unittests_SOURCES += dhcp4_srv_unittest.cc

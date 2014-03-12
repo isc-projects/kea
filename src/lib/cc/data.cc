@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -964,9 +964,26 @@ merge(ElementPtr element, ConstElementPtr other) {
 
     const std::map<std::string, ConstElementPtr>& m = other->mapValue();
     for (std::map<std::string, ConstElementPtr>::const_iterator it = m.begin();
-         it != m.end() ; ++it) {
+        it != m.end() ; ++it) {
         if ((*it).second && (*it).second->getType() != Element::null) {
-            element->set((*it).first, (*it).second);
+            if (((*it).second->getType() == Element::map) &&
+                element->contains((*it).first)) {
+                // Sub-element is a map and is also in the original config,
+                // so we need to merge them too.
+                boost::shared_ptr<MapElement> merged_map(new MapElement());
+                ConstElementPtr orig_map = element->get((*it).first);
+                ConstElementPtr other_map = (*it).second;
+                if (orig_map->getType() ==  Element::map) {
+                    merged_map->setValue(orig_map->mapValue());
+                }
+
+                // Now go recursive to merge the map sub-elements.
+                merge(merged_map, other_map);
+                element->set((*it).first, merged_map);
+            }
+            else {
+                element->set((*it).first, (*it).second);
+            }
         } else if (element->contains((*it).first)) {
             element->remove((*it).first);
         }

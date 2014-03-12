@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -67,6 +67,11 @@ struct OptionDefParams {
 // clients may request ASCII encoding.
 RECORD_DECL(FQDN_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
             OPT_FQDN_TYPE);
+
+// V-I Vendor Class record fields.
+//
+// Opaque data is represented here by the binary data field.
+RECORD_DECL(VIVCO_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams OPTION_DEF_PARAMS4[] = {
@@ -192,8 +197,8 @@ const OptionDefParams OPTION_DEF_PARAMS4[] = {
     // dedicated classes to handle them. Until that happens
     // let's treat them as 'binary' options.
     { "domain-search", DHO_DOMAIN_SEARCH, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
-    { "vivco-suboptions", DHO_VIVCO_SUBOPTIONS,
-      OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "vivco-suboptions", DHO_VIVCO_SUBOPTIONS, OPT_RECORD_TYPE,
+      false, RECORD_DEF(VIVCO_RECORDS), "" },
     { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_BINARY_TYPE,
       false, NO_RECORD_DEF, "" }
 
@@ -231,8 +236,7 @@ RECORD_DECL(REMOTE_ID_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 // status-code
 RECORD_DECL(STATUS_CODE_RECORDS, OPT_UINT16_TYPE, OPT_STRING_TYPE);
 // vendor-class
-RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_UINT16_TYPE,
-            OPT_STRING_TYPE);
+RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 
 /// Standard DHCPv6 option definitions.
 ///

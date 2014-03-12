@@ -29,6 +29,9 @@ CLEANFILES += $(abs_top_builddir)/src/lib/testutils/testdata/does-not-exist.sqli
 TESTS_ENVIRONMENT = \
         $(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
+EXTRA_DIST = gen-query-testdata.py
+EXTRA_DIST += gen-statisticsitems_test.py
+
 # Do not define global tests, use check-local so
 # environment can be set (needed for dynamic loading)
 TESTS =
@@ -91,8 +94,6 @@ BUILT_SOURCES += example_base_inc.cc example_nsec3_inc.cc
 BUILT_SOURCES += testdata/example-base.sqlite3
 BUILT_SOURCES += testdata/example-nsec3.sqlite3
 
-EXTRA_DIST = gen-query-testdata.py
-
 CLEANFILES += example_base_inc.cc example_nsec3_inc.cc
 
 example_base_inc.cc: $(srcdir)/testdata/example-base-inc.zone
@@ -117,8 +118,6 @@ testdata/example-nsec3.sqlite3: testdata/example-nsec3.zone testdata/example-com
 	$(SHELL) $(top_builddir)/src/bin/loadzone/run_loadzone.sh \
 		-c "{\"database_file\": \"$(builddir)/testdata/example-nsec3.sqlite3\"}" \
 		example.com testdata/example-nsec3.zone
-
-EXTRA_DIST += gen-statisticsitems_test.py
 
 check-local:
 	B10_FROM_BUILD=${abs_top_builddir} ./run_unittests

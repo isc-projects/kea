@@ -24,6 +24,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/alloc_engine.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
 
@@ -124,6 +125,31 @@ public:
     ///
     /// @param port UDP port on which server should listen.
     static void openActiveSockets(const uint16_t port);
+
+    /// @brief Starts DHCP_DDNS client IO if DDNS updates are enabled.
+    ///
+    /// If updates are enabled, it Instructs the D2ClientMgr singleton to
+    /// enter send mode.  If D2ClientMgr encounters errors it may throw
+    /// D2ClientErrors. This method does not catch exceptions.
+    void startD2();
+
+    /// @brief Implements the error handler for DHCP_DDNS IO errors
+    ///
+    /// Invoked when a NameChangeRequest send to b10-dhcp-ddns completes with
+    /// a failed status.  These are communications errors, not data related
+    /// failures.
+    ///
+    /// This method logs the failure and then suspends all further updates.
+    /// Updating can only be restored by reconfiguration or restarting the
+    /// server.  There is currently no retry logic so the first IO error that
+    /// occurs will suspend updates.
+    /// @todo We may wish to make this more robust or sophisticated.
+    ///
+    /// @param result Result code of the send operation.
+    /// @param ncr NameChangeRequest which failed to send.
+    virtual void d2ClientErrorHandler(const dhcp_ddns::
+                                      NameChangeSender::Result result,
+                                      dhcp_ddns::NameChangeRequestPtr& ncr);
 
 protected:
 
@@ -447,6 +473,7 @@ protected:
     /// objects and store them in the internal queue. Requests created by this
     /// function are only adding or updating DNS records. In order to generate
     /// requests for DNS records removal, use @c createRemovalNameChangeRequest.
+    /// If ddns updates are disabled, this method returns immediately.
     ///
     /// @todo Add support for multiple IAADDR options in the IA_NA.
     ///
@@ -464,21 +491,11 @@ protected:
     /// Note that this function will not remove the entries which server hadn't
     /// added. This is the case, when client performs forward DNS update on its
     /// own.
+    /// If ddns updates are disabled, this method returns immediately.
     ///
     /// @param lease A lease for which the the removal of corresponding DNS
     /// records will be performed.
     void createRemovalNameChangeRequest(const Lease6Ptr& lease);
-
-    /// @brief Sends all outstanding NameChangeRequests to bind10-d2 module.
-    ///
-    /// The purpose of this function is to pick all outstanding
-    /// NameChangeRequests from the FIFO queue and send them to b10-dhcp-ddns
-    /// module.
-    ///
-    /// @todo Currently this function simply removes all requests from the
-    /// queue but doesn't send them anywhere. In the future, the
-    /// NameChangeSender will be used to deliver requests to the other module.
-    void sendNameChangeRequests();
 
     /// @brief Attempts to extend the lifetime of IAs.
     ///
@@ -579,6 +596,15 @@ protected:
     ///
     /// @param pkt packet to be classified
     void classifyPacket(const Pkt6Ptr& pkt);
+
+
+    /// @brief this is a prefix added to the contend of vendor-class option
+    ///
+    /// If incoming packet has a vendor class option, its content is
+    /// prepended with this prefix and then interpreted as a class.
+    /// For example, a packet that sends vendor class with value of "FOO"
+    /// will cause the packet to be assigned to class VENDOR_CLASS_FOO.
+    static const std::string VENDOR_CLASS_PREFIX;
 
 private:
 

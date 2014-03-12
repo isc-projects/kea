@@ -7,7 +7,7 @@ tests could be separated, so that we can test other systems as well.
 
 Prerequisites:
 - BIND 10 must be compiled or installed (even when testing in-tree build;
-  see below)
+  see below) with both DNS and DHCP components enabled
 - dig
 - lettuce (http://lettuce.it)
 

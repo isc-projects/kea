@@ -44,6 +44,7 @@
 
 #include <util/unittests/mock_socketsession.h>
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 #include <testutils/dnsmessage_test.h>
 #include <testutils/srv_test.h>
 #include <testutils/mockups.h>
@@ -82,8 +83,9 @@ using namespace isc::testutils;
 using namespace isc::server_common::portconfig;
 using namespace isc::auth::unittest;
 using isc::UnitTestUtil;
-using boost::scoped_ptr;
 using isc::auth::statistics::Counters;
+using isc::util::unittests::matchWireData;
+using boost::scoped_ptr;
 
 namespace {
 const char* const CONFIG_TESTDB =
@@ -1072,10 +1074,9 @@ TEST_F(AuthSrvTest, builtInQueryViaDNSServer) {
                                      response_message, response_obuffer);
 
     createBuiltinVersionResponse(default_qid, response_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        response_obuffer->getData(),
-                        response_obuffer->getLength(),
-                        &response_data[0], response_data.size());
+    matchWireData(&response_data[0], response_data.size(),
+                  response_obuffer->getData(),
+                  response_obuffer->getLength());
 
     // After it has been run, the message should be cleared
     EXPECT_EQ(0, parse_message->getRRCount(Message::SECTION_QUESTION));
@@ -1095,10 +1096,9 @@ TEST_F(AuthSrvTest, builtInQuery) {
     server.processMessage(*io_message, *parse_message, *response_obuffer,
                           &dnsserv);
     createBuiltinVersionResponse(default_qid, response_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        response_obuffer->getData(),
-                        response_obuffer->getLength(),
-                        &response_data[0], response_data.size());
+    matchWireData(&response_data[0], response_data.size(),
+                  response_obuffer->getData(),
+                  response_obuffer->getLength());
     checkAllRcodeCountersZeroExcept(Rcode::NOERROR(), 1);
 }
 
@@ -1114,10 +1114,9 @@ TEST_F(AuthSrvTest, iqueryViaDNSServer) {
 
     UnitTestUtil::readWireData("iquery_response_fromWire.wire",
                                response_data);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        response_obuffer->getData(),
-                        response_obuffer->getLength(),
-                        &response_data[0], response_data.size());
+    matchWireData(&response_data[0], response_data.size(),
+                  response_obuffer->getData(),
+                  response_obuffer->getLength());
 }
 
 // Install a Sqlite3 data source with testing data.
