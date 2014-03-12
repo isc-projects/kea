@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014  Internet Systems Consortium.
+# Copyright (C) 2010  Internet Systems Consortium.
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -51,23 +51,13 @@ def remove_identical(a, b):
         del(a[id])
 
 def merge(orig, new):
-    """Merges the contents of one dictionary into another.
-       The merge is done element by element, in order to recursivley merge
-       any elements which are themselves dictionaries. If an element value
-       is None in new it will be removed in orig. Previously this method
-       relied on dict.update but this does not do deep merges properly.
-       Raises a DataTypeError if either argument is not a dict"""
+    """Merges the contents of new into orig, think recursive update()
+       orig and new must both be dicts. If an element value is None in
+       new it will be removed in orig."""
     if type(orig) != dict or type(new) != dict:
         raise DataTypeError("Not a dict in merge()")
-
-    for key in new.keys():
-        if ((key in orig) and (type(orig[key]) == dict)):
-            merge(orig[key], new[key])
-        else:
-            orig[key] = new[key]
-
+    orig.update(new)
     remove_null_items(orig)
-
 
 def remove_null_items(d):
     """Recursively removes all (key,value) pairs from d where the
