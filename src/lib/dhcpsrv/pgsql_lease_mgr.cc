@@ -146,15 +146,14 @@ TaggedStatement tagged_statements[] = {
                         "client_id = $3, valid_lifetime = $4, expire = $5, "
                         "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9 "
                             "WHERE address = $10"},
-    {PgSqlLeaseMgr::UPDATE_LEASE6, 10,
-                    { 1043, 17, 20, 1114, 20,
-                      20, 21, 20, 21, 1043 },
+    {PgSqlLeaseMgr::UPDATE_LEASE6, 13,
+     { 1043, 17, 20, 1114, 20, 20, 21, 20, 21, 16, 16, 1043, 1043 },
                     "update_lease6",
                     "UPDATE lease6 SET address = $1, duid = $2, "
                         "valid_lifetime = $3, expire = $4, subnet_id = $5, "
                         "pref_lifetime = $6, lease_type = $7, iaid = $8, "
-                        "prefix_len = $9 "
-                            "WHERE address = $10"},
+                        "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12 "
+                            "WHERE address = $13"},
     // End of list sentinel
     {PgSqlLeaseMgr::NUM_STATEMENTS, 0,  { 0 }, NULL, NULL}
 };
