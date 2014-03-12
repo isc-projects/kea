@@ -1273,27 +1273,49 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
     }
 
     // Get all parameters that are needed to create the D2ClientConfig.
-    asiolink::IOAddress server_ip(string_values_->getParam("server-ip"));
+    asiolink::IOAddress server_ip(string_values_->
+                                  getOptionalParam("server-ip",
+                                                   D2ClientConfig::
+                                                   DFT_SERVER_IP));
 
-    uint32_t server_port = uint32_values_->getParam("server-port");
-
-    dhcp_ddns::NameChangeProtocol
-    ncr_protocol = dhcp_ddns:: stringToNcrProtocol(string_values_->
-                                                   getParam("ncr-protocol"));
-
-    dhcp_ddns::NameChangeFormat
-    ncr_format = dhcp_ddns::stringToNcrFormat(string_values_->
-                                              getParam("ncr-format"));
-
-    std::string generated_prefix = string_values_->getParam("generated-prefix");
+    uint32_t server_port = uint32_values_->getOptionalParam("server-port",
+                                                             D2ClientConfig::
+                                                             DFT_SERVER_PORT);
+    dhcp_ddns::NameChangeProtocol ncr_protocol
+        = dhcp_ddns::stringToNcrProtocol(string_values_->
+                                         getOptionalParam("ncr-protocol",
+                                                          D2ClientConfig::
+                                                          DFT_NCR_PROTOCOL));
+    dhcp_ddns::NameChangeFormat ncr_format
+        = dhcp_ddns::stringToNcrFormat(string_values_->
+                                       getOptionalParam("ncr-format",
+                                                          D2ClientConfig::
+                                                          DFT_NCR_FORMAT));
+    std::string generated_prefix = string_values_->
+                                   getOptionalParam("generated-prefix",
+                                                    D2ClientConfig::
+                                                    DFT_GENERATED_PREFIX);
     std::string qualifying_suffix = string_values_->
-                                    getParam("qualifying-suffix");
+                                    getOptionalParam("qualifying-suffix",
+                                                     D2ClientConfig::
+                                                     DFT_QUALIFYING_SUFFIX);
 
-    bool always_include_fqdn = boolean_values_->getParam("always-include-fqdn");
-    bool override_no_update = boolean_values_->getParam("override-no-update");
+    bool always_include_fqdn = boolean_values_->
+                               getOptionalParam("always-include-fqdn", false);
+
+    bool override_no_update = boolean_values_->
+                              getOptionalParam("override-no-update",
+                                               D2ClientConfig::
+                                               DFT_OVERRIDE_NO_UPDATE);
+
     bool override_client_update = boolean_values_->
-                                  getParam("override-client-update");
-    bool replace_client_name = boolean_values_->getParam("replace-client-name");
+                                  getOptionalParam("override-client-update",
+                                                   D2ClientConfig::
+                                                   DFT_OVERRIDE_CLIENT_UPDATE);
+    bool replace_client_name = boolean_values_->
+                               getOptionalParam("replace-client-name",
+                                                D2ClientConfig::
+                                                DFT_REPLACE_CLIENT_NAME);
 
     // Attempt to create the new client config.
     local_client_config_.reset(new D2ClientConfig(enable_updates, server_ip,
