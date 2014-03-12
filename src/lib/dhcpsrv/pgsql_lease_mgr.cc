@@ -94,33 +94,33 @@ TaggedStatement tagged_statements[] = {
                         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease4 "
                             "WHERE hwaddr = $1 AND subnet_id = $2"},
-    {PgSqlLeaseMgr::GET_LEASE6_ADDR, 1,
-                    { 1043 },
+    {PgSqlLeaseMgr::GET_LEASE6_ADDR, 2,
+     { 1043, 21 },
                     "get_lease6_addr",
                     "DECLARE get_lease6_addr CURSOR FOR "
                     "SELECT address, duid, valid_lifetime, "
                         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
-                            "WHERE address = $1"},
-    {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID, 2,
-                    { 17, 20 },
+                            "WHERE address = $1 AND lease_type = $2"},
+    {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID, 3,
+     { 17, 20, 21 },
                     "get_lease6_duid_iaid",
                     "DECLARE get_lease6_duid_iaid CURSOR FOR "
                     "SELECT address, duid, valid_lifetime, "
                         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
-                            "WHERE duid = $1 AND iaid = $2"},
-    {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID, 3,
-                    { 17, 20, 20 },
+                            "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
+    {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID, 4,
+     { 21, 17, 20, 20 },
                     "get_lease6_duid_iaid_subid",
                     "DECLARE get_lease6_duid_iaid_subid CURSOR FOR "
                     "SELECT address, duid, valid_lifetime, "
                         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
                         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
-                            "WHERE duid = $1 AND iaid = $2 AND subnet_id = $3"},
+                            "WHERE lease_type = $1 AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
     {PgSqlLeaseMgr::GET_VERSION, 0,
                     { 0 },
                     "get_version",
@@ -228,8 +228,13 @@ public:
 
         // Although HWADDR object will always be there, it may be just an empty vector
         if (!lease_->hwaddr_.empty()) {
-            uint8_t* data = const_cast<uint8_t*>(&(lease_->hwaddr_[0]));
-            PgSqlParam pdest = { .value = reinterpret_cast<char *>(data),
+            if (lease->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
+                isc_throw(DbOperationError, "Attempted to store Hardware address longer ("
+                          << lease->hwaddr_.size() << " than allowed maximum of "
+                          << HWAddr::MAX_HWADDR_LEN);
+            }
+
+            PgSqlParam pdest = { .value = string(lease_->hwaddr_.begin(), lease_->hwaddr_.end()),
                                  .isbinary = 1,
                                  .binarylen = static_cast<int>(lease_->hwaddr_.size()) };
             params.push_back(pdest);
@@ -385,8 +390,10 @@ public:
 
         params.push_back(paddr6);
         vector<uint8_t> duid_data = lease_->duid_->getDuid();
-        PgSqlParam pdest = { .value = reinterpret_cast<char *>(&duid_data[0])
-                           , .isbinary = 1, .binarylen = static_cast<int>(lease_->duid_->getDuid().size()) };
+        PgSqlParam pdest = { .value = string(duid_data.begin(), duid_data.end()),
+                             .isbinary = 1,
+                             .binarylen = static_cast<int>(duid_data.size()) };
+
         params.push_back(pdest);
 
         string valid_lft_str;
@@ -869,10 +876,14 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
     // Set up the WHERE clause value
     bindparams inparams;
 
-    uint8_t* data = const_cast<uint8_t *>(&hwaddr.hwaddr_[0]);
-    PgSqlParam pdest = { .value = reinterpret_cast<char *>(data)
-                       , .isbinary = 1, .binarylen = static_cast<int>(hwaddr.hwaddr_.size()) };
-    inparams.push_back(pdest);
+    if (!hwaddr.hwaddr_.empty()) {
+        uint8_t* data = const_cast<uint8_t *>(&hwaddr.hwaddr_[0]);
+        PgSqlParam pdest = { .value = reinterpret_cast<char *>(data)
+                             , .isbinary = 1, .binarylen = static_cast<int>(hwaddr.hwaddr_.size()) };
+        inparams.push_back(pdest);
+    } else {
+        inparams.push_back(PgSqlParam());
+    }
 
     // Get the data
     Lease4Collection result;
@@ -891,9 +902,9 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     bindparams inparams;
     ostringstream tmp;
 
-    uint8_t* data = const_cast<uint8_t *>(&hwaddr.hwaddr_[0]);
-    PgSqlParam pdest = { .value = reinterpret_cast<char *>(data)
-                       , .isbinary = 1, .binarylen = static_cast<int>(hwaddr.hwaddr_.size()) };
+    PgSqlParam pdest = { .value = string(hwaddr.hwaddr_.begin(), hwaddr.hwaddr_.end()),
+                         .isbinary = 1,
+                         .binarylen = static_cast<int>(hwaddr.hwaddr_.size()) };
     inparams.push_back(pdest);
 
     tmp << static_cast<unsigned long>(subnet_id);
@@ -973,10 +984,12 @@ PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
     bindparams inparams;
 
     PgSqlParam addr6 = { .value = addr.toText() };
-
-    /// @todo: use type param
-
     inparams.push_back(addr6);
+
+    ostringstream tmp;
+    tmp << static_cast<uint16_t>(lease_type);
+    PgSqlParam qtype = { .value = tmp.str() };
+    inparams.push_back(qtype);
 
     Lease6Ptr result;
     getLease(GET_LEASE6_ADDR, inparams, result);
@@ -1003,6 +1016,12 @@ PgSqlLeaseMgr::getLeases6(Lease::Type type, const DUID& duid, uint32_t iaid) con
     tmp << static_cast<unsigned long>(iaid);
     PgSqlParam piaid = { .value = tmp.str() };
     inparams.push_back(piaid);
+    tmp.str("");
+    tmp.clear();
+
+    tmp << static_cast<uint16_t>(type);
+    PgSqlParam param_lease_type = { .value = tmp.str() };
+    inparams.push_back(param_lease_type);
 
     // ... and get the data
     Lease6Collection result;
@@ -1021,13 +1040,19 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid, uint32_t iai
     bindparams inparams;
     ostringstream tmp;
 
-    /// @todo: use type
+    // Lease type
+    tmp << static_cast<uint16_t>(lease_type);
+    PgSqlParam qtype = { .value = tmp.str() };
+    tmp.str("");
+    tmp.clear();
+    inparams.push_back(qtype);
 
     // See the earlier description of the use of "const_cast" when accessing
     // the DUID for an explanation of the reason.
     vector<uint8_t> duid_data = duid.getDuid();
-    PgSqlParam pdest = { .value = reinterpret_cast<char *>(&duid_data[0])
-                       , .isbinary = 1, .binarylen = static_cast<int>(duid.getDuid().size()) };
+    PgSqlParam pdest = { .value = string(duid_data.begin(), duid_data.end()),
+                         .isbinary = 1,
+                         .binarylen = static_cast<int>(duid.getDuid().size()) };
     inparams.push_back(pdest);
 
     // IAID
