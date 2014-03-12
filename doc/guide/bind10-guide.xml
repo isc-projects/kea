@@ -5868,8 +5868,8 @@ Dhcp6/renew-timer	1000	integer	(default)
           <simpara>Prefix delegation is not supported.</simpara>
         </listitem>
         <listitem>
-          <simpara>Rebinding (REBIND), confirmation (CONFIRM),
-          and duplication report (DECLINE) are not yet supported.</simpara>
+          <simpara>Confirmation (CONFIRM), and duplication report (DECLINE)
+          are not yet supported.</simpara>
         </listitem>
         <listitem>
           <simpara>DNS Update is not supported.</simpara>

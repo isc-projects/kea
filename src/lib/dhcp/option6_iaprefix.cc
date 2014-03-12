@@ -99,8 +99,8 @@ std::string Option6IAPrefix::toText(int indent /* =0 */) {
         tmp << " ";
 
     tmp << "type=" << type_ << "(IAPREFIX) prefix=" << addr_ << "/"
-        << prefix_len_ << ", preferred-lft=" << preferred_ << ", valid-lft="
-        << valid_ << endl;
+        << static_cast<int>(prefix_len_) << ", preferred-lft="
+        << preferred_ << ", valid-lft=" << valid_ << endl;
 
     for (OptionCollection::const_iterator opt=options_.begin();
          opt!=options_.end();
