@@ -44,30 +44,36 @@ const char* destroy_statement[] = {
 const char* create_statement[] = {
     "START TRANSACTION",
     "CREATE TABLE lease4 ("
-        "address BIGINT PRIMARY KEY NOT NULL,"
-        "hwaddr BYTEA,"
-        "client_id BYTEA,"
-        "valid_lifetime BIGINT,"
-        "expire TIMESTAMP,"
-        "subnet_id BIGINT"
-        ")",
+    "address BIGINT PRIMARY KEY NOT NULL,"
+    "hwaddr BYTEA,"
+    "client_id BYTEA,"
+    "valid_lifetime BIGINT,"
+    "expire TIMESTAMP,"
+    "subnet_id BIGINT,"
+    "fqdn_fwd BOOLEAN,"
+    "fqdn_rev BOOLEAN,"
+    "hostname VARCHAR(255)"
+    ")",
 
     "CREATE TABLE lease6 ("
-        "address VARCHAR(39) PRIMARY KEY NOT NULL,"
-        "duid BYTEA,"
-        "valid_lifetime BIGINT,"
-        "expire TIMESTAMP,"
-        "subnet_id BIGINT,"
-        "pref_lifetime BIGINT,"
-        "lease_type SMALLINT,"
-        "iaid BIGINT,"
-        "prefix_len SMALLINT"
-        ")",
+    "address VARCHAR(39) PRIMARY KEY NOT NULL,"
+    "duid BYTEA,"
+    "valid_lifetime BIGINT,"
+    "expire TIMESTAMP,"
+    "subnet_id BIGINT,"
+    "pref_lifetime BIGINT,"
+    "lease_type SMALLINT,"
+    "iaid BIGINT,"
+    "prefix_len SMALLINT,"
+    "fqdn_fwd BOOLEAN,"
+    "fqdn_rev BOOLEAN,"
+    "hostname VARCHAR(255)"
+    ")",
 
     "CREATE TABLE lease6_types ("
-        "lease_type SMALLINT PRIMARY KEY NOT NULL,"
-        "name VARCHAR(5)"
-        ")",
+    "lease_type SMALLINT PRIMARY KEY NOT NULL,"
+    "name VARCHAR(5)"
+    ")",
 
     "INSERT INTO lease6_types VALUES (0, 'IA_NA')",
     "INSERT INTO lease6_types VALUES (1, 'IA_TA')",

@@ -15,9 +15,9 @@
 
 -- This is the BIND 10 DHCP schema specification for PostgreSQL.
 
--- The schema is reasonably portable (with the exception of the engine
--- specification, which is MySQL-specific).  Minor changes might be needed for
--- other databases.
+-- The schema is reasonably portable (with the exception of some field types
+-- specification, which are PostgreSQL-specific).  Minor changes might be needed
+-- for other databases.
 
 -- To create the schema, either type the command:
 
@@ -36,7 +36,10 @@ CREATE TABLE lease4 (
     client_id BYTEA,                            -- Client ID
     valid_lifetime BIGINT,                      -- Length of the lease (seconds)
     expire TIMESTAMP,                           -- Expiration time of the lease
-    subnet_id BIGINT                            -- Subnet identification
+    subnet_id BIGINT,                           -- Subnet identification
+    fqdn_fwd BOOLEAN,                           -- Has forward DNS update been performed by a server
+    fqdn_rev BOOLEAN,                           -- Has reverse DNS update been performed by a server
+    hostname VARCHAR(255)                       -- The FQDN of the client
     );
 
 
@@ -60,7 +63,10 @@ CREATE TABLE lease6 (
     lease_type SMALLINT,                        -- Lease type (see lease6_types
                                                 --    table for possible values)
     iaid INT,                                   -- See Section 10 of RFC 3315
-    prefix_len SMALLINT                         -- For IA_PD only
+    prefix_len SMALLINT,                        -- For IA_PD only
+    fqdn_fwd BOOLEAN,                           -- Has forward DNS update been performed by a server
+    fqdn_rev BOOLEAN,                           -- Has reverse DNS update been performed by a server
+    hostname VARCHAR(255)                       -- The FQDN of the client
     );
 
 -- Create search indexes for lease4 table
