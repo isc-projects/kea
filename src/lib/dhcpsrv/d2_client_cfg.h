@@ -55,6 +55,21 @@ public:
 ///
 class D2ClientConfig {
 public:
+
+
+    /// @brief Default configuration constants.
+    /// @todo For now these are hard-coded as configuraiton layer cannot
+    /// readily provide them (see Trac #3358).
+    static const char *DFT_SERVER_IP;
+    static const size_t DFT_SERVER_PORT;
+    static const char *DFT_NCR_PROTOCOL;
+    static const char *DFT_NCR_FORMAT;
+    static const bool DFT_OVERRIDE_NO_UPDATE;
+    static const bool DFT_OVERRIDE_CLIENT_UPDATE;
+    static const bool DFT_REPLACE_CLIENT_NAME;
+    static const char *DFT_GENERATED_PREFIX;
+    static const char *DFT_QUALIFYING_SUFFIX;
+
     /// @brief Constructor
     ///
     /// @param enable_updates Enables DHCP-DDNS updates

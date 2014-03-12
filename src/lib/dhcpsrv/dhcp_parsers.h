@@ -90,6 +90,28 @@ class ValueStorage {
             return (param->second);
         }
 
+        /// @brief Returns the data value for an optional parameter.
+        ///
+        /// Finds and returns the data value for the given parameter or
+        /// a supplied default value if it is not found.
+        ///
+        /// @param name is the name of the parameter for which the data
+        /// value is desired.
+        /// @param default_value value to use the default
+        ///
+        /// @return The paramater's data value of type @c ValueType.
+        ValueType getOptionalParam(const std::string& name,
+                                   const ValueType& default_value) const {
+            typename std::map<std::string, ValueType>::const_iterator param
+                = values_.find(name);
+
+            if (param == values_.end()) {
+                return (default_value);
+            }
+
+            return (param->second);
+        }
+
         /// @brief  Remove the parameter from the store.
         ///
         /// Deletes the entry for the given parameter from the store if it
@@ -957,6 +979,9 @@ public:
     ///
     /// The results of the parsing are retained internally for use during
     /// commit.
+    /// @todo This parser supplies hard-coded default values for all
+    /// optional parameters.  This should be changed once a new plan
+    /// for configuration is determined.
     ///
     /// @param client_config is the "dhcp-ddns" configuration to parse
     virtual void build(isc::data::ConstElementPtr client_config);
