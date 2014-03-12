@@ -18,8 +18,8 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <exceptions/exceptions.h>
-
 
 #include <gtest/gtest.h>
 
@@ -323,46 +323,13 @@ TEST_F(MySqlLeaseMgrTest, checkVersion) {
 /// Checks that the addLease, getLease4 (by address) and deleteLease (with an
 /// IPv4 address) works.
 TEST_F(MySqlLeaseMgrTest, basicLease4) {
-    // Get the leases to be used for the test.
-    vector<Lease4Ptr> leases = createLeases4();
-
-    // Start the tests.  Add three leases to the database, read them back and
-    // check they are what we think they are.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    EXPECT_TRUE(lmptr_->addLease(leases[2]));
-    EXPECT_TRUE(lmptr_->addLease(leases[3]));
-    lmptr_->commit();
-
-    // Reopen the database to ensure that they actually got stored.
-    reopen();
-
-    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
-
-    l_returned = lmptr_->getLease4(ioaddress4_[3]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[3], l_returned);
-
-    // Check that we can't add a second lease with the same address
-    EXPECT_FALSE(lmptr_->addLease(leases[1]));
-
-    // Delete a lease, check that it's gone, and that we can't delete it
-    // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[1]));
-    l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease(ioaddress4_[1]));
-
-    // Check that the second address is still there.
-    l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
+    testBasicLease4();
 }
+
+TEST_F(MySqlLeaseMgrTest, testAddGetDelete6) {
+    testAddGetDelete6(false);
+}
+
 
 /// @brief Basic Lease4 Checks
 ///
@@ -370,75 +337,7 @@ TEST_F(MySqlLeaseMgrTest, basicLease4) {
 /// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
 /// (client-id is optional and may not be present)
 TEST_F(MySqlLeaseMgrTest, lease4NullClientId) {
-    // Get the leases to be used for the test.
-    vector<Lease4Ptr> leases = createLeases4();
-
-    // Let's clear client-id pointers
-    leases[1]->client_id_ = ClientIdPtr();
-    leases[2]->client_id_ = ClientIdPtr();
-    leases[3]->client_id_ = ClientIdPtr();
-
-    // Start the tests.  Add three leases to the database, read them back and
-    // check they are what we think they are.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    EXPECT_TRUE(lmptr_->addLease(leases[2]));
-    EXPECT_TRUE(lmptr_->addLease(leases[3]));
-    lmptr_->commit();
-
-    // Reopen the database to ensure that they actually got stored.
-    reopen();
-
-    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
-
-    l_returned = lmptr_->getLease4(ioaddress4_[3]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[3], l_returned);
-
-    // Check that we can't add a second lease with the same address
-    EXPECT_FALSE(lmptr_->addLease(leases[1]));
-
-    // Check that we can get the lease by HWAddr
-    HWAddr tmp(leases[2]->hwaddr_, HTYPE_ETHER);
-    Lease4Collection returned = lmptr_->getLease4(tmp);
-    ASSERT_EQ(1, returned.size());
-    detailCompareLease(leases[2], *returned.begin());
-
-    l_returned = lmptr_->getLease4(tmp, leases[2]->subnet_id_);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
-
-
-    // Check that we can update the lease
-    // Modify some fields in lease 1 (not the address) and update it.
-    ++leases[1]->subnet_id_;
-    leases[1]->valid_lft_ *= 2;
-    lmptr_->updateLease4(leases[1]);
-
-    // ... and check that the lease is indeed updated
-    l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-
-
-    // Delete a lease, check that it's gone, and that we can't delete it
-    // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[1]));
-    l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease(ioaddress4_[1]));
-
-    // Check that the second address is still there.
-    l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
-
+    testLease4NullClientId();
 }
 
 /// @brief Verify that too long hostname for Lease4 is not accepted.
@@ -446,24 +345,7 @@ TEST_F(MySqlLeaseMgrTest, lease4NullClientId) {
 /// Checks that the it is not possible to create a lease when the hostname
 /// length exceeds 255 characters.
 TEST_F(MySqlLeaseMgrTest, lease4InvalidHostname) {
-    // Get the leases to be used for the test.
-    vector<Lease4Ptr> leases = createLeases4();
-
-    // Create a dummy hostname, consisting of 255 characters.
-    leases[1]->hostname_.assign(255, 'a');
-    ASSERT_TRUE(lmptr_->addLease(leases[1]));
-
-    // The new lease must be in the database.
-    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    detailCompareLease(leases[1], l_returned);
-
-    // Let's delete the lease, so as we can try to add it again with
-    // invalid hostname.
-    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[1]));
-
-    // Create a hostname with 256 characters. It should not be accepted.
-    leases[1]->hostname_.assign(256, 'a');
-    EXPECT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+    testLease4InvalidHostname();
 }
 
 /// @brief Basic Lease6 Checks
@@ -471,45 +353,7 @@ TEST_F(MySqlLeaseMgrTest, lease4InvalidHostname) {
 /// Checks that the addLease, getLease6 (by address) and deleteLease (with an
 /// IPv6 address) works.
 TEST_F(MySqlLeaseMgrTest, basicLease6) {
-    // Get the leases to be used for the test.
-    vector<Lease6Ptr> leases = createLeases6();
-
-    // Start the tests.  Add three leases to the database, read them back and
-    // check they are what we think they are.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    EXPECT_TRUE(lmptr_->addLease(leases[2]));
-    EXPECT_TRUE(lmptr_->addLease(leases[3]));
-    lmptr_->commit();
-
-    // Reopen the database to ensure that they actually got stored.
-    reopen();
-
-    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
-
-    l_returned = lmptr_->getLease6(leasetype6_[3], ioaddress6_[3]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[3], l_returned);
-
-    // Check that we can't add a second lease with the same address
-    EXPECT_FALSE(lmptr_->addLease(leases[1]));
-
-    // Delete a lease, check that it's gone, and that we can't delete it
-    // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease(ioaddress6_[1]));
-    l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
-    EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease(ioaddress6_[1]));
-
-    // Check that the second address is still there.
-    l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
+    testBasicLease6();
 }
 
 /// @brief Verify that too long hostname for Lease6 is not accepted.
@@ -517,102 +361,25 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
 /// Checks that the it is not possible to create a lease when the hostname
 /// length exceeds 255 characters.
 TEST_F(MySqlLeaseMgrTest, lease6InvalidHostname) {
-    // Get the leases to be used for the test.
-    vector<Lease6Ptr> leases = createLeases6();
-
-    // Create a dummy hostname, consisting of 255 characters.
-    leases[1]->hostname_.assign(255, 'a');
-    ASSERT_TRUE(lmptr_->addLease(leases[1]));
-
-    // The new lease must be in the database.
-    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
-    detailCompareLease(leases[1], l_returned);
-
-    // Let's delete the lease, so as we can try to add it again with
-    // invalid hostname.
-    EXPECT_TRUE(lmptr_->deleteLease(ioaddress6_[1]));
-
-    // Create a hostname with 256 characters. It should not be accepted.
-    leases[1]->hostname_.assign(256, 'a');
-    EXPECT_THROW(lmptr_->addLease(leases[1]), DbOperationError);
+    testLease6InvalidHostname();
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address
-///
-/// Adds leases to the database and checks that they can be accessed via
-/// a combination of DIUID and IAID.
-TEST_F(MySqlLeaseMgrTest, getLease4Hwaddr) {
-    // Get the leases to be used for the test and add to the database
-    vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
+TEST_F(MySqlLeaseMgrTest, getLease4HWAddr1) {
+    testGetLease4HWAddr1();
+}
 
-    // Get the leases matching the hardware address of lease 1
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    HWAddr tmp(leases[1]->hwaddr_, HTYPE_ETHER);
-    Lease4Collection returned = lmptr_->getLease4(tmp);
-
-    // Should be three leases, matching leases[1], [3] and [5].
-    ASSERT_EQ(3, returned.size());
-
-    // Easiest way to check is to look at the addresses.
-    vector<string> addresses;
-    for (Lease4Collection::const_iterator i = returned.begin();
-         i != returned.end(); ++i) {
-        addresses.push_back((*i)->addr_.toText());
-    }
-    sort(addresses.begin(), addresses.end());
-    EXPECT_EQ(straddress4_[1], addresses[0]);
-    EXPECT_EQ(straddress4_[3], addresses[1]);
-    EXPECT_EQ(straddress4_[5], addresses[2]);
-
-    // Repeat test with just one expected match
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    returned = lmptr_->getLease4(HWAddr(leases[2]->hwaddr_, HTYPE_ETHER));
-    ASSERT_EQ(1, returned.size());
-    detailCompareLease(leases[2], *returned.begin());
-
-    // Check that an empty vector is valid
-    EXPECT_TRUE(leases[7]->hwaddr_.empty());
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    returned = lmptr_->getLease4(HWAddr(leases[7]->hwaddr_, HTYPE_ETHER));
-    ASSERT_EQ(1, returned.size());
-    detailCompareLease(leases[7], *returned.begin());
-
-    // Try to get something with invalid hardware address
-    vector<uint8_t> invalid(6, 0);
-    returned = lmptr_->getLease4(invalid);
-    EXPECT_EQ(0, returned.size());
+/// @brief Check GetLease4 methods - access by Hardware Address
+TEST_F(MySqlLeaseMgrTest, getLease4HWAddr2) {
+    testGetLease4HWAddr2();
 }
 
 // @brief Get lease4 by hardware address (2)
 //
 // Check that the system can cope with getting a hardware address of
 // any size.
-TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSize) {
-
-    // Create leases, although we need only one.
-    vector<Lease4Ptr> leases = createLeases4();
-
-    // Now add leases with increasing hardware address size.
-    for (uint8_t i = 0; i <= HWAddr::MAX_HWADDR_LEN; ++i) {
-        leases[1]->hwaddr_.resize(i, i);
-        EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        /// @todo: Simply use HWAddr directly once 2589 is implemented
-        Lease4Collection returned =
-            lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER));
-
-        ASSERT_EQ(1, returned.size());
-        detailCompareLease(leases[1], *returned.begin());
-        (void) lmptr_->deleteLease(leases[1]->addr_);
-    }
-
-    // Database should not let us add one that is too big
-    // (The 42 is a random value put in each byte of the address.)
-    /// @todo: 2589 will make this test impossible
-    leases[1]->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
-    EXPECT_THROW(lmptr_->addLease(leases[1]), isc::dhcp::DbOperationError);
+TEST_F(MySqlLeaseMgrTest, getLease4HWAddrSize) {
+    testGetLease4HWAddrSize();
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address & Subnet ID
@@ -620,167 +387,35 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSize) {
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of hardware address and subnet ID
 TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
-    // Get the leases to be used for the test and add to the database
-    vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // Get the leases matching the hardware address of lease 1 and
-    // subnet ID of lease 1.  Result should be a single lease - lease 1.
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
-        HTYPE_ETHER), leases[1]->subnet_id_);
-
-    ASSERT_TRUE(returned);
-    detailCompareLease(leases[1], returned);
-
-    // Try for a match to the hardware address of lease 1 and the wrong
-    // subnet ID.
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_, HTYPE_ETHER),
-                                 leases[1]->subnet_id_ + 1);
-    EXPECT_FALSE(returned);
-
-    // Try for a match to the subnet ID of lease 1 (and lease 4) but
-    // the wrong hardware address.
-    vector<uint8_t> invalid_hwaddr(15, 0x77);
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    returned = lmptr_->getLease4(HWAddr(invalid_hwaddr, HTYPE_ETHER),
-                                 leases[1]->subnet_id_);
-    EXPECT_FALSE(returned);
-
-    // Try for a match to an unknown hardware address and an unknown
-    // subnet ID.
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    returned = lmptr_->getLease4(HWAddr(invalid_hwaddr, HTYPE_ETHER),
-                                 leases[1]->subnet_id_ + 1);
-    EXPECT_FALSE(returned);
-
-    // Add a second lease with the same values as the first and check that
-    // an attempt to access the database by these parameters throws a
-    // "multiple records" exception. (We expect there to be only one record
-    // with that combination, so getting them via getLeaseX() (as opposed
-    // to getLeaseXCollection() should throw an exception.)
-    EXPECT_TRUE(lmptr_->deleteLease(leases[2]->addr_));
-    leases[1]->addr_ = leases[2]->addr_;
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    /// @todo: Simply use HWAddr directly once 2589 is implemented
-    EXPECT_THROW(returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
-                                                    HTYPE_ETHER),
-                                             leases[1]->subnet_id_),
-                 isc::dhcp::MultipleRecords);
-
+    testGetLease4HWAddrSubnetId();
 }
 
 // @brief Get lease4 by hardware address and subnet ID (2)
 //
 // Check that the system can cope with getting a hardware address of
 // any size.
-TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetIdSize) {
+TEST_F(MySqlLeaseMgrTest, getLease4HWAddrSubnetIdSize) {
+    testGetLease4HWAddrSubnetIdSize();
+}
 
-    // Create leases, although we need only one.
-    vector<Lease4Ptr> leases = createLeases4();
-
-    // Now add leases with increasing hardware address size and check
-    // that they can be retrieved.
-    for (uint8_t i = 0; i <= HWAddr::MAX_HWADDR_LEN; ++i) {
-        leases[1]->hwaddr_.resize(i, i);
-        EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        /// @todo: Simply use HWAddr directly once 2589 is implemented
-        Lease4Ptr returned = lmptr_->getLease4(HWAddr(leases[1]->hwaddr_,
-                                                      HTYPE_ETHER),
-                                               leases[1]->subnet_id_);
-        ASSERT_TRUE(returned);
-        detailCompareLease(leases[1], returned);
-        (void) lmptr_->deleteLease(leases[1]->addr_);
-    }
-
-    // Database should not let us add one that is too big
-    // (The 42 is a random value put in each byte of the address.)
-    leases[1]->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
-    EXPECT_THROW(lmptr_->addLease(leases[1]), isc::dhcp::DbOperationError);
+// This test was derived from memfile.
+TEST_F(MySqlLeaseMgrTest, getLease4ClientId) {
+    testGetLease4ClientId();
 }
 
 /// @brief Check GetLease4 methods - access by Client ID
 ///
 /// Adds leases to the database and checks that they can be accessed via
 /// the Client ID.
-TEST_F(MySqlLeaseMgrTest, getLease4ClientId) {
-    // Get the leases to be used for the test and add to the database
-    vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // Get the leases matching the Client ID address of lease 1
-    Lease4Collection returned = lmptr_->getLease4(*leases[1]->client_id_);
-
-    // Should be four leases, matching leases[1], [4], [5] and [6].
-    ASSERT_EQ(4, returned.size());
-
-    // Easiest way to check is to look at the addresses.
-    vector<string> addresses;
-    for (Lease4Collection::const_iterator i = returned.begin();
-         i != returned.end(); ++i) {
-        addresses.push_back((*i)->addr_.toText());
-    }
-    sort(addresses.begin(), addresses.end());
-    EXPECT_EQ(straddress4_[1], addresses[0]);
-    EXPECT_EQ(straddress4_[4], addresses[1]);
-    EXPECT_EQ(straddress4_[5], addresses[2]);
-    EXPECT_EQ(straddress4_[6], addresses[3]);
-
-    // Repeat test with just one expected match
-    returned = lmptr_->getLease4(*leases[3]->client_id_);
-    ASSERT_EQ(1, returned.size());
-    detailCompareLease(leases[3], *returned.begin());
-
-    // Check that client-id is NULL
-    EXPECT_FALSE(leases[7]->client_id_);
-    HWAddr tmp(leases[7]->hwaddr_, HTYPE_ETHER);
-    returned = lmptr_->getLease4(tmp);
-    ASSERT_EQ(1, returned.size());
-    detailCompareLease(leases[7], *returned.begin());
-
-    // Try to get something with invalid client ID
-    const uint8_t invalid_data[] = {0, 0, 0};
-    ClientId invalid(invalid_data, sizeof(invalid_data));
-    returned = lmptr_->getLease4(invalid);
-    EXPECT_EQ(0, returned.size());
+TEST_F(MySqlLeaseMgrTest, getLease4ClientId2) {
+    testGetLease4ClientId2();
 }
 
 // @brief Get Lease4 by client ID (2)
 //
 // Check that the system can cope with a client ID of any size.
 TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSize) {
-
-    // Create leases, although we need only one.
-    vector<Lease4Ptr> leases = createLeases4();
-
-    // Now add leases with increasing Client ID size can be retrieved.
-    // For speed, go from 0 to 128 is steps of 16.
-    // Intermediate client_id_max is to overcome problem if
-    // ClientId::MAX_CLIENT_ID_LEN is used in an EXPECT_EQ.
-    int client_id_max = ClientId::MAX_CLIENT_ID_LEN;
-    EXPECT_EQ(128, client_id_max);
-
-    int client_id_min = ClientId::MIN_CLIENT_ID_LEN;
-    EXPECT_EQ(2, client_id_min); // See RFC2132, section 9.14
-
-    for (uint8_t i = client_id_min; i <= client_id_max; i += 16) {
-        vector<uint8_t> clientid_vec(i, i);
-        leases[1]->client_id_.reset(new ClientId(clientid_vec));
-        EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        Lease4Collection returned = lmptr_->getLease4(*leases[1]->client_id_);
-        ASSERT_TRUE(returned.size() == 1);
-        detailCompareLease(leases[1], *returned.begin());
-        (void) lmptr_->deleteLease(leases[1]->addr_);
-    }
-
-    // Don't bother to check client IDs longer than the maximum -
-    // these cannot be constructed, and that limitation is tested
-    // in the DUID/Client ID unit tests.
+    testGetLease4ClientIdSize();
 }
 
 /// @brief Check GetLease4 methods - access by Client ID & Subnet ID
@@ -788,115 +423,20 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSize) {
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of client and subnet IDs.
 TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
-    // Get the leases to be used for the test and add to the database
-    vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // Get the leases matching the client ID of lease 1 and
-    // subnet ID of lease 1.  Result should be a single lease - lease 1.
-    Lease4Ptr returned = lmptr_->getLease4(*leases[1]->client_id_,
-                                           leases[1]->subnet_id_);
-    ASSERT_TRUE(returned);
-    detailCompareLease(leases[1], returned);
-
-    // Try for a match to the client ID of lease 1 and the wrong
-    // subnet ID.
-    returned = lmptr_->getLease4(*leases[1]->client_id_,
-                                 leases[1]->subnet_id_ + 1);
-    EXPECT_FALSE(returned);
-
-    // Try for a match to the subnet ID of lease 1 (and lease 4) but
-    // the wrong client ID
-    const uint8_t invalid_data[] = {0, 0, 0};
-    ClientId invalid(invalid_data, sizeof(invalid_data));
-    returned = lmptr_->getLease4(invalid, leases[1]->subnet_id_);
-    EXPECT_FALSE(returned);
-
-    // Try for a match to an unknown hardware address and an unknown
-    // subnet ID.
-    returned = lmptr_->getLease4(invalid, leases[1]->subnet_id_ + 1);
-    EXPECT_FALSE(returned);
+    testGetLease4ClientIdSubnetId();
 }
 
 /// @brief Check GetLease6 methods - access by DUID/IAID
 ///
 /// Adds leases to the database and checks that they can be accessed via
-/// a combination of DIUID and IAID.
+/// a combination of DUID and IAID.
 TEST_F(MySqlLeaseMgrTest, getLeases6DuidIaid) {
-    // Get the leases to be used for the test.
-    vector<Lease6Ptr> leases = createLeases6();
-    ASSERT_LE(6, leases.size());    // Expect to access leases 0 through 5
-
-    // Add them to the database
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // Get the leases matching the DUID and IAID of lease[1].
-    Lease6Collection returned = lmptr_->getLeases6(leasetype6_[1],
-                                                   *leases[1]->duid_,
-                                                   leases[1]->iaid_);
-
-    // Should be two leases, matching leases[1] and [4].
-    ASSERT_EQ(2, returned.size());
-
-    // Easiest way to check is to look at the addresses.
-    vector<string> addresses;
-    for (Lease6Collection::const_iterator i = returned.begin();
-         i != returned.end(); ++i) {
-        addresses.push_back((*i)->addr_.toText());
-    }
-    sort(addresses.begin(), addresses.end());
-    EXPECT_EQ(straddress6_[1], addresses[0]);
-    EXPECT_EQ(straddress6_[4], addresses[1]);
-
-    // Check that nothing is returned when either the IAID or DUID match
-    // nothing.
-    returned = lmptr_->getLeases6(leasetype6_[1], *leases[1]->duid_,
-                                  leases[1]->iaid_ + 1);
-    EXPECT_EQ(0, returned.size());
-
-    // Alter the leases[1] DUID to match nothing in the database.
-    vector<uint8_t> duid_vector = leases[1]->duid_->getDuid();
-    ++duid_vector[0];
-    DUID new_duid(duid_vector);
-    returned = lmptr_->getLeases6(leasetype6_[1], new_duid, leases[1]->iaid_);
-    EXPECT_EQ(0, returned.size());
+    testGetLeases6DuidIaid();
 }
 
-// @brief Get Lease4 by DUID and IAID (2)
-//
-// Check that the system can cope with a DUID of any size.
-TEST_F(MySqlLeaseMgrTest, getLeases6DuidIaidSize) {
-
-    // Create leases, although we need only one.
-    vector<Lease6Ptr> leases = createLeases6();
-
-    // Now add leases with increasing DUID size can be retrieved.
-    // For speed, go from 0 to 128 is steps of 16.
-    int duid_max = DUID::MAX_DUID_LEN;
-    EXPECT_EQ(128, duid_max);
-
-    int duid_min = DUID::MIN_DUID_LEN;
-    EXPECT_EQ(1, duid_min);
-
-    for (uint8_t i = duid_min; i <= duid_max; i += 16) {
-        vector<uint8_t> duid_vec(i, i);
-        leases[1]->duid_.reset(new DUID(duid_vec));
-        EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[1],
-                                                       *leases[1]->duid_,
-                                                       leases[1]->iaid_);
-        ASSERT_EQ(1, returned.size());
-        detailCompareLease(leases[1], *returned.begin());
-        (void) lmptr_->deleteLease(leases[1]->addr_);
-    }
-
-    // Don't bother to check DUIDs longer than the maximum - these cannot be
-    // constructed, and that limitation is tested in the DUID/Client ID unit
-    // tests.
+// Check that the system can cope with a DUID of allowed size.
+TEST_F(MySqlLeaseMgrTest, getLeases6DuidSize) {
+    testGetLeases6DuidSize();
 }
 
 /// @brief Check that getLease6 methods discriminate by lease type.
@@ -906,95 +446,7 @@ TEST_F(MySqlLeaseMgrTest, getLeases6DuidIaidSize) {
 /// It then verifies that all of getLeases6() method variants correctly
 /// discriminate between the leases based on lease type alone.
 TEST_F(MySqlLeaseMgrTest, lease6LeaseTypeCheck) {
-
-    Lease6Ptr empty_lease(new Lease6());
-
-    DuidPtr duid(new DUID(vector<uint8_t>(8, 0x77)));
-
-    // Initialize unused fields.
-    empty_lease->t1_ = 0;                             // Not saved
-    empty_lease->t2_ = 0;                             // Not saved
-    empty_lease->fixed_ = false;                      // Unused
-    empty_lease->comments_ = std::string("");         // Unused
-    empty_lease->iaid_ = 142;
-    empty_lease->duid_ = DuidPtr(new DUID(*duid));
-    empty_lease->subnet_id_ = 23;
-    empty_lease->preferred_lft_ = 100;
-    empty_lease->valid_lft_ = 100;
-    empty_lease->cltt_ = 100;
-    empty_lease->fqdn_fwd_ = true;
-    empty_lease->fqdn_rev_ = true;
-    empty_lease->hostname_ = "myhost.example.com.";
-    empty_lease->prefixlen_ = 4;
-
-    // Make Two leases per lease type, all with the same  DUID, IAID but
-    // alternate the subnet_ids.
-    vector<Lease6Ptr> leases;
-    for (int i = 0; i < 6; ++i) {
-          Lease6Ptr lease(new Lease6(*empty_lease));
-          lease->type_ = leasetype6_[i / 2];
-          lease->addr_ = IOAddress(straddress6_[i]);
-          lease->subnet_id_ += (i % 2);
-          leases.push_back(lease);
-          EXPECT_TRUE(lmptr_->addLease(lease));
-     }
-
-    // Verify getting a single lease by type and address.
-    for (int i = 0; i < 6; ++i) {
-        // Look for exact match for each lease type.
-        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i / 2],
-                                               leases[i]->addr_);
-        // We should match one per lease type.
-        ASSERT_TRUE(returned);
-        EXPECT_TRUE(*returned == *leases[i]);
-
-        // Same address but wrong lease type, should not match.
-        returned = lmptr_->getLease6(leasetype6_[i / 2 + 1], leases[i]->addr_);
-        ASSERT_FALSE(returned);
-    }
-
-    // Verify getting a collection of leases by type, DUID, and IAID.
-    // Iterate over the lease types, asking for leases based on
-    // lease type, DUID, and IAID.
-    for (int i = 0; i < 3; ++i) {
-        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i],
-                                                       *duid, 142);
-        // We should match two per lease type.
-        ASSERT_EQ(2, returned.size());
-
-        // Collection order returned is not guaranteed.
-        // Easiest way to check is to look at the addresses.
-        vector<string> addresses;
-        for (Lease6Collection::const_iterator it = returned.begin();
-            it != returned.end(); ++it) {
-            addresses.push_back((*it)->addr_.toText());
-        }
-        sort(addresses.begin(), addresses.end());
-
-        // Now verify that the lease addresses match.
-        EXPECT_EQ(addresses[0], leases[(i * 2)]->addr_.toText());
-        EXPECT_EQ(addresses[1], leases[(i * 2 + 1)]->addr_.toText());
-    }
-
-    // Verify getting a collection of leases by type, DUID, IAID, and subnet id.
-    // Iterate over the lease types, asking for leases based on
-    // lease type, DUID, IAID, and subnet_id.
-    for (int i = 0; i < 3; ++i) {
-        Lease6Collection returned = lmptr_->getLeases6(leasetype6_[i],
-                                                   *duid, 142, 23);
-        // We should match one per lease type.
-        ASSERT_EQ(1, returned.size());
-        EXPECT_TRUE(*(returned[0]) == *leases[i * 2]);
-    }
-
-    // Verify getting a single lease by type, duid, iad, and subnet id.
-    for (int i = 0; i < 6; ++i) {
-        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[i / 2],
-                                                *duid, 142, (23 + (i % 2)));
-        // We should match one per lease type.
-        ASSERT_TRUE(returned);
-        EXPECT_TRUE(*returned == *leases[i]);
-    }
+    testLease6LeaseTypeCheck();
 }
 
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
@@ -1002,180 +454,25 @@ TEST_F(MySqlLeaseMgrTest, lease6LeaseTypeCheck) {
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of DIUID and IAID.
 TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
-    // Get the leases to be used for the test and add them to the database.
-    vector<Lease6Ptr> leases = createLeases6();
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // Get the leases matching the DUID and IAID of lease[1].
-    Lease6Ptr returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
-                                           leases[1]->iaid_,
-                                           leases[1]->subnet_id_);
-    ASSERT_TRUE(returned);
-    EXPECT_TRUE(*returned == *leases[1]);
-
-    // Modify each of the three parameters (DUID, IAID, Subnet ID) and
-    // check that nothing is returned.
-    returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
-                                 leases[1]->iaid_ + 1, leases[1]->subnet_id_);
-    EXPECT_FALSE(returned);
-
-    returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
-                                 leases[1]->iaid_, leases[1]->subnet_id_ + 1);
-    EXPECT_FALSE(returned);
-
-    // Alter the leases[1] DUID to match nothing in the database.
-    vector<uint8_t> duid_vector = leases[1]->duid_->getDuid();
-    ++duid_vector[0];
-    DUID new_duid(duid_vector);
-    returned = lmptr_->getLease6(leasetype6_[1], new_duid, leases[1]->iaid_,
-                                 leases[1]->subnet_id_);
-    EXPECT_FALSE(returned);
+    testGetLease6DuidIaidSubnetId();
 }
 
-
-// @brief Get Lease4 by DUID, IAID & subnet ID (2)
-//
-// Check that the system can cope with a DUID of any size.
 TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
-
-    // Create leases, although we need only one.
-    vector<Lease6Ptr> leases = createLeases6();
-
-    // Now add leases with increasing DUID size can be retrieved.
-    // For speed, go from 0 to 128 is steps of 16.
-    int duid_max = DUID::MAX_DUID_LEN;
-    EXPECT_EQ(128, duid_max);
-
-    int duid_min = DUID::MIN_DUID_LEN;
-    EXPECT_EQ(1, duid_min);
-
-    for (uint8_t i = duid_min; i <= duid_max; i += 16) {
-        vector<uint8_t> duid_vec(i, i);
-        leases[1]->duid_.reset(new DUID(duid_vec));
-        EXPECT_TRUE(lmptr_->addLease(leases[1]));
-        Lease6Ptr returned = lmptr_->getLease6(leasetype6_[1], *leases[1]->duid_,
-                                               leases[1]->iaid_,
-                                               leases[1]->subnet_id_);
-        ASSERT_TRUE(returned);
-        detailCompareLease(leases[1], returned);
-        (void) lmptr_->deleteLease(leases[1]->addr_);
-    }
-
-    // Don't bother to check DUIDs longer than the maximum - these cannot be
-    // constructed, and that limitation is tested in the DUID/Client ID unit
-    // tests.
+    testGetLease6DuidIaidSubnetIdSize();
 }
 
 /// @brief Lease4 update tests
 ///
 /// Checks that we are able to update a lease in the database.
 TEST_F(MySqlLeaseMgrTest, updateLease4) {
-    // Get the leases to be used for the test and add them to the database.
-    vector<Lease4Ptr> leases = createLeases4();
-    for (int i = 0; i < leases.size(); ++i) {
-        EXPECT_TRUE(lmptr_->addLease(leases[i]));
-    }
-
-    // Modify some fields in lease 1 (not the address) and update it.
-    ++leases[1]->subnet_id_;
-    leases[1]->valid_lft_ *= 2;
-    leases[1]->hostname_ = "modified.hostname.";
-    leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
-    leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
-    lmptr_->updateLease4(leases[1]);
-
-    // ... and check what is returned is what is expected.
-    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Alter the lease again and check.
-    ++leases[1]->subnet_id_;
-    leases[1]->cltt_ += 6;
-    lmptr_->updateLease4(leases[1]);
-
-    // Explicitly clear the returned pointer before getting new data to ensure
-    // that the new data is returned.
-    l_returned.reset();
-    l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Check we can do an update without changing data.
-    lmptr_->updateLease4(leases[1]);
-    l_returned.reset();
-    l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Try to update the lease with the too long hostname.
-    leases[1]->hostname_.assign(256, 'a');
-    EXPECT_THROW(lmptr_->updateLease4(leases[1]), isc::dhcp::DbOperationError);
-
-    // Try updating a lease not in the database.
-    lmptr_->deleteLease(ioaddress4_[2]);
-    EXPECT_THROW(lmptr_->updateLease4(leases[2]), isc::dhcp::NoSuchLease);
+    testUpdateLease4();
 }
 
 /// @brief Lease6 update tests
 ///
 /// Checks that we are able to update a lease in the database.
 TEST_F(MySqlLeaseMgrTest, updateLease6) {
-    // Get the leases to be used for the test.
-    vector<Lease6Ptr> leases = createLeases6();
-    ASSERT_LE(3, leases.size());    // Expect to access leases 0 through 2
-
-    // Add a lease to the database and check that the lease is there.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    lmptr_->commit();
-
-    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Modify some fields in lease 1 (not the address) and update it.
-    ++leases[1]->iaid_;
-    leases[1]->type_ = Lease::TYPE_PD;
-    leases[1]->valid_lft_ *= 2;
-    leases[1]->hostname_ = "modified.hostname.v6.";
-    leases[1]->fqdn_fwd_ = !leases[1]->fqdn_fwd_;
-    leases[1]->fqdn_rev_ = !leases[1]->fqdn_rev_;;
-    lmptr_->updateLease6(leases[1]);
-    lmptr_->commit();
-
-    // ... and check what is returned is what is expected.
-    l_returned.reset();
-    l_returned = lmptr_->getLease6(Lease::TYPE_PD, ioaddress6_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Alter the lease again and check.
-    ++leases[1]->iaid_;
-    leases[1]->type_ = Lease::TYPE_TA;
-    leases[1]->cltt_ += 6;
-    leases[1]->prefixlen_ = 93;
-    lmptr_->updateLease6(leases[1]);
-
-    l_returned.reset();
-    l_returned = lmptr_->getLease6(Lease::TYPE_TA, ioaddress6_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Check we can do an update without changing data.
-    lmptr_->updateLease6(leases[1]);
-    l_returned.reset();
-    l_returned = lmptr_->getLease6(Lease::TYPE_TA, ioaddress6_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    // Try to update the lease with the too long hostname.
-    leases[1]->hostname_.assign(256, 'a');
-    EXPECT_THROW(lmptr_->updateLease6(leases[1]), isc::dhcp::DbOperationError);
-
-    // Try updating a lease not in the database.
-    EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::dhcp::NoSuchLease);
+    testUpdateLease6();
 }
 
 }; // Of anonymous namespace

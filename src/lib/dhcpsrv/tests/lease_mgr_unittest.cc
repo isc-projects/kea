@@ -18,6 +18,7 @@
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 
 #include <gtest/gtest.h>
 
@@ -247,6 +248,14 @@ class LeaseMgrTest : public GenericLeaseMgrTest {
 public:
     LeaseMgrTest() {
     }
+
+    /// @brief Reopen the database
+    ///
+    /// No-op implementation. We need to provide concrete implementation,
+    /// as this is a pure virtual method in GenericLeaseMgrTest.
+    virtual void reopen() {
+    }
+
 };
 
 namespace {

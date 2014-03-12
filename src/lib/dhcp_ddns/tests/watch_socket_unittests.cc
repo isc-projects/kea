@@ -11,7 +11,7 @@
 // LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
-
+#include <config.h>
 #include <dhcp_ddns/watch_socket.h>
 #include <test_utils.h>
 
@@ -19,6 +19,11 @@
 
 #include <sys/select.h>
 #include <sys/ioctl.h>
+
+#ifdef HAVE_SYS_FILIO_H
+// FIONREAD is here on Solaris
+#include <sys/filio.h>
+#endif
 
 using namespace std;
 using namespace isc;

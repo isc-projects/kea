@@ -15,7 +15,7 @@
 #include <config.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option6_client_fqdn.h>
-#include <dhcpsrv/d2_client.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -34,6 +34,12 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
 
     // Verify default constructor creates a disabled instance.
     ASSERT_NO_THROW(d2_client_config.reset(new D2ClientConfig()));
+    EXPECT_FALSE(d2_client_config->getEnableUpdates());
+
+    // Verify the enable-updates can be toggled.
+    d2_client_config->enableUpdates(true);
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    d2_client_config->enableUpdates(false);
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
 
     d2_client_config.reset();

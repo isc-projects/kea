@@ -262,6 +262,8 @@ public:
     using NameChangeTransaction::addLeaseAddressRdata;
     using NameChangeTransaction::addDhcidRdata;
     using NameChangeTransaction::addPtrRdata;
+    using NameChangeTransaction::responseString;
+    using NameChangeTransaction::transactionOutcomeString;
 };
 
 // Declare them so Gtest can see them.
@@ -507,8 +509,87 @@ TEST_F(NameChangeTransactionTest, dnsUpdateResponseAccessors) {
 
     // Should be empty again.
     EXPECT_FALSE(name_change->getDnsUpdateResponse());
+
 }
 
+/// @brief Tests responseString method.
+TEST_F(NameChangeTransactionTest, responseString) {
+    // Create a transaction.
+    NameChangeStubPtr name_change;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+
+    // Make sure it is safe to call when status says success but there
+    // is no update response.
+    ASSERT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::SUCCESS));
+    EXPECT_EQ("SUCCESS, rcode:  update response is NULL",
+              name_change->responseString());
+
+    // Create a response. (We use an OUTBOUND message so we can set RCODE)
+    D2UpdateMessagePtr resp;
+    ASSERT_NO_THROW(resp.reset(new D2UpdateMessage(D2UpdateMessage::OUTBOUND)));
+    ASSERT_NO_THROW(name_change->setDnsUpdateResponse(resp));
+
+    // Make sure we decode Rcode when status is successful.
+    ASSERT_NO_THROW(resp->setRcode(dns::Rcode::NXDOMAIN()));
+    EXPECT_EQ("SUCCESS, rcode: NXDOMAIN", name_change->responseString());
+
+    // Test all of the non-success values for status.
+    ASSERT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::TIMEOUT));
+    EXPECT_EQ("TIMEOUT", name_change->responseString());
+
+    ASSERT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::IO_STOPPED));
+    EXPECT_EQ("IO_STOPPED", name_change->responseString());
+
+    ASSERT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::
+                                                    INVALID_RESPONSE));
+    EXPECT_EQ("INVALID_RESPONSE", name_change->responseString());
+
+    ASSERT_NO_THROW(name_change->setDnsUpdateStatus(DNSClient::OTHER));
+    EXPECT_EQ("OTHER", name_change->responseString());
+}
+
+/// @brief Tests transactionOutcomeString method.
+TEST_F(NameChangeTransactionTest, transactionOutcomeString) {
+    // Create a transaction.
+    NameChangeStubPtr name_change;
+    dhcp_ddns::NameChangeRequestPtr ncr;
+    ASSERT_NO_THROW(name_change = makeCannedTransaction());
+    ncr = name_change->getNcr();
+
+    // Check case of failed transaction in both directions
+    std::string exp_str("Status: Failed, Event: UNDEFINED,  Forward change:"
+                        " failed,  Reverse change: failed,  request: ");
+    exp_str += ncr->toText();
+
+    std::string tstring = name_change->transactionOutcomeString();
+    std::cout << "tstring is: [" << tstring << "]" << std::endl;
+
+    EXPECT_EQ(exp_str, name_change->transactionOutcomeString());
+
+    // Check case of success all around
+    name_change->setNcrStatus(dhcp_ddns::ST_COMPLETED);
+    name_change->setForwardChangeCompleted(true);
+    name_change->setReverseChangeCompleted(true);
+
+    exp_str = "Status: Completed, Event: UNDEFINED,  Forward change: completed,"
+              "  Reverse change: completed,  request: " + ncr->toText();
+    EXPECT_EQ(exp_str, name_change->transactionOutcomeString());
+
+    // Check case of success, with no forward change
+    name_change->setNcrStatus(dhcp_ddns::ST_COMPLETED);
+    ncr->setForwardChange(false);
+    exp_str = "Status: Completed, Event: UNDEFINED, "
+              " Reverse change: completed,  request: " + ncr->toText();
+    EXPECT_EQ(exp_str, name_change->transactionOutcomeString());
+
+    // Check case of success, with no reverse change
+    name_change->setNcrStatus(dhcp_ddns::ST_COMPLETED);
+    ncr->setForwardChange(true);
+    ncr->setReverseChange(false);
+    exp_str = "Status: Completed, Event: UNDEFINED, "
+              " Forward change: completed,  request: " + ncr->toText();
+    EXPECT_EQ(exp_str, name_change->transactionOutcomeString());
+}
 
 /// @brief Tests event and state dictionary construction and verification.
 TEST_F(NameChangeTransactionTest, dictionaryCheck) {

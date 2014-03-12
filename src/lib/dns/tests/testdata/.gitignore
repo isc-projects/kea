@@ -87,6 +87,12 @@
 /rdata_sshfp_fromWire6.wire
 /rdata_sshfp_fromWire7.wire
 /rdata_sshfp_fromWire8.wire
+/rdata_tlsa_fromWire3.wire
+/rdata_tlsa_fromWire4.wire
+/rdata_tlsa_fromWire5.wire
+/rdata_tlsa_fromWire6.wire
+/rdata_tlsa_fromWire7.wire
+/rdata_tlsa_fromWire8.wire
 /rdata_tsig_fromWire1.wire
 /rdata_tsig_fromWire2.wire
 /rdata_tsig_fromWire3.wire
@@ -105,6 +111,10 @@
 /rdata_txt_fromWire3.wire
 /rdata_txt_fromWire4.wire
 /rdata_txt_fromWire5.wire
+/rdata_caa_fromWire1.wire
+/rdata_caa_fromWire2.wire
+/rdata_caa_fromWire3.wire
+/rdata_caa_fromWire4.wire
 /rdatafields1.wire
 /rdatafields2.wire
 /rdatafields3.wire

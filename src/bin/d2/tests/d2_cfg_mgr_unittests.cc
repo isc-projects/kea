@@ -1,4 +1,4 @@
-// Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -1008,6 +1008,10 @@ TEST_F(D2CfgMgrTest, fullConfig) {
         EXPECT_EQ(3, count);
     }
 
+    // Test directional update flags.
+    EXPECT_TRUE(cfg_mgr_->forwardUpdatesEnabled());
+    EXPECT_TRUE(cfg_mgr_->reverseUpdatesEnabled());
+
     // Verify that parsing the exact same configuration a second time
     // does not cause a duplicate value errors. 
     answer_ = cfg_mgr_->parseConfig(config_set_);
@@ -1061,9 +1065,17 @@ TEST_F(D2CfgMgrTest, forwardMatch) {
     D2CfgContextPtr context;
     ASSERT_NO_THROW(context = cfg_mgr_->getD2CfgContext());
 
+    // Test directional update flags.
+    EXPECT_TRUE(cfg_mgr_->forwardUpdatesEnabled());
+    EXPECT_FALSE(cfg_mgr_->reverseUpdatesEnabled());
+
     DdnsDomainPtr match;
     // Verify that an exact match works.
     EXPECT_TRUE(cfg_mgr_->matchForward("tmark.org", match));
+    EXPECT_EQ("tmark.org", match->getName());
+
+    // Verify that search is case insensisitive.
+    EXPECT_TRUE(cfg_mgr_->matchForward("TMARK.ORG", match));
     EXPECT_EQ("tmark.org", match->getName());
 
     // Verify that an exact match works.
@@ -1207,7 +1219,8 @@ TEST_F(D2CfgMgrTest, matchReverse) {
                         "  \"dns_servers\" : [ "
                         "  { \"ip_address\": \"127.0.0.1\" } "
                         "  ] }, "
-                        "{ \"name\": \"2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.\" , "
+                        // Note mixed case to test case insensitivity.
+                        "{ \"name\": \"2.0.3.0.8.b.d.0.1.0.0.2.IP6.ARPA.\" , "
                         "  \"dns_servers\" : [ "
                         "  { \"ip_address\": \"127.0.0.1\" } "
                         "  ] },"
@@ -1226,6 +1239,10 @@ TEST_F(D2CfgMgrTest, matchReverse) {
     // Verify that the D2 context can be retrieved and is not null.
     D2CfgContextPtr context;
     ASSERT_NO_THROW(context = cfg_mgr_->getD2CfgContext());
+
+    // Test directional update flags.
+    EXPECT_FALSE(cfg_mgr_->forwardUpdatesEnabled());
+    EXPECT_TRUE(cfg_mgr_->reverseUpdatesEnabled());
 
     DdnsDomainPtr match;
 
@@ -1247,7 +1264,7 @@ TEST_F(D2CfgMgrTest, matchReverse) {
 
     // Verify a IPv6 match.
     EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:302:99::",match));
-    EXPECT_EQ("2.0.3.0.8.B.D.0.1.0.0.2.ip6.arpa.", match->getName());
+    EXPECT_EQ("2.0.3.0.8.b.d.0.1.0.0.2.IP6.ARPA.", match->getName());
 
     // Verify a IPv6 wild card match.
     EXPECT_TRUE(cfg_mgr_->matchReverse("2001:db8:99:302::",match));

@@ -24,13 +24,15 @@
 
 #include <dns/tests/unittest_util.h>
 #include <dns/tests/rdata_unittest.h>
+#include <util/unittests/wiredata.h>
 
-using isc::UnitTestUtil;
 using namespace std;
 using namespace isc::dns;
 using namespace isc::util;
 using namespace isc::dns::rdata;
 using namespace isc::dns::rdata::generic;
+using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class Rdata_NAPTR_Test : public RdataTest {
@@ -165,19 +167,18 @@ TEST_F(Rdata_NAPTR_Test, createFromLexer) {
 
 TEST_F(Rdata_NAPTR_Test, toWire) {
     NAPTR naptr(naptr_str);
-    naptr.toWire(obuffer);
 
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, obuffer.getData(),
-                        obuffer.getLength(), naptr_rdata, sizeof(naptr_rdata));
+    naptr.toWire(obuffer);
+    matchWireData(naptr_rdata, sizeof(naptr_rdata),
+                  obuffer.getData(), obuffer.getLength());
 }
 
 TEST_F(Rdata_NAPTR_Test, toWireRenderer) {
     NAPTR naptr(naptr_str);
 
     naptr.toWire(renderer);
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, renderer.getData(),
-                        renderer.getLength(), naptr_rdata,
-                        sizeof(naptr_rdata));
+    matchWireData(naptr_rdata, sizeof(naptr_rdata),
+                  renderer.getData(), renderer.getLength());
 }
 
 TEST_F(Rdata_NAPTR_Test, toText) {

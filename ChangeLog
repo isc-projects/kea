@@ -1,3 +1,127 @@
+769.	[bug]		tmark
+	b10-dhcp-ddns now treats a DNS server response code of NXRRSET as a
+	successful outcome when processing a request to remove DNS data.  This
+	corrects a defect in which b10-dhcp-ddns would incorrectly fail a request
+	to remove DNS data when the DNS server's response was NXRRSET.
+	(Trac #3362, git da3b0d4f364d069ffdb47723545798ac589fae42)
+
+768.	[bug]		tmark
+	Python configuration library now properly merges changes into
+	configuration items that are maps of items.  This corrects a
+	defect in which a change to an item in a map of items could
+	committed, only to be lost upon committing a subsequent change
+	to same map of items during the same bindctl session.
+	(Trac #3373, git da3b0d4f364d069ffdb47723545798ac589fae42)
+
+767.	[func]		tomek
+	Unit-tests for all database backends are now shared. This improves
+	test coverage for memfile and any future backends that may appear.
+	(Trac #3359, git 3d6c11630ada9d0681a813cf026f6bb16aabb9fa)
+
+bind10-1.2.0beta1 released on March 6, 2014
+
+766.	[func]		muks
+	--disable-dns and --disable-dhcp configure arguments have been
+	added to conditionally disable the DNS or DHCP components
+	respectively. This facility can be used to do a DNS or DHCP-only
+	build of BIND 10. DNS and DHCP components are both enabled by
+	default.
+	(Trac #2367, git 81a689b61b1c4abf8a1a4fcbe41cfc96fd11792a)
+
+765.	[bug]		tomek
+	b10-dhcp4: Fixed a minor bug in eRouter1.0 class processing. The
+	server no longer sets giaddr field.
+	(Trac #3353, git 23c22e9b1141c699f361d45c309e737dfecf6f3f)
+
+764.	[bug]		tomek
+	b10-dhcp4: Fixed a bug caused client classification to not work
+	properly.
+	(Trac #3343, git 1801400ac874380e7a565d373b4bae96a49e21f7)
+
+763.	[func]		tmark
+	b10-dhcp-ddns may now be configured to disable DNS updates in
+	in a given direction by simply not defining any domains for that
+	direction in its configuration.  This allows it to be configured to
+	support either forward DNS or reverse DNS only.  Prior to this if
+	a request was received that could not be matched to servers in a
+	given direction it was failed immediately.
+	(Trac #3341, git 01f26bce1d9faaddb8be59802f73891ea065b200)
+
+762.	[func]		tmark
+	If configured to do so, b10-dhcp6 will now create DHCP-DDNS update
+	requests and send them to b10-dhcp-ddns for processing.
+	(Trac# 3329, git 239956696465a13196a2b6bc0f3a61aed21a5de8)
+
+761.	[doc]		stephen, jreed
+	Added "man" page for perfdhcp.
+	(Trac #2307, git ff2f538912c205fbdb1408ee613c09b90de53514)
+
+760.	[bug]		tmark
+	When merging a map of configuration elements into another, elements
+	that are themselves maps will be merged. In particular, this
+	corrects a defect which caused a configuration commit error to
+	occur when using bindctl to modify a single a parameter in
+	dhcp-ddns portion of b10-dhcp4 configuration.
+	(Trac# 3339, git 3ae0d93d89f3277a566eeb045191a43b2dd9d9b1)
+
+759.	[func]		tomek
+	b10-dhcp4, b10-dhcp6: IP address of the relay agent can now be
+	specified for both IPv4 and IPv6 subnets. That information allows
+	the server to properly handle a case where relay agent address
+	does not match subnet.  This is mostly useful in shared subnets
+	and cable networks.
+	(Trac #3322, git 5de565baea42c9096dff78ed5fbd05982a174469)
+
+758.	[bug]		tmark
+	b10-dhcp4 now correctly handles DHO_HOST_OPTION.  This corrects
+	a bug where the server would fail to recognize the option in the
+	DHCP request and then skip generating the appropriate DHCP-DDNS
+	update request.
+	(Trac #2426, git 985d66cba7665a71e17ef70c5d22c767abaad1b6)
+
+757.	[func]		tmark
+	b10-dhcp6 now parses parameters which support DHCP-DDNS updates
+	via the DHCP-DDNS module, b10-dhcp-ddns.  These parameters are
+	part of new configuration element, dhcp-ddns, defined in
+	dhcp4.spec. These parameters influence when and how DDNS updates
+	requests are created but communicating them to b10-dhcp-ddns is
+	not yet supported.  That will be provided under separate ticket,
+	Trac #3222.
+	(Trac# 3034, git 22c667a66536ff3e3741bc67025d824644ed4e7d)
+
+756.	[bug]		marcin
+	b10-dhcp6: server parses DHCPv6 Vendor Class option. Previously
+	the server failed to parse Vendor Class option having empty opaque
+	data field because of the invalid definition in libdhcp++. The
+	DHCPv6 Vendor Class option and DHCPv4 V-I Vendor Class option is
+	now represented by the new OptionVendorClass. The b10-dhcp4 is
+	affected by this change such that it uses new class to parse the
+	DHCPv4 V-I Vendor Class option.
+	(Trac #3316, git 1e61d7db5b8dc76682aa568cd62bfae0eeff46e3)
+
+755.	[func]		muks
+	Add support for the CAA RR type (RFC 6844).
+	(Trac #2512, git 39162608985e5c904448f308951c73bb9c32da8f)
+
+754.	[func]		muks
+	Add support for the TLSA RR type (RFC 6698).
+	(Trac #2185, git a168170430f6927f28597b2a6debebe31cf39b13)
+
+753.	[func]		muks
+	libdns++: the unknown/generic (RFC 3597) RDATA class now uses the
+	generic lexer in constructors from text.
+	(Trac #2426, git 0770d2df84e5608371db3a47e0456eb2a340b5f4)
+
+752.	[func]		tmark
+	If configured to do so, b10-dhcp4 will now create DHCP-DDNS update
+	requests and send them to b10-dhcp-ddns for processing.
+	(Trac# 3329, git 4546dd186782eec5cfcb4ddb61b0a3aa5c700751)
+
+751.	[func]		muks
+	The BIND 10 zone loader now supports the $GENERATE directive (a
+	BIND 9 extension).
+	(Trac #2430, git b05064f681231fe7f8571253c5786f4ff0f2ca03)
+
 750.	[func]		tomek
 	b10-dhcp4, b10-dhcp6: Simple client classification has been
 	implemented. Incoming packets can be assigned to zero or more
@@ -6,9 +130,10 @@
 	(Trac #3274, git 1791d19899b92a6ee411199f664bdfc690ec08b2)
 
 749.	[bug]		tmark
-	b10-dhcp-ddns now sets the TTL value in RRs that add A, AAAA, or PTR DNS
-	entries to the lease length provided in instigating NameChangeRequest.
-	This corrected a bug in which the TTL was always set to 0.
+	b10-dhcp-ddns now sets the TTL value in RRs that add A, AAAA, or
+	PTR DNS entries to the lease length provided in instigating
+	NameChangeRequest.  This corrected a bug in which the TTL was
+	always set to 0.
 	(Trac# 3299, git dbacf27ece77f3d857da793341c6bd31ef1ea239)
 
 748.	[bug]		marcin
@@ -32,7 +157,7 @@
 	method has been removed and replaced with several convenience methods.
 	(Trac #1485, git ecdb62db16b3f3d447db4a9d2a4079d5260431f0)
 
-745.	[bug]		muks
+745.	[bug]*		muks
 	b10-auth now returns rcode=REFUSED for all questions with
 	qtype=RRSIG (i.e., where RRSIGs are queried directly). This is
 	because RRSIGs are meaningless without being bundled alongside the
@@ -40,12 +165,12 @@
 	(Trac #2226, git 68d24e65c9c3dfee38adfbe1c93367b0083f9a58)
 
 744.	[func]		marcin
-	b10-dhcp6: Refactored the code which is processing Client FQDN option.
-	The major user-visible change is that server generates DDNS
-	NameChangeRequest for the first IPv6 address (instead of all)
-	acquired by a client. Also, the server generates fully qualified domain
-	name from acquired IPv6 address, if the client sends an empty name in
-	Client FQDN option.
+	b10-dhcp6: Refactored the code which is processing Client FQDN
+	option.  The major user-visible change is that server generates
+	DDNS NameChangeRequest for the first IPv6 address (instead of all)
+	acquired by a client. Also, the server generates fully qualified
+	domain name from acquired IPv6 address, if the client sends an
+	empty name in Client FQDN option.
 	(Trac# 3295, git aa1c94a54114e848c64771fde308fc9ac0c00fd0)
 
 743.	[func]		tmark
@@ -92,7 +217,7 @@
 	DNS messages with unsupported opcodes are received.
 	(Trac #1516, git 71611831f6d1aaaea09143d4837eddbd1d67fbf4)
 
-736.    [bug]           wlodek
+736.	[bug]		wlodek
 	b10-dhcp6 is now capable to determine if a received
 	message is addressed to it, using server identifier option.
 	The messages with non-matching server identifier are dropped.
@@ -116,20 +241,21 @@
 
 732.	[func]		tomek
 	b10-dhcp4, b10-dhcp6: Support for simplified client classification
-        added. Incoming packets are now assigned to a client class based on
-	the content of the packet's user class option (DHCPv4) or vendor class
-	option (DHCPv6). Two classes (docsis3.0 and eRouter1.0) have class
-	specific behavior in b10-dhcp4. See DHCPv4 Client Classification and
-	DHCPv6 Client Classification in BIND10 Developer's Guide for details.
-	This is a first ticket in a series of planned at least three tickets.
+	added. Incoming packets are now assigned to a client class based
+	on the content of the packet's user class option (DHCPv4) or vendor
+	class option (DHCPv6). Two classes (docsis3.0 and eRouter1.0) have
+	class specific behavior in b10-dhcp4. See DHCPv4 Client
+	Classification and DHCPv6 Client Classification in BIND10
+	Developer's Guide for details.  This is a first ticket in a series
+	of planned at least three tickets.
 	(Trac #3203, git afea612c23143f81a4201e39ba793bc837c5c9f1)
 
 731.	[func]		tmark
-	b10-dhcp4 now parses parameters which support DHCP-DDNS updates via
-	the DHCP-DDNS module, b10-dhcp-ddns.  These parameters are part of new
-	configuration element, dhcp-ddns, defined in dhcp4.spec. The parameters
-	parse, store and retrieve but do not yet govern behavior.  That will be
-	provided under separate ticket.
+	b10-dhcp4 now parses parameters which support DHCP-DDNS updates
+	via the DHCP-DDNS module, b10-dhcp-ddns.  These parameters are
+	part of new configuration element, dhcp-ddns, defined in
+	dhcp4.spec.  The parameters parse, store and retrieve but do not
+	yet govern behavior.  That will be provided under separate ticket.
 	(Trac# 3033, git 0ba859834503f2b9b908cd7bc572e0286ca9201f)
 
 730.	[bug]		tomek
@@ -154,7 +280,7 @@
 	RRset::setName() has now been removed.
 	(Trac #2335, git c918027a387da8514acf7e125fd52c8378113662)
 
-726.	[bug]		muks
+726.	[bug]*		muks
 	Don't print trailing newlines in Question::toText() output by
 	default.  This fixes some logging that were split with a line
 	feed.  It is possible to get the old behavior by passing
@@ -310,7 +436,7 @@
 	them to b10-dhcp-ddns will be implemented with the future tickets.
 	(Trac #3035, git f617e6af8cdf068320d14626ecbe14a73a6da22)
 
-705.	[bug]		kean
+705.	[bug]*		kean
 	When commands are piped into bindctl, no longer attempt to query the
 	user name and password if no default user name and password file is
 	present, or it contains no valid entries.
@@ -502,12 +628,11 @@
 	(Trac #3145, git 3a844e85ecc3067ccd1c01841f4a61366cb278f4)
 
 672.	[func]		tmark
-	Added b10-dhcp-ddnsupdate transaction base class,
-	NameChangeTransaction.  This class provides the common
-	structure and methods to implement the state models described
-	in the DHCP_DDNS design, plus integration with DNSClient
-	and its callback mechanism for asynchronous IO with the
-	DNS servers.
+	Added b10-dhcp-ddns transaction base class, NameChangeTransaction.
+	This class provides the common structure and methods to implement
+	the state models described in the DHCP_DDNS design, plus
+	integration with DNSClient and its callback mechanism for
+	asynchronous IO with the DNS servers.
 	(Trac #3086, git 079b862c9eb21056fdf957e560b8fe7b218441b6)
 
 671.	[func]		dclink, tomek
@@ -676,7 +801,7 @@
 
 645.	[func]		tomek
 	Added initial set of hooks (pkt4_receive, subnet4_select,
-	lease4_select, pkt4_send) to the DHCPv6 server.
+	lease4_select, pkt4_send) to the DHCPv4 server.
 	(Trac #2994, git be65cfba939a6a7abd3c93931ce35c33d3e8247b)
 
 644.	[func]		marcin
@@ -2315,7 +2440,8 @@ bind10-devel-20120517 released on May 17, 2012
 	now manipulates them in the separate table for the NSEC3 namespace.
 	As a result b10-xfrin now correctly updates NSEC3-signed zones by
 	inbound zone transfers.
-	(Trac #1781, #1788, #1891, git 672f129700dae33b701bb02069cf276238d66be3)
+	(Trac #1781, #1788, #1891,
+	git 672f129700dae33b701bb02069cf276238d66be3)
 
 426.	[bug]		vorner
 	The NSEC3 records are now included when transferring a

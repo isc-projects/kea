@@ -23,10 +23,12 @@
 #include <dns/tsigkey.h>
 
 #include <dns/tests/unittest_util.h>
+#include <util/unittests/wiredata.h>
 
 using namespace std;
 using namespace isc::dns;
 using isc::UnitTestUtil;
+using isc::util::unittests::matchWireData;
 
 namespace {
 class TSIGKeyTest : public ::testing::Test {
@@ -72,15 +74,16 @@ TEST_F(TSIGKeyTest, construct) {
                 secret.c_str(), secret.size());
     EXPECT_EQ(key_name, key.getKeyName());
     EXPECT_EQ(Name("hmac-md5.sig-alg.reg.int"), key.getAlgorithmName());
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, secret.c_str(),
-                        secret.size(), key.getSecret(), key.getSecretLength());
+    matchWireData(secret.c_str(), secret.size(),
+                  key.getSecret(), key.getSecretLength());
 
     TSIGKey key_short_md5(key_name, TSIGKey::HMACMD5_SHORT_NAME(),
                           secret.c_str(), secret.size());
-    EXPECT_EQ(key_name, key.getKeyName());
-    EXPECT_EQ(Name("hmac-md5.sig-alg.reg.int"), key.getAlgorithmName());
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, secret.c_str(),
-                        secret.size(), key.getSecret(), key.getSecretLength());
+    EXPECT_EQ(key_name, key_short_md5.getKeyName());
+    EXPECT_EQ(Name("hmac-md5.sig-alg.reg.int"),
+              key_short_md5.getAlgorithmName());
+    matchWireData(secret.c_str(), secret.size(),
+                  key_short_md5.getSecret(), key_short_md5.getSecretLength());
 
     // "unknown" algorithm is only accepted with empty secret.
     EXPECT_THROW(TSIGKey(key_name, Name("unknown-alg"),
@@ -113,9 +116,8 @@ void
 compareTSIGKeys(const TSIGKey& expect, const TSIGKey& actual) {
     EXPECT_EQ(expect.getKeyName(), actual.getKeyName());
     EXPECT_EQ(expect.getAlgorithmName(), actual.getAlgorithmName());
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData,
-                        expect.getSecret(), expect.getSecretLength(),
-                        actual.getSecret(), actual.getSecretLength());
+    matchWireData(expect.getSecret(), expect.getSecretLength(),
+                  actual.getSecret(), actual.getSecretLength());
 }
 
 TEST_F(TSIGKeyTest, copyConstruct) {
@@ -249,9 +251,8 @@ TEST_F(TSIGKeyRingTest, find) {
     EXPECT_EQ(TSIGKeyRing::SUCCESS, result1.code);
     EXPECT_EQ(key_name, result1.key->getKeyName());
     EXPECT_EQ(TSIGKey::HMACSHA256_NAME(), result1.key->getAlgorithmName());
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, secret, secret_len,
-                        result1.key->getSecret(),
-                        result1.key->getSecretLength());
+    matchWireData(secret, secret_len,
+                  result1.key->getSecret(), result1.key->getSecretLength());
 
     // If either key name or algorithm doesn't match, search should fail.
     const TSIGKeyRing::FindResult result2 =
@@ -268,9 +269,8 @@ TEST_F(TSIGKeyRingTest, find) {
     EXPECT_EQ(TSIGKeyRing::SUCCESS, result4.code);
     EXPECT_EQ(key_name, result4.key->getKeyName());
     EXPECT_EQ(TSIGKey::HMACSHA256_NAME(), result4.key->getAlgorithmName());
-    EXPECT_PRED_FORMAT4(UnitTestUtil::matchWireData, secret, secret_len,
-                        result4.key->getSecret(),
-                        result4.key->getSecretLength());
+    matchWireData(secret, secret_len,
+                  result4.key->getSecret(), result4.key->getSecretLength());
 }
 
 TEST_F(TSIGKeyRingTest, findFromSome) {

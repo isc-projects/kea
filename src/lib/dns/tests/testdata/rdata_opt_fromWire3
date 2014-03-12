@@ -1,0 +1,8 @@
+# Short RDATA length (in second pseudo RR)
+#
+# OPT RDATA, RDLEN=8
+0008
+# Pseudo RR 1 of size 7 (code=3, len=3)
+00 03 00 03 00 01 02
+# Pseudo RR 2 of size 7 exhausts RDLEN (code=4, len=3)
+00 04 00 03 00 01 02
