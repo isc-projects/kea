@@ -166,6 +166,12 @@ Lease6::Lease6(Type type, const isc::asiolink::IOAddress& addr,
     cltt_ = time(NULL);
 }
 
+Lease6::Lease6()
+    : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, 0, 0, false, false, ""),
+      type_(TYPE_NA), prefixlen_(0), iaid_(0), duid_(DuidPtr()),
+      preferred_lft_(0) {
+}
+
 const std::vector<uint8_t>&
 Lease6::getDuidVector() const {
     if (!duid_) {
@@ -180,7 +186,7 @@ std::string
 Lease6::toText() const {
     ostringstream stream;
 
-    stream << "Type:          " << typeToText(type_) << "(" 
+    stream << "Type:          " << typeToText(type_) << "("
            << static_cast<int>(type_) << ") ";
     stream << "Address:       " << addr_ << "\n"
            << "Prefix length: " << static_cast<int>(prefixlen_) << "\n"
