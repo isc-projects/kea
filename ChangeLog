@@ -1,3 +1,7 @@
+770.	[func]		marcin
+	b10-dhcp6: Implemented support for Rebind message.
+	(Trac #3232, git 3649413932857470558a6f19e0b0e181b3fc0fda)
+
 769.	[bug]		tmark
 	b10-dhcp-ddns now treats a DNS server response code of NXRRSET as a
 	successful outcome when processing a request to remove DNS data.  This
