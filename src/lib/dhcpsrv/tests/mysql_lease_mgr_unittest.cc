@@ -318,6 +318,10 @@ TEST_F(MySqlLeaseMgrTest, checkVersion) {
     EXPECT_EQ(CURRENT_VERSION_MINOR, version.second);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// LEASE4 /////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4 (by address) and deleteLease (with an
@@ -326,42 +330,11 @@ TEST_F(MySqlLeaseMgrTest, basicLease4) {
     testBasicLease4();
 }
 
-TEST_F(MySqlLeaseMgrTest, testAddGetDelete6) {
-    testAddGetDelete6(false);
-}
-
-
-/// @brief Basic Lease4 Checks
+/// @brief Lease4 update tests
 ///
-/// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
-/// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
-/// (client-id is optional and may not be present)
-TEST_F(MySqlLeaseMgrTest, lease4NullClientId) {
-    testLease4NullClientId();
-}
-
-/// @brief Verify that too long hostname for Lease4 is not accepted.
-///
-/// Checks that the it is not possible to create a lease when the hostname
-/// length exceeds 255 characters.
-TEST_F(MySqlLeaseMgrTest, lease4InvalidHostname) {
-    testLease4InvalidHostname();
-}
-
-/// @brief Basic Lease6 Checks
-///
-/// Checks that the addLease, getLease6 (by address) and deleteLease (with an
-/// IPv6 address) works.
-TEST_F(MySqlLeaseMgrTest, basicLease6) {
-    testBasicLease6();
-}
-
-/// @brief Verify that too long hostname for Lease6 is not accepted.
-///
-/// Checks that the it is not possible to create a lease when the hostname
-/// length exceeds 255 characters.
-TEST_F(MySqlLeaseMgrTest, lease6InvalidHostname) {
-    testLease6InvalidHostname();
+/// Checks that we are able to update a lease in the database.
+TEST_F(MySqlLeaseMgrTest, updateLease4) {
+    testUpdateLease4();
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address
@@ -426,6 +399,49 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
     testGetLease4ClientIdSubnetId();
 }
 
+/// @brief Basic Lease4 Checks
+///
+/// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
+/// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
+/// (client-id is optional and may not be present)
+TEST_F(MySqlLeaseMgrTest, lease4NullClientId) {
+    testLease4NullClientId();
+}
+
+/// @brief Verify that too long hostname for Lease4 is not accepted.
+///
+/// Checks that the it is not possible to create a lease when the hostname
+/// length exceeds 255 characters.
+TEST_F(MySqlLeaseMgrTest, lease4InvalidHostname) {
+    testLease4InvalidHostname();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// LEASE6 /////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+// Test checks whether simple add, get and delete operations are possible
+// on Lease6
+TEST_F(MySqlLeaseMgrTest, testAddGetDelete6) {
+    testAddGetDelete6(false);
+}
+
+/// @brief Basic Lease6 Checks
+///
+/// Checks that the addLease, getLease6 (by address) and deleteLease (with an
+/// IPv6 address) works.
+TEST_F(MySqlLeaseMgrTest, basicLease6) {
+    testBasicLease6();
+}
+
+/// @brief Verify that too long hostname for Lease6 is not accepted.
+///
+/// Checks that the it is not possible to create a lease when the hostname
+/// length exceeds 255 characters.
+TEST_F(MySqlLeaseMgrTest, lease6InvalidHostname) {
+    testLease6InvalidHostname();
+}
+
 /// @brief Check GetLease6 methods - access by DUID/IAID
 ///
 /// Adds leases to the database and checks that they can be accessed via
@@ -457,15 +473,9 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
     testGetLease6DuidIaidSubnetId();
 }
 
+// Test checks that getLease6() works with different DUID sizes
 TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     testGetLease6DuidIaidSubnetIdSize();
-}
-
-/// @brief Lease4 update tests
-///
-/// Checks that we are able to update a lease in the database.
-TEST_F(MySqlLeaseMgrTest, updateLease4) {
-    testUpdateLease4();
 }
 
 /// @brief Lease6 update tests
