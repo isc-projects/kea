@@ -281,55 +281,85 @@ TEST_F(PgSqlLeaseMgrTest, checkVersion) {
     EXPECT_EQ(PG_CURRENT_MINOR, version.second);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// LEASE4 /////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4 (by address) and deleteLease (with an
 /// IPv4 address) works.
 TEST_F(PgSqlLeaseMgrTest, basicLease4) {
-    // Get the leases to be used for the test.
-    vector<Lease4Ptr> leases = createLeases4();
-
-    // Start the tests.  Add three leases to the database, read them back and
-    // check they are what we think they are.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    EXPECT_TRUE(lmptr_->addLease(leases[2]));
-    EXPECT_TRUE(lmptr_->addLease(leases[3]));
-    lmptr_->commit();
-
-    // Reopen the database to ensure that they actually got stored.
-    reopen();
-
-    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
-
-    l_returned = lmptr_->getLease4(ioaddress4_[3]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[3], l_returned);
-
-    // Check that we can't add a second lease with the same address
-    EXPECT_FALSE(lmptr_->addLease(leases[1]));
-
-    // Delete a lease, check that it's gone, and that we can't delete it
-    // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[1]));
-    l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease(ioaddress4_[1]));
-
-    // Check that the second address is still there.
-    l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
+    testBasicLease4();
 }
 
-/// Checks that we are able to update an IPv4 lease in the database.
+/// @brief Lease4 update tests
+///
+/// Checks that we are able to update a lease in the database.
 TEST_F(PgSqlLeaseMgrTest, updateLease4) {
     testUpdateLease4();
+}
+
+/// @brief Check GetLease4 methods - access by Hardware Address
+TEST_F(PgSqlLeaseMgrTest, getLease4HWAddr1) {
+    testGetLease4HWAddr1();
+}
+
+/// @brief Check GetLease4 methods - access by Hardware Address
+TEST_F(PgSqlLeaseMgrTest, getLease4HWAddr2) {
+    testGetLease4HWAddr2();
+}
+
+// @brief Get lease4 by hardware address (2)
+//
+// Check that the system can cope with getting a hardware address of
+// any size.
+TEST_F(PgSqlLeaseMgrTest, getLease4HWAddrSize) {
+    testGetLease4HWAddrSize();
+}
+
+/// @brief Check GetLease4 methods - access by Hardware Address & Subnet ID
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// a combination of hardware address and subnet ID
+TEST_F(PgSqlLeaseMgrTest, getLease4HwaddrSubnetId) {
+    testGetLease4HWAddrSubnetId();
+}
+
+// @brief Get lease4 by hardware address and subnet ID (2)
+//
+// Check that the system can cope with getting a hardware address of
+// any size.
+TEST_F(PgSqlLeaseMgrTest, getLease4HWAddrSubnetIdSize) {
+    testGetLease4HWAddrSubnetIdSize();
+}
+
+// This test was derived from memfile.
+TEST_F(PgSqlLeaseMgrTest, getLease4ClientId) {
+    testGetLease4ClientId();
+}
+
+/// @brief Check GetLease4 methods - access by Client ID
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// the Client ID.
+TEST_F(PgSqlLeaseMgrTest, getLease4ClientId2) {
+    testGetLease4ClientId2();
+}
+
+// @brief Get Lease4 by client ID (2)
+//
+// Check that the system can cope with a client ID of any size.
+TEST_F(PgSqlLeaseMgrTest, getLease4ClientIdSize) {
+    testGetLease4ClientIdSize();
+}
+
+/// @brief Check GetLease4 methods - access by Client ID & Subnet ID
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// a combination of client and subnet IDs.
+TEST_F(PgSqlLeaseMgrTest, getLease4ClientIdSubnetId) {
+    testGetLease4ClientIdSubnetId();
 }
 
 /// @brief Basic Lease4 Checks
@@ -338,74 +368,25 @@ TEST_F(PgSqlLeaseMgrTest, updateLease4) {
 /// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
 /// (client-id is optional and may not be present)
 TEST_F(PgSqlLeaseMgrTest, lease4NullClientId) {
-    // Get the leases to be used for the test.
-    vector<Lease4Ptr> leases = createLeases4();
+    testLease4NullClientId();
+}
 
-    // Let's clear client-id pointers
-    leases[1]->client_id_ = ClientIdPtr();
-    leases[2]->client_id_ = ClientIdPtr();
-    leases[3]->client_id_ = ClientIdPtr();
+/// @brief Verify that too long hostname for Lease4 is not accepted.
+///
+/// Checks that the it is not possible to create a lease when the hostname
+/// length exceeds 255 characters.
+TEST_F(PgSqlLeaseMgrTest, lease4InvalidHostname) {
+    testLease4InvalidHostname();
+}
 
-    // Start the tests.  Add three leases to the database, read them back and
-    // check they are what we think they are.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    EXPECT_TRUE(lmptr_->addLease(leases[2]));
-    EXPECT_TRUE(lmptr_->addLease(leases[3]));
-    lmptr_->commit();
+////////////////////////////////////////////////////////////////////////////////
+/// LEASE6 /////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-    // Reopen the database to ensure that they actually got stored.
-    reopen();
-
-    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-    l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
-
-    l_returned = lmptr_->getLease4(ioaddress4_[3]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[3], l_returned);
-
-    // Check that we can't add a second lease with the same address
-    EXPECT_FALSE(lmptr_->addLease(leases[1]));
-
-    // Check that we can get the lease by HWAddr
-    HWAddr tmp(leases[2]->hwaddr_, HTYPE_ETHER);
-    Lease4Collection returned = lmptr_->getLease4(tmp);
-    ASSERT_EQ(1, returned.size());
-    detailCompareLease(leases[2], *returned.begin());
-
-    l_returned = lmptr_->getLease4(tmp, leases[2]->subnet_id_);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
-
-    // Check that we can update the lease
-    // Modify some fields in lease 1 (not the address) and update it.
-    ++leases[1]->subnet_id_;
-    leases[1]->valid_lft_ *= 2;
-    lmptr_->updateLease4(leases[1]);
-
-    // ... and check that the lease is indeed updated
-    l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
-
-
-
-    // Delete a lease, check that it's gone, and that we can't delete it
-    // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[1]));
-    l_returned = lmptr_->getLease4(ioaddress4_[1]);
-    EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease(ioaddress4_[1]));
-
-    // Check that the second address is still there.
-    l_returned = lmptr_->getLease4(ioaddress4_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
-
+// Test checks whether simple add, get and delete operations are possible
+// on Lease6
+TEST_F(PgSqlLeaseMgrTest, testAddGetDelete6) {
+    testAddGetDelete6(false);
 }
 
 /// @brief Basic Lease6 Checks
@@ -413,45 +394,58 @@ TEST_F(PgSqlLeaseMgrTest, lease4NullClientId) {
 /// Checks that the addLease, getLease6 (by address) and deleteLease (with an
 /// IPv6 address) works.
 TEST_F(PgSqlLeaseMgrTest, basicLease6) {
-    // Get the leases to be used for the test.
-    vector<Lease6Ptr> leases = createLeases6();
+    testBasicLease6();
+}
 
-    // Start the tests.  Add three leases to the database, read them back and
-    // check they are what we think they are.
-    EXPECT_TRUE(lmptr_->addLease(leases[1]));
-    EXPECT_TRUE(lmptr_->addLease(leases[2]));
-    EXPECT_TRUE(lmptr_->addLease(leases[3]));
-    lmptr_->commit();
+/// @brief Verify that too long hostname for Lease6 is not accepted.
+///
+/// Checks that the it is not possible to create a lease when the hostname
+/// length exceeds 255 characters.
+TEST_F(PgSqlLeaseMgrTest, lease6InvalidHostname) {
+    testLease6InvalidHostname();
+}
 
-    // Reopen the database to ensure that they actually got stored.
-    reopen();
+/// @brief Check GetLease6 methods - access by DUID/IAID
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// a combination of DUID and IAID.
+TEST_F(PgSqlLeaseMgrTest, getLeases6DuidIaid) {
+    testGetLeases6DuidIaid();
+}
 
-    Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[1], l_returned);
+// Check that the system can cope with a DUID of allowed size.
+TEST_F(PgSqlLeaseMgrTest, getLeases6DuidSize) {
+    testGetLeases6DuidSize();
+}
 
-    l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
+/// @brief Check that getLease6 methods discriminate by lease type.
+///
+/// Adds six leases, two per lease type all with the same duid and iad but
+/// with alternating subnet_ids.
+/// It then verifies that all of getLeases6() method variants correctly
+/// discriminate between the leases based on lease type alone.
+TEST_F(PgSqlLeaseMgrTest, lease6LeaseTypeCheck) {
+    testLease6LeaseTypeCheck();
+}
 
-    l_returned = lmptr_->getLease6(leasetype6_[3], ioaddress6_[3]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[3], l_returned);
+/// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
+///
+/// Adds leases to the database and checks that they can be accessed via
+/// a combination of DIUID and IAID.
+TEST_F(PgSqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
+    testGetLease6DuidIaidSubnetId();
+}
 
-    // Check that we can't add a second lease with the same address
-    EXPECT_FALSE(lmptr_->addLease(leases[1]));
+// Test checks that getLease6() works with different DUID sizes
+TEST_F(PgSqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
+    testGetLease6DuidIaidSubnetIdSize();
+}
 
-    // Delete a lease, check that it's gone, and that we can't delete it
-    // a second time.
-    EXPECT_TRUE(lmptr_->deleteLease(ioaddress6_[1]));
-    l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
-    EXPECT_FALSE(l_returned);
-    EXPECT_FALSE(lmptr_->deleteLease(ioaddress6_[1]));
-
-    // Check that the second address is still there.
-    l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
-    ASSERT_TRUE(l_returned);
-    detailCompareLease(leases[2], l_returned);
+/// @brief Lease6 update tests
+///
+/// Checks that we are able to update a lease in the database.
+TEST_F(PgSqlLeaseMgrTest, updateLease6) {
+    testUpdateLease6();
 }
 
 };
