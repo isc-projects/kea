@@ -348,10 +348,7 @@ struct Lease6 : public Lease {
     /// @brief Constructor
     ///
     /// Initialize fields that don't have a default constructor.
-    Lease6() : Lease(isc::asiolink::IOAddress("::"), 0, 0, 0, 0, 0,
-                     false, false, ""),
-        type_(TYPE_NA) {
-    }
+    Lease6();
 
     /// @brief Returns a reference to a vector representing a DUID.
     ///
