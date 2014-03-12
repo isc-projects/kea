@@ -35,12 +35,14 @@ using namespace std;
 namespace {
 const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 
+const size_t MAX_PARAMETERS_IN_QUERY = 12;
+
 struct TaggedStatement {
     PgSqlLeaseMgr::StatementIndex index;
-    int                           nbparams;
-    const Oid                     types[10];
-    const char *                  name;
-    const char *                  text;
+    int nbparams;
+    const Oid types[MAX_PARAMETERS_IN_QUERY + 1];
+    const char* name;
+    const char* text;
 };
 
 TaggedStatement tagged_statements[] = {
@@ -57,7 +59,7 @@ TaggedStatement tagged_statements[] = {
                     "get_lease4_addr",
                     "DECLARE get_lease4_addr CURSOR FOR "
                         "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, extract(epoch from expire), subnet_id "
+                        "valid_lifetime, extract(epoch from expire), subnet_id, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease4 "
                             "WHERE address = $1"},
     {PgSqlLeaseMgr::GET_LEASE4_CLIENTID, 1,
@@ -65,7 +67,7 @@ TaggedStatement tagged_statements[] = {
                     "get_lease4_clientid",
                     "DECLARE get_lease4_clientid CURSOR FOR "
                         "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, extract(epoch from expire), subnet_id "
+                        "valid_lifetime, extract(epoch from expire), subnet_id, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease4 "
                             "WHERE client_id = $1"},
     {PgSqlLeaseMgr::GET_LEASE4_CLIENTID_SUBID, 2,
@@ -73,7 +75,7 @@ TaggedStatement tagged_statements[] = {
                     "get_lease4_clientid_subid",
                     "DECLARE get_lease4_clientid_subid CURSOR FOR "
                     "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id "
+                        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease4 "
                             "WHERE client_id = $1 AND subnet_id = $2"},
     {PgSqlLeaseMgr::GET_LEASE4_HWADDR, 1,
@@ -81,7 +83,7 @@ TaggedStatement tagged_statements[] = {
                     "get_lease4_hwaddr",
                     "DECLARE get_lease4_hwaddr CURSOR FOR "
                     "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id "
+                        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease4 "
                             "WHERE hwaddr = $1"},
     {PgSqlLeaseMgr::GET_LEASE4_HWADDR_SUBID, 2,
@@ -89,7 +91,7 @@ TaggedStatement tagged_statements[] = {
                     "get_lease4_hwaddr_subid",
                     "DECLARE get_lease4_hwaddr_subid CURSOR FOR "
                     "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id "
+                        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease4 "
                             "WHERE hwaddr = $1 AND subnet_id = $2"},
     {PgSqlLeaseMgr::GET_LEASE6_ADDR, 1,
@@ -98,7 +100,7 @@ TaggedStatement tagged_statements[] = {
                     "DECLARE get_lease6_addr CURSOR FOR "
                     "SELECT address, duid, valid_lifetime, "
                         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len "
+                        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
                             "WHERE address = $1"},
     {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID, 2,
@@ -107,7 +109,7 @@ TaggedStatement tagged_statements[] = {
                     "DECLARE get_lease6_duid_iaid CURSOR FOR "
                     "SELECT address, duid, valid_lifetime, "
                         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len "
+                        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
                             "WHERE duid = $1 AND iaid = $2"},
     {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID, 3,
@@ -116,7 +118,7 @@ TaggedStatement tagged_statements[] = {
                     "DECLARE get_lease6_duid_iaid_subid CURSOR FOR "
                     "SELECT address, duid, valid_lifetime, "
                         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len "
+                        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
                             "FROM lease6 "
                             "WHERE duid = $1 AND iaid = $2 AND subnet_id = $3"},
     {PgSqlLeaseMgr::GET_VERSION, 0,
@@ -124,27 +126,26 @@ TaggedStatement tagged_statements[] = {
                     "get_version",
                     "DECLARE get_version CURSOR FOR "
                     "SELECT version, minor FROM schema_version"},
-    {PgSqlLeaseMgr::INSERT_LEASE4, 6,
-                    { 20, 17, 17, 20, 1114, 20 },
+    {PgSqlLeaseMgr::INSERT_LEASE4, 9,
+     { 20, 17, 17, 20, 1114, 20, 16, 16, 1043 },
                     "insert_lease4",
                     "INSERT INTO lease4(address, hwaddr, client_id, "
-                        "valid_lifetime, expire, subnet_id) "
-                            "VALUES ($1, $2, $3, $4, $5, $6)"},
-    {PgSqlLeaseMgr::INSERT_LEASE6, 9,
-                    { 1043, 17, 20, 1114, 20,
-                      20, 21, 20, 21 },
+                        "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname) "
+                            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"},
+    {PgSqlLeaseMgr::INSERT_LEASE6, 12,
+                    { 1043, 17, 20, 1114, 20, 20, 21, 20, 21, 16, 16, 1043 },
                     "insert_lease6",
                     "INSERT INTO lease6(address, duid, valid_lifetime, "
                         "expire, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len) "
-                            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"},
-    {PgSqlLeaseMgr::UPDATE_LEASE4, 7,
-                    { 20, 17, 17, 20, 1114, 20, 20 },
+                        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname) "
+                            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"},
+    {PgSqlLeaseMgr::UPDATE_LEASE4, 10,
+     { 20, 17, 17, 20, 1114, 20, 16, 16, 1043, 20 },
                     "update_lease4",
                     "UPDATE lease4 SET address = $1, hwaddr = $2, "
                         "client_id = $3, valid_lifetime = $4, expire = $5, "
-                        "subnet_id = $6 "
-                            "WHERE address = $7"},
+                        "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9 "
+                            "WHERE address = $10"},
     {PgSqlLeaseMgr::UPDATE_LEASE6, 10,
                     { 1043, 17, 20, 1114, 20,
                       20, 21, 20, 21, 1043 },
@@ -173,10 +174,25 @@ protected:
         localtime_r(&expire_, &tinfo);
         strftime(buffer_, 20, "%Y-%m-%d %H:%M:%S", &tinfo);
     }
+
+    bool stringToBool(char* value) {
+        if (!strlen(value)) {
+            return (false);
+        }
+        switch (value[0]) {
+        case 't':
+            return (true);
+        case 'f':
+            return (false);
+        default:
+            isc_throw(BadValue, "Received " << value[0] << " as boolean. The "
+                      " only accepted values are 't', 'f' or ''");
+        }
+    }
 };
 
 class PgSqlLease4Exchange : public PgSqlLeaseExchange {
-    static const size_t LEASE_COLUMNS = 6;
+    static const size_t LEASE_COLUMNS = 9;
 public:
     PgSqlLease4Exchange() : addr4_(0) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
@@ -189,8 +205,11 @@ public:
         columns_[3] = "valid_lifetime";
         columns_[4] = "expire";
         columns_[5] = "subnet_id";
+        columns_[6] = "fqdn_fwd";
+        columns_[7] = "fqdn_rev";
+        columns_[8] = "hostname";
 
-        BOOST_STATIC_ASSERT(5 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
 
         params.reserve(LEASE_COLUMNS);
     }
@@ -208,11 +227,16 @@ public:
         tmp.str("");
         tmp.clear();
 
-        uint8_t* data = const_cast<uint8_t*>(&(lease_->hwaddr_[0]));
-        PgSqlParam pdest = { .value = reinterpret_cast<char *>(data),
-                             .isbinary = 1,
-                             .binarylen = static_cast<int>(lease_->hwaddr_.size()) };
-        params.push_back(pdest);
+        // Although HWADDR object will always be there, it may be just an empty vector
+        if (!lease_->hwaddr_.empty()) {
+            uint8_t* data = const_cast<uint8_t*>(&(lease_->hwaddr_[0]));
+            PgSqlParam pdest = { .value = reinterpret_cast<char *>(data),
+                                 .isbinary = 1,
+                                 .binarylen = static_cast<int>(lease_->hwaddr_.size()) };
+            params.push_back(pdest);
+        } else {
+            params.push_back(PgSqlParam());
+        }
 
         if(lease_->client_id_) {
             vector<uint8_t> client_data = lease_->client_id_->getClientId();
@@ -240,7 +264,15 @@ public:
         PgSqlParam psubnet_id = { .value = tmp.str() };
         params.push_back(psubnet_id);
 
-        BOOST_STATIC_ASSERT(5 < LEASE_COLUMNS);
+        PgSqlParam fqdn_fwd = { .value = lease_->fqdn_fwd_?"TRUE":"FALSE" };
+        PgSqlParam fqdn_rev = { .value = lease_->fqdn_fwd_?"TRUE":"FALSE" };
+        PgSqlParam hostname = { .value = lease_->hostname_ };
+
+        params.push_back(fqdn_fwd);
+        params.push_back(fqdn_rev);
+        params.push_back(hostname);
+
+        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
 
         return (params);
     }
@@ -291,9 +323,19 @@ public:
 
         time_t cltt = expire_ - valid_lifetime_;
 
+        // Extract fqdn_fwd, fqdn_rev
+        // boolean is represented as one of 3 possible strings:
+        // "" (means NULL or not set), "t" (means true), "f" (means false)
+        bool fwd = stringToBool(PQgetvalue(r, line, 6));
+        bool rev = stringToBool(PQgetvalue(r, line, 7));
+
+        // Extract hostname field
+        string hostname(PQgetvalue(r, line, 8));
+
         return (Lease4Ptr(new Lease4(addr4_, hwaddr_buffer_, hwaddr_length_,
                                      client_id_buffer_, client_id_length_,
-                                     valid_lifetime_, 0, 0, cltt, subnet_id_)));
+                                     valid_lifetime_, 0, 0, cltt, subnet_id_,
+                                     fwd, rev, hostname)));
     }
 
 private:
@@ -308,10 +350,11 @@ private:
     uint32_t        valid_lifetime_;
     unsigned long   hwaddr_length_;
     unsigned long   client_id_length_;
+    string hostname_;
 };
 
 class PgSqlLease6Exchange : public PgSqlLeaseExchange {
-    static const size_t LEASE_COLUMNS = 9;
+    static const size_t LEASE_COLUMNS = 12;
 public:
     PgSqlLease6Exchange() {
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
@@ -325,6 +368,9 @@ public:
         columns_[6] = "lease_type";
         columns_[7] = "iaid";
         columns_[8] = "prefix_len";
+        columns_[9] = "fqdn_fwd";
+        columns_[10]= "fqdn_rev";
+        columns_[11]= "hostname";
         BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
 
         params.reserve(LEASE_COLUMNS);
@@ -385,7 +431,15 @@ public:
         PgSqlParam prefixlen = { .value = tmp.str() };
         params.push_back(prefixlen);
 
-        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
+        PgSqlParam fqdn_fwd = { .value = lease_->fqdn_fwd_?"TRUE":"FALSE" };
+        PgSqlParam fqdn_rev = { .value = lease_->fqdn_rev_?"TRUE":"FALSE" };
+        PgSqlParam hostname = { .value = lease_->hostname_ };
+
+        params.push_back(fqdn_fwd);
+        params.push_back(fqdn_rev);
+        params.push_back(hostname);
+
+        BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
 
         return (params);
     }
@@ -475,12 +529,21 @@ public:
                       addr6_ << ". Only 0, 1, or 2 are allowed.");
         }
 
+        // Extract fqdn_fwd, fqdn_rev
+        // boolean is represented as one of 3 possible strings:
+        // "" (means NULL or not set), "t" (means true), "f" (means false)
+        bool fwd = stringToBool(PQgetvalue(r, line, 9));
+        bool rev = stringToBool(PQgetvalue(r, line, 10));
+
+        // Extract hostname field
+        string hostname(PQgetvalue(r, line, 11));
+
         // Set up DUID,
         DuidPtr duid_ptr(new DUID(duid_buffer_, duid_length_));
 
         Lease6Ptr result(new Lease6(type, addr, duid_ptr, iaid_,
                                     pref_lifetime_, valid_lifetime_, 0, 0,
-                                    subnet_id_, prefixlen_));
+                                    subnet_id_, fwd, rev, hostname, prefixlen_));
 
         time_t cltt = expire_ - valid_lifetime_;
         result->cltt_ = cltt;
@@ -1031,7 +1094,7 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     bindparams params = exchange4_->createBindForSend(lease);
 
     // Set up the WHERE clause and append it to the MYSQL_BIND array
-    tmp << lease->addr_;
+    tmp << static_cast<uint32_t>(lease->addr_);
     PgSqlParam addr4 = { .value = tmp.str() };
     params.push_back(addr4);
 
@@ -1084,7 +1147,7 @@ PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
 
     if (addr.isV4()) {
         ostringstream tmp;
-        tmp << addr;
+        tmp << static_cast<uint32_t>(addr);
         PgSqlParam addr4 = { .value = tmp.str() };
 
         inparams.push_back(addr4);

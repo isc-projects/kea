@@ -327,6 +327,11 @@ TEST_F(PgSqlLeaseMgrTest, basicLease4) {
     detailCompareLease(leases[2], l_returned);
 }
 
+/// Checks that we are able to update an IPv4 lease in the database.
+TEST_F(PgSqlLeaseMgrTest, updateLease4) {
+    testUpdateLease4();
+}
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
@@ -375,7 +380,6 @@ TEST_F(PgSqlLeaseMgrTest, lease4NullClientId) {
     l_returned = lmptr_->getLease4(tmp, leases[2]->subnet_id_);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
-
 
     // Check that we can update the lease
     // Modify some fields in lease 1 (not the address) and update it.
