@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,18 +12,20 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
-#ifndef D2_CLIENT_H
-#define D2_CLIENT_H
+#ifndef D2_CLIENT_MGR_H
+#define D2_CLIENT_MGR_H
 
-/// @file d2_client.h Defines the D2ClientConfig and D2ClientMgr classes.
-/// This file defines the classes Kea uses to act as a client of the b10-
-/// dhcp-ddns module (aka D2).
+/// @file d2_client_mgr.h Defines the D2ClientMgr class.
+/// This file defines the class Kea uses to act as a client of the
+/// b10-dhcp-ddns module (aka D2).
 ///
 #include <asiolink/io_address.h>
 #include <dhcp_ddns/ncr_io.h>
+#include <dhcpsrv/d2_client_cfg.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 #include <stdint.h>
 #include <string>
@@ -31,185 +33,6 @@
 
 namespace isc {
 namespace dhcp {
-
-
-/// An exception that is thrown if an error occurs while configuring
-/// the D2 DHCP DDNS client.
-class D2ClientError : public isc::Exception {
-public:
-
-    /// @brief constructor
-    ///
-    /// @param file name of the file, where exception occurred
-    /// @param line line of the file, where exception occurred
-    /// @param what text description of the issue that caused exception
-    D2ClientError(const char* file, size_t line, const char* what)
-        : isc::Exception(file, line, what) {}
-};
-
-/// @brief Acts as a storage vault for D2 client configuration
-///
-/// A simple container class for storing and retrieving the configuration
-/// parameters associated with DHCP-DDNS and acting as a client of D2.
-/// Instances of this class may be constructed through configuration parsing.
-///
-class D2ClientConfig {
-public:
-    /// @brief Constructor
-    ///
-    /// @param enable_updates Enables DHCP-DDNS updates
-    /// @param server_ip IP address of the b10-dhcp-ddns server (IPv4 or IPv6)
-    /// @param server_port IP port of the b10-dhcp-ddns server
-    /// @param ncr_protocol Socket protocol to use with b10-dhcp-ddns
-    /// Currently only UDP is supported.
-    /// @param ncr_format Format of the b10-dhcp-ddns requests.
-    /// Currently only JSON format is supported.
-    /// @param always_include_fqdn Enables always including the FQDN option in
-    /// DHCP responses.
-    /// @param override_no_update Enables updates, even if clients request no
-    /// updates.
-    /// @param override_client_update Perform updates, even if client requested
-    /// delegation.
-    /// @param replace_client_name enables replacement of the domain-name
-    /// supplied by the client with a generated name.
-    /// @param generated_prefix Prefix to use when generating domain-names.
-    /// @param  qualifying_suffix Suffix to use to qualify partial domain-names.
-    ///
-    /// @throw D2ClientError if given an invalid protocol or format.
-    D2ClientConfig(const bool enable_updates,
-                   const isc::asiolink::IOAddress& server_ip,
-                   const size_t server_port,
-                   const dhcp_ddns::NameChangeProtocol& ncr_protocol,
-                   const dhcp_ddns::NameChangeFormat& ncr_format,
-                   const bool always_include_fqdn,
-                   const bool override_no_update,
-                   const bool override_client_update,
-                   const bool replace_client_name,
-                   const std::string& generated_prefix,
-                   const std::string& qualifying_suffix);
-
-    /// @brief Default constructor
-    /// The default constructor creates an instance that has updates disabled.
-    D2ClientConfig();
-
-    /// @brief Destructor
-    virtual ~D2ClientConfig();
-
-    /// @brief Return whether or not DHCP-DDNS updating is enabled.
-    bool getEnableUpdates() const {
-        return(enable_updates_);
-    }
-
-    /// @brief Return the IP address of b10-dhcp-ddns (IPv4 or IPv6).
-    const isc::asiolink::IOAddress& getServerIp() const {
-        return(server_ip_);
-    }
-
-    /// @brief Return the IP port of b10-dhcp-ddns.
-    size_t getServerPort() const {
-        return(server_port_);
-    }
-
-    /// @brief Return the socket protocol to use with b10-dhcp-ddns.
-    const dhcp_ddns::NameChangeProtocol& getNcrProtocol() const {
-         return(ncr_protocol_);
-    }
-
-    /// @brief Return the b10-dhcp-ddns request format.
-    const dhcp_ddns::NameChangeFormat& getNcrFormat() const {
-        return(ncr_format_);
-    }
-
-    /// @brief Return whether or not FQDN is always included in DHCP responses.
-    bool getAlwaysIncludeFqdn() const {
-        return(always_include_fqdn_);
-    }
-
-    /// @brief Return if updates are done even if clients request no updates.
-    bool getOverrideNoUpdate() const {
-        return(override_no_update_);
-    }
-
-    /// @brief Return if updates are done even when clients request delegation.
-    bool getOverrideClientUpdate() const {
-        return(override_client_update_);
-    }
-
-    /// @brief Return whether or not client's domain-name is always replaced.
-    bool getReplaceClientName() const {
-        return(replace_client_name_);
-    }
-
-    /// @brief Return the prefix to use when generating domain-names.
-    const std::string& getGeneratedPrefix() const {
-        return(generated_prefix_);
-    }
-
-    /// @brief Return the suffix to use to qualify partial domain-names.
-    const std::string& getQualifyingSuffix() const {
-        return(qualifying_suffix_);
-    }
-
-    /// @brief Compares two D2ClientConfigs for equality
-    bool operator == (const D2ClientConfig& other) const;
-
-    /// @brief Compares two D2ClientConfigs for inequality
-    bool operator != (const D2ClientConfig& other) const;
-
-    /// @brief Generates a string representation of the class contents.
-    std::string toText() const;
-
-protected:
-    /// @brief Validates member values.
-    ///
-    /// Method is used by the constructor to validate member contents.
-    ///
-    /// @throw D2ClientError if given an invalid protocol or format.
-    virtual void validateContents();
-
-private:
-    /// @brief Indicates whether or not DHCP DDNS updating is enabled.
-    bool enable_updates_;
-
-    /// @brief IP address of the b10-dhcp-ddns server (IPv4 or IPv6).
-    isc::asiolink::IOAddress server_ip_;
-
-    /// @brief IP port of the b10-dhcp-ddns server.
-    size_t server_port_;
-
-    /// @brief The socket protocol to use with b10-dhcp-ddns.
-    /// Currently only UDP is supported.
-    dhcp_ddns::NameChangeProtocol ncr_protocol_;
-
-    /// @brief Format of the b10-dhcp-ddns requests.
-    /// Currently only JSON format is supported.
-    dhcp_ddns::NameChangeFormat ncr_format_;
-
-    /// @brief Should Kea always include the FQDN option in its response.
-    bool always_include_fqdn_;
-
-    /// @brief Should Kea perform updates, even if client requested no updates.
-    /// Overrides the client request for no updates via the N flag.
-    bool override_no_update_;
-
-    /// @brief Should Kea perform updates, even if client requested delegation.
-    bool override_client_update_;
-
-    /// @brief Should Kea replace the domain-name supplied by the client.
-    bool replace_client_name_;
-
-    /// @brief Prefix Kea should use when generating domain-names.
-    std::string generated_prefix_;
-
-    /// @brief Suffix Kea should use when to qualify partial domain-names.
-    std::string qualifying_suffix_;
-};
-
-std::ostream&
-operator<<(std::ostream& os, const D2ClientConfig& config);
-
-/// @brief Defines a pointer for D2ClientConfig instances.
-typedef boost::shared_ptr<D2ClientConfig> D2ClientConfigPtr;
 
 /// @brief Defines the type for D2 IO error handler.
 /// This callback is invoked when a send to b10-dhcp-ddns completes with a
@@ -219,7 +42,7 @@ typedef boost::shared_ptr<D2ClientConfig> D2ClientConfigPtr;
 /// @param result Result code of the send operation.
 /// @param ncr NameChangeRequest which failed to send.
 ///
-/// @note Handlers are expected not to throw. In the event a hanlder does
+/// @note Handlers are expected not to throw. In the event a handler does
 /// throw invoking code logs the exception and then swallows it.
 typedef
 boost::function<void(const dhcp_ddns::NameChangeSender::Result result,
@@ -240,13 +63,13 @@ boost::function<void(const dhcp_ddns::NameChangeSender::Result result,
 /// used by the NCR IPC with the select-driven IO used by Kea.  Senders expose
 /// a file descriptor, the "select-fd" that can monitored for read-readiness
 /// with the select() function (or variants).  D2ClientMgr provides a method,
-/// runReadyIO(), that will process all ready events on a sender's
-/// IOservice.  Track# 3315 is extending Kea's IfaceMgr to support the
-/// registration of multiple external sockets with callbacks that are then
-/// monitored with IO readiness via select().
-/// @todo D2ClientMgr will be modified to register the sender's select-fd and
-/// runReadyIO() with IfaceMgr when entering the send mode and will
-/// unregister when exiting send mode.
+/// runReadyIO(), that will instructs the sender to process the next ready
+/// ready IO handler on the sender's IOservice.  Track# 3315 extended
+/// Kea's IfaceMgr to support the registration of multiple external sockets
+/// with callbacks that are then monitored with IO readiness via select().
+/// D2ClientMgr registers the sender's select-fd and runReadyIO() with
+/// IfaceMgr when entering the send mode and unregisters it when exiting send
+/// mode.
 ///
 /// To place the manager in send mode, the calling layer must supply an error
 /// handler and optionally an IOService instance.  The error handler is invoked
@@ -258,7 +81,8 @@ boost::function<void(const dhcp_ddns::NameChangeSender::Result result,
 /// into the sender.  Using a private service isolates the sender's IO from
 /// any other services.
 ///
-class D2ClientMgr : public dhcp_ddns::NameChangeSender::RequestSendHandler {
+class D2ClientMgr : public dhcp_ddns::NameChangeSender::RequestSendHandler,
+                    boost::noncopyable {
 public:
     /// @brief Constructor
     ///
@@ -339,7 +163,7 @@ public:
     /// Templated wrapper around the analyzeFqdn() allowing that method to
     /// be used for either IPv4 or IPv6 processing.  This methods resets all
     /// of the flags in the response to zero and then sets the S,N, and O
-    /// flags.  Any other flags are the responsiblity of the invoking layer.
+    /// flags.  Any other flags are the responsibility of the invoking layer.
     ///
     /// @param fqdn FQDN option from which to read client (inbound) flags
     /// @param fqdn_resp FQDN option to update with the server (outbound) flags
@@ -430,16 +254,35 @@ public:
     /// @brief Send the given NameChangeRequests to b10-dhcp-ddns
     ///
     /// Passes NameChangeRequests to the NCR sender for transmission to
-    /// b10-dhcp-ddns.
+    /// b10-dhcp-ddns. If the sender rejects the message, the client's error
+    /// handler will be invoked.  The most likely cause for rejection is
+    /// the senders' queue has reached maximum capacity.
     ///
     /// @param ncr NameChangeRequest to send
     ///
-    /// @throw D2ClientError if sender instance is null. Underlying layer
-    /// may throw NCRSenderExceptions exceptions.
+    /// @throw D2ClientError if sender instance is null or not in send
+    /// mode.  Either of these represents a programmatic error.
     void sendRequest(dhcp_ddns::NameChangeRequestPtr& ncr);
+
+    /// @brief Calls the client's error handler.
+    ///
+    /// Calls the error handler method set by startSender() when an
+    /// error occurs attempting to send a method.  If the error handler
+    /// throws an exception it will be caught and logged.
+    ///
+    /// @param result contains that send outcome status.
+    /// @param ncr is a pointer to the NameChangeRequest that was attempted.
+    ///
+    /// This method is exception safe.
+    void invokeClientErrorHandler(const dhcp_ddns::NameChangeSender::
+                                  Result result,
+                                  dhcp_ddns::NameChangeRequestPtr& ncr);
 
     /// @brief Returns the number of NCRs queued for transmission.
     size_t getQueueSize() const;
+
+    /// @brief Returns the maximum number of NCRs allowed in the queue.
+    size_t getQueueMaxSize() const;
 
     /// @brief Returns the nth NCR queued for transmission.
     ///
@@ -462,14 +305,28 @@ public:
 
     /// @brief Processes sender IO events
     ///
-    /// Runs all handlers ready for execution on the sender's IO service.
+    /// Serves as callback registered for the sender's select-fd with IfaceMgr.
+    /// It instructs the sender to execute the next ready IO handler.
+    /// It provides an instance method that can be bound via boost::bind, as
+    /// NameChangeSender is abstract.
     void runReadyIO();
+
+    /// @brief Suspends sending requests.
+    ///
+    /// This method is intended to be used when IO errors occur.  It toggles
+    /// the enable-updates configuration flag to off, and takes the sender
+    /// out of send mode.  Messages in the sender's queue will remain in the
+    /// queue.
+    /// @todo This logic may change in NameChangeSender is altered allow
+    /// queuing while stopped.  Currently when a sender is not in send mode
+    /// it will not accept additional messages.
+    void suspendUpdates();
 
 protected:
     /// @brief Function operator implementing the NCR sender callback.
     ///
     /// This method is invoked each time the NameChangeSender completes
-    /// an asychronous send.
+    /// an asynchronous send.
     ///
     /// @param result contains that send outcome status.
     /// @param ncr is a pointer to the NameChangeRequest that was
@@ -491,6 +348,14 @@ protected:
     /// mode.
     int getSelectFd();
 
+    /// @brief Fetches the select-fd that is currently registered.
+    ///
+    /// @return The currently registered select-fd or
+    /// dhcp_ddns::WatchSocket::INVALID_SOCKET.
+    ///
+    /// @note This is only exposed for testing purposes.
+    int getRegisteredSelectFd();
+
 private:
     /// @brief Container class for DHCP-DDNS configuration parameters.
     D2ClientConfigPtr d2_client_config_;
@@ -506,12 +371,8 @@ private:
     /// completes with a failed status.
     D2ClientErrorHandler client_error_handler_;
 
-    /// @brief Pointer to the IOService currently being used by the sender.
-    /// @note We need to remember the io_service given to the sender however
-    /// we may have received only a referenece to it from the calling layer.
-    /// Use a raw pointer to store it.  This value should never be exposed
-    /// and is only valid while in send mode.
-    asiolink::IOService* sender_io_service_;
+    /// @brief Remembers the select-fd registered with IfaceMgr.
+    int registered_select_fd_;
 };
 
 template <class T>

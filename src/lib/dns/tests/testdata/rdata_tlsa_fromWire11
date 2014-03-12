@@ -1,0 +1,4 @@
+# Test where RDATA is completely missing
+
+# TLSA RDATA, RDLEN=35
+0023

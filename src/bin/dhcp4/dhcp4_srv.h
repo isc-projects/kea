@@ -18,9 +18,11 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/option.h>
+#include <dhcp/option_string.h>
 #include <dhcp/option4_client_fqdn.h>
 #include <dhcp/option_custom.h>
 #include <dhcp_ddns/ncr_msg.h>
+#include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/alloc_engine.h>
 #include <hooks/callout_handle.h>
@@ -165,6 +167,30 @@ public:
     /// @param use_bcast should broadcast flags be set on the sockets.
     static void openActiveSockets(const uint16_t port, const bool use_bcast);
 
+    /// @brief Starts DHCP_DDNS client IO if DDNS updates are enabled.
+    ///
+    /// If updates are enabled, it Instructs the D2ClientMgr singleton to
+    /// enter send mode.  If D2ClientMgr encounters errors it may throw
+    /// D2ClientErrors. This method does not catch exceptions.
+    void startD2();
+
+    /// @brief Implements the error handler for DHCP_DDNS IO errors
+    ///
+    /// Invoked when a NameChangeRequest send to b10-dhcp-ddns completes with
+    /// a failed status.  These are communications errors, not data related
+    /// failures.
+    ///
+    /// This method logs the failure and then suspends all further updates.
+    /// Updating can only be restored by reconfiguration or restarting the
+    /// server.  There is currently no retry logic so the first IO error that
+    /// occurs will suspend updates.
+    /// @todo We may wish to make this more robust or sophisticated.
+    ///
+    /// @param result Result code of the send operation.
+    /// @param ncr NameChangeRequest which failed to send.
+    virtual void d2ClientErrorHandler(const dhcp_ddns::
+                                      NameChangeSender::Result result,
+                                      dhcp_ddns::NameChangeRequestPtr& ncr);
 protected:
 
     /// @name Functions filtering and sanity-checking received messages.
@@ -405,6 +431,14 @@ protected:
     /// @param [out] answer A response message to be sent to a client.
     void processClientName(const Pkt4Ptr& query, Pkt4Ptr& answer);
 
+    /// @brief this is a prefix added to the contend of vendor-class option
+    ///
+    /// If incoming packet has a vendor class option, its content is
+    /// prepended with this prefix and then interpreted as a class.
+    /// For example, a packet that sends vendor class with value of "FOO"
+    /// will cause the packet to be assigned to class VENDOR_CLASS_FOO.
+    static const std::string VENDOR_CLASS_PREFIX;
+
 private:
     /// @brief Process Client FQDN %Option sent by a client.
     ///
@@ -427,10 +461,10 @@ private:
     /// prepare the Hostname option to be sent back to the client in the
     /// server's response.
     ///
-    /// @param opt_hostname An @c OptionCustom object encapsulating the Hostname
+    /// @param opt_hostname An @c OptionString object encapsulating the Hostname
     /// %Option.
     /// @param [out] answer A response message to be sent to a client.
-    void processHostnameOption(const OptionCustomPtr& opt_hostname,
+    void processHostnameOption(const OptionStringPtr& opt_hostname,
                                Pkt4Ptr& answer);
 
 protected:
@@ -455,27 +489,16 @@ protected:
     /// @brief Creates the NameChangeRequest and adds to the queue for
     /// processing.
     ///
-    /// This function adds the @c isc::dhcp_ddns::NameChangeRequest to the
-    /// queue and emits the debug message which indicates whether the request
-    /// being added is to remove DNS entry or add a new entry. This function
-    /// is exception free.
+    /// This creates the @c isc::dhcp_ddns::NameChangeRequest; emits a
+    /// the debug message which indicates whether the request being added is
+    /// to remove DNS entry or add a new entry; and then sends the request
+    /// to the D2ClientMgr for transmission to b10-dhcp-ddns.
     ///
     /// @param chg_type A type of the NameChangeRequest (ADD or REMOVE).
     /// @param lease A lease for which the NameChangeRequest is created and
     /// queued.
     void queueNameChangeRequest(const isc::dhcp_ddns::NameChangeType chg_type,
                                 const Lease4Ptr& lease);
-
-    /// @brief Sends all outstanding NameChangeRequests to b10-dhcp-ddns module.
-    ///
-    /// The purpose of this function is to pick all outstanding
-    /// NameChangeRequests from the FIFO queue and send them to b10-dhcp-ddns
-    /// module.
-    ///
-    /// @todo Currently this function simply removes all requests from the
-    /// queue but doesn't send them anywhere. In the future, the
-    /// NameChangeSender will be used to deliver requests to the other module.
-    void sendNameChangeRequests();
 
     /// @brief Attempts to renew received addresses
     ///
@@ -686,12 +709,6 @@ private:
     int hook_index_pkt4_receive_;
     int hook_index_subnet4_select_;
     int hook_index_pkt4_send_;
-
-protected:
-
-    /// Holds a list of @c isc::dhcp_ddns::NameChangeRequest objects which
-    /// are waiting for sending  to b10-dhcp-ddns module.
-    std::queue<isc::dhcp_ddns::NameChangeRequest> name_change_reqs_;
 };
 
 }; // namespace isc::dhcp

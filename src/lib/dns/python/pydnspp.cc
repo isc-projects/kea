@@ -28,6 +28,7 @@
 #include <Python.h>
 #include <structmember.h>
 
+#include <dns/exceptions.h>
 #include <dns/message.h>
 #include <dns/opcode.h>
 #include <dns/tsig.h>
@@ -152,8 +153,14 @@ initModulePart_Message(PyObject* mod) {
             PyErr_NewException("pydnspp.InvalidMessageUDPSize", NULL, NULL);
         PyObjectContainer(po_InvalidMessageUDPSize).installToModule(
             mod, "InvalidMessageUDPSize");
+        po_DNSMessageFORMERR =
+            PyErr_NewException("pydnspp.DNSMessageFORMERR",
+                               po_DNSProtocolError, NULL);
+        PyObjectContainer(po_DNSMessageFORMERR).installToModule(
+            mod, "DNSMessageFORMERR");
         po_DNSMessageBADVERS =
-            PyErr_NewException("pydnspp.DNSMessageBADVERS", NULL, NULL);
+            PyErr_NewException("pydnspp.DNSMessageBADVERS",
+                               po_DNSProtocolError, NULL);
         PyObjectContainer(po_DNSMessageBADVERS).installToModule(
             mod, "DNSMessageBADVERS");
         po_UnknownNSEC3HashAlgorithm =
@@ -243,36 +250,40 @@ initModulePart_Name(PyObject* mod) {
 
     // Add the exceptions to the module
     try {
-        po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel", NULL, NULL);
+        po_NameParserException =
+            PyErr_NewException("pydnspp.NameParserException",
+                               po_DNSTextError, NULL);
+        PyObjectContainer(po_NameParserException)
+            .installToModule(mod, "NameParserException");
+
+        po_EmptyLabel = PyErr_NewException("pydnspp.EmptyLabel",
+                                           po_NameParserException, NULL);
         PyObjectContainer(po_EmptyLabel).installToModule(mod, "EmptyLabel");
 
-        po_TooLongName = PyErr_NewException("pydnspp.TooLongName", NULL, NULL);
+        po_TooLongName = PyErr_NewException("pydnspp.TooLongName",
+                                            po_NameParserException, NULL);
         PyObjectContainer(po_TooLongName).installToModule(mod, "TooLongName");
 
-        po_TooLongLabel = PyErr_NewException("pydnspp.TooLongLabel", NULL, NULL);
+        po_TooLongLabel = PyErr_NewException("pydnspp.TooLongLabel",
+                                             po_NameParserException, NULL);
         PyObjectContainer(po_TooLongLabel).installToModule(mod, "TooLongLabel");
 
-        po_BadLabelType = PyErr_NewException("pydnspp.BadLabelType", NULL, NULL);
+        po_BadLabelType = PyErr_NewException("pydnspp.BadLabelType",
+                                             po_NameParserException, NULL);
         PyObjectContainer(po_BadLabelType).installToModule(mod, "BadLabelType");
 
-        po_BadEscape = PyErr_NewException("pydnspp.BadEscape", NULL, NULL);
+        po_BadEscape = PyErr_NewException("pydnspp.BadEscape",
+                                          po_NameParserException, NULL);
         PyObjectContainer(po_BadEscape).installToModule(mod, "BadEscape");
 
-        po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName", NULL,
-                                               NULL);
+        po_IncompleteName = PyErr_NewException("pydnspp.IncompleteName",
+                                               po_NameParserException, NULL);
         PyObjectContainer(po_IncompleteName).installToModule(mod, "IncompleteName");
 
         po_InvalidBufferPosition =
             PyErr_NewException("pydnspp.InvalidBufferPosition", NULL, NULL);
         PyObjectContainer(po_InvalidBufferPosition).installToModule(
             mod, "InvalidBufferPosition");
-
-        // This one could have gone into the message_python.cc file, but is
-        // already needed here.
-        po_DNSMessageFORMERR = PyErr_NewException("pydnspp.DNSMessageFORMERR",
-                                                  NULL, NULL);
-        PyObjectContainer(po_DNSMessageFORMERR).installToModule(
-            mod, "DNSMessageFORMERR");
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in Name initialization: " +
@@ -865,14 +876,31 @@ PyInit_pydnspp(void) {
         PyObjectContainer(po_IscException).installToModule(mod, "IscException");
 
         po_InvalidOperation = PyErr_NewException("pydnspp.InvalidOperation",
-                                                 NULL, NULL);
-        PyObjectContainer(po_InvalidOperation).installToModule(
-            mod, "InvalidOperation");
+                                                 po_IscException, NULL);
+        PyObjectContainer(po_InvalidOperation)
+            .installToModule(mod, "InvalidOperation");
 
         po_InvalidParameter = PyErr_NewException("pydnspp.InvalidParameter",
-                                                 NULL, NULL);
-        PyObjectContainer(po_InvalidParameter).installToModule(
-            mod, "InvalidParameter");
+                                                 po_IscException, NULL);
+        PyObjectContainer(po_InvalidParameter)
+            .installToModule(mod, "InvalidParameter");
+
+        // Add DNS exceptions
+        po_DNSException = PyErr_NewException("pydnspp.DNSException",
+                                             po_IscException, NULL);
+        PyObjectContainer(po_DNSException)
+            .installToModule(mod, "DNSException");
+
+        po_DNSTextError = PyErr_NewException("pydnspp.DNSTextError",
+                                             po_DNSException, NULL);
+        PyObjectContainer(po_DNSTextError)
+            .installToModule(mod, "DNSTextError");
+
+        po_DNSProtocolError = PyErr_NewException("pydnspp.DNSProtocolError",
+                                             po_DNSException, NULL);
+        PyObjectContainer(po_DNSProtocolError)
+            .installToModule(mod, "DNSProtocolError");
+
     } catch (const std::exception& ex) {
         const std::string ex_what =
             "Unexpected failure in pydnspp initialization: " +

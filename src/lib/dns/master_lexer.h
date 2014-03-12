@@ -15,7 +15,7 @@
 #ifndef MASTER_LEXER_H
 #define MASTER_LEXER_H 1
 
-#include <exceptions/exceptions.h>
+#include <dns/exceptions.h>
 
 #include <istream>
 #include <string>
@@ -78,6 +78,7 @@ public:
                            /// error and should never get out of the lexer.
         NUMBER_OUT_OF_RANGE, ///< Number was out of range
         BAD_NUMBER,    ///< Number is expected but not recognized
+        UNEXPECTED_QUOTES, ///< Unexpected quotes character detected
         MAX_ERROR_CODE ///< Max integer corresponding to valid error codes.
                        /// (excluding this one). Mainly for internal use.
     };
@@ -324,10 +325,10 @@ public:
     ///
     /// The \c token_ member variable (read-only) is set to a \c MasterToken
     /// object of type ERROR indicating the reason for the error.
-    class LexerError : public Exception {
+    class LexerError : public isc::dns::Exception {
     public:
         LexerError(const char* file, size_t line, MasterToken error_token) :
-            Exception(file, line, error_token.getErrorText().c_str()),
+            isc::dns::Exception(file, line, error_token.getErrorText().c_str()),
             token_(error_token)
         {}
         const MasterToken token_;
@@ -587,6 +588,9 @@ public:
     ///
     /// - If the expected type is MasterToken::QSTRING, both quoted and
     ///   unquoted strings are recognized and returned.
+    /// - A string with quotation marks is not recognized as a
+    /// - MasterToken::STRING. You have to get it as a
+    /// - MasterToken::QSTRING.
     /// - If the optional \c eol_ok parameter is \c true (very rare case),
     ///   MasterToken::END_OF_LINE and MasterToken::END_OF_FILE are recognized
     ///   and returned if they are found instead of the expected type of

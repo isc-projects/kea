@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -207,16 +207,18 @@ NameRemoveTransaction::removingFwdAddrsHandler() {
 
         // Call sendUpdate() to initiate the async send. Note it also sets
         // next event to NOP_EVT.
-        sendUpdate();
+        sendUpdate("Forward A/AAAA Remove");
         break;
 
     case IO_COMPLETED_EVT: {
         switch (getDnsUpdateStatus()) {
         case DNSClient::SUCCESS: {
             // We successfully received a response packet from the server.
+            // The RCODE will be based on a value-dependent RRset search,
+            // see RFC 2136 section 3.2.3/3.2.4.
             const dns::Rcode& rcode = getDnsUpdateResponse()->getRcode();
             if ((rcode == dns::Rcode::NOERROR()) ||
-                (rcode == dns::Rcode::NXDOMAIN())) {
+                (rcode == dns::Rcode::NXRRSET())) {
                 // We were able to remove it or it wasn't there, now we
                 // need to remove any other RRs for this FQDN.
                 transition(REMOVING_FWD_RRS_ST, UPDATE_OK_EVT);
@@ -311,21 +313,21 @@ NameRemoveTransaction::removingFwdRRsHandler() {
 
         // Call sendUpdate() to initiate the async send. Note it also sets
         // next event to NOP_EVT.
-        sendUpdate();
+        sendUpdate("Forward RR Remove");
         break;
 
     case IO_COMPLETED_EVT: {
         switch (getDnsUpdateStatus()) {
         case DNSClient::SUCCESS: {
             // We successfully received a response packet from the server.
+            // The RCODE will be based on a value-dependent RRset search,
+            // see RFC 2136 section 3.2.3/3.2.4.
             const dns::Rcode& rcode = getDnsUpdateResponse()->getRcode();
-            // @todo Not sure if NXDOMAIN is ok here, but I think so.
-            // A Rcode of NXDOMAIN would mean there are no RRs for the FQDN,
-            // which is fine.  We were asked to delete them, they are not there
-            // so all is well.
             if ((rcode == dns::Rcode::NOERROR()) ||
-                (rcode == dns::Rcode::NXDOMAIN())) {
-                // We were able to remove the forward mapping. Mark it as done.
+                (rcode == dns::Rcode::NXRRSET())) {
+                // We were able to remove them or they were not there (
+                // Rcode of NXRRSET means there are no matching RRsets).
+                // In either case, we consider it success and mark it as done.
                 setForwardChangeCompleted(true);
 
                 // If request calls for reverse update then do that next,
@@ -464,18 +466,21 @@ NameRemoveTransaction::removingRevPtrsHandler() {
 
         // Call sendUpdate() to initiate the async send. Note it also sets
         // next event to NOP_EVT.
-        sendUpdate();
+        sendUpdate("Reverse Remove");
         break;
 
     case IO_COMPLETED_EVT: {
         switch (getDnsUpdateStatus()) {
         case DNSClient::SUCCESS: {
             // We successfully received a response packet from the server.
+            // The RCODE will be based on a value-dependent RRset search,
+            // see RFC 2136 section 3.2.3/3.2.4.
             const dns::Rcode& rcode = getDnsUpdateResponse()->getRcode();
             if ((rcode == dns::Rcode::NOERROR()) ||
-                (rcode == dns::Rcode::NXDOMAIN())) {
-                // We were able to update the reverse mapping. Mark it as done.
-                // @todo For now we are also treating NXDOMAIN as success.
+                (rcode == dns::Rcode::NXRRSET())) {
+                // We were able to remove the reverse mapping or they were
+                // not there (Rcode of NXRRSET means there are no matching
+                // RRsets). In either case, mark it as done.
                 setReverseChangeCompleted(true);
                 transition(PROCESS_TRANS_OK_ST, UPDATE_OK_EVT);
             } else {
@@ -547,8 +552,8 @@ void
 NameRemoveTransaction::processRemoveOkHandler() {
     switch(getNextEvent()) {
     case UPDATE_OK_EVT:
-        LOG_DEBUG(dctl_logger, DBGLVL_TRACE_DETAIL, DHCP_DDNS_REMOVE_SUCCEEDED)
-                  .arg(getNcr()->toText());
+        LOG_INFO(dctl_logger, DHCP_DDNS_REMOVE_SUCCEEDED)
+                .arg(getNcr()->toText());
         setNcrStatus(dhcp_ddns::ST_COMPLETED);
         endModel();
         break;
@@ -565,9 +570,9 @@ NameRemoveTransaction::processRemoveFailedHandler() {
     case UPDATE_FAILED_EVT:
     case NO_MORE_SERVERS_EVT:
     case SERVER_IO_ERROR_EVT:
-        LOG_ERROR(dctl_logger, DHCP_DDNS_REMOVE_FAILED).arg(getNcr()->toText())
-        .arg(getEventLabel(getNextEvent()));
         setNcrStatus(dhcp_ddns::ST_FAILED);
+        LOG_ERROR(dctl_logger, DHCP_DDNS_REMOVE_FAILED)
+                  .arg(transactionOutcomeString());
         endModel();
         break;
     default:

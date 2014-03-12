@@ -33,18 +33,20 @@ if HAVE_GTEST
 # to unexpected errors. For this reason, the --enable-static-link option is
 # ignored for unit tests built here.
 
-nodistdir=$(abs_top_builddir)/src/lib/dhcpsrv/tests
-nodist_LTLIBRARIES = libco1.la libco2.la
+noinst_LTLIBRARIES = libco1.la libco2.la
+
+# -rpath /nowhere is a hack to trigger libtool to not create a
+# convenience archive, resulting in shared modules
 
 libco1_la_SOURCES  = callout_library.cc
 libco1_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco1_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libco1_la_LDFLAGS = -avoid-version -export-dynamic -module
+libco1_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 libco2_la_SOURCES  = callout_library.cc
 libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco2_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libco2_la_LDFLAGS = -avoid-version -export-dynamic -module
+libco2_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 TESTS += libdhcpsrv_unittests
 
@@ -59,6 +61,7 @@ libdhcpsrv_unittests_SOURCES += dbaccess_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_factory_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += generic_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += memfile_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp_parsers_unittest.cc
 if HAVE_MYSQL

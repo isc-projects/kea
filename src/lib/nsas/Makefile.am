@@ -6,7 +6,6 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/lib/dns -I$(top_builddir)/src/lib/dns
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/util -I$(top_builddir)/src/lib/util
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/log -I$(top_builddir)/src/lib/log
 AM_CPPFLAGS += -I$(top_srcdir)/src/lib/nsas -I$(top_builddir)/src/lib/nsas
-AM_CPPFLAGS += $(SQLITE_CFLAGS)
 AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 # Some versions of GCC warn about some versions of Boost regarding missing

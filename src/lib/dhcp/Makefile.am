@@ -14,6 +14,7 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libb10-dhcp++.la
 libb10_dhcp___la_SOURCES  =
+libb10_dhcp___la_SOURCES += classify.h
 libb10_dhcp___la_SOURCES += dhcp6.h dhcp4.h
 libb10_dhcp___la_SOURCES += duid.cc duid.h
 libb10_dhcp___la_SOURCES += hwaddr.cc hwaddr.h
@@ -23,6 +24,7 @@ libb10_dhcp___la_SOURCES += iface_mgr_error_handler.h
 libb10_dhcp___la_SOURCES += iface_mgr_linux.cc
 libb10_dhcp___la_SOURCES += iface_mgr_sun.cc
 libb10_dhcp___la_SOURCES += libdhcp++.cc libdhcp++.h
+libb10_dhcp___la_SOURCES += opaque_data_tuple.cc opaque_data_tuple.h
 libb10_dhcp___la_SOURCES += option4_addrlst.cc option4_addrlst.h
 libb10_dhcp___la_SOURCES += option4_client_fqdn.cc option4_client_fqdn.h
 libb10_dhcp___la_SOURCES += option6_ia.cc option6_ia.h
@@ -31,6 +33,7 @@ libb10_dhcp___la_SOURCES += option6_iaprefix.cc option6_iaprefix.h
 libb10_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
 libb10_dhcp___la_SOURCES += option6_client_fqdn.cc option6_client_fqdn.h
 libb10_dhcp___la_SOURCES += option_vendor.cc option_vendor.h
+libb10_dhcp___la_SOURCES += option_vendor_class.cc option_vendor_class.h
 libb10_dhcp___la_SOURCES += option_int.h
 libb10_dhcp___la_SOURCES += option_int_array.h
 libb10_dhcp___la_SOURCES += option.cc option.h
@@ -67,6 +70,7 @@ EXTRA_DIST  = README libdhcp++.dox
 # written libraries may need access to all libdhcp++ headers.
 libb10_dhcp___includedir = $(pkgincludedir)/dhcp
 libb10_dhcp___include_HEADERS = \
+    classify.h \
     dhcp4.h \
     dhcp6.h \
     duid.h \
