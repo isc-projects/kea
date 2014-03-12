@@ -104,7 +104,10 @@ protected:
     uint8_t prefix_len_;
 };
 
+/// @brief Pointer to the @c Option6IAPrefix object.
+typedef boost::shared_ptr<Option6IAPrefix> Option6IAPrefixPtr;
+
 } // isc::dhcp namespace
 } // isc namespace
 
-#endif // OPTION_IA_H
+#endif // OPTION_IAPREFIX_H
