@@ -27,6 +27,7 @@ const char *D2ClientConfig::DFT_SERVER_IP = "127.0.0.1";
 const size_t D2ClientConfig::DFT_SERVER_PORT = 53001;
 const char *D2ClientConfig::DFT_NCR_PROTOCOL = "UDP";
 const char *D2ClientConfig::DFT_NCR_FORMAT = "JSON";
+const bool D2ClientConfig::DFT_ALWAYS_INCLUDE_FQDN = false;
 const bool D2ClientConfig::DFT_OVERRIDE_NO_UPDATE = false;
 const bool D2ClientConfig::DFT_OVERRIDE_CLIENT_UPDATE = false;
 const bool D2ClientConfig::DFT_REPLACE_CLIENT_NAME = false;

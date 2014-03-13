@@ -853,6 +853,8 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
               d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::stringToNcrFormat(D2ClientConfig::DFT_NCR_FORMAT),
               d2_client_config->getNcrFormat());
+    EXPECT_EQ(D2ClientConfig::DFT_ALWAYS_INCLUDE_FQDN,
+              d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_EQ(D2ClientConfig::DFT_OVERRIDE_NO_UPDATE,
               d2_client_config->getOverrideNoUpdate());
     EXPECT_EQ(D2ClientConfig::DFT_OVERRIDE_CLIENT_UPDATE,

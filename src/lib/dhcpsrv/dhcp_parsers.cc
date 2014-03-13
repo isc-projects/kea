@@ -1301,7 +1301,9 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
                                                      DFT_QUALIFYING_SUFFIX);
 
     bool always_include_fqdn = boolean_values_->
-                               getOptionalParam("always-include-fqdn", false);
+                               getOptionalParam("always-include-fqdn",
+                                               D2ClientConfig::
+                                               DFT_ALWAYS_INCLUDE_FQDN);
 
     bool override_no_update = boolean_values_->
                               getOptionalParam("override-no-update",
