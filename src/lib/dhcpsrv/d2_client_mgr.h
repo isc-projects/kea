@@ -115,7 +115,39 @@ public:
     /// conjunction with the configuration parameters updates-enabled, override-
     /// no-updates, and override-client-updates to determine the values that
     /// should be used for the server's FQDN S and N flags.
-    /// The logic in this method is based upon RFCs 4702 and 4704.
+    /// The logic in this method is based upon RFCs 4702 and 4704, and is
+    /// shown in the following truth table:
+    ///
+    /// @code
+    ///
+    /// When Updates are enabled:
+    ///
+    ///  ON = Override No Updates, OC = Override Client Updates
+    ///
+    ///  | Client |--------   Server Response Flags   ------------|
+    ///  | Flags  | ON=F,OC=F | ON=F,OC=T | ON=T,OC=F | ON=T,OC=T |
+    ///  |  N-S   |  N-S-O    |   N-S-O   |   N-S-O   |   N-S-O   |
+    ///  ----------------------------------------------------------
+    ///  |  0-0   |  0-0-0    |   0-1-1   |   0-0-0   |   0-1-1   |
+    ///  |  0-1   |  0-1-0    |   0-1-0   |   0-1-0   |   0-1-0   |
+    ///  |  1-0   |  1-0-0    |   1-0-0   |   0-1-1   |   0-1-1   |
+    ///
+    /// One can then use the server response flags to know when forward and
+    /// reverse updates should be performed:
+    ///
+    ///  - Forward updates should be done when the Server S-Flag is true.
+    ///  - Reverse updates should be done when the Server N-Flag is false.
+    ///
+    /// When Updates are disabled:
+    ///
+    /// | Client  | Server |
+    /// |  N-S    |  N-S-O |
+    /// --------------------
+    /// |  0-0    | 1-0-0  |
+    /// |  0-1    | 1-0-1  |
+    /// |  1-0    | 1-0-0  |
+    ///
+    /// @endcode
     ///
     /// @param client_s  S Flag from the client's FQDN
     /// @param client_n  N Flag from the client's FQDN
@@ -171,6 +203,26 @@ public:
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
     template <class T>
     void adjustFqdnFlags(const T& fqdn, T& fqdn_resp);
+
+    /// @brief Get direcional update flags based on server FQDN flags
+    ///
+    /// Templated convenience method which determines whether forward and
+    /// reverse updates should be performed based on a server response version
+    /// of the FQDN flags. The logic is straight forward and currently not
+    /// dependent upon configuration specific values:
+    ///
+    /// * forward will be true if S_FLAG is true
+    /// * reverse will be true if N_FLAG is false
+    ///
+    /// @param fqdn FQDN option from which to read server (outbound) flags
+    /// @param [out] forward bool value will be set to true if forward udpates
+    /// should be done, false if not.
+    /// @param [out] reverse bool value will be set to true if reverse udpates
+    /// should be done, false if not.
+    /// @tparam T FQDN Option class containing the FQDN data such as
+    /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
+    template <class T>
+    void getUpdateDirections(const T& fqdn_resp, bool& forward, bool& reverse);
 
     /// @brief Set server FQDN name based on configuration and a given FQDN
     ///
@@ -394,6 +446,13 @@ D2ClientMgr::adjustFqdnFlags(const T& fqdn, T& fqdn_resp) {
     fqdn_resp.setFlag(T::FLAG_O, (fqdn.getFlag(T::FLAG_S) != server_s));
 }
 
+template <class T>
+void
+D2ClientMgr::getUpdateDirections(const T& fqdn_resp,
+                                 bool& forward, bool& reverse) {
+    forward = fqdn_resp.getFlag(T::FLAG_S);
+    reverse = !(fqdn_resp.getFlag(T::FLAG_N));
+}
 
 template <class T>
 void

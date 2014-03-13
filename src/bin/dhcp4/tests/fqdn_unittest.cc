@@ -387,15 +387,16 @@ public:
 
         // NCRs cannot be sent to the d2_mgr unless updates are enabled.
         if (d2_mgr_.ddnsEnabled()) {
-            // There should be an NCR only if response S flag is 1.
-            /// @todo This logic will need to change if forward and reverse
-            /// updates are ever controlled independently.
-            if ((response_flags & Option4ClientFqdn::FLAG_S) == 0) {
+            // There should be an NCR if response S flag is 1 or N flag is 0.
+            bool exp_fwd = (response_flags & Option4ClientFqdn::FLAG_S);
+            bool exp_rev = (!(response_flags & Option4ClientFqdn::FLAG_N));
+            if (!exp_fwd && !exp_rev) {
                 ASSERT_EQ(0, d2_mgr_.getQueueSize());
             } else {
                 // Verify that there is one NameChangeRequest as expected.
                 ASSERT_EQ(1, d2_mgr_.getQueueSize());
-                verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD, true, true,
+                verifyNameChangeRequest(isc::dhcp_ddns::CHG_ADD,
+                                        exp_rev, exp_fwd,
                                         reply->getYiaddr().toText(),
                                         "myhost.example.com.",
                                         "", // empty DHCID means don't check it
@@ -537,13 +538,12 @@ TEST_F(NameDhcpv4SrvTest, overrideNoUpdate) {
 //
 // Server should respect client's delegation request and NOT do updates:
 
-// - Response flags should be  N = 1, S = 0, O = 0
+// - Response flags should be  N = 0, S = 0, O = 0
 // - Should not queue any NCRs
 TEST_F(NameDhcpv4SrvTest, respectClientDelegation) {
 
     flagVsConfigScenario(Option4ClientFqdn::FLAG_E,
-                         (Option4ClientFqdn::FLAG_E |
-                          Option4ClientFqdn::FLAG_N));
+                         Option4ClientFqdn::FLAG_E);
 }
 
 // Tests the following scenario:
