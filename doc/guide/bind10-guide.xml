@@ -4528,19 +4528,21 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       As mentioned earlier, DHCPv4 can be configured to generate requests to the
       DHCP-DDNS server to update DNS entries.  These requests are known as
       NameChangeRequests or NCRs.  Each NCR contains the following information:
-      <para>
-      1. Whether it is a request to add(update) or remove DNS entries
-      </para>
-      <para>
-      2. Whether the change requests forward DNS updates (As), reverse
-      DNS updates (PTRs), or both.
-      </para>
-      <para>
-      3. The FQDN, lease address, and DHCID
-      </para>
+      <orderedlist>
+      <listitem><para>
+      Whether it is a request to add (update) or remove DNS entries
+      </para></listitem>
+      <listitem><para>
+      Whether the change requests forward DNS updates (A records), reverse
+      DNS updates (PTR records), or both.
+      </para></listitem>
+      <listitem><para>
+      The FQDN, lease address, and DHCID
+      </para></listitem>
+      </orderedlist>
       The paramaters for controlling the generation of NCRs for submission to D2
       are contained in the "dhcp-ddns" section of the DHCPv4 server
-      configuration. The default values for this secion appears as follows:
+      configuration. The default values for this section appears as follows:
 <screen>
 &gt; <userinput>config show Dhcp4/dhcp-ddns</userinput>
 Dhcp4/dhcp-ddns/enable-updates	true	boolean
@@ -4558,7 +4560,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       <para>
       The "enable-updates" parameter determines whether or not DHCPv4 will
       generate NCRs.  By default, this value is false hence DDNS updates are
-      disabled.  To enable DDNS updates set this value to true as follows:
+      disabled.  To enable DDNS updates set this value to true:
       </para>
 <screen>
 &gt; <userinput>config set Dhcp4/dhcp-ddns/enable-updates true</userinput>
@@ -4566,17 +4568,16 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       <section id="dhcpv4-d2-io-config">
       <title>DHCP-DDNS Server Connectivty</title>
-      In order for NCRs to reach D2, DHCPv4 must be able to communicate with it.
-      The following parameters are used to establish connectivty between DHCPv4
-      and D2.
       <para>
-      The parameters, "server-ip" and "server-port", specify the address of the
-      D2 server.  By default, D2 is assumed to running on the same machine as
-      DHCPv4, and the default values for these two parameters should be
-      sufficient. However, if D2 has been configured to listen on a different
-      address or port, these values must altered accordingly.  For example, if
-      D2 has been configured to listen on 198.162.1.10 port 900, the following
-      commands would be required:
+      In order for NCRs to reach the D2 server, DHCPv4 must be able
+      to communicate with it and so the relevant parameters must be set
+      appropriately.  The parameters, "server-ip" and "server-port", specify
+      the address of the D2 server.  By default, D2 is assumed to running
+      on the same machine as DHCPv4, and the default values for these two
+      parameters should be sufficient. However, if D2 has been configured
+      to listen on a different address or port, these values must altered
+      accordingly.  For example, if D2 has been configured to listen on
+      198.162.1.10 port 900, the following commands would be required:
       </para>
 <screen>
 &gt; <userinput>config set Dhcp4/dhcp-ddns/server-ip "198.162.1.10"</userinput>
@@ -4594,7 +4595,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       </para>
       </section>
       <section id="dhcpv4-d2-rules-config">
-      <title>When does DHCPv4 generates DDNS request</title>
+      <title>When does the DHCPv4 server generate DDNS requests?</title>
       DHCPv4 follows the behavior prescribed for DHCP servers in RFC 4702.
       It is important to keep in mind that DHCPv4 provides the initial decision
       making of when and what to update and forwards that information to D2 in
@@ -4607,31 +4608,32 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       </para>
       <para>
       In general, DHCPv4 will generate DDNS udpate requests when:
-      </para>
-      <para>
-      1. A new lease is granted in response to a DHCP REQUEST
-      </para>
-      <para>
-      2. An existing lease is renewed but the FQDN associated with it has
+      <orderedlist>
+      <listitem><para>
+      A new lease is granted in response to a DHCP REQUEST
+      </para></listitem>
+      <listitem><para>
+      An existing lease is renewed but the FQDN associated with it has
       changed.
-      </para>
-      <para>
-      3. An existing lease is released in response to a DHCP RELEASE
-      </para>
-      <para>
-      In the second case, lease renewal, to  DDNS requests will be issued: one
+      </para></listitem>
+      <listitem><para>
+      An existing lease is released in response to a DHCP RELEASE
+      </para></listitem>
+      </orderedlist>
+      In the second case, lease renewal, two  DDNS requests will be issued: one
       request to remove entries for the previous FQDN and a second request to
-      add entries for th new FQDN.  In the last case, a lease release, a
+      add entries for the new FQDN.  In the last case, a lease release, a
       single DDNS request to remove its entries will be made.  The decision
-      making involved when granting a new lease, the first case, is more
+      making involved when granting a new lease (the first case) is more
       involved and is discussed next.
       </para>
       <para>
-      DHCPv4 will generate a DDNS update request if the DHCP REQUEST contains
-      either the FQDN option (code 81) or the Host Name option (code 12). If
-      both are present, the server will use the FQDN option. By default the
-      DHCPv4 server will respect the FQDN N and S flags specified by
-      the client as shown in the following table:
+      When a new lease is granted, the DHCPv4 server will generate a DDNS
+      update request if the DHCP REQUEST contains either the FQDN option
+      (code 81) or the Host Name option (code 12). If both are present,
+      the server will use the FQDN option. By default the DHCPv4 server
+      will respect the FQDN N and S flags specified by the client as shown
+      in the following table:
       </para>
         <table id="fqdn-flag-table">
           <title>Default FQDN Flag Behavior</title>
@@ -4681,6 +4683,11 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       respectively.
       </para>
       <para>
+      (Note that the flag combination N=1, S=1 is prohibited according to
+      RFC 4702. If such a combination is received from the client, the packet
+      will be dropped by the DHCPv4 server.)
+      </para>
+      <para>
       To override client delegation, issue the following commands:
       </para>
 <screen>
@@ -4718,35 +4725,39 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       the client in the DHCP REQUEST.
       <para>
       The rules for determining the FQDN option are as follows:
-      </para>
-      <para>
-      1. If configured to do so ignore the REQUEST contents and generate a
+      <orderedlist>
+      <listitem><para>
+      If configured to do, so ignore the REQUEST contents and generate a
       FQDN using a configurable prefix and suffix.
-      </para>
-      <para>
-      2. If the REQUEST contains the client FQDN option than the candidate
+      </para></listitem>
+      <listitem><para>
+      If the REQUEST contains the client FQDN option, the candidate
       name is taken from there, otherwise it is taken from the Host Name option.
-      </para>
-      <para>
-      3. If the candidate name is a fully qualified domain name then use
-      it.
-      4. If the candidate name is a partial (i.e. unqualified) name then
+      The candiate name may then be modified:
+      <orderedlist>
+      <listitem><para>
+      If the candidate name is a fully qualified domain name, use it.
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a partial (i.e. unqualified) name then
       add a configurable suffix to the name and use the result as the FQDN.
-      </para>
-      <para>
-      5. If the candidate name is a empty then generate a FQD using a
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a empty, generate a FQDN using a
       configurable prefix and suffix.
-      </para>
-      <para>
-      To instruct DHCPv4 to always generate a FQDN, set the parmeter,
-      "replace-client-name", to true as follows:
+      </para></listitem>
+      </orderedlist>
+      </para></listitem>
+      </orderedlist>
+      To instruct DHCPv4 to always generate the FQDN for a client, set the
+      parameter "replace-client-name" to true as follows:
       </para>
 <screen>
 &gt; <userinput>config set Dhcp4/dhcp-ddns/replace-client-name true</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
       <para>
-      The prefix used when generating a FQDN is specified by the
+      The prefix used in the generation of a FQDN is specified by the
       "generated-prefix" parameter.  The default value is "myhost".  To alter
       its value simply set it to the desired string:
       </para>
@@ -6004,22 +6015,25 @@ should include options from the isc option space:
     <section id="dhcp6-ddns-config">
       <title>Configuring DHCPv6 for DDNS</title>
       <para>
-      As mentioned earlier, DHCPv6 can be configured to generate requests to the
-      DHCP-DDNS server to update DNS entries.  These requests are known as
-      NameChangeRequests or NCRs.  Each NCR contains the following information:
-      <para>
-      1. Whether it is a request to add(update) or remove DNS entries
-      </para>
-      <para>
-      2. Whether the change requests forward DNS updates (AAAAs), reverse
-      DNS updates (PTRs), or both.
-      </para>
-      <para>
-      3. The FQDN, lease address, and DHCID
-      </para>
-      The paramaters for controlling the generation of NCRs for submission to D2
+      As mentioned earlier, DHCPv6 can be configured to generate requests to
+      the DHCP-DDNS server (referred to here as the "D2" server) to update
+      DNS entries.  These requests are known as NameChangeRequests or NCRs.
+      Each NCR contains the following information:
+      <orderedlist>
+      <listitem><para>
+      Whether it is a request to add (update) or remove DNS entries
+      </para></listitem>
+      <listitem><para>
+      Whether the change requests forward DNS updates (AAAA records), reverse
+      DNS updates (PTR records), or both.
+      </para></listitem>
+      <listitem><para>
+      The FQDN, lease address, and DHCID
+      </para></listitem>
+      </orderedlist>
+      The parameters controlling the generation of NCRs for submission to D2
       are contained in the "dhcp-ddns" section of the DHCPv6 server
-      configuration. The default values for this secion appears as follows:
+      configuration. The default values for this section appears as follows:
 <screen>
 &gt; <userinput>config show Dhcp6/dhcp-ddns</userinput>
 Dhcp6/dhcp-ddns/enable-updates	true	boolean
@@ -6095,21 +6109,21 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       </note>
       <para>
       In general, DHCPv6 will generate DDNS udpate requests when:
-      </para>
-      <para>
-      1. A new lease is granted in response to a DHCP REQUEST
-      </para>
-      <para>
-      2. An existing lease is renewed but the FQDN associated with it has
+      <orderedlist>
+      <listitem><para>
+      A new lease is granted in response to a DHCP REQUEST
+      </para></listitem>
+      <listitem><para>
+      An existing lease is renewed but the FQDN associated with it has
       changed.
-      </para>
-      <para>
-      3. An existing lease is released in response to a DHCP RELEASE
-      </para>
-      <para>
-      In the second case, lease renewal, to  DDNS requests will be issued: one
+      </para></listitem>
+      <listitem><para>
+      An existing lease is released in response to a DHCP RELEASE
+      </para></listitem>
+      </orderedlist>
+      In the second case, lease renewal, two  DDNS requests will be issued: one
       request to remove entries for the previous FQDN and a second request to
-      add entries for th new FQDN.  In the last case, a lease release, a
+      add entries for the new FQDN.  In the last case, a lease release, a
       single DDNS request to remove its entries will be made.  The decision
       making involved when granting a new lease is more involved and is
       discussed next.
@@ -6168,6 +6182,11 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       respectively.
       </para>
       <para>
+      (Note that the flag combination N=1, S=1 is prohibited according to
+      RFC 4702. If such a combination is received from the client, the packet
+      will be dropped by the DHCPv6 server.)
+      </para>
+      <para>
       To override client delegation, issue the following commands:
       </para>
 <screen>
@@ -6198,29 +6217,31 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       the client in the DHCP REQUEST.
       <para>
       The rules for determining the FQDN option are as follows:
-      </para>
-      <para>
+      <orderedlist>
+      <listitem><para>
       If configured to do so ignore the REQUEST contents and generate a
       FQDN using a configurable prefix and suffix.
-      </para>
-      <para>
+      </para></listitem>
+      <listitem><para>
       Otherwise, using is the domain name value from the client FQDN option as
       the candidate name:
-      </para>
-      <para>
-      1. If the candidate name is a fully qualified domain name then use it.
-      </para>
-      <para>
-      2. If the candidate name is a partial (i.e. unqualified) name then
+      <orderedlist>
+      <listitem><para>
+      If the candidate name is a fully qualified domain name then use it.
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a partial (i.e. unqualified) name then
       add a configurable suffix to the name and use the result as the FQDN.
-      </para>
-      <para>
-      3. If the candidate name is a empty then generate a FQDN using a
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a empty then generate a FQDN using a
       configurable prefix and suffix.
-      </para>
-      <para>
-      To instruct DHCPv6 to always generate a FQDN, set the parmeter,
-      "replace-client-name", to true as follows:
+      </para></listitem>
+      </orderedlist>
+      </para></listitem>
+      </orderedlist>
+      To instruct DHCPv6 to always generate a FQDN, set the parameter
+      "replace-client-name" to true:
       </para>
 <screen>
 &gt; <userinput>config set Dhcp6/dhcp-ddns/replace-client-name true</userinput>
@@ -6229,7 +6250,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <para>
       The prefix used when generating a FQDN is specified by the
       "generated-prefix" parameter.  The default value is "myhost".  To alter
-      its value simply set it to the desired string:
+      its value, simply set it to the desired string:
       </para>
 <screen>
 &gt; <userinput>config set Dhcp6/dhcp-ddns/generated-prefix "another.host"</userinput>
@@ -6247,7 +6268,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       </section>
       <para>
-      When qualifying a partial name, DHCPv6 will construct name of with the
+      When qualifying a partial name, DHCPv6 will construct a name of with the
       format:
       </para>
       <para>
@@ -6473,41 +6494,41 @@ Dhcp6/renew-timer	1000	integer	(default)
   <chapter id="dhcp-ddns-server">
     <title>The DHCP-DDNS Server</title>
     <para>
-    The DHCP-DDNS Server, known informally as D2, conducts the client side of
-    the DDNS protocol (defined in RFC 2136) on behalf of other processes,
-    primarily the DHCP servers, DHCPv4 and DHCPv6. The DHCP servers construct
+    The DHCP-DDNS Server (known informally as D2) conducts the client side of
+    the DDNS protocol (defined in RFC 2136) on behalf of the DHCPv4 and DHCPv6
+    servers. The DHCP servers construct
     DDNS update requests, known as NameChangeRequests (NCRs), based upon DHCP
-    lease change events and then post these to D2. D2 will attempt to match
-    each such request to the appropriate DNS server(s) and then carry out the
+    lease change events and then these to D2. D2 attempts to match
+    each such request to the appropriate DNS server(s) and carry out the
     necessary conversation with those servers to update the DNS data.
     </para>
     <para>
     In order to match a request to appropriate DNS servers, D2 must have a
-    catalog of servers from which to select. In fact, D2 has two such catalogs:
-    one for forward DNS and one for Reverse DNS.  These catalogs are referred
+    catalog of servers from which to select. In fact, D2 has two such catalogs,
+    one for forward DNS and one for reverse DNS; these catalogs are referred
     to as DDNS Domain Lists.  Each list consists of one or more named DDNS
-    Domains. Further, each DDNS Domain has a list of of one ore more DNS
-    servers which can update DNS data for that domain.
+    Domains. Further, each DDNS Domain has a list of of one or more DNS
+    servers that publish the DNS data for that domain.
     </para>
     <para>
-    When conducting forward domain matching, D2 will use the FQDN in the
-    request to compare against the name of each forward DDNS Domain. That
-    domain whose name matches the longest portion of the FQDN is considered
-    the best match.  For example, if the FQDN is "myhost.sample.example.com.",
+    When conducting forward domain matching, D2 will compare the FQDN in
+    the request against the name of each forward DDNS Domain. The domain
+    whose name matches the longest portion of the FQDN is considered the
+    best match.  For example, if the FQDN is "myhost.sample.example.com.",
     and there are two forward domains in the catalog: "sample.example.com."
-    and "example.com." then the former is the best match.  Note that it is
-    possible to not find a suitable match. Given the same two forward domains
-    there would be no match for the FQDN, "bogus.net", and the request would be
-    rejected.   Finally, if there are no forward DDNS Domains defined, D2 will
-    simply disregard the forward update portion of requests.
+    and "example.com.", the former is regarded as the best match.  In some
+    cases, it may not be possible to find a suitable match. Given the same two
+    forward domains there would be no match for the FQDN, "bogus.net", so the
+    request would be rejected.   Finally, if there are no forward DDNS Domains
+    defined, D2 will simply disregard the forward update portion of requests.
     </para>
     <para>
-    When conducting reverse domain matching, D2 will construct a reverse
+    When conducting reverse domain matching, D2 constructs a reverse
     FQDN from the lease address in the request and compare that against
     the name of each reverse DDNS Domain. Again, the domain whose name matches
     the longest portion of the FQDN is considered the best match. For instance,
     if the lease address is "172.16.1.40" and there are two reverse domains in
-    the catalog: "1.16.172.in-addr.arpa." and "16.172.in-addr.arpa"; then the
+    the catalog: "1.16.172.in-addr.arpa." and "16.172.in-addr.arpa", the
     former is the best match.  As with forward matching, it is possible to not
     find a suitable match.  Given the same two domains, there would be no
     match for the lease address, "192.168.1.50", and the request would be
@@ -6661,16 +6682,14 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
             <simpara>
               <command>algorithm</command> &mdash;
               specifies the which hashing algorithm should be used with this
-              key.  This value is not yet put to use, so it may contain any
-              string value.  Once implemented it will be limited to one of
-              finite list of supported alogorithms.
+              key.  This value is not currently used.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>secret</command> &mdash;
               is used to specify the shared secret key code for this key. This
-              value is not yet put to use so it may contain any string.
+              value is not currently used.
             </simpara>
           </listitem>
         </itemizedlist>
@@ -6745,18 +6764,18 @@ DhcpDdns/forward_ddns/ddns_domains  [] list  (default)
             <listitem>
               <simpara>
               <command>key_name</command> &mdash;
-              If TSIG should be used with this domain's servers, then this
+              If TSIG is used with this domain's servers, this
               value should be the name of the key from within the TSIG Key List
               to use.  If it the value is blank (the default), TSIG will not be
               used in DDNS converations with this domain's servers.  Currently
-              this value is not used as TSIG is not yet functional.
+              TSIG has not been implemented, so this value is ignored.
               </simpara>
             </listitem>
             <listitem>
               <simpara>
               <command>dns_servers</command> &mdash;
               a list of one or more DNS servers which can conduct the server
-              side of the DDNS protocol for this domain.  Currently the servers
+              side of the DDNS protocol for this domain.  The servers
               are used in a first to last preference. In other words, when D2
               begins to process a request for this domain it will pick the
               first server in this list and attempt to communicate with it.
@@ -6784,8 +6803,8 @@ DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers   []  list    (default)
 </screen>
         It is permissable to add a domain without any servers. If that domain
         should be matched to a request, however, the request will fail.  In
-        order to make the domain useful, we must add at least one DNS server
-        to it.
+        order to make the domain useful though, we must add at least one DNS
+        server to it.
         </para>
 
         <section id="add-forward-dns-servers">
@@ -6795,7 +6814,7 @@ DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers   []  list    (default)
           Repeat them for as many servers as desired for a each domain.
           </para>
           <para>
-          Forward DNS Server entries represents a actual DNS servers which
+          Forward DNS Server entries represent actual DNS servers which
           support the server side of the DDNS protocol. Each Forward DNS Server
           has the following parameters:
           <itemizedlist>
@@ -6851,7 +6870,8 @@ DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
         <title>Reverse DDNS</title>
         <para>
         The Reverse DDNS section is used to configure D2's reverse update
-        behavior. Currently it contains a single parameter, the catalog of
+        behavior, and the concepts are the same as for the forward DDNS
+        section. Currently it contains a single parameter, the catalog of
         reverse DDNS Domains:
 <screen>
 <userinput>> config show DhcpDdns/reverse_ddns/</userinput>
@@ -6867,7 +6887,8 @@ DhcpDdns/reverse_ddns/ddns_domains  [] list  (default)
           which maintain the reverse DNS data for that zone.  You will need one
           reverse DDNS Domain for each zone you wish to service.  It may very
           well be that some or all of your zones are maintained by the same
-          servers. You will still need one DDNS Domain per zone. Remember that
+          servers; even then, uou will still need one DDNS Domain entry for each
+          zone. Remember that
           matching a request to the appropriate server(s) is done by zone and
           a DDNS Domain only defines a single zone.
           </para>
@@ -6879,18 +6900,15 @@ DhcpDdns/reverse_ddns/ddns_domains  [] list  (default)
             <listitem>
               <simpara>
               <command>name</command> &mdash;
-              The fully qualified reverse zone that this DDNS Domain can update.
-              This is the value used to compare against the request the reversed
-              version of the lease address during reverse matching.
-              </simpara>
-              <simpara>
-              To support the subnet 172.16.1 the name should be. "1.16.172.in-addr.arpa.".
-              </simpara>
-              <simpara>
-              To support an IPv6 subent of 2001:db8:1, the name should be "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa."
-              </simpara>
-              It must be unique within the catalog.
-              <simpara>
+              The fully qualified reverse zone that this DDNS Domain
+              can update.  This is the value used to compare against the
+              request the reversed version of the lease address during
+              reverse matching.  The zone name should follow the appropriate
+              standards: for example, to to support the IPv4 subnet 172.16.1,
+              the name should be. "1.16.172.in-addr.arpa.".  Similarly,
+              to support an IPv6 subent of 2001:db8:1, the name should be
+              "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa."
+              Whatever the name, it must be unique within the catalog.
               </simpara>
             </listitem>
             <listitem>
@@ -6900,7 +6918,7 @@ DhcpDdns/reverse_ddns/ddns_domains  [] list  (default)
               value should be the name of the key from within the TSIG Key List
               to use.  If it the value is blank (the default), TSIG will not be
               used in DDNS converations with this domain's servers.  Currently
-              this value is not used as TSIG is not yet functional.
+              this value is not used as TSIG has not been implemented.
               </simpara>
             </listitem>
             <listitem>
@@ -6935,7 +6953,7 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers   []  list    (default)
 <userinput>> config commit</userinput>
 </screen>
         It is permissable to add a domain without any servers. If that domain
-        should be matched to a request, however, the request will fail.  In
+        should be matched to a request, however, the request will fail.  However, in
         order to make the domain useful, we must add at least one DNS server
         to it.
         </para>
@@ -6954,8 +6972,8 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers   []  list    (default)
             <listitem>
               <simpara>
               <command>hostname</command> &mdash;
-              The resolvable host name of the DNS server. This value is not
-              yet implemented.
+              The resolvable host name of the DNS server. This value is
+              currently ignored.
               </simpara>
             </listitem>
             <listitem>
@@ -7045,7 +7063,7 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
         </table>
         </para>
         <para>
-        You will need to construct three forward DDNS Domains:
+        We need to construct three forward DDNS Domains:
         <table>
           <title>Forward DDNS Domains Needed</title>
           <tgroup cols='3' align='left'>
@@ -7080,12 +7098,13 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
         </table>
         As discussed earlier, FQDN to domain matching is based on the longest
         match. The FQDN, "myhost.four.example.com.", will match the first
-        domain while "admin.example.com." will match the third domain. The
-        FQDN, "other.example.net." , would fail to match any domain and would
+        domain ("four.example.com") while "admin.example.com." will match the
+        third domain ("example.com"). The
+        FQDN, "other.example.net." will fail to match any domain and would
         be rejected.
         </para>
         <para>
-        The following series of commands in bindctl will create our Forward
+        The following series of commands in bindctl will create the Forward
         DDNS Domains.
 <screen>
 <userinput>
@@ -7111,7 +7130,7 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
 </screen>
         </para>
         <para>
-        Similarly, you will need to construct three reverse DDNS Domains:
+        Similarly, we need to construct the three reverse DDNS Domains:
         <table>
           <title>Reverse DDNS Domains Needed</title>
           <tgroup cols='3' align='left'>
@@ -7166,7 +7185,7 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
 > config set DhcpDdns/reverse_ddns/ddns_domains[1]/dns_servers[0]/ip_address "3001:1::50:"
 >
 > config add DhcpDdns/reverse_ddns/ddns_domains
-> config set DhcpDdns/reverse_ddns/ddns_domains[2]/name "0.192.in-addrs.arpa."
+> config set DhcpDdns/reverse_ddns/ddns_domains[2]/name "0.192.in-addr.arpa."
 > config add DhcpDdns/reverse_ddns/ddns_domains[2]/dns_servers
 > config set DhcpDdns/reverse_ddns/ddns_domains[2]/dns_servers[0]/ip_address "172.16.2.5"
 >
