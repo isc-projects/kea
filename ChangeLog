@@ -1,3 +1,11 @@
+771.	[bug]		tmark
+	Configuration parsing in b10-dchp6 and b10-dhcp4 for the "dhcp-ddns"
+	section of their configurations now supplies hard-coded default values
+	rather than those from their spec files.  This is a temporary solution
+	to circumvent an issue in the configuration libraries which causes
+	map-items to behave incorrectly.
+	(Trac #3358, git 983d8acec3a7ccb1ffef662eac7518aed5f99381) 
+
 770.	[func]		marcin
 	b10-dhcp6: Implemented support for Rebind message.
 	(Trac #3232, git 3649413932857470558a6f19e0b0e181b3fc0fda)
