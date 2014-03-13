@@ -3556,19 +3556,19 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
       <para>
       BIND 10 DHCP stores its leases in a lease database.  The software has been written in
       a way that makes it possible to choose which database product should be used to
-      store the lease information.  At present, only support for MySQL is provided, and that support must
-      be explicitly included when BIND 10 is built.  This section covers the building of
-      BIND 10 with MySQL and the creation of the lease database.
+      store the lease information.  At present, Kea supports 3 database backends: MySQL,
+      PostgreSQL and memfile. To limit external dependencies, both MySQL and PostgreSQL
+      support are disabled by default and only memfile (which is implemented in pure C++)
+      is available. Support for a given database backend must be explicitly included when
+      BIND 10 is built.  This section covers the building of BIND 10 with MySQL and/or PostgreSQL
+      and the creation of the lease database.
       </para>
       <section>
-        <title>Install MySQL</title>
+        <title>Building with MySQL support</title>
         <para>
           Install MySQL according to the instructions for your system.  The client development
           libraries must be installed.
         </para>
-      </section>
-      <section>
-        <title>Build and Install BIND 10</title>
         <para>
           Build and install BIND 10 as described in <xref linkend="installation"/>, with
           the following modification: to enable the MySQL database code, at the
@@ -3581,8 +3581,8 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
           ...if not.
         </para>
       </section>
-      <section id="dhcp-database-create">
-        <title>Create MySQL Database and BIND 10 User</title>
+      <section id="dhcp-mysql-database-create">
+        <title>Create MySQL Database and Kea User</title>
         <para>
           The next task is to create both the lease database and the user under which the servers will
           access it. A number of steps are required:
@@ -3616,6 +3616,85 @@ Bye<userinput/>
 $</screen>
        </para>
      </section>
+
+
+      <section>
+        <title>Building with PostgreSQL support</title>
+        <para>
+          Install PostgreSQL according to the instructions for your system.  The client development
+          libraries must be installed. Client development libraries are often packaged as &quot;libpq&quot;.
+        </para>
+        <para>
+          Build and install BIND 10 as described in <xref linkend="installation"/>, with
+          the following modification: to enable the PostgreSQL database code, at the
+          "configure" step (see <xref linkend="configure"/>), specify the location of the
+          PostgreSQL configuration program "pg_config" with the "--with-dhcp-pgsql" switch,
+          i.e.
+          <screen><userinput>./configure [other-options] --with-dhcp-pgsql</userinput></screen>
+          ...if MySQL was installed in the default location, or:
+          <screen><userinput>./configure [other-options] --with-dhcp-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
+          ...if not.
+        </para>
+      </section>
+      <section id="dhcp-pgsql-database-create">
+        <title>Create PostgreSQL Database and Kea User</title>
+        <para>
+          The next task is to create both the lease database and the user under which the servers will
+          access it. A number of steps are required:
+        </para>
+        <para>
+          1. Log into PostgreSQL as "root":
+          <screen>$ <userinput>sudo -u postgres psql postgres</userinput>
+Enter password:<userinput/>
+   :<userinput/>
+postgres=#</screen>
+        </para>
+        <para>
+          2. Create the database:
+          <screen>postgres=# <userinput>CREATE DATABASE <replaceable>database-name</replaceable>;</userinput></screen>
+          ... <replaceable>database-name</replaceable> is the name you have chosen for the database.
+        </para>
+         <para>
+          3. Create the database tables:
+          <screen>postgres=# <userinput>\connect <replaceable>database-name</replaceable></userinput>
+postgres=#> <userinput>\i <replaceable>path-to-bind10</replaceable>/share/bind10/dhcpdb_create.pgsql</userinput></screen>
+        </para>
+         <para>
+          4. Create the user under which BIND 10 will access the database (and give it a password), then grant it access to the database tables:
+          <screen>postgres=# <userinput>CREATE USER <replaceable>user-name</replaceable> WITH PASSWORD '<replaceable>password</replaceable>';</userinput>
+postgres=#> <userinput>GRANT ALL PRIVILEGES ON DATABASE <replaceable>database-name</replaceable> TO '<replaceable>user-name</replaceable>;</userinput></screen>
+        </para>
+        <para>
+          5. Exit PostgreSQL:
+          <screen>postgres=# <userinput>\q</userinput>
+Bye<userinput/>
+$</screen>
+       </para>
+
+       <para>Try to log into the newly created database using keatest credentials:
+       <screen>$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>keatest</replaceable></userinput>
+Password for user keatest:
+psql (9.1.12)
+Type "help" for help.
+
+keatest=>
+</screen>
+  </para>
+  <para>
+  If instead of seeing keatest=> prompt, your login will be refused
+  with error code about failed peer or indent authentication, it means
+  that PostgreSQL is configured to check unix username and reject
+  login attepts if PostgreSQL names are different. To alter that,
+  PostgreSQL configuration must be changed. That file is located at
+  <filename>/etc/postgresql/9.1/main/pg_hba.conf</filename> on Ubuntu
+  13.10. Its location may be different on your system. Please consult
+  your PostgreSQL user manual before applying those changes as those
+  changes may expose your other databases that you run on the same
+  system.
+  </para>
+      </section>
+
+
    </section>
 
   </chapter>
@@ -3713,8 +3792,8 @@ Dhcp4/subnet4	[]	list	(default)
       <section>
       <title>Database Configuration</title>
       <para>
-      All leases issued by the server are stored in the lease database.  Currently,
-      the only supported database is MySQL
+      All leases issued by the server are stored in the lease database.  Currently
+      there are 3 database backends available: MySQL, PostgreSQL and experimental memfile.
       <footnote>
       <para>
       The server comes with an in-memory database ("memfile") configured as the default
@@ -3735,12 +3814,13 @@ Dhcp4/subnet4	[]	list	(default)
         </note>
       <para>
       Database configuration is controlled through the Dhcp4/lease-database parameters.
-      The type of the database must be set to MySQL (although the string entered is "mysql"):
+      The type of the database must be set to "mysql", "postgresql" or "memfile":
 <screen>
 &gt; <userinput>config set Dhcp4/lease-database/type "mysql"</userinput>
 </screen>
       Next, the name of the database is to hold the leases must be set: this is the
-      name used when the lease database was created (see <xref linkend="dhcp-database-create"/>).
+      name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
+      or <xref linkend="dhcp-pgsql-database-create"/>).
 <screen>
 &gt; <userinput>config set Dhcp4/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
 </screen>
@@ -4878,8 +4958,8 @@ Dhcp6/subnet6/	list
       <section>
       <title>Database Configuration</title>
       <para>
-      All leases issued by the server are stored in the lease database.  Currently,
-      the only supported database is MySQL
+      All leases issued by the server are stored in the lease database. Currently
+      there are 3 database backends available: MySQL, PostgreSQL and experimental memfile.
       <footnote>
       <para>
       The server comes with an in-memory database ("memfile") configured as the default
@@ -4900,12 +4980,13 @@ Dhcp6/subnet6/	list
         </note>
       <para>
       Database configuration is controlled through the Dhcp6/lease-database parameters.
-      The type of the database must be set to MySQL (although the string entered is "mysql"):
+      The type of the database must be set to "mysql", "postgresql" or "memfile":
 <screen>
 &gt; <userinput>config set Dhcp6/lease-database/type "mysql"</userinput>
 </screen>
       Next, the name of the database is to hold the leases must be set: this is the
-      name used when the lease database was created (see <xref linkend="dhcp-database-create"/>).
+      name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
+      or <xref linkend="dhcp-pgsql-database-create"/>).
 <screen>
 &gt; <userinput>config set Dhcp6/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
 </screen>
@@ -5844,8 +5925,8 @@ should include options from the isc option space:
               that are stored in the lease database. Removing non-last subnet will
               cause the configuration information to mismatch data in the lease
               database. It is possible to manually update subnet-id fields in
-              MySQL database, but it is awkward and error prone process. A better
-              reconfiguration support is planned.
+              MySQL or PostgreSQL database, but it is awkward and error prone
+              process. A better reconfiguration support is planned.
             </para>
           </listitem>
 

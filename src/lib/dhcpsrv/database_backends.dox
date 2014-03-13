@@ -155,7 +155,6 @@ postgres=# \q
   created database using keatest credentials:
 @verbatim
 $ psql -d keatest -U keatest
-$ psql keatest -U keatest -W
 Password for user keatest:
 psql (9.1.12)
 Type "help" for help.
