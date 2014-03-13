@@ -64,6 +64,7 @@ public:
     static const size_t DFT_SERVER_PORT;
     static const char *DFT_NCR_PROTOCOL;
     static const char *DFT_NCR_FORMAT;
+    static const bool DFT_ALWAYS_INCLUDE_FQDN;
     static const bool DFT_OVERRIDE_NO_UPDATE;
     static const bool DFT_OVERRIDE_CLIENT_UPDATE;
     static const bool DFT_REPLACE_CLIENT_NAME;
