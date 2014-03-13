@@ -3539,9 +3539,18 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
     and one for DHCPv6. The DHCP part of the BIND 10 project is codenamed
     Kea. The DHCPv4 component is colloquially referred to as Kea4 and its
     DHCPv6 counterpart is called Kea6.</para>
+    <para> In addition to providing lease management services, both Kea4 and
+    Kea6 can provide dynamic DNS (DDNS) updates driven by the lease changes they
+    make.   These updates are carried out with the assistance of the
+    DHCP-DDNS server, colloquially referred to as D2.    When configured
+    to do so,  Kea servers will notify D2 of  lease changes.  D2 will match
+    them to the appropriate DNS servers and instruct those severs to add or
+    delete the requisite DNS entries.
+    </para>
     <para>This chapter covers those parts of BIND 10 that are common to
     both servers.  DHCPv4-specific details are covered in <xref linkend="dhcp4"/>,
-    while those details specific to DHCPv6 are described in <xref linkend="dhcp6"/>
+    while those details specific to DHCPv6 are described in <xref linkend="dhcp6"/>.
+    The DHCP-DDNS server details are covered in <xref linkend="dhcp-ddns-server"/>
     </para>
 
     <note>
@@ -3684,17 +3693,31 @@ $</screen>
         will be available. It will look similar to this:
 <screen>
 &gt; <userinput>config show Dhcp4</userinput>
-Dhcp4/interfaces/	list	(default)
-Dhcp4/renew-timer	1000	integer	(default)
+Dhcp4/hooks-libraries	[]	list	(default)
+Dhcp4/interfaces/	list
+Dhcp4/renew-timer	1800	integer
 Dhcp4/rebind-timer	2000	integer	(default)
 Dhcp4/valid-lifetime	4000	integer	(default)
+Dhcp4/next-server	""	string	(default)
+Dhcp4/echo-client-id	true	boolean	(default)
+Dhcp4/option-def	[]	list	(default)
 Dhcp4/option-data	[]	list	(default)
-Dhcp4/lease-database/type	"memfile"	string	(default)
+Dhcp4/lease-database/type	""	string	(default)
 Dhcp4/lease-database/name	""	string	(default)
 Dhcp4/lease-database/user	""	string	(default)
 Dhcp4/lease-database/host	""	string	(default)
 Dhcp4/lease-database/password	""	string	(default)
-Dhcp4/subnet4	[]	list	(default)
+Dhcp4/subnet4/	list
+Dhcp4/dhcp-ddns/enable-updates	true	boolean
+Dhcp4/dhcp-ddns/server-ip	"127.0.0.1"	string
+Dhcp4/dhcp-ddns/server-port	53001	integer
+Dhcp4/dhcp-ddns/ncr-protocol	"UDP"	string
+Dhcp4/dhcp-ddns/ncr-format	"JSON"	string
+Dhcp4/dhcp-ddns/override-no-update	false	boolean
+Dhcp4/dhcp-ddns/override-client-update	false	boolean
+Dhcp4/dhcp-ddns/replace-client-name	false	boolean
+Dhcp4/dhcp-ddns/generated-prefix	"myhost"	string
+Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       </para>
 
@@ -4499,6 +4522,282 @@ Dhcp4/subnet4	[]	list	(default)
         clients that do not meet class criteria to be denied any service altogether.
       </para>
     </section>
+    <section id="dhcp4-ddns-config">
+      <title>Configuring DHCPv4 for DDNS</title>
+      <para>
+      As mentioned earlier, DHCPv4 can be configured to generate requests to the
+      DHCP-DDNS server to update DNS entries.  These requests are known as
+      NameChangeRequests or NCRs.  Each NCR contains the following information:
+      <orderedlist>
+      <listitem><para>
+      Whether it is a request to add (update) or remove DNS entries
+      </para></listitem>
+      <listitem><para>
+      Whether the change requests forward DNS updates (A records), reverse
+      DNS updates (PTR records), or both.
+      </para></listitem>
+      <listitem><para>
+      The FQDN, lease address, and DHCID
+      </para></listitem>
+      </orderedlist>
+      The paramaters for controlling the generation of NCRs for submission to D2
+      are contained in the "dhcp-ddns" section of the DHCPv4 server
+      configuration. The default values for this section appears as follows:
+<screen>
+&gt; <userinput>config show Dhcp4/dhcp-ddns</userinput>
+Dhcp4/dhcp-ddns/enable-updates	true	boolean
+Dhcp4/dhcp-ddns/server-ip	"127.0.0.1"	string
+Dhcp4/dhcp-ddns/server-port	53001	integer
+Dhcp4/dhcp-ddns/ncr-protocol	"UDP"	string
+Dhcp4/dhcp-ddns/ncr-format	"JSON"	string
+Dhcp4/dhcp-ddns/override-no-update	false	boolean
+Dhcp4/dhcp-ddns/override-client-update	false	boolean
+Dhcp4/dhcp-ddns/replace-client-name	false	boolean
+Dhcp4/dhcp-ddns/generated-prefix	"myhost"	string
+Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
+</screen>
+      </para>
+      <para>
+      The "enable-updates" parameter determines whether or not DHCPv4 will
+      generate NCRs.  By default, this value is false hence DDNS updates are
+      disabled.  To enable DDNS updates set this value to true:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/enable-updates true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <section id="dhcpv4-d2-io-config">
+      <title>DHCP-DDNS Server Connectivty</title>
+      <para>
+      In order for NCRs to reach the D2 server, DHCPv4 must be able
+      to communicate with it and so the relevant parameters must be set
+      appropriately.  The parameters, "server-ip" and "server-port", specify
+      the address of the D2 server.  By default, D2 is assumed to running
+      on the same machine as DHCPv4, and the default values for these two
+      parameters should be sufficient. However, if D2 has been configured
+      to listen on a different address or port, these values must altered
+      accordingly.  For example, if D2 has been configured to listen on
+      198.162.1.10 port 900, the following commands would be required:
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/server-ip "198.162.1.10"</userinput>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/server-port 900</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      D2 can be configured to listen over IPv4 or IPv6, therefore server-ip
+      may be either an IPv4 or IPv6 address.
+      </para>
+      <para>
+      The socket protocol that DHCPv4 should use to communicate with D2 is
+      specified with the "ncr-protocol" parameter.  Currently only UDP is
+      supported.
+      </para>
+      <para>
+      The internal format for DDNS update requests sent by DHCPv4 is specified
+      with the "ncr-format" parameter. Currently only JSON is supported.
+      </para>
+      </section>
+      <section id="dhcpv4-d2-rules-config">
+      <title>When does the DHCPv4 server generate DDNS requests?</title>
+      DHCPv4 follows the behavior prescribed for DHCP servers in RFC 4702.
+      It is important to keep in mind that DHCPv4 provides the initial decision
+      making of when and what to update and forwards that information to D2 in
+      the form of NCRs. Carrying out the actual DNS updates and dealing with
+      such things as conflict resolution are the purvue of D2 (<xref linkend="dhcp-ddns-server"/>).
+      <para>
+      This section describes when DHCPv4 will generate NCRs and the
+      configuration parameters that can be used to influence this decision.
+      It assumes that the "enable-updates" paramater is true.
+      </para>
+      <para>
+      In general, DHCPv4 will generate DDNS udpate requests when:
+      <orderedlist>
+      <listitem><para>
+      A new lease is granted in response to a DHCP REQUEST
+      </para></listitem>
+      <listitem><para>
+      An existing lease is renewed but the FQDN associated with it has
+      changed.
+      </para></listitem>
+      <listitem><para>
+      An existing lease is released in response to a DHCP RELEASE
+      </para></listitem>
+      </orderedlist>
+      In the second case, lease renewal, two  DDNS requests will be issued: one
+      request to remove entries for the previous FQDN and a second request to
+      add entries for the new FQDN.  In the last case, a lease release, a
+      single DDNS request to remove its entries will be made.  The decision
+      making involved when granting a new lease (the first case) is more
+      involved and is discussed next.
+      </para>
+      <para>
+      When a new lease is granted, the DHCPv4 server will generate a DDNS
+      update request if the DHCP REQUEST contains either the FQDN option
+      (code 81) or the Host Name option (code 12). If both are present,
+      the server will use the FQDN option. By default the DHCPv4 server
+      will respect the FQDN N and S flags specified by the client as shown
+      in the following table:
+      </para>
+        <table id="fqdn-flag-table">
+          <title>Default FQDN Flag Behavior</title>
+          <tgroup cols='4' align='left'>
+          <colspec colname='cflags'/>
+          <colspec colname='meaning'/>
+          <colspec colname='response'/>
+          <colspec colname='sflags'/>
+          <thead>
+              <row>
+                <entry>Client Flags:N-S</entry>
+                <entry>Client Intent</entry>
+                <entry>Server Response</entry>
+                <entry>Server Flags:N-S-O</entry>
+              </row>
+          </thead>
+          <tbody>
+            <row>
+                <entry>0-0</entry>
+                <entry>
+                Client wants to do forward updates, server should do reverse updates
+                </entry>
+                <entry>Server generates reverse-only request</entry>
+                <entry>1-0-0</entry>
+            </row>
+            <row>
+                <entry>0-1</entry>
+                <entry>Server should do both forward and reverse updates</entry>
+                <entry>Server generates request to update both directions</entry>
+                <entry>0-1-0</entry>
+            </row>
+            <row>
+                <entry>1-0</entry>
+                <entry>Client wants no updates done</entry>
+                <entry>Server does not generate a request</entry>
+                <entry>1-0-0</entry>
+            </row>
+          </tbody>
+          </tgroup>
+        </table>
+      <para>
+      The first row in the table above represents "client delegation". Here
+      the DHCP client states that it intends to do the forward DNS updates and
+      the server should do the reverese updates.  By default, DHCPv4 will honor
+      the client's wishes and generate a DDNS request to D2 to update only
+      reverse DNS data.  The parameter, "override-client-update", can be used
+      to instruct the server to override client delegation requests.  When
+      this parameter is true, DHCPv4 will disregard requests for client
+      delegation and generate a DDNS request to update both forward and
+      reverse DNS data.  In this case, the N-S-O flags in the server's
+      response to the client will be 0-1-1 respectively.
+      </para>
+      <para>
+      (Note that the flag combination N=1, S=1 is prohibited according to
+      RFC 4702. If such a combination is received from the client, the packet
+      will be dropped by the DHCPv4 server.)
+      </para>
+      <para>
+      To override client delegation, issue the following commands:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/override-client-update true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The third row in the table above describes the case in which the client
+      requests that no DNS updates be done. The parameter, "override-no-update",
+      can be used to instruct the server to disregard the client's wishes. When
+      this parameter is true, DHCPv4 will generate DDNS udpate request to D2
+      even if the client requests no updates be done.  The N-S-O flags in the
+      server's response to the client will be 0-1-1.
+      </para>
+      <para>
+      To override client delegation, issue the following commands:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/override-no-update true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      DHCPv4 will always generate DDNS update requests if the client request
+      only contains the Host Name option. In addition it will include an FQDN
+      option in the response to the client with the FQDN N-S-O flags set to
+      0-1-0 respectively. The domain name portion of the FQDN option will be
+      the name submitted to D2 in the DDNS update request.
+      </para>
+      </section>
+      <section id="dhcpv4-fqdn-name-generation">
+      <title>DHCPv4 name generation for DDNS update requests</title>
+      Each NameChangeRequest must of course include the fully qualified domain
+      name whose DNS entries are to be affected.  DHCPv4 can be configured to
+      supply a portion or all of that name based upon what it receives from
+      the client in the DHCP REQUEST.
+      <para>
+      The rules for determining the FQDN option are as follows:
+      <orderedlist>
+      <listitem><para>
+      If configured to do, so ignore the REQUEST contents and generate a
+      FQDN using a configurable prefix and suffix.
+      </para></listitem>
+      <listitem><para>
+      If the REQUEST contains the client FQDN option, the candidate
+      name is taken from there, otherwise it is taken from the Host Name option.
+      The candiate name may then be modified:
+      <orderedlist>
+      <listitem><para>
+      If the candidate name is a fully qualified domain name, use it.
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a partial (i.e. unqualified) name then
+      add a configurable suffix to the name and use the result as the FQDN.
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a empty, generate a FQDN using a
+      configurable prefix and suffix.
+      </para></listitem>
+      </orderedlist>
+      </para></listitem>
+      </orderedlist>
+      To instruct DHCPv4 to always generate the FQDN for a client, set the
+      parameter "replace-client-name" to true as follows:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/replace-client-name true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The prefix used in the generation of a FQDN is specified by the
+      "generated-prefix" parameter.  The default value is "myhost".  To alter
+      its value simply set it to the desired string:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/generated-prefix "another.host"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The suffix used when generating a FQDN or when qualifying a partial
+      name is specified by the "qualifying-suffix" parameter.  The default
+      value is "example.com".  To alter its value simply set it to the desired
+      string:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp4/dhcp-ddns/generated-prefix "our.net"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </section>
+      <para>
+      When generating a name, DHCPv4 will construct name of the format:
+      </para>
+      <para>
+        [generated-prefix]-[address-text].[qualifying-suffix].
+      </para>
+      <para>
+      where address-text is simply the lease IP address converted to a
+      hyphenated string.  For example, if lease address is 172.16.1.10 and
+      assuming default values for generated-prefix and qualifying-suffix, the
+      generated FQDN would be:
+      </para>
+      <para>
+        myhost-172-16-1-10.example.com.
+      </para>
+    </section>
 
   </section> <!-- end of configuring DHCPv4 server section with many subsections -->
 
@@ -4843,18 +5142,31 @@ Dhcp4/renew-timer	1000	integer	(default)
         will be available. It will look similar to this:
 <screen>
 &gt; <userinput>config show Dhcp6</userinput>
-Dhcp6/interfaces/	list	(default)
-Dhcp6/renew-timer	1000	integer	(default)
-Dhcp6/rebind-timer	2000	integer	(default)
-Dhcp6/preferred-lifetime	3000	integer	(default)
-Dhcp6/valid-lifetime	4000	integer	(default)
-Dhcp6/option-data	[]	list	(default)
-Dhcp6/lease-database/type	"memfile"	string	(default)
-Dhcp6/lease-database/name	""	string	(default)
-Dhcp6/lease-database/user	""	string	(default)
-Dhcp6/lease-database/host	""	string	(default)
-Dhcp6/lease-database/password	""	string	(default)
-Dhcp6/subnet6/	list
+Dhcp6/hooks-libraries   []  list    (default)
+Dhcp6/interfaces/   list    (default)
+Dhcp6/renew-timer   1000    integer (default)
+Dhcp6/rebind-timer  2000    integer (default)
+Dhcp6/preferred-lifetime    3000    integer (default)
+Dhcp6/valid-lifetime    4000    integer (default)
+Dhcp6/option-def    []  list    (default)
+Dhcp6/option-data   []  list    (default)
+Dhcp6/lease-database/type   ""  string  (default)
+Dhcp6/lease-database/name   ""  string  (default)
+Dhcp6/lease-database/user   ""  string  (default)
+Dhcp6/lease-database/host   ""  string  (default)
+Dhcp6/lease-database/password   ""  string  (default)
+Dhcp6/subnet6/  list
+Dhcp6/dhcp-ddns/enable-updates  true    boolean
+Dhcp6/dhcp-ddns/server-ip   "127.0.0.1" string
+Dhcp6/dhcp-ddns/server-port 53001   integer
+Dhcp6/dhcp-ddns/ncr-protocol    "UDP"   string
+Dhcp6/dhcp-ddns/ncr-format  "JSON"  string
+Dhcp6/dhcp-ddns/always-include-fqdn false   boolean
+Dhcp6/dhcp-ddns/override-no-update  false   boolean
+Dhcp6/dhcp-ddns/override-client-update  false   boolean
+Dhcp6/dhcp-ddns/replace-client-name false   boolean
+Dhcp6/dhcp-ddns/generated-prefix    "myhost"    string
+Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
 </screen>
       </para>
       <para>
@@ -5705,6 +6017,301 @@ should include options from the isc option space:
       </para>
     </section>
 
+
+    <section id="dhcp6-ddns-config">
+      <title>Configuring DHCPv6 for DDNS</title>
+      <para>
+      As mentioned earlier, DHCPv6 can be configured to generate requests to
+      the DHCP-DDNS server (referred to here as the "D2" server) to update
+      DNS entries.  These requests are known as NameChangeRequests or NCRs.
+      Each NCR contains the following information:
+      <orderedlist>
+      <listitem><para>
+      Whether it is a request to add (update) or remove DNS entries
+      </para></listitem>
+      <listitem><para>
+      Whether the change requests forward DNS updates (AAAA records), reverse
+      DNS updates (PTR records), or both.
+      </para></listitem>
+      <listitem><para>
+      The FQDN, lease address, and DHCID
+      </para></listitem>
+      </orderedlist>
+      The parameters controlling the generation of NCRs for submission to D2
+      are contained in the "dhcp-ddns" section of the DHCPv6 server
+      configuration. The default values for this section appears as follows:
+<screen>
+&gt; <userinput>config show Dhcp6/dhcp-ddns</userinput>
+Dhcp6/dhcp-ddns/enable-updates	true	boolean
+Dhcp6/dhcp-ddns/server-ip	"127.0.0.1"	string
+Dhcp6/dhcp-ddns/server-port	53001	integer
+Dhcp6/dhcp-ddns/ncr-protocol	"UDP"	string
+Dhcp6/dhcp-ddns/ncr-format	"JSON"	string
+Dhcp6/dhcp-ddns/override-no-update	false	boolean
+Dhcp6/dhcp-ddns/override-client-update	false	boolean
+Dhcp6/dhcp-ddns/replace-client-name	false	boolean
+Dhcp6/dhcp-ddns/generated-prefix	"myhost"	string
+Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
+</screen>
+      </para>
+      <para>
+      The "enable-updates" parameter determines whether or not DHCPv6 will
+      generate NCRs.  By default, this value is false hence DDNS updates are
+      disabled.  To enable DDNS updates set this value to true as follows:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/enable-updates true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <section id="dhcpv6-d2-io-config">
+      <title>DHCP-DDNS Server Connectivty</title>
+      In order for NCRs to reach D2, DHCPv6 must be able to communicate with it.
+      The following parameters are used to establish connectivty between DHCPv6
+      and D2.
+      <para>
+      The parameters, "server-ip" and "server-port", specify the address of the
+      D2 server.  By default, D2 is assumed to running on the same machine as
+      DHCPv6, and the default values for these two parameters should be
+      sufficient. However, if D2 has been configured to listen on a different
+      address or port, these values must altered accordingly.  For example, if
+      D2 has been configured to listen on 198.162.1.10 port 900, the following
+      commands would be required:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/server-ip "198.162.1.10"</userinput>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/server-port 900</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      D2 can be configured to listen over IPv4 or IPv6, therefore server-ip
+      may be either an IPv4 or IPv6 address.
+      <para>
+      The socket protocol that DHCPv6 should use to communicate with D2 is
+      specified with the "ncr-protocol" parameter.  Currently only UDP is
+      supported.
+      </para>
+      <para>
+      The internal format for DDNS update requests sent by DHCPv6 is specified
+      with the "ncr-format" parameter. Currently only JSON is supported.
+      </para>
+      </section>
+      <section id="dhcpv6-d2-rules-config">
+      <title>When does DHCPv6 generates DDNS request</title>
+      DHCPv6 follows the behavior prescribed for DHCP servers in RFC 4704.
+      It is important to keep in mind that DHCPv6 provides the initial decision
+      making of when and what to update and forwards that information to D2 in
+      the form of NCRs. Carrying out the actual DNS updates and dealing with
+      such things as conflict resolution are the purvue of D2 (<xref linkend="dhcp-ddns-server"/>).
+      <para>
+      This section describes when DHCPv6 will generate NCRs and the
+      configuration parameters that can be used to influence this decision.
+      It assumes that the "enable-updates" paramater is true.
+      </para>
+      <note>
+        <para>
+        Currently the interface between DHCPv6 and D2 only supports requests
+        which update DNS entries for a single IP address.  If a lease grants
+        more than one address, DHCPv6 will create the DDNS update request for
+        only the first of these addresses.  Support for multiple address
+        mappings may be provided in a future release.
+        </para>
+      </note>
+      <para>
+      In general, DHCPv6 will generate DDNS udpate requests when:
+      <orderedlist>
+      <listitem><para>
+      A new lease is granted in response to a DHCP REQUEST
+      </para></listitem>
+      <listitem><para>
+      An existing lease is renewed but the FQDN associated with it has
+      changed.
+      </para></listitem>
+      <listitem><para>
+      An existing lease is released in response to a DHCP RELEASE
+      </para></listitem>
+      </orderedlist>
+      In the second case, lease renewal, two  DDNS requests will be issued: one
+      request to remove entries for the previous FQDN and a second request to
+      add entries for the new FQDN.  In the last case, a lease release, a
+      single DDNS request to remove its entries will be made.  The decision
+      making involved when granting a new lease is more involved and is
+      discussed next.
+      </para>
+      <para>
+      DHCPv6 will generate a DDNS update request only if the DHCP REQUEST
+      contains the FQDN option (code 39). By default the DHCPv6 server will
+      respect the FQDN N and S flags specified by the client as shown in the
+      following table:
+      </para>
+        <table id="fqdn-flag-table">
+          <title>Default FQDN Flag Behavior</title>
+          <tgroup cols='4' align='left'>
+          <colspec colname='cflags'/>
+          <colspec colname='meaning'/>
+          <colspec colname='response'/>
+          <colspec colname='sflags'/>
+          <thead>
+              <row>
+                <entry>Client Flags:N-S</entry>
+                <entry>Client Intent</entry>
+                <entry>Server Response</entry>
+                <entry>Server Flags:N-S-O</entry>
+              </row>
+          </thead>
+          <tbody>
+            <row>
+                <entry>0-0</entry>
+                <entry>
+                Client wants to do forward updates, server should do reverse updates
+                </entry>
+                <entry>Server generates reverse-only request</entry>
+                <entry>1-0-0</entry>
+            </row>
+            <row>
+                <entry>0-1</entry>
+                <entry>Server should do both forward and reverse updates</entry>
+                <entry>Server generates request to update both directions</entry>
+                <entry>0-1-0</entry>
+            </row>
+            <row>
+                <entry>1-0</entry>
+                <entry>Client wants no updates done</entry>
+                <entry>Server does not generate a request</entry>
+                <entry>1-0-0</entry>
+            </row>
+          </tbody>
+          </tgroup>
+        </table>
+      <para>
+      The first row in the table above represents "client delegation". Here
+      the DHCP client states that it intends to do the forward DNS updates and
+      the server should do the reverese updates.  By default, DHCPv6 will honor
+      the client's wishes and generate a DDNS request to D2 to update only
+      reverse DNS data.  The parameter, "override-client-update", can be used
+      to instruct the server to override client delegation requests.  When
+      this parameter is true, DHCPv6 will disregard requests for client
+      delegation and generate a DDNS request to update both forward and
+      reverse DNS data.  In this case, the N-S-O flags in the server's
+      response to the client will be 0-1-1 respectively.
+      </para>
+      <para>
+      (Note that the flag combination N=1, S=1 is prohibited according to
+      RFC 4702. If such a combination is received from the client, the packet
+      will be dropped by the DHCPv6 server.)
+      </para>
+      <para>
+      To override client delegation, issue the following commands:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/override-client-update true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The third row in the table above describes the case in which the client
+      requests that no DNS updates be done. The parameter, "override-no-update",
+      can be used to instruct the server to disregard the client's wishes. When
+      this parameter is true, DHCPv6 will generate DDNS udpate request to D2
+      even if the client requests no updates be done.  The N-S-O flags in the
+      server's response to the client will be 0-1-1.
+      </para>
+      <para>
+      To override client delegation, issue the following commands:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/override-no-update true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </section>
+      <section id="dhcpv6-fqdn-name-generation">
+      <title>DHCPv6 name generation for DDNS update requests</title>
+      Each NameChangeRequest must of course include the fully qualified domain
+      name whose DNS entries are to be affected.  DHCPv6 can be configured to
+      supply a portion or all of that name based upon what it receives from
+      the client in the DHCP REQUEST.
+      <para>
+      The rules for determining the FQDN option are as follows:
+      <orderedlist>
+      <listitem><para>
+      If configured to do so ignore the REQUEST contents and generate a
+      FQDN using a configurable prefix and suffix.
+      </para></listitem>
+      <listitem><para>
+      Otherwise, using is the domain name value from the client FQDN option as
+      the candidate name:
+      <orderedlist>
+      <listitem><para>
+      If the candidate name is a fully qualified domain name then use it.
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a partial (i.e. unqualified) name then
+      add a configurable suffix to the name and use the result as the FQDN.
+      </para></listitem>
+      <listitem><para>
+      If the candidate name is a empty then generate a FQDN using a
+      configurable prefix and suffix.
+      </para></listitem>
+      </orderedlist>
+      </para></listitem>
+      </orderedlist>
+      To instruct DHCPv6 to always generate a FQDN, set the parameter
+      "replace-client-name" to true:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/replace-client-name true</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The prefix used when generating a FQDN is specified by the
+      "generated-prefix" parameter.  The default value is "myhost".  To alter
+      its value, simply set it to the desired string:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/generated-prefix "another.host"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      <para>
+      The suffix used when generating a FQDN or when qualifying a partial
+      name is specified by the "qualifying-suffix" parameter.  The default
+      value is "example.com".  To alter its value simply set it to the desired
+      string:
+      </para>
+<screen>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/generated-prefix "our.net"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </section>
+      <para>
+      When qualifying a partial name, DHCPv6 will construct a name with the
+      format:
+      </para>
+      <para>
+        [candidate-name].[qualifying-suffix].
+      </para>
+      <para>
+      where candidate-name is the partial name supplied in the REQUEST.
+      For example, if FQDN domain name value was "some-computer" and assuming
+      the default value for qualifying-suffix, the generated FQDN would be:
+      </para>
+      <para>
+        some-computer.example.com.
+      </para>
+      <para>
+      When generating a the entire name, DHCPv6 will construct name of the
+      format:
+      </para>
+      <para>
+        [generated-prefix]-[address-text].[qualifying-suffix].
+      </para>
+      <para>
+      where address-text is simply the lease IP address converted to a
+      hyphenated string.  For example, if lease address is 3001:1::70E and
+      assuming default values for generated-prefix and qualifying-suffix, the
+      generated FQDN would be:
+      </para>
+      <para>
+        myhost-3001-1--70E.example.com.
+      </para>
+    </section>
+
    </section>
 
     <section id="dhcp6-serverid">
@@ -5745,7 +6352,7 @@ should include options from the isc option space:
         field in RELAY-FORW message) to select appropriate subnet.
       </para>
       <para>
-        However, that is not always the case. The relay 
+        However, that is not always the case. The relay
         address may not match the subnet in certain deployments. This
         usually means that there is more than one subnet allocated for a given
         link. Two most common examples where this is the case are long lasting
@@ -5895,6 +6502,715 @@ Dhcp6/renew-timer	1000	integer	(default)
     </section> -->
 
   </chapter>
+
+  <chapter id="dhcp-ddns-server">
+    <title>The DHCP-DDNS Server</title>
+    <para>
+    The DHCP-DDNS Server (known informally as D2) conducts the client side of
+    the DDNS protocol (defined in RFC 2136) on behalf of the DHCPv4 and DHCPv6
+    servers. The DHCP servers construct
+    DDNS update requests, known as NameChangeRequests (NCRs), based upon DHCP
+    lease change events and then post these to D2. D2 attempts to match
+    each such request to the appropriate DNS server(s) and carry out the
+    necessary conversation with those servers to update the DNS data.
+    </para>
+    <para>
+    In order to match a request to appropriate DNS servers, D2 must have a
+    catalog of servers from which to select. In fact, D2 has two such catalogs,
+    one for forward DNS and one for reverse DNS; these catalogs are referred
+    to as DDNS Domain Lists.  Each list consists of one or more named DDNS
+    Domains. Further, each DDNS Domain has a list of of one or more DNS
+    servers that publish the DNS data for that domain.
+    </para>
+    <para>
+    When conducting forward domain matching, D2 will compare the FQDN in
+    the request against the name of each forward DDNS Domain. The domain
+    whose name matches the longest portion of the FQDN is considered the
+    best match.  For example, if the FQDN is "myhost.sample.example.com.",
+    and there are two forward domains in the catalog: "sample.example.com."
+    and "example.com.", the former is regarded as the best match.  In some
+    cases, it may not be possible to find a suitable match. Given the same two
+    forward domains there would be no match for the FQDN, "bogus.net", so the
+    request would be rejected.   Finally, if there are no forward DDNS Domains
+    defined, D2 will simply disregard the forward update portion of requests.
+    </para>
+    <para>
+    When conducting reverse domain matching, D2 constructs a reverse
+    FQDN from the lease address in the request and compare that against
+    the name of each reverse DDNS Domain. Again, the domain whose name matches
+    the longest portion of the FQDN is considered the best match. For instance,
+    if the lease address is "172.16.1.40" and there are two reverse domains in
+    the catalog: "1.16.172.in-addr.arpa." and "16.172.in-addr.arpa", the
+    former is the best match.  As with forward matching, it is possible to not
+    find a suitable match.  Given the same two domains, there would be no
+    match for the lease address, "192.168.1.50", and the request would be
+    rejected. Finally, if there are no reverse DDNS Domains defined, D2 will
+    simply disregard the reverse update portion of requests.
+    </para>
+    <section id="dhcp-ddns-server-start-stop">
+      <title>Starting and Stopping the DHCP-DDNS Server</title>
+      <para>
+      <command>b10-dhcp-ddns</command> is the BIND 10 DHCP-DDNS server and,
+      like other parts of BIND 10, is configured through the
+      <command>bindctl</command> program.
+      </para>
+      <para>
+      After starting BIND 10 and entering bindctl, the first step in
+      configuring the server is to add it to the list of running BIND 10
+      services.
+<screen>
+&gt; <userinput>config add Init/components b10-dhcp-ddns</userinput>
+&gt; <userinput>config set Init/components/b10-dhcp-ddns/kind dispensable</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      <para>
+      To remove <command>b10-dhcp-ddns</command> from the set of running services,
+      the <command>b10-dhcp-ddns</command> is removed from list of Init components:
+<screen>
+&gt; <userinput>config remove Init/components b10-dhcp-ddns</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+      </para>
+      <para>
+      Note that the server was only removed from the list, so BIND10 will not
+      restart it, but the server itself is still running. Hence it is usually
+      desired to stop it:
+      </para>
+<screen>
+&gt; <userinput>DhcpDdns shutdown</userinput>
+</screen>
+      <para>
+      Upon start up the module will load its configuration and begin listening
+      for NCRs based on that configuration.
+      </para>
+    </section> <!-- end start-stop -->
+    <section id="d2-configuration">
+      <title>Configuring the DHCP-DDNS Server</title>
+      <para>
+        Once the server is started, it can be configured. To view the
+        current configuration, use the following command in <command>bindctl</command>:
+        <screen>
+&gt; <userinput>config show DhcpDdns</userinput></screen>
+        When starting b10-dhcp-ddns module for the first time, the default
+        configuration will be available. It will look similar to this:
+<screen>
+&gt; <userinput>config show DhcpDdns</userinput>
+DhcpDdns/interface  "eth0"  string  (default)
+DhcpDdns/ip_address "127.0.0.1" string  (default)
+DhcpDdns/port   53001   integer (default)
+DhcpDdns/tsig_keys  []  list    (default)
+DhcpDdns/forward_ddns/ddns_domains  []  list    (default)
+DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
+</screen>
+      <para>
+      (While displayed, the parameter "interface" is not implemented, and
+      will be removed in the near future.)
+      </para>
+      </para>
+      <para>
+      The configuration can be divided as follows, each of which is described
+      in its own section:
+      </para>
+        <itemizedlist>
+          <listitem>
+            <simpara>
+              <command>General Server Parameters</command> &mdash;
+              values which control connectivity and global server behavior
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>TSIG Key Info</command> &mdash;
+              defines the TSIG keys used for secure traffic with DNS servers
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>Forward DDNS</command> &mdash;
+              defines the catalog of Forward DDNS Domains
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>Reverse DDNS</command> &mdash;
+              defines the catalog of Forward DDNS Domains
+            </simpara>
+          </listitem>
+        </itemizedlist>
+      <section id="d2-server-parameter-config">
+        <title>General Server Parameters</title>
+        <para>
+        The DHCP-DDNS server must listen for requests on a known address and
+        port. By default, it will listen at 127.0.0.1 on port 53001.  This is
+        governed by the parameters, "ip-address" and "port".  Either value
+        may be changed using config set/commit. For example to change the
+        server to listen at 192.168.1.10 port 900:
+<screen>
+&gt; <userinput>config set DhcpDdns/ip_address "192.168.1.10"</userinput>
+&gt; <userinput>config set DhcpDdns/port 900</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+        The server may be configured to listen over IPv4 or IPv6, therefore
+        ip-address may an IPv4 or IPv6 address.
+        </para>
+<note>
+<simpara>
+If the ip_address and port are changed, it will be necessary to change the
+corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
+</simpara>
+</note>
+      </section> <!-- "d2-server-parameter-config" -->
+
+      <section id="d2-tsig-key-list-config">
+        <title>TSIG Key List</title>
+<note>
+<simpara>
+        While this section may be displayed and edited using bindctl, the use
+        of TSIG in actual communications between D2 and DNS servers is not yet
+        implemented.
+</simpara>
+</note>
+        <para>
+        DDNS protocol can be conducted with or without TSIG as defined in
+        RFC 2845. This configuration section allows the administrator to
+        define the dictionary of TSIG keys to may be used.  To use TSIG
+        when working with a specific DDNS Domain that key must be defined in
+        the TSIG Key List and referenced by name in that domain's entry in
+        the DDNS catalog.
+        </para>
+        <para>
+        As one might gather from its name, this section is a list of
+        TSIG keys. Each key has three parameters:
+        <itemizedlist>
+          <listitem>
+            <simpara>
+              <command>name</command> &mdash;
+              is a unique text label used to idenfity the this key within the
+              list.  It is this value that is used to specify which key (if any)
+              should be used with a specific DNS server. So long as it is
+              unique, its content is arbitrary.  It cannot be blank.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>algorithm</command> &mdash;
+              specifies which hashing algorithm should be used with this
+              key.  This value is not currently used.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <command>secret</command> &mdash;
+              is used to specify the shared secret key code for this key. This
+              value is not currently used.
+            </simpara>
+          </listitem>
+        </itemizedlist>
+        </para>
+        <para>
+        By default, the TSIG Key list is empty:
+<screen>
+<userinput>> config show DhcpDdns/tsig_keys</userinput>
+DhcpDdns/tsig_keys  []  list  (default)
+</screen>
+        To create a new key in the list, one must first add a new key element:
+<screen>
+<userinput>> config add DhcpDdns/tsig_keys</userinput>
+</screen>
+        Displaying the new element, reveals this:
+<screen>
+<userinput>> config show DhcpDdns/tsig_keys[0]</userinput>
+DhcpDdns/tsig_keys[0]/name  ""  string  (default)
+DhcpDdns/tsig_keys[0]/algorithm "hmac_md5"  string  (modified)
+DhcpDdns/tsig_keys[0]/secret  ""  string  (default)
+</screen>
+        Populating the key name and secret, while accepting the default value
+        for alogorithm:
+<screen>
+<userinput>> config set DhcpDdns/tsig_keys[0]/name "key1.example.com"</userinput>
+<userinput>> config set DhcpDdns/tsig_keys[0]/secret "123456789"</userinput>
+<userinput>> config commit</userinput>
+</screen>
+        </para>
+      </section> <!-- "d2-tsig-key-list-config" -->
+
+      <section id="d2-forward-ddns-config">
+        <title>Forward DDNS</title>
+        <para>
+        The Forward DDNS section is used to configure D2's forward update
+        behavior. Currently it contains a single parameter, the catalog of
+        forward DDNS Domains:
+<screen>
+<userinput>> config show DhcpDdns/forward_ddns/</userinput>
+DhcpDdns/forward_ddns/ddns_domains  [] list  (default)
+</screen>
+        By default, this list is empty, which will cause the server to ignore
+        the forward update portions of requests.
+        </para>
+        <section id="add-forward-ddns-domain">
+          <title>Adding Forward DDNS Domains</title>
+
+
+          <para>
+          A forward DDNS Domain maps a forward DNS zone to a set of DNS servers
+          which maintain the forward DNS data for that zone.  You will need one
+          forward DDNS Domain for each zone you wish to service.  It may very
+          well be that some or all of your zones are maintained by the same
+          servers. You will still need one DDNS Domain per zone. Remember that
+          matching a request to the appropriate server(s) is done by zone and
+          a DDNS Domain only defines a single zone.
+          </para>
+          <para>
+          The section describes how to add Forward DDNS Domains. Repeat these
+          steps for each Forward DDNS Domain desired.  Each Forward DDNS Domain
+          has the following parameters:
+          <itemizedlist>
+            <listitem>
+              <simpara>
+              <command>name</command> &mdash;
+              The fully qualified domain name (or zone) that this DDNS Domain
+              can update.  This is value used to compare against the request
+              FQDN during forward matching.  It must be unique within the
+              catalog.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+              <command>key_name</command> &mdash;
+              If TSIG is used with this domain's servers, this
+              value should be the name of the key from within the TSIG Key List
+              to use.  If the value is blank (the default), TSIG will not be
+              used in DDNS converations with this domain's servers.  Currently
+              TSIG has not been implemented, so this value is ignored.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+              <command>dns_servers</command> &mdash;
+              A list of one or more DNS servers which can conduct the server
+              side of the DDNS protocol for this domain.  The servers
+              are used in a first to last preference. In other words, when D2
+              begins to process a request for this domain it will pick the
+              first server in this list and attempt to communicate with it.
+              If that attempt fails, it will move to next one in the list and
+              so on until the it achieves success or the list is exhausted.
+              </simpara>
+            </listitem>
+          </itemizedlist>
+        To create a new forward DDNS Domain, one must first add a new domain
+        element:
+<screen>
+<userinput>> config add DhcpDdns/forward_ddns/ddns_domains</userinput>
+</screen>
+        Displaying the DDNS Domain reveals this:
+<screen>
+<userinput>> config show DhcpDdns/forward_ddns/ddns_domains[0]</userinput>
+DhcpDdns/forward_ddns/ddns_domains[0]/name  ""  string  (default)
+DhcpDdns/forward_ddns/ddns_domains[0]/key_name  ""  string  (default)
+DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers   []  list    (default)
+</screen>
+        To set the domain's name to "other.example.com":
+<screen>
+<userinput>> config set DhcpDdns/forward_ddns/ddns_domains[1]/name "other.example.com"</userinput>
+<userinput>> config commit</userinput>
+</screen>
+        It is permissable to add a domain without any servers. If that domain
+        should be matched to a request, however, the request will fail.  In
+        order to make the domain useful though, we must add at least one DNS
+        server to it.
+        </para>
+
+        <section id="add-forward-dns-servers">
+          <title>Adding Forward DNS Servers</title>
+          <para>
+          The section describes how to add DNS servers to a Forward DDNS Domain.
+          Repeat them for as many servers as desired for a each domain.
+          </para>
+          <para>
+          Forward DNS Server entries represent actual DNS servers which
+          support the server side of the DDNS protocol. Each Forward DNS Server
+          has the following parameters:
+          <itemizedlist>
+            <listitem>
+              <simpara>
+              <command>hostname</command> &mdash;
+              The resolvable host name of the DNS server. This value is not
+              yet implemented.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+              <command>ip_address</command> &mdash;
+              The IP address at which the server listens for DDNS requests.
+              This may be either an IPv4 or an IPv6 address.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+              <command>port</command> &mdash;
+              The port on which the server listens for DDNS requests. It
+              defaults to the standard DNS service port of 53.
+              </simpara>
+            </listitem>
+          </itemizedlist>
+          To create a new forward DNS Server, one must first add a new server
+          element to the domain:
+<screen>
+<userinput>> config add DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers</userinput>
+</screen>
+         Displaying the DNS Server element should appear as follows:
+<screen>
+<userinput>> config show DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]</userinput>
+DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/hostname   ""  string  (default)
+DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/ip_address ""  string  (default)
+DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
+</screen>
+        As stated earlier, "hostname" is not yet supported so, the parameter
+        "ip_address" must be set to the address of the DNS server. If for
+        example the service is running at "172.88.99.10", then set it as
+        follows:
+<screen>
+<userinput>> config set DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/ip_address "172.88.99.10"</userinput>
+<userinput>> config commit</userinput>
+</screen>
+          </para>
+        </section> <!-- "add-forward-dns-servers" -->
+
+      </section> <!-- "add-forward-ddns-domains" -->
+
+      </section> <!-- "d2-forward-ddns-config" -->
+
+      <section id="d2-reverse-ddns-config">
+        <title>Reverse DDNS</title>
+        <para>
+        The Reverse DDNS section is used to configure D2's reverse update
+        behavior, and the concepts are the same as for the forward DDNS
+        section. Currently it contains a single parameter, the catalog of
+        reverse DDNS Domains:
+<screen>
+<userinput>> config show DhcpDdns/reverse_ddns/</userinput>
+DhcpDdns/reverse_ddns/ddns_domains  [] list  (default)
+</screen>
+        By default, this list is empty, which will cause the server to ignore
+        the reverse update portions of requests.
+        </para>
+        <section id="add-reverse-ddns-domain">
+          <title>Adding Reverse DDNS Domains</title>
+          <para>
+          A reverse DDNS Domain maps a reverse DNS zone to a set of DNS servers
+          which maintain the reverse DNS data for that zone.  You will need one
+          reverse DDNS Domain for each zone you wish to service.  It may very
+          well be that some or all of your zones are maintained by the same
+          servers; even then, you will still need one DDNS Domain entry for each
+          zone. Remember that
+          matching a request to the appropriate server(s) is done by zone and
+          a DDNS Domain only defines a single zone.
+          </para>
+          <para>
+          The section describes how to add Reverse DDNS Domains. Repeat these
+          steps for each Reverse DDNS Domain desired.  Each Reverse DDNS Domain
+          has the following parameters:
+          <itemizedlist>
+            <listitem>
+              <simpara>
+              <command>name</command> &mdash;
+              The fully qualified reverse zone that this DDNS Domain
+              can update.  This is the value used during reverse matching
+              which will compare it with a reversed version of the request's
+              lease address. The zone name should follow the appropriate
+              standards: for example, to to support the IPv4 subnet 172.16.1,
+              the name should be. "1.16.172.in-addr.arpa.".  Similarly,
+              to support an IPv6 subent of 2001:db8:1, the name should be
+              "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa."
+              Whatever the name, it must be unique within the catalog.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+              <command>key_name</command> &mdash;
+              If TSIG should be used with this domain's servers, then this
+              value should be the name of the key from within the TSIG Key List
+              to use.  If the value is blank (the default), TSIG will not be
+              used in DDNS converations with this domain's servers.  Currently
+              this value is not used as TSIG has not been implemented.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+              <command>dns_servers</command> &mdash;
+              a list of one or more DNS servers which can conduct the server
+              side of the DDNS protocol for this domain.  Currently the servers
+              are used in a first to last preference. In other words, when D2
+              begins to process a request for this domain it will pick the
+              first server in this list and attempt to communicate with it.
+              If that attempt fails, it will move to next one in the list and
+              so on until the it achieves success or the list is exhausted.
+              </simpara>
+            </listitem>
+          </itemizedlist>
+        To create a new reverse DDNS Domain, one must first add a new domain
+        element:
+<screen>
+<userinput>> config add DhcpDdns/reverse_ddns/ddns_domains</userinput>
+</screen>
+        Displaying the DDNS Domain reveals this:
+<screen>
+<userinput>> config show DhcpDdns/reverse_ddns/ddns_domains[0]</userinput>
+DhcpDdns/reverse_ddns/ddns_domains[0]/name  ""  string  (default)
+DhcpDdns/reverse_ddns/ddns_domains[0]/key_name  ""  string  (default)
+DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers   []  list    (default)
+</screen>
+        For domain supporting the subnet 2001:db8:1::, we would set the
+        domain's name as follows:
+<screen>
+<userinput>> config set DhcpDdns/reverse_ddns/ddns_domains[1]/name "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa."</userinput>
+<userinput>> config commit</userinput>
+</screen>
+        It is permissable to add a domain without any servers. If that domain
+        should be matched to a request, however, the request will fail.  In
+        order to make the domain useful though, we must add at least one DNS
+        server to it.
+        </para>
+
+        <section id="add-reverse-dns-servers">
+          <title>Adding Reverse DNS Servers</title>
+          <para>
+          The section describes how to add DNS servers to a Reverse DDNS Domain.
+          Repeat them for as many servers as desired for a each domain.
+          </para>
+          <para>
+          Reverse DNS Server entries represents a actual DNS servers which
+          support the server side of the DDNS protocol. Each Reverse DNS Server
+          has the following parameters:
+          <itemizedlist>
+            <listitem>
+              <simpara>
+              <command>hostname</command> &mdash;
+              The resolvable host name of the DNS server. This value is
+              currently ignored.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+              <command>ip_address</command> &mdash;
+              The IP address at which the server listens for DDNS requests.
+              </simpara>
+            </listitem>
+            <listitem>
+              <simpara>
+              <command>port</command> &mdash;
+              The port on which the server listens for DDNS requests. It
+              defaults to the standard DNS service port of 53.
+              </simpara>
+            </listitem>
+          </itemizedlist>
+          To create a new reverse DNS Server, one must first add a new server
+          element to the domain:
+<screen>
+<userinput>> config add DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers</userinput>
+</screen>
+         Displaying the DNS Server element should appear as follows:
+<screen>
+<userinput>> config show DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]</userinput>
+DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/hostname   ""  string  (default)
+DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/ip_address ""  string  (default)
+DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
+</screen>
+        As stated earlier, "hostname" is not yet supported so, the parameter
+        "ip_address" must be set to the address of the DNS server. If for
+        example the service is running at "172.88.99.10", then set it as
+        follows:
+<screen>
+<userinput>> config set DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/ip_address "172.88.99.10"</userinput>
+<userinput>> config commit</userinput>
+</screen>
+          </para>
+        </section> <!-- "add-reverse-dns-servers" -->
+
+      </section> <!-- "add-reverse-ddns-domains" -->
+
+      </section> <!-- "d2-reverse-ddns-config" -->
+
+      <section id="d2-exmaple-config">
+        <title>Example DHCP-DDNS Server Configuration</title>
+        <para>
+        This section provides an example DHCP-DDNS server configuration based
+        on a small example network.  Let's suppose our example network has
+        three domains, each with their own subnet.
+
+        <table>
+          <title>Our example network</title>
+          <tgroup cols='4' align='left'>
+          <colspec colname='domain'/>
+          <colspec colname='subnet'/>
+          <colspec colname='fservers'/>
+          <colspec colname='rservers'/>
+          <thead>
+            <row>
+              <entry>Domain</entry>
+              <entry>Subnet</entry>
+              <entry>Forward DNS Servers</entry>
+              <entry>Reverse DNS Servers</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>four.example.com</entry>
+              <entry>192.0.2.0/24</entry>
+              <entry>172.16.1.5, 172.16.2.5</entry>
+              <entry>172.16.1.5, 172.16.2.5</entry>
+            </row>
+            <row>
+              <entry>six.example.com</entry>
+              <entry>2001:db8:1::/64</entry>
+              <entry>3001:1::50</entry>
+              <entry>3001:1::51</entry>
+            </row>
+            <row>
+              <entry>example.com</entry>
+              <entry>192.0.0.0/16</entry>
+              <entry>172.16.2.5</entry>
+              <entry>172.16.2.5</entry>
+            </row>
+          </tbody>
+          </tgroup>
+        </table>
+        </para>
+        <para>
+        We need to construct three forward DDNS Domains:
+        <table>
+          <title>Forward DDNS Domains Needed</title>
+          <tgroup cols='3' align='left'>
+          <colspec colname='num'/>
+          <colspec colname='name'/>
+          <colspec colname='servers'/>
+          <thead>
+            <row>
+              <entry>#</entry>
+              <entry>DDNS Domain Name</entry>
+              <entry>DNS Servers</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>1.</entry>
+              <entry>four.example.com.</entry>
+              <entry>172.16.1.5, 172.16.2.5</entry>
+            </row>
+            <row>
+              <entry>2.</entry>
+              <entry>six.example.com.</entry>
+              <entry>3001:1::50</entry>
+            </row>
+            <row>
+              <entry>3.</entry>
+              <entry>example.com.</entry>
+              <entry>172.16.2.5</entry>
+            </row>
+          </tbody>
+          </tgroup>
+        </table>
+        As discussed earlier, FQDN to domain matching is based on the longest
+        match. The FQDN, "myhost.four.example.com.", will match the first
+        domain ("four.example.com") while "admin.example.com." will match the
+        third domain ("example.com"). The
+        FQDN, "other.example.net." will fail to match any domain and would
+        be rejected.
+        </para>
+        <para>
+        The following series of commands in bindctl will create the Forward
+        DDNS Domains.
+<screen>
+<userinput>
+> config add DhcpDdns/forward_ddns/ddns_domains
+> config set DhcpDdns/forward_ddns/ddns_domains[0]/name "four.example.com."
+> config add DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers
+> config set DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[0]/ip_address "172.16.1.5"
+> config add DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers
+> config set DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers[1]/ip_address "172.16.2.5"
+>
+> config add DhcpDdns/forward_ddns/ddns_domains
+> config set DhcpDdns/forward_ddns/ddns_domains[1]/name "six.example.com."
+> config add DhcpDdns/forward_ddns/ddns_domains[1]/dns_servers
+> config set DhcpDdns/forward_ddns/ddns_domains[1]/dns_servers[0]/ip_address "3001:1::50:"
+>
+> config add DhcpDdns/forward_ddns/ddns_domains
+> config set DhcpDdns/forward_ddns/ddns_domains[2]/name "example.com."
+> config add DhcpDdns/forward_ddns/ddns_domains[2]/dns_servers
+> config set DhcpDdns/forward_ddns/ddns_domains[2]/dns_servers[0]/ip_address "172.16.2.5"
+>
+> config commit
+</userinput>
+</screen>
+        </para>
+        <para>
+        Similarly, we need to construct the three reverse DDNS Domains:
+        <table>
+          <title>Reverse DDNS Domains Needed</title>
+          <tgroup cols='3' align='left'>
+          <colspec colname='num'/>
+          <colspec colname='DDNS Domain name'/>
+          <colspec colname='DDNS Domain DNS Servers'/>
+          <thead>
+            <row>
+              <entry>#</entry>
+              <entry>DDNS Domain Name</entry>
+              <entry>DNS Servers</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>1.</entry>
+              <entry>2.0.192.in-addr.arpa.</entry>
+              <entry>172.16.1.5, 172.16.2.5</entry>
+            </row>
+            <row>
+              <entry>2.</entry>
+              <entry>1.0.0.0.8.d.b.0.1.0.0.2.ip6.arpa.</entry>
+              <entry>3001:1::50</entry>
+            </row>
+            <row>
+              <entry>3.</entry>
+              <entry>0.182.in-addr.arpa.</entry>
+              <entry>172.16.2.5</entry>
+            </row>
+          </tbody>
+          </tgroup>
+        </table>
+        An address of "192.0.2.150" will match the first domain,
+        "2001:db8:1::10" will match the second domain, and "192.0.50.77"
+        the third domain.
+        </para>
+        <para>
+        The following series of commands in bindctl will create our Reverse
+        DDNS Domains.
+<screen>
+<userinput>
+> config add DhcpDdns/reverse_ddns/ddns_domains
+> config set DhcpDdns/reverse_ddns/ddns_domains[0]/name "2.0.192.in-addr.arpa."
+> config add DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers
+> config set DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/ip_address "172.16.1.5"
+> config add DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers
+> config set DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[1]/ip_address "172.16.2.5"
+>
+> config add DhcpDdns/reverse_ddns/ddns_domains
+> config set DhcpDdns/reverse_ddns/ddns_domains[1]/name "1.0.0.0.8.d.b.0.1.0.0.2.ip6.arpa."
+> config add DhcpDdns/reverse_ddns/ddns_domains[1]/dns_servers
+> config set DhcpDdns/reverse_ddns/ddns_domains[1]/dns_servers[0]/ip_address "3001:1::50:"
+>
+> config add DhcpDdns/reverse_ddns/ddns_domains
+> config set DhcpDdns/reverse_ddns/ddns_domains[2]/name "0.192.in-addr.arpa."
+> config add DhcpDdns/reverse_ddns/ddns_domains[2]/dns_servers
+> config set DhcpDdns/reverse_ddns/ddns_domains[2]/dns_servers[0]/ip_address "172.16.2.5"
+>
+> config commit
+</userinput>
+</screen>
+        </para>
+        </section> <!-- end of "d2-example" -->
+    </section> <!-- end of section "d2-configuration" -->
+  </chapter> <!-- DHCP-DDNS Server -->
 
   <chapter id="libdhcp">
     <title>libdhcp++ library</title>
