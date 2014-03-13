@@ -1,3 +1,12 @@
+773.	[bug]		tmark
+	b10-dhcp4 and b10-dhcp6 now both correctly support DDNS updates
+	when honoring client requested delegation. When DDNS is enabled,
+	and the client's FQDN indicates they will do the forward updates,
+	the servers will now post a DDNS update request to b10-dhcp-ddns
+	for the reverse updates. Prior to this the servers were posting no
+	DDNS update requests when honoring client delegation.
+	(Trac #3352, git b1a0f405463723d539b2e6ed2dcdd692d7796b88)
+
 772.	[bug]		tmark
 	Tickets #3339 and #3373 (see entries 760 and 768 respectively)
 	were reverted. They introduced a bug where components added through
