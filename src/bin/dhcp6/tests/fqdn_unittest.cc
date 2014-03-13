@@ -40,6 +40,7 @@ using namespace std;
 
 namespace {
 
+
 /// @brief A test fixture class for testing DHCPv6 Client FQDN Option handling.
 class FqdnDhcpv6SrvTest : public Dhcpv6SrvTest {
 public:
@@ -55,6 +56,18 @@ public:
     static const uint16_t OVERRIDE_NO_UPDATE = 2;
     static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
     static const uint16_t REPLACE_CLIENT_NAME = 8;
+
+    // Type used to indicate whether or not forward updates are expected
+    struct ExpFwd {
+        ExpFwd(bool exp_fwd) : value_(exp_fwd){};
+        bool value_;
+    };
+
+    // Type used to indicate whether or not reverse updates are expected
+    struct ExpRev {
+        ExpRev(bool exp_rev) : value_(exp_rev){};
+        bool value_;
+    };
 
     /// @brief Constructor
     FqdnDhcpv6SrvTest()
@@ -172,7 +185,6 @@ public:
             pkt->addOption(oro);
         }
 
-        OptionPtr tmp = pkt->getOption(D6O_CLIENTID);
         return (pkt);
     }
 
@@ -297,7 +309,8 @@ public:
                   const uint8_t exp_flags,
                   const std::string& exp_domain_name,
                   const bool create_ncr_check,
-                  const bool exp_fwd = true, const bool exp_rev = true) {
+                  const ExpFwd& exp_fwd = ExpFwd(true),
+                  const ExpRev& exp_rev = ExpRev(true)) {
 
         Pkt6Ptr question = generateMessage(msg_type,
                                            in_flags,
@@ -345,15 +358,15 @@ public:
         if (create_ncr_check) {
             // Call createNameChangeRequests
             ASSERT_NO_THROW(srv_->createNameChangeRequests(answer));
-            if (exp_fwd || exp_rev) {
+            if (exp_fwd.value_ || exp_rev.value_) {
                 // Should have created 1 NCR.
                 NameChangeRequestPtr ncr;
                 ASSERT_EQ(1, d2_mgr_.getQueueSize());
                 ASSERT_NO_THROW(ncr = d2_mgr_.peekAt(0));
                 ASSERT_TRUE(ncr);
                 EXPECT_EQ(dhcp_ddns::CHG_ADD, ncr->getChangeType());
-                EXPECT_EQ(exp_fwd, ncr->isForwardChange());
-                EXPECT_EQ(exp_rev, ncr->isReverseChange());
+                EXPECT_EQ(exp_fwd.value_, ncr->isForwardChange());
+                EXPECT_EQ(exp_rev.value_, ncr->isReverseChange());
                 ASSERT_NO_THROW(d2_mgr_.runReadyIO());
             } else {
                 // Should not have created any NCRs.
@@ -503,7 +516,7 @@ TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdate) {
     testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
              "myhost.example.com",
              Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_S,
-             "myhost.example.com.", true, true, true);
+             "myhost.example.com.", true, ExpFwd(true), ExpRev(true));
 }
 
 // Test server's response when client provides partial domain-name and requests
@@ -511,7 +524,7 @@ TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdate) {
 TEST_F(FqdnDhcpv6SrvTest, serverAAAAUpdatePartialName) {
     testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S, "myhost",
              Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
-             "myhost.example.com.", true, true, true);
+             "myhost.example.com.", true, ExpFwd(true), ExpRev(true));
 }
 
 // Test server's response when client provides empty domain-name and requests
@@ -526,7 +539,7 @@ TEST_F(FqdnDhcpv6SrvTest, noUpdate) {
     testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_N,
              "myhost.example.com",
              Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_N,
-             "myhost.example.com.", true, false, false);
+             "myhost.example.com.", true, ExpFwd(false), ExpRev(false));
 }
 
 // Test server's response when client requests no DNS update and
@@ -537,7 +550,7 @@ TEST_F(FqdnDhcpv6SrvTest, overrideNoUpdate) {
              "myhost.example.com",
              Option6ClientFqdn::FULL,
              (Option6ClientFqdn::FLAG_S | Option6ClientFqdn::FLAG_O),
-             "myhost.example.com.", true, true, true);
+             "myhost.example.com.", true, ExpFwd(true), ExpRev(true));
 }
 
 // Test server's response when client requests that server delegates the AAAA
@@ -546,7 +559,7 @@ TEST_F(FqdnDhcpv6SrvTest, clientAAAAUpdate) {
     testFqdn(DHCPV6_SOLICIT, 0, "myhost.example.com.",
              Option6ClientFqdn::FULL,
              0,
-             "myhost.example.com.", true, false, true);
+             "myhost.example.com.", true, ExpFwd(false), ExpRev(true));
 }
 
 // Test server's response when client requests that server delegates the AAAA
@@ -556,7 +569,7 @@ TEST_F(FqdnDhcpv6SrvTest, clientAAAAUpdateNotAllowed) {
     testFqdn(DHCPV6_SOLICIT, 0, "myhost.example.com.",
              Option6ClientFqdn::FULL,
              Option6ClientFqdn::FLAG_S | Option6ClientFqdn::FLAG_O,
-             "myhost.example.com.", true, true, true);
+             "myhost.example.com.", true, ExpFwd(true), ExpRev(true));
 }
 
 // Test that exception is thrown if supplied NULL answer packet when
