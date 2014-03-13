@@ -544,7 +544,6 @@ TEST_F(NameDhcpv4SrvTest, respectClientDelegation) {
 
     flagVsConfigScenario(Option4ClientFqdn::FLAG_E,
                          Option4ClientFqdn::FLAG_E);
-                         // Option4ClientFqdn::FLAG_N));
 }
 
 // Tests the following scenario:

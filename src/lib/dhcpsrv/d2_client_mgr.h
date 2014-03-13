@@ -215,9 +215,9 @@ public:
     /// * reverse will be true if N_FLAG is false
     ///
     /// @param fqdn FQDN option from which to read server (outbound) flags
-    /// @param forward[out] bool value will be set to true if forward udpates
+    /// @param [out] forward bool value will be set to true if forward udpates
     /// should be done, false if not.
-    /// @param reverse[out] bool value will be set to true if reverse udpates
+    /// @param [out] reverse bool value will be set to true if reverse udpates
     /// should be done, false if not.
     /// @tparam T FQDN Option class containing the FQDN data such as
     /// dhcp::Option4ClientFqdn or dhcp::Option6ClientFqdn
