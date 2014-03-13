@@ -1,3 +1,10 @@
+774.	[doc]		tmark
+	Added sections to the BIND 10 guide on configuring and using the
+	DHCP-DDNS feature of Kea.  Chapter 19, describes the new DHCP-DDNS
+	server and its configuration. Additions to chapters 17 and 18
+	describe configuring the DHCP servers to work with the new server.
+	(Trac #3283, git 806eea955c61eba2d7268958a740a8e8ea63bdaf)
+
 773.	[bug]		tmark
 	b10-dhcp4 and b10-dhcp6 now both correctly support DDNS updates
 	when honoring client requested delegation. When DDNS is enabled,
