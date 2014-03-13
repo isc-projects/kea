@@ -22,7 +22,7 @@
         "item_name": "port",
         "item_type": "integer",
         "item_optional": true,
-        "item_default": 51771 
+        "item_default": 53001 
     },
     {
         "item_name": "tsig_keys",
