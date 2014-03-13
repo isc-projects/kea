@@ -966,8 +966,9 @@ Dhcpv4Srv::assignLease(const Pkt4Ptr& question, Pkt4Ptr& answer) {
         Option4ClientFqdn>(answer->getOption(DHO_FQDN));
     if (fqdn) {
         hostname = fqdn->getDomainName();
-        fqdn_fwd = fqdn->getFlag(Option4ClientFqdn::FLAG_S);
-        fqdn_rev = !fqdn->getFlag(Option4ClientFqdn::FLAG_N);
+        CfgMgr::instance().getD2ClientMgr().getUpdateDirections(*fqdn,
+                                                                fqdn_fwd,
+                                                                fqdn_rev);
     } else {
         opt_hostname = boost::dynamic_pointer_cast<OptionString>
             (answer->getOption(DHO_HOST_NAME));
