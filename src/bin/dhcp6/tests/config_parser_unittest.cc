@@ -3162,7 +3162,7 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
     ConstElementPtr status;
 
     // Configuration string with an invalid D2 client config,
-    // "server-ip" is missing.
+    // "server-ip" is invalid.
     string config_str = "{ \"interfaces\": [ \"*\" ],"
         "\"rebind-timer\": 2000, "
         "\"renew-timer\": 1000, "
@@ -3171,6 +3171,7 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
         "    \"subnet\": \"2001:db8:1::/64\" } ], "
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"bogus-value\", "
         "     \"server-port\" : 5301, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "

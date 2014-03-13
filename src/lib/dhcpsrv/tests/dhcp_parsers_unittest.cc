@@ -821,29 +821,59 @@ TEST_F(ParseConfigTest, validDisabledD2Config) {
     EXPECT_FALSE(d2_client_config->getEnableUpdates());
 }
 
-/// @brief Check various invalid D2 client configurations.
-TEST_F(ParseConfigTest, invalidD2Config) {
-    std::string invalid_configs[] = {
-        // only the enable flag of true
+/// @brief Checks that given a partial configuration, parser supplies
+/// default values
+TEST_F(ParseConfigTest, parserDefaultsD2Config) {
+
+    // Configuration string.  This contains a set of valid libraries.
+    std::string config_str =
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true"
         "    }"
-        "}",
-        // Missing server ip value
+        "}";
+
+    // Verify that the configuration string parses.
+    int rcode = parseConfiguration(config_str);
+    ASSERT_TRUE(rcode == 0) << error_text_;
+
+    // Verify that DHCP-DDNS is enabled.
+    EXPECT_TRUE(CfgMgr::instance().ddnsEnabled());
+
+    // Make sure fetched config is correct.
+    D2ClientConfigPtr d2_client_config;
+    ASSERT_NO_THROW(d2_client_config = CfgMgr::instance().getD2ClientConfig());
+    EXPECT_TRUE(d2_client_config);
+    EXPECT_TRUE(d2_client_config->getEnableUpdates());
+    EXPECT_EQ(D2ClientConfig::DFT_SERVER_IP,
+              d2_client_config->getServerIp().toText());
+    EXPECT_EQ(D2ClientConfig::DFT_SERVER_PORT,
+              d2_client_config->getServerPort());
+    EXPECT_EQ(dhcp_ddns::stringToNcrProtocol(D2ClientConfig::DFT_NCR_PROTOCOL),
+              d2_client_config->getNcrProtocol());
+    EXPECT_EQ(dhcp_ddns::stringToNcrFormat(D2ClientConfig::DFT_NCR_FORMAT),
+              d2_client_config->getNcrFormat());
+    EXPECT_EQ(D2ClientConfig::DFT_ALWAYS_INCLUDE_FQDN,
+              d2_client_config->getAlwaysIncludeFqdn());
+    EXPECT_EQ(D2ClientConfig::DFT_OVERRIDE_NO_UPDATE,
+              d2_client_config->getOverrideNoUpdate());
+    EXPECT_EQ(D2ClientConfig::DFT_OVERRIDE_CLIENT_UPDATE,
+              d2_client_config->getOverrideClientUpdate());
+    EXPECT_EQ(D2ClientConfig::DFT_REPLACE_CLIENT_NAME,
+              d2_client_config->getReplaceClientName());
+    EXPECT_EQ(D2ClientConfig::DFT_GENERATED_PREFIX,
+              d2_client_config->getGeneratedPrefix());
+    EXPECT_EQ(D2ClientConfig::DFT_QUALIFYING_SUFFIX,
+              d2_client_config->getQualifyingSuffix());
+}
+
+
+/// @brief Check various invalid D2 client configurations.
+TEST_F(ParseConfigTest, invalidD2Config) {
+    std::string invalid_configs[] = {
+        // Must supply at lease enable-updates
         "{ \"dhcp-ddns\" :"
         "    {"
-        "     \"enable-updates\" : true, "
-        //"     \"server-ip\" : \"192.0.2.0\", "
-        "     \"server-port\" : 53001, "
-        "     \"ncr-protocol\" : \"UDP\", "
-        "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
-        "     \"override-no-update\" : true, "
-        "     \"override-client-update\" : true, "
-        "     \"replace-client-name\" : true, "
-        "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" "
         "    }"
         "}",
         // Invalid server ip value
@@ -910,12 +940,12 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"qualifying-suffix\" : \"test.suffix.\" "
         "    }"
         "}",
-        // Missig Port
+        // Invalid Port
         "{ \"dhcp-ddns\" :"
         "    {"
         "     \"enable-updates\" : true, "
         "     \"server-ip\" : \"192.0.2.0\", "
-        // "     \"server-port\" : 53001, "
+        "     \"server-port\" : \"bogus\", "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"always-include-fqdn\" : true, "
