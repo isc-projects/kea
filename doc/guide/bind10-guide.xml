@@ -6917,8 +6917,8 @@ DhcpDdns/reverse_ddns/ddns_domains  [] list  (default)
               <command>name</command> &mdash;
               The fully qualified reverse zone that this DDNS Domain
               can update.  This is the value used during reverse matching
-              which will compare it a reversed version of the request's lease
-              address. The zone name should follow the appropriate
+              which will compare it with a reversed version of the request's
+              lease address. The zone name should follow the appropriate
               standards: for example, to to support the IPv4 subnet 172.16.1,
               the name should be. "1.16.172.in-addr.arpa.".  Similarly,
               to support an IPv6 subent of 2001:db8:1, the name should be
