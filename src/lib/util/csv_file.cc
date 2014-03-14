@@ -124,7 +124,8 @@ CSVRow::checkIndex(const size_t at) const {
 }
 
 CSVFile::CSVFile(const std::string& filename)
-    : primary_separator_(','), filename_(filename), fs_() {
+    : primary_separator_(','), filename_(filename), fs_(), cols_(0),
+      read_msg_() {
 }
 
 CSVFile::~CSVFile() {
@@ -142,6 +143,12 @@ CSVFile::close() {
 }
 
 void
+CSVFile::flush() const {
+    checkStreamStatus("flush");
+    fs_->flush();
+}
+
+void
 CSVFile::addColumn(const std::string& col_name) {
     if (getColumnIndex(col_name) >= 0) {
         isc_throw(CSVFileError, "attempt to add duplicate column '"
@@ -152,10 +159,10 @@ CSVFile::addColumn(const std::string& col_name) {
 
 void
 CSVFile::append(const CSVRow& row) const {
-    if (!fs_) {
-        isc_throw(CSVFileError, "unable to write a row to the CSV file '"
-                  << filename_ << "', which is closed");
-    }
+    checkStreamStatus("append");
+
+    // If a stream is in invalid state, reset the state.
+    fs_->clear();
 
     if (row.getValuesCount() != getColumnCount()) {
         isc_throw(CSVFileError, "number of values in the CSV row '"
@@ -176,6 +183,19 @@ CSVFile::append(const CSVRow& row) const {
     }
 }
 
+void
+CSVFile::checkStreamStatus(const std::string& operation) const {
+    if (!fs_) {
+        isc_throw(CSVFileError, "NULL stream pointer when performing '"
+                  << operation << "' on file '" << filename_ << "'");
+
+    } else if (!fs_->is_open()) {
+        isc_throw(CSVFileError, "closed stream when performing '"
+                  << operation << "' on file '" << filename_ << "'");
+
+    }
+}
+
 std::ifstream::pos_type
 CSVFile::size() const {
     std::ifstream fs(filename_.c_str());
@@ -186,11 +206,16 @@ CSVFile::size() const {
         fs.close();
         return (0);
     }
-    // Seek to the end of file and see where we are. This is a size of
-    // the file.
-    fs.seekg(0, std::ifstream::end);
-    std::ifstream::pos_type pos = fs.tellg();
-    fs.close();
+    std::ifstream::pos_type pos;
+    try {
+        // Seek to the end of file and see where we are. This is a size of
+        // the file.
+        fs.seekg(0, std::ifstream::end);
+        pos = fs.tellg();
+        fs.close();
+    } catch (const std::exception& ex) {
+        return (0);
+    }
     return (pos);
 }
 
@@ -214,8 +239,25 @@ CSVFile::getColumnName(const size_t col_index) const {
     return (cols_[col_index]);
 }
 
-void
-CSVFile::next(CSVRow& row) {
+bool
+CSVFile::next(CSVRow& row, const bool skip_validation) {
+    // Set somethings as row validation error. Although, we haven't started
+    // actual row validation we should get rid of any previously recorded
+    // errors so as the caller doesn't interpret them as the current one.
+    setReadMsg("validation not started");
+
+    try {
+        // Check that stream is "ready" for any IO operations.
+        checkStreamStatus("get next row");
+
+    } catch (isc::Exception& ex) {
+        setReadMsg(ex.what());
+        return (false);
+    }
+
+    // If a stream is in invalid state, reset the state.
+    fs_->clear();
+
     // Get exactly one line of the file.
     std::string line;
     std::getline(*fs_, line);
@@ -223,10 +265,20 @@ CSVFile::next(CSVRow& row) {
     // return an empty row.
     if (line.empty() && fs_->eof()) {
         row = EMPTY_ROW();
-        return;
+        return (true);
+
+    } else if (!fs_->good()) {
+        // If we hit an IO error, communicate it to the caller but do NOT close
+        // the stream. Caller may try again.
+        setReadMsg("error reading a row from CSV file '"
+                   + std::string(filename_) + "'");
+        return (false);
     }
     // If we read anything, parse it.
     row.parse(line.c_str());
+
+    // And check if it is correct.
+    return (skip_validation ? true : validate(row));
 }
 
 void
@@ -248,14 +300,34 @@ CSVFile::open() {
         // Make sure we are on the beginning of the file, so as we can parse
         // the header.
         fs_->seekg(0);
+        if (!fs_->good()) {
+            close();
+            isc_throw(CSVFileError, "unable to set read pointer in the file '"
+                      << filename_ << "'");
+        }
 
-        // Get the header.
-        std::string line;
-        std::getline(*fs_, line);
-        CSVRow header(line.c_str(), primary_separator_);
-        // Initialize columns.
-        for (size_t i = 0; i < header.getValuesCount(); ++i) {
-            addColumn(header.readAt(i));
+        // Read the header.
+        CSVRow header;
+        if (!next(header, true)) {
+            close();
+            isc_throw(CSVFileError, "failed to read and parse header of the"
+                      " CSV file '" << filename_ << "': "
+                      << getReadMsg());
+        }
+
+        // Check the header against the columns specified for the CSV file.
+        if (!validateHeader(header)) {
+            close();
+            isc_throw(CSVFileError, "invalid header '" << header
+                      << "' in CSV file '" << filename_ << "'");
+        }
+
+        // Everything is good, so if we haven't added any columns yet,
+        // add them.
+        if (getColumnCount() == 0) {
+            for (size_t i = 0; i < header.getValuesCount(); ++i) {
+                addColumn(header.readAt(i));
+            }
         }
     }
 }
@@ -291,5 +363,37 @@ CSVFile::recreate() {
 
 }
 
+bool
+CSVFile::validate(const CSVRow& row) {
+    setReadMsg("success");
+    bool ok = (row.getValuesCount() == getColumnCount());
+    if (!ok) {
+        std::ostringstream s;
+        s << "the size of the row '" << row << "' doesn't match the number of"
+            " columns '" << getColumnCount() << "' of the CSV file '"
+          << filename_ << "'";
+        setReadMsg(s.str());
+    }
+    return (ok);
 }
+
+bool
+CSVFile::validateHeader(const CSVRow& header) {
+    if (getColumnCount() == 0) {
+        return (true);
+    }
+
+    if (getColumnCount() != header.getValuesCount()) {
+        return (false);
+    }
+
+    for (int i = 0; i < getColumnCount(); ++i) {
+        if (getColumnName(i) != header.readAt(i)) {
+            return (false);
+        }
+    }
+    return (true);
 }
+
+} // end of isc::util namespace
+} // end of isc namespace
