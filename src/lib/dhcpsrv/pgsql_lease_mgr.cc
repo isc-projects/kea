@@ -33,127 +33,146 @@ using namespace isc::dhcp;
 using namespace std;
 
 namespace {
+
+// Maximum text representation of an IPv6 address
 const size_t ADDRESS6_TEXT_MAX_LEN = 39;
 
+// Maximum number of parameters used in any signle query
 const size_t MAX_PARAMETERS_IN_QUERY = 12;
 
+// Defines a single query
 struct TaggedStatement {
+
+    /// Query index
     PgSqlLeaseMgr::StatementIndex index;
+
+    /// Number of parameters for a given query
     int nbparams;
+
+    /// @brief OID types
+    ///
+    /// Sspecify parameter types. See /usr/include/postgresql/catalog/pg_type.h.
+    /// For some reason that header does not export those parameters.
+    /// Those OIDs must match both input and output parameters.
     const Oid types[MAX_PARAMETERS_IN_QUERY + 1];
+
+    /// Short name of the query.
     const char* name;
+
+    /// Text represenation of the actual query.
     const char* text;
 };
 
 TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::DELETE_LEASE4, 1,
-                    { 20 },
-                    "delete_lease4",
-                    "DELETE FROM lease4 WHERE address = $1"},
+        { 20 },
+        "delete_lease4",
+     "DELETE FROM lease4 WHERE address = $1"},
     {PgSqlLeaseMgr::DELETE_LEASE6, 1,
-                    { 1043 },
-                    "delete_lease6",
-                    "DELETE FROM lease6 WHERE address = $1"},
+        { 1043 },
+        "delete_lease6",
+     "DELETE FROM lease6 WHERE address = $1"},
     {PgSqlLeaseMgr::GET_LEASE4_ADDR, 1,
-                    { 20 },
-                    "get_lease4_addr",
-                    "DECLARE get_lease4_addr CURSOR FOR "
-                        "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, extract(epoch from expire), subnet_id, fqdn_fwd, fqdn_rev, hostname "
-                            "FROM lease4 "
-                            "WHERE address = $1"},
+        { 20 },
+        "get_lease4_addr",
+     "DECLARE get_lease4_addr CURSOR FOR "
+     "SELECT address, hwaddr, client_id, "
+     "valid_lifetime, extract(epoch from expire), subnet_id, fqdn_fwd, fqdn_rev, hostname "
+     "FROM lease4 "
+     "WHERE address = $1"},
     {PgSqlLeaseMgr::GET_LEASE4_CLIENTID, 1,
-                    { 17 },
-                    "get_lease4_clientid",
-                    "DECLARE get_lease4_clientid CURSOR FOR "
-                        "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, extract(epoch from expire), subnet_id, fqdn_fwd, fqdn_rev, hostname "
-                            "FROM lease4 "
-                            "WHERE client_id = $1"},
+        { 17 },
+        "get_lease4_clientid",
+     "DECLARE get_lease4_clientid CURSOR FOR "
+     "SELECT address, hwaddr, client_id, "
+     "valid_lifetime, extract(epoch from expire), subnet_id, fqdn_fwd, fqdn_rev, hostname "
+     "FROM lease4 "
+     "WHERE client_id = $1"},
     {PgSqlLeaseMgr::GET_LEASE4_CLIENTID_SUBID, 2,
-                    { 17, 20 },
-                    "get_lease4_clientid_subid",
-                    "DECLARE get_lease4_clientid_subid CURSOR FOR "
-                    "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
-                            "FROM lease4 "
-                            "WHERE client_id = $1 AND subnet_id = $2"},
+        { 17, 20 },
+        "get_lease4_clientid_subid",
+     "DECLARE get_lease4_clientid_subid CURSOR FOR "
+     "SELECT address, hwaddr, client_id, "
+     "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
+     "FROM lease4 "
+     "WHERE client_id = $1 AND subnet_id = $2"},
     {PgSqlLeaseMgr::GET_LEASE4_HWADDR, 1,
-                    { 17 },
-                    "get_lease4_hwaddr",
-                    "DECLARE get_lease4_hwaddr CURSOR FOR "
-                    "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
-                            "FROM lease4 "
-                            "WHERE hwaddr = $1"},
+         { 17 },
+         "get_lease4_hwaddr",
+     "DECLARE get_lease4_hwaddr CURSOR FOR "
+     "SELECT address, hwaddr, client_id, "
+     "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
+     "FROM lease4 "
+     "WHERE hwaddr = $1"},
     {PgSqlLeaseMgr::GET_LEASE4_HWADDR_SUBID, 2,
-                    { 17, 20 },
-                    "get_lease4_hwaddr_subid",
-                    "DECLARE get_lease4_hwaddr_subid CURSOR FOR "
-                    "SELECT address, hwaddr, client_id, "
-                        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
-                            "FROM lease4 "
-                            "WHERE hwaddr = $1 AND subnet_id = $2"},
+         { 17, 20 },
+         "get_lease4_hwaddr_subid",
+     "DECLARE get_lease4_hwaddr_subid CURSOR FOR "
+     "SELECT address, hwaddr, client_id, "
+     "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
+     "FROM lease4 "
+     "WHERE hwaddr = $1 AND subnet_id = $2"},
     {PgSqlLeaseMgr::GET_LEASE6_ADDR, 2,
-     { 1043, 21 },
-                    "get_lease6_addr",
-                    "DECLARE get_lease6_addr CURSOR FOR "
-                    "SELECT address, duid, valid_lifetime, "
-                        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
-                            "FROM lease6 "
-                            "WHERE address = $1 AND lease_type = $2"},
+        { 1043, 21 },
+        "get_lease6_addr",
+     "DECLARE get_lease6_addr CURSOR FOR "
+     "SELECT address, duid, valid_lifetime, "
+     "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+     "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+     "FROM lease6 "
+     "WHERE address = $1 AND lease_type = $2"},
     {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID, 3,
-     { 17, 20, 21 },
-                    "get_lease6_duid_iaid",
-                    "DECLARE get_lease6_duid_iaid CURSOR FOR "
-                    "SELECT address, duid, valid_lifetime, "
-                        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
-                            "FROM lease6 "
-                            "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
+        { 17, 20, 21 },
+        "get_lease6_duid_iaid",
+     "DECLARE get_lease6_duid_iaid CURSOR FOR "
+     "SELECT address, duid, valid_lifetime, "
+     "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+     "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+     "FROM lease6 "
+     "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
     {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID, 4,
-     { 21, 17, 20, 20 },
-                    "get_lease6_duid_iaid_subid",
-                    "DECLARE get_lease6_duid_iaid_subid CURSOR FOR "
-                    "SELECT address, duid, valid_lifetime, "
-                        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
-                            "FROM lease6 "
-                            "WHERE lease_type = $1 AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
+        { 21, 17, 20, 20 },
+        "get_lease6_duid_iaid_subid",
+     "DECLARE get_lease6_duid_iaid_subid CURSOR FOR "
+     "SELECT address, duid, valid_lifetime, "
+     "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+     "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
+     "FROM lease6 "
+     "WHERE lease_type = $1 AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
     {PgSqlLeaseMgr::GET_VERSION, 0,
-                    { 0 },
-                    "get_version",
-                    "DECLARE get_version CURSOR FOR "
-                    "SELECT version, minor FROM schema_version"},
+        { 0 },
+     "get_version",
+     "DECLARE get_version CURSOR FOR "
+     "SELECT version, minor FROM schema_version"},
     {PgSqlLeaseMgr::INSERT_LEASE4, 9,
-     { 20, 17, 17, 20, 1114, 20, 16, 16, 1043 },
-                    "insert_lease4",
-                    "INSERT INTO lease4(address, hwaddr, client_id, "
-                        "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname) "
-                            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"},
+         { 20, 17, 17, 20, 1114, 20, 16, 16, 1043 },
+         "insert_lease4",
+     "INSERT INTO lease4(address, hwaddr, client_id, "
+     "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname) "
+     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)"},
     {PgSqlLeaseMgr::INSERT_LEASE6, 12,
-                    { 1043, 17, 20, 1114, 20, 20, 21, 20, 21, 16, 16, 1043 },
-                    "insert_lease6",
-                    "INSERT INTO lease6(address, duid, valid_lifetime, "
-                        "expire, subnet_id, pref_lifetime, "
-                        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname) "
-                            "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"},
+        { 1043, 17, 20, 1114, 20, 20, 21, 20, 21, 16, 16, 1043 },
+        "insert_lease6",
+     "INSERT INTO lease6(address, duid, valid_lifetime, "
+     "expire, subnet_id, pref_lifetime, "
+     "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname) "
+     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)"},
     {PgSqlLeaseMgr::UPDATE_LEASE4, 10,
-     { 20, 17, 17, 20, 1114, 20, 16, 16, 1043, 20 },
-                    "update_lease4",
-                    "UPDATE lease4 SET address = $1, hwaddr = $2, "
-                        "client_id = $3, valid_lifetime = $4, expire = $5, "
-                        "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9 "
-                            "WHERE address = $10"},
+        { 20, 17, 17, 20, 1114, 20, 16, 16, 1043, 20 },
+        "update_lease4",
+     "UPDATE lease4 SET address = $1, hwaddr = $2, "
+     "client_id = $3, valid_lifetime = $4, expire = $5, "
+     "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9 "
+     "WHERE address = $10"},
     {PgSqlLeaseMgr::UPDATE_LEASE6, 13,
-     { 1043, 17, 20, 1114, 20, 20, 21, 20, 21, 16, 16, 1043, 1043 },
-                    "update_lease6",
-                    "UPDATE lease6 SET address = $1, duid = $2, "
-                        "valid_lifetime = $3, expire = $4, subnet_id = $5, "
-                        "pref_lifetime = $6, lease_type = $7, iaid = $8, "
-                        "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12 "
-                            "WHERE address = $13"},
+        { 1043, 17, 20, 1114, 20, 20, 21, 20, 21, 16, 16, 1043, 1043 },
+        "update_lease6",
+     "UPDATE lease6 SET address = $1, duid = $2, "
+     "valid_lifetime = $3, expire = $4, subnet_id = $5, "
+     "pref_lifetime = $6, lease_type = $7, iaid = $8, "
+     "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12 "
+     "WHERE address = $13"},
+
     // End of list sentinel
     {PgSqlLeaseMgr::NUM_STATEMENTS, 0,  { 0 }, NULL, NULL}
 };
@@ -163,17 +182,25 @@ TaggedStatement tagged_statements[] = {
 namespace isc {
 namespace dhcp {
 
+/// @brief Auxiliary PostgreSQL exchange class
 class PgSqlLeaseExchange {
 protected:
-    bindparams params;
+
+    /// Converts time_t structure to a text representation
+    /// @param expire timestamp to be converted
+    /// @param buffer text version will be written here
     void
-    convertToTimestamp(const time_t & expire_,
-                       char buffer_[20]) {
+    convertToTimestamp(const time_t& expire, char buffer[20]) {
         struct tm tinfo;
-        localtime_r(&expire_, &tinfo);
-        strftime(buffer_, 20, "%Y-%m-%d %H:%M:%S", &tinfo);
+        localtime_r(&expire, &tinfo);
+        strftime(buffer, 20, "%Y-%m-%d %H:%M:%S", &tinfo);
     }
 
+    /// Converts available text representations to bool
+    ///
+    /// Allowed values are "t" or "f". Any other will throw.
+    /// @param value text value to be converted
+    /// @throw BadValue if passed any value other than "t" or "f"
     bool stringToBool(char* value) {
         if (!strlen(value)) {
             return (false);
@@ -188,11 +215,17 @@ protected:
                       " only accepted values are 't', 'f' or ''");
         }
     }
+
+    /// Compiled statement bind parameters
+    bindparams params;
 };
 
+/// @brief Represents a single Lease4 exchange
 class PgSqlLease4Exchange : public PgSqlLeaseExchange {
     static const size_t LEASE_COLUMNS = 9;
 public:
+
+    /// Default constructor
     PgSqlLease4Exchange() : addr4_(0) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
@@ -234,7 +267,8 @@ public:
                           << HWAddr::MAX_HWADDR_LEN);
             }
 
-            PgSqlParam pdest = { .value = string(lease_->hwaddr_.begin(), lease_->hwaddr_.end()),
+            PgSqlParam pdest = { .value = string(lease_->hwaddr_.begin(),
+                                                 lease_->hwaddr_.end()),
                                  .isbinary = 1,
                                  .binarylen = static_cast<int>(lease_->hwaddr_.size()) };
             params.push_back(pdest);
@@ -283,18 +317,16 @@ public:
 
     Lease4Ptr
     convertFromDatabase(PGresult *& r, int line) {
-        const char * addr4_str = PQgetvalue(r, line, 0);
-        unsigned char * hwaddr_str = PQunescapeBytea(
-                                     (const unsigned char *)
-                                     PQgetvalue(r, line, 1),
-                                     & hwaddr_length_);
-        unsigned char * client_id_str = PQunescapeBytea(
-                                        (const unsigned char *)
-                                        PQgetvalue(r, line, 2),
-                                        & client_id_length_);
-        const char * valid_lifetime_str = PQgetvalue(r, line, 3);
-        const char * expire_str = PQgetvalue(r, line, 4);
-        const char * subnet_id_str = PQgetvalue(r, line, 5);
+        const char* addr4_str = PQgetvalue(r, line, 0);
+        unsigned char* hwaddr_str = PQunescapeBytea((const unsigned char *)
+                                                    PQgetvalue(r, line, 1),
+                                                    & hwaddr_length_);
+        unsigned char* client_id_str = PQunescapeBytea((const unsigned char *)
+                                                       PQgetvalue(r, line, 2),
+                                                       & client_id_length_);
+        const char* valid_lifetime_str = PQgetvalue(r, line, 3);
+        const char* expire_str = PQgetvalue(r, line, 4);
+        const char* subnet_id_str = PQgetvalue(r, line, 5);
         unsigned long valid_lifetime, expire, subnet_id;
 
         istringstream tmp;
@@ -452,18 +484,17 @@ public:
 
     Lease6Ptr
     convertFromDatabase(PGresult * r, int line) {
-        const char * addr6_str = PQgetvalue(r, line, 0);
-        unsigned char * duid_str =  PQunescapeBytea(
-                                    (const unsigned char *)
-                                    PQgetvalue(r, line, 1),
-                                    & duid_length_);
-        const char * valid_lifetime_str =  PQgetvalue(r, line, 2);
-        const char * expire_str = PQgetvalue(r, line, 3);
-        const char * subnet_id_str = PQgetvalue(r, line, 4);
-        const char * pref_lifetime_str = PQgetvalue(r, line, 5);
-        const char * lease_type_str = PQgetvalue(r, line, 6);
-        const char * iaid_str = PQgetvalue(r, line, 7);
-        const char * prefixlen_str = PQgetvalue(r, line, 8);
+        const char* addr6_str = PQgetvalue(r, line, 0);
+        unsigned char* duid_str =  PQunescapeBytea((const unsigned char *)
+                                                   PQgetvalue(r, line, 1),
+                                                   & duid_length_);
+        const char* valid_lifetime_str =  PQgetvalue(r, line, 2);
+        const char* expire_str = PQgetvalue(r, line, 3);
+        const char* subnet_id_str = PQgetvalue(r, line, 4);
+        const char* pref_lifetime_str = PQgetvalue(r, line, 5);
+        const char* lease_type_str = PQgetvalue(r, line, 6);
+        const char* iaid_str = PQgetvalue(r, line, 7);
+        const char* prefixlen_str = PQgetvalue(r, line, 8);
         unsigned int lease_type, prefixlen;
         unsigned long valid_lifetime, expire, subnet_id, pref_lifetime, iaid;
 
@@ -559,7 +590,6 @@ public:
 
 private:
     string     addr6_;
-    //  char            addr6_buffer_[ADDRESS6_TEXT_MAX_LEN + 1];
     string     columns_[LEASE_COLUMNS];
     time_t          expire_;
     vector<uint8_t> duid_;
@@ -585,10 +615,10 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
 }
 
 PgSqlLeaseMgr::~PgSqlLeaseMgr() {
-    if(status) {
+    if (status) {
         // Attempt to deallocate prepared queries set previously with DEALLOCATE query
         // No internal libpq function for that, no errors checking as well
-        PGresult * r;
+        PGresult* r = NULL;
         for(int i = 0; tagged_statements[i].text != NULL; ++ i) {
             string deallocate = "DEALLOCATE \"";
             deallocate += tagged_statements[i].name;
@@ -694,19 +724,19 @@ PgSqlLeaseMgr::openDatabase() {
 
 bool
 PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
-                              bindparams & params) {
+                              bindparams& params) {
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(statements_[stindex].stmt_name);
 
-    vector<const char *> params_;
-    vector<int> lengths_;
-    vector<int> formats_;
-    convertToQuery(params, params_, lengths_, formats_);
+    vector<const char *> out_values;
+    vector<int> out_lengths;
+    vector<int> out_formats;
+    convertToQuery(params, out_values, out_lengths, out_formats);
 
     PGresult * r = PQexecPrepared(status, statements_[stindex].stmt_name,
                                   statements_[stindex].stmt_nbparams,
-                                  &params_[0], &lengths_[0], &formats_[0], 0);
+                                  &out_values[0], &out_lengths[0], &out_formats[0], 0);
 
     int s = PQresultStatus(r);
     if (s != PGRES_COMMAND_OK) {
@@ -755,10 +785,10 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_ADDR4).arg(statements_[stindex].stmt_name);
 
-    vector<const char *> params_;
-    vector<int> lengths_;
-    vector<int> formats_;
-    convertToQuery(params, params_, lengths_, formats_);
+    vector<const char *> out_values;
+    vector<int> out_lengths;
+    vector<int> out_formats;
+    convertToQuery(params, out_values, out_lengths, out_formats);
 
     PGresult * r = PQexec(status, "SET AUTOCOMMIT TO OFF");
     PQclear(r);
@@ -767,8 +797,8 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     PQclear(r);
 
     r = PQexecPrepared(status, statements_[stindex].stmt_name,
-                                  statements_[stindex].stmt_nbparams,
-                                  &params_[0], &lengths_[0], &formats_[0], 0);
+                       statements_[stindex].stmt_nbparams, &out_values[0],
+                       &out_lengths[0], &out_formats[0], 0);
 
     checkError(r, stindex, "unable to bind WHERE clause parameter");
     PQclear(r);
@@ -878,8 +908,9 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
 
     if (!hwaddr.hwaddr_.empty()) {
         uint8_t* data = const_cast<uint8_t *>(&hwaddr.hwaddr_[0]);
-        PgSqlParam pdest = { .value = reinterpret_cast<char *>(data)
-                             , .isbinary = 1, .binarylen = static_cast<int>(hwaddr.hwaddr_.size()) };
+        PgSqlParam pdest = { .value = reinterpret_cast<char *>(data),
+                             .isbinary = 1,
+                             .binarylen = static_cast<int>(hwaddr.hwaddr_.size()) };
         inparams.push_back(pdest);
     } else {
         inparams.push_back(PgSqlParam());
@@ -928,8 +959,9 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid) const {
     bindparams inparams;
 
     vector<uint8_t> client_data = clientid.getClientId();
-    PgSqlParam pdest = { .value = reinterpret_cast<char *>(&client_data[0])
-                       , .isbinary = 1, .binarylen = static_cast<int>(clientid.getClientId().size()) };
+    PgSqlParam pdest = { .value = reinterpret_cast<char *>(&client_data[0]),
+                         .isbinary = 1,
+                         .binarylen = static_cast<int>(clientid.getClientId().size()) };
     inparams.push_back(pdest);
 
     // Get the data
@@ -950,8 +982,9 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
     ostringstream tmp;
 
     vector<uint8_t> client_data = clientid.getClientId();
-    PgSqlParam pdest = { .value = reinterpret_cast<char *>(&client_data[0])
-                       , .isbinary = 1, .binarylen = static_cast<int>(clientid.getClientId().size()) };
+    PgSqlParam pdest = { .value = reinterpret_cast<char *>(&client_data[0]),
+                         .isbinary = 1,
+                         .binarylen = static_cast<int>(clientid.getClientId().size()) };
     inparams.push_back(pdest);
 
     tmp << static_cast<unsigned long>(subnet_id);
@@ -1006,8 +1039,9 @@ PgSqlLeaseMgr::getLeases6(Lease::Type type, const DUID& duid, uint32_t iaid) con
     bindparams inparams;
     ostringstream tmp;
     vector<uint8_t> duid_data = duid.getDuid();
-    PgSqlParam pdest = { .value = reinterpret_cast<char *>(&duid_data[0])
-                       , .isbinary = 1, .binarylen = static_cast<int>(duid.getDuid().size()) };
+    PgSqlParam pdest = { .value = reinterpret_cast<char *>(&duid_data[0]),
+                         .isbinary = 1,
+                         .binarylen = static_cast<int>(duid.getDuid().size()) };
     inparams.push_back(pdest);
 
     /// @todo: use type
@@ -1196,6 +1230,36 @@ PgSqlLeaseMgr::getName() const {
         // Return an empty name
     }
     return (name);
+}
+
+void
+PgSqlLeaseMgr::checkError(PGresult* r, StatementIndex index,
+                          const char* what) const {
+    int s = PQresultStatus(r);
+    if (s != PGRES_COMMAND_OK && s != PGRES_TUPLES_OK) {
+        PQclear(r);
+
+        isc_throw(DbOperationError, what << " for <" <<
+                  statements_[index].stmt_name << ">, " <<
+                  PQerrorMessage(status));
+    }
+}
+
+inline void
+PgSqlLeaseMgr::convertToQuery(const bindparams& params,
+                              std::vector<const char *>& out_values,
+                              std::vector<int>& out_lengths,
+                              std::vector<int>& out_formats) const {
+    out_values.reserve(params.size());
+    out_lengths.reserve(params.size());
+    out_formats.reserve(params.size());
+
+    for(bindparams::const_iterator it = params.begin(); it != params.end();
+        ++it) {
+        out_values.push_back((* it).value.c_str());
+        out_lengths.push_back((* it).binarylen);
+        out_formats.push_back((* it).isbinary);
+    }
 }
 
 string
