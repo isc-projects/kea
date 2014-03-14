@@ -73,7 +73,7 @@ public:
     /// @param cols Number of values in the row.
     /// @param separator Character being a separator between values in the
     /// text representation of the row.
-    CSVRow(const size_t cols, const char separator = ',');
+    CSVRow(const size_t cols = 0, const char separator = ',');
 
     /// @brief Constructor, parses a single row of the CSV file.
     ///
@@ -270,9 +270,20 @@ public:
     /// @brief Closes the CSV file.
     void close();
 
+    /// @brief Flushes a file.
+    void flush() const;
+
     /// @brief Returns the number of columns in the file.
     size_t getColumnCount() const {
         return (cols_.size());
+    }
+
+    /// @brief Returns the description of the last error returned by the
+    /// @c CSVFile::next function.
+    ///
+    /// @return Description of the last error during row validation.
+    std::string getReadMsg() const {
+        return (read_msg_);
     }
 
     /// @brief Returns the index of the column having specified name.
@@ -299,7 +310,11 @@ public:
     /// reached, the empty row is returned (a row containing no values).
     ///
     /// @param [out] row Object receiving the parsed CSV file.
-    void next(CSVRow& row);
+    /// @param skip_validation Do not perform validation.
+    ///
+    /// @return true if row has been read and validated; false if validation
+    /// failed.
+    bool next(CSVRow& row, const bool skip_validation = false);
 
     /// @brief Opens existing file or creates a new one.
     ///
@@ -322,13 +337,68 @@ public:
     /// should be called.
     void recreate();
 
+    /// @brief Sets error message after row validation.
+    ///
+    /// The @c CSVFile::validate function is responsible for setting the
+    /// error message after validation of the row read from the CSV file.
+    /// It will use this function to set this message. Note, that the
+    /// @c validate function can set a message after successful validation
+    /// too. Such message could say "success", or something similar.
+    ///
+    /// @param val_msg Error message to be set.
+    void setReadMsg(const std::string& read_msg) {
+        read_msg_ = read_msg;
+    }
+
     /// @brief Represents empty row.
     static CSVRow EMPTY_ROW() {
         static CSVRow row(0);
         return (row);
     }
 
+protected:
+
+    /// @brief Validate the row read from a file.
+    ///
+    /// This function implements a basic validation for the row read from the
+    /// CSV file. It is virtual so as it may be customized in derived classes.
+    ///
+    /// This default implementation checks that the number of values in the
+    /// row corresponds to the number of columns specified for this file.
+    ///
+    /// If row validation fails, the error message is noted and can be retrieved
+    /// using @c CSVFile::getReadMsg. The function which overrides this
+    /// base implementation is responsible for setting the error message using
+    /// @c CSVFile::setReadMsg.
+    ///
+    /// @param row A row to be validated.
+    ///
+    /// @return true if the column is valid; false otherwise.
+    virtual bool validate(const CSVRow& row);
+
 private:
+
+    /// @brief This function validates the header of the CSV file.
+    ///
+    /// If there are any columns added to the @c CSVFile object, it will
+    /// compare that they exactly match (including order) the header read
+    /// from the file.
+    ///
+    /// This function is called internally by @CSVFile::open.
+    ///
+    /// @param header A row holding a header.
+    /// @return true if header matches the columns; false otherwise.
+    bool validateHeader(const CSVRow& header);
+
+    /// @brief Sanity check if stream is open.
+    ///
+    /// Checks if the file stream is open so as IO operations can be performed
+    /// on it. This is internally called by the public class members to prevent
+    /// them from performing IO operations on invalid stream and using NULL
+    /// pointer to a stream.
+    ///
+    /// @throw CSVFileError if stream is closed or pointer to it is NULL.
+    void checkStreamStatus(const std::string& operation) const;
 
     /// @brief Returns size of the CSV file.
     std::ifstream::pos_type size() const;
@@ -344,6 +414,9 @@ private:
 
     /// @brief Holds CSV file columns.
     std::vector<std::string> cols_;
+
+    /// @brief Holds last error during row reading or validation.
+    std::string read_msg_;
 };
 
 } // namespace isc::util

@@ -136,6 +136,7 @@ public:
     /// @param contents Contents of the file.
     void writeFile(const std::string& contents) const;
 
+    /// @brief Absolute path to the file used in the tests.
     std::string testfile_;
 
 };
@@ -190,13 +191,16 @@ CSVFileTest::writeFile(const std::string& contents) const {
     }
 }
 
-// This test checks that the file can be opened and its content
-// parsed correctly. It also checks that empty row is returned
-// when EOF is reached.
-TEST_F(CSVFileTest, open) {
+// This test checks that the file can be opened,  its whole content is
+// parsed correctly and data may be appended. It also checks that empty
+// row is returned when EOF is reached.
+TEST_F(CSVFileTest, openReadAllWrite) {
+    // Create a new CSV file that contains a header and two data rows.
     writeFile("animal,age,color\n"
               "cat,10,white\n"
               "lion,15,yellow\n");
+
+    // Open this file and check that the header is parsed.
     boost::scoped_ptr<CSVFile> csv(new CSVFile(testfile_));
     ASSERT_NO_THROW(csv->open());
     ASSERT_EQ(3, csv->getColumnCount());
@@ -204,33 +208,65 @@ TEST_F(CSVFileTest, open) {
     EXPECT_EQ("age", csv->getColumnName(1));
     EXPECT_EQ("color", csv->getColumnName(2));
 
-    CSVRow row(0);
-    ASSERT_NO_THROW(csv->next(row));
+    // Read first row.
+    CSVRow row;
+    ASSERT_TRUE(csv->next(row));
     ASSERT_EQ(3, row.getValuesCount());
     EXPECT_EQ("cat", row.readAt(0));
     EXPECT_EQ("10", row.readAt(1));
     EXPECT_EQ("white", row.readAt(2));
 
-    ASSERT_NO_THROW(csv->next(row));
+    // Read second row.
+    ASSERT_TRUE(csv->next(row));
     ASSERT_EQ(3, row.getValuesCount());
     EXPECT_EQ("lion", row.readAt(0));
     EXPECT_EQ("15", row.readAt(1));
     EXPECT_EQ("yellow", row.readAt(2));
 
-    ASSERT_NO_THROW(csv->next(row));
+    // There is no 3rd row, so the empty one should be returned.
+    ASSERT_TRUE(csv->next(row));
     EXPECT_EQ(CSVFile::EMPTY_ROW(), row);
+
+    // It should be fine to read again, but again empty row should be returned.
+    ASSERT_TRUE(csv->next(row));
+    EXPECT_EQ(CSVFile::EMPTY_ROW(), row);
+
+    // Now, let's try to append something to this file.
+    CSVRow row_write(3);
+    row_write.writeAt(0, "dog");
+    row_write.writeAt(1, 2);
+    row_write.writeAt(2, "blue");
+    ASSERT_NO_THROW(csv->append(row_write));
+
+    // Close the file.
+    ASSERT_NO_THROW(csv->flush());
+    csv->close();
+
+    // Check the the file contents are correct.
+    EXPECT_EQ("animal,age,color\n"
+              "cat,10,white\n"
+              "lion,15,yellow\n"
+              "dog,2,blue\n",
+              readFile());
+
+    // Any attempt to read from the file or write to it should now fail.
+    EXPECT_FALSE(csv->next(row));
+    EXPECT_THROW(csv->append(row_write), CSVFileError);
 }
 
-// This test checks that a file can be used both for reading
-// and writing. When content is appended to the end of file,
-// an attempt to read results in empty row returned.
-TEST_F(CSVFileTest, openReadWrite) {
+// This test checks that contents may be appended to a file which hasn't
+// been fully parsed/read.
+TEST_F(CSVFileTest, openReadPartialWrite) {
+    // Create a CSV file with two rows in it.
     writeFile("animal,age,color\n"
               "cat,10,white\n"
               "lion,15,yellow\n");
+
+    // Open this file.
     boost::scoped_ptr<CSVFile> csv(new CSVFile(testfile_));
     ASSERT_NO_THROW(csv->open());
 
+    // Read the first row.
     CSVRow row0(0);
     ASSERT_NO_THROW(csv->next(row0));
     ASSERT_EQ(3, row0.getValuesCount());
@@ -238,15 +274,31 @@ TEST_F(CSVFileTest, openReadWrite) {
     EXPECT_EQ("10", row0.readAt(1));
     EXPECT_EQ("white", row0.readAt(2));
 
+    // There is still second row to be read. But, it should be possible to
+    // skip reading it and append new row to the end of file.
     CSVRow row_write(3);
     row_write.writeAt(0, "dog");
     row_write.writeAt(1, 2);
     row_write.writeAt(2, "blue");
     ASSERT_NO_THROW(csv->append(row_write));
 
+    // At this point, the file pointer is at the end of file, so reading
+    // should return empty row.
     CSVRow row1(0);
     ASSERT_NO_THROW(csv->next(row1));
     EXPECT_EQ(CSVFile::EMPTY_ROW(), row1);
+
+    // Close the file.
+    ASSERT_NO_THROW(csv->flush());
+    csv->close();
+
+    // Check that there are two initial lines and one new there.
+    EXPECT_EQ("animal,age,color\n"
+              "cat,10,white\n"
+              "lion,15,yellow\n"
+              "dog,2,blue\n",
+              readFile());
+
 }
 
 // This test checks that the new CSV file is created and header
@@ -274,10 +326,81 @@ TEST_F(CSVFileTest, recreate) {
     row1.writeAt(2, 2);
     ASSERT_NO_THROW(csv->append(row1));
 
+    ASSERT_NO_THROW(csv->flush());
+    csv->close();
+
     EXPECT_EQ("animal,color,age,comments\n"
               "dog,grey,3,nice one\n"
               "cat,black,2,\n",
               readFile());
+}
+
+// This test checks that the error is reported when the size of the row being
+// read doesn't match the number of columns of the CSV file.
+TEST_F(CSVFileTest, validate) {
+    // Create CSV file with 2 invalid rows in it: one too long, one too short.
+    // Apart from that, there are two valid columns that should be read
+    // successfuly.
+    writeFile("animal,age,color\n"
+              "cat,10,white\n"
+              "lion,15,yellow,black\n"
+              "dog,3,green\n"
+              "elephant,11\n");
+
+    boost::scoped_ptr<CSVFile> csv(new CSVFile(testfile_));
+    ASSERT_NO_THROW(csv->open());
+    // First row is correct.
+    CSVRow row0;
+    ASSERT_TRUE(csv->next(row0));
+    EXPECT_EQ("cat", row0.readAt(0));
+    EXPECT_EQ("10", row0.readAt(1));
+    EXPECT_EQ("white", row0.readAt(2));
+    EXPECT_EQ("success", csv->getReadMsg());
+    // This row is too long.
+    CSVRow row1;
+    EXPECT_FALSE(csv->next(row1));
+    EXPECT_NE("success", csv->getReadMsg());
+    // This row is correct.
+    CSVRow row2;
+    ASSERT_TRUE(csv->next(row2));
+    EXPECT_EQ("dog", row2.readAt(0));
+    EXPECT_EQ("3", row2.readAt(1));
+    EXPECT_EQ("green", row2.readAt(2));
+    EXPECT_EQ("success", csv->getReadMsg());
+    // This row is too short.
+    CSVRow row3;
+    EXPECT_FALSE(csv->next(row3));
+    EXPECT_NE("success", csv->getReadMsg());
+}
+
+// Test test checks that exception is thrown when the header of the CSV file
+// parsed, doesn't match the columns specified.
+TEST_F(CSVFileTest, validateHeader) {
+    // Create CSV file with 3 columns.
+    writeFile("animal,age,color\n"
+              "cat,10,white\n"
+              "lion,15,yellow,black\n");
+
+    // Invalid order of columns.
+    boost::scoped_ptr<CSVFile> csv(new CSVFile(testfile_));
+    csv->addColumn("color");
+    csv->addColumn("animal");
+    csv->addColumn("age");
+    EXPECT_THROW(csv->open(), CSVFileError);
+
+    // Too many columns.
+    csv.reset(new CSVFile(testfile_));
+    csv->addColumn("animal");
+    csv->addColumn("age");
+    csv->addColumn("color");
+    csv->addColumn("notes");
+    EXPECT_THROW(csv->open(), CSVFileError);
+
+    // Too few columns.
+    csv.reset(new CSVFile(testfile_));
+    csv->addColumn("animal");
+    csv->addColumn("age");
+    EXPECT_THROW(csv->open(), CSVFileError);
 }
 
 
