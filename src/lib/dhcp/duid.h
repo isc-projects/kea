@@ -72,13 +72,7 @@ class DUID {
     /// @brief Create DUID from the textual format.
     ///
     /// This static function parses a DUID specified in the textual format.
-    /// The format being parsed should match the DUID representation returned
-    /// by the @c DUID::toText method, i.e. the pairs of hexadecimal digits
-    /// representing bytes of DUID must be separated by colons. Usually the
-    /// single byte is represented by two hexadecimal digits. However, this
-    /// function allows one digit per byte. In this case, a zero is prepended
-    /// before the conversion. For example, a DUID 0:1:2::4:5 equals to
-    /// 00:01:02:00:04:05.
+    /// Internally it uses @c DUID::decode to parse the DUID.
     ///
     /// @param text DUID in the hexadecimal format with digits representing
     /// individual bytes separated by colons.
@@ -96,6 +90,23 @@ class DUID {
     bool operator!=(const DUID& other) const;
 
  protected:
+
+    /// @brief Decodes the textual format of the DUID.
+    ///
+    /// The format being parsed should match the DUID representation returned
+    /// by the @c DUID::toText method, i.e. the pairs of hexadecimal digits
+    /// representing bytes of DUID must be separated by colons. Usually the
+    /// single byte is represented by two hexadecimal digits. However, this
+    /// function allows one digit per byte. In this case, a zero is prepended
+    /// before the conversion. For example, a DUID 0:1:2::4:5 equals to
+    /// 00:01:02:00:04:05.
+    ///
+    /// @param text DUID in the hexadecimal format with digits representing
+    /// individual bytes separated by colons.
+    ///
+    /// @throw isc::BadValue if parsing the DUID failed.
+    static std::vector<uint8_t> decode(const std::string& text);
+
     /// The actual content of the DUID
     std::vector<uint8_t> duid_;
 };
@@ -103,7 +114,10 @@ class DUID {
 /// @brief Shared pointer to a DUID
 typedef boost::shared_ptr<DUID> DuidPtr;
 
-
+/// @brief Forward declaration to the @c ClientId class.
+class ClientId;
+/// @brief Shared pointer to a Client ID.
+typedef boost::shared_ptr<ClientId> ClientIdPtr;
 
 /// @brief Holds Client identifier or client IPv4 address
 ///
@@ -147,15 +161,25 @@ public:
     /// @brief Returns textual representation of a DUID (e.g. 00:01:02:03:ff)
     std::string toText() const;
 
+    /// @brief Create client identifier from the textual format.
+    ///
+    /// This static function creates the instance of the @c ClientId from the
+    /// textual format. Internally it calls @c DUID::fromText. The format of
+    /// the input must match the format of the DUID in @c DUID::fromText.
+    ///
+    /// @param text Client identifier in the textual format.
+    ///
+    /// @return Pointer to the instance of the @c ClientId.
+    /// @throw isc::BadValue if parsing the client identifier failed.
+    /// @throw isc::OutOfRange if the client identifier is truncated.
+    static ClientIdPtr fromText(const std::string& text);
+
     /// @brief Compares two client-ids for equality
     bool operator==(const ClientId& other) const;
 
     /// @brief Compares two client-ids for inequality
     bool operator!=(const ClientId& other) const;
 };
-
-/// @brief Shared pointer to a Client ID.
-typedef boost::shared_ptr<ClientId> ClientIdPtr;
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

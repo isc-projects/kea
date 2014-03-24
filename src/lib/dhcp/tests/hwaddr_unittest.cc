@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012, 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -108,6 +108,9 @@ TEST(HWAddrTest, toText) {
 
     EXPECT_EQ("hwtype=15 00:01:02:03:04:05", hw->toText());
 
+    // In some cases we don't want htype value to be included. Check that
+    // it can be forced.
+    EXPECT_EQ("00:01:02:03:04:05", hw->toText(false));
 }
 
 TEST(HWAddrTest, stringConversion) {
@@ -131,5 +134,27 @@ TEST(HWAddrTest, stringConversion) {
     EXPECT_EQ(std::string("hwtype=1 c3:07:a2:e8:42"), result);
 }
 
+// Checks that the HW address can be created from the textual format.
+TEST(HWAddrTest, fromText) {
+    scoped_ptr<HWAddr> hwaddr;
+    // Create HWAddr from text.
+    ASSERT_NO_THROW(
+        hwaddr.reset(new HWAddr(HWAddr::fromText("00:01:A:bc:d:67")));
+    );
+    EXPECT_EQ("00:01:0a:bc:0d:67", hwaddr->toText(false));
+
+    // HWAddr class should allow empty address.
+    ASSERT_NO_THROW(
+        hwaddr.reset(new HWAddr(HWAddr::fromText("")));
+    );
+    EXPECT_TRUE(hwaddr->toText(false).empty());
+
+    // There should be no more than two digits per byte of the HW addr.
+    EXPECT_THROW(
+       hwaddr.reset(new HWAddr(HWAddr::fromText("00:01:00A:bc:0d:67"))),
+       isc::BadValue
+    );
+
+}
 
 } // end of anonymous namespace
