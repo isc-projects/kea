@@ -29,7 +29,48 @@
 namespace isc {
 namespace dhcp {
 
-/// @brief This is a concrete implementation of a Lease database.
+/// @brief Concrete implementation of a lease database backend using flat file.
+///
+/// This class implements a lease database backend using CSV files to store
+/// DHCPv4 and DHCPv6 leases on disk. The format of the files is determined
+/// by the @c CSVLeaseFile4 and @c CSVLeaseFile6 classes.
+///
+/// The backend stores leases incrementally, i.e. updates to leases are appended
+/// at the end of the lease file. When leases is to be deleted, the lease
+/// record is appended to the lease file, with valid lifetime set to 0.
+///
+/// When backend is starting up, it reads leases from the lease file (one by
+/// one) and adds them to the in-memory container as follows:
+/// - if lease record being parsed identifies a lease which is not present
+/// in the container, and the lease has valid lifetime greater than 0,
+/// the lease is added to the container,
+/// - if lease record being parsed identifies a lease which is present in the
+/// container, and the valid lifetime of the lease record being parsed is
+/// greater than 0, the lease in the container is updated
+/// - if lease record being parsed has valid lifetime equal to 0, and the
+/// corresponding lease exists in the container, the lease is removed
+/// from the container.
+///
+/// After the container holding leases is initialized, each subsequent update,
+/// removal or addition of the lease is appended to the lease file
+/// synchronously.
+///
+/// Originally, the Memfile backend didn't write leases to disk. This was
+/// particularly useful for testing server performance in non-disk bound
+/// conditions. In order to preserve this capability, the new parameter
+/// "persistence=yes/no" in the data base access string has been introduced.
+/// For example, database access string: "type=memfile persistence=no"
+/// disables disk writes to disk.
+///
+/// The lease file locations can be specified for DHCPv4 and DHCPv6 leases
+/// with the following two parameters in the database access string:
+/// - leasefile4
+/// - leasefile6
+///
+/// They specify the absolute path to the files (including file names).
+/// If they are not specified, the default location in the installation
+/// directory is used: var/bind10/kea-leases4.csv and
+/// var/bind10/kea-leases6.csv.
 class Memfile_LeaseMgr : public LeaseMgr {
 public:
 
