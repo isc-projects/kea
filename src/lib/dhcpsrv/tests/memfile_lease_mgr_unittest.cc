@@ -113,8 +113,7 @@ public:
 TEST_F(MemfileLeaseMgrTest, constructor) {
 
     LeaseMgr::ParameterMap pmap;
-    pmap["leasefile4"] = "";
-    pmap["leasefile6"] = "";
+    pmap["persist"] = "no";
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
 
     ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
@@ -143,8 +142,7 @@ TEST_F(MemfileLeaseMgrTest, getLeaseFilePath) {
     EXPECT_EQ(pmap["leasefile6"],
               lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6));
 
-    pmap["leasefile4"] = "";
-    pmap["leasefile6"] = "";
+    pmap["persist"] = "no";
     lease_mgr.reset(new Memfile_LeaseMgr(pmap));
     EXPECT_TRUE(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V4).empty());
     EXPECT_TRUE(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6).empty());
@@ -168,10 +166,8 @@ TEST_F(MemfileLeaseMgrTest, persistLeases) {
     EXPECT_TRUE(lease_mgr->persistLeases(Memfile_LeaseMgr::V4));
     EXPECT_TRUE(lease_mgr->persistLeases(Memfile_LeaseMgr::V6));
 
-    // Specify empty names of the lease files. This should disable writes
-    // of leases to disk.
-    pmap["leasefile4"] = "";
-    pmap["leasefile6"] = "";
+    // This should disable writes of leases to disk.
+    pmap["persist"] = "no";
     lease_mgr.reset(new Memfile_LeaseMgr(pmap));
     EXPECT_FALSE(lease_mgr->persistLeases(Memfile_LeaseMgr::V4));
     EXPECT_FALSE(lease_mgr->persistLeases(Memfile_LeaseMgr::V6));

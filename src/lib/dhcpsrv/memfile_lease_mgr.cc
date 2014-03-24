@@ -415,6 +415,19 @@ Memfile_LeaseMgr::persistLeases(Universe u) const {
 
 std::string
 Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
+    bool persist = true;
+    try {
+        std::string persist_str = getParameter("persist");
+        if (persist_str == "no") {
+            persist = false;
+        }
+    } catch (const Exception& ex) {
+        persist = true;
+    }
+    if (!persist) {
+        return ("");
+    }
+
     std::string param_name = (u == V4 ? "leasefile4" : "leasefile6");
     std::string lease_file;
     try {
