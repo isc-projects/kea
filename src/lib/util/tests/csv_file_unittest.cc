@@ -191,6 +191,12 @@ CSVFileTest::writeFile(const std::string& contents) const {
     }
 }
 
+// This test checks that the appropriate file name is initialized.
+TEST_F(CSVFileTest, getFilename) {
+    CSVFile csv(testfile_);
+    EXPECT_EQ(testfile_, csv.getFilename());
+}
+
 // This test checks that the file can be opened,  its whole content is
 // parsed correctly and data may be appended. It also checks that empty
 // row is returned when EOF is reached.

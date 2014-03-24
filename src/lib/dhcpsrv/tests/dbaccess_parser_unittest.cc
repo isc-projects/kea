@@ -410,8 +410,8 @@ TEST_F(DbAccessParserTest, commit) {
             }, isc::dhcp::NoLeaseManager);
 
     // Set up the parser to open the memfile database.
-    const char* config[] = {"type", "memfile",
-                            NULL};
+    const char* config[] = {"type", "memfile", "leasefile4", "",
+                            "leasefile6", "", NULL};
     string json_config = toJson(config);
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);

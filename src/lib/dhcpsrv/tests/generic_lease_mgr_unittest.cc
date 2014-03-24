@@ -717,6 +717,39 @@ GenericLeaseMgrTest::testBasicLease4() {
     l_returned = lmptr_->getLease4(ioaddress4_[2]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
+
+    reopen();
+
+    // The deleted lease should be still gone after we re-read leases from
+    // persistent storage.
+    l_returned = lmptr_->getLease4(ioaddress4_[1]);
+    EXPECT_FALSE(l_returned);
+
+    l_returned = lmptr_->getLease4(ioaddress4_[2]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[2], l_returned);
+
+    l_returned = lmptr_->getLease4(ioaddress4_[3]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[3], l_returned);
+
+    // Update some FQDN data, so as we can check that update in
+    // persistent storage works as expected.
+    leases[2]->hostname_ = "memfile.example.com.";
+    leases[2]->fqdn_rev_ = true;
+
+    ASSERT_NO_THROW(lmptr_->updateLease4(leases[2]));
+
+    reopen();
+
+    // The lease should be now updated in the storage.
+    l_returned = lmptr_->getLease4(ioaddress4_[2]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[2], l_returned);
+
+    l_returned = lmptr_->getLease4(ioaddress4_[3]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[3], l_returned);
 }
 
 
@@ -758,6 +791,32 @@ GenericLeaseMgrTest::testBasicLease6() {
     EXPECT_FALSE(lmptr_->deleteLease(ioaddress6_[1]));
 
     // Check that the second address is still there.
+    l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[2], l_returned);
+
+    reopen();
+
+    // The deleted lease should be still gone after we re-read leases from
+    // persistent storage.
+    l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
+    EXPECT_FALSE(l_returned);
+
+    // Check that the second address is still there.
+    l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(leases[2], l_returned);
+
+    // Update some FQDN data, so as we can check that update in
+    // persistent storage works as expected.
+    leases[2]->hostname_ = "memfile.example.com.";
+    leases[2]->fqdn_rev_ = true;
+
+    ASSERT_NO_THROW(lmptr_->updateLease6(leases[2]));
+
+    reopen();
+
+    // The lease should be now updated in the storage.
     l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
