@@ -13,7 +13,6 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcpsrv/csv_lease_file6.h>
-#include <algorithm>
 
 using namespace isc::asiolink;
 using namespace isc::util;
@@ -24,22 +23,6 @@ namespace dhcp {
 CSVLeaseFile6::CSVLeaseFile6(const std::string& filename)
     : CSVFile(filename) {
     initColumns();
-}
-
-void
-CSVLeaseFile6::initColumns() {
-    addColumn("address");
-    addColumn("duid");
-    addColumn("valid_lifetime");
-    addColumn("expire");
-    addColumn("subnet_id");
-    addColumn("pref_lifetime");
-    addColumn("lease_type");
-    addColumn("iaid");
-    addColumn("prefix_len");
-    addColumn("fqdn_fwd");
-    addColumn("fqdn_rev");
-    addColumn("hostname");
 }
 
 void
@@ -63,31 +46,54 @@ CSVLeaseFile6::append(const Lease6& lease) const {
 
 bool
 CSVLeaseFile6::next(Lease6Ptr& lease) {
+    // We will return NULL pointer if the lease is not read.
     lease.reset();
-
+    // Get the row of CSV values.
     CSVRow row;
     CSVFile::next(row);
-
+    // The empty row signals EOF.
     if (row == CSVFile::EMPTY_ROW()) {
         return (true);
     }
 
+    // Try to create a lease from the values read. This may easily result in
+    // exception. We don't want this function to throw exceptions, so we catch
+    // them all and rather return the false value.
     try {
         lease.reset(new Lease6(readType(row), readAddress(row), readDUID(row),
                                readIAID(row), readPreferred(row),
-                               readValid(row), 0, 0, readSubnetID(row),
+                               readValid(row), 0, 0, // t1, t2 = 0
+                               readSubnetID(row),
                                readPrefixLen(row)));
         lease->cltt_ = readCltt(row);
         lease->fqdn_fwd_ = readFqdnFwd(row);
         lease->fqdn_rev_ = readFqdnRev(row);
-        lease->hostname_ = readhostname(row);
+        lease->hostname_ = readHostname(row);
 
     } catch (std::exception& ex) {
+        // The lease might have been created, so let's set it back to NULL to
+        // signal that lease hasn't been parsed.
         lease.reset();
         setReadMsg(ex.what());
         return (false);
     }
     return (true);
+}
+
+void
+CSVLeaseFile6::initColumns() {
+    addColumn("address");
+    addColumn("duid");
+    addColumn("valid_lifetime");
+    addColumn("expire");
+    addColumn("subnet_id");
+    addColumn("pref_lifetime");
+    addColumn("lease_type");
+    addColumn("iaid");
+    addColumn("prefix_len");
+    addColumn("fqdn_fwd");
+    addColumn("fqdn_rev");
+    addColumn("hostname");
 }
 
 Lease::Type
@@ -131,7 +137,7 @@ CSVLeaseFile6::readValid(const CSVRow& row) {
 uint32_t
 CSVLeaseFile6::readCltt(const CSVRow& row) {
     uint32_t cltt = row.readAndConvertAt<uint32_t>(getColumnIndex("expire"))
-        - readValid();
+        - readValid(row);
     return (cltt);
 }
 
@@ -165,8 +171,6 @@ CSVLeaseFile6::readHostname(const CSVRow& row) {
     std::string hostname = row.readAt(getColumnIndex("hostname"));
     return (hostname);
 }
-
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
