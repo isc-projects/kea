@@ -304,6 +304,11 @@ public:
         return (cols_.size());
     }
 
+    /// @brief Returns the path to the CSV file.
+    std::string getFilename() const {
+        return (filename_);
+    }
+
     /// @brief Returns the description of the last error returned by the
     /// @c CSVFile::next function.
     ///

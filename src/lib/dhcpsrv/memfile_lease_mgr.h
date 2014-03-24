@@ -16,6 +16,8 @@
 #define MEMFILE_LEASE_MGR_H
 
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/csv_lease_file4.h>
+#include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/multi_index/indexed_by.hpp>
@@ -27,14 +29,7 @@
 namespace isc {
 namespace dhcp {
 
-// This is a concrete implementation of a Lease database.
-//
-// It is for testing purposes only. It is NOT a production code.
-//
-// It does not do anything useful now, and is used for abstract LeaseMgr
-// class testing. It may later evolve into more useful backend if the
-// need arises. We can reuse code from memfile benchmark. See code in
-// tests/tools/dhcp-ubench/memfile_bench.{cc|h}
+/// @brief This is a concrete implementation of a Lease database.
 class Memfile_LeaseMgr : public LeaseMgr {
 public:
 
@@ -264,9 +259,10 @@ public:
     /// @brief Returns an absolute path to the lease file.
     ///
     /// @param u Universe (V4 or V6).
-    std::string getLeaseFilePath(Universe u) const {
-        return (u == V4 ? lease_file4_ : lease_file6_);
-    }
+    ///
+    /// @return Absolute path to the lease file or empty string if no lease
+    /// file is used.
+    std::string getLeaseFilePath(Universe u) const;
 
     /// @brief Specifies whether or not leases are written to disk.
     ///
@@ -282,6 +278,50 @@ public:
     bool persistLeases(Universe u) const;
 
 protected:
+
+    /// @brief Load all DHCPv4 leases from the file.
+    ///
+    /// This method loads all DHCPv4 leases from a file to memory. It removes
+    /// existing leases before reading a file.
+    ///
+    /// @throw isc::DbOperationError If failed to read a lease from the lease
+    /// file.
+    void load4();
+
+    /// @brief Loads a single DHCPv4 lease from the file.
+    ///
+    /// This method reads a single lease record from the lease file. If the
+    /// corresponding record doesn't exist in the in-memory container, the
+    /// lease is added to the container (except for a lease which valid lifetime
+    /// is 0). If the corresponding lease exists, the lease being read updates
+    /// the existing lease. If the lease being read from the lease file has
+    /// valid lifetime of 0 and the corresponding lease exists in the in-memory
+    /// database, the existing lease is removed.
+    ///
+    /// @param lease Pointer to the lease read from the lease file.
+    void loadLease4(Lease4Ptr& lease);
+
+    /// @brief Load all DHCPv6 leases from the file.
+    ///
+    /// This method loads all DHCPv6 leases from a file to memory. It removes
+    /// existing leases before reading a file.
+    ///
+    /// @throw isc::DbOperationError If failed to read a lease from the lease
+    /// file.
+    void load6();
+
+    /// @brief Loads a single DHCPv6 lease from the file.
+    ///
+    /// This method reads a single lease record from the lease file. If the
+    /// corresponding record doesn't exist in the in-memory container, the
+    /// lease is added to the container (except for a lease which valid lifetime
+    /// is 0). If the corresponding lease exists, the lease being read updates
+    /// the existing lease. If the lease being read from the lease file has
+    /// valid lifetime of 0 and the corresponding lease exists in the in-memory
+    /// database, the existing lease is removed.
+    ///
+    /// @param lease Pointer to the lease read from the lease file.
+    void loadLease6(Lease6Ptr& lease);
 
     /// @brief Initialize the location of the lease file.
     ///
@@ -368,7 +408,7 @@ protected:
             >,
 
             // Specification of the third index starts here.
-            boost::multi_index::ordered_unique<
+            boost::multi_index::ordered_non_unique<
                 // This is a composite index that uses two values to search for a
                 // lease: client id and subnet id.
                 boost::multi_index::composite_key<
@@ -383,7 +423,7 @@ protected:
             >,
 
             // Specification of the fourth index starts here.
-            boost::multi_index::ordered_unique<
+            boost::multi_index::ordered_non_unique<
                 // This is a composite index that uses two values to search for a
                 // lease: client id and subnet id.
                 boost::multi_index::composite_key<
@@ -409,11 +449,11 @@ protected:
     /// @brief stores IPv6 leases
     Lease6Storage storage6_;
 
-    /// @brief Holds the absolute path to the lease file for DHCPv4.
-    std::string lease_file4_;
+    /// @brief Holds the pointer to the DHCPv4 lease file IO.
+    boost::shared_ptr<CSVLeaseFile4> lease_file4_;
 
-    /// @brief Holds the absolute path to the lease file for DHCPv6.
-    std::string lease_file6_;
+    /// @brief Holds the pointer to the DHCPv6 lease file IO.
+    boost::shared_ptr<CSVLeaseFile6> lease_file6_;
 };
 
 }; // end of isc::dhcp namespace
