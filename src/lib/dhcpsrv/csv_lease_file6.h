@@ -20,7 +20,6 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
 #include <util/csv_file.h>
-#include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <string>
 
@@ -28,6 +27,16 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Provides methods to access CSV file with DHCPv6 leases.
+///
+/// This class contains methods customized to read DHCPv6 leases from the CSV
+/// file. It expects that the CSV file being parsed, contains the set of columns
+/// with well known names (initialized in the class constructor).
+///
+/// @todo This class doesn't validate the lease values read from the file.
+/// The @c Lease6 is a structure that should be itself responsible for this
+/// validation (see http://bind10.isc.org/ticket/2405). However, when #2405
+/// is implemented, the @c next function may need to be updated to use the
+/// validation capablity of @c Lease6.
 class CSVLeaseFile6 : public isc::util::CSVFile {
 public:
 
@@ -40,6 +49,11 @@ public:
 
     /// @brief Appends the lease record to the CSV file.
     ///
+    /// This function doesn't throw exceptions itself. In theory, exceptions
+    /// are possible when the index of the indexes of the values being written
+    /// to the file are invalid. However, this would have been a programming
+    /// error.
+    ///
     /// @param lease Structure representing a DHCPv6 lease.
     void append(const Lease6& lease) const;
 
@@ -49,12 +63,18 @@ public:
     /// message using @c CSVFile::setReadMsg and returns false. The error
     /// string may be read using @c CSVFile::getReadMsg.
     ///
+    /// This function is exception safe.
+    ///
     /// @param [out] lease Pointer to the lease read from CSV file or
     /// NULL pointer if lease hasn't been read.
     ///
     /// @return Boolean value indicating that the new lease has been
     /// read from the CSV file (if true), or that the error has occurred
     /// (false).
+    ///
+    /// @todo Make sure that the values read from the file are correct.
+    /// The appropriate @c Lease6 validation mechanism should be used once
+    /// ticket http://bind10.isc.org/ticket/2405 is implemented.
     bool next(Lease6Ptr& lease);
 
 private:

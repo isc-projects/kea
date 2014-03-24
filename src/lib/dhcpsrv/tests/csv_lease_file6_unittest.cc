@@ -31,12 +31,17 @@ using namespace isc::util;
 
 namespace {
 
+// DUID values used by unit tests.
 const uint8_t DUID0[] = { 0, 1, 2, 3, 4, 5, 6, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf };
 const uint8_t DUID1[] = { 1, 1, 1, 1, 0xa, 1, 2, 3, 4, 5 };
 
+/// @brief Test fixture class for @c CSVLeaseFile6 validation.
 class CSVLeaseFile6Test : public ::testing::Test {
 public:
 
+    /// @brief Constructor.
+    ///
+    /// Initializes IO for lease file used by unit tests.
     CSVLeaseFile6Test();
 
     /// @brief Prepends the absolute path to the file specified
@@ -46,11 +51,19 @@ public:
     /// @return Absolute path to the test file.
     static std::string absolutePath(const std::string& filename);
 
+    /// @brief Create DUID object from the binary.
+    ///
+    /// @param duid Binary value representing a DUID.
+    /// @param size Size of the DUID.
+    /// @return Pointer to the @c DUID object.
     DuidPtr makeDUID(const uint8_t* duid, const unsigned int size) const {
         return (DuidPtr(new DUID(duid, size)));
     }
 
+    /// @brief Name of the test lease file.
     std::string filename_;
+
+    /// @brief Object providing access to lease file IO.
     LeaseFileIO io_;
 
 };
@@ -66,16 +79,19 @@ CSVLeaseFile6Test::absolutePath(const std::string& filename) {
     return (s.str());
 }
 
+// This test checks the capability to read and parse leases from the file.
 TEST_F(CSVLeaseFile6Test, parse) {
+    // Open the lease file.
     boost::scoped_ptr<CSVLeaseFile6>
         lf(new CSVLeaseFile6(absolutePath("leases6_0.csv")));
     ASSERT_NO_THROW(lf->open());
 
     Lease6Ptr lease;
-    bool lease_read = false;
-    ASSERT_NO_THROW(lease_read = lf->next(lease));
+    // Reading first read should be successful.
+    EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
-    EXPECT_TRUE(lease_read);
+
+    // Verify that the lease attributes are correct.
     EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
@@ -90,11 +106,14 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("host.example.com", lease->hostname_);
 
-    EXPECT_FALSE(lease_read = lf->next(lease));
+    // Second lease is malformed - DUID is empty.
+    EXPECT_FALSE(lf->next(lease));
 
-    ASSERT_NO_THROW(lease_read = lf->next(lease));
+    // Even, parsing previous lease failed, reading the next lease should be
+    // successful.
+    EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
-    EXPECT_TRUE(lease_read);
+    // Verify that the third lease is correct.
     EXPECT_EQ("2001:db8:2::10", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("01:01:01:01:0a:01:02:03:04:05", lease->duid_->toText());
@@ -109,11 +128,10 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
 
-    EXPECT_FALSE(lease_read = lf->next(lease));
-
-    ASSERT_NO_THROW(lease_read = lf->next(lease));
+    // Reading fourth lease should be successful.
+    EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
-    EXPECT_TRUE(lease_read);
+    // Verify that lease is correct.
     EXPECT_EQ("3000:1::", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
@@ -128,11 +146,18 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
 
-    ASSERT_NO_THROW(lease_read = lf->next(lease));
-    EXPECT_TRUE(lease_read);
+    // There are no more leases. Reading should cause no error, but the returned
+    // lease pointer should be NULL.
+    EXPECT_TRUE(lf->next(lease));
     EXPECT_FALSE(lease);
+
+    // We should be able to do it again.
+    EXPECT_TRUE(lf->next(lease));
+    EXPECT_FALSE(lease);
+
 }
 
+// This test checks creation of the lease file and writing leases.
 TEST_F(CSVLeaseFile6Test, recreate) {
     boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
     ASSERT_NO_THROW(lf->recreate());
@@ -169,5 +194,11 @@ TEST_F(CSVLeaseFile6Test, recreate) {
               "300,300,10,150,2,7,64,0,0,\n",
               io_.readFile());
 }
+
+/// @todo Currently we don't check invalid lease attributes, such as invalid
+/// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6
+/// should be extended with the function that validates lease attributes. Once
+/// this is implemented we should provide more tests for malformed leases
+/// in the CSV file. See http://bind10.isc.org/ticket/2405.
 
 } // end of anonymous namespace
