@@ -1535,7 +1535,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/dhcpsrv/Makefile
                  src/lib/dhcpsrv/tests/Makefile
                  src/lib/dhcpsrv/tests/test_libraries.h
-                 srv/lib/dhcpsrv/tests/testdata/Makefile
+                 src/lib/dhcpsrv/tests/testdata/Makefile
                  src/lib/dhcp/tests/Makefile
                  src/lib/dns/benchmarks/Makefile
                  src/lib/dns/gen-rdatacode.py

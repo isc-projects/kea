@@ -13,7 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcpsrv/csv_lease_file6.h>
+#include <algorithm>
 
+using namespace isc::asiolink;
 using namespace isc::util;
 
 namespace isc {
@@ -58,6 +60,112 @@ CSVLeaseFile6::append(const Lease6& lease) const {
     row.writeAt(getColumnIndex("hostname"), lease.hostname_);
     CSVFile::append(row);
 }
+
+bool
+CSVLeaseFile6::next(Lease6Ptr& lease) {
+    lease.reset();
+
+    CSVRow row;
+    CSVFile::next(row);
+
+    if (row == CSVFile::EMPTY_ROW()) {
+        return (true);
+    }
+
+    try {
+        lease.reset(new Lease6(readType(row), readAddress(row), readDUID(row),
+                               readIAID(row), readPreferred(row),
+                               readValid(row), 0, 0, readSubnetID(row),
+                               readPrefixLen(row)));
+        lease->cltt_ = readCltt(row);
+        lease->fqdn_fwd_ = readFqdnFwd(row);
+        lease->fqdn_rev_ = readFqdnRev(row);
+        lease->hostname_ = readhostname(row);
+
+    } catch (std::exception& ex) {
+        lease.reset();
+        setReadMsg(ex.what());
+        return (false);
+    }
+    return (true);
+}
+
+Lease::Type
+CSVLeaseFile6::readType(const CSVRow& row) {
+    return (static_cast<Lease::Type>
+            (row.readAndConvertAt<int>(getColumnIndex("lease_type"))));
+}
+
+IOAddress
+CSVLeaseFile6::readAddress(const CSVRow& row) {
+    IOAddress address(row.readAt(getColumnIndex("address")));
+    return (address);
+}
+
+DuidPtr
+CSVLeaseFile6::readDUID(const util::CSVRow& row) {
+    DuidPtr duid(new DUID(DUID::fromText(row.readAt(getColumnIndex("duid")))));
+    return (duid);
+}
+
+uint32_t
+CSVLeaseFile6::readIAID(const CSVRow& row) {
+    uint32_t iaid = row.readAndConvertAt<uint32_t>(getColumnIndex("iaid"));
+    return (iaid);
+}
+
+uint32_t
+CSVLeaseFile6::readPreferred(const CSVRow& row) {
+    uint32_t pref =
+        row.readAndConvertAt<uint32_t>(getColumnIndex("pref_lifetime"));
+    return (pref);
+}
+
+uint32_t
+CSVLeaseFile6::readValid(const CSVRow& row) {
+    uint32_t valid =
+        row.readAndConvertAt<uint32_t>(getColumnIndex("valid_lifetime"));
+    return (valid);
+}
+
+uint32_t
+CSVLeaseFile6::readCltt(const CSVRow& row) {
+    uint32_t cltt = row.readAndConvertAt<uint32_t>(getColumnIndex("expire"))
+        - readValid();
+    return (cltt);
+}
+
+SubnetID
+CSVLeaseFile6::readSubnetID(const CSVRow& row) {
+    SubnetID subnet_id =
+        row.readAndConvertAt<SubnetID>(getColumnIndex("subnet_id"));
+    return (subnet_id);
+}
+
+uint8_t
+CSVLeaseFile6::readPrefixLen(const CSVRow& row) {
+    int prefixlen = row.readAndConvertAt<int>(getColumnIndex("prefix_len"));
+    return (static_cast<uint8_t>(prefixlen));
+}
+
+bool
+CSVLeaseFile6::readFqdnFwd(const CSVRow& row) {
+    bool fqdn_fwd = row.readAndConvertAt<bool>(getColumnIndex("fqdn_fwd"));
+    return (fqdn_fwd);
+}
+
+bool
+CSVLeaseFile6::readFqdnRev(const CSVRow& row) {
+    bool fqdn_rev = row.readAndConvertAt<bool>(getColumnIndex("fqdn_rev"));
+    return (fqdn_rev);
+}
+
+std::string
+CSVLeaseFile6::readHostname(const CSVRow& row) {
+    std::string hostname = row.readAt(getColumnIndex("hostname"));
+    return (hostname);
+}
+
 
 
 } // end of namespace isc::dhcp
