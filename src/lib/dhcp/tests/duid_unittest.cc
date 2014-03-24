@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -124,6 +124,37 @@ TEST(DuidTest, getType) {
     EXPECT_EQ(DUID::DUID_LL,      duid_ll->getType());
     EXPECT_EQ(DUID::DUID_UUID,    duid_uuid->getType());
     EXPECT_EQ(DUID::DUID_UNKNOWN, duid_invalid->getType());
+}
+
+// This test checks that the DUID instance can be created from the textual
+// format and that error is reported if the textual format is invalid.
+TEST(DuidTest, fromText) {
+    scoped_ptr<DUID> duid;
+    // DUID with only decimal digits.
+    ASSERT_NO_THROW(
+        duid.reset(new DUID(DUID::fromText("00:01:02:03:04:05:06")))
+    );
+    EXPECT_EQ("00:01:02:03:04:05:06", duid->toText());
+    // DUID with some hexadecimal digits (upper case and lower case).
+    ASSERT_NO_THROW(
+        duid.reset(new DUID(DUID::fromText("00:aa:bb:CD:ee:EF:ab")))
+    );
+    EXPECT_EQ("00:aa:bb:cd:ee:ef:ab", duid->toText());
+    // DUID with one digit for a particular byte.
+    ASSERT_NO_THROW(
+        duid.reset(new DUID(DUID::fromText("00:a:bb:D:ee:EF:ab")))
+    );
+    EXPECT_EQ("00:0a:bb:0d:ee:ef:ab", duid->toText());
+    // Repeated colon sign in the DUID should be ignored.
+    ASSERT_NO_THROW(
+        duid.reset(new DUID(DUID::fromText("00::bb:D:ee:EF:ab")))
+    );
+    EXPECT_EQ("00:bb:0d:ee:ef:ab", duid->toText());
+    // DUID with excessive number of digits for one of the bytes.
+    EXPECT_THROW(
+       duid.reset(new DUID(DUID::fromText("00:01:021:03:04:05:06"))),
+       isc::BadValue
+    );
 }
 
 // Test checks if the toText() returns valid texual representation

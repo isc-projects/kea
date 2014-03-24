@@ -14,10 +14,12 @@
 
 #include <config.h>
 #include <asiolink/io_address.h>
+#include <dhcp/duid.h>
 #include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/tests/lease_file_io.h>
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -64,6 +66,72 @@ CSVLeaseFile6Test::absolutePath(const std::string& filename) {
     return (s.str());
 }
 
+TEST_F(CSVLeaseFile6Test, parse) {
+    boost::scoped_ptr<CSVLeaseFile6>
+        lf(new CSVLeaseFile6(absolutePath("leases6_0.csv")));
+    ASSERT_NO_THROW(lf->open());
+
+    Lease6Ptr lease;
+    bool lease_read = false;
+    ASSERT_NO_THROW(lease_read = lf->next(lease));
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(lease_read);
+    EXPECT_EQ("2001:db8:1::1", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
+    EXPECT_EQ(200, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(100, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(7, lease->iaid_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_TRUE(lease->fqdn_fwd_);
+    EXPECT_TRUE(lease->fqdn_rev_);
+    EXPECT_EQ("host.example.com", lease->hostname_);
+
+    EXPECT_FALSE(lease_read = lf->next(lease));
+
+    ASSERT_NO_THROW(lease_read = lf->next(lease));
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(lease_read);
+    EXPECT_EQ("2001:db8:2::10", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("01:01:01:01:0a:01:02:03:04:05", lease->duid_->toText());
+    EXPECT_EQ(300, lease->valid_lft_);
+    EXPECT_EQ(0, lease->cltt_);
+    EXPECT_EQ(6, lease->subnet_id_);
+    EXPECT_EQ(150, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_NA, lease->type_);
+    EXPECT_EQ(8, lease->iaid_);
+    EXPECT_EQ(0, lease->prefixlen_);
+    EXPECT_FALSE(lease->fqdn_fwd_);
+    EXPECT_FALSE(lease->fqdn_rev_);
+    EXPECT_TRUE(lease->hostname_.empty());
+
+    EXPECT_FALSE(lease_read = lf->next(lease));
+
+    ASSERT_NO_THROW(lease_read = lf->next(lease));
+    ASSERT_TRUE(lease);
+    EXPECT_TRUE(lease_read);
+    EXPECT_EQ("3000:1::", lease->addr_.toText());
+    ASSERT_TRUE(lease->duid_);
+    EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());
+    EXPECT_EQ(0, lease->valid_lft_);
+    EXPECT_EQ(200, lease->cltt_);
+    EXPECT_EQ(8, lease->subnet_id_);
+    EXPECT_EQ(0, lease->preferred_lft_);
+    EXPECT_EQ(Lease::TYPE_PD, lease->type_);
+    EXPECT_EQ(16, lease->iaid_);
+    EXPECT_EQ(64, lease->prefixlen_);
+    EXPECT_FALSE(lease->fqdn_fwd_);
+    EXPECT_FALSE(lease->fqdn_rev_);
+    EXPECT_TRUE(lease->hostname_.empty());
+
+    ASSERT_NO_THROW(lease_read = lf->next(lease));
+    EXPECT_TRUE(lease_read);
+    EXPECT_FALSE(lease);
+}
 
 TEST_F(CSVLeaseFile6Test, recreate) {
     boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
