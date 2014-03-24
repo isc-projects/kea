@@ -26,7 +26,7 @@ LeaseFileIO::LeaseFileIO(const std::string& filename)
 }
 
 LeaseFileIO::~LeaseFileIO() {
-    //    removeFile();
+    removeFile();
 }
 
 bool
