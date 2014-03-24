@@ -101,7 +101,7 @@ public:
 
         initFqdn("", false, false);
 
-        factory_.create("type=memfile");
+        factory_.create("type=memfile leasefile4= leasefile6=");
     }
 
     /// @brief Configures a subnet and adds one pool to it.
@@ -424,7 +424,7 @@ public:
         subnet_->addPool(pool_);
         cfg_mgr.addSubnet4(subnet_);
 
-        factory_.create("type=memfile");
+        factory_.create("type=memfile leasefile4= leasefile6=");
     }
 
     /// @brief checks if Lease4 matches expected configuration
