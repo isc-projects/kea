@@ -280,4 +280,36 @@ TEST(ClientIdTest, toText) {
     EXPECT_EQ("00:01:02:03:04:ff:fe", clientid.toText());
 }
 
+// This test checks that the ClientId instance can be created from the textual
+// format and that error is reported if the textual format is invalid.
+TEST(ClientIdTest, fromText) {
+    ClientIdPtr cid;
+    // ClientId with only decimal digits.
+    ASSERT_NO_THROW(
+        cid = ClientId::fromText("00:01:02:03:04:05:06")
+    );
+    EXPECT_EQ("00:01:02:03:04:05:06", cid->toText());
+    // ClientId with some hexadecimal digits (upper case and lower case).
+    ASSERT_NO_THROW(
+        cid = ClientId::fromText("00:aa:bb:CD:ee:EF:ab")
+    );
+    EXPECT_EQ("00:aa:bb:cd:ee:ef:ab", cid->toText());
+    // ClientId with one digit for a particular byte.
+    ASSERT_NO_THROW(
+        cid = ClientId::fromText("00:a:bb:D:ee:EF:ab")
+    );
+    EXPECT_EQ("00:0a:bb:0d:ee:ef:ab", cid->toText());
+    // Repeated colon sign in the ClientId should be ignored.
+    ASSERT_NO_THROW(
+        cid = ClientId::fromText("00::bb:D:ee:EF:ab")
+    );
+    EXPECT_EQ("00:bb:0d:ee:ef:ab", cid->toText());
+    // ClientId with excessive number of digits for one of the bytes.
+    EXPECT_THROW(
+       cid = ClientId::fromText("00:01:021:03:04:05:06"),
+       isc::BadValue
+    );
+}
+
+
 } // end of anonymous namespace
