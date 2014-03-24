@@ -56,6 +56,7 @@ libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_unittest.cc
 libdhcpsrv_unittests_SOURCES += callout_handle_store_unittest.cc
 libdhcpsrv_unittests_SOURCES += cfgmgr_unittest.cc
+libdhcpsrv_unittests_SOURCES += csv_lease_file4_unittest.cc
 libdhcpsrv_unittests_SOURCES += csv_lease_file6_unittest.cc
 libdhcpsrv_unittests_SOURCES += d2_client_unittest.cc
 libdhcpsrv_unittests_SOURCES += d2_udp_unittest.cc

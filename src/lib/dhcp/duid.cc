@@ -49,6 +49,34 @@ DUID::DUID(const uint8_t* data, size_t len) {
     duid_ = std::vector<uint8_t>(data, data + len);
 }
 
+std::vector<uint8_t>
+DUID::decode(const std::string& text) {
+    /// @todo optimize stream operations here.
+    std::vector<std::string> split_text;
+    boost::split(split_text, text, boost::is_any_of(":"),
+                 boost::algorithm::token_compress_on);
+
+    std::ostringstream s;
+    for (size_t i = 0; i < split_text.size(); ++i) {
+        if (split_text[i].size() == 1) {
+            s << "0";
+
+        } else if (split_text[i].size() > 2) {
+            isc_throw(isc::BadValue, "invalid identifier '" << text << "'");
+        }
+        s << split_text[i];
+    }
+
+    std::vector<uint8_t> binary;
+    try {
+        util::encode::decodeHex(s.str(), binary);
+    } catch (const Exception& ex) {
+        isc_throw(isc::BadValue, "failed to create identifier from text '"
+                  << text << "': " << ex.what());
+    }
+    return (binary);
+}
+
 const std::vector<uint8_t>& DUID::getDuid() const {
     return (duid_);
 }
@@ -67,33 +95,8 @@ DUID::DUIDType DUID::getType() const {
 
 DUID
 DUID::fromText(const std::string& text) {
-    /// @todo optimize stream operations here.
-    std::vector<std::string> split_text;
-    boost::split(split_text, text, boost::is_any_of(":"),
-                 boost::algorithm::token_compress_on);
-
-    std::ostringstream s;
-    for (size_t i = 0; i < split_text.size(); ++i) {
-        if (split_text[i].size() == 1) {
-            s << "0";
-
-        } else if (split_text[i].size() > 2) {
-            isc_throw(isc::BadValue, "invalid DUID '" << text << "'");
-        }
-        s << split_text[i];
-    }
-    if (s.str().empty()) {
-        isc_throw(isc::BadValue, "empty DUID is not allowed");
-    }
-
-    std::vector<uint8_t> binary;
-    try {
-        util::encode::decodeHex(s.str(), binary);
-    } catch (const Exception& ex) {
-        isc_throw(isc::BadValue, "failed to create DUID from text '"
-                  << text << "': " << ex.what());
-    }
-    return DUID(&binary[0], binary.size());
+    std::vector<uint8_t> binary = decode(text);
+    return DUID(binary);
 }
 
 std::string DUID::toText() const {
@@ -150,6 +153,12 @@ std::string ClientId::toText() const {
     // need the interface of a ClientId::toText() that calls the
     // equivalent method in the base class.
     return (DUID::toText());
+}
+
+ClientIdPtr
+ClientId::fromText(const std::string& text) {
+    std::vector<uint8_t> binary = decode(text);
+    return (ClientIdPtr(new ClientId(binary)));
 }
 
 // Compares two client-ids
