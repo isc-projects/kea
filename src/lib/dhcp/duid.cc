@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,11 @@
 
 #include <dhcp/duid.h>
 #include <exceptions/exceptions.h>
+#include <util/encode/hex.h>
 #include <util/io_utilities.h>
-
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/constants.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <iomanip>
 #include <sstream>
 #include <vector>
@@ -60,6 +63,37 @@ DUID::DUIDType DUID::getType() const {
     } else {
         return (DUID_UNKNOWN);
     }
+}
+
+DUID
+DUID::fromText(const std::string& text) {
+    /// @todo optimize stream operations here.
+    std::vector<std::string> split_text;
+    boost::split(split_text, text, boost::is_any_of(":"),
+                 boost::algorithm::token_compress_on);
+
+    std::ostringstream s;
+    for (size_t i = 0; i < split_text.size(); ++i) {
+        if (split_text[i].size() == 1) {
+            s << "0";
+
+        } else if (split_text[i].size() > 2) {
+            isc_throw(isc::BadValue, "invalid DUID '" << text << "'");
+        }
+        s << split_text[i];
+    }
+    if (s.str().empty()) {
+        isc_throw(isc::BadValue, "empty DUID is not allowed");
+    }
+
+    std::vector<uint8_t> binary;
+    try {
+        util::encode::decodeHex(s.str(), binary);
+    } catch (const Exception& ex) {
+        isc_throw(isc::BadValue, "failed to create DUID from text '"
+                  << text << "': " << ex.what());
+    }
+    return DUID(&binary[0], binary.size());
 }
 
 std::string DUID::toText() const {

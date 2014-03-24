@@ -118,6 +118,32 @@ public:
     /// @c CSVRow::getValuesCount.
     std::string readAt(const size_t at) const;
 
+    /// @brief Retrieves a value from the internal container.
+    ///
+    /// This method is reads a value from the internal container and converts
+    /// this value to the type specified as a template parameter. Internally
+    /// it uses @c boost::lexical_cast.
+    ///
+    /// @param at Index of the value in the container. The values are indexed
+    /// from 0, where 0 corresponds to the left-most value in the CSV file row.
+    /// @tparam T type of the value to convert to.
+    ///
+    /// @return Converted value.
+    ///
+    /// @throw CSVFileError if the index is out of range or if the
+    /// @c boost::bad_lexical_cast is thrown by the @c boost::lexical_cast.
+    template<typename T>
+    T readAndConvertAt(const size_t at) const {
+        T cast_value;
+        try {
+            cast_value = boost::lexical_cast<T>(readAt(at).c_str());
+
+        } catch (const boost::bad_lexical_cast& ex) {
+            isc_throw(CSVFileError, ex.what());
+        }
+        return (cast_value);
+    }
+
     /// @brief Creates a text representation of the CSV file row.
     ///
     /// This function iterates over all values currently held in the internal
