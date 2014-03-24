@@ -329,8 +329,9 @@ protected:
     /// initialize the location of the lease file. If the lease file is not
     /// specified, the method will use the default location for the universe
     /// (v4 or v6) selected. If the location is specified in the map as empty
-    /// it will set the empty location, which implies that leases belonging to
-    /// the specified universe will not be written to disk.
+    /// or the "persist" parameter is set to "no" it will set the empty
+    /// location, which implies that leases belonging to the specified universe
+    /// will not be written to disk.
     ///
     /// @param u Universe (v4 or v6)
     /// @param parameters Map holding parameters of the Lease Manager, passed to
@@ -454,6 +455,7 @@ protected:
 
     /// @brief Holds the pointer to the DHCPv6 lease file IO.
     boost::shared_ptr<CSVLeaseFile6> lease_file6_;
+
 };
 
 }; // end of isc::dhcp namespace
