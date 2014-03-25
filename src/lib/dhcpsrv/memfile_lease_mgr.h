@@ -57,10 +57,11 @@ namespace dhcp {
 ///
 /// Originally, the Memfile backend didn't write leases to disk. This was
 /// particularly useful for testing server performance in non-disk bound
-/// conditions. In order to preserve this capability, the new parameter
-/// "persistence=yes/no" in the data base access string has been introduced.
-/// For example, database access string: "type=memfile persistence=no"
-/// disables disk writes to disk.
+/// conditions. In order to preserve this capability, the new parameters
+/// "persist4=yes|no" and "persist6=yes|no" has been introduced in the
+/// database access string. For example, database access string:
+/// "type=memfile persist4=no persist6=yes" disables disk writes to disk
+/// of DHCPv4 leases enables writes to disk of DHCPv6 leases.
 ///
 /// The lease file locations can be specified for DHCPv4 and DHCPv6 leases
 /// with the following two parameters in the database access string:

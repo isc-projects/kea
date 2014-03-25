@@ -113,10 +113,31 @@ public:
 TEST_F(MemfileLeaseMgrTest, constructor) {
 
     LeaseMgr::ParameterMap pmap;
-    pmap["persist"] = "no";
+    pmap["persist4"] = "no";
+    pmap["persist6"] = "no";
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr;
 
-    ASSERT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+    EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    pmap["persist4"] = "yes";
+    pmap["persist6"] = "yes";
+    pmap["leasefile4"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["leasefile6"] = getLeaseFilePath("leasefile6_1.csv");
+    EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
+
+    // Expecting that persist parameter is yes or no. Everything other than
+    // that is wrong.
+    pmap["persist4"] = "bogus";
+    pmap["persist6"] = "yes";
+    pmap["leasefile4"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["leasefile6"] = getLeaseFilePath("leasefile6_1.csv");
+    EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
+
+    pmap["persist4"] = "yes";
+    pmap["persist6"] = "bogus";
+    pmap["leasefile4"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["leasefile6"] = getLeaseFilePath("leasefile6_1.csv");
+    EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 }
 
 // Checks if the getType() and getName() methods both return "memfile".
@@ -142,7 +163,8 @@ TEST_F(MemfileLeaseMgrTest, getLeaseFilePath) {
     EXPECT_EQ(pmap["leasefile6"],
               lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6));
 
-    pmap["persist"] = "no";
+    pmap["persist4"] = "no";
+    pmap["persist6"] = "no";
     lease_mgr.reset(new Memfile_LeaseMgr(pmap));
     EXPECT_TRUE(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V4).empty());
     EXPECT_TRUE(lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V6).empty());
