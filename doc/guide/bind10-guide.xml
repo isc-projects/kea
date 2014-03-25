@@ -3711,6 +3711,42 @@ Dhcp4/subnet4	[]	list	(default)
       </para>
 
       <section>
+      <title>Default storage for leases</title>
+      <para>
+        Server is designed to support multiple lease database storages. In larger deployments
+        it is often desired to store leases in the database. The
+        <xref linkend="database-configuration4"/> describes one of the possible ways to do it.
+        By default, the server will use a flat CSV file, rather than the database to store
+        lease information. One of the advantages of using a file is that it eliminates
+        dependency on third party software, such as MySQL deamon and developer package.
+      </para>
+      <para>
+        The configuration of the backend (Memfile) performing writes and reads from the
+        file is controlled through the Dhcp4/lease-database parameters. When default
+        parameters are left, the Memfile backend will write leases to a disk in the
+        [bind10-install-dir]/var/bind10/kea-leases4.csv.
+      </para>
+      <para>
+        It is possible to alter the default location of the lease file. The following
+        configuration:
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/type "memfile"</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/persist true</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/leasefile "/tmp/kea-leases4.csv"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+        will change the default location of the lease file to /tmp/kea-leases4.csv.
+      </para>
+      <para>
+        The "persist" parameter controls whether the leases are written to disk or not.
+        It is strongly recommended that this parameter is set to "true" at all times
+        during the normal operation of the server. The typical case when lease writes
+        can be disabled is testing: unit testing, performance testing when it is
+        desired that server is not disk-bound.
+      </para>
+      </section>
+
+      <section id="database-configuration4">
       <title>Database Configuration</title>
       <para>
       All leases issued by the server are stored in the lease database.  Currently,
@@ -4868,6 +4904,42 @@ Dhcp6/subnet6/	list
       </note>
 
       <section>
+      <title>Default storage for leases</title>
+      <para>
+        Server is designed to support multiple lease database storages. In larger deployments
+        it is often desired to store leases in the database. The
+        <xref linkend="database-configuration6"/> describes one of the possible ways to do it.
+        By default, the server will use a flat CSV file, rather than the database to store
+        lease information. One of the advantages of using a file is that it eliminates
+        dependency on third party software, such as MySQL deamon and developer package.
+      </para>
+      <para>
+        The configuration of the backend (Memfile) performing writes and reads from the
+        file is controlled through the Dhcp4/lease-database parameters. When default
+        parameters are left, the Memfile backend will write leases to a disk in the
+        [bind10-install-dir]/var/bind10/kea-leases6.csv.
+      </para>
+      <para>
+        It is possible to alter the default location of the lease file. The following
+        configuration:
+<screen>
+&gt; <userinput>config set Dhcp4/lease-database/type "memfile"</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/persist true</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/leasefile "/tmp/kea-leases6.csv"</userinput>
+&gt; <userinput>config commit</userinput>
+</screen>
+        will change the default location of the lease file to /tmp/kea-leases6.csv.
+      </para>
+      <para>
+        The "persist" parameter controls whether the leases are written to disk or not.
+        It is strongly recommended that this parameter is set to "true" at all times
+        during the normal operation of the server. The typical case when lease writes
+        can be disabled is testing: unit testing, performance testing when it is
+        desired that server is not disk-bound.
+      </para>
+      </section>
+
+      <section id="database-configuration6">
       <title>Database Configuration</title>
       <para>
       All leases issued by the server are stored in the lease database.  Currently,
