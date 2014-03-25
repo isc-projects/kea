@@ -54,6 +54,9 @@ public:
     /// @return Absolute path to the test file.
     static std::string absolutePath(const std::string& filename);
 
+    /// @brief Creates the lease file to be parsed by unit tests.
+    void writeSampleFile() const;
+
     /// @brief Name of the test lease file.
     std::string filename_;
 
@@ -69,15 +72,28 @@ CSVLeaseFile4Test::CSVLeaseFile4Test()
 std::string
 CSVLeaseFile4Test::absolutePath(const std::string& filename) {
     std::ostringstream s;
-    s << TEST_DATA_BUILDDIR << "/" << filename;
+    s << DHCP_DATA_DIR << "/" << filename;
     return (s.str());
+}
+
+void
+CSVLeaseFile4Test::writeSampleFile() const {
+    io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
+                  "fqdn_fwd,fqdn_rev,hostname\n"
+                  "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
+                  "host.example.com\n"
+                  "192.0.2.1,,a:11:01:04,200,200,8,1,1,host.example.com\n"
+                  "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
+                  "0,0,\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
 TEST_F(CSVLeaseFile4Test, parse) {
+    // Create a file to be parsed.
+    writeSampleFile();
+
     // Open the lease file.
-    boost::scoped_ptr<CSVLeaseFile4>
-        lf(new CSVLeaseFile4(absolutePath("leases4_0.csv")));
+    boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
     ASSERT_NO_THROW(lf->open());
 
     Lease4Ptr lease;
