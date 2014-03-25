@@ -101,7 +101,7 @@ public:
 
         initFqdn("", false, false);
 
-        factory_.create("type=memfile persist=no");
+        factory_.create("type=memfile persist4=no persist6=no");
     }
 
     /// @brief Configures a subnet and adds one pool to it.
@@ -424,7 +424,7 @@ public:
         subnet_->addPool(pool_);
         cfg_mgr.addSubnet4(subnet_);
 
-        factory_.create("type=memfile persist=no");
+        factory_.create("type=memfile persist4=no persist6=no");
     }
 
     /// @brief checks if Lease4 matches expected configuration
