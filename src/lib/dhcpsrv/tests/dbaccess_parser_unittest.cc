@@ -90,7 +90,7 @@ public:
             // The only parameter which is not quoted is persist as it
             // is a boolean value.
             result += quote + keyval[i] + quote + colon + space;
-            if (keyval[i] != "persist") {
+            if (std::string(keyval[i]) != "persist") {
                 result += quote + keyval[i + 1] + quote;
             } else {
                 result += keyval[i + 1];
