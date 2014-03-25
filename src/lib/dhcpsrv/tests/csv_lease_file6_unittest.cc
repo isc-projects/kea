@@ -60,6 +60,9 @@ public:
         return (DuidPtr(new DUID(duid, size)));
     }
 
+    /// @brief Create lease file that can be parsed by unit tests.
+    void writeSampleFile() const;
+
     /// @brief Name of the test lease file.
     std::string filename_;
 
@@ -75,15 +78,31 @@ CSVLeaseFile6Test::CSVLeaseFile6Test()
 std::string
 CSVLeaseFile6Test::absolutePath(const std::string& filename) {
     std::ostringstream s;
-    s << TEST_DATA_BUILDDIR << "/" << filename;
+    s << DHCP_DATA_DIR << "/" << filename;
     return (s.str());
+}
+
+void
+CSVLeaseFile6Test::writeSampleFile() const {
+    io_.writeFile("address,duid,valid_lifetime,expire,subnet_id,"
+                  "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
+                  "fqdn_rev,hostname\n"
+                  "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
+                  "200,200,8,100,0,7,0,1,1,host.example.com\n"
+                  "2001:db8:1::1,,200,200,8,100,0,7,0,1,1,host.example.com\n"
+                  "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,300,300,6,150,"
+                  "0,8,0,0,0,\n"
+                  "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,0,200,8,0,2,"
+                  "16,64,0,0,\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
 TEST_F(CSVLeaseFile6Test, parse) {
+    // Create a file to be parsed.
+    writeSampleFile();
+
     // Open the lease file.
-    boost::scoped_ptr<CSVLeaseFile6>
-        lf(new CSVLeaseFile6(absolutePath("leases6_0.csv")));
+    boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
     ASSERT_NO_THROW(lf->open());
 
     Lease6Ptr lease;
