@@ -23,18 +23,22 @@ using namespace isc::dhcp;
 
 Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
     : LeaseMgr(parameters) {
-    // Get the lease files locations and open for IO.
-    std::string file4 = initLeaseFilePath(V4);
-    if (!file4.empty()) {
-        lease_file4_.reset(new CSVLeaseFile4(file4));
-        lease_file4_->open();
-        load4();
-    }
-    std::string file6 = initLeaseFilePath(V6);
-    if (!file6.empty()) {
-        lease_file6_.reset(new CSVLeaseFile6(file6));
-        lease_file6_->open();
-        load6();
+    // Check the universe and use v4 file or v6 file.
+    std::string universe = getParameter("universe");
+    if (universe == "4") {
+        std::string file4 = initLeaseFilePath(V4);
+        if (!file4.empty()) {
+            lease_file4_.reset(new CSVLeaseFile4(file4));
+            lease_file4_->open();
+            load4();
+        }
+    } else {
+        std::string file6 = initLeaseFilePath(V6);
+        if (!file6.empty()) {
+            lease_file6_.reset(new CSVLeaseFile6(file6));
+            lease_file6_->open();
+            load6();
+        }
     }
 
     // If lease persistence have been disabled for both v4 and v6,
@@ -424,28 +428,26 @@ Memfile_LeaseMgr::persistLeases(Universe u) const {
 std::string
 Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
     std::string persist_val;
-    std::string persist_str = (u == V4 ? "persist4" : "persist6");
     try {
-        persist_val = getParameter(persist_str);
+        persist_val = getParameter("persist");
     } catch (const Exception& ex) {
         // If parameter persist hasn't been specified, we use a default value
         // 'yes'.
-        persist_val = "yes";
+        persist_val = "true";
     }
-    // If persist_val is 'no' we will not store leases to disk, so let's
+    // If persist_val is 'false' we will not store leases to disk, so let's
     // return empty file name.
-    if (persist_val == "no") {
+    if (persist_val == "false") {
         return ("");
 
-    } else if (persist_val != "yes") {
-        isc_throw(isc::BadValue, "invalid value '" << persist_str
-                  << "=" << persist_val << "'");
+    } else if (persist_val != "true") {
+        isc_throw(isc::BadValue, "invalid value 'persist="
+                  << persist_val << "'");
     }
 
-    std::string param_name = (u == V4 ? "leasefile4" : "leasefile6");
     std::string lease_file;
     try {
-        lease_file = getParameter(param_name);
+        lease_file = getParameter("leasefile");
     } catch (const Exception& ex) {
         lease_file = getDefaultLeaseFilePath(u);
     }

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -637,7 +637,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id) {
         parser  = new StringParser(config_id,
                                    globalContext()->string_values_);
     } else if (config_id.compare("lease-database") == 0) {
-        parser = new DbAccessParser(config_id);
+        parser = new DbAccessParser(config_id, *globalContext());
     } else if (config_id.compare("hooks-libraries") == 0) {
         parser = new HooksLibrariesParser(config_id);
     } else if (config_id.compare("dhcp-ddns") == 0) {
