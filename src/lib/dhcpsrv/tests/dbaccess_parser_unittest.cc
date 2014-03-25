@@ -87,8 +87,14 @@ public:
             }
 
             // Add the keyword and value - make sure that they are quoted.
-            result += quote + keyval[i] + quote + colon + space +
-                      quote + keyval[i + 1] + quote;
+            // The only parameter which is not quoted is persist as it
+            // is a boolean value.
+            result += quote + keyval[i] + quote + colon + space;
+            if (keyval[i] != "persist") {
+                result += quote + keyval[i + 1] + quote;
+            } else {
+                result += keyval[i + 1];
+            }
         }
 
         // Add the terminating brace

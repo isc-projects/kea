@@ -58,7 +58,15 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
 
     // 3. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
-        values_copy[param.first] = param.second->stringValue();
+        // The persist parameter is the only boolean parameter at the
+        // moment. It needs special handling.
+        if (param.first != "persist") {
+            values_copy[param.first] = param.second->stringValue();
+
+        } else {
+            values_copy[param.first] = (param.second->boolValue() ?
+                                        "true" : "false");
+        }
     }
 
     // 4. Perform validation checks on the updated set of keyword/values.
