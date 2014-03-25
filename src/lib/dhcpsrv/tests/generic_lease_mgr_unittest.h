@@ -30,6 +30,12 @@ namespace test {
 class GenericLeaseMgrTest : public ::testing::Test {
 public:
 
+    /// @brief Universe (V4 or V6).
+    enum Universe {
+        V4,
+        V6
+    };
+
     /// @brief Default constructor.
     GenericLeaseMgrTest();
 
@@ -40,7 +46,9 @@ public:
     ///
     /// Closes the database and re-opens it. It must be implemented
     /// in derived classes.
-    virtual void reopen() = 0;
+    ///
+    /// @param u Universe (V4 or V6), required by some backends.
+    virtual void reopen(Universe u = V4) = 0;
 
     /// @brief Initialize Lease4 Fields
     ///

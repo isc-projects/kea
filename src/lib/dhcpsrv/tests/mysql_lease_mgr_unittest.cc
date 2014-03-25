@@ -183,7 +183,10 @@ public:
     ///
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
-    void reopen() {
+    ///
+    /// Parameter is ignored for MySQL backend as the v4 and v6 leases share
+    /// the same database.
+    void reopen(Universe) {
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
