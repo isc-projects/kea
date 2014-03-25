@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -12,6 +12,7 @@
 // OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 // PERFORMANCE OF THIS SOFTWARE.
 
+#include <dhcp/option.h>
 #include <dhcpsrv/dbaccess_parser.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -30,11 +31,10 @@ namespace dhcp {
 
 
 // Factory function to build the parser
-DbAccessParser::DbAccessParser(const std::string& param_name) : values_()
+DbAccessParser::DbAccessParser(const std::string&, const ParserContext& ctx)
+    : values_(), ctx_(ctx)
 {
-    if (param_name != "lease-database") {
-        LOG_WARN(dhcpsrv_logger, DHCPSRV_UNEXPECTED_NAME).arg(param_name);
-    }
+    ctx_ = ctx;
 }
 
 // Parse the configuration and check that the various keywords are consistent.
@@ -43,19 +43,25 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
 
     // To cope with incremental updates, the strategy is:
     // 1. Take a copy of the stored keyword/value pairs.
-    // 2. Update the copy with the passed keywords.
-    // 3. Perform validation checks on the updated keyword/value pairs.
-    // 4. If all is OK, update the stored keyword/value pairs.
+    // 2. Inject the universe parameter.
+    // 3. Update the copy with the passed keywords.
+    // 4. Perform validation checks on the updated keyword/value pairs.
+    // 5. If all is OK, update the stored keyword/value pairs.
 
     // 1. Take a copy of the stored keyword/value pairs.
     std::map<string, string> values_copy = values_;
 
-    // 2. Update the copy with the passed keywords.
+    // 2. Inject the parameter which defines whether we are configuring
+    // DHCPv4 or DHCPv6. Some database backends (e.g. Memfile make
+    // use of it).
+    values_copy["universe"] = ctx_.universe_ == Option::V4 ? "4" : "6";
+
+    // 3. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
         values_copy[param.first] = param.second->stringValue();
     }
 
-    // 3. Perform validation checks on the updated set of keyword/values.
+    // 4. Perform validation checks on the updated set of keyword/values.
     //
     // a. Check if the "type" keyword exists and thrown an exception if not.
     StringPairMap::const_iterator type_ptr = values_copy.find("type");
@@ -71,7 +77,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
         isc_throw(BadValue, "unknown backend database type: " << dbtype);
     }
 
-    // 4. If all is OK, update the stored keyword/value pairs.  We do this by
+    // 5. If all is OK, update the stored keyword/value pairs.  We do this by
     // swapping contents - values_copy is destroyed immediately after the
     // operation (when the method exits), so we are not interested in its new
     // value.

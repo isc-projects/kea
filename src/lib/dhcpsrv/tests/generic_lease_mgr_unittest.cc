@@ -766,7 +766,7 @@ GenericLeaseMgrTest::testBasicLease6() {
     lmptr_->commit();
 
     // Reopen the database to ensure that they actually got stored.
-    reopen();
+    reopen(V6);
 
     Lease6Ptr l_returned = lmptr_->getLease6(leasetype6_[1], ioaddress6_[1]);
     ASSERT_TRUE(l_returned);
@@ -795,7 +795,7 @@ GenericLeaseMgrTest::testBasicLease6() {
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
 
-    reopen();
+    reopen(V6);
 
     // The deleted lease should be still gone after we re-read leases from
     // persistent storage.
@@ -814,7 +814,7 @@ GenericLeaseMgrTest::testBasicLease6() {
 
     ASSERT_NO_THROW(lmptr_->updateLease6(leases[2]));
 
-    reopen();
+    reopen(V6);
 
     // The lease should be now updated in the storage.
     l_returned = lmptr_->getLease6(leasetype6_[2], ioaddress6_[2]);
