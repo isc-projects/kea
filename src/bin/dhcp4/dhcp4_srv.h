@@ -88,7 +88,7 @@ public:
     /// @param direct_response_desired specifies if it is desired to
     /// use direct V4 traffic.
     Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
-              const char* dbconfig = "type=memfile",
+              const char* dbconfig = "type=memfile universe=4",
               const bool use_bcast = true,
               const bool direct_response_desired = true);
 
