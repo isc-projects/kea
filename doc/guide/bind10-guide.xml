@@ -3714,15 +3714,7 @@ Dhcp4/subnet4	[]	list	(default)
       <title>Database Configuration</title>
       <para>
       All leases issued by the server are stored in the lease database.  Currently,
-      the only supported database is MySQL
-      <footnote>
-      <para>
-      The server comes with an in-memory database ("memfile") configured as the default
-      database. This is used for internal testing and is not supported.  In addition,
-      it does not store lease information on disk: lease information will be lost if the
-      server is restarted.
-      </para>
-      </footnote>, and so the server must be configured to
+      the only supported database is MySQL and so the server must be configured to
       access the correct database with the appropriate credentials.
       </para>
         <note>
@@ -4879,15 +4871,7 @@ Dhcp6/subnet6/	list
       <title>Database Configuration</title>
       <para>
       All leases issued by the server are stored in the lease database.  Currently,
-      the only supported database is MySQL
-      <footnote>
-      <para>
-      The server comes with an in-memory database ("memfile") configured as the default
-      database. This is used for internal testing and is not supported.  In addition,
-      it does not store lease information on disk: lease information will be lost if the
-      server is restarted.
-      </para>
-      </footnote>, and so the server must be configured to
+      the only supported database is MySQL, and so the server must be configured to
       access the correct database with the appropriate credentials.
       </para>
       <note>

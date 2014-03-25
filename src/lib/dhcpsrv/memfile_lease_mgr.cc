@@ -36,6 +36,14 @@ Memfile_LeaseMgr::Memfile_LeaseMgr(const ParameterMap& parameters)
         lease_file6_->open();
         load6();
     }
+
+    // If lease persistence have been disabled for both v4 and v6,
+    // issue a warning. It is ok not to write leases to disk when
+    // doing testing, but it should not be done in normal server
+    // operation.
+    if (!persistLeases(V4) && !persistLeases(V6)) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_MEMFILE_NO_STORAGE);
+    }
 }
 
 Memfile_LeaseMgr::~Memfile_LeaseMgr() {
@@ -62,7 +70,7 @@ Memfile_LeaseMgr::addLease(const Lease4Ptr& lease) {
     // Try to write a lease to disk first. If this fails, the lease will
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
-    if (lease_file4_) {
+    if (persistLeases(V4)) {
         lease_file4_->append(*lease);
     }
 
@@ -83,7 +91,7 @@ Memfile_LeaseMgr::addLease(const Lease6Ptr& lease) {
     // Try to write a lease to disk first. If this fails, the lease will
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
-    if (lease_file6_) {
+    if (persistLeases(V6)) {
         lease_file6_->append(*lease);
     }
 
@@ -290,7 +298,7 @@ Memfile_LeaseMgr::updateLease4(const Lease4Ptr& lease) {
     // Try to write a lease to disk first. If this fails, the lease will
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
-    if (lease_file4_) {
+    if (persistLeases(V4)) {
         lease_file4_->append(*lease);
     }
 
@@ -311,7 +319,7 @@ Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
     // Try to write a lease to disk first. If this fails, the lease will
     // not be inserted to the memory and the disk and in-memory data will
     // remain consistent.
-    if (lease_file6_) {
+    if (persistLeases(V6)) {
         lease_file6_->append(*lease);
     }
 
@@ -329,7 +337,7 @@ Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
             // No such lease
             return (false);
         } else {
-            if (lease_file4_) {
+            if (persistLeases(V4)) {
                 // Copy the lease. The valid lifetime needs to be modified and
                 // we don't modify the original lease.
                 Lease4 lease_copy = **l;
@@ -349,7 +357,7 @@ Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
             // No such lease
             return (false);
         } else {
-            if (lease_file6_) {
+            if (persistLeases(V6)) {
                 // Copy the lease. The lifetimes need to be modified and we
                 // don't modify the original lease.
                 Lease6 lease_copy = **l;
@@ -415,17 +423,23 @@ Memfile_LeaseMgr::persistLeases(Universe u) const {
 
 std::string
 Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
-    bool persist = true;
+    std::string persist_val;
+    std::string persist_str = (u == V4 ? "persist4" : "persist6");
     try {
-        std::string persist_str = getParameter("persist");
-        if (persist_str == "no") {
-            persist = false;
-        }
+        persist_val = getParameter(persist_str);
     } catch (const Exception& ex) {
-        persist = true;
+        // If parameter persist hasn't been specified, we use a default value
+        // 'yes'.
+        persist_val = "yes";
     }
-    if (!persist) {
+    // If persist_val is 'no' we will not store leases to disk, so let's
+    // return empty file name.
+    if (persist_val == "no") {
         return ("");
+
+    } else if (persist_val != "yes") {
+        isc_throw(isc::BadValue, "invalid value '" << persist_str
+                  << "=" << persist_val << "'");
     }
 
     std::string param_name = (u == V4 ? "leasefile4" : "leasefile6");
@@ -442,9 +456,13 @@ void
 Memfile_LeaseMgr::load4() {
     // If lease file hasn't been opened, we are working in non-persistent mode.
     // That's fine, just leave.
-    if (!lease_file4_) {
+    if (!persistLeases(V4)) {
         return;
     }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LEASES_RELOAD4)
+        .arg(lease_file4_->getFilename());
+
     // Remove existing leases (if any). We will recreate them based on the
     // data on disk.
     storage4_.clear();
@@ -462,6 +480,9 @@ Memfile_LeaseMgr::load4() {
         // If we got the lease, we update the internal container holding
         // leases. Otherwise, we reached the end of file and we leave.
         if (lease) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA,
+                      DHCPSRV_MEMFILE_LEASE_LOAD4)
+                .arg(lease->toText());
             loadLease4(lease);
         }
     } while (lease);
@@ -496,9 +517,13 @@ void
 Memfile_LeaseMgr::load6() {
     // If lease file hasn't been opened, we are working in non-persistent mode.
     // That's fine, just leave.
-    if (!lease_file6_) {
+    if (!persistLeases(V6)) {
         return;
     }
+
+    LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_LEASES_RELOAD6)
+        .arg(lease_file6_->getFilename());
+
     // Remove existing leases (if any). We will recreate them based on the
     // data on disk.
     storage6_.clear();
@@ -516,6 +541,10 @@ Memfile_LeaseMgr::load6() {
         // If we got the lease, we update the internal container holding
         // leases. Otherwise, we reached the end of file and we leave.
         if (lease) {
+            LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL_DATA,
+                      DHCPSRV_MEMFILE_LEASE_LOAD6)
+                .arg(lease->toText());
+
             loadLease6(lease);
         }
     } while (lease);
