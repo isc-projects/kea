@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -406,7 +406,8 @@ protected:
         if ((config_id.compare("preferred-lifetime") == 0)  ||
             (config_id.compare("valid-lifetime") == 0)  ||
             (config_id.compare("renew-timer") == 0)  ||
-            (config_id.compare("rebind-timer") == 0))  {
+            (config_id.compare("rebind-timer") == 0) ||
+            (config_id.compare("id") == 0)) {
             parser = new Uint32Parser(config_id, uint32_values_);
         } else if ((config_id.compare("subnet") == 0) ||
                    (config_id.compare("interface") == 0) ||
@@ -480,6 +481,10 @@ protected:
         Triplet<uint32_t> t2 = getParam("rebind-timer");
         Triplet<uint32_t> pref = getParam("preferred-lifetime");
         Triplet<uint32_t> valid = getParam("valid-lifetime");
+        // Subnet ID is optional. If it is not supplied the value of 0 is used,
+        // which means autogenerate.
+        SubnetID subnet_id =
+            static_cast<SubnetID>(uint32_values_->getOptionalParam("id", 0));
 
         // Get interface-id option content. For now we support string
         // represenation only
@@ -518,7 +523,8 @@ protected:
         LOG_INFO(dhcp6_logger, DHCP6_CONFIG_NEW_SUBNET).arg(tmp.str());
 
         // Create a new subnet.
-        Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid);
+        Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid,
+                                       subnet_id);
 
         // Configure interface-id for remote interfaces, if defined
         if (!ifaceid.empty()) {
