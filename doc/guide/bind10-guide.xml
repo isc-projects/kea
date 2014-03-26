@@ -3848,6 +3848,42 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       </para>
       </section>
 
+      <section>
+      <title>IPv4 Subnet Identifier</title>
+      <para>
+        Subnet identifier is a unique number associated with a particular subnet.
+        In principle, it is used to associate clients' leases with respective subnets.
+        When subnet identifier is not specified for a subnet being configured, it will
+        be automatically assigned by the configuration mechanism. The identifiers
+        are assigned from 1 and are monotonically increased for each subsequent
+        subnet: 1, 2, 3 ....
+      </para>
+      <para>
+       If there are multiple subnets configured with auto-generated identifiers and
+       one of them is removed, the subnet identifiers may be renumbered. For example:
+       if there are 4 subnets and 3rd is removed the last subnet will be assigned
+       identifier that the 3rd subnet had before removal. As a result, the leases
+       stored in the lease database for subnet 3 are now associated with the
+       subnet 4, which may have unexpected consequences. In the future it is planned
+       to implement the mechanism to preserve auto-generated subnet ids upon removal
+       of one of the subnets. Currently, the only remedy for this issue is to
+       manually specify the unique subnet identifier for each subnet.
+      </para>
+      <para>
+        The following configuration:
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/id 1024</userinput>
+&gt; <userinput>config commit</userinput>
+        </screen>
+        will assign the arbitrary subnet identifier to the newly configured subnet.
+        This identifier will not change for this subnet until "id" parameter is
+        removed or set to 0. The value of 0 forces auto-generation of subnet
+        identifier.
+      </para>
+      </section>
+
       <section id="dhcp4-address-config">
       <title>Configuration of IPv4 Address Pools</title>
       <para>
@@ -5299,6 +5335,42 @@ Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
         <screen>
 &gt; <userinput>config remove Dhcp6/interfaces[2]</userinput>
 &gt; <userinput>config commit</userinput></screen>
+      </para>
+    </section>
+
+    <section>
+      <title>IPv6 Subnet Identifier</title>
+      <para>
+        Subnet identifier is a unique number associated with a particular subnet.
+        In principle, it is used to associate clients' leases with respective subnets.
+        When subnet identifier is not specified for a subnet being configured, it will
+        be automatically assigned by the configuration mechanism. The identifiers
+        are assigned from 1 and are monotonically increased for each subsequent
+        subnet: 1, 2, 3 ....
+      </para>
+      <para>
+       If there are multiple subnets configured with auto-generated identifiers and
+       one of them is removed, the subnet identifiers may be renumbered. For example:
+       if there are 4 subnets and 3rd is removed the last subnet will be assigned
+       identifier that the 3rd subnet had before removal. As a result, the leases
+       stored in the lease database for subnet 3 are now associated with the
+       subnet 4, which may have unexpected consequences. In the future it is planned
+       to implement the mechanism to preserve auto-generated subnet ids upon removal
+       of one of the subnets. Currently, the only remedy for this issue is to
+       manually specify the unique subnet identifier for each subnet.
+      </para>
+      <para>
+        The following configuration:
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/id 1024</userinput>
+&gt; <userinput>config commit</userinput>
+        </screen>
+        will assign the arbitrary subnet identifier to the newly configured subnet.
+        This identifier will not change for this subnet until "id" parameter is
+        removed or set to 0. The value of 0 forces auto-generation of subnet
+        identifier.
       </para>
     </section>
 
