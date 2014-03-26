@@ -1053,6 +1053,41 @@ TEST_F(CfgMgrTest, getSubnet4ForInterface) {
 
 }
 
+// Checks that detection of duplicated subnet IDs works as expected. It should
+// not be possible to add two IPv4 subnets holding the same ID to the config
+// manager.
+TEST_F(CfgMgrTest, subnet4Duplication) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3, 124));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 123));
+
+    ASSERT_NO_THROW(cfg_mgr.addSubnet4(subnet1));
+    EXPECT_NO_THROW(cfg_mgr.addSubnet4(subnet2));
+    // Subnet 3 has the same ID as subnet 1. It shouldn't be able to add it.
+    EXPECT_THROW(cfg_mgr.addSubnet4(subnet3), isc::dhcp::DuplicateSubnetID);
+}
+
+// Checks that detection of duplicated subnet IDs works as expected. It should
+// not be possible to add two IPv6 subnets holding the same ID to the config
+// manager.
+TEST_F(CfgMgrTest, subnet6Duplication) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 1, 2, 3,
+                                   4, 123));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"), 64, 1, 2, 3,
+                                   4, 124));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"), 64, 1, 2, 3,
+                                   4, 123));
+
+    ASSERT_NO_THROW(cfg_mgr.addSubnet6(subnet1));
+    EXPECT_NO_THROW(cfg_mgr.addSubnet6(subnet2));
+    // Subnet 3 has the same ID as subnet 1. It shouldn't be able to add it.
+    EXPECT_THROW(cfg_mgr.addSubnet6(subnet3), isc::dhcp::DuplicateSubnetID);
+}
+
 
 /// @todo Add unit-tests for testing:
 /// - addActiveIface() with invalid interface name

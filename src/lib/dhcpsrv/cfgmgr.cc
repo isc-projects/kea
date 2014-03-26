@@ -219,6 +219,11 @@ void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
     /// @todo: Check that this new subnet does not cross boundaries of any
     /// other already defined subnet.
     /// @todo: Check that there is no subnet with the same interface-id
+    if (isDuplicate(*subnet)) {
+        isc_throw(isc::dhcp::DuplicateSubnetID, "ID of the new IPv6 subnet '"
+                  << subnet->getID() << "' is the same as ID of an existing"
+                  " subnet");
+    }
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET6)
               .arg(subnet->toText());
     subnets6_.push_back(subnet);
@@ -282,6 +287,11 @@ CfgMgr::getSubnet4(const std::string& iface_name,
 void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
     /// @todo: Check that this new subnet does not cross boundaries of any
     /// other already defined subnet.
+    if (isDuplicate(*subnet)) {
+        isc_throw(isc::dhcp::DuplicateSubnetID, "ID of the new IPv4 subnet '"
+                  << subnet->getID() << "' is the same as ID of an existing"
+                  " subnet");
+    }
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET4)
               .arg(subnet->toText());
     subnets4_.push_back(subnet);
@@ -376,6 +386,29 @@ CfgMgr::isIfaceListedActive(const std::string& iface) const {
     }
     return (false);
 }
+
+bool
+CfgMgr::isDuplicate(const Subnet4& subnet) const {
+    for (Subnet4Collection::const_iterator subnet_it = subnets4_.begin();
+         subnet_it != subnets4_.end(); ++subnet_it) {
+        if ((*subnet_it)->getID() == subnet.getID()) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+bool
+CfgMgr::isDuplicate(const Subnet6& subnet) const {
+    for (Subnet6Collection::const_iterator subnet_it = subnets6_.begin();
+         subnet_it != subnets6_.end(); ++subnet_it) {
+        if ((*subnet_it)->getID() == subnet.getID()) {
+            return (true);
+        }
+    }
+    return (false);
+}
+
 
 const isc::asiolink::IOAddress*
 CfgMgr::getUnicast(const std::string& iface) const {
