@@ -466,7 +466,7 @@ protected:
 
     /// @brief Protected constructor
     //
-    /// By making the constructor protected, we make sure that noone will
+    /// By making the constructor protected, we make sure that no one will
     /// ever instantiate that class. Subnet4 and Subnet6 should be used instead.
     ///
     /// This constructor assigns a new subnet-id (see @ref generateNextID).
@@ -480,11 +480,14 @@ protected:
     /// @param t2 T2 (rebind-time) timer, expressed in seconds
     /// @param valid_lifetime valid lifetime of leases in this subnet (in seconds)
     /// @param relay optional relay information (currently with address only)
+    /// @param id arbitraty subnet id, value of 0 triggers autogeneration
+    /// of subnet id
     Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
            const Triplet<uint32_t>& t1,
            const Triplet<uint32_t>& t2,
            const Triplet<uint32_t>& valid_lifetime,
-           const isc::dhcp::Subnet::RelayInfo& relay);
+           const isc::dhcp::Subnet::RelayInfo& relay,
+           const SubnetID id);
 
     /// @brief virtual destructor
     ///
@@ -637,10 +640,13 @@ public:
     /// @param t1 renewal timer (in seconds)
     /// @param t2 rebind timer (in seconds)
     /// @param valid_lifetime preferred lifetime of leases (in seconds)
+    /// @param id arbitraty subnet id, default value of 0 triggers
+    /// autogeneration of subnet id
     Subnet4(const isc::asiolink::IOAddress& prefix, uint8_t length,
             const Triplet<uint32_t>& t1,
             const Triplet<uint32_t>& t2,
-            const Triplet<uint32_t>& valid_lifetime);
+            const Triplet<uint32_t>& valid_lifetime,
+            const SubnetID id = 0);
 
     /// @brief Sets siaddr for the Subnet4
     ///
@@ -704,11 +710,14 @@ public:
     /// @param t2 rebind timer (in seconds)
     /// @param preferred_lifetime preferred lifetime of leases (in seconds)
     /// @param valid_lifetime preferred lifetime of leases (in seconds)
+    /// @param id arbitraty subnet id, default value of 0 triggers
+    /// autogeneration of subnet id
     Subnet6(const isc::asiolink::IOAddress& prefix, uint8_t length,
             const Triplet<uint32_t>& t1,
             const Triplet<uint32_t>& t2,
             const Triplet<uint32_t>& preferred_lifetime,
-            const Triplet<uint32_t>& valid_lifetime);
+            const Triplet<uint32_t>& valid_lifetime,
+            const SubnetID id = 0);
 
     /// @brief Returns preverred lifetime (in seconds)
     ///
