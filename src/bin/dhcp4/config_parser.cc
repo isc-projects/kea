@@ -201,7 +201,8 @@ protected:
         DhcpConfigParser* parser = NULL;
         if ((config_id.compare("valid-lifetime") == 0)  ||
             (config_id.compare("renew-timer") == 0)  ||
-            (config_id.compare("rebind-timer") == 0))  {
+            (config_id.compare("rebind-timer") == 0) ||
+            (config_id.compare("id") == 0)) {
             parser = new Uint32Parser(config_id, uint32_values_);
         } else if ((config_id.compare("subnet") == 0) ||
                    (config_id.compare("interface") == 0) ||
@@ -271,6 +272,10 @@ protected:
         Triplet<uint32_t> t1 = getParam("renew-timer");
         Triplet<uint32_t> t2 = getParam("rebind-timer");
         Triplet<uint32_t> valid = getParam("valid-lifetime");
+        // Subnet ID is optional. If it is not supplied the value of 0 is used,
+        // which means autogenerate.
+        SubnetID subnet_id =
+            static_cast<SubnetID>(uint32_values_->getOptionalParam("id", 0));
 
         stringstream tmp;
         tmp << addr << "/" << (int)len
@@ -278,7 +283,7 @@ protected:
 
         LOG_INFO(dhcp4_logger, DHCP4_CONFIG_NEW_SUBNET).arg(tmp.str());
 
-        Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid));
+        Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid, subnet_id));
         subnet_ = subnet4;
 
         // Try global value first
