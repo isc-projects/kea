@@ -5049,6 +5049,13 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
           <listitem>
             <simpara>Address duplication report (DECLINE) is not supported yet.</simpara>
           </listitem>
+          <listitem>
+            <simpara>
+              Server doesn't act upon expired leases. In particular, when the lease
+              expires, the server doesn't request removal of DNS records associated
+              with the lease.
+            </simpara>
+          </listitem>
       </itemizedlist>
     </section>
 
@@ -6465,6 +6472,13 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
             reconfiguration (RECONFIGURE) are not yet supported.
           </simpara>
         </listitem>
+          <listitem>
+            <simpara>
+              Server doesn't act upon expired leases. In particular, when the lease
+              expires, the server doesn't request removal of DNS records associated
+              with the lease.
+            </simpara>
+          </listitem>
       </itemizedlist>
     </section>
 
@@ -6638,6 +6652,16 @@ DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
         The server may be configured to listen over IPv4 or IPv6, therefore
         ip-address may an IPv4 or IPv6 address.
         </para>
+        <note>
+          <simpara>
+            When DHCP-DDNS server is configured to listen at address other than
+            loopback address (127.0.0.1 or ::1), it is possible for the malicious
+            attacker to spoof the server. Therefore, other addresses should only
+            be used for testing purposes! In the future, an authentication
+            will be implemented to guard against spoofing attacks.
+          </simpara>
+        </note>
+
 <note>
 <simpara>
 If the ip_address and port are changed, it will be necessary to change the
@@ -7194,6 +7218,25 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
         </para>
         </section> <!-- end of "d2-example" -->
     </section> <!-- end of section "d2-configuration" -->
+    <section>
+      <title>DHCP-DDNS Server Limitations</title>
+      <para>The following are the current limitations of the DHCP-DDNS Server.</para>
+      <itemizedlist>
+        <listitem>
+          <simpara>
+            As requests are received from the DHCP servers they are placed om a queue.
+            These requests are currently not persisted across shutdowns and so cannot
+            be recovered.
+          </simpara>
+        </listitem>
+        <listitem>
+          <simpara>
+            TSIG Authentication (<ulink url="http://tools.ietf.org/html/rfc2845">RFC 2845</ulink>)
+            is not supported yet.
+          </simpara>
+        </listitem>
+      </itemizedlist>
+    </section>
   </chapter> <!-- DHCP-DDNS Server -->
 
   <chapter id="libdhcp">
