@@ -4995,6 +4995,11 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
             Relay Agent Information option is supported.</simpara>
           </listitem>
           <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3925">RFC 3925</ulink>:
+            Vendor-Identifying Vendor Class and Vendor-Identifying Vendor-Specific
+            Information option are supported.</simpara>
+          </listitem>
+          <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc6842">RFC 6842</ulink>:
             Server by default sends back client-id option. That capability may be
             disabled. See <xref linkend="dhcp4-echo-client-id"/> for details.
@@ -5026,24 +5031,10 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
             </para>
           </listitem>
           <listitem>
-          <para>
-            On startup, the DHCPv4 server does not get the full configuration from
-            BIND 10.  To remedy this, after starting BIND 10, modify any parameter
-            and commit the changes, e.g.
-            <screen>
-&gt; <userinput>config show Dhcp4/renew-timer</userinput>
-Dhcp4/renew-timer	1000	integer	(default)
-&gt; <userinput>config set Dhcp4/renew-timer 1001</userinput>
-&gt; <userinput>config commit</userinput></screen>
-          </para>
-        </listitem>
-
-          <listitem>
-            <simpara>The DHCPv4 server does not support
-            BOOTP. That is a design choice and the limitation is
-            permanent. If you have legacy nodes that can't use DHCP and
-            require BOOTP support, please use the latest version of ISC DHCP,
-            available from <ulink url="http://www.isc.org/software/dhcp"/>.</simpara>
+            <simpara>
+              BOOTP (<ulink url="http://tools.ietf.org/html/rfc951">RFC 951</ulink>)
+              is not supported.
+            </simpara>
           </listitem>
           <listitem>
             <simpara>Raw sockets operation is working on Linux
@@ -5056,11 +5047,7 @@ Dhcp4/renew-timer	1000	integer	(default)
             sending ICMP echo request.</simpara>
           </listitem>
           <listitem>
-            <simpara>Address rebinding (REBIND) and duplication report (DECLINE)
-            are not supported yet.</simpara>
-          </listitem>
-          <listitem>
-          <simpara>DNS Update is not yet supported.</simpara>
+            <simpara>Address duplication report (DECLINE) is not supported yet.</simpara>
           </listitem>
       </itemizedlist>
     </section>
@@ -6420,7 +6407,11 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <itemizedlist>
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink>: Supported messages are SOLICIT,
-            ADVERTISE, REQUEST, RELEASE, RENEW, and REPLY.</simpara>
+            ADVERTISE, REQUEST, RELEASE, RENEW, REBIND and REPLY.</simpara>
+          </listitem>
+          <listitem>
+            <simpara><ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>: Supported options are IA_PD and
+            IA_PREFIX. New status code: NoPrefixAvail.</simpara>
           </listitem>
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc3646">RFC 3646</ulink>: Supported option is DNS_SERVERS.</simpara>
@@ -6440,46 +6431,39 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       yet</quote>, rather than actual limitations.</para>
       <itemizedlist>
 
-          <listitem> <!-- see tickets #3234, #3281 -->
-            <para>
-              On-line configuration has some limitations. Adding new subnets or
-              modifying existing ones work, as is removing the last subnet from
-              the list. However, removing non-last (e.g. removing subnet 1,2 or 3 if
-              there are 4 subnets configured) will cause issues. The problem is
-              caused by simplistic subnet-id assignment. The subnets are always
-              numbered, starting from 1. That subnet-id is then used in leases
-              that are stored in the lease database. Removing non-last subnet will
-              cause the configuration information to mismatch data in the lease
-              database. It is possible to manually update subnet-id fields in
-              MySQL database, but it is awkward and error prone process. A better
-              reconfiguration support is planned.
-            </para>
-          </listitem>
-
+        <listitem> <!-- see tickets #3234, #3281 -->
+          <simpara>
+            On-line configuration has some limitations. Adding new subnets or
+            modifying existing ones work, as is removing the last subnet from
+            the list. However, removing non-last (e.g. removing subnet 1,2 or 3 if
+            there are 4 subnets configured) will cause issues. The problem is
+            caused by simplistic subnet-id assignment. The subnets are always
+            numbered, starting from 1. That subnet-id is then used in leases
+            that are stored in the lease database. Removing non-last subnet will
+            cause the configuration information to mismatch data in the lease
+            database. It is possible to manually update subnet-id fields in
+            MySQL database, but it is awkward and error prone process. A better
+            reconfiguration support is planned.
+          </simpara>
+        </listitem>
         <listitem>
-          <para>
-            On startup, the DHCPv6 server does not get the full configuration from
-            BIND 10.  To remedy this, after starting BIND 10, modify any parameter
-            and commit the changes, e.g.
-            <screen>
-&gt; <userinput>config show Dhcp6/renew-timer</userinput>
-Dhcp6/renew-timer	1000	integer	(default)
-&gt; <userinput>config set Dhcp6/renew-timer 1001</userinput>
-&gt; <userinput>config commit</userinput></screen>
-          </para>
+          <simpara>
+            Server will allocate, renew or rebind maximum one lease for a
+            particular IA option (IA_NA or IA_PD) sent by a client.
+            <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink> and
+            <ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink> allow
+            for multiple addresses or prefixes to be allocated for a single IA.
+          </simpara>
         </listitem>
         <listitem>
           <simpara>Temporary addresses are not supported.</simpara>
         </listitem>
         <listitem>
-          <simpara>Prefix delegation is not supported.</simpara>
-        </listitem>
-        <listitem>
-          <simpara>Confirmation (CONFIRM), and duplication report (DECLINE)
-          are not yet supported.</simpara>
-        </listitem>
-        <listitem>
-          <simpara>DNS Update is not supported.</simpara>
+          <simpara>
+            Confirmation (CONFIRM), duplication report (DECLINE),
+            stateless configuration (INFORMATION-REQUEST) and client
+            reconfiguration (RECONFIGURE) are not yet supported.
+          </simpara>
         </listitem>
       </itemizedlist>
     </section>
