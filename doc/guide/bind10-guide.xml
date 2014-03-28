@@ -7226,11 +7226,12 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
       <itemizedlist>
         <listitem>
           <simpara>
-            Requests are received from the DHCP servers are placed in a
+            Requests received from the DHCP servers are placed in a
             queue until they are processed.  Currently all queued requests
             are lost when the server shuts down.
           </simpara>
-        </listitem> <listitem>
+        </listitem>
+        <listitem>
           <simpara>
             TSIG Authentication (<ulink
             url="http://tools.ietf.org/html/rfc2845">RFC 2845</ulink>)
