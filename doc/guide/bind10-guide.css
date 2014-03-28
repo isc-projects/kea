@@ -30,6 +30,15 @@ body {
 	-webkit-border-radius: 10px;
 }
 
+.warning {
+	background-color: #eedddd;
+	border: 1px solid #ccaaaa;
+	margin: 1em 0 1em 0;
+	padding: 0.5em 1em 0.5em 1em;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+}
+
 h3 {
 	text-decoration: underline;
 }
