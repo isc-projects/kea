@@ -976,8 +976,7 @@ Dhcpv6Srv::assignLeases(const Pkt6Ptr& question, Pkt6Ptr& answer) {
     // received options and handle IA_NA options one by one and store our
     // responses in answer message (ADVERTISE or REPLY).
     //
-    // @todo: expand this to cover IA_PD and IA_TA once we implement support for
-    // prefix delegation and temporary addresses.
+    // @todo: IA_TA once we implement support for temporary addresses.
     for (OptionCollection::iterator opt = question->options_.begin();
          opt != question->options_.end(); ++opt) {
         switch (opt->second->getType()) {
