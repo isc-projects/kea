@@ -1,3 +1,8 @@
+775.	[doc]		marcin
+	Updated information in the BIND 10 Guide about the standards supported
+	by Kea and its current limitations.
+	(Trac #3258, git ff52b86206e3a256a02ca6d5cde55040550ba86a)
+
 774.	[doc]		tmark
 	Added sections to the BIND 10 guide on configuring and using the
 	DHCP-DDNS feature of Kea.  Chapter 19, describes the new DHCP-DDNS
