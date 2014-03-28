@@ -5051,9 +5051,9 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
           </listitem>
           <listitem>
             <simpara>
-              Server doesn't act upon expired leases. In particular, when the lease
-              expires, the server doesn't request removal of DNS records associated
-              with the lease.
+              The server doesn't act upon expired leases. In particular,
+              when a lease expires, the server doesn't request the removal
+              of the DNS records associated with it.
             </simpara>
           </listitem>
       </itemizedlist>
@@ -6418,7 +6418,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
           </listitem>
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink>: Supported options are IA_PD and
-            IA_PREFIX. New status code: NoPrefixAvail.</simpara>
+            IA_PREFIX. Also supported is the status code NoPrefixAvail.</simpara>
           </listitem>
           <listitem>
             <simpara><ulink url="http://tools.ietf.org/html/rfc3646">RFC 3646</ulink>: Supported option is DNS_SERVERS.</simpara>
@@ -6455,8 +6455,8 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
         </listitem>
         <listitem>
           <simpara>
-            Server will allocate, renew or rebind maximum one lease for a
-            particular IA option (IA_NA or IA_PD) sent by a client.
+            The server will allocate, renew or rebind a maximum of one lease
+            for a particular IA option (IA_NA or IA_PD) sent by a client.
             <ulink url="http://tools.ietf.org/html/rfc3315">RFC 3315</ulink> and
             <ulink url="http://tools.ietf.org/html/rfc3633">RFC 3633</ulink> allow
             for multiple addresses or prefixes to be allocated for a single IA.
@@ -6474,9 +6474,9 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
         </listitem>
           <listitem>
             <simpara>
-              Server doesn't act upon expired leases. In particular, when the lease
-              expires, the server doesn't request removal of DNS records associated
-              with the lease.
+              The server doesn't act upon expired leases. In particular,
+              when a lease expires, the server doesn't request removal of
+              the DNS records associated with it.
             </simpara>
           </listitem>
       </itemizedlist>
@@ -6652,15 +6652,17 @@ DhcpDdns/reverse_ddns/ddns_domains  []  list    (default)
         The server may be configured to listen over IPv4 or IPv6, therefore
         ip-address may an IPv4 or IPv6 address.
         </para>
-        <note>
+        <warning>
           <simpara>
-            When DHCP-DDNS server is configured to listen at address other than
-            loopback address (127.0.0.1 or ::1), it is possible for the malicious
-            attacker to spoof the server. Therefore, other addresses should only
-            be used for testing purposes! In the future, an authentication
-            will be implemented to guard against spoofing attacks.
+            When the DHCP-DDNS server is configured to listen at an address
+            other than the loopback address (127.0.0.1 or ::1), it is possible
+            for a malicious attacker to send bogus NameChangeRequests to it
+            and change entries in the DNS. For this reason, addresses other
+            than the IPv4 or IPv6 loopback addresses should only be used
+            for testing purposes. A future version of Kea will implement
+            authentication to guard against such attacks.
           </simpara>
-        </note>
+        </warning>
 
 <note>
 <simpara>
@@ -7224,14 +7226,14 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
       <itemizedlist>
         <listitem>
           <simpara>
-            As requests are received from the DHCP servers they are placed om a queue.
-            These requests are currently not persisted across shutdowns and so cannot
-            be recovered.
+            Requests are received from the DHCP servers are placed in a
+            queue until they are processed.  Currently all queued requests
+            are lost when the server shuts down.
           </simpara>
-        </listitem>
-        <listitem>
+        </listitem> <listitem>
           <simpara>
-            TSIG Authentication (<ulink url="http://tools.ietf.org/html/rfc2845">RFC 2845</ulink>)
+            TSIG Authentication (<ulink
+            url="http://tools.ietf.org/html/rfc2845">RFC 2845</ulink>)
             is not supported yet.
           </simpara>
         </listitem>
