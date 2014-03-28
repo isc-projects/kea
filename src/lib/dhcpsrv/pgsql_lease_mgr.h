@@ -22,6 +22,8 @@
 #include <boost/utility.hpp>
 #include <libpq-fe.h>
 
+#include <vector>
+
 namespace isc {
 namespace dhcp {
 
@@ -31,8 +33,28 @@ namespace dhcp {
 /// or UPDATE clauses).
 struct PgSqlParam {
     std::string value; ///< The actual value represented as text
-    bool isbinary;     ///< Boolean flag that controls whether the data is binary
+    bool isbinary;     ///< Boolean flag that indicates if data is binary
     int binarylen;     ///< Specified binary length
+
+    /// @brief Constructor for text parameters
+    ///
+    /// Constructs a text (i.e. non-binary) instance given a string value.
+    /// @param val string containing the text value of the parameter.  The
+    /// default is an empty string which serves as the default or empty
+    /// parameter constructor.
+    PgSqlParam (const std::string& val = "")
+        : value(val), isbinary(false), binarylen(0) {
+    }
+
+    /// @brief Constructor for binary data parameters
+    ///
+    /// Constructs a binary data instance given a vector of binary data.
+    /// @param data vector of binary data from which to set the parameter's
+    /// value.
+    PgSqlParam (const std::vector<uint8_t>& data)
+      : value(data.begin(), data.end()), isbinary(true),
+          binarylen(data.size()) {
+    }
 };
 
 /// @brief Defines all parameters for binding a compiled statement
