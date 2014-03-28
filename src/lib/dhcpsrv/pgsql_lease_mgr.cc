@@ -34,16 +34,14 @@ using namespace std;
 
 namespace {
 
-// Maximum text representation of an IPv6 address
-const size_t ADDRESS6_TEXT_MAX_LEN = 39;
-
 // Maximum number of parameters used in any signle query
-const size_t MAX_PARAMETERS_IN_QUERY = 12;
+const size_t MAX_PARAMETERS_IN_QUERY = 13;
 
 // Defines a single query
 struct TaggedStatement {
 
     /// Query index
+    /// @todo cppcheck flags index as unused
     PgSqlLeaseMgr::StatementIndex index;
 
     /// Number of parameters for a given query
@@ -54,7 +52,7 @@ struct TaggedStatement {
     /// Sspecify parameter types. See /usr/include/postgresql/catalog/pg_type.h.
     /// For some reason that header does not export those parameters.
     /// Those OIDs must match both input and output parameters.
-    const Oid types[MAX_PARAMETERS_IN_QUERY + 1];
+    const Oid types[MAX_PARAMETERS_IN_QUERY];
 
     /// Short name of the query.
     const char* name;
@@ -186,23 +184,47 @@ namespace dhcp {
 class PgSqlLeaseExchange {
 protected:
 
-    /// Converts time_t structure to a text representation
-    /// @param expire timestamp to be converted
-    /// @param buffer text version will be written here
-    void
-    convertToTimestamp(const time_t& expire, char buffer[20]) {
+    /// Converts time_t structure to a text representation in local time.
+    ///
+    /// The format of the output string is "%Y-%m-%d %H:%M:%S".  Database
+    /// table columns using this value should be typed as TIMESTAMP WITH
+    /// TIME ZONE. For such columns Postgres assumes input strings without
+    /// timezones should be treated as in local time and are converted to UTC
+    /// when stored.  Likewise, these columns are automatically adjusted
+    /// upon retrieval unless fetched via "extract(epoch from <column>))".
+    ///
+    /// @param time_val timestamp to be converted
+    /// @return std::string containing the stringified time
+    std::string
+    convertToDatabaseTime(const time_t& time_val) {
         struct tm tinfo;
-        localtime_r(&expire, &tinfo);
-        strftime(buffer, 20, "%Y-%m-%d %H:%M:%S", &tinfo);
+        char buffer[20];
+        localtime_r(&time_val, &tinfo);
+        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tinfo);
+        return (std::string(buffer));
     }
 
-    /// Converts available text representations to bool
+    /// Converts time stamp from the database to a time_t
+    /// @param db_time_val timestamp to be converted.  This value
+    /// is expected to be the number of seconds since the epoch
+    /// expressed as base-10 integer string.
+    time_t convertFromDatabaseTime(const std::string& db_time_val) {
+        // Convert string time value to time_t
+        istringstream tmp;
+        time_t db_time_t;
+        tmp.str(db_time_val);
+        tmp >> db_time_t;
+        return (db_time_t);
+    }
+
+    /// Converts Postgres text boolean representations to bool
     ///
-    /// Allowed values are "t" or "f". Any other will throw.
+    /// Allowed values are "t" or "f", or "" which is false.
+    //  Any other will throw.
     /// @param value text value to be converted
     /// @throw BadValue if passed any value other than "t" or "f"
     bool stringToBool(char* value) {
-        if (!strlen(value)) {
+        if (!value || !strlen(value)) {
             return (false);
         }
         switch (value[0]) {
@@ -226,7 +248,7 @@ class PgSqlLease4Exchange : public PgSqlLeaseExchange {
 public:
 
     /// Default constructor
-    PgSqlLease4Exchange() : addr4_(0) {
+    PgSqlLease4Exchange() : addr4_(0), hwaddr_length_(0), client_id_length_(0) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
 
@@ -253,11 +275,8 @@ public:
         ostringstream tmp;
 
         tmp << static_cast<uint32_t>(lease_->addr_);
-        PgSqlParam paddr4 = { .value = tmp.str() };
-
-        params.push_back(paddr4);
+        params.push_back(PgSqlParam(tmp.str()));
         tmp.str("");
-        tmp.clear();
 
         // Although HWADDR object will always be there, it may be just an empty vector
         if (!lease_->hwaddr_.empty()) {
@@ -267,50 +286,30 @@ public:
                           << HWAddr::MAX_HWADDR_LEN);
             }
 
-            PgSqlParam pdest = { .value = string(lease_->hwaddr_.begin(),
-                                                 lease_->hwaddr_.end()),
-                                 .isbinary = 1,
-                                 .binarylen = static_cast<int>(lease_->hwaddr_.size()) };
-            params.push_back(pdest);
+            params.push_back(PgSqlParam(lease_->hwaddr_));
         } else {
             params.push_back(PgSqlParam());
         }
 
-        if(lease_->client_id_) {
-            vector<uint8_t> client_data = lease_->client_id_->getClientId();
-            PgSqlParam pclient_dest = { .value = reinterpret_cast<char *>(&client_data[0]),
-                                        .isbinary = 1,
-                                        .binarylen = static_cast<int>(lease_->client_id_->getClientId().size()) };
-            params.push_back(pclient_dest);
+        if (lease_->client_id_) {
+            params.push_back(PgSqlParam(lease_->client_id_->getClientId()));
         } else {
             params.push_back(PgSqlParam());
         }
 
-        string valid_lft_str;
         tmp << static_cast<unsigned long>(lease_->valid_lft_);
-        PgSqlParam pvalid_lft = { .value = tmp.str() };
-        params.push_back(pvalid_lft);
+        params.push_back(PgSqlParam(tmp.str()));
         tmp.str("");
-        tmp.clear();
-        time_t expire_ = lease_->valid_lft_ + lease_->cltt_;
-        char buffer_[20] = { 0 };
-        convertToTimestamp(expire_, buffer_);
-        PgSqlParam pbuffer = { .value = buffer_ };
-        params.push_back(pbuffer);
-        string subnet_id_str;
+
+        time_t expire = lease_->valid_lft_ + lease_->cltt_;
+        params.push_back(PgSqlParam(convertToDatabaseTime(expire)));
+
         tmp << static_cast<unsigned long>(lease_->subnet_id_);
-        PgSqlParam psubnet_id = { .value = tmp.str() };
-        params.push_back(psubnet_id);
+        params.push_back(PgSqlParam(tmp.str()));
 
-        PgSqlParam fqdn_fwd = { .value = lease_->fqdn_fwd_?"TRUE":"FALSE" };
-        PgSqlParam fqdn_rev = { .value = lease_->fqdn_fwd_?"TRUE":"FALSE" };
-        PgSqlParam hostname = { .value = lease_->hostname_ };
-
-        params.push_back(fqdn_fwd);
-        params.push_back(fqdn_rev);
-        params.push_back(hostname);
-
-        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
+        params.push_back(PgSqlParam(lease_->fqdn_fwd_ ? "TRUE" : "FALSE"));
+        params.push_back(PgSqlParam(lease_->fqdn_rev_ ? "TRUE" : "FALSE"));
+        params.push_back(PgSqlParam(lease_->hostname_));
 
         return (params);
     }
@@ -327,7 +326,7 @@ public:
         const char* valid_lifetime_str = PQgetvalue(r, line, 3);
         const char* expire_str = PQgetvalue(r, line, 4);
         const char* subnet_id_str = PQgetvalue(r, line, 5);
-        unsigned long valid_lifetime, expire, subnet_id;
+        unsigned long valid_lifetime, subnet_id;
 
         istringstream tmp;
         tmp.str(addr4_str);
@@ -347,11 +346,7 @@ public:
         tmp.clear();
         valid_lifetime_ = static_cast<uint32_t>(valid_lifetime);
 
-        tmp.str(expire_str);
-        tmp >> expire;
-        tmp.str("");
-        tmp.clear();
-        expire_ = static_cast<uint32_t>(expire);
+        expire_ = convertFromDatabaseTime(expire_str);
 
         tmp.str(subnet_id_str);
         tmp >> subnet_id;
@@ -392,7 +387,7 @@ private:
 class PgSqlLease6Exchange : public PgSqlLeaseExchange {
     static const size_t LEASE_COLUMNS = 12;
 public:
-    PgSqlLease6Exchange() {
+    PgSqlLease6Exchange() : duid_length_(0) {
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
         // Set the column names (for error messages)
         columns_[0] = "address";
@@ -407,7 +402,7 @@ public:
         columns_[9] = "fqdn_fwd";
         columns_[10]= "fqdn_rev";
         columns_[11]= "hostname";
-        BOOST_STATIC_ASSERT(8 < LEASE_COLUMNS);
+        BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
 
         params.reserve(LEASE_COLUMNS);
     }
@@ -418,66 +413,44 @@ public:
         params.clear();
         ostringstream tmp;
 
-        PgSqlParam paddr6 = { .value = lease_->addr_.toText() };
+        params.push_back(PgSqlParam(lease_->addr_.toText()));
 
-        params.push_back(paddr6);
-        vector<uint8_t> duid_data = lease_->duid_->getDuid();
-        PgSqlParam pdest = { .value = string(duid_data.begin(), duid_data.end()),
-                             .isbinary = 1,
-                             .binarylen = static_cast<int>(duid_data.size()) };
+        params.push_back(PgSqlParam(lease_->duid_->getDuid()));
 
-        params.push_back(pdest);
-
-        string valid_lft_str;
         tmp << static_cast<unsigned long>(lease_->valid_lft_);
-        PgSqlParam pvalid_lft = { .value = tmp.str() };
-        params.push_back(pvalid_lft);
+        params.push_back(PgSqlParam(tmp.str()));
         tmp.str("");
         tmp.clear();
 
-        time_t expire_ = lease_->valid_lft_ + lease_->cltt_;
-        char buffer_[20] = { 0 };
-        convertToTimestamp(expire_, buffer_);
-        PgSqlParam pbuffer = { .value = buffer_ };
-        params.push_back(pbuffer);
+        time_t expire = lease_->valid_lft_ + lease_->cltt_;
+        params.push_back(PgSqlParam(convertToDatabaseTime(expire)));
 
         tmp << static_cast<unsigned long>(lease_->subnet_id_);
-        PgSqlParam psubnet_id = { .value = tmp.str() };
-        params.push_back(psubnet_id);
+        params.push_back(PgSqlParam(tmp.str()));
         tmp.str("");
         tmp.clear();
 
         tmp << static_cast<unsigned long>(lease_->preferred_lft_);
-        PgSqlParam preferred_lft = { .value = tmp.str() };
-        params.push_back(preferred_lft);
+        params.push_back(PgSqlParam(tmp.str()));
         tmp.str("");
         tmp.clear();
 
         tmp << static_cast<unsigned int>(lease_->type_);
-        PgSqlParam type = { .value = tmp.str() };
-        params.push_back(type);
+        params.push_back(PgSqlParam(tmp.str()));
         tmp.str("");
         tmp.clear();
 
         tmp << static_cast<unsigned long>(lease_->iaid_);
-        PgSqlParam iaid = { .value = tmp.str() };
-        params.push_back(iaid);
+        params.push_back(PgSqlParam(tmp.str()));
         tmp.str("");
         tmp.clear();
 
         tmp << static_cast<unsigned int>(lease_->prefixlen_);
-        PgSqlParam prefixlen = { .value = tmp.str() };
-        params.push_back(prefixlen);
+        params.push_back(PgSqlParam(tmp.str()));
 
-        PgSqlParam fqdn_fwd = { .value = lease_->fqdn_fwd_?"TRUE":"FALSE" };
-        PgSqlParam fqdn_rev = { .value = lease_->fqdn_rev_?"TRUE":"FALSE" };
-        PgSqlParam hostname = { .value = lease_->hostname_ };
-
-        params.push_back(fqdn_fwd);
-        params.push_back(fqdn_rev);
-        params.push_back(hostname);
-
-        BOOST_STATIC_ASSERT(11 < LEASE_COLUMNS);
+        params.push_back(PgSqlParam(lease_->fqdn_fwd_ ? "TRUE" : "FALSE"));
+        params.push_back(PgSqlParam(lease_->fqdn_rev_ ? "TRUE" : "FALSE"));
+        params.push_back(PgSqlParam(lease_->hostname_));
 
         return (params);
     }
@@ -496,7 +469,7 @@ public:
         const char* iaid_str = PQgetvalue(r, line, 7);
         const char* prefixlen_str = PQgetvalue(r, line, 8);
         unsigned int lease_type, prefixlen;
-        unsigned long valid_lifetime, expire, subnet_id, pref_lifetime, iaid;
+        unsigned long valid_lifetime, subnet_id, pref_lifetime, iaid;
 
         istringstream tmp;
 
@@ -513,11 +486,7 @@ public:
         tmp.clear();
         valid_lifetime_ = static_cast<uint32_t>(valid_lifetime);
 
-        tmp.str(expire_str);
-        tmp >> expire;
-        tmp.str("");
-        tmp.clear();
-        expire_ = static_cast<uint32_t>(expire);
+        expire_ = convertFromDatabaseTime(expire_str);
 
         tmp.str(subnet_id_str);
         tmp >> subnet_id;
@@ -618,12 +587,12 @@ PgSqlLeaseMgr::~PgSqlLeaseMgr() {
     if (status) {
         // Attempt to deallocate prepared queries set previously with DEALLOCATE query
         // No internal libpq function for that, no errors checking as well
-        PGresult* r = NULL;
+        /// @todo Can't this be done as a single string with list of statements?
         for(int i = 0; tagged_statements[i].text != NULL; ++ i) {
             string deallocate = "DEALLOCATE \"";
             deallocate += tagged_statements[i].name;
             deallocate += "\"";
-            r = PQexec(status, deallocate.c_str());
+            PGresult* r = PQexec(status, deallocate.c_str());
             PQclear(r);
         }
 
@@ -635,16 +604,16 @@ void PgSqlLeaseMgr::prepareStatements() {
     statements_.clear();
     statements_.resize(NUM_STATEMENTS, PgSqlStatementBind());
 
-    PGresult * r = PQexec(status, "SET AUTOCOMMIT TO OFF");
-    PQclear(r);
-
     for(int i = 0; tagged_statements[i].text != NULL; ++ i) {
+        /// @todo why do we bother with select here?  If they are already
+        /// defined we should let the error occur because we only do this
+        /// once per open anyway.
         string checkstatement = "SELECT * FROM pg_prepared_statements "
                                      "WHERE name = '";
         checkstatement += tagged_statements[i].name;
         checkstatement += "'";
 
-        r = PQexec(status, checkstatement.c_str());
+        PGresult* r = PQexec(status, checkstatement.c_str());
 
         if(!PQntuples(r)) {
             PQclear(r);
@@ -674,9 +643,6 @@ void PgSqlLeaseMgr::prepareStatements() {
                 PQclear(r);
             }
     }
-
-    r = PQexec(status, "SET AUTOCOMMIT TO ON");
-    PQclear(r);
 }
 
 void
@@ -717,8 +683,16 @@ PgSqlLeaseMgr::openDatabase() {
     }
 
     status = PQconnectdb(dbconnparameters.c_str());
-    if(status == NULL || PQstatus(status) != CONNECTION_OK) {
-        isc_throw(DbOpenError, PQerrorMessage(status));
+    if (status == NULL) {
+        isc_throw(DbOpenError, "could not allocate connection object");
+    }
+
+    if (PQstatus(status) != CONNECTION_OK) {
+        // If we have a connection object, we have to call finish
+        // to release it, but grab the error message first.
+        std::string error_message = PQerrorMessage(status);
+        PQfinish(status);
+        isc_throw(DbOpenError, error_message);
     }
 }
 
@@ -789,11 +763,7 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     vector<int> out_lengths;
     vector<int> out_formats;
     convertToQuery(params, out_values, out_lengths, out_formats);
-
-    PGresult * r = PQexec(status, "SET AUTOCOMMIT TO OFF");
-    PQclear(r);
-
-    r = PQexec(status, "BEGIN");
+    PGresult* r = PQexec(status, "BEGIN");
     PQclear(r);
 
     r = PQexecPrepared(status, statements_[stindex].stmt_name,
@@ -832,9 +802,6 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     PQclear(r);
 
     r = PQexec(status, "END");
-    PQclear(r);
-
-    r = PQexec(status, "SET AUTOCOMMIT TO ON");
     PQclear(r);
 }
 
@@ -884,12 +851,9 @@ PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
     // Set up the WHERE clause value
     bindparams inparams;
     ostringstream tmp;
-    string baddr;
 
     tmp << static_cast<uint32_t>(addr);
-    PgSqlParam addr4 = { .value = tmp.str() };
-
-    inparams.push_back(addr4);
+    inparams.push_back(PgSqlParam(tmp.str()));
 
     // Get the data
     Lease4Ptr result;
@@ -907,11 +871,7 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
     bindparams inparams;
 
     if (!hwaddr.hwaddr_.empty()) {
-        uint8_t* data = const_cast<uint8_t *>(&hwaddr.hwaddr_[0]);
-        PgSqlParam pdest = { .value = reinterpret_cast<char *>(data),
-                             .isbinary = 1,
-                             .binarylen = static_cast<int>(hwaddr.hwaddr_.size()) };
-        inparams.push_back(pdest);
+        inparams.push_back(PgSqlParam(hwaddr.hwaddr_));
     } else {
         inparams.push_back(PgSqlParam());
     }
@@ -933,15 +893,14 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     bindparams inparams;
     ostringstream tmp;
 
-    PgSqlParam pdest = { .value = string(hwaddr.hwaddr_.begin(), hwaddr.hwaddr_.end()),
-                         .isbinary = 1,
-                         .binarylen = static_cast<int>(hwaddr.hwaddr_.size()) };
-    inparams.push_back(pdest);
+    if (!hwaddr.hwaddr_.empty()) {
+        inparams.push_back(PgSqlParam(hwaddr.hwaddr_));
+    } else {
+        inparams.push_back(PgSqlParam());
+    }
 
     tmp << static_cast<unsigned long>(subnet_id);
-    PgSqlParam psubnet_id = { .value = tmp.str() };
-
-    inparams.push_back(psubnet_id);
+    inparams.push_back(PgSqlParam(tmp.str()));
 
     // Get the data
     Lease4Ptr result;
@@ -958,11 +917,8 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid) const {
     // Set up the WHERE clause value
     bindparams inparams;
 
-    vector<uint8_t> client_data = clientid.getClientId();
-    PgSqlParam pdest = { .value = reinterpret_cast<char *>(&client_data[0]),
-                         .isbinary = 1,
-                         .binarylen = static_cast<int>(clientid.getClientId().size()) };
-    inparams.push_back(pdest);
+    // CLIENT_ID
+    inparams.push_back(PgSqlParam(clientid.getClientId()));
 
     // Get the data
     Lease4Collection result;
@@ -981,15 +937,11 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
     bindparams inparams;
     ostringstream tmp;
 
-    vector<uint8_t> client_data = clientid.getClientId();
-    PgSqlParam pdest = { .value = reinterpret_cast<char *>(&client_data[0]),
-                         .isbinary = 1,
-                         .binarylen = static_cast<int>(clientid.getClientId().size()) };
-    inparams.push_back(pdest);
+    // CLIENT_ID
+    inparams.push_back(PgSqlParam(clientid.getClientId()));
 
     tmp << static_cast<unsigned long>(subnet_id);
-    PgSqlParam psubnet_id = { .value = tmp.str() };
-    inparams.push_back(psubnet_id);
+    inparams.push_back(PgSqlParam(tmp.str()));
 
     // Get the data
     Lease4Ptr result;
@@ -1015,15 +967,16 @@ PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
 
     // Set up the WHERE clause value
     bindparams inparams;
-
-    PgSqlParam addr6 = { .value = addr.toText() };
-    inparams.push_back(addr6);
-
     ostringstream tmp;
-    tmp << static_cast<uint16_t>(lease_type);
-    PgSqlParam qtype = { .value = tmp.str() };
-    inparams.push_back(qtype);
 
+    // ADDRESS
+    inparams.push_back(PgSqlParam(addr.toText()));
+
+    // LEASE_TYPE
+    tmp << static_cast<uint16_t>(lease_type);
+    inparams.push_back(PgSqlParam(tmp.str()));
+
+    // ... and get the data
     Lease6Ptr result;
     getLease(GET_LEASE6_ADDR, inparams, result);
 
@@ -1038,24 +991,19 @@ PgSqlLeaseMgr::getLeases6(Lease::Type type, const DUID& duid, uint32_t iaid) con
     // Set up the WHERE clause value
     bindparams inparams;
     ostringstream tmp;
-    vector<uint8_t> duid_data = duid.getDuid();
-    PgSqlParam pdest = { .value = reinterpret_cast<char *>(&duid_data[0]),
-                         .isbinary = 1,
-                         .binarylen = static_cast<int>(duid.getDuid().size()) };
-    inparams.push_back(pdest);
 
-    /// @todo: use type
+    // DUID
+    inparams.push_back(PgSqlParam(duid.getDuid()));
 
     // IAID
     tmp << static_cast<unsigned long>(iaid);
-    PgSqlParam piaid = { .value = tmp.str() };
-    inparams.push_back(piaid);
+    inparams.push_back(PgSqlParam(tmp.str()));
     tmp.str("");
     tmp.clear();
 
+    // LEASE_TYPE
     tmp << static_cast<uint16_t>(type);
-    PgSqlParam param_lease_type = { .value = tmp.str() };
-    inparams.push_back(param_lease_type);
+    inparams.push_back(PgSqlParam(tmp.str()));
 
     // ... and get the data
     Lease6Collection result;
@@ -1074,35 +1022,28 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid, uint32_t iai
     bindparams inparams;
     ostringstream tmp;
 
-    // Lease type
+    // LEASE_TYPE
     tmp << static_cast<uint16_t>(lease_type);
-    PgSqlParam qtype = { .value = tmp.str() };
+    inparams.push_back(PgSqlParam(tmp.str()));
     tmp.str("");
     tmp.clear();
-    inparams.push_back(qtype);
 
-    // See the earlier description of the use of "const_cast" when accessing
-    // the DUID for an explanation of the reason.
-    vector<uint8_t> duid_data = duid.getDuid();
-    PgSqlParam pdest = { .value = string(duid_data.begin(), duid_data.end()),
-                         .isbinary = 1,
-                         .binarylen = static_cast<int>(duid.getDuid().size()) };
-    inparams.push_back(pdest);
+    // DUID
+    inparams.push_back(PgSqlParam(duid.getDuid()));
 
     // IAID
     tmp << static_cast<unsigned long>(iaid);
-    PgSqlParam piaid = { .value = tmp.str() };
-    inparams.push_back(piaid);
+    inparams.push_back(PgSqlParam(tmp.str()));
     tmp.str("");
     tmp.clear();
 
     // Subnet ID
     tmp << static_cast<unsigned long>(subnet_id);
-    PgSqlParam psubnet_id = { .value = tmp.str() };
-    inparams.push_back(psubnet_id);
+    inparams.push_back(PgSqlParam(tmp.str()));
     tmp.str("");
     tmp.clear();
 
+    // ... and get the data
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6_DUID_IAID_SUBID, inparams, result);
 
@@ -1153,8 +1094,7 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
     // Set up the WHERE clause and append it to the MYSQL_BIND array
     tmp << static_cast<uint32_t>(lease->addr_);
-    PgSqlParam addr4 = { .value = tmp.str() };
-    params.push_back(addr4);
+    params.push_back(PgSqlParam(tmp.str()));
 
     // Drop to common update code
     updateLeaseCommon(stindex, params, lease);
@@ -1171,8 +1111,7 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     bindparams params = exchange6_->createBindForSend(lease);
 
     // Set up the WHERE clause and append it to the MYSQL_BIND array
-    PgSqlParam addr6 = { .value = lease->addr_.toText() };
-    params.push_back(addr6);
+    params.push_back(PgSqlParam(lease->addr_.toText()));
 
     // Drop to common update code
     updateLeaseCommon(stindex, params, lease);
@@ -1206,19 +1145,12 @@ PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
     if (addr.isV4()) {
         ostringstream tmp;
         tmp << static_cast<uint32_t>(addr);
-        PgSqlParam addr4 = { .value = tmp.str() };
-
-        inparams.push_back(addr4);
-
+        inparams.push_back(PgSqlParam(tmp.str()));
         return (deleteLeaseCommon(DELETE_LEASE4, inparams));
-
-    } else {
-        PgSqlParam addr6 = { .value = addr.toText() };
-
-        inparams.push_back(addr6);
-
-        return (deleteLeaseCommon(DELETE_LEASE6, inparams));
     }
+
+    inparams.push_back(PgSqlParam(addr.toText()));
+    return (deleteLeaseCommon(DELETE_LEASE6, inparams));
 }
 
 string
@@ -1272,10 +1204,7 @@ PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_VERSION);
 
-    PGresult* r = PQexec(status, "SET AUTOCOMMIT TO OFF");
-    PQclear(r);
-
-    r = PQexec(status, "BEGIN");
+    PGresult* r = PQexec(status, "BEGIN");
     PQclear(r);
 
     r = PQexecPrepared(status, "get_version", 0, NULL, NULL, NULL, 0);
@@ -1304,9 +1233,6 @@ PgSqlLeaseMgr::getVersion() const {
     PQclear(r);
 
     r = PQexec(status, "END");
-    PQclear(r);
-
-    r = PQexec(status, "SET AUTOCOMMIT TO ON");
     PQclear(r);
 
     return make_pair<uint32_t, uint32_t>(version, minor);

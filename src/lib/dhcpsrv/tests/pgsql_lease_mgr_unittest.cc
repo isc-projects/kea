@@ -142,6 +142,8 @@ void createSchema() {
         r = PQexec(conn, create_statement[i]);
         PQclear(r);
     }
+
+    PQfinish(conn);
 }
 
 /// @brief Test fixture class for testing PostgreSQL Lease Manager
@@ -221,7 +223,6 @@ TEST(PgSqlOpenTest, OpenDatabase) {
                << "*** The test environment is broken and must be fixed\n"
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
-
     // Check that attempting to get an instance of the lease manager when
     // none is set throws an exception.
     EXPECT_THROW(LeaseMgrFactory::instance(), NoLeaseManager);
@@ -232,6 +233,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
@@ -240,12 +242,15 @@ TEST(PgSqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);

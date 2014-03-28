@@ -35,7 +35,7 @@ CREATE TABLE lease4 (
     hwaddr BYTEA,                               -- Hardware address
     client_id BYTEA,                            -- Client ID
     valid_lifetime BIGINT,                      -- Length of the lease (seconds)
-    expire TIMESTAMP,                           -- Expiration time of the lease
+    expire TIMESTAMP WITH TIME ZONE,            -- Expiration time of the lease
     subnet_id BIGINT,                           -- Subnet identification
     fqdn_fwd BOOLEAN,                           -- Has forward DNS update been performed by a server
     fqdn_rev BOOLEAN,                           -- Has reverse DNS update been performed by a server
@@ -57,7 +57,7 @@ CREATE TABLE lease6 (
     address VARCHAR(39) PRIMARY KEY NOT NULL,   -- IPv6 address
     duid BYTEA,                                 -- DUID
     valid_lifetime BIGINT,                      -- Length of the lease (seconds)
-    expire TIMESTAMP,                           -- Expiration time of the lease
+    expire TIMESTAMP WITH TIME ZONE,            -- Expiration time of the lease
     subnet_id BIGINT,                           -- Subnet identification
     pref_lifetime BIGINT,                       -- Preferred lifetime
     lease_type SMALLINT,                        -- Lease type (see lease6_types
