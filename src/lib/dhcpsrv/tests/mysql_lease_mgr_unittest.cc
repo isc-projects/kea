@@ -38,7 +38,7 @@ using namespace std;
 namespace {
 
 // This holds statements to create and destroy the schema.
-#include "schema_copy.h"
+#include "schema_mysql_copy.h"
 
 // Connection strings.
 // Database: keatest
