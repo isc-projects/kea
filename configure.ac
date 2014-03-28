@@ -294,7 +294,9 @@ case "$host" in
 	# it should be avoided to rely on 'osx_version' unless there's no
 	# viable alternative.
 	osx_version=`/usr/bin/sw_vers -productVersion`
-	if [ test $osx_version = "10.9" ]; then
+	if [ test $osx_version = "10.9" \
+         -o $osx_version = "10.9.1" \
+         -o $osx_version = "10.9.2" ]; then
 		bind10_undefined_pthread_behavior=yes
 	fi
 
@@ -989,8 +991,8 @@ if test "$PG_CONFIG" != "" ; then
     PGSQL_CPPFLAGS=`$PG_CONFIG --cppflags`
     PGSQL_INCLUDEDIR=`$PG_CONFIG --includedir`
     PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$PGSQL_INCLUDEDIR"
-    PGSQL_LIBS=`$PG_CONFIG --ldflags`
-    PGSQL_LIBS="$PGSQL_LIBS -lpq"
+    PGSQL_LIBS=`$PG_CONFIG --libdir`
+    PGSQL_LIBS="-L$PGSQL_LIBS -lpq"
     PGSQL_VERSION=`$PG_CONFIG --version`
 
     AC_SUBST(PGSQL_CPPFLAGS)
