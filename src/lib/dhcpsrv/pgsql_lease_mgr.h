@@ -58,7 +58,7 @@ struct PgSqlParam {
 };
 
 /// @brief Defines all parameters for binding a compiled statement
-typedef std::vector<PgSqlParam> bindparams;
+typedef std::vector<PgSqlParam> BindParams;
 
 /// @brief Describes a single compiled statement
 struct PgSqlStatementBind {
@@ -432,7 +432,7 @@ private:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(StatementIndex stindex, bindparams& params);
+    bool addLeaseCommon(StatementIndex stindex, BindParams& params);
 
     /// @brief Get Lease Collection Common Code
     ///
@@ -455,7 +455,7 @@ private:
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(StatementIndex stindex, bindparams& params,
+    void getLeaseCollection(StatementIndex stindex, BindParams& params,
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
@@ -475,7 +475,7 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, bindparams& params,
+    void getLeaseCollection(StatementIndex stindex, BindParams& params,
                             Lease4Collection& result) const {
         getLeaseCollection(stindex, params, exchange4_, result);
     }
@@ -495,7 +495,7 @@ private:
     ///        failed.
     /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, bindparams& params,
+    void getLeaseCollection(StatementIndex stindex, BindParams& params,
                             Lease6Collection& result) const {
         getLeaseCollection(stindex, params, exchange6_, result);
     }
@@ -507,10 +507,9 @@ private:
     ///
     /// @param r result of the last PostgreSQL operation
     /// @param index will be used to print out compiled statement name
-    /// @param what operation that cause the error
     ///
     /// @throw isc::dhcp::DbOperationError Detailed PostgreSQL failure
-    inline void checkError(PGresult* r, StatementIndex index, const char* what) const;
+    inline void checkStatementError(PGresult* r, StatementIndex index) const;
 
     /// @brief Converts query parameters to format accepted by PostgreSQL
     ///
@@ -520,7 +519,7 @@ private:
     /// @param out_values [out] values of specified parameters
     /// @param out_lengths [out] lengths of specified values
     /// @param out_formats [out] specifies format (text (0) or binary (1))
-    inline void convertToQuery(const bindparams& params,
+    inline void convertToQuery(const BindParams& params,
                                std::vector<const char *>& out_values,
                                std::vector<int>& out_lengths,
                                std::vector<int>& out_formats) const;
@@ -532,9 +531,9 @@ private:
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bindparams PostgreSQL array for input parameters
+    /// @param BindParams PostgreSQL array for input parameters
     /// @param lease Lease4 object returned
-    void getLease(StatementIndex stindex, bindparams& params,
+    void getLease(StatementIndex stindex, BindParams& params,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease6 Common Code
@@ -544,9 +543,9 @@ private:
     /// but retrieveing only a single lease.
     ///
     /// @param stindex Index of statement being executed
-    /// @param bindparams PostgreSQL array for input parameters
+    /// @param BindParams PostgreSQL array for input parameters
     /// @param lease Lease6 object returned
-    void getLease(StatementIndex stindex, bindparams& params,
+    void getLease(StatementIndex stindex, BindParams& params,
                   Lease6Ptr& result) const;
 
 
@@ -557,7 +556,7 @@ private:
     /// were affected.
     ///
     /// @param stindex Index of prepared statement to be executed
-    /// @param bindparams Array of PostgreSQL objects representing the parameters.
+    /// @param BindParams Array of PostgreSQL objects representing the parameters.
     ///        (Note that the number is determined by the number of parameters
     ///        in the statement.)
     /// @param lease Pointer to the lease object whose record is being updated.
@@ -567,7 +566,7 @@ private:
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
-    void updateLeaseCommon(StatementIndex stindex, bindparams& params,
+    void updateLeaseCommon(StatementIndex stindex, BindParams& params,
                            const LeasePtr& lease);
 
     /// @brief Delete lease common code
@@ -577,7 +576,7 @@ private:
     /// see how many rows were deleted.
     ///
     /// @param stindex Index of prepared statement to be executed
-    /// @param bindparams Array of PostgreSQL objects representing the parameters.
+    /// @param BindParams Array of PostgreSQL objects representing the parameters.
     ///        (Note that the number is determined by the number of parameters
     ///        in the statement.)
     ///
@@ -586,7 +585,7 @@ private:
     ///
     /// @throw isc::dhcp::DbOperationError An operation on the open database has
     ///        failed.
-    bool deleteLeaseCommon(StatementIndex stindex, bindparams& params);
+    bool deleteLeaseCommon(StatementIndex stindex, BindParams& params);
 
     /// The exchange objects are used for transfer of data to/from the database.
     /// They are pointed-to objects as the contents may change in "const" calls,
@@ -599,7 +598,7 @@ private:
     std::vector<PgSqlStatementBind> statements_;
 
     /// PostgreSQL connection handle
-    PGconn* status;
+    PGconn* conn_;
 };
 
 }; // end of isc::dhcp namespace
