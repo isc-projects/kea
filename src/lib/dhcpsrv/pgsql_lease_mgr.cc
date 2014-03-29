@@ -1,4 +1,4 @@
-// Copyright (C) 2012 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -73,7 +73,6 @@ TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::GET_LEASE4_ADDR, 1,
         { 20 },
         "get_lease4_addr",
-     "DECLARE get_lease4_addr CURSOR FOR "
      "SELECT address, hwaddr, client_id, "
      "valid_lifetime, extract(epoch from expire), subnet_id, fqdn_fwd, fqdn_rev, hostname "
      "FROM lease4 "
@@ -81,7 +80,6 @@ TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::GET_LEASE4_CLIENTID, 1,
         { 17 },
         "get_lease4_clientid",
-     "DECLARE get_lease4_clientid CURSOR FOR "
      "SELECT address, hwaddr, client_id, "
      "valid_lifetime, extract(epoch from expire), subnet_id, fqdn_fwd, fqdn_rev, hostname "
      "FROM lease4 "
@@ -89,7 +87,6 @@ TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::GET_LEASE4_CLIENTID_SUBID, 2,
         { 17, 20 },
         "get_lease4_clientid_subid",
-     "DECLARE get_lease4_clientid_subid CURSOR FOR "
      "SELECT address, hwaddr, client_id, "
      "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
      "FROM lease4 "
@@ -97,7 +94,6 @@ TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::GET_LEASE4_HWADDR, 1,
          { 17 },
          "get_lease4_hwaddr",
-     "DECLARE get_lease4_hwaddr CURSOR FOR "
      "SELECT address, hwaddr, client_id, "
      "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
      "FROM lease4 "
@@ -105,7 +101,6 @@ TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::GET_LEASE4_HWADDR_SUBID, 2,
          { 17, 20 },
          "get_lease4_hwaddr_subid",
-     "DECLARE get_lease4_hwaddr_subid CURSOR FOR "
      "SELECT address, hwaddr, client_id, "
      "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, fqdn_fwd, fqdn_rev, hostname "
      "FROM lease4 "
@@ -113,7 +108,6 @@ TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::GET_LEASE6_ADDR, 2,
         { 1043, 21 },
         "get_lease6_addr",
-     "DECLARE get_lease6_addr CURSOR FOR "
      "SELECT address, duid, valid_lifetime, "
      "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
      "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
@@ -122,7 +116,6 @@ TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID, 3,
         { 17, 20, 21 },
         "get_lease6_duid_iaid",
-     "DECLARE get_lease6_duid_iaid CURSOR FOR "
      "SELECT address, duid, valid_lifetime, "
      "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
      "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
@@ -131,7 +124,6 @@ TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::GET_LEASE6_DUID_IAID_SUBID, 4,
         { 21, 17, 20, 20 },
         "get_lease6_duid_iaid_subid",
-     "DECLARE get_lease6_duid_iaid_subid CURSOR FOR "
      "SELECT address, duid, valid_lifetime, "
      "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
      "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname "
@@ -140,7 +132,6 @@ TaggedStatement tagged_statements[] = {
     {PgSqlLeaseMgr::GET_VERSION, 0,
         { 0 },
      "get_version",
-     "DECLARE get_version CURSOR FOR "
      "SELECT version, minor FROM schema_version"},
     {PgSqlLeaseMgr::INSERT_LEASE4, 9,
          { 20, 17, 17, 20, 1114, 20, 16, 16, 1043 },
@@ -239,7 +230,7 @@ protected:
     }
 
     /// Compiled statement bind parameters
-    bindparams params;
+    BindParams params;
 };
 
 /// @brief Represents a single Lease4 exchange
@@ -268,7 +259,7 @@ public:
         params.reserve(LEASE_COLUMNS);
     }
 
-    bindparams
+    BindParams
     createBindForSend(const Lease4Ptr& lease) {
         lease_ = lease;
         params.clear();
@@ -278,11 +269,14 @@ public:
         params.push_back(PgSqlParam(tmp.str()));
         tmp.str("");
 
-        // Although HWADDR object will always be there, it may be just an empty vector
+        // Although HWADDR object will always be there, it may be just an
+        // empty vector
         if (!lease_->hwaddr_.empty()) {
             if (lease->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
-                isc_throw(DbOperationError, "Attempted to store Hardware address longer ("
-                          << lease->hwaddr_.size() << " than allowed maximum of "
+                isc_throw(DbOperationError,
+                          "Attempted to store Hardware address longer ("
+                          << lease->hwaddr_.size()
+                          << " than allowed maximum of "
                           << HWAddr::MAX_HWADDR_LEN);
             }
 
@@ -326,12 +320,12 @@ public:
         const char* valid_lifetime_str = PQgetvalue(r, line, 3);
         const char* expire_str = PQgetvalue(r, line, 4);
         const char* subnet_id_str = PQgetvalue(r, line, 5);
-        unsigned long valid_lifetime, subnet_id;
+        unsigned long valid_lifetime;
+        unsigned long subnet_id;
 
         istringstream tmp;
         tmp.str(addr4_str);
         tmp >> addr4_;
-        tmp.str("");
         tmp.clear();
 
         memcpy(hwaddr_buffer_, hwaddr_str, hwaddr_length_);
@@ -342,21 +336,19 @@ public:
 
         tmp.str(valid_lifetime_str);
         tmp >> valid_lifetime;
-        tmp.str("");
-        tmp.clear();
         valid_lifetime_ = static_cast<uint32_t>(valid_lifetime);
+        tmp.clear();
 
         expire_ = convertFromDatabaseTime(expire_str);
 
         tmp.str(subnet_id_str);
         tmp >> subnet_id;
         subnet_id_ = static_cast<uint32_t>(subnet_id);
+        tmp.clear();
 
         time_t cltt = expire_ - valid_lifetime_;
 
         // Extract fqdn_fwd, fqdn_rev
-        // boolean is represented as one of 3 possible strings:
-        // "" (means NULL or not set), "t" (means true), "f" (means false)
         bool fwd = stringToBool(PQgetvalue(r, line, 6));
         bool rev = stringToBool(PQgetvalue(r, line, 7));
 
@@ -407,7 +399,7 @@ public:
         params.reserve(LEASE_COLUMNS);
     }
 
-    bindparams
+    BindParams
     createBindForSend(const Lease6Ptr& lease) {
         lease_ = lease;
         params.clear();
@@ -482,38 +474,34 @@ public:
 
         tmp.str(valid_lifetime_str);
         tmp >> valid_lifetime;
-        tmp.str("");
-        tmp.clear();
         valid_lifetime_ = static_cast<uint32_t>(valid_lifetime);
+        tmp.clear();
 
         expire_ = convertFromDatabaseTime(expire_str);
 
         tmp.str(subnet_id_str);
         tmp >> subnet_id;
-        tmp.str("");
-        tmp.clear();
         subnet_id_ = static_cast<uint32_t>(subnet_id);
+        tmp.clear();
 
         tmp.str(pref_lifetime_str);
         tmp >> pref_lifetime;
-        tmp.str("");
-        tmp.clear();
         pref_lifetime_ = static_cast<uint32_t>(pref_lifetime);
+        tmp.clear();
 
         tmp.str(lease_type_str);
         tmp >> lease_type;
-        tmp.str("");
         tmp.clear();
 
         tmp.str(iaid_str);
         tmp >> iaid;
-        tmp.str("");
-        tmp.clear();
         iaid_ = static_cast<uint32_t>(iaid);
+        tmp.clear();
 
         tmp.str(prefixlen_str);
         tmp >> prefixlen;
         prefixlen_ = static_cast<uint8_t>(prefixlen);
+        tmp.clear();
 
         Lease6::Type type = Lease6::TYPE_NA;
         switch (lease_type) {
@@ -536,8 +524,6 @@ public:
         }
 
         // Extract fqdn_fwd, fqdn_rev
-        // boolean is represented as one of 3 possible strings:
-        // "" (means NULL or not set), "t" (means true), "f" (means false)
         bool fwd = stringToBool(PQgetvalue(r, line, 9));
         bool rev = stringToBool(PQgetvalue(r, line, 10));
 
@@ -549,7 +535,8 @@ public:
 
         Lease6Ptr result(new Lease6(type, addr, duid_ptr, iaid_,
                                     pref_lifetime_, valid_lifetime_, 0, 0,
-                                    subnet_id_, fwd, rev, hostname, prefixlen_));
+                                    subnet_id_, fwd, rev, hostname,
+                                    prefixlen_));
 
         time_t cltt = expire_ - valid_lifetime_;
         result->cltt_ = cltt;
@@ -574,8 +561,8 @@ private:
 };
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
-    : LeaseMgr(parameters){
-    status = NULL;
+    : LeaseMgr(parameters) {
+    conn_ = NULL;
     openDatabase();
     prepareStatements();
 
@@ -584,19 +571,17 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
 }
 
 PgSqlLeaseMgr::~PgSqlLeaseMgr() {
-    if (status) {
-        // Attempt to deallocate prepared queries set previously with DEALLOCATE query
-        // No internal libpq function for that, no errors checking as well
-        /// @todo Can't this be done as a single string with list of statements?
-        for(int i = 0; tagged_statements[i].text != NULL; ++ i) {
-            string deallocate = "DEALLOCATE \"";
-            deallocate += tagged_statements[i].name;
-            deallocate += "\"";
-            PGresult* r = PQexec(status, deallocate.c_str());
-            PQclear(r);
+    if (conn_) {
+        // Deallocate the prepared queries.
+        PGresult* r = PQexec(conn_, "DEALLOCATE all");
+        if(PQresultStatus(r) != PGRES_COMMAND_OK) {
+            /// @todo log it for posterity but go on
+            std::cout << "deallocate error: "
+                      << PQerrorMessage(conn_) << std::endl;
         }
 
-        PQfinish(status);
+        PQclear(r);
+        PQfinish(conn_);
     }
 }
 
@@ -605,43 +590,23 @@ void PgSqlLeaseMgr::prepareStatements() {
     statements_.resize(NUM_STATEMENTS, PgSqlStatementBind());
 
     for(int i = 0; tagged_statements[i].text != NULL; ++ i) {
-        /// @todo why do we bother with select here?  If they are already
-        /// defined we should let the error occur because we only do this
-        /// once per open anyway.
-        string checkstatement = "SELECT * FROM pg_prepared_statements "
-                                     "WHERE name = '";
-        checkstatement += tagged_statements[i].name;
-        checkstatement += "'";
+        // Prepare all statements queries with all known fields datatype
+        PGresult* r = PQprepare(conn_, tagged_statements[i].name,
+                                tagged_statements[i].text,
+                                tagged_statements[i].nbparams,
+                                tagged_statements[i].types);
 
-        PGresult* r = PQexec(status, checkstatement.c_str());
-
-        if(!PQntuples(r)) {
+        if(PQresultStatus(r) != PGRES_COMMAND_OK) {
             PQclear(r);
-            r = PQexec(status, "BEGIN");
-            PQclear(r);
-            // Prepare all statements queries with all known fields datatype
-            // No need to remind them when called
-            r = PQprepare(status, tagged_statements[i].name,
-                                       tagged_statements[i].text,
-                                       tagged_statements[i].nbparams,
-                                       tagged_statements[i].types);
+            isc_throw(DbOperationError,
+                      "unable to prepare PostgreSQL statement: "
+                      << tagged_statements[i].text << ", reason: "
+                      << PQerrorMessage(conn_));
+        }
 
-            if(PQresultStatus(r) != PGRES_COMMAND_OK) {
-                PQclear(r);
-                isc_throw(DbOperationError, "unable to prepare PostgreSQL statement <" <<
-                          tagged_statements[i].text << ">, reason: " << PQerrorMessage(status));
-            }
-
-            PQclear(r);
-
-            r = PQexec(status, "END");
-            PQclear(r);
-
-            statements_[i].stmt_name = tagged_statements[i].name;
-            statements_[i].stmt_nbparams = tagged_statements[i].nbparams;
-        } else {
-                PQclear(r);
-            }
+        statements_[i].stmt_name = tagged_statements[i].name;
+        statements_[i].stmt_nbparams = tagged_statements[i].nbparams;
+        PQclear(r);
     }
 }
 
@@ -682,23 +647,23 @@ PgSqlLeaseMgr::openDatabase() {
         isc_throw(NoDatabaseName, "must specified a name for the database");
     }
 
-    status = PQconnectdb(dbconnparameters.c_str());
-    if (status == NULL) {
+    conn_ = PQconnectdb(dbconnparameters.c_str());
+    if (conn_ == NULL) {
         isc_throw(DbOpenError, "could not allocate connection object");
     }
 
-    if (PQstatus(status) != CONNECTION_OK) {
+    if (PQstatus(conn_) != CONNECTION_OK) {
         // If we have a connection object, we have to call finish
         // to release it, but grab the error message first.
-        std::string error_message = PQerrorMessage(status);
-        PQfinish(status);
+        std::string error_message = PQerrorMessage(conn_);
+        PQfinish(conn_);
         isc_throw(DbOpenError, error_message);
     }
 }
 
 bool
 PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
-                              bindparams& params) {
+                              BindParams& params) {
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(statements_[stindex].stmt_name);
@@ -708,22 +673,26 @@ PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
     vector<int> out_formats;
     convertToQuery(params, out_values, out_lengths, out_formats);
 
-    PGresult * r = PQexecPrepared(status, statements_[stindex].stmt_name,
+    PGresult * r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
                                   statements_[stindex].stmt_nbparams,
-                                  &out_values[0], &out_lengths[0], &out_formats[0], 0);
+                                  &out_values[0], &out_lengths[0],
+                                  &out_formats[0], 0);
 
     int s = PQresultStatus(r);
     if (s != PGRES_COMMAND_OK) {
-        const char * errorMsg = PQerrorMessage(status);
+        const char * errorMsg = PQerrorMessage(conn_);
         PQclear(r);
 
+        /// @todo - ok, do we have to rely on error message text??
+        /// and why is failing on duplicate key NOT an error?
+        /// should be looking at global sqlca struct
         if(!strncmp(errorMsg, "ERROR:  duplicate key",
            sizeof("ERROR:  duplicate key") - 1)) {
             return (false);
         }
 
-        isc_throw(DbOperationError, "unable to INSERT for <" <<
-                  statements_[stindex].stmt_name << ">, " <<
+        isc_throw(DbOperationError, "unable to INSERT for " <<
+                  statements_[stindex].stmt_name << ", reason: " <<
                   errorMsg);
     }
 
@@ -736,7 +705,7 @@ bool
 PgSqlLeaseMgr::addLease(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(lease->addr_.toText());
-    bindparams params = exchange4_->createBindForSend(lease);
+    BindParams params = exchange4_->createBindForSend(lease);
 
     return (addLeaseCommon(INSERT_LEASE4, params));
 }
@@ -745,14 +714,14 @@ bool
 PgSqlLeaseMgr::addLease(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR6).arg(lease->addr_.toText());
-    bindparams params = exchange6_->createBindForSend(lease);
+    BindParams params = exchange6_->createBindForSend(lease);
 
     return (addLeaseCommon(INSERT_LEASE6, params));
 }
 
 template <typename Exchange, typename LeaseCollection>
 void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
-                                       bindparams & params,
+                                       BindParams & params,
                                        Exchange& exchange,
                                        LeaseCollection& result,
                                        bool single) const {
@@ -763,27 +732,15 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     vector<int> out_lengths;
     vector<int> out_formats;
     convertToQuery(params, out_values, out_lengths, out_formats);
-    PGresult* r = PQexec(status, "BEGIN");
-    PQclear(r);
 
-    r = PQexecPrepared(status, statements_[stindex].stmt_name,
+    PGresult* r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
                        statements_[stindex].stmt_nbparams, &out_values[0],
                        &out_lengths[0], &out_formats[0], 0);
 
-    checkError(r, stindex, "unable to bind WHERE clause parameter");
-    PQclear(r);
-
-    string fetchall = "FETCH ALL in ";
-    fetchall += statements_[stindex].stmt_name;
-
-    r = PQexec(status, fetchall.c_str());
-    checkError(r, stindex, "unable to FETCH ALL");
+    checkStatementError(r, stindex);
 
     int lines = PQntuples(r);
-
-    if(single && lines > 1) {
-        PQclear(r);
-        r = PQexec(status, "END");
+    if (single && lines > 1) {
         PQclear(r);
         isc_throw(MultipleRecords, "multiple records were found in the "
                       "database where only one was expected for query "
@@ -795,18 +752,10 @@ void PgSqlLeaseMgr::getLeaseCollection(StatementIndex stindex,
     }
 
     PQclear(r);
-
-    string closecursor = "CLOSE ";
-    closecursor += statements_[stindex].stmt_name;
-    r = PQexec(status, closecursor.c_str());
-    PQclear(r);
-
-    r = PQexec(status, "END");
-    PQclear(r);
 }
 
 void
-PgSqlLeaseMgr::getLease(StatementIndex stindex, bindparams & params,
+PgSqlLeaseMgr::getLease(StatementIndex stindex, BindParams & params,
                              Lease4Ptr& result) const {
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" paraeter is true to indicate
@@ -825,7 +774,7 @@ PgSqlLeaseMgr::getLease(StatementIndex stindex, bindparams & params,
 }
 
 void
-PgSqlLeaseMgr::getLease(StatementIndex stindex, bindparams & params,
+PgSqlLeaseMgr::getLease(StatementIndex stindex, BindParams & params,
                              Lease6Ptr& result) const {
     // Create appropriate collection object and get all leases matching
     // the selection criteria.  The "single" paraeter is true to indicate
@@ -849,7 +798,7 @@ PgSqlLeaseMgr::getLease4(const isc::asiolink::IOAddress& addr) const {
               DHCPSRV_PGSQL_GET_ADDR4).arg(addr.toText());
 
     // Set up the WHERE clause value
-    bindparams inparams;
+    BindParams inparams;
     ostringstream tmp;
 
     tmp << static_cast<uint32_t>(addr);
@@ -868,7 +817,7 @@ PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
               DHCPSRV_PGSQL_GET_HWADDR).arg(hwaddr.toText());
 
     // Set up the WHERE clause value
-    bindparams inparams;
+    BindParams inparams;
 
     if (!hwaddr.hwaddr_.empty()) {
         inparams.push_back(PgSqlParam(hwaddr.hwaddr_));
@@ -887,10 +836,10 @@ Lease4Ptr
 PgSqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_SUBID_HWADDR)
-        .arg(subnet_id).arg(hwaddr.toText());
+              .arg(subnet_id).arg(hwaddr.toText());
 
     // Set up the WHERE clause value
-    bindparams inparams;
+    BindParams inparams;
     ostringstream tmp;
 
     if (!hwaddr.hwaddr_.empty()) {
@@ -915,7 +864,7 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid) const {
               DHCPSRV_PGSQL_GET_CLIENTID).arg(clientid.toText());
 
     // Set up the WHERE clause value
-    bindparams inparams;
+    BindParams inparams;
 
     // CLIENT_ID
     inparams.push_back(PgSqlParam(clientid.getClientId()));
@@ -934,7 +883,7 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
               .arg(subnet_id).arg(clientid.toText());
 
     // Set up the WHERE clause value
-    bindparams inparams;
+    BindParams inparams;
     ostringstream tmp;
 
     // CLIENT_ID
@@ -951,10 +900,10 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 }
 
 Lease4Ptr
-PgSqlLeaseMgr::getLease4(const ClientId& /*client_id*/, const HWAddr& /*hwaddr*/,
+PgSqlLeaseMgr::getLease4(const ClientId& /*client_id*/,
+                         const HWAddr& /*hwaddr*/,
                          SubnetID /*subnet_id*/) const {
     /// @todo
-
     Lease4Ptr result;
     return (result);
 }
@@ -966,7 +915,7 @@ PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
         .arg(addr.toText()).arg(lease_type);
 
     // Set up the WHERE clause value
-    bindparams inparams;
+    BindParams inparams;
     ostringstream tmp;
 
     // ADDRESS
@@ -984,12 +933,14 @@ PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
 }
 
 Lease6Collection
-PgSqlLeaseMgr::getLeases6(Lease::Type type, const DUID& duid, uint32_t iaid) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_IAID_DUID)
-        .arg(iaid).arg(duid.toText()).arg(type);
+PgSqlLeaseMgr::getLeases6(Lease::Type type, const DUID& duid,
+                          uint32_t iaid) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_IAID_DUID)
+              .arg(iaid).arg(duid.toText()).arg(type);
 
     // Set up the WHERE clause value
-    bindparams inparams;
+    BindParams inparams;
     ostringstream tmp;
 
     // DUID
@@ -1019,7 +970,7 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid, uint32_t iai
         .arg(iaid).arg(subnet_id).arg(duid.toText()).arg(lease_type);
 
     // Set up the WHERE clause value
-    bindparams inparams;
+    BindParams inparams;
     ostringstream tmp;
 
     // LEASE_TYPE
@@ -1052,7 +1003,7 @@ PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid, uint32_t iai
 
 template <typename LeasePtr>
 void
-PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, bindparams & params,
+PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, BindParams & params,
                                  const LeasePtr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_ADD_ADDR4).arg(statements_[stindex].stmt_name);
@@ -1062,23 +1013,29 @@ PgSqlLeaseMgr::updateLeaseCommon(StatementIndex stindex, bindparams & params,
     vector<int> formats_;
     convertToQuery(params, params_, lengths_, formats_);
 
-    PGresult * r = PQexecPrepared(status, statements_[stindex].stmt_name,
+    PGresult * r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
                                   statements_[stindex].stmt_nbparams,
                                   &params_[0], &lengths_[0], &formats_[0], 0);
-    checkError(r, stindex, "unable to bind UPDATE parameters");
-    int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
+    checkStatementError(r, stindex);
 
+    int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
     PQclear(r);
 
-    if (!affected_rows) {
+    // Check success case first as it is the most likely outcome.
+    if (affected_rows == 1) {
+      return;
+    }
+
+    // If no rows affected, lease doesn't exist.
+    if (affected_rows == 0) {
         isc_throw(NoSuchLease, "unable to update lease for address " <<
                   lease->addr_.toText() << " as it does not exist");
-    } else if (affected_rows > 1) {
-        // Should not happen - primary key constraint should only have selected
-        // one row.
-        isc_throw(DbOperationError, "apparently updated more than one lease "
-                  "that had the address " << lease->addr_.toText());
     }
+
+    // Should not happen - primary key constraint should only have selected
+    // one row.
+    isc_throw(DbOperationError, "apparently updated more than one lease "
+                  "that had the address " << lease->addr_.toText());
 }
 
 void
@@ -1090,7 +1047,7 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
 
     // Create the MYSQL_BIND array for the data being updated
     ostringstream tmp;
-    bindparams params = exchange4_->createBindForSend(lease);
+    BindParams params = exchange4_->createBindForSend(lease);
 
     // Set up the WHERE clause and append it to the MYSQL_BIND array
     tmp << static_cast<uint32_t>(lease->addr_);
@@ -1108,7 +1065,7 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
               DHCPSRV_PGSQL_UPDATE_ADDR6).arg(lease->addr_.toText());
 
     // Create the MYSQL_BIND array for the data being updated
-    bindparams params = exchange6_->createBindForSend(lease);
+    BindParams params = exchange6_->createBindForSend(lease);
 
     // Set up the WHERE clause and append it to the MYSQL_BIND array
     params.push_back(PgSqlParam(lease->addr_.toText()));
@@ -1118,16 +1075,16 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
 }
 
 bool
-PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, bindparams & params) {
+PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex, BindParams & params) {
     vector<const char *> params_;
     vector<int> lengths_;
     vector<int> formats_;
     convertToQuery(params, params_, lengths_, formats_);
 
-    PGresult * r = PQexecPrepared(status, statements_[stindex].stmt_name,
+    PGresult * r = PQexecPrepared(conn_, statements_[stindex].stmt_name,
                                   statements_[stindex].stmt_nbparams,
                                   &params_[0], &lengths_[0], &formats_[0], 0);
-    checkError(r, stindex, "unable to bind WHERE clause parameter");
+    checkStatementError(r, stindex);
     int affected_rows = boost::lexical_cast<int>(PQcmdTuples(r));
     PQclear(r);
 
@@ -1140,7 +1097,7 @@ PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
               DHCPSRV_PGSQL_DELETE_ADDR).arg(addr.toText());
 
     // Set up the WHERE clause value
-    bindparams inparams;
+    BindParams inparams;
 
     if (addr.isV4()) {
         ostringstream tmp;
@@ -1165,20 +1122,19 @@ PgSqlLeaseMgr::getName() const {
 }
 
 void
-PgSqlLeaseMgr::checkError(PGresult* r, StatementIndex index,
-                          const char* what) const {
+PgSqlLeaseMgr::checkStatementError(PGresult* r, StatementIndex index) const {
     int s = PQresultStatus(r);
     if (s != PGRES_COMMAND_OK && s != PGRES_TUPLES_OK) {
         PQclear(r);
 
-        isc_throw(DbOperationError, what << " for <" <<
-                  statements_[index].stmt_name << ">, " <<
-                  PQerrorMessage(status));
+        isc_throw(DbOperationError, "Statement exec faild:" << " for: " <<
+                  statements_[index].stmt_name << ", reason: " <<
+                  PQerrorMessage(conn_));
     }
 }
 
 inline void
-PgSqlLeaseMgr::convertToQuery(const bindparams& params,
+PgSqlLeaseMgr::convertToQuery(const BindParams& params,
                               std::vector<const char *>& out_values,
                               std::vector<int>& out_lengths,
                               std::vector<int>& out_formats) const {
@@ -1186,7 +1142,7 @@ PgSqlLeaseMgr::convertToQuery(const bindparams& params,
     out_lengths.reserve(params.size());
     out_formats.reserve(params.size());
 
-    for(bindparams::const_iterator it = params.begin(); it != params.end();
+    for(BindParams::const_iterator it = params.begin(); it != params.end();
         ++it) {
         out_values.push_back((* it).value.c_str());
         out_lengths.push_back((* it).binarylen);
@@ -1204,35 +1160,20 @@ PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_VERSION);
 
-    PGresult* r = PQexec(status, "BEGIN");
-    PQclear(r);
-
-    r = PQexecPrepared(status, "get_version", 0, NULL, NULL, NULL, 0);
-
-    PQclear(r);
-
-    r = PQexec(status, "FETCH ALL in get_version");
-
-    const char* version_str = PQgetvalue(r, 0, 0);
-    const char* minor_str = PQgetvalue(r, 0, 1);
+    PGresult* r = PQexecPrepared(conn_, "get_version", 0, NULL, NULL, NULL, 0);
+    checkStatementError(r, GET_VERSION);
 
     istringstream tmp;
-
     uint32_t version;
-    tmp.str(version_str);
+    tmp.str(PQgetvalue(r, 0, 0));
     tmp >> version;
     tmp.str("");
     tmp.clear();
 
     uint32_t minor;
-    tmp.str(minor_str);
+    tmp.str(PQgetvalue(r, 0, 1));
     tmp >> minor;
 
-    PQclear(r);
-    r = PQexec(status, "CLOSE get_version");
-    PQclear(r);
-
-    r = PQexec(status, "END");
     PQclear(r);
 
     return make_pair<uint32_t, uint32_t>(version, minor);
@@ -1241,9 +1182,9 @@ PgSqlLeaseMgr::getVersion() const {
 void
 PgSqlLeaseMgr::commit() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_COMMIT);
-    PGresult * r = PQexec(status, "COMMIT");
+    PGresult * r = PQexec(conn_, "COMMIT");
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        isc_throw(DbOperationError, "commit failed: " << PQerrorMessage(status));
+        isc_throw(DbOperationError, "commit failed: " << PQerrorMessage(conn_));
     }
 
     PQclear(r);
@@ -1252,9 +1193,10 @@ PgSqlLeaseMgr::commit() {
 void
 PgSqlLeaseMgr::rollback() {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ROLLBACK);
-    PGresult * r = PQexec(status, "ROLLBACK");
+    PGresult * r = PQexec(conn_, "ROLLBACK");
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        isc_throw(DbOperationError, "rollback failed: " << PQerrorMessage(status));
+        isc_throw(DbOperationError, "rollback failed: "
+                                    << PQerrorMessage(conn_));
     }
 
     PQclear(r);
