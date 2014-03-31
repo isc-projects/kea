@@ -1,3 +1,11 @@
+776.	[func]		marcin
+	b10-dhcp4, b10-dhcp6: added a new parameter to subnet configuration.
+	This parameter allows subnet ids to be set to arbitrary values or
+	automatically generated values. Generated subnet ids are renumbered
+	each time one or more subnets are removed.  Setting the ids to to
+	specific values prevents this renumbering.
+	(Trac #3281, git abc)
+
 775.	[doc]		marcin
 	Updated information in the BIND 10 Guide about the standards supported
 	by Kea and its current limitations.
