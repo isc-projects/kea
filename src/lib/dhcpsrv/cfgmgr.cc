@@ -221,8 +221,7 @@ void CfgMgr::addSubnet6(const Subnet6Ptr& subnet) {
     /// @todo: Check that there is no subnet with the same interface-id
     if (isDuplicate(*subnet)) {
         isc_throw(isc::dhcp::DuplicateSubnetID, "ID of the new IPv6 subnet '"
-                  << subnet->getID() << "' is the same as ID of an existing"
-                  " subnet");
+                  << subnet->getID() << "' is already in use");
     }
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET6)
               .arg(subnet->toText());
@@ -289,8 +288,7 @@ void CfgMgr::addSubnet4(const Subnet4Ptr& subnet) {
     /// other already defined subnet.
     if (isDuplicate(*subnet)) {
         isc_throw(isc::dhcp::DuplicateSubnetID, "ID of the new IPv4 subnet '"
-                  << subnet->getID() << "' is the same as ID of an existing"
-                  " subnet");
+                  << subnet->getID() << "' is already in use");
     }
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_ADD_SUBNET4)
               .arg(subnet->toText());
