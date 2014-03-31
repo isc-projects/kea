@@ -576,16 +576,9 @@ TEST_F(Dhcp4ParserTest, multipleSubnets) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
-
     int cnt = 0; // Number of reconfigurations
 
     do {
-        ElementPtr json = Element::fromJSON(config);
-
         EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
@@ -639,16 +632,8 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsExplicitIDs) {
 
     ElementPtr json = Element::fromJSON(config);
 
-    EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
-    ASSERT_TRUE(x);
-    comment_ = parseAnswer(rcode_, x);
-    ASSERT_EQ(0, rcode_);
-
     int cnt = 0; // Number of reconfigurations
-
     do {
-        ElementPtr json = Element::fromJSON(config);
-
         EXPECT_NO_THROW(x = configureDhcp4Server(*srv_, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
@@ -666,7 +651,7 @@ TEST_F(Dhcp4ParserTest, multipleSubnetsExplicitIDs) {
 
         // Repeat reconfiguration process 10 times and check that the subnet-id
         // is set to the same value.
-    } while (++cnt < 10);
+    } while (++cnt < 3);
 }
 
 // Check that the configuration with two subnets having the same id is rejected.
