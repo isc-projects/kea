@@ -598,9 +598,9 @@ TEST_F(Dhcp6ParserTest, multipleSubnets) {
 
     int cnt = 0; // Number of reconfigurations
 
-    do {
-        ElementPtr json = Element::fromJSON(config);
+    ElementPtr json = Element::fromJSON(config);
 
+    do {
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
@@ -655,9 +655,9 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsExplicitIDs) {
 
     int cnt = 0; // Number of reconfigurations
 
-    do {
-        ElementPtr json = Element::fromJSON(config);
+    ElementPtr json = Element::fromJSON(config);
 
+    do {
         EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
         ASSERT_TRUE(x);
         comment_ = parseAnswer(rcode_, x);
@@ -675,7 +675,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsExplicitIDs) {
 
         // Repeat reconfiguration process 10 times and check that the subnet-id
         // is set to the same value.
-    } while (++cnt < 10);
+    } while (++cnt < 3);
 }
 
 // CHeck that the configuration with two subnets having the same id is rejected.
@@ -824,7 +824,6 @@ TEST_F(Dhcp6ParserTest, reconfigureRemoveSubnet) {
     /// CASE 2: Configure 4 subnets, then reconfigure and remove one
     /// from in between (not first, not last)
 
-    /// @todo: Uncomment subnet removal test as part of #3281.
     json = Element::fromJSON(config4);
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
     ASSERT_TRUE(x);
