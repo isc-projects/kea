@@ -3848,6 +3848,42 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       </para>
       </section>
 
+      <section id="ipv4-subnet-id">
+      <title>IPv4 Subnet Identifier</title>
+      <para>
+        Subnet identifier is a unique number associated with a particular subnet.
+        In principle, it is used to associate clients' leases with respective subnets.
+        When subnet identifier is not specified for a subnet being configured, it will
+        be automatically assigned by the configuration mechanism. The identifiers
+        are assigned from 1 and are monotonically increased for each subsequent
+        subnet: 1, 2, 3 ....
+      </para>
+      <para>
+       If there are multiple subnets configured with auto-generated identifiers and
+       one of them is removed, the subnet identifiers may be renumbered. For example:
+       if there are 4 subnets and 3rd is removed the last subnet will be assigned
+       identifier that the 3rd subnet had before removal. As a result, the leases
+       stored in the lease database for subnet 3 are now associated with the
+       subnet 4, which may have unexpected consequences. In the future it is planned
+       to implement the mechanism to preserve auto-generated subnet ids upon removal
+       of one of the subnets. Currently, the only remedy for this issue is to
+       manually specify the unique subnet identifier for each subnet.
+      </para>
+      <para>
+        The following configuration:
+        <screen>
+&gt; <userinput>config add Dhcp4/subnet4</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/subnet "192.0.2.0/24"</userinput>
+&gt; <userinput>config set Dhcp4/subnet4[0]/id 1024</userinput>
+&gt; <userinput>config commit</userinput>
+        </screen>
+        will assign the arbitrary subnet identifier to the newly configured subnet.
+        This identifier will not change for this subnet until "id" parameter is
+        removed or set to 0. The value of 0 forces auto-generation of subnet
+        identifier.
+      </para>
+      </section>
+
       <section id="dhcp4-address-config">
       <title>Configuration of IPv4 Address Pools</title>
       <para>
@@ -5016,19 +5052,11 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       yet</quote>, rather than actual limitations.</para>
       <itemizedlist>
           <listitem> <!-- see tickets #3234, #3281 -->
-            <para>
-              On-line configuration has some limitations. Adding new subnets or
-              modifying existing ones work, as is removing the last subnet from
-              the list. However, removing non-last (e.g. removing subnet 1,2 or 3 if
-              there are 4 subnets configured) will cause issues. The problem is
-              caused by simplistic subnet-id assignment. The subnets are always
-              numbered, starting from 1. That subnet-id is then used in leases
-              that are stored in the lease database. Removing non-last subnet will
-              cause the configuration information to mismatch data in the lease
-              database. It is possible to manually update subnet-id fields in
-              MySQL database, but it is awkward and error prone process. A better
-              reconfiguration support is planned.
-            </para>
+            <simpara>
+              Removal of a subnet during server reconfiguration may cause renumbering
+              of auto-generated subnet identifiers, as described in section
+              <xref linkend="ipv4-subnet-id"/>.
+            </simpara>
           </listitem>
           <listitem>
             <simpara>
@@ -5293,6 +5321,42 @@ Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
         <screen>
 &gt; <userinput>config remove Dhcp6/interfaces[2]</userinput>
 &gt; <userinput>config commit</userinput></screen>
+      </para>
+    </section>
+
+    <section id="ipv6-subnet-id">
+      <title>IPv6 Subnet Identifier</title>
+      <para>
+        Subnet identifier is a unique number associated with a particular subnet.
+        In principle, it is used to associate clients' leases with respective subnets.
+        When subnet identifier is not specified for a subnet being configured, it will
+        be automatically assigned by the configuration mechanism. The identifiers
+        are assigned from 1 and are monotonically increased for each subsequent
+        subnet: 1, 2, 3 ....
+      </para>
+      <para>
+       If there are multiple subnets configured with auto-generated identifiers and
+       one of them is removed, the subnet identifiers may be renumbered. For example:
+       if there are 4 subnets and 3rd is removed the last subnet will be assigned
+       identifier that the 3rd subnet had before removal. As a result, the leases
+       stored in the lease database for subnet 3 are now associated with the
+       subnet 4, which may have unexpected consequences. In the future it is planned
+       to implement the mechanism to preserve auto-generated subnet ids upon removal
+       of one of the subnets. Currently, the only remedy for this issue is to
+       manually specify the unique subnet identifier for each subnet.
+      </para>
+      <para>
+        The following configuration:
+        <screen>
+&gt; <userinput>config add Dhcp6/subnet6</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/subnet "2001:db8:1::/64"</userinput>
+&gt; <userinput>config set Dhcp6/subnet6[0]/id 1024</userinput>
+&gt; <userinput>config commit</userinput>
+        </screen>
+        will assign the arbitrary subnet identifier to the newly configured subnet.
+        This identifier will not change for this subnet until "id" parameter is
+        removed or set to 0. The value of 0 forces auto-generation of subnet
+        identifier.
       </para>
     </section>
 
@@ -6439,19 +6503,11 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <itemizedlist>
 
         <listitem> <!-- see tickets #3234, #3281 -->
-          <simpara>
-            On-line configuration has some limitations. Adding new subnets or
-            modifying existing ones work, as is removing the last subnet from
-            the list. However, removing non-last (e.g. removing subnet 1,2 or 3 if
-            there are 4 subnets configured) will cause issues. The problem is
-            caused by simplistic subnet-id assignment. The subnets are always
-            numbered, starting from 1. That subnet-id is then used in leases
-            that are stored in the lease database. Removing non-last subnet will
-            cause the configuration information to mismatch data in the lease
-            database. It is possible to manually update subnet-id fields in
-            MySQL database, but it is awkward and error prone process. A better
-            reconfiguration support is planned.
-          </simpara>
+            <simpara>
+              Removal of a subnet during server reconfiguration may cause renumbering
+              of auto-generated subnet identifiers, as described in section
+              <xref linkend="ipv6-subnet-id"/>.
+            </simpara>
         </listitem>
         <listitem>
           <simpara>

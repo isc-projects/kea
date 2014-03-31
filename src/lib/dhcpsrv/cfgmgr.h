@@ -47,6 +47,13 @@ public:
         isc::Exception(file, line, what) { };
 };
 
+/// @brief Exception thrown upon attempt to add subnet with an ID that belongs
+/// to the subnet that already exists.
+class DuplicateSubnetID : public Exception {
+public:
+    DuplicateSubnetID(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) { };
+};
 
 /// @brief Configuration Manager
 ///
@@ -457,6 +464,20 @@ private:
     /// @return true if specified interface belongs to
     /// @c CfgMgr::active_ifaces_.
     bool isIfaceListedActive(const std::string& iface) const;
+
+    /// @brief Checks that the IPv4 subnet with the given id already exists.
+    ///
+    /// @param subnet Subnet for which this function will check if the other
+    /// subnet with equal id already exists.
+    /// @return true if the duplicate subnet exists.
+    bool isDuplicate(const Subnet4& subnet) const;
+
+    /// @brief Checks that the IPv6 subnet with the given id already exists.
+    ///
+    /// @param subnet Subnet for which this function will check if the other
+    /// subnet with equal id already exists.
+    /// @return true if the duplicate subnet exists.
+    bool isDuplicate(const Subnet6& subnet) const;
 
     /// @brief A collection of option definitions.
     ///

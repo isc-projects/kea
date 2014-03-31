@@ -207,6 +207,12 @@
                   "item_default": ""
                 },
 
+                { "item_name": "id",
+                  "item_type": "integer",
+                  "item_optional": false,
+                  "item_default": 0
+                },
+
                 { "item_name": "interface",
                   "item_type": "string",
                   "item_optional": false,
