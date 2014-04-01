@@ -3713,17 +3713,17 @@ Dhcp4/subnet4	[]	list	(default)
       <section>
       <title>Default storage for leases</title>
       <para>
-        Server is designed to support multiple lease database storages. In larger deployments
-        it is often desired to store leases in the database. The
-        <xref linkend="database-configuration4"/> describes one of the possible ways to do it.
-        By default, the server will use a flat CSV file, rather than the database to store
+        The server is able to store lease data in different repositories. Larger deployments
+        may elect to store leases in a database.
+        <xref linkend="database-configuration4"/> describes one way to do it.
+        By default, the server will use a CSV file rather than a database to store
         lease information. One of the advantages of using a file is that it eliminates
-        dependency on third party software, such as MySQL deamon and developer package.
+        dependency on third party database software.
       </para>
       <para>
-        The configuration of the backend (Memfile) performing writes and reads from the
-        file is controlled through the Dhcp4/lease-database parameters. When default
-        parameters are left, the Memfile backend will write leases to a disk in the
+        The configuration of the file backend (Memfile)
+        is controlled through the Dhcp4/lease-database parameters. When default
+        parameters are used, the Memfile backend will write leases to a disk in the
         [bind10-install-dir]/var/bind10/kea-leases4.csv.
       </para>
       <para>
@@ -3738,11 +3738,9 @@ Dhcp4/subnet4	[]	list	(default)
         will change the default location of the lease file to /tmp/kea-leases4.csv.
       </para>
       <para>
-        The "persist" parameter controls whether the leases are written to disk or not.
+        The "persist" parameter controls whether the leases are written to disk.
         It is strongly recommended that this parameter is set to "true" at all times
-        during the normal operation of the server. The typical case when lease writes
-        can be disabled is testing: unit testing, performance testing when it is
-        desired that server is not disk-bound.
+        during the normal operation of the server
       </para>
       </section>
 
@@ -4906,16 +4904,16 @@ Dhcp6/subnet6/	list
       <section>
       <title>Default storage for leases</title>
       <para>
-        Server is designed to support multiple lease database storages. In larger deployments
-        it is often desired to store leases in the database. The
-        <xref linkend="database-configuration6"/> describes one of the possible ways to do it.
-        By default, the server will use a flat CSV file, rather than the database to store
+        The server is able to store lease data in different repositories. Larger deployments
+        may elect to store leases in a database.
+        <xref linkend="database-configuration4"/> describes one way to do it.
+        By default, the server will use a CSV file rather than a database to store
         lease information. One of the advantages of using a file is that it eliminates
-        dependency on third party software, such as MySQL deamon and developer package.
+        dependency on third party database software.
       </para>
       <para>
-        The configuration of the backend (Memfile) performing writes and reads from the
-        file is controlled through the Dhcp4/lease-database parameters. When default
+        The configuration of the file backend (Memfile)
+        is controlled through the Dhcp6/lease-database parameters. When default
         parameters are left, the Memfile backend will write leases to a disk in the
         [bind10-install-dir]/var/bind10/kea-leases6.csv.
       </para>
@@ -4931,11 +4929,9 @@ Dhcp6/subnet6/	list
         will change the default location of the lease file to /tmp/kea-leases6.csv.
       </para>
       <para>
-        The "persist" parameter controls whether the leases are written to disk or not.
+        The "persist" parameter controls whether the leases are written to disk.
         It is strongly recommended that this parameter is set to "true" at all times
-        during the normal operation of the server. The typical case when lease writes
-        can be disabled is testing: unit testing, performance testing when it is
-        desired that server is not disk-bound.
+        during the normal operation of the server.
       </para>
       </section>
 

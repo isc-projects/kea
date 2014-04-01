@@ -147,10 +147,10 @@ TEST_F(CSVLeaseFile6Test, parse) {
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
 
-    // Reading fourth lease should be successful.
+    // Reading the fourth lease should be successful.
     EXPECT_TRUE(lf->next(lease));
     ASSERT_TRUE(lease);
-    // Verify that lease is correct.
+    // Verify that the lease is correct.
     EXPECT_EQ("3000:1::", lease->addr_.toText());
     ASSERT_TRUE(lease->duid_);
     EXPECT_EQ("00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f", lease->duid_->toText());

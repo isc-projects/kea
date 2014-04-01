@@ -28,9 +28,9 @@ namespace dhcp {
 
 /// @brief Provides methods to access CSV file with DHCPv6 leases.
 ///
-/// This class contains methods customized to read DHCPv6 leases from the CSV
-/// file. It expects that the CSV file being parsed, contains the set of columns
-/// with well known names (initialized in the class constructor).
+/// This class contains methods customized to read and write DHCPv6 leases from
+/// and to the CSV file. It expects that the CSV file being parsed contains a
+/// set of columns with well known names (initialized in the class constructor).
 ///
 /// @todo This class doesn't validate the lease values read from the file.
 /// The @c Lease6 is a structure that should be itself responsible for this
