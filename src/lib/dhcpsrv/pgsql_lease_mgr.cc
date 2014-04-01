@@ -201,11 +201,12 @@ protected:
     /// expressed as base-10 integer string.
     time_t convertFromDatabaseTime(const std::string& db_time_val) {
         // Convert string time value to time_t
-        istringstream tmp;
-        time_t db_time_t;
-        tmp.str(db_time_val);
-        tmp >> db_time_t;
-        return (db_time_t);
+        try  {
+            return (boost::lexical_cast<time_t>(db_time_val));
+        } catch (const std::exception& ex) {
+            isc_throw(BadValue, "Database time value is invalid: "
+                                << db_time_val);
+        }
     }
 
     /// Converts Postgres text boolean representations to bool
@@ -575,9 +576,9 @@ PgSqlLeaseMgr::~PgSqlLeaseMgr() {
         // Deallocate the prepared queries.
         PGresult* r = PQexec(conn_, "DEALLOCATE all");
         if(PQresultStatus(r) != PGRES_COMMAND_OK) {
-            /// @todo log it for posterity but go on
-            std::cout << "deallocate error: "
-                      << PQerrorMessage(conn_) << std::endl;
+            // Highly unlikely but we'll log it and go on.
+            LOG_ERROR(dhcpsrv_logger, DHCPSRV_PGSQL_DEALLOC_ERROR)
+                      .arg(PQerrorMessage(conn_));
         }
 
         PQclear(r);
@@ -664,10 +665,6 @@ PgSqlLeaseMgr::openDatabase() {
 bool
 PgSqlLeaseMgr::addLeaseCommon(StatementIndex stindex,
                               BindParams& params) {
-
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_ADD_ADDR4).arg(statements_[stindex].stmt_name);
-
     vector<const char *> out_values;
     vector<int> out_lengths;
     vector<int> out_formats;
@@ -900,19 +897,20 @@ PgSqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
 }
 
 Lease4Ptr
-PgSqlLeaseMgr::getLease4(const ClientId& /*client_id*/,
-                         const HWAddr& /*hwaddr*/,
-                         SubnetID /*subnet_id*/) const {
-    /// @todo
-    Lease4Ptr result;
-    return (result);
+PgSqlLeaseMgr::getLease4(const ClientId&, const HWAddr&, SubnetID) const {
+    /// This function is currently not implemented because allocation engine
+    /// searches for the lease using HW address or client identifier.
+    /// It never uses both parameters in the same time. We need to
+    /// consider if this function is needed at all.
+    isc_throw(NotImplemented, "The PgSqlLeaseMgr::getLease4 function was"
+              " called, but it is not implemented");
 }
 
 Lease6Ptr
 PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const isc::asiolink::IOAddress& addr) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_ADDR6)
-        .arg(addr.toText()).arg(lease_type);
+              .arg(addr.toText()).arg(lease_type);
 
     // Set up the WHERE clause value
     BindParams inparams;
@@ -964,10 +962,11 @@ PgSqlLeaseMgr::getLeases6(Lease::Type type, const DUID& duid,
 }
 
 Lease6Collection
-PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid, uint32_t iaid,
-                          SubnetID subnet_id) const {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_GET_IAID_SUBID_DUID)
-        .arg(iaid).arg(subnet_id).arg(duid.toText()).arg(lease_type);
+PgSqlLeaseMgr::getLeases6(Lease::Type lease_type, const DUID& duid,
+                          uint32_t iaid, SubnetID subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_IAID_SUBID_DUID)
+              .arg(iaid).arg(subnet_id).arg(duid.toText()).arg(lease_type);
 
     // Set up the WHERE clause value
     BindParams inparams;
@@ -1045,11 +1044,11 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_UPDATE_ADDR4).arg(lease->addr_.toText());
 
-    // Create the MYSQL_BIND array for the data being updated
+    // Create the BIND array for the data being updated
     ostringstream tmp;
     BindParams params = exchange4_->createBindForSend(lease);
 
-    // Set up the WHERE clause and append it to the MYSQL_BIND array
+    // Set up the WHERE clause and append it to the SQL_BIND array
     tmp << static_cast<uint32_t>(lease->addr_);
     params.push_back(PgSqlParam(tmp.str()));
 
@@ -1064,10 +1063,10 @@ PgSqlLeaseMgr::updateLease6(const Lease6Ptr& lease) {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_UPDATE_ADDR6).arg(lease->addr_.toText());
 
-    // Create the MYSQL_BIND array for the data being updated
+    // Create the BIND array for the data being updated
     BindParams params = exchange6_->createBindForSend(lease);
 
-    // Set up the WHERE clause and append it to the MYSQL_BIND array
+    // Set up the WHERE clause and append it to the BIND array
     params.push_back(PgSqlParam(lease->addr_.toText()));
 
     // Drop to common update code
@@ -1181,7 +1180,7 @@ PgSqlLeaseMgr::getVersion() const {
 
 void
 PgSqlLeaseMgr::commit() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_COMMIT);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_COMMIT);
     PGresult * r = PQexec(conn_, "COMMIT");
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
         isc_throw(DbOperationError, "commit failed: " << PQerrorMessage(conn_));
@@ -1192,7 +1191,7 @@ PgSqlLeaseMgr::commit() {
 
 void
 PgSqlLeaseMgr::rollback() {
-    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_MYSQL_ROLLBACK);
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_ROLLBACK);
     PGresult * r = PQexec(conn_, "ROLLBACK");
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
         isc_throw(DbOperationError, "rollback failed: "
