@@ -36,27 +36,26 @@ public:
 /// @brief Represents a single row of the CSV file.
 ///
 /// The object of this type can create the string holding a collection of the
-/// comma separated values, representing a row of the CSV file. It allows to
-/// select ANY character as a separator for the values. The default separator
-/// is a comma sign.
+/// comma separated values, representing a row of the CSV file. It allows the
+/// selection of any character as a separator for the values. The default
+/// separator is the comma symbol.
 ///
 /// The @c CSVRow object can be constructed in two different ways. The first
 /// option is that the caller creates an object holding empty values
 /// and then adds values one by one. Note that it is possible to either add
-/// a string or a number. The number is stringified to the appropriate text
+/// a string or a number. The number is converted to the appropriate text
 /// representation. When all the values are added, the text representation of
 /// the row can be obtained by calling @c CSVRow::render function or output
 /// stream operator.
 ///
-/// The @c CSVRow object can be also constructed by parsing the row of the
-/// CSV file. In this case, the separator has to be known in advance and
-/// passed to the class constructor. Constructor will call the @c CSVRow::parse
-/// function internally to tokenize the CSV row and create collection of the
-/// values. The class accessors can be then used to retrieve individual
-/// values.
+/// The @c CSVRow object can be also constructed by parsing a row of a CSV
+/// file. In this case, the separator has to be known in advance and passed to
+/// the class constructor. The constructor will call the @c CSVRow::parse
+/// function internally to tokenize the CSV row and create the collection of
+/// values. The class accessors can be then used to retrieve individual values.
 ///
 /// This class is meant to be used by the @c CSVFile class to manipulate
-/// the individual rows of the CSV file.
+/// individual rows of the CSV file.
 class CSVRow {
 public:
 
@@ -71,7 +70,7 @@ public:
     /// This constructor is exception-free.
     ///
     /// @param cols Number of values in the row.
-    /// @param separator Character being a separator between values in the
+    /// @param separator Character used as a separator between values in the
     /// text representation of the row.
     CSVRow(const size_t cols = 0, const char separator = ',');
 
@@ -80,7 +79,7 @@ public:
     /// This constructor should be used to parse a single row of the CSV
     /// file. The separator being used for the particular row needs to
     /// be known in advance and specified as an argument of the constructor
-    /// if other than default separator is used in the row being parsed.
+    /// if other than the default separator is used in the row being parsed.
     /// An example string to be parsed by this function looks as follows:
     /// "foo,bar,foo-bar".
     ///
@@ -147,8 +146,8 @@ public:
     /// @brief Creates a text representation of the CSV file row.
     ///
     /// This function iterates over all values currently held in the internal
-    /// @c values_ container and appends them into a string. The values are
-    /// separated using a separator character specified in the constructor.
+    /// @c values_ container and appends them to a string. The values are
+    /// separated using the separator character specified in the constructor.
     ///
     /// This function is exception free.
     ///

@@ -36,20 +36,20 @@ namespace dhcp {
 /// by the @c CSVLeaseFile4 and @c CSVLeaseFile6 classes.
 ///
 /// The backend stores leases incrementally, i.e. updates to leases are appended
-/// at the end of the lease file. When leases is to be deleted, the lease
-/// record is appended to the lease file, with valid lifetime set to 0.
+/// at the end of the lease file. To record the deletion of a lease, the lease
+/// record is appended to the lease file with the valid lifetime set to 0.
 ///
-/// When backend is starting up, it reads leases from the lease file (one by
-/// one) and adds them to the in-memory container as follows:
-/// - if lease record being parsed identifies a lease which is not present
+/// When the backend is starting up, it reads leases from the lease file (one
+/// by one) and adds them to the in-memory container as follows:
+/// - if the lease record being parsed identifies a lease which is not present
 /// in the container, and the lease has valid lifetime greater than 0,
 /// the lease is added to the container,
-/// - if lease record being parsed identifies a lease which is present in the
-/// container, and the valid lifetime of the lease record being parsed is
+/// - if the lease record being parsed identifies a lease which is present in
+/// the container, and the valid lifetime of the lease record being parsed is
 /// greater than 0, the lease in the container is updated
-/// - if lease record being parsed has valid lifetime equal to 0, and the
-/// corresponding lease exists in the container, the lease is removed
-/// from the container.
+/// - if the lease record being parsed has valid lifetime equal to 0, and the
+/// corresponding lease exists in the container, the lease is removed from
+/// the container.
 ///
 /// After the container holding leases is initialized, each subsequent update,
 /// removal or addition of the lease is appended to the lease file

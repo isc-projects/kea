@@ -334,14 +334,14 @@ CSVFile::open() {
 
 void
 CSVFile::recreate() {
-    // There is no sense to create a file is we don't specify columns for it.
+    // There is no sense creating a file if we don't specify columns for it.
     if (getColumnCount() == 0) {
         close();
         isc_throw(CSVFileError, "no columns defined for the newly"
                   " created CSV file '" << filename_ << "'");
     }
 
-    // Close any danglining files.
+    // Close any dangling files.
     close();
     fs_.reset(new std::fstream(filename_.c_str(), std::fstream::out));
     if (!fs_->is_open()) {
