@@ -383,6 +383,13 @@ with the specified address to the PostgreSQL backend database.
 A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the PostgreSQL backend database.
 
+% DHCPSRV_PGSQL_DEALLOC_ERROR An error occured deallocating SQL statements while closing the PostgreSQL lease database: %1
+This is an error message issued when a DHCP server (either V4 or V6) exprienced
+and error freeing database SQL resources as part of closing its connection to
+ the Postgresql database.  The connection is closed as part of normal server
+shutdown.  This error is most likely a programmatic issue that is highly
+unlikely to occur or negatively impact server operation.
+
 % DHCPSRV_PGSQL_COMMIT committing to MySQL database
 The code has issued a commit call.  All outstanding transactions will be
 committed to the database.  Note that depending on the PostgreSQL settings,
@@ -421,7 +428,7 @@ A debug message issued when the server is attempting to obtain a set of
 IPv6 lease from the PostgreSQL database for a client with the specified IAID
 (Identity Association ID) and DUID (DHCP Unique Identifier).
 
-% DHCPSRV_PGSQL_GET_IAID_SUBID_DUID obtaining IPv4 leases for IAID %1, Subnet ID %2 and DUID %3
+% DHCPSRV_PGSQL_GET_IAID_SUBID_DUID obtaining IPv4 leases for IAID %1, Subnet ID %2, DUID %3, and lease type %4
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the PostgreSQL database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
