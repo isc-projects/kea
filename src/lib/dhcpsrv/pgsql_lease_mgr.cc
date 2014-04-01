@@ -34,10 +34,10 @@ using namespace std;
 
 namespace {
 
-// Maximum number of parameters used in any signle query
+// Maximum number of parameters used in any single query
 const size_t MAX_PARAMETERS_IN_QUERY = 13;
 
-// Defines a single query
+/// @brief  Defines a single query
 struct TaggedStatement {
 
     /// Query index
@@ -175,7 +175,7 @@ namespace dhcp {
 class PgSqlLeaseExchange {
 protected:
 
-    /// Converts time_t structure to a text representation in local time.
+    /// @brief Converts time_t structure to a text representation in local time.
     ///
     /// The format of the output string is "%Y-%m-%d %H:%M:%S".  Database
     /// table columns using this value should be typed as TIMESTAMP WITH
@@ -195,10 +195,12 @@ protected:
         return (std::string(buffer));
     }
 
-    /// Converts time stamp from the database to a time_t
+    /// @brief Converts time stamp from the database to a time_t
+    ///
     /// @param db_time_val timestamp to be converted.  This value
     /// is expected to be the number of seconds since the epoch
     /// expressed as base-10 integer string.
+    /// @return Converted timestamp as time_t value.
     time_t convertFromDatabaseTime(const std::string& db_time_val) {
         // Convert string time value to time_t
         try  {
@@ -209,7 +211,7 @@ protected:
         }
     }
 
-    /// Converts Postgres text boolean representations to bool
+    /// @brief Converts Postgres text boolean representations to bool
     ///
     /// Allowed values are "t" or "f", or "" which is false.
     //  Any other will throw.
@@ -236,10 +238,13 @@ protected:
 
 /// @brief Represents a single Lease4 exchange
 class PgSqlLease4Exchange : public PgSqlLeaseExchange {
+private:
+    /// @brief Number of columns in the table holding DHCPv4 leases.
     static const size_t LEASE_COLUMNS = 9;
+
 public:
 
-    /// Default constructor
+    /// @brief Default constructor
     PgSqlLease4Exchange() : addr4_(0), hwaddr_length_(0), client_id_length_(0) {
         memset(hwaddr_buffer_, 0, sizeof(hwaddr_buffer_));
         memset(client_id_buffer_, 0, sizeof(client_id_buffer_));
@@ -378,7 +383,9 @@ private:
 };
 
 class PgSqlLease6Exchange : public PgSqlLeaseExchange {
+private:
     static const size_t LEASE_COLUMNS = 12;
+
 public:
     PgSqlLease6Exchange() : duid_length_(0) {
         memset(duid_buffer_, 0, sizeof(duid_buffer_));
@@ -644,8 +651,8 @@ PgSqlLeaseMgr::openDatabase() {
         sname= getParameter("name");
         dbconnparameters += " dbname = '" + sname + "'";
     } catch(...) {
-        // No database name.  Throw a "NoName" exception
-        isc_throw(NoDatabaseName, "must specified a name for the database");
+        // No database name.  Throw a "NoDatabaseName" exception
+        isc_throw(NoDatabaseName, "must specify a name for the database");
     }
 
     conn_ = PQconnectdb(dbconnparameters.c_str());
