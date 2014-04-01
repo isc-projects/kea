@@ -384,9 +384,9 @@ A debug message issued when the server is about to add an IPv6 lease
 with the specified address to the PostgreSQL backend database.
 
 % DHCPSRV_PGSQL_DEALLOC_ERROR An error occured deallocating SQL statements while closing the PostgreSQL lease database: %1
-This is an error message issued when a DHCP server (either V4 or V6) exprienced
+This is an error message issued when a DHCP server (either V4 or V6) experienced
 and error freeing database SQL resources as part of closing its connection to
- the Postgresql database.  The connection is closed as part of normal server
+the Postgresql database.  The connection is closed as part of normal server
 shutdown.  This error is most likely a programmatic issue that is highly
 unlikely to occur or negatively impact server operation.
 
