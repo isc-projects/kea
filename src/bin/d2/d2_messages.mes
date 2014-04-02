@@ -254,6 +254,14 @@ This is a debug message issued when the DHCP-DDNS application encountered an
 error while decoding a response to DNS Update message. Typically, this error
 will be encountered when a response message is malformed.
 
+% DHCP_DDNS_NOT_ON_LOOPBACK The DHCP-DDNS server has been configured to listen on %1 which is not the local loopback.  This is an insecure configuration supported for testing purposes only.
+This is a warning message issued When the DHCP-DDNS server is configured to
+listen at an address other than the loopback address (127.0.0.1 or ::1). It is
+possible for a malicious attacker to send bogus NameChangeRequests to it and
+change entries in the DNS. For this reason, addresses other than the IPv4 or
+IPv6 loopback addresses should only be used for testing purposes. A future
+version of Kea will implement authentication to guard against such attacks.
+
 % DHCP_DDNS_NO_ELIGIBLE_JOBS although there are queued requests, there are pending transactions for each Queue count: %1  Transaction count: %2
 This is a debug message issued when all of the queued requests represent clients
 for which there is a an update already in progress.  This may occur under
