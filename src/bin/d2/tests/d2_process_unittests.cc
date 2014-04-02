@@ -602,4 +602,52 @@ TEST_F(D2ProcessTest, fatalErrorShutdown) {
                 elapsed.total_milliseconds() <= 2100);
 }
 
+/// @brief Used to permit visual inspection of logs to ensure
+/// DHCP_DDNS_NOT_ON_LOOPBACK is issued when ip_address is not
+/// loopback.
+TEST_F(D2ProcessTest, notLoopbackTest) {
+    const char* config = "{ "
+                        "\"interface\" : \"\" , "
+                        "\"ip_address\" : \"0.0.0.0\" , "
+                        "\"port\" : 53001, "
+                        "\"tsig_keys\": [],"
+                        "\"forward_ddns\" : {},"
+                        "\"reverse_ddns\" : {}"
+                        "}";
+
+    // Note we don't care nor can we predict if this
+    // succeeds or fails. The address and port may or may
+    // not be valid on the test host.
+    runWithConfig(config);
+}
+
+
+/// @brief Used to permit visual inspection of logs to ensure
+/// DHCP_DDNS_NOT_ON_LOOPBACK is not issued.
+TEST_F(D2ProcessTest, v4LoopbackTest) {
+    const char* config = "{ "
+                        "\"interface\" : \"\" , "
+                        "\"ip_address\" : \"127.0.0.1\" , "
+                        "\"port\" : 53001, "
+                        "\"tsig_keys\": [],"
+                        "\"forward_ddns\" : {},"
+                        "\"reverse_ddns\" : {}"
+                        "}";
+    ASSERT_TRUE(runWithConfig(config));
+}
+
+/// @brief Used to permit visual inspection of logs to ensure
+/// DHCP_DDNS_NOT_ON_LOOPBACK is not issued.
+TEST_F(D2ProcessTest, v6LoopbackTest) {
+    const char* config = "{ "
+                        "\"interface\" : \"\" , "
+                        "\"ip_address\" : \"::1\" , "
+                        "\"port\" : 53001, "
+                        "\"tsig_keys\": [],"
+                        "\"forward_ddns\" : {},"
+                        "\"reverse_ddns\" : {}"
+                        "}";
+    ASSERT_TRUE(runWithConfig(config));
+}
+
 } // end of anonymous namespace
