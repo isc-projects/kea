@@ -1,6 +1,6 @@
 778.    [func]		tmark
 	If b10-dhcp-ddns is configured to listen on an address other than 
-	loop back, it will issue a log message warning the user that this is
+	loopback, it will issue a log message warning the user that this is
 	insecure and is supported for testing purposes only.  
 	(Trac #3383,    git  652aa4de2fa82fdf3de569d01d9f4aa618fc1972)
 
