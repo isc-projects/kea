@@ -1,9 +1,16 @@
-777.	[func]		dclink, tomek
+778.    [func]		tmark
+	If b10-dhcp-ddns is configured to listen on an address other than 
+	loop back, it will issue a log message warning the user that this is
+	insecure and is supported for testing purposes only.  
+	(Trac #3383,    git  652aa4de2fa82fdf3de569d01d9f4aa618fc1972)
+
+777.	[func]		tomek
 	b10-dhcp4 and b10-dhcp6 now support using Postgresql as the backend
 	for storing lease data.  This backend is enabled by specifying
 	--with-dhcp-pgsql on the "configure" command line. Without this
 	switch the Postgresql backend is not compiled leaving BIND 10 able to
-	be built on systems without Postgresql installed.
+	be built on systems without Postgresql installed.  Thanks to David
+	Carlier who contributed the intial patches for this work.
 	(Trac #3080,    git  1aae8b1fab3008e62c4f085948b1abadad512447)
 
 776.	[func]		marcin
