@@ -447,7 +447,7 @@ Memfile_LeaseMgr::initLeaseFilePath(Universe u) {
 
     std::string lease_file;
     try {
-        lease_file = getParameter("leasefile");
+        lease_file = getParameter("name");
     } catch (const Exception& ex) {
         lease_file = getDefaultLeaseFilePath(u);
     }

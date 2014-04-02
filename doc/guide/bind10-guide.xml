@@ -3732,7 +3732,7 @@ Dhcp4/subnet4	[]	list	(default)
 <screen>
 &gt; <userinput>config set Dhcp4/lease-database/type "memfile"</userinput>
 &gt; <userinput>config set Dhcp4/lease-database/persist true</userinput>
-&gt; <userinput>config set Dhcp4/lease-database/leasefile "/tmp/kea-leases4.csv"</userinput>
+&gt; <userinput>config set Dhcp4/lease-database/name "/tmp/kea-leases4.csv"</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
         will change the default location of the lease file to /tmp/kea-leases4.csv.

@@ -46,20 +46,20 @@ CSVLeaseFile6::append(const Lease6& lease) const {
 
 bool
 CSVLeaseFile6::next(Lease6Ptr& lease) {
-    // We will return NULL pointer if the lease is not read.
-    lease.reset();
-    // Get the row of CSV values.
-    CSVRow row;
-    CSVFile::next(row);
-    // The empty row signals EOF.
-    if (row == CSVFile::EMPTY_ROW()) {
-        return (true);
-    }
-
-    // Try to create a lease from the values read. This may easily result in
-    // exception. We don't want this function to throw exceptions, so we catch
-    // them all and rather return the false value.
+    // Read the CSV row and try to create a lease from the values read.
+    // This may easily result in exception. We don't want this function
+    // to throw exceptions, so we catch them all and rather return the
+    // false value.
     try {
+        // Get the row of CSV values.
+        CSVRow row;
+        CSVFile::next(row);
+        // The empty row signals EOF.
+        if (row == CSVFile::EMPTY_ROW()) {
+            lease.reset();
+            return (true);
+        }
+
         lease.reset(new Lease6(readType(row), readAddress(row), readDUID(row),
                                readIAID(row), readPreferred(row),
                                readValid(row), 0, 0, // t1, t2 = 0

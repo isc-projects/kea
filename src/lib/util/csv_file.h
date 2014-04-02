@@ -103,7 +103,7 @@ public:
     /// This function is exception-free.
     ///
     /// @param line String holding a row of comma separated values.
-    void parse(const char* line);
+    void parse(const std::string& line);
 
     /// @brief Retrieves a value from the internal container.
     ///
@@ -174,7 +174,9 @@ public:
     /// @param value Value to be written given as string.
     ///
     /// @throw CSVFileError if index is out of range.
-    void writeAt(const size_t at, const std::string& value);
+    void writeAt(const size_t at, const std::string& value) {
+        writeAt(at, value.c_str());
+    }
 
     /// @brief Replaces the value at specified index.
     ///
@@ -204,7 +206,9 @@ public:
     /// includes the order of fields, separator etc.
     ///
     /// @param other Object to compare to.
-    bool operator==(const CSVRow& other) const;
+    bool operator==(const CSVRow& other) const {
+        return (render() == other.render());
+    }
 
     /// @brief Unequality operator.
     ///
@@ -212,7 +216,9 @@ public:
     /// This includes the order of fields, separator etc.
     ///
     /// @param other Object to compare to.
-    bool operator!=(const CSVRow& other) const;
+    bool operator!=(const CSVRow& other) const {
+        return (render() != other.render());
+    }
 
 private:
 
@@ -225,7 +231,12 @@ private:
     void checkIndex(const size_t at) const;
 
     /// @brief Separator character specifed in the constructor.
-    char separator_;
+    ///
+    /// @note Separator is held as a string object (one character long),
+    /// because the boost::is_any_of algorithm requires a string, not a
+    /// char value. If we held the separator as a char, we would need to
+    /// convert it to string on every call to @c CSVRow::parse.
+    std::string separator_;
 
     /// @brief Internal container holding values that belong to the row.
     std::vector<std::string> values_;
@@ -388,6 +399,19 @@ public:
 
 protected:
 
+    /// @brief Adds a column regardless if the file is open or not.
+    ///
+    /// This function adds as new column to the collection. It is meant to be
+    /// called internally by the methods of the base class and derived classes.
+    /// It must not be used in the public scope. The @c CSVFile::addColumn
+    /// must be used in the public scope instead, because it prevents addition
+    /// of the new column when the file is open.
+    ///
+    /// @param col_name Name of the column.
+    ///
+    /// @throw CSVFileError if a column with the specified name exists.
+    void addColumnInternal(const std::string& col_name);
+
     /// @brief Validate the row read from a file.
     ///
     /// This function implements a basic validation for the row read from the
@@ -425,10 +449,11 @@ private:
     /// Checks if the file stream is open so as IO operations can be performed
     /// on it. This is internally called by the public class members to prevent
     /// them from performing IO operations on invalid stream and using NULL
-    /// pointer to a stream.
+    /// pointer to a stream. The @c clear() method is called on the stream
+    /// after the status has been checked.
     ///
     /// @throw CSVFileError if stream is closed or pointer to it is NULL.
-    void checkStreamStatus(const std::string& operation) const;
+    void checkStreamStatusAndReset(const std::string& operation) const;
 
     /// @brief Returns size of the CSV file.
     std::ifstream::pos_type size() const;

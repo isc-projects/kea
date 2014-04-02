@@ -145,11 +145,11 @@ TEST(DuidTest, fromText) {
         duid.reset(new DUID(DUID::fromText("00:a:bb:D:ee:EF:ab")))
     );
     EXPECT_EQ("00:0a:bb:0d:ee:ef:ab", duid->toText());
-    // Repeated colon sign in the DUID should be ignored.
-    ASSERT_NO_THROW(
-        duid.reset(new DUID(DUID::fromText("00::bb:D:ee:EF:ab")))
+    // Repeated colon sign is not allowed.
+    EXPECT_THROW(
+        duid.reset(new DUID(DUID::fromText("00::bb:D:ee:EF:ab"))),
+        isc::BadValue
     );
-    EXPECT_EQ("00:bb:0d:ee:ef:ab", duid->toText());
     // DUID with excessive number of digits for one of the bytes.
     EXPECT_THROW(
        duid.reset(new DUID(DUID::fromText("00:01:021:03:04:05:06"))),
@@ -299,15 +299,16 @@ TEST(ClientIdTest, fromText) {
         cid = ClientId::fromText("00:a:bb:D:ee:EF:ab")
     );
     EXPECT_EQ("00:0a:bb:0d:ee:ef:ab", cid->toText());
-    // Repeated colon sign in the ClientId should be ignored.
-    ASSERT_NO_THROW(
-        cid = ClientId::fromText("00::bb:D:ee:EF:ab")
+    // Repeated colon sign in the ClientId is not allowed.
+    EXPECT_THROW(
+        ClientId::fromText("00::bb:D:ee:EF:ab"),
+        isc::BadValue
+
     );
-    EXPECT_EQ("00:bb:0d:ee:ef:ab", cid->toText());
     // ClientId with excessive number of digits for one of the bytes.
     EXPECT_THROW(
-       cid = ClientId::fromText("00:01:021:03:04:05:06"),
-       isc::BadValue
+        ClientId::fromText("00:01:021:03:04:05:06"),
+        isc::BadValue
     );
 }
 

@@ -34,7 +34,6 @@ namespace dhcp {
 DbAccessParser::DbAccessParser(const std::string&, const ParserContext& ctx)
     : values_(), ctx_(ctx)
 {
-    ctx_ = ctx;
 }
 
 // Parse the configuration and check that the various keywords are consistent.

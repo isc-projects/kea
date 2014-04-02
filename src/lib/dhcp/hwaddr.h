@@ -79,9 +79,11 @@ public:
     /// type.
     ///
     /// @param text HW address in the textual format.
+    /// @param htype Hardware type.
     ///
     /// @return Instance of the HW address created from text.
-    static HWAddr fromText(const std::string& text);
+    static HWAddr fromText(const std::string& text,
+                           const uint8_t htype = HTYPE_ETHER);
 
     /// @brief Compares two hardware addresses for equality
     bool operator==(const HWAddr& other) const;
