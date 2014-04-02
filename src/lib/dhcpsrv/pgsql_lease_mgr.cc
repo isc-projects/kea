@@ -280,9 +280,9 @@ public:
         if (!lease_->hwaddr_.empty()) {
             if (lease->hwaddr_.size() > HWAddr::MAX_HWADDR_LEN) {
                 isc_throw(DbOperationError,
-                          "Attempted to store Hardware address longer ("
+                          "Hardware address length : "
                           << lease->hwaddr_.size()
-                          << " than allowed maximum of "
+                          << " exceeds maximum allowed of: "
                           << HWAddr::MAX_HWADDR_LEN);
             }
 
@@ -569,13 +569,10 @@ private:
 };
 
 PgSqlLeaseMgr::PgSqlLeaseMgr(const LeaseMgr::ParameterMap& parameters)
-    : LeaseMgr(parameters) {
-    conn_ = NULL;
+    : LeaseMgr(parameters), exchange4_(new PgSqlLease4Exchange()),
+    exchange6_(new PgSqlLease6Exchange()), conn_(NULL) {
     openDatabase();
     prepareStatements();
-
-    exchange4_.reset(new PgSqlLease4Exchange());
-    exchange6_.reset(new PgSqlLease6Exchange());
 }
 
 PgSqlLeaseMgr::~PgSqlLeaseMgr() {
@@ -590,6 +587,7 @@ PgSqlLeaseMgr::~PgSqlLeaseMgr() {
 
         PQclear(r);
         PQfinish(conn_);
+        conn_ = NULL;
     }
 }
 
@@ -665,6 +663,7 @@ PgSqlLeaseMgr::openDatabase() {
         // to release it, but grab the error message first.
         std::string error_message = PQerrorMessage(conn_);
         PQfinish(conn_);
+        conn_ = NULL;
         isc_throw(DbOpenError, error_message);
     }
 }
