@@ -12,7 +12,7 @@
 	automatically generated values. Generated subnet ids are renumbered
 	each time one or more subnets are removed.  Setting the ids to to
 	specific values prevents this renumbering.
-	(Trac #3281, git abc)
+	(Trac #3281, git d90e9a0642fbb16a4e664160b4812f61fb81f1aa)
 
 775.	[doc]		marcin
 	Updated information in the BIND 10 Guide about the standards supported
