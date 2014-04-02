@@ -329,6 +329,13 @@ D2Process::reconfigureQueueMgr() {
         std::string ip_address;
         uint32_t port;
         getCfgMgr()->getContext()->getParam("ip_address", ip_address);
+
+        // Warn the user if the server address is not the loopback.
+        /// @todo Remove this once we provide a secure mechanism.
+        if (ip_address != "127.0.0.1" && ip_address != "::1") {
+            LOG_WARN(dctl_logger, DHCP_DDNS_NOT_ON_LOOPBACK).arg(ip_address);
+        }
+
         getCfgMgr()->getContext()->getParam("port", port);
         isc::asiolink::IOAddress addr(ip_address);
 
