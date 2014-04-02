@@ -254,8 +254,8 @@ This is a debug message issued when the DHCP-DDNS application encountered an
 error while decoding a response to DNS Update message. Typically, this error
 will be encountered when a response message is malformed.
 
-% DHCP_DDNS_NOT_ON_LOOPBACK The DHCP-DDNS server has been configured to listen on %1 which is not the local loopback.  This is an insecure configuration supported for testing purposes only.
-This is a warning message issued When the DHCP-DDNS server is configured to
+% DHCP_DDNS_NOT_ON_LOOPBACK the DHCP-DDNS server has been configured to listen on %1 which is not the local loopback.  This is an insecure configuration supported for testing purposes only
+This is a warning message issued when the DHCP-DDNS server is configured to
 listen at an address other than the loopback address (127.0.0.1 or ::1). It is
 possible for a malicious attacker to send bogus NameChangeRequests to it and
 change entries in the DNS. For this reason, addresses other than the IPv4 or
@@ -298,11 +298,9 @@ requests too quickly, or perhaps upstream DNS servers are experiencing
 load issues.
 
 % DHCP_DDNS_QUEUE_MGR_RECONFIGURING application is reconfiguring the queue manager
-This is an informational message indicating that DHCP_DDNS is reconfiguring the
-queue manager as part of normal startup or in response to a new configuration.
+This is an informational message indicating that DHCP_DDNS is reconfiguring the queue manager as part of normal startup or in response to a new configuration.
 
-% DHCP_DDNS_QUEUE_MGR_RECOVERING application is attempting to recover from a
-queue manager IO error
+% DHCP_DDNS_QUEUE_MGR_RECOVERING application is attempting to recover from a queue manager IO error
 This is an informational message indicating that DHCP_DDNS is attempting to
 restart the queue manager after it suffered an IO error while receiving
 requests.
