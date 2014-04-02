@@ -10,7 +10,7 @@
 	--with-dhcp-pgsql on the "configure" command line. Without this
 	switch the Postgresql backend is not compiled leaving BIND 10 able to
 	be built on systems without Postgresql installed.  Thanks to David
-	Carlier who contributed the intial patches for this work.
+	Carlier who contributed the initial patches for this work.
 	(Trac #3080,    git  1aae8b1fab3008e62c4f085948b1abadad512447)
 
 776.	[func]		marcin
