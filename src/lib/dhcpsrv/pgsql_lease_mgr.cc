@@ -42,6 +42,7 @@ struct TaggedStatement {
 
     /// Query index
     /// @todo cppcheck flags index as unused
+    // cppcheck-suppress unusedStructMember
     PgSqlLeaseMgr::StatementIndex index;
 
     /// Number of parameters for a given query
