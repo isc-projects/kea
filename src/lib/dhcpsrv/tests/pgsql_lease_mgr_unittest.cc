@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,10 +16,11 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/mysql_lease_mgr.h>
+#include <dhcpsrv/pgsql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <exceptions/exceptions.h>
+
 
 #include <gtest/gtest.h>
 
@@ -38,14 +39,14 @@ using namespace std;
 namespace {
 
 // This holds statements to create and destroy the schema.
-#include "schema_mysql_copy.h"
+#include "schema_pgsql_copy.h"
 
 // Connection strings.
 // Database: keatest
 // Host: localhost
 // Username: keatest
 // Password: keatest
-const char* VALID_TYPE = "type=mysql";
+const char* VALID_TYPE = "type=postgresql";
 const char* INVALID_TYPE = "type=unknown";
 const char* VALID_NAME = "name=keatest";
 const char* INVALID_NAME = "name=invalidname";
@@ -108,16 +109,19 @@ validConnectionString() {
 // There is no error checking in this code: if something fails, one of the
 // tests will (should) fall over.
 void destroySchema() {
-    MySqlHolder mysql;
-
     // Open database
-    (void) mysql_real_connect(mysql, "localhost", "keatest",
-                              "keatest", "keatest", 0, NULL, 0);
+    PGconn * conn = 0;
+    conn = PQconnectdb("host = 'localhost' user = 'keatest'"
+                       " password = 'keatest' dbname = 'keatest'");
 
+    PGresult * r;
     // Get rid of everything in it.
     for (int i = 0; destroy_statement[i] != NULL; ++i) {
-        (void) mysql_query(mysql, destroy_statement[i]);
+        r = PQexec(conn, destroy_statement[i]);
+        PQclear(r);
     }
+
+    PQfinish(conn);
 }
 
 // @brief Create the Schema
@@ -127,29 +131,32 @@ void destroySchema() {
 // There is no error checking in this code: if it fails, one of the tests
 // will fall over.
 void createSchema() {
-    MySqlHolder mysql;
-
     // Open database
-    (void) mysql_real_connect(mysql, "localhost", "keatest",
-                              "keatest", "keatest", 0, NULL, 0);
+    PGconn * conn = 0;
+    conn = PQconnectdb("host = 'localhost' user = 'keatest'"
+                       " password = 'keatest' dbname = 'keatest'");
 
-    // Execute creation statements.
+    PGresult * r;
+    // Get rid of everything in it.
     for (int i = 0; create_statement[i] != NULL; ++i) {
-        (void) mysql_query(mysql, create_statement[i]);
+        r = PQexec(conn, create_statement[i]);
+        PQclear(r);
     }
+
+    PQfinish(conn);
 }
 
-/// @brief Test fixture class for testing MySQL Lease Manager
+/// @brief Test fixture class for testing PostgreSQL Lease Manager
 ///
 /// Opens the database prior to each test and closes it afterwards.
 /// All pending transactions are deleted prior to closure.
 
-class MySqlLeaseMgrTest : public GenericLeaseMgrTest {
+class PgSqlLeaseMgrTest : public GenericLeaseMgrTest {
 public:
     /// @brief Constructor
     ///
     /// Deletes everything from the database and opens it.
-    MySqlLeaseMgrTest() {
+    PgSqlLeaseMgrTest() {
 
         // Ensure schema is the correct one.
         destroySchema();
@@ -161,7 +168,7 @@ public:
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test\n"
                          "*** environment is broken and must be fixed before\n"
-                         "*** the MySQL tests will run correctly.\n"
+                         "*** the PostgreSQL tests will run correctly.\n"
                          "*** The reason for the problem is described in the\n"
                          "*** accompanying exception output.\n";
             throw;
@@ -173,7 +180,7 @@ public:
     ///
     /// Rolls back all pending transactions.  The deletion of lmptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
-    virtual ~MySqlLeaseMgrTest() {
+    virtual ~PgSqlLeaseMgrTest() {
         lmptr_->rollback();
         LeaseMgrFactory::destroy();
         destroySchema();
@@ -193,12 +200,12 @@ public:
 
 /// @brief Check that database can be opened
 ///
-/// This test checks if the MySqlLeaseMgr can be instantiated.  This happens
+/// This test checks if the PgSqlLeaseMgr can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// MySqlLeaseMgr test fixure set.  This test checks that the database can be
+/// PgSqlLeaseMgr test fixure set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 
-TEST(MySqlOpenTest, OpenDatabase) {
+TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
     destroySchema();
@@ -214,9 +221,8 @@ TEST(MySqlOpenTest, OpenDatabase) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
                << "*** The test environment is broken and must be fixed\n"
-               << "*** before the MySQL tests will run correctly.\n";
+               << "*** before the PostgreSQL tests will run correctly.\n";
     }
-
     // Check that attempting to get an instance of the lease manager when
     // none is set throws an exception.
     EXPECT_THROW(LeaseMgrFactory::instance(), NoLeaseManager);
@@ -227,6 +233,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
@@ -235,12 +242,15 @@ TEST(MySqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
@@ -257,65 +267,23 @@ TEST(MySqlOpenTest, OpenDatabase) {
 /// @brief Check the getType() method
 ///
 /// getType() returns a string giving the type of the backend, which should
-/// always be "mysql".
-TEST_F(MySqlLeaseMgrTest, getType) {
-    EXPECT_EQ(std::string("mysql"), lmptr_->getType());
+/// always be "postgresql".
+TEST_F(PgSqlLeaseMgrTest, getType) {
+    EXPECT_EQ(std::string("postgresql"), lmptr_->getType());
 }
-
-/// @brief Check conversion functions
-///
-/// The server works using cltt and valid_filetime.  In the database, the
-/// information is stored as expire_time and valid-lifetime, which are
-/// related by
-///
-/// expire_time = cltt + valid_lifetime
-///
-/// This test checks that the conversion is correct.  It does not check that the
-/// data is entered into the database correctly, only that the MYSQL_TIME
-/// structure used for the entry is correctly set up.
-TEST_F(MySqlLeaseMgrTest, checkTimeConversion) {
-    const time_t cltt = time(NULL);
-    const uint32_t valid_lft = 86400;       // 1 day
-    struct tm tm_expire;
-    MYSQL_TIME mysql_expire;
-
-    // Work out what the broken-down time will be for one day
-    // after the current time.
-    time_t expire_time = cltt + valid_lft;
-    (void) localtime_r(&expire_time, &tm_expire);
-
-    // Convert to the database time
-    MySqlLeaseMgr::convertToDatabaseTime(cltt, valid_lft, mysql_expire);
-
-    // Are the times the same?
-    EXPECT_EQ(tm_expire.tm_year + 1900, mysql_expire.year);
-    EXPECT_EQ(tm_expire.tm_mon + 1,  mysql_expire.month);
-    EXPECT_EQ(tm_expire.tm_mday, mysql_expire.day);
-    EXPECT_EQ(tm_expire.tm_hour, mysql_expire.hour);
-    EXPECT_EQ(tm_expire.tm_min, mysql_expire.minute);
-    EXPECT_EQ(tm_expire.tm_sec, mysql_expire.second);
-    EXPECT_EQ(0, mysql_expire.second_part);
-    EXPECT_EQ(0, mysql_expire.neg);
-
-    // Convert back
-    time_t converted_cltt = 0;
-    MySqlLeaseMgr::convertFromDatabaseTime(mysql_expire, valid_lft, converted_cltt);
-    EXPECT_EQ(cltt, converted_cltt);
-}
-
 
 /// @brief Check getName() returns correct database name
-TEST_F(MySqlLeaseMgrTest, getName) {
+TEST_F(PgSqlLeaseMgrTest, getName) {
     EXPECT_EQ(std::string("keatest"), lmptr_->getName());
 }
 
 /// @brief Check that getVersion() returns the expected version
-TEST_F(MySqlLeaseMgrTest, checkVersion) {
+TEST_F(PgSqlLeaseMgrTest, checkVersion) {
     // Check version
     pair<uint32_t, uint32_t> version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
-    EXPECT_EQ(CURRENT_VERSION_VERSION, version.first);
-    EXPECT_EQ(CURRENT_VERSION_MINOR, version.second);
+    EXPECT_EQ(PG_CURRENT_VERSION, version.first);
+    EXPECT_EQ(PG_CURRENT_MINOR, version.second);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -326,24 +294,24 @@ TEST_F(MySqlLeaseMgrTest, checkVersion) {
 ///
 /// Checks that the addLease, getLease4 (by address) and deleteLease (with an
 /// IPv4 address) works.
-TEST_F(MySqlLeaseMgrTest, basicLease4) {
+TEST_F(PgSqlLeaseMgrTest, basicLease4) {
     testBasicLease4();
 }
 
 /// @brief Lease4 update tests
 ///
 /// Checks that we are able to update a lease in the database.
-TEST_F(MySqlLeaseMgrTest, updateLease4) {
+TEST_F(PgSqlLeaseMgrTest, updateLease4) {
     testUpdateLease4();
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address
-TEST_F(MySqlLeaseMgrTest, getLease4HWAddr1) {
+TEST_F(PgSqlLeaseMgrTest, getLease4HWAddr1) {
     testGetLease4HWAddr1();
 }
 
 /// @brief Check GetLease4 methods - access by Hardware Address
-TEST_F(MySqlLeaseMgrTest, getLease4HWAddr2) {
+TEST_F(PgSqlLeaseMgrTest, getLease4HWAddr2) {
     testGetLease4HWAddr2();
 }
 
@@ -351,7 +319,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HWAddr2) {
 //
 // Check that the system can cope with getting a hardware address of
 // any size.
-TEST_F(MySqlLeaseMgrTest, getLease4HWAddrSize) {
+TEST_F(PgSqlLeaseMgrTest, getLease4HWAddrSize) {
     testGetLease4HWAddrSize();
 }
 
@@ -359,7 +327,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4HWAddrSize) {
 ///
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of hardware address and subnet ID
-TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
+TEST_F(PgSqlLeaseMgrTest, getLease4HwaddrSubnetId) {
     testGetLease4HWAddrSubnetId();
 }
 
@@ -367,12 +335,12 @@ TEST_F(MySqlLeaseMgrTest, getLease4HwaddrSubnetId) {
 //
 // Check that the system can cope with getting a hardware address of
 // any size.
-TEST_F(MySqlLeaseMgrTest, getLease4HWAddrSubnetIdSize) {
+TEST_F(PgSqlLeaseMgrTest, getLease4HWAddrSubnetIdSize) {
     testGetLease4HWAddrSubnetIdSize();
 }
 
 // This test was derived from memfile.
-TEST_F(MySqlLeaseMgrTest, getLease4ClientId) {
+TEST_F(PgSqlLeaseMgrTest, getLease4ClientId) {
     testGetLease4ClientId();
 }
 
@@ -380,14 +348,14 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientId) {
 ///
 /// Adds leases to the database and checks that they can be accessed via
 /// the Client ID.
-TEST_F(MySqlLeaseMgrTest, getLease4ClientId2) {
+TEST_F(PgSqlLeaseMgrTest, getLease4ClientId2) {
     testGetLease4ClientId2();
 }
 
 // @brief Get Lease4 by client ID (2)
 //
 // Check that the system can cope with a client ID of any size.
-TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSize) {
+TEST_F(PgSqlLeaseMgrTest, getLease4ClientIdSize) {
     testGetLease4ClientIdSize();
 }
 
@@ -395,7 +363,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSize) {
 ///
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of client and subnet IDs.
-TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
+TEST_F(PgSqlLeaseMgrTest, getLease4ClientIdSubnetId) {
     testGetLease4ClientIdSubnetId();
 }
 
@@ -404,7 +372,7 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
 /// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
 /// (client-id is optional and may not be present)
-TEST_F(MySqlLeaseMgrTest, lease4NullClientId) {
+TEST_F(PgSqlLeaseMgrTest, lease4NullClientId) {
     testLease4NullClientId();
 }
 
@@ -412,7 +380,7 @@ TEST_F(MySqlLeaseMgrTest, lease4NullClientId) {
 ///
 /// Checks that the it is not possible to create a lease when the hostname
 /// length exceeds 255 characters.
-TEST_F(MySqlLeaseMgrTest, lease4InvalidHostname) {
+TEST_F(PgSqlLeaseMgrTest, lease4InvalidHostname) {
     testLease4InvalidHostname();
 }
 
@@ -422,7 +390,7 @@ TEST_F(MySqlLeaseMgrTest, lease4InvalidHostname) {
 
 // Test checks whether simple add, get and delete operations are possible
 // on Lease6
-TEST_F(MySqlLeaseMgrTest, testAddGetDelete6) {
+TEST_F(PgSqlLeaseMgrTest, testAddGetDelete6) {
     testAddGetDelete6(false);
 }
 
@@ -430,7 +398,7 @@ TEST_F(MySqlLeaseMgrTest, testAddGetDelete6) {
 ///
 /// Checks that the addLease, getLease6 (by address) and deleteLease (with an
 /// IPv6 address) works.
-TEST_F(MySqlLeaseMgrTest, basicLease6) {
+TEST_F(PgSqlLeaseMgrTest, basicLease6) {
     testBasicLease6();
 }
 
@@ -438,7 +406,7 @@ TEST_F(MySqlLeaseMgrTest, basicLease6) {
 ///
 /// Checks that the it is not possible to create a lease when the hostname
 /// length exceeds 255 characters.
-TEST_F(MySqlLeaseMgrTest, lease6InvalidHostname) {
+TEST_F(PgSqlLeaseMgrTest, lease6InvalidHostname) {
     testLease6InvalidHostname();
 }
 
@@ -446,12 +414,12 @@ TEST_F(MySqlLeaseMgrTest, lease6InvalidHostname) {
 ///
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of DUID and IAID.
-TEST_F(MySqlLeaseMgrTest, getLeases6DuidIaid) {
+TEST_F(PgSqlLeaseMgrTest, getLeases6DuidIaid) {
     testGetLeases6DuidIaid();
 }
 
 // Check that the system can cope with a DUID of allowed size.
-TEST_F(MySqlLeaseMgrTest, getLeases6DuidSize) {
+TEST_F(PgSqlLeaseMgrTest, getLeases6DuidSize) {
     testGetLeases6DuidSize();
 }
 
@@ -461,7 +429,7 @@ TEST_F(MySqlLeaseMgrTest, getLeases6DuidSize) {
 /// with alternating subnet_ids.
 /// It then verifies that all of getLeases6() method variants correctly
 /// discriminate between the leases based on lease type alone.
-TEST_F(MySqlLeaseMgrTest, lease6LeaseTypeCheck) {
+TEST_F(PgSqlLeaseMgrTest, lease6LeaseTypeCheck) {
     testLease6LeaseTypeCheck();
 }
 
@@ -469,20 +437,20 @@ TEST_F(MySqlLeaseMgrTest, lease6LeaseTypeCheck) {
 ///
 /// Adds leases to the database and checks that they can be accessed via
 /// a combination of DIUID and IAID.
-TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
+TEST_F(PgSqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
     testGetLease6DuidIaidSubnetId();
 }
 
 // Test checks that getLease6() works with different DUID sizes
-TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
+TEST_F(PgSqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     testGetLease6DuidIaidSubnetIdSize();
 }
 
 /// @brief Lease6 update tests
 ///
 /// Checks that we are able to update a lease in the database.
-TEST_F(MySqlLeaseMgrTest, updateLease6) {
+TEST_F(PgSqlLeaseMgrTest, updateLease6) {
     testUpdateLease6();
 }
 
-}; // Of anonymous namespace
+};

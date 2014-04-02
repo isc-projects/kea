@@ -3565,19 +3565,19 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
       <para>
       BIND 10 DHCP stores its leases in a lease database.  The software has been written in
       a way that makes it possible to choose which database product should be used to
-      store the lease information.  At present, only support for MySQL is provided, and that support must
-      be explicitly included when BIND 10 is built.  This section covers the building of
-      BIND 10 with MySQL and the creation of the lease database.
+      store the lease information.  At present, Kea supports 3 database backends: MySQL,
+      PostgreSQL and memfile. To limit external dependencies, both MySQL and PostgreSQL
+      support are disabled by default and only memfile (which is implemented in pure C++)
+      is available. Support for a given database backend must be explicitly included when
+      BIND 10 is built.  This section covers the building of BIND 10 with MySQL and/or PostgreSQL
+      and the creation of the lease database.
       </para>
       <section>
-        <title>Install MySQL</title>
+        <title>Building with MySQL support</title>
         <para>
           Install MySQL according to the instructions for your system.  The client development
           libraries must be installed.
         </para>
-      </section>
-      <section>
-        <title>Build and Install BIND 10</title>
         <para>
           Build and install BIND 10 as described in <xref linkend="installation"/>, with
           the following modification: to enable the MySQL database code, at the
@@ -3590,8 +3590,8 @@ then change those defaults with config set Resolver/forward_addresses[0]/address
           ...if not.
         </para>
       </section>
-      <section id="dhcp-database-create">
-        <title>Create MySQL Database and BIND 10 User</title>
+      <section id="dhcp-mysql-database-create">
+        <title>Create MySQL Database and Kea User</title>
         <para>
           The next task is to create both the lease database and the user under which the servers will
           access it. A number of steps are required:
@@ -3625,6 +3625,108 @@ Bye<userinput/>
 $</screen>
        </para>
      </section>
+
+
+      <section>
+        <title>Building with PostgreSQL support</title>
+        <para>
+          Install PostgreSQL according to the instructions for your system.  The client development
+          libraries must be installed. Client development libraries are often packaged as &quot;libpq&quot;.
+        </para>
+        <para>
+          Build and install BIND 10 as described in <xref linkend="installation"/>, with
+          the following modification: to enable the PostgreSQL database code, at the
+          "configure" step (see <xref linkend="configure"/>), specify the location of the
+          PostgreSQL configuration program "pg_config" with the "--with-dhcp-pgsql" switch,
+          i.e.
+          <screen><userinput>./configure [other-options] --with-dhcp-pgsql</userinput></screen>
+          ...if Postgresql was installed in the default location, or:
+          <screen><userinput>./configure [other-options] --with-dhcp-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
+          ...if not.
+        </para>
+      </section>
+      <section id="dhcp-pgsql-database-create">
+        <title>Create PostgreSQL Database and Kea User</title>
+        <para>
+          The next task is to create both the lease database and the user under which the servers will
+          access it. A number of steps are required:
+        </para>
+        <para>
+          1. Log into PostgreSQL as "root":
+          <screen>$ <userinput>sudo -u postgres psql postgres</userinput>
+Enter password:<userinput/>
+   :<userinput/>
+postgres=#</screen>
+        </para>
+        <para>
+          2. Create the database:
+          <screen>postgres=# <userinput>CREATE DATABASE <replaceable>database-name</replaceable>;</userinput></screen>
+          ... <replaceable>database-name</replaceable> is the name you have chosen for the database.
+        </para>
+
+         <para>
+          3. Create the user under which Kea will access the database (and give it a password), then grant it access to the database:
+          <screen>postgres=# <userinput>CREATE USER <replaceable>user-name</replaceable> WITH PASSWORD <replaceable>password</replaceable>;</userinput>
+postgres=#> <userinput>GRANT ALL PRIVILEGES ON DATABASE <replaceable>database-name</replaceable> TO <replaceable>user-name</replaceable>;</userinput></screen>
+        </para>
+
+         <para>
+          4. Exit PostgreSQL:
+          <screen>postgres=# <userinput>\q</userinput>
+Bye<userinput/>
+$</screen>
+       </para>
+       <para>
+        5. Create the database tables using the new user's credentials.
+        After entering the following command, you will be prompted for the new
+        user's password. When the command completes you will be returned to
+        the shell prompt. You should see output similiar to following:
+<screen>$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-bind10</replaceable>/share/bind10/dhcpdb_create.pgsql;</userinput>
+Password for user <replaceable>user-name</replaceable>:
+CREATE TABLE
+CREATE INDEX
+CREATE INDEX
+CREATE TABLE
+CREATE INDEX
+CREATE TABLE
+START TRANSACTION
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+COMMIT
+CREATE TABLE
+START TRANSACTION
+INSERT 0 1
+COMMIT
+$
+</screen>
+  </para>
+  <para>
+  If instead you encounter an error such as shown below:
+  </para>
+<screen>
+psql: FATAL:  no pg_hba.conf entry for host "[local]", user "<replaceable>user-name</replaceable>", database "<replaceable>database-name</replaceable>", SSL off
+</screen>
+  <para>
+  This indicates that the Postgresql configuration needs to be modified.
+  Kea uses password authentication when connecting to the database and must
+  have the appropriate entries added to Posgresql's pg_hba.conf file.  This
+  file is normally located in the primary data directory for your Postgresql
+  server. The precise path may vary but the default location for Postgres 9.3
+  on Centos 6.5 is:
+  <filename>/var/lib/pgsql/9.3/data/pg_hba.conf</filename>.
+  Adding lines similiar to following should be sufficient:
+  </para>
+<screen>
+local   <replaceable>database-name</replaceable>    <replaceable>user-name</replaceable>                                 password
+host    <replaceable>database-name</replaceable>    <replaceable>user-name</replaceable>          127.0.0.1/32           password
+host    <replaceable>database-name</replaceable>    <replaceable>user-name</replaceable>          ::1/128                password
+</screen>
+  <para>
+  Please consult your PostgreSQL user manual before making these changes as they
+  may expose your other databases that you run on the same system.
+  </para>
+      </section>
    </section>
 
   </chapter>
@@ -3736,8 +3838,8 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       <section>
       <title>Database Configuration</title>
       <para>
-      All leases issued by the server are stored in the lease database.  Currently,
-      the only supported database is MySQL
+      All leases issued by the server are stored in the lease database.  Currently
+      there are 3 database backends available: MySQL, PostgreSQL and experimental memfile.
       <footnote>
       <para>
       The server comes with an in-memory database ("memfile") configured as the default
@@ -3758,12 +3860,13 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
         </note>
       <para>
       Database configuration is controlled through the Dhcp4/lease-database parameters.
-      The type of the database must be set to MySQL (although the string entered is "mysql"):
+      The type of the database must be set to "mysql", "postgresql" or "memfile":
 <screen>
 &gt; <userinput>config set Dhcp4/lease-database/type "mysql"</userinput>
 </screen>
       Next, the name of the database is to hold the leases must be set: this is the
-      name used when the lease database was created (see <xref linkend="dhcp-database-create"/>).
+      name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
+      or <xref linkend="dhcp-pgsql-database-create"/>).
 <screen>
 &gt; <userinput>config set Dhcp4/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
 </screen>
@@ -5212,8 +5315,8 @@ Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
       <section>
       <title>Database Configuration</title>
       <para>
-      All leases issued by the server are stored in the lease database.  Currently,
-      the only supported database is MySQL
+      All leases issued by the server are stored in the lease database. Currently
+      there are 3 database backends available: MySQL, PostgreSQL and experimental memfile.
       <footnote>
       <para>
       The server comes with an in-memory database ("memfile") configured as the default
@@ -5234,12 +5337,13 @@ Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
         </note>
       <para>
       Database configuration is controlled through the Dhcp6/lease-database parameters.
-      The type of the database must be set to MySQL (although the string entered is "mysql"):
+      The type of the database must be set to "mysql", "postgresql" or "memfile":
 <screen>
 &gt; <userinput>config set Dhcp6/lease-database/type "mysql"</userinput>
 </screen>
       Next, the name of the database is to hold the leases must be set: this is the
-      name used when the lease database was created (see <xref linkend="dhcp-database-create"/>).
+      name used when the lease database was created (see <xref linkend="dhcp-mysql-database-create"/>
+      or <xref linkend="dhcp-pgsql-database-create"/>).
 <screen>
 &gt; <userinput>config set Dhcp6/lease-database/name "<replaceable>database-name</replaceable>"</userinput>
 </screen>
@@ -6501,13 +6605,36 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       development and should be treated as <quote>not implemented
       yet</quote>, rather than actual limitations.</para>
       <itemizedlist>
+          <listitem> <!-- see tickets #3234, #3281 -->
+            <para>
+              On-line configuration has some limitations. Adding new subnets or
+              modifying existing ones work, as is removing the last subnet from
+              the list. However, removing non-last (e.g. removing subnet 1,2 or 3 if
+              there are 4 subnets configured) will cause issues. The problem is
+              caused by simplistic subnet-id assignment. The subnets are always
+              numbered, starting from 1. That subnet-id is then used in leases
+              that are stored in the lease database. Removing non-last subnet will
+              cause the configuration information to mismatch data in the lease
+              database. It is possible to manually update subnet-id fields in
+              MySQL or PostgreSQL database, but it is awkward and error prone
+              process. A better reconfiguration support is planned.
+            </para>
+          </listitem>
 
-        <listitem> <!-- see tickets #3234, #3281 -->
-            <simpara>
-              Removal of a subnet during server reconfiguration may cause renumbering
-              of auto-generated subnet identifiers, as described in section
-              <xref linkend="ipv6-subnet-id"/>.
-            </simpara>
+        <listitem>
+          <para>
+            On startup, the DHCPv6 server does not get the full configuration from
+            BIND 10.  To remedy this, after starting BIND 10, modify any parameter
+            and commit the changes, e.g.
+            <screen>
+&gt; <userinput>config show Dhcp6/renew-timer</userinput>
+Dhcp6/renew-timer	1000	integer	(default)
+&gt; <userinput>config set Dhcp6/renew-timer 1001</userinput>
+&gt; <userinput>config commit</userinput></screen>
+          </para>
+        </listitem>
+        <listitem>
+          <simpara>Temporary addresses are not supported.</simpara>
         </listitem>
         <listitem>
           <simpara>
