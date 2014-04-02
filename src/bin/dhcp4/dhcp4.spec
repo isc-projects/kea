@@ -197,12 +197,6 @@
                 "item_type": "boolean",
                 "item_optional": true,
                 "item_default": true
-            },
-            {
-                "item_name": "leasefile",
-                "item_type": "string",
-                "item_optional": true,
-                "item_default": ""
             }
         ]
       },

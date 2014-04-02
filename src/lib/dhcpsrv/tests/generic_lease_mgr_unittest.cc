@@ -673,7 +673,13 @@ GenericLeaseMgrTest::testAddGetDelete6(bool check_t1_t2) {
 
     // after the lease is deleted, it should really be gone
     x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::456"));
-    EXPECT_EQ(Lease6Ptr(), x);
+    EXPECT_FALSE(x);
+
+    // Reopen the lease storage to make sure that lease is gone from the
+    // persistent storage.
+    reopen(V6);
+    x = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::456"));
+    EXPECT_FALSE(x);
 }
 
 void
@@ -689,7 +695,7 @@ GenericLeaseMgrTest::testBasicLease4() {
     lmptr_->commit();
 
     // Reopen the database to ensure that they actually got stored.
-    reopen();
+    reopen(V4);
 
     Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[1]);
     ASSERT_TRUE(l_returned);
@@ -718,7 +724,7 @@ GenericLeaseMgrTest::testBasicLease4() {
     ASSERT_TRUE(l_returned);
     detailCompareLease(leases[2], l_returned);
 
-    reopen();
+    reopen(V4);
 
     // The deleted lease should be still gone after we re-read leases from
     // persistent storage.
@@ -740,7 +746,7 @@ GenericLeaseMgrTest::testBasicLease4() {
 
     ASSERT_NO_THROW(lmptr_->updateLease4(leases[2]));
 
-    reopen();
+    reopen(V4);
 
     // The lease should be now updated in the storage.
     l_returned = lmptr_->getLease4(ioaddress4_[2]);
@@ -1419,6 +1425,87 @@ GenericLeaseMgrTest::testUpdateLease6() {
     // Try updating a lease not in the database.
     EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::dhcp::NoSuchLease);
 }
+
+void
+GenericLeaseMgrTest::testRecreateLease4() {
+    // Create a lease.
+    std::vector<Lease4Ptr> leases = createLeases4();
+    // Copy the lease so as we can freely modify it.
+    Lease4Ptr lease(new Lease4(*leases[0]));
+
+    // Add a lease.
+    EXPECT_TRUE(lmptr_->addLease(lease));
+    lmptr_->commit();
+
+    // Check that the lease has been successfuly added.
+    Lease4Ptr l_returned = lmptr_->getLease4(ioaddress4_[0]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(lease, l_returned);
+
+    // Delete a lease, check that it's gone.
+    EXPECT_TRUE(lmptr_->deleteLease(ioaddress4_[0]));
+    EXPECT_FALSE(lmptr_->getLease4(ioaddress4_[0]));
+
+    // Modify the copy of the lease. Increasing values or negating them ensures
+    // that they are really modified, because we will never get the same values.
+    ++lease->subnet_id_;
+    ++lease->valid_lft_;
+    lease->fqdn_fwd_ = !lease->fqdn_fwd_;
+    // Make sure that the lease has been really modified.
+    ASSERT_NE(*lease, *leases[1]);
+    // Add the updated lease.
+    EXPECT_TRUE(lmptr_->addLease(lease));
+    lmptr_->commit();
+
+    // Reopen the lease database, so as the lease is re-read.
+    reopen(V4);
+
+    // The lease in the database should be modified.
+    l_returned = lmptr_->getLease4(ioaddress4_[0]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(lease, l_returned);
+}
+
+void
+GenericLeaseMgrTest::testRecreateLease6() {
+    // Create a lease.
+    std::vector<Lease6Ptr> leases = createLeases6();
+    // Copy the lease so as we can freely modify it.
+    Lease6Ptr lease(new Lease6(*leases[0]));
+
+    // Add a lease.
+    EXPECT_TRUE(lmptr_->addLease(lease));
+    lmptr_->commit();
+
+    // Check that the lease has been successfuly added.
+    Lease6Ptr l_returned = lmptr_->getLease6(Lease::TYPE_NA, ioaddress6_[0]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(lease, l_returned);
+
+    // Delete a lease, check that it's gone.
+    EXPECT_TRUE(lmptr_->deleteLease(ioaddress6_[0]));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, ioaddress6_[0]));
+
+    // Modify the copy of the lease. Increasing values or negating them ensures
+    // that they are really modified, because we will never get the same values.
+    ++lease->subnet_id_;
+    ++lease->valid_lft_;
+    lease->fqdn_fwd_ = !lease->fqdn_fwd_;
+    // Make sure that the lease has been really modified.
+    ASSERT_NE(*lease, *leases[1]);
+    // Add the updated lease.
+    EXPECT_TRUE(lmptr_->addLease(lease));
+    lmptr_->commit();
+
+    // Reopen the lease database, so as the lease is re-read.
+    reopen(V6);
+
+    // The lease in the database should be modified.
+    l_returned = lmptr_->getLease6(Lease::TYPE_NA, ioaddress6_[0]);
+    ASSERT_TRUE(l_returned);
+    detailCompareLease(lease, l_returned);
+}
+
 
 }; // namespace test
 }; // namespace dhcp

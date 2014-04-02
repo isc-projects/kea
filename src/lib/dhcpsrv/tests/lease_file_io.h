@@ -21,10 +21,20 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
+/// @brief This class contains functions to perform IO operations on files.
+///
+/// This class is solely used by unit tests. Some tests often need files
+/// as an input. This class allows for easy creation of text files that can
+/// be later used by unit tests. It also provides method to read the contents
+/// of the existing file and remove existing file (cleanup after unit test).
 class LeaseFileIO {
 public:
+    /// @brief Constructor
+    ///
+    /// @param filename Abolsute path to the file.
     LeaseFileIO(const std::string& filename);
 
+    /// @brief Destructor.
     ~LeaseFileIO();
 
     /// @brief Check if test file exists on disk.

@@ -191,6 +191,32 @@ CSVFileTest::writeFile(const std::string& contents) const {
     }
 }
 
+// This test checks that the function which is used to add columns of the
+// CSV file works as expected.
+TEST_F(CSVFileTest, addColumn) {
+    boost::scoped_ptr<CSVFile> csv(new CSVFile(testfile_));
+    // Add two columns.
+    ASSERT_NO_THROW(csv->addColumn("animal"));
+    ASSERT_NO_THROW(csv->addColumn("color"));
+    // Make sure we can't add duplicates.
+    EXPECT_THROW(csv->addColumn("animal"), CSVFileError);
+    EXPECT_THROW(csv->addColumn("color"), CSVFileError);
+    // But we should still be able to add unique columns.
+    EXPECT_NO_THROW(csv->addColumn("age"));
+    EXPECT_NO_THROW(csv->addColumn("comments"));
+    // Assert that the file is opened, because the rest of the test relies
+    // on this.
+    ASSERT_NO_THROW(csv->recreate());
+    ASSERT_TRUE(exists());
+
+    // Make sure we can't add columns (even unique) when the file is open.
+    ASSERT_THROW(csv->addColumn("zoo"), CSVFileError);
+    // Close the file.
+    ASSERT_NO_THROW(csv->close());
+    // And check that now it is possible to add the column.
+    EXPECT_NO_THROW(csv->addColumn("zoo"));
+}
+
 // This test checks that the appropriate file name is initialized.
 TEST_F(CSVFileTest, getFilename) {
     CSVFile csv(testfile_);

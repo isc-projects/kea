@@ -65,15 +65,23 @@ std::string HWAddr::toText(bool include_htype) const {
 }
 
 HWAddr
-HWAddr::fromText(const std::string& text) {
+HWAddr::fromText(const std::string& text, const uint8_t htype) {
     /// @todo optimize stream operations here.
     std::vector<std::string> split_text;
     boost::split(split_text, text, boost::is_any_of(":"),
-                 boost::algorithm::token_compress_on);
+                 boost::algorithm::token_compress_off);
 
     std::ostringstream s;
     for (size_t i = 0; i < split_text.size(); ++i) {
-        if (split_text[i].size() == 1) {
+        // If there are multiple tokens and the current one is empty, it
+        // means that two consecutive colons were specified. This is not
+        // allowed for hardware address.
+        if ((split_text.size() > 1) && split_text[i].empty()) {
+            isc_throw(isc::BadValue, "failed to create hardware address"
+                      " from text '" << text << "': tokens of the hardware"
+                      " address must be separated with a single colon");
+
+        } else  if (split_text[i].size() == 1) {
             s << "0";
 
         } else if (split_text[i].size() > 2) {
@@ -89,7 +97,7 @@ HWAddr::fromText(const std::string& text) {
         isc_throw(isc::BadValue, "failed to create hwaddr from text '"
                   << text << "': " << ex.what());
     }
-    return (HWAddr(binary, HTYPE_ETHER));
+    return (HWAddr(binary, htype));
 }
 
 bool HWAddr::operator==(const HWAddr& other) const {
