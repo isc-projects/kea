@@ -10,7 +10,7 @@
 	b10-dhcp4, b10-dhcp6: added a new parameter to subnet configuration.
 	This parameter allows subnet ids to be set to arbitrary values or
 	automatically generated values. Generated subnet ids are renumbered
-	each time one or more subnets are removed.  Setting the ids to to
+	each time one or more subnets are removed.  Setting the ids to
 	specific values prevents this renumbering.
 	(Trac #3281, git d90e9a0642fbb16a4e664160b4812f61fb81f1aa)
 
