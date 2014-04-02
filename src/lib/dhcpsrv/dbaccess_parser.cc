@@ -67,7 +67,7 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
 
     // b. Check if the 'type; keyword known and throw an exception if not.
     string dbtype = type_ptr->second;
-    if ((dbtype != "memfile") && (dbtype != "mysql")) {
+    if ((dbtype != "memfile") && (dbtype != "mysql") && (dbtype != "postgresql")) {
         isc_throw(BadValue, "unknown backend database type: " << dbtype);
     }
 

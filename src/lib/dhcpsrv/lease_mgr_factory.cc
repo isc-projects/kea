@@ -20,6 +20,9 @@
 #ifdef HAVE_MYSQL
 #include <dhcpsrv/mysql_lease_mgr.h>
 #endif
+#ifdef HAVE_PGSQL
+#include <dhcpsrv/pgsql_lease_mgr.h>
+#endif
 
 #include <boost/algorithm/string.hpp>
 #include <boost/foreach.hpp>
@@ -122,6 +125,13 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     if (parameters[type] == string("mysql")) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB).arg(redacted);
         getLeaseMgrPtr().reset(new MySqlLeaseMgr(parameters));
+        return;
+    }
+#endif
+#ifdef HAVE_PGSQL
+    if (parameters[type] == string("postgresql")) {
+        LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB).arg(redacted);
+        getLeaseMgrPtr().reset(new PgSqlLeaseMgr(parameters));
         return;
     }
 #endif
