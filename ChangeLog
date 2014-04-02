@@ -1,3 +1,11 @@
+777.	[func]		dclink, tomek
+	b10-dhcp4 and b10-dhcp6 now support using Postgresql as the backend
+	for storing lease data.  This backend is enabled by specifying
+	--with-dhcp-pgsql on the "configure" command line. Without this
+	switch the Postgresql backend is not compiled leaving BIND 10 able to
+	be built on systems without Postgresql installed.
+	(Trac #3080,    git  1aae8b1fab3008e62c4f085948b1abadad512447)
+
 776.	[func]		marcin
 	b10-dhcp4, b10-dhcp6: added a new parameter to subnet configuration.
 	This parameter allows subnet ids to be set to arbitrary values or
