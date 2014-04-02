@@ -46,20 +46,20 @@ CSVLeaseFile4::append(const Lease4& lease) const {
 
 bool
 CSVLeaseFile4::next(Lease4Ptr& lease) {
-    // We will return NULL pointer if the lease is not read.
-    lease.reset();
-    // Get the row of CSV values.
-    CSVRow row;
-    CSVFile::next(row);
-    // The empty row signals EOF.
-    if (row == CSVFile::EMPTY_ROW()) {
-        return (true);
-    }
-
-    // Try to create a lease from the values read. This may easily result in
-    // exception. We don't want this function to throw exceptions, so we catch
-    // them all and rather return the false value.
+    // Read the CSV row and try to create a lease from the values read.
+    // This may easily result in exception. We don't want this function
+    // to throw exceptions, so we catch them all and rather return the
+    // false value.
     try {
+        // Get the row of CSV values.
+        CSVRow row;
+        CSVFile::next(row);
+        // The empty row signals EOF.
+        if (row == CSVFile::EMPTY_ROW()) {
+            lease.reset();
+            return (true);
+        }
+
         // Get client id. It is possible that the client id is empty and the
         // returned pointer is NULL. This is ok, but if the client id is NULL,
         // we need to be careful to not use the NULL pointer.
@@ -68,7 +68,7 @@ CSVLeaseFile4::next(Lease4Ptr& lease) {
         if (client_id) {
             client_id_vec = client_id->getClientId();
         }
-        size_t client_id_len = client_id_vec.empty() ? 0 : client_id_vec.size();
+        size_t client_id_len = client_id_vec.size();
 
         // Get the HW address. It should never be empty and the readHWAddr checks
         // that.

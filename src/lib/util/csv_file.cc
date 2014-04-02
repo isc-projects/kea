@@ -13,6 +13,9 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <util/csv_file.h>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/constants.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <fstream>
 #include <sstream>
 
@@ -20,53 +23,21 @@ namespace isc {
 namespace util {
 
 CSVRow::CSVRow(const size_t cols, const char separator)
-    : separator_(separator), values_(cols) {
+    : separator_(1, separator), values_(cols) {
 }
 
 CSVRow::CSVRow(const std::string& text, const char separator)
-    : separator_(separator) {
+    : separator_(1, separator) {
     // Parsing is exception safe, so this will not throw.
     parse(text.c_str());
 }
 
 void
-CSVRow::parse(const char* line) {
-    std::string s(line);
-    // The 'pos' value holds the current position in the parsed stream.
-    // Normally, it points to the position of one of the the separator
-    // characters following the parsed value. For the first value, it
-    // has to be set to -1.
-    int pos = -1;
-    // Position of the first character of the currently parsed value.
-    size_t start_pos;
-    // Flag which indicates whether parsing should end because last value
-    // has been just parsed.
-    bool leave = false;
-    // Temporary container which holds parsed values. On successful
-    // parsing completion, the contents of this container are moved
-    // to the container holding values for the row.
-    std::vector<std::string> values;
-
-    do {
-        // Set the position of the currently parsed value.
-        start_pos = pos + 1;
-        // Find the first separator, following the character at
-        // start_pos.
-        pos = s.find(separator_, start_pos);
-        // The last value is not followed by a separator, so if
-        // we reached the end of line, take reminder of the string
-        // and make it a value.
-        if (pos == std::string::npos) {
-            pos = s.length();
-            // Finish parsing as we already parsed the last value.
-            leave = true;
-        }
-        // Store the parsed value.
-        values.push_back(s.substr(start_pos, pos - start_pos));
-    } while (!leave);
-
-    // Assign new values.
-    std::swap(values, values_);
+CSVRow::parse(const std::string& line) {
+    // Tokenize the string using a specified separator. Disable compression,
+    // so as the two consecutive separators mark an empty value.
+    boost::split(values_, line, boost::is_any_of(separator_),
+                 boost::algorithm::token_compress_off);
 }
 
 std::string
@@ -92,21 +63,6 @@ void
 CSVRow::writeAt(const size_t at, const char* value) {
     checkIndex(at);
     values_[at] = value;
-}
-
-void
-CSVRow::writeAt(const size_t at, const std::string& value) {
-    writeAt(at, value.c_str());
-}
-
-bool
-CSVRow::operator==(const CSVRow& other) const {
-    return (render() == other.render());
-}
-
-bool
-CSVRow::operator!=(const CSVRow& other) const {
-    return (render() != other.render());
 }
 
 std::ostream& operator<<(std::ostream& os, const CSVRow& row) {
@@ -144,12 +100,23 @@ CSVFile::close() {
 
 void
 CSVFile::flush() const {
-    checkStreamStatus("flush");
+    checkStreamStatusAndReset("flush");
     fs_->flush();
 }
 
 void
 CSVFile::addColumn(const std::string& col_name) {
+    // It is not allowed to add a new column when file is open.
+    if (fs_) {
+        isc_throw(CSVFileError, "attempt to add a column '" << col_name
+                  << "' while the file '" << getFilename()
+                  << "' is open");
+    }
+    addColumnInternal(col_name);
+}
+
+void
+CSVFile::addColumnInternal(const std::string& col_name) {
     if (getColumnIndex(col_name) >= 0) {
         isc_throw(CSVFileError, "attempt to add duplicate column '"
                   << col_name << "'");
@@ -159,10 +126,7 @@ CSVFile::addColumn(const std::string& col_name) {
 
 void
 CSVFile::append(const CSVRow& row) const {
-    checkStreamStatus("append");
-
-    // If a stream is in invalid state, reset the state.
-    fs_->clear();
+    checkStreamStatusAndReset("append");
 
     if (row.getValuesCount() != getColumnCount()) {
         isc_throw(CSVFileError, "number of values in the CSV row '"
@@ -170,6 +134,14 @@ CSVFile::append(const CSVRow& row) const {
                   " columns in the CSV file '" << getColumnCount() << "'");
     }
 
+    /// @todo Apparently, seekp and seekg are interchangable. A call to seekp
+    /// results in moving the input pointer too. This is ok for now. It means
+    /// that when the append() is called, the read pointer is moved to the EOF.
+    /// For the current use cases we only read a file and then append a new
+    /// content. If we come up with the scenarios when read and write is
+    /// needed at the same time, we may revisit this: perhaps remember the
+    /// old pointer. Also, for safety, we call both functions so as we are
+    /// sure that both pointers are moved.
     fs_->seekp(0, std::ios_base::end);
     fs_->seekg(0, std::ios_base::end);
     fs_->clear();
@@ -184,15 +156,18 @@ CSVFile::append(const CSVRow& row) const {
 }
 
 void
-CSVFile::checkStreamStatus(const std::string& operation) const {
+CSVFile::checkStreamStatusAndReset(const std::string& operation) const {
     if (!fs_) {
         isc_throw(CSVFileError, "NULL stream pointer when performing '"
                   << operation << "' on file '" << filename_ << "'");
 
     } else if (!fs_->is_open()) {
+        fs_->clear();
         isc_throw(CSVFileError, "closed stream when performing '"
                   << operation << "' on file '" << filename_ << "'");
 
+    } else {
+        fs_->clear();
     }
 }
 
@@ -231,7 +206,7 @@ CSVFile::getColumnIndex(const std::string& col_name) const {
 
 std::string
 CSVFile::getColumnName(const size_t col_index) const {
-    if (col_index > cols_.size()) {
+    if (col_index >= cols_.size()) {
         isc_throw(isc::OutOfRange, "column index " << col_index << " in the "
                   " CSV file '" << filename_ << "' is out of range; the CSV"
                   " file has only  " << cols_.size() << " columns ");
@@ -248,15 +223,12 @@ CSVFile::next(CSVRow& row, const bool skip_validation) {
 
     try {
         // Check that stream is "ready" for any IO operations.
-        checkStreamStatus("get next row");
+        checkStreamStatusAndReset("get next row");
 
     } catch (isc::Exception& ex) {
         setReadMsg(ex.what());
         return (false);
     }
-
-    // If a stream is in invalid state, reset the state.
-    fs_->clear();
 
     // Get exactly one line of the file.
     std::string line;
@@ -275,7 +247,7 @@ CSVFile::next(CSVRow& row, const bool skip_validation) {
         return (false);
     }
     // If we read anything, parse it.
-    row.parse(line.c_str());
+    row.parse(line);
 
     // And check if it is correct.
     return (skip_validation ? true : validate(row));
@@ -290,44 +262,47 @@ CSVFile::open() {
     } else {
         // Try to open existing file, holding some data.
         fs_.reset(new std::fstream(filename_.c_str()));
-        // The file may fail to open. For example, because of insufficient
-        // persmissions. Although the file is not open we should call close
-        // to reset our internal pointer.
-        if (!fs_->is_open()) {
-            close();
-            isc_throw(CSVFileError, "unable to open '" << filename_ << "'");
-        }
-        // Make sure we are on the beginning of the file, so as we can parse
-        // the header.
-        fs_->seekg(0);
-        if (!fs_->good()) {
-            close();
-            isc_throw(CSVFileError, "unable to set read pointer in the file '"
-                      << filename_ << "'");
-        }
 
-        // Read the header.
-        CSVRow header;
-        if (!next(header, true)) {
-            close();
-            isc_throw(CSVFileError, "failed to read and parse header of the"
-                      " CSV file '" << filename_ << "': "
-                      << getReadMsg());
-        }
-
-        // Check the header against the columns specified for the CSV file.
-        if (!validateHeader(header)) {
-            close();
-            isc_throw(CSVFileError, "invalid header '" << header
-                      << "' in CSV file '" << filename_ << "'");
-        }
-
-        // Everything is good, so if we haven't added any columns yet,
-        // add them.
-        if (getColumnCount() == 0) {
-            for (size_t i = 0; i < header.getValuesCount(); ++i) {
-                addColumn(header.readAt(i));
+        // Catch exceptions so as we can close the file if error occurs.
+        try {
+            // The file may fail to open. For example, because of insufficient
+            // persmissions. Although the file is not open we should call close
+            // to reset our internal pointer.
+            if (!fs_->is_open()) {
+                isc_throw(CSVFileError, "unable to open '" << filename_ << "'");
             }
+            // Make sure we are on the beginning of the file, so as we can parse
+            // the header.
+            fs_->seekg(0);
+            if (!fs_->good()) {
+                isc_throw(CSVFileError, "unable to set read pointer in the file '"
+                          << filename_ << "'");
+            }
+
+            // Read the header.
+            CSVRow header;
+            if (!next(header, true)) {
+                isc_throw(CSVFileError, "failed to read and parse header of the"
+                          " CSV file '" << filename_ << "': "
+                          << getReadMsg());
+            }
+
+            // Check the header against the columns specified for the CSV file.
+            if (!validateHeader(header)) {
+                isc_throw(CSVFileError, "invalid header '" << header
+                          << "' in CSV file '" << filename_ << "'");
+            }
+
+            // Everything is good, so if we haven't added any columns yet,
+            // add them.
+            if (getColumnCount() == 0) {
+                for (size_t i = 0; i < header.getValuesCount(); ++i) {
+                    addColumnInternal(header.readAt(i));
+                }
+            }
+        } catch (const std::exception& ex) {
+            close();
+            throw;
         }
     }
 }

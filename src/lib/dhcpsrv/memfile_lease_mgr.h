@@ -57,19 +57,15 @@ namespace dhcp {
 ///
 /// Originally, the Memfile backend didn't write leases to disk. This was
 /// particularly useful for testing server performance in non-disk bound
-/// conditions. In order to preserve this capability, the new parameters
-/// "persist4=yes|no" and "persist6=yes|no" has been introduced in the
-/// database access string. For example, database access string:
-/// "type=memfile persist4=no persist6=yes" disables disk writes to disk
-/// of DHCPv4 leases enables writes to disk of DHCPv6 leases.
+/// conditions. In order to preserve this capability, the new parameter
+/// "persist=true|false" has been introduced in the database access string.
+/// For example, database access string: "type=memfile persist=true"
+/// enables writes of leases to a disk.
 ///
-/// The lease file locations can be specified for DHCPv4 and DHCPv6 leases
-/// with the following two parameters in the database access string:
-/// - leasefile4
-/// - leasefile6
-///
-/// They specify the absolute path to the files (including file names).
-/// If they are not specified, the default location in the installation
+/// The lease file locations can be specified with the "name=[path]"
+/// parameter in the database access string. The [path] is the
+/// absolute path to the file (including file name). If this parameter
+/// is not specified, the default location in the installation
 /// directory is used: var/bind10/kea-leases4.csv and
 /// var/bind10/kea-leases6.csv.
 class Memfile_LeaseMgr : public LeaseMgr {

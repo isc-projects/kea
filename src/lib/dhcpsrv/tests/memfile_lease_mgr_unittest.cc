@@ -96,7 +96,7 @@ public:
     static std::string getConfigString(Universe u) {
         std::ostringstream s;
         s << "type=memfile " << (u == V4 ? "universe=4 " : "universe=6 ")
-          << "leasefile="
+          << "name="
           << getLeaseFilePath(u == V4 ? "leasefile4_0.csv" : "leasefile6_0.csv");
         return (s.str());
     }
@@ -134,13 +134,13 @@ TEST_F(MemfileLeaseMgrTest, constructor) {
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 
     pmap["persist"] = "true";
-    pmap["leasefile"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
     EXPECT_NO_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)));
 
     // Expecting that persist parameter is yes or no. Everything other than
     // that is wrong.
     pmap["persist"] = "bogus";
-    pmap["leasefile"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
     EXPECT_THROW(lease_mgr.reset(new Memfile_LeaseMgr(pmap)), isc::BadValue);
 }
 
@@ -160,10 +160,10 @@ TEST_F(MemfileLeaseMgrTest, getLeaseFilePath) {
 
     LeaseMgr::ParameterMap pmap;
     pmap["universe"] = "4";
-    pmap["leasefile"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
 
-    EXPECT_EQ(pmap["leasefile"],
+    EXPECT_EQ(pmap["name"],
               lease_mgr->getLeaseFilePath(Memfile_LeaseMgr::V4));
 
     pmap["persist"] = "false";
@@ -183,7 +183,7 @@ TEST_F(MemfileLeaseMgrTest, persistLeases) {
     LeaseMgr::ParameterMap pmap;
     pmap["universe"] = "4";
     // Specify the names of the lease files. Leases will be written.
-    pmap["leasefile"] = getLeaseFilePath("leasefile4_1.csv");
+    pmap["name"] = getLeaseFilePath("leasefile4_1.csv");
     boost::scoped_ptr<Memfile_LeaseMgr> lease_mgr(new Memfile_LeaseMgr(pmap));
 
     lease_mgr.reset(new Memfile_LeaseMgr(pmap));
@@ -191,7 +191,7 @@ TEST_F(MemfileLeaseMgrTest, persistLeases) {
     EXPECT_FALSE(lease_mgr->persistLeases(Memfile_LeaseMgr::V6));
 
     pmap["universe"] = "6";
-    pmap["leasefile"] = getLeaseFilePath("leasefile6_1.csv");
+    pmap["name"] = getLeaseFilePath("leasefile6_1.csv");
     lease_mgr.reset(new Memfile_LeaseMgr(pmap));
     EXPECT_FALSE(lease_mgr->persistLeases(Memfile_LeaseMgr::V4));
     EXPECT_TRUE(lease_mgr->persistLeases(Memfile_LeaseMgr::V6));
@@ -384,6 +384,25 @@ TEST_F(MemfileLeaseMgrTest, DISABLED_updateLease6) {
     testUpdateLease6();
 }
 
+/// @brief DHCPv4 Lease recreation tests
+///
+/// Checks that the lease can be created, deleted and recreated with
+/// different parameters. It also checks that the re-created lease is
+/// correctly stored in the lease database.
+TEST_F(MemfileLeaseMgrTest, testRecreateLease4) {
+    startBackend(V4);
+    testRecreateLease4();
+}
+
+/// @brief DHCPv6 Lease recreation tests
+///
+/// Checks that the lease can be created, deleted and recreated with
+/// different parameters. It also checks that the re-created lease is
+/// correctly stored in the lease database.
+TEST_F(MemfileLeaseMgrTest, testRecreateLease6) {
+    startBackend(V6);
+    testRecreateLease6();
+}
 
 // The following tests are not applicable for memfile. When adding
 // new tests to the list here, make sure to provide brief explanation
