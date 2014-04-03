@@ -117,7 +117,8 @@ public:
     /// @param port port number to listen on; the default value 0 indicates
     /// that sockets should not be opened.
     NakedDhcpv4Srv(uint16_t port = 0)
-        : Dhcpv4Srv(port, "type=memfile", false, false) {
+        : Dhcpv4Srv(port, "type=memfile universe=4 persist=false",
+                    false, false) {
         // Create fixed server id.
         server_id_.reset(new Option4AddrLst(DHO_DHCP_SERVER_IDENTIFIER,
                                             asiolink::IOAddress("192.0.3.1")));

@@ -183,7 +183,10 @@ public:
     ///
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
-    void reopen() {
+    ///
+    /// Parameter is ignored for MySQL backend as the v4 and v6 leases share
+    /// the same database.
+    void reopen(Universe) {
         LeaseMgrFactory::destroy();
         LeaseMgrFactory::create(validConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
@@ -483,6 +486,24 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
 /// Checks that we are able to update a lease in the database.
 TEST_F(MySqlLeaseMgrTest, updateLease6) {
     testUpdateLease6();
+}
+
+/// @brief DHCPv4 Lease recreation tests
+///
+/// Checks that the lease can be created, deleted and recreated with
+/// different parameters. It also checks that the re-created lease is
+/// correctly stored in the lease database.
+TEST_F(MySqlLeaseMgrTest, testRecreateLease4) {
+    testRecreateLease4();
+}
+
+/// @brief DHCPv6 Lease recreation tests
+///
+/// Checks that the lease can be created, deleted and recreated with
+/// different parameters. It also checks that the re-created lease is
+/// correctly stored in the lease database.
+TEST_F(MySqlLeaseMgrTest, testRecreateLease6) {
+    testRecreateLease6();
 }
 
 }; // Of anonymous namespace

@@ -19,7 +19,8 @@ AM_CXXFLAGS += $(BOOST_MAPPED_FILE_CXXFLAG)
 endif
 
 lib_LTLIBRARIES = libb10-util.la
-libb10_util_la_SOURCES  = filename.h filename.cc
+libb10_util_la_SOURCES  = csv_file.h csv_file.cc
+libb10_util_la_SOURCES += filename.h filename.cc
 libb10_util_la_SOURCES += locks.h lru_list.h
 libb10_util_la_SOURCES += strutil.h strutil.cc
 libb10_util_la_SOURCES += buffer.h io_utilities.h

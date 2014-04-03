@@ -15,6 +15,7 @@
 #include <config.h>
 
 #include <dhcpsrv/dbaccess_parser.h>
+#include <dhcpsrv/dhcp_parsers.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <config/ccsession.h>
 #include <gtest/gtest.h>
@@ -86,8 +87,14 @@ public:
             }
 
             // Add the keyword and value - make sure that they are quoted.
-            result += quote + keyval[i] + quote + colon + space +
-                      quote + keyval[i + 1] + quote;
+            // The only parameter which is not quoted is persist as it
+            // is a boolean value.
+            result += quote + keyval[i] + quote + colon + space;
+            if (std::string(keyval[i]) != "persist") {
+                result += quote + keyval[i + 1] + quote;
+            } else {
+                result += keyval[i + 1];
+            }
         }
 
         // Add the terminating brace
@@ -114,14 +121,18 @@ public:
     /// @param dbaccess set of database access parameters to check
     /// @param keyval Array of "const char*" strings in the order keyword,
     ///        value, keyword, value ...  A NULL entry terminates the list.
+    /// @param u Universe (V4 or V6).
     void checkAccessString(const char* trace_string,
                            const DbAccessParser::StringPairMap& parameters,
-                           const char* keyval[]) {
+                           const char* keyval[],
+                           Option::Universe u = Option::V4) {
         SCOPED_TRACE(trace_string);
 
         // Construct a map of keyword value pairs.
         std::map<string, string> expected;
-        size_t expected_count = 0;
+        expected["universe"] = (u == Option::V4 ? "4" : "6");
+        // The universe is always injected by the parser itself.
+        size_t expected_count = 1;
         for (size_t i = 0; keyval[i] != NULL; i += 2) {
             // Get the value.  This should not be NULL
             ASSERT_NE(static_cast<const char*>(NULL), keyval[i + 1]) <<
@@ -134,7 +145,7 @@ public:
         }
 
         // Check no duplicates in the test set of reference keywords.
-        ASSERT_EQ(expected_count, expected.size()) << 
+        ASSERT_EQ(expected_count, expected.size()) <<
             "Supplied reference keyword/value list contains duplicate keywords";
 
         // The passed parameter map should have the same number of entries as
@@ -169,8 +180,8 @@ public:
     /// @brief Constructor
     ///
     /// @brief Keyword/value collection of ddatabase access parameters
-    TestDbAccessParser(const std::string& param_name)
-        : DbAccessParser(param_name)
+    TestDbAccessParser(const std::string& param_name, const ParserContext& ctx)
+        : DbAccessParser(param_name, ctx)
     {}
 
     /// @brief Destructor
@@ -211,7 +222,7 @@ TEST_F(DbAccessParserTest, validTypeMemfile) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
 }
@@ -227,9 +238,47 @@ TEST_F(DbAccessParserTest, emptyKeyword) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Valid memfile", parser.getDbAccessParameters(), config);
+}
+
+// Check that the parser works with more complex configuration when
+// lease file path is specified for DHCPv4.
+TEST_F(DbAccessParserTest, persistV4Memfile) {
+    const char* config[] = {"type", "memfile",
+                            "persist", "true",
+                            "name", "/opt/bind10/var/kea-leases4.csv",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
+    EXPECT_NO_THROW(parser.build(json_elements));
+
+    checkAccessString("Valid memfile", parser.getDbAccessParameters(),
+                      config);
+}
+
+// Check that the parser works with more complex configuration when
+// lease file path is specified for DHCPv6.
+TEST_F(DbAccessParserTest, persistV6Memfile) {
+    const char* config[] = {"type", "memfile",
+                            "persist", "true",
+                            "name", "/opt/bind10/var/kea-leases6.csv",
+                            NULL};
+
+    string json_config = toJson(config);
+    ConstElementPtr json_elements = Element::fromJSON(json_config);
+    EXPECT_TRUE(json_elements);
+
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V6));
+    EXPECT_NO_THROW(parser.build(json_elements));
+
+    checkAccessString("Valid memfile", parser.getDbAccessParameters(),
+                      config, Option::V6);
 }
 
 // Check that the parser works with a valid MySQL configuration
@@ -245,7 +294,7 @@ TEST_F(DbAccessParserTest, validTypeMysql) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
     checkAccessString("Valid mysql", parser.getDbAccessParameters(), config);
 }
@@ -262,7 +311,7 @@ TEST_F(DbAccessParserTest, missingTypeKeyword) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_THROW(parser.build(json_elements), TypeKeywordMissing);
 }
 
@@ -271,7 +320,8 @@ TEST_F(DbAccessParserTest, factory) {
 
     // Check that the parser is built through the factory.
     boost::scoped_ptr<DhcpConfigParser> parser(
-        DbAccessParser::factory("lease-database"));
+        DbAccessParser::factory("lease-database", ParserContext(Option::V4))
+    );
     EXPECT_TRUE(parser);
     DbAccessParser* dbap = dynamic_cast<DbAccessParser*>(parser.get());
     EXPECT_NE(static_cast<DbAccessParser*>(NULL), dbap);
@@ -321,7 +371,7 @@ TEST_F(DbAccessParserTest, incrementalChanges) {
                              "name",     "keatest",
                              NULL};
 
-    TestDbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
 
     // First configuration string should cause a representation of that string
     // to be held.
@@ -385,7 +435,7 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
 
     // Get the database access string
@@ -394,8 +444,7 @@ TEST_F(DbAccessParserTest, getDbAccessString) {
     // String should be either "type=mysql name=keatest" or
     // "name=keatest type=mysql". The "host" entry is null, so should not be
     // output.
-    EXPECT_TRUE((dbaccess == "type=mysql name=keatest") ||
-                (dbaccess == "name=keatest type=mysql"));
+    EXPECT_EQ(dbaccess, "name=keatest type=mysql universe=4");
 }
 
 // Check that the "commit" function actually opens the database.  We will
@@ -410,17 +459,18 @@ TEST_F(DbAccessParserTest, commit) {
             }, isc::dhcp::NoLeaseManager);
 
     // Set up the parser to open the memfile database.
-    const char* config[] = {"type", "memfile",
-                            NULL};
+    const char* config[] = {"type", "memfile", "persist", "false", NULL};
     string json_config = toJson(config);
+
     ConstElementPtr json_elements = Element::fromJSON(json_config);
     EXPECT_TRUE(json_elements);
 
-    TestDbAccessParser parser("lease-database");
+    TestDbAccessParser parser("lease-database", ParserContext(Option::V4));
     EXPECT_NO_THROW(parser.build(json_elements));
 
     // Ensure that the access string is as expected.
-    EXPECT_EQ(std::string("type=memfile"), parser.getDbAccessString());
+    EXPECT_EQ("persist=false type=memfile universe=4",
+              parser.getDbAccessString());
 
     // Committal of the parser changes should open the database.
     EXPECT_NO_THROW(parser.commit());

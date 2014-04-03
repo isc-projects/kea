@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -16,6 +16,8 @@
 #define MEMFILE_LEASE_MGR_H
 
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/csv_lease_file4.h>
+#include <dhcpsrv/csv_lease_file6.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/multi_index/indexed_by.hpp>
@@ -27,16 +29,58 @@
 namespace isc {
 namespace dhcp {
 
-// This is a concrete implementation of a Lease database.
-//
-// It is for testing purposes only. It is NOT a production code.
-//
-// It does not do anything useful now, and is used for abstract LeaseMgr
-// class testing. It may later evolve into more useful backend if the
-// need arises. We can reuse code from memfile benchmark. See code in
-// tests/tools/dhcp-ubench/memfile_bench.{cc|h}
+/// @brief Concrete implementation of a lease database backend using flat file.
+///
+/// This class implements a lease database backend using CSV files to store
+/// DHCPv4 and DHCPv6 leases on disk. The format of the files is determined
+/// by the @c CSVLeaseFile4 and @c CSVLeaseFile6 classes.
+///
+/// The backend stores leases incrementally, i.e. updates to leases are appended
+/// at the end of the lease file. To record the deletion of a lease, the lease
+/// record is appended to the lease file with the valid lifetime set to 0.
+///
+/// When the backend is starting up, it reads leases from the lease file (one
+/// by one) and adds them to the in-memory container as follows:
+/// - if the lease record being parsed identifies a lease which is not present
+/// in the container, and the lease has valid lifetime greater than 0,
+/// the lease is added to the container,
+/// - if the lease record being parsed identifies a lease which is present in
+/// the container, and the valid lifetime of the lease record being parsed is
+/// greater than 0, the lease in the container is updated
+/// - if the lease record being parsed has valid lifetime equal to 0, and the
+/// corresponding lease exists in the container, the lease is removed from
+/// the container.
+///
+/// After the container holding leases is initialized, each subsequent update,
+/// removal or addition of the lease is appended to the lease file
+/// synchronously.
+///
+/// Originally, the Memfile backend didn't write leases to disk. This was
+/// particularly useful for testing server performance in non-disk bound
+/// conditions. In order to preserve this capability, the new parameter
+/// "persist=true|false" has been introduced in the database access string.
+/// For example, database access string: "type=memfile persist=true"
+/// enables writes of leases to a disk.
+///
+/// The lease file locations can be specified with the "name=[path]"
+/// parameter in the database access string. The [path] is the
+/// absolute path to the file (including file name). If this parameter
+/// is not specified, the default location in the installation
+/// directory is used: var/bind10/kea-leases4.csv and
+/// var/bind10/kea-leases6.csv.
 class Memfile_LeaseMgr : public LeaseMgr {
 public:
+
+    /// @brief Specifies universe (V4, V6)
+    ///
+    /// This enumeration is used by various functions in Memfile Lease Manager,
+    /// to identify the lease type referred to. In particular, it is used by
+    /// functions operating on the lease files to distinguish between lease
+    /// files for DHCPv4 and DHCPv6.
+    enum Universe {
+        V4,
+        V6
+    };
 
     /// @brief The sole lease manager constructor
     ///
@@ -245,7 +289,96 @@ public:
     /// support transactions, this is a no-op.
     virtual void rollback();
 
+    /// @brief Returns default path to the lease file.
+    ///
+    /// @param u Universe (V4 or V6).
+    std::string getDefaultLeaseFilePath(Universe u) const;
+
+    /// @brief Returns an absolute path to the lease file.
+    ///
+    /// @param u Universe (V4 or V6).
+    ///
+    /// @return Absolute path to the lease file or empty string if no lease
+    /// file is used.
+    std::string getLeaseFilePath(Universe u) const;
+
+    /// @brief Specifies whether or not leases are written to disk.
+    ///
+    /// It is possible that leases for DHCPv4 are written to disk whereas leases
+    /// for DHCPv6 are not; or vice versa. The argument of the method specifies
+    /// the type of lease in that respect.
+    ///
+    /// @param u Universe (V4 or V6).
+    ///
+    /// @return true if leases are written to lease file; if false is
+    /// returned, leases will be held in memory and will be lost upon
+    /// server shut down.
+    bool persistLeases(Universe u) const;
+
 protected:
+
+    /// @brief Load all DHCPv4 leases from the file.
+    ///
+    /// This method loads all DHCPv4 leases from a file to memory. It removes
+    /// existing leases before reading a file.
+    ///
+    /// @throw isc::DbOperationError If failed to read a lease from the lease
+    /// file.
+    void load4();
+
+    /// @brief Loads a single DHCPv4 lease from the file.
+    ///
+    /// This method reads a single lease record from the lease file. If the
+    /// corresponding record doesn't exist in the in-memory container, the
+    /// lease is added to the container (except for a lease which valid lifetime
+    /// is 0). If the corresponding lease exists, the lease being read updates
+    /// the existing lease. If the lease being read from the lease file has
+    /// valid lifetime of 0 and the corresponding lease exists in the in-memory
+    /// database, the existing lease is removed.
+    ///
+    /// @param lease Pointer to the lease read from the lease file.
+    void loadLease4(Lease4Ptr& lease);
+
+    /// @brief Load all DHCPv6 leases from the file.
+    ///
+    /// This method loads all DHCPv6 leases from a file to memory. It removes
+    /// existing leases before reading a file.
+    ///
+    /// @throw isc::DbOperationError If failed to read a lease from the lease
+    /// file.
+    void load6();
+
+    /// @brief Loads a single DHCPv6 lease from the file.
+    ///
+    /// This method reads a single lease record from the lease file. If the
+    /// corresponding record doesn't exist in the in-memory container, the
+    /// lease is added to the container (except for a lease which valid lifetime
+    /// is 0). If the corresponding lease exists, the lease being read updates
+    /// the existing lease. If the lease being read from the lease file has
+    /// valid lifetime of 0 and the corresponding lease exists in the in-memory
+    /// database, the existing lease is removed.
+    ///
+    /// @param lease Pointer to the lease read from the lease file.
+    void loadLease6(Lease6Ptr& lease);
+
+    /// @brief Initialize the location of the lease file.
+    ///
+    /// This method uses the parameters passed as a map to the constructor to
+    /// initialize the location of the lease file. If the lease file is not
+    /// specified, the method will use the default location for the universe
+    /// (v4 or v6) selected. If the location is specified in the map as empty
+    /// or the "persist" parameter is set to "no" it will set the empty
+    /// location, which implies that leases belonging to the specified universe
+    /// will not be written to disk.
+    ///
+    /// @param u Universe (v4 or v6)
+    /// @param parameters Map holding parameters of the Lease Manager, passed to
+    /// the constructor.
+    ///
+    /// @return The location of the lease file that should be assigned to the
+    /// lease_file4_ or lease_file6_, depending on the universe specified as an
+    /// argument to this function.
+    std::string initLeaseFilePath(Universe u);
 
     // This is a multi-index container, which holds elements that can
     // be accessed using different search indexes.
@@ -283,7 +416,7 @@ protected:
     // be accessed using different search indexes.
     typedef boost::multi_index_container<
         // It holds pointers to Lease4 objects.
-        Lease4Ptr, 
+        Lease4Ptr,
         // Specification of search indexes starts here.
         boost::multi_index::indexed_by<
             // Specification of the first index starts here.
@@ -314,7 +447,7 @@ protected:
             >,
 
             // Specification of the third index starts here.
-            boost::multi_index::ordered_unique<
+            boost::multi_index::ordered_non_unique<
                 // This is a composite index that uses two values to search for a
                 // lease: client id and subnet id.
                 boost::multi_index::composite_key<
@@ -329,7 +462,7 @@ protected:
             >,
 
             // Specification of the fourth index starts here.
-            boost::multi_index::ordered_unique<
+            boost::multi_index::ordered_non_unique<
                 // This is a composite index that uses two values to search for a
                 // lease: client id and subnet id.
                 boost::multi_index::composite_key<
@@ -354,6 +487,13 @@ protected:
 
     /// @brief stores IPv6 leases
     Lease6Storage storage6_;
+
+    /// @brief Holds the pointer to the DHCPv4 lease file IO.
+    boost::shared_ptr<CSVLeaseFile4> lease_file4_;
+
+    /// @brief Holds the pointer to the DHCPv6 lease file IO.
+    boost::shared_ptr<CSVLeaseFile6> lease_file6_;
+
 };
 
 }; // end of isc::dhcp namespace

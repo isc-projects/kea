@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #include <cc/data.h>
 #include <dhcpsrv/dhcp_config_parser.h>
+#include <dhcpsrv/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
 
 #include <string>
@@ -54,7 +55,8 @@ public:
     ///
     /// @param param_name Name of the parameter under which the database
     ///        access details are held.
-    DbAccessParser(const std::string& param_name);
+    /// @param ctx Parser context.
+    DbAccessParser(const std::string& param_name, const ParserContext& ctx);
 
     /// The destructor.
     virtual ~DbAccessParser()
@@ -96,11 +98,13 @@ public:
     ///
     /// @param param_name Name of the parameter used to access the
     /// 	configuration.
+    /// @param ctx Parser context.
     ///
     /// @return Pointer to a DbAccessParser.  The caller is responsible for
     ///         destroying the parser after use.
-    static DhcpConfigParser* factory(const std::string& param_name) {
-        return (new DbAccessParser(param_name));
+    static DhcpConfigParser* factory(const std::string& param_name,
+                                     const ParserContext& ctx) {
+        return (new DbAccessParser(param_name, ctx));
     }
 
 protected:
@@ -124,7 +128,10 @@ protected:
     std::string getDbAccessString() const;
 
 private:
+
     std::map<std::string, std::string> values_; ///< Stored parameter values
+
+    ParserContext ctx_; ///< Parser context
 };
 
 };  // namespace dhcp
