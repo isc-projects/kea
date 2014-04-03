@@ -36,12 +36,16 @@ AM_CXXFLAGS += $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # Make sure the generated files are deleted in a "clean" operation
 CLEANFILES = *.gcno *.gcda dhcpsrv_messages.h dhcpsrv_messages.cc s-messages
+# Remove CSV files created by the CSVLeaseFile6 and CSVLeaseFile4 unit tests.
+CLEANFILES += *.csv
 
 lib_LTLIBRARIES = libb10-dhcpsrv.la
 libb10_dhcpsrv_la_SOURCES  =
 libb10_dhcpsrv_la_SOURCES += addr_utilities.cc addr_utilities.h
 libb10_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libb10_dhcpsrv_la_SOURCES += callout_handle_store.h
+libb10_dhcpsrv_la_SOURCES += csv_lease_file4.cc csv_lease_file4.h
+libb10_dhcpsrv_la_SOURCES += csv_lease_file6.cc csv_lease_file6.h
 libb10_dhcpsrv_la_SOURCES += d2_client_cfg.cc d2_client_cfg.h
 libb10_dhcpsrv_la_SOURCES += d2_client_mgr.cc d2_client_mgr.h
 libb10_dhcpsrv_la_SOURCES += dbaccess_parser.cc dbaccess_parser.h

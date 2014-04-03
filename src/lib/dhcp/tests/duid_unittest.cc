@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -126,6 +126,37 @@ TEST(DuidTest, getType) {
     EXPECT_EQ(DUID::DUID_UNKNOWN, duid_invalid->getType());
 }
 
+// This test checks that the DUID instance can be created from the textual
+// format and that error is reported if the textual format is invalid.
+TEST(DuidTest, fromText) {
+    scoped_ptr<DUID> duid;
+    // DUID with only decimal digits.
+    ASSERT_NO_THROW(
+        duid.reset(new DUID(DUID::fromText("00:01:02:03:04:05:06")))
+    );
+    EXPECT_EQ("00:01:02:03:04:05:06", duid->toText());
+    // DUID with some hexadecimal digits (upper case and lower case).
+    ASSERT_NO_THROW(
+        duid.reset(new DUID(DUID::fromText("00:aa:bb:CD:ee:EF:ab")))
+    );
+    EXPECT_EQ("00:aa:bb:cd:ee:ef:ab", duid->toText());
+    // DUID with one digit for a particular byte.
+    ASSERT_NO_THROW(
+        duid.reset(new DUID(DUID::fromText("00:a:bb:D:ee:EF:ab")))
+    );
+    EXPECT_EQ("00:0a:bb:0d:ee:ef:ab", duid->toText());
+    // Repeated colon sign is not allowed.
+    EXPECT_THROW(
+        duid.reset(new DUID(DUID::fromText("00::bb:D:ee:EF:ab"))),
+        isc::BadValue
+    );
+    // DUID with excessive number of digits for one of the bytes.
+    EXPECT_THROW(
+       duid.reset(new DUID(DUID::fromText("00:01:021:03:04:05:06"))),
+       isc::BadValue
+    );
+}
+
 // Test checks if the toText() returns valid texual representation
 TEST(DuidTest, toText) {
     uint8_t data1[] = {0, 1, 2, 3, 4, 0xff, 0xfe};
@@ -248,5 +279,38 @@ TEST(ClientIdTest, toText) {
     ClientId clientid(data1, sizeof(data1));
     EXPECT_EQ("00:01:02:03:04:ff:fe", clientid.toText());
 }
+
+// This test checks that the ClientId instance can be created from the textual
+// format and that error is reported if the textual format is invalid.
+TEST(ClientIdTest, fromText) {
+    ClientIdPtr cid;
+    // ClientId with only decimal digits.
+    ASSERT_NO_THROW(
+        cid = ClientId::fromText("00:01:02:03:04:05:06")
+    );
+    EXPECT_EQ("00:01:02:03:04:05:06", cid->toText());
+    // ClientId with some hexadecimal digits (upper case and lower case).
+    ASSERT_NO_THROW(
+        cid = ClientId::fromText("00:aa:bb:CD:ee:EF:ab")
+    );
+    EXPECT_EQ("00:aa:bb:cd:ee:ef:ab", cid->toText());
+    // ClientId with one digit for a particular byte.
+    ASSERT_NO_THROW(
+        cid = ClientId::fromText("00:a:bb:D:ee:EF:ab")
+    );
+    EXPECT_EQ("00:0a:bb:0d:ee:ef:ab", cid->toText());
+    // Repeated colon sign in the ClientId is not allowed.
+    EXPECT_THROW(
+        ClientId::fromText("00::bb:D:ee:EF:ab"),
+        isc::BadValue
+
+    );
+    // ClientId with excessive number of digits for one of the bytes.
+    EXPECT_THROW(
+        ClientId::fromText("00:01:021:03:04:05:06"),
+        isc::BadValue
+    );
+}
+
 
 } // end of anonymous namespace

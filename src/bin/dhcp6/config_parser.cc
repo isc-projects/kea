@@ -643,7 +643,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id) {
         parser  = new StringParser(config_id,
                                    globalContext()->string_values_);
     } else if (config_id.compare("lease-database") == 0) {
-        parser = new DbAccessParser(config_id);
+        parser = new DbAccessParser(config_id, *globalContext());
     } else if (config_id.compare("hooks-libraries") == 0) {
         parser = new HooksLibrariesParser(config_id);
     } else if (config_id.compare("dhcp-ddns") == 0) {
