@@ -1,4 +1,4 @@
-// Copyright (C) 2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -54,8 +54,36 @@ public:
     // Hardware type
     uint8_t htype_;
 
-    /// @brief Returns textual representation of a client-id (e.g. 00:01:02:03)
-    std::string toText() const;
+    /// @brief Returns textual representation of a hardware address
+    /// (e.g. 00:01:02:03:04:05)
+    ///
+    /// @param include_htype Boolean value which controls whether the hardware
+    /// type is included in the returned string (true), or not (false).
+    ///
+    /// @return Hardware address in the textual format.
+    std::string toText(bool include_htype = true) const;
+
+    /// @brief Creates instance of the hardware address from textual format.
+    ///
+    /// This function parses HW address specified as text and creates the
+    /// corresponding @c HWAddr instance. The hexadecimal digits representing
+    /// individual bytes of the hardware address should be separated with
+    /// colons. Typically, two digits per byte are used. However, this function
+    /// allows for 1 digit per HW address byte. In this case, the digit is
+    /// prepended with '0' during conversion to binary value.
+    ///
+    /// This function can be used to perform a reverse operation to the
+    /// @c HWAddr::toText(false).
+    ///
+    /// The instance created by this function sets HTYPE_ETHER as a hardware
+    /// type.
+    ///
+    /// @param text HW address in the textual format.
+    /// @param htype Hardware type.
+    ///
+    /// @return Instance of the HW address created from text.
+    static HWAddr fromText(const std::string& text,
+                           const uint8_t htype = HTYPE_ETHER);
 
     /// @brief Compares two hardware addresses for equality
     bool operator==(const HWAddr& other) const;

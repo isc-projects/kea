@@ -30,6 +30,12 @@ namespace test {
 class GenericLeaseMgrTest : public ::testing::Test {
 public:
 
+    /// @brief Universe (V4 or V6).
+    enum Universe {
+        V4,
+        V6
+    };
+
     /// @brief Default constructor.
     GenericLeaseMgrTest();
 
@@ -40,7 +46,9 @@ public:
     ///
     /// Closes the database and re-opens it. It must be implemented
     /// in derived classes.
-    virtual void reopen() = 0;
+    ///
+    /// @param u Universe (V4 or V6), required by some backends.
+    virtual void reopen(Universe u = V4) = 0;
 
     /// @brief Initialize Lease4 Fields
     ///
@@ -159,6 +167,13 @@ public:
     /// @todo: check if it does overlap with @ref testGetLease4NullClientId()
     void testLease4NullClientId();
 
+    /// @brief Check that the DHCPv4 lease can be added, removed and recreated.
+    ///
+    /// This test creates a lease, removes it and then recreates it with some
+    /// of the attributes changed. Next it verifies that the lease in the
+    /// persistent storage has been updated as expected.
+    void testRecreateLease4();
+
     /// @brief Basic Lease6 Checks
     ///
     /// Checks that the addLease, getLease6 (by address) and deleteLease (with an
@@ -222,6 +237,13 @@ public:
     ///
     /// Checks that the code is able to update an IPv6 lease in the database.
     void testUpdateLease6();
+
+    /// @brief Check that the DHCPv6 lease can be added, removed and recreated.
+    ///
+    /// This test creates a lease, removes it and then recreates it with some
+    /// of the attributes changed. Next it verifies that the lease in the
+    /// persistent storage has been updated as expected.
+    void testRecreateLease6();
 
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;

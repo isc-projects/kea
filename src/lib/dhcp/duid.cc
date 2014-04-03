@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,11 @@
 
 #include <dhcp/duid.h>
 #include <exceptions/exceptions.h>
+#include <util/encode/hex.h>
 #include <util/io_utilities.h>
-
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/constants.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <iomanip>
 #include <sstream>
 #include <vector>
@@ -46,6 +49,41 @@ DUID::DUID(const uint8_t* data, size_t len) {
     duid_ = std::vector<uint8_t>(data, data + len);
 }
 
+std::vector<uint8_t>
+DUID::decode(const std::string& text) {
+    /// @todo optimize stream operations here.
+    std::vector<std::string> split_text;
+    boost::split(split_text, text, boost::is_any_of(":"),
+                 boost::algorithm::token_compress_off);
+
+    std::ostringstream s;
+    for (size_t i = 0; i < split_text.size(); ++i) {
+        // If there are multiple tokens and the current one is empty, it
+        // means that two consecutive colons were specified. This is not
+        // allowed for client identifier.
+        if ((split_text.size() > 1) && split_text[i].empty()) {
+            isc_throw(isc::BadValue, "invalid identifier '" << text << "': "
+                      << " tokens must be separated with a single colon");
+
+        } else if (split_text[i].size() == 1) {
+            s << "0";
+
+        } else if (split_text[i].size() > 2) {
+            isc_throw(isc::BadValue, "invalid identifier '" << text << "'");
+        }
+        s << split_text[i];
+    }
+
+    std::vector<uint8_t> binary;
+    try {
+        util::encode::decodeHex(s.str(), binary);
+    } catch (const Exception& ex) {
+        isc_throw(isc::BadValue, "failed to create identifier from text '"
+                  << text << "': " << ex.what());
+    }
+    return (binary);
+}
+
 const std::vector<uint8_t>& DUID::getDuid() const {
     return (duid_);
 }
@@ -60,6 +98,12 @@ DUID::DUIDType DUID::getType() const {
     } else {
         return (DUID_UNKNOWN);
     }
+}
+
+DUID
+DUID::fromText(const std::string& text) {
+    std::vector<uint8_t> binary = decode(text);
+    return DUID(binary);
 }
 
 std::string DUID::toText() const {
@@ -116,6 +160,12 @@ std::string ClientId::toText() const {
     // need the interface of a ClientId::toText() that calls the
     // equivalent method in the base class.
     return (DUID::toText());
+}
+
+ClientIdPtr
+ClientId::fromText(const std::string& text) {
+    std::vector<uint8_t> binary = decode(text);
+    return (ClientIdPtr(new ClientId(binary)));
 }
 
 // Compares two client-ids
