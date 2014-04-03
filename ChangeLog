@@ -1,7 +1,15 @@
+779.	[func]*		marcin
+	libdhcpsrv: the Memfile lease storage backend now writes leases into
+	CSV file. Configuration parsers for b10-dhcp4 and b10-dhcp6 use the
+	new configuration parameters to control the location of the lease
+	file. It is possible to disable lease writes to disk using
+	configuration for testing purposes.
+	(Trac #3360, git 09e6e71abf8bc693e389ebd262fd149b43c1f1d4)
+
 778.    [func]		tmark
-	If b10-dhcp-ddns is configured to listen on an address other than 
+	If b10-dhcp-ddns is configured to listen on an address other than
 	loopback, it will issue a log message warning the user that this is
-	insecure and is supported for testing purposes only.  
+	insecure and is supported for testing purposes only.
 	(Trac #3383,    git  652aa4de2fa82fdf3de569d01d9f4aa618fc1972)
 
 777.	[func]		tomek
