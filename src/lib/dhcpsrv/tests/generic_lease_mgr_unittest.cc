@@ -1452,7 +1452,7 @@ GenericLeaseMgrTest::testRecreateLease4() {
     ++lease->valid_lft_;
     lease->fqdn_fwd_ = !lease->fqdn_fwd_;
     // Make sure that the lease has been really modified.
-    ASSERT_NE(*lease, *leases[1]);
+    ASSERT_NE(*lease, *leases[0]);
     // Add the updated lease.
     EXPECT_TRUE(lmptr_->addLease(lease));
     lmptr_->commit();
@@ -1492,7 +1492,7 @@ GenericLeaseMgrTest::testRecreateLease6() {
     ++lease->valid_lft_;
     lease->fqdn_fwd_ = !lease->fqdn_fwd_;
     // Make sure that the lease has been really modified.
-    ASSERT_NE(*lease, *leases[1]);
+    ASSERT_NE(*lease, *leases[0]);
     // Add the updated lease.
     EXPECT_TRUE(lmptr_->addLease(lease));
     lmptr_->commit();
