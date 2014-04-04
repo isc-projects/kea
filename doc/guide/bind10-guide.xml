@@ -3660,16 +3660,23 @@ postgres=#</screen>
         </para>
         <para>
           2. Create the database:
-          <screen>postgres=# <userinput>CREATE DATABASE <replaceable>database-name</replaceable>;</userinput></screen>
+<screen>
+postgres=#<userinput> CREATE DATABASE <replaceable>database-name</replaceable>;</userinput>
+CREATE DATABASE
+postgres=#
+</screen>
           ... <replaceable>database-name</replaceable> is the name you have chosen for the database.
         </para>
-
          <para>
           3. Create the user under which Kea will access the database (and give it a password), then grant it access to the database:
-          <screen>postgres=# <userinput>CREATE USER <replaceable>user-name</replaceable> WITH PASSWORD <replaceable>password</replaceable>;</userinput>
-postgres=#> <userinput>GRANT ALL PRIVILEGES ON DATABASE <replaceable>database-name</replaceable> TO <replaceable>user-name</replaceable>;</userinput></screen>
+<screen>postgres=#<userinput> CREATE USER <replaceable>user-name</replaceable> WITH PASSWORD '<replaceable>password</replaceable>';</userinput>
+CREATE ROLE
+postgres=#
+postgres=#<userinput> GRANT ALL PRIVILEGES ON DATABASE <replaceable>database-name</replaceable> TO <replaceable>user-name</replaceable>;</userinput>
+GRANT
+postgres=#
+</screen>
         </para>
-
          <para>
           4. Exit PostgreSQL:
           <screen>postgres=# <userinput>\q</userinput>
@@ -3681,7 +3688,7 @@ $</screen>
         After entering the following command, you will be prompted for the new
         user's password. When the command completes you will be returned to
         the shell prompt. You should see output similiar to following:
-<screen>$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-bind10</replaceable>/share/bind10/dhcpdb_create.pgsql;</userinput>
+<screen>$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-bind10</replaceable>/share/bind10/dhcpdb_create.pgsql</userinput>
 Password for user <replaceable>user-name</replaceable>:
 CREATE TABLE
 CREATE INDEX
@@ -3715,7 +3722,9 @@ psql: FATAL:  no pg_hba.conf entry for host "[local]", user "<replaceable>user-n
   server. The precise path may vary but the default location for Postgres 9.3
   on Centos 6.5 is:
   <filename>/var/lib/pgsql/9.3/data/pg_hba.conf</filename>.
-  Adding lines similiar to following should be sufficient:
+  Assuming Kea is running on the same host as Postgresql, adding lines similiar
+  to following should be sufficient to provide password-authenticated access to
+  Kea's database:
   </para>
 <screen>
 local   <replaceable>database-name</replaceable>    <replaceable>user-name</replaceable>                                 password
