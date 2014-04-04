@@ -401,6 +401,15 @@ typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
 /// @brief A collection of IPv6 leases.
 typedef std::vector<Lease6Ptr> Lease6Collection;
 
+/// @brief Stream output operator.
+///
+/// Dumps the output of Lease::toText to the given stream.
+/// @param os output stream to which the output is
+/// @param lease reference to Lease object to dump
+/// @return a reference to the output stream paramater
+std::ostream&
+operator<<(std::ostream& os, const Lease& lease);
+
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
 

@@ -266,5 +266,11 @@ Lease6::operator==(const Lease6& other) const {
             comments_ == other.comments_);
 }
 
+std::ostream&
+operator<<(std::ostream& os, const Lease& lease) {
+    os << lease.toText();
+    return (os);
+}
+
 } // namespace isc::dhcp
 } // namespace isc
