@@ -458,9 +458,6 @@ private:
     /// @brief Returns size of the CSV file.
     std::ifstream::pos_type size() const;
 
-    /// @brief Separator used by CSV file.
-    char primary_separator_;
-
     /// @brief CSV file name.
     std::string filename_;
 
