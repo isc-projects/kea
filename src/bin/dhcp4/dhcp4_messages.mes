@@ -295,7 +295,7 @@ intervention (e.g. check if DHCP process has sufficient privileges to
 update the database). It may also be triggered if a lease was manually
 removed from the database during RELEASE message processing.
 
-% DHCP4_RELEASE_FAIL_NO_LEASE client (client-id %2) tried to release address %1, but there is no lease for such address.
+% DHCP4_RELEASE_FAIL_NO_LEASE client (client-id %1, hwaddr %2) tried to release address, %3, but there is no such lease.
 This warning message is printed when client attempts to release a lease,
 but no such lease is known to the server.
 
