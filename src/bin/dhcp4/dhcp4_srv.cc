@@ -1276,10 +1276,12 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release) {
 
         if (!lease) {
             // No such lease - bogus release
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_RELEASE_FAIL_NO_LEASE)
-                .arg(release->getCiaddr().toText())
-                .arg(release->getHWAddr()->toText())
-                .arg(client_id ? client_id->toText() : "(no client-id)");
+            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL,
+                      DHCP4_RELEASE_FAIL_NO_LEASE)
+                      .arg(client_id ? client_id->toText() : "(no client-id)")
+                      .arg(release->getHWAddr() ?
+                           release->getHWAddr()->toText() : "(no hwaddr info)")
+                      .arg(release->getCiaddr().toText());
             return;
         }
 
