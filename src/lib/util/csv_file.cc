@@ -170,7 +170,7 @@ CSVFile::checkStreamStatusAndReset(const std::string& operation) const {
     }
 }
 
-std::ifstream::pos_type
+std::streampos
 CSVFile::size() const {
     std::ifstream fs(filename_.c_str());
     bool ok = fs.good();
@@ -255,7 +255,7 @@ CSVFile::next(CSVRow& row, const bool skip_validation) {
 void
 CSVFile::open() {
     // If file doesn't exist or is empty, we have to create our own file.
-    if (size() == 0) {
+    if (size() == static_cast<std::streampos>(0)) {
         recreate();
 
     } else {

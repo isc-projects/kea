@@ -456,7 +456,7 @@ private:
     void checkStreamStatusAndReset(const std::string& operation) const;
 
     /// @brief Returns size of the CSV file.
-    std::ifstream::pos_type size() const;
+    std::streampos size() const;
 
     /// @brief CSV file name.
     std::string filename_;
