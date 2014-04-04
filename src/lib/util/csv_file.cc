@@ -29,7 +29,7 @@ CSVRow::CSVRow(const size_t cols, const char separator)
 CSVRow::CSVRow(const std::string& text, const char separator)
     : separator_(1, separator) {
     // Parsing is exception safe, so this will not throw.
-    parse(text.c_str());
+    parse(text);
 }
 
 void
