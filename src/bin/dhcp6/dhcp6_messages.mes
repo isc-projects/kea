@@ -115,11 +115,6 @@ This message is printed when DHCPv6 server disables an interface from being
 used to receive DHCPv6 traffic. Sockets on this interface will not be opened
 by the Interface Manager until interface is enabled.
 
-% DHCP6_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
-A "libreload" command was issued to reload the hooks libraries but for
-some reason the reload failed.  Other error messages issued from the
-hooks framework will indicate the nature of the problem.
-
 % DHCP6_EXTEND_LEASE_SUBNET_SELECTED the %1 subnet was selected for client extending its lease
 This is a debug message informing that a given subnet was selected. It will
 be used for extending lifetime of the lease. This is one of the early steps
@@ -169,6 +164,11 @@ A warning message indicating that a client is attempting to extend lease lifetim
 for the prefix, but the server doesn't have any information about the subnet this
 client belongs to.
 
+% DHCP6_HOOKS_LIBS_RELOAD_FAIL reload of hooks libraries failed
+A "libreload" command was issued to reload the hooks libraries but for
+some reason the reload failed.  Other error messages issued from the
+hooks framework will indicate the nature of the problem.
+
 % DHCP6_HOOK_BUFFER_RCVD_SKIP received DHCPv6 buffer was dropped because a callout set the skip flag
 This debug message is printed when a callout installed on buffer6_receive
 hook point set the skip flag. For this particular hook point, the
@@ -187,6 +187,7 @@ point, the setting of the flag by a callout instructs the server to not
 extend the lifetime for a lease. If client requested renewal of multiples
 leases (by sending multiple IA options), the server will skip the renewal
 of the one in question and will proceed with other renewals as usual.
+
 % DHCP6_HOOK_LEASE6_RELEASE_NA_SKIP DHCPv6 address lease was not released because a callout set the skip flag
 This debug message is printed when a callout installed on the
 lease6_release hook point set the skip flag. For this particular hook
