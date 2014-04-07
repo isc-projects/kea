@@ -1,9 +1,10 @@
 779.	[func]*		marcin
-	libdhcpsrv: the Memfile lease storage backend now writes leases into
-	CSV file. Configuration parsers for b10-dhcp4 and b10-dhcp6 use the
-	new configuration parameters to control the location of the lease
-	file. It is possible to disable lease writes to disk using
-	configuration for testing purposes.
+	libdhcpsrv: the Memfile lease storage backend now writes
+	leases into a CSV file. Configuration parsers for b10-dhcp4
+	and b10-dhcp6 use the new configuration parameters to
+	control the location of the lease file. It is possible to
+	disable lease writes to disk using configuration for testing
+	purposes.
 	(Trac #3360, git 09e6e71abf8bc693e389ebd262fd149b43c1f1d4)
 
 778.	[func]		tmark
@@ -13,11 +14,11 @@
 	(Trac #3383,    git  652aa4de2fa82fdf3de569d01d9f4aa618fc1972)
 
 777.	[func]		tomek
-	b10-dhcp4 and b10-dhcp6 now support using Postgresql as the backend
+	b10-dhcp4 and b10-dhcp6 now support using PostgreSQL as the backend
 	for storing lease data.  This backend is enabled by specifying
 	--with-dhcp-pgsql on the "configure" command line. Without this
-	switch the Postgresql backend is not compiled leaving BIND 10 able to
-	be built on systems without Postgresql installed.  Thanks to David
+	switch the PostgreSQL backend is not compiled leaving BIND 10 able to
+	be built on systems without PostgreSQLinstalled.  Thanks to David
 	Carlier who contributed the initial patches for this work.
 	(Trac #3080,    git  1aae8b1fab3008e62c4f085948b1abadad512447)
 
@@ -57,7 +58,7 @@
 	(Trac #3374, git c641e2d0569df3ca3e5a93beaf0ecf39db07e402)
 
 771.	[bug]		tmark
-	Configuration parsing in b10-dchp6 and b10-dhcp4 for the "dhcp-ddns"
+	Configuration parsing in b10-dhcp6 and b10-dhcp4 for the "dhcp-ddns"
 	section of their configurations now supplies hard-coded default values
 	rather than those from their spec files.  This is a temporary solution
 	to circumvent an issue in the configuration libraries which causes
@@ -85,8 +86,9 @@
 	(Trac #3373, git da3b0d4f364d069ffdb47723545798ac589fae42)
 
 767.	[func]		tomek
-	Unit-tests for all database backends are now shared. This improves
-	test coverage for memfile and any future backends that may appear.
+	Unit-tests for all DHCP database backends are now shared.
+	This improves test coverage for memfile and any future
+	backends that may appear.
 	(Trac #3359, git 3d6c11630ada9d0681a813cf026f6bb16aabb9fa)
 
 bind10-1.2.0beta1 released on March 6, 2014
