@@ -1,4 +1,4 @@
-779.	[func]*		marcin
+778.	[func]*		marcin
 	libdhcpsrv: the Memfile lease storage backend now writes
 	leases into a CSV file. Configuration parsers for b10-dhcp4
 	and b10-dhcp6 use the new configuration parameters to
@@ -7,13 +7,13 @@
 	purposes.
 	(Trac #3360, git 09e6e71abf8bc693e389ebd262fd149b43c1f1d4)
 
-778.	[func]		tmark
+777.	[func]		tmark
 	If b10-dhcp-ddns is configured to listen on an address other than
 	loopback, it will issue a log message warning the user that this is
 	insecure and is supported for testing purposes only.
 	(Trac #3383,    git  652aa4de2fa82fdf3de569d01d9f4aa618fc1972)
 
-777.	[func]		tomek
+776.	[func]		tomek
 	b10-dhcp4 and b10-dhcp6 now support using PostgreSQL as the backend
 	for storing lease data.  This backend is enabled by specifying
 	--with-dhcp-pgsql on the "configure" command line. Without this
@@ -22,7 +22,7 @@
 	Carlier who contributed the initial patches for this work.
 	(Trac #3080,    git  1aae8b1fab3008e62c4f085948b1abadad512447)
 
-776.	[func]		marcin
+775.	[func]		marcin
 	b10-dhcp4, b10-dhcp6: added a new parameter to subnet configuration.
 	This parameter allows subnet ids to be set to arbitrary values or
 	automatically generated values. Generated subnet ids are renumbered
@@ -30,19 +30,19 @@
 	specific values prevents this renumbering.
 	(Trac #3281, git d90e9a0642fbb16a4e664160b4812f61fb81f1aa)
 
-775.	[doc]		marcin
+774.	[doc]		marcin
 	Updated information in the BIND 10 Guide about the standards supported
 	by Kea and its current limitations.
 	(Trac #3258, git ff52b86206e3a256a02ca6d5cde55040550ba86a)
 
-774.	[doc]		tmark
+773.	[doc]		tmark
 	Added sections to the BIND 10 guide on configuring and using the
 	DHCP-DDNS feature of Kea.  Chapter 19, describes the new DHCP-DDNS
 	server and its configuration. Additions to chapters 17 and 18
 	describe configuring the DHCP servers to work with the new server.
 	(Trac #3283, git 806eea955c61eba2d7268958a740a8e8ea63bdaf)
 
-773.	[bug]		tmark
+772.	[bug]		tmark
 	b10-dhcp4 and b10-dhcp6 now both correctly support DDNS updates
 	when honoring client requested delegation. When DDNS is enabled,
 	and the client's FQDN indicates they will do the forward updates,
@@ -51,13 +51,12 @@
 	DDNS update requests when honoring client delegation.
 	(Trac #3352, git b1a0f405463723d539b2e6ed2dcdd692d7796b88)
 
-772.	[bug]		tmark
-	Tickets #3339 and #3373 (see entries 760 and 768 respectively)
-	were reverted. They introduced a bug where components added through
-	bindctl, could not be removed.
+771.	[bug]		tmark
+	Ticket #3339 (entry 760) was reverted to fix regression
+	where components added through bindctl, could not be removed.
 	(Trac #3374, git c641e2d0569df3ca3e5a93beaf0ecf39db07e402)
 
-771.	[bug]		tmark
+770.	[bug]		tmark
 	Configuration parsing in b10-dhcp6 and b10-dhcp4 for the "dhcp-ddns"
 	section of their configurations now supplies hard-coded default values
 	rather than those from their spec files.  This is a temporary solution
@@ -65,25 +64,17 @@
 	map-items to behave incorrectly.
 	(Trac #3358, git 983d8acec3a7ccb1ffef662eac7518aed5f99381)
 
-770.	[func]		marcin
+769.	[func]		marcin
 	b10-dhcp6: Implemented support for Rebind message.
 	(Trac #3232, git 3649413932857470558a6f19e0b0e181b3fc0fda)
 
-769.	[bug]		tmark
+768.	[bug]		tmark
 	b10-dhcp-ddns now treats a DNS server response code of
 	NXRRSET as a successful outcome when processing a request
 	to remove DNS data.  This corrects a defect in which
 	b10-dhcp-ddns would incorrectly fail a request to remove
 	DNS data when the DNS server's response was NXRRSET.
 	(Trac #3362, git da3b0d4f364d069ffdb47723545798ac589fae42)
-
-768.	[bug]		tmark
-	Python configuration library now properly merges changes into
-	configuration items that are maps of items.  This corrects a
-	defect in which a change to an item in a map of items could
-	committed, only to be lost upon committing a subsequent change
-	to same map of items during the same bindctl session.
-	(Trac #3373, git da3b0d4f364d069ffdb47723545798ac589fae42)
 
 767.	[func]		tomek
 	Unit-tests for all DHCP database backends are now shared.
