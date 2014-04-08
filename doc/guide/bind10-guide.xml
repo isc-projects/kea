@@ -6334,7 +6334,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       </para>
       </section>
       <section id="dhcpv6-d2-rules-config">
-      <title>When does DHCPv6 generates DDNS request</title>
+      <title>When does DHCPv6 generate DDNS request</title>
       DHCPv6 follows the behavior prescribed for DHCP servers in RFC 4704.
       It is important to keep in mind that DHCPv6 provides the initial decision
       making of when and what to update and forwards that information to D2 in
