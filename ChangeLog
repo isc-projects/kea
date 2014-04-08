@@ -20,7 +20,7 @@ bind10-1.2.0rc1 released on April 8, 2014
 	for storing lease data.  This backend is enabled by specifying
 	--with-dhcp-pgsql on the "configure" command line. Without this
 	switch the PostgreSQL backend is not compiled leaving BIND 10 able to
-	be built on systems without PostgreSQLinstalled.  Thanks to David
+	be built on systems without PostgreSQL installed.  Thanks to David
 	Carlier who contributed the initial patches for this work.
 	(Trac #3080,    git  1aae8b1fab3008e62c4f085948b1abadad512447)
 
