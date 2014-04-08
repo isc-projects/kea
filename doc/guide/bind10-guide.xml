@@ -3640,7 +3640,7 @@ $</screen>
           PostgreSQL configuration program "pg_config" with the "--with-dhcp-pgsql" switch,
           i.e.
           <screen><userinput>./configure [other-options] --with-dhcp-pgsql</userinput></screen>
-          ...if Postgresql was installed in the default location, or:
+          ...if PostgreSQL was installed in the default location, or:
           <screen><userinput>./configure [other-options] --with-dhcp-pgsql=<replaceable>path-to-pg_config</replaceable></userinput></screen>
           ...if not.
         </para>
@@ -3687,7 +3687,7 @@ $</screen>
         5. Create the database tables using the new user's credentials.
         After entering the following command, you will be prompted for the new
         user's password. When the command completes you will be returned to
-        the shell prompt. You should see output similiar to following:
+        the shell prompt. You should see output similar to following:
 <screen>$ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-bind10</replaceable>/share/bind10/dhcpdb_create.pgsql</userinput>
 Password for user <replaceable>user-name</replaceable>:
 CREATE TABLE
@@ -3715,14 +3715,14 @@ $
 psql: FATAL:  no pg_hba.conf entry for host "[local]", user "<replaceable>user-name</replaceable>", database "<replaceable>database-name</replaceable>", SSL off
 </screen>
   <para>
-  This indicates that the Postgresql configuration needs to be modified.
+  This indicates that the PostgreSQL configuration needs to be modified.
   Kea uses password authentication when connecting to the database and must
-  have the appropriate entries added to Posgresql's pg_hba.conf file.  This
-  file is normally located in the primary data directory for your Postgresql
-  server. The precise path may vary but the default location for Postgres 9.3
+  have the appropriate entries added to PostgreSQL's pg_hba.conf file.  This
+  file is normally located in the primary data directory for your PostgreSQL
+  server. The precise path may vary but the default location for PostgreSQL 9.3
   on Centos 6.5 is:
   <filename>/var/lib/pgsql/9.3/data/pg_hba.conf</filename>.
-  Assuming Kea is running on the same host as Postgresql, adding lines similiar
+  Assuming Kea is running on the same host as PostgreSQL, adding lines similar
   to following should be sufficient to provide password-authenticated access to
   Kea's database:
   </para>
@@ -4451,7 +4451,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
          It is recommended that boolean values are specified using "true" and "false"
          strings. This helps to prevent errors when typing multiple comma separated
          values, as it make it easier to identify the type of the value being typed,
-         and compare it with the order of data fields. Nevetheless, it is possible
+         and compare it with the order of data fields. Nevertheless, it is possible
          to use integer values: "1" and "0", instead of "true" and "false"
          accordingly. If other integer value is specified, the configuration is
          rejected.
@@ -4722,7 +4722,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       The FQDN, lease address, and DHCID
       </para></listitem>
       </orderedlist>
-      The paramaters for controlling the generation of NCRs for submission to D2
+      The parameters for controlling the generation of NCRs for submission to D2
       are contained in the "dhcp-ddns" section of the DHCPv4 server
       configuration. The default values for this section appears as follows:
 <screen>
@@ -4749,7 +4749,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
 &gt; <userinput>config commit</userinput>
 </screen>
       <section id="dhcpv4-d2-io-config">
-      <title>DHCP-DDNS Server Connectivty</title>
+      <title>DHCP-DDNS Server Connectivity</title>
       <para>
       In order for NCRs to reach the D2 server, DHCPv4 must be able
       to communicate with it and so the relevant parameters must be set
@@ -4784,14 +4784,14 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       It is important to keep in mind that DHCPv4 provides the initial decision
       making of when and what to update and forwards that information to D2 in
       the form of NCRs. Carrying out the actual DNS updates and dealing with
-      such things as conflict resolution are the purvue of D2 (<xref linkend="dhcp-ddns-server"/>).
+      such things as conflict resolution are the purview of D2 (<xref linkend="dhcp-ddns-server"/>).
       <para>
       This section describes when DHCPv4 will generate NCRs and the
       configuration parameters that can be used to influence this decision.
-      It assumes that the "enable-updates" paramater is true.
+      It assumes that the "enable-updates" parameter is true.
       </para>
       <para>
-      In general, DHCPv4 will generate DDNS udpate requests when:
+      In general, DHCPv4 will generate DDNS update requests when:
       <orderedlist>
       <listitem><para>
       A new lease is granted in response to a DHCP REQUEST
@@ -4861,7 +4861,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       <para>
       The first row in the table above represents "client delegation". Here
       the DHCP client states that it intends to do the forward DNS updates and
-      the server should do the reverese updates.  By default, DHCPv4 will honor
+      the server should do the reverse updates.  By default, DHCPv4 will honor
       the client's wishes and generate a DDNS request to D2 to update only
       reverse DNS data.  The parameter, "override-client-update", can be used
       to instruct the server to override client delegation requests.  When
@@ -4886,7 +4886,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, "override-no-update",
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, DHCPv4 will generate DDNS udpate request to D2
+      this parameter is true, DHCPv4 will generate DDNS update request to D2
       even if the client requests no updates be done.  The N-S-O flags in the
       server's response to the client will be 0-1-1.
       </para>
@@ -5083,7 +5083,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
         <para>The subnet selection mechanism described in this section is based
         on the assumption that client classification is not used. The classification
         mechanism alters the way in which subnet is selected for the client,
-        depending on the clasess that the client belongs to.</para>
+        depending on the classes that the client belongs to.</para>
       </note>
     </section>
 
@@ -5563,7 +5563,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
 &gt; <userinput>config set Dhcp6/interfaces[0] eth1/2001:db8::1</userinput>
 &gt; <userinput>config commit</userinput></screen>
         When configuration gets committed, the server will start to listen on
-        eth1 on link-local address, mutlicast group (ff02::1:2) and 2001:db8::1.
+        eth1 on link-local address, multicast group (ff02::1:2) and 2001:db8::1.
       </para>
       <para>
         It is possible to mix interface names, wildcards and interface name/addresses
@@ -5935,7 +5935,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
           It is recommended that boolean values are specified using "true" and "false"
           strings. This helps to prevent errors when typing multiple comma separated
           values, as it make it easier to identify the type of the value being typed,
-          and compare it with the order of data fields. Nevetheless, it is possible
+          and compare it with the order of data fields. Nevertheless, it is possible
           to use integer values: "1" and "0", instead of "true" and "false"
           accordingly. If other integer value is specified, the configuration is
           rejected.
@@ -6303,7 +6303,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
 &gt; <userinput>config commit</userinput>
 </screen>
       <section id="dhcpv6-d2-io-config">
-      <title>DHCP-DDNS Server Connectivty</title>
+      <title>DHCP-DDNS Server Connectivity</title>
       In order for NCRs to reach D2, DHCPv6 must be able to communicate with it.
       The following parameters are used to establish connectivty between DHCPv6
       and D2.
@@ -6339,11 +6339,11 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       It is important to keep in mind that DHCPv6 provides the initial decision
       making of when and what to update and forwards that information to D2 in
       the form of NCRs. Carrying out the actual DNS updates and dealing with
-      such things as conflict resolution are the purvue of D2 (<xref linkend="dhcp-ddns-server"/>).
+      such things as conflict resolution are the purview of D2 (<xref linkend="dhcp-ddns-server"/>).
       <para>
       This section describes when DHCPv6 will generate NCRs and the
       configuration parameters that can be used to influence this decision.
-      It assumes that the "enable-updates" paramater is true.
+      It assumes that the "enable-updates" parameter is true.
       </para>
       <note>
         <para>
@@ -6355,7 +6355,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
         </para>
       </note>
       <para>
-      In general, DHCPv6 will generate DDNS udpate requests when:
+      In general, DHCPv6 will generate DDNS update requests when:
       <orderedlist>
       <listitem><para>
       A new lease is granted in response to a DHCP REQUEST
@@ -6423,7 +6423,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <para>
       The first row in the table above represents "client delegation". Here
       the DHCP client states that it intends to do the forward DNS updates and
-      the server should do the reverese updates.  By default, DHCPv6 will honor
+      the server should do the reverse updates.  By default, DHCPv6 will honor
       the client's wishes and generate a DDNS request to D2 to update only
       reverse DNS data.  The parameter, "override-client-update", can be used
       to instruct the server to override client delegation requests.  When
@@ -6448,7 +6448,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       The third row in the table above describes the case in which the client
       requests that no DNS updates be done. The parameter, "override-no-update",
       can be used to instruct the server to disregard the client's wishes. When
-      this parameter is true, DHCPv6 will generate DDNS udpate request to D2
+      this parameter is true, DHCPv6 will generate DDNS update request to D2
       even if the client requests no updates be done.  The N-S-O flags in the
       server's response to the client will be 0-1-1.
       </para>
@@ -6956,7 +6956,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
           <listitem>
             <simpara>
               <command>name</command> &mdash;
-              is a unique text label used to idenfity the this key within the
+              is a unique text label used to identify the this key within the
               list.  It is this value that is used to specify which key (if any)
               should be used with a specific DNS server. So long as it is
               unique, its content is arbitrary.  It cannot be blank.
@@ -7051,7 +7051,7 @@ DhcpDdns/forward_ddns/ddns_domains  [] list  (default)
               If TSIG is used with this domain's servers, this
               value should be the name of the key from within the TSIG Key List
               to use.  If the value is blank (the default), TSIG will not be
-              used in DDNS converations with this domain's servers.  Currently
+              used in DDNS conversations with this domain's servers.  Currently
               TSIG has not been implemented, so this value is ignored.
               </simpara>
             </listitem>
@@ -7085,7 +7085,7 @@ DhcpDdns/forward_ddns/ddns_domains[0]/dns_servers   []  list    (default)
 <userinput>> config set DhcpDdns/forward_ddns/ddns_domains[1]/name "other.example.com"</userinput>
 <userinput>> config commit</userinput>
 </screen>
-        It is permissable to add a domain without any servers. If that domain
+        It is permissible to add a domain without any servers. If that domain
         should be matched to a request, however, the request will fail.  In
         order to make the domain useful though, we must add at least one DNS
         server to it.
@@ -7202,7 +7202,7 @@ DhcpDdns/reverse_ddns/ddns_domains  [] list  (default)
               If TSIG should be used with this domain's servers, then this
               value should be the name of the key from within the TSIG Key List
               to use.  If the value is blank (the default), TSIG will not be
-              used in DDNS converations with this domain's servers.  Currently
+              used in DDNS conversations with this domain's servers.  Currently
               this value is not used as TSIG has not been implemented.
               </simpara>
             </listitem>
@@ -7237,7 +7237,7 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers   []  list    (default)
 <userinput>> config set DhcpDdns/reverse_ddns/ddns_domains[1]/name "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa."</userinput>
 <userinput>> config commit</userinput>
 </screen>
-        It is permissable to add a domain without any servers. If that domain
+        It is permissible to add a domain without any servers. If that domain
         should be matched to a request, however, the request will fail.  In
         order to make the domain useful though, we must add at least one DNS
         server to it.
