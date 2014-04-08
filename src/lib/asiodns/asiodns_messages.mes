@@ -65,7 +65,7 @@ included in the log message.  The server still keeps accepting new
 connections, so unless it happens often it's probably okay to ignore
 this error.  If the shown error indicates something like "too many
 open files", it's probably because the run time environment is too
-restrictive on this limitation, so consider adjusing the limit using
+restrictive on this limitation, so consider adjusting the limit using
 a tool such as ulimit.  If you see other types of errors too often,
 there may be something overlooked; please file a bug report in that case.
 

@@ -146,7 +146,7 @@ a brief service interruption.
 A warning message indicating that a client is attempting to extend lease lifetime
 for the address, but the server does not have any information about the subnet this
 client belongs to. This may mean that faulty the mobile client changed its location
-and is trying to renew its old address (client is supposed to send confirm, not rewew
+and is trying to renew its old address (client is supposed to send confirm, not renew
 in such cases, according to RFC3315) or the server configuration has changed and
 information about existing subnet was removed. Note that in a sense this is worse
 case of DHCP6_EXTEND_NA_UNKNOWN, as not only the lease is unknown, but also the subnet
@@ -490,7 +490,7 @@ reconfiguration procedure.
 % DHCP6_SERVERID_WRITE_FAIL server was not able to write its ID to file %1
 This warning message indicates that server was not able to write its
 server identifier (DUID) to a file. This likely indicates lack of write
-permission to a given file or directory. This is not cricital and the
+permission to a given file or directory. This is not critical and the
 server will continue to operate, but server will generate different DUID
 during every start and clients will need to go through a rebind phase
 to recover.

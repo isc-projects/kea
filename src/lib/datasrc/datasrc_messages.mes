@@ -19,7 +19,7 @@ $NAMESPACE isc::datasrc
 % DATASRC_BAD_NSEC3_NAME NSEC3 record has a bad owner name '%1'
 The software refuses to load NSEC3 records into a wildcard domain or
 the owner name has two or more labels below the zone origin.
-It isn't explicitly forbidden, but no sane zone wouldn have such names
+It isn't explicitly forbidden, but no sane zone would have such names
 for NSEC3.  BIND 9 also refuses NSEC3 at wildcard, so this behavior is
 compatible with BIND 9.
 

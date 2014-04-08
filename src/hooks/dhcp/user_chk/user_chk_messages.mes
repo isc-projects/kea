@@ -22,7 +22,7 @@ This is an error message issued when an error occurs while unloading the
 UserCheckHook library.  This is unlikely to occur and normal operations of the
 library will likely resume when it is next loaded.
 
-% USER_CHK_SUBNET4_SELECT_ERROR DHCP UserCheckHook an unexpected error occured in subnet4_select callout: %1
+% USER_CHK_SUBNET4_SELECT_ERROR DHCP UserCheckHook an unexpected error occurred in subnet4_select callout: %1
 This is an error message issued when the DHCP UserCheckHook subnet4_select hook
 encounters an unexpected error.  The message should contain a more detailed
 explanation.
@@ -32,7 +32,7 @@ This is an error message issued when the DHCP UserCheckHook subnet4_select hook
 has been invoked but the UserRegistry has not been created.  This is a
 programmatic error and should not occur.
 
-% USER_CHK_SUBNET6_SELECT_ERROR DHCP UserCheckHook an unexpected error occured in subnet6_select callout: %1
+% USER_CHK_SUBNET6_SELECT_ERROR DHCP UserCheckHook an unexpected error occurred in subnet6_select callout: %1
 This is an error message issued when the DHCP UserCheckHook subnet6_select hook
 encounters an unexpected error.  The message should contain a more detailed
 explanation.
