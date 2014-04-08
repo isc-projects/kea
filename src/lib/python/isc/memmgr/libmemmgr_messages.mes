@@ -30,6 +30,6 @@ The MemorySegmentBuilder failed to load the specified zone when handling
 the load command. This zone will be skipped.
 
 % LIBMEMMGR_BUILDER_ZONE_WRITER_LOAD_2_ERROR Error loading zone '%1', data source '%2': '%3'
-An exception occured when the MemorySegmentBuilder tried to load the
+An exception occurred when the MemorySegmentBuilder tried to load the
 specified zone when handling the load command. This zone will be
 skipped.

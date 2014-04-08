@@ -63,7 +63,7 @@ restart BIND 10.
 % HOOKS_HOOK_LIST_RESET the list of hooks has been reset
 This is a message indicating that the list of hooks has been reset.
 While this is usual when running the BIND 10 test suite, it should not be
-seen when running BIND 10 in a producion environment.  If this appears,
+seen when running BIND 10 in a production environment.  If this appears,
 please report a bug through the usual channels.
 
 % HOOKS_INCORRECT_VERSION hook library %1 is at version %2, require version %3

@@ -177,7 +177,7 @@ The separate thread for maintaining data source clients has been stopped.
 
 % AUTH_DATASRC_CLIENTS_BUILDER_WAKE_ERR failed to wake up main thread: %1
 A low-level error happened when trying to send data to the main thread to wake
-it up. Terminating to prevent inconsistent state and possiblu hang ups.
+it up. Terminating to prevent inconsistent state and possible hang ups.
 
 % AUTH_DATASRC_CLIENTS_SHUTDOWN_ERROR error on waiting for data source builder thread: %1
 This indicates that the separate thread for maintaining data source
