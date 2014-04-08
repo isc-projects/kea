@@ -55,7 +55,7 @@ the one we sent. Since there was a response, no more notifies will
 be sent to this server for this notification event.
 
 % NOTIFY_OUT_REPLY_QR_NOT_SET QR flags set to 0 in reply to notify from %1
-The notify_out library sent a notify message to the namesever at the
+The notify_out library sent a notify message to the nameserver at the
 given address, but the reply did not have the QR bit set to one.
 Since there was a response, no more notifies will be sent to this
 server for this notification event.

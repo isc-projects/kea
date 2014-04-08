@@ -22,7 +22,7 @@ The cause of the error is included in the message.  None of the received
 updates applied, and the daemon keeps running with the previous configuration.
 
 % MEMMGR_CONFIG_UPDATE received new configuration
-A debug message.  The memmgr daemon receives configuratiopn updates
+A debug message.  The memmgr daemon receives configuration updates
 and is now applying them to its running configurations.
 
 % MEMMGR_DATASRC_CONFIG_ERROR failed to update data source configuration: %1

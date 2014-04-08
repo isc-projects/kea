@@ -29,7 +29,7 @@ The named component failed previously and we will try to restart it to provide
 as flawless service as possible, but it should be investigated what happened,
 as it could happen again.
 
-% BIND10_COMPONENT_SHUTDOWN_ERROR An error occured stopping component %1
+% BIND10_COMPONENT_SHUTDOWN_ERROR An error occurred stopping component %1
 An attempt to gracefully shutdown a component failed.
 
 % BIND10_COMPONENT_START component %1 is starting
