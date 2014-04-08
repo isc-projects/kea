@@ -6381,7 +6381,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       respect the FQDN N and S flags specified by the client as shown in the
       following table:
       </para>
-        <table id="fqdn-flag-table">
+        <table id="dhcp6-fqdn-flag-table">
           <title>Default FQDN Flag Behavior</title>
           <tgroup cols='4' align='left'>
           <colspec colname='cflags'/>
