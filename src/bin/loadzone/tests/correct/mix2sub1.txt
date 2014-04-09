@@ -1,3 +1,0 @@
-h                       TXT     "inherited ttl 1"
-$TTL 6
-g                       TXT     "inherited ttl 6"
