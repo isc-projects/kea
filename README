@@ -5,5 +5,7 @@ Kea provides DHCPv4 and DHCPv6 servers, a dynamic DNS update module,
 a portable DHCP library, libdhcp++, and a DHCP benchmarking tool,
 perfdhcp.
 
+Th developers website is at http://kea.isc.org/
+
 Limitations and known issues with this DHCP release can be found
 at http://kea.isc.org/wiki/KeaKnownIssues
