@@ -1,9 +1,0 @@
-###
-### DNS message-like data but doesn't contain sufficient length of data.
-###
-
-# Header Section
-# ID=4149 QR=Query Opcode=QUERY(0) Rcode=NOERROR(0)
-1035 0000
-# QDCNT=1, ANCNT=0, NSCNT=0, (ARCNT is missing)
-0001 0000 0000

@@ -1,9 +1,0 @@
-Add verbose option to show what it is adding, not necessarily
-in master file format, but in the context of the data source.
-
-Add "check" option to check sanity of master file but don't really
-add to data source.
-
-Currently b10-loadzone uses a default database path, overridable by
-the -d option.  It should also be able to get the database path from
-the bind10 configuration.
