@@ -1,3 +1,0 @@
-a                       TXT      "soa minttl 3"
-$ORIGIN foo
-b                       TXT      "soa minttl 3"
