@@ -1,77 +1,9 @@
 
-This is the source for the BIND 10 suite.
+This is the source for Kea, developed by Internet Systems Consortium.
 
-BIND is the popular implementation of a DNS server, developer
-interfaces, and DNS tools. BIND 10 is a rewrite of BIND 9 and ISC
-DHCP. BIND 10 is written in C++ and Python and provides a modular
-environment for serving, maintaining, and developing DNS and DHCP.
-
-This release includes the bind10 master process, b10-msgq message
-bus, b10-cmdctl remote control daemon, b10-cfgmgr configuration
-manager, b10-stats statistics collection and reporting daemon, and
-b10-stats-httpd for HTTP access to XML-formatted stats.
-
-For DNS services, it provides the b10-auth authoritative DNS server
-(with SQLite3 and in-memory backends), b10-xfrin IXFR/AXFR inbound
-service, b10-xfrout outgoing IXFR/AXFR service, b10-zonemgr secondary
-manager, libdns++ library for C++ with a python wrapper, and many
-tests and example programs. (It also includes an experimental proof
-of concept recursive or forwarding DNS server, b10-resolver.)
-
-BIND 10 also provides experimental DHCPv4 and DHCPv6 servers,
-b10-dhcp4 and b10-dhcp6, a dynamic DNS update module, b10-dhcp-ddns,
+Kea provides DHCPv4 and DHCPv6 servers, a dynamic DNS update module,
 a portable DHCP library, libdhcp++, and a DHCP benchmarking tool,
-perfdhcp.  In this release of BIND 10, the DHCPv4 and DHCPv6 servers
-must be considered experimental.  Limitations and known issues with
-this DHCP release can be found at http://bind10.isc.org/wiki/KeaKnownIssues
+perfdhcp.
 
-NOTE: The API/ABI provided by libraries in BIND 10 may change in future
-point releases. So please do not assume currently that any code that you
-compile for a particular version of a BIND 10 library will work in
-future versions of the library. We aim to stabilize the public API/ABI
-interface of BIND 10 libraries in future releases.
-
-Documentation is included with the source. See doc/guide/bind10-guide.txt
-(or bind10-guide.html) for installation instructions.  The
-documentation is also available via the BIND 10 website at
-http://bind10.isc.org/
-
-The latest released source tar file may be downloaded from:
-
-        ftp://ftp.isc.org/isc/bind10/
-
-Users and developers are encouraged to participate on the BIND 10
-mailing lists:
-
-        https://lists.isc.org/mailman/listinfo/bind10-users
-        https://lists.isc.org/mailman/listinfo/bind10-dev
-
-Bugs may be reported as tickets via the developers website:
-
-        http://bind10.isc.org/
-
-Simple build and installation instructions:
-
-  ./configure
-  make
-  make install
-
-If building from Git repository, run:
-
-  autoreconf --install
-
-before running ./configure
-
-See the Guide for detailed installation directions at
-doc/guide/bind10-guide.txt.
-
-For operating system specific tips see the wiki at:
-
-       http://bind10.isc.org/wiki/SystemSpecificNotes
-
-Please see the wiki and the doc/ directory for various documentation.
-
-The BIND 10 suite is started by running "bind10". Note that the default
-configuration does not start any DNS or DHCP services.  Please see the
-Guide for information on how to configure these services to be started
-automatically.
+Limitations and known issues with this DHCP release can be found
+at http://kea.isc.org/wiki/KeaKnownIssues
