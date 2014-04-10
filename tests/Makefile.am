@@ -1,1 +1,1 @@
-SUBDIRS = tools lettuce
+SUBDIRS = tools

@@ -1539,8 +1539,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
                  src/Makefile
-                 tests/lettuce/Makefile
-                 tests/lettuce/setup_intree_bind10.sh
                  tests/Makefile
                  tests/tools/Makefile
                  tests/tools/perfdhcp/Makefile
