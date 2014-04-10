@@ -15,7 +15,9 @@
 #ifndef ASIOLINK_DNS_SERVICE_H
 #define ASIOLINK_DNS_SERVICE_H 1
 
-#include <resolve/resolver_interface.h>
+// The commented header occurs to be unused so we remove it to get
+// rid of dependency on resolver.
+// #include <resolve/resolver_interface.h>
 
 #include <asiolink/io_service.h>
 #include <asiolink/simple_callback.h>

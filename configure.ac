@@ -1469,7 +1469,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/dhcpsrv/tests/Makefile
                  src/lib/dhcpsrv/tests/test_libraries.h
                  src/lib/dhcp/tests/Makefile
-                 src/lib/dns/benchmarks/Makefile
                  src/lib/dns/gen-rdatacode.py
                  src/lib/dns/Makefile
                  src/lib/dns/python/Makefile
@@ -1667,11 +1666,6 @@ END
 fi
 
 cat >> config.report << END
-
-Components:
-  DHCP: $want_dhcp
-  DNS: $want_dns
-  Experimental resolver: $want_experimental_resolver
 
 Features:
   $enable_features
