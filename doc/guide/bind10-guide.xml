@@ -26,95 +26,64 @@
   <?xml-stylesheet href="bind10-guide.css" type="text/css"?>
 
   <bookinfo>
-    <title>BIND 10 Guide</title>
-    <subtitle>Administrator Reference for BIND 10</subtitle>
+    <title>Kea Guide</title>
+    <subtitle>Administrator Reference for Kea</subtitle>
 
     <copyright>
       <year>2010-2014</year><holder>Internet Systems Consortium, Inc.</holder>
     </copyright>
 
     <abstract>
-      <para>BIND 10 is a framework that features Domain Name System
-      (DNS) suite and Dynamic Host Configuration Protocol (DHCP)
-      servers with development managed by Internet Systems Consortium (ISC).
-      It includes DNS libraries, modular components for controlling
-      authoritative and recursive DNS servers, and experimental DHCPv4
-      and DHCPv6 servers (codenamed Kea).
-      </para>
       <para>
-        This is the reference guide for BIND 10 version &__VERSION__;.
+        Kea is an implementation of the Dynamic Host Configuration
+        Protocol (DHCP) servers with development managed by Internet Systems
+        Consortium (ISC).
+      </para>
+
+      <!-- TODO: The VERSION needs to be updated -->
+      <para>
+        This is the reference guide for Kea version &__VERSION__;.
         The most up-to-date version of this document (in PDF, HTML,
         and plain text formats), along with other documents for
-        BIND 10, can be found at <ulink url="http://bind10.isc.org/docs"/>.
+        Kea, can be found at <ulink url="http://kea.isc.org/docs"/>.
         </para> </abstract>
 
-      <releaseinfo>This is the reference guide for BIND 10 version
+      <releaseinfo>This is the reference guide for Kea version
         &__VERSION__;.</releaseinfo>
 
   </bookinfo>
 
+  <!-- todo: Preface is now empty, but leave it around now -->
   <preface>
     <title>Preface</title>
-
-    <section id="acknowledgements">
-      <title>Acknowledgements</title>
-
-      <para>BIND 10 is a sponsored development project, and would not
-      be possible without the generous support of the sponsors.</para>
-
-      <para><ulink url="http://jprs.co.jp/">JPRS</ulink> and
-      <ulink url="http://cira.ca/">CIRA</ulink> are Patron Level
-      sponsors.</para>
-
-      <para><ulink url="https://www.afnic.fr/">AFNIC</ulink>,
-      <ulink url="https://www.cnnic.net.cn/">CNNIC</ulink>,
-      <ulink url="https://www.nic.cz/">CZ.NIC</ulink>,
-      <ulink url="http://www.denic.de/">DENIC eG</ulink>,
-      <ulink url="https://www.google.com/">Google</ulink>,
-      <ulink url="https://www.ripe.net/">RIPE NCC</ulink>,
-      <ulink url="https://registro.br/">Registro.br</ulink>,
-      <ulink url="https://nzrs.net.nz/">.nz Registry Services</ulink>, and
-      <ulink url="https://www.tcinet.ru/">Technical Center of Internet</ulink>
-      are current sponsors.</para>
-
-      <para><ulink url="https://www.afilias.info/">Afilias</ulink>,
-      <ulink url="https://www.iis.se/">IIS.SE</ulink>,
-      <ulink url="http://www.nominet.org.uk/">Nominet</ulink>, and
-      <ulink url="https://www.sidn.nl/">SIDN</ulink> were founding
-      sponsors of the project.</para>
-
-<!-- DHCP sponsorship by Comcast -->
-
-      <para>Support for BIND 10 development of the DHCPv4 and DHCPv6
-      components is provided by
-      <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
-
-    </section>
-
   </preface>
 
   <chapter id="intro">
     <title>Introduction</title>
     <para>
-      BIND is the popular implementation of a DNS server, developer
-      interfaces, and DNS tools.
-      BIND 10 is a rewrite of BIND 9 and ISC DHCP.
-      BIND 10 is written in C++ and Python and provides a modular
-      environment for serving, maintaining, and developing DNS and DHCP.
-      BIND 10 provides a EDNS0- and DNSSEC-capable authoritative
-      DNS server and a caching recursive name server which also
-      provides forwarding.
-      It also provides experimental DHCPv4 and DHCPv6 servers.
+      Kea is an implementation of the new generation DHCP servers from
+      ISC. It supports both DHCPv4 and DHCPv6 protocols along with their
+      extensions (e.g. prefix delegation). It also supports the dynamic
+      updates to DNS.
     </para>
 
     <para>
-      This guide covers BIND 10 version &__VERSION__;.
+      Kea has been initially developed as a part of the BIND 10 framework
+      (<ulink url="http://bind10.isc.org"/>). In early 2014, ISC has
+      made a decision to discontinue active development of BIND 10 and
+      continue development of Kea as standalone DHCP servers. As a result,
+      the DNS-related binaries and libraries are going to be removed from
+      the Kea source tree over time.
+    </para>
+
+    <para>
+      This guide covers Kea version &__VERSION__;.
     </para>
 
     <section>
       <title>Supported Platforms</title>
       <para>
-  BIND 10 builds have been tested on (in no particular order)
+  Kea builds have been tested on (in no particular order)
   Debian GNU/Linux 6 and unstable, Ubuntu 9.10, NetBSD 5,
   Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
   MacOS 10.6 and 10.7, and OpenBSD 5.1.
@@ -122,7 +91,7 @@
   It has been tested on Sparc, i386, and amd64 hardware
   platforms.
 
-        It is planned for BIND 10 to build, install and run on
+        It is planned for Kea to build, install and run on
         Windows and standard Unix-type platforms.
       </para>
     </section>
@@ -131,7 +100,7 @@
       <title>Required Software at Run-time</title>
 
       <para>
-        Running BIND 10 uses various extra software which may
+        Running Kea uses various extra software which may
         not be provided in some operating systems' default
         installations nor standard packages collections. You may
         need to install this required software separately.
@@ -140,52 +109,41 @@
       </para>
 
       <para>
-        BIND 10 requires at least Python 3.1
-        (<ulink url="http://www.python.org/"/>).
-        It also works with Python 3.2.
+        Kea was developed as a collection of applications within
+        BIND 10 framework and it still relies on the remaining parts
+        of this framework. In particular, the servers' configuration
+        and startup are still facilitated by the modules which origin
+        in BIND 10. These modules require at least Python 3.1 to run.
+        They also work with Python 3.2
+        (<ulink url="http://www.python.org/"/>)). The dependency
+        on Python will be removed once a replacing configuration
+        and startup mechanisms are developed for Kea. At this point
+        Kea will be written in pure C++.
       </para>
 
       <para>
-        BIND 10 uses the Botan crypto library for C++
+        Kea uses the Botan crypto library for C++
         (<ulink url="http://botan.randombit.net/"/>).
         It requires at least Botan version 1.8.
       </para>
 
       <para>
-        BIND 10 uses the log4cplus C++ logging library
+        Kea uses the log4cplus C++ logging library
         (<ulink url="http://log4cplus.sourceforge.net/"/>).
         It requires at least log4cplus version 1.0.3.
 <!-- TODO: It is recommended to use at least version .... -->
       </para>
-
-      <para>
-        The authoritative DNS server uses SQLite3
-        (<ulink url="http://www.sqlite.org/"/>).
-<!-- TODO: is this still required? -->
-        It needs at least SQLite version 3.3.9.
-      </para>
-
-      <para>
-        The <command>b10-ddns</command>, <command>b10-xfrin</command>,
-        <command>b10-xfrout</command>, and <command>b10-zonemgr</command>
-        components require the libpython3 library and the Python
-        _sqlite3.so module (which is included with Python).
-        Python modules need to be built for the corresponding Python 3.
-      </para>
-<!-- TODO: this will change ... -->
     </section>
 
     <section id="starting_stopping">
       <title>Starting and Stopping the Server</title>
-
       <para>
-        BIND 10 is modular.  Part of this modularity is
+        Kea is modular.  Part of this modularity is
         accomplished using multiple cooperating processes which, together,
-        provide the server functionality.  This is a change from
-        the previous generation of BIND software, which used a
-        single process.
+        provide the server functionality.
       </para>
 
+      <!-- todo: Rename processes here, once they are renamed in the source -->
       <para>
         At first, running many different processes may seem confusing.
         However, these processes are started by running a single
@@ -199,14 +157,6 @@
       <para>
 
         <itemizedlist>
-
-          <listitem>
-            <simpara>
-              <command>b10-auth</command> &mdash;
-              Authoritative DNS server.
-              This process serves DNS requests.
-            </simpara>
-          </listitem>
 
           <listitem>
             <simpara>
@@ -226,11 +176,27 @@
 
           <listitem>
             <simpara>
-              <command>b10-ddns</command> &mdash;
-              Dynamic DNS update service.
-              This process is used to handle incoming DNS update
-              requests to allow granted clients to update zones
-	      for which BIND 10 is serving as a primary server.
+              <command>b10-dhcp4</command> &mdash;
+              DHCPv4 server process.
+              This process responds to DHCPv4 queries from clients.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-dhcp6</command> &mdash;
+              DHCPv6 server process.
+              This process responds to DHCPv6 queries from clients.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>b10-dhcp-ddns</command> &mdash;
+              DHCP-DDNS process.
+              This process acts as an intermediary between the DHCP servers
+              and DNS server. It receives name update requests from the DHCP
+              servers and sends DNS Update messages to the DNS servers.
             </simpara>
           </listitem>
 
@@ -240,16 +206,6 @@
               Message bus daemon.
               This process coordinates communication between all of the other
               BIND 10 processes.
-            </simpara>
-          </listitem>
-
-          <listitem>
-            <simpara>
-              <command>b10-resolver</command> &mdash;
-              Recursive name server.
-              This process handles incoming DNS queries and provides
-              answers from its cache or by recursively doing remote lookups.
-              (This is an experimental proof of concept.)
             </simpara>
           </listitem>
 
@@ -278,33 +234,6 @@
             </simpara>
           </listitem>
 
-          <listitem>
-            <simpara>
-              <command>b10-xfrin</command> &mdash;
-              Incoming zone transfer service.
-              This process is used to transfer a new copy
-              of a zone into BIND 10, when acting as a secondary server.
-            </simpara>
-          </listitem>
-
-          <listitem>
-            <simpara>
-              <command>b10-xfrout</command> &mdash;
-              Outgoing zone transfer service.
-              This process is used to handle transfer requests to
-              send a local zone to a remote secondary server.
-            </simpara>
-          </listitem>
-
-          <listitem>
-            <simpara>
-              <command>b10-zonemgr</command> &mdash;
-              Secondary zone manager.
-              This process keeps track of timers and other
-              necessary information for BIND 10 to act as a slave server.
-            </simpara>
-          </listitem>
-
         </itemizedlist>
       </para>
 
@@ -327,15 +256,7 @@
               Interactive administration interface.
               This is a low-level command-line tool which allows
               a developer or an experienced administrator to control
-              BIND 10.
-            </simpara>
-          </listitem>
-          <listitem>
-            <simpara>
-              <command>b10-loadzone</command> &mdash;
-              Zone file loader.
-              This tool will load standard masterfile-format zone files into
-              BIND 10.
+              Kea.
             </simpara>
           </listitem>
           <listitem>
@@ -343,7 +264,7 @@
               <command>b10-cmdctl-usermgr</command> &mdash;
               User access control.
               This tool allows an administrator to authorize additional users
-              to manage BIND 10.
+              to manage Kea.
             </simpara>
           </listitem>
   <!-- TODO usermgr -->
@@ -381,10 +302,9 @@ var/
 
     <para>
       BIND 10 also provides libraries and programmer interfaces
-      for C++ and Python for the message bus, configuration backend,
-      and, of course, DNS. These include detailed developer
+      for C++ and Python for the message bus and configuration backend,
+      and, of course, DHCP. These include detailed developer
       documentation and code examples.
-<!-- TODO: DHCP also but no Python yet. -->
 <!-- TODO point to this -->
     </para>
 
@@ -395,13 +315,13 @@ var/
 
     <para>
         This quickly covers the standard steps for installing
-        and deploying BIND 10.
+        and deploying Kea.
         For further details, full customizations, and troubleshooting,
-        see the respective chapters in the BIND 10 guide.
+        see the respective chapters in the Kea guide.
     </para>
 
-    <section id="quick-start-auth-dns">
-      <title>Quick start guide for authoritative DNS service</title>
+    <section id="quick-start-dhcp6">
+      <title>Quick start guide for DHCPv6 service</title>
 
       <orderedlist>
 
@@ -411,22 +331,18 @@ var/
           </simpara>
         </listitem>
 
+        <!-- We may need to replace it with the link to a downloadable tarball
+        once we have it. -->
         <listitem>
           <simpara>
-            Download the BIND 10 source tar file from
-            <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
+            Checkout the latest Kea revision from the Git repository:
+            <screen>$ <userinput>git clone git://git.kea.isc.org/kea</userinput> </screen>
           </simpara>
         </listitem>
 
         <listitem>
-          <para>Extract the tar file:
-          <screen>$ <userinput>gzcat bind10-<replaceable>VERSION</replaceable>.tar.gz | tar -xvf -</userinput></screen>
-          </para>
-        </listitem>
-
-        <listitem>
           <para>Go into the source and run configure:
-            <screen>$ <userinput>cd bind10-<replaceable>VERSION</replaceable></userinput>
+            <screen>$ <userinput>cd kea</userinput>
 $ <userinput>./configure</userinput></screen>
           </para>
         </listitem>
@@ -465,16 +381,16 @@ $ <userinput>./configure</userinput></screen>
         </listitem>
 
         <listitem>
-          <para>DNS and DHCP components are not started in the default
-	    configuration.  In another console, enable the authoritative
-	    DNS service (by using the <command>bindctl</command> utility
-	    to configure the <command>b10-auth</command> component to
+          <para>DHCP components are not started in the default
+	    configuration.  In another console, enable the DHCPv6
+	    service (by using the <command>bindctl</command> utility
+	    to configure the <command>b10-dhcp6</command> component to
 	    run): <screen>$ <userinput>bin/bindctl</userinput></screen>
 	    (Login with the username and password you used above to create a user.)
             <screen>
-&gt; <userinput>config add Init/components b10-auth</userinput>
-&gt; <userinput>config set Init/components/b10-auth/special auth</userinput>
-&gt; <userinput>config set Init/components/b10-auth/kind needed</userinput>
+&gt; <userinput>config add Init/components b10-dhcp6</userinput>
+<!-- todo: Should the kind be needed or dispensable? -->
+&gt; <userinput>config set Init/components/b10-dhcp6/kind dispensable</userinput>
 &gt; <userinput>config commit</userinput>
 &gt; <userinput>quit</userinput>
             </screen>
@@ -482,25 +398,13 @@ $ <userinput>./configure</userinput></screen>
         </listitem>
 
         <listitem>
-         <para>Test it; for example:
-            <screen>$ <userinput>dig @127.0.0.1 -c CH -t TXT version.bind</userinput></screen>
+         <para>Test it; for example, use the
+         <ulink url="http://www.isc.org/downloads/DHCP/">ISC DHCP client</ulink>
+         to send DHCPv6 queries to the server and verify that the client receives a
+         configuration from the server:
+            <screen>$ <userinput>dhclient -6</userinput></screen>
          </para>
         </listitem>
-
-        <listitem>
-          <para>Load desired zone file(s), for example:
-            <screen>$ <userinput>bin/b10-loadzone <replaceable>-c '{"database_file": "/usr/local/var/bind10/zone.sqlite3"}'</replaceable> <replaceable>your.zone.example.org</replaceable> <replaceable>your.zone.file</replaceable></userinput></screen>
-          </para>
-	  (If you use the sqlite3 data source with the default DB
-	  file, you can omit the -c option).
-        </listitem>
-
-        <listitem>
-          <simpara>
-            Test the new zone.
-          </simpara>
-        </listitem>
-
       </orderedlist>
 
     </section>
@@ -516,7 +420,7 @@ $ <userinput>./configure</userinput></screen>
       <para>
         Some operating systems or software package vendors may
         provide ready-to-use, pre-built software packages for
-        the BIND 10 suite.
+        the Kea.
         Installing a pre-built package means you do not need to
         install build-only prerequisites and do not need to
         <emphasis>make</emphasis> the software.
@@ -533,7 +437,7 @@ $ <userinput>./configure</userinput></screen>
       <title>Install Hierarchy</title>
       <para>
         The following is the standard, common layout of the
-        complete BIND 10 installation:
+        complete Kea installation:
         <itemizedlist>
           <listitem>
            <simpara>
@@ -558,7 +462,7 @@ $ <userinput>./configure</userinput></screen>
               <filename>libexec/bind10/</filename> &mdash;
               executables that a user wouldn't normally run directly and
               are not run independently.
-              These are the BIND 10 modules which are daemons started by
+              These are the BIND 10 and Kea modules which are daemons started by
               the <command>b10-init</command> master process.
             </simpara>
           </listitem>
@@ -601,7 +505,7 @@ $ <userinput>./configure</userinput></screen>
 
         <para>
           In addition to the run-time requirements (listed in
-          <xref linkend="required-software"/>), building BIND 10
+          <xref linkend="required-software"/>), building Kea
           from source code requires various development include headers and
           program development tools.
         </para>
@@ -611,7 +515,7 @@ $ <userinput>./configure</userinput></screen>
             Some operating systems have split their distribution packages into
             a run-time and a development package.  You will need to install
             the development package versions, which include header files and
-            libraries, to build BIND 10 from source code.
+            libraries, to build Kea from source code.
           </simpara>
         </note>
 
@@ -625,7 +529,7 @@ $ <userinput>./configure</userinput></screen>
         </para>
 
         <para>
-          To build BIND 10, also install the Botan (at least version
+          To build Kea, also install the Botan (at least version
           1.8) and the log4cplus (at least version 1.0.3)
           development include headers.
         </para>
@@ -640,15 +544,15 @@ Debian and Ubuntu:
 as a dependency earlier -->
 
         <para>
-          Building BIND 10 also requires a C++ compiler and
+          Building Kea also requires a C++ compiler and
           standard development headers, make, and pkg-config.
-          BIND 10 builds have been tested with GCC g++ 3.4.3, 4.1.2,
+          Kea builds have been tested with GCC g++ 3.4.3, 4.1.2,
           4.1.3, 4.2.1, 4.3.2, and 4.4.1; Clang++ 2.8; and Sun C++ 5.10.
         </para>
 
         <para>
           Visit the user-contributed wiki at <ulink
-          url="http://bind10.isc.org/wiki/SystemSpecificNotes" />
+          url="http://kea.isc.org/wiki/SystemSpecificNotes" />
           for system-specific installation tips.
         </para>
 
@@ -657,26 +561,21 @@ as a dependency earlier -->
     <section id="install">
       <title>Installation from source</title>
       <para>
-        BIND 10 is open source software written in C++ and Python.
+        Kea is open source software written in C++ and Python.
         It is freely available in source code form from ISC as a
-        downloadable tar file or via BIND 10's Git code revision control
+        downloadable tar file or via Kea Git code revision control
         service. (It may also be available in pre-compiled ready-to-use
         packages from operating system vendors.)
       </para>
 
       <section>
+
         <title>Download Tar File</title>
         <para>
-          Downloading a release tar file is the recommended method to
-          obtain the source code.
+          Kea 0.8 is available as a part of BIND10 1.2 release, which is
+          a final release of BIND10 from ISC. This release can be downloaded
+          from: <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
         </para>
-
-        <para>
-          The BIND 10 releases are available as tar file downloads from
-          <ulink url="ftp://ftp.isc.org/isc/bind10/"/>.
-          Periodic development snapshots may also be available.
-        </para>
-  <!-- TODO -->
       </section>
 
       <section>
@@ -698,18 +597,18 @@ as a dependency earlier -->
 
         <para>
           The latest development code (and temporary experiments
-          and un-reviewed code) is available via the BIND 10 code revision
-          control system. This is powered by Git and all the BIND 10
+          and un-reviewed code) is available via the Kea code revision
+          control system. This is powered by Git and all the Kea
           development is public.
           The leading development is done in the <quote>master</quote>
           branch.
         </para>
         <para>
           The code can be checked out from
-          <filename>git://git.bind10.isc.org/bind10</filename>;
+          <filename>git://git.kea.isc.org/kea</filename>;
           for example:
 
-        <screen>$ <userinput>git clone git://git.bind10.isc.org/bind10</userinput></screen>
+        <screen>$ <userinput>git clone git://git.kea.isc.org/kea</userinput></screen>
         </para>
 
         <para>
@@ -733,7 +632,7 @@ as a dependency earlier -->
       <section id="configure">
         <title>Configure before the build</title>
         <para>
-          BIND 10 uses the GNU Build System to discover build environment
+          Kea uses the GNU Build System to discover build environment
           details.
           To generate the makefiles using the defaults, simply run:
           <screen>$ <userinput>./configure</userinput></screen>
@@ -794,7 +693,7 @@ as a dependency earlier -->
           <note>
             <para>
               For additional instructions concerning the building and installation of
-              BIND 10 DHCP, see <xref linkend="dhcp-install-configure"/>.
+              Kea, see <xref linkend="dhcp-install-configure"/>.
             </para>
           </note>
         </para>
@@ -832,7 +731,7 @@ as a dependency earlier -->
       <section>
         <title>Install</title>
         <para>
-          To install the BIND 10 executables, support files,
+          To install the Kea executables, support files,
           and documentation, run:
           <screen>$ <userinput>make install</userinput></screen>
         </para>
@@ -879,14 +778,14 @@ as a dependency earlier -->
   </chapter>
 
   <chapter id="bind10">
-    <title>Starting BIND 10 with <command>bind10</command></title>
+    <title>Starting Kea with <command>bind10</command></title>
     <para>
-      BIND 10 is started with the <command>bind10</command> command.
+      Kea is started with the <command>bind10</command> command.
       It runs the <command>b10-init</command> daemon which
       starts up the required processes, and
       will also restart some processes that exit unexpectedly.
       <command>bind10</command> is the only command needed to start
-      the BIND 10 system.
+      the Kea.
     </para>
 
     <para>
@@ -905,8 +804,8 @@ as a dependency earlier -->
       module, if only to send information about themselves somewhere,
       but more importantly to ask about their own settings, and
       about other modules. The <command>b10-sockcreator</command> daemon
-      helps allocate Internet addresses and ports as needed for BIND 10
-      network services.
+      can allocate Internet addresses and ports needed by network services
+      but is currently unused by DHCP servers.
     </para>
 
     <para>
@@ -915,13 +814,13 @@ as a dependency earlier -->
       <command>b10-cmdctl</command> for administration tools to
       communicate with the system, and
       <command>b10-stats</command> for statistics collection.
-      The DNS and DHCP servers are not started by default.
+      The DHCP servers are not started by default.
       The configuration of components to start is covered in
-      <xref linkend="bind10.components"/>.
+      <xref linkend="kea.components"/>.
     </para>
 
     <section id="start">
-      <title>Starting BIND 10</title>
+      <title>Starting Kea</title>
       <para>
         To start the BIND 10 service, simply run <command>bind10</command>
         as root.
@@ -954,7 +853,7 @@ as a dependency earlier -->
 
       <para>
         The BIND 10 components use the <command>b10-msgq</command>
-        message routing daemon to communicate with other BIND 10 components.
+        message routing daemon to communicate with Kea components.
         The <command>b10-msgq</command> implements what is called the
         <quote>Command Channel</quote>.
         Processes intercommunicate by sending messages on the command
@@ -980,14 +879,14 @@ as a dependency earlier -->
 
       <para>
          The configuration manager, <command>b10-cfgmgr</command>,
-         handles all BIND 10 system configuration.  It provides
+         handles all system configuration.  It provides
          persistent storage for configuration, and notifies running
          modules of configuration changes.
       </para>
 
       <para>
-        The <command>b10-auth</command> and <command>b10-xfrin</command>
-        daemons and other components receive their configurations
+        The <command>b10-dhcp6</command>, <command>b10-dhcp4</command> and
+        <command>b10-dhcp-ddns</command> daemons receive their configurations
         from the configuration manager over the <command>b10-msgq</command>
         command channel.
       </para>
@@ -1001,11 +900,10 @@ as a dependency earlier -->
 <!-- TODO -->
       <note>
         <para>
-          The current release only provides
-          <command>bindctl</command> as a user interface to
-          <command>b10-cmdctl</command>.
-          Upcoming releases will provide another interactive command-line
-          interface and a web-based interface.
+          In the future releases of Kea, the architecture which origins in
+          BIND 10 project will be replaced by the new mechanisms to start
+          and configure Kea. The new mechanisms will use a file based
+          configuration.
         </para>
       </note>
 
@@ -1143,7 +1041,7 @@ but you might wanna check with likun
       public service. If any client wants to control BIND 10, then
       a certificate needs to be first received from the BIND 10
       administrator.
-      The BIND 10 installation provides a sample PEM bundle that matches
+      The Kea installation provides a sample PEM bundle that matches
       the sample key and certificate.
     </para></note>
 <!-- TODO: cross-ref -->
@@ -1219,14 +1117,6 @@ TODO
     <title>Control and configure user interface</title>
 
     <note><para>
-      For the current release, <command>bindctl</command>
-      is the only user interface. It is expected that upcoming
-      releases will provide another interactive command-line
-      interface and a web-based interface for controlling and
-      configuring BIND 10.
-    </para></note>
-
-    <note><para>
       <command>bindctl</command> has an internal command history, as
       well as tab-completion for most of the commands and arguments.
       However, these are only enabled if the python readline module
@@ -1236,7 +1126,7 @@ TODO
 
     <para>
       The <command>bindctl</command> tool provides an interactive
-      prompt for configuring, controlling, and querying the BIND 10
+      prompt for configuring, controlling, and querying the Kea
       components.
       It communicates directly with a REST-ful interface over HTTPS
       provided by <command>b10-cmdctl</command>. It doesn't
@@ -1326,7 +1216,7 @@ TODO
         BIND 10, with an optional argument 'help':
 
         <screen>&gt; <userinput>Init shutdown help</userinput>
-Command  shutdown 	(Shut down BIND 10)
+Command  shutdown 	(Shut down BIND 10 and Kea)
 		help (Get help for command)
 This command has no parameters
         </screen>
@@ -1352,19 +1242,19 @@ Available module names:
 Module  Init 	Master process
 Available commands:
     help        Get help for module.
-    shutdown    Shut down BIND 10
+    shutdown    Shut down BIND10 and Kea
     ping        Ping the Init process
     show_processes
-            List the running BIND 10 processes
+            List the running BIND10 and Kea processes
         </screen>
 
     And when added to a module command, it shows the description and parameters of that specific command; for example:
-    <screen>&gt; <userinput>Auth loadzone help</userinput>
-Command  loadzone 	((Re)load a specified zone)
+    <screen>&gt; <userinput>DhcpDdns shutdown help</userinput>
+Command  shutdown 	(Shuts down b10-dhcp-ddns module server.)
 		help (Get help for command)
 Parameters:
-    class (string, optional)
-    origin (string, mandatory)
+    type (string, optional)
+        values: normal (default), now, or drain_first
     </screen>
 
     </section>
@@ -1384,30 +1274,24 @@ Parameters:
             positional arguments are used.
         </simpara>
         <simpara>
-            For example, the <command>loadzone</command> command of the Auth
+            For example, the <command>shutdown</command> command of the DhcpDdns
             module, as shown in the last example of the previous section, has
-            two arguments, one of which is optional. The positional arguments in
-            this case are class first and origin second; for example:
-            <screen>&gt; <userinput>Auth loadzone IN example.com.</userinput></screen>
-            But since the class is optional (defaulting to IN), leaving it out
+            one optional argument which is appended right after the command:
+            <screen>&gt; <userinput>DhcpDdns shutdown now</userinput></screen>
+            But since the class is optional (defaulting to normal), leaving it out
             works as well:
-            <screen>&gt; <userinput>Auth loadzone example.com.</userinput></screen>
+            <screen>&gt; <userinput>DhcpDdns shutdown</userinput></screen>
         </simpara>
         <simpara>
-            The arguments can also be provided with their names, in which
-            case the order does not matter:
-            <screen>&gt; <userinput>Auth loadzone origin="example.com." class="IN"</userinput></screen>
+            The arguments can also be provided with their names:
+            <screen>&gt; <userinput>DhcpDdns shutdown type="now"</userinput></screen>
         </simpara>
     </section>
 
     <section id="bindctl_module_commands">
         <title>Module commands</title>
         Each module has its own set of commands (if any), which will only be
-        available if the module is running. For instance, the
-        Auth module has a <command>loadzone</command> command.
-        The commands a module provides are documented in
-        this guide in the section of that module or in the module's
-        corresponding manual page.
+        available if the module is running.
     </section>
 
     <section>
@@ -1613,12 +1497,7 @@ Parameters:
                         modified directly, but their elements are. Every
                         top-level element for a module is a map containing
                         the configuration values for that map, which can
-                        themselves be maps again. For instance, the Auth
-                        module configuration is a map containing the
-                        elements '<varname>listen_on</varname>' (list) and '<varname>tcp_recv_timeout</varname>'
-                        (integer). When changing one of its values, they can
-                        be modified directly with <command>config set
-                        Auth/tcp_recv_timeout 3000</command>.
+                        themselves be maps again.
                     </simpara>
                     <simpara>
                         Some map entries are optional. If they are, and
@@ -1679,8 +1558,8 @@ Parameters:
                         entire list value in JSON format.
                     </simpara>
                     <simpara>
-                        For example, this command shows the port number used for the second element of the list <varname>listen_on</varname> in the Auth module:
-                        <command> config show Auth/listen_on[1]/port</command>
+                        For example, this command shows the renew-timer used for the second element of the list <varname>subnet4</varname> in the Dhcp4 module:
+                        <command>config show Dhcp4/subnet4[1]/renew-timer</command>
                     </simpara>
                 </listitem>
             </varlistentry>
@@ -1750,45 +1629,12 @@ Parameters:
         <title>The execute command</title>
         The <command>execute</command> command executes a set of commands,
         either from a file
-        or from a pre-defined set. Currently, the only predefined set is
-        <command>init_authoritative_server</command>, which adds
-        <command>b10-auth</command>, <command>b10-xfrin</command>, and
-        <command>b10-xfrout</command> to the set of components to be
-        started by BIND 10. This
-        pre-defined set does not commit the changes, so these modules do not
-        show up for commands or configuration until the user enters
-        <command>config commit</command> after
-        <command>execute init_authoritative_server</command>. For example:
-
-        <screen>&gt; <userinput>execute init_authoritative_server</userinput></screen>
+        or from a pre-defined set. Currently, there are no pre-defined sets
+        available.
 
         <screen>&gt; <userinput>execute file /tmp/example_commands</userinput></screen>
 
-        The optional argument <command>show</command> displays the exact set of
-        commands that would be executed; for example:
-
-        <screen>&gt; <userinput>execute init_authoritative_server show</userinput>
-!echo adding Authoritative server component
-config add /Init/components b10-auth
-config set /Init/components/b10-auth/kind needed
-config set /Init/components/b10-auth/special auth
-!echo adding Xfrin component
-config add /Init/components b10-xfrin
-config set /Init/components/b10-xfrin/address Xfrin
-config set /Init/components/b10-xfrin/kind dispensable
-!echo adding Xfrout component
-config add /Init/components b10-xfrout
-config set /Init/components/b10-xfrout/address Xfrout
-config set /Init/components/b10-xfrout/kind dispensable
-!echo adding Zone Manager component
-config add /Init/components b10-zonemgr
-config set /Init/components/b10-zonemgr/address Zonemgr
-config set /Init/components/b10-zonemgr/kind dispensable
-!echo Components added. Please enter "config commit" to
-!echo finalize initial setup and run the components.
-        </screen>
-
-        The optional <command>show</command> argument may also be used when
+        The optional <command>show</command> argument may be used when
         executing a script from a file; for example:
 
         <screen>&gt; <userinput>execute file /tmp/example_commands show</userinput></screen>
@@ -1842,301 +1688,6 @@ config set /Init/components/b10-zonemgr/kind dispensable
     </section>
   </chapter>
 
-  <chapter id="common">
-    <title>Common configuration elements</title>
-
-    <para>
-      Some things are configured in the same or similar manner across
-      many modules. So we show them here in one place.
-    </para>
-
-    <section id='common-tsig'>
-      <title>TSIG keys</title>
-
-      <para>
-        TSIG is a way to sign requests and responses in DNS. It is defined in
-        RFC 2845 and uses symmetric cryptography to sign the DNS messages. If
-        you want to make any use of TSIG (to authenticate transfers or DDNS,
-        for example), you need to set up shared secrets between the endpoints.
-      </para>
-
-      <para>
-        BIND 10 uses a global key ring for the secrets. It doesn't currently
-        mean they would be stored differently, they are just in one place of
-        the configuration.
-      </para>
-
-      <section id='tsig-key-syntax'>
-        <title>Key anatomy and syntax</title>
-
-        <para>
-          Each key has three attributes. One is a name by which it is referred
-          both in DNS packets and the rest of the configuration. Another is the
-          algorithm used to compute the signature. And the last part is a
-          base64 encoded secret, which might be any blob of data.
-        </para>
-
-        <para>
-          The parts are written into a string, concatenated together by colons.
-          So if you wanted to have a key called "example.key", used as a
-          HMAC-MD5 key with secret "secret", you'd write it as:
-<screen>"example.key.:c2VjcmV0:hmac-md5"</screen>
-        </para>
-
-        <para>
-          The HMAC-MD5 algorithm is the default, so you can omit it. You could
-          write the same key as:
-<screen>"example.key.:c2VjcmV0"</screen>
-        </para>
-
-        <para>
-          You can also use these algorithms (which may not be omitted from the
-          key definition if used):
-          <itemizedlist>
-            <listitem>hmac-sha1</listitem>
-            <listitem>hmac-sha224</listitem>
-            <listitem>hmac-sha256</listitem>
-            <listitem>hmac-sha384</listitem>
-            <listitem>hmac-sha512</listitem>
-          </itemizedlist>
-        </para>
-
-        <para>
-          The name of the key must be a valid DNS name.
-        </para>
-      </section>
-
-      <section id='tsig-key-ring'>
-        <title>Key ring</title>
-        <para>
-          The key ring lives in the configuration in "tsig_keys/keys". Most of
-          the system uses the keys from there &mdash; ACLs, authoritative server to
-          sign responses to signed queries, and <command>b10-xfrin</command>
-          and <command>b10-xfrout</command> to sign transfers.
-        </para>
-
-        <para>
-          The key ring is just a list of strings, each describing one key. So,
-          to add a new key, you can do this:
-          <screen>&gt; <userinput>config add tsig_keys/keys "example.key.:c2VjcmV0"</userinput>
-&gt; <userinput>config show tsig_keys/keys</userinput>
-tsig_keys/keys[0]   "example.key.:c2VjcmV0" string  (modified)
-&gt; <userinput>config commit</userinput></screen>
-        </para>
-
-        <para>
-          You can keep as many keys as you want in the key ring, but each must
-          have a different name.
-        </para>
-      </section>
-    </section>
-
-    <section id='common-acl'>
-      <title>ACLs</title>
-
-      <para>
-        An ACL, or Access Control List, is a way to describe if a request
-        is allowed or disallowed. The principle is, there's a list of rules.
-        Each rule is a name-value mapping (a dictionary, in the JSON
-        terminology). Each rule must contain exactly one mapping called
-        "action", which describes what should happen if the rule applies.
-        There may be more mappings, called matches, which describe the
-        conditions under which the rule applies.
-      </para>
-
-      <para>
-        When there's a query, the first rule is examined. If it matches, the
-        action in it is taken. If not, next rule is examined. If there are no
-        more rules to examine, a default action is taken.
-      </para>
-
-      <para>
-        There are three possible "action" values. The "ACCEPT" value means
-        the query is handled. If it is "REJECT", the query is not answered,
-        but a polite error message is sent back (if that makes sense in the
-        context). The "DROP" action acts like a black hole. The query is
-        not answered and no error message is sent.
-      </para>
-
-      <para>
-        If there are multiple matching conditions inside the rule, all of
-        them must be satisfied for the rule to apply. This can be used,
-        for example, to require the query to be signed by a TSIG key and
-        originate from given address.
-      </para>
-
-      <para>
-        This is encoded in form of JSON. Semi-formal description could look
-        something like this. It is described in more details below.
-<!-- FIXME: Is <screen> really the correct one?-->
-        <screen>ACL := [ RULE, RULE, ... ]
-RULE := { "action": "ACCEPT"|"REJECT"|"DROP", MATCH, MATCH, ... }
-RULE_RAW := { MATCH, MATCH, ... }
-MATCH := FROM_MATCH|KEY_MATCH|NOT_MATCH|OR_MATCH|AND_MATCH|...
-FROM_MATCH := "from": [RANGE, RANGE, RANGE, ...] | RANGE
-RANGE := "&lt;ip range&gt;"
-KEY_MATCH := "key": [KEY, KEY, KEY, ...] | KEY
-KEY := "&lt;key name&gt;"
-NOT_MATCH := "NOT": RULE_RAW
-OR_MATCH := "ANY": [ RULE_RAW, RULE_RAW, ... ]
-AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
-</screen>
-      </para>
-
-      <section>
-        <title>Matching properties</title>
-
-        <para>
-          The first thing you can check against is the source address
-          of request. The name is <varname>from</varname> and the value
-          is a string containing either a single IPv4 or IPv6 address,
-          or a range in the usual slash notation (eg. "192.0.2.0/24").
-        </para>
-
-        <para>
-          The other is TSIG key by which the message was signed. The ACL
-          contains only the name (under the name "key"), the key itself
-	  must be stored in the global key ring (see <xref
-	  linkend="tsig-key-ring"/>).
-          This property is applicable only to the DNS context.
-        </para>
-
-        <para>
-          More properties to match are planned &mdash; the destination
-          address, ports, matches against the packet content.
-        </para>
-      </section>
-
-      <section>
-        <title>More complicated matches</title>
-
-        <para>
-          From time to time, you need to express something more complex
-          than just a single address or key.
-        </para>
-
-        <para>
-          You can specify a list of values instead of single value. Then
-          the property needs to match at least one of the values listed
-          &mdash; so you can say <quote>"from": ["192.0.2.0/24",
-          "2001:db8::/32"]</quote> to match any address in the ranges
-          set aside for documentation. The keys or any future properties
-          will work in a similar way.
-        </para>
-
-        <para>
-          If that is not enough, you can compose the matching conditions
-          to logical expressions. They are called "ANY", "ALL" and "NOT".
-          The "ANY" and "ALL" ones contain lists of subexpressions &mdash;
-          each subexpression is a similar dictionary, just not containing
-          the "action" element. The "NOT" contains single subexpression.
-          Their function should be obvious &mdash; "NOT" matches if and
-          only if the subexpression does not match. The "ALL" matches exactly
-          when each of the subexpressions matches and "ANY" when at least
-          one matches.
-        </para>
-      </section>
-
-      <section>
-        <title>Examples</title>
-
-        <para>
-          All the examples here is just the JSON representing the ACL,
-          nicely formatted and split across lines. They are out of any
-          surrounding context. This is similar to what you'd get from
-          <command>config show_json</command> called on the entry containing
-          the ACL.
-        </para>
-
-        <para>
-          In the first example, the ACL accepts queries from two known hosts.
-          Each host has an IP addresses (both IPv4 and IPv6) and a TSIG
-          key. Other queries are politely rejected. The last entry in the list
-          has no conditions &mdash; making it match any query.
-
-          <screen>[
-  {
-    "from": ["192.0.2.1", "2001:db8::1"],
-    "key": "first.key",
-    "action": "ACCEPT"
-  },
-  {
-    "from": ["192.0.2.2", "2001:db8::2"],
-    "key": "second.key",
-    "action": "ACCEPT"
-  },
-  {
-    "action": "REJECT"
-  }
-]</screen>
-        </para>
-
-        <para>
-          Now we show two ways to accept only the queries from private ranges.
-          This is the same as rejecting anything that is outside.
-
-          <screen>[
-  {
-    "from": [
-      "10.0.0.0/8",
-      "172.16.0.0/12",
-      "192.168.0.0/16",
-      "fc00::/7"
-    ],
-    "action": "ACCEPT"
-  },
-  {
-    "action": "REJECT"
-  }
-]</screen>
-
-          <screen>[
-  {
-    "NOT": {
-       "ANY": [
-         {"from": "10.0.0.0/8"},
-         {"from": "172.16.0.0/12"},
-         {"from": "192.168.0.0/16"},
-         {"from": "fc00::/7"}
-       ]
-    },
-    "action": "REJECT"
-  },
-  {
-    "action": "ACCEPT"
-  }
-]</screen>
-        </para>
-      </section>
-
-      <section>
-        <title>Interaction with <command>bindctl</command></title>
-
-        <para>
-          Currently, <command>bindctl</command> has hard time coping with
-          the variable nature of the ACL syntax. This technical limitation
-          makes it impossible to edit parts of the entries. You need to
-          set the whole entry at once, providing the whole JSON value.
-        </para>
-
-        <para>
-          This limitation is planned to be solved soon at least partially.
-        </para>
-
-        <para>
-          You'd do something like this to create the second example.
-          Note that the whole JSON must be on a single line.
-
-          <screen>&gt; <userinput>config add somewhere/acl</userinput>
-&gt; <userinput>config set somewhere/acl[0] { "from": [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "fc00::/7" ], "action": "ACCEPT" }</userinput>
-&gt; <userinput>config add somewhere/acl</userinput>
-&gt; <userinput>config set somewhere/acl[1] { "action": "REJECT" }</userinput>
-&gt; <userinput>config commit</userinput></screen>
-        </para>
-      </section>
-    </section>
-  </chapter>
-
   <chapter id="bind10.config">
     <title>bind10 Control and Configuration</title>
 
@@ -2157,7 +1708,7 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
       </para>
     </section>
 
-    <section id="bind10.components">
+    <section id="kea.components">
       <title>Configuration to start processes</title>
 
       <para>
@@ -2172,45 +1723,27 @@ AND_MATCH := "ALL": [ RULE_RAW, RULE_RAW, ... ]
       </para>
 
       <para>
-	To add a process to the set, let's say the resolver (which
+	To add a process to the set, let's say the DHCPv6 server (which
 	is not started by default), you would do this:
-        <screen>&gt; <userinput>config add Init/components b10-resolver</userinput>
-&gt; <userinput>config set Init/components/b10-resolver/special resolver</userinput>
+        <screen>&gt; <userinput>config add Init/components b10-dhcp6</userinput>
 &gt; <userinput>config set Init/components/b10-resolver/kind needed</userinput>
 &gt; <userinput>config set Init/components/b10-resolver/priority 10</userinput>
 &gt; <userinput>config commit</userinput></screen></para>
 
       <para>
 	Now, what it means. We add an entry called
-	<quote>b10-resolver</quote>. It is both a name used to
+	<quote>b10-dhcp6</quote>. It is both a name used to
 	reference this component in the configuration and the name
 	of the process to start. Then we set some parameters on
 	how to start it.
       </para>
 
       <para>
-	The <varname>special</varname> setting is for components
-	that need some kind of special care during startup or
-	shutdown. Unless specified, the component is started in a
-	usual way. This is the list of components that need to be
-	started in a special way, with the value of special used
-	for them:
-<!-- TODO: this still doesn't explain why they are special -->
-        <table>
-          <title>Special startup components</title>
-          <tgroup cols='3' align='left'>
-          <colspec colname='component'/>
-          <colspec colname='special'/>
-          <colspec colname='description'/>
-          <thead><row><entry>Component</entry><entry>Special</entry><entry>Description</entry></row></thead>
-          <tbody>
-            <row><entry>b10-auth</entry><entry>auth</entry><entry>Authoritative DNS server</entry></row>
-            <row><entry>b10-resolver</entry><entry>resolver</entry><entry>DNS resolver</entry></row>
-            <row><entry>b10-cmdctl</entry><entry>cmdctl</entry><entry>Command control (remote control interface)</entry></row>
-            <!-- TODO Either add xfrin and xfrout as well or clean up the workarounds in b10-init before the release -->
-          </tbody>
-          </tgroup>
-        </table>
+        The <varname>special</varname> (not used in the example above), was introduced
+        to be used for the components which require some kind of special care
+        during startup. One such component is the b10-cmdctl, which is always started
+        by default. No other components use this setting and it should be left unset
+        for them.
       </para>
 
       <para>
@@ -2273,40 +1806,12 @@ address, but the usual ones don't." mean? -->
           <command>b10-cmdctl</command>, but then you couldn't
           change it back the usual way, as it would require it to
           be running (you would have to find and edit the configuration
-          directly).  Also, some modules might have dependencies:
-          <command>b10-stats-httpd</command> needs
-          <command>b10-stats</command>, <command>b10-xfrout</command>
-          needs <command>b10-auth</command> to be running, etc.
-
-<!-- TODO: should we define dependencies? -->
-
+          directly).
         </para>
         <para>
           In short, you should think twice before disabling something here.
         </para>
       </note>
-      <para>
-        It is possible to start some components multiple times (currently
-        <command>b10-auth</command> and <command>b10-resolver</command>).
-        You might want to do that to gain more performance (each one uses only
-        single core). Just put multiple entries under different names, like
-        this, with the same config:
-        <screen>&gt; <userinput>config add Init/components b10-resolver-2</userinput>
-&gt; <userinput>config set Init/components/b10-resolver-2/special resolver</userinput>
-&gt; <userinput>config set Init/components/b10-resolver-2/kind needed</userinput>
-&gt; <userinput>config commit</userinput></screen>
-      </para>
-      <para>
-        However, this is work in progress and the support is not yet complete.
-        For example, each resolver will have its own cache, each authoritative
-        server will keep its own copy of in-memory data and there could be
-        problems with locking the sqlite database, if used. The configuration
-        might be changed to something more convenient in future.
-	Other components don't expect such a situation, so it would
-	probably not do what you want. Such support is yet to be
-	implemented.
-      </para>
-
       <para>
         The running processes started by <command>b10-init</command>
         may be listed by running <userinput>Init show_processes</userinput>
@@ -2314,1215 +1819,6 @@ address, but the usual ones don't." mean? -->
       </para>
 
     </section>
-  </chapter>
-
-  <chapter id="authserver">
-    <title>Authoritative Server</title>
-
-    <para>
-      The <command>b10-auth</command> is the authoritative DNS server.
-      It supports EDNS0, DNSSEC, IPv6, and SQLite3 and in-memory zone
-      data backends.
-      Normally it is started by the <command>b10-init</command> master
-      process.
-    </para>
-
-    <section>
-      <title>Server Configurations</title>
-
-<!-- TODO: offers command line options but not used
-since we used bind10 -->
-
-      <para>
-        <command>b10-auth</command> is configured via the
-        <command>b10-cfgmgr</command> configuration manager.
-        The module name is <quote>Auth</quote>.
-        The configuration data items are:
-
-        <variablelist>
-
-          <varlistentry>
-            <term>database_file</term>
-            <listitem>
-              <simpara>This is an optional string to define the path to find
-                 the SQLite3 database file.
-<!-- TODO: -->
-Note: This may be a temporary setting because the DNS server
-can use various data source backends.
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-<!-- NOTE: docs pulled in verbatim from the b10-auth.xml manual page.
-     TODO: automate this if want this or rewrite
--->
-          <varlistentry>
-            <term>datasources</term>
-            <listitem>
-              <simpara>
-      <varname>datasources</varname> configures data sources.
-      The list items include:
-      <varname>type</varname> to define the required data source type
-      (such as <quote>memory</quote>);
-      <varname>class</varname> to optionally select the class
-      (it defaults to <quote>IN</quote>);
-      and
-      <varname>zones</varname> to define
-      the <varname>file</varname> path name,
-      the <varname>filetype</varname> (<quote>sqlite3</quote> to load
-      from a SQLite3 database file or <quote>text</quote> to
-      load from a master text file),
-      and the <varname>origin</varname> (default domain).
-
-      By default, this is empty.
-
-      <note><simpara>
-        Currently this is only used for the memory data source.
-        Only the IN class is supported at this time.
-        By default, the memory data source is disabled.
-        Also, currently the zone file must be canonical such as
-        generated by <command>named-compilezone -D</command>, or
-        must be an SQLite3 database.
-      </simpara></note>
-
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
-            <term>listen_on</term>
-            <listitem>
-              <simpara>
-      <varname>listen_on</varname> is a list of addresses and ports for
-      <command>b10-auth</command> to listen on.
-      The list items are the <varname>address</varname> string
-      and <varname>port</varname> number.
-      By default, <command>b10-auth</command> listens on port 53
-      on the IPv6 (::) and IPv4 (0.0.0.0) wildcard addresses.
-      <note>
-        <simpara>
-          The default configuration is currently not appropriate for a multi-homed host.
-          In case you have multiple public IP addresses, it is possible the
-          query UDP packet comes through one interface and the answer goes out
-          through another. The answer will probably be dropped by the client, as it
-          has a different source address than the one it sent the query to. The
-          client would fallback on TCP after several attempts, which works
-          well in this situation, but is clearly not ideal.
-        </simpara>
-        <simpara>
-          There are plans to solve the problem such that the server handles
-          it by itself. But until it is actually implemented, it is recommended to
-          alter the configuration &mdash; remove the wildcard addresses and list all
-          addresses explicitly. Then the server will answer on the same
-          interface the request came on, preserving the correct address.
-        </simpara>
-      </note>
-              </simpara>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>tcp_recv_timeout</term>
-            <listitem>
-              <simpara>
-                <varname>tcp_recv_timeout</varname> is the timeout used on
-                incoming TCP connections, in milliseconds. If the query
-                is not sent within this time, the connection is closed.
-                Setting this to 0 will disable TCP timeouts completely.
-              </simpara>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-
-      </para>
-
-      <para>
-
-        The configuration commands are:
-
-        <variablelist>
-
-          <varlistentry>
-            <term>loadzone</term>
-            <listitem>
-              <simpara>
-      <command>loadzone</command> tells <command>b10-auth</command>
-      to load or reload a zone file. The arguments include:
-      <varname>class</varname> which optionally defines the class
-      (it defaults to <quote>IN</quote>);
-      <varname>origin</varname> is the domain name of the zone;
-      and
-      <varname>datasrc</varname> optionally defines the type of datasource
-      (it defaults to <quote>memory</quote>).
-
-      <note><simpara>
-        Currently this only supports the
-        IN class and the memory data source.
-      </simpara></note>
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
-            <term>getstats</term>
-            <listitem>
-              <simpara>
-      <command>getstats</command> requests <command>b10-auth</command>
-      to send its statistics data to
-      <citerefentry><refentrytitle>b10-stats</refentrytitle>
-      <manvolnum>8</manvolnum></citerefentry>
-      as a response of the command.
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
-            <term>shutdown</term>
-            <listitem>
-              <simpara>Stop the authoritative DNS server.
-      This has an optional <varname>pid</varname> argument to
-      select the process ID to stop.
-      (Note that the BIND 10 init process may restart this service
-      if configured.)
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-        </variablelist>
-
-      </para>
-
-<!-- TODO: examples of setting or running above? -->
-
-    </section>
-
-    <section id='datasrc'>
-      <title>Data Source Backends</title>
-
-      <para>
-        Bind 10 has the concept of data sources. A data source is a place
-        where authoritative zone data reside and where they can be served
-        from. This can be a master file, a database or something completely
-        different.
-      </para>
-
-      <para>
-        Once a query arrives, <command>b10-auth</command> goes through a
-        configured list of data sources and finds the one containing a best
-        matching zone. From the equally good ones, the first one is taken.
-        This data source is then used to answer the query.
-      </para>
-
-      <note><para>
-        In the current release, <command>b10-auth</command>
-        can serve data from a SQLite3 data source backend and from master
-        files.
-        Upcoming versions will be able to use multiple different
-        data sources, such as MySQL and Berkeley DB.
-      </para></note>
-
-      <para>
-        The configuration is located in data_sources/classes. Each item there
-        represents one RR class and a list used to answer queries for that
-        class. The default contains two classes. The CH class contains a
-        built-in data source &mdash; one that serves things like
-        <quote>AUTHORS.BIND.</quote>. The IN class contains single SQLite3
-        data source with database file located at
-        <filename>/usr/local/var/bind10/zone.sqlite3</filename>.
-      </para>
-
-      <para>
-        Each data source has several options. The first one is
-        <varname>type</varname>, which specifies the type of data source to
-        use. Valid types include the ones listed below, but BIND 10 uses
-        dynamically loaded modules for them, so there may be more in your
-        case. This option is mandatory.
-      </para>
-
-      <para>
-        Another option is <varname>params</varname>. This option is type
-        specific; it holds different data depending on the type
-        above. Also, depending on the type, it could be possible to omit it.
-      </para>
-
-      <para>
-        There are two options related to the so-called cache. If you enable
-        cache, zone data from the data source are loaded into memory.
-        Then, when answering a query, <command>b10-auth</command> looks
-        into the memory only instead of the data source, which speeds
-        answering up. The first option is <varname>cache-enable</varname>,
-        a boolean value turning the cache on and off (off is the default).
-        The second one, <varname>cache-zones</varname>, is a list of zone
-        origins to load into in-memory.
-
-<!-- NOT YET:  http://bind10.isc.org/ticket/2240
- Once the cache is enabled,
-        the zones in the data source not listed in
-        <varname>cache-zones</varname> will not be loaded and will
-        not be available at all.
--->
-      </para>
-
-      <section id='datasource-types'>
-        <title>Data source types</title>
-        <para>
-          As mentioned, the type used by default is <quote>sqlite3</quote>.
-          It has single configuration option inside <varname>params</varname>
-          &mdash; <varname>database_file</varname>, which contains the path
-          to the SQLite3 file containing the data.
-        </para>
-
-        <para>
-          Another type is called <quote>MasterFiles</quote>. This one is
-          slightly special. The data are stored in RFC1034 master files.
-          Because answering directly from them would be impractical,
-          this type mandates the cache to be enabled. Also, the list of
-          zones (<varname>cache-zones</varname>) should be omitted. The
-          <varname>params</varname> is a dictionary mapping from zone
-          origins to the files they reside in.
-        </para>
-      </section>
-
-      <section id='datasrc-examples'>
-        <title>Examples</title>
-        <para>
-          As this is one of the more complex configurations of BIND 10,
-          we show some examples. They all assume they start with default
-          configuration.
-        </para>
-
-        <para>
-          First, let's disable the built-in data source
-          (<quote>VERSION.BIND</quote> and friends). As it is the only
-          data source in the CH class, we can remove the whole class.
-
-          <screen>&gt; <userinput>config remove data_sources/classes CH</userinput>
-&gt; <userinput>config commit</userinput></screen>
-        </para>
-
-        <para>
-          Another one, let's say our default data source contains zones
-          <quote>example.org.</quote> and <quote>example.net.</quote>.
-          We want them to be served from memory to make the answering
-          faster.
-
-          <screen>&gt; <userinput>config set data_sources/classes/IN[0]/cache-enable true</userinput>
-&gt; <userinput>config add data_sources/classes/IN[0]/cache-zones example.org.</userinput>
-&gt; <userinput>config add data_sources/classes/IN[0]/cache-zones example.net.</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-          Now every time the zone in the data source is changed by the
-          operator, the authoritative server needs to be told to reload it, by
-          <screen>&gt; <userinput>Auth loadzone example.org</userinput></screen>
-          You don't need to do this when the zone is modified by
-          <command>b10-xfrin</command>; it does so automatically.
-        </para>
-
-        <para>
-          Now, the last example is when there are master files we want to
-          serve in addition to whatever is inside the SQLite3 database.
-
-          <screen>&gt; <userinput>config add data_sources/classes/IN</userinput>
-&gt; <userinput>config set data_sources/classes/IN[1]/type MasterFiles</userinput>
-&gt; <userinput>config set data_sources/classes/IN[1]/cache-enable true</userinput>
-&gt; <userinput>config set data_sources/classes/IN[1]/params { "example.org": "/path/to/example.org", "example.com": "/path/to/example.com" }</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-          Unfortunately, due to current technical limitations, the
-          params must be set as one JSON blob. To reload a zone, use the
-          same <command>Auth loadzone</command> command as above.
-	</para>
-
-	<para>
-          Initially, a map value has to be set, but this value may be an
-          empty map. After that, key/value pairs can be added with
-          <command>config add</command> and keys can be removed with
-          <command>config remove</command>. The initial value may be an
-          empty map, but it has to be set before zones are added or
-          removed.
-
-          <screen>
-&gt; <userinput>config set data_sources/classes/IN[1]/params {}</userinput>
-&gt; <userinput>config add data_sources/classes/IN[1]/params another.example.org /path/to/another.example.org</userinput>
-&gt; <userinput>config add data_sources/classes/IN[1]/params another.example.com /path/to/another.example.com</userinput>
-&gt; <userinput>config remove data_sources/classes/IN[1]/params another.example.org</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-        </para>
-      </section>
-
-      <note>
-      <para>
-        There's also <varname>Auth/database_file</varname> configuration
-        variable, pointing to a SQLite3 database file. This is no longer
-        used by <command>b10-auth</command>, but it is left in place for
-        now, since other modules use it. Once <command>b10-zonemgr</command>,
-        <command>b10-xfrout</command> and <command>b10-ddns</command>
-        are ported to the new configuration, this will disappear. But for
-        now, make sure that if you use any of these modules, the new
-        and old configuration correspond. The defaults are consistent, so
-        unless you tweaked either the new or the old configuration, you're
-        good.
-      </para>
-      </note>
-
-      <section id='datasrc-static'>
-        <title>Adding a static data source</title>
-
-	<para>
-	  BIND 10 includes a zone file named
-	  <filename>static.zone</filename> in the CH (Chaos) class for
-	  providing information about the server via the AUTHORS.BIND
-	  and VERSION.BIND TXT records. By default, this BIND zone is
-	  configured and its records are served.
-	</para>
-
-        <para>
-          If you have removed this zone from the configuration (e.g., by
-          using the commands in the previous section to disable the
-          "built-in data source"), here is how you can add it back to
-          serve the zones in the <filename>static.zone</filename> file.
-        </para>
-
-	<para>First, add the CH class if it doesn't exist:
-
-          <screen>&gt; <userinput>config add data_sources/classes CH</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-        Then, add a data source of type <emphasis>MasterFiles</emphasis>
-        in the CH class to serve the zones in
-        <filename>static.zone</filename>:
-
-          <screen>&gt; <userinput>config add data_sources/classes/CH</userinput>
-&gt; <userinput>config set data_sources/classes/CH[0]/type MasterFiles</userinput>
-&gt; <userinput>config set data_sources/classes/CH[0]/cache-enable true</userinput>
-&gt; <userinput>config set data_sources/classes/CH[0]/params {"BIND": "/usr/local/bind10/share/bind10/static.zone"}</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-        Then, lookup the static data from
-        <filename>static.zone</filename> to test it (assuming your
-        authoritative server is running on <command>localhost</command>):
-
-          <screen>&gt; <userinput>dig @localhost -c CH -t TXT version.bind</userinput>
-&gt; <userinput>dig @localhost -c CH -t TXT authors.bind</userinput></screen>
-
-	</para>
-
-      </section>
-
-    </section>
-
-    <section>
-      <title>Loading Master Zones Files</title>
-
-      <para>
-        RFC 1035 style DNS master zone files may imported
-        into a BIND 10 SQLite3 data source by using the
-        <command>b10-loadzone</command> utility.
-      </para>
-
-      <para>
-        <command>b10-loadzone</command> supports the following
-        special directives (control entries):
-
-        <variablelist>
-
-          <varlistentry>
-            <term>$INCLUDE</term>
-            <listitem>
-              <simpara>Loads an additional zone file. This may be recursive.
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
-            <term>$ORIGIN</term>
-            <listitem>
-              <simpara>Defines the relative domain name.
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
-            <term>$TTL</term>
-            <listitem>
-              <simpara>Defines the time-to-live value used for following
-                records that don't include a TTL.
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-        </variablelist>
-
-      </para>
-
-      <note>
-      <para>
-        In the current release, only the SQLite3 back
-        end is used by <command>b10-loadzone</command>.
-        Multiple zones are stored in a single SQLite3 zone database.
-      </para>
-      </note>
-
-      <para>
-        If you reload a zone already existing in the database,
-        all records from that prior zone disappear and a whole new set
-        appears.
-      </para>
-
-<!--TODO: permissions for xfrin or loadzone to create the file -->
-
-    </section>
-
-<!--
-TODO
-    <section>
-      <title>Troubleshooting</title>
-      <para>
-      </para>
-    </section>
--->
-
-  </chapter>
-
-  <chapter id="xfrin">
-    <title>Incoming Zone Transfers</title>
-
-    <para>
-      Incoming zones are transferred using the <command>b10-xfrin</command>
-      process which is started by <command>b10-init</command>.
-      When received, the zone is stored in the corresponding BIND 10
-      data source, and its records can be served by
-      <command>b10-auth</command>.
-      In combination with <command>b10-zonemgr</command> (for
-      automated SOA checks), this allows the BIND 10 server to
-      provide <emphasis>secondary</emphasis> service.
-    </para>
-
-    <para>
-      The <command>b10-xfrin</command> process supports both AXFR and
-      IXFR.
-    </para>
-
-    <section>
-      <title>Configuration for Incoming Zone Transfers</title>
-      <para>
-	In order to enable incoming zone transfers for a secondary
-	zone, you will first need to make the zone "exist" in some
-	data source.
-	One easy way to do this is to create an empty zone using the
-	<command>b10-loadzone</command> utility.
-	For example, this makes an empty zone (or empties any existing
-	content of the zone) "example.com" in the default data source
-	for <command>b10-loadzone</command> (which is SQLite3-based
-	data source):
-            <screen>$ <userinput>b10-loadzone <replaceable>-e</replaceable> <replaceable>example.com</replaceable></userinput></screen>
-      </para>
-
-      <para>
-        Next, you need to specify a list of secondary zones to
-        enable incoming zone transfers for these zones in most
-        practical cases (you can still trigger a zone transfer
-        manually, without a prior configuration (see below)).
-      </para>
-
-      <para>
-        For example, to enable zone transfers for a zone named "example.com"
-        (whose master address is assumed to be 2001:db8::53 here),
-        run the following at the <command>bindctl</command> prompt:
-
-      <screen>&gt; <userinput>config add Xfrin/zones</userinput>
-&gt; <userinput>config set Xfrin/zones[0]/name "<option>example.com</option>"</userinput>
-&gt; <userinput>config set Xfrin/zones[0]/master_addr "<option>2001:db8::53</option>"</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-      (We assume there has been no zone configuration before).
-      </para>
-
-      <note>
-        <simpara>
-	  There is a plan to revise overall zone management
-	  configuration (which are primary and secondary zones, which
-	  data source they are stored, etc) so it can be configured
-	  more consistently and in a unified way among various BIND 10 modules.
-	  When it's done, part or all of the initial configuration
-	  setup described in this section may be deprecated.
-	</simpara>
-      </note>
-    </section>
-
-    <section>
-        <title>TSIG</title>
-        If you want to use TSIG for incoming transfers, a system wide TSIG
-        key ring must be configured (see <xref linkend="tsig-key-ring"/>).
-        To specify a key to use, set tsig_key value to the name of the key
-        to use from the key ring.
-&gt; <userinput>config set Xfrin/zones[0]/tsig_key "<option>example.key</option>"</userinput>
-    </section>
-
-    <section id="request_ixfr">
-      <title>Control the use of IXFR</title>
-      <para>
-	By default, <command>b10-xfrin</command> uses IXFR for
-	transferring zones specified in
-	the <varname>Xfrin/zones</varname> list of the configuration,
-	unless it doesn't know the current SOA serial of the zone
-	(including the case where the zone has never transferred or
-	locally loaded), in which case it automatically uses AXFR.
-	If the attempt of IXFR fails, <command>b10-xfrin</command>
-	automatically retries the transfer using AXFR.
-	In general, this works for any master server implementations
-	including those that don't support IXFR and in any local state
-	of the zone.  So there should normally be no need to configure
-	on whether to use IXFR.
-      </para>
-
-      <para>
-	In some cases, however, it may be desirable to specify how and
-	whether to use IXFR and AXFR.
-	The <varname>request_ixfr</varname> configuration item under
-	<varname>Xfrin/zones</varname> can be used to control such
-	policies.
-	It can take the following values.
-      </para>
-      <variablelist>
-	<varlistentry>
-	  <term>yes</term>
-	  <listitem>
-	    <simpara>
-	      This is the default behavior as described above.
-	    </simpara>
-	  </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term>no</term>
-	  <listitem>
-	    <simpara>
-	      Only use AXFR.  Note that this value normally shouldn't
-	      be needed thanks to the automatic fallback from IXFR to IXFR.
-	      A possible case where this value needs to be used is
-	      that the master server has a bug and crashes if it
-	      receives an IXFR request.
-	    </simpara>
-	  </listitem>
-	</varlistentry>
-	<varlistentry>
-	  <term>only</term>
-	  <listitem>
-	    <simpara>
-	      Only use IXFR except when the current SOA serial is not
-	      known.
-	      This value has a severe drawback, that is, if the master
-	      server does not support IXFR zone transfers never
-	      succeed (except for the very first one, which will use AXFR),
-	      and the zone will eventually expire.
-	      Therefore it should not be used in general.
-	      Still, in some special cases the use of this value may
-	      make sense.  For example, if the operator is sure that
-	      the master server supports IXFR and the zone is very
-	      large, they may want to avoid falling back to AXFR as
-	      it can be more expensive.
-	    </simpara>
-	  </listitem>
-	</varlistentry>
-      </variablelist>
-
-      <note>
-        <simpara>
-	  There used to be a boolean configuration item named
-	  <varname>use_ixfr</varname>.
-	  It was deprecated for the finer control described above.
-	  The <varname>request_ixfr</varname> item should be used instead.
-	</simpara>
-      </note>
-
-    </section>
-
-<!-- TODO:
-
-how to tell bind10 you are a secondary?
-
-when will it first attempt to check for new zone? (using REFRESH?)
-what if zonemgr is not running?
-
-what if a NOTIFY is sent?
-
--->
-
-    <section id="zonemgr">
-      <title>Secondary Manager</title>
-
-      <para>
-        The <command>b10-zonemgr</command> process is started by
-        <command>b10-init</command>.
-        It keeps track of SOA refresh, retry, and expire timers
-        and other details for BIND 10 to perform as a slave.
-        When the <command>b10-auth</command> authoritative DNS server
-        receives a NOTIFY message, <command>b10-zonemgr</command>
-        may tell <command>b10-xfrin</command> to do a refresh
-        to start an inbound zone transfer.
-        The secondary manager resets its counters when a new zone is
-        transferred in.
-      </para>
-
-      <note><simpara>
-        Access control (such as allowing notifies) is not yet provided.
-        The primary/secondary service is not yet complete.
-      </simpara></note>
-
-      <para>
-        The following example shows using <command>bindctl</command>
-        to configure the server to be a secondary for the example zone:
-
-      <screen>&gt; <userinput>config add Zonemgr/secondary_zones</userinput>
-&gt; <userinput>config set Zonemgr/secondary_zones[0]/name "<option>example.com</option>"</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-      </para>
-
-      <para>
-        If the zone does not exist in the data source already
-        (i.e. no SOA record for it), <command>b10-zonemgr</command>
-        will automatically tell <command>b10-xfrin</command>
-        to transfer the zone in.
-      </para>
-
-    </section>
-
-    <section>
-      <title>Trigger an Incoming Zone Transfer Manually</title>
-
-      <para>
-        To manually trigger a zone transfer to retrieve a remote zone,
-        you may use the <command>bindctl</command> utility.
-        For example, at the <command>bindctl</command> prompt run:
-
-        <screen>&gt; <userinput>Xfrin retransfer zone_name="<option>foo.example.org</option>" master=<option>192.0.2.99</option></userinput></screen>
-      </para>
-
-      <para>
-	The <command>retransfer</command> command always uses AXFR.
-	To use IXFR for a zone that has already been transferred once,
-	use the <command>refresh</command> command.
-	It honors the <varname>Xfrin/zones/request_ixfr</varname>
-	configuration item (see <xref linkend="request_ixfr"/>.), and
-	if it's configured to use IXFR, it will be used.
-      </para>
-
-      <para>
-	Both the <command>retransfer</command>
-	and <command>refresh</command> commands can be used for
-	an initial transfer before setting up secondary
-	configurations.
-	In this case AXFR will be used for the obvious reason.
-      </para>
-    </section>
-
-    <section>
-      <title>Incoming Transfers with In-memory Datasource</title>
-
-      <para>
-        In the case of an incoming zone transfer, the received zone is
-        first stored in the corresponding BIND 10 datasource. In
-        case the secondary zone is served by an in-memory datasource
-        with an SQLite3 backend, <command>b10-auth</command> is
-        automatically sent a <varname>loadzone</varname> command to
-        reload the corresponding zone into memory from the backend.
-      </para>
-<!-- TODO: currently it delays the queries; see
-http://bind10.isc.org/wiki/ScalableZoneLoadDesign#a7.2UpdatingaZone
--->
-
-      <para>
-	The administrator doesn't have to do anything for
-	<command>b10-auth</command> to serve the new version of the
-	zone, except for the configuration such as the one described in
-	<xref linkend="datasrc" />.
-      </para>
-    </section>
-
-<!-- TODO: what if doesn't exist at that master IP? -->
-
-  </chapter>
-
-  <chapter id="xfrout">
-    <title>Outbound Zone Transfers</title>
-    <para>
-      The <command>b10-xfrout</command> process is started by
-      <command>b10-init</command>.
-      When the <command>b10-auth</command> authoritative DNS server
-      receives an AXFR or IXFR request, <command>b10-auth</command>
-      internally forwards the request to <command>b10-xfrout</command>,
-      which handles the rest of this request processing.
-      This is used to provide primary DNS service to share zones
-      to secondary name servers.
-      The <command>b10-xfrout</command> is also used to send
-      NOTIFY messages to secondary servers.
-    </para>
-
-    <para>
-      A global or per zone <option>transfer_acl</option> configuration
-      can be used to control accessibility of the outbound zone
-      transfer service.
-      By default, <command>b10-xfrout</command> allows any clients to
-      perform zone transfers for any zones.
-    </para>
-
-      <screen>&gt; <userinput>config show Xfrout/transfer_acl</userinput>
-Xfrout/transfer_acl[0]	{"action": "ACCEPT"}	any	(default)</screen>
-
-    <para>
-      If you want to require TSIG in access control, a system wide TSIG
-      key ring must be configured (see <xref linkend="tsig-key-ring"/>).
-      In this example, we allow client matching both the IP address
-      and key.
-    </para>
-
-    <screen>&gt; <userinput>config set tsig_keys/keys ["key.example:&lt;base64-key&gt;"]</userinput>
-&gt; <userinput>config set Xfrout/zone_config[0]/transfer_acl [{"action": "ACCEPT", "from": "192.0.2.1", "key": "key.example"}]</userinput>
-&gt; <userinput>config commit</userinput></screen>
-
-    <para>Both <command>b10-xfrout</command> and <command>b10-auth</command>
-      will use the system wide key ring to check
-      TSIGs in the incoming messages and to sign responses.</para>
-
-    <para>
-      For further details on ACL configuration, see
-      <xref linkend="common-acl" />.
-    </para>
-
-    <note><simpara>
-        The way to specify zone specific configuration (ACLs, etc) is
-        likely to be changed.
-    </simpara></note>
-
-<!--
-TODO:
-xfrout section:
-auth servers checks for AXFR query
-sends the XFR query to the xfrout module
-uses /tmp/auth_xfrout_conn which is a socket
-what is XfroutClient xfr_client??
-/tmp/auth_xfrout_conn is not removed
--->
-
-  </chapter>
-
-  <chapter id="ddns">
-    <title>Dynamic DNS Update</title>
-
-    <para>
-      BIND 10 supports the server side of the Dynamic DNS Update
-      (DDNS) protocol as defined in RFC 2136.
-      This service is provided by the <command>b10-ddns</command>
-      component, which is started by the <command>b10-init</command>
-      process if configured so.
-    </para>
-
-    <para>
-      When the <command>b10-auth</command> authoritative DNS server
-      receives an UPDATE request, it internally forwards the request
-      to <command>b10-ddns</command>, which handles the rest of
-      this request processing.
-      When the processing is completed, <command>b10-ddns</command>
-      will send a response to the client as specified in RFC 2136
-      (NOERROR for successful update, REFUSED if rejected due to
-      ACL check, etc).
-      If the zone has been changed as a result, it will internally
-      notify <command>b10-xfrout</command> so that other secondary
-      servers will be notified via the DNS NOTIFY protocol.
-      In addition, if <command>b10-auth</command> serves the updated
-      zone (as described in
-      <xref linkend="datasrc" />),
-      <command>b10-ddns</command> will also
-      notify <command>b10-auth</command> so that <command>b10-auth</command>
-      will re-cache the updated zone content if necessary.
-    </para>
-
-    <para>
-      The <command>b10-ddns</command> component supports requests over
-      both UDP and TCP, and both IPv6 and IPv4; for TCP requests,
-      however, it terminates the TCP connection immediately after
-      each single request has been processed.  Clients cannot reuse the
-      same TCP connection for multiple requests. (This is a current
-      implementation limitation of <command>b10-ddns</command>.
-      While RFC 2136 doesn't specify anything about such reuse of TCP
-      connection, there is no reason for disallowing it as RFC 1035
-      generally allows multiple requests sent over a single TCP
-      connection.  BIND 9 supports such reuse.)
-    </para>
-
-    <para>
-      As of this writing <command>b10-ddns</command> does not support
-      update forwarding for secondary zones.
-      If it receives an update request for a secondary zone, it will
-      immediately return a <quote>not implemented</quote> response.
-      <note><simpara>
-	  For feature completeness, update forwarding should be
-	  eventually supported.  But currently it's considered a lower
-	  priority task and there is no specific plan of implementing
-	  this feature.
-<!-- See Trac #2063 -->
-      </simpara></note>
-    </para>
-
-    <section>
-      <title>Enabling Dynamic Update</title>
-      <para>
-        First off, it must be made sure that a few components on which
-        <command>b10-ddns</command> depends are configured to run,
-        which are <command>b10-auth</command>
-        and <command>b10-zonemgr</command>.
-        In addition, <command>b10-xfrout</command> should also be
-        configured to run; otherwise the notification after an update
-        (see above) will fail with a timeout, suspending the DDNS
-        service while <command>b10-ddns</command> waits for the
-        response (see the description of the <ulink
-        url="bind10-messages.html#DDNS_UPDATE_NOTIFY_FAIL">DDNS_UPDATE_NOTIFY_FAIL</ulink>
-        log message for further details).
-        If BIND 10 is already configured to provide authoritative DNS
-        service they should normally be configured to run already.
-      </para>
-
-      <para>
-        Second, for the obvious reason dynamic update requires that the
-        underlying data source storing the zone data be writable.
-        In the current implementation this means the zone must be stored
-        in an SQLite3-based data source.
-<!-- TODO -->
-	Also, in this current version, the <command>b10-ddns</command>
-	component configures itself with the data source referring to the
-        <varname>database_file</varname> configuration parameter of
-        <command>b10-auth</command>.
-        So this information must be configured correctly before starting
-        <command>b10-ddns</command>.
-
-        <note><simpara>
-            The way to configure data sources is now being revised.
-            Configuration on the data source for DDNS will be very
-            likely to be changed in a backward incompatible manner in
-            a near future version.
-        </simpara></note>
-      </para>
-
-      <para>
-	In general, if something goes wrong regarding the dependency
-	described above, <command>b10-ddns</command> will log the
-	related event at the warning or error level.
-	It's advisable to check the log message when you first enable
-	DDNS or if it doesn't work as you expect to see if there's any
-	warning or error log message.
-      </para>
-
-      <para>
-        Next, to enable the DDNS service, <command>b10-ddns</command>
-        needs to be explicitly configured to run.
-        It can be done by using the <command>bindctl</command>
-        utility.  For example:
-      <screen>
-&gt; <userinput>config add Init/components b10-ddns</userinput>
-&gt; <userinput>config set Init/components/b10-ddns/address DDNS</userinput>
-&gt; <userinput>config set Init/components/b10-ddns/kind dispensable</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-      <note><simpara>
-	  In theory <varname>kind</varname> could be omitted because
-	  "dispensable" is its default.
-	  But there's some peculiar behavior (which should be a
-	  bug and should be fixed eventually; see Trac ticket #2064)
-	  with <command>bindctl</command> and you'll still need to
-	  specify that explicitly.  Likewise, <varname>address</varname>
-	  may look unnecessary because <command>b10-ddns</command>
-	  would start and work without specifying it.  But for it
-	  to shutdown gracefully this parameter should also be
-	  specified.
-      </simpara></note>
-      </para>
-    </section>
-
-    <section>
-      <title>Access Control</title>
-      <para>
-        By default, <command>b10-ddns</command> rejects any update
-        requests from any clients by returning a REFUSED response.
-        To allow updates to take effect, an access control rule
-        (called update ACL) with a policy allowing updates must explicitly be
-        configured.
-        Update ACL must be configured per zone basis in the
-        <varname>zones</varname> configuration parameter of
-        <command>b10-ddns</command>.
-        This is a list of per-zone configurations regarding DDNS.
-        Each list element consists of the following parameters:
-        <variablelist>
-          <varlistentry>
-            <term>origin</term>
-            <listitem>
-              <simpara>The zone's origin name</simpara>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>class</term>
-            <listitem>
-              <simpara>The RR class of the zone
-                (normally <quote>IN</quote>, and in that case
-		can be omitted in configuration)</simpara>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term>update_acl</term>
-            <listitem>
-              <simpara>List of access control rules (ACL) for the zone</simpara>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-        The syntax of the ACL is the same as ACLs for other
-        components.
-        Specific examples are given below.
-      </para>
-
-      <para>
-        In general, an update ACL rule that allows an update request
-        should be configured with a TSIG key.
-        This is an example update ACL that allows updates to the zone
-        named <quote>example.org</quote> (of default RR class <quote>IN</quote>)
-        from clients that send requests signed with a TSIG whose
-        key name is "key.example.org" (and refuses all others):
-      <screen>
-&gt; <userinput>config add DDNS/zones</userinput>
-&gt; <userinput>config set DDNS/zones[0]/origin example.org</userinput>
-&gt; <userinput>config add DDNS/zones[0]/update_acl {"action": "ACCEPT", "key": "key.example.org"}</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-      The TSIG key must be configured system wide
-      (see <xref linkend="common-tsig"/>).
-      </para>
-
-      <para>
-	The full description of ACLs can be found in <xref
-	linkend="common-acl" />.
-      </para>
-
-      <note><simpara>
-          The <command>b10-ddns</command> component accepts an ACL
-          rule that just allows updates from a specific IP address
-          (i.e., without requiring TSIG), but this is highly
-          discouraged (remember that requests can be made over UDP and
-          spoofing the source address of a UDP packet is often pretty
-          easy).
-          Unless you know what you are doing and that you can accept
-          its consequence, any update ACL rule that allows updates
-          should have a TSIG key in its constraints.
-      </simpara></note>
-
-      <para>
-        Currently update ACL can only control updates per zone basis;
-        it's not possible to specify access control with higher
-        granularity such as for particular domain names or specific
-        types of RRs.
-<!-- See Trac ticket #2065 -->
-      </para>
-
-      <note><simpara>
-        Contrary to what RFC 2136 (literally) specifies,
-        <command>b10-ddns</command> checks the update ACL before
-        checking the prerequisites of the update request.
-        This is a deliberate implementation decision.
-        This counter intuitive specification has been repeatedly
-        discussed among implementers and in the IETF, and it is now
-        widely agreed that it does not make sense to strictly follow
-        that part of RFC.
-        One known specific bad result of following the RFC is that it
-        could leak information about which name or record exists or does not
-        exist in the zone as a result of prerequisite checks even if a
-        zone is somehow configured to reject normal queries from
-        arbitrary clients.
-        There have been other troubles that could have been avoided if
-        the ACL could be checked before the prerequisite check.
-      </simpara></note>
-    </section>
-
-    <section>
-      <title>Miscellaneous Operational Issues</title>
-      <para>
-        Unlike BIND 9, BIND 10 currently does not support automatic
-        re-signing of DNSSEC-signed zone when it's updated via DDNS.
-        It could be possible to re-sign the updated zone afterwards
-        or make sure the update request also updates related DNSSEC
-        records, but that will be pretty error-prone operation.
-        In general, it's not advisable to allow DDNS for a signed zone
-        at this moment.
-      </para>
-
-      <para>
-        Also unlike BIND 9, it's currently not possible
-        to <quote>freeze</quote> a zone temporarily in order to
-        suspend DDNS while you manually update the zone.
-        If you need to make manual updates to a dynamic zone,
-        you'll need to temporarily reject any updates to the zone via
-        the update ACLs.
-      </para>
-
-      <para>
-        Dynamic updates are only applicable to primary zones.
-        In order to avoid updating secondary zones via DDNS requests,
-        <command>b10-ddns</command> refers to the
-        <quote>secondary_zones</quote> configuration of
-        <command>b10-zonemgr</command>.  Zones listed in
-        <quote>secondary_zones</quote> will never be updated via DDNS
-        regardless of the update ACL configuration;
-	<command>b10-ddns</command> will return a NOTAUTH (server
-        not authoritative for the zone) response.
-        If you have a "conceptual" secondary zone whose content is a
-        copy of some external source but is not updated via the
-        standard zone transfers and therefore not listed in
-        <quote>secondary_zones</quote>, be careful not to allow DDNS
-        for the zone; it would be quite likely to lead to inconsistent
-        state between different servers.
-        Normally this should not be a problem because the default
-        update ACL rejects any update requests, but you may want to
-        take an extra care about the configuration if you have such
-        type of secondary zones.
-      </para>
-      <para>
-        The difference of two versions of a zone, before and after a
-        DDNS transaction, is automatically recorded in the underlying
-        data source, and can be retrieved in the form of outbound
-        IXFR.
-        This is done automatically; it does not require specific
-        configuration to make this possible.
-      </para>
-    </section>
-  </chapter>
-
-  <chapter id="resolverserver">
-    <title>Recursive Name Server</title>
-
-    <note><simpara>
-      The <command>b10-resolver</command> is an experimental proof
-      of concept.
-    </simpara></note>
-
-    <para>
-      The <command>b10-resolver</command> daemon provides an
-      iterative caching and forwarding DNS server.
-      The process is started by <command>b10-init</command>.
-<!-- TODO
-      It provides a resolver so DNS clients can ask it to do recursion
-      and it will return answers.
--->
-    </para>
-
-    <para>
-      The main <command>b10-init</command> process can be configured
-      to select to run either the authoritative or resolver or both.
-      By default, it doesn't start either one. You may change this using
-      <command>bindctl</command>, for example:
-
-      <screen>
-&gt; <userinput>config add Init/components b10-resolver</userinput>
-&gt; <userinput>config set Init/components/b10-resolver/special resolver</userinput>
-&gt; <userinput>config set Init/components/b10-resolver/kind needed</userinput>
-&gt; <userinput>config set Init/components/b10-resolver/priority 10</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-
-    </para>
-
-    <para>
-       The master <command>b10-init</command> process will stop and start
-       the desired services.
-    </para>
-
-    <para>
-      By default, the resolver listens on port 53 for 127.0.0.1 and ::1.
-      The following example shows how it can be configured to
-      listen on an additional address (and port):
-
-      <screen>
-&gt; <userinput>config add Resolver/listen_on</userinput>
-&gt; <userinput>config set Resolver/listen_on[<replaceable>2</replaceable>]/address "192.168.1.1"</userinput>
-&gt; <userinput>config set Resolver/listen_on[<replaceable>2</replaceable>]/port 53</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-    </para>
-
-     <simpara>(Replace the <quote><replaceable>2</replaceable></quote>
-       as needed; run <quote><userinput>config show
-       Resolver/listen_on</userinput></quote> if needed.)</simpara>
-<!-- TODO: this example should not include the port, ticket #1185 -->
-
-    <section>
-      <title>Access Control</title>
-
-      <para>
-        By default, the <command>b10-resolver</command> daemon only accepts
-        DNS queries from the localhost (127.0.0.1 and ::1).
-        The <option>Resolver/query_acl</option> configuration may
-        be used to reject, drop, or allow specific IPs or networks.
-        See <xref linkend="common-acl" />.
-      </para>
-
-      <para>
-	The following session is an example of extending the ACL to also
-	allow queries from 192.0.2.0/24:
-        <screen>
-> <userinput>config show Resolver/query_acl</userinput>
-Resolver/query_acl[0]   {"action": "ACCEPT", "from": "127.0.0.1"}   any (default)
-Resolver/query_acl[1]   {"action": "ACCEPT", "from": "::1"} any (default)
-> <userinput>config add Resolver/query_acl</userinput>
-> <userinput>config set Resolver/query_acl[2] {"action": "ACCEPT", "from": "192.0.2.0/24"}</userinput>
-> <userinput>config add Resolver/query_acl</userinput>
-> <userinput>config show Resolver/query_acl</userinput>
-Resolver/query_acl[0]   {"action": "ACCEPT", "from": "127.0.0.1"}   any (modified)
-Resolver/query_acl[1]   {"action": "ACCEPT", "from": "::1"} any (modified)
-Resolver/query_acl[2]   {"action": "ACCEPT", "from": "192.0.2.0/24"}  any (modified)
-Resolver/query_acl[3]   {"action": "REJECT"}    any (modified)
-> <userinput>config commit</userinput></screen>
-	Note that we didn't set the value of the last final rule
-	(query_acl[3]) -- in the case of resolver, rejecting all queries is
-	the default value of a new rule.  In fact, this rule can even be
-	omitted completely, as the default, when a query falls off the list,
-	is rejection.
-      </para>
-
-    </section>
-
-    <section>
-      <title>Forwarding</title>
-
-      <para>
-
-        To enable forwarding, the upstream address and port must be
-        configured to forward queries to, such as:
-
-        <screen>
-&gt; <userinput>config set Resolver/forward_addresses [{ "address": "<replaceable>192.168.1.1</replaceable>", "port": 53 }]</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-
-        (Replace <replaceable>192.168.1.1</replaceable> to point to your
-        full resolver.)
-      </para>
-
-      <para>
-        Normal iterative name service can be re-enabled by clearing the
-        forwarding address(es); for example:
-
-        <screen>
-&gt; <userinput>config set Resolver/forward_addresses []</userinput>
-&gt; <userinput>config commit</userinput>
-</screen>
-      </para>
-
-    </section>
-
-<!-- TODO: later try this
-
-> config set Resolver/forward_addresses[0]/address "192.168.8.8"
-> config set Resolver/forward_addresses[0]/port 53
-then change those defaults with config set Resolver/forward_addresses[0]/address "1.2.3.4"
-> config set Resolver/forward_addresses[0]/address "1.2.3.4"
--->
-
   </chapter>
 
   <chapter id="dhcp">
@@ -7607,8 +5903,8 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
 
       <para>
 
-        The logging system in BIND 10 is configured through the
-        Logging module. All BIND 10 modules will look at the
+        The logging system in Kea is configured through the
+        Logging module. All  modules will look at the
         configuration in Logging to see what should be logged and
         to where.
 
@@ -7621,8 +5917,8 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
 
         <para>
 
-          Within BIND 10, a message is logged through a component
-          called a "logger". Different parts of BIND 10 log messages
+          Within Kea, a message is logged through a component
+          called a "logger". Different parts of log messages
           through different loggers, and each logger can be configured
           independently of one another.
 
@@ -7652,10 +5948,10 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
           <para>
           Each logger in the system has a name, the name being that
           of the component using it to log messages. For instance,
-          if you want to configure logging for the resolver module,
-          you add an entry for a logger named <quote>Resolver</quote>. This
+          if you want to configure logging for the Dhcp4 module,
+          you add an entry for a logger named <quote>Dhcp4</quote>. This
           configuration will then be used by the loggers in the
-          Resolver module, and all the libraries used by it.
+          Dhcp4 module, and all the libraries used by it.
               </para>
 
 <!-- TODO: later we will have a way to know names of all modules
@@ -7664,39 +5960,29 @@ Right now you can only see what their names are if they are running
 (a simple 'help' without anything else in bindctl for instance).
 
  -->
-
-        <para>
+          <para>
 
           If you want to specify logging for one specific library
           within the module, you set the name to
           <replaceable>module.library</replaceable>.  For example, the
           logger used by the nameserver address store component
-          has the full name of <quote>Resolver.nsas</quote>. If
+          has the full name of <quote>Dhcp4.dhcpsrv</quote>. If
           there is no entry in Logging for a particular library,
           it will use the configuration given for the module.
 
-<!-- TODO: how to know these specific names?
-
-We will either have to document them or tell the administrator to
-specify module-wide logging and see what appears...
-
--->
-
         </para>
 
-        <para>
-
-<!-- TODO: severity has not been covered yet -->
+       <para>
 
           To illustrate this, suppose you want the cache library
           to log messages of severity DEBUG, and the rest of the
           resolver code to log messages of severity INFO. To achieve
           this you specify two loggers, one with the name
-          <quote>Resolver</quote> and severity INFO, and one with
-          the name <quote>Resolver.cache</quote> with severity
-          DEBUG. As there are no entries for other libraries (e.g.
-          the nsas), they will use the configuration for the module
-          (<quote>Resolver</quote>), so giving the desired behavior.
+          <quote>Dhcp4</quote> and severity INFO, and one with
+          the name <quote>Dhcp4.dhcpsrv</quote> with severity
+          DEBUG. As there are no entries for other libraries,
+          they will use the configuration for the module
+          (<quote>Dhcp4</quote>), so giving the desired behavior.
 
         </para>
 
@@ -7718,15 +6004,12 @@ specify module-wide logging and see what appears...
           configuration that might match a particular logger, the
           specification with the more specific logger name takes
           precedence. For example, if there are entries for
-          both <quote>*</quote> and <quote>Resolver</quote>, the
-          resolver module &mdash; and all libraries it uses &mdash;
+          both <quote>*</quote> and <quote>Dhcp4</quote>, the
+          Dhcp4 module &mdash; and all libraries it uses &mdash;
           will log messages according to the configuration in the
-          second entry (<quote>Resolver</quote>). All other modules
+          second entry (<quote>Dhcp4</quote>). All other modules
           will use the configuration of the first entry
-          (<quote>*</quote>). If there was also a configuration
-          entry for <quote>Resolver.cache</quote>, the cache library
-          within the resolver would use that in preference to the
-          entry for <quote>Resolver</quote>.
+          (<quote>*</quote>).
 
         </para>
 
@@ -7735,14 +6018,14 @@ specify module-wide logging and see what appears...
           One final note about the naming. When specifying the
           module name within a logger, use the name of the module
           as specified in <command>bindctl</command>, e.g.
-          <quote>Resolver</quote> for the resolver module,
-          <quote>Xfrout</quote> for the xfrout module, etc. When
+          <quote>Dhcp4</quote> for the Dhcp4 module,
+          <quote>Dhcp6</quote> for the Dhcp6 module, etc. When
           the message is logged, the message will include the name
           of the logger generating the message, but with the module
           name replaced by the name of the process implementing
           the module (so for example, a message generated by the
-          <quote>Auth.cache</quote> logger will appear in the output
-          with a logger name of <quote>b10-auth.cache</quote>).
+          <quote>Dhcp4</quote> logger will appear in the output
+          with a logger name of <quote>b10-dhcp4</quote>).
 
         </para>
 
@@ -7848,15 +6131,13 @@ TODO; there's a ticket to determine these levels, see #1074
 
           If this is true, the <option>output_options</option> from
           the parent will be used. For example, if there are two
-          loggers configured; <quote>Resolver</quote> and
-          <quote>Resolver.cache</quote>, and <option>additive</option>
+          loggers configured; <quote>Dhcp4</quote> and
+          <quote>Dhcp4.dhcpsrv</quote>, and <option>additive</option>
           is true in the second, it will write the log messages
           not only to the destinations specified for
-          <quote>Resolver.cache</quote>, but also to the destinations
+          <quote>Dhcp4.dhcpsrv</quote>, but also to the destinations
           as specified in the <option>output_options</option> in
-          the logger named <quote>Resolver</quote>.
-
-<!-- TODO: check this -->
+          the logger named <quote>Dhcp4</quote>.
 
       </para>
 
@@ -8000,11 +6281,11 @@ TODO; there's a ticket to determine these levels, see #1074
 	      (log4cplus), rolling over the log files (from ".1" to
 	      ".2", etc) may show odd results: There can be
 	      multiple small files at the timing of roll over.  This
-	      can happen when multiple BIND 10 processes try to roll
+	      can happen when multiple processes try to roll
 	      over the files simultaneously.
 	      Version 1.1.0 of log4cplus solved this problem, so if
 	      this or higher version of log4cplus is used to build
-	      BIND 10, it shouldn't happen.  Even for older versions
+	      Kea, it shouldn't happen.  Even for older versions
 	      it is normally expected to happen rarely unless the log
 	      messages are produced very frequently by multiple
 	      different processes.
@@ -8151,7 +6432,7 @@ Logging/loggers[0]/output_options[0]/maxver	0	integer	(default)
         <para>
 
           <screen>&gt; <userinput> config set Logging/loggers[0]/output_options[0]/destination file</userinput>
-&gt; <userinput> config set Logging/loggers[0]/output_options[0]/output /var/log/bind10.log</userinput>
+&gt; <userinput> config set Logging/loggers[0]/output_options[0]/output /var/log/kea.log</userinput>
 &gt; <userinput> config set Logging/loggers[0]/output_options[0]/maxsize 204800</userinput>
 &gt; <userinput> config set Logging/loggers[0]/output_options[0]/maxver 8</userinput>
 </screen>
@@ -8173,7 +6454,7 @@ Logging/loggers[0]/severity	"WARN"	string	(modified)
 Logging/loggers[0]/debuglevel	0	integer	(default)
 Logging/loggers[0]/additive	false	boolean	(default)
 Logging/loggers[0]/output_options[0]/destination	"file"	string	(modified)
-Logging/loggers[0]/output_options[0]/output	"/var/log/bind10.log"	string	(modified)
+Logging/loggers[0]/output_options[0]/output	"/var/log/kea.log"	string	(modified)
 Logging/loggers[0]/output_options[0]/flush	false	boolean	(default)
 Logging/loggers[0]/output_options[0]/maxsize	204800	integer	(modified)
 Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
@@ -8204,12 +6485,12 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
         <para>
 
           <screen>&gt; <userinput> config add Logging/loggers</userinput>
-&gt; <userinput> config set Logging/loggers[1]/name Auth</userinput>
+&gt; <userinput> config set Logging/loggers[1]/name Dhcp4</userinput>
 &gt; <userinput> config set Logging/loggers[1]/severity DEBUG</userinput>
 &gt; <userinput> config set Logging/loggers[1]/debuglevel 40</userinput>
 &gt; <userinput> config add Logging/loggers[1]/output_options</userinput>
 &gt; <userinput> config set Logging/loggers[1]/output_options[0]/destination file</userinput>
-&gt; <userinput> config set Logging/loggers[1]/output_options[0]/output /tmp/auth_debug.log</userinput>
+&gt; <userinput> config set Logging/loggers[1]/output_options[0]/output /tmp/dhcp4_debug.log</userinput>
 &gt; <userinput> config commit</userinput>
 </screen>
 
@@ -8219,7 +6500,7 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
 
           And that's it. Once we have found whatever it was we
           needed the debug messages for, we can simply remove the
-          second logger to let the authoritative server use the
+          second logger to let the DHCP server use the
           same settings as the rest.
 
         </para>
@@ -8247,7 +6528,7 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
       <title>Logging Message Format</title>
 
       <para>
-          Each message written by BIND 10 to the configured logging
+          Each message written  to the configured logging
           destinations comprises a number of components that identify
           the origin of the message and, if the message indicates
           a problem, information about the problem that may be
@@ -8256,8 +6537,8 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
 
       <para>
           Consider the message below logged to a file:
-          <screen>2011-06-15 13:48:22.034 ERROR [b10-resolver.asiolink]
-    ASIODNS_OPENSOCK error 111 opening TCP socket to 127.0.0.1(53)</screen>
+          <screen>2014-04-11 12:58:01.005 INFO  [b10-dhcp4.dhcpsrv/27456]
+    DHCPSRV_MEMFILE_DB opening memory file lease database: type=memfile universe=4</screen>
       </para>
 
       <para>
@@ -8272,7 +6553,7 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
 
           <variablelist>
           <varlistentry>
-          <term>2011-06-15 13:48:22.034</term>
+          <term>2014-04-11 12:58:01.005</term>
 <!-- TODO: timestamp repeated even if using syslog? -->
           <listitem><para>
               The date and time at which the message was generated.
@@ -8280,50 +6561,45 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
           </varlistentry>
 
           <varlistentry>
-          <term>ERROR</term>
+          <term>INFO</term>
           <listitem><para>
               The severity of the message.
           </para></listitem>
           </varlistentry>
 
           <varlistentry>
-          <term>[b10-resolver.asiolink]</term>
+          <term>[b10-dhcp4.dhcpsrv/27456]</term>
           <listitem><para>
             The source of the message.  This comprises two components:
             the BIND 10 process generating the message (in this
-            case, <command>b10-resolver</command>) and the module
+            case, <command>b10-dhcp4</command>) and the module
             within the program from which the message originated
-            (which in the example is the asynchronous I/O link
-            module, asiolink).
+            (which is the name of the common library used by DHCP server
+            implementations).
           </para></listitem>
           </varlistentry>
 
           <varlistentry>
-          <term>ASIODNS_OPENSOCK</term>
+          <term>DHCPSRV_MEMFILE_DB</term>
           <listitem><para>
-            The message identification.  Every message in BIND 10
+            The message identification.  Every message in Kea
             has a unique identification, which can be used as an
             index into the <ulink
-            url="bind10-messages.html"><citetitle>BIND 10 Messages
+            url="bind10-messages.html"><citetitle>Kea Messages
             Manual</citetitle></ulink> (<ulink
-            url="http://bind10.isc.org/docs/bind10-messages.html"
+            url="http://kea.isc.org/docs/bind10-messages.html"
             />) from which more information can be obtained.
           </para></listitem>
           </varlistentry>
 
           <varlistentry>
-          <term>error 111 opening TCP socket to 127.0.0.1(53)</term>
+          <term>opening memory file lease database: type=memfile universe=4</term>
           <listitem><para>
-              A brief description of the cause of the problem.
+              A brief description.
               Within this text, information relating to the condition
               that caused the message to be logged will be included.
-              In this example, error number 111 (an operating
-              system-specific error number) was encountered when
-              trying to open a TCP connection to port 53 on the
-              local system (address 127.0.0.1).  The next step
-              would be to find out the reason for the failure by
-              consulting your system's documentation to identify
-              what error number 111 means.
+              In this example, the information is logged that the in-memory
+              lease database backend will be used to store DHCP leases.
           </para></listitem>
           </varlistentry>
           </variablelist>
@@ -8332,6 +6608,43 @@ Logging/loggers[0]/output_options[0]/maxver	8	integer	(modified)
     </section>
 
   </chapter>
+
+    <chapter id="acknowledgements">
+      <title>Acknowledgements</title>
+
+      <para>Kea was initially implemented as a collection of applications
+      within the BIND 10 framework. Hence, Kea development would not be
+      possible without the generous support of BIND 10 project sponsors.</para>
+
+      <para><ulink url="http://jprs.co.jp/">JPRS</ulink> and
+      <ulink url="http://cira.ca/">CIRA</ulink> are Patron Level
+      sponsors.</para>
+
+      <para><ulink url="https://www.afnic.fr/">AFNIC</ulink>,
+      <ulink url="https://www.cnnic.net.cn/">CNNIC</ulink>,
+      <ulink url="https://www.nic.cz/">CZ.NIC</ulink>,
+      <ulink url="http://www.denic.de/">DENIC eG</ulink>,
+      <ulink url="https://www.google.com/">Google</ulink>,
+      <ulink url="https://www.ripe.net/">RIPE NCC</ulink>,
+      <ulink url="https://registro.br/">Registro.br</ulink>,
+      <ulink url="https://nzrs.net.nz/">.nz Registry Services</ulink>, and
+      <ulink url="https://www.tcinet.ru/">Technical Center of Internet</ulink>
+      are current sponsors.</para>
+
+      <para><ulink url="https://www.afilias.info/">Afilias</ulink>,
+      <ulink url="https://www.iis.se/">IIS.SE</ulink>,
+      <ulink url="http://www.nominet.org.uk/">Nominet</ulink>, and
+      <ulink url="https://www.sidn.nl/">SIDN</ulink> were founding
+      sponsors of the project.</para>
+
+<!-- DHCP sponsorship by Comcast -->
+
+      <para>Support for the development of the DHCPv4, DHCPv6 and
+      DHCP-DDNS  components is provided by
+      <ulink url="http://www.comcast.com/">Comcast</ulink>.</para>
+
+    </chapter>
+
 
 <!-- TODO: Add bibliography section (mostly RFCs, probably) -->
 
