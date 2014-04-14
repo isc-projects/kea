@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Bouml (http://bouml.free.fr/) -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="840" height="777" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="365" y="49" width="74" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="361" y="45" width="74" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="398" y="61">READY_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="312" y="193" width="180" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="308" y="189" width="180" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="398" y="205">SELECTING_FWD_SERVER_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="46" y="527" width="178" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="42" y="523" width="178" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="131" y="539">SELECTING_REV_SERVER_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="324" y="299" width="156" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="320" y="295" width="156" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="398" y="311">ADDING_FWD_ADDRS_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="466" y="414" width="176" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="462" y="410" width="176" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="550" y="426">REPLACING_FWD_ADDRS_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="662" y="600" width="166" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="658" y="596" width="166" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="741" y="612">PROCESS_ADD_FAILED_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="233" y="735" width="151" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="229" y="731" width="151" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="305" y="747">PROCESSS_ADD_OK_ST</text>
+</g>
+<g>
+	<ellipse fill="white" stroke="black" stroke-width="1" stroke-opacity="1" cx="743" cy="746" rx="11.5" ry="11.5" />
+	<ellipse fill="black" cx="743" cy="746" rx="8.5" ry="8.5" />
+</g>
+<ellipse fill="black" cx="137" cy="57" rx="8.5" ry="8.5" />
+<polygon fill="white" stroke="black" stroke-opacity="1" points ="291,492 300,475 309,492 300,509" />
+<g>
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="575" y="473" width="118" height="43" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="634" y="489">&lt;&lt;DNS IO Callback&gt;&gt;</text>
+</g>
+<g>
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="178" y="244" width="118" height="43" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="237" y="260">&lt;&lt;DNS IO Callback&gt;&gt;</text>
+</g>
+<g>
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="12" y="722" width="118" height="43" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="71" y="738">&lt;&lt;DNS IO Callback&gt;&gt;</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="610" y1="436" x2="604" y2="442" />
+	<line stroke="black" stroke-opacity="1" x1="610" y1="436" x2="616" y2="441" />
+	<line stroke="black" stroke-opacity="1" x1="611" y1="472" x2="610" y2="436" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="360" y1="57" x2="354" y2="51" />
+	<line stroke="black" stroke-opacity="1" x1="360" y1="57" x2="354" y2="63" />
+	<line stroke="black" stroke-opacity="1" x1="146" y1="57" x2="360" y2="57" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="400" y1="294" x2="406" y2="288" />
+	<line stroke="black" stroke-opacity="1" x1="400" y1="294" x2="394" y2="288" />
+	<line stroke="black" stroke-opacity="1" x1="400" y1="215" x2="400" y2="294" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="355" y1="294" x2="323" y2="253" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="352" y1="215" x2="343" y2="216" />
+	<line stroke="black" stroke-opacity="1" x1="352" y1="215" x2="353" y2="223" />
+	<line stroke="black" stroke-opacity="1" x1="323" y1="253" x2="352" y2="215" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="492" y1="201" x2="743" y2="201" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="743" y1="595" x2="749" y2="589" />
+	<line stroke="black" stroke-opacity="1" x1="743" y1="595" x2="737" y2="589" />
+	<line stroke="black" stroke-opacity="1" x1="743" y1="201" x2="743" y2="595" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="480" y1="308" x2="743" y2="308" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="743" y1="595" x2="749" y2="589" />
+	<line stroke="black" stroke-opacity="1" x1="743" y1="595" x2="737" y2="589" />
+	<line stroke="black" stroke-opacity="1" x1="743" y1="308" x2="743" y2="595" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="642" y1="423" x2="743" y2="423" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="743" y1="595" x2="749" y2="589" />
+	<line stroke="black" stroke-opacity="1" x1="743" y1="595" x2="737" y2="589" />
+	<line stroke="black" stroke-opacity="1" x1="743" y1="423" x2="743" y2="595" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="370" y1="321" x2="370" y2="423" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="461" y1="423" x2="455" y2="417" />
+	<line stroke="black" stroke-opacity="1" x1="461" y1="423" x2="455" y2="429" />
+	<line stroke="black" stroke-opacity="1" x1="370" y1="423" x2="461" y2="423" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="523" y1="409" x2="522" y2="357" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="434" y1="321" x2="437" y2="328" />
+	<line stroke="black" stroke-opacity="1" x1="434" y1="321" x2="441" y2="317" />
+	<line stroke="black" stroke-opacity="1" x1="522" y1="357" x2="434" y2="321" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="587" y1="409" x2="587" y2="238" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="484" y1="215" x2="488" y2="222" />
+	<line stroke="black" stroke-opacity="1" x1="484" y1="215" x2="491" y2="210" />
+	<line stroke="black" stroke-opacity="1" x1="587" y1="238" x2="484" y2="215" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="319" y1="312" x2="300" y2="312" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="300" y1="473" x2="306" y2="467" />
+	<line stroke="black" stroke-opacity="1" x1="300" y1="473" x2="294" y2="467" />
+	<line stroke="black" stroke-opacity="1" x1="300" y1="312" x2="300" y2="473" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="506" y1="436" x2="506" y2="492" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="312" y1="492" x2="318" y2="498" />
+	<line stroke="black" stroke-opacity="1" x1="312" y1="492" x2="318" y2="486" />
+	<line stroke="black" stroke-opacity="1" x1="506" y1="492" x2="312" y2="492" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="298" y1="730" x2="304" y2="724" />
+	<line stroke="black" stroke-opacity="1" x1="298" y1="730" x2="292" y2="723" />
+	<line stroke="black" stroke-opacity="1" x1="300" y1="510" x2="298" y2="730" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="287" y1="491" x2="132" y2="491" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="132" y1="522" x2="138" y2="516" />
+	<line stroke="black" stroke-opacity="1" x1="132" y1="522" x2="126" y2="516" />
+	<line stroke="black" stroke-opacity="1" x1="132" y1="491" x2="132" y2="522" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="743" y1="733" x2="749" y2="727" />
+	<line stroke="black" stroke-opacity="1" x1="743" y1="733" x2="737" y2="727" />
+	<line stroke="black" stroke-opacity="1" x1="743" y1="622" x2="743" y2="733" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="730" y1="745" x2="724" y2="738" />
+	<line stroke="black" stroke-opacity="1" x1="730" y1="745" x2="723" y2="750" />
+	<line stroke="black" stroke-opacity="1" x1="384" y1="744" x2="730" y2="745" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="234" y1="287" x2="234" y2="303" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="319" y1="303" x2="313" y2="297" />
+	<line stroke="black" stroke-opacity="1" x1="319" y1="303" x2="313" y2="309" />
+	<line stroke="black" stroke-opacity="1" x1="234" y1="303" x2="319" y2="303" />
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="616" y="301">UPDATE_FAILED_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="196" y="236">SERVER_IO_ERROR_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="336" y="440">FQDN_IN_USE_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="436" y="251">SERVER_IO_ERROR_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="378" y="374">FQDN_NOT_IN_USE_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="328" y="485">UPDATE_OK_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="309" y="540">No reverse change requested</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="286" y="51">START_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="530" y="740">END_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="197" y="455">UPDATE_OK_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="616" y="400">UPDATE_FAILED_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="149" y="484">Reverse change requested</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="674" y="695">END_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="588" y="196">NO_MORE_SERVERS_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="420" y="291">SERVER_SELECTED_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="168" y="324">IO_COMPLETED_EVT</text>
+</g>
+<polygon fill="white" stroke="black" stroke-opacity="1" points ="391,122 400,105 409,122 400,139" />
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="34" y="642" width="207" height="23" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="30" y="638" width="207" height="23" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="134" y="654">REPLACING_REV_PTRS_ST</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="400" y1="103" x2="406" y2="97" />
+	<line stroke="black" stroke-opacity="1" x1="400" y1="103" x2="394" y2="97" />
+	<line stroke="black" stroke-opacity="1" x1="400" y1="71" x2="400" y2="103" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="400" y1="188" x2="406" y2="182" />
+	<line stroke="black" stroke-opacity="1" x1="400" y1="188" x2="394" y2="182" />
+	<line stroke="black" stroke-opacity="1" x1="400" y1="140" x2="400" y2="188" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="387" y1="121" x2="132" y2="121" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="132" y1="522" x2="138" y2="516" />
+	<line stroke="black" stroke-opacity="1" x1="132" y1="522" x2="126" y2="516" />
+	<line stroke="black" stroke-opacity="1" x1="132" y1="121" x2="132" y2="522" />
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="410" y="156">Forward change requested</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="179" y="116">Only reverse change requested</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="175" y1="549" x2="208" y2="590" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="181" y1="637" x2="189" y2="634" />
+	<line stroke="black" stroke-opacity="1" x1="181" y1="637" x2="178" y2="628" />
+	<line stroke="black" stroke-opacity="1" x1="208" y1="590" x2="181" y2="637" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="83" y1="637" x2="52" y2="602" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="86" y1="549" x2="77" y2="550" />
+	<line stroke="black" stroke-opacity="1" x1="86" y1="549" x2="87" y2="557" />
+	<line stroke="black" stroke-opacity="1" x1="52" y1="602" x2="86" y2="549" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="147" y1="665" x2="147" y2="695" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="147" y1="695" x2="298" y2="695" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="298" y1="730" x2="304" y2="724" />
+	<line stroke="black" stroke-opacity="1" x1="298" y1="730" x2="292" y2="724" />
+	<line stroke="black" stroke-opacity="1" x1="298" y1="695" x2="298" y2="730" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="71" y1="665" x2="65" y2="671" />
+	<line stroke="black" stroke-opacity="1" x1="71" y1="665" x2="77" y2="671" />
+	<line stroke="black" stroke-opacity="1" x1="71" y1="721" x2="71" y2="665" />
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="31" y="577">SERVER_IO_ERROR_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="124" y="620">SERVER_SELECTED_ST</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="197" y="691">UPDATE_OK_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="714">IO_COMPLETED_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="553" y="460">IO_COMPLETED_EVT</text>
+</g>
+</svg>

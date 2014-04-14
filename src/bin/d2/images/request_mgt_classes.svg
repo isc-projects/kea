@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Bouml (http://bouml.free.fr/) -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="791" height="846" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="169" y="10" width="3" height="291" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="11" y="298" width="161" height="3" />
+	<rect fill="#c0ffff" stroke="black" stroke-width="1" stroke-opacity="1" x="7" y="6" width="162" height="292" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="88" y="19">D2Process</text>
+	<line stroke="black" stroke-opacity="1" x1="7" y1="21" x2="169" y2="21" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="11" y="34">QUEUE_RESTART_PERCENT</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="47">reconf_queue_flag_</text>
+	<line stroke="black" stroke-opacity="1" x1="7" y1="49" x2="169" y2="49" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="62">D2Process()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="75">init()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="88">run()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="101">shutdown()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="114">configure()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="127">command()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="140">~D2Process()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="153">checkQueueStatus()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="166">reconfigureQueueMgr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="179">runIO()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="192">canShutdown()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="205">setReconfQueueFlag()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="218">setShutdownType()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="231">getD2CfgMgr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="244">getD2QueueMgr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="257">getD2UpdateMgr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="270">getReconfQueueFlag()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="283">getShutdownType()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="11" y="296">getShutdownTypeStr()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="367" y="446" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="297" y="488" width="73" height="3" />
+	<rect fill="#c0ffff" stroke="black" stroke-width="1" stroke-opacity="1" x="293" y="442" width="74" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="330" y="455">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="330" y="470">IOServicePtr</text>
+	<line stroke="black" stroke-opacity="1" x1="293" y1="472" x2="367" y2="472" />
+	<line stroke="black" stroke-opacity="1" x1="293" y1="480" x2="367" y2="480" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="587" y="319" width="3" height="199" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="463" y="515" width="127" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="459" y="315" width="128" height="200" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" font-style="italic" text-anchor="middle" x="523" y="328">NameChangeListener</text>
+	<line stroke="black" stroke-opacity="1" x1="459" y1="330" x2="587" y2="330" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="463" y="343">listening_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="463" y="356">io_pending_</text>
+	<line stroke="black" stroke-opacity="1" x1="459" y1="358" x2="587" y2="358" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="463" y="371">NameChangeListener()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="463" y="384">~NameChangeListener()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="463" y="397">startListening()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="463" y="410">stopListening()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="463" y="423">receiveNext()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="463" y="436">invokeRecvHandler()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="463" y="449">open()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="463" y="462">close()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-style="italic" x="463" y="475">doReceive()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="463" y="488">amListening()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="463" y="501">isIoPending()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="463" y="514">setListening()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="371" y1="464" x2="377" y2="470" />
+	<line stroke="black" stroke-opacity="1" x1="371" y1="464" x2="377" y2="458" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="458" y1="464" x2="371" y2="464" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="775" y="218" width="3" height="615" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="653" y="830" width="125" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="649" y="214" width="126" height="616" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="712" y="227">NameChangeRequest</text>
+	<line stroke="black" stroke-opacity="1" x1="649" y1="229" x2="775" y2="229" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="242">forward_change_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="255">reverse_change_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="268">fqdn_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="281">lease_expires_on_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="294">lease_length_</text>
+	<line stroke="black" stroke-opacity="1" x1="649" y1="296" x2="775" y2="296" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="309">NameChangeRequest()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="322">NameChangeRequest()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="653" y="335">fromFormat()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="348">toFormat()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="653" y="361">fromJSON()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="374">toJSON()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="387">validateContent()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="400">getChangeType()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="413">setChangeType()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="426">setChangeType()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="439">isForwardChange()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="452">setForwardChange()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="465">setForwardChange()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="478">isReverseChange()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="491">setReverseChange()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="504">setReverseChange()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="517">getFqdn()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="530">setFqdn()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="543">setFqdn()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="556">getIpAddress()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="569">getIpIoAddress()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="582">isV4()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="595">isV6()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="608">setIpAddress()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="621">setIpAddress()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="634">getDhcid()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="647">setDhcid()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="660">setDhcid()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="673">getLeaseExpiresOn()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="686">getLeaseExpiresOnStr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="699">setLeaseExpiresOn()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="712">setLeaseExpiresOn()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="725">getLeaseLength()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="738">setLeaseLength()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="751">setLeaseLength()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="764">getStatus()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="777">setStatus()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="790">getElement()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="803">toText()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="816">operator ==()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="653" y="829">operator !=()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="377" y="113" width="3" height="277" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="249" y="387" width="131" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="245" y="109" width="132" height="278" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="311" y="122">D2QueueMgr</text>
+	<line stroke="black" stroke-opacity="1" x1="245" y1="124" x2="377" y2="124" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="249" y="137">MAX_QUEUE_DEFAULT</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="150">max_queue_size_</text>
+	<line stroke="black" stroke-opacity="1" x1="245" y1="152" x2="377" y2="152" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="165">D2QueueMgr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="178">~D2QueueMgr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="191">initUDPListener()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="204">startListening()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="217">operator ()()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="230">stopListening()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="243">removeListener()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="256">getQueueSize()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="269">getMaxQueueSize()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="282">setMaxQueueSize()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="295">getMgrState()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="308">peek()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="321">peekAt()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="334">dequeueAt()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="347">dequeue()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="360">enqueue()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="373">clearQueue()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="249" y="386">updateStopState()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="590" y="227" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="458" y="269" width="135" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="454" y="223" width="136" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="522" y="236">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="522" y="251">NameChangeListenerPtr</text>
+	<line stroke="black" stroke-opacity="1" x1="454" y1="253" x2="590" y2="253" />
+	<line stroke="black" stroke-opacity="1" x1="454" y1="261" x2="590" y2="261" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="604" y="547" width="3" height="173" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="456" y="717" width="151" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="452" y="543" width="152" height="174" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="528" y="556">NameChangeUDPListener</text>
+	<line stroke="black" stroke-opacity="1" x1="452" y1="558" x2="604" y2="558" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="456" y="571">RECV_BUF_MAX</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="456" y="584">port_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="456" y="597">asio_socket_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="456" y="610">reuse_address_</text>
+	<line stroke="black" stroke-opacity="1" x1="452" y1="612" x2="604" y2="612" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="456" y="625">NameChangeUDPListener()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="456" y="638">~NameChangeUDPListener()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="456" y="651">open()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="456" y="664">close()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="456" y="677">doReceive()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="456" y="690">receiveCompletionHandler()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="456" y="703">NameChangeUDPListener()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="456" y="716">operator =()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="331" y1="441" x2="337" y2="435" />
+	<line stroke="black" stroke-opacity="1" x1="331" y1="441" x2="325" y2="435" />
+	<line stroke="black" stroke-opacity="1" x1="331" y1="391" x2="331" y2="441" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="331,391 337,397 331,403 325,397" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="524" y1="314" x2="530" y2="308" />
+	<line stroke="black" stroke-opacity="1" x1="524" y1="314" x2="518" y2="308" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="524" y1="273" x2="524" y2="314" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="453" y1="245" x2="447" y2="239" />
+	<line stroke="black" stroke-opacity="1" x1="453" y1="245" x2="447" y2="251" />
+	<line stroke="black" stroke-opacity="1" x1="381" y1="245" x2="453" y2="245" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="381,245 387,239 393,245 387,251" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="527" y1="542" x2="526" y2="524" />
+	<line stroke="black" stroke-opacity="1" x1="526" y1="519" x2="520" y2="525" />
+	<line stroke="black" stroke-opacity="1" x1="526" y1="519" x2="532" y2="524" />
+	<line stroke="black" stroke-opacity="1" x1="520" y1="525" x2="532" y2="524" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="554" y="129" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="472" y="171" width="85" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="468" y="125" width="86" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="511" y="138">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="511" y="153">RequestQueue</text>
+	<line stroke="black" stroke-opacity="1" x1="468" y1="155" x2="554" y2="155" />
+	<line stroke="black" stroke-opacity="1" x1="468" y1="163" x2="554" y2="163" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="173" y="353" width="3" height="129" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="35" y="479" width="141" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="31" y="349" width="142" height="130" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="102" y="362">&lt;&lt;enum&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="102" y="377">State</text>
+	<line stroke="black" stroke-opacity="1" x1="31" y1="379" x2="173" y2="379" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="392">NOT_INITTED</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="405">INITTED</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="418">RUNNING</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="431">STOPPING</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="444">STOPPED_QUEUE_FULL</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="457">STOPPED_RECV_ERROR</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="35" y="470">STOPPED</text>
+	<line stroke="black" stroke-opacity="1" x1="31" y1="472" x2="173" y2="472" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="467" y1="150" x2="461" y2="144" />
+	<line stroke="black" stroke-opacity="1" x1="467" y1="150" x2="461" y2="156" />
+	<line stroke="black" stroke-opacity="1" x1="381" y1="150" x2="467" y2="150" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="381,150 387,144 393,150 387,156" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="244" y1="319" x2="102" y2="319" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="244,319 238,325 232,319 238,313" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="102" y1="348" x2="108" y2="342" />
+	<line stroke="black" stroke-opacity="1" x1="102" y1="348" x2="96" y2="342" />
+	<line stroke="black" stroke-opacity="1" x1="102" y1="319" x2="102" y2="348" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="285" y1="391" x2="285" y2="416" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="285,391 291,397 285,403 279,397" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="177" y1="416" x2="183" y2="422" />
+	<line stroke="black" stroke-opacity="1" x1="177" y1="416" x2="183" y2="410" />
+	<line stroke="black" stroke-opacity="1" x1="285" y1="416" x2="177" y2="416" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="177" y1="367" x2="232" y2="366" />
+<ellipse fill="none" stroke="black" stroke-width="1" stroke-opacity="1" cx="238" cy="366" rx="5" ry="5" />
+	<line stroke="black" stroke-opacity="1" x1="233" y1="366" x2="243" y2="366" />
+	<line stroke="black" stroke-opacity="1" x1="238" y1="361" x2="238" y2="371" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="774" y="129" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="642" y="171" width="135" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="638" y="125" width="136" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="706" y="138">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="706" y="153">NameChangeRequestPtr</text>
+	<line stroke="black" stroke-opacity="1" x1="638" y1="155" x2="774" y2="155" />
+	<line stroke="black" stroke-opacity="1" x1="638" y1="163" x2="774" y2="163" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="708" y1="213" x2="714" y2="207" />
+	<line stroke="black" stroke-opacity="1" x1="708" y1="213" x2="702" y2="207" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="708" y1="175" x2="708" y2="213" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="637" y1="150" x2="631" y2="144" />
+	<line stroke="black" stroke-opacity="1" x1="637" y1="150" x2="631" y2="156" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="558" y1="150" x2="637" y2="150" />
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="187" y="54">queue_mgr_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="341" y="438">io_service_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="187" y="413">target_stop_state_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="401" y="242">listener_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="112" y="345">mgr_state_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="399" y="147">ncr_queue_</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="352" y="36" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="264" y="78" width="91" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="260" y="32" width="92" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="306" y="45">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="306" y="60">D2QueueMgrPtr</text>
+	<line stroke="black" stroke-opacity="1" x1="260" y1="62" x2="352" y2="62" />
+	<line stroke="black" stroke-opacity="1" x1="260" y1="70" x2="352" y2="70" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="259" y1="57" x2="252" y2="51" />
+	<line stroke="black" stroke-opacity="1" x1="259" y1="57" x2="253" y2="63" />
+	<line stroke="black" stroke-opacity="1" x1="173" y1="58" x2="259" y2="57" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="173,58 178,51 184,57 179,63" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="308" y1="108" x2="314" y2="102" />
+	<line stroke="black" stroke-opacity="1" x1="308" y1="108" x2="302" y2="102" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="308" y1="82" x2="308" y2="108" />
+</g>
+</svg>
