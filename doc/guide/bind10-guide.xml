@@ -53,11 +53,11 @@
 
   </bookinfo>
 
-  <!-- todo: Preface is now empty, but leave it around now -->
+  <!-- todo: Preface is now empty, but leave it around now
   <preface>
     <title>Preface</title>
   </preface>
-
+-->
   <chapter id="intro">
     <title>Introduction</title>
     <para>
