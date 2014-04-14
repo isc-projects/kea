@@ -70,6 +70,7 @@
  *   - @subpage dhcpv6OptionsParse
  *   - @subpage dhcpv6Classifier
  *   - @subpage dhcpv6Other
+ * - @subpage d2
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
