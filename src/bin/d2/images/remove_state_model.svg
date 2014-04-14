@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Bouml (http://bouml.free.fr/) -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="788" height="792" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="331" y="16" width="74" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="327" y="12" width="74" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="364" y="28">READY_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="280" y="138" width="180" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="276" y="134" width="180" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="366" y="150">SELECTING_FWD_SERVER_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="56" y="493" width="178" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="52" y="489" width="178" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="141" y="505">SELECTING_REV_SERVER_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="285" y="234" width="172" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="281" y="230" width="172" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="367" y="246">REMOVING_FWD_ADDRS_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="293" y="349" width="156" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="289" y="345" width="156" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="367" y="361">REMOVING_FWD_RRS_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="588" y="610" width="188" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="584" y="606" width="188" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="678" y="622">PROCESS_REMOVE_FAILED_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="277" y="687" width="166" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="273" y="683" width="166" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="356" y="699">PROCESS_REMOVE_OK_ST</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="62" y="608" width="160" height="22" rx="10" />
+	<rect fill="#ffffc0" stroke="black" stroke-opacity="1" x="58" y="604" width="160" height="22" rx="10" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="138" y="620">REMOVING_REV_PTRS_ST</text>
+</g>
+<polygon fill="white" stroke="black" stroke-opacity="1" points ="358,88 367,71 376,88 367,105" />
+<ellipse fill="black" cx="163" cy="26" rx="8.5" ry="8.5" />
+<g>
+	<ellipse fill="white" stroke="black" stroke-width="1" stroke-opacity="1" cx="531" cy="768" rx="11.5" ry="11.5" />
+	<ellipse fill="black" cx="531" cy="768" rx="8.5" ry="8.5" />
+</g>
+<polygon fill="white" stroke="black" stroke-opacity="1" points ="346,451 355,434 364,451 355,468" />
+<g>
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="153" y="255" width="118" height="43" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="212" y="271">&lt;&lt;DNS IO Callback&gt;&gt;</text>
+</g>
+<g>
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="11" y="666" width="118" height="43" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="70" y="682">&lt;&lt;DNS IO Callback&gt;&gt;</text>
+</g>
+<g>
+	<rect fill="none" stroke="black" stroke-width="1" stroke-opacity="1" x="154" y="368" width="118" height="43" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="213" y="384">&lt;&lt;DNS IO Callback&gt;&gt;</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="326" y1="25" x2="320" y2="19" />
+	<line stroke="black" stroke-opacity="1" x1="326" y1="25" x2="320" y2="31" />
+	<line stroke="black" stroke-opacity="1" x1="172" y1="25" x2="326" y2="25" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="366" y1="69" x2="372" y2="63" />
+	<line stroke="black" stroke-opacity="1" x1="366" y1="69" x2="360" y2="63" />
+	<line stroke="black" stroke-opacity="1" x1="366" y1="38" x2="366" y2="69" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="367" y1="133" x2="373" y2="127" />
+	<line stroke="black" stroke-opacity="1" x1="367" y1="133" x2="361" y2="127" />
+	<line stroke="black" stroke-opacity="1" x1="367" y1="106" x2="367" y2="133" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="354" y1="88" x2="143" y2="88" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="143" y1="488" x2="149" y2="482" />
+	<line stroke="black" stroke-opacity="1" x1="143" y1="488" x2="137" y2="482" />
+	<line stroke="black" stroke-opacity="1" x1="143" y1="88" x2="143" y2="488" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="368" y1="229" x2="374" y2="223" />
+	<line stroke="black" stroke-opacity="1" x1="368" y1="229" x2="362" y2="223" />
+	<line stroke="black" stroke-opacity="1" x1="368" y1="160" x2="368" y2="229" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="351" y1="229" x2="293" y2="190" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="340" y1="160" x2="331" y2="158" />
+	<line stroke="black" stroke-opacity="1" x1="340" y1="160" x2="338" y2="168" />
+	<line stroke="black" stroke-opacity="1" x1="293" y1="190" x2="340" y2="160" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="368" y1="344" x2="374" y2="338" />
+	<line stroke="black" stroke-opacity="1" x1="368" y1="344" x2="362" y2="337" />
+	<line stroke="black" stroke-opacity="1" x1="369" y1="256" x2="368" y2="344" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="460" y1="147" x2="680" y2="147" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="680" y1="605" x2="686" y2="599" />
+	<line stroke="black" stroke-opacity="1" x1="680" y1="605" x2="674" y2="599" />
+	<line stroke="black" stroke-opacity="1" x1="680" y1="147" x2="680" y2="605" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="457" y1="243" x2="680" y2="243" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="680" y1="605" x2="686" y2="599" />
+	<line stroke="black" stroke-opacity="1" x1="680" y1="605" x2="674" y2="599" />
+	<line stroke="black" stroke-opacity="1" x1="680" y1="243" x2="680" y2="605" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="449" y1="357" x2="680" y2="357" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="680" y1="605" x2="686" y2="599" />
+	<line stroke="black" stroke-opacity="1" x1="680" y1="605" x2="674" y2="599" />
+	<line stroke="black" stroke-opacity="1" x1="680" y1="357" x2="680" y2="605" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="429" y1="371" x2="429" y2="398" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="429" y1="398" x2="679" y2="398" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="679" y1="605" x2="685" y2="599" />
+	<line stroke="black" stroke-opacity="1" x1="679" y1="605" x2="673" y2="599" />
+	<line stroke="black" stroke-opacity="1" x1="679" y1="398" x2="679" y2="605" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="680" y1="632" x2="680" y2="767" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="543" y1="767" x2="549" y2="773" />
+	<line stroke="black" stroke-opacity="1" x1="543" y1="767" x2="549" y2="761" />
+	<line stroke="black" stroke-opacity="1" x1="680" y1="767" x2="543" y2="767" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="358" y1="709" x2="358" y2="767" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="518" y1="767" x2="512" y2="761" />
+	<line stroke="black" stroke-opacity="1" x1="518" y1="767" x2="512" y2="773" />
+	<line stroke="black" stroke-opacity="1" x1="358" y1="767" x2="518" y2="767" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="161" y1="515" x2="219" y2="561" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="156" y1="603" x2="164" y2="604" />
+	<line stroke="black" stroke-opacity="1" x1="156" y1="603" x2="157" y2="594" />
+	<line stroke="black" stroke-opacity="1" x1="219" y1="561" x2="156" y2="603" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="125" y1="603" x2="72" y2="559" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="125" y1="515" x2="116" y2="514" />
+	<line stroke="black" stroke-opacity="1" x1="125" y1="515" x2="124" y2="523" />
+	<line stroke="black" stroke-opacity="1" x1="72" y1="559" x2="125" y2="515" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="342" y1="450" x2="143" y2="450" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="143" y1="488" x2="149" y2="482" />
+	<line stroke="black" stroke-opacity="1" x1="143" y1="488" x2="137" y2="482" />
+	<line stroke="black" stroke-opacity="1" x1="143" y1="450" x2="143" y2="488" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="354" y1="432" x2="360" y2="426" />
+	<line stroke="black" stroke-opacity="1" x1="354" y1="432" x2="348" y2="426" />
+	<line stroke="black" stroke-opacity="1" x1="354" y1="371" x2="354" y2="432" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="358" y1="682" x2="364" y2="676" />
+	<line stroke="black" stroke-opacity="1" x1="358" y1="682" x2="352" y2="676" />
+	<line stroke="black" stroke-opacity="1" x1="358" y1="469" x2="358" y2="682" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="234" y1="501" x2="680" y2="501" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="680" y1="605" x2="686" y2="599" />
+	<line stroke="black" stroke-opacity="1" x1="680" y1="605" x2="674" y2="599" />
+	<line stroke="black" stroke-opacity="1" x1="680" y1="501" x2="680" y2="605" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="583" y1="618" x2="577" y2="611" />
+	<line stroke="black" stroke-opacity="1" x1="583" y1="618" x2="576" y2="623" />
+	<line stroke="black" stroke-opacity="1" x1="222" y1="617" x2="583" y2="618" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="163" y1="630" x2="163" y2="696" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="272" y1="696" x2="266" y2="690" />
+	<line stroke="black" stroke-opacity="1" x1="272" y1="696" x2="266" y2="702" />
+	<line stroke="black" stroke-opacity="1" x1="163" y1="696" x2="272" y2="696" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="213" y1="367" x2="213" y2="358" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="209" y1="254" x2="209" y2="243" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="73" y1="667" x2="74" y2="667" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="74" y1="630" x2="68" y2="636" />
+	<line stroke="black" stroke-opacity="1" x1="74" y1="630" x2="80" y2="636" />
+	<line stroke="black" stroke-opacity="1" x1="74" y1="667" x2="74" y2="630" />
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="527" y="497">NO_MORE_SERVERS_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="655" y="695">END_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="298" y="420">UPDATE_OK_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="551" y="352">UPDATE_FAILED_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="374" y="202">SERVER_SELECTED_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="176" y="688">UPDATE_OK_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="171" y="350">IO_COMPLETED_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="133" y="580">SERVER_SELEGTED_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="366" y="681">No reverse change requested</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="332" y="733">END_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="164" y="448">Reverse change requested</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="452" y="612">UPDATE_FAILED_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="529" y="394">SERVER_IO_ERROR_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="525" y="140">NO_MORE_SERVERS_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="381" y="332">UPDATE_OK_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="548" y="234">UPDATE_FAILED_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="213" y="192">SERVER_IO_ERROR_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="164" y="82">Only reverse change requested</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="203" y="14">START_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="384" y="115">Forward change requested</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="19" y="554">SERVER_IO_ERROR_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="156" y="237">IO_COMPLETED_EVT</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="11" y="655">IO_COMPLETED_EVT</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="288" y1="358" x2="282" y2="352" />
+	<line stroke="black" stroke-opacity="1" x1="288" y1="358" x2="282" y2="364" />
+	<line stroke="black" stroke-opacity="1" x1="213" y1="358" x2="288" y2="358" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="280" y1="243" x2="274" y2="237" />
+	<line stroke="black" stroke-opacity="1" x1="280" y1="243" x2="274" y2="249" />
+	<line stroke="black" stroke-opacity="1" x1="209" y1="243" x2="280" y2="243" />
+</g>
+</svg>

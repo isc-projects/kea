@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Bouml (http://bouml.free.fr/) -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="848" height="647" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="593" y="8" width="3" height="16" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="541" y="21" width="55" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="537" y="4" width="56" height="17" />
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="565" y="18">:DNSClient</text>
+</g>
+<g>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="567" y1="45" x2="567" y2="647" />
+</g>
+<g>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="143" y1="45" x2="143" y2="647" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="177" y="8" width="3" height="16" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="109" y="21" width="71" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="105" y="4" width="72" height="17" />
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="141" y="18">:D2UpdateMgr</text>
+</g>
+	<text font-family="Helvetica" font-size="20" fill="#000000" xml:space="preserve" x="603" y="71">Sequence depicting a</text>
+	<text font-family="Helvetica" font-size="20" fill="#000000" xml:space="preserve" x="603" y="91">simple state model which</text>
+	<text font-family="Helvetica" font-size="20" fill="#000000" xml:space="preserve" x="603" y="111">performs a single update.</text>
+<g>
+	<polygon fill="#c0ffff" stroke="black" stroke-opacity="1" points="6,115 120,115 120,125 130,125 130,185 6,185 6,115" />
+	<line stroke="black" stroke-opacity="1" x1="120" y1="115" x2="130" y2="125" />
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="16" y="135">As part of Update</text>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="16" y="145">Manager's sweep()</text>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="16" y="155">between events it</text>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="16" y="165">creates and starts the</text>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="16" y="175">transaction</text>
+</g>
+<g>
+	<polygon fill="#c0ffff" stroke="black" stroke-opacity="1" points="611,473 765,473 765,483 775,483 775,525 611,525 611,473" />
+	<line stroke="black" stroke-opacity="1" x1="765" y1="473" x2="775" y2="483" />
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="621" y="493">runStateModel() Iterates through</text>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="621" y="503">states until DONE_ST is</text>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="621" y="513">reached</text>
+</g>
+<g>
+	<line stroke="black" stroke-dasharray="18,6"  stroke-opacity="1" x1="336" y1="45" x2="336" y2="647" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="138" y="131" width="10" height="213" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="396" y="8" width="3" height="16" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="277" y="21" width="122" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="273" y="4" width="123" height="17" />
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" text-decoration="underline" text-anchor="middle" x="335" y="18">:NameChangeTransaction</text>
+</g>
+<g>
+	<polygon fill="#c0ffff" stroke="black" stroke-opacity="1" points="611,330 769,330 769,340 779,340 779,388 611,388 611,330" />
+	<line stroke="black" stroke-opacity="1" x1="769" y1="330" x2="779" y2="340" />
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="621" y="350">At some point later, DNSClient</text>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="621" y="360">invokes callback when IO</text>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="621" y="370">completes</text>
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="331" y="77" width="10" height="25" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="331" y="406" width="10" height="210" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="562" y="283" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="138" y="77" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="331" y="128" width="10" height="219" />
+</g>
+<g>
+	<polygon fill="#c0ffff" stroke="black" stroke-opacity="1" points="596,206 766,206 766,216 776,216 776,252 596,252 596,206" />
+	<line stroke="black" stroke-opacity="1" x1="766" y1="206" x2="776" y2="216" />
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="606" y="226">runStateModel() Iterates through</text>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="606" y="236">states until an update is initiated</text>
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="562" y="409" width="10" height="214" />
+</g>
+<g>
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="670" y1="388" x2="572" y2="417" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="149" y1="142" x2="331" y2="142" />
+	<polygon fill="#000000" stroke="none" points="331,142 327,138 327,146" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="342" y1="414" x2="562" y2="414" />
+	<polygon fill="#000000" stroke="none" points="342,414 346,410 346,418" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="149" y1="82" x2="331" y2="82" />
+	<polygon fill="#000000" stroke="none" points="331,82 327,78 327,86" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="337" y="221" width="10" height="115" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="337" y="424" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="337" y="175" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="337" y="136" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="337" y="466" width="10" height="126" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 349 467 L 366 467 L 366 474 L 349 474" />
+	<polygon fill="#000000" stroke="none" points="349,474 353,478 353,470" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 349 222 L 366 222 L 366 229 L 349 229" />
+	<polygon fill="#000000" stroke="none" points="349,229 353,233 353,225" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 349 425 L 366 425 L 366 432 L 349 432" />
+	<polygon fill="#000000" stroke="none" points="349,432 353,436 353,428" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 349 137 L 366 137 L 366 144 L 349 144" />
+	<polygon fill="#000000" stroke="none" points="349,144 353,148 353,140" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 349 176 L 366 176 L 366 183 L 349 183" />
+	<polygon fill="#000000" stroke="none" points="349,183 353,187 353,179" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" stroke-dasharray="4,4" x1="342" y1="611" x2="562" y2="611" />
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 558 607 L 562 611 L 558 615" />
+</g>
+<g>
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="595" y1="228" x2="367" y2="227" />
+</g>
+<g>
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="610" y1="492" x2="367" y2="472" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="343" y="491" width="10" height="95" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="343" y="247" width="10" height="83" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 355 248 L 372 248 L 372 255 L 355 255" />
+	<polygon fill="#000000" stroke="none" points="355,255 359,259 359,251" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 355 492 L 372 492 L 372 499 L 355 499" />
+	<polygon fill="#000000" stroke="none" points="355,499 359,503 359,495" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="354" y1="288" x2="562" y2="288" />
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 558 284 L 562 288 L 558 292" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" stroke-dasharray="4,4" x1="149" y1="339" x2="331" y2="339" />
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 153 335 L 149 339 L 153 343" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="349" y="515" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="349" y="556" width="10" height="24" />
+</g>
+<g>
+	<rect fill="#ffffff" stroke="black" stroke-width="1" stroke-opacity="1" x="349" y="300" width="10" height="24" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 361 516 L 378 516 L 378 523 L 361 523" />
+	<polygon fill="#000000" stroke="none" points="361,523 365,527 365,519" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 361 557 L 378 557 L 378 564 L 361 564" />
+	<polygon fill="#000000" stroke="none" points="361,564 365,568 365,560" />
+</g>
+<g>
+	<path fill="none" stroke="black" stroke-opacity="1" d="M 361 301 L 378 301 L 378 308 L 361 308" />
+	<polygon fill="#000000" stroke="none" points="361,308 365,312 365,304" />
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="439" y="283">doUpdate()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="361" y="173">setState(READY_ST)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="352" y="216">runStateModel(START_TRANSACTION_EVT)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="211" y="137">startTransaction()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="383" y="250">(getStateHandler())()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="363" y="410">operator ()()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="357" y="133">initStateHandlerMap()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="371" y="433">setDnsUpdateStatus()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="350" y="465">runStateModel(IO_COMPLETED_EVT)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="183" y="77">NameChangeTransaction()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="377" y="499">(getStateHandler)()</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="374" y="579">setNextEvent(NOP_EVT)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="382" y="521">setState(DONE_ST)</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="10" fill="#000000" xml:space="preserve" x="391" y="310">setNextEvent(NOP_EVT)</text>
+</g>
+</svg>

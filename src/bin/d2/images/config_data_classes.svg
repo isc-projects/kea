@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Bouml (http://bouml.free.fr/) -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="744" height="590" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="163" y="23" width="3" height="127" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="77" y="147" width="89" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="73" y="19" width="90" height="128" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="118" y="32">D2CfgContext</text>
+	<line stroke="black" stroke-opacity="1" x1="73" y1="34" x2="163" y2="34" />
+	<line stroke="black" stroke-opacity="1" x1="73" y1="42" x2="163" y2="42" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="77" y="55">D2CfgContext()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="77" y="68">~D2CfgContext()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="77" y="81">clone()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="77" y="94">getForwardMgr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="77" y="107">getReverseMgr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="77" y="120">getKeys()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="77" y="133">D2CfgContext()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="77" y="146">operator =()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="728" y="342" width="3" height="213" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="600" y="552" width="131" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="596" y="338" width="132" height="214" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="662" y="351">DnsServerInfo</text>
+	<line stroke="black" stroke-opacity="1" x1="596" y1="353" x2="728" y2="353" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="600" y="366">STANDARD_DNS_PORT</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="600" y="379">EMPTY_IP_STR</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="392">hostname_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="405">ip_address_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="418">port_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="431">enabled_</text>
+	<line stroke="black" stroke-opacity="1" x1="596" y1="433" x2="728" y2="433" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="446">DnsServerInfo()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="459">~DnsServerInfo()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="472">getHostname()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="485">getPort()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="498">getIpAddress()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="511">isEnabled()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="524">enable()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="537">disable()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="600" y="550">toText()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="551" y="64" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="467" y="106" width="87" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="463" y="60" width="88" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="507" y="73">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="507" y="88">TSIGKeyInfoPtr</text>
+	<line stroke="black" stroke-opacity="1" x1="463" y1="90" x2="551" y2="90" />
+	<line stroke="black" stroke-opacity="1" x1="463" y1="98" x2="551" y2="98" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="158" y="532" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="64" y="574" width="97" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="60" y="528" width="98" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="109" y="541">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="109" y="556">DdnsDomainMap</text>
+	<line stroke="black" stroke-opacity="1" x1="60" y1="558" x2="158" y2="558" />
+	<line stroke="black" stroke-opacity="1" x1="60" y1="566" x2="158" y2="566" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="437" y="460" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="303" y="502" width="137" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="299" y="456" width="138" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="368" y="469">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="368" y="484">DnsServerInfoStoragePtr</text>
+	<line stroke="black" stroke-opacity="1" x1="299" y1="486" x2="437" y2="486" />
+	<line stroke="black" stroke-opacity="1" x1="299" y1="494" x2="437" y2="494" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="180" y="195" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="54" y="237" width="129" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="50" y="191" width="130" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="115" y="204">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="115" y="219">DdnsDomainListMgrPtr</text>
+	<line stroke="black" stroke-opacity="1" x1="50" y1="221" x2="180" y2="221" />
+	<line stroke="black" stroke-opacity="1" x1="50" y1="229" x2="180" y2="229" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="548" y="355" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="454" y="397" width="97" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="450" y="351" width="98" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="499" y="364">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="499" y="379">DnsServerInfoPtr</text>
+	<line stroke="black" stroke-opacity="1" x1="450" y1="381" x2="548" y2="381" />
+	<line stroke="black" stroke-opacity="1" x1="450" y1="389" x2="548" y2="389" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="666" y="63" width="3" height="121" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="586" y="181" width="83" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="582" y="59" width="84" height="122" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="624" y="72">TSIGKeyInfo</text>
+	<line stroke="black" stroke-opacity="1" x1="582" y1="74" x2="666" y2="74" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="586" y="87">name_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="586" y="100">algorithm_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="586" y="113">secret_</text>
+	<line stroke="black" stroke-opacity="1" x1="582" y1="115" x2="666" y2="115" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="586" y="128">TSIGKeyInfo()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="586" y="141">~TSIGKeyInfo()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="586" y="154">getName()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="586" y="167">getAlgorithm()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="586" y="180">getSecret()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="152" y1="190" x2="158" y2="184" />
+	<line stroke="black" stroke-opacity="1" x1="152" y1="190" x2="146" y2="184" />
+	<line stroke="black" stroke-opacity="1" x1="152" y1="151" x2="152" y2="190" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="152,151 158,157 152,163 146,157" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="85" y1="190" x2="91" y2="184" />
+	<line stroke="black" stroke-opacity="1" x1="85" y1="190" x2="79" y2="184" />
+	<line stroke="black" stroke-opacity="1" x1="85" y1="151" x2="85" y2="190" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="85,151 91,157 85,163 79,157" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="595" y1="369" x2="589" y2="362" />
+	<line stroke="black" stroke-opacity="1" x1="595" y1="369" x2="588" y2="374" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="552" y1="368" x2="595" y2="369" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="581" y1="72" x2="575" y2="65" />
+	<line stroke="black" stroke-opacity="1" x1="581" y1="72" x2="574" y2="77" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="555" y1="71" x2="581" y2="72" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="177" y="274" width="3" height="147" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="51" y="418" width="129" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="47" y="270" width="130" height="148" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="112" y="283">DdnsDomainListMgr</text>
+	<line stroke="black" stroke-opacity="1" x1="47" y1="285" x2="177" y2="285" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="51" y="298">wildcard_domain_name_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="51" y="311">name_</text>
+	<line stroke="black" stroke-opacity="1" x1="47" y1="313" x2="177" y2="313" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="51" y="326">DdnsDomainListMgr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="51" y="339">~DdnsDomainListMgr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="51" y="352">matchDomain()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="51" y="365">getName()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="51" y="378">size()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="51" y="391">getWildcardDomain()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="51" y="404">getDomains()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="51" y="417">setDomains()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="428" y="527" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="308" y="569" width="123" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="304" y="523" width="124" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="366" y="536">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="366" y="551">DnsServerInfoStorage</text>
+	<line stroke="black" stroke-opacity="1" x1="304" y1="553" x2="428" y2="553" />
+	<line stroke="black" stroke-opacity="1" x1="304" y1="561" x2="428" y2="561" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="115" y1="269" x2="121" y2="263" />
+	<line stroke="black" stroke-opacity="1" x1="115" y1="269" x2="109" y2="262" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="116" y1="241" x2="115" y2="269" />
+</g>
+<g>
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="432" y1="548" x2="501" y2="548" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="501" y1="401" x2="495" y2="407" />
+	<line stroke="black" stroke-opacity="1" x1="501" y1="401" x2="507" y2="407" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="501" y1="548" x2="501" y2="401" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="368" y1="522" x2="374" y2="516" />
+	<line stroke="black" stroke-opacity="1" x1="368" y1="522" x2="362" y2="515" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="369" y1="506" x2="368" y2="522" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="295" y="316" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="209" y="358" width="89" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="205" y="312" width="90" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="250" y="325">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="250" y="340">DdnsDomainPtr</text>
+	<line stroke="black" stroke-opacity="1" x1="205" y1="342" x2="295" y2="342" />
+	<line stroke="black" stroke-opacity="1" x1="205" y1="350" x2="295" y2="350" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="181" y1="297" x2="251" y2="297" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="181,297 187,291 193,297 187,303" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="251" y1="311" x2="257" y2="305" />
+	<line stroke="black" stroke-opacity="1" x1="251" y1="311" x2="245" y2="305" />
+	<line stroke="black" stroke-opacity="1" x1="251" y1="297" x2="251" y2="311" />
+</g>
+<g>
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="162" y1="553" x2="251" y2="553" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="251" y1="362" x2="245" y2="368" />
+	<line stroke="black" stroke-opacity="1" x1="251" y1="362" x2="257" y2="368" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="251" y1="553" x2="251" y2="362" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="414" y="318" width="3" height="109" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="334" y="424" width="83" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="330" y="314" width="84" height="110" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="372" y="327">DdnsDomain</text>
+	<line stroke="black" stroke-opacity="1" x1="330" y1="329" x2="414" y2="329" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="334" y="342">name_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="334" y="355">key_name_</text>
+	<line stroke="black" stroke-opacity="1" x1="330" y1="357" x2="414" y2="357" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="334" y="370">DdnsDomain()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="334" y="383">~DdnsDomain()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="334" y="396">getName()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="334" y="409">getKeyName()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="334" y="422">getServers()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="370" y1="455" x2="376" y2="449" />
+	<line stroke="black" stroke-opacity="1" x1="370" y1="455" x2="364" y2="448" />
+	<line stroke="black" stroke-opacity="1" x1="371" y1="428" x2="370" y2="455" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="371,428 376,434 370,439 364,433" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="329" y1="337" x2="323" y2="330" />
+	<line stroke="black" stroke-opacity="1" x1="329" y1="337" x2="322" y2="342" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="299" y1="336" x2="329" y2="337" />
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="9" y="183">reverse_mgr_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="162" y="187">forward_mgr_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="254" y="78">keys_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="229" y="285">wildcard_domain_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="380" y="452">servers_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="128" y="446">domains_</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="408" y="65" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="302" y="107" width="109" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="298" y="61" width="110" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="353" y="74">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="353" y="89">TSIGKeyInfoMapPtr</text>
+	<line stroke="black" stroke-opacity="1" x1="298" y1="91" x2="408" y2="91" />
+	<line stroke="black" stroke-opacity="1" x1="298" y1="99" x2="408" y2="99" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="167" y="461" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="59" y="503" width="111" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="55" y="457" width="112" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="111" y="470">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="111" y="485">DdnsDomainMapPtr</text>
+	<line stroke="black" stroke-opacity="1" x1="55" y1="487" x2="167" y2="487" />
+	<line stroke="black" stroke-opacity="1" x1="55" y1="495" x2="167" y2="495" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="297" y1="85" x2="291" y2="79" />
+	<line stroke="black" stroke-opacity="1" x1="297" y1="85" x2="291" y2="91" />
+	<line stroke="black" stroke-opacity="1" x1="167" y1="85" x2="297" y2="85" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="167,85 173,79 179,85 173,91" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="111" y1="527" x2="117" y2="521" />
+	<line stroke="black" stroke-opacity="1" x1="111" y1="527" x2="105" y2="520" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="112" y1="507" x2="111" y2="527" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="113" y1="456" x2="119" y2="450" />
+	<line stroke="black" stroke-opacity="1" x1="113" y1="456" x2="107" y2="450" />
+	<line stroke="black" stroke-opacity="1" x1="113" y1="422" x2="113" y2="456" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="113,422 119,428 113,434 107,428" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="395" y="136" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="303" y="178" width="95" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="299" y="132" width="96" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="347" y="145">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="347" y="160">TSIGKeyInfoMap</text>
+	<line stroke="black" stroke-opacity="1" x1="299" y1="162" x2="395" y2="162" />
+	<line stroke="black" stroke-opacity="1" x1="299" y1="170" x2="395" y2="170" />
+</g>
+<g>
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="399" y1="157" x2="509" y2="157" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="509" y1="110" x2="503" y2="116" />
+	<line stroke="black" stroke-opacity="1" x1="509" y1="110" x2="515" y2="116" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="509" y1="157" x2="509" y2="110" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="350" y1="131" x2="356" y2="125" />
+	<line stroke="black" stroke-opacity="1" x1="350" y1="131" x2="344" y2="124" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="352" y1="111" x2="350" y2="131" />
+</g>
+</svg>

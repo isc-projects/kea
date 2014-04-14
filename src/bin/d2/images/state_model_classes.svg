@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Bouml (http://bouml.free.fr/) -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="645" height="712" version="1.1" xmlns="http://www.w3.org/2000/svg">
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="212" y="431" width="3" height="63" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="170" y="491" width="45" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="166" y="427" width="46" height="64" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="189" y="440">State</text>
+	<line stroke="black" stroke-opacity="1" x1="166" y1="442" x2="212" y2="442" />
+	<line stroke="black" stroke-opacity="1" x1="166" y1="450" x2="212" y2="450" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="170" y="463">State()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="170" y="476">~State()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="170" y="489">run()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="227" y="531" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="161" y="573" width="69" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="157" y="527" width="70" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="192" y="540">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="192" y="555">StatePtr</text>
+	<line stroke="black" stroke-opacity="1" x1="157" y1="557" x2="227" y2="557" />
+	<line stroke="black" stroke-opacity="1" x1="157" y1="565" x2="227" y2="565" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="191" y1="495" x2="185" y2="501" />
+	<line stroke="black" stroke-opacity="1" x1="191" y1="495" x2="197" y2="500" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="192" y1="526" x2="191" y2="495" />
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="403" y="271">states_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="255" y="125">map_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="108" y="458">handler_</text>
+</g>
+<g>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="426" y="86">events_</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="94" y="441" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="22" y="483" width="75" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="18" y="437" width="76" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="56" y="450">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="56" y="465">StateHandler</text>
+	<line stroke="black" stroke-opacity="1" x1="18" y1="467" x2="94" y2="467" />
+	<line stroke="black" stroke-opacity="1" x1="18" y1="475" x2="94" y2="475" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="98" y1="461" x2="104" y2="467" />
+	<line stroke="black" stroke-opacity="1" x1="98" y1="461" x2="104" y2="455" />
+	<line stroke="black" stroke-opacity="1" x1="165" y1="461" x2="98" y2="461" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="165,461 159,467 153,461 159,455" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="84" y="302" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="18" y="344" width="69" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="14" y="298" width="70" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="49" y="311">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="49" y="326">Event</text>
+	<line stroke="black" stroke-opacity="1" x1="14" y1="328" x2="84" y2="328" />
+	<line stroke="black" stroke-opacity="1" x1="14" y1="336" x2="84" y2="336" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="84" y="183" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="18" y="225" width="69" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="14" y="179" width="70" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="49" y="192">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="49" y="207">EventPtr</text>
+	<line stroke="black" stroke-opacity="1" x1="14" y1="209" x2="84" y2="209" />
+	<line stroke="black" stroke-opacity="1" x1="14" y1="217" x2="84" y2="217" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="629" y="32" width="3" height="667" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="485" y="696" width="147" height="3" />
+	<rect fill="#c0ffff" stroke="black" stroke-width="1" stroke-opacity="1" x="481" y="28" width="148" height="668" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="555" y="41">StateModel</text>
+	<line stroke="black" stroke-opacity="1" x1="481" y1="43" x2="629" y2="43" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="485" y="56">NEW_ST</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="485" y="69">END_ST</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="485" y="82">SM_DERIVED_STATE_MIN</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="485" y="95">NOP_EVT</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="485" y="108">START_EVT</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="485" y="121">END_EVT</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="485" y="134">FAIL_EVT</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="485" y="147">SM_DERIVED_EVENT_MIN</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="160">dictionaries_initted_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="173">curr_state_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="186">prev_state_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="199">last_event_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="212">next_event_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="225">on_entry_flag_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="238">on_exit_flag_</text>
+	<line stroke="black" stroke-opacity="1" x1="481" y1="240" x2="629" y2="240" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="253">StateModel()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="266">~StateModel()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="279">startModel()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="292">runModel()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="305">endModel()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="318">nopStateHandler()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="331">initDictionaries()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="344">defineEvents()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="357">defineEvent()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="370">getEvent()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="383">verifyEvents()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="396">defineStates()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="409">defineState()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="422">getState()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="435">verifyStates()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="448">onModelFailure()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="461">transition()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="474">abortModel()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="487">setState()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="500">postNextEvent()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="513">doOnEntry()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="526">doOnExit()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="539">getCurrState()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="552">getPrevState()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="565">getLastEvent()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="578">getNextEvent()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="591">isModelNew()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="604">isModelRunning()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="617">isModelWaiting()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="630">isModelDone()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="643">didModelFail()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="656">getEventLabel()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="669">getStateLabel()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="682">getContextStr()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="485" y="695">getPrevContextStr()</text>
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="412" y="69" width="3" height="121" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="304" y="187" width="111" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="300" y="65" width="112" height="122" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="356" y="78">LabeledValueSet</text>
+	<line stroke="black" stroke-opacity="1" x1="300" y1="80" x2="412" y2="80" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-decoration="underline" x="304" y="93">UNDEFINED_LABEL</text>
+	<line stroke="black" stroke-opacity="1" x1="300" y1="95" x2="412" y2="95" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="304" y="108">LabeledValueSet()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="304" y="121">~LabeledValueSet()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="304" y="134">add()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="304" y="147">add()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="304" y="160">get()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="304" y="173">isDefined()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="304" y="186">getLabel()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="416" y1="89" x2="422" y2="95" />
+	<line stroke="black" stroke-opacity="1" x1="416" y1="89" x2="422" y2="83" />
+	<line stroke="black" stroke-opacity="1" x1="480" y1="89" x2="416" y2="89" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="480,89 474,95 468,89 474,83" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="241" y="107" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="145" y="149" width="99" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="141" y="103" width="100" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="191" y="116">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="191" y="131">LabeledValueMap</text>
+	<line stroke="black" stroke-opacity="1" x1="141" y1="133" x2="241" y2="133" />
+	<line stroke="black" stroke-opacity="1" x1="141" y1="141" x2="241" y2="141" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="389" y="239" width="3" height="75" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="329" y="311" width="63" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="325" y="235" width="64" height="76" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="357" y="248">StateSet</text>
+	<line stroke="black" stroke-opacity="1" x1="325" y1="250" x2="389" y2="250" />
+	<line stroke="black" stroke-opacity="1" x1="325" y1="258" x2="389" y2="258" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="329" y="271">StateSet()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="329" y="284">~StateSet()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="329" y="297">add()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="329" y="310">getState()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="245" y1="128" x2="251" y2="134" />
+	<line stroke="black" stroke-opacity="1" x1="245" y1="128" x2="251" y2="122" />
+	<line stroke="black" stroke-opacity="1" x1="299" y1="128" x2="245" y2="128" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="299,128 293,134 287,128 293,122" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="358" y1="234" x2="358" y2="197" />
+	<line stroke="black" stroke-opacity="1" x1="358" y1="191" x2="352" y2="197" />
+	<line stroke="black" stroke-opacity="1" x1="358" y1="191" x2="364" y2="197" />
+	<line stroke="black" stroke-opacity="1" x1="352" y1="197" x2="364" y2="197" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="393" y1="274" x2="399" y2="280" />
+	<line stroke="black" stroke-opacity="1" x1="393" y1="274" x2="399" y2="268" />
+	<line stroke="black" stroke-opacity="1" x1="480" y1="274" x2="393" y2="274" />
+	<polygon fill="#000000" stroke="black" stroke-opacity="1" points="480,274 474,280 468,274 474,268" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="240" y="185" width="3" height="45" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="150" y="227" width="93" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="146" y="181" width="94" height="46" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" text-anchor="middle" x="193" y="194">&lt;&lt;typedef&gt;&gt;</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="193" y="209">LabeledValuePtr</text>
+	<line stroke="black" stroke-opacity="1" x1="146" y1="211" x2="240" y2="211" />
+	<line stroke="black" stroke-opacity="1" x1="146" y1="219" x2="240" y2="219" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="145" y1="205" x2="139" y2="198" />
+	<line stroke="black" stroke-opacity="1" x1="145" y1="205" x2="138" y2="210" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="88" y1="204" x2="145" y2="205" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="194" y1="180" x2="199" y2="173" />
+	<line stroke="black" stroke-opacity="1" x1="194" y1="180" x2="187" y2="174" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="193" y1="153" x2="194" y2="180" />
+</g>
+<g>
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="234" y="260" width="3" height="135" />
+	<rect fill="#cbcbcb" stroke="none" stroke-opacity="1" x="150" y="392" width="87" height="3" />
+	<rect fill="#ffffc0" stroke="black" stroke-width="1" stroke-opacity="1" x="146" y="256" width="88" height="136" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" font-weight="bold" text-anchor="middle" x="190" y="269">LabeledValue</text>
+	<line stroke="black" stroke-opacity="1" x1="146" y1="271" x2="234" y2="271" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="150" y="284">value_</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="150" y="297">label_</text>
+	<line stroke="black" stroke-opacity="1" x1="146" y1="299" x2="234" y2="299" />
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="150" y="312">LabeledValue()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="150" y="325">~LabeledValue()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="150" y="338">getValue()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="150" y="351">getLabel()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="150" y="364">operator ==()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="150" y="377">operator !=()</text>
+	<text font-family="Helvetica" font-size="11" fill="#000000" xml:space="preserve" x="150" y="390">operator &lt;()</text>
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="191" y1="426" x2="191" y2="402" />
+	<line stroke="black" stroke-opacity="1" x1="191" y1="396" x2="185" y2="402" />
+	<line stroke="black" stroke-opacity="1" x1="191" y1="396" x2="197" y2="402" />
+	<line stroke="black" stroke-opacity="1" x1="185" y1="402" x2="197" y2="402" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="145" y1="324" x2="139" y2="317" />
+	<line stroke="black" stroke-opacity="1" x1="145" y1="324" x2="138" y2="329" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="88" y1="323" x2="145" y2="324" />
+</g>
+<g>
+	<line stroke="black" stroke-opacity="1" x1="193" y1="255" x2="199" y2="249" />
+	<line stroke="black" stroke-opacity="1" x1="193" y1="255" x2="187" y2="248" />
+	<line stroke-dasharray="4,4" stroke="black" stroke-opacity="1" x1="194" y1="231" x2="193" y2="255" />
+</g>
+</svg>
