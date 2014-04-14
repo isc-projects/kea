@@ -1575,7 +1575,7 @@ dnl
 
 cat > config.report << END
 
-     BIND 10 source configure results:
+       Kea source configure results:
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 Package:
