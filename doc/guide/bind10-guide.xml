@@ -72,9 +72,23 @@
       (<ulink url="http://bind10.isc.org"/>). In early 2014, ISC has
       made a decision to discontinue active development of BIND 10 and
       continue development of Kea as standalone DHCP servers. As a result,
-      the DNS-related binaries and libraries are going to be removed from
-      the Kea source tree over time.
+      the DNS server implementation is going to be removed from
+      the Kea source tree over time. In order to remove the dependency on Python 3,
+      the BIND 10 framework will be replaced by the server startup and
+      configuration mechanisms written in C++.
     </para>
+
+    <note>
+      <simpara>Kea has been implemented in BIND 10 framework and to certain extent
+      it still depends on various BIND 10 libraries. It also requires the BIND 10
+      framework to run, because BIND 10 configuration mechanisms are used to
+      configure Kea. As a result, this document still refers to BIND 10 in many
+      paragraphs. The term "BIND 10" in the context of this document means
+      "BIND 10 libraries and applications which are necessary for Kea to run
+      and configure". The term "Kea" means "the collection of binaries and libraries
+      which, as a whole, implement the DHCP protocols.
+      </simpara>
+    </note>
 
     <para>
       This guide covers Kea version &__VERSION__;.
@@ -1831,10 +1845,9 @@ address, but the usual ones don't." mean? -->
     be deployed that facilitate communication between servers and
     clients. Even though principles of both DHCPv4 and DHCPv6 are
     somewhat similar, these are two radically different
-    protocols. BIND 10 offers two server implementations, one for DHCPv4
-    and one for DHCPv6. The DHCP part of the BIND 10 project is codenamed
-    Kea. The DHCPv4 component is colloquially referred to as Kea4 and its
-    DHCPv6 counterpart is called Kea6.</para>
+    protocols. Kea offers two server implementations, one for DHCPv4
+    and one for DHCPv6. The DHCPv4 component is colloquially referred to
+    as Kea4 and its DHCPv6 counterpart is called Kea6.</para>
     <para> In addition to providing lease management services, both Kea4 and
     Kea6 can provide dynamic DNS (DDNS) updates driven by the lease changes they
     make.   These updates are carried out with the assistance of the
@@ -1843,30 +1856,23 @@ address, but the usual ones don't." mean? -->
     them to the appropriate DNS servers and instruct those severs to add or
     delete the requisite DNS entries.
     </para>
-    <para>This chapter covers those parts of BIND 10 that are common to
+    <para>This chapter covers those parts of Kea that are common to
     both servers.  DHCPv4-specific details are covered in <xref linkend="dhcp4"/>,
     while those details specific to DHCPv6 are described in <xref linkend="dhcp6"/>.
     The DHCP-DDNS server details are covered in <xref linkend="dhcp-ddns-server"/>
     </para>
 
-    <note>
-      <simpara>
-	In this release of BIND 10, the DHCPv4 and DHCPv6 servers
-	must be considered experimental.
-      </simpara>
-    </note>
-
     <section id="dhcp-install-configure">
       <title>DHCP Database Installation and Configuration</title>
       <para>
-      BIND 10 DHCP stores its leases in a lease database.  The software has been written in
-      a way that makes it possible to choose which database product should be used to
-      store the lease information.  At present, Kea supports 3 database backends: MySQL,
-      PostgreSQL and memfile. To limit external dependencies, both MySQL and PostgreSQL
-      support are disabled by default and only memfile (which is implemented in pure C++)
-      is available. Support for a given database backend must be explicitly included when
-      BIND 10 is built.  This section covers the building of BIND 10 with MySQL and/or PostgreSQL
-      and the creation of the lease database.
+        Kea stores its leases in a lease database.  The software has been written in
+        a way that makes it possible to choose which database product should be used to
+        store the lease information.  At present, Kea supports 3 database backends: MySQL,
+        PostgreSQL and Memfile. To limit external dependencies, both MySQL and PostgreSQL
+        support are disabled by default and only Memfile (which is implemented in pure C++)
+        is available. Support for a given database backend must be explicitly included when
+        Kea is built.  This section covers the building of Kea with MySQL and/or PostgreSQL
+        and the creation of the lease database.
       </para>
       <section>
         <title>Building with MySQL support</title>
@@ -1875,7 +1881,7 @@ address, but the usual ones don't." mean? -->
           libraries must be installed.
         </para>
         <para>
-          Build and install BIND 10 as described in <xref linkend="installation"/>, with
+          Build and install Kea as described in <xref linkend="installation"/>, with
           the following modification: to enable the MySQL database code, at the
           "configure" step (see <xref linkend="configure"/>), specify the location of the
           MySQL configuration program "mysql_config" with the "--with-dhcp-mysql" switch,
@@ -1930,7 +1936,7 @@ $</screen>
           libraries must be installed. Client development libraries are often packaged as &quot;libpq&quot;.
         </para>
         <para>
-          Build and install BIND 10 as described in <xref linkend="installation"/>, with
+          Build and install Kea as described in <xref linkend="installation"/>, with
           the following modification: to enable the PostgreSQL database code, at the
           "configure" step (see <xref linkend="configure"/>), specify the location of the
           PostgreSQL configuration program "pg_config" with the "--with-dhcp-pgsql" switch,
@@ -2043,13 +2049,12 @@ host    <replaceable>database-name</replaceable>    <replaceable>user-name</repl
       <title>Starting and Stopping the DHCPv4 Server</title>
 
       <para>
-        <command>b10-dhcp4</command> is the BIND 10 DHCPv4 server and, like other
-        parts of BIND 10, is configured through the <command>bindctl</command>
-        program.
+        <command>b10-dhcp4</command> is the Kea DHCPv4 server and is configured
+        through the <command>bindctl</command> program.
       </para>
       <para>
-        After starting BIND 10 and entering bindctl, the first step
-        in configuring the server is to add it to the list of running BIND 10 services.
+        After starting <command>bind10</command> and entering bindctl, the first step
+        in configuring the server is to add it to the list of running services.
 <screen>
 &gt; <userinput>config add Init/components b10-dhcp4</userinput>
 &gt; <userinput>config set Init/components/b10-dhcp4/kind dispensable</userinput>
@@ -2231,8 +2236,8 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       If there is no password to the account, set the password to the empty string "". (This is also the default.)
       </para>
       <note>
-      <para>The password is echoed when entered and is stored in clear text in the BIND 10 configuration
-      database.  Improved password security will be added in a future version of BIND 10 DHCP</para>
+      <para>The password is echoed when entered and is stored in clear text in the configuration
+      database.  Improved password security will be added in a future version of Kea.</para>
       </note>
       </section>
 
@@ -2805,7 +2810,7 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
 
       <note>
         <para>
-          With this version of BIND 10, the "vendor-encapsulated-options" option
+          With this version of Kea, the "vendor-encapsulated-options" option
           must be specified in the configuration although it has no configurable
           parameters. If it is not specified, the server will assume that it is
           not configured and will not send it to a client. In the future there
@@ -3555,13 +3560,12 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       <title>Starting and Stopping the DHCPv6 Server</title>
 
       <para>
-        <command>b10-dhcp6</command> is the BIND 10 DHCPv6 server and, like other
-        parts of BIND 10, is configured through the <command>bindctl</command>
-        program.
+        <command>b10-dhcp6</command> is the Kea DHCPv6 server and is configured
+        through the <command>bindctl</command> program.
       </para>
       <para>
-        After starting BIND 10 and starting <command>bindctl</command>, the first step
-        in configuring the server is to add <command>b10-dhcp6</command> to the list of running BIND 10 services.
+        After starting <command>bind10</command> and starting <command>bindctl</command>, the first step
+        in configuring the server is to add <command>b10-dhcp6</command> to the list of running services.
 <screen>
 &gt; <userinput>config add Init/components b10-dhcp6</userinput>
 &gt; <userinput>config set Init/components/b10-dhcp6/kind dispensable</userinput>
@@ -3646,7 +3650,7 @@ Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
       </para>
       <note>
         <para>
-          With this version of BIND 10, there are a number of known limitations
+          With this version of Kea, there are a number of known limitations
           and problems in the DHCPv6 server. See <xref linkend="dhcp6-limit"/>.
         </para>
       </note>
@@ -3742,8 +3746,8 @@ Dhcp6/dhcp-ddns/qualifying-suffix   "example.com"   string
       If there is no password to the account, set the password to the empty string "". (This is also the default.)
       </para>
       <note>
-      <para>The password is echoed when entered and is stored in clear text in the BIND 10 configuration
-      database.  Improved password security will be added in a future version of BIND 10 DHCP</para>
+      <para>The password is echoed when entered and is stored in clear text in the configuration
+      database.  Improved password security will be added in a future version of Kea.</para>
       </note>
       </section>
 
@@ -5127,9 +5131,9 @@ Dhcp6/renew-timer	1000	integer	(default)
 </screen>
       </para>
       <para>
-      Note that the server was only removed from the list, so BIND10 will not
-      restart it, but the server itself is still running. Hence it is usually
-      desired to stop it:
+      Note that the server was only removed from the list, so it will not be
+      automatically restarted, but the server itself is still running. Hence it
+      is usually desired to stop it:
       </para>
 <screen>
 &gt; <userinput>DhcpDdns shutdown</userinput>
@@ -5820,7 +5824,7 @@ DhcpDdns/reverse_ddns/ddns_domains[0]/dns_servers[0]/port   53  integer(default)
     </para>
 
     <para>
-    While this library is currently used by BIND 10 DHCP, it is designed to
+    While this library is currently used by Kea, it is designed to
     be a portable, universal library, useful for any kind of DHCP-related software.
     </para>
 
