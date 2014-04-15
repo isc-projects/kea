@@ -69,8 +69,8 @@
 
     <para>
       Kea has been initially developed as a part of the BIND 10 framework
-      (<ulink url="http://bind10.isc.org"/>). In early 2014, ISC has
-      made a decision to discontinue active development of BIND 10 and
+      (<ulink url="http://bind10.isc.org"/>). In early 2014, ISC
+      made the decision to discontinue active development of BIND 10 and
       continue development of Kea as standalone DHCP servers. As a result,
       the DNS server implementation is going to be removed from
       the Kea source tree over time. In order to remove the dependency on Python 3,
@@ -126,7 +126,7 @@
         Kea was developed as a collection of applications within
         BIND 10 framework and it still relies on the remaining parts
         of this framework. In particular, the servers' configuration
-        and startup are still facilitated by the modules which origin
+        and startup are still facilitated by the modules which originate
         in BIND 10. These modules require at least Python 3.1 to run.
         They also work with Python 3.2
         (<ulink url="http://www.python.org/"/>)). The dependency
@@ -433,8 +433,7 @@ $ <userinput>./configure</userinput></screen>
 
       <para>
         Some operating systems or software package vendors may
-        provide ready-to-use, pre-built software packages for
-        the Kea.
+        provide ready-to-use, pre-built software packages for Kea.
         Installing a pre-built package means you do not need to
         install build-only prerequisites and do not need to
         <emphasis>make</emphasis> the software.
@@ -798,8 +797,7 @@ as a dependency earlier -->
       It runs the <command>b10-init</command> daemon which
       starts up the required processes, and
       will also restart some processes that exit unexpectedly.
-      <command>bind10</command> is the only command needed to start
-      the Kea.
+      <command>bind10</command> is the only command needed to start Kea.
     </para>
 
     <para>
@@ -914,8 +912,8 @@ as a dependency earlier -->
 <!-- TODO -->
       <note>
         <para>
-          In the future releases of Kea, the architecture which origins in
-          BIND 10 project will be replaced by the new mechanisms to start
+          In future releases of Kea, the architecture which originates in
+          the BIND 10 project will be replaced by the new mechanisms to start
           and configure Kea. The new mechanisms will use a file based
           configuration.
         </para>
