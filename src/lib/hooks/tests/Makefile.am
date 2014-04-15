@@ -10,11 +10,11 @@ AM_CPPFLAGS += $(BOOST_INCLUDES) $(MULTITHREADING_FLAG)
 AM_CXXFLAGS  = $(WARNING_NO_MISSING_FIELD_INITIALIZERS_CFLAG)
 
 # BIND 10 libraries against which the test user libraries are linked.
-HOOKS_LIB      = $(top_builddir)/src/lib/hooks/libb10-hooks.la
-LOG_LIB        = $(top_builddir)/src/lib/log/libb10-log.la
-EXCEPTIONS_LIB = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-UTIL_LIB       = $(top_builddir)/src/lib/util/libb10-util.la
-THREADS_LIB    = $(top_builddir)/src/lib/util/threads/libb10-threads.la
+HOOKS_LIB      = $(top_builddir)/src/lib/hooks/libkea-hooks.la
+LOG_LIB        = $(top_builddir)/src/lib/log/libkea-log.la
+EXCEPTIONS_LIB = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+UTIL_LIB       = $(top_builddir)/src/lib/util/libkea-util.la
+THREADS_LIB    = $(top_builddir)/src/lib/util/threads/libkea-threads.la
 
 ALL_LIBS       = $(HOOKS_LIB) $(LOG_LIB) $(EXCEPTIONS_LIB) $(UTIL_LIB) $(THREADS_LIB)
 

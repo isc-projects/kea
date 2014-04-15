@@ -14,6 +14,6 @@ CLEANFILES = *.gcno *.gcda
 noinst_PROGRAMS = message
 
 message_SOURCES = message.cc
-message_LDADD   = $(top_builddir)/src/lib/log/libb10-log.la
-message_LDADD  += $(top_builddir)/src/lib/util/libb10-util.la
-message_LDADD  += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+message_LDADD   = $(top_builddir)/src/lib/log/libkea-log.la
+message_LDADD  += $(top_builddir)/src/lib/util/libkea-util.la
+message_LDADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

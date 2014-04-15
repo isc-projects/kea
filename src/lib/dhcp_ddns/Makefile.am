@@ -28,34 +28,34 @@ EXTRA_DIST = dhcp_ddns_messages.mes libdhcp_ddns.dox
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda dhcp_ddns_messages.h dhcp_ddns_messages.cc s-messages
 
-lib_LTLIBRARIES = libb10-dhcp_ddns.la
-libb10_dhcp_ddns_la_SOURCES  =
-libb10_dhcp_ddns_la_SOURCES += dhcp_ddns_log.cc dhcp_ddns_log.h
-libb10_dhcp_ddns_la_SOURCES += ncr_io.cc ncr_io.h
-libb10_dhcp_ddns_la_SOURCES += ncr_msg.cc ncr_msg.h
-libb10_dhcp_ddns_la_SOURCES += ncr_udp.cc ncr_udp.h
-libb10_dhcp_ddns_la_SOURCES += watch_socket.cc watch_socket.h
+lib_LTLIBRARIES = libkea-dhcp_ddns.la
+libkea_dhcp_ddns_la_SOURCES  =
+libkea_dhcp_ddns_la_SOURCES += dhcp_ddns_log.cc dhcp_ddns_log.h
+libkea_dhcp_ddns_la_SOURCES += ncr_io.cc ncr_io.h
+libkea_dhcp_ddns_la_SOURCES += ncr_msg.cc ncr_msg.h
+libkea_dhcp_ddns_la_SOURCES += ncr_udp.cc ncr_udp.h
+libkea_dhcp_ddns_la_SOURCES += watch_socket.cc watch_socket.h
 
-nodist_libb10_dhcp_ddns_la_SOURCES = dhcp_ddns_messages.cc dhcp_ddns_messages.h
+nodist_libkea_dhcp_ddns_la_SOURCES = dhcp_ddns_messages.cc dhcp_ddns_messages.h
 
-libb10_dhcp_ddns_la_CXXFLAGS = $(AM_CXXFLAGS)
-libb10_dhcp_ddns_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libb10_dhcp_ddns_la_LDFLAGS  = $(AM_LDFLAGS)
-libb10_dhcp_ddns_la_LDFLAGS += ${BOTAN_LDFLAGS}
-libb10_dhcp_ddns_la_LIBADD  =
-libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
-libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libb10-cryptolink.la
-libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
-libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
-libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
-libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
-libb10_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
-libb10_dhcp_ddns_la_LIBADD += ${BOTAN_LIBS} ${BOTAN_RPATH}
+libkea_dhcp_ddns_la_CXXFLAGS = $(AM_CXXFLAGS)
+libkea_dhcp_ddns_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libkea_dhcp_ddns_la_LDFLAGS  = $(AM_LDFLAGS)
+libkea_dhcp_ddns_la_LDFLAGS += ${BOTAN_LDFLAGS}
+libkea_dhcp_ddns_la_LIBADD  =
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_dhcp_ddns_la_LIBADD += ${BOTAN_LIBS} ${BOTAN_RPATH}
 
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
 # Boost headers when compiling with clang.
-libb10_dhcp_ddns_la_CXXFLAGS += -Wno-unused-parameter
+libkea_dhcp_ddns_la_CXXFLAGS += -Wno-unused-parameter
 endif
 

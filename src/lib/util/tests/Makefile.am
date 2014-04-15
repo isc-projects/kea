@@ -51,10 +51,10 @@ run_unittests_SOURCES += range_utilities_unittest.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
-run_unittests_LDADD = $(top_builddir)/src/lib/util/libb10-util.la
-run_unittests_LDADD += $(top_builddir)/src/lib/util/io/libb10-util-io.la
+run_unittests_LDADD = $(top_builddir)/src/lib/util/libkea-util.la
+run_unittests_LDADD += $(top_builddir)/src/lib/util/io/libkea-util-io.la
 run_unittests_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+run_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 run_unittests_LDADD += $(GTEST_LDADD)
 endif
 
