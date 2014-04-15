@@ -26,7 +26,7 @@ DOXYFILE_ENCODING      = UTF-8
 # identify the project. Note that if you do not use Doxywizard you need
 # to put quotes around the project name if it contains spaces.
 
-PROJECT_NAME           = BIND10
+PROJECT_NAME           = Kea
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number.
 # This could be handy for archiving the generated documentation or
@@ -661,22 +661,15 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT                  = ../src/bin/auth \
-                         ../src/bin/d2 \
+INPUT                  = ../src/bin/d2 \
                          ../src/bin/dhcp4 \
                          ../src/bin/dhcp6 \
-                         ../src/bin/resolver \
                          ../src/bin/sockcreator \
                          ../src/hooks/dhcp/user_chk \
-                         ../src/lib/acl \
                          ../src/lib/asiolink \
-                         ../src/lib/bench \
-                         ../src/lib/cache \
                          ../src/lib/cc \
                          ../src/lib/config \
                          ../src/lib/cryptolink \
-                         ../src/lib/datasrc \
-                         ../src/lib/datasrc/memory \
                          ../src/lib/dhcp \
                          ../src/lib/dhcp_ddns \
                          ../src/lib/dhcpsrv \
@@ -685,10 +678,7 @@ INPUT                  = ../src/bin/auth \
                          ../src/lib/hooks \
                          ../src/lib/log \
                          ../src/lib/log/compiler \
-                         ../src/lib/nsas \
                          ../src/lib/resolve \
-                         ../src/lib/server_common \
-                         ../src/lib/statistics \
                          ../src/lib/testutils \
                          ../src/lib/util \
                          ../src/lib/util/io \
