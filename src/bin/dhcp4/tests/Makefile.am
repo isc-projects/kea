@@ -95,17 +95,17 @@ nodist_dhcp4_unittests_SOURCES += marker_file.h test_libraries.h
 dhcp4_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp4_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp4_unittests_LDADD = $(GTEST_LDADD)
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

@@ -93,18 +93,18 @@ nodist_d2_unittests_SOURCES = ../d2_messages.h ../d2_messages.cc
 d2_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 d2_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 d2_unittests_LDADD = $(GTEST_LDADD)
-d2_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libb10-asiodns.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/dns/libb10-dns++.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-d2_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+d2_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
 endif
 

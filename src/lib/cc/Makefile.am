@@ -14,13 +14,13 @@ AM_CXXFLAGS += -Wno-unused-parameter
 AM_CXXFLAGS += -fno-strict-aliasing
 endif
 
-lib_LTLIBRARIES = libb10-cc.la
-libb10_cc_la_SOURCES = data.cc data.h session.cc session.h
-libb10_cc_la_SOURCES += logger.cc logger.h
-nodist_libb10_cc_la_SOURCES = cc_messages.cc cc_messages.h
-libb10_cc_la_SOURCES += proto_defs.cc
-nodist_libb10_cc_la_SOURCES += proto_defs.h
-libb10_cc_la_LIBADD = $(top_builddir)/src/lib/log/libb10-log.la
+lib_LTLIBRARIES = libkea-cc.la
+libkea_cc_la_SOURCES = data.cc data.h session.cc session.h
+libkea_cc_la_SOURCES += logger.cc logger.h
+nodist_libkea_cc_la_SOURCES = cc_messages.cc cc_messages.h
+libkea_cc_la_SOURCES += proto_defs.cc
+nodist_libkea_cc_la_SOURCES += proto_defs.h
+libkea_cc_la_LIBADD = $(top_builddir)/src/lib/log/libkea-log.la
 
 CLEANFILES = *.gcno *.gcda session_config.h cc_messages.cc cc_messages.h \
 	proto_defs.h s-messages
