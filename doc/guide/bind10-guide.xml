@@ -35,8 +35,8 @@
 
     <abstract>
       <para>
-        Kea is an implementation of the Dynamic Host Configuration
-        Protocol (DHCP) servers with development managed by Internet Systems
+        Kea is an open source implementation of the Dynamic Host Configuration
+        Protocol (DHCP) servers, developed and maintained by Internet Systems
         Consortium (ISC).
       </para>
 
@@ -61,8 +61,8 @@
   <chapter id="intro">
     <title>Introduction</title>
     <para>
-      Kea is an implementation of the new generation DHCP servers from
-      ISC. It supports both DHCPv4 and DHCPv6 protocols along with their
+      Kea is the next generation of DHCP servers developed by ISC.
+      It supports both DHCPv4 and DHCPv6 protocols along with their
       extensions (e.g. prefix delegation). It also supports the dynamic
       updates to DNS.
     </para>
@@ -72,10 +72,11 @@
       (<ulink url="http://bind10.isc.org"/>). In early 2014, ISC
       made the decision to discontinue active development of BIND 10 and
       continue development of Kea as standalone DHCP servers. As a result,
-      the DNS server implementation is going to be removed from
-      the Kea source tree over time. In order to remove the dependency on Python 3,
-      the BIND 10 framework will be replaced by the server startup and
-      configuration mechanisms written in C++.
+      the components and libraries related to the BIND10 framework and DNS
+      are going to be removed from the Kea source tree over time.
+      In order to remove the dependency on Python 3, the BIND 10 framework
+      will be replaced by the server startup and configuration mechanisms
+      written in C++.
     </para>
 
     <note>
@@ -95,15 +96,16 @@
     </para>
 
     <section>
+      <!-- todo: revisit (maybe extend) the list of supported platforms -->
       <title>Supported Platforms</title>
       <para>
-  Kea builds have been tested on (in no particular order)
-  Debian GNU/Linux 6 and unstable, Ubuntu 9.10, NetBSD 5,
-  Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
-  MacOS 10.6 and 10.7, and OpenBSD 5.1.
+        Kea builds have been tested on (in no particular order)
+        Debian GNU/Linux 6 and unstable, Ubuntu 9.10, NetBSD 5,
+        Solaris 10 and 11, FreeBSD 7 and 8, CentOS Linux 5.3,
+        MacOS 10.6 and 10.7, and OpenBSD 5.1.
 
-  It has been tested on Sparc, i386, and amd64 hardware
-  platforms.
+        It has been tested on Sparc, i386, and amd64 hardware
+        platforms.
 
         It is planned for Kea to build, install and run on
         Windows and standard Unix-type platforms.
@@ -357,6 +359,7 @@ var/
         <listitem>
           <para>Go into the source and run configure:
             <screen>$ <userinput>cd kea</userinput>
+$ <userinput>autoreconf --install</userinput>
 $ <userinput>./configure</userinput></screen>
           </para>
         </listitem>
@@ -574,7 +577,8 @@ as a dependency earlier -->
     <section id="install">
       <title>Installation from source</title>
       <para>
-        Kea is open source software written in C++ and Python.
+        Kea is open source software written in C++ (some components of the
+        BIND 10 framework are written in Python).
         It is freely available in source code form from ISC as a
         downloadable tar file or via Kea Git code revision control
         service. (It may also be available in pre-compiled ready-to-use
@@ -1738,8 +1742,8 @@ Parameters:
 	To add a process to the set, let's say the DHCPv6 server (which
 	is not started by default), you would do this:
         <screen>&gt; <userinput>config add Init/components b10-dhcp6</userinput>
-&gt; <userinput>config set Init/components/b10-resolver/kind needed</userinput>
-&gt; <userinput>config set Init/components/b10-resolver/priority 10</userinput>
+&gt; <userinput>config set Init/components/b10-dhcp6/kind needed</userinput>
+&gt; <userinput>config set Init/components/b10-dhcp6/priority 10</userinput>
 &gt; <userinput>config commit</userinput></screen></para>
 
       <para>
@@ -5976,9 +5980,9 @@ Right now you can only see what their names are if they are running
 
        <para>
 
-          To illustrate this, suppose you want the cache library
+          To illustrate this, suppose you want the dhcpsrv library
           to log messages of severity DEBUG, and the rest of the
-          resolver code to log messages of severity INFO. To achieve
+          Dhcp4 code to log messages of severity INFO. To achieve
           this you specify two loggers, one with the name
           <quote>Dhcp4</quote> and severity INFO, and one with
           the name <quote>Dhcp4.dhcpsrv</quote> with severity
