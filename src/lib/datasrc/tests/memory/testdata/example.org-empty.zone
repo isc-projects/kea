@@ -1,3 +1,0 @@
-;; empty example.org zone
-example.org. 3600 IN SOA	ns1.example.org. bugs.x.w.example.org. 71 3600 300 3600000 3600
-example.org. 3600 IN NS		ns1.example.org.

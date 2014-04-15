@@ -14,12 +14,5 @@ pythondir = $(config_plugindir)
 CLEANFILES = b10logging.pyc tsig_keys.pyc datasrc.spec
 CLEANDIRS = __pycache__
 
-if WANT_DNS
-
-config_plugin_DATA += datasrc.spec
-python_PYTHON += datasrc_config_plugin.py
-
-endif
-
 clean-local:
 	rm -rf $(CLEANDIRS)
