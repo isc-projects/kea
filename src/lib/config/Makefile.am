@@ -14,18 +14,18 @@ s-messages: config_messages.mes
 
 BUILT_SOURCES = config_messages.h config_messages.cc
 
-lib_LTLIBRARIES = libb10-cfgclient.la
-libb10_cfgclient_la_SOURCES = config_data.h config_data.cc
-libb10_cfgclient_la_SOURCES += module_spec.h module_spec.cc
-libb10_cfgclient_la_SOURCES += ccsession.cc ccsession.h
-libb10_cfgclient_la_SOURCES += config_log.h config_log.cc
+lib_LTLIBRARIES = libkea-cfgclient.la
+libkea_cfgclient_la_SOURCES = config_data.h config_data.cc
+libkea_cfgclient_la_SOURCES += module_spec.h module_spec.cc
+libkea_cfgclient_la_SOURCES += ccsession.cc ccsession.h
+libkea_cfgclient_la_SOURCES += config_log.h config_log.cc
 
-libb10_cfgclient_la_LIBADD = $(top_builddir)/src/lib/cc/libb10-cc.la
-libb10_cfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+libkea_cfgclient_la_LIBADD = $(top_builddir)/src/lib/cc/libkea-cc.la
+libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
-libb10_cfgclient_la_LDFLAGS = -no-undefined -version-info 1:0:1
+libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 1:0:1
 
-nodist_libb10_cfgclient_la_SOURCES  = config_messages.h config_messages.cc
+nodist_libkea_cfgclient_la_SOURCES  = config_messages.h config_messages.cc
 
 # The message file should be in the distribution.
 EXTRA_DIST = config_messages.mes
