@@ -1,3 +1,0 @@
-BIND.           3600    CH  SOA BIND. BIND. 3 3600 300 36000 3600
-BIND.           3600    CH  NS  BIND.
-VERSION.BIND.   3600    CH  TXT "10"

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.59])
-AC_INIT(bind10, 20140313, bind10-dev@isc.org)
+AC_INIT(bind10, 20140313, kea-dev@isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -23,55 +23,6 @@ AC_CONFIG_MACRO_DIR([m4macros])
 
 # Checks for programs.
 AC_PROG_CXX
-
-want_dns=yes
-AC_ARG_ENABLE(dns,
-  [AC_HELP_STRING([--disable-dns],
-  [disable DNS components])],
-  [want_dns=$enableval])
-AM_CONDITIONAL([WANT_DNS], [test "$want_dns" = "yes"])
-if test "$want_dns" = "yes"; then
-   WANT_DNS=yes
-else
-   WANT_DNS=no
-fi
-AC_SUBST(WANT_DNS)
-
-want_dhcp=yes
-AC_ARG_ENABLE(dhcp,
-  [AC_HELP_STRING([--disable-dhcp],
-  [disable DHCP components])],
-  [want_dhcp=$enableval])
-AM_CONDITIONAL([WANT_DHCP], [test "$want_dhcp" = "yes"])
-if test "$want_dhcp" = "yes"; then
-   WANT_DHCP=yes
-else
-   WANT_DHCP=no
-fi
-AC_SUBST(WANT_DHCP)
-
-want_experimental_resolver=no
-AC_ARG_ENABLE(experimental-resolver,
-  [AC_HELP_STRING([--enable-experimental-resolver],
-  [enable the experimental resolver [default=no]])],
-  [want_experimental_resolver=$enableval])
-AM_CONDITIONAL([WANT_EXPERIMENTAL_RESOLVER], [test "$want_experimental_resolver" = "yes"])
-if test "$want_experimental_resolver" = "yes"; then
-   WANT_EXPERIMENTAL_RESOLVER=yes
-else
-   WANT_EXPERIMENTAL_RESOLVER=no
-fi
-AC_SUBST(WANT_EXPERIMENTAL_RESOLVER)
-
-# At least DNS or DHCP components must be enabled
-if test "$want_dns" != "yes" -a "$want_dhcp" != "yes"; then
-    AC_MSG_ERROR([At least one of DNS or DHCP components must be enabled to do a BIND 10 build.])
-fi
-
-# Experimental resolver requires DNS components to be enabled
-if test "$want_experimental_resolver" = "yes" -a "$want_dns" != "yes"; then
-    AC_MSG_ERROR([You must also enable DNS components if you want to enable the experimental resolver.])
-fi
 
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
@@ -514,7 +465,7 @@ if test "X$GXX" = "Xyes" -a "$werror_ok" = 1; then
 		 PYTHON_CXXFLAGS="${PYTHON_CXXFLAGS} -Wno-unused-parameter"
 		 AC_SUBST(PYTHON_CXXFLAGS)
 		],
-		[AC_MSG_ERROR([Can't compile against Python.h.  If you're using MacOS X and have installed Python with Homebrew, see http://bind10.isc.org/wiki/SystemNotesMacOSX])]
+		[AC_MSG_ERROR([Can't compile against Python.h.  If you're using MacOS X and have installed Python with Homebrew, see http://kea.isc.org/wiki/SystemNotesMacOSX])]
                 )
                 ]
 	)
@@ -926,10 +877,6 @@ elif test "${mysql_config}" != "no" ; then
 fi
 
 if test "$MYSQL_CONFIG" != "" ; then
-    if test "$want_dhcp" != "yes"; then
-        AC_MSG_ERROR([--with-dhcp-mysql should not be used when DHCP components are disabled])
-    fi
-
     if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
         AC_MSG_ERROR([--with-dhcp-mysql should point to a mysql_config program])
     fi
@@ -1434,16 +1381,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  ext/Makefile
                  m4macros/Makefile
                  Makefile
-                 src/bin/auth/auth.spec.pre
-                 src/bin/auth/benchmarks/Makefile
-                 src/bin/auth/gen-statisticsitems.py.pre
-                 src/bin/auth/Makefile
-                 src/bin/auth/spec_config.h.pre
-                 src/bin/auth/tests/Makefile
-                 src/bin/auth/tests/testdata/example-base.zone
-                 src/bin/auth/tests/testdata/example-nsec3.zone
-                 src/bin/auth/tests/testdata/example.zone
-                 src/bin/auth/tests/testdata/Makefile
                  src/bin/bind10/bind10
                  src/bin/bind10/init.py
                  src/bin/bind10/Makefile
@@ -1473,15 +1410,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/d2/spec_config.h.pre
                  src/bin/d2/tests/Makefile
                  src/bin/d2/tests/test_data_files_config.h
-                 src/bin/dbutil/dbutil.py
-                 src/bin/dbutil/Makefile
-                 src/bin/dbutil/run_dbutil.sh
-                 src/bin/dbutil/tests/dbutil_test.sh
-                 src/bin/dbutil/tests/Makefile
-                 src/bin/dbutil/tests/testdata/Makefile
-                 src/bin/ddns/ddns.py
-                 src/bin/ddns/Makefile
-                 src/bin/ddns/tests/Makefile
                  src/bin/dhcp4/Makefile
                  src/bin/dhcp4/spec_config.h.pre
                  src/bin/dhcp4/tests/Makefile
@@ -1494,26 +1422,11 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/dhcp6/tests/marker_file.h
                  src/bin/dhcp6/tests/test_data_files_config.h
                  src/bin/dhcp6/tests/test_libraries.h
-                 src/bin/loadzone/loadzone.py
-                 src/bin/loadzone/Makefile
-                 src/bin/loadzone/run_loadzone.sh
-                 src/bin/loadzone/tests/correct/correct_test.sh
-                 src/bin/loadzone/tests/correct/Makefile
-                 src/bin/loadzone/tests/Makefile
                  src/bin/Makefile
-                 src/bin/memmgr/Makefile
-                 src/bin/memmgr/memmgr.py
-                 src/bin/memmgr/memmgr.spec.pre
-                 src/bin/memmgr/tests/Makefile
                  src/bin/msgq/Makefile
                  src/bin/msgq/msgq.py
                  src/bin/msgq/run_msgq.sh
                  src/bin/msgq/tests/Makefile
-                 src/bin/resolver/bench/Makefile
-                 src/bin/resolver/Makefile
-                 src/bin/resolver/resolver.spec.pre
-                 src/bin/resolver/spec_config.h.pre
-                 src/bin/resolver/tests/Makefile
                  src/bin/sockcreator/Makefile
                  src/bin/sockcreator/tests/Makefile
                  src/bin/stats/Makefile
@@ -1530,41 +1443,15 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/bin/usermgr/Makefile
                  src/bin/usermgr/run_b10-cmdctl-usermgr.sh
                  src/bin/usermgr/tests/Makefile
-                 src/bin/xfrin/Makefile
-                 src/bin/xfrin/run_b10-xfrin.sh
-                 src/bin/xfrin/tests/Makefile
-                 src/bin/xfrin/tests/testdata/Makefile
-                 src/bin/xfrin/tests/xfrin_test
-                 src/bin/xfrin/xfrin.py
-                 src/bin/xfrout/Makefile
-                 src/bin/xfrout/run_b10-xfrout.sh
-                 src/bin/xfrout/tests/Makefile
-                 src/bin/xfrout/tests/xfrout_test
-                 src/bin/xfrout/tests/xfrout_test.py
-                 src/bin/xfrout/xfrout.py
-                 src/bin/xfrout/xfrout.spec.pre
-                 src/bin/zonemgr/Makefile
-                 src/bin/zonemgr/run_b10-zonemgr.sh
-                 src/bin/zonemgr/tests/Makefile
-                 src/bin/zonemgr/tests/zonemgr_test
-                 src/bin/zonemgr/zonemgr.py
-                 src/bin/zonemgr/zonemgr.spec.pre
                  src/hooks/dhcp/Makefile
                  src/hooks/dhcp/user_chk/Makefile
                  src/hooks/dhcp/user_chk/tests/Makefile
                  src/hooks/dhcp/user_chk/tests/test_data_files_config.h
                  src/hooks/Makefile
-                 src/lib/acl/Makefile
-                 src/lib/acl/tests/Makefile
                  src/lib/asiodns/Makefile
                  src/lib/asiodns/tests/Makefile
                  src/lib/asiolink/Makefile
                  src/lib/asiolink/tests/Makefile
-                 src/lib/bench/example/Makefile
-                 src/lib/bench/Makefile
-                 src/lib/bench/tests/Makefile
-                 src/lib/cache/Makefile
-                 src/lib/cache/tests/Makefile
                  src/lib/cc/Makefile
                  src/lib/cc/session_config.h.pre
                  src/lib/cc/tests/Makefile
@@ -1575,14 +1462,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/config/tests/testdata/Makefile
                  src/lib/cryptolink/Makefile
                  src/lib/cryptolink/tests/Makefile
-                 src/lib/datasrc/datasrc_config.h.pre
-                 src/lib/datasrc/Makefile
-                 src/lib/datasrc/memory/benchmarks/Makefile
-                 src/lib/datasrc/memory/Makefile
-                 src/lib/datasrc/tests/Makefile
-                 src/lib/datasrc/tests/memory/Makefile
-                 src/lib/datasrc/tests/memory/testdata/Makefile
-                 src/lib/datasrc/tests/testdata/Makefile
                  src/lib/dhcp_ddns/Makefile
                  src/lib/dhcp_ddns/tests/Makefile
                  src/lib/dhcp/Makefile
@@ -1590,7 +1469,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/dhcpsrv/tests/Makefile
                  src/lib/dhcpsrv/tests/test_libraries.h
                  src/lib/dhcp/tests/Makefile
-                 src/lib/dns/benchmarks/Makefile
                  src/lib/dns/gen-rdatacode.py
                  src/lib/dns/Makefile
                  src/lib/dns/python/Makefile
@@ -1618,11 +1496,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
                  src/lib/Makefile
-                 src/lib/nsas/Makefile
-                 src/lib/nsas/tests/Makefile
                  src/lib/python/bind10_config.py
-                 src/lib/python/isc/acl/Makefile
-                 src/lib/python/isc/acl/tests/Makefile
                  src/lib/python/isc/bind10/Makefile
                  src/lib/python/isc/bind10/tests/Makefile
                  src/lib/python/isc/cc/cc_generated/Makefile
@@ -1632,11 +1506,6 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/python/isc/config/Makefile
                  src/lib/python/isc/config/tests/config_test
                  src/lib/python/isc/config/tests/Makefile
-                 src/lib/python/isc/datasrc/Makefile
-                 src/lib/python/isc/datasrc/tests/Makefile
-                 src/lib/python/isc/datasrc/tests/testdata/Makefile
-                 src/lib/python/isc/ddns/Makefile
-                 src/lib/python/isc/ddns/tests/Makefile
                  src/lib/python/isc/dns/Makefile
                  src/lib/python/isc/log/Makefile
                  src/lib/python/isc/log_messages/Makefile
@@ -1645,18 +1514,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/python/isc/log/tests/log_console.py
                  src/lib/python/isc/log/tests/Makefile
                  src/lib/python/isc/Makefile
-                 src/lib/python/isc/memmgr/Makefile
-                 src/lib/python/isc/memmgr/tests/Makefile
-                 src/lib/python/isc/memmgr/tests/testdata/Makefile
                  src/lib/python/isc/net/Makefile
                  src/lib/python/isc/net/tests/Makefile
-                 src/lib/python/isc/notify/Makefile
-                 src/lib/python/isc/notify/tests/Makefile
-                 src/lib/python/isc/notify/tests/notify_out_test
-                 src/lib/python/isc/server_common/Makefile
-                 src/lib/python/isc/server_common/tests/Makefile
-                 src/lib/python/isc/statistics/Makefile
-                 src/lib/python/isc/statistics/tests/Makefile
                  src/lib/python/isc/sysinfo/Makefile
                  src/lib/python/isc/sysinfo/tests/Makefile
                  src/lib/python/isc/testutils/Makefile
@@ -1664,16 +1523,7 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/python/isc/util/cio/tests/Makefile
                  src/lib/python/isc/util/Makefile
                  src/lib/python/isc/util/tests/Makefile
-                 src/lib/python/isc/xfrin/Makefile
-                 src/lib/python/isc/xfrin/tests/Makefile
                  src/lib/python/Makefile
-                 src/lib/resolve/Makefile
-                 src/lib/resolve/tests/Makefile
-                 src/lib/server_common/Makefile
-                 src/lib/server_common/tests/data_path.h
-                 src/lib/server_common/tests/Makefile
-                 src/lib/statistics/Makefile
-                 src/lib/statistics/tests/Makefile
                  src/lib/testutils/Makefile
                  src/lib/testutils/testdata/Makefile
                  src/lib/util/io/Makefile
@@ -1687,14 +1537,8 @@ AC_CONFIG_FILES([compatcheck/Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
-                 src/lib/xfr/Makefile
-                 src/lib/xfr/tests/Makefile
                  src/Makefile
-                 tests/lettuce/Makefile
-                 tests/lettuce/setup_intree_bind10.sh
                  tests/Makefile
-                 tests/tools/badpacket/Makefile
-                 tests/tools/badpacket/tests/Makefile
                  tests/tools/Makefile
                  tests/tools/perfdhcp/Makefile
                  tests/tools/perfdhcp/tests/Makefile
@@ -1708,19 +1552,9 @@ AC_CONFIG_FILES([compatcheck/Makefile
            chmod +x src/bin/bindctl/tests/bindctl_test
            chmod +x src/bin/cmdctl/run_b10-cmdctl.sh
            chmod +x src/bin/cmdctl/tests/cmdctl_test
-           chmod +x src/bin/dbutil/run_dbutil.sh
-           chmod +x src/bin/dbutil/tests/dbutil_test.sh
-           chmod +x src/bin/loadzone/run_loadzone.sh
-           chmod +x src/bin/loadzone/tests/correct/correct_test.sh
            chmod +x src/bin/msgq/run_msgq.sh
            chmod +x src/bin/sysinfo/run_sysinfo.sh
            chmod +x src/bin/usermgr/run_b10-cmdctl-usermgr.sh
-           chmod +x src/bin/xfrin/run_b10-xfrin.sh
-           chmod +x src/bin/xfrin/tests/xfrin_test
-           chmod +x src/bin/xfrout/run_b10-xfrout.sh
-           chmod +x src/bin/xfrout/tests/xfrout_test
-           chmod +x src/bin/zonemgr/run_b10-zonemgr.sh
-           chmod +x src/bin/zonemgr/tests/zonemgr_test
            chmod +x src/lib/dns/gen-rdatacode.py
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
@@ -1741,7 +1575,7 @@ dnl
 
 cat > config.report << END
 
-     BIND 10 source configure results:
+       Kea source configure results:
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 Package:
@@ -1832,11 +1666,6 @@ END
 fi
 
 cat >> config.report << END
-
-Components:
-  DHCP: $want_dhcp
-  DNS: $want_dns
-  Experimental resolver: $want_experimental_resolver
 
 Features:
   $enable_features

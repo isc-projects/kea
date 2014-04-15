@@ -1,4 +1,0 @@
-; a zone file that can be used with any origin.
-
-@ 3600 IN SOA . . 1 0 0 0 0
-@ 3600 IN NS ns1

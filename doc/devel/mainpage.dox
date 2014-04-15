@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -13,29 +13,28 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 /**
- * @mainpage BIND10 Developer's Guide
+ * @mainpage Kea Developer's Guide
  *
- * Welcome to BIND10 Developer's Guide. This documentation is addressed
+ * Welcome to Kea Developer's Guide. This documentation is addressed
  * at existing and prospecting developers and programmers and provides
  * information needed to both extend and maintain BIND 10.
  *
- * If you wish to write "hook" code - code that is loaded by BIND 10 at
+ * If you wish to write "hook" code - code that is loaded by Kea at
  * run-time and modifies its behavior you should read the section
  * @ref hooksdgDevelopersGuide.
  *
- * BIND 10 maintenance information is divided into a number of sections
- * depending on focus.  DNS-specific issues are covered in the
- * @ref dnsMaintenanceGuide while information on DHCP-specific topics can
- * be found in the @ref dhcpMaintenanceGuide.  General BIND 10 topics, not
- * specific to any protocol, are discussed in @ref miscellaneousTopics.
+ * Kea maintenance information is divided into a number of sections
+ * depending on focus. Information on DHCP-specific topics can be found
+ * in the @ref dhcpMaintenanceGuide.  General topics, are discussed in
+ * @ref miscellaneousTopics.
  *
  * If you are a user or system administrator, rather than software engineer,
  * you should read the
- * <a href="http://bind10.isc.org/docs/bind10-guide.html">BIND10
- * Guide (Administrator Reference for BIND10)</a> instead.
+ * <a href="http://kea.isc.org/docs/bind10-guide.html">Kea
+ * Guide (Administrator Reference for Kea)</a> instead.
  *
  * Regardless of your field of expertise, you are encouraged to visit the
- * <a href="http://bind10.isc.org/">BIND10 webpage (http://bind10.isc.org)</a>
+ * <a href="http://kea.isc.org/">Kea webpage (http://kea.isc.org)</a>
  *
  * @section contrib Contributor's Guide
  * - @subpage contributorGuide
@@ -47,11 +46,6 @@
  * - @subpage hooksComponentDeveloperGuide
  * - @subpage hooksmgMaintenanceGuide
  * - @subpage libdhcp_user_chk
- *
- * @section dnsMaintenanceGuide DNS Maintenance Guide
- * - Authoritative DNS (todo)
- * - Recursive resolver (todo)
- * - @subpage DataScrubbing
  *
  * @section dhcpMaintenanceGuide DHCP Maintenance Guide
  * - @subpage dhcp4

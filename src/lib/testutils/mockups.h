@@ -22,7 +22,7 @@
 #include <cc/data.h>
 #include <cc/session.h>
 
-#include <xfr/xfrout_client.h>
+//#include <xfr/xfrout_client.h>
 
 #include <asiodns/asiodns.h>
 
@@ -173,8 +173,11 @@ private:
     bool done_;
 };
 
+// Commenting out this class as it is not used anyware. The removal of this class
+// allows for removal of the lib/xfr.
+
 // Mock Xfrout client
-class MockXfroutClient : public isc::xfr::AbstractXfroutClient {
+/*class MockXfroutClient : public isc::xfr::AbstractXfroutClient {
 public:
     MockXfroutClient() :
         is_connected_(false), connect_ok_(true), send_ok_(true),
@@ -215,7 +218,7 @@ private:
     bool connect_ok_;
     bool send_ok_;
     bool disconnect_ok_;
-};
+    }; */
 
 } // end of testutils
 } // end of isc
