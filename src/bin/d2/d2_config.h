@@ -540,8 +540,9 @@ public:
 
     /// @brief Performs the actual parsing of the given  "tsig_key" element.
     ///
-    /// The results of the parsing are retained internally for use during
-    /// commit.
+    /// Parses a configuration for the elements needed to instantiate a
+    /// TSIGKeyInfo, validates those entries, creates a TSIGKeyInfo instance
+    /// then attempts to add to a list of keys
     ///
     /// @param key_config is the "tsig_key" configuration to parse
     virtual void build(isc::data::ConstElementPtr key_config);
@@ -559,9 +560,8 @@ public:
     /// @return returns a pointer to newly created parser.
     virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
                                                     config_id);
-
-    /// @brief Instantiates a DnsServerInfo from internal data values
-    /// saves it to the storage area pointed to by servers_.
+    /// @brief commits the TSIGKeyInfo configuration
+    /// At the moment this method is a NOP.
     virtual void commit();
 
 private:
@@ -629,7 +629,7 @@ private:
     /// the list of newly created TSIGKeyInfo instances. This is given to us
     /// as a constructor argument by an upper level.
     TSIGKeyInfoMapPtr keys_;
-    
+
     /// @brief Local storage area to which individual key parsers commit.
     TSIGKeyInfoMapPtr local_keys_;
 

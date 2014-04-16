@@ -261,9 +261,8 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
                          "}";
     ASSERT_TRUE(fromJSON(config));
 
-    // Verify that build succeeds but commit fails on blank name.
-    EXPECT_NO_THROW(parser_->build(config_set_));
-    EXPECT_THROW(parser_->commit(), D2CfgError);
+    // Verify that build fails on blank name.
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Config with a blank algorithm entry.
     config = "{"
@@ -274,9 +273,8 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
 
     ASSERT_TRUE(fromJSON(config));
 
-    // Verify that build succeeds but commit fails on blank algorithm.
-    EXPECT_NO_THROW(parser_->build(config_set_));
-    EXPECT_THROW(parser_->commit(), D2CfgError);
+    // Verify that build fails on blank algorithm.
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Config with a blank secret entry.
     config = "{"
@@ -287,9 +285,8 @@ TEST_F(TSIGKeyInfoTest, invalidEntry) {
 
     ASSERT_TRUE(fromJSON(config));
 
-    // Verify that build succeeds but commit fails on blank secret.
-    EXPECT_NO_THROW(parser_->build(config_set_));
-    EXPECT_THROW(parser_->commit(), D2CfgError);
+    // Verify that build fails blank secret
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 }
 
 /// @brief Verifies that TSIGKeyInfo parsing creates a proper TSIGKeyInfo
@@ -347,10 +344,7 @@ TEST_F(TSIGKeyInfoTest, invalidTSIGKeyList) {
     ASSERT_NO_THROW(parser.reset(new TSIGKeyInfoListParser("test", keys_)));
 
     // Verify that the list builds without errors.
-    ASSERT_NO_THROW(parser->build(config_set_));
-
-    // Verify that the list commit fails.
-    EXPECT_THROW(parser->commit(), D2CfgError);
+    EXPECT_THROW(parser->build(config_set_), D2CfgError);
 }
 
 /// @brief Verifies that attempting to parse an invalid list of TSIGKeyInfo
@@ -380,10 +374,7 @@ TEST_F(TSIGKeyInfoTest, duplicateTSIGKey) {
     ASSERT_NO_THROW(parser.reset(new TSIGKeyInfoListParser("test", keys_)));
 
     // Verify that the list builds without errors.
-    ASSERT_NO_THROW(parser->build(config_set_));
-
-    // Verify that the list commit fails.
-    EXPECT_THROW(parser->commit(), D2CfgError);
+    EXPECT_THROW(parser->build(config_set_), D2CfgError);
 }
 
 /// @brief Verifies a valid list of TSIG Keys parses correctly.
@@ -1013,7 +1004,7 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     EXPECT_TRUE(cfg_mgr_->reverseUpdatesEnabled());
 
     // Verify that parsing the exact same configuration a second time
-    // does not cause a duplicate value errors. 
+    // does not cause a duplicate value errors.
     answer_ = cfg_mgr_->parseConfig(config_set_);
     ASSERT_TRUE(checkAnswer(0));
 }
