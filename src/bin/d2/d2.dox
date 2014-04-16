@@ -24,7 +24,7 @@ carrying out DDNS conversations with the appropriate DNS servers such that they
 update the DNS data.
 
 The design documentation for D2 can be found here:
-<a href="http://kea.isc.org/wiki/DhcpDdnsDesign">D2 Design</a>).
+<a href="http://kea.isc.org/wiki/DhcpDdnsDesign">D2 Design</a>.
 
 This document contains several UML diagrams, and a few conventions used within
 these diagrams are worth noting:
@@ -38,65 +38,65 @@ sometimes through a small chain of typedefs.  These typedefs are shown for
 accuracy but are unimportant to a general discussion.
 
 
-@section d2CPL Controllable Process Layer (CPL):
+@section d2CPL Controllable Process Layer (CPL)
 
 D2 is built upon an abstract set of classes referred to as the Controllable
 Process Layer or CPL.  This layer provides the essentials for a controllable,
 configurable, asynchronous process.  They are the result of an effort to
-distill the common facets of process control currently duplicated in in Kea's
+distill the common facets of process control currently duplicated in Kea's
 DHCP servers into a reusable construct.  The classes which form this abstract
 base are shown in the following class diagram:
 
 @image html abstract_app_classes.svg  "Controllable Process Layer Classes"
 
 - isc::d2::DControllerBase - provides all of the services necessary to manage
-an application process class derived from DProcess. These services include:
+an application process class derived from isc::d2::DProcess. These services include:
     - Command line argument handling
     - Process instantiation and initialization
     - Support for stand-alone execution
     - Support for integrated operation as a BIND10 module (session management
       and event handling)
     - Process event loop invocation and shutdown
+    .
+    It creates and manages an instance of isc::d2::DProcessBase.  The CPL is designed
+    for asynchronous event processing applications.  It is constructed to use ASIO
+    library for IO processing.  DControllerBase own an isc::asiolink::io_service instance and it pas    ses this into the @c DProcessBase constructor and it is this
+    service that is used drivel the process's event loop.
 
-It creates and manages an instance of DProcessBase.  The CPL is designed
-for asynchronous event processing applications.  It is constructed to use ASIO
-library for IO processing.  DControllerBase own an isc::asiolink::io_service instance and it passes this into the DProcessBase constructor and it is this
-service that is used drivel the process's event loop.
+    @c DControllerBase also provides the ability to operate one of two modes:
+    "stand-alone" mode or "managed" mode.  In stand-alone mode, the controller has
+    no IO of it's own, thus there is two-way control communication between the application and the outside world.
 
-DControllerBase also provides the ability to operate one of two modes:
-"stand-alone" mode or "managed" mode.  In stand-alone mode, the controller has
- no IO of it's own, thus there is two-way control communication between the application and the outside world.
+    In "managed mode" the controller creates a BIND10 Session, allowing it to
+    participate as a BIND10 module and therefore receive control commands such as
+    configuration updates, status requests, and shutdown.  BIND10 modules are
+    required to supply two callbacks: one for configuration events and one for
+    command events. @c DControllerBase supplies these callbacks which largely
+    pass the information through to its @c DProcessBase instance.  The key aspect
+    to take from this is that the controller handles the interface for receiving
+    asynchronous commands and the invokes the appropriate services in the process's
+    interface.
 
-@todo DControllerBase does yet support reading the configuration from a
-command line argument. It's command line argument processing can be very easily
-extended to do so.
+    @todo DControllerBase does yet support reading the configuration from a
+    command line argument. It's command line argument processing can be very easily
+    extended to do so.
 
-In "managed mode" the controller creates a BIND10 Session, allowing it to
-participate as a BIND10 module and therefore receive control commands such as
-configuration updates, status requests, and shutdown.  BIND10 modules are
-required to supply two callbacks: one for configuration events and one for
-command events.  DControllerBase supplies these callbacks which largely
-pass the information through to its DProcessBase instance.  The key aspect
-to take from this is that the controller handles the interface for receiving
-asynchronous commands and the invokes the appropriate services in the process's
-interface.
-
-@todo At the time of this writing Kea is being separated from the BIND10
-framework.  As such, use of the BIND10 Session will be removed but could
-readily be replaced with an authenticated socket connection for receiving and
-responding to directives asynchronously.
+    @todo At the time of this writing Kea is being separated from the BIND10
+    framework.  As such, use of the BIND10 Session will be removed but could
+    readily be replaced with an authenticated socket connection for receiving and
+    responding to directives asynchronously.
 
 - isc::d2::DProcessBase - defines an asynchronous-event processor (i.e.
 application) which provides a uniform interface to:
     - Instantiate and initialize a process instance
     - "Run" the application by starting its event loop
     - Inject events to control the process
-It owns an instance of DCfgMgrBase.
+It owns an instance of @c DCfgMgrBase.
 
 - isc::d2::DCfgMgrBase - provides the mechanisms for managing an application's
 configuration.  This includes services for parsing sets of configuration
 values, storing the parsed information in its converted form, and retrieving
-the information on demand.  It owns an instance of DCfgContextBase, which
+the information on demand.  It owns an instance of @c DCfgContextBase, which
 provides a "global" context for information that is accessible before, during,
 and after parsing.
 
@@ -120,13 +120,13 @@ in the diagram below:
 @image html d2_app_classes.svg "D2's CPL Derivations"
 
 - isc::d2::D2Controller - entry point for running D2, it processes command line
-options, starts and controls the application process, D2Process.
+options, starts and controls the application process, @c D2Process.
 
 - isc::d2::D2Process - creates and manages D2's primary resources and implements
 the main event loop described in @ref d2EventLoop.
 
 - isc::d2::D2CfgMgr - creates, updates, and provides access to D2's application
-configuration which is embodied by D2Context.
+configuration which is embodied by @c D2CfgContext.
 
 - isc::d2::D2CfgContext - warehouses D2's application configuration.
 
@@ -137,7 +137,7 @@ servers.  It's configuration information is organized into a hierarchical data
 model which is mirrored in the implementation by a hierarchy of parser classes
 and the runtime classes they instantiate.
 
-D2's data model is is organized as follows:
+D2's data model is organized as follows:
 
 - A set of application level values such as the D2's IP address, port
 
@@ -151,7 +151,7 @@ The runtime classes that embody this model are shown in the following diagram:
 
 @image html config_data_classes.svg "D2's Configuration Data Classes"
 
-- isc::d2::D2CfgContext - D2-specific derivation of DCfgContextBase. It
+- isc::d2::D2CfgContext - D2-specific derivation of @c DCfgContextBase. It
 houses the "global" configuration for an instance of D2.
 - isc::d2::DdnsDomainListMgr - manages a list of domains.  Currently there is
 one manager instance for the list of forward domains,  and one for the list of
@@ -188,7 +188,7 @@ The underlying common libraries for configuration parsing support configuration
 input in JSON format, that complies with a fixed set of generic constructs that
 may be described by a spec file (also JSON).  This mechanism is subject to
 change, but in the meantime, the spec file describe D2's configuration may be
-found here: src/bin/d2/dhcp-ddns.spec
+found here: @c src/bin/d2/dhcp-ddns.spec
 
 @section d2NCRReceipt Request Reception and Queueing
 
@@ -198,7 +198,7 @@ shown in the diagram below:
 
 @image html request_mgt_classes.svg  "Request Management Classes"
 
-- isc::d2::D2QueueMgr - owned by D2Process, it listens for NameChangeRequests
+- isc::d2::D2QueueMgr - owned by @c D2Process, it listens for NameChangeRequests
 and queues them for processing. It also provides services for adding,
 finding, and removing queue entries.  It owns the interface used to receive
 requests and thus shields the remainder of D2 from any specific knowledge or
@@ -222,7 +222,7 @@ The DDNS protocol can lead to a multiple step conversation between the updater
 and the DNS server to update entries for a single client.  In addition,
 NameChangeRequests can request changes be made for both forward and reverse
 DNS.  In order to carry out the appropriate conversation, D2 wraps each request
-in a stateful, transaction.
+in a stateful transaction.
 
 Working such transactions serially can be inefficient, especially if those
 requests involve different DNS servers. Therefore, D2 has been designed to
@@ -234,7 +234,7 @@ following diagram:
 
 @image html update_exec_classes.svg "Update Execution Classes"
 
-- isc::d2::D2UpdateMgr owned by D2Process, orchestrates the fulfillment of
+- isc::d2::D2UpdateMgr owned by @c D2Process, orchestrates the fulfillment of
 each request by managing the execution of its transaction.  Its high level
 method @ref isc::d2::D2UpdateMgr::sweep() is meant to be called whenever IO
 events occur.  The following steps are performed each time the method is called:
@@ -259,7 +259,7 @@ exchange with a DNS server, it uses an instance of this class to do it.
 
 Now that all of the primary components have been introduced it is worth while
 discussing D2's main event loop.  As mentioned earlier D2 is constructed around
-the CPL which designed to be driven by asynchronous IO processed by a
+the CPL which is designed to be driven by asynchronous IO processed by a
 common IO service thread (isc::asiolink::io_service).  Any IO that needs to be
 performed by the application thread uses this service to do so. This organizes
 the IO event processing into a single event loop centered around the service.
@@ -316,7 +316,7 @@ The state model for isc::d2::NameRemoveTransaction is depicted next:
 D2 implements a abstract state-machine through a light weight set of classes.
 At construction, the model's dictionary of events and states is initialized.
 This allows, the deriving class the ability to bind a method of its choosing
-to each state as thats state's handler.  Each handler contains the knowledge
+to each state as that state's handler.  Each handler contains the knowledge
 of how to respond to the "posted" event and including posting other events and
 transitioning to other states.
 
