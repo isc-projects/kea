@@ -15,8 +15,8 @@
 /**
  @page d2 DHCP-DDNS Component
 
-Kea is capable of providing DDNS driven by changes to leases based on DHCP
-requests processed by Kea's DHCP servers.  When DDNS updating is enabled,
+Kea is capable of sending dynamic DNS updates to DNS Servers, based on lease
+changes made by Kea's DHCP servers. When DDNS updating is enabled,
 the DHCP servers generate requests to update DNS as they make lease changes.
 These requests, implemented by isc::dhcp_ddns::NameChangeRequest (NCR), are sent
 to a separate process, informally known as D2. D2 processes these requests by
@@ -112,7 +112,7 @@ asynchronously through the session command channel, moves through the CPL:
 
 The CPL classes will likely move into a common library.
 
-@section d2ProcesDerivation D2 Application Core Classes
+@section d2ProcesDerivation D2's CPL Derivations
 
 D2's core application classes are DDNS-specific derivations of the CPL as show
 in the diagram below:
@@ -198,7 +198,7 @@ shown in the diagram below:
 
 @image html request_mgt_classes.svg  "Request Management Classes"
 
-- isc::d2::D2QueueMgr - owned by @c D2Process, it listens for NameChangeRequests
+- isc::d2::D2QueueMgr - owned by @c D2Process, it listens for @c NameChangeRequests
 and queues them for processing. It also provides services for adding,
 finding, and removing queue entries.  It owns the interface used to receive
 requests and thus shields the remainder of D2 from any specific knowledge or
@@ -220,7 +220,7 @@ are defined by isc::d2::D2QueueMgr::State, and described in detail in in
 
 The DDNS protocol can lead to a multiple step conversation between the updater
 and the DNS server to update entries for a single client.  In addition,
-NameChangeRequests can request changes be made for both forward and reverse
+@c NameChangeRequests can request changes be made for both forward and reverse
 DNS.  In order to carry out the appropriate conversation, D2 wraps each request
 in a stateful transaction.
 
@@ -255,7 +255,7 @@ exchange with a DNS server, it uses an instance of this class to do it.
 
 - isc::d2::D2UpdateMessage - container for sending and receiving DDNS packets
 
-@section d2EventLoop D2's Event Loop
+@section d2EventLoop Main Event Loop
 
 Now that all of the primary components have been introduced it is worth while
 discussing D2's main event loop.  As mentioned earlier D2 is constructed around
@@ -283,9 +283,9 @@ with their own io_service instances).  D2's main event loop, implemented in @ref
             e. Something has stopped the IO service (most likely a fatal error)
 @endcode
 
-@section d2TransDetail D2 Transactions
+@section d2TransDetail Transactions
 
-There are two types of NameChangeRequests: an "Add" that is issued when DNS
+There are two types of @c NameChangeRequests: an "Add" that is issued when DNS
 entries need to be added for new or updated lease, and a "Remove" that is
 issued when DNS entries need to be removed for obsolete or expired lease. The
 DDNS protocol dictates the steps that should be followed in both cases.
@@ -296,8 +296,8 @@ The transaction classes are shown in the following diagram:
 
 @image html trans_classes.svg "NameChangeTransaction Derviations"
 
-- isc::d2::NameAddTransaction - carries out a NameChangeRequest to add entries
-- isc::d2::NameRemoveTransaction - carries out a NameChangeRequest to remove entries
+- isc::d2::NameAddTransaction - carries out a @c NameChangeRequest to add entries
+- isc::d2::NameRemoveTransaction - carries out a @c NameChangeRequest to remove entries
 - isc::d2::StateModel - abstract state model described in @ref d2StateModel
 
 The state models for these two transactions implement DDNS with conflict
