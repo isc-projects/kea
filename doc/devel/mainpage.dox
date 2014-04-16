@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2013  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -71,6 +71,15 @@
  *   - @subpage dhcpv6Classifier
  *   - @subpage dhcpv6Other
  * - @subpage d2
+ *   - @subpage d2CPL
+ *   - @subpage d2ProcesDerivation
+ *   - @subpage d2ConfigMgt
+ *   - @subpage d2NCRReceipt
+ *   - @subpage d2DDNSUpdateExecution
+ *   - @subpage d2EventLoop
+ *   - @subpage d2TransDetail
+ *   - @subpage d2StateModel
+ *   - @subpage d2TransExecExample
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
