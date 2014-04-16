@@ -201,30 +201,7 @@ TSIGKeyInfoParser::build(isc::data::ConstElementPtr key_config) {
         parser->build(config_pair.second);
         parser->commit();
     }
-}
 
-isc::dhcp::ParserPtr
-TSIGKeyInfoParser::createConfigParser(const std::string& config_id) {
-    DhcpConfigParser* parser = NULL;
-    // Based on the configuration id of the element, create the appropriate
-    // parser. Scalars are set to use the parser's local scalar storage.
-    if ((config_id == "name")  ||
-        (config_id == "algorithm") ||
-        (config_id == "secret")) {
-        parser = new isc::dhcp::StringParser(config_id,
-                                             local_scalars_.getStringStorage());
-    } else {
-        isc_throw(NotImplemented,
-                  "parser error: TSIGKeyInfo parameter not supported: "
-                  << config_id);
-    }
-
-    // Return the new parser instance.
-    return (isc::dhcp::ParserPtr(parser));
-}
-
-void
-TSIGKeyInfoParser::commit() {
     std::string name;
     std::string algorithm;
     std::string secret;
@@ -264,6 +241,32 @@ TSIGKeyInfoParser::commit() {
 
     // Add the new TSIGKeyInfo to the key storage.
     (*keys_)[name]=key_info;
+}
+
+isc::dhcp::ParserPtr
+TSIGKeyInfoParser::createConfigParser(const std::string& config_id) {
+    DhcpConfigParser* parser = NULL;
+    // Based on the configuration id of the element, create the appropriate
+    // parser. Scalars are set to use the parser's local scalar storage.
+    if ((config_id == "name")  ||
+        (config_id == "algorithm") ||
+        (config_id == "secret")) {
+        parser = new isc::dhcp::StringParser(config_id,
+                                             local_scalars_.getStringStorage());
+    } else {
+        isc_throw(NotImplemented,
+                  "parser error: TSIGKeyInfo parameter not supported: "
+                  << config_id);
+    }
+
+    // Return the new parser instance.
+    return (isc::dhcp::ParserPtr(parser));
+}
+
+void
+TSIGKeyInfoParser::commit() {
+    /// @todo if at some point  TSIG keys need some form of resource
+    /// initialization do that here
 }
 
 // *********************** TSIGKeyInfoListParser  *************************
