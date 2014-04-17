@@ -382,7 +382,7 @@
                 "item_name": "server-ip",
                 "item_type": "string",
                 "item_optional": true,
-                "item_default": "127.0.0.1",
+                "item_default": "::1",
                 "item_description" : "IP address of b10-dhcp-ddns (IPv4 or IPv6)"
             },
             {
@@ -391,6 +391,27 @@
                 "item_optional": true,
                 "item_default": 53001,
                 "item_description" : "port number of b10-dhcp-ddns"
+            },
+            {
+                "item_name": "sender-ip",
+                "item_type": "string",
+                "item_optional": true,
+                "item_default": "",
+                "item_description" : "IP address from which to send to b10-dhcp-ddns (IPv4 or IPv6)"
+            },
+            {
+                "item_name": "sender-port",
+                "item_type": "integer",
+                "item_optional": true,
+                "item_default": 0,
+                "item_description" : "port number from which to send to b10-dhcp-ddns"
+            },
+            {
+                "item_name": "max-queue-size",
+                "item_type": "integer",
+                "item_optional": true,
+                "item_default": 1024,
+                "item_description" : "maximum number of requests allowed in the send queue"
             },
             {
                 "item_name": "ncr-protocol",

@@ -109,7 +109,9 @@ public:
         D2ClientConfigPtr cfg;
 
         ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
-                                  isc::asiolink::IOAddress("127.0.0.1"), 53001,
+                                  isc::asiolink::IOAddress("::1"), 53001,
+                                  isc::asiolink::IOAddress("::"), 0,
+                                  1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   (mask & ALWAYS_INCLUDE_FQDN),
                                   (mask & OVERRIDE_NO_UPDATE),
