@@ -28,7 +28,7 @@ perfdhcp_SOURCES += pkt_transform.cc pkt_transform.h
 perfdhcp_SOURCES += rate_control.cc rate_control.h
 perfdhcp_SOURCES += stats_mgr.h
 perfdhcp_SOURCES += test_control.cc test_control.h
-libb10_perfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
+libkea_perfdhcp___la_CXXFLAGS = $(AM_CXXFLAGS)
 
 perfdhcp_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_CLANGPP
@@ -37,9 +37,9 @@ if USE_CLANGPP
 perfdhcp_CXXFLAGS += -Wno-unused-parameter
 endif
 
-perfdhcp_LDADD = $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-perfdhcp_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
-perfdhcp_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
+perfdhcp_LDADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+perfdhcp_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 
 
 # ... and the documentation

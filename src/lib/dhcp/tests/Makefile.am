@@ -40,7 +40,7 @@ libdhcptest_la_SOURCES  += pkt_filter6_test_stub.cc pkt_filter6_test_stub.h
 libdhcptest_la_CXXFLAGS  = $(AM_CXXFLAGS)
 libdhcptest_la_CPPFLAGS  = $(AM_CPPFLAGS)
 libdhcptest_la_LDFLAGS   = $(AM_LDFLAGS)
-libdhcptest_la_LIBADD    = $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+libdhcptest_la_LIBADD    = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 
 TESTS += libdhcp++_unittests
 
@@ -97,12 +97,12 @@ if USE_CLANGPP
 libdhcp___unittests_CXXFLAGS += -Wno-unused-variable -Wno-unused-parameter
 endif
 
-libdhcp___unittests_LDADD  = $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+libdhcp___unittests_LDADD  = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libdhcp___unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 libdhcp___unittests_LDADD += $(GTEST_LDADD)
 endif
 

@@ -60,16 +60,16 @@ b10_dhcp6_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 nodist_b10_dhcp6_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
 
-b10_dhcp6_LDADD  = $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-b10_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
+b10_dhcp6_LDADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+b10_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
 b10_dhcp6dir = $(pkgdatadir)
 b10_dhcp6_DATA = dhcp6.spec

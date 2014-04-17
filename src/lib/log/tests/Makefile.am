@@ -26,40 +26,40 @@ noinst_PROGRAMS = logger_example
 logger_example_SOURCES = logger_example.cc
 logger_example_CPPFLAGS = $(AM_CPPFLAGS)
 logger_example_LDFLAGS = $(AM_LDFLAGS)
-logger_example_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
-logger_example_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-logger_example_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+logger_example_LDADD  = $(top_builddir)/src/lib/log/libkea-log.la
+logger_example_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+logger_example_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 logger_example_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
 noinst_PROGRAMS += init_logger_test
 init_logger_test_SOURCES = init_logger_test.cc
 init_logger_test_CPPFLAGS = $(AM_CPPFLAGS)
 init_logger_test_LDFLAGS = $(AM_LDFLAGS)
-init_logger_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
-init_logger_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+init_logger_test_LDADD  = $(top_builddir)/src/lib/log/libkea-log.la
+init_logger_test_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+init_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 init_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
 noinst_PROGRAMS += buffer_logger_test
 buffer_logger_test_SOURCES = buffer_logger_test.cc
 buffer_logger_test_CPPFLAGS = $(AM_CPPFLAGS)
 buffer_logger_test_LDFLAGS = $(AM_LDFLAGS)
-buffer_logger_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
-buffer_logger_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-buffer_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+buffer_logger_test_LDADD  = $(top_builddir)/src/lib/log/libkea-log.la
+buffer_logger_test_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+buffer_logger_test_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 buffer_logger_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
-# This test directly uses libb10-threads, and on some systems it seems to
-# require explicit LDADD (even if libb10-log has indirect dependencies)
+# This test directly uses libkea-threads, and on some systems it seems to
+# require explicit LDADD (even if libkea-log has indirect dependencies)
 noinst_PROGRAMS += logger_lock_test
 logger_lock_test_SOURCES = logger_lock_test.cc
 nodist_logger_lock_test_SOURCES = log_test_messages.cc log_test_messages.h
 logger_lock_test_CPPFLAGS = $(AM_CPPFLAGS)
 logger_lock_test_LDFLAGS = $(AM_LDFLAGS)
-logger_lock_test_LDADD  = $(top_builddir)/src/lib/log/libb10-log.la
-logger_lock_test_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-logger_lock_test_LDADD += $(top_builddir)/src/lib/util/threads/libb10-threads.la
-logger_lock_test_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+logger_lock_test_LDADD  = $(top_builddir)/src/lib/log/libkea-log.la
+logger_lock_test_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+logger_lock_test_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+logger_lock_test_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 logger_lock_test_LDADD += $(AM_LDADD) $(LOG4CPLUS_LIBS)
 
 TESTS_ENVIRONMENT = \
@@ -76,10 +76,10 @@ endif
 AM_CPPFLAGS += $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
 AM_LDFLAGS  += $(GTEST_LDFLAGS)
 
-AM_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-AM_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
+AM_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+AM_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
-AM_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+AM_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 AM_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
 AM_LDADD += $(GTEST_LDADD)
 
