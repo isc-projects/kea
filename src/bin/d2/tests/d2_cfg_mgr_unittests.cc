@@ -609,9 +609,8 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
                          "    \"port\": 300 } ] } ";
     ASSERT_TRUE(fromJSON(config));
 
-    // Verify that the domain configuration builds but commit fails.
-    ASSERT_NO_THROW(parser_->build(config_set_));
-    ASSERT_THROW(parser_->commit(), isc::dhcp::DhcpConfigError);
+    // Verify that the domain configuration builds fails.
+    EXPECT_THROW(parser_->build(config_set_), isc::dhcp::DhcpConfigError);
 
     // Create a domain configuration with an empty server list.
     config = "{ \"name\": \"tmark.org\" , "
@@ -621,7 +620,7 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the domain configuration build fails.
-    ASSERT_THROW(parser_->build(config_set_), D2CfgError);
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Create a domain configuration with a mal-formed server entry.
     config = "{ \"name\": \"tmark.org\" , "
@@ -632,7 +631,7 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the domain configuration build fails.
-    ASSERT_THROW(parser_->build(config_set_), isc::BadValue);
+    EXPECT_THROW(parser_->build(config_set_), isc::BadValue);
 
     // Create a domain configuration without an defined key name
     config = "{ \"name\": \"tmark.org\" , "
@@ -642,9 +641,8 @@ TEST_F(DdnsDomainTest, invalidDdnsDomainEntry) {
              "    \"port\": 300 } ] } ";
     ASSERT_TRUE(fromJSON(config));
 
-    // Verify that the domain configuration build succeeds but commit fails.
-    ASSERT_NO_THROW(parser_->build(config_set_));
-    ASSERT_THROW(parser_->commit(), D2CfgError);
+    // Verify that the domain configuration build fails.
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 }
 
 /// @brief Verifies the basics of parsing DdnsDomains.
@@ -839,9 +837,8 @@ TEST_F(DdnsDomainTest, duplicateDomain) {
     ASSERT_NO_THROW(list_parser.reset(
                     new DdnsDomainListParser("test", domains_, keys_)));
 
-    // Verify that the parse build succeeds but the commit fails.
-    ASSERT_NO_THROW(list_parser->build(config_set_));
-    ASSERT_THROW(list_parser->commit(), D2CfgError);
+    // Verify that the parse build fails.
+    EXPECT_THROW(list_parser->build(config_set_), D2CfgError);
 }
 
 /// @brief Tests construction of D2CfgMgr

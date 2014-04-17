@@ -302,6 +302,10 @@ build(isc::data::ConstElementPtr key_list){
         parser->build(key_config);
         parsers_.push_back(parser);
     }
+
+    // Now that we know we have a valid list, commit that list to the
+    // area given to us during construction (i.e. to the d2 context).
+    *keys_ = *local_keys_;
 }
 
 void
@@ -311,10 +315,6 @@ TSIGKeyInfoListParser::commit() {
     BOOST_FOREACH(isc::dhcp::ParserPtr parser, parsers_) {
         parser->commit();
     }
-
-    // Now that we know we have a valid list, commit that list to the
-    // area given to us during construction (i.e. to the d2 context).
-    *keys_ = *local_keys_;
 }
 
 // *********************** DnsServerInfoParser  *************************
@@ -488,34 +488,8 @@ DdnsDomainParser::build(isc::data::ConstElementPtr domain_config) {
         parser->build(config_pair.second);
         parser->commit();
     }
-}
 
-isc::dhcp::ParserPtr
-DdnsDomainParser::createConfigParser(const std::string& config_id) {
-    DhcpConfigParser* parser = NULL;
-    // Based on the configuration id of the element, create the appropriate
-    // parser. Scalars are set to use the parser's local scalar storage.
-    if ((config_id == "name")  ||
-        (config_id == "key_name")) {
-        parser = new isc::dhcp::StringParser(config_id,
-                                             local_scalars_.getStringStorage());
-    } else if (config_id == "dns_servers") {
-       // Server list parser is given in our local server storage. It will pass
-       // this down to its server parsers and is where they will write their
-       // server instances upon commit.
-       parser = new DnsServerInfoListParser(config_id, local_servers_);
-    } else {
-       isc_throw(NotImplemented,
-                "parser error: DdnsDomain parameter not supported: "
-                << config_id);
-    }
-
-    // Return the new domain parser instance.
-    return (isc::dhcp::ParserPtr(parser));
-}
-
-void
-DdnsDomainParser::commit() {
+    // Now construct the domain.
     std::string name;
     std::string key_name;
 
@@ -549,7 +523,35 @@ DdnsDomainParser::commit() {
     DdnsDomainPtr domain(new DdnsDomain(name, key_name, local_servers_));
 
     // Add the new domain to the domain storage.
-    (*domains_)[name]=domain;
+    (*domains_)[name] = domain;
+}
+
+isc::dhcp::ParserPtr
+DdnsDomainParser::createConfigParser(const std::string& config_id) {
+    DhcpConfigParser* parser = NULL;
+    // Based on the configuration id of the element, create the appropriate
+    // parser. Scalars are set to use the parser's local scalar storage.
+    if ((config_id == "name")  ||
+        (config_id == "key_name")) {
+        parser = new isc::dhcp::StringParser(config_id,
+                                             local_scalars_.getStringStorage());
+    } else if (config_id == "dns_servers") {
+       // Server list parser is given in our local server storage. It will pass
+       // this down to its server parsers and is where they will write their
+       // server instances upon commit.
+       parser = new DnsServerInfoListParser(config_id, local_servers_);
+    } else {
+       isc_throw(NotImplemented,
+                "parser error: DdnsDomain parameter not supported: "
+                << config_id);
+    }
+
+    // Return the new domain parser instance.
+    return (isc::dhcp::ParserPtr(parser));
+}
+
+void
+DdnsDomainParser::commit() {
 }
 
 // *********************** DdnsDomainListParser  *************************
@@ -622,6 +624,9 @@ DdnsDomainListMgrParser::build(isc::data::ConstElementPtr domain_config) {
         parser->build(config_pair.second);
         parser->commit();
     }
+
+    // Add the new domain to the domain storage.
+    mgr_->setDomains(local_domains_);
 }
 
 isc::dhcp::ParserPtr
@@ -643,8 +648,6 @@ DdnsDomainListMgrParser::createConfigParser(const std::string& config_id) {
 
 void
 DdnsDomainListMgrParser::commit() {
-    // Add the new domain to the domain storage.
-    mgr_->setDomains(local_domains_);
 }
 
 
