@@ -611,6 +611,9 @@ public:
     virtual void build(isc::data::ConstElementPtr key_list_config);
 
     /// @brief Commits the list of TSIG keys
+    ///
+    /// Iterates over the internal list of TSIGKeyInfoParsers, invoking
+    /// commit on each one.
     virtual void commit();
 
 private:
@@ -723,6 +726,9 @@ public:
     virtual void build(isc::data::ConstElementPtr server_list_config);
 
     /// @brief Commits the list of DnsServerInfos
+    ///
+    /// Iterates over the internal list of DdnsServerInfoParsers, invoking
+    /// commit on each one.
     virtual void commit();
 
 private:
@@ -759,8 +765,10 @@ public:
     virtual ~DdnsDomainParser();
 
     /// @brief Performs the actual parsing of the given  "ddns_domain" element.
-    /// The results of the parsing are retained internally for use during
-    /// commit.
+    ///
+    /// Parses a configuration for the elements needed to instantiate a
+    /// DdnsDomain, validates those entries, creates a DdnsDomain instance
+    /// then attempts to add it to a list of domains.
     ///
     /// @param domain_config is the "ddns_domain" configuration to parse
     virtual void build(isc::data::ConstElementPtr domain_config);
@@ -779,8 +787,7 @@ public:
     virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
                                                     config_id);
 
-    /// @brief Instantiates a DdnsDomain from internal data values
-    /// saves it to the storage area pointed to by domains_.
+    /// @brief commits the configured DdnsDomain
     virtual void commit();
 
 private:
@@ -832,7 +839,7 @@ public:
 
     /// @brief Performs the actual parsing of the given list "ddns_domain"
     /// elements.
-    /// It iterates over each server entry in the list:
+    /// It iterates over each domain entry in the list:
     ///   1. Instantiate a DdnsDomainParser for the entry
     ///   2. Pass the element configuration to the parser's build method
     ///   3. Add the parser instance to local storage
@@ -844,10 +851,10 @@ public:
     /// parse.
     virtual void build(isc::data::ConstElementPtr domain_list_config);
 
-    /// @brief Iterates over the internal list of DdnsDomainParsers, invoking
-    /// commit on each.  This causes each parser to instantiate a DdnsDomain
-    /// from its internal data values and add that domain instance to the
-    /// storage area, domains_.
+    /// @brief Commits the list of DdnsDomains
+    ///
+    /// Iterates over the internal list of DdnsDomainParsers, invoking
+    /// commit on each one.
     virtual void commit();
 
 private:
@@ -892,8 +899,10 @@ public:
     virtual ~DdnsDomainListMgrParser();
 
     /// @brief Performs the actual parsing of the given manager element.
-    /// The results of the parsing are retained internally for use during
-    /// commit.
+    ///
+    /// Parses a configuration for the elements needed to instantiate a
+    /// DdnsDomainListMgr, validates those entries, then creates a
+    /// DdnsDomainListMgr.
     ///
     /// @param mgr_config is the manager configuration to parse
     virtual void build(isc::data::ConstElementPtr mgr_config);
@@ -910,8 +919,7 @@ public:
     virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
                                                     config_id);
 
-    /// @brief Populates the DdnsDomainListMgr from internal data values
-    /// set during parsing.
+    /// @brief Commits the configured DdsnDomainListMgr
     virtual void commit();
 
 private:
