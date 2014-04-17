@@ -64,6 +64,16 @@
  *   - @subpage dhcpv6OptionsParse
  *   - @subpage dhcpv6Classifier
  *   - @subpage dhcpv6Other
+ * - @subpage d2
+ *   - @subpage d2CPL
+ *   - @subpage d2ProcesDerivation
+ *   - @subpage d2ConfigMgt
+ *   - @subpage d2NCRReceipt
+ *   - @subpage d2DDNSUpdateExecution
+ *   - @subpage d2EventLoop
+ *   - @subpage d2TransDetail
+ *   - @subpage d2StateModel
+ *   - @subpage d2TransExecExample
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
