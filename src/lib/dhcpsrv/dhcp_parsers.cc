@@ -1281,6 +1281,23 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
     uint32_t server_port = uint32_values_->getOptionalParam("server-port",
                                                              D2ClientConfig::
                                                              DFT_SERVER_PORT);
+
+    // The default sender IP depends on the server IP family
+    asiolink::IOAddress
+        sender_ip(string_values_->
+                  getOptionalParam("sender-ip",
+                                   (server_ip.isV4() ?
+                                    D2ClientConfig::DFT_V4_SENDER_IP :
+                                    D2ClientConfig::DFT_V6_SENDER_IP)));
+
+    uint32_t sender_port = uint32_values_->getOptionalParam("sender-port",
+                                                             D2ClientConfig::
+                                                             DFT_SENDER_PORT);
+    uint32_t max_queue_size
+        = uint32_values_->getOptionalParam("max-queue-size",
+                                            D2ClientConfig::
+                                            DFT_MAX_QUEUE_SIZE);
+
     dhcp_ddns::NameChangeProtocol ncr_protocol
         = dhcp_ddns::stringToNcrProtocol(string_values_->
                                          getOptionalParam("ncr-protocol",
@@ -1302,8 +1319,8 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
 
     bool always_include_fqdn = boolean_values_->
                                getOptionalParam("always-include-fqdn",
-                                               D2ClientConfig::
-                                               DFT_ALWAYS_INCLUDE_FQDN);
+                                                D2ClientConfig::
+                                                DFT_ALWAYS_INCLUDE_FQDN);
 
     bool override_no_update = boolean_values_->
                               getOptionalParam("override-no-update",
@@ -1320,8 +1337,13 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
                                                 DFT_REPLACE_CLIENT_NAME);
 
     // Attempt to create the new client config.
-    local_client_config_.reset(new D2ClientConfig(enable_updates, server_ip,
-                                                  server_port, ncr_protocol,
+    local_client_config_.reset(new D2ClientConfig(enable_updates,
+                                                  server_ip,
+                                                  server_port,
+                                                  sender_ip,
+                                                  sender_port,
+                                                  max_queue_size,
+                                                  ncr_protocol,
                                                   ncr_format,
                                                   always_include_fqdn,
                                                   override_no_update,
@@ -1334,12 +1356,15 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
 isc::dhcp::ParserPtr
 D2ClientConfigParser::createConfigParser(const std::string& config_id) {
     DhcpConfigParser* parser = NULL;
-    if (config_id.compare("server-port") == 0) {
+    if ((config_id.compare("server-port") == 0) ||
+        (config_id.compare("sender-port") == 0) ||
+        (config_id.compare("max-queue-size") == 0)) {
         parser = new Uint32Parser(config_id, uint32_values_);
     } else if ((config_id.compare("server-ip") == 0) ||
         (config_id.compare("ncr-protocol") == 0) ||
         (config_id.compare("ncr-format") == 0) ||
         (config_id.compare("generated-prefix") == 0) ||
+        (config_id.compare("sender-ip") == 0) ||
         (config_id.compare("qualifying-suffix") == 0)) {
         parser = new StringParser(config_id, string_values_);
     } else if ((config_id.compare("enable-updates") == 0) ||
