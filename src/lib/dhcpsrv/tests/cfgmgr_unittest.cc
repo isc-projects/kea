@@ -991,6 +991,8 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
     // Create a new, enabled configuration.
     ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig(true,
                                   isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 478,
+                                  1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   true, true, true, true,
                                   "pre-fix", "suf-fix")));

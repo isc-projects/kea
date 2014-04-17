@@ -25,6 +25,10 @@ namespace dhcp {
 
 const char *D2ClientConfig::DFT_SERVER_IP = "127.0.0.1";
 const size_t D2ClientConfig::DFT_SERVER_PORT = 53001;
+const char *D2ClientConfig::DFT_V4_SENDER_IP = "0.0.0.0";
+const char *D2ClientConfig::DFT_V6_SENDER_IP = "::";
+const size_t D2ClientConfig::DFT_SENDER_PORT = 0;
+const size_t D2ClientConfig::DFT_MAX_QUEUE_SIZE = 1024;
 const char *D2ClientConfig::DFT_NCR_PROTOCOL = "UDP";
 const char *D2ClientConfig::DFT_NCR_FORMAT = "JSON";
 const bool D2ClientConfig::DFT_ALWAYS_INCLUDE_FQDN = false;
@@ -37,6 +41,9 @@ const char *D2ClientConfig::DFT_QUALIFYING_SUFFIX = "example.com";
 D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                const isc::asiolink::IOAddress& server_ip,
                                const size_t server_port,
+                               const isc::asiolink::IOAddress& sender_ip,
+                               const size_t sender_port,
+                               const size_t max_queue_size,
                                const dhcp_ddns::
                                      NameChangeProtocol& ncr_protocol,
                                const dhcp_ddns::
@@ -50,6 +57,9 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
     : enable_updates_(enable_updates),
     server_ip_(server_ip),
     server_port_(server_port),
+    sender_ip_(sender_ip),
+    sender_port_(sender_port),
+    max_queue_size_(max_queue_size),
     ncr_protocol_(ncr_protocol),
     ncr_format_(ncr_format),
     always_include_fqdn_(always_include_fqdn),
@@ -65,6 +75,9 @@ D2ClientConfig::D2ClientConfig()
     : enable_updates_(false),
       server_ip_(isc::asiolink::IOAddress("0.0.0.0")),
       server_port_(0),
+      sender_ip_(isc::asiolink::IOAddress("0.0.0.0")),
+      sender_port_(0),
+      max_queue_size_(0),
       ncr_protocol_(dhcp_ddns::NCR_UDP),
       ncr_format_(dhcp_ddns::FMT_JSON),
       always_include_fqdn_(false),
@@ -106,6 +119,9 @@ D2ClientConfig::operator == (const D2ClientConfig& other) const {
     return ((enable_updates_ == other.enable_updates_) &&
             (server_ip_ == other.server_ip_) &&
             (server_port_ == other.server_port_) &&
+            (sender_ip_ == other.sender_ip_) &&
+            (sender_port_ == other.sender_port_) &&
+            (max_queue_size_ == other.max_queue_size_) &&
             (ncr_protocol_ == other.ncr_protocol_) &&
             (ncr_format_ == other.ncr_format_) &&
             (always_include_fqdn_ == other.always_include_fqdn_) &&
@@ -129,6 +145,9 @@ D2ClientConfig::toText() const {
     if (enable_updates_) {
         stream << ", server_ip: " << server_ip_.toText()
                << ", server_port: " << server_port_
+               << ", sender_ip: " << sender_ip_.toText()
+               << ", sender_port: " << sender_port_
+               << ", max_queue_size: " << max_queue_size_
                << ", ncr_protocol: " << ncr_protocol_
                << ", ncr_format: " << ncr_format_
                << ", always_include_fqdn: " << (always_include_fqdn_ ?
