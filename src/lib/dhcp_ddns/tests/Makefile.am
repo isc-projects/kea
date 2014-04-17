@@ -44,15 +44,15 @@ if USE_CLANGPP
 libdhcp_ddns_unittests_CXXFLAGS += -Wno-unused-parameter
 endif
 
-libdhcp_ddns_unittests_LDADD = $(top_builddir)/src/lib/log/libb10-log.la
-libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
-libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libb10-cryptolink.la
-libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
-libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
-libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
-libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
+libdhcp_ddns_unittests_LDADD = $(top_builddir)/src/lib/log/libkea-log.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+libdhcp_ddns_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcp_ddns_unittests_LDADD += ${BOTAN_LIBS} ${BOTAN_RPATH}
 libdhcp_ddns_unittests_LDADD += $(GTEST_LDADD)
 endif
