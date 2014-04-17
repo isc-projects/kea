@@ -68,7 +68,7 @@ namespace d2 {
 /// any scalars which belong to the manager as well as creating and invoking a
 /// DdnsDomainListParser to parse its list of domain entries.
 ///
-/// A DdnsDomainLiatParser creates and invokes DdnsDomainListParser for each
+/// A DdnsDomainListParser creates and invokes DdnsDomainListParser for each
 /// domain entry in its list.
 ///
 /// A DdnsDomainParser handles the scalars which belong to the domain as well as
@@ -561,7 +561,6 @@ public:
     virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
                                                     config_id);
     /// @brief commits the TSIGKeyInfo configuration
-    /// At the moment this method is a NOP.
     virtual void commit();
 
 private:
@@ -611,14 +610,7 @@ public:
     /// @param key_list_config is the list of "tsig_key" elements to parse.
     virtual void build(isc::data::ConstElementPtr key_list_config);
 
-    /// @brief Iterates over the internal list of TSIGKeyInfoParsers,
-    /// invoking commit on each.  This causes each parser to instantiate a
-    /// TSIGKeyInfo from its internal data values and add that key
-    /// instance to the local key storage area, local_keys_.   If all of the
-    /// key parsers commit cleanly, then update the context key map (keys_)
-    /// with the contents of local_keys_.  This is done to allow for duplicate
-    /// key detection while parsing the keys, but not get stumped by it
-    /// updating the context with a valid list.
+    /// @brief Commits the list of TSIG keys
     virtual void commit();
 
 private:
@@ -657,8 +649,10 @@ public:
     virtual ~DnsServerInfoParser();
 
     /// @brief Performs the actual parsing of the given  "dns_server" element.
-    /// The results of the parsing are retained internally for use during
-    /// commit.
+    ///
+    /// Parses a configuration for the elements needed to instantiate a
+    /// DnsServerInfo, validates those entries, creates a DnsServerInfo instance
+    /// then attempts to add to a list of  servers.
     ///
     /// @param server_config is the "dns_server" configuration to parse
     virtual void build(isc::data::ConstElementPtr server_config);
@@ -677,8 +671,7 @@ public:
     virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
                                                     config_id);
 
-    /// @brief Instantiates a DnsServerInfo from internal data values
-    /// saves it to the storage area pointed to by servers_.
+    /// @brief commits the configured DnsServerInfo
     virtual void commit();
 
 private:
@@ -729,10 +722,7 @@ public:
     /// @param server_list_config is the list of "dns_server" elements to parse.
     virtual void build(isc::data::ConstElementPtr server_list_config);
 
-    /// @brief Iterates over the internal list of DnsServerInfoParsers,
-    /// invoking commit on each.  This causes each parser to instantiate a
-    /// DnsServerInfo from its internal data values and add that that server
-    /// instance to the storage area, servers_.
+    /// @brief Commits the list of DnsServerInfos
     virtual void commit();
 
 private:
