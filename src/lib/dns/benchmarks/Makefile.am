@@ -13,12 +13,12 @@ noinst_PROGRAMS = rdatarender_bench message_renderer_bench
 
 rdatarender_bench_SOURCES = rdatarender_bench.cc
 
-rdatarender_bench_LDADD = $(top_builddir)/src/lib/dns/libb10-dns++.la
-rdatarender_bench_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-rdatarender_bench_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+rdatarender_bench_LDADD = $(top_builddir)/src/lib/dns/libkea-dns++.la
+rdatarender_bench_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+rdatarender_bench_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
 message_renderer_bench_SOURCES = message_renderer_bench.cc
 message_renderer_bench_SOURCES += oldmessagerenderer.h oldmessagerenderer.cc
-message_renderer_bench_LDADD = $(top_builddir)/src/lib/dns/libb10-dns++.la
-message_renderer_bench_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
-message_renderer_bench_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+message_renderer_bench_LDADD = $(top_builddir)/src/lib/dns/libkea-dns++.la
+message_renderer_bench_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+message_renderer_bench_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la

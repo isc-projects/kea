@@ -28,34 +28,34 @@ EXTRA_DIST = hooks_messages.mes
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc s-messages
 
-lib_LTLIBRARIES = libb10-hooks.la
-libb10_hooks_la_SOURCES  =
-libb10_hooks_la_SOURCES += callout_handle.cc callout_handle.h
-libb10_hooks_la_SOURCES += callout_manager.cc callout_manager.h
-libb10_hooks_la_SOURCES += hooks.h hooks.cc
-libb10_hooks_la_SOURCES += hooks_log.cc hooks_log.h
-libb10_hooks_la_SOURCES += hooks_manager.cc hooks_manager.h
-libb10_hooks_la_SOURCES += library_handle.cc library_handle.h
-libb10_hooks_la_SOURCES += library_manager.cc library_manager.h
-libb10_hooks_la_SOURCES += library_manager_collection.cc library_manager_collection.h
-libb10_hooks_la_SOURCES += pointer_converter.h
-libb10_hooks_la_SOURCES += server_hooks.cc server_hooks.h
+lib_LTLIBRARIES = libkea-hooks.la
+libkea_hooks_la_SOURCES  =
+libkea_hooks_la_SOURCES += callout_handle.cc callout_handle.h
+libkea_hooks_la_SOURCES += callout_manager.cc callout_manager.h
+libkea_hooks_la_SOURCES += hooks.h hooks.cc
+libkea_hooks_la_SOURCES += hooks_log.cc hooks_log.h
+libkea_hooks_la_SOURCES += hooks_manager.cc hooks_manager.h
+libkea_hooks_la_SOURCES += library_handle.cc library_handle.h
+libkea_hooks_la_SOURCES += library_manager.cc library_manager.h
+libkea_hooks_la_SOURCES += library_manager_collection.cc library_manager_collection.h
+libkea_hooks_la_SOURCES += pointer_converter.h
+libkea_hooks_la_SOURCES += server_hooks.cc server_hooks.h
 
-nodist_libb10_hooks_la_SOURCES = hooks_messages.cc hooks_messages.h
+nodist_libkea_hooks_la_SOURCES = hooks_messages.cc hooks_messages.h
 
-libb10_hooks_la_CXXFLAGS = $(AM_CXXFLAGS)
-libb10_hooks_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
-libb10_hooks_la_LDFLAGS  = $(AM_LDFLAGS)
-libb10_hooks_la_LIBADD  =
-libb10_hooks_la_LIBADD += $(top_builddir)/src/lib/log/libb10-log.la
-libb10_hooks_la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
-libb10_hooks_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+libkea_hooks_la_CXXFLAGS = $(AM_CXXFLAGS)
+libkea_hooks_la_CPPFLAGS = $(AM_CPPFLAGS) $(LOG4CPLUS_INCLUDES)
+libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS)
+libkea_hooks_la_LIBADD  =
+libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
+libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
+libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
 # Specify the headers for copying into the installation directory tree. User-
 # written libraries only need the definitions from the headers for the
 # CalloutHandle and LibraryHandle objects.
-libb10_hooks_includedir = $(pkgincludedir)/hooks
-libb10_hooks_include_HEADERS = \
+libkea_hooks_includedir = $(pkgincludedir)/hooks
+libkea_hooks_include_HEADERS = \
     callout_handle.h \
     library_handle.h \
     hooks.h
@@ -63,5 +63,5 @@ libb10_hooks_include_HEADERS = \
 if USE_CLANGPP
 # Disable unused parameter warning caused by some of the
 # Boost headers when compiling with clang.
-libb10_hooks_la_CXXFLAGS += -Wno-unused-parameter
+libkea_hooks_la_CXXFLAGS += -Wno-unused-parameter
 endif

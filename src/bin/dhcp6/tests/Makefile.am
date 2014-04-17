@@ -94,17 +94,17 @@ dhcp6_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 dhcp6_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 dhcp6_unittests_LDADD = $(GTEST_LDADD)
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libb10-asiolink.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libb10-cc.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libb10-dhcp++.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libb10-dhcp_ddns.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libb10-dhcpsrv.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/hooks/libb10-hooks.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libb10-log.la
-dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/libb10-util.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 endif
 
 noinst_PROGRAMS = $(TESTS)

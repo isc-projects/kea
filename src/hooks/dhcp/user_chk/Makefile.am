@@ -57,11 +57,11 @@ libdhcp_user_chk_la_LDFLAGS  += -avoid-version -export-dynamic -module
 # convenience archive, resulting in shared modules
 libdhcp_user_chk_la_LDFLAGS  += -rpath /nowhere
 libdhcp_user_chk_la_LIBADD  =
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/hooks/libb10-hooks.la
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/log/libb10-log.la
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/libb10-util.la
-libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libb10-threads.la
+libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
+libdhcp_user_chk_la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 
 
 if USE_CLANGPP

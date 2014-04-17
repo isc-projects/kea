@@ -8,14 +8,14 @@ AM_CXXFLAGS = $(B10_CXXFLAGS)
 
 CLEANFILES = *.gcno *.gcda
 
-noinst_LTLIBRARIES = libb10-log_interprocess.la
+noinst_LTLIBRARIES = libkea-log_interprocess.la
 
-libb10_log_interprocess_la_SOURCES = interprocess_sync.h
-libb10_log_interprocess_la_SOURCES += interprocess_sync_file.h
-libb10_log_interprocess_la_SOURCES += interprocess_sync_file.cc
-libb10_log_interprocess_la_SOURCES += interprocess_sync_null.h
-libb10_log_interprocess_la_SOURCES += interprocess_sync_null.cc
+libkea_log_interprocess_la_SOURCES = interprocess_sync.h
+libkea_log_interprocess_la_SOURCES += interprocess_sync_file.h
+libkea_log_interprocess_la_SOURCES += interprocess_sync_file.cc
+libkea_log_interprocess_la_SOURCES += interprocess_sync_null.h
+libkea_log_interprocess_la_SOURCES += interprocess_sync_null.cc
 
-libb10_log_interprocess_la_LIBADD  = $(top_builddir)/src/lib/util/threads/libb10-threads.la
+libkea_log_interprocess_la_LIBADD  = $(top_builddir)/src/lib/util/threads/libkea-threads.la
 
 EXTRA_DIST  = README

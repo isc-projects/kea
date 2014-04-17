@@ -99,65 +99,65 @@ noinst_SCRIPTS = gen-rdatacode.py
 BUILT_SOURCES = rrclass.h rrtype.h rrparamregistry.cc
 BUILT_SOURCES += rdataclass.h rdataclass.cc
 
-lib_LTLIBRARIES = libb10-dns++.la
+lib_LTLIBRARIES = libkea-dns++.la
 
-libb10_dns___la_LDFLAGS = -no-undefined -version-info 2:0:0
+libkea_dns___la_LDFLAGS = -no-undefined -version-info 2:0:0
 
-libb10_dns___la_SOURCES =
-libb10_dns___la_SOURCES += dns_fwd.h
-libb10_dns___la_SOURCES += edns.h edns.cc
-libb10_dns___la_SOURCES += exceptions.h exceptions.cc
-libb10_dns___la_SOURCES += master_lexer_inputsource.h master_lexer_inputsource.cc
-libb10_dns___la_SOURCES += labelsequence.h labelsequence.cc
-libb10_dns___la_SOURCES += masterload.h masterload.cc
-libb10_dns___la_SOURCES += master_lexer.h master_lexer.cc
-libb10_dns___la_SOURCES += master_lexer_state.h
-libb10_dns___la_SOURCES += master_loader.h master_loader.cc
-libb10_dns___la_SOURCES += message.h message.cc
-libb10_dns___la_SOURCES += messagerenderer.h messagerenderer.cc
-libb10_dns___la_SOURCES += name.h name.cc
-libb10_dns___la_SOURCES += name_internal.h
-libb10_dns___la_SOURCES += nsec3hash.h nsec3hash.cc
-libb10_dns___la_SOURCES += opcode.h opcode.cc
-libb10_dns___la_SOURCES += rcode.h rcode.cc
-libb10_dns___la_SOURCES += rdata.h rdata.cc
-libb10_dns___la_SOURCES += rdatafields.h rdatafields.cc
-libb10_dns___la_SOURCES += rrclass.cc
-libb10_dns___la_SOURCES += rrparamregistry.h
-libb10_dns___la_SOURCES += rrset.h rrset.cc
-libb10_dns___la_SOURCES += rrttl.h rrttl.cc
-libb10_dns___la_SOURCES += rrtype.cc
-libb10_dns___la_SOURCES += rrcollator.h rrcollator.cc
-libb10_dns___la_SOURCES += question.h question.cc
-libb10_dns___la_SOURCES += serial.h serial.cc
-libb10_dns___la_SOURCES += tsig.h tsig.cc
-libb10_dns___la_SOURCES += tsigerror.h tsigerror.cc
-libb10_dns___la_SOURCES += tsigkey.h tsigkey.cc
-libb10_dns___la_SOURCES += tsigrecord.h tsigrecord.cc
-libb10_dns___la_SOURCES += master_loader_callbacks.h master_loader_callbacks.cc
-libb10_dns___la_SOURCES += master_loader.h
-libb10_dns___la_SOURCES += rrset_collection_base.h
-libb10_dns___la_SOURCES += rrset_collection.h rrset_collection.cc
-libb10_dns___la_SOURCES += zone_checker.h zone_checker.cc
-libb10_dns___la_SOURCES += rdata_pimpl_holder.h
-libb10_dns___la_SOURCES += rdata/generic/detail/char_string.h
-libb10_dns___la_SOURCES += rdata/generic/detail/char_string.cc
-libb10_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
-libb10_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
-libb10_dns___la_SOURCES += rdata/generic/detail/nsec3param_common.cc
-libb10_dns___la_SOURCES += rdata/generic/detail/nsec3param_common.h
-libb10_dns___la_SOURCES += rdata/generic/detail/txt_like.h
-libb10_dns___la_SOURCES += rdata/generic/detail/ds_like.h
+libkea_dns___la_SOURCES =
+libkea_dns___la_SOURCES += dns_fwd.h
+libkea_dns___la_SOURCES += edns.h edns.cc
+libkea_dns___la_SOURCES += exceptions.h exceptions.cc
+libkea_dns___la_SOURCES += master_lexer_inputsource.h master_lexer_inputsource.cc
+libkea_dns___la_SOURCES += labelsequence.h labelsequence.cc
+libkea_dns___la_SOURCES += masterload.h masterload.cc
+libkea_dns___la_SOURCES += master_lexer.h master_lexer.cc
+libkea_dns___la_SOURCES += master_lexer_state.h
+libkea_dns___la_SOURCES += master_loader.h master_loader.cc
+libkea_dns___la_SOURCES += message.h message.cc
+libkea_dns___la_SOURCES += messagerenderer.h messagerenderer.cc
+libkea_dns___la_SOURCES += name.h name.cc
+libkea_dns___la_SOURCES += name_internal.h
+libkea_dns___la_SOURCES += nsec3hash.h nsec3hash.cc
+libkea_dns___la_SOURCES += opcode.h opcode.cc
+libkea_dns___la_SOURCES += rcode.h rcode.cc
+libkea_dns___la_SOURCES += rdata.h rdata.cc
+libkea_dns___la_SOURCES += rdatafields.h rdatafields.cc
+libkea_dns___la_SOURCES += rrclass.cc
+libkea_dns___la_SOURCES += rrparamregistry.h
+libkea_dns___la_SOURCES += rrset.h rrset.cc
+libkea_dns___la_SOURCES += rrttl.h rrttl.cc
+libkea_dns___la_SOURCES += rrtype.cc
+libkea_dns___la_SOURCES += rrcollator.h rrcollator.cc
+libkea_dns___la_SOURCES += question.h question.cc
+libkea_dns___la_SOURCES += serial.h serial.cc
+libkea_dns___la_SOURCES += tsig.h tsig.cc
+libkea_dns___la_SOURCES += tsigerror.h tsigerror.cc
+libkea_dns___la_SOURCES += tsigkey.h tsigkey.cc
+libkea_dns___la_SOURCES += tsigrecord.h tsigrecord.cc
+libkea_dns___la_SOURCES += master_loader_callbacks.h master_loader_callbacks.cc
+libkea_dns___la_SOURCES += master_loader.h
+libkea_dns___la_SOURCES += rrset_collection_base.h
+libkea_dns___la_SOURCES += rrset_collection.h rrset_collection.cc
+libkea_dns___la_SOURCES += zone_checker.h zone_checker.cc
+libkea_dns___la_SOURCES += rdata_pimpl_holder.h
+libkea_dns___la_SOURCES += rdata/generic/detail/char_string.h
+libkea_dns___la_SOURCES += rdata/generic/detail/char_string.cc
+libkea_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.h
+libkea_dns___la_SOURCES += rdata/generic/detail/nsec_bitmap.cc
+libkea_dns___la_SOURCES += rdata/generic/detail/nsec3param_common.cc
+libkea_dns___la_SOURCES += rdata/generic/detail/nsec3param_common.h
+libkea_dns___la_SOURCES += rdata/generic/detail/txt_like.h
+libkea_dns___la_SOURCES += rdata/generic/detail/ds_like.h
 
-libb10_dns___la_CPPFLAGS = $(AM_CPPFLAGS)
+libkea_dns___la_CPPFLAGS = $(AM_CPPFLAGS)
 # Most applications of libdns++ will only implicitly rely on libcryptolink,
 # so we add the dependency here so that the applications don't have to link
 # libcryptolink explicitly.
-libb10_dns___la_LIBADD = $(top_builddir)/src/lib/cryptolink/libb10-cryptolink.la
-libb10_dns___la_LIBADD += $(top_builddir)/src/lib/util/libb10-util.la
+libkea_dns___la_LIBADD = $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libkea_dns___la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 
 nodist_libdns___include_HEADERS = rdataclass.h rrclass.h rrtype.h
-nodist_libb10_dns___la_SOURCES = rdataclass.cc rrparamregistry.cc
+nodist_libkea_dns___la_SOURCES = rdataclass.cc rrparamregistry.cc
 
 rrclass.h: rrclass-placeholder.h
 rrtype.h: rrtype-placeholder.h

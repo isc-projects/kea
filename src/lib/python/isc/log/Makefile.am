@@ -14,10 +14,10 @@ log_la_CPPFLAGS = $(AM_CPPFLAGS) $(PYTHON_INCLUDES)
 log_la_CXXFLAGS = $(AM_CXXFLAGS) $(PYTHON_CXXFLAGS)
 log_la_LDFLAGS = $(PYTHON_LDFLAGS)
 log_la_LDFLAGS += -module -avoid-version
-log_la_LIBADD = $(top_builddir)/src/lib/log/libb10-log.la
-log_la_LIBADD += $(top_builddir)/src/lib/cc/libb10-cc.la
-log_la_LIBADD += $(top_builddir)/src/lib/config/libb10-cfgclient.la
-log_la_LIBADD += $(top_builddir)/src/lib/exceptions/libb10-exceptions.la
+log_la_LIBADD = $(top_builddir)/src/lib/log/libkea-log.la
+log_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+log_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+log_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 log_la_LIBADD += $(PYTHON_LIB)
 
 # This is not installed, it helps locate the module during tests
