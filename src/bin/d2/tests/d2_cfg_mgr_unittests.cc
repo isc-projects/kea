@@ -441,20 +441,18 @@ TEST_F(TSIGKeyInfoTest, validTSIGKeyList) {
 /// 3. Specifying a negative port number is not allowed.
 TEST_F(DnsServerInfoTest, invalidEntry) {
     // Create a config in which both host and ip address are supplied.
-    // Verify that it builds without throwing but commit fails.
+    // Verify that build fails.
     std::string config = "{ \"hostname\": \"pegasus.tmark\", "
                          "  \"ip_address\": \"127.0.0.1\" } ";
     ASSERT_TRUE(fromJSON(config));
-    EXPECT_NO_THROW(parser_->build(config_set_));
-    EXPECT_THROW(parser_->commit(), D2CfgError);
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Neither host nor ip address supplied
-    // Verify that it builds without throwing but commit fails.
+    // Verify that builds fails.
     config = "{ \"hostname\": \"\", "
              "  \"ip_address\": \"\" } ";
     ASSERT_TRUE(fromJSON(config));
-    EXPECT_NO_THROW(parser_->build(config_set_));
-    EXPECT_THROW(parser_->commit(), D2CfgError);
+    EXPECT_THROW(parser_->build(config_set_), D2CfgError);
 
     // Create a config with a negative port number.
     // Verify that build fails.
@@ -545,11 +543,8 @@ TEST_F(ConfigParseTest, invalidServerList) {
     isc::dhcp::ParserPtr parser;
     ASSERT_NO_THROW(parser.reset(new DnsServerInfoListParser("test", servers)));
 
-    // Verify that the list builds without errors.
-    ASSERT_NO_THROW(parser->build(config_set_));
-
-    // Verify that the list commit fails.
-    EXPECT_THROW(parser->commit(), D2CfgError);
+    // Verify that build fails.
+    EXPECT_THROW(parser->build(config_set_), D2CfgError);
 }
 
 /// @brief Verifies that a list of DnsServerInfo entries parses correctly given
