@@ -346,32 +346,6 @@ DnsServerInfoParser::build(isc::data::ConstElementPtr server_config) {
         parser->commit();
     }
 
-}
-
-isc::dhcp::ParserPtr
-DnsServerInfoParser::createConfigParser(const std::string& config_id) {
-    DhcpConfigParser* parser = NULL;
-    // Based on the configuration id of the element, create the appropriate
-    // parser. Scalars are set to use the parser's local scalar storage.
-    if ((config_id == "hostname")  ||
-        (config_id == "ip_address")) {
-        parser = new isc::dhcp::StringParser(config_id,
-                                             local_scalars_.getStringStorage());
-    } else if (config_id == "port") {
-        parser = new isc::dhcp::Uint32Parser(config_id,
-                                             local_scalars_.getUint32Storage());
-    } else {
-        isc_throw(NotImplemented,
-                  "parser error: DnsServerInfo parameter not supported: "
-                  << config_id);
-    }
-
-    // Return the new parser instance.
-    return (isc::dhcp::ParserPtr(parser));
-}
-
-void
-DnsServerInfoParser::commit() {
     std::string hostname;
     std::string ip_address;
     uint32_t port = DnsServerInfo::STANDARD_DNS_PORT;
@@ -410,6 +384,32 @@ DnsServerInfoParser::commit() {
     servers_->push_back(serverInfo);
 }
 
+isc::dhcp::ParserPtr
+DnsServerInfoParser::createConfigParser(const std::string& config_id) {
+    DhcpConfigParser* parser = NULL;
+    // Based on the configuration id of the element, create the appropriate
+    // parser. Scalars are set to use the parser's local scalar storage.
+    if ((config_id == "hostname")  ||
+        (config_id == "ip_address")) {
+        parser = new isc::dhcp::StringParser(config_id,
+                                             local_scalars_.getStringStorage());
+    } else if (config_id == "port") {
+        parser = new isc::dhcp::Uint32Parser(config_id,
+                                             local_scalars_.getUint32Storage());
+    } else {
+        isc_throw(NotImplemented,
+                  "parser error: DnsServerInfo parameter not supported: "
+                  << config_id);
+    }
+
+    // Return the new parser instance.
+    return (isc::dhcp::ParserPtr(parser));
+}
+
+void
+DnsServerInfoParser::commit() {
+}
+
 // *********************** DnsServerInfoListParser  *************************
 
 DnsServerInfoListParser::DnsServerInfoListParser(const std::string& list_name,
@@ -442,17 +442,16 @@ build(isc::data::ConstElementPtr server_list){
         parser->build(server_config);
         parsers_.push_back(parser);
     }
-}
 
-void
-DnsServerInfoListParser::commit() {
     // Domains must have at least one server.
     if (parsers_.size() == 0) {
         isc_throw (D2CfgError, "Server List must contain at least one server");
     }
+}
 
-    // Invoke commit on each server parser. This will cause each one to
-    // create it's server instance and commit it to storage.
+void
+DnsServerInfoListParser::commit() {
+    // Invoke commit on each server parser.
     BOOST_FOREACH(isc::dhcp::ParserPtr parser, parsers_) {
         parser->commit();
     }
