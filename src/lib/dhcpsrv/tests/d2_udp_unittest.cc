@@ -81,12 +81,20 @@ public:
                     const dhcp_ddns::NameChangeProtocol protocol) {
         // Update the configuration with one that is enabled.
         D2ClientConfigPtr new_cfg;
+
+        isc::asiolink::IOAddress server_ip(server_address);
+        isc::asiolink::IOAddress sender_ip(server_ip.isV4() ?
+                                           D2ClientConfig::DFT_V4_SENDER_IP :
+                                           D2ClientConfig::DFT_V6_SENDER_IP);
+
         ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig(true,
-                                  isc::asiolink::IOAddress(server_address),
-                                  server_port,
+                                  server_ip, server_port,
+                                  sender_ip, D2ClientConfig::DFT_SENDER_PORT,
+                                  D2ClientConfig::DFT_MAX_QUEUE_SIZE,
                                   protocol, dhcp_ddns::FMT_JSON,
                                   true, true, true, true,
                                   "myhost", ".example.com.")));
+
         ASSERT_NO_THROW(setD2ClientConfig(new_cfg));
         ASSERT_TRUE(ddnsEnabled());
     }
@@ -300,7 +308,7 @@ TEST_F(D2ClientMgrTest, udpSend) {
 /// an external IOService.
 TEST_F(D2ClientMgrTest, udpSendExternalIOService) {
     // Enable DDNS with server at 127.0.0.1/prot 53001 via UDP.
-    enableDdns("127.0.0.1", 530001, dhcp_ddns::NCR_UDP);
+    enableDdns("127.0.0.1", 53001, dhcp_ddns::NCR_UDP);
 
     // Place sender in send mode using an external IO service.
     asiolink::IOService io_service;
@@ -327,6 +335,39 @@ TEST_F(D2ClientMgrTest, udpSendExternalIOService) {
     // instance goes out of scope.
     ASSERT_NO_THROW(stopSender());
 }
+
+/// @brief Checks that D2ClientMgr can send with a UDP sender and
+/// an external IOService.
+TEST_F(D2ClientMgrTest, udpSendExternalIOService6) {
+    // Enable DDNS with server at 127.0.0.1/prot 53001 via UDP.
+    enableDdns("::1", 53001, dhcp_ddns::NCR_UDP);
+
+    // Place sender in send mode using an external IO service.
+    asiolink::IOService io_service;
+    ASSERT_NO_THROW(startSender(getErrorHandler(), io_service));
+
+    // select_fd should evaluate to NOT ready to read.
+    selectCheck(false);
+
+    // Build a test request and send it.
+    dhcp_ddns::NameChangeRequestPtr ncr = buildTestNcr();
+    ASSERT_NO_THROW(sendRequest(ncr));
+
+    // select_fd should evaluate to ready to read.
+    selectCheck(true);
+
+    // Call service handler.
+    runReadyIO();
+
+    // select_fd should evaluate to not ready to read.
+    selectCheck(false);
+
+    // Explicitly stop the sender. This ensures the sender's
+    // ASIO socket is closed prior to the local io_service
+    // instance goes out of scope.
+    ASSERT_NO_THROW(stopSender());
+}
+
 
 /// @brief Checks that D2ClientMgr invokes the client error handler
 /// when send errors occur.

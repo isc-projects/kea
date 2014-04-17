@@ -62,6 +62,10 @@ public:
     /// readily provide them (see Trac #3358).
     static const char *DFT_SERVER_IP;
     static const size_t DFT_SERVER_PORT;
+    static const char *DFT_V4_SENDER_IP;
+    static const char *DFT_V6_SENDER_IP;
+    static const size_t DFT_SENDER_PORT;
+    static const size_t DFT_MAX_QUEUE_SIZE;
     static const char *DFT_NCR_PROTOCOL;
     static const char *DFT_NCR_FORMAT;
     static const bool DFT_ALWAYS_INCLUDE_FQDN;
@@ -76,6 +80,9 @@ public:
     /// @param enable_updates Enables DHCP-DDNS updates
     /// @param server_ip IP address of the b10-dhcp-ddns server (IPv4 or IPv6)
     /// @param server_port IP port of the b10-dhcp-ddns server
+    /// @param sender_ip IP address of the b10-dhcp-ddns server (IPv4 or IPv6)
+    /// @param sender_port IP port of the b10-dhcp-ddns server
+    /// @param max_queue_size  maximum NCRs allowed in sender's queue
     /// @param ncr_protocol Socket protocol to use with b10-dhcp-ddns
     /// Currently only UDP is supported.
     /// @param ncr_format Format of the b10-dhcp-ddns requests.
@@ -95,6 +102,9 @@ public:
     D2ClientConfig(const bool enable_updates,
                    const isc::asiolink::IOAddress& server_ip,
                    const size_t server_port,
+                   const isc::asiolink::IOAddress& sender_ip,
+                   const size_t sender_port,
+                   const size_t max_queue_size,
                    const dhcp_ddns::NameChangeProtocol& ncr_protocol,
                    const dhcp_ddns::NameChangeFormat& ncr_format,
                    const bool always_include_fqdn,
@@ -124,6 +134,21 @@ public:
     /// @brief Return the IP port of b10-dhcp-ddns.
     size_t getServerPort() const {
         return(server_port_);
+    }
+
+    /// @brief Return the IP address client should use to send
+    const isc::asiolink::IOAddress& getSenderIp() const {
+        return(sender_ip_);
+    }
+
+    /// @brief Return the IP port client should use to send
+    size_t getSenderPort() const {
+        return(sender_port_);
+    }
+
+    /// @brief Return Maximun sender queue size
+    size_t getMaxQueueSize() const {
+        return(max_queue_size_);
     }
 
     /// @brief Return the socket protocol to use with b10-dhcp-ddns.
@@ -201,6 +226,15 @@ private:
 
     /// @brief IP port of the b10-dhcp-ddns server.
     size_t server_port_;
+
+    /// @brief IP address on which the client should send
+    isc::asiolink::IOAddress sender_ip_;
+
+    /// @brief IP port on which the client should send
+    size_t sender_port_;
+
+    /// @brief Maxium number of NCRs allowed to queue waiting to send
+    size_t max_queue_size_;
 
     /// @brief The socket protocol to use with b10-dhcp-ddns.
     /// Currently only UDP is supported.
