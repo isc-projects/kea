@@ -1,3 +1,8 @@
+779.	[doc]		tmark
+	Added a section to the developer's guide for Kea's DHCP-DDNS
+	component, D2.
+	(Trac #3158,    git  7be263c7372b1401a8b4288742854f96b5bec0d6)
+
 bind10-1.2.0rc1 released on April 8, 2014
 
 778.	[func]*		marcin
