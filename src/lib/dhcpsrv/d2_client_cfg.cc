@@ -73,8 +73,8 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
 
 D2ClientConfig::D2ClientConfig()
     : enable_updates_(false),
-      server_ip_(isc::asiolink::IOAddress("0.0.0.0")),
-      server_port_(0),
+      server_ip_(isc::asiolink::IOAddress(DFT_SERVER_IP)),
+      server_port_(DFT_SERVER_PORT),
       sender_ip_(isc::asiolink::IOAddress("0.0.0.0")),
       sender_port_(0),
       max_queue_size_(0),
@@ -106,8 +106,22 @@ D2ClientConfig::validateContents() {
 
     if (ncr_protocol_ != dhcp_ddns::NCR_UDP) {
         isc_throw(D2ClientError, "D2ClientConfig: NCR Protocol:"
-                    << dhcp_ddns::ncrProtocolToString(ncr_protocol_)
-                    << " is not yet supported");
+                  << dhcp_ddns::ncrProtocolToString(ncr_protocol_)
+                  << " is not yet supported");
+    }
+
+    if (sender_ip_.getFamily() != server_ip_.getFamily()) {
+        isc_throw(D2ClientError, "D2ClientConfig: address family mismatch: "
+                  << "server-ip: " << server_ip_.toText()
+                  << " is: " << (server_ip_.isV4() ? "IPv4" : "IPv6")
+                  << " while sender-ip: "  << sender_ip_.toText()
+                  << " is: " << (sender_ip_.isV4() ? "IPv4" : "IPv6"));
+    }
+
+    if (server_ip_ == sender_ip_ && server_port_ == sender_port_) {
+        isc_throw(D2ClientError, "D2ClientConfig: server and sender cannot"
+                  " share the exact same IP address/port: "
+                  << server_ip_.toText() << "/" << server_port_);
     }
 
     /// @todo perhaps more validation we should do yet?

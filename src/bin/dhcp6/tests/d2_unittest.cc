@@ -91,7 +91,8 @@ Dhcp6SrvD2Test::reset() {
 void
 Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
                             const std::string& ip_address,
-                            const uint32_t port) {
+                            const uint32_t port,
+                            const uint32_t sender_port) {
     std::ostringstream config;
     config <<
         "{ \"interfaces\": [ \"*\" ],"
@@ -106,6 +107,7 @@ Dhcp6SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "     \"enable-updates\" : " << (enable_d2 ? "true" : "false") <<  ", "
         "     \"server-ip\" : \"" << ip_address << "\", "
         "     \"server-port\" : " << port << ", "
+        "     \"sender-port\" : " << sender_port << ", "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"always-include-fqdn\" : true, "
@@ -297,7 +299,9 @@ TEST_F(Dhcp6SrvD2Test, forceUDPSendFailure) {
 
     // Configure it enabled and start it.
     // Using server address of 0.0.0.0/0 should induce failure on send.
-    ASSERT_NO_FATAL_FAILURE(configureD2(true, SHOULD_PASS, "0.0.0.0", 0));
+    // Pass in a non-zero sender port to avoid validation error when
+    // server-ip/port are same as sender-ip/port
+    ASSERT_NO_FATAL_FAILURE(configureD2(true, SHOULD_PASS, "0.0.0.0", 0, 53001));
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_NO_THROW(srv_.startD2());
     ASSERT_TRUE(mgr.amSending());
