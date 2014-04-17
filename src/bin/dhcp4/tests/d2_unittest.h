@@ -79,9 +79,11 @@ public:
     /// @param exp_result indicates if configuration should pass or fail
     /// @param ip_address IP address for the D2 server
     /// @param port  port for the D2 server
+    /// @param sender_port NCR sender port
     void configureD2(bool enable_updates, bool exp_result = SHOULD_PASS,
                      const std::string& ip_address = "127.0.0.1",
-                     const uint32_t port = 53001);
+                     const uint32_t port = 53001,
+                     const uint32_t sender_port = 0);
 
     /// @brief Configures the server with the given configuration
     ///
