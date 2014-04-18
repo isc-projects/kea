@@ -1,3 +1,11 @@
+780.	[func]		marcin
+	libkea-cc: JSON parser stores information about the position
+	of the data element values in the JSON string. The position
+	comprises the line number and the offset within this line where
+	the specific value resides. This functionality is intended to
+	be used for error logging during configuration parsing.
+	(Trac #3408, git 115a52a6713340fc589f6f95d73d242931239405)
+
 779.	[doc]		tmark
 	Added a section to the developer's guide for Kea's DHCP-DDNS
 	component, D2.
