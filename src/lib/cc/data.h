@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
 #ifndef ISC_DATA_H
 #define ISC_DATA_H 1
 
+#include <stdint.h>
 #include <string>
 #include <vector>
 #include <map>
@@ -72,16 +73,73 @@ public:
 ///
 class Element {
 
+public:
+    /// \brief Represents the position of the data element within a
+    /// configuration string.
+    ///
+    /// Position comprises a line number and an offset within this line
+    /// where the element value starts. For example, if the JSON string is
+    ///
+    /// \code
+    /// { "foo": "some string",
+    ///   "bar": 123 }
+    /// \endcode
+    ///
+    /// the position of the element "bar" is: line_ = 2; pos_ = 9, because
+    /// begining of the value "123" is at offset 9 from the beginning of
+    /// the second line, including whitespaces.
+    ///
+    /// Note that the @c Position structure is used as an argument to @c Element
+    /// constructors and factory functions to avoid ambiguity and so that the
+    /// uint32_t arguments holding line number and position within the line are
+    /// not confused with the @c Element values passed to these functions.
+    struct Position {
+        uint32_t line_; ///< Line number.
+        uint32_t pos_;  ///< Position within the line.
+
+        /// \brief Constructor.
+        ///
+        /// \param line Line number.
+        /// \param pos Position within the line.
+        Position(const uint32_t line, const uint32_t pos)
+            : line_(line), pos_(pos) {
+        }
+    };
+
+    /// \brief Returns @c Position object with line_ and pos_ set to 0.
+    ///
+    /// The object containing two zeros is a default for most of the
+    /// methods creating @c Element objects. The returned value is static
+    /// so as it is not created everytime the function with the default
+    /// position argument is called.
+    static const Position& ZERO_POSITION() {
+        static Position position(0, 0);
+        return (position);
+    }
+
 private:
     // technically the type could be omitted; is it useful?
     // should we remove it or replace it with a pure virtual
     // function getType?
-    int type;
+    int type_;
+
+    /// \brief Position of the element in the configuration string.
+    Position position_;
 
 protected:
-    Element(int t) { type = t; }
+
+    /// \brief Constructor.
+    ///
+    /// \param t Element type.
+    /// \param pos Structure holding position of the value of the data element.
+    /// It comprises the line number and the position within this line. The values
+    /// held in this structure are used for error logging purposes.
+    Element(int t, const Position& pos = ZERO_POSITION())
+        : type_(t), position_(pos) {
+    }
 
 public:
+
     // any is a special type used in list specifications, specifying
     // that the elements can be of any type
     enum types { integer, real, boolean, null, string, list, map, any };
@@ -89,7 +147,14 @@ public:
     virtual ~Element() {};
 
     /// \return the type of this element
-    int getType() const { return (type); }
+    int getType() const { return (type_); }
+
+    /// \brief Returns position where the data element's value starts in a
+    /// configuration string.
+    ///
+    /// @warning The returned reference is valid as long as the object which
+    /// created it lives.
+    const Position& getPosition() const { return (position_); }
 
     /// Returns a string representing the Element and all its
     /// child elements; note that this is different from stringValue(),
@@ -282,22 +347,35 @@ public:
     /// Notes: Read notes of IntElement definition about the use of
     ///        long long int, long int and int.
     //@{
-    static ElementPtr create();
-    static ElementPtr create(const long long int i);
-    static ElementPtr create(const int i) { return (create(static_cast<long long int>(i))); };
-    static ElementPtr create(const long int i) { return (create(static_cast<long long int>(i))); };
-    static ElementPtr create(const double d);
-    static ElementPtr create(const bool b);
-    static ElementPtr create(const std::string& s);
+    static ElementPtr create(const Position& pos = ZERO_POSITION());
+    static ElementPtr create(const long long int i,
+                             const Position& pos = ZERO_POSITION());
+    static ElementPtr create(const int i,
+                             const Position& pos = ZERO_POSITION());
+    static ElementPtr create(const long int i,
+                             const Position& pos = ZERO_POSITION());
+    static ElementPtr create(const double d,
+                             const Position& pos = ZERO_POSITION());
+    static ElementPtr create(const bool b,
+                             const Position& pos = ZERO_POSITION());
+    static ElementPtr create(const std::string& s,
+                             const Position& pos = ZERO_POSITION());
     // need both std:string and char *, since c++ will match
     // bool before std::string when you pass it a char *
-    static ElementPtr create(const char *s) { return (create(std::string(s))); }
+    static ElementPtr create(const char *s,
+                             const Position& pos = ZERO_POSITION());
 
     /// \brief Creates an empty ListElement type ElementPtr.
-    static ElementPtr createList();
+    ///
+    /// \param pos A structure holding position of the data element value
+    /// in the configuration string. It is used for error logging purposes.
+    static ElementPtr createList(const Position& pos = ZERO_POSITION());
 
     /// \brief Creates an empty MapElement type ElementPtr.
-    static ElementPtr createMap();
+    ///
+    /// \param pos A structure holding position of the data element value
+    /// in the configuration string. It is used for error logging purposes.
+    static ElementPtr createMap(const Position& pos = ZERO_POSITION());
     //@}
 
 
@@ -321,7 +399,8 @@ public:
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     static ElementPtr fromJSON(std::istream& in) throw(JSONError);
-    static ElementPtr fromJSON(std::istream& in, const std::string& file_name) throw(JSONError);
+    static ElementPtr fromJSON(std::istream& in, const std::string& file_name)
+        throw(JSONError);
 
     /// Creates an Element from the given input stream, where we keep
     /// track of the location in the stream for error reporting.
@@ -335,7 +414,9 @@ public:
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
-    static ElementPtr fromJSON(std::istream& in, const std::string& file, int& line, int &pos) throw(JSONError);
+    static ElementPtr fromJSON(std::istream& in, const std::string& file,
+                               int& line, int &pos)
+        throw(JSONError);
     //@}
 
     /// \name Type name conversion functions
@@ -386,7 +467,7 @@ public:
 ///          (C++ tries to convert integer type values and reference/pointer
 ///           if value types do not match exactly)
 ///        We decided the storage as int64_t,
-///           three (long long, long, int) override function defintions 
+///           three (long long, long, int) override function definitions
 ///           and cast int/long/long long to int64_t via long long.
 ///        Therefore, call by value methods (create, setValue) have three
 ///        (int,long,long long) definitions. Others use int64_t.
@@ -396,7 +477,8 @@ class IntElement : public Element {
 private:
 
 public:
-    IntElement(int64_t v) : Element(integer), i(v) { }
+    IntElement(int64_t v, const Position& pos = ZERO_POSITION())
+        : Element(integer, pos), i(v) { }
     int64_t intValue() const { return (i); }
     using Element::getValue;
     bool getValue(int64_t& t) const { t = i; return (true); }
@@ -410,7 +492,8 @@ class DoubleElement : public Element {
     double d;
 
 public:
-    DoubleElement(double v) : Element(real), d(v) {};
+    DoubleElement(double v, const Position& pos = ZERO_POSITION())
+        : Element(real, pos), d(v) {};
     double doubleValue() const { return (d); }
     using Element::getValue;
     bool getValue(double& t) const { t = d; return (true); }
@@ -424,7 +507,8 @@ class BoolElement : public Element {
     bool b;
 
 public:
-    BoolElement(const bool v) : Element(boolean), b(v) {};
+    BoolElement(const bool v, const Position& pos = ZERO_POSITION())
+        : Element(boolean, pos), b(v) {};
     bool boolValue() const { return (b); }
     using Element::getValue;
     bool getValue(bool& t) const { t = b; return (true); }
@@ -436,7 +520,8 @@ public:
 
 class NullElement : public Element {
 public:
-    NullElement() : Element(null) {};
+    NullElement(const Position& pos = ZERO_POSITION())
+        : Element(null, pos) {};
     void toJSON(std::ostream& ss) const;
     bool equals(const Element& other) const;
 };
@@ -445,7 +530,8 @@ class StringElement : public Element {
     std::string s;
 
 public:
-    StringElement(std::string v) : Element(string), s(v) {};
+    StringElement(std::string v, const Position& pos = ZERO_POSITION())
+        : Element(string, pos), s(v) {};
     std::string stringValue() const { return (s); }
     using Element::getValue;
     bool getValue(std::string& t) const { t = s; return (true); }
@@ -459,7 +545,8 @@ class ListElement : public Element {
     std::vector<ConstElementPtr> l;
 
 public:
-    ListElement() : Element(list) {}
+    ListElement(const Position& pos = ZERO_POSITION())
+        : Element(list, pos) {}
     const std::vector<ConstElementPtr>& listValue() const { return (l); }
     using Element::getValue;
     bool getValue(std::vector<ConstElementPtr>& t) const {
@@ -490,8 +577,9 @@ class MapElement : public Element {
     std::map<std::string, ConstElementPtr> m;
 
 public:
-    MapElement() : Element(map) {}
-    // TODO: should we have direct iterators instead of exposing the std::map here?
+    MapElement(const Position& pos = ZERO_POSITION()) : Element(map, pos) {}
+    // @todo should we have direct iterators instead of exposing the std::map
+    // here?
     const std::map<std::string, ConstElementPtr>& mapValue() const {
         return (m);
     }

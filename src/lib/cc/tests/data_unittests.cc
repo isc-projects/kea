@@ -1,4 +1,4 @@
-// Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009, 2014 Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -929,4 +929,87 @@ TEST(Element, merge) {
     EXPECT_EQ(*b, *c);
 
 }
+
+TEST(Element, getPosition) {
+    // Create a JSON string holding different type of values. Some of the
+    // values in the config string are not aligned, so as we can check that
+    // the position is set correctly for the elements.
+    ElementPtr top = Element::fromJSON("{\n"
+                                       "    \"a\":  2,\n"
+                                       "    \"b\":true,\n"
+                                       "    \"cy\": \"a string\",\n"
+                                       "    \"dyz\": {\n"
+                                       "\n"
+                                       "      \"e\": 3,\n"
+                                       "        \"f\": null\n"
+                                       "\n"
+                                       "    },\n"
+                                       "    \"g\": [ 5, 6,\n"
+                                       "             7 ]\n"
+                                       "}\n");
+    ASSERT_TRUE(top);
+
+    // Element "a"
+    ConstElementPtr level1_el = top->get("a");
+    ASSERT_TRUE(level1_el);
+    EXPECT_EQ(2, level1_el->getPosition().line_);
+    EXPECT_EQ(11, level1_el->getPosition().pos_);
+
+    // Element "b"
+    level1_el = top->get("b");
+    ASSERT_TRUE(level1_el);
+    EXPECT_EQ(3, level1_el->getPosition().line_);
+    EXPECT_EQ(9, level1_el->getPosition().pos_);
+
+    // Element "cy"
+    level1_el = top->get("cy");
+    ASSERT_TRUE(level1_el);
+    EXPECT_EQ(4, level1_el->getPosition().line_);
+    EXPECT_EQ(11, level1_el->getPosition().pos_);
+
+    // Element "dyz"
+    level1_el = top->get("dyz");
+    ASSERT_TRUE(level1_el);
+    EXPECT_EQ(5, level1_el->getPosition().line_);
+    EXPECT_EQ(13, level1_el->getPosition().pos_);
+
+    // Element "e" is a sub element of "dyz".
+    ConstElementPtr level2_el = level1_el->get("e");
+    ASSERT_TRUE(level2_el);
+    EXPECT_EQ(7, level2_el->getPosition().line_);
+    EXPECT_EQ(12, level2_el->getPosition().pos_);
+
+    // Element "f" is also a sub element of "dyz"
+    level2_el = level1_el->get("f");
+    ASSERT_TRUE(level2_el);
+    EXPECT_EQ(8, level2_el->getPosition().line_);
+    EXPECT_EQ(14, level2_el->getPosition().pos_);
+
+    // Element "g" is a list.
+    level1_el = top->get("g");
+    ASSERT_TRUE(level1_el);
+    EXPECT_EQ(11, level1_el->getPosition().line_);
+    // Position indicates where the values start (excluding the "[" character)"
+    EXPECT_EQ(11, level1_el->getPosition().pos_);
+
+    // First element from the list.
+    level2_el = level1_el->get(0);
+    ASSERT_TRUE(level2_el);
+    EXPECT_EQ(11, level2_el->getPosition().line_);
+    EXPECT_EQ(12, level2_el->getPosition().pos_);
+
+    // Second element from the list.
+    level2_el = level1_el->get(1);
+    ASSERT_TRUE(level2_el);
+    EXPECT_EQ(11, level2_el->getPosition().line_);
+    EXPECT_EQ(15, level2_el->getPosition().pos_);
+
+    // Third element from the list.
+    level2_el = level1_el->get(2);
+    ASSERT_TRUE(level2_el);
+    EXPECT_EQ(12, level2_el->getPosition().line_);
+    EXPECT_EQ(14, level2_el->getPosition().pos_);
+
+}
+
 }
