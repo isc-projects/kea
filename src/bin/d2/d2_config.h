@@ -191,7 +191,7 @@ public:
 private:
     /// @brief The name of the key.
     ///
-    /// This value is the unique identifeir thay domains use to
+    /// This value is the unique identifier that domains use to
     /// to specify which TSIG key they need.
     std::string name_;
 
@@ -560,7 +560,7 @@ public:
     /// @return returns a pointer to newly created parser.
     virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
                                                     config_id);
-    /// @brief commits the TSIGKeyInfo configuration
+    /// @brief Commits the TSIGKeyInfo configuration
     virtual void commit();
 
 private:
@@ -674,7 +674,7 @@ public:
     virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
                                                     config_id);
 
-    /// @brief commits the configured DnsServerInfo
+    /// @brief Commits the configured DnsServerInfo
     virtual void commit();
 
 private:
@@ -787,7 +787,7 @@ public:
     virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
                                                     config_id);
 
-    /// @brief commits the configured DdnsDomain
+    /// @brief Commits the configured DdnsDomain
     virtual void commit();
 
 private:
