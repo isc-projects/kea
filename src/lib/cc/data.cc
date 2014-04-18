@@ -219,8 +219,23 @@ Element::create(const long long int i, const Position& pos) {
 }
 
 ElementPtr
+Element::create(const int i, const Position& pos) {
+    return (create(static_cast<long long int>(i), pos));
+};
+
+ElementPtr
+Element::create(const long int i, const Position& pos) {
+    return (create(static_cast<long long int>(i), pos));
+};
+
+ElementPtr
 Element::create(const double d, const Position& pos) {
     return (ElementPtr(new DoubleElement(d, pos)));
+}
+
+ElementPtr
+Element::create(const bool b, const Position& pos) {
+    return (ElementPtr(new BoolElement(b, pos)));
 }
 
 ElementPtr
@@ -229,8 +244,8 @@ Element::create(const std::string& s, const Position& pos) {
 }
 
 ElementPtr
-Element::create(const bool b, const Position& pos) {
-    return (ElementPtr(new BoolElement(b, pos)));
+Element::create(const char *s, const Position& pos) {
+    return (create(std::string(s), pos));
 }
 
 ElementPtr
@@ -412,7 +427,8 @@ fromStringstreamNumber(std::istream& in, const std::string& file,
             return (Element::create(boost::lexical_cast<double>(number),
                                     Element::Position(line, start_pos)));
         } catch (const boost::bad_lexical_cast&) {
-            isc_throw(JSONError, std::string("Number overflow: ") + number);
+            throwJSONError(std::string("Number overflow: ") + number,
+                           file, line, start_pos);
         }
     } else {
         try {
