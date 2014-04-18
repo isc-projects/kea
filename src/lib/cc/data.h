@@ -84,11 +84,11 @@ public:
     ///   "bar": 123 }
     /// \endcode
     ///
-    /// The position of the element "bar" is: line_ = 2; pos_ = 9, because
+    /// the position of the element "bar" is: line_ = 2; pos_ = 9, because
     /// begining of the value "123" is at offset 9 from the beginning of
     /// the second line, including whitespaces.
     ///
-    /// Note that the @c Position structure is used to as argument to @c Element
+    /// Note that the @c Position structure is used as an argument to @c Element
     /// constructors and factory functions to avoid ambiguity and so that the
     /// uint32_t arguments holding line number and position within the line are
     /// not confused with the @c Element values passed to these functions.
