@@ -1,4 +1,4 @@
-// Copyright (C) 2010  Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -209,38 +209,53 @@ bool operator!=(const Element& a, const Element& b) {
 // factory functions
 //
 ElementPtr
-Element::create() {
-    return (ElementPtr(new NullElement()));
+Element::create(const Position& pos) {
+    return (ElementPtr(new NullElement(pos)));
 }
 
 ElementPtr
-Element::create(const long long int i) {
-    return (ElementPtr(new IntElement(static_cast<int64_t>(i))));
+Element::create(const long long int i, const Position& pos) {
+    return (ElementPtr(new IntElement(static_cast<int64_t>(i), pos)));
 }
 
 ElementPtr
-Element::create(const double d) {
-    return (ElementPtr(new DoubleElement(d)));
+Element::create(const int i, const Position& pos) {
+    return (create(static_cast<long long int>(i), pos));
+};
+
+ElementPtr
+Element::create(const long int i, const Position& pos) {
+    return (create(static_cast<long long int>(i), pos));
+};
+
+ElementPtr
+Element::create(const double d, const Position& pos) {
+    return (ElementPtr(new DoubleElement(d, pos)));
 }
 
 ElementPtr
-Element::create(const std::string& s) {
-    return (ElementPtr(new StringElement(s)));
+Element::create(const bool b, const Position& pos) {
+    return (ElementPtr(new BoolElement(b, pos)));
 }
 
 ElementPtr
-Element::create(const bool b) {
-    return (ElementPtr(new BoolElement(b)));
+Element::create(const std::string& s, const Position& pos) {
+    return (ElementPtr(new StringElement(s, pos)));
 }
 
 ElementPtr
-Element::createList() {
-    return (ElementPtr(new ListElement()));
+Element::create(const char *s, const Position& pos) {
+    return (create(std::string(s), pos));
 }
 
 ElementPtr
-Element::createMap() {
-    return (ElementPtr(new MapElement()));
+Element::createList(const Position& pos) {
+    return (ElementPtr(new ListElement(pos)));
+}
+
+ElementPtr
+Element::createMap(const Position& pos) {
+    return (ElementPtr(new MapElement(pos)));
 }
 
 
@@ -399,49 +414,69 @@ numberFromStringstream(std::istream& in, int& pos) {
 // value is larger than an int can handle)
 //
 ElementPtr
-fromStringstreamNumber(std::istream& in, int& pos) {
-    std::string number = numberFromStringstream(in, pos);
+fromStringstreamNumber(std::istream& in, const std::string& file,
+                       const int& line, int& pos) {
+    // Remember position where the value starts. It will be set in the
+    // Position structure of the Element to be created.
+    const uint32_t start_pos = pos;
+    // This will move the pos to the end of the value.
+    const std::string number = numberFromStringstream(in, pos);
 
     if (number.find_first_of(".eE") < number.size()) {
         try {
-            return (Element::create(boost::lexical_cast<double>(number)));
+            return (Element::create(boost::lexical_cast<double>(number),
+                                    Element::Position(line, start_pos)));
         } catch (const boost::bad_lexical_cast&) {
-            isc_throw(JSONError, std::string("Number overflow: ") + number);
+            throwJSONError(std::string("Number overflow: ") + number,
+                           file, line, start_pos);
         }
     } else {
         try {
-            return (Element::create(boost::lexical_cast<int64_t>(number)));
+            return (Element::create(boost::lexical_cast<int64_t>(number),
+                                    Element::Position(line, start_pos)));
         } catch (const boost::bad_lexical_cast&) {
-            isc_throw(JSONError, std::string("Number overflow: ") + number);
+            throwJSONError(std::string("Number overflow: ") + number, file,
+                           line, start_pos);
         }
     }
+    return (ElementPtr());
 }
 
 ElementPtr
 fromStringstreamBool(std::istream& in, const std::string& file,
                      const int line, int& pos)
 {
+    // Remember position where the value starts. It will be set in the
+    // Position structure of the Element to be created.
+    const uint32_t start_pos = pos;
+    // This will move the pos to the end of the value.
     const std::string word = wordFromStringstream(in, pos);
+
     if (boost::iequals(word, "True")) {
-        return (Element::create(true));
+        return (Element::create(true, Element::Position(line, start_pos)));
     } else if (boost::iequals(word, "False")) {
-        return (Element::create(false));
+        return (Element::create(false, Element::Position(line, start_pos)));
     } else {
-        throwJSONError(std::string("Bad boolean value: ") + word, file, line, pos);
-        // above is a throw shortcurt, return empty is never reached
-        return (ElementPtr());
+        throwJSONError(std::string("Bad boolean value: ") + word, file,
+                       line, start_pos);
     }
+    return (ElementPtr());
 }
 
 ElementPtr
 fromStringstreamNull(std::istream& in, const std::string& file,
                      const int line, int& pos)
 {
+    // Remember position where the value starts. It will be set in the
+    // Position structure of the Element to be created.
+    const uint32_t start_pos = pos;
+    // This will move the pos to the end of the value.
     const std::string word = wordFromStringstream(in, pos);
     if (boost::iequals(word, "null")) {
-        return (Element::create());
+        return (Element::create(Element::Position(line, start_pos)));
     } else {
-        throwJSONError(std::string("Bad null value: ") + word, file, line, pos);
+        throwJSONError(std::string("Bad null value: ") + word, file,
+                       line, start_pos);
         return (ElementPtr());
     }
 }
@@ -450,7 +485,12 @@ ElementPtr
 fromStringstreamString(std::istream& in, const std::string& file, int& line,
                        int& pos)
 {
-    return (Element::create(strFromStringstream(in, file, line, pos)));
+    // Remember position where the value starts. It will be set in the
+    // Position structure of the Element to be created.
+    const uint32_t start_pos = pos;
+    // This will move the pos to the end of the value.
+    const std::string string_value = strFromStringstream(in, file, line, pos);
+    return (Element::create(string_value, Element::Position(line, start_pos)));
 }
 
 ElementPtr
@@ -458,7 +498,7 @@ fromStringstreamList(std::istream& in, const std::string& file, int& line,
                      int& pos)
 {
     int c = 0;
-    ElementPtr list = Element::createList();
+    ElementPtr list = Element::createList(Element::Position(line, pos));
     ConstElementPtr cur_list_element;
 
     skipChars(in, WHITESPACE, line, pos);
@@ -479,7 +519,7 @@ ElementPtr
 fromStringstreamMap(std::istream& in, const std::string& file, int& line,
                     int& pos)
 {
-    ElementPtr map = Element::createMap();
+    ElementPtr map = Element::createMap(Element::Position(line, pos));
     skipChars(in, WHITESPACE, line, pos);
     int c = in.peek();
     if (c == EOF) {
@@ -594,7 +634,7 @@ Element::fromJSON(std::istream& in, const std::string& file, int& line,
             case '.':
                 in.putback(c);
                 --pos;
-                element = fromStringstreamNumber(in, pos);
+                element = fromStringstreamNumber(in, file, line, pos);
                 el_read = true;
                 break;
             case 't':
