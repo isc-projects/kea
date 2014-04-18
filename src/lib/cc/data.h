@@ -75,6 +75,23 @@ class Element {
 public:
     /// \brief Represents the position of the data element within a
     /// configuration string.
+    ///
+    /// Position comprises a line number and an offset within this line
+    /// where the element value starts. For example, if the JSON string is
+    ///
+    /// \code
+    /// { "foo": "some string",
+    ///   "bar": 123 }
+    /// \endcode
+    ///
+    /// The position of the element "bar" is: line_ = 2; pos_ = 9, because
+    /// begining of the value "123" is at offset 9 from the beginning of
+    /// the second line, including whitespaces.
+    ///
+    /// Note that the @c Position structure is used to as argument to @c Element
+    /// constructors and factory functions to avoid ambiguity and so that the
+    /// uint32_t arguments holding line number and position within the line are
+    /// not confused with the @c Element values passed to these functions.
     struct Position {
         uint32_t line_; ///< Line number.
         uint32_t pos_;  ///< Position within the line.
@@ -91,7 +108,9 @@ public:
     /// \brief Returns @c Position object with line_ and pos_ set to 0.
     ///
     /// The object containing two zeros is a default for most of the
-    /// methods creating @c Element objects.
+    /// methods creating @c Element objects. The returned value is static
+    /// so as it is not created everytime the function with the default
+    /// position argument is called.
     static const Position& ZERO_POSITION() {
         static Position position(0, 0);
         return (position);
@@ -111,11 +130,9 @@ protected:
     /// \brief Constructor.
     ///
     /// \param t Element type.
-    /// \param line Line number in the configuration string where this element
-    /// starts. It is used to communicate the broken parts of configuration
-    /// through logging mechanism.
-    /// \param line_pos Position within the line of the configuration string
-    /// where this element's value starts.
+    /// \param pos Structure holding position of the value of the data element.
+    /// It comprises the line number and the position within this line. The values
+    /// held in this structure are used for error logging purposes.
     Element(int t, const Position& pos = ZERO_POSITION())
         : type_(t), position_(pos) {
     }
@@ -131,8 +148,11 @@ public:
     /// \return the type of this element
     int getType() const { return (type_); }
 
-    /// \brief Returns line number where the data element's value starts in a
-    /// configuration string
+    /// \brief Returns position where the data element's value starts in a
+    /// configuration string.
+    ///
+    /// @warning The returned reference is valid as long as the object which
+    /// created it lives.
     const Position& getPosition() const { return (position_); }
 
     /// Returns a string representing the Element and all its
@@ -353,14 +373,14 @@ public:
 
     /// \brief Creates an empty ListElement type ElementPtr.
     ///
-    /// \param line_num Line number in the configuration string where the
-    /// data element is located.
+    /// \param pos A structure holding position of the data element value
+    /// in the configuration string. It is used for error logging purposes.
     static ElementPtr createList(const Position& pos = ZERO_POSITION());
 
     /// \brief Creates an empty MapElement type ElementPtr.
     ///
-    /// \param line_num Line number in the configuration string where the
-    /// data element is located.
+    /// \param pos A structure holding position of the data element value
+    /// in the configuration string. It is used for error logging purposes.
     static ElementPtr createMap(const Position& pos = ZERO_POSITION());
     //@}
 
@@ -385,7 +405,8 @@ public:
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     static ElementPtr fromJSON(std::istream& in) throw(JSONError);
-    static ElementPtr fromJSON(std::istream& in, const std::string& file_name) throw(JSONError);
+    static ElementPtr fromJSON(std::istream& in, const std::string& file_name)
+        throw(JSONError);
 
     /// Creates an Element from the given input stream, where we keep
     /// track of the location in the stream for error reporting.
@@ -399,7 +420,9 @@ public:
     /// \return An ElementPtr that contains the element(s) specified
     /// in the given input stream.
     // make this one private?
-    static ElementPtr fromJSON(std::istream& in, const std::string& file, int& line, int &pos) throw(JSONError);
+    static ElementPtr fromJSON(std::istream& in, const std::string& file,
+                               int& line, int &pos)
+        throw(JSONError);
     //@}
 
     /// \name Type name conversion functions
