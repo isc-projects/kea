@@ -15,6 +15,7 @@
 #ifndef ISC_DATA_H
 #define ISC_DATA_H 1
 
+#include <stdint.h>
 #include <string>
 #include <vector>
 #include <map>
