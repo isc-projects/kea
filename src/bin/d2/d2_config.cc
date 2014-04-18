@@ -281,12 +281,12 @@ TSIGKeyInfoListParser::TSIGKeyInfoListParser(const std::string& list_name,
     }
 }
 
-TSIGKeyInfoListParser::~TSIGKeyInfoListParser(){
+TSIGKeyInfoListParser::~TSIGKeyInfoListParser() {
 }
 
 void
 TSIGKeyInfoListParser::
-build(isc::data::ConstElementPtr key_list){
+build(isc::data::ConstElementPtr key_list) {
     int i = 0;
     isc::data::ConstElementPtr key_config;
     // For each key element in the key list:
