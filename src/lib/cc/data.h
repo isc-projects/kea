@@ -351,16 +351,11 @@ public:
     static ElementPtr create(const long long int i,
                              const Position& pos = ZERO_POSITION());
     static ElementPtr create(const int i,
-                             const Position& pos = ZERO_POSITION()) {
-        return (create(static_cast<long long int>(i), pos));
-    };
+                             const Position& pos = ZERO_POSITION());
     static ElementPtr create(const long int i,
-                             const Position& pos = ZERO_POSITION()) {
-        return (create(static_cast<long long int>(i), pos));
-    };
+                             const Position& pos = ZERO_POSITION());
     static ElementPtr create(const double d,
                              const Position& pos = ZERO_POSITION());
-
     static ElementPtr create(const bool b,
                              const Position& pos = ZERO_POSITION());
     static ElementPtr create(const std::string& s,
@@ -368,9 +363,7 @@ public:
     // need both std:string and char *, since c++ will match
     // bool before std::string when you pass it a char *
     static ElementPtr create(const char *s,
-                             const Position& pos = ZERO_POSITION()) {
-        return (create(std::string(s), pos));
-    }
+                             const Position& pos = ZERO_POSITION());
 
     /// \brief Creates an empty ListElement type ElementPtr.
     ///
@@ -474,7 +467,7 @@ public:
 ///          (C++ tries to convert integer type values and reference/pointer
 ///           if value types do not match exactly)
 ///        We decided the storage as int64_t,
-///           three (long long, long, int) override function defintions
+///           three (long long, long, int) override function definitions
 ///           and cast int/long/long long to int64_t via long long.
 ///        Therefore, call by value methods (create, setValue) have three
 ///        (int,long,long long) definitions. Others use int64_t.
