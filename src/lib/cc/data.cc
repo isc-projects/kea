@@ -401,7 +401,10 @@ numberFromStringstream(std::istream& in, int& pos) {
 ElementPtr
 fromStringstreamNumber(std::istream& in, const std::string& file,
                        const int& line, int& pos) {
+    // Remember position where the value starts. It will be set in the
+    // Position structure of the Element to be created.
     const uint32_t start_pos = pos;
+    // This will move the pos to the end of the value.
     const std::string number = numberFromStringstream(in, pos);
 
     if (number.find_first_of(".eE") < number.size()) {
@@ -427,7 +430,10 @@ ElementPtr
 fromStringstreamBool(std::istream& in, const std::string& file,
                      const int line, int& pos)
 {
+    // Remember position where the value starts. It will be set in the
+    // Position structure of the Element to be created.
     const uint32_t start_pos = pos;
+    // This will move the pos to the end of the value.
     const std::string word = wordFromStringstream(in, pos);
 
     if (boost::iequals(word, "True")) {
@@ -445,7 +451,10 @@ ElementPtr
 fromStringstreamNull(std::istream& in, const std::string& file,
                      const int line, int& pos)
 {
+    // Remember position where the value starts. It will be set in the
+    // Position structure of the Element to be created.
     const uint32_t start_pos = pos;
+    // This will move the pos to the end of the value.
     const std::string word = wordFromStringstream(in, pos);
     if (boost::iequals(word, "null")) {
         return (Element::create(Element::Position(line, start_pos)));
@@ -460,7 +469,10 @@ ElementPtr
 fromStringstreamString(std::istream& in, const std::string& file, int& line,
                        int& pos)
 {
+    // Remember position where the value starts. It will be set in the
+    // Position structure of the Element to be created.
     const uint32_t start_pos = pos;
+    // This will move the pos to the end of the value.
     const std::string string_value = strFromStringstream(in, file, line, pos);
     return (Element::create(string_value, Element::Position(line, start_pos)));
 }
