@@ -2125,6 +2125,9 @@ Dhcp4/subnet4/	list
 Dhcp4/dhcp-ddns/enable-updates	true	boolean
 Dhcp4/dhcp-ddns/server-ip	"127.0.0.1"	string
 Dhcp4/dhcp-ddns/server-port	53001	integer
+Dhcp4/dhcp-ddns/sender-ip	""	string
+Dhcp4/dhcp-ddns/sender-port	0	integer
+Dhcp4/dhcp-ddns/max-queue-size	1024	integer
 Dhcp4/dhcp-ddns/ncr-protocol	"UDP"	string
 Dhcp4/dhcp-ddns/ncr-format	"JSON"	string
 Dhcp4/dhcp-ddns/override-no-update	false	boolean
@@ -3033,6 +3036,9 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
 Dhcp4/dhcp-ddns/enable-updates	true	boolean
 Dhcp4/dhcp-ddns/server-ip	"127.0.0.1"	string
 Dhcp4/dhcp-ddns/server-port	53001	integer
+Dhcp4/dhcp-ddns/sender-ip	""	string
+Dhcp4/dhcp-ddns/sender-port	0	integer
+Dhcp4/dhcp-ddns/max-queue-size	1024	integer
 Dhcp4/dhcp-ddns/ncr-protocol	"UDP"	string
 Dhcp4/dhcp-ddns/ncr-format	"JSON"	string
 Dhcp4/dhcp-ddns/override-no-update	false	boolean
@@ -3055,30 +3061,58 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       <title>DHCP-DDNS Server Connectivity</title>
       <para>
       In order for NCRs to reach the D2 server, DHCPv4 must be able
-      to communicate with it and so the relevant parameters must be set
-      appropriately.  The parameters, "server-ip" and "server-port", specify
-      the address of the D2 server.  By default, D2 is assumed to running
-      on the same machine as DHCPv4, and the default values for these two
-      parameters should be sufficient. However, if D2 has been configured
-      to listen on a different address or port, these values must altered
-      accordingly.  For example, if D2 has been configured to listen on
-      198.162.1.10 port 900, the following commands would be required:
+      to communicate with it.  DHCPv4 uses the following configuration
+      parameters to control how it communications with D2:
+      <orderedlist>
+      <listitem><para>
+      server-ip - IP address on which D2 listens for requests. The default is
+      the local loopback interface at address 127.0.0.1. (You may specifiy
+      either an IPv4 or IPv6 address.)
+      or IPv6 address.)
+      </para></listitem>
+      <listitem><para>
+      server-port - port on which D2 listens for requests.  The default value
+      is 53001.
+      </para></listitem>
+      <listitem><para>
+      sender-ip - IP address which DHCPv4 should use to send requests to D2.
+      The default value is blank which instructs DHCPv4 to select a suitable
+      address.
+      </para></listitem>
+      <listitem><para>
+      sender-port - port which DHCPv4 should use to send requests to D2. The
+      default value of 0 instructs DHCPv4 to select suitable port.
+      </para></listitem>
+      <listitem><para>
+      ncr-format - Socket protocol use when sending requests to D2.  Currently
+      only UDP is supported.  TCP may be available in an upcoming release.
+      </para></listitem>
+      <listitem><para>
+      ncr-protocol - Packet format to use when sending requests to D2.
+      Currently only JSON format is supported.  Other formats may be available
+      in future releases.
+      </para></listitem>
+      <listitem><para>
+      max-queue-size - maximum number of requests allowed to queue waiting to
+      be sent to D2. This value guards against requests accumulating
+      uncontrollably if they are being generated faster than they can be
+      delivered.  If the number of requests queued for transmission reaches
+      this value, DDNS updating will be turned off until the queue backlog has
+      been sufficiently reduced.  The intent is allow the DHCPv4 server to
+      continue lease operations.  The default value is 1024.
+      </para></listitem>
+      </orderedlist>
+      By default, D2 is assumed to running on the same machine as DHCPv4, and
+      all of the default values mentioned above should be sufficient.
+      If, however, D2 has been configured to listen on a different address or
+      port, these values must altered accordingly. For example, if D2 has been
+      configured to listen on 198.162.1.10 port 900, the following commands
+      would be required:
 <screen>
 &gt; <userinput>config set Dhcp4/dhcp-ddns/server-ip "198.162.1.10"</userinput>
 &gt; <userinput>config set Dhcp4/dhcp-ddns/server-port 900</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-      D2 can be configured to listen over IPv4 or IPv6, therefore server-ip
-      may be either an IPv4 or IPv6 address.
-      </para>
-      <para>
-      The socket protocol that DHCPv4 should use to communicate with D2 is
-      specified with the "ncr-protocol" parameter.  Currently only UDP is
-      supported.
-      </para>
-      <para>
-      The internal format for DDNS update requests sent by DHCPv4 is specified
-      with the "ncr-format" parameter. Currently only JSON is supported.
       </para>
       </section>
       <section id="dhcpv4-d2-rules-config">
@@ -3629,6 +3663,9 @@ Dhcp6/subnet6/  list
 Dhcp6/dhcp-ddns/enable-updates  true    boolean
 Dhcp6/dhcp-ddns/server-ip   "127.0.0.1" string
 Dhcp6/dhcp-ddns/server-port 53001   integer
+Dhcp6/dhcp-ddns/sender-ip	""	string
+Dhcp6/dhcp-ddns/sender-port	0	integer
+Dhcp6/dhcp-ddns/max-queue-size	1024  integer
 Dhcp6/dhcp-ddns/ncr-protocol    "UDP"   string
 Dhcp6/dhcp-ddns/ncr-format  "JSON"  string
 Dhcp6/dhcp-ddns/always-include-fqdn false   boolean
@@ -4586,6 +4623,9 @@ should include options from the isc option space:
 Dhcp6/dhcp-ddns/enable-updates	true	boolean
 Dhcp6/dhcp-ddns/server-ip	"127.0.0.1"	string
 Dhcp6/dhcp-ddns/server-port	53001	integer
+Dhcp6/dhcp-ddns/sender-ip	""	string
+Dhcp6/dhcp-ddns/sender-port	0	integer
+Dhcp6/dhcp-ddns/max-queue-size	1024 integer
 Dhcp6/dhcp-ddns/ncr-protocol	"UDP"	string
 Dhcp6/dhcp-ddns/ncr-format	"JSON"	string
 Dhcp6/dhcp-ddns/override-no-update	false	boolean
@@ -4606,33 +4646,60 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
 </screen>
       <section id="dhcpv6-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
-      In order for NCRs to reach D2, DHCPv6 must be able to communicate with it.
-      The following parameters are used to establish connectivty between DHCPv6
-      and D2.
       <para>
-      The parameters, "server-ip" and "server-port", specify the address of the
-      D2 server.  By default, D2 is assumed to running on the same machine as
-      DHCPv6, and the default values for these two parameters should be
-      sufficient. However, if D2 has been configured to listen on a different
-      address or port, these values must altered accordingly.  For example, if
-      D2 has been configured to listen on 198.162.1.10 port 900, the following
-      commands would be required:
-      </para>
+      In order for NCRs to reach the D2 server, DHCPv6 must be able
+      to communicate with it.  DHCPv6 uses the following configuration
+      parameters to control how it communications with D2:
+      <orderedlist>
+      <listitem><para>
+      server-ip - IP address on which D2 listens for requests. The default is
+      the local loopback interface at address 127.0.0.1. (You may specifiy
+      either an IPv4 or IPv6 address.)
+      or IPv6 address.)
+      </para></listitem>
+      <listitem><para>
+      server-port - port on which D2 listens for requests.  The default value
+      is 53001.
+      </para></listitem>
+      <listitem><para>
+      sender-ip - IP address which DHCPv6 should use to send requests to D2.
+      The default value is blank which instructs DHCPv6 to select a suitable
+      address.
+      </para></listitem>
+      <listitem><para>
+      sender-port - port which DHCPv6 should use to send requests to D2. The
+      default value of 0 instructs DHCPv6 to select suitable port.
+      </para></listitem>
+      <listitem><para>
+      ncr-format - Socket protocol use when sending requests to D2.  Currently
+      only UDP is supported.  TCP may be available in an upcoming release.
+      </para></listitem>
+      <listitem><para>
+      ncr-protocol - Packet format to use when sending requests to D2.
+      Currently only JSON format is supported.  Other formats may be available
+      in future releases.
+      </para></listitem>
+      <listitem><para>
+      max-queue-size - maximum number of requests allowed to queue waiting to
+      be sent to D2. This value guards against requests accumulating
+      uncontrollably if they are being generated faster than they can be
+      delivered.  If the number of requests queued for transmission reaches
+      this value, DDNS updating will be turned off until the queue backlog has
+      been sufficiently reduced.  The intent is allow the DHCPv6 server to
+      continue lease operations.  The default value is 1024.
+      </para></listitem>
+      </orderedlist>
+      By default, D2 is assumed to running on the same machine as DHCPv6, and
+      all of the default values mentioned above should be sufficient.
+      If, however, D2 has been configured to listen on a different address or
+      port, these values must altered accordingly. For example, if D2 has been
+      configured to listen on 3001::5 port 900, the following commands
+      would be required:
 <screen>
-&gt; <userinput>config set Dhcp6/dhcp-ddns/server-ip "198.162.1.10"</userinput>
+&gt; <userinput>config set Dhcp6/dhcp-ddns/server-ip "3001::5"</userinput>
 &gt; <userinput>config set Dhcp6/dhcp-ddns/server-port 900</userinput>
 &gt; <userinput>config commit</userinput>
 </screen>
-      D2 can be configured to listen over IPv4 or IPv6, therefore server-ip
-      may be either an IPv4 or IPv6 address.
-      <para>
-      The socket protocol that DHCPv6 should use to communicate with D2 is
-      specified with the "ncr-protocol" parameter.  Currently only UDP is
-      supported.
-      </para>
-      <para>
-      The internal format for DDNS update requests sent by DHCPv6 is specified
-      with the "ncr-format" parameter. Currently only JSON is supported.
       </para>
       </section>
       <section id="dhcpv6-d2-rules-config">
