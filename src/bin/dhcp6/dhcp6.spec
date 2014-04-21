@@ -382,7 +382,7 @@
                 "item_name": "server-ip",
                 "item_type": "string",
                 "item_optional": true,
-                "item_default": "::1",
+                "item_default": "127.0.0.1",
                 "item_description" : "IP address of b10-dhcp-ddns (IPv4 or IPv6)"
             },
             {
