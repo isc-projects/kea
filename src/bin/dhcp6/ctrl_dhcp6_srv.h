@@ -46,11 +46,15 @@ public:
     /// @brief Destructor.
     ~ControlledDhcpv6Srv();
 
-    /// @brief Establishes msgq session.
+    /// @brief Initializes the server.
     ///
-    /// Creates session that will be used to receive commands and updated
-    /// configuration from cfgmgr (or indirectly from user via bindctl).
-    void establishSession();
+    /// Depending on the configuration backend, it establishes msgq session,
+    /// reads the JSON file from disk or may perform any other setup
+    /// operation. For specific details, see actual implementation in
+    /// ctrl_*_dhcp6_srv.cc
+    ///
+    /// @return true if initialization was successful, false if it failed
+    bool init(const std::string& config_file);
 
     /// @brief Terminates existing msgq session.
     ///
@@ -59,7 +63,7 @@ public:
     /// may be received.
     ///
     /// It is ok to call this method when session is disconnected already.
-    void disconnectSession();
+    void cleanup();
 
     /// @brief Initiates shutdown procedure for the whole DHCPv6 server.
     void shutdown();

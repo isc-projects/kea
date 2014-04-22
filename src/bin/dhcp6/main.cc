@@ -18,6 +18,7 @@
 #include <dhcp6/dhcp6_log.h>
 #include <log/logger_support.h>
 #include <log/logger_manager.h>
+#include <exceptions/exceptions.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -38,13 +39,16 @@ using namespace std;
 namespace {
 const char* const DHCP6_NAME = "b10-dhcp6";
 
+const char* const DHCP6_LOGGER_NAME = "bind10";
+
 void
 usage() {
-    cerr << "Usage: " << DHCP6_NAME << " [-v] [-s] [-p number]" << endl;
+    cerr << "Usage: " << DHCP6_NAME << " [-v] [-s] [-p port_number] [-c cfgfile]" << endl;
     cerr << "  -v: verbose output" << endl;
     cerr << "  -s: stand-alone mode (don't connect to BIND10)" << endl;
     cerr << "  -p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
+    cerr << "  -c file: specify configuration file" << endl;
     exit(EXIT_FAILURE);
 }
 } // end of anonymous namespace
@@ -57,17 +61,20 @@ main(int argc, char* argv[]) {
     bool stand_alone = false;  // Should be connect to BIND10 msgq?
     bool verbose_mode = false; // Should server be verbose?
 
-    while ((ch = getopt(argc, argv, "vsp:")) != -1) {
+    // The standard config file
+    std::string config_file("");
+
+    while ((ch = getopt(argc, argv, "vsp:c:")) != -1) {
         switch (ch) {
         case 'v':
             verbose_mode = true;
             break;
 
-        case 's':
+        case 's': // stand-alone
             stand_alone = true;
             break;
 
-        case 'p':
+        case 'p': // port number
             try {
                 port_number = boost::lexical_cast<int>(optarg);
             } catch (const boost::bad_lexical_cast &) {
@@ -82,6 +89,10 @@ main(int argc, char* argv[]) {
             }
             break;
 
+        case 'c': // config file
+            config_file = optarg;
+            break;
+
         default:
             usage();
         }
@@ -92,39 +103,52 @@ main(int argc, char* argv[]) {
         usage();
     }
 
-    // Initialize logging.  If verbose, we'll use maximum verbosity.
-    // If standalone is enabled, do not buffer initial log messages
-    isc::log::initLogger(DHCP6_NAME,
-                         (verbose_mode ? isc::log::DEBUG : isc::log::INFO),
-                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
-    LOG_INFO(dhcp6_logger, DHCP6_STARTING);
-    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_START_INFO)
-              .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no")
-              .arg(stand_alone ? "yes" : "no" );
 
     int ret = EXIT_SUCCESS;
+    bool status = true;
     try {
+        // Initialize logging.  If verbose, we'll use maximum verbosity.
+        // If standalone is enabled, do not buffer initial log messages
+        Daemon::loggerInit(DHCP6_LOGGER_NAME, verbose_mode, stand_alone);
+
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_START_INFO)
+            .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no")
+            .arg(stand_alone ? "yes" : "no" );
+
+        LOG_INFO(dhcp6_logger, DHCP6_STARTING);
+
         ControlledDhcpv6Srv server(port_number);
+
         if (!stand_alone) {
             try {
-                server.establishSession();
+                // Initialize the server, i.e. establish control session
+                // if BIND10 backend is used or read a configuration file
+                // 
+                status = server.init(config_file);
             } catch (const std::exception& ex) {
-                LOG_ERROR(dhcp6_logger, DHCP6_SESSION_FAIL).arg(ex.what());
-                // Let's continue. It is useful to have the ability to run
-                // DHCP server in stand-alone mode, e.g. for testing
-                // We do need to make sure logging is no longer buffered
-                // since then it would not print until dhcp6 is stopped
+                LOG_ERROR(dhcp6_logger, DHCP6_INIT_FAIL).arg(ex.what());
+
+                // We should not continue if were told to configure (either read
+                // config file or establish BIND10 control session).
                 isc::log::LoggerManager log_manager;
                 log_manager.process();
+
+                cerr << "Failed to initialize server: " << ex.what() << endl;
+                return (EXIT_FAILURE);
             }
         } else {
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_STANDALONE);
         }
+        if (!status) {
+            isc_throw(isc::Unexpected, "Failed to initialize configuration backend.");
+        }
+
         server.run();
         LOG_INFO(dhcp6_logger, DHCP6_SHUTDOWN);
 
     } catch (const std::exception& ex) {
         LOG_FATAL(dhcp6_logger, DHCP6_SERVER_FAILED).arg(ex.what());
+        cerr << "Fatal error during start up: " << ex.what() << endl;
         ret = EXIT_FAILURE;
     }
 

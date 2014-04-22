@@ -26,7 +26,7 @@
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/iface_mgr.h>
-#include <dhcp6/config_parser.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/docsis3_option_defs.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
@@ -197,12 +197,12 @@ TEST_F(Dhcpv6SrvTest, basic) {
 
     ASSERT_NO_THROW( {
         // Skip opening any sockets
-        srv.reset(new Dhcpv6Srv(0));
+        srv.reset(new NakedDhcpv6Srv(0));
     });
     srv.reset();
     ASSERT_NO_THROW({
         // open an unpriviledged port
-        srv.reset(new Dhcpv6Srv(DHCP6_SERVER_PORT + 10000));
+        srv.reset(new NakedDhcpv6Srv(DHCP6_SERVER_PORT + 10000));
     });
 }
 
