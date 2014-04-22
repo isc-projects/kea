@@ -42,6 +42,19 @@ namespace isc {
 namespace data {
 
 std::string
+Element::Position::str() const {
+    std::ostringstream ss;
+    ss << file_ << ":" << line_ << ":" << pos_;
+    return (ss.str());
+}
+
+std::ostream&
+operator<<(std::ostream& out, const Element::Position& pos) {
+    out << pos.str();
+    return (out);
+}
+
+std::string
 Element::str() const {
     std::stringstream ss;
     toJSON(ss);
@@ -425,7 +438,7 @@ fromStringstreamNumber(std::istream& in, const std::string& file,
     if (number.find_first_of(".eE") < number.size()) {
         try {
             return (Element::create(boost::lexical_cast<double>(number),
-                                    Element::Position(line, start_pos)));
+                                    Element::Position(file, line, start_pos)));
         } catch (const boost::bad_lexical_cast&) {
             throwJSONError(std::string("Number overflow: ") + number,
                            file, line, start_pos);
@@ -433,7 +446,7 @@ fromStringstreamNumber(std::istream& in, const std::string& file,
     } else {
         try {
             return (Element::create(boost::lexical_cast<int64_t>(number),
-                                    Element::Position(line, start_pos)));
+                                    Element::Position(file, line, start_pos)));
         } catch (const boost::bad_lexical_cast&) {
             throwJSONError(std::string("Number overflow: ") + number, file,
                            line, start_pos);
@@ -453,9 +466,11 @@ fromStringstreamBool(std::istream& in, const std::string& file,
     const std::string word = wordFromStringstream(in, pos);
 
     if (boost::iequals(word, "True")) {
-        return (Element::create(true, Element::Position(line, start_pos)));
+        return (Element::create(true, Element::Position(file, line,
+                                                        start_pos)));
     } else if (boost::iequals(word, "False")) {
-        return (Element::create(false, Element::Position(line, start_pos)));
+        return (Element::create(false, Element::Position(file, line,
+                                                         start_pos)));
     } else {
         throwJSONError(std::string("Bad boolean value: ") + word, file,
                        line, start_pos);
@@ -473,7 +488,7 @@ fromStringstreamNull(std::istream& in, const std::string& file,
     // This will move the pos to the end of the value.
     const std::string word = wordFromStringstream(in, pos);
     if (boost::iequals(word, "null")) {
-        return (Element::create(Element::Position(line, start_pos)));
+        return (Element::create(Element::Position(file, line, start_pos)));
     } else {
         throwJSONError(std::string("Bad null value: ") + word, file,
                        line, start_pos);
@@ -490,7 +505,8 @@ fromStringstreamString(std::istream& in, const std::string& file, int& line,
     const uint32_t start_pos = pos;
     // This will move the pos to the end of the value.
     const std::string string_value = strFromStringstream(in, file, line, pos);
-    return (Element::create(string_value, Element::Position(line, start_pos)));
+    return (Element::create(string_value, Element::Position(file, line,
+                                                            start_pos)));
 }
 
 ElementPtr
@@ -498,7 +514,7 @@ fromStringstreamList(std::istream& in, const std::string& file, int& line,
                      int& pos)
 {
     int c = 0;
-    ElementPtr list = Element::createList(Element::Position(line, pos));
+    ElementPtr list = Element::createList(Element::Position(file, line, pos));
     ConstElementPtr cur_list_element;
 
     skipChars(in, WHITESPACE, line, pos);
@@ -519,7 +535,7 @@ ElementPtr
 fromStringstreamMap(std::istream& in, const std::string& file, int& line,
                     int& pos)
 {
-    ElementPtr map = Element::createMap(Element::Position(line, pos));
+    ElementPtr map = Element::createMap(Element::Position(file, line, pos));
     skipChars(in, WHITESPACE, line, pos);
     int c = in.peek();
     if (c == EOF) {
