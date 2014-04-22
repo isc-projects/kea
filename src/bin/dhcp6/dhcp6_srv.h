@@ -27,8 +27,7 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
-
-#include <boost/noncopyable.hpp>
+#include <dhcpsrv/daemon.h>
 
 #include <iostream>
 #include <queue>
@@ -52,11 +51,7 @@ public:
 /// that is going to be used as server-identifier, receives incoming
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
-///
-/// @note Only one instance of this class is instantiated as it encompasses
-///       the whole operation of the server.  Nothing, however, enforces the
-///       singleton status of the object.
-class Dhcpv6Srv : public boost::noncopyable {
+class Dhcpv6Srv : public Daemon {
 
 public:
     /// @brief defines if certain option may, must or must not appear

@@ -75,17 +75,25 @@ dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += fqdn_unittest.cc
 dhcp6_unittests_SOURCES += hooks_unittest.cc
 dhcp6_unittests_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
-dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
-dhcp6_unittests_SOURCES += config_parser_unittest.cc
 dhcp6_unittests_SOURCES += d2_unittest.cc d2_unittest.h
 dhcp6_unittests_SOURCES += marker_file.cc
 dhcp6_unittests_SOURCES += ../dhcp6_srv.h ../dhcp6_srv.cc
 dhcp6_unittests_SOURCES += ../dhcp6_log.h ../dhcp6_log.cc
-dhcp6_unittests_SOURCES += ../ctrl_dhcp6_srv.cc
-dhcp6_unittests_SOURCES += ../config_parser.cc ../config_parser.h
 dhcp6_unittests_SOURCES += wireshark.cc
 dhcp6_unittests_SOURCES += dhcp6_client.cc dhcp6_client.h
 dhcp6_unittests_SOURCES += rebind_unittest.cc
+
+if CONFIG_BACKEND_BIND10
+dhcp6_unittests_SOURCES += ../json_config_parser.cc ../json_config_parser.h ../ctrl_bind10_dhcp6_srv.cc
+dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
+dhcp6_unittests_SOURCES += config_parser_unittest.cc
+endif
+
+if CONFIG_BACKEND_JSON
+dhcp6_unittests_SOURCES += ../json_config_parser.cc ../json_config_parser.h ../ctrl_json_dhcp6_srv.cc
+dhcp6_unittests_SOURCES += config_parser_unittest.cc
+endif
+
 
 nodist_dhcp6_unittests_SOURCES  = ../dhcp6_messages.h ../dhcp6_messages.cc
 nodist_dhcp6_unittests_SOURCES += marker_file.h test_libraries.h
