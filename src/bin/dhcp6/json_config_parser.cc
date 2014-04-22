@@ -16,7 +16,7 @@
 #include <cc/data.h>
 #include <config/ccsession.h>
 #include <dhcp/libdhcp++.h>
-#include <dhcp6/config_parser.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfgmgr.h>

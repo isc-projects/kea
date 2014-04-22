@@ -21,7 +21,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/dhcp_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcp6/config_parser.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6_log.h>
 #include <dhcp6/spec_config.h>
@@ -186,7 +186,14 @@ void ControlledDhcpv6Srv::sessionReader(void) {
     }
 }
 
-void ControlledDhcpv6Srv::establishSession() {
+
+bool
+ControlledDhcpv6Srv::init(const std::string& /* config_file*/) {
+    // This is BIND10 configuration backed. It established control session
+    // that is used to connect to BIND10 framework.
+    //
+    // Creates session that will be used to receive commands and updated
+    // configuration from cfgmgr (or indirectly from user via bindctl).
 
     string specfile;
     if (getenv("B10_FROM_BUILD")) {
@@ -242,9 +249,11 @@ void ControlledDhcpv6Srv::establishSession() {
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_CCSESSION_STARTED)
               .arg(ctrl_socket);
     IfaceMgr::instance().addExternalSocket(ctrl_socket, sessionReader);
+
+    return (true);
 }
 
-void ControlledDhcpv6Srv::disconnectSession() {
+void ControlledDhcpv6Srv::cleanup() {
     if (config_session_) {
         delete config_session_;
         config_session_ = NULL;
@@ -273,7 +282,7 @@ void ControlledDhcpv6Srv::shutdown() {
 }
 
 ControlledDhcpv6Srv::~ControlledDhcpv6Srv() {
-    disconnectSession();
+    cleanup();
 
     server_ = NULL; // forget this instance. There should be no callback anymore
                     // at this stage anyway.
@@ -288,6 +297,13 @@ ControlledDhcpv6Srv::execDhcpv6ServerCommand(const std::string& command_id,
         ConstElementPtr answer = isc::config::createAnswer(1, ex.what());
         return (answer);
     }
+}
+
+void
+Daemon::loggerInit(const char* log_name, bool verbose, bool stand_alone) {
+    isc::log::initLogger(log_name,
+                         (verbose ? isc::log::DEBUG : isc::log::INFO),
+                         isc::log::MAX_DEBUG_LEVEL, NULL, !stand_alone);
 }
 
 };

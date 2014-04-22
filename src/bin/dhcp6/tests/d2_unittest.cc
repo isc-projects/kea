@@ -13,7 +13,7 @@
 // PERFORMANCE OF THIS SOFTWARE.
 
 #include <dhcp/iface_mgr.h>
-#include <dhcp6/config_parser.h>
+#include <dhcp6/json_config_parser.h>
 #include <dhcp6/tests/d2_unittest.h>
 #include <dhcpsrv/cfgmgr.h>
 
