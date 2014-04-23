@@ -51,7 +51,17 @@ public:
     /// or reads the 
     /// Creates session that will be used to receive commands and updated
     /// configuration from cfgmgr (or indirectly from user via bindctl).
-    /// @return true if initialization was successful, false if it failed
+    ///
+    /// Note: This function may throw to report enountered problems. It may
+    /// also return false if the initialization was skipped. That may seem
+    /// redundant, but the idea here is that in some cases the configuration
+    /// was read, understood and the decision was made to not start. One
+    /// case where such capability could be needed is when we have a single
+    /// config file for Kea4 and D2, but the DNS Update is disabled. It is
+    /// likely that the D2 will be started, it will analyze its config file,
+    /// decide that it is not needed and will shut down.
+    ///
+    /// @return true if initialization was successful, false if it was not
     virtual bool init(const std::string& config_file);
 
     /// @brief Performs final deconfiguration.
@@ -85,9 +95,13 @@ public:
     /// This is an utility method that is expected to be used by several daemons.
     /// It reads contents of a text file and return it as a string.
     ///
+    /// For now, comments are defined as lines starting with a hash.
+    ///
     /// @param file_name name of the file to read
+    /// @param ignore_comments whether ignore comment lines
     /// @return content of the file
-    std::string readFile(const std::string& file_name);
+    std::string readFile(const std::string& file_name,
+                         bool ingore_comments = false);
 };
 
 }; // end of isc::dhcp namespace
