@@ -63,6 +63,7 @@
  *   - @subpage dhcpv6DDNSIntegration
  *   - @subpage dhcpv6OptionsParse
  *   - @subpage dhcpv6Classifier
+ *   - @subpage dhcpv6ConfigBackend
  *   - @subpage dhcpv6Other
  * - @subpage d2
  *   - @subpage d2CPL
