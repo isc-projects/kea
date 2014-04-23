@@ -98,6 +98,10 @@ public:
         uint32_t line_;    ///< Line number.
         uint32_t pos_;     ///< Position within the line.
 
+        /// \brief Default constructor.
+        Position() : file_(""), line_(0), pos_(0) {
+        }
+
         /// \brief Constructor.
         ///
         /// \param file File name.
