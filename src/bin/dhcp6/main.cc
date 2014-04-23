@@ -39,13 +39,13 @@ using namespace std;
 namespace {
 const char* const DHCP6_NAME = "b10-dhcp6";
 
-const char* const DHCP6_LOGGER_NAME = "bind10";
+const char* const DHCP6_LOGGER_NAME = "kea";
 
 void
 usage() {
     cerr << "Usage: " << DHCP6_NAME << " [-v] [-s] [-p port_number] [-c cfgfile]" << endl;
     cerr << "  -v: verbose output" << endl;
-    cerr << "  -s: stand-alone mode (don't connect to BIND10)" << endl;
+    cerr << "  -s: skip configuration (don't connect to BIND10 or don't read config file)" << endl;
     cerr << "  -p number: specify non-standard port number 1-65535 "
          << "(useful for testing only)" << endl;
     cerr << "  -c file: specify configuration file" << endl;

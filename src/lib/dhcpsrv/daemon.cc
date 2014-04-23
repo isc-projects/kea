@@ -49,21 +49,42 @@ void Daemon::shutdown() {
 Daemon::~Daemon() {
 }
 
-std::string Daemon::readFile(const std::string& file_name) {
+std::string Daemon::readFile(const std::string& file_name, bool ignore_comments) {
 
-    // This is the fastest method to read a file according to:
-    // http://insanecoding.blogspot.com/2011/11/how-to-read-in-file-in-c.html
 
     std::ifstream infile(file_name.c_str(), std::ios::in | std::ios::binary);
     if (infile.is_open())
     {
         std::string contents;
-        infile.seekg(0, std::ios::end);
-        contents.resize(infile.tellg());
-        infile.seekg(0, std::ios::beg);
-        infile.read(&contents[0], contents.size());
-        infile.close();
-        return(contents);
+        std::string line;
+
+        if (ignore_comments) {
+            while (std::getline(infile, line)) {
+
+                // If this is a comments line, replace it with empty line
+                // (so the line numbers will still match
+                if (!line.empty() && line[0] == '#') {
+                    line = "";
+                }
+
+                // getline() removes end line charaters. Unfortunately, we need
+                // it for getting the line numbers right (in case we report an
+                // error.
+                contents.append(line);
+                contents.append("\n");
+            }
+            return (contents);
+        } else {
+
+            // This is the fastest method to read a file according to:
+            // http://insanecoding.blogspot.com/2011/11/how-to-read-in-file-in-c.html
+            infile.seekg(0, std::ios::end);
+            contents.resize(infile.tellg());
+            infile.seekg(0, std::ios::beg);
+            infile.read(&contents[0], contents.size());
+            infile.close();
+            return(contents);
+        }
     }
     isc_throw(InvalidOperation, "Failed to read file " << file_name << ",error:"
               << errno);

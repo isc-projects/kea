@@ -85,12 +85,13 @@ dhcp6_unittests_SOURCES += rebind_unittest.cc
 
 if CONFIG_BACKEND_BIND10
 dhcp6_unittests_SOURCES += ../json_config_parser.cc ../json_config_parser.h ../ctrl_bind10_dhcp6_srv.cc
-dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
+dhcp6_unittests_SOURCES += ctrl_bind10_dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
 endif
 
 if CONFIG_BACKEND_JSON
 dhcp6_unittests_SOURCES += ../json_config_parser.cc ../json_config_parser.h ../ctrl_json_dhcp6_srv.cc
+dhcp6_unittests_SOURCES += ctrl_json_dhcp6_srv_unittest.cc
 dhcp6_unittests_SOURCES += config_parser_unittest.cc
 endif
 

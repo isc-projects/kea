@@ -64,7 +64,7 @@ ControlledDhcpv6Srv::init(const std::string& file_name) {
 
     try {
         // Read contents of the file
-        string config = readFile(file_name);
+        string config = readFile(file_name, true);
 
         // Try to parse it as JSON
         json = Element::fromJSON(config);
