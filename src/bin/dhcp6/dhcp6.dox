@@ -223,6 +223,45 @@ being passed in isc::dhcp::Dhcpv6Srv::selectSubnet() to isc::dhcp::CfgMgr::getSu
 Currently this capability is usable, but the number of scenarios it supports is
 limited.
 
+ @section dhcpv6ConfigBackend Configuration backend for DHCPv6
+
+There are many theoretical ways in which server configuration can be stored. Kea 0.8 and
+earlier versions used BIND10 framework and its internal storage for DHCPv6 server configuration.
+The legacy ISC-DHCP implementation uses flat files. Configuration stored in JSON files is
+becoming more and more popular among various projects. There are unofficial patches for
+ISC-DHCP that keep parts of the configuration in LDAP. It was also suggested that in some
+cases it would be convenient to keep configuration in XML files.
+
+Kea 0.9 introduces configuration backends that are switchable during compilation phase.
+There is a new parameter for configure script: --with-kea-config. It currently supports
+two values: BIND10 and JSON.
+
+BIND10 (which is the default value as of April 2014) means that Kea6 is linked with the
+BIND10 configuration backend that connects to the BIND10 framework and in general works
+exactly the same as Kea 0.8 and earlier versions. The benefits of that backend are uniform
+integration with BIND10 framework, easy on-line reconfiguration using bindctl, available
+RESTful API. On the other hand, it requires the whole heavy BIND10 framework that requires
+Python3 to be present. That backend is likely to go away with the release of Kea 0.9.
+
+JSON is a new configuration backend that causes Kea to read JSON configuration file from
+disk. It does not require any framework and thus is considered more lightweight. It will
+allow dynamic on-line reconfiguration, but will lack remote capabilities (i.e. no RESTful
+API). This configuration backend is expected to be the default for upcoming Kea 0.9.
+
+Internally, configuration backends are implemented as different implementations of the
+isc::dhcp::ControlledDhcpv6Srv class, stored in ctrl_*_dhcpv6_srv.cc files. Depending on
+the choice made by ./configure script, only one of those files is compiled and linked.
+There are backend specific tests in src/bin/dhcp6/tests/ctrl_*_dhcpv6_srv_unittest.cc.
+Only tests specific to selected backend are linked and executed during make distcheck.
+
+While it is unlikely that ISC will support more than one backend at any given time, there
+are several aspects that make that approach appealing in the long term. First, having
+two backends is essential during transition time, where both old and new backend is used.
+Second, there are external organizations that develop and presumably maintain LDAP backend
+for ISC-DHCP. Is at least possible that similar will happen for Kea. Finally, if we ever
+extend the isc::dhcp::CfgMgr with configuration export, this approach could be used as
+a migration tool.
+
  @section dhcpv6Other Other DHCPv6 topics
 
  For hooks API support in DHCPv6, see @ref dhcpv6Hooks.
