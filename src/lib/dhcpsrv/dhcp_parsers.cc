@@ -125,6 +125,8 @@ DebugParser::commit() {
 // **************************** BooleanParser  *************************
 
 template<> void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
+    // Invoke common code for all specializations of build().
+    buildCommon(value);
     // The Config Manager checks if user specified a
     // valid value for a boolean parameter: True or False.
     // We should have a boolean Element, use value directly
@@ -139,6 +141,9 @@ template<> void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
 // **************************** Uin32Parser  *************************
 
 template<> void ValueParser<uint32_t>::build(ConstElementPtr value) {
+    // Invoke common code for all specializations of build().
+    buildCommon(value);
+
     int64_t check;
     string x = value->str();
     try {
@@ -163,6 +168,9 @@ template<> void ValueParser<uint32_t>::build(ConstElementPtr value) {
 // **************************** StringParser  *************************
 
 template <> void ValueParser<std::string>::build(ConstElementPtr value) {
+    // Invoke common code for all specializations of build().
+    buildCommon(value);
+
     value_ = value->str();
     boost::erase_all(value_, "\"");
 }

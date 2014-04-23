@@ -51,86 +51,127 @@ typedef boost::shared_ptr<std::vector<std::string> > HooksLibsStoragePtr;
 
 /// @brief A template class that stores named elements of a given data type.
 ///
-/// This template class is provides data value storage for configuration parameters
-/// of a given data type.  The values are stored by parameter name and as instances
-/// of type "ValueType".
+/// This template class is provides data value storage for configuration
+/// parameters of a given data type.  The values are stored by parameter name
+/// and as instances of type "ValueType". Each value held in the storage has
+/// a corresponding position within a configuration string (file) specified
+/// as a: file name, line number and position within the line. The position
+/// information is used for logging when the particular configuration value
+/// causes a configuration error.
 ///
-/// @param ValueType is the data type of the elements to store.
+/// @tparam ValueType is the data type of the elements to store.
 template<typename ValueType>
 class ValueStorage {
-    public:
-        /// @brief  Stores the the parameter and its value in the store.
-        ///
-        /// If the parameter does not exist in the store, then it will be added,
-        /// otherwise its data value will be updated with the given value.
-        ///
-        /// @param name is the name of the paramater to store.
-        /// @param value is the data value to store.
-        void setParam(const std::string& name, const ValueType& value) {
-            values_[name] = value;
+public:
+    /// @brief  Stores the the parameter, its value and the position in the
+    /// store.
+    ///
+    /// If the parameter does not exist in the store, then it will be added,
+    /// otherwise its data value and the position will be updated with the
+    /// given values.
+    ///
+    /// @param name is the name of the paramater to store.
+    /// @param value is the data value to store.
+    /// @param position is the position of the data element within a
+    /// configuration string (file).
+    void setParam(const std::string& name, const ValueType& value,
+                  const data::Element::Position& position) {
+        values_[name] = value;
+        positions_[name] = position;
+    }
+
+    /// @brief Returns the data value for the given parameter.
+    ///
+    /// Finds and returns the data value for the given parameter.
+    /// @param name is the name of the parameter for which the data
+    /// value is desired.
+    ///
+    /// @return The paramater's data value of type @c ValueType.
+    /// @throw DhcpConfigError if the parameter is not found.
+    ValueType getParam(const std::string& name) const {
+        typename std::map<std::string, ValueType>::const_iterator param
+            = values_.find(name);
+
+        if (param == values_.end()) {
+            isc_throw(DhcpConfigError, "Missing parameter '"
+                      << name << "'");
         }
 
-        /// @brief Returns the data value for the given parameter.
-        ///
-        /// Finds and returns the data value for the given parameter.
-        /// @param name is the name of the parameter for which the data
-        /// value is desired.
-        ///
-        /// @return The paramater's data value of type @c ValueType.
-        /// @throw DhcpConfigError if the parameter is not found.
-        ValueType getParam(const std::string& name) const {
-            typename std::map<std::string, ValueType>::const_iterator param
-                = values_.find(name);
+        return (param->second);
+    }
 
-            if (param == values_.end()) {
-                isc_throw(DhcpConfigError, "Missing parameter '"
-                       << name << "'");
-            }
-
-            return (param->second);
+    /// @brief Returns position of the data element in the configuration string.
+    ///
+    /// The returned object comprises file name, line number and the position
+    /// within the particular line of the configuration string where the data
+    /// element holding a particular value is located.
+    ///
+    /// @param name is the name of the parameter which position is desired.
+    ///
+    /// @return Position of the data element or the position holding empty
+    /// file name and two zeros if the position hasn't been specified for the
+    /// particular value.
+    const data::Element::Position& getPosition(const std::string& name) const {
+        typename std::map<std::string, data::Element::Position>::const_iterator
+            pos = positions_.find(name);
+        if (pos == positions_.end()) {
+            return (data::Element::ZERO_POSITION());
         }
 
-        /// @brief Returns the data value for an optional parameter.
-        ///
-        /// Finds and returns the data value for the given parameter or
-        /// a supplied default value if it is not found.
-        ///
-        /// @param name is the name of the parameter for which the data
-        /// value is desired.
-        /// @param default_value value to use the default
-        ///
-        /// @return The paramater's data value of type @c ValueType.
-        ValueType getOptionalParam(const std::string& name,
-                                   const ValueType& default_value) const {
-            typename std::map<std::string, ValueType>::const_iterator param
-                = values_.find(name);
+        return (pos->second);
+    }
 
-            if (param == values_.end()) {
-                return (default_value);
-            }
+    /// @brief Returns the data value for an optional parameter.
+    ///
+    /// Finds and returns the data value for the given parameter or
+    /// a supplied default value if it is not found.
+    ///
+    /// @param name is the name of the parameter for which the data
+    /// value is desired.
+    /// @param default_value value to use the default
+    ///
+    /// @return The paramater's data value of type @c ValueType.
+    ValueType getOptionalParam(const std::string& name,
+                               const ValueType& default_value) const {
+        typename std::map<std::string, ValueType>::const_iterator param
+            = values_.find(name);
 
-            return (param->second);
+        if (param == values_.end()) {
+            return (default_value);
         }
 
-        /// @brief  Remove the parameter from the store.
-        ///
-        /// Deletes the entry for the given parameter from the store if it
-        /// exists.
-        ///
-        /// @param name is the name of the paramater to delete.
-        void delParam(const std::string& name) {
-            values_.erase(name);
-        }
+        return (param->second);
+    }
 
-        /// @brief Deletes all of the entries from the store.
-        ///
-        void clear() {
-            values_.clear();
-        }
+    /// @brief  Remove the parameter from the store.
+    ///
+    /// Deletes the entry for the given parameter from the store if it
+    /// exists.
+    ///
+    /// @param name is the name of the paramater to delete.
+    void delParam(const std::string& name) {
+        values_.erase(name);
+        positions_.erase(name);
+    }
 
-    private:
-        /// @brief An std::map of the data values, keyed by parameter names.
-        std::map<std::string, ValueType> values_;
+    /// @brief Deletes all of the entries from the store.
+    ///
+    void clear() {
+        values_.clear();
+        positions_.clear();
+    }
+
+private:
+    /// @brief An std::map of the data values, keyed by parameter names.
+    std::map<std::string, ValueType> values_;
+
+    /// @brief An std::map holding positions of the data elements in the
+    /// configuration, which values are held in @c values_.
+    ///
+    /// The position is used for logging, when the particular value
+    /// causes a configuration error.
+    std::map<std::string, data::Element::Position> positions_;
+
 };
 
 
@@ -237,7 +278,7 @@ public:
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
     ValueParser(const std::string& param_name,
         boost::shared_ptr<ValueStorage<ValueType> > storage)
-        : storage_(storage), param_name_(param_name), value_() {
+        : storage_(storage), param_name_(param_name), value_(), pos_() {
         // Empty parameter name is invalid.
         if (param_name_.empty()) {
             isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
@@ -251,7 +292,6 @@ public:
         }
     }
 
-
     /// @brief Parse a given element into a value of type @c ValueType
     ///
     /// @param value a value to be parsed.
@@ -264,10 +304,23 @@ public:
     void commit() {
         // If a given parameter already exists in the storage we override
         // its value. If it doesn't we insert a new element.
-        storage_->setParam(param_name_, value_);
+        storage_->setParam(param_name_, value_, pos_);
     }
 
 private:
+
+    /// @brief Performs operations common for all specializations of the
+    /// @c build function.
+    ///
+    /// This method should be called by all specializations of the @c build
+    /// method.
+    ///
+    /// @param value a value being parsed.
+    void buildCommon(isc::data::ConstElementPtr value) {
+        // Remember position of the data element.
+        pos_ = value->getPosition();
+    }
+
     /// Pointer to the storage where committed value is stored.
     boost::shared_ptr<ValueStorage<ValueType> > storage_;
 
@@ -276,6 +329,8 @@ private:
 
     /// Parsed value.
     ValueType value_;
+
+    data::Element::Position pos_;
 };
 
 /// @brief typedefs for simple data type parsers
