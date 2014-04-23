@@ -190,9 +190,8 @@ public:
     virtual Lease6Ptr getLease6(Lease::Type type,
                                 const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief Returns existing IPv6 lease for a given DUID+IA combination
-    ///
-    /// @todo Not implemented yet
+    /// @brief Returns existing IPv6 lease for a given DUID + IA + lease type
+    /// combination
     ///
     /// @param type specifies lease type: (NA, TA or PD)
     /// @param duid client DUID
@@ -202,7 +201,8 @@ public:
     virtual Lease6Collection getLeases6(Lease::Type type,
                                         const DUID& duid, uint32_t iaid) const;
 
-    /// @brief Returns existing IPv6 lease for a given DUID/IA/subnet-id tuple
+    /// @brief Returns existing IPv6 lease for a given DUID + IA + subnet-id +
+    /// lease type combination.
     ///
     /// This function returns a copy of the lease. The modification in the
     /// return lease does not affect the instance held in the lease storage.
@@ -214,7 +214,8 @@ public:
     ///
     /// @return lease collection (may be empty if no lease is found)
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
-                                        uint32_t iaid, SubnetID subnet_id) const;
+                                        uint32_t iaid,
+                                        SubnetID subnet_id) const;
 
     /// @brief Updates IPv4 lease.
     ///
@@ -372,8 +373,6 @@ protected:
     /// will not be written to disk.
     ///
     /// @param u Universe (v4 or v6)
-    /// @param parameters Map holding parameters of the Lease Manager, passed to
-    /// the constructor.
     ///
     /// @return The location of the lease file that should be assigned to the
     /// lease_file4_ or lease_file6_, depending on the universe specified as an
@@ -394,9 +393,9 @@ protected:
             >,
 
             // Specification of the second index starts here.
-            boost::multi_index::ordered_unique<
+            boost::multi_index::ordered_non_unique<
                 // This is a composite index that will be used to search for
-                // the lease using three attributes: DUID, IAID, Subnet Id.
+                // the lease using three attributes: DUID, IAID and lease type.
                 boost::multi_index::composite_key<
                     Lease6,
                     // The DUID can be retrieved from the Lease6 object using
@@ -404,9 +403,9 @@ protected:
                     boost::multi_index::const_mem_fun<Lease6, const std::vector<uint8_t>&,
                                                       &Lease6::getDuidVector>,
                     // The two other ingredients of this index are IAID and
-                    // subnet id.
+                    // lease type.
                     boost::multi_index::member<Lease6, uint32_t, &Lease6::iaid_>,
-                    boost::multi_index::member<Lease, SubnetID, &Lease::subnet_id_>
+                    boost::multi_index::member<Lease6, Lease::Type, &Lease6::type_>
                 >
             >
         >
