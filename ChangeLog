@@ -1,3 +1,10 @@
+781.	[func]		marcin
+	libkea-dhcpsrv: the Memfile lease storage backend returns leases
+	of a specified type. Previously, it ignored the lease type parameter
+	and returned all leases for a particular client. Thanks to David
+	Carlier for helping to implement this ticket.
+	(Trac #3148, git d2f0edf473716cd747a21d6917e89ba55c148d8e)
+
 780.	[func]		marcin
 	libkea-cc: JSON parser stores information about the position
 	of the data element values in the JSON string. The position
