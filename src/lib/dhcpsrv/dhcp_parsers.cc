@@ -1026,7 +1026,7 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
         // below will thrown an exception. We have to catch this exception
         // to append the line number where the parameter is.
         try {
-            parser = (createSubnetConfigParser(param.first));
+            parser.reset(createSubnetConfigParser(param.first));
         } catch (const std::exception& ex) {
             isc_throw(DhcpConfigError, ex.what() << " ("
                       << param.second->getPosition() << ")");
