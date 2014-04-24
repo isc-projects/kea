@@ -77,11 +77,17 @@ public:
     ///
     /// @param enable_updates value to assign to the enable-updates parameter
     /// @param exp_result indicates if configuration should pass or fail
-    /// @param ip_address IP address for the D2 server
+    /// @param server_ip IP address for the D2 server
     /// @param port  port for the D2 server
+    /// @param sender_ip NCR sender's IP address
+    /// @param sender_port NCR sender port
+    /// @param max_queue_size maximum number of NCRs allowed in sender's queue
     void configureD2(bool enable_updates, bool exp_result = SHOULD_PASS,
-                     const std::string& ip_address = "127.0.0.1",
-                     const uint32_t port = 53001);
+                     const std::string& server_ip = "127.0.0.1",
+                     const size_t port = 53001,
+                     const std::string& sender_ip = "0.0.0.0",
+                     const size_t sender_port = 0,
+                     const size_t max_queue_size = 1024);
 
     /// @brief Configures the server with the given configuration
     ///
