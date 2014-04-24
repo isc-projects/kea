@@ -455,15 +455,25 @@ OptionDataParser::createOption() {
         isc_throw(DhcpConfigError, "invalid option space name '"
                 << option_space << "' specified for option '"
                 << option_name << "', code '" << option_code
-                  << "' (" << string_values_->getPosition("name") << ")");
+                  << "' (" << string_values_->getPosition("space") << ")");
     }
 
     const bool csv_format = boolean_values_->getParam("csv-format");
 
     // Find the Option Definition for the option by its option code.
     // findOptionDefinition will throw if not found, no need to test.
+    // Find the definition for the option by its code. This function
+    // may throw so we catch exceptions to log the culprit line of the
+    // configuration.
     OptionDefinitionPtr def;
-    if (!(def = findServerSpaceOptionDefinition(option_space, option_code))) {
+    try {
+        def = findServerSpaceOptionDefinition(option_space, option_code);
+
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError, ex.what()
+                  << " (" << string_values_->getPosition("space") << ")");
+    }
+    if (!def) {
         // If we are not dealing with a standard option then we
         // need to search for its definition among user-configured
         // options. They are expected to be in the global storage
@@ -1011,7 +1021,16 @@ SubnetConfigParser::SubnetConfigParser(const std::string&,
 void
 SubnetConfigParser::build(ConstElementPtr subnet) {
     BOOST_FOREACH(ConfigPair param, subnet->mapValue()) {
-        ParserPtr parser(createSubnetConfigParser(param.first));
+        ParserPtr parser;
+        // When unsupported parameter is specified, the function called
+        // below will thrown an exception. We have to catch this exception
+        // to append the line number where the parameter is.
+        try {
+            parser = (createSubnetConfigParser(param.first));
+        } catch (const std::exception& ex) {
+            isc_throw(DhcpConfigError, ex.what() << " ("
+                      << param.second->getPosition() << ")");
+        }
         parser->build(param.second);
         parsers_.push_back(parser);
     }
@@ -1029,7 +1048,13 @@ SubnetConfigParser::build(ConstElementPtr subnet) {
     }
 
     // Create a subnet.
-    createSubnet();
+    try {
+        createSubnet();
+    } catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError,
+                  "subnet configuration failed (" << subnet->getPosition()
+                  << "): " << ex.what());
+    }
 }
 
 void
