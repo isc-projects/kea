@@ -218,8 +218,7 @@ protected:
                                              global_context_,
                                              Dhcp4OptionDataParser::factory);
         } else {
-            isc_throw(NotImplemented,
-                "parser error: Subnet4 parameter not supported: " << config_id);
+            isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
 
         return (parser);
