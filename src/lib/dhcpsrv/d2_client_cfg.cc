@@ -55,19 +55,19 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                const std::string& generated_prefix,
                                const std::string& qualifying_suffix)
     : enable_updates_(enable_updates),
-    server_ip_(server_ip),
-    server_port_(server_port),
-    sender_ip_(sender_ip),
-    sender_port_(sender_port),
-    max_queue_size_(max_queue_size),
-    ncr_protocol_(ncr_protocol),
-    ncr_format_(ncr_format),
-    always_include_fqdn_(always_include_fqdn),
-    override_no_update_(override_no_update),
-    override_client_update_(override_client_update),
-    replace_client_name_(replace_client_name),
-    generated_prefix_(generated_prefix),
-    qualifying_suffix_(qualifying_suffix) {
+      server_ip_(server_ip),
+      server_port_(server_port),
+      sender_ip_(sender_ip),
+      sender_port_(sender_port),
+      max_queue_size_(max_queue_size),
+      ncr_protocol_(ncr_protocol),
+      ncr_format_(ncr_format),
+      always_include_fqdn_(always_include_fqdn),
+      override_no_update_(override_no_update),
+      override_client_update_(override_client_update),
+      replace_client_name_(replace_client_name),
+      generated_prefix_(generated_prefix),
+      qualifying_suffix_(qualifying_suffix) {
     validateContents();
 }
 
@@ -75,17 +75,17 @@ D2ClientConfig::D2ClientConfig()
     : enable_updates_(false),
       server_ip_(isc::asiolink::IOAddress(DFT_SERVER_IP)),
       server_port_(DFT_SERVER_PORT),
-      sender_ip_(isc::asiolink::IOAddress("0.0.0.0")),
-      sender_port_(0),
-      max_queue_size_(0),
-      ncr_protocol_(dhcp_ddns::NCR_UDP),
-      ncr_format_(dhcp_ddns::FMT_JSON),
-      always_include_fqdn_(false),
-      override_no_update_(false),
-      override_client_update_(false),
-      replace_client_name_(false),
-      generated_prefix_("myhost"),
-      qualifying_suffix_("example.com") {
+      sender_ip_(isc::asiolink::IOAddress(DFT_V4_SENDER_IP)),
+      sender_port_(DFT_SENDER_PORT),
+      max_queue_size_(DFT_MAX_QUEUE_SIZE),
+      ncr_protocol_(dhcp_ddns::stringToNcrProtocol(DFT_NCR_PROTOCOL)),
+      ncr_format_(dhcp_ddns::stringToNcrFormat(DFT_NCR_FORMAT)),
+      always_include_fqdn_(DFT_ALWAYS_INCLUDE_FQDN),
+      override_no_update_(DFT_OVERRIDE_NO_UPDATE),
+      override_client_update_(DFT_OVERRIDE_CLIENT_UPDATE),
+      replace_client_name_(DFT_REPLACE_CLIENT_NAME),
+      generated_prefix_(DFT_GENERATED_PREFIX),
+      qualifying_suffix_(DFT_QUALIFYING_SUFFIX) {
     validateContents();
 }
 
