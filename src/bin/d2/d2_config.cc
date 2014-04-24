@@ -265,8 +265,9 @@ TSIGKeyInfoParser::createConfigParser(const std::string& config_id) {
 
 void
 TSIGKeyInfoParser::commit() {
-    /// @todo if at some point  TSIG keys need some form of resource
-    /// initialization do that here
+    /// @todo if at some point  TSIG keys need some form of runtime resource
+    /// initialization, such as creating some sort of hash instance in
+    /// crytpolib.  Once TSIG is fully implemented under Trac #3432 we'll know.
 }
 
 // *********************** TSIGKeyInfoListParser  *************************

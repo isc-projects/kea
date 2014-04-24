@@ -561,6 +561,8 @@ public:
     virtual isc::dhcp::ParserPtr createConfigParser(const std::string&
                                                     config_id);
     /// @brief Commits the TSIGKeyInfo configuration
+    /// Currently this method is a NOP, as the key instance is created and
+    /// then added to a local list of keys in build().
     virtual void commit();
 
 private:
@@ -613,7 +615,8 @@ public:
     /// @brief Commits the list of TSIG keys
     ///
     /// Iterates over the internal list of TSIGKeyInfoParsers, invoking
-    /// commit on each one.
+    /// commit on each one.  Then commits the local list of keys to
+    /// storage.
     virtual void commit();
 
 private:
@@ -675,6 +678,8 @@ public:
                                                     config_id);
 
     /// @brief Commits the configured DnsServerInfo
+    /// Currently this method is a NOP, as the server instance is created and
+    /// then added to the list of servers in build().
     virtual void commit();
 
 private:
@@ -788,6 +793,8 @@ public:
                                                     config_id);
 
     /// @brief Commits the configured DdnsDomain
+    /// Currently this method is a NOP, as the domain instance is created and
+    /// then added to the list of domains in build().
     virtual void commit();
 
 private:
@@ -920,6 +927,8 @@ public:
                                                     config_id);
 
     /// @brief Commits the configured DdsnDomainListMgr
+    /// Currently this method is a NOP, as the manager instance is created
+    /// in build().
     virtual void commit();
 
 private:
