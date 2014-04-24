@@ -1,3 +1,8 @@
+782.	[func]		tmark
+	Added sender-ip, sender-port, and max-queue-size parameters to
+	the dhcp-ddns configuration section of both b10-dhcp4 and b10-dhcp6.
+	(Trac #3328,    git 8d8d0b5eedaab20bf1008dfb3a6913eb006a6e73)
+
 781.	[func]		marcin
 	libkea-dhcpsrv: the Memfile lease storage backend returns leases
 	of a specified type. Previously, it ignored the lease type parameter
