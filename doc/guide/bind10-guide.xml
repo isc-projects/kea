@@ -3066,8 +3066,8 @@ Dhcp4/dhcp-ddns/qualifying-suffix	"example.com"	string
       <orderedlist>
       <listitem><para>
       server-ip - IP address on which D2 listens for requests. The default is
-      the local loopback interface at address 127.0.0.1. (You may specifiy
-      either an IPv4 or IPv6 address.)
+      the local loopback interface at address 127.0.0.1. You may specify
+      either an IPv4 or IPv6 address.
       </para></listitem>
       <listitem><para>
       server-port - port on which D2 listens for requests.  The default value
@@ -4652,8 +4652,8 @@ Dhcp6/dhcp-ddns/qualifying-suffix	"example.com"	string
       <orderedlist>
       <listitem><para>
       server-ip - IP address on which D2 listens for requests. The default is
-      the local loopback interface at address 127.0.0.1. (You may specifiy
-      either an IPv4 or IPv6 address.)
+      the local loopback interface at address 127.0.0.1. You may specify
+      either an IPv4 or IPv6 address.
       </para></listitem>
       <listitem><para>
       server-port - port on which D2 listens for requests.  The default value
