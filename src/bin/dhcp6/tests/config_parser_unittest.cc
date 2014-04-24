@@ -3213,8 +3213,11 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
         "    \"subnet\": \"2001:db8:1::/64\" } ], "
         " \"dhcp-ddns\" : {"
         "     \"enable-updates\" : true, "
-        "     \"server-ip\" : \"192.168.2.1\", "
+        "     \"server-ip\" : \"3001::1\", "
         "     \"server-port\" : 777, "
+        "     \"sender-ip\" : \"3001::2\", "
+        "     \"sender-port\" : 778, "
+        "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
         "     \"always-include-fqdn\" : true, "
@@ -3245,8 +3248,11 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
 
     // Verify that the configuration values are correct.
     EXPECT_TRUE(d2_client_config->getEnableUpdates());
-    EXPECT_EQ("192.168.2.1", d2_client_config->getServerIp().toText());
+    EXPECT_EQ("3001::1", d2_client_config->getServerIp().toText());
     EXPECT_EQ(777, d2_client_config->getServerPort());
+    EXPECT_EQ("3001::2", d2_client_config->getSenderIp().toText());
+    EXPECT_EQ(778, d2_client_config->getSenderPort());
+    EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
     EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
