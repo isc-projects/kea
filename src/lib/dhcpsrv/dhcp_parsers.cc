@@ -134,7 +134,8 @@ template<> void ValueParser<bool>::build(isc::data::ConstElementPtr value) {
         value_ = value->boolValue();
     } catch (const isc::data::TypeError &) {
         isc_throw(BadValue, " Wrong value type for " << param_name_
-                  << " : build called with a non-boolean element.");
+                  << " : build called with a non-boolean element "
+                  << "(" << value->getPosition() << ").");
     }
 }
 
@@ -150,15 +151,18 @@ template<> void ValueParser<uint32_t>::build(ConstElementPtr value) {
         check = boost::lexical_cast<int64_t>(x);
     } catch (const boost::bad_lexical_cast &) {
         isc_throw(BadValue, "Failed to parse value " << value->str()
-                  << " as unsigned 32-bit integer.");
+                  << " as unsigned 32-bit integer "
+                  "(" << value->getPosition() << ").");
     }
     if (check > std::numeric_limits<uint32_t>::max()) {
         isc_throw(BadValue, "Value " << value->str() << "is too large"
-                  << " for unsigned 32-bit integer.");
+                  << " for unsigned 32-bit integer "
+                  "(" << value->getPosition() << ").");
     }
     if (check < 0) {
         isc_throw(BadValue, "Value " << value->str() << "is negative."
-               << " Only 0 or larger are allowed for unsigned 32-bit integer.");
+               << " Only 0 or larger are allowed for unsigned 32-bit integer "
+                  "(" << value->getPosition() << ").");
     }
 
     // value is small enough to fit
@@ -202,7 +206,8 @@ InterfaceListConfigParser::build(ConstElementPtr value) {
             if (isIfaceAdded(iface_name)) {
                 isc_throw(isc::dhcp::DhcpConfigError, "duplicate interface"
                           << " name '" << iface_name << "' specified in '"
-                          << param_name_ << "' configuration parameter");
+                          << param_name_ << "' configuration parameter "
+                          "(" << value->getPosition() << ")");
             }
             // @todo check that this interface exists in the system!
             // The IfaceMgr exposes mechanisms to check this.
@@ -293,7 +298,8 @@ HooksLibrariesParser::build(ConstElementPtr value) {
             error_list += (string(", ") + error_libs[i]);
         }
         isc_throw(DhcpConfigError, "hooks libraries failed to validate - "
-                  "library or libraries in error are: " + error_list);
+                  "library or libraries in error are: " << error_list
+                  << " (" << value->getPosition() << ")");
     }
 
     // The library list has changed and the libraries are valid, so flag for
@@ -357,8 +363,8 @@ OptionDataParser::build(ConstElementPtr option_data_entries) {
             parser = value_parser;
         } else {
             isc_throw(DhcpConfigError,
-                      "Parser error: option-data parameter not supported: "
-                      << param.first);
+                      "option-data parameter not supported: " << param.first
+                      << " (" << param.second->getPosition() << ")");
         }
 
         parser->build(param.second);
@@ -412,22 +418,22 @@ OptionDataParser::createOption() {
     // is not zero.
     uint32_t option_code = uint32_values_->getParam("code");
     if (option_code == 0) {
-        isc_throw(DhcpConfigError, "option code must not be zero."
-                << " Option code '0' is reserved.");
+        isc_throw(DhcpConfigError, "option code must not be zero "
+                  "(" << uint32_values_->getPosition("code") << ")");
 
     } else if (global_context_->universe_ == Option::V4 &&
                option_code > std::numeric_limits<uint8_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << option_code
                 << "', it must not exceed '"
                   << static_cast<int>(std::numeric_limits<uint8_t>::max())
-                  << "'");
+                  << "' (" << uint32_values_->getPosition("code") << ")");
 
     } else if (global_context_->universe_ == Option::V6 &&
                option_code > std::numeric_limits<uint16_t>::max()) {
         isc_throw(DhcpConfigError, "invalid option code '" << option_code
                 << "', it must not exceed '"
                   << std::numeric_limits<uint16_t>::max()
-                  << "'");
+                  << "' (" << uint32_values_->getPosition("code") << ")");
 
     }
 
@@ -436,18 +442,20 @@ OptionDataParser::createOption() {
     std::string option_name = string_values_->getParam("name");
     if (option_name.empty()) {
         isc_throw(DhcpConfigError, "name of the option with code '"
-                << option_code << "' is empty");
+                  << option_code << "' is empty ("
+                  << string_values_->getPosition("name") << ")");
     } else if (option_name.find(" ") != std::string::npos) {
         isc_throw(DhcpConfigError, "invalid option name '" << option_name
-                << "', space character is not allowed");
+                  << "', space character is not allowed ("
+                  << string_values_->getPosition("name") << ")");
     }
 
     std::string option_space = string_values_->getParam("space");
     if (!OptionSpace::validateName(option_space)) {
         isc_throw(DhcpConfigError, "invalid option space name '"
                 << option_space << "' specified for option '"
-                << option_name << "' (code '" << option_code
-                << "')");
+                << option_name << "', code '" << option_code
+                  << "' (" << string_values_->getPosition("name") << ")");
     }
 
     const bool csv_format = boolean_values_->getParam("csv-format");
@@ -479,7 +487,8 @@ OptionDataParser::createOption() {
             isc_throw(DhcpConfigError, "definition for the option '"
                       << option_space << "." << option_name
                       << "' having code '" <<  option_code
-                      << "' does not exist");
+                      << "' does not exist ("
+                      << string_values_->getPosition("name") << ")");
         }
     }
 
@@ -509,7 +518,8 @@ OptionDataParser::createOption() {
             util::encode::decodeHex(option_data, binary);
         } catch (...) {
             isc_throw(DhcpConfigError, "option data is not a valid"
-                      << " string of hexadecimal digits: " << option_data);
+                      << " string of hexadecimal digits: " << option_data
+                      << " (" << string_values_->getPosition("data") << ")");
         }
     }
 
@@ -519,10 +529,11 @@ OptionDataParser::createOption() {
             isc_throw(DhcpConfigError, "the CSV option data format can be"
                       " used to specify values for an option that has a"
                       " definition. The option with code " << option_code
-                      << " does not have a definition.");
+                      << " does not have a definition ("
+                      << boolean_values_->getPosition("csv-format") << ")");
         }
 
-        // @todo We have a limited set of option definitions intiialized at
+        // @todo We have a limited set of option definitions initalized at
         // the moment.  In the future we want to initialize option definitions
         // for all options.  Consequently an error will be issued if an option
         // definition does not exist for a particular option code. For now it is
@@ -546,7 +557,8 @@ OptionDataParser::createOption() {
             isc_throw(DhcpConfigError, "specified option name '"
                       << option_name << "' does not match the "
                       << "option definition: '" << option_space
-                      << "." << def->getName() << "'");
+                      << "." << def->getName() << "' ("
+                      << string_values_->getPosition("name") << ")");
         }
 
         // Option definition has been found so let's use it to create
@@ -564,7 +576,8 @@ OptionDataParser::createOption() {
             isc_throw(DhcpConfigError, "option data does not match"
                       << " option definition (space: " << option_space
                       << ", code: " << option_code << "): "
-                      << ex.what());
+                      << ex.what() << " ("
+                      << string_values_->getPosition("data") << ")");
         }
     }
 
@@ -654,15 +667,24 @@ OptionDefParser::build(ConstElementPtr option_def) {
                                          boolean_values_));
             parser = array_parser;
         } else {
-            isc_throw(DhcpConfigError, "invalid parameter: " << entry);
+            isc_throw(DhcpConfigError, "invalid parameter '" << entry
+                      << "' (" << param.second->getPosition() << ")");
         }
 
         parser->build(param.second);
         parser->commit();
     }
 
-    // Create an instance of option definition.
-    createOptionDef();
+    // Create an instance of option definition. It may throw an exception,
+    // which we have to handle here by appending a position of the element.
+    try {
+        createOptionDef();
+    } catch (isc::dhcp::MalformedOptionDefinition& ex) {
+        // Have to catch an exception to append the position of the option
+        // definition to the error string.
+        isc_throw(DhcpConfigError,
+                  ex.what() << " (" << option_def->getPosition() << ")");
+    }
 
     // Get all items we collected so far for the particular option space.
     OptionDefContainerPtr defs = storage_->getItems(option_space_name_);
@@ -678,7 +700,8 @@ OptionDefParser::build(ConstElementPtr option_def) {
     // option definitions within an option space.
     if (std::distance(range.first, range.second) > 0) {
         isc_throw(DhcpConfigError, "duplicated option definition for"
-                << " code '" << option_definition_->getCode() << "'");
+                  << " code '" << option_definition_->getCode() << "' ("
+                  << option_def->getPosition() << ")");
     }
 }
 
@@ -696,7 +719,8 @@ OptionDefParser::createOptionDef() {
     std::string space = string_values_->getParam("space");
     if (!OptionSpace::validateName(space)) {
         isc_throw(DhcpConfigError, "invalid option space name '"
-                  << space << "'");
+                  << space << "' ("
+                  << string_values_->getPosition("space") << ")");
     }
 
     // Get other parameters that are needed to create the
@@ -716,13 +740,15 @@ OptionDefParser::createOptionDef() {
         if (array_type) {
             isc_throw(DhcpConfigError, "option '" << space << "."
                       << "name" << "', comprising an array of data"
-                      << " fields may not encapsulate any option space");
+                      << " fields may not encapsulate any option space ("
+                      << string_values_->getPosition("encapsulate") << ")");
 
         } else if (encapsulates == space) {
             isc_throw(DhcpConfigError, "option must not encapsulate"
                       << " an option space it belongs to: '"
                       << space << "." << name << "' is set to"
-                      << " encapsulate '" << space << "'");
+                      << " encapsulate '" << space << "' ("
+                      << string_values_->getPosition("encapsulate") << ")");
 
         } else {
             def.reset(new OptionDefinition(name, code, type,
@@ -752,17 +778,17 @@ OptionDefParser::createOptionDef() {
         } catch (const Exception& ex) {
             isc_throw(DhcpConfigError, "invalid record type values"
                       << " specified for the option definition: "
-                      << ex.what());
+                      << ex.what() << " ("
+                      << string_values_->getPosition("record-types") << ")");
         }
     }
 
-    // Check the option definition parameters are valid.
-    try {
-        def->validate();
-    } catch (const isc::Exception& ex) {
-        isc_throw(DhcpConfigError, "invalid option definition"
-                  << " parameters: " << ex.what());
-    }
+    // Check the option definition parameters are valid. If this fails, the
+    // isc::dhcp::MalformedOptionDefinition exception will be thrown. We let
+    // this exception to be thrown here so as the calling method can distiguish
+    // between the errors which have been already handled here (position has
+    // been appended) and those that have to be handled on the upper level.
+    def->validate();
 
     // Option definition has been created successfully.
     option_space_name_ = space;
@@ -786,7 +812,8 @@ OptionDefListParser::build(ConstElementPtr option_def_list) {
 
     if (!option_def_list) {
         isc_throw(DhcpConfigError, "parser error: a pointer to a list of"
-                  << " option definitions is NULL");
+                  << " option definitions is NULL ("
+                  << option_def_list->getPosition() << ")");
     }
 
     BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
@@ -848,14 +875,16 @@ RelayInfoParser::build(ConstElementPtr relay_info) {
         ip.reset(new asiolink::IOAddress(string_values_->getParam("ip-address")));
     } catch (...)  {
         isc_throw(DhcpConfigError, "Failed to parse ip-address "
-                  "value: " << string_values_->getParam("ip-address"));
+                  "value: " << string_values_->getParam("ip-address")
+                  << " (" << string_values_->getPosition("ip-address") << ")");
     }
 
     if ( (ip->isV4() && family_ != Option::V4) ||
          (ip->isV6() && family_ != Option::V6) ) {
         isc_throw(DhcpConfigError, "ip-address field " << ip->toText()
                   << "does not have IP address of expected family type: "
-                  << (family_ == Option::V4?"IPv4":"IPv6"));
+                  << (family_ == Option::V4 ? "IPv4" : "IPv6")
+                  << " (" << string_values_->getPosition("ip-address") << ")");
     }
 
     local_.addr_ = *ip;
@@ -924,7 +953,8 @@ PoolParser::build(ConstElementPtr pools_list) {
                 len = boost::lexical_cast<int>(prefix_len);
             } catch (...)  {
                 isc_throw(DhcpConfigError, "Failed to parse pool "
-                          "definition: " << text_pool->stringValue());
+                          "definition: " << text_pool->stringValue()
+                          << " (" << text_pool->getPosition() << ")");
             }
 
             PoolPtr pool(poolMaker(addr, len));
@@ -946,7 +976,8 @@ PoolParser::build(ConstElementPtr pools_list) {
 
         isc_throw(DhcpConfigError, "Failed to parse pool definition:"
                   << text_pool->stringValue() <<
-                  ". Does not contain - (for min-max) nor / (prefix/len)");
+                  ". Does not contain - (for min-max) nor / (prefix/len) ("
+                  << text_pool->getPosition() << ")");
         }
 }
 
@@ -1064,7 +1095,8 @@ SubnetConfigParser::createSubnet() {
     } catch (const DhcpConfigError &) {
         // rethrow with precise error
         isc_throw(DhcpConfigError,
-                 "Mandatory subnet definition in subnet missing");
+                 "Mandatory subnet definition in subnet missing ("
+                  << string_values_->getPosition("subnet") << ")");
     }
 
     // Remove any spaces or tabs.
@@ -1079,7 +1111,8 @@ SubnetConfigParser::createSubnet() {
     size_t pos = subnet_txt.find("/");
     if (pos == string::npos) {
         isc_throw(DhcpConfigError,
-                  "Invalid subnet syntax (prefix/len expected):" << subnet_txt);
+                  "Invalid subnet syntax (prefix/len expected):" << subnet_txt
+                  << " (" << string_values_->getPosition("subnet") << ")");
     }
 
     // Try to create the address object. It also validates that
@@ -1110,8 +1143,9 @@ SubnetConfigParser::createSubnet() {
     if (!iface.empty()) {
         if (!IfaceMgr::instance().getIface(iface)) {
             isc_throw(DhcpConfigError, "Specified interface name " << iface
-                     << " for subnet " << subnet_->toText()
-                     << " is not present" << " in the system.");
+                      << " for subnet " << subnet_->toText()
+                      << " is not present" << " in the system ("
+                      << string_values_->getPosition("interface") << ")");
         }
 
         subnet_->setIface(iface);
@@ -1265,7 +1299,17 @@ D2ClientConfigParser::~D2ClientConfigParser() {
 void
 D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
     BOOST_FOREACH(ConfigPair param, client_config->mapValue()) {
-        ParserPtr parser(createConfigParser(param.first));
+        ParserPtr parser;
+        try {
+            parser = createConfigParser(param.first);
+        } catch (std::exception& ex) {
+            // Catch exception in case the configuration contains the
+            // unsupported parameter. In this case, we will need to
+            // append the position of this element.
+            isc_throw(DhcpConfigError, ex.what() << " ("
+                      << param.second->getPosition() << ")");
+        }
+
         parser->build(param.second);
         parser->commit();
     }
