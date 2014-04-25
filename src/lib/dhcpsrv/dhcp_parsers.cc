@@ -817,10 +817,9 @@ OptionDefParser::createOptionDef(ConstElementPtr option_def_element) {
 }
 
 // ******************************** OptionDefListParser ************************
-OptionDefListParser::
-OptionDefListParser(const std::string&, OptionDefStoragePtr storage,
-                    ParserContextPtr global_context)
-    : storage_(storage),
+OptionDefListParser::OptionDefListParser(const std::string&,
+                                         ParserContextPtr global_context)
+    : storage_(global_context->option_defs_),
       global_context_(global_context) {
     if (!storage_) {
         isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"

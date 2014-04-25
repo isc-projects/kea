@@ -639,8 +639,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id) {
                                           globalContext(),
                                           Dhcp6OptionDataParser::factory);
     } else if (config_id.compare("option-def") == 0) {
-        parser  = new OptionDefListParser(config_id,
-                                          globalContext()->option_defs_);
+        parser  = new OptionDefListParser(config_id, globalContext());
     } else if (config_id.compare("version") == 0) {
         parser  = new StringParser(config_id,
                                    globalContext()->string_values_);
