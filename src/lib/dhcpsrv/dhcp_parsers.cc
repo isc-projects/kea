@@ -29,6 +29,7 @@
 #include <vector>
 
 using namespace std;
+using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::hooks;
 
@@ -729,9 +730,9 @@ OptionDefParser::commit() {
 void
 OptionDefParser::createOptionDef(ConstElementPtr option_def_element) {
     // Check if mandatory parameters have been specified.
-    std::string name = string_values_->getParam("name");
-    uint32_t code = uint32_values_->getParam("code");
-    std::string type = string_values_->getParam("type");
+    std::string name;
+    uint32_t code;
+    std::string type;
     try {
         name = string_values_->getParam("name");
         code = uint32_values_->getParam("code");
@@ -998,9 +999,10 @@ PoolParser::build(ConstElementPtr pools_list) {
             continue;
         }
 
-        isc_throw(DhcpConfigError, "Failed to parse pool definition:"
+        isc_throw(DhcpConfigError, "invalid pool definition: "
                   << text_pool->stringValue() <<
-                  ". Does not contain - (for min-max) nor / (prefix/len) ("
+                  ". There are two acceptable formats <min address-max address>"
+                  " or <prefix/len> ("
                   << text_pool->getPosition() << ")");
         }
 }
@@ -1134,8 +1136,8 @@ SubnetConfigParser::createSubnet() {
     } catch (const DhcpConfigError &) {
         // rethrow with precise error
         isc_throw(DhcpConfigError,
-                 "Mandatory subnet definition in subnet missing ("
-                  << string_values_->getPosition("subnet") << ")");
+                 "mandatory 'subnet' parameter is missing for a subnet being"
+                  " configured");
     }
 
     // Remove any spaces or tabs.
@@ -1353,73 +1355,89 @@ D2ClientConfigParser::build(isc::data::ConstElementPtr client_config) {
         parser->commit();
     }
 
-    bool enable_updates = boolean_values_->getParam("enable-updates");
-    if (!enable_updates && (client_config->mapValue().size() == 1)) {
-        // If enable-updates is the only parameter and it is false then
-        // we're done.  This allows for an abbreviated configuration entry
-        // that only contains that flag.  Use the default D2ClientConfig
-        // constructor to a create a disabled instance.
-        local_client_config_.reset(new D2ClientConfig());
-        return;
+    /// @todo Create configuration from the configuration parameters. Because
+    /// the validation of the D2 configuration is atomic, there is no way to
+    /// tell which parameter is invalid. Therefore, we catch all exceptions
+    /// and append the line number of the parent element. In the future we
+    /// may should extend D2ClientConfig code so as it returns the name of
+    /// the invalid parameter.
+    try {
+        bool enable_updates = boolean_values_->getParam("enable-updates");
+        if (!enable_updates && (client_config->mapValue().size() == 1)) {
+            // If enable-updates is the only parameter and it is false then
+            // we're done.  This allows for an abbreviated configuration entry
+            // that only contains that flag.  Use the default D2ClientConfig
+            // constructor to a create a disabled instance.
+            local_client_config_.reset(new D2ClientConfig());
+
+            return;
+        }
+
+        // Get all parameters that are needed to create the D2ClientConfig.
+        IOAddress server_ip =
+            IOAddress(string_values_->getOptionalParam("server-ip",
+                                                       D2ClientConfig::
+                                                       DFT_SERVER_IP));
+
+        uint32_t server_port =
+            uint32_values_->getOptionalParam("server-port",
+                                             D2ClientConfig::DFT_SERVER_PORT);
+
+        dhcp_ddns::NameChangeProtocol ncr_protocol
+            = dhcp_ddns::stringToNcrProtocol(string_values_->
+                                             getOptionalParam("ncr-protocol",
+                                                              D2ClientConfig::
+                                                              DFT_NCR_PROTOCOL));
+        dhcp_ddns::NameChangeFormat ncr_format
+            = dhcp_ddns::stringToNcrFormat(string_values_->
+                                           getOptionalParam("ncr-format",
+                                                            D2ClientConfig::
+                                                            DFT_NCR_FORMAT));
+        std::string generated_prefix =
+            string_values_->getOptionalParam("generated-prefix",
+                                             D2ClientConfig::
+                                             DFT_GENERATED_PREFIX);
+        std::string qualifying_suffix =
+            string_values_->getOptionalParam("qualifying-suffix",
+                                             D2ClientConfig::
+                                             DFT_QUALIFYING_SUFFIX);
+
+        bool always_include_fqdn =
+            boolean_values_->getOptionalParam("always-include-fqdn",
+                                              D2ClientConfig::
+                                              DFT_ALWAYS_INCLUDE_FQDN);
+
+        bool override_no_update =
+            boolean_values_->getOptionalParam("override-no-update",
+                                              D2ClientConfig::
+                                              DFT_OVERRIDE_NO_UPDATE);
+
+        bool override_client_update =
+            boolean_values_->getOptionalParam("override-client-update",
+                                              D2ClientConfig::
+                                              DFT_OVERRIDE_CLIENT_UPDATE);
+
+        bool replace_client_name =
+            boolean_values_->getOptionalParam("replace-client-name",
+                                              D2ClientConfig::
+                                              DFT_REPLACE_CLIENT_NAME);
+
+        // Attempt to create the new client config.
+        local_client_config_.reset(new D2ClientConfig(enable_updates,
+                                                      server_ip,
+                                                      server_port, ncr_protocol,
+                                                      ncr_format,
+                                                      always_include_fqdn,
+                                                      override_no_update,
+                                                      override_client_update,
+                                                      replace_client_name,
+                                                      generated_prefix,
+                                                      qualifying_suffix));
+
+    }  catch (const std::exception& ex) {
+        isc_throw(DhcpConfigError, ex.what() << " ("
+                  << client_config->getPosition() << ")");
     }
-
-    // Get all parameters that are needed to create the D2ClientConfig.
-    asiolink::IOAddress server_ip(string_values_->
-                                  getOptionalParam("server-ip",
-                                                   D2ClientConfig::
-                                                   DFT_SERVER_IP));
-
-    uint32_t server_port = uint32_values_->getOptionalParam("server-port",
-                                                             D2ClientConfig::
-                                                             DFT_SERVER_PORT);
-    dhcp_ddns::NameChangeProtocol ncr_protocol
-        = dhcp_ddns::stringToNcrProtocol(string_values_->
-                                         getOptionalParam("ncr-protocol",
-                                                          D2ClientConfig::
-                                                          DFT_NCR_PROTOCOL));
-    dhcp_ddns::NameChangeFormat ncr_format
-        = dhcp_ddns::stringToNcrFormat(string_values_->
-                                       getOptionalParam("ncr-format",
-                                                          D2ClientConfig::
-                                                          DFT_NCR_FORMAT));
-    std::string generated_prefix = string_values_->
-                                   getOptionalParam("generated-prefix",
-                                                    D2ClientConfig::
-                                                    DFT_GENERATED_PREFIX);
-    std::string qualifying_suffix = string_values_->
-                                    getOptionalParam("qualifying-suffix",
-                                                     D2ClientConfig::
-                                                     DFT_QUALIFYING_SUFFIX);
-
-    bool always_include_fqdn = boolean_values_->
-                               getOptionalParam("always-include-fqdn",
-                                               D2ClientConfig::
-                                               DFT_ALWAYS_INCLUDE_FQDN);
-
-    bool override_no_update = boolean_values_->
-                              getOptionalParam("override-no-update",
-                                               D2ClientConfig::
-                                               DFT_OVERRIDE_NO_UPDATE);
-
-    bool override_client_update = boolean_values_->
-                                  getOptionalParam("override-client-update",
-                                                   D2ClientConfig::
-                                                   DFT_OVERRIDE_CLIENT_UPDATE);
-    bool replace_client_name = boolean_values_->
-                               getOptionalParam("replace-client-name",
-                                                D2ClientConfig::
-                                                DFT_REPLACE_CLIENT_NAME);
-
-    // Attempt to create the new client config.
-    local_client_config_.reset(new D2ClientConfig(enable_updates, server_ip,
-                                                  server_port, ncr_protocol,
-                                                  ncr_format,
-                                                  always_include_fqdn,
-                                                  override_no_update,
-                                                  override_client_update,
-                                                  replace_client_name,
-                                                  generated_prefix,
-                                                  qualifying_suffix));
 }
 
 isc::dhcp::ParserPtr
