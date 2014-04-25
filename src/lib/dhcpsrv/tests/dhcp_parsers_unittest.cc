@@ -384,7 +384,8 @@ public:
 
         } else if (config_id.compare("option-def") == 0) {
             parser.reset(new OptionDefListParser(config_id,
-                                              parser_context_->option_defs_));
+                                                 parser_context_->option_defs_,
+                                                 parser_context_));
 
         } else if (config_id.compare("hooks-libraries") == 0) {
             parser.reset(new HooksLibrariesParser(config_id));

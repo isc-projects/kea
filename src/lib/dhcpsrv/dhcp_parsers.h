@@ -590,9 +590,12 @@ private:
     /// is intitialized but this check is not needed here because it is done
     /// in the \ref build function.
     ///
+    /// @param option_data An element holding data for a single option being
+    /// created.
+    ///
     /// @throw DhcpConfigError if parameters provided in the configuration
     /// are invalid.
-    void createOption();
+    void createOption(isc::data::ConstElementPtr option_data);
 
     /// Storage for boolean values.
     BooleanStoragePtr boolean_values_;
@@ -690,8 +693,11 @@ public:
     /// accept string as first argument.
     /// @param storage is the definition storage in which to store the parsed
     /// definition upon "commit".
+    /// @param global_context is a pointer to the global context which
+    /// stores global scope parameters, options, option defintions.
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    OptionDefParser(const std::string& dummy, OptionDefStoragePtr storage);
+    OptionDefParser(const std::string& dummy, OptionDefStoragePtr storage,
+                    ParserContextPtr global_context);
 
     /// @brief Parses an entry that describes single option definition.
     ///
@@ -706,7 +712,10 @@ public:
 private:
 
     /// @brief Create option definition from the parsed parameters.
-    void createOptionDef();
+    ///
+    /// @param option_def_element A data element holding the configuration
+    /// for an option definition.
+    void createOptionDef(isc::data::ConstElementPtr option_def_element);
 
     /// Instance of option definition being created by this parser.
     OptionDefinitionPtr option_definition_;
@@ -725,6 +734,10 @@ private:
 
     /// Storage for uint32 values.
     Uint32StoragePtr uint32_values_;
+
+    /// Parsing context which contains global values, options and option
+    /// definitions.
+    ParserContextPtr global_context_;
 };
 
 /// @brief Parser for a list of option definitions.
@@ -741,8 +754,11 @@ public:
     /// accept string as first argument.
     /// @param storage is the definition storage in which to store the parsed
     /// definitions in this list
+    /// @param global_context is a pointer to the global context which
+    /// stores global scope parameters, options, option defintions.
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    OptionDefListParser(const std::string& dummy, OptionDefStoragePtr storage);
+    OptionDefListParser(const std::string& dummy, OptionDefStoragePtr storage,
+                        ParserContextPtr global_context);
 
     /// @brief Parse configuration entries.
     ///
@@ -760,6 +776,10 @@ public:
 private:
     /// @brief storage for option definitions.
     OptionDefStoragePtr storage_;
+
+    /// Parsing context which contains global values, options and option
+    /// definitions.
+    ParserContextPtr global_context_;
 };
 
 /// @brief a collection of pools
