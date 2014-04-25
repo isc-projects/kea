@@ -231,30 +231,33 @@ public:
                                                              uint32_values_));
                 parser = code_parser;
             } else {
-                isc_throw(DhcpConfigError, "invalid parameter: " << entry);
+                isc_throw(DhcpConfigError, "unsupported parameter: " << entry
+                          << " (" << param.second->getPosition() << ")");
             }
 
             parser->build(param.second);
             parser->commit();
         }
 
+        // Try to obtain the pool parameters. It will throw an exception if any
+        // of the required parameters are not present or invalid.
+        std::string addr_str;
+        uint32_t prefix_len;
+        uint32_t delegated_len;
         try {
-            // We should now have all of the pool elements we need to create
-            // the pool.  Fetch them and pass them into the Pool6 constructor.
-            // The constructor is expected to enforce any value validation.
-            const std::string addr_str = string_values_->getParam("prefix");
-            IOAddress addr(addr_str);
-
-            uint32_t prefix_len = uint32_values_->getParam("prefix-len");
-
-            uint32_t delegated_len = uint32_values_->getParam("delegated-len");
+            addr_str = string_values_->getParam("prefix");
+            prefix_len = uint32_values_->getParam("prefix-len");
+            delegated_len = uint32_values_->getParam("delegated-len");
 
             // Attempt to construct the local pool.
-            pool_.reset(new Pool6(Lease::TYPE_PD, addr, prefix_len,
-                                 delegated_len));
+            pool_.reset(new Pool6(Lease::TYPE_PD, IOAddress(addr_str),
+                                  prefix_len, delegated_len));
         } catch (const std::exception& ex) {
-            isc_throw(isc::dhcp::DhcpConfigError,
-                      "PdPoolParser failed to build pool: " << ex.what());
+            // Some parameters don't exist or are invalid. Since we are not
+            // aware whether they don't exist or are invalid, let's append
+            // the position of the pool map element.
+            isc_throw(isc::dhcp::DhcpConfigError, ex.what()
+                      << " (" << pd_pool_->getPosition() << ")");
         }
     }
 
@@ -319,7 +322,7 @@ public:
         // Make sure we have a configuration elements to parse.
         if (!pd_pool_list) {
             isc_throw(DhcpConfigError,
-                      "PdPoolListParser: list of pool definitions is empty");
+                      "PdPoolListParser: list of pool definitions is NULL");
         }
 
         // Loop through the list of pd pools.
@@ -379,7 +382,7 @@ public:
             if (!sub6ptr) {
                 // If we hit this, it is a programming error.
                 isc_throw(Unexpected,
-                          "Invalid cast in Subnet4ConfigParser::commit");
+                          "Invalid cast in Subnet6ConfigParser::commit");
             }
 
             // Set relay infomation if it was provided
@@ -425,8 +428,7 @@ protected:
                                              global_context_,
                                              Dhcp6OptionDataParser::factory);
         } else {
-            isc_throw(NotImplemented,
-                "parser error: Subnet6 parameter not supported: " << config_id);
+            isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
 
         return (parser);
