@@ -293,6 +293,10 @@ protected:
             }
         } catch (const DhcpConfigError&) {
             // Don't care. next_server is optional. We can live without it
+        } catch (...) {
+            isc_throw(DhcpConfigError, "invalid parameter next-server ("
+                      << globalContext()->string_values_->getPosition("next-server")
+                      << ")");
         }
 
         // Try subnet specific value if it's available
@@ -303,7 +307,12 @@ protected:
             }
         } catch (const DhcpConfigError&) {
             // Don't care. next_server is optional. We can live without it
+        } catch (...) {
+            isc_throw(DhcpConfigError, "invalid parameter next-server ("
+                      << string_values_->getPosition("next-server")
+                      << ")");
         }
+
 
         // Try setting up client class (if specified)
         try {
