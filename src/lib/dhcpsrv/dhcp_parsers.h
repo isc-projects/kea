@@ -752,12 +752,10 @@ public:
     ///
     /// @param dummy first argument is ignored, all Parser constructors
     /// accept string as first argument.
-    /// @param storage is the definition storage in which to store the parsed
-    /// definitions in this list
     /// @param global_context is a pointer to the global context which
     /// stores global scope parameters, options, option defintions.
     /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    OptionDefListParser(const std::string& dummy, OptionDefStoragePtr storage,
+    OptionDefListParser(const std::string& dummy,
                         ParserContextPtr global_context);
 
     /// @brief Parse configuration entries.
