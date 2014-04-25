@@ -106,7 +106,7 @@ public:
         udp_fetch_(IOFetch::UDP, service_, question_, IOAddress(TEST_HOST),
             TEST_PORT, result_buff_, this, 100),
         tcp_fetch_(IOFetch::TCP, service_, question_, IOAddress(TEST_HOST),
-            TEST_PORT, result_buff_, this, (16 * SEND_INTERVAL)),
+            TEST_PORT, result_buff_, this, (24 * SEND_INTERVAL)),
                                         // Timeout interval chosen to ensure no timeout
         protocol_(IOFetch::TCP),        // for initialization - will be changed
         cumulative_(0),
