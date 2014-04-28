@@ -22,6 +22,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/dhcp_parsers.h>
 #include <dhcpsrv/tests/test_libraries.h>
+#include <dhcpsrv/testutils/config_result_check.h>
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_manager.h>
 
@@ -37,6 +38,7 @@ using namespace isc;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::hooks;
 
 namespace {
@@ -419,6 +421,11 @@ public:
             ConstElementPtr status = parseElementSet(json);
             ConstElementPtr comment = parseAnswer(rcode_, status);
             error_text_ = comment->stringValue();
+            // If error was reported, the error string should contain
+            // position of the data element which caused failure.
+            if (rcode_ != 0) {
+                EXPECT_TRUE(errorContainsPosition(status, "<string>"));
+            }
         }
 
         return (rcode_);
