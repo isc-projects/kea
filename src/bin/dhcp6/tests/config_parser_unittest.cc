@@ -698,7 +698,7 @@ TEST_F(Dhcp6ParserTest, multipleSubnetsOverlapingIDs) {
     ElementPtr json = Element::fromJSON(config);
 
     EXPECT_NO_THROW(x = configureDhcp6Server(srv_, json));
-    checkResult(x, 2);
+    checkResult(x, 1);
     EXPECT_TRUE(errorContainsPosition(x, "<string>"));
 }
 
