@@ -847,17 +847,13 @@ OptionDefListParser::build(ConstElementPtr option_def_list) {
         parser->build(option_def);
         parser->commit();
     }
-}
 
-void
-OptionDefListParser::commit() {
     CfgMgr& cfg_mgr = CfgMgr::instance();
     cfg_mgr.deleteOptionDefs();
 
     // We need to move option definitions from the temporary
     // storage to the storage.
-    std::list<std::string> space_names =
-    storage_->getOptionSpaceNames();
+    std::list<std::string> space_names = storage_->getOptionSpaceNames();
 
     BOOST_FOREACH(std::string space_name, space_names) {
         BOOST_FOREACH(OptionDefinitionPtr def,
@@ -866,9 +862,22 @@ OptionDefListParser::commit() {
             // values. The validation is expected to be made by the
             // OptionDefParser when creating an option definition.
             assert(def);
-            cfg_mgr.addOptionDef(def, space_name);
+            // The Config Manager may thrown an exception if the duplicated
+            // definition is being added. Catch the exceptions here to and
+            // append the position in the config.
+            try {
+                cfg_mgr.addOptionDef(def, space_name);
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << option_def_list->getPosition() << ")");
+            }
         }
     }
+}
+
+void
+OptionDefListParser::commit() {
+    // Do nothing.
 }
 
 //****************************** RelayInfoParser ********************************
