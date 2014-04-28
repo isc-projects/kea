@@ -760,18 +760,21 @@ public:
 
     /// @brief Parse configuration entries.
     ///
-    /// This function parses configuration entries and creates instances
-    /// of option definitions.
+    /// This function parses configuration entries, creates instances
+    /// of option definitions and tries to add them to the Configuration
+    /// Manager.
     ///
     /// @param option_def_list pointer to an element that holds entries
     /// that define option definitions.
     /// @throw DhcpConfigError if configuration parsing fails.
     void build(isc::data::ConstElementPtr option_def_list);
 
-    /// @brief Stores option definitions in the CfgMgr.
+    /// @brief Commits option definitions.
+    ///
+    /// Currently this function is no-op, because option definitions are
+    /// added to the Configuration Manager in the @c build method.
     void commit();
 
-private:
     /// @brief storage for option definitions.
     OptionDefStoragePtr storage_;
 
