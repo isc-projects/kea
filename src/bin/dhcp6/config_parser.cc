@@ -374,9 +374,13 @@ public:
         :SubnetConfigParser("", globalContext(), IOAddress("::")) {
     }
 
-    /// @brief Adds the created subnet to a server's configuration.
-    /// @throw throws Unexpected if dynamic cast fails.
-    void commit() {
+    /// @brief Parses a single IPv4 subnet configuration and adds to the
+    /// Configuration Manager.
+    ///
+    /// @param subnet A new subnet being configured.
+    void build(ConstElementPtr subnet) {
+        SubnetConfigParser::build(subnet);
+
         if (subnet_) {
             Subnet6Ptr sub6ptr = boost::dynamic_pointer_cast<Subnet6>(subnet_);
             if (!sub6ptr) {
@@ -390,9 +394,24 @@ public:
                 sub6ptr->setRelayInfo(*relay_info_);
             }
 
-            isc::dhcp::CfgMgr::instance().addSubnet6(sub6ptr);
+            // Adding a subnet to the Configuration Manager may fail if the
+            // subnet id is invalid (duplicate). Thus, we catch exceptions
+            // here to append a position in the configuration string.
+            try {
+                isc::dhcp::CfgMgr::instance().addSubnet6(sub6ptr);
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << subnet->getPosition() << ")");
+            }
+
         }
     }
+
+    /// @brief Commits subnet configuration.
+    ///
+    /// This function is currently no-op because subnet should already
+    /// be added into the Config Manager in the build().
+    void commit() { }
 
 protected:
 
@@ -571,6 +590,12 @@ public:
     ///
     /// @param subnets_list pointer to a list of IPv6 subnets
     void build(ConstElementPtr subnets_list) {
+        // @todo: Implement more subtle reconfiguration than toss
+        // the old one and replace with the new one.
+
+        // remove old subnets
+        isc::dhcp::CfgMgr::instance().deleteSubnets6();
+
         BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
             ParserPtr parser(new Subnet6ConfigParser("subnet"));
             parser->build(subnet);
@@ -584,12 +609,6 @@ public:
     /// Iterates over all Subnet6 parsers. Each parser contains definitions of
     /// a single subnet and its parameters and commits each subnet separately.
     void commit() {
-        // @todo: Implement more subtle reconfiguration than toss
-        // the old one and replace with the new one.
-
-        // remove old subnets
-        isc::dhcp::CfgMgr::instance().deleteSubnets6();
-
         BOOST_FOREACH(ParserPtr subnet, subnets_) {
             subnet->commit();
         }

@@ -167,9 +167,13 @@ public:
         :SubnetConfigParser("", globalContext(), IOAddress("0.0.0.0")) {
     }
 
-    /// @brief Adds the created subnet to a server's configuration.
-    /// @throw throws Unexpected if dynamic cast fails.
-    void commit() {
+    /// @brief Parses a single IPv4 subnet configuration and adds to the
+    /// Configuration Manager.
+    ///
+    /// @param subnet A new subnet being configured.
+    void build(ConstElementPtr subnet) {
+        SubnetConfigParser::build(subnet);
+
         if (subnet_) {
             Subnet4Ptr sub4ptr = boost::dynamic_pointer_cast<Subnet4>(subnet_);
             if (!sub4ptr) {
@@ -183,9 +187,23 @@ public:
                 sub4ptr->setRelayInfo(*relay_info_);
             }
 
-            isc::dhcp::CfgMgr::instance().addSubnet4(sub4ptr);
+            // Adding a subnet to the Configuration Manager may fail if the
+            // subnet id is invalid (duplicate). Thus, we catch exceptions
+            // here to append a position in the configuration string.
+            try {
+                isc::dhcp::CfgMgr::instance().addSubnet4(sub4ptr);
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << subnet->getPosition() << ")");
+            }
         }
     }
+
+    /// @brief Commits subnet configuration.
+    ///
+    /// This function is currently no-op because subnet should already
+    /// be added into the Config Manager in the build().
+    void commit() { }
 
 protected:
 
@@ -346,6 +364,12 @@ public:
     ///
     /// @param subnets_list pointer to a list of IPv4 subnets
     void build(ConstElementPtr subnets_list) {
+        // @todo: Implement more subtle reconfiguration than toss
+        // the old one and replace with the new one.
+
+        // remove old subnets
+        CfgMgr::instance().deleteSubnets4();
+
         BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
             ParserPtr parser(new Subnet4ConfigParser("subnet"));
             parser->build(subnet);
@@ -358,12 +382,6 @@ public:
     /// Iterates over all Subnet4 parsers. Each parser contains definitions of
     /// a single subnet and its parameters and commits each subnet separately.
     void commit() {
-        // @todo: Implement more subtle reconfiguration than toss
-        // the old one and replace with the new one.
-
-        // remove old subnets
-        CfgMgr::instance().deleteSubnets4();
-
         BOOST_FOREACH(ParserPtr subnet, subnets_) {
             subnet->commit();
         }
