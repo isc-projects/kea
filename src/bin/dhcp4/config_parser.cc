@@ -414,7 +414,8 @@ namespace dhcp {
 /// @return parser for specified global DHCPv4 parameter
 /// @throw NotImplemented if trying to create a parser for unknown
 /// config element
-DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
+    DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id,
+                                                    ConstElementPtr element) {
     DhcpConfigParser* parser = NULL;
     if ((config_id.compare("valid-lifetime") == 0)  ||
         (config_id.compare("renew-timer") == 0)  ||
@@ -445,9 +446,9 @@ DhcpConfigParser* createGlobalDhcp4ConfigParser(const std::string& config_id) {
     } else if (config_id.compare("dhcp-ddns") == 0) {
         parser = new D2ClientConfigParser(config_id);
     } else {
-        isc_throw(NotImplemented,
-                "Parser error: Global configuration parameter not supported: "
-                << config_id);
+        isc_throw(DhcpConfigError,
+                "unsupported global configuration parameter: "
+                  << config_id << " (" << element->getPosition() << ")");
     }
 
     return (parser);
@@ -525,7 +526,8 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         const std::map<std::string, ConstElementPtr>& values_map =
                                                         config_set->mapValue();
         BOOST_FOREACH(config_pair, values_map) {
-            ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first));
+            ParserPtr parser(createGlobalDhcp4ConfigParser(config_pair.first,
+                                                           config_pair.second));
             LOG_DEBUG(dhcp4_logger, DBG_DHCP4_DETAIL, DHCP4_PARSER_CREATED)
                       .arg(config_pair.first);
             if (config_pair.first == "subnet4") {
