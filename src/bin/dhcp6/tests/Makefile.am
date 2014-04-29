@@ -101,6 +101,7 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la

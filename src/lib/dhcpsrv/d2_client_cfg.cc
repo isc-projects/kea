@@ -99,13 +99,13 @@ D2ClientConfig::enableUpdates(bool enable) {
 void
 D2ClientConfig::validateContents() {
     if (ncr_format_ != dhcp_ddns::FMT_JSON) {
-        isc_throw(D2ClientError, "D2ClientConfig: NCR Format:"
+        isc_throw(D2ClientError, "D2ClientConfig: NCR Format: "
                     << dhcp_ddns::ncrFormatToString(ncr_format_)
                     << " is not yet supported");
     }
 
     if (ncr_protocol_ != dhcp_ddns::NCR_UDP) {
-        isc_throw(D2ClientError, "D2ClientConfig: NCR Protocol:"
+        isc_throw(D2ClientError, "D2ClientConfig: NCR Protocol: "
                   << dhcp_ddns::ncrProtocolToString(ncr_protocol_)
                   << " is not yet supported");
     }

@@ -231,30 +231,33 @@ public:
                                                              uint32_values_));
                 parser = code_parser;
             } else {
-                isc_throw(DhcpConfigError, "invalid parameter: " << entry);
+                isc_throw(DhcpConfigError, "unsupported parameter: " << entry
+                          << " (" << param.second->getPosition() << ")");
             }
 
             parser->build(param.second);
             parser->commit();
         }
 
+        // Try to obtain the pool parameters. It will throw an exception if any
+        // of the required parameters are not present or invalid.
+        std::string addr_str;
+        uint32_t prefix_len;
+        uint32_t delegated_len;
         try {
-            // We should now have all of the pool elements we need to create
-            // the pool.  Fetch them and pass them into the Pool6 constructor.
-            // The constructor is expected to enforce any value validation.
-            const std::string addr_str = string_values_->getParam("prefix");
-            IOAddress addr(addr_str);
-
-            uint32_t prefix_len = uint32_values_->getParam("prefix-len");
-
-            uint32_t delegated_len = uint32_values_->getParam("delegated-len");
+            addr_str = string_values_->getParam("prefix");
+            prefix_len = uint32_values_->getParam("prefix-len");
+            delegated_len = uint32_values_->getParam("delegated-len");
 
             // Attempt to construct the local pool.
-            pool_.reset(new Pool6(Lease::TYPE_PD, addr, prefix_len,
-                                 delegated_len));
+            pool_.reset(new Pool6(Lease::TYPE_PD, IOAddress(addr_str),
+                                  prefix_len, delegated_len));
         } catch (const std::exception& ex) {
-            isc_throw(isc::dhcp::DhcpConfigError,
-                      "PdPoolParser failed to build pool: " << ex.what());
+            // Some parameters don't exist or are invalid. Since we are not
+            // aware whether they don't exist or are invalid, let's append
+            // the position of the pool map element.
+            isc_throw(isc::dhcp::DhcpConfigError, ex.what()
+                      << " (" << pd_pool_->getPosition() << ")");
         }
     }
 
@@ -319,7 +322,7 @@ public:
         // Make sure we have a configuration elements to parse.
         if (!pd_pool_list) {
             isc_throw(DhcpConfigError,
-                      "PdPoolListParser: list of pool definitions is empty");
+                      "PdPoolListParser: list of pool definitions is NULL");
         }
 
         // Loop through the list of pd pools.
@@ -371,15 +374,19 @@ public:
         :SubnetConfigParser("", globalContext(), IOAddress("::")) {
     }
 
-    /// @brief Adds the created subnet to a server's configuration.
-    /// @throw throws Unexpected if dynamic cast fails.
-    void commit() {
+    /// @brief Parses a single IPv4 subnet configuration and adds to the
+    /// Configuration Manager.
+    ///
+    /// @param subnet A new subnet being configured.
+    void build(ConstElementPtr subnet) {
+        SubnetConfigParser::build(subnet);
+
         if (subnet_) {
             Subnet6Ptr sub6ptr = boost::dynamic_pointer_cast<Subnet6>(subnet_);
             if (!sub6ptr) {
                 // If we hit this, it is a programming error.
                 isc_throw(Unexpected,
-                          "Invalid cast in Subnet4ConfigParser::commit");
+                          "Invalid cast in Subnet6ConfigParser::commit");
             }
 
             // Set relay infomation if it was provided
@@ -387,9 +394,24 @@ public:
                 sub6ptr->setRelayInfo(*relay_info_);
             }
 
-            isc::dhcp::CfgMgr::instance().addSubnet6(sub6ptr);
+            // Adding a subnet to the Configuration Manager may fail if the
+            // subnet id is invalid (duplicate). Thus, we catch exceptions
+            // here to append a position in the configuration string.
+            try {
+                isc::dhcp::CfgMgr::instance().addSubnet6(sub6ptr);
+            } catch (const std::exception& ex) {
+                isc_throw(DhcpConfigError, ex.what() << " ("
+                          << subnet->getPosition() << ")");
+            }
+
         }
     }
+
+    /// @brief Commits subnet configuration.
+    ///
+    /// This function is currently no-op because subnet should already
+    /// be added into the Config Manager in the build().
+    void commit() { }
 
 protected:
 
@@ -425,8 +447,7 @@ protected:
                                              global_context_,
                                              Dhcp6OptionDataParser::factory);
         } else {
-            isc_throw(NotImplemented,
-                "parser error: Subnet6 parameter not supported: " << config_id);
+            isc_throw(NotImplemented, "unsupported parameter: " << config_id);
         }
 
         return (parser);
@@ -569,6 +590,12 @@ public:
     ///
     /// @param subnets_list pointer to a list of IPv6 subnets
     void build(ConstElementPtr subnets_list) {
+        // @todo: Implement more subtle reconfiguration than toss
+        // the old one and replace with the new one.
+
+        // remove old subnets
+        isc::dhcp::CfgMgr::instance().deleteSubnets6();
+
         BOOST_FOREACH(ConstElementPtr subnet, subnets_list->listValue()) {
             ParserPtr parser(new Subnet6ConfigParser("subnet"));
             parser->build(subnet);
@@ -582,12 +609,6 @@ public:
     /// Iterates over all Subnet6 parsers. Each parser contains definitions of
     /// a single subnet and its parameters and commits each subnet separately.
     void commit() {
-        // @todo: Implement more subtle reconfiguration than toss
-        // the old one and replace with the new one.
-
-        // remove old subnets
-        isc::dhcp::CfgMgr::instance().deleteSubnets6();
-
         BOOST_FOREACH(ParserPtr subnet, subnets_) {
             subnet->commit();
         }
@@ -619,7 +640,8 @@ namespace dhcp {
 /// @return parser for specified global DHCPv6 parameter
 /// @throw NotImplemented if trying to create a parser for unknown config
 /// element
-DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id) {
+    DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id,
+                                                    ConstElementPtr element) {
     DhcpConfigParser* parser = NULL;
     if ((config_id.compare("preferred-lifetime") == 0)  ||
         (config_id.compare("valid-lifetime") == 0)  ||
@@ -637,8 +659,7 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id) {
                                           globalContext(),
                                           Dhcp6OptionDataParser::factory);
     } else if (config_id.compare("option-def") == 0) {
-        parser  = new OptionDefListParser(config_id,
-                                          globalContext()->option_defs_);
+        parser  = new OptionDefListParser(config_id, globalContext());
     } else if (config_id.compare("version") == 0) {
         parser  = new StringParser(config_id,
                                    globalContext()->string_values_);
@@ -649,9 +670,9 @@ DhcpConfigParser* createGlobal6DhcpConfigParser(const std::string& config_id) {
     } else if (config_id.compare("dhcp-ddns") == 0) {
         parser = new D2ClientConfigParser(config_id);
     } else {
-        isc_throw(NotImplemented,
-                "Parser error: Global configuration parameter not supported: "
-                << config_id);
+        isc_throw(DhcpConfigError,
+                "unsupported global configuration parameter: "
+                  << config_id << " (" << element->getPosition() << ")");
     }
 
     return (parser);
@@ -716,7 +737,8 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         const std::map<std::string, ConstElementPtr>& values_map =
             config_set->mapValue();
         BOOST_FOREACH(config_pair, values_map) {
-            ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first));
+            ParserPtr parser(createGlobal6DhcpConfigParser(config_pair.first,
+                                                           config_pair.second));
             LOG_DEBUG(dhcp6_logger, DBG_DHCP6_DETAIL, DHCP6_PARSER_CREATED)
                       .arg(config_pair.first);
             if (config_pair.first == "subnet6") {
@@ -751,6 +773,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         std::map<std::string, ConstElementPtr>::const_iterator option_config =
             values_map.find("option-data");
         if (option_config != values_map.end()) {
+            config_pair.first = "option-data";
             option_parser->build(option_config->second);
             option_parser->commit();
         }
@@ -759,6 +782,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
             values_map.find("subnet6");
         if (subnet_config != values_map.end()) {
+            config_pair.first = "subnet6";
             subnet_parser->build(subnet_config->second);
         }
 

@@ -57,14 +57,20 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
 
     // 3. Update the copy with the passed keywords.
     BOOST_FOREACH(ConfigPair param, config_value->mapValue()) {
-        // The persist parameter is the only boolean parameter at the
-        // moment. It needs special handling.
-        if (param.first != "persist") {
-            values_copy[param.first] = param.second->stringValue();
+        try {
+            // The persist parameter is the only boolean parameter at the
+            // moment. It needs special handling.
+            if (param.first != "persist") {
+                values_copy[param.first] = param.second->stringValue();
 
-        } else {
-            values_copy[param.first] = (param.second->boolValue() ?
-                                        "true" : "false");
+            } else {
+                values_copy[param.first] = (param.second->boolValue() ?
+                                            "true" : "false");
+            }
+        } catch (const isc::data::TypeError& ex) {
+            // Append position of the element.
+            isc_throw(isc::data::TypeError, ex.what() << " ("
+                      << param.second->getPosition() << ")");
         }
     }
 
@@ -75,13 +81,14 @@ DbAccessParser::build(isc::data::ConstElementPtr config_value) {
     if (type_ptr == values_copy.end()) {
         isc_throw(TypeKeywordMissing, "lease database access parameters must "
                   "include the keyword 'type' to determine type of database "
-                  "to be accessed");
+                  "to be accessed (" << config_value->getPosition() << ")");
     }
 
     // b. Check if the 'type; keyword known and throw an exception if not.
     string dbtype = type_ptr->second;
     if ((dbtype != "memfile") && (dbtype != "mysql") && (dbtype != "postgresql")) {
-        isc_throw(BadValue, "unknown backend database type: " << dbtype);
+        isc_throw(BadValue, "unknown backend database type: " << dbtype
+                  << " (" << config_value->getPosition() << ")");
     }
 
     // 5. If all is OK, update the stored keyword/value pairs.  We do this by
