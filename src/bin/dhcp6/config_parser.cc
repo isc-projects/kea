@@ -773,6 +773,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         std::map<std::string, ConstElementPtr>::const_iterator option_config =
             values_map.find("option-data");
         if (option_config != values_map.end()) {
+            config_pair.first = "option-data";
             option_parser->build(option_config->second);
             option_parser->commit();
         }
@@ -781,6 +782,7 @@ configureDhcp6Server(Dhcpv6Srv&, isc::data::ConstElementPtr config_set) {
         std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
             values_map.find("subnet6");
         if (subnet_config != values_map.end()) {
+            config_pair.first = "subnet6";
             subnet_parser->build(subnet_config->second);
         }
 

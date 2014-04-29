@@ -561,6 +561,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         std::map<std::string, ConstElementPtr>::const_iterator option_config =
             values_map.find("option-data");
         if (option_config != values_map.end()) {
+            config_pair.first = "option-data";
             option_parser->build(option_config->second);
             option_parser->commit();
         }
@@ -569,6 +570,7 @@ configureDhcp4Server(Dhcpv4Srv&, isc::data::ConstElementPtr config_set) {
         std::map<std::string, ConstElementPtr>::const_iterator subnet_config =
             values_map.find("subnet4");
         if (subnet_config != values_map.end()) {
+            config_pair.first = "subnet4";
             subnet_parser->build(subnet_config->second);
         }
 
