@@ -57,6 +57,31 @@ struct PgSqlParam {
     }
 };
 
+struct PsqlBindArray {
+    std::vector<const char *> values_;
+    std::vector<int> lengths_;
+    std::vector<int> formats_;
+
+    static const int TEXT_FMT;
+    static const int BINARY_FMT;
+    static const char* TRUE_STR;
+    static const char* FALSE_STR;
+
+    size_t size() {
+        return (values_.size());
+    }
+
+    bool empty() {
+        return (values_.empty());
+    }
+
+    void add(const char* value);
+    void add(const std::string& value);
+    void add(const std::vector<uint8_t>& data);
+    void add(const uint32_t& value);
+    void add(const bool& value);
+};
+
 /// @brief Defines all parameters for binding a compiled statement
 typedef std::vector<PgSqlParam> BindParams;
 
@@ -434,6 +459,8 @@ private:
     ///        failed.
     bool addLeaseCommon(StatementIndex stindex, BindParams& params);
 
+    bool addLeaseCommon(StatementIndex stindex, PsqlBindArray& bind_array);
+
     /// @brief Get Lease Collection Common Code
     ///
     /// This method performs the common actions for obtaining multiple leases
@@ -567,6 +594,10 @@ private:
     ///        failed.
     template <typename LeasePtr>
     void updateLeaseCommon(StatementIndex stindex, BindParams& params,
+                           const LeasePtr& lease);
+
+    template <typename LeasePtr>
+    void updateLeaseCommon(StatementIndex stindex, PsqlBindArray& bind_array,
                            const LeasePtr& lease);
 
     /// @brief Delete lease common code
